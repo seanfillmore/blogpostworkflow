@@ -1,0 +1,357 @@
+{
+  "generatedAt": "2026-03-09T03:44:01.878Z",
+  "days": 90,
+  "minImpr": 50,
+  "applied": true,
+  "blogGroups": 116,
+  "decisions": [
+    {
+      "query": "sls free toothpaste",
+      "winner": "/blogs/news/best-sls-free-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "CONSOLIDATE",
+          "reason": "Loser targets the same intent with a synonym URL and has minimal unique traffic, but any unique content sections should be merged into the winner before redirecting."
+        }
+      ],
+      "confidence": "HIGH",
+      "summary": "Winner has 2x the impressions and more clicks; consolidate the synonym post into the winner to unify all ranking signals."
+    },
+    {
+      "query": "best sls free toothpaste",
+      "winner": "/blogs/news/best-sls-free-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "REDIRECT",
+          "reason": "Ranks far lower (pos 42 vs pos 5) with zero clicks and is a near-duplicate synonym post adding no unique value."
+        },
+        {
+          "path": "/blogs/news/best-natural-toothpaste-2025",
+          "action": "MONITOR",
+          "reason": "Targets a broader 'natural toothpaste' intent that warrants its own page; only appearing here incidentally with negligible impressions."
+        }
+      ],
+      "confidence": "HIGH",
+      "summary": "Winner dominates at position 5 with 17 clicks; redirect the synonym duplicate and leave the natural toothpaste post alone as a separate intent."
+    },
+    {
+      "query": "natural toothpaste",
+      "winner": "/blogs/news/best-natural-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "MONITOR",
+          "reason": "The SLS-free post ranks well (pos 2.8) for this query on a small impression slice, suggesting genuine topical overlap but a distinct sub-intent worth watching before acting."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "Winner holds the primary 'natural toothpaste' intent with 772 impressions; monitor the SLS-free post's incidental ranking rather than redirecting a high-performing page."
+    },
+    {
+      "query": "sls free toothpaste list",
+      "winner": "/blogs/news/best-sls-free-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "REDIRECT",
+          "reason": "Winner outperforms at position 5.4 with 10 clicks vs position 14.9 with 1 click; synonym duplicate splits list-intent signals."
+        }
+      ],
+      "confidence": "HIGH",
+      "summary": "Winner clearly owns this query; redirecting the weaker synonym post will consolidate list-intent signals and likely improve position further."
+    },
+    {
+      "query": "dr bronner alternative",
+      "winner": "/blogs/news/best-dr-bronners-alternatives-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025",
+          "action": "MONITOR",
+          "reason": "The toothpaste-specific alternatives post targets a narrower product sub-intent (toothpaste only) that is genuinely different from the broader brand-alternative query."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "Both pages target related but distinct intents (brand alternatives broadly vs. toothpaste specifically); monitor to confirm they don't cannibalize before consolidating."
+    },
+    {
+      "query": "fluoride free toothpaste",
+      "winner": "/blogs/news/best-natural-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-fluoride-free-toothpaste-2025",
+          "action": "CONSOLIDATE",
+          "reason": "Despite its keyword-exact URL, this post ranks at position 73 with zero clicks while the natural toothpaste post ranks at position 2.5; merge any unique fluoride-free content into the winner."
+        },
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "MONITOR",
+          "reason": "Ranks well (pos 3.9) on very few impressions for this query, likely incidental; primary action is the fluoride-free post consolidation."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "The natural toothpaste post dramatically outperforms the dedicated fluoride-free post; consolidate fluoride-free content there and monitor the SLS post's minor presence."
+    },
+    {
+      "query": "best fluoride free toothpaste",
+      "winner": "/blogs/news/best-fluoride-free-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "MONITOR",
+          "reason": "Only 1 impression for this query on the SLS post; no meaningful cannibalization occurring at this scale."
+        }
+      ],
+      "confidence": "LOW",
+      "summary": "The dedicated fluoride-free post owns 99% of impressions for this query but ranks at position 72, signaling a content quality issue to fix on the winner rather than a cannibalization problem to resolve."
+    },
+    {
+      "query": "best fluoride-free toothpaste brands 2025",
+      "winner": "/blogs/news/best-fluoride-free-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-natural-toothpaste-2025",
+          "action": "CONSOLIDATE",
+          "reason": "Natural toothpaste post overlaps heavily on brand-list intent and splits signals; merge any unique brand coverage into the fluoride-free winner."
+        },
+        {
+          "path": "/blogs/news/best-sls-free-toothpaste-2025",
+          "action": "MONITOR",
+          "reason": "Only 2 impressions; negligible cannibalization from the SLS post on this query."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "Fluoride-free post is the correct canonical for this brand-list query; consolidating overlapping natural toothpaste content will strengthen its weak position-11 ranking."
+    },
+    {
+      "query": "best clean body lotion",
+      "winner": "/blogs/news/best-clean-body-lotion-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-non-toxic-body-lotion-2025",
+          "action": "CONSOLIDATE",
+          "reason": "'Non-toxic' and 'clean' lotion posts target near-identical purchase intent; merge any unique product picks or sections into the winner, then redirect."
+        }
+      ],
+      "confidence": "HIGH",
+      "summary": "Winner has 97% of impressions and the only click; consolidate the non-toxic synonym post to unify lotion-related ranking signals."
+    },
+    {
+      "query": "best natural toothpaste",
+      "winner": "/blogs/news/best-natural-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025",
+          "action": "MONITOR",
+          "reason": "Only 1 impression; the Dr. Bronner's alternatives post serves a brand-specific sub-intent that doesn't materially cannibalize the natural toothpaste query."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "Natural toothpaste post owns this query; the Dr. Bronner's post is not a real cannibalization threat but should improve the winner's position-66 ranking through content optimization."
+    },
+    {
+      "query": "benefits of coconut oil on skin everyday",
+      "winner": "/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "losers": [
+        {
+          "path": "/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "action": "MONITOR",
+          "reason": "Only 1 impression; the coconut lotion post targets a product-specific angle (lotion format) distinct from the general skin-benefits guide intent."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "The skin guide holds 99% of impressions and is the correct winner; monitor the lotion post as a distinct sub-intent rather than redirecting."
+    },
+    {
+      "query": "coconut lotion benefits",
+      "winner": "/blogs/news/benefits-of-using-coconut-oil-lotion",
+      "losers": [
+        {
+          "path": "/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+          "action": "CONSOLIDATE",
+          "reason": "The skin guide overlaps on benefit content but covers a broader scope; migrate any lotion-specific benefit sections into the winner before redirecting."
+        },
+        {
+          "path": "/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+          "action": "MONITOR",
+          "reason": "The moisturizer post targets a slightly different is-it-effective angle; review content overlap manually before deciding to merge."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "The lotion benefits post leads with the only click; consolidate the general skin guide's overlapping content and monitor the moisturizer post for a potentially distinct intent."
+    },
+    {
+      "query": "all natural toothpaste",
+      "winner": "/blogs/news/best-natural-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "REDIRECT",
+          "reason": "SLS-free post appears incidentally on this query with only 3 impressions and is already being redirected for the primary SLS queries, so it should redirect to the natural toothpaste winner."
+        }
+      ],
+      "confidence": "HIGH",
+      "summary": "Natural toothpaste post owns this query; the SLS post's redirect (already recommended above) will resolve this cannibalization automatically."
+    },
+    {
+      "query": "coconut oil soap",
+      "winner": "/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+      "losers": [
+        {
+          "path": "/blogs/news/diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars",
+          "action": "MONITOR",
+          "reason": "The DIY soap recipe post targets a distinct make-it-yourself intent with unique recipe content that warrants its own page rather than a redirect."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "The benefits post ranks far better (pos 1.3 vs 30.2); keep the DIY recipe post separate as it serves a distinct transactional/informational sub-intent."
+    },
+    {
+      "query": "coconut oil moisturizer",
+      "winner": "/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+      "losers": [
+        {
+          "path": "/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "action": "CONSOLIDATE",
+          "reason": "The lotion benefits post overlaps heavily on moisturizing use-case content; merge relevant sections into the moisturizer post and redirect to consolidate signals."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "The moisturizer-specific post is the correct canonical for this query despite its weak position-53 ranking; consolidating the lotion post's overlapping content should strengthen it."
+    },
+    {
+      "query": "best toothpaste without sls",
+      "winner": "/blogs/news/best-sls-free-toothpaste-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-toothpaste-without-sls-2025",
+          "action": "REDIRECT",
+          "reason": "The SLS-free post ranks at position 2.4 with clicks while the synonym URL post ranks at position 23.9 with zero clicks; the weaker synonym URL should redirect to the winner."
+        }
+      ],
+      "confidence": "HIGH",
+      "summary": "Clear winner by position and clicks despite the loser having the exact-match URL slug; redirect immediately to unify signals."
+    },
+    {
+      "query": "coconut oil as moisturizer",
+      "winner": "/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+      "losers": [
+        {
+          "path": "/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "action": "CONSOLIDATE",
+          "reason": "Lotion benefits post has higher impressions for this query but the moisturizer post holds the only click and more specifically matches the intent; merge overlapping moisturizer content from the lotion post into the winner."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "The moisturizer post better matches this intent and earned the only click; consolidate the lotion post's overlapping moisturizer content to strengthen the winner's weak position-38 ranking."
+    },
+    {
+      "query": "can i use coconut oil as lotion",
+      "winner": "/blogs/news/benefits-of-using-coconut-oil-lotion",
+      "losers": [
+        {
+          "path": "/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+          "action": "MONITOR",
+          "reason": "This query has a 'can I use it as lotion' intent that the lotion post addresses more directly; the moisturizer post covers overlapping ground but may warrant its own page for the moisturizer-specific angle."
+        }
+      ],
+      "confidence": "LOW",
+      "summary": "The lotion post better matches the lotion-substitution intent but both posts rank poorly; manual content review is needed before consolidating these coconut oil moisturizer posts."
+    },
+    {
+      "query": "coconut oil lotion",
+      "winner": "/blogs/news/benefits-of-using-coconut-oil-lotion",
+      "losers": [
+        {
+          "path": "/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+          "action": "CONSOLIDATE",
+          "reason": "The moisturizer post overlaps heavily with the lotion post on coconut oil skincare use-cases; merge relevant lotion-use content into the winner and redirect."
+        },
+        {
+          "path": "/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+          "action": "CONSOLIDATE",
+          "reason": "Product roundup for dry skin lotion overlaps directly with the winner's topic; merge any unique product recommendations into the winner before redirecting."
+        },
+        {
+          "path": "/blogs/news/is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+          "action": "MONITOR",
+          "reason": "The stretch marks post targets a highly specific use-case sub-intent (pregnancy/stretch marks) that is genuinely distinct from general coconut oil lotion content."
+        }
+      ],
+      "confidence": "MEDIUM",
+      "summary": "The lotion benefits post is the best canonical for this query; consolidate the moisturizer and roundup posts while keeping the stretch marks post as a distinct sub-intent."
+    },
+    {
+      "query": "best natural toothpaste for sensitive teeth 2025 or 2026",
+      "winner": "/blogs/news/best-toothpaste-for-sensitive-teeth-2025",
+      "losers": [
+        {
+          "path": "/blogs/news/best-natural-toothpaste-2025",
+          "action": "MONITOR",
+          "reason": "The sensitive-teeth post is the correct specific match for this query; the general natural toothpaste post serves a broader intent and should not be redirected, but sensitive-teeth content should not live on both pages."
+        }
+      ],
+      "confidence": "HIGH",
+      "summary": "The sensitive-teeth post is the clear topical winner for this specific query; monitor the natural toothpaste post to ensure sensitive-teeth content isn't duplicated across both pages."
+    }
+  ],
+  "results": [
+    {
+      "query": "sls free toothpaste",
+      "loserPath": "/blogs/news/best-toothpaste-without-sls-2025",
+      "winnerPath": "/blogs/news/best-sls-free-toothpaste-2025",
+      "action": "CONSOLIDATE",
+      "status": "draft_saved"
+    },
+    {
+      "query": "sls free toothpaste",
+      "loserPath": "/blogs/news/best-toothpaste-without-sls-2025",
+      "winnerPath": "/blogs/news/best-sls-free-toothpaste-2025",
+      "action": "CONSOLIDATE",
+      "status": "redirect_exists"
+    },
+    {
+      "query": "best sls free toothpaste",
+      "loserPath": "/blogs/news/best-toothpaste-without-sls-2025",
+      "winnerPath": "/blogs/news/best-sls-free-toothpaste-2025",
+      "action": "REDIRECT",
+      "status": "redirect_exists"
+    },
+    {
+      "query": "sls free toothpaste list",
+      "loserPath": "/blogs/news/best-toothpaste-without-sls-2025",
+      "winnerPath": "/blogs/news/best-sls-free-toothpaste-2025",
+      "action": "REDIRECT",
+      "status": "redirect_exists"
+    },
+    {
+      "query": "best clean body lotion",
+      "loserPath": "/blogs/news/best-non-toxic-body-lotion-2025",
+      "winnerPath": "/blogs/news/best-clean-body-lotion-2025",
+      "action": "CONSOLIDATE",
+      "status": "draft_saved"
+    },
+    {
+      "query": "best clean body lotion",
+      "loserPath": "/blogs/news/best-non-toxic-body-lotion-2025",
+      "winnerPath": "/blogs/news/best-clean-body-lotion-2025",
+      "action": "CONSOLIDATE",
+      "status": "redirect_exists"
+    },
+    {
+      "query": "all natural toothpaste",
+      "loserPath": "/blogs/news/best-toothpaste-without-sls-2025",
+      "winnerPath": "/blogs/news/best-natural-toothpaste-2025",
+      "action": "REDIRECT",
+      "status": "redirect_exists"
+    },
+    {
+      "query": "best toothpaste without sls",
+      "loserPath": "/blogs/news/best-toothpaste-without-sls-2025",
+      "winnerPath": "/blogs/news/best-sls-free-toothpaste-2025",
+      "action": "REDIRECT",
+      "status": "redirect_exists"
+    }
+  ]
+}

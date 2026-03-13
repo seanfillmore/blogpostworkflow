@@ -1,0 +1,757 @@
+/**
+ * Editor Agent
+ *
+ * Reviews a generated blog post HTML file and produces a structured report covering:
+ *   1. Link validation — checks every <a href> returns a valid HTTP response
+ *   2. Source verification — fetches external source URLs and asks Claude whether the
+ *      claim made in the post is supported by the source content
+ *   3. Topical relevance — Claude reviews the full post for brand voice, ingredient
+ *      accuracy, and on-topic focus
+ *   4. Topical map alignment — checks the post links to the right cluster pillar pages
+ *      and flags any orphaned deodorant posts that should be linked
+ *
+ * Requires: ANTHROPIC_API_KEY in .env
+ *           data/posts/<slug>.html + data/posts/<slug>.json
+ *           data/sitemap-index.json, data/blog-index.json, data/topical-map.json
+ *
+ * Output:  data/reports/<slug>-editor-report.md
+ *
+ * Usage:
+ *   node agents/editor/index.js data/posts/best-natural-deodorant-for-women.html
+ *   node agents/editor/index.js data/posts/best-natural-deodorant-for-women.html --auto-fix
+ *
+ * --auto-fix applies unambiguous corrections directly to the HTML file:
+ *   - Removes broken external links (replaces <a> with its text content)
+ *   - Corrects stale years to the current year in visible text
+ */
+
+import Anthropic from '@anthropic-ai/sdk';
+import * as cheerio from 'cheerio';
+import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync } from 'fs';
+import { join, dirname, basename } from 'path';
+import { fileURLToPath } from 'url';
+import { withRetry } from '../../lib/retry.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..', '..');
+const REPORTS_DIR = join(ROOT, 'data', 'reports', 'editor');
+
+let config, ingredients;
+try {
+  config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
+} catch (e) {
+  console.error(`Failed to load config/site.json: ${e.message}`); process.exit(1);
+}
+try {
+  ingredients = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+} catch (e) {
+  console.error(`Failed to load config/ingredients.json: ${e.message}`); process.exit(1);
+}
+
+// ── feedback loader ────────────────────────────────────────────────────────────
+
+function loadAgentFeedback(agentName) {
+  try {
+    const feedbackPath = join(ROOT, 'data', 'context', 'feedback.md');
+    const content = readFileSync(feedbackPath, 'utf8');
+    const marker = `## ${agentName}`;
+    const start = content.indexOf(marker);
+    if (start === -1) return '';
+    const rest = content.slice(start + marker.length);
+    const nextSection = rest.search(/\n## [a-z]/);
+    const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
+    return section.trim();
+  } catch {
+    return '';
+  }
+}
+
+// ── env ───────────────────────────────────────────────────────────────────────
+
+function loadEnv() {
+  const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
+  const env = {};
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const idx = t.indexOf('=');
+    if (idx === -1) continue;
+    env[t.slice(0, idx).trim()] = t.slice(idx + 1).trim();
+  }
+  return env;
+}
+
+const env = loadEnv();
+if (!env.ANTHROPIC_API_KEY) { console.error('Missing ANTHROPIC_API_KEY in .env'); process.exit(1); }
+
+const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
+// ── data loaders ──────────────────────────────────────────────────────────────
+
+function loadSitemap() {
+  try { return JSON.parse(readFileSync(join(ROOT, 'data', 'sitemap-index.json'), 'utf8')); }
+  catch { return null; }
+}
+
+function loadBlogIndex() {
+  try {
+    const blogs = JSON.parse(readFileSync(join(ROOT, 'data', 'blog-index.json'), 'utf8'));
+    return blogs.flatMap((b) => (b.articles || []).map((a) => ({
+      title: a.title,
+      url: `${config.url}/blogs/${b.handle}/${a.handle}`,
+    })));
+  } catch { return []; }
+}
+
+function loadTopicalMap() {
+  try { return JSON.parse(readFileSync(join(ROOT, 'data', 'topical-map.json'), 'utf8')); }
+  catch { return null; }
+}
+
+// ── link extraction ───────────────────────────────────────────────────────────
+
+function extractLinks($) {
+  const links = [];
+  $('a[href]').each((_, el) => {
+    const href = $(el).attr('href');
+    const text = $(el).text().trim();
+    const context = $(el).closest('p, li, td, section').text().trim().slice(0, 200);
+    if (!href || href.startsWith('#') || href.startsWith('mailto:')) return;
+    links.push({ href, text, context });
+  });
+  return links;
+}
+
+function categoriseLinks(links) {
+  const siteHost = new URL(config.url).hostname;
+  const internal = { products: [], collections: [], blog: [], other: [] };
+  const external = { sources: [], other: [] };
+
+  for (const link of links) {
+    try {
+      const url = new URL(link.href);
+      if (url.hostname === siteHost || url.hostname === `www.${siteHost}`) {
+        if (url.pathname.includes('/products/')) internal.products.push(link);
+        else if (url.pathname.includes('/collections/')) internal.collections.push(link);
+        else if (url.pathname.includes('/blogs/')) internal.blog.push(link);
+        else internal.other.push(link);
+      } else {
+        // External links in a Sources/References section are source links
+        const inSources = link.context.toLowerCase().includes('source') ||
+          link.context.toLowerCase().includes('reference') ||
+          link.context.toLowerCase().includes('further reading');
+        if (inSources) external.sources.push(link);
+        else external.other.push(link);
+      }
+    } catch {
+      // Relative URL — treat as internal
+      internal.other.push(link);
+    }
+  }
+  return { internal, external };
+}
+
+// ── http link checker ─────────────────────────────────────────────────────────
+
+async function checkUrl(href) {
+  try {
+    const res = await fetch(href, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SEO-Editor-Bot/1.0)' },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(10000),
+    });
+    return { ok: res.ok, status: res.status, finalUrl: res.url };
+  } catch (err) {
+    return { ok: false, status: null, error: err.message };
+  }
+}
+
+async function checkAllLinks(links) {
+  const unique = [...new Map(links.map((l) => [l.href, l])).values()];
+  const CONCURRENCY = 5;
+  const results = [];
+  for (let i = 0; i < unique.length; i += CONCURRENCY) {
+    const batch = unique.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.all(
+      batch.map(async (link) => ({ ...link, check: await checkUrl(link.href) }))
+    );
+    results.push(...batchResults);
+  }
+  return results;
+}
+
+// ── source verification ───────────────────────────────────────────────────────
+
+async function fetchPageText(url) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SEO-Editor-Bot/1.0)' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    $('script, style, nav, footer, header').remove();
+    return $('body').text().replace(/\s+/g, ' ').trim().slice(0, 3000);
+  } catch { return null; }
+}
+
+async function verifySource(link, pageText) {
+  if (!pageText) return { verdict: 'unreachable', note: 'Could not fetch source page.' };
+
+  const message = await withRetry(
+    () => client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{
+        role: 'user',
+        content: `A blog post links to this source with the following context:
+
+ANCHOR TEXT: "${link.text}"
+SURROUNDING CONTEXT: "${link.context}"
+
+SOURCE PAGE CONTENT (first 3000 chars):
+${pageText}
+
+Does the source page support the claim or context in the blog post?
+Reply with one of: SUPPORTED / UNSUPPORTED / UNCLEAR
+Then one sentence explaining why.
+Format: VERDICT: <word>\nNOTE: <explanation>`,
+      }],
+    }),
+    { label: 'editor:source-verify' }
+  );
+
+  const raw = message.content[0].text.trim();
+  const verdict = raw.match(/VERDICT:\s*(\w+)/i)?.[1]?.toUpperCase() ?? 'UNCLEAR';
+  const note = raw.match(/NOTE:\s*(.+)/i)?.[1]?.trim() ?? raw;
+  return { verdict, note };
+}
+
+// ── topical map alignment ─────────────────────────────────────────────────────
+
+function findRelevantClusters(postUrl, keyword, topicalMap) {
+  if (!topicalMap) return [];
+  const kw = keyword.toLowerCase();
+  return topicalMap.clusters.filter((c) => {
+    const tagMatch = kw.includes(c.tag.replace('_', ' ')) || c.tag.replace('_', ' ').includes(kw.split(' ')[0]);
+    const articleMatch = c.articles.some((a) => a.url === postUrl);
+    return tagMatch || articleMatch;
+  });
+}
+
+function getPillarSuggestions(clusters, linkedBlogUrls, postUrl) {
+  const suggestions = [];
+  for (const cluster of clusters) {
+    for (const article of cluster.articles) {
+      if (article.url === postUrl) continue; // don't suggest linking to itself
+      if (!linkedBlogUrls.has(article.url)) {
+        suggestions.push({
+          cluster: cluster.tag,
+          url: article.url,
+          title: article.title,
+          isOrphan: article.is_orphan,
+          inbound: article.inbound_links,
+        });
+      }
+    }
+  }
+  return suggestions;
+}
+
+// ── internal link validation ──────────────────────────────────────────────────
+
+function validateInternalLinks(categorised, sitemap, blogArticles) {
+  const sitemapUrls = new Set((sitemap?.pages || []).map((p) => p.url));
+  const blogUrls = new Set(blogArticles.map((a) => a.url));
+
+  const issues = [];
+
+  for (const link of [...categorised.internal.products, ...categorised.internal.collections]) {
+    if (!sitemapUrls.has(link.href) && !sitemapUrls.has(link.href.replace(/\/$/, ''))) {
+      issues.push({ type: 'internal_not_in_sitemap', link });
+    }
+  }
+
+  for (const link of categorised.internal.blog) {
+    if (!blogUrls.has(link.href) && !blogUrls.has(link.href.replace(/\/$/, ''))) {
+      issues.push({ type: 'blog_not_in_index', link });
+    }
+  }
+
+  return issues;
+}
+
+// ── CTA check ─────────────────────────────────────────────────────────────────
+
+function checkCTAs(html, categorised) {
+  const siteHost = new URL(config.url).hostname;
+  const issues = [];
+
+  // Must have at least one product or collection CTA
+  const ctaLinks = [...categorised.internal.products, ...categorised.internal.collections];
+  if (ctaLinks.length === 0) {
+    issues.push({ type: 'no_product_cta', message: 'No links to any product or collection page found.' });
+  }
+
+  // Flag markdown artifacts that indicate broken HTML
+  if (/```/.test(html)) {
+    issues.push({ type: 'markdown_artifact', message: 'Post contains ``` markdown code fences — HTML was not properly rendered.' });
+  }
+
+
+  return { ctaLinks, issues };
+}
+
+// ── html → editorial content (strips tags, preserves structure) ───────────────
+
+function buildEditorialContent(html) {
+  const $c = cheerio.load(html);
+  $c('style, noscript').remove();
+  const schemas = [];
+  $c('script[type="application/ld+json"]').each((_, el) => schemas.push($c(el).html().trim()));
+  $c('script').remove();
+
+  let body = $c('body').html() || html;
+  body = body
+    .replace(/<h1[^>]*>/gi, '\n# ').replace(/<\/h1>/gi, '\n')
+    .replace(/<h2[^>]*>/gi, '\n## ').replace(/<\/h2>/gi, '\n')
+    .replace(/<h3[^>]*>/gi, '\n### ').replace(/<\/h3>/gi, '\n')
+    .replace(/<h4[^>]*>/gi, '\n#### ').replace(/<\/h4>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '\n- ').replace(/<\/li>/gi, '')
+    .replace(/<\/tr>/gi, '\n').replace(/<\/td>/gi, ' | ').replace(/<\/th>/gi, ' | ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  if (schemas.length) body += '\n\n[JSON-LD SCHEMAS]\n' + schemas.join('\n---\n');
+  return body;
+}
+
+// ── deterministic checks (no tokens) ─────────────────────────────────────────
+
+function checkH1InBody($) {
+  const count = $('h1').length;
+  return count > 0
+    ? [`BLOCKER — H1 tag in post body (${count} found; Shopify adds H1 from article title automatically)`]
+    : [];
+}
+
+function checkYearInHeadings($) {
+  const current = new Date().getFullYear();
+  const issues = [];
+  $('h1,h2,h3,h4,h5,h6').each((_, el) => {
+    for (const [, yr] of $(el).text().matchAll(/\b(20\d{2})\b/g)) {
+      if (parseInt(yr) < current) {
+        issues.push(`Stale year ${yr} in heading: "${$(el).text().trim()}"`);
+      }
+    }
+  });
+  return issues;
+}
+
+function extractFaqQAs($) {
+  const qas = [];
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      const parsed = JSON.parse($(el).html());
+      for (const s of (Array.isArray(parsed) ? parsed : [parsed])) {
+        if (s['@type'] === 'FAQPage' && Array.isArray(s.mainEntity)) {
+          for (const q of s.mainEntity) {
+            qas.push({ q: q.name || '', a: q.acceptedAnswer?.text || '' });
+          }
+        }
+      }
+    } catch {}
+  });
+  return qas;
+}
+
+// ── claude editorial review ───────────────────────────────────────────────────
+
+async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult) {
+  const ctaContext = ctaResult.issues.length > 0
+    ? `CTA ISSUES: ${ctaResult.issues.map((i) => i.message).join('; ')}`
+    : `CTA links found: ${ctaResult.ctaLinks.map((l) => l.href).join(', ')}`;
+
+  const deterministicNote = deterministicIssues.length > 0
+    ? `CODE PRE-CHECKS FOUND ISSUES:\n${deterministicIssues.map((i) => `- ${i}`).join('\n')}`
+    : 'CODE PRE-CHECKS PASSED: H1 not in body ✓  No stale years in headings ✓';
+
+  const faqNote = faqQAs.length > 0
+    ? `FAQ Q&As (for competitor check):\n${faqQAs.map((qa, i) => `Q${i + 1}: ${qa.q}\nA${i + 1}: ${qa.a}`).join('\n\n')}`
+    : 'No FAQ content detected.';
+
+  const fb = loadAgentFeedback('editor');
+
+  const systemPrompt = `You are an editor reviewing blog posts for ${config.name}, a natural skincare brand.
+
+Review each post on these dimensions:
+
+1. TOPICAL RELEVANCE — Tightly focused on target keyword? Off-topic tangents?
+2. BRAND VOICE & READABILITY — Conversational and warm, ~8th grade level. Flag clinical/jargon phrases without plain-language follow-up. Flag paragraphs over 4 sentences. Good signals: short sentences, "you/your", plain words.
+3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description?
+4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass.
+5. FACTUAL CONCERNS — Exaggerated, unsubstantiated, or potentially inaccurate claims?
+6. CTA QUALITY — Natural, well-placed CTA to Real Skin Care product/collection? Flag if missing.
+7. FORMATTING — Heading hierarchy clean (H2+, no H1 in body)? Orphaned sections? H1 presence pre-checked by code.
+8. COMPETITOR NAMES IN FAQ — Using the FAQ Q&As provided, flag any brand names other than Real Skin Care. BLOCKER if found.
+9. OVERALL QUALITY — Excellent / Good / Needs Work. Must be "Needs Work" if any BLOCKER exists.
+
+Format each section as:
+## [Dimension]
+VERDICT: [word/phrase]
+NOTES: [2-4 sentences]${fb ? `\n\nSTANDING FEEDBACK — apply in addition to above:\n${fb}` : ''}`;
+
+  const message = await withRetry(
+    () => client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1800,
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+      messages: [{
+        role: 'user',
+        content: `POST TITLE: ${meta?.title ?? 'Unknown'}
+TARGET KEYWORD: ${meta?.target_keyword ?? 'Unknown'}
+PRODUCT INGREDIENTS: ${productIngredientsContext}
+${ctaContext}
+
+${deterministicNote}
+
+${faqNote}
+
+POST CONTENT:
+${editorialContent}`,
+      }],
+    }),
+    { label: 'editor:review' }
+  );
+
+  return message.content[0].text.trim();
+}
+
+// ── report builder ────────────────────────────────────────────────────────────
+
+function buildReport({ slug, meta, linkResults, internalIssues, sourceVerifications,
+  topicalSuggestions, editorialReview, linkedBlogUrls, ctaResult }) {
+
+  const lines = [];
+  const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  lines.push(`# Editor Report — ${meta?.title ?? slug}`);
+  lines.push(`**Post:** data/posts/${slug}.html`);
+  lines.push(`**Target keyword:** ${meta?.target_keyword ?? '—'}`);
+  lines.push(`**Reviewed:** ${now}\n`);
+
+  // ── 1. Link health ────────────────────────────────────────────────────────
+  lines.push('---\n## 1. Link Health\n');
+  const broken = linkResults.filter((r) => !r.check.ok);
+  const ok = linkResults.filter((r) => r.check.ok);
+  lines.push(`**${ok.length} links OK** | **${broken.length} broken/unreachable**\n`);
+
+  if (broken.length === 0) {
+    lines.push('All links returned a valid HTTP response.\n');
+  } else {
+    lines.push('| URL | Anchor Text | Status | Error |');
+    lines.push('|-----|-------------|--------|-------|');
+    for (const r of broken) {
+      lines.push(`| ${r.href} | ${r.text} | ${r.check.status ?? 'timeout'} | ${r.check.error ?? ''} |`);
+    }
+    lines.push('');
+  }
+
+  // ── 2. Internal link validation ───────────────────────────────────────────
+  lines.push('---\n## 2. Internal Link Validation\n');
+  if (internalIssues.length === 0) {
+    lines.push('All internal product, collection, and blog links match the sitemap/blog index.\n');
+  } else {
+    lines.push('The following internal links could not be verified against the sitemap or blog index:\n');
+    for (const issue of internalIssues) {
+      const label = issue.type === 'blog_not_in_index' ? 'Blog URL not in blog index' : 'URL not in sitemap';
+      lines.push(`- **${label}:** \`${issue.link.href}\` (anchor: "${issue.link.text}")`);
+    }
+    lines.push('');
+  }
+
+  // ── 2b. CTA and formatting ────────────────────────────────────────────────
+  lines.push('---\n## 2b. CTA & Formatting Check\n');
+  if (ctaResult?.issues.length === 0) {
+    const ctaList = ctaResult.ctaLinks.map((l) => `[${l.text || l.href}](${l.href})`).join(', ');
+    lines.push(`**Pass** — Product/collection CTA links found: ${ctaList || '(none listed)'}\n`);
+  } else {
+    lines.push('**Issues detected:**\n');
+    for (const issue of ctaResult?.issues ?? []) {
+      lines.push(`- ⚠️ ${issue.message}`);
+    }
+    lines.push('');
+  }
+
+  // ── 3. Source verification ────────────────────────────────────────────────
+  lines.push('---\n## 3. Source Verification\n');
+  if (sourceVerifications.length === 0) {
+    lines.push('No external source links found in the post.\n');
+  } else {
+    lines.push('| Verdict | Source URL | Note |');
+    lines.push('|---------|-----------|------|');
+    for (const sv of sourceVerifications) {
+      const icon = sv.verdict === 'SUPPORTED' ? 'PASS' : sv.verdict === 'UNREACHABLE' ? 'SKIP' : 'REVIEW';
+      lines.push(`| ${icon} | [${sv.link.text || sv.link.href}](${sv.link.href}) | ${sv.note} |`);
+    }
+    lines.push('');
+  }
+
+  // ── 4. Topical map alignment ──────────────────────────────────────────────
+  lines.push('---\n## 4. Topical Map Alignment\n');
+  if (topicalSuggestions.length === 0) {
+    lines.push('No additional cluster articles identified for cross-linking at this time.\n');
+  } else {
+    lines.push('The following posts are in the same topical cluster and should be linked from this post (or vice versa) as the cluster grows:\n');
+    for (const s of topicalSuggestions) {
+      const orphanNote = s.isOrphan ? ' *(orphan — no inbound links yet)*' : ` *(${s.inbound} inbound links)*`;
+      lines.push(`- **[${s.title}](${s.url})**${orphanNote}`);
+    }
+    lines.push('\n> Note: As new deodorant posts are published, revisit this post to add cross-links to the growing cluster.\n');
+  }
+
+  // ── 5. Editorial review ───────────────────────────────────────────────────
+  lines.push('---\n## 5. Editorial Review\n');
+  lines.push(editorialReview);
+  lines.push('');
+
+  return lines.join('\n');
+}
+
+// ── auto-fix ──────────────────────────────────────────────────────────────────
+
+/**
+ * Apply unambiguous fixes directly to the HTML file:
+ *   1. Remove broken external links (keep anchor text, strip <a> wrapper)
+ *   2. Correct stale years in visible text (any 4-digit year < current year)
+ *
+ * Creates a timestamped backup before writing.
+ */
+function applyAutoFixes(htmlPath, html, brokenLinks) {
+  const currentYear = new Date().getFullYear();
+  let fixed = html;
+  const changes = [];
+
+  // 1. Remove broken external links
+  const siteHost = new URL(config.url).hostname;
+  for (const link of brokenLinks) {
+    try {
+      const urlHost = new URL(link.href).hostname;
+      const isInternal = urlHost === siteHost || urlHost === `www.${siteHost}`;
+      if (isInternal) continue; // Don't strip internal links — may just be temporarily down
+    } catch { continue; }
+
+    // Escape for regex
+    const escapedHref = link.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const linkRegex = new RegExp(`<a[^>]+href=["']${escapedHref}["'][^>]*>(.*?)<\\/a>`, 'gis');
+    const before = fixed;
+    fixed = fixed.replace(linkRegex, '$1');
+    if (fixed !== before) {
+      changes.push(`Removed broken link: ${link.href} (kept text: "${link.text}")`);
+    }
+  }
+
+  // 2. Fix stale years in visible text (not inside href/src attributes)
+  // Replace year strings like "in 2023" or "2024" in text nodes only
+  for (let year = 2020; year < currentYear; year++) {
+    // Match year in text context: preceded/followed by space, punctuation, or common words
+    const yearRegex = new RegExp(`\\b(in |updated |\\()${year}\\b`, 'gi');
+    const before = fixed;
+    fixed = fixed.replace(yearRegex, (match, prefix) => `${prefix}${currentYear}`);
+    if (fixed !== before) {
+      changes.push(`Corrected year: ${year} → ${currentYear}`);
+    }
+  }
+
+  if (changes.length === 0) {
+    console.log('  Auto-fix: no changes needed.');
+    return;
+  }
+
+  // Backup original
+  const backupPath = htmlPath.replace('.html', `.backup-${Date.now()}.html`);
+  copyFileSync(htmlPath, backupPath);
+  writeFileSync(htmlPath, fixed, 'utf8');
+
+  console.log(`\n  Auto-fix applied ${changes.length} change(s) (backup: ${basename(backupPath)}):`);
+  changes.forEach((c) => console.log(`    • ${c}`));
+}
+
+// ── main ──────────────────────────────────────────────────────────────────────
+
+const args = process.argv.slice(2);
+
+async function runEditor(htmlPath) {
+  const html = readFileSync(htmlPath, 'utf8');
+  const slug = basename(htmlPath, '.html');
+  const metaPath = join(ROOT, 'data', 'posts', `${slug}.json`);
+  let meta = null;
+  if (existsSync(metaPath)) {
+    try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); }
+    catch (e) { console.warn(`  Warning: could not parse metadata ${metaPath}: ${e.message}`); }
+  }
+  const keyword = meta?.target_keyword ?? slug.replace(/-/g, ' ');
+
+  console.log(`\n  Post: "${meta?.title ?? slug}"`);
+  console.log(`  Keyword: ${keyword}\n`);
+
+  // Detect product type for ingredient context
+  const kw = keyword.toLowerCase();
+  let productIngredients = null;
+  function flattenProduct(p) {
+    if (!p) return null;
+    const base = p.base_ingredients || p.ingredients || [];
+    const oils = (p.variations || []).flatMap((v) => v.essential_oils || []);
+    return { name: p.name, format: p.format, ingredients: [...new Set([...base, ...oils])] };
+  }
+  if (kw.includes('deodorant')) productIngredients = flattenProduct(ingredients.deodorant);
+  else if (kw.includes('toothpaste') || kw.includes('oral')) productIngredients = flattenProduct(ingredients.toothpaste);
+  else if (kw.includes('lotion') || kw.includes('moisturizer')) productIngredients = flattenProduct(ingredients.lotion);
+  else if (kw.includes('cream')) productIngredients = flattenProduct(ingredients.cream);
+  else if (kw.includes('soap')) productIngredients = flattenProduct(ingredients.bar_soap);
+  else if (kw.includes('lip')) productIngredients = flattenProduct(ingredients.lip_balm);
+  else productIngredients = { name: 'our products', ingredients: [...new Set(Object.values(ingredients).flatMap((p) => { const f = flattenProduct(p); return f?.ingredients || []; }))] };
+
+  const formatNote = productIngredients.format ? ` | Product format: ${productIngredients.format}` : '';
+  const productIngredientsContext = `${productIngredients.name}: ${productIngredients.ingredients.join(', ')}${formatNote}`;
+
+  // Load context data
+  const sitemap = loadSitemap();
+  const blogArticles = loadBlogIndex();
+  const topicalMap = loadTopicalMap();
+
+  // Parse HTML
+  const $ = cheerio.load(html);
+  const allLinks = extractLinks($);
+  const categorised = categoriseLinks(allLinks);
+
+  // Build post URL (approximate — for topical map matching)
+  const postUrl = `${config.url}/blogs/news/${slug}`;
+  const linkedBlogUrls = new Set(categorised.internal.blog.map((l) => l.href));
+
+  // 1. HTTP check all links
+  process.stdout.write('  Checking all links... ');
+  const allLinksFlat = [
+    ...categorised.internal.products,
+    ...categorised.internal.collections,
+    ...categorised.internal.blog,
+    ...categorised.external.sources,
+    ...categorised.external.other,
+  ];
+  const linkResults = await checkAllLinks(allLinksFlat);
+  console.log(`${linkResults.length} checked (${linkResults.filter((r) => !r.check.ok).length} broken)`);
+
+  // 2. Internal validation
+  process.stdout.write('  Validating internal links... ');
+  const internalIssues = validateInternalLinks(categorised, sitemap, blogArticles);
+  console.log(`${internalIssues.length} issues`);
+
+  // 2b. CTA and formatting check
+  const ctaResult = checkCTAs(html, categorised);
+  if (ctaResult.issues.length > 0) {
+    console.log(`  CTA/formatting issues: ${ctaResult.issues.map((i) => i.message).join('; ')}`);
+  }
+
+  // 3. Source verification (live sources only)
+  const liveSourceLinks = linkResults.filter((r) =>
+    categorised.external.sources.some((s) => s.href === r.href) && r.check.ok
+  );
+  process.stdout.write(`  Verifying ${liveSourceLinks.length} source(s)... `);
+  const sourceVerifications = [];
+  for (const link of liveSourceLinks) {
+    const pageText = await fetchPageText(link.href);
+    const result = await verifySource(link, pageText);
+    sourceVerifications.push({ link, ...result });
+    process.stdout.write('.');
+  }
+  // Add unreachable sources
+  for (const r of linkResults.filter((r) =>
+    categorised.external.sources.some((s) => s.href === r.href) && !r.check.ok
+  )) {
+    sourceVerifications.push({ link: r, verdict: 'UNREACHABLE', note: `HTTP ${r.check.status ?? 'timeout'}` });
+  }
+  console.log(' done');
+
+  // 4. Topical map alignment
+  process.stdout.write('  Checking topical map alignment... ');
+  const relevantClusters = findRelevantClusters(postUrl, keyword, topicalMap);
+  const topicalSuggestions = getPillarSuggestions(relevantClusters, linkedBlogUrls, postUrl);
+  console.log(`${relevantClusters.length} cluster(s), ${topicalSuggestions.length} link suggestion(s)`);
+
+  // 5. Deterministic checks (no tokens)
+  const deterministicIssues = [...checkH1InBody($), ...checkYearInHeadings($)];
+  if (deterministicIssues.length > 0) {
+    console.log(`  Deterministic issues: ${deterministicIssues.join('; ')}`);
+  }
+
+  // 6. Extract FAQ Q&As for competitor check
+  const faqQAs = extractFaqQAs($);
+
+  // 7. Build compressed editorial content (strips HTML tags)
+  const editorialContent = buildEditorialContent(html);
+
+  // 8. Editorial review
+  process.stdout.write('  Running editorial review... ');
+  const review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult);
+  console.log('done');
+
+  // Build and save report
+  const report = buildReport({
+    slug, meta, linkResults, internalIssues,
+    sourceVerifications, topicalSuggestions,
+    editorialReview: review, linkedBlogUrls, ctaResult,
+  });
+
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  const reportPath = join(REPORTS_DIR, `${slug}-editor-report.md`);
+  writeFileSync(reportPath, report);
+
+  console.log(`\n  Report saved: ${reportPath}`);
+
+  // Print summary
+  const brokenLinks = linkResults.filter((r) => !r.check.ok);
+  const needsReview = sourceVerifications.filter((s) => s.verdict !== 'SUPPORTED' && s.verdict !== 'UNREACHABLE').length;
+  console.log(`\n  Summary:`);
+  console.log(`    Broken links:       ${brokenLinks.length}`);
+  console.log(`    Internal issues:    ${internalIssues.length}`);
+  console.log(`    CTA/format issues:  ${ctaResult.issues.length}`);
+  console.log(`    Deterministic:      ${deterministicIssues.length} issue(s)`);
+  console.log(`    Sources to review:  ${needsReview}`);
+  console.log(`    Topical suggestions:${topicalSuggestions.length}`);
+
+  // Auto-fix if requested
+  if (args.includes('--auto-fix')) {
+    applyAutoFixes(htmlPath, html, brokenLinks);
+  }
+}
+
+async function main() {
+  console.log(`\nEditor Agent — ${config.name}\n`);
+
+  if (!args[0] || args[0].startsWith('--')) {
+    console.error('Usage: node agents/editor/index.js data/posts/<slug>.html [--auto-fix]');
+    process.exit(1);
+  }
+
+  const htmlPath = args[0].startsWith('/') ? args[0] : join(ROOT, args[0]);
+  if (!existsSync(htmlPath)) {
+    console.error(`File not found: ${htmlPath}`);
+    process.exit(1);
+  }
+
+  await runEditor(htmlPath);
+  console.log('\nEditor review complete.');
+}
+
+main().catch((err) => {
+  console.error('Error:', err.message);
+  process.exit(1);
+});

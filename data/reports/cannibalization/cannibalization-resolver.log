@@ -1,0 +1,62 @@
+
+Cannibalization Resolver — Real Skin Care
+Mode: APPLY | Window: 90d | Min impressions: 50
+
+  Fetching GSC query+page data... 5000 rows
+  Detecting blog-vs-blog cannibalization... 116 groups
+  Top groups:
+    "sls free toothpaste" — 1841 impr
+      /blogs/news/best-sls-free-toothpaste-2025 (pos 33.8, 4 clicks)
+      /blogs/news/best-toothpaste-without-sls-2025 (pos 33.5, 1 clicks)
+    "best sls free toothpaste" — 1423 impr
+      /blogs/news/best-sls-free-toothpaste-2025 (pos 5, 17 clicks)
+      /blogs/news/best-toothpaste-without-sls-2025 (pos 42.3, 0 clicks)
+      /blogs/news/best-natural-toothpaste-2025 (pos 4.5, 0 clicks)
+    "natural toothpaste" — 790 impr
+      /blogs/news/best-natural-toothpaste-2025 (pos 56.9, 2 clicks)
+      /blogs/news/best-toothpaste-without-sls-2025 (pos 2.8, 1 clicks)
+    "sls free toothpaste list" — 752 impr
+      /blogs/news/best-sls-free-toothpaste-2025 (pos 5.4, 10 clicks)
+      /blogs/news/best-toothpaste-without-sls-2025 (pos 14.9, 1 clicks)
+    "dr bronner alternative" — 678 impr
+      /blogs/news/best-dr-bronners-alternatives-2025 (pos 20, 1 clicks)
+      /blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025 (pos 17.3, 0 clicks)
+
+  Loading Shopify articles and redirects... 58 articles, 64 existing redirects
+  Triaging decisions with Claude... done
+  HIGH confidence: 6 | Actionable: 6
+
+  Applying resolutions...
+
+    Merging "best-toothpaste-without-sls-2025" → "best-sls-free-toothpaste-2025"... merged
+    Running editor review... editor warning (non-fatal): /bin/sh: node: command not found
+    Saving Shopify draft... saved
+
+    Merging "best-toothpaste-without-sls-2025" → "best-sls-free-toothpaste-2025"... merged
+    Running editor review... editor warning (non-fatal): /bin/sh: node: command not found
+    Saving Shopify draft... saved
+
+    Merging "best-toothpaste-without-sls-2025" → "best-sls-free-toothpaste-2025"... merged
+    Running editor review... editor warning (non-fatal): /bin/sh: node: command not found
+    Saving Shopify draft... saved
+
+    Merging "best-non-toxic-body-lotion-2025" → "best-clean-body-lotion-2025"... merged
+    Running editor review... editor warning (non-fatal): /bin/sh: node: command not found
+    Saving Shopify draft... saved
+
+    Merging "best-toothpaste-without-sls-2025" → "best-sls-free-toothpaste-2025"... merged
+    Running editor review... editor warning (non-fatal): /bin/sh: node: command not found
+    Saving Shopify draft... saved
+
+    Merging "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin" → "benefits-of-using-coconut-oil-lotion"... merged
+    Running editor review... editor warning (non-fatal): /bin/sh: node: command not found
+    Saving Shopify draft... saved
+
+    Merging "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup" → "benefits-of-using-coconut-oil-lotion"... merged
+    Running editor review... editor warning (non-fatal): /bin/sh: node: command not found
+    Saving Shopify draft... saved
+
+  Done: 2 redirects created, 7 drafts saved
+
+  Decisions: /Users/seanfillmore/Code/Claude/data/reports/cannibalization-decisions.json
+  Report:    /Users/seanfillmore/Code/Claude/data/reports/cannibalization-report.md

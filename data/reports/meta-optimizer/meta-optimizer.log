@@ -1,0 +1,29 @@
+
+Meta Optimizer — Real Skin Care
+Mode: APPLY (will update Shopify)
+Criteria: impressions > 100, CTR < 5%, limit 25
+
+  Querying GSC for low-CTR pages... 50 pages found
+  Fetching Shopify articles... 58 articles indexed
+  Fetching page performance data from GSC... done
+  [1] "sls free toothpaste" (#32, 0.3% CTR)... done
+    ✓ Updated in Shopify
+  [2] "coconut oil as deodorant" (#8, 1.7% CTR)... done
+    ✓ Updated in Shopify
+  [3] "tom's of maine toothpaste alternative" (#6, 1.5% CTR)... done
+    ✓ Updated in Shopify
+  [4] "best clean body lotion" (#18, 0.2% CTR)... done
+    ✓ Updated in Shopify
+  [5] "best fragrance free body lotion" (#22, 0.3% CTR)... done
+    ✓ Updated in Shopify
+  [6] "boka toothpaste alternative" (#6, 0.6% CTR)... done
+    ✓ Updated in Shopify
+  [7] "coconut oil for stretch marks" (#8, 0.1% CTR)... done
+    ✓ Updated in Shopify
+  [8] "dr bronner alternative" (#19, 0.1% CTR)... done
+    ✓ Updated in Shopify
+
+  A/B baseline saved: /Users/seanfillmore/Code/Claude/data/reports/meta-ab-tracker.json (8 entries)
+
+  Report saved: /Users/seanfillmore/Code/Claude/data/reports/meta-optimizer-report.md
+  Pages updated: 8

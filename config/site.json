@@ -1,0 +1,29 @@
+{
+  "name": "Real Skin Care",
+  "author": {
+    "name": "Sean Fillmore",
+    "slug": "sean-fillmore",
+    "title": "Founder, Real Skin Care",
+    "bio": "",
+    "sameAs": []
+  },
+  "brand_description": "natural skincare and personal care brand (deodorant, toothpaste, coconut oil, body lotion, lip balm, bar soap)",
+  "url": "https://www.realskincare.com",
+  "sitemap": "https://www.realskincare.com/sitemap.xml",
+  "gsc_project_id": "real-skin-care-489518",
+  "gsc_client_secret_file": "client_secret_729233344313-pignibt6ffqse7jq27tb6mrcbrf0qcs5.apps.googleusercontent.com.json",
+  "seed_topics": [
+    "fluoride free toothpaste",
+    "natural toothpaste",
+    "sls free toothpaste",
+    "natural deodorant",
+    "best natural deodorant",
+    "natural lip balm",
+    "natural bar soap",
+    "non toxic body lotion",
+    "natural moisturizer",
+    "coconut oil skin",
+    "organic skincare",
+    "clean beauty"
+  ]
+}

@@ -1,0 +1,801 @@
+#!/usr/bin/env node
+/**
+ * SEO Dashboard
+ *
+ * Local web server that visualizes the content pipeline, keyword rankings,
+ * published posts, and content calendar in a single-page dashboard.
+ *
+ * Usage:
+ *   node agents/dashboard/index.js
+ *   node agents/dashboard/index.js --port 4242
+ *   node agents/dashboard/index.js --open
+ */
+
+import http from 'http';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { join, dirname, basename } from 'path';
+import { fileURLToPath } from 'url';
+
+// ── basic auth ─────────────────────────────────────────────────────────────────
+// Set DASHBOARD_USER and DASHBOARD_PASSWORD in .env to enable.
+// If neither is set the dashboard is open (safe for local-only use).
+
+function loadEnvAuth() {
+  try {
+    const lines = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.env'), 'utf8').split('\n');
+    const e = {};
+    for (const l of lines) {
+      const t = l.trim(); if (!t || t.startsWith('#')) continue;
+      const i = t.indexOf('='); if (i === -1) continue;
+      e[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    }
+    return e;
+  } catch { return {}; }
+}
+
+const _authEnv  = loadEnvAuth();
+const AUTH_USER = _authEnv.DASHBOARD_USER || '';
+const AUTH_PASS = _authEnv.DASHBOARD_PASSWORD || '';
+const AUTH_REQUIRED = AUTH_USER && AUTH_PASS;
+const AUTH_TOKEN = AUTH_REQUIRED
+  ? 'Basic ' + Buffer.from(`${AUTH_USER}:${AUTH_PASS}`).toString('base64')
+  : null;
+
+function checkAuth(req, res) {
+  if (!AUTH_REQUIRED) return true;
+  if (req.headers['authorization'] === AUTH_TOKEN) return true;
+  res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="SEO Dashboard"', 'Content-Type': 'text/plain' });
+  res.end('Unauthorized');
+  return false;
+}
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..', '..');
+
+const args = process.argv.slice(2);
+const PORT   = (() => { const i = args.indexOf('--port'); return i !== -1 ? parseInt(args[i+1], 10) : 4242; })();
+const doOpen = args.includes('--open');
+
+const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
+
+// ── paths ──────────────────────────────────────────────────────────────────────
+
+const POSTS_DIR     = join(ROOT, 'data', 'posts');
+const BRIEFS_DIR    = join(ROOT, 'data', 'briefs');
+const IMAGES_DIR    = join(ROOT, 'data', 'images');
+const REPORTS_DIR   = join(ROOT, 'data', 'reports');
+const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
+const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
+
+// ── calendar parsing ───────────────────────────────────────────────────────────
+
+function kwToSlug(kw) {
+  return kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function parseCalendar() {
+  if (!existsSync(CALENDAR_PATH)) return [];
+  const md = readFileSync(CALENDAR_PATH, 'utf8');
+  const rows = [];
+  const re = /^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
+  for (const m of md.matchAll(re)) {
+    const [, week, dateStr, category, keyword, title, kd, volume, contentType, priority] = m;
+    if (week.trim() === 'Week' || week.trim() === '---') continue;
+    const dm = dateStr.trim().match(/([A-Za-z]+)\s+(\d+),?\s+(\d{4})/);
+    if (!dm) continue;
+    const publishDate = new Date(`${dm[1]} ${dm[2]}, ${dm[3]} 08:00:00 GMT-0700`);
+    rows.push({
+      week: parseInt(week.trim(), 10),
+      publishDate,
+      category: category.trim(),
+      keyword: keyword.trim(),
+      title: title.trim(),
+      kd: parseInt(kd.trim(), 10) || 0,
+      volume: parseInt(volume.trim().replace(/,/g, ''), 10) || 0,
+      contentType: contentType.trim(),
+      priority: priority.trim(),
+      slug: kwToSlug(keyword.trim()),
+    });
+  }
+  return rows.sort((a, b) => a.publishDate - b.publishDate);
+}
+
+// ── pipeline status ────────────────────────────────────────────────────────────
+
+function getPostMeta(slug) {
+  const exact = join(POSTS_DIR, `${slug}.json`);
+  if (existsSync(exact)) {
+    try { return JSON.parse(readFileSync(exact, 'utf8')); } catch { return null; }
+  }
+  if (!existsSync(POSTS_DIR)) return null;
+  for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
+    try {
+      const m = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      if (m.target_keyword?.toLowerCase() === slug.replace(/-/g, ' ')) return m;
+    } catch {}
+  }
+  return null;
+}
+
+function getItemStatus(item) {
+  const meta = getPostMeta(item.slug);
+  const hasBrief = existsSync(join(BRIEFS_DIR, `${item.slug}.json`));
+  const hasHtml  = existsSync(join(POSTS_DIR, `${item.slug}.html`));
+  if (meta?.shopify_status === 'published') return 'published';
+  if (meta?.shopify_publish_at)             return 'scheduled';
+  if (meta?.shopify_article_id)             return 'draft';
+  if (hasHtml)                              return 'written';
+  if (hasBrief)                             return 'briefed';
+  return 'pending';
+}
+
+// ── editor reports ─────────────────────────────────────────────────────────────
+
+function parseEditorReports() {
+  const dir = join(REPORTS_DIR, 'editor');
+  if (!existsSync(dir)) return {};
+  const out = {};
+  for (const f of readdirSync(dir).filter(f => f.endsWith('-editor-report.md'))) {
+    const slug = f.replace('-editor-report.md', '');
+    try {
+      const txt = readFileSync(join(dir, f), 'utf8');
+      out[slug] = {
+        verdict:     /VERDICT:\s*Needs Work/i.test(txt) ? 'Needs Work' : 'Approved',
+        brokenLinks: (txt.match(/\|\s*https?:\/\/[^|]+\|\s*[^|]*\|\s*404\s*\|/g) || []).length,
+        generatedAt: statSync(join(dir, f)).mtime.toISOString(),
+      };
+    } catch {}
+  }
+  return out;
+}
+
+// ── rank snapshots ─────────────────────────────────────────────────────────────
+
+function parseRankings() {
+  const empty = { latestDate: null, previousDate: null, items: [], summary: { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 } };
+  if (!existsSync(SNAPSHOTS_DIR)) return empty;
+
+  const files = readdirSync(SNAPSHOTS_DIR)
+    .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    .sort().reverse();
+  if (!files.length) return empty;
+
+  const latest   = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[0]), 'utf8'));
+  const previous = files[1] ? JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[1]), 'utf8')) : null;
+
+  const prevMap = {};
+  for (const p of previous?.posts ?? []) prevMap[p.slug] = p.position;
+
+  const items = (latest.posts ?? []).map(p => {
+    const prev   = prevMap[p.slug] ?? null;
+    const change = (p.position != null && prev != null) ? prev - p.position : null;
+    const tier   = !p.position       ? 'notRanking'
+                 : p.position <= 10  ? 'page1'
+                 : p.position <= 20  ? 'quickWins'
+                 : 'needsWork';
+    return { ...p, previousPosition: prev, change, tier };
+  }).sort((a, b) => {
+    if (a.position == null && b.position == null) return 0;
+    if (a.position == null) return 1;
+    if (b.position == null) return -1;
+    return a.position - b.position;
+  });
+
+  const summary = items.reduce((acc, x) => { acc[x.tier]++; return acc; },
+    { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 });
+
+  return { latestDate: latest.date, previousDate: previous?.date ?? null, items, summary };
+}
+
+// ── ahrefs data readiness ──────────────────────────────────────────────────────
+
+const AHREFS_DIR = join(ROOT, 'data', 'ahrefs');
+
+function checkAhrefsData(keyword) {
+  const slug = kwToSlug(keyword);
+  const dir  = join(AHREFS_DIR, slug);
+  if (!existsSync(dir)) return { ready: false, slug, dir: `data/ahrefs/${slug}/`, hasSerp: false, hasKeywords: false, hasHistory: false };
+
+  // Researcher auto-detects by CSV column headers, not filenames — so just count CSVs
+  // and use common filename hints as a best-effort indicator per file type
+  const files = readdirSync(dir).filter(f => f.endsWith('.csv')).map(f => f.toLowerCase());
+  const hasSerp     = files.some(f => f.includes('serp') || f.includes('overview'));
+  // matching_terms.csv or any csv with 'matching'/'terms'; keyword.csv alone is the history file
+  const hasKeywords = files.some(f => f.includes('matching') || f.includes('terms'));
+  // keyword.csv = volume history export; also accept 'volume' or 'history' in name
+  const hasHistory  = files.some(f => f.includes('keyword') || f.includes('volume') || f.includes('history'));
+  // Researcher requires serp + at least one keywords csv to produce a quality brief
+  const ready       = hasSerp && hasKeywords;
+  return { ready, slug, dir: `data/ahrefs/${slug}/`, hasSerp, hasKeywords, hasHistory };
+}
+
+function getPendingAhrefsData(calItems) {
+  const pending = [];
+  for (const item of calItems) {
+    const slug     = item.slug;
+    const hasBrief = existsSync(join(BRIEFS_DIR, `${slug}.json`));
+    const hasPost  = existsSync(join(POSTS_DIR,  `${slug}.html`));
+    if (hasBrief || hasPost) continue; // already past research stage
+
+    const status = checkAhrefsData(item.keyword);
+    if (!status.ready) {
+      const missing = [];
+      if (!status.hasSerp)     missing.push('SERP Overview (required)');
+      if (!status.hasKeywords) missing.push('Matching Terms (required)');
+      if (!status.hasHistory)  missing.push('Volume History (optional)');
+      pending.push({
+        keyword:     item.keyword,
+        slug,
+        publishDate: item.publishDate.toISOString(),
+        dir:         status.dir,
+        missingFiles: missing,
+        hasSerp:     status.hasSerp,
+        hasKeywords: status.hasKeywords,
+        hasHistory:  status.hasHistory,
+      });
+    }
+  }
+  return pending;
+}
+
+// ── aggregate ──────────────────────────────────────────────────────────────────
+
+function aggregateData() {
+  const calItems    = parseCalendar();
+  const editorMap   = parseEditorReports();
+  const rankings    = parseRankings();
+
+  // Build lookup from keyword slug → calendar metadata
+  const calMap = new Map(calItems.map(c => [c.slug, c]));
+
+  // Start with all post files as the source of truth
+  const seen = new Set();
+  const pipelineItems = [];
+
+  // Add calendar items first (in calendar order)
+  for (const item of calItems) {
+    seen.add(item.slug);
+    pipelineItems.push({
+      keyword:     item.keyword,
+      title:       item.title,
+      slug:        item.slug,
+      publishDate: item.publishDate.toISOString(),
+      week:        item.week,
+      priority:    item.priority,
+      volume:      item.volume,
+      kd:          item.kd,
+      status:      getItemStatus(item),
+    });
+  }
+
+  // Add posts that exist but aren't in the calendar
+  if (existsSync(POSTS_DIR)) {
+    const postFiles = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json')).sort();
+    for (const f of postFiles) {
+      const slug = basename(f, '.json');
+      if (seen.has(slug)) continue;
+      try {
+        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+        const status = meta.shopify_status === 'published' ? 'published'
+                     : meta.shopify_publish_at             ? 'scheduled'
+                     : meta.shopify_article_id             ? 'draft'
+                     : existsSync(join(POSTS_DIR, `${slug}.html`)) ? 'written'
+                     : existsSync(join(BRIEFS_DIR, `${slug}.json`)) ? 'briefed'
+                     : 'pending';
+        pipelineItems.push({
+          keyword:     meta.target_keyword || slug.replace(/-/g, ' '),
+          title:       meta.title || slug,
+          slug,
+          publishDate: meta.shopify_publish_at || meta.uploaded_at || null,
+          week:        null,
+          priority:    null,
+          volume:      null,
+          kd:          null,
+          status,
+        });
+        seen.add(slug);
+      } catch {}
+    }
+  }
+
+  // Sort: calendar items by publishDate first, then non-calendar by publishDate
+  pipelineItems.sort((a, b) => {
+    if (!a.publishDate && !b.publishDate) return 0;
+    if (!a.publishDate) return 1;
+    if (!b.publishDate) return -1;
+    return new Date(a.publishDate) - new Date(b.publishDate);
+  });
+
+  const statusCounts = pipelineItems.reduce((acc, i) => {
+    acc[i.status] = (acc[i.status] || 0) + 1; return acc;
+  }, { pending: 0, briefed: 0, written: 0, draft: 0, scheduled: 0, published: 0 });
+
+  const posts = [];
+  if (existsSync(POSTS_DIR)) {
+    for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
+      try {
+        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+        const slug = meta.slug || basename(f, '.json');
+        const ed   = editorMap[slug];
+        posts.push({
+          slug,
+          title:          meta.title,
+          keyword:        meta.target_keyword,
+          status:         meta.shopify_status || 'local',
+          uploadedAt:     meta.uploaded_at    || null,
+          publishAt:      meta.shopify_publish_at || null,
+          shopifyUrl:     meta.shopify_url    || null,
+          shopifyImageUrl:meta.shopify_image_url || null,
+          editorVerdict:  ed?.verdict  ?? null,
+          brokenLinks:    ed?.brokenLinks ?? 0,
+          hasImage:       existsSync(join(IMAGES_DIR, `${slug}.webp`)) || existsSync(join(IMAGES_DIR, `${slug}.png`)),
+        });
+      } catch {}
+    }
+  }
+  posts.sort((a, b) => {
+    if (!a.uploadedAt && !b.uploadedAt) return 0;
+    if (!a.uploadedAt) return 1;
+    if (!b.uploadedAt) return -1;
+    return new Date(b.uploadedAt) - new Date(a.uploadedAt);
+  });
+
+  const pendingAhrefsData = getPendingAhrefsData(calItems);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    site:        { name: config.name },
+    pipeline:    { counts: statusCounts, items: pipelineItems },
+    rankings,
+    posts,
+    pendingAhrefsData,
+  };
+}
+
+// ── HTML ───────────────────────────────────────────────────────────────────────
+
+const HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SEO Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #f1f5f9;
+    --surface: #ffffff;
+    --border:  #e2e8f0;
+    --text:    #0f172a;
+    --muted:   #64748b;
+    --accent:  #2563eb;
+    --green:   #16a34a;
+    --amber:   #d97706;
+    --red:     #dc2626;
+    --purple:  #7c3aed;
+    --teal:    #0891b2;
+    --gray:    #6b7280;
+    --radius:  8px;
+    --shadow:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* ── layout ── */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 16px; font-weight: 600; }
+  .header-meta { font-size: 12px; color: var(--muted); margin-left: auto; }
+  main { max-width: 1400px; margin: 0 auto; padding: 24px; display: grid; gap: 24px; }
+
+  /* ── cards ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .card-header { padding: 14px 18px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-header h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .card-body { padding: 16px 18px; }
+
+  /* ── metric cards ── */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .metric-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .metric-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .metric-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .metric.green .metric-value { color: var(--green); }
+  .metric.blue  .metric-value { color: var(--accent); }
+  .metric.amber .metric-value { color: var(--amber); }
+  .metric.purple .metric-value { color: var(--purple); }
+
+  /* ── pipeline kanban ── */
+  .kanban { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .kanban-col { border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+  .kanban-head { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; }
+  .kanban-count { font-size: 18px; font-weight: 700; padding: 4px 12px 8px; }
+  .kanban-items { padding: 0 12px 12px; display: grid; gap: 4px; max-height: 260px; overflow-y: auto; }
+  .kanban-item { font-size: 11px; padding: 5px 7px; border-radius: 4px; background: rgba(0,0,0,.04); line-height: 1.35; }
+  .kanban-item .kw { font-weight: 500; }
+  .kanban-item .vol { color: var(--muted); font-size: 10px; }
+  .kanban-item .pub-date-scheduled { color: var(--red);   font-size: 10px; font-weight: 500; }
+  .kanban-item .pub-date-published { color: var(--green); font-size: 10px; font-weight: 500; }
+
+  .col-published { border-color: #bbf7d0; }
+  .col-published .kanban-head { background: #f0fdf4; color: var(--green); }
+  .col-scheduled { border-color: #bfdbfe; }
+  .col-scheduled .kanban-head { background: #eff6ff; color: var(--accent); }
+  .col-draft     { border-color: #fde68a; }
+  .col-draft     .kanban-head { background: #fffbeb; color: var(--amber); }
+  .col-written   { border-color: #ddd6fe; }
+  .col-written   .kanban-head { background: #f5f3ff; color: var(--purple); }
+  .col-briefed   { border-color: #a5f3fc; }
+  .col-briefed   .kanban-head { background: #ecfeff; color: var(--teal); }
+  .col-pending   { border-color: var(--border); }
+  .col-pending   .kanban-head { background: #f9fafb; color: var(--muted); }
+
+  /* ── tables ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+  .nowrap { white-space: nowrap; }
+
+  /* ── badges ── */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-published { background: #dcfce7; color: var(--green); }
+  .badge-scheduled { background: #dbeafe; color: var(--accent); }
+  .badge-draft     { background: #fef3c7; color: var(--amber); }
+  .badge-written   { background: #ede9fe; color: var(--purple); }
+  .badge-briefed   { background: #cffafe; color: var(--teal); }
+  .badge-pending   { background: #f3f4f6; color: var(--gray); }
+  .badge-local     { background: #f3f4f6; color: var(--gray); }
+  .badge-approved  { background: #dcfce7; color: var(--green); }
+  .badge-needswork { background: #fee2e2; color: var(--red); }
+  .badge-page1     { background: #dcfce7; color: var(--green); }
+  .badge-quickwins { background: #dbeafe; color: var(--accent); }
+  .badge-needswork-rank { background: #fef3c7; color: var(--amber); }
+  .badge-notranking { background: #f3f4f6; color: var(--gray); }
+
+  /* ── rank change ── */
+  .change { font-weight: 600; white-space: nowrap; }
+  .change-up   { color: var(--green); }
+  .change-down { color: var(--red); }
+  .change-flat { color: var(--muted); }
+
+  .pos { font-weight: 600; font-size: 15px; }
+
+  /* ── misc ── */
+  .link { color: var(--accent); text-decoration: none; }
+  .link:hover { text-decoration: underline; }
+  .muted { color: var(--muted); }
+  .refresh-btn { padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 13px; color: var(--text); }
+  .refresh-btn:hover { background: #f8fafc; }
+  .spin { animation: spin .8s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
+  .section-note { font-size: 11px; color: var(--muted); }
+
+  /* ── data needed alert ── */
+  .alert-card { border-color: #fca5a5; }
+  .alert-card .card-header { background: #fff1f2; }
+  .alert-card .card-header h2 { color: var(--red); }
+  .alert-badge { background: var(--red); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; padding: 1px 7px; }
+  .data-item { border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
+  .data-item:last-child { margin-bottom: 0; }
+  .data-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .data-item-keyword { font-weight: 600; font-size: 13px; }
+  .data-item-date { font-size: 11px; color: var(--muted); }
+  .data-item-dir { font-family: monospace; font-size: 12px; color: var(--accent); background: #eff6ff; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
+  .data-item-files { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .file-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid; }
+  .file-tag-missing { background: #fee2e2; color: var(--red); border-color: #fca5a5; }
+  .file-tag-present { background: #dcfce7; color: var(--green); border-color: #86efac; }
+  .data-instructions { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="site-name">SEO Dashboard</h1>
+  <span class="header-meta">Updated <span id="updated-at">—</span> &nbsp;|&nbsp; Auto-refresh every 60s</span>
+  <button class="refresh-btn" onclick="loadData()"><span id="spin-icon"></span> Refresh</button>
+</header>
+
+<main>
+  <!-- Metrics row -->
+  <div class="metrics" id="metrics"></div>
+
+  <!-- Data Needed alert (hidden when empty) -->
+  <div class="card alert-card" id="data-needed-card" style="display:none">
+    <div class="card-header">
+      <h2>⚠ Ahrefs Data Needed <span class="alert-badge" id="data-needed-count">0</span></h2>
+      <span class="section-note">Upload these CSV exports before the research agent can run</span>
+    </div>
+    <div class="card-body" id="data-needed-body"></div>
+  </div>
+
+  <!-- Pipeline kanban -->
+  <div class="card">
+    <div class="card-header"><h2>Content Pipeline</h2><span class="section-note" id="pipeline-note"></span></div>
+    <div class="card-body"><div class="kanban" id="kanban"></div></div>
+  </div>
+
+  <!-- Rankings -->
+  <div class="card">
+    <div class="card-header"><h2>Keyword Rankings</h2><span class="section-note" id="rank-note"></span></div>
+    <div class="card-body table-wrap"><div id="rankings-table"></div></div>
+  </div>
+
+  <!-- Posts -->
+  <div class="card">
+    <div class="card-header"><h2>Posts</h2><span class="section-note" id="posts-note"></span></div>
+    <div class="card-body table-wrap"><div id="posts-table"></div></div>
+  </div>
+</main>
+
+<script>
+let data = null;
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtNum(n) {
+  if (n == null) return '—';
+  return n.toLocaleString();
+}
+function badge(cls, text) {
+  return '<span class="badge badge-' + cls + '">' + text + '</span>';
+}
+function statusBadge(s) {
+  const map = { published:'published', scheduled:'scheduled', draft:'draft', written:'written', briefed:'briefed', pending:'pending', local:'local' };
+  return badge(map[s] || 'pending', s || 'unknown');
+}
+
+function renderMetrics(d) {
+  const c = d.pipeline.counts;
+  const inPipeline = (c.pending||0) + (c.briefed||0) + (c.written||0) + (c.draft||0);
+  const scheduled  = c.scheduled || 0;
+  const published  = c.published || 0;
+
+  const r = d.rankings;
+  const page1 = r.summary.page1;
+  const rankItems = r.items.filter(x => x.change != null);
+  const avgChange = rankItems.length
+    ? (rankItems.reduce((s, x) => s + x.change, 0) / rankItems.length).toFixed(1)
+    : null;
+  const changeClass = avgChange > 0 ? 'green' : avgChange < 0 ? '' : '';
+  const changeSign  = avgChange > 0 ? '+' : '';
+
+  document.getElementById('metrics').innerHTML = [
+    '<div class="metric green"><div class="metric-value">' + published + '</div><div class="metric-label">Published</div></div>',
+    '<div class="metric blue"><div class="metric-value">' + scheduled + '</div><div class="metric-label">Scheduled</div></div>',
+    '<div class="metric purple"><div class="metric-value">' + inPipeline + '</div><div class="metric-label">In Pipeline</div><div class="metric-sub">' +
+      [c.pending && c.pending + ' pending', c.briefed && c.briefed + ' briefed', c.written && c.written + ' written', c.draft && c.draft + ' draft'].filter(Boolean).join(' · ') + '</div></div>',
+    '<div class="metric green"><div class="metric-value">' + page1 + '</div><div class="metric-label">Page 1 Keywords</div></div>',
+    '<div class="metric ' + changeClass + '"><div class="metric-value">' + (avgChange != null ? changeSign + avgChange : '—') + '</div><div class="metric-label">Avg Rank Change</div><div class="metric-sub">' + (r.latestDate || '') + '</div></div>',
+  ].join('');
+}
+
+function renderKanban(d) {
+  const cols = [
+    { key: 'published', label: 'Published' },
+    { key: 'scheduled', label: 'Scheduled' },
+    { key: 'draft',     label: 'Draft' },
+    { key: 'written',   label: 'Written' },
+    { key: 'briefed',   label: 'Briefed' },
+    { key: 'pending',   label: 'Pending' },
+  ];
+  const byStatus = {};
+  for (const col of cols) byStatus[col.key] = [];
+  for (const item of d.pipeline.items) {
+    if (byStatus[item.status]) byStatus[item.status].push(item);
+  }
+
+  const html = cols.map(col => {
+    const items = byStatus[col.key];
+    const itemsHtml = items.slice(0, 20).map(i => {
+      const dateStr = i.publishDate ? fmtDate(i.publishDate) : null;
+      const dateLine = dateStr && col.key === 'scheduled' ? '<div class="pub-date-scheduled">' + dateStr + '</div>'
+                     : dateStr && col.key === 'published'  ? '<div class="pub-date-published">' + dateStr + '</div>'
+                     : '';
+      return '<div class="kanban-item"><div class="kw">' + esc(i.keyword) + '</div>' +
+        dateLine +
+        (i.volume ? '<div class="vol">' + fmtNum(i.volume) + '/mo</div>' : '') + '</div>';
+    }).join('');
+    const more = items.length > 20 ? '<div class="muted" style="font-size:11px;padding-top:4px">+' + (items.length - 20) + ' more</div>' : '';
+    return '<div class="kanban-col col-' + col.key + '">' +
+      '<div class="kanban-head">' + col.label + '</div>' +
+      '<div class="kanban-count">' + items.length + '</div>' +
+      (items.length ? '<div class="kanban-items">' + itemsHtml + more + '</div>' : '') +
+      '</div>';
+  }).join('');
+
+  document.getElementById('kanban').innerHTML = html;
+  document.getElementById('pipeline-note').textContent = d.pipeline.items.length + ' total calendar items';
+}
+
+function renderRankings(d) {
+  const r = d.rankings;
+  if (!r.items.length) {
+    document.getElementById('rankings-table').innerHTML = '<div class="empty">No rank snapshots yet. Run <code>npm run rank-tracker</code> to generate one.</div>';
+    return;
+  }
+
+  const note = r.latestDate ? r.latestDate + (r.previousDate ? ' vs ' + r.previousDate : '') : '';
+  document.getElementById('rank-note').textContent = note;
+
+  const tierBadge = t => {
+    if (t === 'page1')     return badge('page1', 'Page 1');
+    if (t === 'quickWins') return badge('quickwins', 'Quick Win');
+    if (t === 'needsWork') return badge('needswork-rank', 'Needs Work');
+    return badge('notranking', 'Not Ranking');
+  };
+
+  const changeHtml = x => {
+    if (x.change == null) return '<span class="muted">—</span>';
+    if (x.change > 0) return '<span class="change change-up">↑ ' + x.change + '</span>';
+    if (x.change < 0) return '<span class="change change-down">↓ ' + Math.abs(x.change) + '</span>';
+    return '<span class="change change-flat">→ 0</span>';
+  };
+
+  const rows = r.items.map(x =>
+    '<tr>' +
+    '<td>' + esc(x.keyword) + '</td>' +
+    '<td class="nowrap"><span class="pos">' + (x.position != null ? '#' + x.position : '—') + '</span></td>' +
+    '<td class="nowrap">' + changeHtml(x) + (x.previousPosition != null ? '<span class="muted" style="font-size:11px;margin-left:4px">was #' + x.previousPosition + '</span>' : '') + '</td>' +
+    '<td class="nowrap muted">' + fmtNum(x.volume) + '</td>' +
+    '<td>' + tierBadge(x.tier) + '</td>' +
+    '<td>' + (x.url ? '<a class="link" href="' + x.url + '" target="_blank">↗</a>' : '<span class="muted">—</span>') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  document.getElementById('rankings-table').innerHTML =
+    '<table><thead><tr>' +
+    '<th>Keyword</th><th>Position</th><th>Change</th><th>Volume</th><th>Tier</th><th>URL</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function renderPosts(d) {
+  if (!d.posts.length) {
+    document.getElementById('posts-table').innerHTML = '<div class="empty">No posts found.</div>';
+    return;
+  }
+  document.getElementById('posts-note').textContent = d.posts.length + ' posts';
+
+  const rows = d.posts.map(p => {
+    const titleHtml = p.shopifyUrl
+      ? '<a class="link" href="' + p.shopifyUrl + '" target="_blank">' + esc(p.title || p.slug) + '</a>'
+      : esc(p.title || p.slug);
+    const editorHtml = p.editorVerdict === 'Approved'    ? badge('approved', '✓ Approved')
+                     : p.editorVerdict === 'Needs Work'  ? badge('needswork', '⚠ Needs Work')
+                     : '<span class="muted">—</span>';
+    const linksHtml = p.brokenLinks > 0
+      ? '<span style="color:var(--red);font-weight:600">' + p.brokenLinks + ' broken</span>'
+      : '<span class="muted">—</span>';
+    const imgHtml = p.hasImage ? '🖼' : '<span class="muted">—</span>';
+    const dateHtml = p.status === 'scheduled' && p.publishAt
+      ? fmtDate(p.publishAt)
+      : fmtDate(p.uploadedAt);
+
+    return '<tr>' +
+      '<td>' + titleHtml + '</td>' +
+      '<td class="muted">' + esc(p.keyword || '—') + '</td>' +
+      '<td>' + statusBadge(p.status) + '</td>' +
+      '<td class="nowrap muted">' + dateHtml + '</td>' +
+      '<td>' + editorHtml + '</td>' +
+      '<td class="nowrap">' + linksHtml + '</td>' +
+      '<td style="text-align:center">' + imgHtml + '</td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('posts-table').innerHTML =
+    '<table><thead><tr>' +
+    '<th>Title</th><th>Keyword</th><th>Status</th><th>Date</th><th>Editor</th><th>Links</th><th>Image</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function renderDataNeeded(d) {
+  const items = d.pendingAhrefsData || [];
+  const card  = document.getElementById('data-needed-card');
+  const body  = document.getElementById('data-needed-body');
+  const count = document.getElementById('data-needed-count');
+
+  if (!items.length) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = '';
+  count.textContent = items.length;
+
+  body.innerHTML = items.map(item => {
+    const fileChecks = [
+      { label: 'SERP Overview',  present: item.hasSerp },
+      { label: 'Matching Terms', present: item.hasKeywords },
+      { label: 'Volume History', present: item.hasHistory },
+    ];
+    const fileTags = fileChecks.map(f =>
+      '<span class="file-tag ' + (f.present ? 'file-tag-present' : 'file-tag-missing') + '">' +
+      (f.present ? '✓ ' : '✗ ') + f.label + '</span>'
+    ).join('');
+
+    return '<div class="data-item">' +
+      '<div class="data-item-header">' +
+        '<span class="data-item-keyword">' + esc(item.keyword) + '</span>' +
+        '<span class="data-item-date">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
+      '</div>' +
+      '<div class="data-item-dir">' + esc(item.dir) + '</div>' +
+      '<div class="data-item-files">' + fileTags + '</div>' +
+      '<div class="data-instructions">' +
+        'In Ahrefs Keywords Explorer → search "<strong>' + esc(item.keyword) + '</strong>" →<br>' +
+        (!item.hasSerp     ? '&nbsp;• <strong>SERP Overview</strong> tab → Export → save to folder above<br>' : '') +
+        (!item.hasKeywords ? '&nbsp;• <strong>Matching Terms</strong> tab → Export (vol ≥100, KD ≤40) → save to folder above<br>' : '') +
+        (!item.hasHistory  ? '&nbsp;• <em>Optional:</em> Overview → Volume History chart → Export → save to folder above<br>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadData() {
+  document.getElementById('spin-icon').textContent = '⟳';
+  document.getElementById('spin-icon').classList.add('spin');
+  try {
+    const res = await fetch('/api/data');
+    data = await res.json();
+    document.getElementById('site-name').textContent = (data.site?.name || 'SEO') + ' Dashboard';
+    document.getElementById('updated-at').textContent = new Date(data.generatedAt).toLocaleTimeString();
+    renderMetrics(data);
+    renderDataNeeded(data);
+    renderKanban(data);
+    renderRankings(data);
+    renderPosts(data);
+  } catch(e) {
+    console.error(e);
+  } finally {
+    document.getElementById('spin-icon').textContent = '';
+    document.getElementById('spin-icon').classList.remove('spin');
+  }
+}
+
+loadData();
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>`;
+
+// ── HTTP server ────────────────────────────────────────────────────────────────
+
+const server = http.createServer((req, res) => {
+  if (!checkAuth(req, res)) return;
+
+  if (req.url === '/api/data') {
+    try {
+      const data = aggregateData();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+      res.end(JSON.stringify(data));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(HTML);
+});
+
+const BIND = args.includes('--public') ? '0.0.0.0' : '127.0.0.1';
+server.listen(PORT, BIND, () => {
+  const url = `http://localhost:${PORT}`;
+  console.log(`\nSEO Dashboard — ${config.name}`);
+  console.log(`  ${url}`);
+  console.log('  Auto-refreshes every 60s. Ctrl+C to stop.\n');
+
+  if (doOpen) {
+    import('child_process').then(({ execSync }) => {
+      try { execSync(`open "${url}"`); } catch {}
+    });
+  }
+});

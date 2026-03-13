@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Credentials — never commit
+.env
+client_secret_*.json
+Shopify/
+
+# Large binary assets (images already live on Shopify CDN)
+data/images/
+data/product-images/
+
+# Large Ahrefs/GSC raw export folders (regeneratable)
+data/technical_seo/
+data/keyword-tracker/
+data/backlinks/
+data/content_gap/
+data/articles/
+
+# Generated log files
+data/reports/scheduler.log
+data/reports/scheduler/
+data/reports/backlink-monitor.log
+data/reports/backlink-opportunity.log
+data/reports/meta-optimizer.log
+data/reports/meta-ab-checker.log
+data/reports/content-refresher.log
+data/reports/seo-reporter.log
+data/reports/product-optimizer.log
+data/reports/product-schema.log
+data/reports/collection-creator.log
+data/reports/cannibalization-resolver.log
+data/reports/gsc-query-miner.log
+data/reports/rank-tracker.log
+
+# Misc
+Ingredients/
+*.DS_Store

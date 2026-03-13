@@ -1,0 +1,37 @@
+
+Content Refresher — Real Skin Care
+Mode: APPLY (will push drafts to Shopify)
+
+  Indexing Shopify articles... 58 articles
+  Fetching refresh candidates from GSC (positions 21–50)... 8 candidates
+
+  Refreshing 3 post(s):
+
+  1. "SLS Free Toothpaste: The Gentle Switch Worth Making"
+     Keyword: "sls free toothpaste" | Position: #34 | Impressions: 1244
+  2. "Best Toothpaste Without SLS – 2025"
+     Keyword: "sls free toothpaste" | Position: #33 | Impressions: 597
+  3. "Best Natural Toothpaste - 2025"
+     Keyword: "best organic toothpaste" | Position: #45 | Impressions: 383
+
+
+  [1/3] Refreshing "SLS Free Toothpaste: The Gentle Switch Worth Making"...
+    Generating refreshed content... done (3735 words)
+    Summarizing changes... done
+    Saved: /Users/seanfillmore/Code/Claude/data/posts/best-sls-free-toothpaste-2025-refreshed.html
+    Publishing draft to Shopify... done
+
+  [2/3] Refreshing "Best Toothpaste Without SLS – 2025"...
+    Generating refreshed content... done (2684 words)
+    Summarizing changes... done
+    Saved: /Users/seanfillmore/Code/Claude/data/posts/best-toothpaste-without-sls-2025-refreshed.html
+    Publishing draft to Shopify... done
+
+  [3/3] Refreshing "Best Natural Toothpaste - 2025"...
+    Generating refreshed content... done (1800 words)
+    Summarizing changes... done
+    Saved: /Users/seanfillmore/Code/Claude/data/posts/best-natural-toothpaste-2025-refreshed.html
+    Publishing draft to Shopify... done
+
+  Report saved: /Users/seanfillmore/Code/Claude/data/reports/content-refresh-report.md
+  Posts refreshed: 3

@@ -1,0 +1,377 @@
+{
+  "target_keyword": "organic body lotion",
+  "slug": "organic-body-lotion",
+  "search_intent": "commercial",
+  "recommended_title": "Organic Body Lotion: What It Is & How to Choose",
+  "meta_description": "Discover what makes a truly organic body lotion and how to choose the best one for your skin. Shop Real Skin Care's clean, certified organic formulas today.",
+  "target_word_count": 2000,
+  "content_angle": "A practical, ingredient-first guide that empowers shoppers to read labels with confidence and understand exactly what sets a genuinely organic body lotion apart — positioning Real Skin Care's coconut oil-based, clean formula as the benchmark for what good looks like.",
+  "key_differentiators": [
+    "Goes beyond a generic product listing by teaching readers how to evaluate any organic lotion label — turning educational authority into purchase confidence",
+    "Covers the full spectrum of skin-type needs (dry, sensitive, aging, normal) in a single post rather than requiring the reader to visit multiple pages",
+    "Highlights Real Skin Care's specific organic ingredients (e.g. coconut oil base) as concrete proof points rather than vague 'clean beauty' claims",
+    "Addresses the 'without chemicals' and 'certified organic' concerns searchers explicitly have — demystifying USDA certification and greenwashing red flags",
+    "Incorporates structured FAQ schema to capture People Also Ask real estate and improve CTR from the current 0% baseline"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with a relatable scenario: the reader is standing in a store aisle (or scrolling online) staring at a lotion labeled 'natural' and wondering whether it's actually any different from the conventional one next to it. Acknowledge the confusion around terms like 'natural,' 'organic,' and 'clean.' Briefly promise the reader that this guide will explain exactly what organic body lotion means, what ingredients to look for, and how to find one that genuinely works for their skin type. Naturally introduce the primary keyword in the first 100 words. Keep tone warm, knowledgeable, and direct — no fluff.",
+      "keywords_to_include": [
+        "organic body lotion",
+        "natural organic body lotion",
+        "clean organic body lotion"
+      ]
+    },
+    {
+      "section": "H2: What Is Organic Body Lotion?",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Define what 'organic' actually means in the context of body lotion. Explain the difference between a product that uses a few organic ingredients versus one that is certified organic (USDA NOP). Clarify that 'natural' has no legal definition in cosmetics, while 'certified organic' does. Mention the USDA organic seal and what percentage of ingredients must be organic to qualify. Note that 'organic body lotion without chemicals' is a common search because shoppers are reacting to synthetic preservatives, artificial fragrances, parabens, and petrochemicals found in conventional lotions. Keep this factual and educational — no brand comparisons.",
+      "keywords_to_include": [
+        "certified organic body lotion",
+        "organic body lotion without chemicals",
+        "usda certified organic body lotion",
+        "organic non toxic body lotion",
+        "all natural organic body lotion"
+      ]
+    },
+    {
+      "section": "H2: Key Ingredients That Define a Genuinely Organic Body Lotion",
+      "type": "h2",
+      "word_count_target": 320,
+      "guidance": "Walk through the core ingredients readers should expect to see in a high-quality organic body lotion. Lead with organic coconut oil — explain its emollient properties, how it forms a breathable moisture barrier, and why it is a foundational ingredient in Real Skin Care's formula. Then cover: organic shea butter (deep nourishment, barrier repair), organic jojoba oil (mimics skin's natural sebum, suitable for multiple skin types), organic aloe vera (soothing, hydrating, ideal for sensitive skin), and organic cocoa butter (locks in moisture, beneficial for dry and aging skin). For each ingredient, give one sentence on why it matters to the reader's skin. Do NOT fabricate RSC's ingredient list — only highlight coconut oil as a confirmed RSC base ingredient and frame the others as benchmark 'look for' ingredients shoppers should seek. Add a brief note on what to avoid: parabens, synthetic fragrance (listed as 'fragrance' or 'parfum'), PEGs, mineral oil, and formaldehyde-releasing preservatives.",
+      "keywords_to_include": [
+        "organic coconut body lotion",
+        "organic shea butter body lotion",
+        "organic coconut oil body lotion",
+        "organic aloe vera body lotion",
+        "organic cocoa butter body lotion",
+        "organic body lotion ingredients"
+      ]
+    },
+    {
+      "section": "H2: How to Choose the Best Organic Body Lotion for Your Skin Type",
+      "type": "h2",
+      "word_count_target": 380,
+      "guidance": "Structure this as four short sub-sections (H3s) covering the most searched skin-type use cases. Each H3 should be 80–100 words. Be specific and practical — readers should finish each sub-section knowing exactly what ingredient profile or texture to look for. Link internally to relevant collection pages where appropriate.",
+      "keywords_to_include": [
+        "best organic body lotion",
+        "organic body lotion for dry skin",
+        "best organic body lotion for dry skin",
+        "organic body lotion for sensitive skin",
+        "organic body lotion for women",
+        "organic body lotion for men",
+        "best organic body lotion for aging skin",
+        "organic firming body lotion"
+      ]
+    },
+    {
+      "section": "H3: Organic Body Lotion for Dry Skin",
+      "type": "h3",
+      "word_count_target": 100,
+      "guidance": "Explain that dry skin needs occlusive and humectant ingredients working together. Recommend formulas rich in organic shea butter, coconut oil, and cocoa butter for occlusion, plus aloe vera or hyaluronic acid for humectancy. Advise applying immediately after showering to damp skin to seal in moisture. Mention that fragrance-free or unscented versions are better for skin whose barrier is already compromised. Link to the body lotion for dry skin collection page.",
+      "keywords_to_include": [
+        "organic body lotion for dry skin",
+        "best organic body lotion for dry skin",
+        "organic body lotion for very dry skin",
+        "organic unscented body lotion"
+      ]
+    },
+    {
+      "section": "H3: Organic Body Lotion for Sensitive Skin",
+      "type": "h3",
+      "word_count_target": 90,
+      "guidance": "Highlight that sensitive skin reacts to synthetic fragrances, dyes, and alcohol-based preservatives first. Advise looking for fragrance-free, paraben-free, and hypoallergenic formulas with calming organic ingredients like aloe vera, calendula, or chamomile. Note that a short, readable ingredient list is itself a signal of quality for sensitive skin shoppers. Tie back to the 'organic body lotion without chemicals' concern.",
+      "keywords_to_include": [
+        "organic body lotion for sensitive skin",
+        "organic fragrance free body lotion",
+        "organic body lotion fragrance free",
+        "organic non toxic body lotion",
+        "organic body lotion without alcohol"
+      ]
+    },
+    {
+      "section": "H3: Organic Firming Body Lotion for Aging Skin",
+      "type": "h3",
+      "word_count_target": 95,
+      "guidance": "Address the 'organic firming body lotion' and 'best organic body lotion for aging skin' searches. Explain that as skin ages it loses elasticity and collagen. Organic ingredients that support firmness include vitamin C (as ascorbic acid from plant sources), retinol alternatives like bakuchiol (plant-derived), and peptide-rich plant extracts. Coconut oil and shea butter also help plump skin by restoring the lipid barrier. Keep expectations realistic — consistent daily application is key. Mention 'organic anti aging body lotion' naturally.",
+      "keywords_to_include": [
+        "organic firming body lotion",
+        "best organic firming body lotion",
+        "best organic body lotion for aging skin",
+        "organic anti aging body lotion",
+        "organic vitamin c body lotion"
+      ]
+    },
+    {
+      "section": "H3: Organic Body Lotion for Men",
+      "type": "h3",
+      "word_count_target": 80,
+      "guidance": "Briefly acknowledge that the 'organic body lotion for men' and 'men's organic body lotion' segments are growing. Note that men's skin tends to be thicker but still benefits from daily organic moisturization, especially after shaving or sun exposure. Highlight that a non-greasy, fast-absorbing formula with organic coconut oil or jojoba is ideal. Keep this brief and non-stereotyped. Link to the natural body lotion collection.",
+      "keywords_to_include": [
+        "organic body lotion for men",
+        "men's organic body lotion",
+        "organic men's body lotion"
+      ]
+    },
+    {
+      "section": "H2: What to Look for on the Label: Certifications and Red Flags",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "Help readers decode labels with confidence. Cover: (1) USDA Organic seal — what it guarantees and how to spot it. (2) EWG Verified — briefly note this as an additional trust signal. (3) Vegan and cruelty-free certifications for shoppers who care about those values. Then list 5 red-flag ingredients to avoid in any product claiming to be organic or natural: synthetic fragrance ('parfum'), parabens (methylparaben, propylparaben), PEG compounds, mineral oil/petrolatum, and formaldehyde-releasing preservatives (DMDM hydantoin, diazolidinyl urea). Keep the tone educational, not alarmist. This section should feel like having a knowledgeable friend read the label for you.",
+      "keywords_to_include": [
+        "certified organic body lotion",
+        "usda organic body lotion",
+        "organic vegan body lotion",
+        "organic chemical free body lotion",
+        "organic body lotion paraben free",
+        "best organic non toxic body lotion"
+      ]
+    },
+    {
+      "section": "H2: Why Real Skin Care's Organic Body Lotion Stands Apart",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "This is the brand authority section — do not make it feel like a sales pitch. Lead with what Real Skin Care actually puts in its formula (confirm with product team: coconut oil base is known; list only verified ingredients). Explain the brand's commitment to clean, organic, and non-toxic formulation. Mention the absence of synthetic fragrances, parabens, and petrochemicals specifically. Highlight that the formula is designed for real everyday use — not a luxury item but a genuinely effective daily moisturizer. Reference the organic body lotion collection page and the secrets-of-organic-natural-body-lotion blog post as further reading. Keep this to 3–4 short paragraphs. Do not compare to other brands.",
+      "keywords_to_include": [
+        "real skin care organic body lotion",
+        "organic body lotion",
+        "natural organic body lotion",
+        "organic natural body lotion",
+        "pure organic body lotion"
+      ]
+    },
+    {
+      "section": "H2: How to Get the Most Out of Your Organic Body Lotion",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Provide 4–5 practical application tips that add genuine value. Include: apply to damp skin post-shower for maximum absorption; use circular massage motions to boost circulation; apply more generously to elbows, knees, and heels; consider a slightly richer application at night; store lotion away from direct sunlight to protect organic ingredient integrity. Keep this list-friendly for easy scanning. This section helps reinforce E-E-A-T by demonstrating practical knowledge beyond just ingredients.",
+      "keywords_to_include": [
+        "organic moisturizing body lotion",
+        "organic hydrating body lotion",
+        "organic nourishing body lotion",
+        "organic body lotion for winter"
+      ]
+    },
+    {
+      "section": "FAQ",
+      "type": "faq",
+      "word_count_target": 250,
+      "guidance": "Write 4–5 FAQ items in plain conversational language targeting People Also Ask queries. Suggested questions: (1) What makes a body lotion truly organic? (2) Is organic body lotion better for sensitive skin? (3) Can I use organic body lotion on my face? (4) What is the difference between organic body lotion and regular lotion? (5) How often should I apply organic body lotion? Each answer should be 40–60 words — direct and complete enough to be featured as a PAA snippet. Format each as a clear Q&A pair. Avoid keyword stuffing.",
+      "keywords_to_include": [
+        "organic body lotion",
+        "best organic body lotion",
+        "organic body lotion for sensitive skin",
+        "organic face and body lotion",
+        "organic body lotion without chemicals",
+        "what is the best organic body lotion"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 120,
+      "guidance": "Summarize the three most important takeaways: (1) 'organic' has a legal definition — look for USDA certification and a clean ingredient list; (2) the right formula depends on your skin type and concerns; (3) daily use of a genuinely organic lotion is one of the simplest swaps you can make for cleaner personal care. End with a clear, friendly CTA directing the reader to shop Real Skin Care's organic body lotion collection. Do not be pushy — frame it as a natural next step. Link to the organic body lotion collection page.",
+      "keywords_to_include": [
+        "organic body lotion",
+        "best organic body lotion",
+        "certified organic body lotion"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "organic body lotion",
+    "best organic body lotion",
+    "organic body lotion without chemicals",
+    "organic body lotion for dry skin",
+    "organic firming body lotion",
+    "body lotion organic",
+    "organic body lotion for women",
+    "certified organic body lotion",
+    "best organic firming body lotion",
+    "best organic body lotion for dry skin",
+    "organic body lotion for men",
+    "men's organic body lotion",
+    "organic men's body lotion",
+    "organic natural body lotion",
+    "natural organic body lotion",
+    "organic body lotion for sensitive skin",
+    "organic non toxic body lotion",
+    "organic shea butter body lotion",
+    "organic unscented body lotion",
+    "best organic vegan body lotion",
+    "organic men's body lotion",
+    "all natural organic body lotion",
+    "best organic body lotion for aging skin",
+    "best organic body lotion for sensitive skin",
+    "organic vegan body lotion",
+    "organic coconut body lotion",
+    "organic body lotion brands",
+    "clean organic body lotion",
+    "best natural organic body lotion",
+    "organic baby body lotion",
+    "organic hand and body lotion",
+    "organic body lotion fragrance free",
+    "organic fragrance free body lotion",
+    "organic moisturizing body lotion",
+    "organic hydrating body lotion",
+    "organic nourishing body lotion",
+    "organic anti aging body lotion",
+    "organic chemical free body lotion",
+    "organic body lotion ingredients",
+    "organic coconut oil body lotion",
+    "organic aloe vera body lotion",
+    "organic cocoa butter body lotion",
+    "organic vitamin c body lotion",
+    "usda organic body lotion",
+    "usda certified organic body lotion",
+    "organic body lotion paraben free",
+    "best organic non toxic body lotion",
+    "organic body lotion without alcohol",
+    "organic face and body lotion",
+    "organic body lotion for winter",
+    "pure organic body lotion",
+    "100% organic body lotion",
+    "what is the best organic body lotion",
+    "affordable organic body lotion",
+    "organic body lotion for eczema",
+    "organic body lotion for pregnancy",
+    "organic body lotion for kids",
+    "organic body lotion for very dry skin",
+    "best organic body lotion for winter",
+    "non toxic organic body lotion",
+    "organic retinol body lotion",
+    "organic exfoliating body lotion",
+    "top rated organic body lotion",
+    "best value organic body lotion",
+    "organic luxury body lotion"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "organic body lotion collection",
+      "url": "https://www.realskincare.com/collections/organic-body-lotion",
+      "placement_guidance": "Link in the brand authority section (H2: Why Real Skin Care's Organic Body Lotion Stands Apart) and again in the conclusion CTA"
+    },
+    {
+      "anchor_text": "natural body lotion",
+      "url": "https://www.realskincare.com/collections/natural-body-lotion",
+      "placement_guidance": "Link in the H3 section on organic body lotion for men or in the introduction when distinguishing natural vs. organic"
+    },
+    {
+      "anchor_text": "non-toxic body lotion",
+      "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+      "placement_guidance": "Link in the label-reading section (H2: What to Look for on the Label) when discussing non-toxic formulas"
+    },
+    {
+      "anchor_text": "body lotion for dry skin",
+      "url": "https://www.realskincare.com/collections/body-lotion-for-dry-skin",
+      "placement_guidance": "Link at the end of the H3 on organic body lotion for dry skin"
+    },
+    {
+      "anchor_text": "vegan body lotion",
+      "url": "https://www.realskincare.com/collections/vegan-body-lotion",
+      "placement_guidance": "Link in the label-reading section when mentioning vegan and cruelty-free certifications"
+    },
+    {
+      "anchor_text": "coconut oil body lotion",
+      "url": "https://www.realskincare.com/collections/coconut-oil-body-lotion",
+      "placement_guidance": "Link in the ingredients section when first introducing organic coconut oil as a key ingredient"
+    },
+    {
+      "anchor_text": "face and body lotion",
+      "url": "https://www.realskincare.com/collections/face-and-body-lotion",
+      "placement_guidance": "Link in the FAQ answer to 'Can I use organic body lotion on my face?'"
+    },
+    {
+      "anchor_text": "organic hand lotion",
+      "url": "https://www.realskincare.com/collections/organic-hand-lotion",
+      "placement_guidance": "Link as a related product mention in the conclusion or in the application tips section"
+    },
+    {
+      "anchor_text": "secrets of organic natural body lotion",
+      "url": "https://www.realskincare.com/blogs/news/discover-the-secrets-of-organic-natural-body-lotion",
+      "placement_guidance": "Link in the brand authority section as a 'further reading' reference to deepen engagement"
+    },
+    {
+      "anchor_text": "organic baby lotion",
+      "url": "https://www.realskincare.com/collections/organic-baby-lotion",
+      "placement_guidance": "Link naturally in the FAQ or label-reading section when mentioning gentle formulas suitable for sensitive or delicate skin"
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite the USDA National Organic Program definition and percentage thresholds for organic labeling to demonstrate regulatory knowledge",
+    "Reference EWG (Environmental Working Group) as a third-party ingredient safety resource to show awareness of credible industry watchdogs",
+    "Include at least one specific formulation insight — e.g. why coconut oil's fatty acid profile (lauric acid) makes it an effective emollient — to demonstrate ingredient-level expertise",
+    "Use first-person brand voice ('At Real Skin Care, we formulate with…') in the brand section only, backed by verifiable formula claims reviewed by the product team before publishing",
+    "Avoid absolute health claims ('cures,' 'treats,' 'heals') and frame all skin benefits as supportive or nourishing to stay compliant with FTC and FDA cosmetic guidelines",
+    "Add an author byline or 'reviewed by' note from a qualified team member (e.g. a certified natural formulator or skincare specialist) to the published post",
+    "Include a 'last updated' date on the post to signal freshness, especially important given the seasonal peak in October",
+    "Link to authoritative external sources (USDA organic program, EWG database) once or twice in the post to reinforce trust without sending readers away unnecessarily"
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "Tone: warm, knowledgeable, and direct — like advice from a trusted friend who happens to be a skincare formulator. Avoid academic stiffness but also avoid hype or buzzword-heavy marketing language ('revolutionary,' 'miracle,' 'game-changing'). The reader is a health-conscious shopper who is skeptical of greenwashing and wants straight answers. Respect their intelligence. Do not make the post feel like an ad — the brand should earn trust through education first and convert through a well-placed CTA second. Structure for scannability: use short paragraphs (2–4 sentences max), clear H2/H3 hierarchy, and bullet points in the ingredients and tips sections. Avoid passive voice where possible. Do not include competitor brand names anywhere in the post. Do not create comparison tables. Confirm all Real Skin Care ingredient claims with the product team before drafting — only write confidently about coconut oil as a confirmed base ingredient; flag other ingredient details for verification. Seasonal note: the post will see peak traffic in October and November — if published in Q3, a light seasonal hook ('as the weather cools and skin gets drier') in the intro or application tips section is appropriate and timely. The site currently ranks at position 21 with 1,010 impressions and zero clicks — the title tag and meta description need to be compelling and specific to earn the click when the post moves into the top 10. The recommended title is 59 characters; do not change it significantly. Target a Flesch-Kincaid reading ease score of 60–70 (accessible, not dumbed down).",
+  "search_volume": 900,
+  "keyword_difficulty": 2,
+  "traffic_potential": 900,
+  "serp_overview": [
+    {
+      "position": 2,
+      "url": "https://www.lather.com/collections/body-creams-and-oils",
+      "title": "Natural Body Butters & Lotions | Organic Body Moisturizers",
+      "domain_rating": 51,
+      "traffic": 707
+    },
+    {
+      "position": 2,
+      "url": "https://www.google.com/m/storepages?q=lather.com&c=US&hl=en-US",
+      "title": "262",
+      "domain_rating": null,
+      "traffic": null
+    },
+    {
+      "position": 3,
+      "url": "https://www.drbronner.com/products/peppermint-organic-lotions",
+      "title": "Healing Organic Lotions for Body & Face | Peppermint",
+      "domain_rating": 75,
+      "traffic": 802
+    },
+    {
+      "position": 3,
+      "url": "https://www.google.com/search?q=PeppermintOrganic+Lotions&ibp=oshop&prds=catalogid:11872262226694939930,headlineOfferDocid:2997379932352460874,rds:PC_8851235650194562019%7CPROD_PC_8851235650194562019,pvo:21,query:PeppermintOrganic+Lotions,pvt:hg&hl=en-US&gl=us&sa=X&ved=2ahUKEwi7uML7tJCTAxWN48kDHVQYKJAQrd8PegQIKxAG",
+      "title": "1,721",
+      "domain_rating": null,
+      "traffic": null
+    },
+    {
+      "position": 4,
+      "url": "https://thefiltery.com/best-non-toxic-natural-body-lotion-butter-oil/",
+      "title": "What is the healthiest natural body lotion?",
+      "domain_rating": null,
+      "traffic": null
+    },
+    {
+      "position": 4,
+      "url": "https://www.nhs.uk/tests-and-treatments/emollients/",
+      "title": "Can body lotion help with eczema?",
+      "domain_rating": null,
+      "traffic": null
+    },
+    {
+      "position": 4,
+      "url": "https://nymag.com/strategist/article/best-body-lotions-for-every-skin-type.html",
+      "title": "What body lotion is best for acne prone skin?",
+      "domain_rating": null,
+      "traffic": null
+    },
+    {
+      "position": 4,
+      "url": "https://www.allure.com/story/best-crepey-skin-treatments",
+      "title": "What is best for crepey skin over 60?",
+      "domain_rating": null,
+      "traffic": null
+    }
+  ]
+}

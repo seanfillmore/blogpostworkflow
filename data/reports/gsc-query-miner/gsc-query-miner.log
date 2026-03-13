@@ -1,0 +1,16 @@
+
+GSC Query Miner — Real Skin Care
+Window: 90 days | Min impressions: 50
+
+  Fetching GSC query data... 5000 queries, 5000 query+page rows
+  Analysing... 50 leaks, 30 near-misses, 25 cannibalization groups, 15 clusters
+
+  Generating analysis with Claude... done
+
+  Report saved: /Users/seanfillmore/Code/Claude/data/reports/gsc-query-mining-report.md
+
+  Summary:
+    Impression leaks:        50 queries (22,843 impressions wasted)
+    Near-miss opportunities: 30 queries
+    Cannibalization groups:  25 queries
+    Topic clusters:          15 groups

@@ -1,0 +1,496 @@
+/**
+ * Blog Post Writer Agent
+ *
+ * Reads a content brief (produced by content-researcher) and writes a
+ * complete, Shopify-ready HTML blog post. Uses Claude claude-sonnet-4-6 with
+ * the full brief + site context as input.
+ *
+ * Requires: ANTHROPIC_API_KEY in .env
+ *           data/briefs/<slug>.json (run content-researcher first)
+ *           data/sitemap-index.json (optional, for richer internal links)
+ *
+ * Output:  data/posts/<slug>.html  — paste directly into Shopify HTML editor
+ *          data/posts/<slug>.json  — metadata (title, meta description, tags)
+ *
+ * Usage:
+ *   node agents/blog-post-writer/index.js data/briefs/best-natural-deodorant-for-women.json
+ *   node agents/blog-post-writer/index.js --all   # write all un-written briefs
+ */
+
+import Anthropic from '@anthropic-ai/sdk';
+import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { join, dirname, basename } from 'path';
+import { fileURLToPath } from 'url';
+import { withRetry } from '../../lib/retry.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..', '..');
+const POSTS_DIR = join(ROOT, 'data', 'posts');
+const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
+
+let config, ingredients;
+try {
+  config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
+} catch (e) {
+  console.error(`Failed to load config/site.json: ${e.message}`); process.exit(1);
+}
+try {
+  ingredients = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+} catch (e) {
+  console.error(`Failed to load config/ingredients.json: ${e.message}`); process.exit(1);
+}
+
+// ── feedback loader ────────────────────────────────────────────────────────────
+
+function loadAgentFeedback(agentName) {
+  try {
+    const feedbackPath = join(ROOT, 'data', 'context', 'feedback.md');
+    const content = readFileSync(feedbackPath, 'utf8');
+    const marker = `## ${agentName}`;
+    const start = content.indexOf(marker);
+    if (start === -1) return '';
+    const rest = content.slice(start + marker.length);
+    // Find next ## heading or end of file
+    const nextSection = rest.search(/\n## [a-z]/);
+    const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
+    return section.trim();
+  } catch {
+    return '';
+  }
+}
+
+// ── env ───────────────────────────────────────────────────────────────────────
+
+function loadEnv() {
+  const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
+  const env = {};
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const idx = t.indexOf('=');
+    if (idx === -1) continue;
+    env[t.slice(0, idx).trim()] = t.slice(idx + 1).trim();
+  }
+  return env;
+}
+
+const env = loadEnv();
+if (!env.ANTHROPIC_API_KEY) { console.error('Missing ANTHROPIC_API_KEY in .env'); process.exit(1); }
+
+const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
+// ── context loaders ───────────────────────────────────────────────────────────
+
+function loadSitemapContext() {
+  try {
+    const sitemap = JSON.parse(readFileSync(join(ROOT, 'data', 'sitemap-index.json'), 'utf8'));
+    const products = sitemap.pages.filter((p) => p.type === 'product').map((p) => p.url);
+    const collections = sitemap.pages.filter((p) => p.type === 'collection').map((p) => p.url);
+    return { products: products.slice(0, 20), collections: collections.slice(0, 10) };
+  } catch { return { products: [], collections: [] }; }
+}
+
+function loadBlogPosts(keyword) {
+  try {
+    const blogs = JSON.parse(readFileSync(join(ROOT, 'data', 'blog-index.json'), 'utf8'));
+    const kwWords = keyword.toLowerCase().split(/\s+/);
+    const score = (title) => kwWords.filter((w) => title.toLowerCase().includes(w)).length;
+
+    return blogs
+      .flatMap((b) => (b.articles || []).map((a) => ({
+        title: a.title,
+        url: `${config.url}/blogs/${b.handle}/${a.handle}`,
+        relevance: score(a.title),
+      })))
+      .sort((a, b) => b.relevance - a.relevance)
+      .slice(0, 8);
+  } catch { return []; }
+}
+
+// ── write post ────────────────────────────────────────────────────────────────
+
+const CTA_STYLES = {
+  aboveTheFold: `border:1px solid #eee;border-radius:12px;padding:16px;margin:0 0 20px;background:#fafafa;text-align:center;`,
+  midArticle: `border:1px dashed #ddd;border-radius:12px;padding:16px;margin:24px 0;text-align:center;`,
+  conversion: `border:1px solid #eee;border-radius:12px;padding:16px;margin:24px 0;background:#f6fff6;text-align:center;`,
+  button: `display:inline-block;padding:12px 18px;border-radius:8px;background-color:#AEDEAC;color:#000;text-decoration:none;font-weight:600;`,
+  h2: `margin:0 0 8px;`,
+  h3: `margin:0 0 8px;`,
+  p: `margin:0 0 12px;`,
+};
+
+// Flatten a product entry from ingredients.json into a simple { name, format, ingredients[] }
+function flattenProduct(product) {
+  if (!product) return null;
+  const base = product.base_ingredients || product.ingredients || [];
+  const variationOils = (product.variations || []).flatMap((v) => v.essential_oils || []);
+  const all = [...new Set([...base, ...variationOils])];
+  return { name: product.name, format: product.format, ingredients: all };
+}
+
+// Map keywords to product ingredient sets
+function detectProductIngredients(keyword) {
+  const kw = keyword.toLowerCase();
+  if (kw.includes('deodorant')) return flattenProduct(ingredients.deodorant);
+  if (kw.includes('toothpaste') || kw.includes('tooth paste') || kw.includes('oral')) return flattenProduct(ingredients.toothpaste);
+  if (kw.includes('lotion') || kw.includes('moisturizer') || kw.includes('moisturiser')) return flattenProduct(ingredients.lotion);
+  if (kw.includes('cream') || kw.includes('body butter')) return flattenProduct(ingredients.cream);
+  if (kw.includes('soap') && kw.includes('bar')) return flattenProduct(ingredients.bar_soap);
+  if (kw.includes('soap')) return flattenProduct(ingredients.liquid_soap);
+  if (kw.includes('lip balm') || kw.includes('lip')) return flattenProduct(ingredients.lip_balm);
+  // Default: return all unique ingredients across all products as context
+  const all = [...new Set(Object.values(ingredients).flatMap((p) => flattenProduct(p)?.ingredients || []))];
+  return { name: 'our products', ingredients: all };
+}
+
+function buildSystemPrompt(productIngredients) {
+  const feedback = loadAgentFeedback('blog-post-writer');
+  const ingredientList = productIngredients.ingredients.join(', ');
+  const formatNote = productIngredients.format
+    ? `\nProduct format: ${productIngredients.format} — always describe this product using the correct format name (e.g. "${productIngredients.format}"), never as a different format (e.g. "stick", "bar", "cream" unless that is the actual format).`
+    : '';
+
+  return `You are an expert SEO content writer for ${config.name} (${config.url}), a natural skincare and personal care brand.
+
+Brand voice: Helpful, warm, conversational. Write like a trusted friend explaining something over coffee — not a clinician writing a report. Aim for an 8th grade reading level.
+
+Reading level rules:
+- Use short sentences. Break long ones in two.
+- Choose the plain word over the clinical one: "sore mouth" not "oral tissue irritation", "cleans teeth" not "facilitates plaque removal", "helps with cavities" not "supports enamel remineralization"
+- Never use jargon without immediately explaining it in plain language
+- Vary sentence length — mix short punchy sentences with slightly longer ones to keep rhythm
+- Write paragraphs of 2–4 sentences max. If a paragraph runs longer, break it up.
+- Speak directly to the reader: "you", "your", "here's what that means for you"
+- Avoid nominalization: "making the switch" not "the process of transitioning", "helps" not "facilitates"
+- It's fine to start a sentence with "And", "But", or "So" — it reads naturally
+
+CURRENT DATE: ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (${new Date().getFullYear()}). When referencing "best of [year]", year-specific claims, or datelines like "Updated [Month Year]", always use the current month and year. Never write content dated to a past month or year.
+
+═══════════════════════════════════
+PRODUCT INGREDIENTS — CRITICAL
+═══════════════════════════════════
+The ${productIngredients.name} you are writing about contains ONLY these ingredients:
+${ingredientList}${formatNote}
+
+Ingredient rules:
+- Lead with OUR ingredients when explaining what makes a natural product effective
+- When you discuss an ingredient benefit, tie it back to one of our actual ingredients above
+- You MAY mention other common ingredients briefly for education — but ONLY to explain why ours is different or better, never as "what to look for"
+- Never recommend ingredients we don't use as the primary choice or as a gold standard
+- Never list ingredients we don't use in a "what to look for" or "ingredients that work" section
+- DEODORANT POSTS SPECIFICALLY: arrowroot powder, tapioca starch, shea butter, magnesium hydroxide, and probiotics are NOT in our formula — do not present them as desirable features or things the reader should seek out; you may briefly acknowledge they exist in other brands, but never frame them as superior or as what readers should look for
+
+════════════════════════════
+COMPETITOR BRAND GUIDELINES
+════════════════════════════
+- Do NOT optimize content around competitor brand keywords. Do not write sections whose primary purpose is to rank for a competitor's brand query (e.g. "What happened to Crest cinnamon toothpaste?" or "Is Tom's the best natural deodorant?").
+- Do NOT write brand comparison roundup tables or "best brands" listicles where competitor products are the editorial focus.
+- You MAY mention a competitor by name when it provides genuine editorial context — e.g. noting that a well-known brand uses a certain ingredient, or that readers switching from a specific brand may notice a difference. Keep such mentions brief and factual.
+- Position Real Skin Care as the authoritative choice. This is a brand blog, not a consumer review site.
+
+Your posts:
+- Are written for real people first, search engines second
+- Include specific, actionable advice the reader can use immediately
+- Back up claims with reasoning (not vague assertions)
+- Naturally incorporate the target keyword and related terms without keyword stuffing
+- Use clear, scannable H2/H3 hierarchy with short paragraphs
+- Lists use <strong> lead terms followed by a colon and explanation
+
+═══════════════════════════════════
+POST STRUCTURE (follow exactly in this order):
+═══════════════════════════════════
+
+1. ABOVE-THE-FOLD CTA (always first, before intro):
+<section style="${CTA_STYLES.aboveTheFold}">
+  <h2 style="${CTA_STYLES.h2}">[Short benefit headline — 5-8 words]</h2>
+  <p style="${CTA_STYLES.p}">[One sentence pitch with linked product name]</p>
+  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">[Shop CTA text]</a>
+</section>
+
+2. INTRO — 1-2 engaging paragraphs. State the problem, hint at the solution.
+
+3. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>.
+   - List items: <li><strong>Term:</strong> Explanation</li>
+   - Never start a section with the H2 tag immediately; always follow with a <p>.
+
+4. MID-ARTICLE CTA (place roughly halfway through, after 2-3 H2 sections):
+<section style="${CTA_STYLES.midArticle}">
+  <h3 style="${CTA_STYLES.h3}">[Question or desire statement]</h3>
+  <p style="${CTA_STYLES.p}">[Brief product mention with link]</p>
+  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Shop Now</a>
+</section>
+
+CTA BUTTON COPY RULES:
+- Link to a specific product page (/products/...) → use "Add to Cart"
+- Link to a collection page (/collections/...) → use "Shop Now" or "Browse Collection"
+- Never use "Add to Cart" on a collection page link — collections have no cart button
+
+5. COMPARISON TABLE (for roundup/review posts only):
+<table style="width:100%;border-collapse:collapse;text-align:left;">
+  <thead><tr>
+    <th style="border-bottom:2px solid #ccc;padding:8px;">Column</th>
+  </tr></thead>
+  <tbody><tr>
+    <td style="padding:8px;border-bottom:1px solid #eee;">Value</td>
+  </tr></tbody>
+</table>
+
+6. FAQ SECTION (always include, minimum 4 Q&As targeting common search queries):
+<h2>Frequently Asked Questions</h2>
+<p><strong>[Question?]</strong><br>[Concise, direct answer in 1-3 sentences.]</p>
+
+7. CONVERSION CTA (always last content block before references):
+<section style="${CTA_STYLES.conversion}">
+  <h2 style="${CTA_STYLES.h2}">[Action headline]</h2>
+  <p style="${CTA_STYLES.p}">[Final pitch sentence with product link]</p>
+  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Shop Now</a>
+</section>
+
+8. REFERENCES (for informational posts with factual claims):
+<h2>Sources</h2>
+<ul>
+  <li><a href="[URL]" target="_blank" rel="noopener">[Source Title]</a></li>
+</ul>
+
+9. RELATED POSTS (always include):
+<h3>Related Articles</h3>
+<ul>
+  <li><a href="[INTERNAL_URL]">[Post Title]</a></li>
+</ul>
+
+═══════════════════════════════════
+PRODUCT IMAGES — when featuring the Real Skin Care product:
+<a href="[PRODUCT_URL]"><img src="[IMG_URL]" alt="[descriptive alt text]" style="max-width:600px;height:auto;display:block;margin:16px auto;"></a>
+Only use image URLs that are explicitly provided. Do not invent image URLs.
+
+═══════════════════════════════════
+HTML RULES:
+- Return ONLY body HTML — no <html>, <head>, or <body> tags
+- All links must be absolute URLs (https://...)
+- No markdown, no CSS classes, no <div> tags
+- Inline styles exactly as shown in the templates above — do not deviate
+- Use exact product/collection URLs provided in the brief${feedback ? `\n\n═══════════════════════════════════\nSTANDING FEEDBACK (from insight-aggregator)\n═══════════════════════════════════\n${feedback}` : ''}`;
+}
+
+function buildUserPrompt(brief, sitemapCtx, blogPosts) {
+  const outlineText = (brief.outline || [])
+    .map((s) => `### ${s.section} (${s.type}, ~${s.word_count_target || 'flexible'} words)\n${s.guidance || ''}\nKeywords: ${(s.keywords_to_include || []).join(', ')}`)
+    .join('\n\n');
+
+  const internalLinksText = (brief.internal_links || [])
+    .map((l) => `- "${l.anchor_text}" → ${l.url} (${l.placement_guidance || ''})`)
+    .join('\n');
+
+  const semanticKwText = (brief.semantic_keywords || []).join(', ');
+
+  const eeatText = (brief.e_e_a_t_signals || []).join('\n- ');
+
+  const productLinksText = [
+    ...sitemapCtx.products.slice(0, 5),
+    ...sitemapCtx.collections.slice(0, 3),
+  ].join('\n');
+
+  return `Write a complete, high-quality blog post using the content brief below.
+
+---
+TARGET KEYWORD: "${brief.target_keyword}"
+TITLE: ${brief.recommended_title}
+META DESCRIPTION (for your reference only, do not include in HTML): ${brief.meta_description}
+SEARCH INTENT: ${brief.search_intent}
+TARGET WORD COUNT: ~${brief.target_word_count} words
+
+CONTENT ANGLE:
+${brief.content_angle}
+
+KEY DIFFERENTIATORS (this post must deliver these):
+${(brief.key_differentiators || []).map((d) => `- ${d}`).join('\n')}
+
+OUTLINE TO FOLLOW:
+${outlineText}
+
+SEMANTIC KEYWORDS TO WEAVE IN NATURALLY:
+${semanticKwText}
+
+INTERNAL LINKS TO INCLUDE:
+${internalLinksText || 'None specified — link to relevant products/collections where natural'}
+
+AVAILABLE PRODUCT/COLLECTION URLS (for CTAs and in-content links only):
+${productLinksText || 'See site.json for store URL'}
+
+RELATED BLOG POSTS (use ONLY these URLs in the Related Articles section — do not invent URLs):
+${blogPosts.length > 0 ? blogPosts.map((p) => `- "${p.title}" → ${p.url}`).join('\n') : 'None available — omit the Related Articles section'}
+
+E-E-A-T SIGNALS TO DEMONSTRATE:
+- ${eeatText}
+
+WRITER NOTES:
+${brief.writer_notes || 'Follow brand voice guidelines above.'}
+---
+
+Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Aim for ~${brief.target_word_count} words. Make it genuinely useful and comprehensive.`;
+}
+
+// ── stream the post ───────────────────────────────────────────────────────────
+
+async function writePost(briefPath) {
+  let brief;
+  try {
+    brief = JSON.parse(readFileSync(briefPath, 'utf8'));
+  } catch (e) {
+    throw new Error(`Failed to parse brief ${briefPath}: ${e.message}`);
+  }
+  const slug = brief.slug || basename(briefPath, '.json');
+  const htmlPath = join(POSTS_DIR, `${slug}.html`);
+  const metaPath = join(POSTS_DIR, `${slug}.json`);
+
+  console.log(`\n  Writing: "${brief.recommended_title || brief.target_keyword}"`);
+  console.log(`  Target: ~${brief.target_word_count} words, intent: ${brief.search_intent}`);
+
+  const sitemapCtx = loadSitemapContext();
+  const blogPosts = loadBlogPosts(brief.target_keyword);
+  const productIngredients = detectProductIngredients(brief.target_keyword);
+
+  process.stdout.write('  Streaming from Claude... ');
+
+  let html = '';
+  let inputTokens = 0;
+  let outputTokens = 0;
+
+  await withRetry(async () => {
+    html = '';
+    const stream = client.messages.stream({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8000,
+      system: buildSystemPrompt(productIngredients),
+      messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
+    });
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        html += chunk.delta.text;
+        process.stdout.write('.');
+      }
+    }
+
+    const finalMessage = await stream.finalMessage();
+    inputTokens = finalMessage.usage?.input_tokens || 0;
+    outputTokens = finalMessage.usage?.output_tokens || 0;
+  }, { label: 'blog-post-writer' });
+
+  // Strip any accidental markdown fences
+  html = html.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  const wordCount = html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+
+  // Validate output before saving
+  const hasH2 = /<h2[\s>]/i.test(html);
+  const hasCTA = /<section\s[^>]*style/i.test(html);
+  if (wordCount < 300) {
+    throw new Error(`Stream produced too little content: ${wordCount} words (minimum 300). Re-run or check brief.`);
+  }
+  if (!hasH2) {
+    throw new Error('Stream produced HTML with no H2 headings — likely truncated or malformed. Re-run.');
+  }
+  if (!hasCTA) {
+    console.warn('  Warning: No CTA section blocks detected. Editor will flag this.');
+  }
+
+  console.log(` done (${wordCount} words, ${outputTokens} tokens)`);
+
+  mkdirSync(POSTS_DIR, { recursive: true });
+  writeFileSync(htmlPath, html);
+
+  // Save metadata for Shopify upload — preserve any existing Shopify fields from a previous publish
+  let existingMeta = {};
+  if (existsSync(metaPath)) {
+    try { existingMeta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch {}
+  }
+  const shopifyFields = {};
+  for (const key of ['shopify_blog_id', 'shopify_blog_handle', 'shopify_article_id', 'shopify_handle', 'shopify_url', 'shopify_status', 'uploaded_at']) {
+    if (existingMeta[key] !== undefined) shopifyFields[key] = existingMeta[key];
+  }
+
+  const currentYear = new Date().getFullYear();
+  const sanitizedTitle = brief.recommended_title.replace(/\b(202[0-9])\b/g, (match) => {
+    return parseInt(match) < currentYear ? String(currentYear) : match;
+  });
+  const meta = {
+    slug,
+    title: sanitizedTitle,
+    meta_description: brief.meta_description,
+    target_keyword: brief.target_keyword,
+    tags: deriveTags(brief),
+    word_count: wordCount,
+    generated_at: new Date().toISOString(),
+    brief_path: briefPath,
+    tokens_used: { input: inputTokens, output: outputTokens },
+    ...shopifyFields,
+  };
+  writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
+  console.log(`  Saved: ${htmlPath}`);
+  console.log(`  Meta:  ${metaPath}`);
+
+  return { htmlPath, meta };
+}
+
+function deriveTags(brief) {
+  const tags = [];
+  const kw = brief.target_keyword.toLowerCase();
+  if (kw.includes('deodorant')) tags.push('deodorant', 'natural deodorant');
+  if (kw.includes('toothpaste')) tags.push('toothpaste', 'natural toothpaste');
+  if (kw.includes('lotion') || kw.includes('moisturizer')) tags.push('body lotion', 'moisturizer');
+  if (kw.includes('coconut')) tags.push('coconut oil');
+  if (kw.includes('soap')) tags.push('soap', 'natural soap');
+  if (kw.includes('face')) tags.push('face care');
+  tags.push('natural skincare', 'organic');
+  return [...new Set(tags)];
+}
+
+// ── main ──────────────────────────────────────────────────────────────────────
+
+const args = process.argv.slice(2);
+
+async function main() {
+  console.log(`\nBlog Post Writer Agent — ${config.name}\n`);
+
+  if (args[0] === '--all') {
+    if (!existsSync(BRIEFS_DIR)) {
+      console.error('No briefs found. Run content-researcher first.');
+      process.exit(1);
+    }
+    const briefFiles = readdirSync(BRIEFS_DIR)
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => join(BRIEFS_DIR, f));
+
+    const toWrite = briefFiles.filter((f) => {
+      const slug = basename(f, '.json');
+      return !existsSync(join(POSTS_DIR, `${slug}.html`));
+    });
+
+    console.log(`${briefFiles.length} brief(s) found, ${toWrite.length} not yet written.\n`);
+
+    for (const briefPath of toWrite) {
+      await writePost(briefPath);
+    }
+  } else if (args[0]) {
+    const briefPath = args[0].startsWith('/') ? args[0] : join(ROOT, args[0]);
+    if (!existsSync(briefPath)) {
+      console.error(`Brief not found: ${briefPath}`);
+      process.exit(1);
+    }
+    await writePost(briefPath);
+  } else {
+    console.error('Usage:');
+    console.error('  node agents/blog-post-writer/index.js data/briefs/<slug>.json');
+    console.error('  node agents/blog-post-writer/index.js --all');
+    process.exit(1);
+  }
+
+  console.log('\nBlog post writing complete.');
+}
+
+main().catch((err) => {
+  console.error('Error:', err.message);
+  process.exit(1);
+});

@@ -1,0 +1,3110 @@
+{
+  "meta": {
+    "site": "Real Skin Care",
+    "generated_at": "2026-03-07T20:06:47.768Z",
+    "blog_posts_crawled": 51,
+    "total_internal_links_found": 364,
+    "broken_internal_links": 50,
+    "orphaned_blog_posts": 26
+  },
+  "pillar_pages": [
+    {
+      "url": "https://www.realskincare.com/",
+      "type": "homepage",
+      "slug": "www.realskincare.com",
+      "inbound_count": 51,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "how-to-do-a-skin-care-patch-test",
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "why-add-organic-lip-balms-to-your-skin-care-routine",
+        "why-should-you-use-moisturizers-everday",
+        "bar-soap-vs-liquid-hand-soap-which-is-better",
+        "why-choose-coconut-skin-care-products",
+        "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+        "why-use-natural-deodorants",
+        "why-use-unscented-skincare-products",
+        "benefits-of-using-coconut-oil-lotion",
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "toxic-chemicals-in-soap-to-keep-an-eye-on",
+        "how-to-choose-the-right-body-cream",
+        "embrace-natural-beauty-with-real-skin-cares-organic-products",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-power-of-coconut-whitening-toothpaste",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap",
+        "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+        "discover-the-best-organic-skincare-products-for-2024-at-real-skin-care",
+        "can-you-use-coconut-oil-as-toothpaste",
+        "coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+        "coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+        "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+        "is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+        "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+        "diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars",
+        "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+        "best-non-toxic-body-lotion-2025",
+        "best-dr-bronners-alternatives-2025",
+        "best-sls-free-toothpaste-2025",
+        "best-boka-alternatives-2025",
+        "best-natural-toothpaste-2025",
+        "what-is-natural-skincare-benefits-myths-how-to-start",
+        "best-natural-body-lotion-2025",
+        "best-clean-body-lotion-2025",
+        "best-fragrance-free-body-lotion-2025",
+        "best-body-lotion-for-sensitive-skin-2025",
+        "best-hello-toothpaste-alternatives-2025",
+        "best-tom-s-of-maine-alternatives-2025",
+        "best-risewell-alternatives-2025",
+        "best-dr-bronner-s-toothpaste-alternatives-2025",
+        "best-davids-toothpaste-alternatives-2025",
+        "best-fluoride-free-toothpaste-2025",
+        "best-toothpaste-for-sensitive-teeth-2025",
+        "best-toothpaste-without-sls-2025",
+        "best-natural-toothpaste-for-families-2025",
+        "7-ingredients-to-avoid-in-natural-toothpaste",
+        "why-glycerin-free-toothpaste-matters",
+        "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+        "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks"
+      ],
+      "anchor_texts": [
+        "Home"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news",
+      "type": "blog_index",
+      "slug": "news",
+      "inbound_count": 51,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "how-to-do-a-skin-care-patch-test",
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "why-add-organic-lip-balms-to-your-skin-care-routine",
+        "why-should-you-use-moisturizers-everday",
+        "bar-soap-vs-liquid-hand-soap-which-is-better",
+        "why-choose-coconut-skin-care-products",
+        "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+        "why-use-natural-deodorants",
+        "why-use-unscented-skincare-products",
+        "benefits-of-using-coconut-oil-lotion",
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "toxic-chemicals-in-soap-to-keep-an-eye-on",
+        "how-to-choose-the-right-body-cream",
+        "embrace-natural-beauty-with-real-skin-cares-organic-products",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-power-of-coconut-whitening-toothpaste",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap",
+        "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+        "discover-the-best-organic-skincare-products-for-2024-at-real-skin-care",
+        "can-you-use-coconut-oil-as-toothpaste",
+        "coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+        "coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+        "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+        "is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+        "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+        "diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars",
+        "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+        "best-non-toxic-body-lotion-2025",
+        "best-dr-bronners-alternatives-2025",
+        "best-sls-free-toothpaste-2025",
+        "best-boka-alternatives-2025",
+        "best-natural-toothpaste-2025",
+        "what-is-natural-skincare-benefits-myths-how-to-start",
+        "best-natural-body-lotion-2025",
+        "best-clean-body-lotion-2025",
+        "best-fragrance-free-body-lotion-2025",
+        "best-body-lotion-for-sensitive-skin-2025",
+        "best-hello-toothpaste-alternatives-2025",
+        "best-tom-s-of-maine-alternatives-2025",
+        "best-risewell-alternatives-2025",
+        "best-dr-bronner-s-toothpaste-alternatives-2025",
+        "best-davids-toothpaste-alternatives-2025",
+        "best-fluoride-free-toothpaste-2025",
+        "best-toothpaste-for-sensitive-teeth-2025",
+        "best-toothpaste-without-sls-2025",
+        "best-natural-toothpaste-for-families-2025",
+        "7-ingredients-to-avoid-in-natural-toothpaste",
+        "why-glycerin-free-toothpaste-matters",
+        "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+        "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks"
+      ],
+      "anchor_texts": [
+        "Blog"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+      "type": "blog_post",
+      "slug": "toxic-chemicals-in-soap-to-keep-an-eye-on",
+      "inbound_count": 16,
+      "linked_from": [
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "why-choose-coconut-skin-care-products",
+        "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+        "why-use-unscented-skincare-products",
+        "how-to-choose-the-right-body-cream",
+        "discover-the-power-of-coconut-whitening-toothpaste",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap",
+        "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+        "coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+        "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+        "best-non-toxic-body-lotion-2025",
+        "best-dr-bronners-alternatives-2025",
+        "what-is-natural-skincare-benefits-myths-how-to-start",
+        "best-clean-body-lotion-2025",
+        "best-fragrance-free-body-lotion-2025",
+        "best-body-lotion-for-sensitive-skin-2025"
+      ],
+      "anchor_texts": [
+        "Toxic Chemicals in Soap to Keep an Eye On",
+        "Toxic Chemicals in Soap to Avoid",
+        "Toxic Chemicals in Soap to Keep an Eye on",
+        "Ingredients to avoid in everyday soap",
+        "Toxic Chemicals in Soap",
+        "ingredients to avoid in everyday soap"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/products/coconut-lotion",
+      "type": "product",
+      "slug": "coconut-lotion",
+      "inbound_count": 13,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "why-should-you-use-moisturizers-everday",
+        "why-choose-coconut-skin-care-products",
+        "why-use-unscented-skincare-products",
+        "benefits-of-using-coconut-oil-lotion",
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "how-to-choose-the-right-body-cream",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-power-of-coconut-whitening-toothpaste",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap",
+        "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+        "best-dr-bronners-alternatives-2025"
+      ],
+      "anchor_texts": [
+        "Organic Coconut Oil Body Lotion",
+        "Organic Body Lotion",
+        "Coconut Body Lotion"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+      "type": "blog_post",
+      "slug": "how-to-do-a-skin-care-patch-test",
+      "inbound_count": 13,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "bar-soap-vs-liquid-hand-soap-which-is-better",
+        "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+        "why-use-natural-deodorants",
+        "why-use-unscented-skincare-products",
+        "benefits-of-using-coconut-oil-lotion",
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "how-to-choose-the-right-body-cream",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-power-of-coconut-whitening-toothpaste",
+        "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+        "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin"
+      ],
+      "anchor_texts": [
+        "patch test",
+        "Learn how to patch test here",
+        "How to Do a Skin Care Patch Test",
+        "patch testing guide"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/products/coconut-moisturizer",
+      "type": "product",
+      "slug": "coconut-moisturizer",
+      "inbound_count": 12,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "how-to-do-a-skin-care-patch-test",
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "why-should-you-use-moisturizers-everday",
+        "why-choose-coconut-skin-care-products",
+        "why-use-natural-deodorants",
+        "why-use-unscented-skincare-products",
+        "benefits-of-using-coconut-oil-lotion",
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "how-to-choose-the-right-body-cream",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin"
+      ],
+      "anchor_texts": [
+        "Real Skin Care’s gentle, organic body cream",
+        "Real Skin Care Organic Body Cream",
+        "Organic Body Cream",
+        "Real Skin Care’s Organic Body Cream",
+        "Coconut Body Cream",
+        "Moisturizing Body Cream"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/products/organic-body-lotion",
+      "type": "product",
+      "slug": "organic-body-lotion",
+      "inbound_count": 11,
+      "linked_from": [
+        "how-to-do-a-skin-care-patch-test",
+        "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+        "why-use-natural-deodorants",
+        "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+        "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+        "best-non-toxic-body-lotion-2025",
+        "what-is-natural-skincare-benefits-myths-how-to-start",
+        "best-natural-body-lotion-2025",
+        "best-clean-body-lotion-2025",
+        "best-fragrance-free-body-lotion-2025",
+        "best-body-lotion-for-sensitive-skin-2025"
+      ],
+      "anchor_texts": [
+        "Organic Coconut Oil Body Lotion",
+        "Organic Body Lotion",
+        "fragrance-free lotion",
+        "Coconut Oil Body Lotion"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+      "type": "product",
+      "slug": "coconut-oil-toothpaste",
+      "inbound_count": 11,
+      "linked_from": [
+        "best-hello-toothpaste-alternatives-2025",
+        "best-tom-s-of-maine-alternatives-2025",
+        "best-risewell-alternatives-2025",
+        "best-dr-bronner-s-toothpaste-alternatives-2025",
+        "best-davids-toothpaste-alternatives-2025",
+        "best-fluoride-free-toothpaste-2025",
+        "best-toothpaste-for-sensitive-teeth-2025",
+        "best-toothpaste-without-sls-2025",
+        "best-natural-toothpaste-for-families-2025",
+        "7-ingredients-to-avoid-in-natural-toothpaste",
+        "why-glycerin-free-toothpaste-matters"
+      ],
+      "anchor_texts": [
+        "Real Skin Care’s Coconut Oil Toothpaste",
+        "Fresh Mint Natural Toothpaste",
+        "Organic Coconut Oil Toothpaste",
+        "Coconut Oil Toothpaste",
+        "Real Skin Care’s Cinnamon Spice Coconut Oil Toothpaste",
+        "Real Skin Care’s Fresh Mint Coconut Oil Toothpaste",
+        "Real Skin Care’s All Natural Coconut Oil Toothpaste",
+        "All Natural Coconut Oil Toothpaste"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+      "type": "blog_post",
+      "slug": "what-is-natural-skincare-benefits-myths-how-to-start",
+      "inbound_count": 10,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "how-to-do-a-skin-care-patch-test",
+        "why-use-natural-deodorants",
+        "why-use-unscented-skincare-products",
+        "toxic-chemicals-in-soap-to-keep-an-eye-on",
+        "how-to-choose-the-right-body-cream",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-power-of-coconut-whitening-toothpaste",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap",
+        "get-silky-smooth-lips-with-coconut-oil-lip-balm"
+      ],
+      "anchor_texts": [
+        "What Is Natural Skincare? Benefits, Myths & How to Start"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/products/coconut-soap",
+      "type": "product",
+      "slug": "coconut-soap",
+      "inbound_count": 10,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "how-to-do-a-skin-care-patch-test",
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "bar-soap-vs-liquid-hand-soap-which-is-better",
+        "why-choose-coconut-skin-care-products",
+        "why-use-unscented-skincare-products",
+        "toxic-chemicals-in-soap-to-keep-an-eye-on",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap",
+        "what-is-natural-skincare-benefits-myths-how-to-start"
+      ],
+      "anchor_texts": [
+        "Unscented Bar Soap",
+        "Tea Tree Bar Soap",
+        "Unscented Coconut Oil Bar Soap",
+        "Coconut Oil Bar Soap"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+      "type": "blog_post",
+      "slug": "best-fluoride-free-toothpaste-2025",
+      "inbound_count": 9,
+      "linked_from": [
+        "can-you-use-coconut-oil-as-toothpaste",
+        "best-sls-free-toothpaste-2025",
+        "best-natural-toothpaste-2025",
+        "best-tom-s-of-maine-alternatives-2025",
+        "best-toothpaste-for-sensitive-teeth-2025",
+        "best-toothpaste-without-sls-2025",
+        "best-natural-toothpaste-for-families-2025",
+        "7-ingredients-to-avoid-in-natural-toothpaste",
+        "why-glycerin-free-toothpaste-matters"
+      ],
+      "anchor_texts": [
+        "The Best Fluoride Free Toothpaste 2025",
+        "Best Fluoride-Free Toothpaste – 2025",
+        "best fluoride‑free toothpaste picks for 2025",
+        "Best Fluoride‑Free Toothpaste – 2025",
+        "Best Fluoride Free Toothpaste - 2025",
+        "fluoride‑free toothpaste picks for 2025",
+        "Best Fluoride Free Toothpaste"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+      "type": "blog_post",
+      "slug": "benefits-of-using-coconut-oil-lotion",
+      "inbound_count": 8,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "how-to-do-a-skin-care-patch-test",
+        "bar-soap-vs-liquid-hand-soap-which-is-better",
+        "why-use-natural-deodorants",
+        "benefits-of-using-coconut-oil-lotion",
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "how-to-choose-the-right-body-cream",
+        "discover-the-secrets-of-organic-natural-body-lotion"
+      ],
+      "anchor_texts": [
+        "Benefits of Using Coconut Oil Lotion"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+      "type": "product",
+      "slug": "coconut-oil-lip-balm",
+      "inbound_count": 8,
+      "linked_from": [
+        "definitive-guide-to-clean-skin-care-products",
+        "how-to-do-a-skin-care-patch-test",
+        "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+        "why-add-organic-lip-balms-to-your-skin-care-routine",
+        "why-should-you-use-moisturizers-everday",
+        "why-use-unscented-skincare-products",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-power-of-coconut-whitening-toothpaste"
+      ],
+      "anchor_texts": [
+        "Organic Lip Balm",
+        "Real Skin Care’s Organic Coconut Oil Lip Balm",
+        "Coconut Oil Lip Balm"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+      "type": "blog_post",
+      "slug": "best-fragrance-free-body-lotion-2025",
+      "inbound_count": 7,
+      "linked_from": [
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+        "best-non-toxic-body-lotion-2025",
+        "best-dr-bronners-alternatives-2025",
+        "best-natural-body-lotion-2025",
+        "best-clean-body-lotion-2025",
+        "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup"
+      ],
+      "anchor_texts": [
+        "Best Fragrance-Free Body Lotion 2025",
+        "Fragrance-free body lotion for sensitive skin",
+        "Best Fragrance Free Body Lotion 2025",
+        "fragrance‑free body lotion for sensitive skin"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+      "type": "blog_post",
+      "slug": "bar-soap-vs-liquid-hand-soap-which-is-better",
+      "inbound_count": 6,
+      "linked_from": [
+        "how-to-do-a-skin-care-patch-test",
+        "why-use-natural-deodorants",
+        "toxic-chemicals-in-soap-to-keep-an-eye-on",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap",
+        "coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+        "what-is-natural-skincare-benefits-myths-how-to-start"
+      ],
+      "anchor_texts": [
+        "Bar Soap vs. Liquid Hand Soap: Which Is Better?",
+        "Bar Soap vs Liquid Hand Soap — Which Is Better?",
+        "Bar Soap vs Liquid Hand Soap"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+      "type": "blog_post",
+      "slug": "best-body-lotion-for-sensitive-skin-2025",
+      "inbound_count": 6,
+      "linked_from": [
+        "benefits-of-using-coconut-oil-lotion",
+        "the-ultimate-guide-to-moisturizing-your-skin",
+        "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+        "best-natural-body-lotion-2025",
+        "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+        "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks"
+      ],
+      "anchor_texts": [
+        "Best Body Lotion for Sensitive Skin 2025"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+      "type": "blog_post",
+      "slug": "best-natural-toothpaste-2025",
+      "inbound_count": 6,
+      "linked_from": [
+        "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+        "best-hello-toothpaste-alternatives-2025",
+        "best-dr-bronner-s-toothpaste-alternatives-2025",
+        "best-davids-toothpaste-alternatives-2025",
+        "best-fluoride-free-toothpaste-2025",
+        "best-toothpaste-for-sensitive-teeth-2025"
+      ],
+      "anchor_texts": [
+        "Best Natural Toothpaste – 2025",
+        "Best Natural Toothpaste - 2025",
+        "The Best Natural Toothpaste 2025",
+        "Best Natural Toothpaste 2025"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+      "type": "product",
+      "slug": "organic-foaming-hand-soap",
+      "inbound_count": 5,
+      "linked_from": [
+        "bar-soap-vs-liquid-hand-soap-which-is-better",
+        "why-use-unscented-skincare-products",
+        "discover-the-secrets-of-organic-natural-body-lotion",
+        "discover-the-power-of-coconut-whitening-toothpaste",
+        "discover-the-soothing-power-of-coconut-oil-bar-soap"
+      ],
+      "anchor_texts": [
+        "Organic Foaming Hand Soap"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/collections/best-non-toxic-body-lotion",
+      "type": "collection",
+      "slug": "best-non-toxic-body-lotion",
+      "inbound_count": 5,
+      "linked_from": [
+        "best-non-toxic-body-lotion-2025",
+        "best-natural-body-lotion-2025",
+        "best-clean-body-lotion-2025",
+        "best-fragrance-free-body-lotion-2025",
+        "best-body-lotion-for-sensitive-skin-2025"
+      ],
+      "anchor_texts": [
+        "best non-toxic body lotion collection"
+      ]
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+      "type": "blog_post",
+      "slug": "best-sls-free-toothpaste-2025",
+      "inbound_count": 5,
+      "linked_from": [
+        "best-hello-toothpaste-alternatives-2025",
+        "best-tom-s-of-maine-alternatives-2025",
+        "best-dr-bronner-s-toothpaste-alternatives-2025",
+        "best-davids-toothpaste-alternatives-2025",
+        "best-fluoride-free-toothpaste-2025"
+      ],
+      "anchor_texts": [
+        "Best SLS Free Toothpaste - 2025",
+        "Best SLS‑Free Toothpaste – 2025",
+        "The Best SLS Free Toothpaste 2025",
+        "Best SLS-Free Toothpaste 2025"
+      ]
+    }
+  ],
+  "orphaned_blog_posts": [
+    {
+      "url": "https://www.realskincare.com/blogs/news/definitive-guide-to-clean-skin-care-products",
+      "slug": "definitive-guide-to-clean-skin-care-products",
+      "lastmod": "2025-08-15T11:24:28-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/why-add-organic-lip-balms-to-your-skin-care-routine",
+      "slug": "why-add-organic-lip-balms-to-your-skin-care-routine",
+      "lastmod": "2025-08-11T21:13:58-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/why-choose-coconut-skin-care-products",
+      "slug": "why-choose-coconut-skin-care-products",
+      "lastmod": "2025-08-11T14:50:09-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "slug": "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "lastmod": "2025-08-12T05:52:57-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/why-use-natural-deodorants",
+      "slug": "why-use-natural-deodorants",
+      "lastmod": "2025-08-15T13:22:51-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/why-use-unscented-skincare-products",
+      "slug": "why-use-unscented-skincare-products",
+      "lastmod": "2025-08-15T15:30:11-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/the-ultimate-guide-to-moisturizing-your-skin",
+      "slug": "the-ultimate-guide-to-moisturizing-your-skin",
+      "lastmod": "2025-08-14T11:03:42-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/how-to-choose-the-right-body-cream",
+      "slug": "how-to-choose-the-right-body-cream",
+      "lastmod": "2025-08-15T15:21:34-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/embrace-natural-beauty-with-real-skin-cares-organic-products",
+      "slug": "embrace-natural-beauty-with-real-skin-cares-organic-products",
+      "lastmod": "2025-08-11T21:52:25-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/discover-the-secrets-of-organic-natural-body-lotion",
+      "slug": "discover-the-secrets-of-organic-natural-body-lotion",
+      "lastmod": "2025-08-15T16:20:24-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/discover-the-power-of-coconut-whitening-toothpaste",
+      "slug": "discover-the-power-of-coconut-whitening-toothpaste",
+      "lastmod": "2025-08-15T16:44:05-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/discover-the-soothing-power-of-coconut-oil-bar-soap",
+      "slug": "discover-the-soothing-power-of-coconut-oil-bar-soap",
+      "lastmod": "2025-08-15T17:33:39-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "slug": "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "lastmod": "2025-08-15T17:26:38-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "slug": "coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "lastmod": "2025-08-14T10:16:43-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+      "slug": "is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+      "lastmod": "2025-08-09T22:23:27-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars",
+      "slug": "diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars",
+      "lastmod": "2025-08-13T19:45:38-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "slug": "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "lastmod": "2025-08-14T08:23:30-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-dr-bronners-alternatives-2025",
+      "slug": "best-dr-bronners-alternatives-2025",
+      "lastmod": "2025-08-09T22:19:22-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-boka-alternatives-2025",
+      "slug": "best-boka-alternatives-2025",
+      "lastmod": "2025-06-12T08:13:59-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-hello-toothpaste-alternatives-2025",
+      "slug": "best-hello-toothpaste-alternatives-2025",
+      "lastmod": "2025-08-10T09:12:55-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-tom-s-of-maine-alternatives-2025",
+      "slug": "best-tom-s-of-maine-alternatives-2025",
+      "lastmod": "2025-08-09T22:03:36-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-risewell-alternatives-2025",
+      "slug": "best-risewell-alternatives-2025",
+      "lastmod": "2025-08-11T09:56:28-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025",
+      "slug": "best-dr-bronner-s-toothpaste-alternatives-2025",
+      "lastmod": "2025-08-11T09:58:38-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-davids-toothpaste-alternatives-2025",
+      "slug": "best-davids-toothpaste-alternatives-2025",
+      "lastmod": "2025-08-11T10:04:34-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "slug": "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "lastmod": "2025-08-11T09:35:07-06:00"
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "slug": "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "lastmod": "2025-08-10T08:57:19-06:00"
+    }
+  ],
+  "broken_internal_links": [
+    {
+      "source": "https://www.realskincare.com/blogs/news/definitive-guide-to-clean-skin-care-products",
+      "source_slug": "definitive-guide-to-clean-skin-care-products",
+      "target": "https://www.realskincare.com/blogs/news/is-your-soap-toxic-8-ingredients-to-avoid",
+      "anchor_text": "Is Your Soap Toxic? 8 Ingredients to Avoid",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+      "source_slug": "how-to-do-a-skin-care-patch-test",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Coconut Oil Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+      "source_slug": "how-to-do-a-skin-care-patch-test",
+      "target": "https://www.realskincare.com/blogs/news/is-your-soap-toxic-8-ingredients-to-avoid",
+      "anchor_text": "Is Your Soap Toxic? 8 Ingredients to Avoid",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/why-add-organic-lip-balms-to-your-skin-care-routine",
+      "source_slug": "why-add-organic-lip-balms-to-your-skin-care-routine",
+      "target": "https://www.realskincare.com/blogs/news/coconut-oil-benefits-for-skin",
+      "anchor_text": "Coconut Oil Benefits for Skin",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/why-add-organic-lip-balms-to-your-skin-care-routine",
+      "source_slug": "why-add-organic-lip-balms-to-your-skin-care-routine",
+      "target": "https://www.realskincare.com/blogs/news/how-to-build-a-natural-skincare-routine",
+      "anchor_text": "How to Build a Natural Skincare Routine",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+      "source_slug": "bar-soap-vs-liquid-hand-soap-which-is-better",
+      "target": "https://www.realskincare.com/blogs/news/is-your-soap-toxic-8-ingredients-to-avoid",
+      "anchor_text": "Is Your Soap Toxic? 8 Ingredients to Avoid",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "source_slug": "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "target": "https://www.realskincare.com/collections/natural-lip-balm/products/coconut-oil-lip-balm",
+      "anchor_text": "Vanilla Dream Lip Balm",
+      "target_type": "collection"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "source_slug": "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "source_slug": "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "target": "https://www.realskincare.com/products/organic-body-cream",
+      "anchor_text": "Organic Body Cream",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/why-use-natural-deodorants",
+      "source_slug": "why-use-natural-deodorants",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "fragrance-free lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/discover-the-power-of-coconut-whitening-toothpaste",
+      "source_slug": "discover-the-power-of-coconut-whitening-toothpaste",
+      "target": "https://www.realskincare.com/collections/toothpaste",
+      "anchor_text": "Toothpaste Collection",
+      "target_type": "collection"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/discover-the-soothing-power-of-coconut-oil-bar-soap",
+      "source_slug": "discover-the-soothing-power-of-coconut-oil-bar-soap",
+      "target": "https://www.realskincare.com/collections/bar-soap",
+      "anchor_text": "Bar Soap Collection",
+      "target_type": "collection"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/discover-the-soothing-power-of-coconut-oil-bar-soap",
+      "source_slug": "discover-the-soothing-power-of-coconut-oil-bar-soap",
+      "target": "https://www.realskincare.com/products/organic-body-cream",
+      "anchor_text": "Organic Body Cream",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "source_slug": "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "target": "https://www.realskincare.com/products/organic-lip-balm",
+      "anchor_text": "Organic Coconut Oil Lip Balm",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "source_slug": "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "target": "https://www.realskincare.com/products/organic-body-cream",
+      "anchor_text": "Organic Body Cream",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "source_slug": "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "target": "https://www.realskincare.com/products/organic-bar-soap",
+      "anchor_text": "Organic Bar Soap",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "source_slug": "get-silky-smooth-lips-with-coconut-oil-lip-balm",
+      "target": "https://www.realskincare.com/collections/lip-balm",
+      "anchor_text": "Lip Balm Collection",
+      "target_type": "collection"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste",
+      "source_slug": "can-you-use-coconut-oil-as-toothpaste",
+      "target": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2026",
+      "anchor_text": "The Best SLS Free Toothpaste 2026",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste",
+      "source_slug": "can-you-use-coconut-oil-as-toothpaste",
+      "target": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2026",
+      "anchor_text": "The Best Fluoride-Free Toothpaste 2026",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "source_slug": "coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "target": "https://www.realskincare.com/blogs/news/non-toxic-body-care-routine",
+      "anchor_text": "Non-Toxic Body Care Routine",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "source_slug": "coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "target": "https://www.realskincare.com/blogs/news/fragrance-free-skin-care",
+      "anchor_text": "How to Choose a Fragrance-Free Routine",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "source_slug": "coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "target": "https://www.realskincare.com/blogs/news/coconut-oil-for-skin-care",
+      "anchor_text": "Benefits of Coconut Oil for Skin (and When to Skip It)",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+      "source_slug": "is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+      "source_slug": "is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+      "target": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotion-2025",
+      "anchor_text": "Best Coconut Oil Body Lotion 2025",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+      "source_slug": "is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks",
+      "target": "https://www.realskincare.com/blogs/news/benefits-of-coconut-oil-for-skin",
+      "anchor_text": "Benefits of Coconut Oil for Skin",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "source_slug": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "target": "https://www.realskincare.com/products/toothpaste",
+      "anchor_text": "Organic Coconut Oil Toothpaste",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "source_slug": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "target": "https://www.realskincare.com/blogs/news/is-fluoride-free-toothpaste-effective",
+      "anchor_text": "Is Fluoride‑Free Toothpaste Effective?",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "source_slug": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "target": "https://www.realskincare.com/blogs/news/benefits-of-coconut-oil-for-skin-and-teeth",
+      "anchor_text": "Benefits of Coconut Oil for Skin and Teeth",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "source_slug": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "target": "https://www.realskincare.com/blogs/news/how-to-choose-non-toxic-toothpaste",
+      "anchor_text": "How to Choose Non‑Toxic Toothpaste for Your Family",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "source_slug": "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Coconut Oil Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "source_slug": "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "target": "https://www.realskincare.com/blogs/news/best-clean-lotion-2025",
+      "anchor_text": "Best Clean Lotion 2025",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-non-toxic-body-lotion-2025",
+      "source_slug": "best-non-toxic-body-lotion-2025",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Coconut Oil Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+      "source_slug": "best-sls-free-toothpaste-2025",
+      "target": "https://www.realskincare.com/products/toothpaste",
+      "anchor_text": "Coconut Oil Toothpaste",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-boka-alternatives-2025",
+      "source_slug": "best-boka-alternatives-2025",
+      "target": "https://www.realskincare.com/products/toothpaste",
+      "anchor_text": "",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+      "source_slug": "best-natural-toothpaste-2025",
+      "target": "https://www.realskincare.com/products/toothpaste",
+      "anchor_text": "Fresh Mint Natural Toothpaste",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+      "source_slug": "best-natural-toothpaste-2025",
+      "target": "https://www.realskincare.com/blogs/news/toothpaste-without-artificial-sweeteners",
+      "anchor_text": "toothpaste without artificial sweeteners",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+      "source_slug": "what-is-natural-skincare-benefits-myths-how-to-start",
+      "target": "https://www.realskincare.com/products/organic-body-cream",
+      "anchor_text": "Organic Body Cream",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+      "source_slug": "what-is-natural-skincare-benefits-myths-how-to-start",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-natural-body-lotion-2025",
+      "source_slug": "best-natural-body-lotion-2025",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Coconut Oil Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-natural-body-lotion-2025",
+      "source_slug": "best-natural-body-lotion-2025",
+      "target": "https://www.realskincare.com/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin",
+      "anchor_text": "Coconut Oil Body Lotion That Actually Works for Dry Skin",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-clean-body-lotion-2025",
+      "source_slug": "best-clean-body-lotion-2025",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Coconut Oil Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+      "source_slug": "best-fragrance-free-body-lotion-2025",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Coconut Oil Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+      "source_slug": "best-body-lotion-for-sensitive-skin-2025",
+      "target": "https://www.realskincare.com/products/organic-body-lotion",
+      "anchor_text": "Organic Coconut Oil Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-tom-s-of-maine-alternatives-2025",
+      "source_slug": "best-tom-s-of-maine-alternatives-2025",
+      "target": "https://www.realskincare.com/blogs/news/toothpaste-without-artificial-sweeteners",
+      "anchor_text": "Toothpaste Without Artificial Sweeteners",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2025",
+      "source_slug": "best-toothpaste-without-sls-2025",
+      "target": "https://www.realskincare.com/blogs/news/toothpaste-for-sensitive-teeth",
+      "anchor_text": "toothpaste for sensitive teeth",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2025",
+      "source_slug": "best-toothpaste-without-sls-2025",
+      "target": "https://www.realskincare.com/blogs/news/toothpaste-without-artificial-sweeteners",
+      "anchor_text": "toothpaste without artificial sweeteners",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "source_slug": "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "target": "https://www.realskincare.com/products/moisturizing-body-lotion-coconut-breeze",
+      "anchor_text": "Real Skin Care Coconut Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "source_slug": "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "target": "https://www.realskincare.com/blogs/news/best-clean-lotion-2025",
+      "anchor_text": "Best Clean Lotion 2025",
+      "target_type": "blog_post"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "source_slug": "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "target": "https://www.realskincare.com/products/moisturizing-body-lotion-coconut-breeze",
+      "anchor_text": "Organic Coconut Body Lotion",
+      "target_type": "product"
+    },
+    {
+      "source": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "source_slug": "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "target": "https://www.realskincare.com/blogs/news/best-clean-lotion-2025",
+      "anchor_text": "Best Clean Lotion 2025",
+      "target_type": "blog_post"
+    }
+  ],
+  "link_distribution_by_type": {
+    "homepage": 51,
+    "blog_index": 51,
+    "product": 86,
+    "collection": 31,
+    "blog_post": 145
+  },
+  "crawl_results": {
+    "https://www.realskincare.com/blogs/news/definitive-guide-to-clean-skin-care-products": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Real Skin Care’s gentle, organic body cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/foaming-hand-soap",
+          "text": "sulfate-free cleanser",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "patch test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/is-your-soap-toxic-8-ingredients-to-avoid",
+          "text": "Is Your Soap Toxic? 8 Ingredients to Avoid",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Organic Lip Balm",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Unscented Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-deodorant",
+          "text": "Natural Deodorant (Frankincense & Sandalwood)",
+          "type": "product"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Real Skin Care Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/is-your-soap-toxic-8-ingredients-to-avoid",
+          "text": "Is Your Soap Toxic? 8 Ingredients to Avoid",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+          "text": "Bar Soap vs. Liquid Hand Soap: Which Is Better?",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Unscented Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/foaming-hand-soap",
+          "text": "Organic Foaming Hand Soap",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Organic Lip Balm",
+          "type": "product"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Tea Tree Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-deodorant",
+          "text": "Organic Coconut Oil Deodorant",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "Learn how to patch test here",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+          "text": "Coconut Oil Soap Benefits",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Organic Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Organic Lip Balm",
+          "type": "product"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/why-add-organic-lip-balms-to-your-skin-care-routine": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Real Skin Care’s Organic Coconut Oil Lip Balm",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-oil-benefits-for-skin",
+          "text": "Coconut Oil Benefits for Skin",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-build-a-natural-skincare-routine",
+          "text": "How to Build a Natural Skincare Routine",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/why-should-you-use-moisturizers-everday": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Real Skin Care’s Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Organic Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/all-products",
+          "text": "Find Your Moisturizer",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Organic Lip Balm",
+          "type": "product"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/natural-bar-soap",
+          "text": "natural bar soaps",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/foaming-hand-soap",
+          "text": "foaming hand soap",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Unscented Coconut Oil Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+          "text": "Organic Foaming Hand Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/is-your-soap-toxic-8-ingredients-to-avoid",
+          "text": "Is Your Soap Toxic? 8 Ingredients to Avoid",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "How to Do a Skin Care Patch Test",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/why-choose-coconut-skin-care-products": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Coconut Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Coconut Oil Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-clean-body-lotion-2025",
+          "text": "Best Clean Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Avoid",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/incorporating-vanilla-skin-care-into-your-beauty-regimen": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/natural-lip-balm/products/coconut-oil-lip-balm",
+          "text": "Vanilla Dream Lip Balm",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-cream",
+          "text": "Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/all-products",
+          "text": "Shop Moisturizers",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "How to Do a Skin Care Patch Test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-clean-body-lotion-2025",
+          "text": "Best Clean Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/why-use-natural-deodorants": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-deodorant",
+          "text": "Natural Deodorant",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "fragrance-free lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Coconut Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "patch test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+          "text": "Bar Soap vs. Liquid Hand Soap: Which Is Better?",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/why-use-unscented-skincare-products": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Coconut Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Coconut Oil Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "patch testing guide",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+          "text": "Organic Foaming Hand Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Coconut Oil Lip Balm",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-deodorant",
+          "text": "Natural Deodorant",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Coconut Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/why-should-you-use-moisturizers-everday",
+          "text": "Why You Should Use Moisturizers Every Day",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "How to Do a Skin Care Patch Test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+          "text": "Best Body Lotion for Sensitive Skin 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/the-ultimate-guide-to-moisturizing-your-skin": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Moisturizing Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "How to Do a Skin Care Patch Test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/why-should-you-use-moisturizers-everday",
+          "text": "Why You Should Use Moisturizers Every Day",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+          "text": "Best Body Lotion for Sensitive Skin 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+          "text": "Best Fragrance-Free Body Lotion 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/natural-bar-soap",
+          "text": "natural bar soaps",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/foaming-hand-soap",
+          "text": "foaming hand soap",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/organic-bar-soap",
+          "text": "organic bar soap",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Coconut Oil Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+          "text": "11 Benefits of Tea Tree Oil for Skin and Everyday Use",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+          "text": "Bar Soap vs. Liquid Hand Soap: Which Is Better?",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/how-to-choose-the-right-body-cream": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Coconut Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "patch test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/why-should-you-use-moisturizers-everday",
+          "text": "Why You Should Use Moisturizers Every Day",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/embrace-natural-beauty-with-real-skin-cares-organic-products": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/discover-the-secrets-of-organic-natural-body-lotion": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Coconut Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+          "text": "Organic Foaming Hand Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Coconut Oil Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Coconut Oil Lip Balm",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "patch test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/body-cream",
+          "text": "Body Cream Collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+          "text": "Benefits of Using Coconut Oil Lotion",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/discover-the-power-of-coconut-whitening-toothpaste": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/toothpaste",
+          "text": "Toothpaste Collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+          "text": "Organic Foaming Hand Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+          "text": "Coconut Oil Lip Balm",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "How to Do a Skin Care Patch Test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye on",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/discover-the-soothing-power-of-coconut-oil-bar-soap": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Coconut Oil Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/bar-soap",
+          "text": "Bar Soap Collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-cream",
+          "text": "Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+          "text": "Bar Soap vs. Liquid Hand Soap: Which Is Better?",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+          "text": "Organic Foaming Hand Soap",
+          "type": "product"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/get-silky-smooth-lips-with-coconut-oil-lip-balm": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-lip-balm",
+          "text": "Organic Coconut Oil Lip Balm",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "How to Do a Skin Care Patch Test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+          "text": "What Is Natural Skincare? Benefits, Myths & How to Start",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-cream",
+          "text": "Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-bar-soap",
+          "text": "Organic Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/lip-balm",
+          "text": "Lip Balm Collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/coconut-oil-products",
+          "text": "Coconut Oil Products",
+          "type": "collection"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/discover-the-best-organic-skincare-products-for-2024-at-real-skin-care": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/fluoride-free-toothpaste",
+          "text": "Fluoride-Free Coconut Oil Toothpaste",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2026",
+          "text": "The Best SLS Free Toothpaste 2026",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "The Best Fluoride Free Toothpaste 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+          "text": "Coconut Oil Pulling: Discover the Oral Health Benefits and How to Incorporate It into Your Daily Rou",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2026",
+          "text": "The Best Fluoride-Free Toothpaste 2026",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/natural-bar-soap",
+          "text": "Coconut Oil Bar Soaps",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+          "text": "Bar Soap vs Liquid Hand Soap — Which Is Better?",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/discover-the-best-organic-skincare-products-for-2024-at-real-skin-care",
+          "text": "Best Organic Skincare Products for 2024",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/non-toxic-body-care-routine",
+          "text": "Non-Toxic Body Care Routine",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/fragrance-free-skin-care",
+          "text": "How to Choose a Fragrance-Free Routine",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-oil-for-skin-care",
+          "text": "Benefits of Coconut Oil for Skin (and When to Skip It)",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-moisturizer",
+          "text": "Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/all-products",
+          "text": "Find Your Moisturizer",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+          "text": "How to Do a Skin Care Patch Test",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+          "text": "Coconut Oil Soap Benefits",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotion-2025",
+          "text": "Best Coconut Oil Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-coconut-oil-for-skin",
+          "text": "Benefits of Coconut Oil for Skin",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/toothpaste",
+          "text": "Organic Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+          "text": "Best Natural Toothpaste – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/is-fluoride-free-toothpaste-effective",
+          "text": "Is Fluoride‑Free Toothpaste Effective?",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/benefits-of-coconut-oil-for-skin-and-teeth",
+          "text": "Benefits of Coconut Oil for Skin and Teeth",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/how-to-choose-non-toxic-toothpaste",
+          "text": "How to Choose Non‑Toxic Toothpaste for Your Family",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+          "text": "Best Body Lotion for Sensitive Skin 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+          "text": "Best Fragrance-Free Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-clean-lotion-2025",
+          "text": "Best Clean Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-non-toxic-body-lotion-2025",
+          "text": "Best Non-Toxic Body Lotion 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-non-toxic-body-lotion-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/best-non-toxic-body-lotion",
+          "text": "best non-toxic body lotion collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+          "text": "Non-Toxic Body Lotion",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+          "text": "Fragrance-free body lotion for sensitive skin",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-clean-body-lotion-2025",
+          "text": "Clean body lotion picks in 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Ingredients to avoid in everyday soap",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-dr-bronners-alternatives-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-body-lotion-2025",
+          "text": "Best Natural Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+          "text": "Best Fragrance-Free Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/toothpaste",
+          "text": "Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/why-glycerin-free-toothpaste-matters",
+          "text": "Why Glycerin-Free Toothpaste Matters",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-for-families-2025",
+          "text": "Best Natural Toothpaste for Families – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/7-ingredients-to-avoid-in-natural-toothpaste",
+          "text": "7 Ingredients to Avoid in Natural Toothpaste",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-toothpaste-for-sensitive-teeth-2025",
+          "text": "Best Toothpaste for Sensitive Teeth – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "Best Fluoride-Free Toothpaste – 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-boka-alternatives-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/toothpaste",
+          "text": "",
+          "type": "product"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/toothpaste",
+          "text": "Fresh Mint Natural Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "best fluoride‑free toothpaste picks for 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2025",
+          "text": "our complete guide to SLS‑free toothpaste",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toothpaste-without-artificial-sweeteners",
+          "text": "toothpaste without artificial sweeteners",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-cream",
+          "text": "Organic Body Cream",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-soap",
+          "text": "Coconut Oil Bar Soap",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap to Keep an Eye On",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+          "text": "Bar Soap vs Liquid Hand Soap",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-natural-body-lotion-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/best-non-toxic-body-lotion",
+          "text": "best non-toxic body lotion collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/natural-body-lotion",
+          "text": "Natural Body Lotion",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+          "text": "Best Fragrance Free Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-clean-body-lotion-2025",
+          "text": "Best Clean Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+          "text": "Best Body Lotion for Sensitive Skin 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin",
+          "text": "Coconut Oil Body Lotion That Actually Works for Dry Skin",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-clean-body-lotion-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/best-non-toxic-body-lotion",
+          "text": "best non-toxic body lotion collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+          "text": "fragrance‑free body lotion for sensitive skin",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-body-lotion-2025",
+          "text": "best natural body lotions in 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "ingredients to avoid in everyday soap",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/best-non-toxic-body-lotion",
+          "text": "best non-toxic body lotion collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/fragrance-free-lotion",
+          "text": "fragrance-free body lotion",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-body-lotion-2025",
+          "text": "Best Natural Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/best-non-toxic-body-lotion",
+          "text": "best non-toxic body lotion collection",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/products/organic-body-lotion",
+          "text": "Organic Coconut Oil Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-body-lotion-2025",
+          "text": "Best Natural Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+          "text": "Toxic Chemicals in Soap",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-hello-toothpaste-alternatives-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Real Skin Care’s Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+          "text": "Best Natural Toothpaste - 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+          "text": "Best SLS Free Toothpaste - 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste",
+          "text": "Coconut Oil as Toothpaste: What You Need to Know",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-tom-s-of-maine-alternatives-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Fresh Mint Natural Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/sls-free-toothpaste",
+          "text": "SLS‑Free Toothpaste",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/fluoride-free-toothpaste",
+          "text": "Fluoride‑Free Toothpaste",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+          "text": "Best SLS‑Free Toothpaste – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "Best Fluoride‑Free Toothpaste – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toothpaste-without-artificial-sweeteners",
+          "text": "Toothpaste Without Artificial Sweeteners",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-risewell-alternatives-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Organic Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/sls-free-toothpaste",
+          "text": "SLS-Free Toothpaste",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/fluoride-free-toothpaste",
+          "text": "Fluoride Free Toothpaste",
+          "type": "collection"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Organic Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+          "text": "The Best SLS Free Toothpaste 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+          "text": "The Best Natural Toothpaste 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+          "text": "Coconut Oil Pulling: Discover the Oral Health Benefits and How to Incorporate It into Your Daily Rou",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-davids-toothpaste-alternatives-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Organic Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+          "text": "The Best SLS Free Toothpaste 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+          "text": "The Best Natural Toothpaste 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+          "text": "Coconut Oil Pulling: Discover the Oral Health Benefits and How to Incorporate It into Your Daily Rou",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+          "text": "Best SLS-Free Toothpaste 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+          "text": "Best Natural Toothpaste 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+          "text": "Coconut Oil Pulling: Benefits & How-To",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-toothpaste-for-sensitive-teeth-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Real Skin Care’s Cinnamon Spice Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+          "text": "Best Natural Toothpaste - 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "Best Fluoride Free Toothpaste - 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste",
+          "text": "Coconut Oil as Toothpaste: What You Need to Know",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Real Skin Care’s Fresh Mint Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "fluoride‑free toothpaste picks for 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toothpaste-for-sensitive-teeth",
+          "text": "toothpaste for sensitive teeth",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/toothpaste-without-artificial-sweeteners",
+          "text": "toothpaste without artificial sweeteners",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-natural-toothpaste-for-families-2025": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Real Skin Care’s All Natural Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "Best Fluoride-Free Toothpaste – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2025",
+          "text": "Best Toothpaste Without SLS – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-toothpaste-for-sensitive-teeth-2025",
+          "text": "Best Toothpaste for Sensitive Teeth – 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/7-ingredients-to-avoid-in-natural-toothpaste": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "All Natural Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "Best Fluoride Free Toothpaste",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste",
+          "text": "Coconut Oil as Toothpaste: What You Need to Know",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-for-families-2025",
+          "text": "Best Natural Toothpaste for Families – 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/why-glycerin-free-toothpaste-matters": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+          "text": "Real Skin Care’s All Natural Coconut Oil Toothpaste",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2025",
+          "text": "Best Toothpaste Without SLS – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-toothpaste-for-sensitive-teeth-2025",
+          "text": "Best Toothpaste for Sensitive Teeth – 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "text": "Best Fluoride-Free Toothpaste – 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/moisturizing-body-lotion-coconut-breeze",
+          "text": "Real Skin Care Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+          "text": "Best Fragrance-Free Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+          "text": "Best Body Lotion for Sensitive Skin 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-non-toxic-body-lotion-2025",
+          "text": "Best Non Toxic Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-clean-lotion-2025",
+          "text": "Best Clean Lotion 2025",
+          "type": "blog_post"
+        }
+      ]
+    },
+    "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks": {
+      "status": 200,
+      "links": [
+        {
+          "url": "https://www.realskincare.com/",
+          "text": "Home",
+          "type": "homepage"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news",
+          "text": "Blog",
+          "type": "blog_index"
+        },
+        {
+          "url": "https://www.realskincare.com/products/moisturizing-body-lotion-coconut-breeze",
+          "text": "Organic Coconut Body Lotion",
+          "type": "product"
+        },
+        {
+          "url": "https://www.realskincare.com/collections/vegan-body-lotion",
+          "text": "Vegan Body Lotion",
+          "type": "collection"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+          "text": "Best Body Lotion for Sensitive Skin 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-non-toxic-body-lotion-2025",
+          "text": "Best Non-Toxic Body Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-clean-lotion-2025",
+          "text": "Best Clean Lotion 2025",
+          "type": "blog_post"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin",
+          "text": "Is Coconut Oil Good for Your Skin?",
+          "type": "blog_post"
+        }
+      ]
+    }
+  }
+}
