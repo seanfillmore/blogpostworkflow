@@ -37,6 +37,7 @@ import {
   upsertMetafield,
 } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
+import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -420,7 +421,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+main()
+  .then(() => notify({ subject: 'Product Optimizer completed', body: 'Product Optimizer ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'Product Optimizer failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });

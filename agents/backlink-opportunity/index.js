@@ -34,6 +34,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
+import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -336,7 +337,10 @@ async function main() {
   });
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+main()
+  .then(() => notify({ subject: 'Backlink Opportunity completed', body: 'Backlink Opportunity ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'Backlink Opportunity failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });

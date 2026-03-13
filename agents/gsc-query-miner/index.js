@@ -35,6 +35,7 @@ import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
+import { notify } from '../../lib/notify.js';
   getTopKeywords,
   getAllQueryPageRows,
 } from '../../lib/gsc.js';
@@ -318,7 +319,10 @@ async function main() {
   console.log(`    Topic clusters:          ${clusters.length} groups`);
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+main()
+  .then(() => notify({ subject: 'GSC Query Miner completed', body: 'GSC Query Miner ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'GSC Query Miner failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });

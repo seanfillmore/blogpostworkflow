@@ -32,6 +32,7 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
+import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -421,7 +422,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+main()
+  .then(() => notify({ subject: 'Content Refresher completed', body: 'Content Refresher ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'Content Refresher failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });

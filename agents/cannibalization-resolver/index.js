@@ -44,6 +44,7 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
 import {
+import { notify } from '../../lib/notify.js';
   getBlogs, getArticles, updateArticle,
   getRedirects, createRedirect,
 } from '../../lib/shopify.js';
@@ -506,7 +507,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+main()
+  .then(() => notify({ subject: 'Cannibalization Resolver completed', body: 'Cannibalization Resolver ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'Cannibalization Resolver failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });

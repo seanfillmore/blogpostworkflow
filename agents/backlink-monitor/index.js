@@ -25,6 +25,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -244,4 +245,9 @@ function main() {
   console.log(`  Report saved: ${reportPath}`);
 }
 
-main();
+main()
+  .then(() => notify({ subject: 'Backlink Monitor completed', body: 'Backlink Monitor ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'Backlink Monitor failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+  });

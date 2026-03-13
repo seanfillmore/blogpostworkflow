@@ -38,6 +38,7 @@ import {
 } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { withRetry } from '../../lib/retry.js';
+import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -518,7 +519,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nFatal error:', err);
-  process.exit(1);
-});
+main()
+  .then(() => notify({ subject: 'Collection Creator completed', body: 'Collection Creator ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'Collection Creator failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });

@@ -21,6 +21,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import * as gsc from '../../lib/gsc.js';
+import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -184,7 +185,10 @@ async function main() {
   console.log(`  ✅ Improved: ${improved.length}  → Flat: ${flat.length}  ⚠️ Regressed: ${regressed.length}`);
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+main()
+  .then(() => notify({ subject: 'Meta A/B Checker completed', body: 'Meta A/B Checker ran successfully.', status: 'success' }))
+  .catch((err) => {
+    notify({ subject: 'Meta A/B Checker failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
