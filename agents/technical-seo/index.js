@@ -478,6 +478,7 @@ async function createRedirects({ dryRun = false } = {}) {
       let bestMatch = null;
       let bestScore = 0;
       for (const [path] of Object.entries(articleIndex)) {
+        if (path === fromPath) continue; // exclude self
         const score = slugWords.filter((w) => path.includes(w)).length;
         if (score > bestScore) { bestScore = score; bestMatch = path; }
       }
