@@ -157,15 +157,14 @@ async function main() {
     published = false;
     console.log('  Status:  draft');
   } else if (effectivePublishAt) {
-    publishAtArg = effectivePublishAt; // use preserved date
-    publishedAt = new Date(publishAtArg).toISOString();
+    publishedAt = new Date(effectivePublishAt).toISOString();
     const isFuture = new Date(publishedAt) > new Date();
     if (isFuture) {
       // Keep as plain draft on Shopify — do NOT send published_at to Shopify as it publishes immediately.
       // The intended date is stored in local JSON only; --publish-due reads it and publishes when due.
       published = false;
       publishedAt = null; // don't send to Shopify
-      console.log(`  Status:  scheduled (draft until ${new Date(publishAtArg).toISOString()})`);
+      console.log(`  Status:  scheduled (draft until ${new Date(effectivePublishAt).toISOString()})`);
     } else {
       // Past or present date — publish immediately
       published = true;
@@ -210,9 +209,9 @@ async function main() {
   meta.shopify_article_id = article.id;
   meta.shopify_handle = article.handle;
   meta.shopify_url = shopifyUrl;
-  // publishedAt is null for future schedules (not sent to Shopify); use publishAtArg for local state
-  const intendedPublishAt = publishAtArg ? new Date(publishAtArg).toISOString() : publishedAt;
-  const isFutureSchedule = publishAtArg && !published && new Date(publishAtArg) > new Date();
+  // publishedAt is null for future schedules (not sent to Shopify); use effectivePublishAt for local state
+  const intendedPublishAt = effectivePublishAt ? new Date(effectivePublishAt).toISOString() : publishedAt;
+  const isFutureSchedule = effectivePublishAt && !published && new Date(effectivePublishAt) > new Date();
   meta.shopify_status = isDraft ? 'draft' : isFutureSchedule ? 'scheduled' : published ? 'published' : 'draft';
   if (intendedPublishAt && !published) meta.shopify_publish_at = intendedPublishAt;
   else if (published) delete meta.shopify_publish_at;
