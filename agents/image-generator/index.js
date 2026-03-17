@@ -248,7 +248,7 @@ ${templateList}
 
 ${hasProductRef
   ? variantTitles.length > 1
-    ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED showing ${variantTitles.length} different variants of the same product: ${variantTitles.map(t => t.split('—')[1]?.trim() || t).join(', ')}. You MUST show ALL ${variantTitles.length} bottles together in the scene — grouped or arranged side by side. Describe each bottle exactly as it appears in the reference images, including the specific cap/lid type (e.g. flip-top cap, screw cap — NOT a pump dispenser unless the reference clearly shows one). Do NOT show only one bottle when multiple variants exist.`
+    ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED showing ${variantTitles.length} different variants of the same product: ${variantTitles.map(t => t.split('—')[1]?.trim() || t).join(', ')}. This is a generic post — include however many variants make the scene look natural and well-composed (anywhere from 1 to all ${variantTitles.length}). Describe each included product exactly as it appears in the reference images, including the specific cap/lid type (e.g. flip-top cap, screw cap — NOT a pump dispenser unless the reference clearly shows one).`
     : `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: The actual product bottle/packaging will be sent as reference images alongside this prompt. Your prompt MUST describe the product exactly as it appears in the reference — including the specific cap/lid type (e.g. flip-top cap, screw cap — NOT a pump dispenser unless the reference clearly shows one), label colors, and packaging design. Do NOT describe a "plain white bottle" or invent a different cap style.`
   : productDescription
   ? `No reference images available, but here is the exact product description to use: ${productDescription} Describe the product faithfully using these details — do not invent a different format or container type.`
@@ -785,9 +785,7 @@ async function generateImage(metaPath) {
 
     // Creative director review
     process.stdout.write('  Creative director review... ');
-    const reviewContext = isMultiVariant
-      ? `${productContext || ''} IMPORTANT: This scene should show ALL ${uniqueVariantTitles.length} product variants grouped together. Reject if only one bottle is shown when multiple variants were required.`
-      : productContext;
+    const reviewContext = productContext;
     const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, reviewContext);
     if (review.pass) {
       console.log('approved');
