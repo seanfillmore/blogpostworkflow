@@ -463,7 +463,7 @@ async function describeProducts() {
     const imageBlocks = [];
     for (const img of images.slice(0, 6)) {
       try {
-        const buf = await sharp(img.path).resize(800, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+        const buf = await sharp(img).resize(800, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
         imageBlocks.push({
           type: 'image',
           source: { type: 'base64', media_type: 'image/jpeg', data: buf.toString('base64') },
