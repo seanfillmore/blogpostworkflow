@@ -248,8 +248,8 @@ ${templateList}
 
 ${hasProductRef
   ? variantTitles.length > 1
-    ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED showing ${variantTitles.length} different variants of the same product: ${variantTitles.map(t => t.split('—')[1]?.trim() || t).join(', ')}. You MUST show ALL ${variantTitles.length} bottles together in the scene — grouped or arranged side by side. Describe each bottle as it appears in the reference images. Do NOT show only one bottle when multiple variants exist.`
-    : `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: The actual product bottle/packaging will be sent as reference images alongside this prompt. Your prompt MUST describe the product as it appears in the reference — include its label, colors, and packaging design. Do NOT describe a "plain white bottle" or "blank container". Instead describe it naturally, e.g. "a bottle of [Product Name] body lotion with its label clearly visible".`
+    ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED showing ${variantTitles.length} different variants of the same product: ${variantTitles.map(t => t.split('—')[1]?.trim() || t).join(', ')}. You MUST show ALL ${variantTitles.length} bottles together in the scene — grouped or arranged side by side. Describe each bottle exactly as it appears in the reference images, including the specific cap/lid type (e.g. flip-top cap, screw cap — NOT a pump dispenser unless the reference clearly shows one). Do NOT show only one bottle when multiple variants exist.`
+    : `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: The actual product bottle/packaging will be sent as reference images alongside this prompt. Your prompt MUST describe the product exactly as it appears in the reference — including the specific cap/lid type (e.g. flip-top cap, screw cap — NOT a pump dispenser unless the reference clearly shows one), label colors, and packaging design. Do NOT describe a "plain white bottle" or invent a different cap style.`
   : productDescription
   ? `No reference images available, but here is the exact product description to use: ${productDescription} Describe the product faithfully using these details — do not invent a different format or container type.`
   : `No product reference images are available. Describe a generic unlabeled product container appropriate to the post topic.`
@@ -308,7 +308,7 @@ async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowP
 ${allowProductLabel
   ? 'NOTE: This image intentionally includes the actual product with its label visible. A product label with readable text is EXPECTED and should NOT cause a rejection. Only reject for text on non-product elements (e.g. text floating in the background, text on props).'
   : 'Reject if any text, logos, or labels are visible anywhere in the image.'}
-${productContext ? `\nPRODUCT ACCURACY: ${productContext}` : ''}
+${productContext ? `\nPRODUCT ACCURACY — check ALL of the following details carefully:\n${productContext}\nThis includes the cap/lid type, container shape, and any other packaging details mentioned. A pump dispenser is NOT the same as a flip-top cap. A tube is NOT the same as a bottle. Flag any mismatch — even subtle ones like the wrong lid type.` : ''}
 Review this image and respond in this EXACT format (no extra lines):
 
 PASS: yes or no
@@ -316,7 +316,7 @@ TEXT_VISIBLE: yes or no (any text, logos, labels, words, numbers visible${allowP
 BLACK_BARS: yes or no (solid-colour bars/borders on any edge — letterboxing or pillarboxing?)
 SURREAL: yes or no (physically impossible geometry, objects that couldn't coexist in real life, props that are nonsensical in the setting, distorted or impossible architecture? Note: a bathroom counter, shower shelf, kitchen counter, or bedside table is NOT surreal — only flag if the scene is physically impossible or incoherent.)
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
-WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the image show the wrong product format as described above?)' : ' (n/a — write no)'}
+WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the product shown match ALL packaging details above — container type, lid/cap type, shape? Mark yes if ANY detail is wrong)' : ' (n/a — write no)'}
 SCENE_DESCRIPTION: one sentence describing the surface, props, and lighting (e.g. "White linen flat lay with coconut oil jar, mint sprigs, and soft diffused light")
 REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong (name the specific problem objects or issues). If PASS is yes, write "None."`,
         },
