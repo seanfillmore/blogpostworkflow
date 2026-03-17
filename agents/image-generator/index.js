@@ -24,7 +24,8 @@
  * Usage:
  *   node agents/image-generator/index.js data/posts/<slug>.json
  *   node agents/image-generator/index.js --all
- *   node agents/image-generator/index.js --sync-products   # download product images from Shopify
+ *   node agents/image-generator/index.js --sync-products      # download product images from Shopify
+ *   node agents/image-generator/index.js --describe-products  # generate Claude Vision descriptions for each product
  *   node agents/image-generator/index.js --compress-existing
  *
  * Product reference workflow:
@@ -207,7 +208,7 @@ const SCENE_TEMPLATES = [
   },
 ];
 
-async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejectionNote = '', hasProductRef = false, productIngredients = []) {
+async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejectionNote = '', hasProductRef = false, productIngredients = [], productDescription = null) {
   // Hard-exclude templates used in recent posts, then fall back to full set if too few remain
   const available = SCENE_TEMPLATES.filter((t) => !usedTemplateKeys.includes(t.key));
   const pool = available.length >= 3 ? available : SCENE_TEMPLATES.filter((t) => !usedTemplateKeys.slice(0, 3).includes(t.key));
@@ -247,6 +248,8 @@ ${templateList}
 
 ${hasProductRef
   ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: The actual product bottle/packaging will be sent as reference images alongside this prompt. Your prompt MUST describe the product as it appears in the reference — include its label, colors, and packaging design. Do NOT describe a "plain white bottle" or "blank container". Instead describe it naturally, e.g. "a bottle of [Product Name] body lotion with its label clearly visible".`
+  : productDescription
+  ? `No reference images available, but here is the exact product description to use: ${productDescription} Describe the product faithfully using these details — do not invent a different format or container type.`
   : `No product reference images are available. Describe a generic unlabeled product container appropriate to the post topic.`
 }
 
@@ -434,6 +437,80 @@ async function syncProductImages() {
   console.log(`\nSync complete. ${downloaded} new image(s) downloaded. ${manifest.length} products in manifest.`);
 }
 
+async function describeProducts() {
+  if (!existsSync(PRODUCT_MANIFEST_PATH)) {
+    console.error('No manifest found. Run --sync-products first.');
+    process.exit(1);
+  }
+
+  const manifest = JSON.parse(readFileSync(PRODUCT_MANIFEST_PATH, 'utf8'));
+  console.log(`Describing ${manifest.length} product(s)...\n`);
+
+  for (const product of manifest) {
+    const imageDir = product.imageDir.includes('/')
+      ? product.imageDir
+      : join(PRODUCT_IMAGES_DIR, product.imageDir);
+
+    const images = getImagesFromDir(imageDir);
+    if (images.length === 0) {
+      console.log(`  SKIP ${product.handle} — no images found`);
+      continue;
+    }
+
+    process.stdout.write(`  ${product.handle} (${images.length} image(s))... `);
+
+    // Build image content blocks (up to 6 images)
+    const imageBlocks = [];
+    for (const img of images.slice(0, 6)) {
+      try {
+        const buf = await sharp(img.path).resize(800, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+        imageBlocks.push({
+          type: 'image',
+          source: { type: 'base64', media_type: 'image/jpeg', data: buf.toString('base64') },
+        });
+      } catch { /* skip unreadable image */ }
+    }
+
+    if (imageBlocks.length === 0) {
+      console.log('no readable images');
+      continue;
+    }
+
+    const message = await anthropic.messages.create({
+      model: 'claude-opus-4-6',
+      max_tokens: 600,
+      messages: [{
+        role: 'user',
+        content: [
+          ...imageBlocks,
+          {
+            type: 'text',
+            text: `You are describing a product for an AI image generator that will include this product in lifestyle photography.
+
+Product: "${product.title}"
+
+Describe ONLY the physical product itself — not the background, setting, or props. Be precise and specific so an AI image generator can accurately recreate it. Cover:
+1. Container format (bottle, jar, tin, stick, tube, etc.) and size
+2. Shape and proportions
+3. Color of the container/packaging
+4. Label or cap details (color, style, any text style if visible)
+5. Material/finish (glossy, matte, glass, plastic, etc.)
+
+Keep it to 3-4 sentences. Focus entirely on what makes this product visually distinct and what format it comes in — so the generator never shows the wrong product type (e.g. never shows a tube when it should be a bottle).`,
+          },
+        ],
+      }],
+    });
+
+    product.productDescription = message.content[0].text.trim();
+    console.log('done');
+    console.log(`    → ${product.productDescription.slice(0, 120)}...`);
+  }
+
+  writeFileSync(PRODUCT_MANIFEST_PATH, JSON.stringify(manifest, null, 2));
+  console.log('\nDescriptions saved to manifest.');
+}
+
 function getImagesFromDir(dir) {
   const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif']);
   if (!existsSync(dir)) return [];
@@ -504,7 +581,7 @@ function findProductImagesForPost(meta) {
   // No variation match — use all product-root images (excluding subdirectories)
   const images = getImagesFromDir(best.imageDir);
   if (images.length === 0) return [];
-  return images.map((path) => ({ path, title: best.title }));
+  return images.map((path) => ({ path, title: best.title, productDescription: best.productDescription || null }));
 }
 
 // ── generate image (with CD review + retry) ───────────────────────────────────
@@ -523,9 +600,12 @@ async function generateImage(metaPath) {
     console.log(`  Product reference: ${basename(productRefs[0].path)} (${productRefs[0].title})`);
   }
 
-  // Build product format context for CD review
+  // Build product format context for CD review — prefer manifest description if available
   const kw = (meta.target_keyword || meta.title || '').toLowerCase();
-  const productContext = kw.includes('toothpaste')
+  const manifestDescription = productRefs[0]?.productDescription || null;
+  const productContext = manifestDescription
+    ? `The product in this image should match this description: ${manifestDescription} Reject if the product format does not match (e.g. a tube when it should be a bottle).`
+    : kw.includes('toothpaste')
     ? 'This post is about toothpaste. Our toothpaste comes in a 4oz bottle or jar — NEVER a squeeze tube. Reject if the image shows a toothpaste tube.'
     : kw.includes('deodorant')
     ? 'This post is about deodorant. Our deodorant is a stick/push-up format — not a spray or roll-on. Reject if the wrong format is shown.'
@@ -591,7 +671,7 @@ async function generateImage(metaPath) {
 
     process.stdout.write('  Generating image prompt with Claude... ');
     const allUsedScenes = [...usedScenes, ...sceneLog.filter((_, i) => i >= usedScenes.length).map((e) => e.scene)];
-    const { prompt, selectedKey } = await buildImagePrompt(meta, allUsedScenes, usedTemplateKeys, lastRejectionNote, useProductRef, productIngredients);
+    const { prompt, selectedKey } = await buildImagePrompt(meta, allUsedScenes, usedTemplateKeys, lastRejectionNote, useProductRef, productIngredients, manifestDescription);
     console.log('done');
     if (selectedKey) console.log(`  Template: ${selectedKey}`);
     console.log(`  Prompt: ${prompt.slice(0, 150)}...`);
@@ -757,6 +837,9 @@ async function main() {
 
   if (args[0] === '--sync-products') {
     await syncProductImages();
+    return;
+  } else if (args[0] === '--describe-products') {
+    await describeProducts();
     return;
   } else if (args[0] === '--compress-existing') {
     // Convert PNGs to WebP, and re-compress any WebPs that are still over 150KB
