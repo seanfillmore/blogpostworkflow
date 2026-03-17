@@ -623,7 +623,7 @@ async function generateImage(metaPath) {
     : kw.includes('toothpaste')
     ? 'This post is about toothpaste. Our toothpaste comes in a 4oz bottle or jar — NEVER a squeeze tube. Reject if the image shows a toothpaste tube.'
     : kw.includes('deodorant')
-    ? 'This post is about deodorant. Our deodorant is a stick/push-up format — not a spray or roll-on. Reject if the wrong format is shown.'
+    ? 'This post is about deodorant. Our deodorant comes in a roll-on bottle format. Reject if a stick, spray, or any other format is shown.'
     : kw.includes('lip balm')
     ? 'This post is about lip balm. Our lip balm comes in a small round tin or pot — not a twist-up stick. Reject if a stick-format lip balm is shown.'
     : kw.includes('lotion') || kw.includes('body lotion') || kw.includes('moisturizer')
