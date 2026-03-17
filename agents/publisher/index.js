@@ -150,10 +150,14 @@ async function main() {
   let published = true;
   let publishedAt = null;
 
+  // If no --publish-at given but the JSON already has a future scheduled date, preserve it
+  const effectivePublishAt = publishAtArg || (meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date() ? meta.shopify_publish_at : null);
+
   if (isDraft) {
     published = false;
     console.log('  Status:  draft');
-  } else if (publishAtArg) {
+  } else if (effectivePublishAt) {
+    publishAtArg = effectivePublishAt; // use preserved date
     publishedAt = new Date(publishAtArg).toISOString();
     const isFuture = new Date(publishedAt) > new Date();
     if (isFuture) {
