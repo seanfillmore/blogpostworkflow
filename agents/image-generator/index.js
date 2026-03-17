@@ -247,7 +247,7 @@ AVAILABLE SCENE TEMPLATES (choose one that fits the post topic best):
 ${templateList}
 
 ${hasProductRef
-  ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: The actual product bottle/packaging will be sent as reference images alongside this prompt. Your prompt MUST describe the product as it appears in the reference — include its label, colors, and packaging design. Do NOT describe a "plain white bottle" or "blank container". Instead describe it naturally, e.g. "a bottle of [Product Name] body lotion with its label clearly visible".`
+  ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: Multiple reference images of the actual product may be provided — some may show different flavor/scent variants of the same product line. If multiple variants are shown, include all of them together in the scene (e.g. three toothpaste bottles side by side). Your prompt MUST describe the product(s) as they appear in the references — include label colors and packaging design. Do NOT describe a "plain white bottle" or "blank container". Instead describe it naturally, e.g. "three bottles of Real Skin Care toothpaste in different flavors with labels clearly visible".`
   : productDescription
   ? `No reference images available, but here is the exact product description to use: ${productDescription} Describe the product faithfully using these details — do not invent a different format or container type.`
   : `No product reference images are available. Describe a generic unlabeled product container appropriate to the post topic.`
@@ -268,7 +268,7 @@ HARD RULES:
 - Props must make real-world sense together on that surface — no random unrelated objects
 - Contextual scene elements (toothbrush, faucet, towel, cup, soap dish, etc.) are encouraged for bathroom/kitchen/bedroom scenes — make it look like a real lived-in space
 - Do NOT include people
-- Maximum 3 props total — keep it minimal
+- Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced, don't force the maximum
 - Every prop must be physically plausible in the chosen setting
 - PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a stick/push-up format. Our lip balm is a small round tin or pot. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
     }],
@@ -568,17 +568,26 @@ function findProductImagesForPost(meta) {
         const images = getImagesFromDir(variationDir);
         return { ...v, variationScore, variationDir, images };
       })
-      .filter((v) => v.variationScore > 0 && v.images.length > 0)
-      .sort((a, b) => b.variationScore - a.variationScore);
+      .filter((v) => v.images.length > 0);
 
-    if (scoredVariations.length > 0) {
-      const bestVariation = scoredVariations[0];
+    const matched = scoredVariations.filter((v) => v.variationScore > 0).sort((a, b) => b.variationScore - a.variationScore);
+
+    if (matched.length > 0) {
+      // Specific variation matched — use only that one
+      const bestVariation = matched[0];
       console.log(`  Variation matched: ${bestVariation.name} (${bestVariation.images.length} image(s))`);
-      return bestVariation.images.map((path) => ({ path, title: `${best.title} — ${bestVariation.name}` }));
+      return bestVariation.images.map((path) => ({ path, title: `${best.title} — ${bestVariation.name}`, productDescription: best.productDescription || null }));
+    } else if (scoredVariations.length > 1) {
+      // Generic post — include all variations so all flavors appear in the scene
+      const allImages = scoredVariations.flatMap((v) =>
+        v.images.slice(0, 2).map((path) => ({ path, title: `${best.title} — ${v.name}`, productDescription: best.productDescription || null }))
+      );
+      console.log(`  Generic post — including all ${scoredVariations.length} variation(s) (${allImages.length} image(s))`);
+      return allImages;
     }
   }
 
-  // No variation match — use all product-root images (excluding subdirectories)
+  // No variations — use root images
   const images = getImagesFromDir(best.imageDir);
   if (images.length === 0) return [];
   return images.map((path) => ({ path, title: best.title, productDescription: best.productDescription || null }));
