@@ -208,7 +208,7 @@ const SCENE_TEMPLATES = [
   },
 ];
 
-async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejectionNote = '', hasProductRef = false, productIngredients = [], productDescription = null) {
+async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejectionNote = '', hasProductRef = false, productIngredients = [], productDescription = null, variantTitles = []) {
   // Hard-exclude templates used in recent posts, then fall back to full set if too few remain
   const available = SCENE_TEMPLATES.filter((t) => !usedTemplateKeys.includes(t.key));
   const pool = available.length >= 3 ? available : SCENE_TEMPLATES.filter((t) => !usedTemplateKeys.slice(0, 3).includes(t.key));
@@ -247,7 +247,9 @@ AVAILABLE SCENE TEMPLATES (choose one that fits the post topic best):
 ${templateList}
 
 ${hasProductRef
-  ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: Multiple reference images of the actual product may be provided — some may show different flavor/scent variants of the same product line. If multiple variants are shown, include all of them together in the scene (e.g. three toothpaste bottles side by side). Your prompt MUST describe the product(s) as they appear in the references — include label colors and packaging design. Do NOT describe a "plain white bottle" or "blank container". Instead describe it naturally, e.g. "three bottles of Real Skin Care toothpaste in different flavors with labels clearly visible".`
+  ? variantTitles.length > 1
+    ? `PRODUCT REFERENCE IMAGES WILL BE PROVIDED showing ${variantTitles.length} different variants of the same product: ${variantTitles.map(t => t.split('—')[1]?.trim() || t).join(', ')}. You MUST show ALL ${variantTitles.length} bottles together in the scene — grouped or arranged side by side. Describe each bottle as it appears in the reference images. Do NOT show only one bottle when multiple variants exist.`
+    : `PRODUCT REFERENCE IMAGES WILL BE PROVIDED: The actual product bottle/packaging will be sent as reference images alongside this prompt. Your prompt MUST describe the product as it appears in the reference — include its label, colors, and packaging design. Do NOT describe a "plain white bottle" or "blank container". Instead describe it naturally, e.g. "a bottle of [Product Name] body lotion with its label clearly visible".`
   : productDescription
   ? `No reference images available, but here is the exact product description to use: ${productDescription} Describe the product faithfully using these details — do not invent a different format or container type.`
   : `No product reference images are available. Describe a generic unlabeled product container appropriate to the post topic.`
@@ -609,6 +611,10 @@ async function generateImage(metaPath) {
     console.log(`  Product reference: ${basename(productRefs[0].path)} (${productRefs[0].title})`);
   }
 
+  // Detect unique variants — used to tell the prompt builder to show all bottles
+  const uniqueVariantTitles = [...new Set(productRefs.map((r) => r.title))];
+  const isMultiVariant = uniqueVariantTitles.length > 1;
+
   // Build product format context for CD review — prefer manifest description if available
   const kw = (meta.target_keyword || meta.title || '').toLowerCase();
   const manifestDescription = productRefs[0]?.productDescription || null;
@@ -680,7 +686,7 @@ async function generateImage(metaPath) {
 
     process.stdout.write('  Generating image prompt with Claude... ');
     const allUsedScenes = [...usedScenes, ...sceneLog.filter((_, i) => i >= usedScenes.length).map((e) => e.scene)];
-    const { prompt, selectedKey } = await buildImagePrompt(meta, allUsedScenes, usedTemplateKeys, lastRejectionNote, useProductRef, productIngredients, manifestDescription);
+    const { prompt, selectedKey } = await buildImagePrompt(meta, allUsedScenes, usedTemplateKeys, lastRejectionNote, useProductRef, productIngredients, manifestDescription, uniqueVariantTitles);
     console.log('done');
     if (selectedKey) console.log(`  Template: ${selectedKey}`);
     console.log(`  Prompt: ${prompt.slice(0, 150)}...`);
@@ -779,7 +785,10 @@ async function generateImage(metaPath) {
 
     // Creative director review
     process.stdout.write('  Creative director review... ');
-    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, productContext);
+    const reviewContext = isMultiVariant
+      ? `${productContext || ''} IMPORTANT: This scene should show ALL ${uniqueVariantTitles.length} product variants grouped together. Reject if only one bottle is shown when multiple variants were required.`
+      : productContext;
+    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, reviewContext);
     if (review.pass) {
       console.log('approved');
     } else {
