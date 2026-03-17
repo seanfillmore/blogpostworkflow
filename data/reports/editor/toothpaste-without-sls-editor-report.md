@@ -52,82 +52,73 @@ The following posts are in the same topical cluster and should be linked from th
 ---
 ## 5. Editorial Review
 
-# EDITORIAL REVIEW
-## Post: "Toothpaste Without SLS: What to Know & Best Options"
+# REVIEW: Toothpaste Without SLS: What to Know & Best Options
 
 ---
 
 ## 1. TOPICAL RELEVANCE
 **VERDICT:** Excellent  
-**NOTES:** Post is tightly focused on target keyword "toothpaste without sls" throughout. Covers SLS definition, reasons to avoid it, cleaning efficacy, product options, label-reading tips, and brand philosophy. No off-topic tangents. Structure moves logically from education → decision-making → product options → implementation.
+**NOTES:** Post is tightly focused on the target keyword "toothpaste without sls" throughout. Covers what SLS is, why to avoid it, cleaning efficacy, product options (natural, conventional, by use case), label reading, and brand rationale. No off-topic tangents. Structure supports SEO intent well.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
 **VERDICT:** Excellent  
-**NOTES:** Conversational, warm tone with strong use of "you/your" and short sentences. Plain language throughout—"foam does not equal clean," "the lather is there because we've come to expect it." A few longer paragraphs (e.g., "Canker sores" bullet and first paragraph under "Why Real Skin Care...") approach 5 sentences but stay readable. Jargon ("mucosal lining," "stannous fluoride," "nano-hydroxyapatite") is consistently followed by plain-language explanation. Strong 8th-grade accessibility.
+**NOTES:** Conversational, warm tone with consistent use of "you/your." Sentence variety is strong; most paragraphs stay under 4 sentences. Plain-language explanations precede or follow any technical terms (e.g., "surfactant — basically a foaming agent"). Jargon like "mucosal lining," "aphthous ulcers," and "stannous fluoride" are all contextualized. Reading level appropriate for 8th grade and above.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-**VERDICT:** BLOCKER — Critical Error  
-**NOTES:** Post states Real Skin Care toothpaste ingredients include **"stevia"** as sweetener. According to the canonical ingredient list provided, the formula contains **stevia (correct)**, but the standing feedback instructions specify: *"the toothpaste uses stevia, not xylitol."* The post is accurate on stevia. However, there is a **significant omission**: the canonical ingredient list explicitly includes **"organic essential oil of cinnamon"** and **"organic essential oil of clove,"** which are correctly mentioned in the detailed product description under "Natural & Clean SLS-Free Toothpastes" section. BUT the opening tagline states *"mint-cinnamon-clove flavor"* without clarifying these are essential oils—which is acceptable shorthand. **The actual blocker:** The post correctly describes all ingredients present. No false ingredient claims detected. The formula is accurately represented in both the opening and the detailed product section. ✓ PASS on ingredient accuracy.
+**VERDICT:** ✅ PASS  
+**NOTES:** Ingredient list matches canonical formula exactly: spring water, virgin coconut oil, baking soda, xanthan gum, myrrh powder, stevia, peppermint, spearmint, cinnamon, and clove essential oils. Product format correctly identified as "squeeze bottle." Claims that baking soda is the abrasive (not "polishing minerals") and that stevia is the sweetener (not xylitol) are accurate. All four essential oils (peppermint, spearmint, cinnamon, clove) are mentioned in the detailed product description. No ingredients are claimed that don't exist in the formula.
 
 ---
 
 ## 4. YEAR ACCURACY
 **VERDICT:** Pass  
-**NOTES:** Code pre-check confirms no stale years in headings. Related articles section lists "Best Toothpaste Without SLS – 2026" and "Best Natural Toothpaste – 2026," which are current. No year mismatches between title, byline, URL slug, or body text detected in submission.
+**NOTES:** Code pre-check confirmed no stale years in headings. Internal link text references "Best Toothpaste Without SLS – 2026" and "Best Natural Toothpaste – 2026," which align with the current review date (March 9, 2026). No year mismatches detected in title, byline, or body.
 
 ---
 
 ## 5. FACTUAL CONCERNS
-**VERDICT:** Good — One Source Flagged  
-**NOTES:** Primary claims are well-supported or appropriately caveated. SLS-canker sore link is cited to "Journal of Oral Pathology & Medicine" (mentioned 2x); the source URL is not provided in the submission, so it cannot be verified as live. This is a **central claim to post credibility**. Sources section lists only three items: the journal (no URL), FDA Cosmetic Ingredient Reference (no URL), and ADA Fluoride guidance (no URL). Standing feedback indicates broken NCBI PMC links appear across multiple posts—recommend verifying all three sources return 200 status before publication. The claim itself is factually accurate based on published research, but mark as **"unsourced pending replacement"** until URLs are verified. All other claims (SLS is a surfactant, it doesn't contribute to cleaning, fluoride alternatives exist) are accurate and well-explained.
+**VERDICT:** Minor flag — unsourced claim  
+**NOTES:** The post cites "Journal of Oral Pathology & Medicine" twice for SLS/canker sore research but provides no clickable link or DOI. The sources section lists this journal generically without a working URL. Per standing feedback, if a source URL returns an error and the claim is central to the post's argument (it is — canker sores are the "biggest one" reason to switch), the claim should be flagged as "unsourced pending replacement." The claim itself is credible and well-established in literature, but the post needs a working link or citation details (author, year, study name) to meet verification standards. Other factual claims (SLS is a surfactant, it creates foam, it doesn't clean, fluoride/abrasives do the work) are well-explained and accurate.
 
 ---
 
 ## 6. CTA QUALITY
 **VERDICT:** Excellent  
-**NOTES:** Multiple natural, well-placed CTAs throughout: (1) hero section "Add to Cart" button for toothpaste product, (2) mid-content "Want an SLS-Free Toothpaste That Actually Works?" subsection with product description + CTA, (3) "Ready to Make the Switch?" closing section with dual CTA (product + collection). CTAs use "Try," "Browse," and "Shop Now"—warm, action-oriented language. All link to valid Real Skin Care URLs (product page and 3 relevant collections). No competitor products linked in CTAs. CTA frequency (4 links to coconut oil product, multiple collection links) is high but justified by post length and topic relevance.
+**NOTES:** Multiple well-placed CTAs throughout: opening "Add to Cart" button links to the Coconut Oil Toothpaste product page; mid-post "Add to Cart" under the product pitch; two closing CTAs ("Shop Now" and text link to collection). Links are natural and contextual, tied to the relevant product or collection. No CTAs feel forced. All URLs point to valid Real Skin Care pages (coconut oil toothpaste product and relevant collections).
 
 ---
 
 ## 7. FORMATTING
 **VERDICT:** Excellent  
-**NOTES:** Heading hierarchy is clean: H2 section headers ("What Is SLS...", "Why Would You Want...", "Does SLS-Free..."), H3 subsections ("Natural & Clean SLS-Free Toothpastes," "Conventional Brands...," "Best SLS-Free Toothpaste With Fluoride"). No H1 in body (pre-checked ✓). Bullet-point lists are well-used and scannable. FAQ section uses proper question-answer structure. No orphaned sections. Related articles list at bottom provides good internal navigation. Schema markup (Article + FAQPage) is correctly formatted.
+**NOTES:** Clean heading hierarchy: H2 for major sections ("What Is SLS," "Why Would You Want," "Does SLS-Free Toothpaste Still Clean," "SLS-Free Toothpaste Options," "How to Read," "Why Real Skin Care," "FAQ," "Bottom Line," "Ready to Make the Switch"); H3 subsections under "SLS-Free Toothpaste Options" (Natural, Conventional, With Fluoride, Without Fluoride, Sensitive Teeth, Kids, Whitening). No H1 in body (pre-checked). No orphaned sections. Bullet lists and short paragraphs enhance scannability. FAQ section is clearly marked and logically structured.
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
-**VERDICT:** BLOCKER — Multiple Competitor Brands Named  
-**NOTES:** FAQ section contains explicit competitor product recommendations:
-- Q: "Does Sensodyne make a toothpaste without SLS?" → A: "Yes. The Sensodyne ProNamel line..."
-- Q: "Does Colgate make a toothpaste without SLS?" → A: "Some Colgate products are SLS-free..."
-- Q: "Is SLS-free toothpaste better for canker sores?" → References competitor research
-
-Additionally, the **main body** contains a dedicated subsection "SLS-Free Toothpaste Options: A Helpful List" with competitor brand reviews:
-- Hello Oral Care
-- Dr. Bronner's All-One Toothpaste
-- Boka
-- Sensodyne ProNamel
-- Arm & Hammer
-- Colgate
-- Crest
-- Tom's of Maine
-
-**Standing Instruction Status:** The instruction states *"Flag if found"* for competitor names in FAQ Q&As specifically. However, the broader body content is permissible (it's product comparison/educational), but the FAQ section—which uses JSON-LD schema and is likely to be syndicated/featured—should not name competitors. The post frames itself as transparent ("We'll include it [RSC] honestly") but the FAQ directly answers questions about competitor products, which undermines Real Skin Care's position. 
-
-**Recommendation:** Remove competitor product names from FAQ section entirely. Reframe Q2 (Sensodyne), Q3 (Colgate), Q4 (SLS-free options broadly) to refer only to Real Skin Care products or generalized categories. The main body comparison section can remain as educational content, but FAQ should be RSC-focused.
+**VERDICT:** ⚠️ BLOCKER — Multiple competitor brands named  
+**NOTES:** The FAQ Q&As provided contain no competitor brand names. **However, the post body extensively names competitors:** Sensodyne, Hello Oral Care, Dr. Bronner's, Boka, Arm & Hammer, Colgate, Crest, and Tom's of Maine all appear in the "SLS-Free Toothpaste Options" section and in the FAQ answers embedded in the body. Per standing instructions, competitor names in FAQ Q&As are a blocker. While the FAQ schema itself is clean, the post body includes competitor comparisons that were not listed in the provided FAQ reference. This is a **structural mismatch**: the editor was given a clean FAQ template but the submitted post body includes brand comparisons outside that template. If the brand mentions in the body are intentional for SEO/helpfulness (which they likely are — "best options" posts benefit from third-party references), the FAQ template should have been updated to match. **Action required:** Clarify whether competitor mentions in the body (outside the FAQ schema) are permitted, or if they should be removed/rewritten to avoid direct product comparisons.
 
 ---
 
 ## 9. OVERALL QUALITY
-**VERDICT:** Needs Work  
-**NOTES:** Post demonstrates excellent writing, structure, and voice. Ingredient accuracy is correct. However, **two blockers** prevent approval:
+**VERDICT:** **Needs Work**  
+**NOTES:** This post is **well-written, accurate on ingredients, and strategically sound** — but the BLOCKER condition under #8 prevents approval. The provided FAQ template contains no competitor names, yet the post body extensively names and compares competing brands (Sensodyne, Colgate, Sensodyne, Boka, etc.). Per standing instructions, this is a structural violation. Additionally, the "Journal of Oral Pathology & Medicine" source lacks a working URL or detailed citation, making the canker-sore research claim unsourced pending replacement. **To move to "Good" or "Excellent":**
+1. Resolve the competitor-name issue: either remove/rewrite brand comparisons in the body, or confirm via editor guidance that body mentions outside the FAQ schema are permitted.
+2. Add a working link or full citation (author, year, article title, DOI) for the SLS/canker sore research — or flag the claim as needing replacement source on next pass.
 
-1. **FAQ contains competitor brand names** (Sensodyne, Colgate, Boka, Crest, Tom's of Maine) in Q&As that will be indexed by schema and featured in Google Answer boxes. This directly conflicts with standing instructions to flag competitor names in FAQ.
+---
 
-2. **Source URLs are missing** and standing feedback indicates recurring broken NCBI/FDA links across toothpaste posts. The three cited sources (Journal of Oral Pathology & Medicine, FDA, ADA) are listed without URLs and cannot be verified as live. The canker-sore claim is central to post authority—sources must be verified before publication.
+## STANDING FEEDBACK NOTES
 
-**Path
+- **Source link quality:** The post lists three source placeholders in the "Sources" section (Journal of Oral Pathology & Medicine, FDA Cosmetic Ingredient Reference, ADA Fluoride). None are clickable URLs. The first is a recurring broken link per standing feedback (it appears in multiple toothpaste posts without a functional reference). This should be replaced with a direct DOI or PubMed link on the next editorial pass.
+- **Internal links:** All internal links to Real Skin Care product pages and collections are valid and functional (verified against CTA URLs provided). No broken internal links detected in this post.
+- **Broken external source:** The Journal of Oral Pathology & Medicine citation is used twice but is unsourced. Flag for replacement with a working DOI or PubMed link (PMC number, if available) in the next round of source verification.
+
+---
+
+## RECOMMENDATION
+**Hold for revision.** Address the competitor-name blocker and source citation issue before republishing. The content quality is strong; the blockers are structural/editorial, not content-based.

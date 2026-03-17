@@ -52,72 +52,73 @@ The following posts are in the same topical cluster and should be linked from th
 ---
 ## 5. Editorial Review
 
-# EDITORIAL REVIEW
+# EDITORIAL REVIEW: SLS Toothpaste: What It Is & Why to Go SLS-Free
+
+---
 
 ## 1. TOPICAL RELEVANCE
-**VERDICT:** Excellent  
-**NOTES:** Post is tightly focused on target keyword "SLS toothpaste" throughout. Covers what SLS is, why brands use it, health concerns, who should switch, and product alternatives. No off-topic tangents. Structure logically progresses from definition → rationale → concerns → recommendations → product showcase.
+**VERDICT:** Pass  
+**NOTES:** Post is tightly aligned with target keyword "sls toothpaste." Content systematically covers what SLS is, why brands use it, health concerns, effectiveness of alternatives, and product recommendations. No off-topic tangents; structure follows user intent throughout.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
-**VERDICT:** Excellent  
-**NOTES:** Conversational, warm tone throughout ("Let's be direct," "you/your" usage, plain language). Sentence lengths are varied and digestible. Jargon is introduced with plain-language follow-up: "sodium lauryl sulfate — or SLS" and "mucosal lining of the mouth" is explained as "a protective barrier." No paragraphs exceed 4 sentences except one brief bulleted section. Readability ~8th grade level maintained.
+**VERDICT:** Pass  
+**NOTES:** Conversational tone with accessible language ("Think of it like dish soap for your mouth"). Short paragraphs dominate; longest sections stay under 4 sentences. Good use of "you/your" and plain phrasing ("Let's be direct," "The good news?"). Clinical terms (mucin, anionic surfactant) are defined immediately. Readability is ~8th grade; voice is warm and honest.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
 **VERDICT:** BLOCKER — CRITICAL ERROR  
-**NOTES:** **Product ingredients list provided shows stevia, NOT xylitol.** Post content is accurate: "Our coconut oil toothpaste... contains: purified spring water, organic virgin coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder, stevia, and organic essential oils of peppermint, spearmint, cinnamon, and clove." ✓ All four essential oils (peppermint, spearmint, cinnamon, clove) are correctly mentioned. ✓ Baking soda is correctly listed. ✓ Product format correctly described as "squeeze bottle." ✓ However, in the "What to Look for in an SLS-Free Toothpaste" section, the post states ingredients are "milder on mucosal tissue" and praises natural actives, but **does NOT mention stevia as a natural sweetener choice** — it's in the formula but the post doesn't call it out in the "natural actives" section. This is a minor omission (not a contradiction) but worth noting. The standing feedback specifies stevia vs. xylitol accuracy; this post **correctly uses stevia.** No blocker for accuracy per se, but the post could strengthen the formula description by explicitly calling out stevia as the sweetening choice.
+**NOTES:** Post claims the toothpaste uses **xanthan gum as a thickener**, but canonical ingredients show **xanthan gum is present**. However, the standing feedback explicitly states the toothpaste **contains stevia, NOT xylitol**. The post never mentions xylitol, so that's correct. BUT — the standing feedback also flags that **cinnamon and clove essential oils are often omitted from product descriptions.** This post DOES correctly list both: "organic essential oils of peppermint, spearmint, cinnamon, and clove" in the "What a genuinely clean SLS-free formula looks like" section. The ingredient list in that section matches the canonical formula exactly: purified spring water, organic virgin coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder, stevia, peppermint, spearmint, cinnamon, clove. **Verdict corrected: ingredients are accurate.** No blocker.
 
 ---
 
 ## 4. YEAR ACCURACY
 **VERDICT:** Pass  
-**NOTES:** Title and byline both reference 2026 ("Updated March 2026"). Internal date consistency appears sound. URL slug and body text years pre-checked by code. No year mismatches detected in this submission.
+**NOTES:** Code pre-check indicates no stale years in headings. Byline reads "Updated March 2026," which aligns with standing last-updated date (March 9, 2026). Related articles section includes "Best Toothpaste Without SLS – 2026" and "Best Natural Toothpaste – 2026," which are current. No year mismatches detected.
 
 ---
 
 ## 5. FACTUAL CONCERNS
-**VERDICT:** Good  
-**NOTES:** Core claims are well-sourced or accurately hedged. SLS is FDA-approved at 1–2% in toothpaste (accurate). Canker sore research attribution to Herlofson & Barkvoll 1994 is correctly cited. Post appropriately states "not acutely dangerous for most people" rather than claiming absolute safety. Mucosal barrier disruption, dry mouth connection, and perioral dermatitis are all documented concerns presented with appropriate evidence caveats. One minor concern: the statement "Anyone telling you otherwise is overstating the science" (in the SLS danger section) is assertive but accurate per regulatory review. No exaggerated or unsubstantiated claims detected.
+**VERDICT:** Pass with Minor Source Note  
+**NOTES:** Claims are well-supported and appropriately hedged. Key factual statements (SLS is FDA-approved at 1–2%, Herlofson & Barkvoll 1994 study on canker sores, mucosal barrier disruption) align with cited sources. The post correctly notes SLS is "not acutely dangerous for most people" and avoids overstating risks. One source listed — "U.S. Food & Drug Administration — Cosmetic Ingredients Overview" — is generic and should be verified to confirm it returns a live link (standing feedback notes FDA antiperspirant pages are broken; cosmetic overview may be affected). Recommend spot-checking this link on next technical pass.
 
 ---
 
 ## 6. CTA QUALITY
 **VERDICT:** Excellent  
-**NOTES:** CTAs are natural and well-placed. Five distinct CTAs appear throughout: (1) "Looking for a Toothpaste That's Gentle on Your Mouth?" → product link, (2) heading "SLS-Free Toothpaste Options: A Practical Guide" → collection links, (3) "You can browse our full SLS-free toothpaste collection," (4) "Ready to Drop the SLS for Good?" section at mid-post, (5) final takeaway → collection link. CTAs tie directly to product and are conversational. All links point to valid Real Skin Care URLs (coconut oil toothpaste product and SLS-free/natural toothpaste collections).
+**NOTES:** CTAs are natural and well-placed. Multiple product links to coconut oil toothpaste (https://www.realskincare.com/products/coconut-oil-toothpaste) appear organically within relevant sections ("Our coconut oil toothpaste skips the SLS entirely"). Collection links to SLS-free and natural toothpaste collections are embedded contextually ("You can browse our full SLS-free toothpaste collection"). Final CTA at bottom ("Shop Now") is soft but direct. Seven product links, three collection links — good saturation without overselling.
 
 ---
 
 ## 7. FORMATTING
-**VERDICT:** Good  
-**NOTES:** Heading hierarchy is clean (H2 sections: "What Is SLS in Toothpaste?", "Why Do Toothpaste Brands Put SLS in Their Formulas?", etc.). No H1 in body (pre-checked ✓). Bulleted lists are properly formatted and scannable. FAQ section is structured with Q&A format matching schema. One minor note: the "Related Articles" section at the end lists 6 internal article links with years (e.g., "Best Toothpaste Without SLS – 2026"). These are formatted correctly but one link references "Best SLS-free toothpaste guide" — verify these slugs exist and are not orphaned (common issue per standing feedback). One potential formatting issue: the "Sources" section lists four citations but does not provide URLs or active hyperlinks — only author names and publication titles. This is acceptable for print-style citations but consider adding clickable DOI or NCBI links for digital credibility.
+**VERDICT:** Pass  
+**NOTES:** Heading hierarchy is clean (H2 for main sections, H3 for subsections like "Related Articles"). No H1 in body (pre-checked). One minor orphaned element noted: the FAQ section contains multiple Q&As but they lack structural nesting — they appear as plain text rather than as marked-up FAQ items. However, JSON-LD FAQPage schema is provided separately and correctly structured, so this is a presentation-only note, not a blocker. Overall structure is sound.
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
-**VERDICT:** BLOCKER — COMPETITOR REFERENCES DETECTED  
-**NOTES:** FAQ Q&A "Does Sensodyne toothpaste have SLS?" directly names **Sensodyne** (and sub-variant "Sensodyne Pronamel") as a competitor product. This violates the standing instruction: "COMPETITOR NAMES IN FAQ — Using the FAQ Q&As provided, flag any brand names other than Real Skin Care. BLOCKER if found." The main body also mentions "Sensodyne Pronamel" in the "Why Do Toothpaste Brands Put SLS in Their Formulas?" section, along with "standard Crest, Colgate, and Oral-B products." However, the standing instruction specifically flags **FAQ** competitor names as a blocker. The FAQ entry must be removed or reworded to avoid naming Sensodyne directly. Suggest revision: "Do some toothpaste brands offer SLS-free options?" with answer redirecting to Real Skin Care's collection rather than naming competitors.
+**VERDICT:** BLOCKER — COMPETITOR MENTION FOUND  
+**NOTES:** FAQ section contains explicit competitor brand names: "Sensodyne Pronamel" and "Sensodyne" appear in two questions ("Does Sensodyne toothpaste have SLS?" and implied in answer text). Body text also mentions "Crest, Colgate, and Oral-B" in the section "Why Do Toothpaste Brands Put SLS in Their Formulas?" Standing instruction states: "Flag any brand names other than Real Skin Care. BLOCKER if found." Per standing feedback instructions, competitor names in FAQ Q&As are an explicit blocker. This post violates that rule.
 
 ---
 
 ## 9. OVERALL QUALITY
 **VERDICT:** Needs Work  
-**NOTES:** Post has excellent editorial quality, tone, structure, and factual grounding — BUT contains a BLOCKER (competitor brand names in FAQ). Must remove or neutralize the Sensodyne reference in the FAQ section before approval. Once that is corrected, the post moves to "Good" or "Excellent" status. All other dimensions are strong. Request resubmission with FAQ competitor reference removed.
+**NOTES:** Content is excellent — accurate, readable, well-researched, and strategically CTAed. However, the presence of competitor brand names (Sensodyne, Crest, Colgate, Oral-B) in both FAQ and body text triggers the standing blocker rule. Specifically, the FAQ questions "Does Sensodyne toothpaste have SLS?" and the answer that references Sensodyne Pronamel must be removed or rewritten to reference the competitor only generically (e.g., "some mainstream brands"). Body mentions are less critical but should also be softened to generic references ("mainstream brands" instead of named competitors). Ingredient accuracy is correct. All other dimensions pass.
 
 ---
 
-## SUMMARY OF BLOCKERS & REQUIRED ACTIONS
+## SUMMARY FOR RESUBMISSION
 
-| Issue | Severity | Action |
-|-------|----------|--------|
-| Competitor brand name (Sensodyne) in FAQ Q5 | **BLOCKER** | Remove or reword FAQ entry "Does Sensodyne toothpaste have SLS?" to avoid naming competitor brands. Redirect to Real Skin Care's collection instead. |
+**DO NOT APPROVE.** Resubmit with:
 
----
+1. **Remove or genericize competitor names:**
+   - FAQ Q: "Does Sensodyne toothpaste have SLS?" → Rewrite to "Do some mainstream sensitive toothpaste brands have SLS?" or similar.
+   - FAQ Answer referencing Sensodyne Pronamel → Rephrase to "Some mainstream sensitive formulas are commonly cited as SLS-free."
+   - Body text "Crest, Colgate, and Oral-B" → Generalize to "most mainstream toothpaste lines."
 
-## SECONDARY NOTES FOR WEB TEAM
+2. **Spot-check external source links** (FDA Cosmetic Ingredients Overview) for live status before final approval.
 
-1. **Source URLs:** The "Sources" section lists citations without active hyperlinks. Herlofson & Barkvoll (1994, 1996) and Chahine et al. (1997) should ideally link to PubMed or DOI if available. FDA link is reference-only. Consider adding NCBI links for credibility (noting standing feedback about broken NCBI links in other posts — verify these work before publishing).
-
-2. **Internal Links:** Related Articles section lists six links with dates. Verify all slug
+3. **All other elements approved** — no changes needed to ingredients, year, tone, CTA placement, or formatting.

@@ -6,7 +6,7 @@
 ---
 ## 1. Link Health
 
-**14 links OK** | **5 broken/unreachable**
+**13 links OK** | **6 broken/unreachable**
 
 | URL | Anchor Text | Status | Error |
 |-----|-------------|--------|-------|
@@ -15,6 +15,7 @@
 | https://www.realskincare.com/blogs/news/sls-free-toothpaste-the-gentle-switch-worth-making | SLS Free Toothpaste: The Gentle Switch Worth Making | 404 |  |
 | https://www.realskincare.com/blogs/news/best-natural-toothpaste-2026 | Best Natural Toothpaste – 2026 | 404 |  |
 | https://www.ams.usda.gov/about-ams/programs-offices/national-organic-program | USDA National Organic Program — Organic Labeling Standards | 403 |  |
+| https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4229754/ | Antibacterial Effect of Lauric Acid and Coconut Oil on Streptococcus mutans — NCBI | 405 |  |
 
 ---
 ## 2. Internal Link Validation
@@ -51,104 +52,73 @@ The following posts are in the same topical cluster and should be linked from th
 ---
 ## 5. Editorial Review
 
-# EDITORIAL REVIEW
-## Best Organic Toothpaste: What to Look For & Why It Matters
+# POST REVIEW: "Best Organic Toothpaste: What to Look For & Why It Matters"
 
 ---
 
 ## 1. TOPICAL RELEVANCE
 **VERDICT:** Excellent  
-**NOTES:** Post stays tightly focused on "organic toothpaste" throughout. Keyword appears naturally in headings, body text, and multiple contextual variations (certified organic, fluoride-free organic, organic whitening, etc.). No off-topic tangents; all sections ladder back to the core question of what makes toothpaste genuinely organic and how to choose well.
+**NOTES:** Post tightly targets "organic toothpaste" keyword throughout with natural clustering of related terms (certified organic, organic ingredients, fluoride-free, whitening, etc.). No off-topic tangents. Structure mirrors typical buyer journey: what organic means → ingredients to look for → what to avoid → use cases → decision framework. Strong topical focus maintained end-to-end.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
 **VERDICT:** Excellent  
-**NOTES:** Warm, conversational tone with frequent "you/your" address. Sentences are crisp and short; most paragraphs stay at 3–4 sentences. Plain language dominates (e.g., "flip the tube over," "no fluff"). A few technical terms (RDA scale, hydroxyapatite, fluorosis) are all defined or explained immediately after introduction. The byline and closing note add transparency and personality without jargon.
+**NOTES:** Voice is conversational, warm, and accessible. Sentence lengths are short and varied; many paragraphs stay at 2–3 sentences. Plain language dominates ("flip the tube over," "the label says clean. The formula doesn't."). Jargon like "RDA scale" is immediately explained in parentheses. Frequent use of "you/your" builds direct relationship with reader. Reading level appropriate for target audience.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-**VERDICT:** BLOCKER — Multiple Critical Errors  
-**NOTES:** 
-
-**CRITICAL MISMATCH:**  
-The post claims RSC's formula contains **xylitol** as a sweetener. Per the canonical ingredient list provided, the formula contains **stevia**, not xylitol. This is repeated in the ingredient breakdown section ("RSC uses stevia…instead of…xylitol") and again in the FAQ answer. However, the standing feedback explicitly flags xylitol as a recurring error—an ingredient "not in the formula" that appears across posts.
-
-**OMISSION ERROR:**  
-The post's ingredient breakdown lists: coconut oil, baking soda, myrrh, stevia, peppermint, spearmint, cinnamon, clove, xanthan gum, and spring water. The canonical list includes **cinnamon and clove essential oils**, which are correctly mentioned. However, the breakdown does NOT explicitly call out that **cinnamon and clove are essential oils**—it lists them inline with peppermint and spearmint without clarifying their format. This is a minor presentation issue but compounds the larger accuracy problem.
-
-**BROADER PATTERN MATCH:**  
-This post exhibits the exact error flagged in standing feedback: "(b) xylitol appears in toothpaste posts when the actual formula uses stevia." The post must be corrected before approval.
+**VERDICT:** ✅ PASS (No issues detected)  
+**NOTES:** Post correctly identifies all RSC toothpaste ingredients: baking soda, coconut oil, stevia, myrrh, peppermint, spearmint, cinnamon, clove, xanthan gum, spring water. Accurately describes product format as "squeeze bottle." No ingredients attributed to RSC that aren't in the formula. Stevia correctly identified (not xylitol). All four essential oils named (cinnamon and clove included). Baking soda confirmed as abrasive. No contradictions with canonical ingredient list.
 
 ---
 
 ## 4. YEAR ACCURACY
 **VERDICT:** Pass  
-**NOTES:** Code pre-checks confirmed no stale years in headings. Byline reads "Reviewed for accuracy: March 2026," which aligns with the standing feedback date of March 9, 2026. No year-in-title/URL mismatch detected.
+**NOTES:** Code pre-check confirmed no stale years in headings. Byline reads "March 2026" and post content references "March 2026" in sources section. No year mismatches detected between title, URL slug, and body text. Consistent with standing feedback expectations.
 
 ---
 
 ## 5. FACTUAL CONCERNS
-**VERDICT:** Unsourced Pending Replacement (non-blocking if sources are updated)  
-**NOTES:** 
-
-The post cites four sources in the "Sources" section, but **none include actual URLs or DOI links**:
-- "USDA National Organic Program — Organic Labeling Standards" (no link)
-- "Antibacterial Effect of Lauric Acid and Coconut Oil on Streptococcus mutans — NCBI" (no link; matches the pattern of broken NCBI PMC URLs flagged in standing feedback)
-- "Baking Soda Dentifrices and Oral Health — Journal of the American Dental Association" (no link)
-- "Oral Hygiene — American Dental Association" (no link)
-- "Sodium Lauryl Sulfate and Recurrent Aphthous Ulcers — PubMed" (no link)
-
-Per standing feedback, NCBI PMC links in deodorant and toothpaste posts are systematically broken (404/405). The coconut oil and SLS claims here are central to the post's argument. **Flag all source URLs for replacement on next pass.** Until then, treat supporting claims as "unsourced pending replacement" rather than approved.
-
-The fluoride section is balanced and does not make exaggerated claims; it presents both sides fairly. Baking soda whitening claim is well-supported by standing reference to "decades of clinical study."
+**VERDICT:** Excellent — minor clarification opportunity  
+**NOTES:** Claims are well-sourced and appropriately nuanced. Fluoride section balanced ("strongly supported by mainstream dentistry" vs. "legitimate reasons" for fluoride-free choice). RDA scale reference accurate. Coconut oil antibacterial claim properly framed as "has been examined" and "studied in laboratory settings" — appropriately cautious. One small note: post references "studies" on coconut oil's effect on S. mutans but source link is not active in sources list (see Sources section below). Overall factual integrity is high.
 
 ---
 
 ## 6. CTA QUALITY
-**VERDICT:** Excellent  
-**NOTES:** CTAs are natural and well-placed. Six CTAs link to the primary product (`/products/coconut-oil-toothpaste`), with additional CTAs to relevant collection pages (vegan, SLS-free, fluoride-free, cinnamon, mint, natural). CTAs appear organically after key sections ("Add to Cart" after ingredient intro, "Shop Now" before final paragraph). No aggressive or orphaned CTAs; messaging feels earned by content.
+**VERDICT:** Good — repetitive placement  
+**NOTES:** CTAs are well-integrated and natural. Primary CTA ("Add to Cart" for coconut oil toothpaste product) appears 3 times with appropriate context. Secondary CTAs ("Shop Now," "Browse our natural toothpaste collection") placed at logical decision points. However, the same product URL (coconut-oil-toothpaste) is linked 6 times, and collection links repeat 4+ times. This is over-optimization—consider varying or consolidating. CTAs themselves are warm and non-aggressive ("ready to make the switch?"), fitting brand voice perfectly.
 
 ---
 
 ## 7. FORMATTING
 **VERDICT:** Excellent  
-**NOTES:** H1 not in body (pre-checked ✓). Heading hierarchy is clean: H2 for major sections, H3 for subsections (e.g., "Best Organic Toothpaste for Adults"). No orphaned sections. FAQ section properly formatted with Q&A pairs. Bullet lists are used effectively to break up dense sections. Related Articles section at bottom is a logical waypoint.
+**NOTES:** Heading hierarchy is clean (H2 primary sections, H3 for subsections). No H1 in body (pre-checked). Orphaned sections absent. Bulleted lists are well-formatted and scannable. FAQ is properly structured with Q&A pairs. Schema markup (Article + FAQPage) is present and correct. Visual hierarchy supports readability throughout.
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
-**VERDICT:** Pass  
-**NOTES:** Four FAQ Q&As provided all contain only Real Skin Care references. No competitor brand names appear. Neutral references to "most brands" in Q1 are permissible (general market education, not competitor naming).
+**VERDICT:** ✅ Pass — No competitor brand names found  
+**NOTES:** FAQ Q&As reference only Real Skin Care products and ingredients. No Colgate, Crest, Tom's, Hello, or other competitor brands mentioned. All Q&As stay focused on educational content and RSC product benefits. Compliant with brand guidelines.
 
 ---
 
-## 9. OVERALL QUALITY
-**VERDICT:** Needs Work  
-**NOTES:** 
-
-**BLOCKER PRESENT:** Ingredient accuracy errors (xylitol vs. stevia) are a non-negotiable blocker per standing instructions ("Add any post that describes RSC products with ingredients they don't contain as a blocker — do not approve").
-
-**Secondary Issues:**
-- Source links missing; central claims depend on replacements per standing feedback.
-- Minor omission in how cinnamon/clove essential oils are presented in the ingredient breakdown.
-
-**Strengths:**  
-Excellent topical relevance, brand voice, and CTA execution. Content is well-structured, educational, and appropriately skeptical of greenwashing. Formatting is clean. The post would be strong once ingredient and source errors are corrected.
-
-**Action Required Before Approval:**
-1. Correct xylitol → stevia throughout (ingredient breakdown, FAQ, and any other mentions).
-2. Clarify that cinnamon and clove are "essential oils" (not just listed as ingredients).
-3. Replace all source URLs with working links (prioritize NCBI coconut oil study and SLS-aphthous ulcer link).
-4. Re-submit for final review.
+## 9. SOURCES & BROKEN LINKS
+**VERDICT:** ⚠️ FLAGGED — Source links incomplete  
+**NOTES:** Sources section lists 5 sources, but only titles and general descriptions are provided (no actual URLs given). Per standing feedback, NCBI PMC citations and FDA links commonly return 405/404 errors across RSC posts. This post does not include specific PMC numbers or FDA URLs, so no systemic broken-link pattern detected *in this post*, but the absence of clickable source links is a usability issue. Recommend adding functional URLs for: (1) USDA Organic Labeling Standards, (2) NCBI study on coconut oil & S. mutans, (3) JADA baking soda article, (4) ADA oral hygiene page, (5) SLS and aphthous ulcers source. Flag to web team for addition before publication.
 
 ---
 
-## STANDING ISSUES FLAGGED FOR WEB TEAM
+## 10. OVERALL QUALITY
+**VERDICT:** Excellent ✅  
 
-**Systemic Source URL Problem:**  
-NCBI and PubMed links in this post (and others) are incomplete or broken. Consider auditing and replacing all source citations across toothpaste posts in a single upstream pass rather than post-by-post.
+**SUMMARY:**
+This post is well-researched, brand-aligned, and editorial-ready. It successfully teaches readers how to evaluate organic toothpaste claims while naturally positioning Real Skin Care's formula as a transparent, ingredient-first example. Voice is warm and accessible; accuracy is high; CTAs are organic (though slightly repetitive); formatting is clean.
 
-**Recurring Ingredient Accuracy:**  
-The xylitol/stevia confusion in this post matches the pattern noted in standing feedback. A QA check at the formulation-data level (before posts are submitted) would prevent these errors.
+**Minor improvements before publication:**
+1. Add functional source URLs to Sources section (currently titles only).
+2. Consider consolidating or varying repeated product link placements (same coconut-oil-toothpaste URL appears 6 times).
+3. Ensure source link URLs are tested for 404/405 errors before final publish.
+
+**No blockers detected. Approved for publication with source URL additions.**
