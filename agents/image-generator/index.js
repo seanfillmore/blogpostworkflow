@@ -266,7 +266,8 @@ HARD RULES:
 - Contextual scene elements (toothbrush, faucet, towel, cup, soap dish, etc.) are encouraged for bathroom/kitchen/bedroom scenes — make it look like a real lived-in space
 - Do NOT include people
 - Maximum 3 props total — keep it minimal
-- Every prop must be physically plausible in the chosen setting`,
+- Every prop must be physically plausible in the chosen setting
+- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a stick/push-up format. Our lip balm is a small round tin or pot. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
     }],
   });
 
@@ -279,7 +280,7 @@ HARD RULES:
 
 // ── creative director review ──────────────────────────────────────────────────
 
-async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowProductLabel = false) {
+async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowProductLabel = false, productContext = null) {
   // Resize to max 1280px wide as JPEG before sending to Claude (5MB API limit)
   const reviewBuf = await sharp(imagePath).resize(1280, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
   const base64 = reviewBuf.toString('base64');
@@ -302,7 +303,7 @@ async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowP
 ${allowProductLabel
   ? 'NOTE: This image intentionally includes the actual product with its label visible. A product label with readable text is EXPECTED and should NOT cause a rejection. Only reject for text on non-product elements (e.g. text floating in the background, text on props).'
   : 'Reject if any text, logos, or labels are visible anywhere in the image.'}
-
+${productContext ? `\nPRODUCT ACCURACY: ${productContext}` : ''}
 Review this image and respond in this EXACT format (no extra lines):
 
 PASS: yes or no
@@ -310,6 +311,7 @@ TEXT_VISIBLE: yes or no (any text, logos, labels, words, numbers visible${allowP
 BLACK_BARS: yes or no (solid-colour bars/borders on any edge — letterboxing or pillarboxing?)
 SURREAL: yes or no (physically impossible geometry, objects that couldn't coexist in real life, props that are nonsensical in the setting, distorted or impossible architecture? Note: a bathroom counter, shower shelf, kitchen counter, or bedside table is NOT surreal — only flag if the scene is physically impossible or incoherent.)
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
+WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the image show the wrong product format as described above?)' : ' (n/a — write no)'}
 SCENE_DESCRIPTION: one sentence describing the surface, props, and lighting (e.g. "White linen flat lay with coconut oil jar, mint sprigs, and soft diffused light")
 REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong (name the specific problem objects or issues). If PASS is yes, write "None."`,
         },
@@ -323,6 +325,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
   const blackBars = /BLACK_BARS:\s*yes/i.test(raw);
   const surreal = /SURREAL:\s*yes/i.test(raw);
   const looksAi = /LOOKS_AI:\s*yes/i.test(raw);
+  const wrongProductFormat = /WRONG_PRODUCT_FORMAT:\s*yes/i.test(raw);
   const sceneMatch = raw.match(/SCENE_DESCRIPTION:\s*(.+)/i);
   const rejectionMatch = raw.match(/REJECTION_REASON:\s*(.+)/i);
 
@@ -331,6 +334,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
     blackBars && 'black bars detected',
     surreal && 'physically impossible/surreal elements',
     looksAi && 'obviously AI-generated appearance',
+    wrongProductFormat && 'wrong product format (e.g. tube instead of bottle)',
   ].filter(Boolean);
 
   const rejectionReason = rejectionMatch?.[1]?.trim() ?? '';
@@ -519,6 +523,18 @@ async function generateImage(metaPath) {
     console.log(`  Product reference: ${basename(productRefs[0].path)} (${productRefs[0].title})`);
   }
 
+  // Build product format context for CD review
+  const kw = (meta.target_keyword || meta.title || '').toLowerCase();
+  const productContext = kw.includes('toothpaste')
+    ? 'This post is about toothpaste. Our toothpaste comes in a 4oz bottle or jar — NEVER a squeeze tube. Reject if the image shows a toothpaste tube.'
+    : kw.includes('deodorant')
+    ? 'This post is about deodorant. Our deodorant is a stick/push-up format — not a spray or roll-on. Reject if the wrong format is shown.'
+    : kw.includes('lip balm')
+    ? 'This post is about lip balm. Our lip balm comes in a small round tin or pot — not a twist-up stick. Reject if a stick-format lip balm is shown.'
+    : kw.includes('lotion') || kw.includes('body lotion') || kw.includes('moisturizer')
+    ? 'This post is about body lotion. Our lotion comes in a pump bottle — not a tube. Reject if a tube is shown.'
+    : null;
+
   // Extract actual product ingredients to constrain prop choices
   const productIngredients = (() => {
     if (!existsSync(join(ROOT, 'config', 'ingredients.json'))) return [];
@@ -674,7 +690,7 @@ async function generateImage(metaPath) {
 
     // Creative director review
     process.stdout.write('  Creative director review... ');
-    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef);
+    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, productContext);
     if (review.pass) {
       console.log('approved');
     } else {
