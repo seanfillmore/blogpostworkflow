@@ -1,126 +1,133 @@
 # SEO Performance Report — Real Skin Care
 **Period:** 2026-03
-**Generated:** March 9, 2026
+**Generated:** March 16, 2026
 
 ---
 
-# Real Skin Care — SEO Performance Report
+# Real Skin Care — Monthly SEO Performance Report
 **Period:** March 2026
 **Site:** https://www.realskincare.com
 **Prepared by:** SEO Lead
-**Report Generated:** March 2026
 
 ---
 
 ## 1. Executive Summary
 
-- **Ahrefs data is unavailable this period.** Domain metrics, keyword rankings, traffic by page, and backlink stats could not be pulled. Performance assessment below is based on content pipeline data and the March 8 gap analysis. This is a significant blind spot and should be resolved before the April report.
-- **Publishing velocity is on track.** Three posts went live in March and two more are scheduled for March 16–17, bringing the active deodorant and toothpaste clusters closer to completion. The pipeline is functional.
-- **The fluoride-free toothpaste opportunity remains the most urgent gap.** At 22,000 searches/month with a KD of 0, RSC is currently sitting at position 46 despite having both a published post and a collection page. The scheduled post (March 16) is a direct attempt to fix this, but it needs to be monitored closely for movement.
-- **Lip balm and bar soap categories have zero supporting content.** RSC sells products in both categories but has no blog content targeting any of the relevant keywords. These represent compounding missed traffic — Dr. Bronner's earns 943 monthly visits from a single lip balm product page alone.
-- **20 briefs are queued but unwritten.** With only 8 listed explicitly in the data, the full queue represents a backlog that needs prioritization and assignment if publishing pace is to scale beyond the current rate.
+- **Traffic and ranking data are unavailable this period.** Ahrefs API was not accessible, meaning no keyword positions, traffic estimates, or backlink metrics can be reported. All performance assessment this month is based on content inventory, pipeline status, and prior gap analysis findings.
+- **Content velocity is strong.** Six posts are scheduled to publish in March, with two clusters — toothpaste/SLS and deodorant — taking shape. The site will move from 66 to at least 72 live articles by end of month.
+- **The fluoride-free toothpaste opportunity remains the most urgent priority.** Despite a published post and an existing collection page, RSC sits at position 46 for a 22,000/mo keyword with KD 0. This should be resolving — the calendar is executing against it, but we have no visibility into whether positions are moving without Ahrefs access.
+- **Lip balm and bar soap are still early-stage gaps.** The lip balm cluster is just now entering the pipeline. Bar soap has zero supporting content despite RSC selling coconut soap bars. Both represent low-competition, meaningful-volume opportunities that are not yet captured.
+- **25 briefs are queued but unwritten.** The pipeline is healthy on volume but the gap between briefs and published content needs to close systematically. Several high-priority topics — including multiple deodorant variants and body lotion terms — are stalled at the brief stage.
 
 ---
 
 ## 2. Content Performance
 
-**Traffic and ranking data is not available this period.** The Ahrefs API was inaccessible, so no top pages, keyword positions, or traffic trend data can be reported.
+**Ranking data:** Not available. Ahrefs API was inaccessible this period. No keyword positions, traffic estimates, or top-page data can be reported.
 
-What is known from the March 8 gap analysis (the most recent snapshot available):
+**What we know from prior gap analysis (March 8, 2026):**
 
-| Signal | Detail |
-|---|---|
-| "fluoride free toothpaste" | RSC at position 46 — 22,000/mo, KD 0 |
-| "natural lip balm" | Not ranking — 4,900/mo, KD 6, zero RSC content |
-| "organic lip balm" | Not ranking — 3,400/mo, KD 3, zero RSC content |
-| "natural bar soap for men" | Not ranking — 700/mo, KD 1, zero RSC content |
-| "natural bar soap for women" | Not ranking — 300/mo, KD 7, zero RSC content |
+| Keyword | Est. Monthly Volume | KD | RSC Status |
+|---|---|---|---|
+| fluoride free toothpaste | 22,000 | 0 | Position 46 — underperforming |
+| natural lip balm | 4,900 | 6 | No content (post now scheduled) |
+| organic lip balm | 3,400 | 3 | No content |
+| natural lip balm recipe | 100 (TP: 4,200) | — | No content |
+| natural bar soap for men | 700 | 1 | No content |
+| natural bar soap for women | 300 | 7 | No content |
+| cinnamon toothpaste | — | — | Post published |
+| best aluminum free deodorant | — | — | Post scheduled |
 
-The deodorant cluster is the most built-out content area on the site. Three posts targeting deodorant keywords published this period, and two of the eight explicitly named briefs in the queue are deodorant-adjacent ("best natural deodorant for men," "best natural deodorant for women"). Whether these posts are ranking or gaining impressions cannot be confirmed without Ahrefs access.
+**Key observation:** The fluoride-free toothpaste post is live and the collection page exists, but a position 46 ranking suggests the page lacks authority, internal link support, or content depth. The SLS cluster now being published in March is the right move to build topical reinforcement — but without Ahrefs data, we cannot confirm whether the fluoride-free post is moving.
 
-**Action required:** Restore Ahrefs API access before the April reporting cycle. Without this data, there is no way to assess whether published content is moving or stalling.
+> **Action required:** Restore Ahrefs API access before the April report. Flying blind on rankings for a period when we're actively executing a cluster build is a meaningful risk.
 
 ---
 
 ## 3. Content Pipeline Status
 
-### Published This Period (March 2026)
-| Title | Target Keyword | Status |
+### Published This Period
+| Title | Target Keyword |
+|---|---|
+| Best Cinnamon Toothpaste: Benefits, Brands & What to Know | cinnamon toothpaste |
+| Fluoride Free Toothpaste: Benefits, How It Works & Best Picks | fluoride free toothpaste |
+
+### Scheduled for March 2026
+| Title | Publish Date | Target Keyword |
 |---|---|---|
-| "Why Use Natural Deodorant? Benefits & Reasons to Switch" | why use natural deodorant | Published |
-| "Best Natural Deodorant for Sensitive Skin in 2026" | best natural deodorant for sensitive skin | Published |
-| "Best Natural Roll On Deodorant: Clean Picks That Work" | best natural roll on deodorant | Published |
+| Natural Lip Balm: Best Ingredients & How to Choose | Mar 17 | natural lip balm |
+| Best Aluminum Free Deodorant in 2026 (That Actually Works) | Mar 17 | best aluminum free deodorant |
+| Toothpaste Without Sodium Lauryl Sulfate: Why It Matters | Mar 19 | toothpaste without sodium lauryl sulfate |
+| SLS Free Toothpaste: The Gentle Switch Worth Making | Mar 19 | SLS free toothpaste |
+| Best Natural Toothpaste – 2026 | Mar 26 | best natural toothpaste |
+| Best Toothpaste Without SLS – 2026 | Mar 30 | best toothpaste without SLS |
 
-### Scheduled
-| Title | Target Keyword | Publish Date |
-|---|---|---|
-| "Fluoride Free Toothpaste: Benefits, How It Works & Best Picks" | fluoride free toothpaste | March 16, 2026 |
-| "Best Aluminum Free Deodorant in 2026 (That Actually Works)" | best aluminum free deodorant | March 17, 2026 |
+**Six posts scheduled in March** — a solid output. The toothpaste/SLS cluster (4 posts) and the deodorant opener are both executing on the content calendar strategy.
 
-### Briefs Queued (Written and Ready to Assign)
-8 of 20 total briefs are named in the current data. Full list of named briefs:
+### Briefs Queued — Not Yet Written (25 total)
+Selected high-priority examples from the queue:
 
-1. best aluminum free deodorant *(post now scheduled — brief may be consumed)*
-2. best natural deodorant for men
-3. best natural deodorant for sensitive skin *(post published — brief may be consumed)*
-4. best natural deodorant for women
-5. best natural roll on deodorant *(post published — brief may be consumed)*
-6. cinnamon toothpaste
-7. clean body lotion
-8. fluoride free toothpaste *(post scheduled — brief may be consumed)*
+- all natural lotion
+- best aluminum free deodorant *(note: post is scheduled — confirm brief is retired)*
+- best natural deodorant for men
+- best natural deodorant for sensitive skin
+- best natural deodorant for women
+- best natural roll on deodorant
+- cinnamon toothpaste *(note: post is published — confirm brief is retired)*
+- clean body lotion
 
-**Note:** The pipeline data lists 20 briefs queued total but only 8 are named. The remaining 12 are unspecified. This should be reconciled — an unnamed brief cannot be prioritized or assigned.
+> **Flag:** "best aluminum free deodorant" and "cinnamon toothpaste" appear in both the briefs queue and the published/scheduled posts list. These should be removed from the briefs queue to keep the pipeline accurate.
 
-### Overall Content Inventory
-- **Live Shopify articles:** 58
-- **Local pipeline:** 7 published, 2 scheduled
-- **Briefs not yet written:** 20 (partially named)
+### Inventory Summary
+| Stage | Count |
+|---|---|
+| Live Shopify articles | 66 |
+| Published this period (pipeline) | 17 |
+| Scheduled (March) | 6 |
+| Briefs queued, unwritten | 25 |
 
 ---
 
 ## 4. Technical Health
 
-### Open Editor Issues
-**None.** No posts have unresolved editor flags as of this report.
+**Open editor issues:** None reported.
 
-### Link and Technical Issues
-No technical crawl data is available this period. Ahrefs API being offline also means no broken backlink or internal link data can be surfaced. Outside of the editor issue queue being clean, technical health cannot be fully assessed.
+**Backlink data:** Not available.
 
-**Minimum recommended check before next report:**
-- Confirm internal links from all three March deodorant posts point to the deodorant collection page
-- Confirm the fluoride-free toothpaste post (March 16) links to the `fluoride-free-toothpaste` collection
-- Verify scheduled posts are indexed within 48–72 hours of going live
+**Ahrefs domain metrics:** Not available — API inaccessible.
+
+**No critical technical flags this period.** However, the following items warrant attention:
+
+- **Internal linking:** With 4 SLS/toothpaste posts publishing in a single month, internal linking between these pieces and the existing fluoride-free toothpaste post needs to be intentional and executed at publish time — not retroactively. Confirm that each scheduled post links to the fluoride-free post and to the `fluoride-free-toothpaste` collection page.
+- **Pipeline data hygiene:** Two briefs ("best aluminum free deodorant," "cinnamon toothpaste") appear to correspond to already-published or scheduled posts. The briefs queue should be audited to remove completed items and avoid double-counting.
+- **Monitoring gap:** Without Ahrefs access, there is currently no way to detect ranking drops, index issues, or cannibalization across the SLS cluster. This is a meaningful blind spot given current cluster activity.
 
 ---
 
 ## 5. Wins This Period
 
-- **Three posts shipped in a single period.** The deodorant cluster now has meaningful depth — sensitive skin, roll-on format, and reasons-to-switch are all covered. This is the kind of cluster density that supports topical authority signals.
-- **No open editor issues across 58 live articles.** A clean queue means no content is stuck, flagged, or degraded — a baseline that's worth maintaining explicitly.
-- **Two high-priority posts are staged and scheduled.** The fluoride-free toothpaste post going live March 16 directly targets the single largest keyword gap on the site (22,000/mo, KD 0, current position 46). If the post performs, this alone could represent a meaningful traffic gain within 30–60 days.
-- **The deodorant brief backlog is nearly cleared.** Of the six deodorant-related briefs in the named queue, four are either published or scheduled. "Best natural deodorant for men" and "best natural deodorant for women" are the only remaining gaps in this cluster.
+- **Fluoride-free toothpaste cluster is actively being built.** Four toothpaste/SLS posts are scheduled in March alone. This is exactly what the gap analysis called for and it's executing on schedule.
+- **Lip balm entered the pipeline.** "Natural Lip Balm: Best Ingredients & How to Choose" is scheduled for March 17 — the first content addressing a category (KD 6, 4,900/mo) that had zero coverage despite RSC selling the product.
+- **Best Aluminum Free Deodorant post is scheduled.** This extends RSC's deodorant cluster with a high-intent, commercial keyword that was flagged as a gap.
+- **No open editor issues.** All 66 live posts are clean — no unresolved content quality flags.
+- **Content calendar is tracking to plan.** The March 8 calendar called for toothpaste cluster execution in Weeks 1–4 and lip balm introduction alongside it. March's scheduled posts are consistent with that plan.
 
 ---
 
 ## 6. Priority Actions for Next Period (April 2026)
 
-**Ordered by estimated impact:**
+**Ordered by impact:**
 
-**1. Restore Ahrefs API access and pull a full performance snapshot.**
-This is the highest-priority non-content task. Without ranking and traffic data, there is no way to confirm whether any published content is working. The March posts — particularly the fluoride-free toothpaste piece — need to be monitored for position movement starting within 2–3 weeks of publish.
+1. **Restore Ahrefs API access and pull a full ranking snapshot.** This is non-negotiable. We are executing a cluster build for a 22,000/mo keyword and have zero visibility into whether it's working. Pull current positions for: `fluoride free toothpaste`, `toothpaste without sodium lauryl sulfate`, `SLS free toothpaste`, `cinnamon toothpaste`, `natural lip balm`, `best aluminum free deodorant`. Establish a baseline before April content publishes.
 
-**2. Publish "Best Natural Deodorant for Men" and "Best Natural Deodorant for Women" to complete the deodorant cluster.**
-Both briefs are named and queued. Completing this cluster gives RSC comprehensive coverage of the deodorant category and strengthens internal linking across all deodorant posts. These should be the first two posts assigned to writers in April.
+2. **Execute internal linking across the live toothpaste/SLS cluster.** Once all six March posts are live, audit internal links to ensure every toothpaste/SLS post links to the others and to the `fluoride-free-toothpaste` collection page. The fluoride-free post sitting at position 46 with KD 0 is a link and authority problem — this is the lowest-cost fix available.
 
-**3. Launch the lip balm content cluster — start with a natural lip balm roundup.**
-Lip balm is an entirely unaddressed category. RSC sells the product, has a collection page, and the top keyword ("natural lip balm") sits at 4,900/mo with a KD of 6. There is no reason this cluster should not exist. A single well-optimized roundup post should be briefed and published in April. "Organic lip balm" (3,400/mo, KD 3) follows as piece two.
+3. **Move bar soap content from gap to brief to published.** "Natural bar soap for men" (700/mo, KD 1) and "natural bar soap for women" (300/mo, KD 7) have no competing content and no RSC coverage. Per the content calendar, bar soap opens in Weeks 5–6. Brief writing should begin now so posts are ready to publish in April.
 
-**4. Brief and publish at least one bar soap content piece targeting a gender-specific keyword.**
-"Natural bar soap for men" (700/mo, KD 1) is a near-zero-competition keyword with a clear product match. This is the lowest-effort new category entry in the gap analysis. One post opens the cluster; subsequent gender and use-case variants can follow in May–June per the content calendar.
+4. **Audit and clean the briefs queue.** 25 briefs queued is a healthy backlog, but at least 2 confirmed duplicates exist ("cinnamon toothpaste," "best aluminum free deodorant"). Audit all 25 against live and scheduled posts, remove duplicates, and confirm true queue count. Prioritize the deodorant cluster briefs (men, women, sensitive skin, roll-on) for writing in April given the published "best aluminum free deodorant" post will need cluster support.
 
-**5. Reconcile and name all 20 queued briefs.**
-12 of 20 briefs in the queue are currently unnamed. An unspecified brief cannot be prioritized, assigned, or scheduled. Before April's content calendar is set, every brief in the queue should have a confirmed target keyword and owner. This is a planning hygiene issue that will compound if left unresolved as the queue grows.
+5. **Build the organic/natural lip balm supporting content.** The "Natural Lip Balm" pillar post publishes March 17. Supporting terms — "organic lip balm" (3,400/mo, KD 3) and "natural lip balm recipe" (traffic potential 4,200) — should move to brief and then to draft in April to complete the cluster while the pillar post is fresh and indexing.
 
 ---
 
-*Next report due: End of April 2026. Ahrefs access required for full performance assessment.*
+*Report generated for internal use. Next report due: end of April 2026. Ahrefs API restoration required before that report can include performance data.*
