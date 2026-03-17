@@ -422,7 +422,7 @@ async function syncProductImages() {
       handle: product.handle,
       title: product.title,
       tags: product.tags ? product.tags.split(',').map((t) => t.trim().toLowerCase()) : [],
-      imageDir: productDir,
+      imageDir: product.handle,
     });
   }
 
@@ -443,6 +443,12 @@ function findProductImagesForPost(meta) {
 
   const manifest = JSON.parse(readFileSync(PRODUCT_MANIFEST_PATH, 'utf8'));
 
+  // Resolve imageDir — support both legacy absolute paths and new relative (handle) format
+  const resolved = manifest.map((p) => ({
+    ...p,
+    imageDir: p.imageDir.includes('/') ? p.imageDir : join(PRODUCT_IMAGES_DIR, p.imageDir),
+  }));
+
   // Build keyword set from post metadata (full phrases + individual words)
   const postText = [
     ...(meta.tags || []),
@@ -453,7 +459,7 @@ function findProductImagesForPost(meta) {
   const postKeywords = postText.split(/\s+/).filter((k) => k.length > 3);
 
   // Score each product against post keywords
-  const scored = manifest
+  const scored = resolved
     .filter((p) => existsSync(p.imageDir))
     .map((p) => {
       const productTerms = [p.handle.replace(/-/g, ' '), p.title.toLowerCase(), ...p.tags].join(' ');
