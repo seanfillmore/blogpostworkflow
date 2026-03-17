@@ -36,6 +36,7 @@ import {
   getRedirects, createRedirect,
   upsertMetafield,
   getProducts, getProduct, updateProduct, updateProductImage,
+  getAllFiles, updateFileAlt,
 } from '../../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -928,7 +929,56 @@ async function fixAltText({ dryRun = false } = {}) {
     }
   }
 
-  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} images across blog posts and products`);
+  // ── Hero images in Shopify Files ─────────────────────────────────────────
+  console.log('\n  Checking hero images in Shopify Files...');
+  const POSTS_DIR = join(ROOT, 'data', 'posts');
+  const postFiles = existsSync(POSTS_DIR)
+    ? readdirSync(POSTS_DIR).filter((f) => f.endsWith('.json'))
+    : [];
+
+  // Build a map of CDN URL (without query string) → post metadata
+  const cdnToPost = new Map();
+  for (const f of postFiles) {
+    try {
+      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      if (meta.shopify_image_url) {
+        const baseUrl = meta.shopify_image_url.split('?')[0];
+        cdnToPost.set(baseUrl, meta);
+      }
+    } catch { /* skip */ }
+  }
+
+  if (cdnToPost.size === 0) {
+    console.log('  No posts with hero images found.');
+  } else {
+    const allFiles = await getAllFiles();
+    const heroFiles = allFiles.filter((f) => {
+      const baseUrl = f.url.split('?')[0];
+      return cdnToPost.has(baseUrl);
+    });
+
+    const missingAlt = heroFiles.filter((f) => !f.alt || f.alt.trim() === '');
+    console.log(`  ${heroFiles.length} hero image(s) found, ${missingAlt.length} missing alt text\n`);
+
+    for (const file of missingAlt) {
+      const baseUrl = file.url.split('?')[0];
+      const meta = cdnToPost.get(baseUrl);
+      process.stdout.write(`  ${meta.target_keyword || meta.title}: generating alt... `);
+      const alt = await generateAltText(file.url, meta.title, meta.shopify_url || '');
+      console.log(`"${alt}"`);
+
+      if (!dryRun) {
+        try {
+          await updateFileAlt(file.id, alt);
+          fixed++;
+        } catch (e) {
+          console.log(`    Error: ${e.message}`);
+        }
+      } else { fixed++; }
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} images across blog posts, products, and hero files`);
 }
 
 // ── COMMAND: compare ─────────────────────────────────────────────────────────
