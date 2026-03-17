@@ -161,7 +161,9 @@ async function checkUrl(href) {
       redirect: 'follow',
       signal: AbortSignal.timeout(10000),
     });
-    return { ok: res.ok, status: res.status, finalUrl: res.url };
+    // 403/405 = bot-blocked, treat as valid
+    const ok = res.ok || res.status === 403 || res.status === 405;
+    return { ok, status: res.status, finalUrl: res.url };
   } catch (err) {
     return { ok: false, status: null, error: err.message };
   }
