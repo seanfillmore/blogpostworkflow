@@ -545,11 +545,26 @@ async function main() {
   // Save snapshot
   mkdirSync(SNAPSHOTS_DIR, { recursive: true });
   const snapshotPath = join(SNAPSHOTS_DIR, `${today}.json`);
+  // Build full keyword list from CSV (all keywords, not just tracked posts)
+  const trackedKeywords = new Set(entries.map(e => e.keyword?.toLowerCase().trim()).filter(Boolean));
+  const allKeywords = [];
+  for (const [kw, data] of trackerMap.entries()) {
+    if (trackedKeywords.has(kw)) continue; // already in posts
+    allKeywords.push({ keyword: kw, url: data.url || null, position: data.position, volume: data.volume });
+  }
+  allKeywords.sort((a, b) => {
+    if (a.position == null && b.position == null) return 0;
+    if (a.position == null) return 1;
+    if (b.position == null) return -1;
+    return a.position - b.position;
+  });
+
   const snapshot = {
     date: today,
     posts: entries.map(({ slug, keyword, url, position, volume, traffic, published_at }) => ({
       slug, keyword, url, position, volume, traffic, published_at,
     })),
+    allKeywords,
   };
   writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2));
   console.log(`\n  Snapshot saved: ${snapshotPath}`);

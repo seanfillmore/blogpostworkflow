@@ -163,18 +163,28 @@ function parseRankings() {
   const latest   = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[0]), 'utf8'));
   const previous = files[1] ? JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[1]), 'utf8')) : null;
 
-  const prevMap = {};
-  for (const p of previous?.posts ?? []) prevMap[p.slug] = p.position;
+  const prevPostMap = {};
+  for (const p of previous?.posts ?? []) prevPostMap[p.slug] = p.position;
+  const prevKwMap = {};
+  for (const p of previous?.allKeywords ?? []) prevKwMap[p.keyword] = p.position;
 
-  const items = (latest.posts ?? []).map(p => {
-    const prev   = prevMap[p.slug] ?? null;
+  const toItem = (p, prev, tracked) => {
     const change = (p.position != null && prev != null) ? prev - p.position : null;
     const tier   = !p.position       ? 'notRanking'
                  : p.position <= 10  ? 'page1'
                  : p.position <= 20  ? 'quickWins'
                  : 'needsWork';
-    return { ...p, previousPosition: prev, change, tier };
-  }).sort((a, b) => {
+    return { ...p, previousPosition: prev, change, tier, tracked };
+  };
+
+  const trackedItems = (latest.posts ?? []).map(p =>
+    toItem(p, prevPostMap[p.slug] ?? null, true)
+  );
+  const allKwItems = (latest.allKeywords ?? []).map(p =>
+    toItem(p, prevKwMap[p.keyword] ?? null, false)
+  );
+
+  const items = [...trackedItems, ...allKwItems].sort((a, b) => {
     if (a.position == null && b.position == null) return 0;
     if (a.position == null) return 1;
     if (b.position == null) return -1;
@@ -611,6 +621,9 @@ function renderKanban(d) {
   document.getElementById('pipeline-note').textContent = d.pipeline.items.length + ' total calendar items';
 }
 
+let rankPage = 0;
+const RANK_PAGE_SIZE = 20;
+
 function renderRankings(d) {
   const r = d.rankings;
   if (!r.items.length) {
@@ -635,9 +648,13 @@ function renderRankings(d) {
     return '<span class="change change-flat">→ 0</span>';
   };
 
-  const rows = r.items.map(x =>
+  const totalPages = Math.ceil(r.items.length / RANK_PAGE_SIZE);
+  rankPage = Math.max(0, Math.min(rankPage, totalPages - 1));
+  const pageItems = r.items.slice(rankPage * RANK_PAGE_SIZE, (rankPage + 1) * RANK_PAGE_SIZE);
+
+  const rows = pageItems.map(x =>
     '<tr>' +
-    '<td>' + esc(x.keyword) + '</td>' +
+    '<td>' + esc(x.keyword) + (x.tracked ? ' <span class="muted" style="font-size:10px">●</span>' : '') + '</td>' +
     '<td class="nowrap"><span class="pos">' + (x.position != null ? '#' + x.position : '—') + '</span></td>' +
     '<td class="nowrap">' + changeHtml(x) + (x.previousPosition != null ? '<span class="muted" style="font-size:11px;margin-left:4px">was #' + x.previousPosition + '</span>' : '') + '</td>' +
     '<td class="nowrap muted">' + fmtNum(x.volume) + '</td>' +
@@ -646,10 +663,17 @@ function renderRankings(d) {
     '</tr>'
   ).join('');
 
+  const pagination =
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;font-size:13px;">' +
+    '<button onclick="rankPage--;renderRankings(data)" ' + (rankPage === 0 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">← Prev</button>' +
+    '<span class="muted">Page ' + (rankPage + 1) + ' of ' + totalPages + ' (' + r.items.length + ' keywords)</span>' +
+    '<button onclick="rankPage++;renderRankings(data)" ' + (rankPage >= totalPages - 1 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">Next →</button>' +
+    '</div>';
+
   document.getElementById('rankings-table').innerHTML =
     '<table><thead><tr>' +
     '<th>Keyword</th><th>Position</th><th>Change</th><th>Volume</th><th>Tier</th><th>URL</th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table>';
+    '</tr></thead><tbody>' + rows + '</tbody></table>' + pagination;
 }
 
 function renderPosts(d) {
