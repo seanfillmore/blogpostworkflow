@@ -652,16 +652,16 @@ function renderRankings(d) {
   rankPage = Math.max(0, Math.min(rankPage, totalPages - 1));
   const pageItems = r.items.slice(rankPage * RANK_PAGE_SIZE, (rankPage + 1) * RANK_PAGE_SIZE);
 
-  const rows = pageItems.map(x =>
-    '<tr>' +
+  const rows = pageItems.map((x, i) => {
+    const idx = rankPage * RANK_PAGE_SIZE + i;
+    return '<tr style="cursor:pointer" onclick="openKeywordCard(data.rankings.items[' + idx + '])">' +
     '<td>' + esc(x.keyword) + (x.tracked ? ' <span class="muted" style="font-size:10px">●</span>' : '') + '</td>' +
     '<td class="nowrap"><span class="pos">' + (x.position != null ? '#' + x.position : '—') + '</span></td>' +
     '<td class="nowrap">' + changeHtml(x) + (x.previousPosition != null ? '<span class="muted" style="font-size:11px;margin-left:4px">was #' + x.previousPosition + '</span>' : '') + '</td>' +
     '<td class="nowrap muted">' + fmtNum(x.volume) + '</td>' +
     '<td>' + tierBadge(x.tier) + '</td>' +
-    '<td>' + (x.url ? '<a class="link" href="' + x.url + '" target="_blank">↗</a>' : '<span class="muted">—</span>') + '</td>' +
-    '</tr>'
-  ).join('');
+    '</tr>';
+  }).join('');
 
   const pagination =
     '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;font-size:13px;">' +
@@ -672,7 +672,7 @@ function renderRankings(d) {
 
   document.getElementById('rankings-table').innerHTML =
     '<table><thead><tr>' +
-    '<th>Keyword</th><th>Position</th><th>Change</th><th>Volume</th><th>Tier</th><th>URL</th>' +
+    '<th>Keyword</th><th>Position</th><th>Change</th><th>Volume</th><th>Tier</th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table>' + pagination;
 }
 
@@ -785,7 +785,77 @@ async function loadData() {
 
 loadData();
 setInterval(loadData, 60000);
+
+// ── keyword detail modal ──────────────────────────────────────────────────────
+
+function openKeywordCard(item) {
+  const fmt = v => (v == null || v === '') ? '<span class="muted">—</span>' : esc(String(v));
+  const fmtN = v => v == null ? '<span class="muted">—</span>' : fmtNum(v);
+  const changeArrow = (v) => {
+    if (v == null) return '<span class="muted">—</span>';
+    if (v > 0) return '<span class="change-up">↑ ' + v + '</span>';
+    if (v < 0) return '<span class="change-down">↓ ' + Math.abs(v) + '</span>';
+    return '→ 0';
+  };
+
+  const intentsHtml = (item.intents && item.intents.length)
+    ? item.intents.map(i => '<span class="badge badge-approved" style="margin-right:4px">' + esc(i) + '</span>').join('')
+    : '<span class="muted">—</span>';
+
+  const serpHtml = item.serpFeatures
+    ? item.serpFeatures.split(',').map(s => '<span class="badge badge-notranking" style="margin-right:4px">' + esc(s.trim()) + '</span>').join('')
+    : '<span class="muted">—</span>';
+
+  const rows = (label, val) =>
+    '<tr><td style="color:#6b7280;padding:6px 12px 6px 0;white-space:nowrap;font-size:13px">' + label + '</td>' +
+    '<td style="padding:6px 0;font-size:13px">' + val + '</td></tr>';
+
+  const html =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">' +
+    '<div><div style="font-size:18px;font-weight:700;margin-bottom:4px">' + esc(item.keyword) + '</div>' +
+    (item.title ? '<div style="color:#6b7280;font-size:13px">' + esc(item.title) + '</div>' : '') +
+    '</div>' +
+    '<button onclick="closeKeywordCard()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1">✕</button>' +
+    '</div>' +
+    '<table style="width:100%;border-collapse:collapse">' +
+    rows('Position', item.position != null ? '<strong>#' + item.position + '</strong>' : '<span class="muted">—</span>') +
+    rows('Previous Position', item.positionPrev != null ? '#' + item.positionPrev : (item.previousPosition != null ? '#' + item.previousPosition : '<span class="muted">—</span>')) +
+    rows('Position Change', changeArrow(item.positionChange)) +
+    rows('Volume', fmtN(item.volume)) +
+    rows('KD', fmt(item.kd)) +
+    rows('CPC', item.cpc != null ? '$' + item.cpc.toFixed(2) : '<span class="muted">—</span>') +
+    rows('Traffic (current)', fmtN(item.traffic)) +
+    rows('Traffic (previous)', fmtN(item.trafficPrev)) +
+    rows('Traffic Change', changeArrow(item.trafficChange)) +
+    rows('Country', fmt(item.country)) +
+    rows('SERP Features', serpHtml) +
+    rows('Intent', intentsHtml) +
+    rows('Current URL', item.url ? '<a class="link" href="' + esc(item.url) + '" target="_blank">' + esc(item.url) + '</a>' : '<span class="muted">—</span>') +
+    rows('Previous URL', item.urlPrev ? '<a class="link" href="' + esc(item.urlPrev) + '" target="_blank">' + esc(item.urlPrev) + '</a>' : '<span class="muted">—</span>') +
+    rows('Last checked', fmt(item.dateCurr)) +
+    (item.gsc_clicks != null ? rows('GSC Clicks (90d)', fmtN(item.gsc_clicks)) : '') +
+    (item.gsc_impressions != null ? rows('GSC Impressions (90d)', fmtN(item.gsc_impressions)) : '') +
+    (item.gsc_ctr != null ? rows('GSC CTR', (item.gsc_ctr * 100).toFixed(1) + '%') : '') +
+    '</table>';
+
+  document.getElementById('kw-modal-body').innerHTML = html;
+  document.getElementById('kw-modal').style.display = 'flex';
+}
+
+function closeKeywordCard() {
+  document.getElementById('kw-modal').style.display = 'none';
+}
+
+document.getElementById('kw-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeKeywordCard();
+});
 </script>
+
+<!-- keyword detail modal -->
+<div id="kw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center">
+  <div id="kw-modal-body" style="background:#fff;border-radius:10px;padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)"></div>
+</div>
+
 </body>
 </html>`;
 

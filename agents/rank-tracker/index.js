@@ -139,10 +139,33 @@ function loadKeywordTrackerCsv() {
   for (const row of rows) {
     const keyword = g(row, 'keyword', 'keywords', 'query', 'term');
     if (!keyword) continue;
-    const position = num(g(row, 'current position', 'position', 'rank', 'pos'));
-    const volume = num(g(row, 'volume', 'search volume', 'vol', 'monthly volume'));
-    const url = g(row, 'current url', 'url', 'landing page', 'page');
-    map.set(keyword.toLowerCase().trim(), { position, volume, url });
+    const position     = num(g(row, 'current position', 'position', 'rank', 'pos'));
+    const volume       = num(g(row, 'volume', 'search volume', 'vol', 'monthly volume'));
+    const url          = g(row, 'current url', 'url', 'landing page', 'page') || null;
+    const kd           = num(g(row, 'kd', 'keyword difficulty', 'difficulty'));
+    const cpc          = num(g(row, 'cpc', 'cost per click'));
+    const traffic      = num(g(row, 'current organic traffic', 'organic traffic', 'traffic'));
+    const trafficPrev  = num(g(row, 'previous organic traffic'));
+    const trafficChange= num(g(row, 'organic traffic change', 'traffic change'));
+    const positionPrev = num(g(row, 'previous position'));
+    const positionChange=num(g(row, 'position change'));
+    const urlPrev      = g(row, 'previous url') || null;
+    const serpFeatures = g(row, 'serp features', 'serp feature') || null;
+    const country      = g(row, 'country') || null;
+    const datePrev     = g(row, 'previous date') || null;
+    const dateCurr     = g(row, 'current date') || null;
+    const intents      = [];
+    if (g(row, 'informational')  === 'true') intents.push('Informational');
+    if (g(row, 'commercial')     === 'true') intents.push('Commercial');
+    if (g(row, 'transactional')  === 'true') intents.push('Transactional');
+    if (g(row, 'navigational')   === 'true') intents.push('Navigational');
+    if (g(row, 'branded')        === 'true') intents.push('Branded');
+    if (g(row, 'local')          === 'true') intents.push('Local');
+    map.set(keyword.toLowerCase().trim(), {
+      position, volume, url, kd, cpc, traffic, trafficPrev, trafficChange,
+      positionPrev, positionChange, urlPrev, serpFeatures, country,
+      datePrev, dateCurr, intents,
+    });
   }
 
   return { map, filename };
@@ -527,6 +550,19 @@ async function main() {
       position,
       volume,
       dataSource,
+      kd:            tracked?.kd           ?? null,
+      cpc:           tracked?.cpc          ?? null,
+      traffic:       tracked?.traffic      ?? null,
+      trafficPrev:   tracked?.trafficPrev  ?? null,
+      trafficChange: tracked?.trafficChange?? null,
+      positionPrev:  tracked?.positionPrev ?? null,
+      positionChange:tracked?.positionChange??null,
+      urlPrev:       tracked?.urlPrev      ?? null,
+      serpFeatures:  tracked?.serpFeatures ?? null,
+      country:       tracked?.country      ?? null,
+      datePrev:      tracked?.datePrev     ?? null,
+      dateCurr:      tracked?.dateCurr     ?? null,
+      intents:       tracked?.intents      ?? [],
       gsc_position: gscPerf?.position ? Math.round(gscPerf.position) : null,
       gsc_clicks: gscPerf?.clicks ?? null,
       gsc_impressions: gscPerf?.impressions ?? null,
@@ -550,7 +586,7 @@ async function main() {
   const allKeywords = [];
   for (const [kw, data] of trackerMap.entries()) {
     if (trackedKeywords.has(kw)) continue; // already in posts
-    allKeywords.push({ keyword: kw, url: data.url || null, position: data.position, volume: data.volume });
+    allKeywords.push({ keyword: kw, ...data });
   }
   allKeywords.sort((a, b) => {
     if (a.position == null && b.position == null) return 0;
