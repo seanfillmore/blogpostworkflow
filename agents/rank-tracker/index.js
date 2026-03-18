@@ -462,8 +462,9 @@ async function main() {
   if (trackerFile) {
     console.log(`  Keyword data: data/keyword-tracker/${trackerFile} (${trackerMap.size} keywords)`);
   } else {
-    console.log(`  ⚠️  No CSV found in data/keyword-tracker/ — positions will be empty`);
-    console.log(`  Drop an Ahrefs Rank Tracker export (or any CSV with keyword+position columns) there to enable tracking\n`);
+    console.log(`  ⚠️  No CSV found in data/keyword-tracker/ — skipping snapshot to avoid overwriting good data.`);
+    console.log(`  Drop an Ahrefs Rank Tracker export (or any CSV with keyword+position columns) there to enable tracking.`);
+    process.exit(0);
   }
 
   // Load previous snapshot for delta comparison
