@@ -19,16 +19,55 @@ GSC and GA4 are explicitly out of scope for this iteration but the design is bui
 Four new components:
 
 ### 1. `lib/clarity.js`
-Clarity API client. Wraps the `project-live-insights` endpoint authenticated via `MICROSOFT_CLARITY_TOKEN`. Returns a normalized object with all available metrics. Mirrors the structure of `lib/shopify.js`.
+Clarity API client. Wraps the `project-live-insights` endpoint authenticated via `MICROSOFT_CLARITY_TOKEN`. Makes a GET request to `https://www.clarity.ms/export-data/api/v1/project-live-insights` with `Authorization: Bearer <token>`. Parses the raw API response (an array of `{ metricName, information }` objects) and returns a normalized object.
+
+**Raw API → normalized field mapping (confirmed against live API):**
+| Raw `metricName` | Normalized field |
+|---|---|
+| `Traffic.totalSessionCount` | `sessions.total` |
+| `Traffic.totalBotSessionCount` | `sessions.bots` |
+| `Traffic.distinctUserCount` | `sessions.distinctUsers` |
+| `Traffic.pagesPerSessionPercentage` | `sessions.pagesPerSession` |
+| `EngagementTime.totalTime` | `engagement.totalTime` |
+| `EngagementTime.activeTime` | `engagement.activeTime` |
+| `ScrollDepth.averageScrollDepth` | `behavior.scrollDepth` |
+| `RageClickCount.sessionsWithMetricPercentage` | `behavior.rageClickPct` |
+| `DeadClickCount.sessionsWithMetricPercentage` | `behavior.deadClickPct` |
+| `ScriptErrorCount.sessionsWithMetricPercentage` | `behavior.scriptErrorPct` |
+| `QuickbackClick.sessionsWithMetricPercentage` | `behavior.quickbackPct` |
+| `ExcessiveScroll.sessionsWithMetricPercentage` | `behavior.excessiveScrollPct` |
+| `Device[].name + sessionsCount` | `devices[]` |
+| `Country[].name + sessionsCount` | `countries[]` |
+| `PageTitle[].name + sessionsCount` | `topPages[]` |
+
+Derived field: `sessions.real = sessions.total - sessions.bots`.
 
 ### 2. `agents/clarity-collector/index.js`
-Daily cron agent. Calls `lib/clarity.js`, saves snapshot to `data/snapshots/clarity/YYYY-MM-DD.json`. Exits early (no snapshot written) if the API returns no session data, to prevent empty files from polluting trend comparisons (same guard used in rank-tracker).
+Daily cron agent. Calls `lib/clarity.js`, saves snapshot to `data/snapshots/clarity/YYYY-MM-DD.json`. Exits early (no snapshot written) if `sessions.total === 0`, to prevent empty files from polluting trend comparisons.
 
 ### 3. `agents/shopify-collector/index.js`
-Daily cron agent. Calls Shopify REST API for orders and abandoned checkouts. Saves snapshot to `data/snapshots/shopify/YYYY-MM-DD.json`. Adds `getOrders(dateFrom, dateTo)` and `getAbandonedCheckouts(dateFrom, dateTo)` to `lib/shopify.js`.
+Daily cron agent. Adds two new functions to `lib/shopify.js`:
+
+- **`getOrders(dateFrom, dateTo)`** — fetches `/admin/api/2025-01/orders.json?status=any&created_at_min=<dateFrom>&created_at_max=<dateTo>&limit=250` with pagination. Returns order count, total revenue (sum of `total_price`), and AOV.
+
+- **`getAbandonedCheckouts(dateFrom, dateTo)`** — fetches `/admin/api/2025-01/checkouts.json?created_at_min=<dateFrom>&created_at_max=<dateTo>&limit=250` with pagination. Returns count of incomplete checkouts.
+
+**`topProducts` derivation:** There is no Shopify endpoint for top products by revenue. The collector fetches all orders for the date range, iterates each order's `line_items`, and aggregates revenue and order count per product title client-side. Sorted descending by revenue, top 5 stored.
+
+**`cartAbandonmentRate` formula:** `abandonedCheckouts.count / (abandonedCheckouts.count + orders.count)`. Represents the proportion of checkout-intending sessions that did not complete. Stored as a decimal (e.g. `0.68`).
+
+Saves snapshot to `data/snapshots/shopify/YYYY-MM-DD.json`.
+
+**Note:** `data/snapshots/` is a new directory distinct from the existing `data/rank-snapshots/`. They must not be conflated — the dashboard uses separate directory constants for each.
 
 ### 4. `agents/cro-analyzer/index.js`
-Weekly cron agent (or run on demand). Reads the last 7 Clarity snapshots and last 7 Shopify snapshots, sends them to Claude with a CRO analysis prompt, and saves the brief to `data/reports/cro/YYYY-MM-DD-cro-brief.md`. Identifies week-over-week changes, flags regressions, and outputs 3–7 prioritized action items with supporting data.
+Weekly cron agent (Mondays) or run on demand. Reads the last 7 Clarity snapshots and last 7 Shopify snapshots from their respective directories, sends them to Claude for CRO analysis, saves the brief to `data/reports/cro/YYYY-MM-DD-cro-brief.md`.
+
+**Claude API details:**
+- Model: `claude-opus-4-6` (same model used by blog-post-writer and other analysis agents)
+- Pattern: use the Anthropic SDK directly (`import Anthropic from '@anthropic-ai/sdk'`), same pattern as `agents/blog-post-writer/index.js`
+- Prompt structure: system prompt establishes CRO analyst role; user message contains 7 days of both snapshots serialized as JSON, plus instructions to output 3–7 prioritized action items with HIGH/MED/LOW priority, data evidence, and specific recommended action
+- Token budget: 7 days × 2 sources × ~1KB per snapshot ≈ ~15KB input, well within context limits
 
 ### 5. Dashboard CRO Tab
 New tab added to `agents/dashboard/index.js`. Tab navigation introduced at the top of the page (SEO | CRO). CRO tab reads from snapshot directories and the most recent CRO brief. No live API calls.
@@ -45,6 +84,7 @@ New tab added to `agents/dashboard/index.js`. Tab navigation introduced at the t
     "total": 43,
     "bots": 32,
     "real": 11,
+    "distinctUsers": 73,
     "pagesPerSession": 1.13
   },
   "engagement": {
@@ -91,19 +131,21 @@ New tab added to `agents/dashboard/index.js`. Tab navigation introduced at the t
 }
 ```
 
+`cartAbandonmentRate` = `abandonedCheckouts.count / (abandonedCheckouts.count + orders.count)` = 58 / (58 + 26) ≈ 0.69.
+
 ### CRO Brief (`data/reports/cro/YYYY-MM-DD-cro-brief.md`)
-Markdown file. Sections: summary paragraph, numbered action items (each with priority level HIGH/MED/LOW and supporting data), and a raw data appendix.
+Markdown file. Sections: summary paragraph, numbered action items (each with priority level HIGH/MED/LOW and supporting data), raw data appendix.
 
 ---
 
 ## Dashboard CRO Tab Layout
 
-**Tab navigation:** Two tabs at top — SEO (existing content) and CRO (new). Clicking a tab shows/hides the relevant content sections; URL hash updated for bookmarking (`#seo`, `#cro`).
+**Tab navigation:** Two tabs at top — SEO (existing content) and CRO (new). Clicking a tab shows/hides the relevant content sections.
 
 **CRO tab structure (top to bottom):**
 
 1. **KPI strip** — 6 metric cards with delta vs prior day:
-   - Conversion Rate (`orders ÷ real sessions`)
+   - Conversion Rate (`orders ÷ real sessions`, requires both sources present for same date)
    - Average Order Value
    - Real Sessions (with bot count as subtext)
    - Script Error % (red background if > 5%)
@@ -114,21 +156,24 @@ Markdown file. Sections: summary paragraph, numbered action items (each with pri
    - Left: **Clarity card** — session table, device split, top pages list
    - Right: **Shopify card** — revenue/orders/abandoned carts table, top products list
 
-3. **AI CRO Brief** — amber card, shows most recent brief. Three-column grid of prioritized action items. Shows generation date and next scheduled run.
+3. **AI CRO Brief** — amber card showing most recent brief content. Three-column grid of prioritized action items. Shows generation date. "Next run" displays the hardcoded string "Every Monday" (not dynamically computed).
 
-**Empty states:** If no snapshots exist yet, each section shows a "No data collected yet — run the collector to get started" message rather than crashing.
+**Empty states:**
+- If no snapshots exist for either source: show "No data collected yet — run the collector to get started" in place of that section.
+- If only one source has data for the latest date (partial data): render that source's card normally; show "—" for any cross-source metrics (e.g. Conversion Rate). Do not crash or hide the whole tab.
+- If no CRO brief exists yet: show "No brief generated yet — run cro-analyzer to generate your first brief."
 
 ---
 
 ## Cron Schedule
 
-| Agent | Frequency | Command |
-|---|---|---|
-| `clarity-collector` | Daily | `node agents/clarity-collector/index.js` |
-| `shopify-collector` | Daily | `node agents/shopify-collector/index.js` |
-| `cro-analyzer` | Weekly (Monday) | `node agents/cro-analyzer/index.js` |
+New entries added to the system crontab (`crontab -e` on the server), following the pattern of existing agent cron entries:
 
-Both collectors added to the existing server crontab alongside rank-tracker.
+| Agent | Frequency |
+|---|---|
+| `clarity-collector` | Daily |
+| `shopify-collector` | Daily |
+| `cro-analyzer` | Weekly (Monday) |
 
 ---
 
@@ -156,7 +201,7 @@ Both collector agents and the CRO analyzer use `lib/notify.js` (already wired on
 | `agents/shopify-collector/index.js` | Create |
 | `agents/cro-analyzer/index.js` | Create |
 | `agents/dashboard/index.js` | Add tab nav, CRO tab rendering |
-| `scheduler.js` | Add new agents to daily/weekly schedule |
+| System crontab (server) | Add 3 new cron entries |
 
 ---
 
