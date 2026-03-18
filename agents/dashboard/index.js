@@ -954,7 +954,7 @@ function renderCROTab(data) {
   } else {
     // Parse action items from markdown (lines starting with ### N.)
     const items = [];
-    const lines = brief.content.split('\n');
+    const lines = brief.content.split('\\n');
     let current = null;
     for (const line of lines) {
       if (/^### \d+\./.test(line)) {
