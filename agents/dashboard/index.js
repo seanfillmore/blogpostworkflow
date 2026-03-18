@@ -1056,14 +1056,14 @@ function renderCROTab(data) {
       '<span style="font-size:11px;color:#92400e">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
       '<div class="card-body">' +
       (items.length ? '<div class="brief-grid">' +
-        items.slice(0, 6).map(item =>
+        items.map(item =>
           '<div class="brief-item">' +
           '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
           (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
-          '<div class="brief-item-body">' + esc(item.body.slice(0, 3).join(' ').slice(0, 200)) + '</div>' +
+          '<div class="brief-item-body">' + esc(item.body.join(' ')) + '</div>' +
           '</div>'
         ).join('') + '</div>'
-      : '<pre style="font-size:11px;white-space:pre-wrap;color:#78350f">' + esc(brief.content.slice(0, 1000)) + '</pre>') +
+      : '<pre style="font-size:11px;white-space:pre-wrap;color:#78350f">' + esc(brief.content) + '</pre>') +
       '</div></div>';
   }
 
