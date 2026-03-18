@@ -102,15 +102,16 @@ Write the CRO brief now.`;
   process.stdout.write('  Running AI analysis... ');
   const response = await client.messages.create({
     model: 'claude-opus-4-6',
-    max_tokens: 2048,
+    max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
   });
 
+  if (!response.content?.[0]?.text) throw new Error('Claude returned an empty response');
   const brief = response.content[0].text;
   console.log('done');
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   const header = `# CRO Brief — ${today}\n**Generated:** ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}\n\n---\n\n`;
 
   mkdirSync(REPORTS_DIR, { recursive: true });
