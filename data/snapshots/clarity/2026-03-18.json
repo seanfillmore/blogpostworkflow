@@ -1,0 +1,100 @@
+{
+  "date": "2026-03-18",
+  "sessions": {
+    "total": 40,
+    "bots": 33,
+    "real": 7,
+    "distinctUsers": 72,
+    "pagesPerSession": 1.12
+  },
+  "engagement": {
+    "totalTime": 95,
+    "activeTime": 50
+  },
+  "behavior": {
+    "scrollDepth": 45.23,
+    "rageClickPct": 0,
+    "deadClickPct": 0,
+    "scriptErrorPct": 15,
+    "quickbackPct": 0,
+    "excessiveScrollPct": 0
+  },
+  "devices": [
+    {
+      "name": "PC",
+      "sessions": 26
+    },
+    {
+      "name": "Mobile",
+      "sessions": 14
+    }
+  ],
+  "countries": [
+    {
+      "name": "United States",
+      "sessions": 27
+    },
+    {
+      "name": "China",
+      "sessions": 9
+    },
+    {
+      "name": "Egypt",
+      "sessions": 1
+    },
+    {
+      "name": "Israel",
+      "sessions": 1
+    },
+    {
+      "name": "New Zealand",
+      "sessions": 1
+    },
+    {
+      "name": "Pakistan",
+      "sessions": 1
+    }
+  ],
+  "topPages": [
+    {
+      "title": "Coconut Oil Based Skin Care Products | Real Skin Care – realskincare.com",
+      "sessions": 8
+    },
+    {
+      "title": "Coconut Lotion | 6-Ingredient Clean Body Moisturizer – realskincare.com",
+      "sessions": 3
+    },
+    {
+      "title": "Best Toothpaste Without SLS – 2026 – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Coconut Oil Body Lotion That Actually Works for Dry Skin (2026 Roundup – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "11 Tea Tree Oil Benefits for Skin and Daily Use – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Shop Coconut Soap - Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Shop Coconut Oil Toothpaste - Real Skin Care – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Shop SLS Free Toothpaste - Real Skin Care – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Home Page Collection – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Shop Men's Natural Soap - Real Skin Care – realskincare.com",
+      "sessions": 1
+    }
+  ]
+}
