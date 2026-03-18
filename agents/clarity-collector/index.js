@@ -25,6 +25,10 @@ const dateArgIdx = process.argv.indexOf('--date');
 const dateArg = process.argv.find(a => a.startsWith('--date='))?.split('=')[1]
   ?? (dateArgIdx !== -1 ? process.argv[dateArgIdx + 1] : undefined);
 const date = dateArg || new Date().toISOString().slice(0, 10);
+if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  console.error('Invalid date format. Expected YYYY-MM-DD.');
+  process.exit(1);
+}
 
 async function main() {
   console.log('Clarity Collector\n');
@@ -38,7 +42,7 @@ async function main() {
     return false;
   }
 
-  console.log(`done (${data.sessions.real} real sessions, ${data.sessions.bots} bots)`);
+  console.log(`done (${data.sessions?.real ?? 0} real sessions, ${data.sessions?.bots ?? 0} bots)`);
 
   const snapshot = { date, ...data };
   mkdirSync(SNAPSHOTS_DIR, { recursive: true });
@@ -49,11 +53,11 @@ async function main() {
 }
 
 main()
-  .then(saved => {
-    if (saved) notify({ subject: 'Clarity Collector completed', body: `Snapshot saved for ${date}`, status: 'success' });
+  .then(async saved => {
+    if (saved) await notify({ subject: 'Clarity Collector completed', body: `Snapshot saved for ${date}`, status: 'success' }).catch(() => {});
   })
-  .catch(err => {
-    notify({ subject: 'Clarity Collector failed', body: err.message || String(err), status: 'error' });
+  .catch(async err => {
+    await notify({ subject: 'Clarity Collector failed', body: err.message || String(err), status: 'error' }).catch(() => {});
     console.error('Error:', err.message);
     process.exit(1);
   });
