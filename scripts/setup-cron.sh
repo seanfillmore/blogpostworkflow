@@ -10,6 +10,9 @@
 #   Weekly  Mon 07:00 PT — rank tracker snapshot
 #   Weekly  Mon 07:30 PT — insight aggregator
 #   Weekly  Mon 06:00 PT — topical map refresh
+#   Daily   06:00 PT — clarity-collector (CRO)
+#   Daily   06:05 PT — shopify-collector (CRO)
+#   Weekly  Mon 07:45 PT — cro-analyzer
 
 set -e
 
@@ -26,6 +29,9 @@ DAILY_BLOG_INDEX="0 6 * * * cd \"$PROJECT_DIR\" && $NODE agents/blog-content/ind
 WEEKLY_RANK_TRACKER="0 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/rank-tracker/index.js >> data/reports/scheduler/rank-tracker.log 2>&1"
 WEEKLY_INSIGHTS="30 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/insight-aggregator/index.js >> data/reports/scheduler/insights.log 2>&1"
 WEEKLY_TOPICAL_MAP="0 6 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/topical-mapper/index.js >> data/reports/scheduler/topical-map.log 2>&1"
+DAILY_CLARITY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/clarity-collector/index.js >> data/reports/scheduler/clarity-collector.log 2>&1"
+DAILY_SHOPIFY="5 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/shopify-collector/index.js >> data/reports/scheduler/shopify-collector.log 2>&1"
+WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyzer/index.js >> data/reports/scheduler/cro-analyzer.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
 EXISTING=$(crontab -l 2>/dev/null || true)
@@ -41,6 +47,9 @@ $DAILY_BLOG_INDEX
 $WEEKLY_RANK_TRACKER
 $WEEKLY_INSIGHTS
 $WEEKLY_TOPICAL_MAP
+$DAILY_CLARITY
+$DAILY_SHOPIFY
+$WEEKLY_CRO_ANALYZER
 "
 
 echo "Installing cron jobs..."
@@ -53,6 +62,9 @@ echo "  Daily   06:00 PT — blog-index refresh"
 echo "  Weekly  Mon 07:00 PT — rank tracker snapshot"
 echo "  Weekly  Mon 07:30 PT — insight aggregator"
 echo "  Weekly  Mon 06:00 PT — topical map refresh"
+echo "  Daily   06:00 PT — clarity-collector (CRO)"
+echo "  Daily   06:05 PT — shopify-collector (CRO)"
+echo "  Weekly  Mon 07:45 PT — cro-analyzer"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"
