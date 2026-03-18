@@ -18,7 +18,7 @@ import { execSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { appendFileSync, mkdirSync, existsSync, readdirSync, readFileSync } from 'fs';
-import { notify } from './lib/notify.js';
+import { notify, notifyLatestReport } from './lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOG_DIR  = join(__dirname, 'data/reports/scheduler');
@@ -107,4 +107,4 @@ if (!dryFlag) {
 }
 
 log('Scheduler done.');
-await notify({ subject: 'Scheduler completed', body: 'Daily content scheduler ran successfully.', status: 'success' });
+await notifyLatestReport('Scheduler completed', LOG_DIR);

@@ -44,7 +44,7 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
 import {
-import { notify } from '../../lib/notify.js';
+import { notify, notifyLatestReport } from '../../lib/notify.js';
   getBlogs, getArticles, updateArticle,
   getRedirects, createRedirect,
 } from '../../lib/shopify.js';
@@ -508,7 +508,7 @@ async function main() {
 }
 
 main()
-  .then(() => notify({ subject: 'Cannibalization Resolver completed', body: 'Cannibalization Resolver ran successfully.', status: 'success' }))
+  .then(() => notifyLatestReport('Cannibalization Resolver completed', join(ROOT, 'data', 'reports', 'cannibalization')))
   .catch((err) => {
     notify({ subject: 'Cannibalization Resolver failed', body: err.message || String(err), status: 'error' });
     console.error('Error:', err.message);

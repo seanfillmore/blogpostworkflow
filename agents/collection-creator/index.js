@@ -38,7 +38,7 @@ import {
 } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { withRetry } from '../../lib/retry.js';
-import { notify } from '../../lib/notify.js';
+import { notify, notifyLatestReport } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -520,7 +520,7 @@ async function main() {
 }
 
 main()
-  .then(() => notify({ subject: 'Collection Creator completed', body: 'Collection Creator ran successfully.', status: 'success' }))
+  .then(() => notifyLatestReport('Collection Creator completed', join(ROOT, 'data', 'reports', 'collection-creator')))
   .catch((err) => {
     notify({ subject: 'Collection Creator failed', body: err.message || String(err), status: 'error' });
     console.error('Error:', err.message);

@@ -28,7 +28,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
-import { notify } from '../../lib/notify.js';
+import { notify, notifyLatestReport } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -309,7 +309,7 @@ async function main() {
 }
 
 main()
-  .then(() => notify({ subject: 'SEO Reporter completed', body: 'SEO Reporter ran successfully.', status: 'success' }))
+  .then(() => notifyLatestReport('SEO Reporter completed', join(ROOT, 'data', 'reports', 'seo-reporter')))
   .catch((err) => {
     notify({ subject: 'SEO Reporter failed', body: err.message || String(err), status: 'error' });
     console.error('Error:', err.message);

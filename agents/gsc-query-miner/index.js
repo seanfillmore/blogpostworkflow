@@ -35,7 +35,7 @@ import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
-import { notify } from '../../lib/notify.js';
+import { notify, notifyLatestReport } from '../../lib/notify.js';
   getTopKeywords,
   getAllQueryPageRows,
 } from '../../lib/gsc.js';
@@ -320,7 +320,7 @@ async function main() {
 }
 
 main()
-  .then(() => notify({ subject: 'GSC Query Miner completed', body: 'GSC Query Miner ran successfully.', status: 'success' }))
+  .then(() => notifyLatestReport('GSC Query Miner completed', join(ROOT, 'data', 'reports', 'gsc-query-miner')))
   .catch((err) => {
     notify({ subject: 'GSC Query Miner failed', body: err.message || String(err), status: 'error' });
     console.error('Error:', err.message);

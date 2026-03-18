@@ -28,7 +28,7 @@ import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
-import { notify } from '../../lib/notify.js';
+import { notify, notifyLatestReport } from '../../lib/notify.js';
   getProducts,
   getCustomCollections,
   getSmartCollections,
@@ -277,7 +277,7 @@ async function main() {
 }
 
 main()
-  .then(() => notify({ subject: 'Product Schema completed', body: 'Product Schema ran successfully.', status: 'success' }))
+  .then(() => notifyLatestReport('Product Schema completed', join(ROOT, 'data', 'reports', 'product-schema')))
   .catch((err) => {
     notify({ subject: 'Product Schema failed', body: err.message || String(err), status: 'error' });
     console.error('Error:', err.message);

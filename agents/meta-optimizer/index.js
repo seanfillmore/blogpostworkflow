@@ -27,7 +27,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
-import { notify } from '../../lib/notify.js';
+import { notify, notifyLatestReport } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -311,7 +311,7 @@ async function main() {
 }
 
 main()
-  .then(() => notify({ subject: 'Meta Optimizer completed', body: 'Meta Optimizer ran successfully.', status: 'success' }))
+  .then(() => notifyLatestReport('Meta Optimizer completed', join(ROOT, 'data', 'reports', 'meta-optimizer')))
   .catch((err) => {
     notify({ subject: 'Meta Optimizer failed', body: err.message || String(err), status: 'error' });
     console.error('Error:', err.message);
