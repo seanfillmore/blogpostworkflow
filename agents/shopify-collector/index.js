@@ -22,7 +22,7 @@ const SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
 
 const dateArg = process.argv.find(a => a.startsWith('--date='))?.split('=')[1]
   ?? (process.argv.includes('--date') ? process.argv[process.argv.indexOf('--date') + 1] : null);
-const date = dateArg || new Date().toISOString().slice(0, 10);
+const date = dateArg || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
 if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
   console.error('Invalid date format. Expected YYYY-MM-DD.');
@@ -51,8 +51,12 @@ async function main() {
   console.log('Shopify Collector\n');
   console.log(`  Date: ${date}`);
 
-  const dayStart = `${date}T00:00:00-07:00`; // Pacific time
-  const dayEnd   = `${date}T23:59:59-07:00`;
+  // Determine Pacific UTC offset dynamically (PDT = -07:00, PST = -08:00)
+  const refTime = new Date(`${date}T20:00:00Z`);
+  const ptStr = refTime.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', timeZoneName: 'short' });
+  const ptOffset = ptStr.includes('PDT') ? '-07:00' : '-08:00';
+  const dayStart = `${date}T00:00:00${ptOffset}`;
+  const dayEnd   = `${date}T23:59:59.999${ptOffset}`;
 
   process.stdout.write('  Fetching orders... ');
   const { count, revenue, aov, rawOrders } = await getOrders(dayStart, dayEnd);
