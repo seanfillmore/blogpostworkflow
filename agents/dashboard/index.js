@@ -204,22 +204,20 @@ const SHOPIFY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
 const CRO_REPORTS_DIR       = join(ROOT, 'data', 'reports', 'cro');
 
 function parseCROData() {
-  // Load latest + previous Clarity snapshot
-  let clarityLatest = null, clarityPrev = null;
+  // Load up to 60 clarity snapshots (supports 30-day view + prior period comparison)
+  let clarityAll = [];
   if (existsSync(CLARITY_SNAPSHOTS_DIR)) {
     const files = readdirSync(CLARITY_SNAPSHOTS_DIR)
-      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
-    if (files[0]) clarityLatest = JSON.parse(readFileSync(join(CLARITY_SNAPSHOTS_DIR, files[0]), 'utf8'));
-    if (files[1]) clarityPrev   = JSON.parse(readFileSync(join(CLARITY_SNAPSHOTS_DIR, files[1]), 'utf8'));
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
+    clarityAll = files.map(f => JSON.parse(readFileSync(join(CLARITY_SNAPSHOTS_DIR, f), 'utf8')));
   }
 
-  // Load latest + previous Shopify snapshot
-  let shopifyLatest = null, shopifyPrev = null;
+  // Load up to 60 shopify snapshots
+  let shopifyAll = [];
   if (existsSync(SHOPIFY_SNAPSHOTS_DIR)) {
     const files = readdirSync(SHOPIFY_SNAPSHOTS_DIR)
-      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
-    if (files[0]) shopifyLatest = JSON.parse(readFileSync(join(SHOPIFY_SNAPSHOTS_DIR, files[0]), 'utf8'));
-    if (files[1]) shopifyPrev   = JSON.parse(readFileSync(join(SHOPIFY_SNAPSHOTS_DIR, files[1]), 'utf8'));
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
+    shopifyAll = files.map(f => JSON.parse(readFileSync(join(SHOPIFY_SNAPSHOTS_DIR, f), 'utf8')));
   }
 
   // Load most recent CRO brief
@@ -236,7 +234,7 @@ function parseCROData() {
     }
   }
 
-  return { clarity: clarityLatest, prevClarity: clarityPrev, shopify: shopifyLatest, prevShopify: shopifyPrev, brief };
+  return { clarityAll, shopifyAll, brief };
 }
 
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
@@ -571,6 +569,10 @@ const HTML = `<!DOCTYPE html>
   .brief-item-title { font-size: 11px; font-weight: 700; color: #c2410c; margin-bottom: 6px; }
   .brief-item-body { font-size: 11px; color: #78350f; line-height: 1.5; }
   .empty-state { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
+  .filter-bar { display: flex; gap: 6px; margin-bottom: 16px; }
+  .filter-btn { padding: 5px 12px; font-size: 12px; font-weight: 500; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 5px; cursor: pointer; transition: all .15s; }
+  .filter-btn:hover { color: var(--text); border-color: #94a3b8; }
+  .filter-btn.active { color: var(--accent); background: #eff6ff; border-color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -617,6 +619,12 @@ const HTML = `<!DOCTYPE html>
   </div>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setCroFilter('today',this)">Today</button>
+    <button class="filter-btn" onclick="setCroFilter('yesterday',this)">Yesterday</button>
+    <button class="filter-btn" onclick="setCroFilter('7days',this)">Last 7 Days</button>
+    <button class="filter-btn" onclick="setCroFilter('30days',this)">Last 30 Days</button>
+  </div>
   <div id="cro-kpi-strip" style="margin-bottom:16px"></div>
   <div class="cro-grid" style="margin-bottom:16px">
     <div id="cro-clarity-card"></div>
@@ -851,12 +859,86 @@ function renderDataNeeded(d) {
   }).join('');
 }
 
+let croFilter = 'today';
+
+function setCroFilter(name, btn) {
+  croFilter = name;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (data) renderCROTab(data);
+}
+
+function aggregateClarity(snaps) {
+  if (!snaps || !snaps.length) return null;
+  if (snaps.length === 1) return snaps[0];
+  const avg = (fn) => { const vals = snaps.map(fn).filter(v => v != null); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null; };
+  const sum = (fn) => snaps.reduce((s,x) => s + (fn(x)||0), 0);
+  const mergeByName = (fn) => {
+    const map = {};
+    snaps.forEach(x => (fn(x)||[]).forEach(d => { map[d.name] = (map[d.name]||0) + d.sessions; }));
+    return Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([name,sessions])=>({name,sessions}));
+  };
+  const pageMap = {};
+  snaps.forEach(x => (x.topPages||[]).forEach(p => { pageMap[p.title] = (pageMap[p.title]||0) + p.sessions; }));
+  return {
+    date: snaps.length + ' days',
+    sessions: { total: sum(x=>x.sessions?.total), bots: sum(x=>x.sessions?.bots), real: sum(x=>x.sessions?.real),
+      distinctUsers: sum(x=>x.sessions?.distinctUsers), pagesPerSession: avg(x=>x.sessions?.pagesPerSession) },
+    engagement: { totalTime: avg(x=>x.engagement?.totalTime), activeTime: avg(x=>x.engagement?.activeTime) },
+    behavior: { scrollDepth: avg(x=>x.behavior?.scrollDepth), rageClickPct: avg(x=>x.behavior?.rageClickPct),
+      deadClickPct: avg(x=>x.behavior?.deadClickPct), scriptErrorPct: avg(x=>x.behavior?.scriptErrorPct),
+      quickbackPct: avg(x=>x.behavior?.quickbackPct), excessiveScrollPct: avg(x=>x.behavior?.excessiveScrollPct) },
+    devices: mergeByName(x=>x.devices),
+    countries: mergeByName(x=>x.countries),
+    topPages: Object.entries(pageMap).sort((a,b)=>b[1]-a[1]).map(([title,sessions])=>({title,sessions})),
+  };
+}
+
+function aggregateShopify(snaps) {
+  if (!snaps || !snaps.length) return null;
+  if (snaps.length === 1) return snaps[0];
+  const totalOrders   = snaps.reduce((s,x)=>s+(x.orders?.count||0),0);
+  const totalRevenue  = snaps.reduce((s,x)=>s+(x.orders?.revenue||0),0);
+  const totalAbandoned = snaps.reduce((s,x)=>s+(x.abandonedCheckouts?.count||0),0);
+  const productMap = {};
+  snaps.forEach(x => (x.topProducts||[]).forEach(p => {
+    if (!productMap[p.title]) productMap[p.title] = {revenue:0,orders:0};
+    productMap[p.title].revenue += p.revenue||0;
+    productMap[p.title].orders  += p.orders||0;
+  }));
+  const topProducts = Object.entries(productMap).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5).map(([title,v])=>({title,...v}));
+  return {
+    date: snaps.length + ' days',
+    orders: { count: totalOrders, revenue: totalRevenue, aov: totalOrders > 0 ? totalRevenue / totalOrders : 0 },
+    abandonedCheckouts: { count: totalAbandoned },
+    cartAbandonmentRate: (totalAbandoned + totalOrders) > 0 ? totalAbandoned / (totalAbandoned + totalOrders) : 0,
+    topProducts,
+  };
+}
+
 function renderCROTab(data) {
   const cro = data.cro || {};
-  const cl  = cro.clarity  || null;
-  const sh  = cro.shopify  || null;
-  const pcl = cro.prevClarity  || null;
-  const psh = cro.prevShopify  || null;
+  const clarityAll = cro.clarityAll || [];
+  const shopifyAll = cro.shopifyAll || [];
+
+  let cl, sh, pcl, psh, dateLabel;
+  if (croFilter === 'yesterday') {
+    cl = clarityAll[1] || null; pcl = clarityAll[2] || null;
+    sh = shopifyAll[1] || null; psh = shopifyAll[2] || null;
+    dateLabel = 'Yesterday';
+  } else if (croFilter === '7days') {
+    cl = aggregateClarity(clarityAll.slice(0,7));   pcl = aggregateClarity(clarityAll.slice(7,14));
+    sh = aggregateShopify(shopifyAll.slice(0,7));   psh = aggregateShopify(shopifyAll.slice(7,14));
+    dateLabel = 'Last 7 Days';
+  } else if (croFilter === '30days') {
+    cl = aggregateClarity(clarityAll.slice(0,30));  pcl = aggregateClarity(clarityAll.slice(30,60));
+    sh = aggregateShopify(shopifyAll.slice(0,30));  psh = aggregateShopify(shopifyAll.slice(30,60));
+    dateLabel = 'Last 30 Days';
+  } else {
+    cl = clarityAll[0] || null; pcl = clarityAll[1] || null;
+    sh = shopifyAll[0] || null; psh = shopifyAll[1] || null;
+    dateLabel = 'Today';
+  }
 
   // ── helpers ────────────────────────────────────────────────────────────────
   const fmtPct = v => v != null ? v.toFixed(1) + '%' : '—';
@@ -906,7 +988,7 @@ function renderCROTab(data) {
   // ── Clarity card ───────────────────────────────────────────────────────────
   const clarityHtml = cl ? (
     '<div class="card">' +
-    '<div class="card-header"><h2>Clarity</h2><span style="font-size:11px;color:var(--muted)">' + esc(cl.date) + '</span></div>' +
+    '<div class="card-header"><h2>Clarity</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
     '<div class="card-body">' +
     '<table class="cro-table">' +
     '<tr><td>Total Sessions</td><td>' + cl.sessions.total + ' <span class="cro-sub">(' + cl.sessions.bots + ' bots)</span></td></tr>' +
@@ -928,7 +1010,7 @@ function renderCROTab(data) {
   // ── Shopify card ───────────────────────────────────────────────────────────
   const shopifyHtml = sh ? (
     '<div class="card">' +
-    '<div class="card-header"><h2>Shopify</h2><span style="font-size:11px;color:var(--muted)">' + esc(sh.date) + '</span></div>' +
+    '<div class="card-header"><h2>Shopify</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
     '<div class="card-body">' +
     '<table class="cro-table">' +
     '<tr><td>Revenue</td><td>' + fmtDollar(sh.orders.revenue) + '</td></tr>' +
