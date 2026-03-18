@@ -888,7 +888,7 @@ function renderCROTab(data) {
     { label: 'Scroll Depth',    value: cl ? fmtPct(cl.behavior.scrollDepth) : '—',
       d: delta(cl?.behavior?.scrollDepth, pcl?.behavior?.scrollDepth), alert: false },
     { label: 'Cart Abandon',    value: sh ? fmtPct(sh.cartAbandonmentRate * 100) : '—',
-      d: delta(sh?.cartAbandonmentRate, psh?.cartAbandonmentRate, false), alert: false },
+      d: delta(sh?.cartAbandonmentRate != null ? sh.cartAbandonmentRate * 100 : null, psh?.cartAbandonmentRate != null ? psh.cartAbandonmentRate * 100 : null, false), alert: false },
   ];
 
   document.getElementById('cro-kpi-strip').innerHTML =
@@ -917,7 +917,7 @@ function renderCROTab(data) {
     '<tr><td>Dead Clicks</td><td>' + fmtPct(cl.behavior.deadClickPct) + '</td></tr>' +
     '</table>' +
     '<div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Pages</div>' +
-    cl.topPages.slice(0, 5).map((p, i) =>
+    (cl.topPages || []).slice(0, 5).map((p, i) =>
       '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + (i+1) + '. ' + esc(p.title.length > 50 ? p.title.slice(0,50)+'…' : p.title) + ' — ' + p.sessions + '</div>'
     ).join('') +
     '</div></div>'
@@ -938,7 +938,7 @@ function renderCROTab(data) {
     '<tr><td>Cart Abandon Rate</td><td>' + fmtPct(sh.cartAbandonmentRate * 100) + '</td></tr>' +
     '</table>' +
     '<div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Products</div>' +
-    (sh.topProducts.length ? sh.topProducts.slice(0, 5).map((p, i) =>
+    ((sh.topProducts || []).length ? (sh.topProducts || []).slice(0, 5).map((p, i) =>
       '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + (i+1) + '. ' + esc(p.title) + ' — ' + fmtDollar(p.revenue) + ' (' + p.orders + ' orders)</div>'
     ).join('') : '<div style="font-size:11px;color:var(--muted)">No orders today</div>') +
     '</div></div>'
