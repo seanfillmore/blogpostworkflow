@@ -197,6 +197,48 @@ function parseRankings() {
   return { latestDate: latest.date, previousDate: previous?.date ?? null, items, summary };
 }
 
+// ── CRO data ───────────────────────────────────────────────────────────────────
+
+const CLARITY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'clarity');
+const SHOPIFY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
+const CRO_REPORTS_DIR       = join(ROOT, 'data', 'reports', 'cro');
+
+function parseCROData() {
+  // Load latest + previous Clarity snapshot
+  let clarityLatest = null, clarityPrev = null;
+  if (existsSync(CLARITY_SNAPSHOTS_DIR)) {
+    const files = readdirSync(CLARITY_SNAPSHOTS_DIR)
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+    if (files[0]) clarityLatest = JSON.parse(readFileSync(join(CLARITY_SNAPSHOTS_DIR, files[0]), 'utf8'));
+    if (files[1]) clarityPrev   = JSON.parse(readFileSync(join(CLARITY_SNAPSHOTS_DIR, files[1]), 'utf8'));
+  }
+
+  // Load latest + previous Shopify snapshot
+  let shopifyLatest = null, shopifyPrev = null;
+  if (existsSync(SHOPIFY_SNAPSHOTS_DIR)) {
+    const files = readdirSync(SHOPIFY_SNAPSHOTS_DIR)
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+    if (files[0]) shopifyLatest = JSON.parse(readFileSync(join(SHOPIFY_SNAPSHOTS_DIR, files[0]), 'utf8'));
+    if (files[1]) shopifyPrev   = JSON.parse(readFileSync(join(SHOPIFY_SNAPSHOTS_DIR, files[1]), 'utf8'));
+  }
+
+  // Load most recent CRO brief
+  let brief = null;
+  if (existsSync(CRO_REPORTS_DIR)) {
+    const files = readdirSync(CRO_REPORTS_DIR)
+      .filter(f => f.endsWith('-cro-brief.md'))
+      .sort().reverse();
+    if (files[0]) {
+      brief = {
+        date: files[0].replace('-cro-brief.md', ''),
+        content: readFileSync(join(CRO_REPORTS_DIR, files[0]), 'utf8'),
+      };
+    }
+  }
+
+  return { clarity: clarityLatest, prevClarity: clarityPrev, shopify: shopifyLatest, prevShopify: shopifyPrev, brief };
+}
+
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
 
 const AHREFS_DIR = join(ROOT, 'data', 'ahrefs');
@@ -359,6 +401,7 @@ function aggregateData() {
     rankings,
     posts,
     pendingAhrefsData,
+    cro: parseCROData(),
   };
 }
 
