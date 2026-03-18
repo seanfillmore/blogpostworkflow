@@ -1,7 +1,7 @@
 # Editor Report — No Fluoride Toothpaste: What to Use & Why It Works
 **Post:** data/posts/no-fluoride-toothpaste.html
 **Target keyword:** no fluoride toothpaste
-**Reviewed:** March 17, 2026
+**Reviewed:** March 18, 2026
 
 ---
 ## 1. Link Health
@@ -50,93 +50,100 @@ The following posts are in the same topical cluster and should be linked from th
 ---
 ## 5. Editorial Review
 
-# EDITORIAL REVIEW: "No Fluoride Toothpaste: What to Use & Why It Works"
+# EDITORIAL REVIEW
+**Post Title:** No Fluoride Toothpaste: What to Use & Why It Works  
+**Target Keyword:** no fluoride toothpaste  
+**Submission Date:** [Pre-check passed on H1 and year accuracy]
 
 ---
 
 ## 1. TOPICAL RELEVANCE
-**VERDICT:** Pass  
-**NOTES:** Post stays tightly focused on "no fluoride toothpaste" throughout. Opens with the debate, defines the category, compares to fluoride options, covers ingredients and use cases, and concludes with transition advice. No significant off-topic tangents. One minor note: the "Related Articles" section mixes 2025 and 2026 year tags (see Year Accuracy below), which is a web architecture issue, not topical drift.
+**VERDICT:** Excellent  
+**NOTES:** Post is tightly focused on the target keyword throughout. Covers "what it is," "why people choose it," "how it compares," and "which ingredients work"—all directly supporting search intent. No off-topic tangents; every section serves the core question.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
 **VERDICT:** Excellent  
-**NOTES:** Conversational, warm tone throughout. Short sentences dominate ("Add to Cart," "That's it."). Frequent use of "you/your" creates direct reader connection. Plain language paired with explanations (e.g., "Hydroxyapatite — often written as nHA — is the mineral..."). Paragraph structure is clean; most sections stay under 4 sentences. Phrases like "Let's be straightforward here" and "Here's the catch with the natural toothpaste aisle" feel authentic and approachable. No clinical jargon left unexplained.
+**NOTES:** Conversational, warm, accessible language throughout. Short sentences dominate ("That's real, and it's worth acknowledging." "Pair it with consistent brushing technique."). Effective use of "you/your" and plain-English explanations. Paragraph lengths are well-controlled; no sections exceed 4 sentences unnecessarily. Clinical terms (e.g., "Streptococcus mutans," "remineralization") are either explained in plain language or paired with accessible context. Readability is strong at ~8th grade level.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-**VERDICT:** ⚠️ **PARTIAL CONCERN — Not a Blocker, but needs flag**  
-**NOTES:** 
+**BLOCKER — CRITICAL ERROR**
 
-✓ **Correct claims:**
-- Baking soda IS in the formula (confirmed in ingredient list)
-- Cinnamon and clove essential oils ARE in the formula (confirmed)
-- Stevia IS the sweetener (confirmed; post correctly states "naturally sweetened with stevia")
-- Coconut oil, myrrh, peppermint, spearmint all match ingredient list
-- Product format is squeeze bottle (confirmed)
+**VERDICT:** FAIL  
+**NOTES:** **Major discrepancy found.** The post lists ingredients to look for, including "xylitol," but the canonical ingredient list provided does NOT contain xylitol. Real Skin Care's toothpaste uses **stevia**, not xylitol. This error appears in two places:
 
-⚠️ **ISSUE — Ingredients NOT in RSC formula but mentioned as "look for" category:**
-The "Key Ingredients to Look for in No Fluoride Toothpaste" section lists:
-- **Hydroxyapatite (nHA)** — NOT in Real Skin Care's formula, but presented as an ingredient to look for in the category. This is handled correctly; the section explicitly says "Here's what to understand about the most common ones" and later clarifies "For hydroxyapatite-based formulas" and "If sensitivity is your main concern...look for...hydroxyapatite." This is educational, not misdirected to RSC product. **PASS.**
-- **Xylitol** — NOT in Real Skin Care's formula. Same framing—presented as a category-wide ingredient to understand, not as an RSC ingredient. Section says "Xylitol, a natural sugar alcohol...has been studied" and "Other well-known options include certain Tom's of Maine formulas and various charcoal or hydroxyapatite-based products." **PASS.**
-- **Charcoal** — NOT in RSC formula. Again, framed as general category knowledge: "Charcoal: Popular in whitening products." No claim that RSC uses it. **PASS.**
+1. **"Key Ingredients to Look for" section:** Lists "Xylitol: A natural sugar alcohol found in plants..." and recommends it as something to look for in fluoride-free formulas, without clarifying that RSC's formula does not contain it.
 
-**Full ingredient list matches stated formula.** No misattribution of ingredients to RSC product. Ingredient accuracy is sound.
+2. **"What to Avoid" section:** Under "Artificial sweeteners like saccharin," the post recommends "Look for stevia or xylitol instead"—again suggesting xylitol is in RSC products when it is not.
+
+**Additional verification against canonical formula:**
+- ✓ Coconut oil (organic virgin) — correctly described
+- ✓ Baking soda — correctly identified as key cleaning ingredient
+- ✓ Cinnamon and clove essential oils — correctly highlighted
+- ✓ Myrrh — correctly noted as wildcrafted myrrh powder
+- ✓ Stevia — correctly named (though xylitol is incorrectly suggested as equivalent)
+- ✓ Peppermint and spearmint essential oils — mentioned
+- ✓ Format (squeeze bottle) — correctly stated
+
+**Per standing instructions:** "When a post describes RSC products with ingredients they don't contain, add as a blocker—do not approve." This post recommends xylitol as an alternative to avoid artificial sweeteners, creating confusion that RSC uses it when the formula actually uses stevia.
 
 ---
 
 ## 4. YEAR ACCURACY
-**VERDICT:** ⚠️ **FLAG — URL/Title Mismatch in Related Articles**  
-**NOTES:** 
-
-Code pre-check passed for headings, which is correct—no stale years in body heading hierarchy.
-
-**However**, "Related Articles" section contains year inconsistency:
-- "Best Fluoride Free Toothpaste – **2025**" (link slug likely contains 2025)
-- "Best Toothpaste Without SLS – **2026**"
-- "Best Natural Toothpaste – **2026**"
-
-The post's main URL slug is not provided, but the post itself contains no year in the title or body headings. **This is a minor related-articles issue, not a blocker,** but it should be escalated to the web team for URL/year standardization. Per standing instructions, flag for systemic review.
+**VERDICT:** Pass  
+**NOTES:** Pre-check code confirmed no stale years in headings. Related articles section does contain "Best Fluoride Free Toothpaste – 2025" and "Best Toothpaste Without SLS – 2026," which suggests potential URL slug mismatches (flagged separately below under Formatting), but the main post body contains no year references and no title/body year conflicts detected.
 
 ---
 
 ## 5. FACTUAL CONCERNS
-**VERDICT:** Minor flags; no blockers  
+**VERDICT:** Needs Work (Minor)  
 **NOTES:** 
 
-✓ **Strong sourcing:** Post cites PubMed references and ADA guidance for fluoride, hydroxyapatite, xylitol, and coconut oil antimicrobial activity. Source URLs provided are generic PubMed links (not the problematic PMC IDs from standing feedback). Disclaimer at bottom ("This article is for informational purposes only. Always consult your dentist...") is appropriate.
+1. **Source links:** Four citations listed under "Sources" are generic PubMed/ADA references without specific URLs. The post claims "Hydroxyapatite as a Remineralizing Agent — PubMed" and similar but does not provide clickable links or PMC identifiers. Per standing feedback, broken or missing source URLs should be flagged when claims are central to the argument. These should be replaced with full URLs before publication.
 
-⚠️ **Claim check:** "Too much ingested fluoride during early tooth development can contribute to dental fluorosis — white spots or streaking on permanent teeth." This is factually accurate and well-established in dental literature.
+2. **Hydroxyapatite claim:** Post states "nHA — is the mineral that makes up about 97% of your tooth enamel" and later recommends it for sensitivity without noting it is NOT in Real Skin Care's formula. This is factually accurate information but represents a gap: the post educates readers on hydroxyapatite as a beneficial ingredient without clarifying that RSC's formula does not contain it (it uses baking soda instead). This creates a silent mismatch between "what to look for" and what's actually in RSC's product.
 
-⚠️ **Hydroxyapatite framing:** Post states "Some studies suggest it may help support enamel when used in toothpaste" and "research into its potential to support enamel remineralization is growing." Language is appropriately cautious ("some studies," "growing") and not overstated. **PASS.**
+3. **Glycerin debate:** The post mentions "Glycerin: This one is debated in holistic circles" and suggests some practitioners think it may interfere with remineralization. This framing is appropriately cautious ("evidence is mixed") and reflects genuine debate in the holistic dentistry community, so it's factually sound—though it's worth noting RSC's formula does not contain glycerin, so this is informational rather than product-specific.
 
-⚠️ **Xylitol framing:** "It's well-studied for its ability to disrupt the growth of Streptococcus mutans, the primary cavity-causing bacteria in your mouth." Xylitol research is robust on this point; claim is supported. **PASS.**
-
-✓ **No exaggerated claims about RSC product:** The post does not claim RSC toothpaste is a substitute for fluoride therapy or that it outperforms fluoride-based options. It frames RSC as a "solid daily option" and "clean alternative," which is defensible positioning.
+**No exaggerated claims detected.** The post is notably careful to acknowledge fluoride's research base ("Decades of dental research support its role") while explaining why people choose alternatives. Tone is balanced throughout.
 
 ---
 
 ## 6. CTA QUALITY
-**VERDICT:** Excellent  
-**NOTES:** 
+**VERDICT:** Good  
+**NOTES:** Multiple natural CTAs present:
+- "Add to Cart" buttons (2×) tied directly to the coconut oil toothpaste product page
+- Section CTAs: "Shop Now" (fluoride-free collection), "Check our natural toothpaste collection," reference to "non-fluoride toothpaste collection"
+- Product-specific links in subsections: "cinnamon toothpaste collection," "natural toothpaste collection," "sls-free toothpaste collection," "fluoride-free toothpaste" collections
 
-CTAs are abundant and natural:
-1. Opening: "Add to Cart" link to coconut oil toothpaste
-2. Section "Ready for a Toothpaste You Can Actually Read the Label On?" → "Add to Cart"
-3. Subsections link to collections: "non-fluoride toothpaste collection," "cinnamon and clove notes in our formula," "our natural toothpaste collection," "our SLS-free toothpaste collection," "our fluoride-free toothpaste collection"
-4. Closing section: "Make the Switch to Natural, Fluoride-Free Toothpaste" → "Shop Now"
-5. In-text links to product pages within body copy (e.g., "our cinnamon toothpaste collection is worth a look")
-
-All CTAs link to real RSC product pages or collections. Placement feels organic; CTAs are contextual (e.g., the cinnamon-mention CTA appears right after discussing cinnamon oils in the formula). **No missing or weak CTAs.**
+CTAs feel organic and are well-placed after relevant explanations. Links are frequent but not aggressive. One minor note: "Related Articles" section at the bottom may dilute focus slightly by pointing readers away from Real Skin Care products, but this is a minor issue and is standard practice.
 
 ---
 
 ## 7. FORMATTING
-**VERDICT:** Pass  
-**NOTES:** 
+**VERDICT:** Needs Work (Minor)  
+**NOTES:**
 
-✓ H1 not in body (per code pre-check)  
-✓ H2 headings are hierarchically clean and descriptive ("What Is No Fluoride Toothpaste?", "Why Do People Choose...", "Fluoride vs. No Fluoride Toothpaste — An Honest Comparison", "Key Ingredients to Look for...", "Best No Fluoride Toothpaste Options by Need", "What to Avoid...", "How to Transition...", "Frequently Asked Questions", "Make the Switch...")  
-✓ H3 subheadings under "Best No
+1. **Heading hierarchy clean:** H2 structure is correct throughout (no H1 in body, per code pre-check). Subheadings use H3 appropriately under "Best No Fluoride Toothpaste by Need" section. ✓
+
+2. **Year mismatch in Related Articles:**
+   - "Best Fluoride Free Toothpaste – 2025" appears in the Related Articles list
+   - "Best Toothpaste Without SLS – 2026" and "Best Natural Toothpaste – 2026" also appear
+   - Per standing instructions: "Flag year-in-title/year-in-URL mismatches explicitly."
+   - **Action required:** Web team should verify whether these article slugs contain 2025/2026 mismatches and update Related Articles links to match current URL structure.
+
+3. **No orphaned sections detected.** Content flows logically.
+
+4. **Source citations:** Listed as plain text without links. Should be converted to clickable references or at least full URLs before publication.
+
+---
+
+## 8. COMPETITOR NAMES IN FAQ
+**VERDICT:** Pass (One Minor Reference)  
+**NOTES:** FAQ Q&As provided were checked against post content. In the main FAQ section, under "What toothpaste has no fluoride?" the post mentions "Tom's of Maine formulas and various charcoal or hydroxyapatite-based products on the market."
+
+Per the blocker rule, this is **not a blocker** because:
+- Tom's of Maine is mentioned only once, context
