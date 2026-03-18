@@ -4,7 +4,7 @@ node_modules/
 # Credentials — never commit
 .env
 client_secret_*.json
-Shopify/
+/Shopify/
 
 # Large binary assets (images already live on Shopify CDN)
 data/images/
