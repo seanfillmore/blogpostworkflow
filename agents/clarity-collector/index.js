@@ -35,7 +35,7 @@ async function main() {
 
   if (!data) {
     console.log('no session data — skipping snapshot');
-    return;
+    return false;
   }
 
   console.log(`done (${data.sessions.real} real sessions, ${data.sessions.bots} bots)`);
@@ -45,10 +45,13 @@ async function main() {
   const outPath = join(SNAPSHOTS_DIR, `${date}.json`);
   writeFileSync(outPath, JSON.stringify(snapshot, null, 2));
   console.log(`  Snapshot saved: ${outPath}`);
+  return true;
 }
 
 main()
-  .then(() => notify({ subject: 'Clarity Collector completed', body: `Snapshot saved for ${date}`, status: 'success' }))
+  .then(saved => {
+    if (saved) notify({ subject: 'Clarity Collector completed', body: `Snapshot saved for ${date}`, status: 'success' });
+  })
   .catch(err => {
     notify({ subject: 'Clarity Collector failed', body: err.message || String(err), status: 'error' });
     console.error('Error:', err.message);
