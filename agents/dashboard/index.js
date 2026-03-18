@@ -997,7 +997,8 @@ async function loadData() {
   document.getElementById('spin-icon').textContent = '⟳';
   document.getElementById('spin-icon').classList.add('spin');
   try {
-    const res = await fetch('/api/data');
+    const res = await fetch('/api/data', { credentials: 'same-origin' });
+    if (!res.ok) throw new Error(`API error: ${res.status} ${await res.text()}`);
     data = await res.json();
     document.getElementById('site-name').textContent = (data.site?.name || 'SEO') + ' Dashboard';
     document.getElementById('updated-at').textContent = new Date(data.generatedAt).toLocaleTimeString();
@@ -1009,6 +1010,7 @@ async function loadData() {
     renderCROTab(data);
   } catch(e) {
     console.error(e);
+    document.getElementById('updated-at').textContent = 'Error: ' + e.message;
   } finally {
     document.getElementById('spin-icon').textContent = '';
     document.getElementById('spin-icon').classList.remove('spin');
