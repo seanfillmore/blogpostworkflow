@@ -548,7 +548,7 @@ const HTML = `<!DOCTYPE html>
   .tab-btn:hover { color: var(--text); background: var(--bg); }
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: #eff6ff; font-weight: 600; }
   .tab-panel { display: none; }
-  .tab-panel.active { display: contents; }
+  .tab-panel.active { display: block; }
 
   /* ── cro ── */
   .cro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -996,6 +996,7 @@ function esc(s) {
 async function loadData() {
   document.getElementById('spin-icon').textContent = '⟳';
   document.getElementById('spin-icon').classList.add('spin');
+  document.getElementById('updated-at').textContent = 'Loading...';
   try {
     const res = await fetch('/api/data', { credentials: 'same-origin' });
     if (!res.ok) throw new Error('API error: ' + res.status + ' ' + await res.text());
