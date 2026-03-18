@@ -541,6 +541,36 @@ const HTML = `<!DOCTYPE html>
   .file-tag-missing { background: #fee2e2; color: var(--red); border-color: #fca5a5; }
   .file-tag-present { background: #dcfce7; color: var(--green); border-color: #86efac; }
   .data-instructions { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+
+  /* ── tabs ── */
+  .tab-nav { display: flex; gap: 2px; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+  .tab-btn { padding: 8px 20px; font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; border-radius: 6px 6px 0 0; transition: all .15s; }
+  .tab-btn:hover { color: var(--text); background: var(--bg); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: #eff6ff; font-weight: 600; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: contents; }
+
+  /* ── cro ── */
+  .cro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; box-shadow: var(--shadow); }
+  .kpi-card.alert { background: #fef2f2; border-color: #fecaca; }
+  .kpi-value { font-size: 22px; font-weight: 700; line-height: 1; }
+  .kpi-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .kpi-delta { font-size: 11px; margin-top: 3px; font-weight: 500; display: block; }
+  .kpi-delta.up   { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta.flat { color: var(--muted); }
+  .cro-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .cro-table td { padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .cro-table td:first-child { color: var(--muted); }
+  .cro-table td:last-child { text-align: right; font-weight: 500; }
+  .cro-sub { font-size: 10px; color: var(--muted); }
+  .brief-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+  .brief-item { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 12px; }
+  .brief-item-title { font-size: 11px; font-weight: 700; color: #c2410c; margin-bottom: 6px; }
+  .brief-item-body { font-size: 11px; color: #78350f; line-height: 1.5; }
+  .empty-state { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
 </style>
 </head>
 <body>
@@ -551,6 +581,11 @@ const HTML = `<!DOCTYPE html>
 </header>
 
 <main>
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('seo', this)">SEO</button>
+  <button class="tab-btn" onclick="switchTab('cro', this)">CRO</button>
+</div>
+<div id="tab-seo" class="tab-panel active">
   <!-- Metrics row -->
   <div class="metrics" id="metrics"></div>
 
@@ -580,10 +615,26 @@ const HTML = `<!DOCTYPE html>
     <div class="card-header"><h2>Posts</h2><span class="section-note" id="posts-note"></span></div>
     <div class="card-body table-wrap"><div id="posts-table"></div></div>
   </div>
+</div><!-- /tab-seo -->
+<div id="tab-cro" class="tab-panel">
+  <div id="cro-kpi-strip" style="margin-bottom:16px"></div>
+  <div class="cro-grid" style="margin-bottom:16px">
+    <div id="cro-clarity-card"></div>
+    <div id="cro-shopify-card"></div>
+  </div>
+  <div id="cro-brief-card"></div>
+</div><!-- /tab-cro -->
 </main>
 
 <script>
 let data = null;
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
 
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -800,6 +851,143 @@ function renderDataNeeded(d) {
   }).join('');
 }
 
+function renderCROTab(data) {
+  const cro = data.cro || {};
+  const cl  = cro.clarity  || null;
+  const sh  = cro.shopify  || null;
+  const pcl = cro.prevClarity  || null;
+  const psh = cro.prevShopify  || null;
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+  const fmtPct = v => v != null ? v.toFixed(1) + '%' : '—';
+  const fmtDollar = v => v != null ? '$' + Math.round(v).toLocaleString() : '—';
+  const delta = (curr, prev, higherIsBetter = true) => {
+    if (curr == null || prev == null) return '<span class="kpi-delta flat">—</span>';
+    const diff = curr - prev;
+    const dir = diff > 0 ? (higherIsBetter ? 'up' : 'down') : diff < 0 ? (higherIsBetter ? 'down' : 'up') : 'flat';
+    const sign = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+    const display = Math.abs(diff) < 1 ? Math.abs(diff).toFixed(2) : Math.round(Math.abs(diff));
+    return '<span class="kpi-delta ' + dir + '">' + sign + ' ' + display + '</span>';
+  };
+
+  // Conversion rate = orders / real sessions (cross-source)
+  const convRate  = (sh?.orders?.count != null && cl?.sessions?.real)
+    ? (sh.orders.count / cl.sessions.real * 100) : null;
+  const pConvRate = (psh?.orders?.count != null && pcl?.sessions?.real)
+    ? (psh.orders.count / pcl.sessions.real * 100) : null;
+
+  // ── KPI strip ──────────────────────────────────────────────────────────────
+  const kpis = [
+    { label: 'Conversion Rate', value: convRate != null ? fmtPct(convRate) : '—', d: delta(convRate, pConvRate), alert: false },
+    { label: 'Avg Order Value', value: sh ? fmtDollar(sh.orders.aov) : '—', d: delta(sh?.orders?.aov, psh?.orders?.aov), alert: false },
+    { label: 'Real Sessions',   value: cl ? cl.sessions.real : '—',
+      sub: cl ? 'of ' + cl.sessions.total + ' total' : '', d: delta(cl?.sessions?.real, pcl?.sessions?.real), alert: false },
+    { label: 'Script Errors',   value: cl ? fmtPct(cl.behavior.scriptErrorPct) : '—',
+      d: delta(cl?.behavior?.scriptErrorPct, pcl?.behavior?.scriptErrorPct, false),
+      alert: cl?.behavior?.scriptErrorPct > 5 },
+    { label: 'Scroll Depth',    value: cl ? fmtPct(cl.behavior.scrollDepth) : '—',
+      d: delta(cl?.behavior?.scrollDepth, pcl?.behavior?.scrollDepth), alert: false },
+    { label: 'Cart Abandon',    value: sh ? fmtPct(sh.cartAbandonmentRate * 100) : '—',
+      d: delta(sh?.cartAbandonmentRate, psh?.cartAbandonmentRate, false), alert: false },
+  ];
+
+  document.getElementById('cro-kpi-strip').innerHTML =
+    '<div class="kpi-strip">' +
+    kpis.map(k =>
+      '<div class="kpi-card' + (k.alert ? ' alert' : '') + '">' +
+      '<div class="kpi-value">' + k.value + '</div>' +
+      '<div class="kpi-label">' + k.label + '</div>' +
+      (k.sub ? '<div class="cro-sub">' + k.sub + '</div>' : '') +
+      k.d +
+      '</div>'
+    ).join('') +
+    '</div>';
+
+  // ── Clarity card ───────────────────────────────────────────────────────────
+  const clarityHtml = cl ? (
+    '<div class="card">' +
+    '<div class="card-header"><h2>Clarity</h2><span style="font-size:11px;color:var(--muted)">' + esc(cl.date) + '</span></div>' +
+    '<div class="card-body">' +
+    '<table class="cro-table">' +
+    '<tr><td>Total Sessions</td><td>' + cl.sessions.total + ' <span class="cro-sub">(' + cl.sessions.bots + ' bots)</span></td></tr>' +
+    '<tr><td>Active Engagement</td><td>' + cl.engagement.activeTime + 's <span class="cro-sub">of ' + cl.engagement.totalTime + 's</span></td></tr>' +
+    '<tr><td>Device Split</td><td>' + (cl.devices[0] ? esc(cl.devices[0].name) + ': ' + cl.devices[0].sessions : '—') + '</td></tr>' +
+    '<tr><td>Top Country</td><td>' + (cl.countries[0] ? esc(cl.countries[0].name) + ' (' + cl.countries[0].sessions + ')' : '—') + '</td></tr>' +
+    '<tr><td>Rage Clicks</td><td>' + fmtPct(cl.behavior.rageClickPct) + '</td></tr>' +
+    '<tr><td>Dead Clicks</td><td>' + fmtPct(cl.behavior.deadClickPct) + '</td></tr>' +
+    '</table>' +
+    '<div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Pages</div>' +
+    cl.topPages.slice(0, 5).map((p, i) =>
+      '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + (i+1) + '. ' + esc(p.title.length > 50 ? p.title.slice(0,50)+'…' : p.title) + ' — ' + p.sessions + '</div>'
+    ).join('') +
+    '</div></div>'
+  ) : '<div class="card"><div class="card-body"><p class="empty-state">No Clarity data collected yet — run clarity-collector to get started.</p></div></div>';
+
+  document.getElementById('cro-clarity-card').innerHTML = clarityHtml;
+
+  // ── Shopify card ───────────────────────────────────────────────────────────
+  const shopifyHtml = sh ? (
+    '<div class="card">' +
+    '<div class="card-header"><h2>Shopify</h2><span style="font-size:11px;color:var(--muted)">' + esc(sh.date) + '</span></div>' +
+    '<div class="card-body">' +
+    '<table class="cro-table">' +
+    '<tr><td>Revenue</td><td>' + fmtDollar(sh.orders.revenue) + '</td></tr>' +
+    '<tr><td>Orders</td><td>' + sh.orders.count + '</td></tr>' +
+    '<tr><td>Avg Order Value</td><td>' + fmtDollar(sh.orders.aov) + '</td></tr>' +
+    '<tr><td>Abandoned Carts</td><td>' + sh.abandonedCheckouts.count + '</td></tr>' +
+    '<tr><td>Cart Abandon Rate</td><td>' + fmtPct(sh.cartAbandonmentRate * 100) + '</td></tr>' +
+    '</table>' +
+    '<div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Products</div>' +
+    (sh.topProducts.length ? sh.topProducts.slice(0, 5).map((p, i) =>
+      '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + (i+1) + '. ' + esc(p.title) + ' — ' + fmtDollar(p.revenue) + ' (' + p.orders + ' orders)</div>'
+    ).join('') : '<div style="font-size:11px;color:var(--muted)">No orders today</div>') +
+    '</div></div>'
+  ) : '<div class="card"><div class="card-body"><p class="empty-state">No Shopify data collected yet — run shopify-collector to get started.</p></div></div>';
+
+  document.getElementById('cro-shopify-card').innerHTML = shopifyHtml;
+
+  // ── CRO Brief ──────────────────────────────────────────────────────────────
+  const brief = cro.brief;
+  let briefHtml;
+  if (!brief) {
+    briefHtml = '<div class="card"><div class="card-body"><p class="empty-state">No brief generated yet — run cro-analyzer to generate your first brief.</p></div></div>';
+  } else {
+    // Parse action items from markdown (lines starting with ### N.)
+    const items = [];
+    const lines = brief.content.split('\n');
+    let current = null;
+    for (const line of lines) {
+      if (/^### \d+\./.test(line)) {
+        if (current) items.push(current);
+        const titleMatch = line.match(/^### \d+\.\s+(.+?)\s+—\s+(HIGH|MED|LOW)/i);
+        current = { title: titleMatch?.[1] || line.replace(/^### \d+\.\s*/, ''), priority: titleMatch?.[2] || '', body: [] };
+      } else if (current && line.trim() && !/^##/.test(line)) {
+        current.body.push(line.trim());
+      }
+    }
+    if (current) items.push(current);
+
+    const prioColor = p => p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280';
+
+    briefHtml = '<div class="card" style="background:#fffbeb;border-color:#fde68a">' +
+      '<div class="card-header"><h2 style="color:#92400e">AI CRO Brief</h2>' +
+      '<span style="font-size:11px;color:#92400e">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
+      '<div class="card-body">' +
+      (items.length ? '<div class="brief-grid">' +
+        items.slice(0, 6).map(item =>
+          '<div class="brief-item">' +
+          '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
+          (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
+          '<div class="brief-item-body">' + esc(item.body.slice(0, 3).join(' ').slice(0, 200)) + '</div>' +
+          '</div>'
+        ).join('') + '</div>'
+      : '<pre style="font-size:11px;white-space:pre-wrap;color:#78350f">' + esc(brief.content.slice(0, 1000)) + '</pre>') +
+      '</div></div>';
+  }
+
+  document.getElementById('cro-brief-card').innerHTML = briefHtml;
+}
+
 function esc(s) {
   if (!s) return '';
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -818,6 +1006,7 @@ async function loadData() {
     renderKanban(data);
     renderRankings(data);
     renderPosts(data);
+    renderCROTab(data);
   } catch(e) {
     console.error(e);
   } finally {
