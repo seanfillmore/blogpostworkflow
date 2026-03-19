@@ -1091,7 +1091,7 @@ function renderGSCSEOPanel(data) {
   html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Pages</div>' +
     '<table class="gsc-table"><thead><tr><th>Page</th><th>Clicks</th><th>Impr</th><th>CTR</th><th>Pos</th></tr></thead><tbody>' +
     (gsc.topPages || []).map(p => {
-      const slug = p.page.replace(/^https?:\/\/[^/]+/, '').slice(0, 35) || '/';
+      const slug = p.page.replace(/^https?:\\/\\/[^/]+/, '').slice(0, 35) || '/';
       return '<tr><td title="' + esc(p.page) + '">' + esc(slug) + '</td>' +
         '<td>' + esc(String(p.clicks)) + '</td><td>' + esc(String(p.impressions)) + '</td>' +
         '<td>' + fmtPct(p.ctr) + '</td><td>' + fmtPos(p.position) + '</td></tr>';
@@ -1246,7 +1246,7 @@ function renderCROTab(data) {
     ).join('') +
     '<div style="margin-top:10px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Landing Pages</div>' +
     (ga4.topLandingPages || []).map((p, i) => {
-      const slug = (p.page || '').replace(/^https?:\/\/[^/]+/, '').slice(0, 40) || '/';
+      const slug = (p.page || '').replace(/^https?:\\/\\/[^/]+/, '').slice(0, 40) || '/';
       return '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + esc(String(i+1)) + '. ' + esc(slug) + ' — ' + fmtDollar(p.revenue) + '</div>';
     }).join('') +
     '</div></div>'
