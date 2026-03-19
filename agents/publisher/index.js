@@ -230,7 +230,7 @@ async function main() {
   console.log(`\n  Metadata updated: ${metaPath}`);
 
   // Post-publish verification (skippable with --no-verify)
-  if (!skipVerify && !isDraft) {
+  if (!skipVerify && meta.shopify_status === 'published') {
     console.log('\nRunning post-publish verifier...');
     const { spawnSync } = await import('node:child_process');
     const result = spawnSync(
