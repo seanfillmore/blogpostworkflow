@@ -1416,8 +1416,8 @@ Add `$DAILY_GSC` and `$DAILY_GA4` after `$DAILY_SHOPIFY` in the heredoc.
 
 Add:
 ```bash
-echo "  Daily   06:15 UTC — gsc-collector"
-echo "  Daily   06:20 UTC — ga4-collector"
+echo "  Daily   06:15 PDT / 05:15 PST — gsc-collector"
+echo "  Daily   06:20 PDT / 05:20 PST — ga4-collector"
 ```
 
 - [ ] **Step 4: Test the script locally**
