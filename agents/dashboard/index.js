@@ -605,12 +605,6 @@ const HTML = `<!DOCTYPE html>
   header h1 { font-size: 16px; font-weight: 600; }
   .header-meta { font-size: 12px; color: var(--muted); margin-left: auto; }
 
-  /* ── legacy tab nav (removed in Task 3) ── */
-  .tab-nav { display: flex; gap: 2px; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
-  .tab-btn { padding: 8px 20px; font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; border-radius: 6px 6px 0 0; transition: all .15s; }
-  .tab-btn:hover { color: var(--text); background: var(--bg); }
-  .tab-btn.active { color: var(--indigo); border-bottom-color: var(--indigo); background: #eef2ff; font-weight: 600; }
-
   /* ── metric cards (removed in Task 3/5) ── */
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
   .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
@@ -748,10 +742,9 @@ function switchTab(name, btn) {
 }
 
 function renderHeroKpis(d) {
-  const seoKpis = buildSeoKpis(d);
-  const croKpis = buildCroKpis(d);
-  const adsKpis = buildAdsKpis(d);
-  const kpis = activeTab === 'cro' ? croKpis : activeTab === 'ads' ? adsKpis : seoKpis;
+  const kpis = activeTab === 'cro' ? buildCroKpis(d)
+             : activeTab === 'ads' ? buildAdsKpis(d)
+             : buildSeoKpis(d);
   document.getElementById('hero-kpis').innerHTML = kpis.map(k =>
     '<div class="hero-kpi">' +
     '<div class="hero-kpi-value" style="color:' + k.color + '">' + k.value + '</div>' +
@@ -817,31 +810,6 @@ function badge(cls, text) {
 function statusBadge(s) {
   const map = { published:'published', scheduled:'scheduled', draft:'draft', written:'written', briefed:'briefed', pending:'pending', local:'local' };
   return badge(map[s] || 'pending', s || 'unknown');
-}
-
-function renderMetrics(d) {
-  const c = d.pipeline.counts;
-  const inPipeline = (c.pending||0) + (c.briefed||0) + (c.written||0) + (c.draft||0);
-  const scheduled  = c.scheduled || 0;
-  const published  = c.published || 0;
-
-  const r = d.rankings;
-  const page1 = r.summary.page1;
-  const rankItems = r.items.filter(x => x.change != null);
-  const avgChange = rankItems.length
-    ? (rankItems.reduce((s, x) => s + x.change, 0) / rankItems.length).toFixed(1)
-    : null;
-  const changeClass = avgChange > 0 ? 'green' : avgChange < 0 ? '' : '';
-  const changeSign  = avgChange > 0 ? '+' : '';
-
-  document.getElementById('metrics').innerHTML = [
-    '<div class="metric green"><div class="metric-value">' + published + '</div><div class="metric-label">Published</div></div>',
-    '<div class="metric blue"><div class="metric-value">' + scheduled + '</div><div class="metric-label">Scheduled</div></div>',
-    '<div class="metric purple"><div class="metric-value">' + inPipeline + '</div><div class="metric-label">In Pipeline</div><div class="metric-sub">' +
-      [c.pending && c.pending + ' pending', c.briefed && c.briefed + ' briefed', c.written && c.written + ' written', c.draft && c.draft + ' draft'].filter(Boolean).join(' · ') + '</div></div>',
-    '<div class="metric green"><div class="metric-value">' + page1 + '</div><div class="metric-label">Page 1 Keywords</div></div>',
-    '<div class="metric ' + changeClass + '"><div class="metric-value">' + (avgChange != null ? changeSign + avgChange : '—') + '</div><div class="metric-label">Avg Rank Change</div><div class="metric-sub">' + (r.latestDate || '') + '</div></div>',
-  ].join('');
 }
 
 function renderKanban(d) {
