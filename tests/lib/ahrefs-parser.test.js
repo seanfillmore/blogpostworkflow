@@ -31,3 +31,12 @@ test('is case-insensitive for column names', () => {
   assert.equal(result.domainRating, '55');
   assert.equal(result.backlinks, '800');
 });
+
+test('handles quoted fields with embedded commas', () => {
+  const csv = `Domain Rating,Backlinks,Referring Domains,Organic Traffic Value\n72,"1,240",310,"45,600"`;
+  const result = parseAhrefsOverview(csv);
+  assert.equal(result.domainRating, '72');
+  assert.equal(result.backlinks, '1,240');
+  assert.equal(result.referringDomains, '310');
+  assert.equal(result.organicTrafficValue, '45,600');
+});
