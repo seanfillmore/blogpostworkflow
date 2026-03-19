@@ -12,8 +12,9 @@
  */
 
 import http from 'http';
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
+import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 import { fileURLToPath } from 'url';
 
 // ── basic auth ─────────────────────────────────────────────────────────────────
@@ -257,7 +258,9 @@ function parseCROData() {
 
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
 
-const AHREFS_DIR = join(ROOT, 'data', 'ahrefs');
+const AHREFS_DIR      = join(ROOT, 'data', 'ahrefs');
+const RANK_ALERTS_DIR = join(ROOT, 'data', 'reports', 'rank-alerts');
+const ALERTS_VIEWED   = join(RANK_ALERTS_DIR, '.last-viewed');
 
 function checkAhrefsData(keyword) {
   const slug = kwToSlug(keyword);
@@ -410,6 +413,28 @@ function aggregateData() {
 
   const pendingAhrefsData = getPendingAhrefsData(calItems);
 
+  // Ahrefs authority
+  const ahrefsData = loadLatestAhrefsOverview(AHREFS_DIR);
+
+  // Rank alerts
+  let rankAlert = null;
+  if (existsSync(RANK_ALERTS_DIR)) {
+    const alertFiles = readdirSync(RANK_ALERTS_DIR)
+      .filter(f => f.endsWith('.md') && !f.startsWith('.'))
+      .sort().reverse();
+    if (alertFiles.length) {
+      const latestAlert = alertFiles[0];
+      const alertMtime  = statSync(join(RANK_ALERTS_DIR, latestAlert)).mtimeMs;
+      const viewedMtime = existsSync(ALERTS_VIEWED) ? statSync(ALERTS_VIEWED).mtimeMs : 0;
+      if (alertMtime > viewedMtime) {
+        const content = readFileSync(join(RANK_ALERTS_DIR, latestAlert), 'utf8');
+        const drops = (content.match(/🔻/g) || []).length;
+        const gains = (content.match(/🚀/g) || []).length;
+        rankAlert = { file: latestAlert, drops, gains, path: join(RANK_ALERTS_DIR, latestAlert) };
+      }
+    }
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -418,6 +443,8 @@ function aggregateData() {
     posts,
     pendingAhrefsData,
     cro: parseCROData(),
+    ahrefsData,
+    rankAlert,
   };
 }
 
@@ -686,6 +713,15 @@ const HTML = `<!DOCTYPE html>
       <span class="section-note">Upload these CSV exports before the research agent can run</span>
     </div>
     <div class="card-body" id="data-needed-body"></div>
+  </div>
+
+  <!-- Rank alert banner -->
+  <div id="rank-alert-banner" style="display:none"></div>
+
+  <!-- SEO Authority -->
+  <div class="card">
+    <div class="card-header accent-indigo"><h2>SEO Authority</h2><span class="section-note">Ahrefs · Updated manually</span></div>
+    <div class="card-body" id="seo-authority-panel"><p class="empty-state">Loading...</p></div>
   </div>
 
   <!-- Pipeline kanban -->
@@ -1410,6 +1446,44 @@ function renderCROTab(data) {
   document.getElementById('cro-brief-card').innerHTML = briefHtml;
 }
 
+function renderSEOAuthorityPanel(ahrefs) {
+  const el = document.getElementById('seo-authority-panel');
+  if (!el) return;
+  if (!ahrefs) {
+    el.innerHTML = '<div class="data-needed"><strong>⚠ SEO Authority Data Needed</strong>Download Ahrefs domain overview export and place in <code>data/ahrefs/</code></div>';
+    return;
+  }
+  const fmt = v => v != null && v !== '' ? Number(v).toLocaleString() : '—';
+  const fmtDr = v => v != null && v !== '' ? v : '—';
+  const fmtVal = v => v != null && v !== '' ? '$' + (Number(v) / 100).toLocaleString() : '—';
+  el.innerHTML =
+    '<div class="authority-row">' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmtDr(ahrefs.domainRating) + '</div><div class="authority-stat-label">Domain Rating</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.backlinks) + '</div><div class="authority-stat-label">Backlinks</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.referringDomains) + '</div><div class="authority-stat-label">Referring Domains</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmtVal(ahrefs.organicTrafficValue) + '</div><div class="authority-stat-label">Organic Traffic Value</div></div>' +
+    '</div>';
+}
+
+function renderRankAlertBanner(alert) {
+  const el = document.getElementById('rank-alert-banner');
+  if (!el) return;
+  if (!alert) { el.style.display = 'none'; return; }
+  const isNeg = alert.drops > alert.gains;
+  el.className = 'alert-banner ' + (isNeg ? 'alert-red' : 'alert-green');
+  el.style.display = '';
+  el.innerHTML =
+    (isNeg ? '🔻' : '🚀') + ' ' +
+    '<strong>' + (isNeg ? alert.drops + ' rank drops' : alert.gains + ' rank gains') + ' today</strong> — ' +
+    alert.file.replace('.md', '') +
+    '<span class="alert-banner-dismiss" onclick="dismissAlert()">Dismiss ×</span>';
+}
+
+async function dismissAlert() {
+  await fetch('/dismiss-alert', { method: 'POST' });
+  document.getElementById('rank-alert-banner').style.display = 'none';
+}
+
 function esc(s) {
   if (!s) return '';
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1443,6 +1517,8 @@ async function loadData() {
     renderPosts(data);
     renderGSCSEOPanel(data);
     renderCROTab(data);
+    renderSEOAuthorityPanel(data.ahrefsData);
+    renderRankAlertBanner(data.rankAlert);
   } catch(e) {
     console.error(e);
     document.getElementById('updated-at').textContent = 'Error: ' + e.message;
@@ -1532,6 +1608,14 @@ document.getElementById('kw-modal').addEventListener('click', function(e) {
 
 const server = http.createServer((req, res) => {
   if (!checkAuth(req, res)) return;
+
+  if (req.method === 'POST' && req.url === '/dismiss-alert') {
+    mkdirSync(RANK_ALERTS_DIR, { recursive: true });
+    writeFileSync(ALERTS_VIEWED, new Date().toISOString());
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
 
   if (req.url === '/api/data') {
     try {
