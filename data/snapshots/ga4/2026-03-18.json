@@ -1,0 +1,80 @@
+{
+  "date": "2026-03-18",
+  "sessions": 26,
+  "users": 25,
+  "newUsers": 24,
+  "bounceRate": 0.462,
+  "avgSessionDuration": 75,
+  "conversions": 0,
+  "conversionRate": 0,
+  "revenue": 0,
+  "topSources": [
+    {
+      "source": "(direct)",
+      "medium": "(none)",
+      "sessions": 18,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "source": "google",
+      "medium": "organic",
+      "sessions": 2,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "source": "mail.google.com",
+      "medium": "referral",
+      "sessions": 2,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "source": "(data not available)",
+      "medium": "(data not available)",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "source": "137.184.119.230",
+      "medium": "referral",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    }
+  ],
+  "topLandingPages": [
+    {
+      "page": "/",
+      "sessions": 10,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+      "sessions": 2,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "sessions": 2,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "/blogs/news",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    }
+  ]
+}
