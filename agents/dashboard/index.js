@@ -1453,9 +1453,9 @@ function renderSEOAuthorityPanel(ahrefs) {
     el.innerHTML = '<div class="data-needed"><strong>⚠ SEO Authority Data Needed</strong>Download Ahrefs domain overview export and place in <code>data/ahrefs/</code></div>';
     return;
   }
-  const fmt = v => v != null && v !== '' ? Number(v).toLocaleString() : '—';
-  const fmtDr = v => v != null && v !== '' ? v : '—';
-  const fmtVal = v => v != null && v !== '' ? '$' + (Number(v) / 100).toLocaleString() : '—';
+  const fmt    = v => (v != null && v !== '' && !isNaN(Number(v))) ? Number(v).toLocaleString() : '—';
+  const fmtDr  = v => (v != null && v !== '') ? v : '—';
+  const fmtVal = v => (v != null && v !== '' && !isNaN(Number(v))) ? '$' + (Number(v) / 100).toLocaleString() : '—';
   el.innerHTML =
     '<div class="authority-row">' +
     '<div class="authority-stat"><div class="authority-stat-value">' + fmtDr(ahrefs.domainRating) + '</div><div class="authority-stat-label">Domain Rating</div></div>' +
