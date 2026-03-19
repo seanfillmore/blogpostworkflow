@@ -28,6 +28,7 @@ const REDIRECT_URI = `http://localhost:${PORT}/callback`;
 const SCOPES = [
   'https://www.googleapis.com/auth/webmasters.readonly',
   'https://www.googleapis.com/auth/analytics.readonly',
+  'https://www.googleapis.com/auth/adwords',
 ].join(' ');
 
 function loadEnv() {
@@ -116,8 +117,8 @@ const server = createServer(async (req, res) => {
     }
     saveToEnv('GOOGLE_REFRESH_TOKEN', tokens.refresh_token);
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end('<h2>Success!</h2><p>GSC + GA4 authorized. You can close this tab.</p>');
-    console.log('✓ Refresh token saved to .env (grants webmasters.readonly + analytics.readonly)');
+    res.end('<h2>Success!</h2><p>GSC + GA4 + Google Ads authorized. You can close this tab.</p>');
+    console.log('✓ Refresh token saved to .env (grants webmasters.readonly + analytics.readonly + adwords)');
     console.log('\nTest GA4: node -e "import(\'./lib/ga4.js\').then(m => m.fetchGA4Snapshot(\'2026-03-18\')).then(r => console.log(JSON.stringify(r, null, 2)))"');
     server.close();
     process.exit(0);
