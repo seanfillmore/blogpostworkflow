@@ -203,6 +203,7 @@ const CLARITY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'clarity');
 const SHOPIFY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
 const GSC_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'gsc');
 const GA4_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'ga4');
+const GOOGLE_ADS_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'google-ads');
 const CRO_REPORTS_DIR       = join(ROOT, 'data', 'reports', 'cro');
 
 function parseCROData() {
@@ -252,7 +253,15 @@ function parseCROData() {
     ga4All = files.map(f => JSON.parse(readFileSync(join(GA4_SNAPSHOTS_DIR, f), 'utf8')));
   }
 
-  return { clarityAll, shopifyAll, gscAll, ga4All, brief };
+  // Load up to 60 Google Ads snapshots
+  let googleAdsAll = [];
+  if (existsSync(GOOGLE_ADS_SNAPSHOTS_DIR)) {
+    const files = readdirSync(GOOGLE_ADS_SNAPSHOTS_DIR)
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
+    googleAdsAll = files.map(f => JSON.parse(readFileSync(join(GOOGLE_ADS_SNAPSHOTS_DIR, f), 'utf8')));
+  }
+
+  return { clarityAll, shopifyAll, gscAll, ga4All, brief, googleAdsAll };
 }
 
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
@@ -612,6 +621,7 @@ const HTML = `<!DOCTYPE html>
 <div class="tab-nav">
   <button class="tab-btn active" onclick="switchTab('seo', this)">SEO</button>
   <button class="tab-btn" onclick="switchTab('cro', this)">CRO</button>
+  <button class="tab-btn" onclick="switchTab('ads', this)">Paid Search</button>
 </div>
 <div id="tab-seo" class="tab-panel active">
   <!-- Metrics row -->
@@ -665,6 +675,13 @@ const HTML = `<!DOCTYPE html>
   </div>
   <div id="cro-brief-card"></div>
 </div><!-- /tab-cro -->
+<div id="tab-ads" class="tab-panel">
+  <div id="ads-kpi-strip" style="margin-bottom:16px"></div>
+  <div class="cro-grid" style="margin-bottom:16px">
+    <div id="ads-overview-card"></div>
+    <div id="ads-keywords-card"></div>
+  </div>
+</div><!-- /tab-ads -->
 </main>
 
 <script>
@@ -1321,6 +1338,77 @@ function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function kpiCard(label, value, sub) {
+  return '<div class="kpi-card">' +
+    '<div class="kpi-value">' + esc(String(value)) + '</div>' +
+    '<div class="kpi-label">' + esc(label) + '</div>' +
+    (sub ? '<div class="cro-sub">' + esc(sub) + '</div>' : '') +
+    '</div>';
+}
+
+function renderAdsTab(data) {
+  const adsAll = data.cro?.googleAdsAll || [];
+  const snap = adsAll[0];
+
+  if (!snap) {
+    document.getElementById('ads-kpi-strip').innerHTML = '';
+    document.getElementById('ads-overview-card').innerHTML =
+      '<div class="card"><div class="card-header"><h2>Campaign Overview</h2></div>' +
+      '<div class="card-body"><p class="empty-state">No Google Ads data yet — run google-ads-collector to get started.</p></div></div>';
+    document.getElementById('ads-keywords-card').innerHTML = '';
+    return;
+  }
+
+  // KPI strip inside the Paid Search tab (2 cards — Ad Spend and ROAS)
+  document.getElementById('ads-kpi-strip').innerHTML =
+    '<div class="kpi-strip" style="grid-template-columns: repeat(2, 1fr)">' +
+    kpiCard('Ad Spend', '$' + snap.spend.toFixed(2), 'of $10.00/day') +
+    kpiCard('ROAS', snap.roas.toFixed(2) + 'x', 'paid search') +
+    '</div>';
+
+  // Campaign overview card
+  const overviewRows = [
+    ['Spend', '$' + snap.spend.toFixed(2)],
+    ['Daily Budget', '$10.00'],
+    ['Impressions', fmtNum(snap.impressions)],
+    ['Clicks', fmtNum(snap.clicks)],
+    ['CTR', (snap.ctr * 100).toFixed(2) + '%'],
+    ['Avg CPC', '$' + snap.avgCpc.toFixed(2)],
+    ['Conversions', snap.conversions],
+    ['CVR', (snap.conversionRate * 100).toFixed(2) + '%'],
+    ['Revenue', '$' + snap.revenue.toFixed(2)],
+    ['ROAS', snap.roas.toFixed(2) + 'x'],
+    ['Cost/Conv', snap.costPerConversion > 0 ? '$' + snap.costPerConversion.toFixed(2) : '—'],
+  ];
+
+  document.getElementById('ads-overview-card').innerHTML =
+    '<div class="card"><div class="card-header"><h2>Campaign Overview</h2>' +
+    '<span class="section-note">' + esc(snap.date) + '</span></div>' +
+    '<div class="card-body"><table class="cro-table">' +
+    overviewRows.map(([l, v]) => '<tr><td>' + esc(l) + '</td><td>' + esc(String(v)) + '</td></tr>').join('') +
+    '</table></div></div>';
+
+  // Top keywords card
+  const kws = snap.topKeywords || [];
+  document.getElementById('ads-keywords-card').innerHTML =
+    '<div class="card"><div class="card-header"><h2>Top Keywords</h2>' +
+    '<span class="section-note">by conversions</span></div>' +
+    '<div class="card-body table-wrap">' +
+    (kws.length === 0 ? '<p class="empty-state">No keyword data yet.</p>' :
+      '<table><thead><tr><th>Keyword</th><th>Match</th><th>QS</th><th>Clicks</th><th>CVR</th><th>CPC</th><th>Conv</th></tr></thead><tbody>' +
+      kws.map(k =>
+        '<tr><td>' + esc(k.keyword || '—') + '</td>' +
+        '<td>' + esc((k.matchType || '').toLowerCase()) + '</td>' +
+        '<td>' + (k.qualityScore || '—') + '</td>' +
+        '<td>' + fmtNum(k.clicks) + '</td>' +
+        '<td>' + (k.clicks > 0 ? (k.conversions / k.clicks * 100).toFixed(1) + '%' : '—') + '</td>' +
+        '<td>$' + (k.avgCpc || 0).toFixed(2) + '</td>' +
+        '<td>' + k.conversions + '</td></tr>'
+      ).join('') +
+      '</tbody></table>') +
+    '</div></div>';
+}
+
 async function loadData() {
   document.getElementById('spin-icon').textContent = '⟳';
   document.getElementById('spin-icon').classList.add('spin');
@@ -1338,6 +1426,7 @@ async function loadData() {
     renderPosts(data);
     renderGSCSEOPanel(data);
     renderCROTab(data);
+    renderAdsTab(data);
   } catch(e) {
     console.error(e);
     document.getElementById('updated-at').textContent = 'Error: ' + e.message;
