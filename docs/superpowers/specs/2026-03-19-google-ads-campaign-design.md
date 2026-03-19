@@ -142,15 +142,17 @@ Two ad groups isolate which message angle (product vs. category) drives better C
 
 ### Ad Extensions
 
-**Sitelinks:**
-- Shop Coconut Lotion → `/products/coconut-lotion`
-- Natural Deodorant → `/products/coconut-oil-deodorant`
-- Coconut Oil Toothpaste → `/products/coconut-oil-toothpaste`
-- All Products → `/collections/all`
+**Sitelinks** (each URL includes UTM params with `utm_content` to distinguish sitelink clicks from headline clicks in GA4):
+- Shop Coconut Lotion → `/products/coconut-lotion?utm_source=google&utm_medium=cpc&utm_campaign=rsc-lotion-search&utm_content=sitelink-coconut-lotion`
+- Natural Deodorant → `/products/coconut-oil-deodorant?utm_source=google&utm_medium=cpc&utm_campaign=rsc-lotion-search&utm_content=sitelink-deodorant`
+- Coconut Oil Toothpaste → `/products/coconut-oil-toothpaste?utm_source=google&utm_medium=cpc&utm_campaign=rsc-lotion-search&utm_content=sitelink-toothpaste`
+- All Products → `/collections/all?utm_source=google&utm_medium=cpc&utm_campaign=rsc-lotion-search&utm_content=sitelink-all`
 
 **Callouts:** 6-Ingredient Formula · Fragrance Free · Vegan & Cruelty-Free · Ships Fast
 
 **Structured Snippets** (Type: Ingredients): Organic Coconut Oil, Shea Butter, Vitamin E
+
+> **Note on Ad Group 2 landing page:** The collection page `/collections/best-non-toxic-body-lotion` shows a 3.57% CVR vs. 2.64% for the product page, and is a strong semantic match for category queries. However, that sample is only 56 sessions / 2 conversions — too thin to be reliable. Both ad groups land on `/products/coconut-lotion` for now. Revisit after 50+ paid clicks on Ad Group 2.
 
 ---
 
@@ -158,12 +160,14 @@ Two ad groups isolate which message angle (product vs. category) drives better C
 
 ### Phase 1: Days 1–30 (Manual CPC)
 - **Max CPC:** $0.80
-- **Rationale:** Break-even CPC at 2.64% CVR and $22 AOV is $0.58. Capping at $0.80 allows top-3 positioning on moderate-competition terms while staying near break-even as conversion data builds.
+- **Rationale:** Revenue break-even CPC at 2.64% CVR and $22 AOV is $0.58. Note this is revenue break-even, not margin break-even — actual profitability depends on COGS. Capping at $0.80 allows top-3 positioning on moderate-competition terms while building conversion history.
 - Smart Bidding requires ≥15 conversions to optimize effectively — manual CPC avoids wasted spend during the learning phase.
+- **Realistic timeline note:** At $10/day and ~0.33 conversions/day (10 clicks/day × 2.64% CVR × 80% efficiency), reaching 15 conversions will take ~45 days, not 30. The Phase 2 trigger is conversion-count-gated, not calendar-gated.
 
-### Phase 2: Days 31+ (Target ROAS)
+### Phase 2: Days 45+ (Target ROAS)
 - **Trigger:** ≥15 cumulative conversions in the account
-- **Initial tROAS target:** 110% (slight profit above break-even)
+- **Initial tROAS target:** 150% (Google's Smart Bidding needs headroom above 1x to explore bid variations; starting at 110% risks under-bidding and delivery stalls)
+- **Step down to 130%** if impression share falls below 40% at 150% tROAS
 - **Rationale:** Once conversion history exists, Google's model can optimize bid timing/audience in ways manual CPC cannot.
 
 ---
@@ -207,14 +211,49 @@ data/snapshots/google-ads/YYYY-MM-DD.json
 }
 ```
 
-### Prerequisites
-1. **Re-auth OAuth** — update `scripts/reauth-google.js` to include `https://www.googleapis.com/auth/adwords` scope, run once
-2. **Add `GOOGLE_ADS_CUSTOMER_ID`** to `.env` (10-digit account ID from Google Ads UI)
-3. Existing `GOOGLE_ADS_TOKEN` (developer token) is already in `.env`
+### API resources used for campaign creation
+Campaign creation is a one-shot setup script (`scripts/create-google-ads-campaign.js`), separate from the daily collector. The collector only reads; the setup script writes. Resources created in order:
 
-### Integration into CRO analyzer and dashboard
-- `agents/cro-analyzer` reads the Google Ads snapshot alongside GA4 + Shopify
-- Dashboard surfaces spend, ROAS, and top-converting keywords
+| Resource | API service | Notes |
+|---|---|---|
+| CampaignBudget | CampaignBudgetService | $10/day, shared=false |
+| Campaign | CampaignService | Search, Manual CPC, US-only |
+| AdGroup (×2) | AdGroupService | Coconut Lotion + Natural Body Lotion |
+| AdGroupAd (×2) | AdGroupAdService | RSA per ad group |
+| AdGroupCriterion (×12) | AdGroupCriterionService | Keywords with match types |
+| CampaignCriterion (negative) | CampaignCriterionService | Negative keyword list |
+| CampaignExtensionSetting | CampaignExtensionSettingService | Sitelinks, callouts, structured snippets |
+
+All mutations use `GoogleAdsService.mutate()` with `partialFailure: true`. On partial failure, log the failed operations with their error details and continue — do not abort the entire setup.
+
+### Prerequisites
+1. **Verify `GOOGLE_ADS_TOKEN`** in `.env` — confirm the developer token is approved for Basic Access in Google Ads API Center (Tools → API Center). Test with a `listAccessibleCustomers` call before any further work.
+2. **Update `scripts/reauth-google.js`** — add `https://www.googleapis.com/auth/adwords` to the `SCOPES` array and update the success message from "GSC + GA4 authorized" to "GSC + GA4 + Google Ads authorized"
+3. **Re-run reauth script** — updates `GOOGLE_REFRESH_TOKEN` in `.env` with adwords scope
+4. **Add `GOOGLE_ADS_CUSTOMER_ID`** to `.env` (10-digit account ID, no dashes, from Google Ads UI top-right)
+
+### Data lag handling
+Google Ads reporting lags 24–48 hours; conversion data (imported from GA4) can lag up to 72 hours. The collector defaults to `date = yesterday` (same reasoning as the GSC collector). Running for "today" will always show 0 or understated conversions.
+
+### Integration into CRO analyzer
+`agents/cro-analyzer/index.js` currently loads four snapshot sources (Clarity, Shopify, GSC, GA4). Add Google Ads as a fifth:
+- Add `GOOGLE_ADS_DIR` constant pointing to `data/snapshots/google-ads/`
+- Add a `loadRecentSnapshots('google-ads')` call alongside the existing four
+- Add a `## Google Ads Performance` named block to the user message passed to Claude, containing spend, ROAS, clicks, CVR, and top keywords
+- Update the system prompt to describe the Google Ads data source
+
+### Integration into dashboard
+In `agents/dashboard/index.js`:
+
+**KPI strip** — add two new KPI cards to the existing strip (following the same `{ label, value, subtext }` pattern as the current cards):
+- `{ label: 'Ad Spend', value: '$X.XX', subtext: 'of $10.00/day' }`
+- `{ label: 'ROAS', value: 'X.XXx', subtext: 'paid search' }`
+
+**New "Paid Search" tab** — add a tab named `Paid Search` alongside the existing tabs (SEO, CRO, etc.). The tab contains two cards:
+- **Campaign Overview card**: spend today, clicks, CTR, avg CPC, conversions, CVR, ROAS — sourced from `data/snapshots/google-ads/YYYY-MM-DD.json`
+- **Top Keywords card**: table of top 5 keywords by conversions, showing keyword text, match type, clicks, CVR, CPC, Quality Score
+
+Load the Google Ads snapshot using a new `GOOGLE_ADS_SNAPSHOT_DIR` constant (following the pattern of `GA4_SNAPSHOT_DIR`, `SHOPIFY_SNAPSHOT_DIR`). The snapshot is read via the existing `loadLatestSnapshot(dir)` helper.
 
 ---
 
@@ -234,8 +273,10 @@ data/snapshots/google-ads/YYYY-MM-DD.json
 ### Break-even Analysis
 - CVR baseline: 2.64% (lotion product page)
 - AOV: $22 (lotion price)
-- Break-even CPC: **$0.58**
-- Max CPC target: $0.80 (allows ~38% margin for learning inefficiency)
+- **Revenue break-even CPC: $0.58** (`0.0264 × $22`)
+- Max CPC target: $0.80 (allows ~38% margin above revenue break-even for learning inefficiency)
+- Note: $0.58 is revenue break-even, not margin break-even. Actual profit break-even is lower once COGS and Shopify transaction fees (2–3%) are accounted for. The Phase 1 goal is data acquisition, not profitability.
+- Days 1–30 revenue target of ≥$150 on $300 spend = 50% ROAS — this is intentionally below break-even and acceptable during the learning phase.
 
 ---
 
@@ -249,7 +290,7 @@ data/snapshots/google-ads/YYYY-MM-DD.json
 | Keyword CPA > $25 after 5 conversions | Lower bid 15% |
 | Ad group CVR < 1% after 50 clicks | Test new headlines or landing page variant |
 | Mobile CPA < desktop CPA (confirmed) | Increase mobile bid adj to +50% |
-| 15+ total conversions | Switch Manual CPC → Target ROAS at 110% |
+| 15+ conversions attributed to this campaign | Switch Manual CPC → Target ROAS at 150% |
 | Any keyword Quality Score ≤ 4 | Rewrite ad copy, consider dedicated landing page |
 
 ### 60-Day Expansion Triggers
@@ -264,13 +305,15 @@ data/snapshots/google-ads/YYYY-MM-DD.json
 
 ## 10. Implementation Sequence
 
-1. **Re-auth Google OAuth** with adwords scope → update `GOOGLE_REFRESH_TOKEN` in `.env`
-2. **Add `GOOGLE_ADS_CUSTOMER_ID`** to `.env`
-3. **Build `lib/google-ads.js`** — API client (campaign CRUD, reporting)
-4. **Build `agents/google-ads-collector/index.js`** — daily snapshot
-5. **Update `scripts/reauth-google.js`** — add adwords scope
-6. **Create campaign via API** — RSC | Lotion | Search, both ad groups, full keyword set, RSAs, extensions
-7. **Import GA4 conversion** into Google Ads (manual step in UI, or via API)
-8. **Wire into cro-analyzer** — Google Ads snapshot alongside GA4 + Shopify
-9. **Wire into dashboard** — spend, ROAS, top keywords panel
-10. **Add cron entry** — `google-ads-collector` runs daily alongside existing collectors
+1. **Verify `GOOGLE_ADS_TOKEN`** — confirm developer token is approved for Basic Access (Google Ads UI → Tools → API Center); run `listAccessibleCustomers` test call
+2. **Add `GOOGLE_ADS_CUSTOMER_ID`** to `.env` (from Google Ads UI)
+3. **Update `scripts/reauth-google.js`** — add adwords scope to `SCOPES` array; update success message string
+4. **Re-run `scripts/reauth-google.js`** — updates `GOOGLE_REFRESH_TOKEN` in `.env` with adwords scope
+5. **Build `lib/google-ads.js`** — OAuth client, `listAccessibleCustomers`, reporting queries, mutate wrapper with `partialFailure: true` handling
+6. **Build `agents/google-ads-collector/index.js`** — daily snapshot, defaults to yesterday's date
+7. **Build `scripts/create-google-ads-campaign.js`** — one-shot campaign creation: budget → campaign → ad groups → RSAs → keywords → negatives → extensions
+8. **Run campaign creation script** — creates `RSC | Lotion | Search` in Google Ads
+9. **Import GA4 conversion** into Google Ads (Google Ads UI → Tools → Conversions → Import from GA4)
+10. **Wire into cro-analyzer** — add Google Ads as fifth snapshot source with dedicated prompt block
+11. **Wire into dashboard** — add Paid Search panel with spend, ROAS, CTR, top keywords
+12. **Add cron entry** — `google-ads-collector` runs daily alongside existing collectors
