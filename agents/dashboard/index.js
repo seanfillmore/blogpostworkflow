@@ -568,7 +568,7 @@ const HTML = `<!DOCTYPE html>
 
   /* ── cro ── */
   .cro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .kpi-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
   .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; box-shadow: var(--shadow); }
   .kpi-card.alert { background: #fef2f2; border-color: #fecaca; }
   .kpi-value { font-size: 22px; font-weight: 700; line-height: 1; }
