@@ -205,6 +205,7 @@ const SHOPIFY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
 const GSC_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'gsc');
 const GA4_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'ga4');
 const CRO_REPORTS_DIR       = join(ROOT, 'data', 'reports', 'cro');
+const META_TESTS_DIR        = join(ROOT, 'data', 'meta-tests');
 
 function parseCROData() {
   // Load up to 60 clarity snapshots (supports 30-day view + prior period comparison)
@@ -435,6 +436,13 @@ function aggregateData() {
     }
   }
 
+  const metaTests = existsSync(META_TESTS_DIR)
+    ? readdirSync(META_TESTS_DIR)
+        .filter(f => f.endsWith('.json'))
+        .map(f => { try { return JSON.parse(readFileSync(join(META_TESTS_DIR, f), 'utf8')); } catch { return null; } })
+        .filter(Boolean)
+    : [];
+
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -445,6 +453,7 @@ function aggregateData() {
     cro: parseCROData(),
     ahrefsData,
     rankAlert,
+    metaTests,
   };
 }
 
@@ -754,6 +763,12 @@ const HTML = `<!DOCTYPE html>
     <div id="cro-shopify-card"></div>
     <div id="cro-ga4-card"></div>
     <div id="cro-gsc-card"></div>
+  </div>
+  <div id="active-tests-row" style="display:none">
+    <div class="card">
+      <div class="card-header accent-indigo"><h2>Active A/B Tests</h2></div>
+      <div class="card-body"><div class="test-pills"></div></div>
+    </div>
   </div>
   <div id="cro-brief-card"></div>
 </div><!-- /tab-cro -->
@@ -1317,7 +1332,7 @@ function renderCROTab(data) {
   // ── Clarity card ───────────────────────────────────────────────────────────
   const clarityHtml = cl ? (
     '<div class="card">' +
-    '<div class="card-header"><h2>Clarity</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
+    '<div class="card-header accent-purple"><h2>Clarity</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
     '<div class="card-body">' +
     '<table class="cro-table">' +
     '<tr><td>Total Sessions</td><td>' + cl.sessions.total + ' <span class="cro-sub">(' + cl.sessions.bots + ' bots)</span></td></tr>' +
@@ -1339,7 +1354,7 @@ function renderCROTab(data) {
   // ── Shopify card ───────────────────────────────────────────────────────────
   const shopifyHtml = sh ? (
     '<div class="card">' +
-    '<div class="card-header"><h2>Shopify</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
+    '<div class="card-header accent-green"><h2>Shopify</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
     '<div class="card-body">' +
     '<table class="cro-table">' +
     '<tr><td>Revenue</td><td>' + fmtDollar(sh.orders.revenue) + '</td></tr>' +
@@ -1360,7 +1375,7 @@ function renderCROTab(data) {
   // ── GA4 card ────────────────────────────────────────────────────────────────
   const ga4Html = ga4 ? (
     '<div class="card">' +
-    '<div class="card-header"><h2>GA4</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
+    '<div class="card-header accent-orange"><h2>GA4</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
     '<div class="card-body">' +
     '<table class="cro-table">' +
     '<tr><td>Sessions</td><td>' + fmtNum(ga4.sessions) + '</td></tr>' +
@@ -1387,7 +1402,7 @@ function renderCROTab(data) {
   // ── GSC card (CRO tab) ──────────────────────────────────────────────────────
   const gscCROHtml = gsc ? (
     '<div class="card">' +
-    '<div class="card-header"><h2>Search Console</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
+    '<div class="card-header accent-sky"><h2>Search Console</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
     '<div class="card-body">' +
     '<table class="cro-table">' +
     '<tr><td>Clicks</td><td>' + esc(String(gsc.summary?.clicks ?? '—')) + '</td></tr>' +
@@ -1489,6 +1504,30 @@ function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function renderActiveTests(d) {
+  const el = document.getElementById('active-tests-row');
+  if (!el) return;
+  const tests = d.metaTests || [];
+  const active = tests.filter(t => t.status === 'active');
+  if (!active.length) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const today = new Date();
+  el.querySelector('.test-pills').innerHTML = active.map(t => {
+    const start = new Date(t.startDate);
+    const day = Math.floor((today - start) / 86400000) + 1;
+    const delta = t.currentDelta;
+    const deltaClass = delta == null ? 'tp-delta-flat'
+      : delta > 0 ? 'tp-delta-pos' : delta < 0 ? 'tp-delta-neg' : 'tp-delta-flat';
+    const deltaStr = delta == null ? '—'
+      : (delta > 0 ? '+' : '') + (delta * 100).toFixed(2) + 'pp';
+    return '<span class="test-pill">' +
+      '<span class="tp-slug">' + esc(t.slug) + '</span>' +
+      '<span class="tp-day">Day ' + day + '/28</span>' +
+      '<span class="' + deltaClass + '">CTR ' + deltaStr + '</span>' +
+      '</span>';
+  }).join('');
+}
+
 async function loadData() {
   document.getElementById('spin-icon').textContent = '⟳';
   document.getElementById('spin-icon').classList.add('spin');
@@ -1517,6 +1556,7 @@ async function loadData() {
     renderPosts(data);
     renderGSCSEOPanel(data);
     renderCROTab(data);
+    renderActiveTests(data);
     renderSEOAuthorityPanel(data.ahrefsData);
     renderRankAlertBanner(data.rankAlert);
   } catch(e) {
