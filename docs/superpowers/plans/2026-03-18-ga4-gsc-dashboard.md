@@ -937,9 +937,8 @@ function aggregateGSC(snaps) {
   if (snaps.length === 1) return snaps[0];
   const totalClicks      = snaps.reduce((s, x) => s + (x.summary?.clicks || 0), 0);
   const totalImpressions = snaps.reduce((s, x) => s + (x.summary?.impressions || 0), 0);
-  const weightedPos      = totalImpressions > 0
-    ? snaps.reduce((s, x) => s + (x.summary?.position || 0) * (x.summary?.impressions || 0), 0) / totalImpressions
-    : null;
+  // Accumulate query-level data to compute weighted position from raw per-query data
+  // (more accurate than weighting per-day summary positions)
   const queryMap = {};
   snaps.forEach(x => (x.topQueries || []).forEach(q => {
     if (!queryMap[q.query]) queryMap[q.query] = { clicks: 0, impressions: 0, posWt: 0 };
@@ -954,6 +953,11 @@ function aggregateGSC(snaps) {
       ctr:      v.impressions > 0 ? Math.round(v.clicks / v.impressions * 10000) / 10000 : 0,
       position: v.impressions > 0 ? Math.round(v.posWt / v.impressions * 10) / 10 : null,
     }));
+  // Derive summary position from accumulated query posWt (weighted by impressions)
+  const qTotalImpressions = Object.values(queryMap).reduce((s, v) => s + v.impressions, 0);
+  const weightedPos = qTotalImpressions > 0
+    ? Object.values(queryMap).reduce((s, v) => s + v.posWt, 0) / qTotalImpressions
+    : null;
   const pageMap = {};
   snaps.forEach(x => (x.topPages || []).forEach(p => {
     if (!pageMap[p.page]) pageMap[p.page] = { clicks: 0, impressions: 0, posWt: 0 };
@@ -1065,7 +1069,20 @@ kill %1
 ```
 Expected: `gscAll: 1 ga4All: 1` (or however many snapshots exist)
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Verify client script still parses cleanly**
+
+```bash
+node -e "
+const fs = require('fs');
+const src = fs.readFileSync('agents/dashboard/index.js', 'utf8');
+const s = src.indexOf('<script>', src.indexOf('const HTML = \`'));
+const e = src.indexOf('</script>', s);
+try { new Function(src.slice(s+8, e)); console.log('OK'); } catch(err) { console.log('ERROR:', err.message); }
+"
+```
+Expected: `OK`
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add agents/dashboard/index.js
