@@ -201,6 +201,8 @@ function parseRankings() {
 
 const CLARITY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'clarity');
 const SHOPIFY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
+const GSC_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'gsc');
+const GA4_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'ga4');
 const CRO_REPORTS_DIR       = join(ROOT, 'data', 'reports', 'cro');
 
 function parseCROData() {
@@ -234,7 +236,23 @@ function parseCROData() {
     }
   }
 
-  return { clarityAll, shopifyAll, brief };
+  // Load up to 60 GSC snapshots
+  let gscAll = [];
+  if (existsSync(GSC_SNAPSHOTS_DIR)) {
+    const files = readdirSync(GSC_SNAPSHOTS_DIR)
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
+    gscAll = files.map(f => JSON.parse(readFileSync(join(GSC_SNAPSHOTS_DIR, f), 'utf8')));
+  }
+
+  // Load up to 60 GA4 snapshots
+  let ga4All = [];
+  if (existsSync(GA4_SNAPSHOTS_DIR)) {
+    const files = readdirSync(GA4_SNAPSHOTS_DIR)
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
+    ga4All = files.map(f => JSON.parse(readFileSync(join(GA4_SNAPSHOTS_DIR, f), 'utf8')));
+  }
+
+  return { clarityAll, shopifyAll, gscAll, ga4All, brief };
 }
 
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
@@ -916,27 +934,125 @@ function aggregateShopify(snaps) {
   };
 }
 
+function aggregateGSC(snaps) {
+  if (!snaps || !snaps.length) return null;
+  if (snaps.length === 1) return snaps[0];
+  const totalClicks      = snaps.reduce((s, x) => s + (x.summary?.clicks || 0), 0);
+  const totalImpressions = snaps.reduce((s, x) => s + (x.summary?.impressions || 0), 0);
+  const queryMap = {};
+  snaps.forEach(x => (x.topQueries || []).forEach(q => {
+    if (!queryMap[q.query]) queryMap[q.query] = { clicks: 0, impressions: 0, posWt: 0 };
+    queryMap[q.query].clicks      += q.clicks || 0;
+    queryMap[q.query].impressions += q.impressions || 0;
+    queryMap[q.query].posWt       += (q.position || 0) * (q.impressions || 0);
+  }));
+  const topQueries = Object.entries(queryMap)
+    .sort((a, b) => b[1].clicks - a[1].clicks).slice(0, 10)
+    .map(([query, v]) => ({
+      query, clicks: v.clicks, impressions: v.impressions,
+      ctr:      v.impressions > 0 ? Math.round(v.clicks / v.impressions * 10000) / 10000 : 0,
+      position: v.impressions > 0 ? Math.round(v.posWt / v.impressions * 10) / 10 : null,
+    }));
+  const qTotalImpressions = Object.values(queryMap).reduce((s, v) => s + v.impressions, 0);
+  const weightedPos = qTotalImpressions > 0
+    ? Object.values(queryMap).reduce((s, v) => s + v.posWt, 0) / qTotalImpressions
+    : null;
+  const pageMap = {};
+  snaps.forEach(x => (x.topPages || []).forEach(p => {
+    if (!pageMap[p.page]) pageMap[p.page] = { clicks: 0, impressions: 0, posWt: 0 };
+    pageMap[p.page].clicks      += p.clicks || 0;
+    pageMap[p.page].impressions += p.impressions || 0;
+    pageMap[p.page].posWt       += (p.position || 0) * (p.impressions || 0);
+  }));
+  const topPages = Object.entries(pageMap)
+    .sort((a, b) => b[1].clicks - a[1].clicks).slice(0, 10)
+    .map(([page, v]) => ({
+      page, clicks: v.clicks, impressions: v.impressions,
+      ctr:      v.impressions > 0 ? Math.round(v.clicks / v.impressions * 10000) / 10000 : 0,
+      position: v.impressions > 0 ? Math.round(v.posWt / v.impressions * 10) / 10 : null,
+    }));
+  return {
+    date: snaps.length + ' days',
+    summary: { clicks: totalClicks, impressions: totalImpressions,
+      ctr: totalImpressions > 0 ? Math.round(totalClicks / totalImpressions * 10000) / 10000 : 0,
+      position: weightedPos != null ? Math.round(weightedPos * 10) / 10 : null },
+    topQueries, topPages,
+  };
+}
+
+function aggregateGA4(snaps) {
+  if (!snaps || !snaps.length) return null;
+  if (snaps.length === 1) return snaps[0];
+  const totalSessions    = snaps.reduce((s, x) => s + (x.sessions || 0), 0);
+  const totalUsers       = snaps.reduce((s, x) => s + (x.users || 0), 0);
+  const totalNewUsers    = snaps.reduce((s, x) => s + (x.newUsers || 0), 0);
+  const totalConversions = snaps.reduce((s, x) => s + (x.conversions || 0), 0);
+  const totalRevenue     = snaps.reduce((s, x) => s + (x.revenue || 0), 0);
+  const active = snaps.filter(x => x.sessions > 0);
+  const activeSess = active.reduce((s, x) => s + x.sessions, 0);
+  const bounceRate        = activeSess > 0 ? active.reduce((s, x) => s + x.bounceRate * x.sessions, 0) / activeSess : null;
+  const avgSessionDuration = activeSess > 0 ? active.reduce((s, x) => s + x.avgSessionDuration * x.sessions, 0) / activeSess : null;
+  const sourceMap = {};
+  snaps.forEach(x => (x.topSources || []).forEach(s => {
+    const k = s.source + '/' + s.medium;
+    if (!sourceMap[k]) sourceMap[k] = { source: s.source, medium: s.medium, sessions: 0, conversions: 0, revenue: 0 };
+    sourceMap[k].sessions    += s.sessions || 0;
+    sourceMap[k].conversions += s.conversions || 0;
+    sourceMap[k].revenue     += s.revenue || 0;
+  }));
+  const topSources = Object.values(sourceMap).sort((a, b) => b.sessions - a.sessions).slice(0, 5);
+  const pageMap = {};
+  snaps.forEach(x => (x.topLandingPages || []).forEach(p => {
+    if (!pageMap[p.page]) pageMap[p.page] = { page: p.page, sessions: 0, conversions: 0, revenue: 0 };
+    pageMap[p.page].sessions    += p.sessions || 0;
+    pageMap[p.page].conversions += p.conversions || 0;
+    pageMap[p.page].revenue     += p.revenue || 0;
+  }));
+  const topLandingPages = Object.values(pageMap).sort((a, b) => b.sessions - a.sessions).slice(0, 5);
+  return {
+    date: snaps.length + ' days',
+    sessions: totalSessions, users: totalUsers, newUsers: totalNewUsers,
+    bounceRate: bounceRate != null ? Math.round(bounceRate * 1000) / 1000 : null,
+    avgSessionDuration: avgSessionDuration != null ? Math.round(avgSessionDuration) : null,
+    conversions: totalConversions,
+    conversionRate: totalSessions > 0 ? Math.round(totalConversions / totalSessions * 1000) / 1000 : 0,
+    revenue: Math.round(totalRevenue * 100) / 100,
+    topSources, topLandingPages,
+  };
+}
+
 function renderCROTab(data) {
   const cro = data.cro || {};
   const clarityAll = cro.clarityAll || [];
   const shopifyAll = cro.shopifyAll || [];
 
-  let cl, sh, pcl, psh, dateLabel;
+  const gscAll = cro.gscAll || [];
+  const ga4All = cro.ga4All || [];
+
+  let cl, sh, ga4, gsc, pcl, psh, pga4, pgsc, dateLabel;
   if (croFilter === 'yesterday') {
     cl = clarityAll[1] || null; pcl = clarityAll[2] || null;
     sh = shopifyAll[1] || null; psh = shopifyAll[2] || null;
+    ga4 = ga4All[1] || null;   pga4 = ga4All[2] || null;
+    gsc = gscAll[1] || null;   pgsc = gscAll[2] || null;
     dateLabel = 'Yesterday';
   } else if (croFilter === '7days') {
-    cl = aggregateClarity(clarityAll.slice(0,7));   pcl = aggregateClarity(clarityAll.slice(7,14));
-    sh = aggregateShopify(shopifyAll.slice(0,7));   psh = aggregateShopify(shopifyAll.slice(7,14));
+    cl  = aggregateClarity(clarityAll.slice(0,7));   pcl  = aggregateClarity(clarityAll.slice(7,14));
+    sh  = aggregateShopify(shopifyAll.slice(0,7));   psh  = aggregateShopify(shopifyAll.slice(7,14));
+    ga4 = aggregateGA4(ga4All.slice(0,7));           pga4 = aggregateGA4(ga4All.slice(7,14));
+    gsc = aggregateGSC(gscAll.slice(0,7));           pgsc = aggregateGSC(gscAll.slice(7,14));
     dateLabel = 'Last 7 Days';
   } else if (croFilter === '30days') {
-    cl = aggregateClarity(clarityAll.slice(0,30));  pcl = aggregateClarity(clarityAll.slice(30,60));
-    sh = aggregateShopify(shopifyAll.slice(0,30));  psh = aggregateShopify(shopifyAll.slice(30,60));
+    cl  = aggregateClarity(clarityAll.slice(0,30));  pcl  = aggregateClarity(clarityAll.slice(30,60));
+    sh  = aggregateShopify(shopifyAll.slice(0,30));  psh  = aggregateShopify(shopifyAll.slice(30,60));
+    ga4 = aggregateGA4(ga4All.slice(0,30));          pga4 = aggregateGA4(ga4All.slice(30,60));
+    gsc = aggregateGSC(gscAll.slice(0,30));          pgsc = aggregateGSC(gscAll.slice(30,60));
     dateLabel = 'Last 30 Days';
   } else {
     cl = clarityAll[0] || null; pcl = clarityAll[1] || null;
     sh = shopifyAll[0] || null; psh = shopifyAll[1] || null;
+    ga4 = ga4All[0] || null;   pga4 = ga4All[1] || null;
+    gsc = gscAll[0] || null;   pgsc = gscAll[1] || null;
     dateLabel = 'Today';
   }
 
