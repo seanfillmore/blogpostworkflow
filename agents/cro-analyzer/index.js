@@ -1,8 +1,8 @@
 /**
  * CRO Analyzer Agent
  *
- * Reads the last 7 days of Clarity and Shopify snapshots, sends them to
- * Claude for CRO analysis, and saves a brief to:
+ * Reads the last 7 days of Clarity, Shopify, GSC, and GA4 snapshots, sends
+ * them to Claude for CRO analysis, and saves a brief to:
  *   data/reports/cro/YYYY-MM-DD-cro-brief.md
  *
  * Usage:
@@ -19,6 +19,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const CLARITY_DIR  = join(ROOT, 'data', 'snapshots', 'clarity');
 const SHOPIFY_DIR  = join(ROOT, 'data', 'snapshots', 'shopify');
+const GSC_DIR      = join(ROOT, 'data', 'snapshots', 'gsc');
+const GA4_DIR      = join(ROOT, 'data', 'snapshots', 'ga4');
 const REPORTS_DIR  = join(ROOT, 'data', 'reports', 'cro');
 
 function loadRecentSnapshots(dir, days = 7) {
@@ -50,11 +52,15 @@ async function main() {
 
   const claritySnaps  = loadRecentSnapshots(CLARITY_DIR);
   const shopifySnaps  = loadRecentSnapshots(SHOPIFY_DIR);
+  const gscSnaps      = loadRecentSnapshots(GSC_DIR);
+  const ga4Snaps      = loadRecentSnapshots(GA4_DIR);
 
   console.log(`  Clarity snapshots:  ${claritySnaps.length}`);
   console.log(`  Shopify snapshots:  ${shopifySnaps.length}`);
+  console.log(`  GSC snapshots:      ${gscSnaps.length}`);
+  console.log(`  GA4 snapshots:      ${ga4Snaps.length}`);
 
-  if (!claritySnaps.length && !shopifySnaps.length) {
+  if (!claritySnaps.length && !shopifySnaps.length && !gscSnaps.length && !ga4Snaps.length) {
     console.log('  No snapshot data found — run collectors first.');
     process.exit(0);
   }
@@ -65,7 +71,13 @@ async function main() {
 
   const client = new Anthropic({ apiKey });
 
-  const systemPrompt = `You are a senior CRO (conversion rate optimization) analyst. You will be given daily snapshot data from Microsoft Clarity (user behavior) and Shopify (orders, revenue, cart abandonment) for a small ecommerce store selling natural skin care and oral care products.
+  const systemPrompt = `You are a senior CRO (conversion rate optimization) analyst. You will be given daily snapshot data from up to four sources for a small ecommerce store selling natural skin care and oral care products:
+- Microsoft Clarity: user behavior (sessions, scroll depth, rage clicks, dead clicks)
+- Shopify: orders, revenue, cart abandonment, top products
+- Google Search Console (GSC): organic search queries, impressions, CTR, ranking positions
+- Google Analytics 4 (GA4): sessions, bounce rate, conversion rate, revenue, traffic sources, top landing pages
+
+Not all sources may be present — analyze what is available.
 
 Your task: analyze the data, identify the most impactful CRO opportunities, and write a concise brief with 3-7 prioritized action items.
 
@@ -89,15 +101,15 @@ Output format (Markdown):
 ## Raw Data
 [paste key metrics as a compact table]`;
 
-  const userMessage = `Here is the last ${claritySnaps.length} days of Clarity data and ${shopifySnaps.length} days of Shopify data:
-
-### Clarity Snapshots (most recent first)
-${JSON.stringify(claritySnaps, null, 2)}
-
-### Shopify Snapshots (most recent first)
-${JSON.stringify(shopifySnaps, null, 2)}
-
-Write the CRO brief now.`;
+  const parts = [
+    `Here is the available CRO data (most recent first):`,
+    claritySnaps.length ? `### Clarity Snapshots (${claritySnaps.length} days)\n${JSON.stringify(claritySnaps, null, 2)}` : '',
+    shopifySnaps.length ? `### Shopify Snapshots (${shopifySnaps.length} days)\n${JSON.stringify(shopifySnaps, null, 2)}` : '',
+    gscSnaps.length     ? `### GSC Snapshots (${gscSnaps.length} days)\n${JSON.stringify(gscSnaps, null, 2)}`     : '',
+    ga4Snaps.length     ? `### GA4 Snapshots (${ga4Snaps.length} days)\n${JSON.stringify(ga4Snaps, null, 2)}`     : '',
+    `Write the CRO brief now.`,
+  ].filter(Boolean);
+  const userMessage = parts.join('\n\n');
 
   process.stdout.write('  Running AI analysis... ');
   const response = await client.messages.create({
