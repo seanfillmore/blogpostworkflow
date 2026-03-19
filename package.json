@@ -50,7 +50,8 @@
     "link-repair": "node agents/link-repair/index.js",
     "publish-due": "node agents/calendar-runner/index.js --publish-due",
     "dashboard": "node agents/dashboard/index.js",
-    "dashboard-open": "node agents/dashboard/index.js --open"
+    "dashboard-open": "node agents/dashboard/index.js --open",
+    "meta-test": "node scripts/create-meta-test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
