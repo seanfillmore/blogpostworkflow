@@ -1,0 +1,153 @@
+{
+  "date": "2026-03-10",
+  "summary": {
+    "clicks": 3,
+    "impressions": 28,
+    "ctr": 0.1071,
+    "position": 15.8
+  },
+  "topQueries": [
+    {
+      "query": "best coconut body oil",
+      "clicks": 1,
+      "impressions": 1,
+      "ctr": 1,
+      "position": 6
+    },
+    {
+      "query": "dr bronner's alternative",
+      "clicks": 1,
+      "impressions": 3,
+      "ctr": 0.3333333333333333,
+      "position": 3.3333333333333335
+    },
+    {
+      "query": "real skin care",
+      "clicks": 1,
+      "impressions": 10,
+      "ctr": 0.1,
+      "position": 1.5
+    },
+    {
+      "query": "76 degree coconut oil for soap making",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 60
+    },
+    {
+      "query": "affordable sls-free toothpaste buy online",
+      "clicks": 0,
+      "impressions": 4,
+      "ctr": 0,
+      "position": 9.25
+    },
+    {
+      "query": "all natural body creams",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 24
+    },
+    {
+      "query": "all natural body lotion",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 33
+    },
+    {
+      "query": "all natural body moisturizing lotions",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 30
+    },
+    {
+      "query": "all natural face moisturizing lotions",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 42.5
+    },
+    {
+      "query": "all natural fluoride free toothpaste",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 26.5
+    }
+  ],
+  "topPages": [
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "clicks": 3,
+      "impressions": 97,
+      "ctr": 0.030927835051546393,
+      "position": 6.855670103092783
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste",
+      "clicks": 3,
+      "impressions": 333,
+      "ctr": 0.009009009009009009,
+      "position": 3.942942942942943
+    },
+    {
+      "page": "https://www.realskincare.com/",
+      "clicks": 1,
+      "impressions": 100,
+      "ctr": 0.01,
+      "position": 12.4
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-dr-bronners-alternatives-2025",
+      "clicks": 1,
+      "impressions": 33,
+      "ctr": 0.030303030303030304,
+      "position": 6.484848484848484
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-risewell-alternatives-2025",
+      "clicks": 1,
+      "impressions": 9,
+      "ctr": 0.1111111111111111,
+      "position": 4.333333333333334
+    },
+    {
+      "page": "https://realskincare.com/account/login",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 7
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+      "clicks": 0,
+      "impressions": 85,
+      "ctr": 0,
+      "position": 35.49411764705882
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/7-ingredients-to-avoid-in-natural-toothpaste",
+      "clicks": 0,
+      "impressions": 7,
+      "ctr": 0,
+      "position": 9
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+      "clicks": 0,
+      "impressions": 8,
+      "ctr": 0,
+      "position": 20.625
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+      "clicks": 0,
+      "impressions": 110,
+      "ctr": 0,
+      "position": 21.527272727272727
+    }
+  ]
+}
