@@ -35,6 +35,7 @@ DAILY_CLARITY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/clarity-collector/
 DAILY_SHOPIFY="5 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/shopify-collector/index.js >> data/reports/scheduler/shopify-collector.log 2>&1"
 DAILY_GSC="15 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-collector/index.js >> data/reports/scheduler/gsc-collector.log 2>&1"
 DAILY_GA4="20 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/ga4-collector/index.js >> data/reports/scheduler/ga4-collector.log 2>&1"
+DAILY_GOOGLE_ADS="25 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/google-ads-collector/index.js >> data/reports/scheduler/google-ads-collector.log 2>&1"
 WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyzer/index.js >> data/reports/scheduler/cro-analyzer.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
@@ -55,6 +56,7 @@ $DAILY_CLARITY
 $DAILY_SHOPIFY
 $DAILY_GSC
 $DAILY_GA4
+$DAILY_GOOGLE_ADS
 $WEEKLY_CRO_ANALYZER
 "
 
@@ -72,6 +74,7 @@ echo "  Daily   06:00 PT — clarity-collector (CRO)"
 echo "  Daily   06:05 PT — shopify-collector (CRO)"
 echo "  Daily   06:15 PDT / 05:15 PST — gsc-collector"
 echo "  Daily   06:20 PDT / 05:20 PST — ga4-collector"
+echo "  Daily   06:25 PDT / 05:25 PST — google-ads-collector"
 echo "  Weekly  Mon 07:45 PT — cro-analyzer"
 echo ""
 echo "View with: crontab -l"
