@@ -19,6 +19,8 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 NODE="$(which node)"
 
+mkdir -p "$PROJECT_DIR/data/reports/scheduler"
+
 echo "Project: $PROJECT_DIR"
 echo "Node:    $NODE"
 echo ""
@@ -31,6 +33,8 @@ WEEKLY_INSIGHTS="30 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/insight-aggregat
 WEEKLY_TOPICAL_MAP="0 6 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/topical-mapper/index.js >> data/reports/scheduler/topical-map.log 2>&1"
 DAILY_CLARITY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/clarity-collector/index.js >> data/reports/scheduler/clarity-collector.log 2>&1"
 DAILY_SHOPIFY="5 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/shopify-collector/index.js >> data/reports/scheduler/shopify-collector.log 2>&1"
+DAILY_GSC="15 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-collector/index.js >> data/reports/scheduler/gsc-collector.log 2>&1"
+DAILY_GA4="20 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/ga4-collector/index.js >> data/reports/scheduler/ga4-collector.log 2>&1"
 WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyzer/index.js >> data/reports/scheduler/cro-analyzer.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
@@ -49,6 +53,8 @@ $WEEKLY_INSIGHTS
 $WEEKLY_TOPICAL_MAP
 $DAILY_CLARITY
 $DAILY_SHOPIFY
+$DAILY_GSC
+$DAILY_GA4
 $WEEKLY_CRO_ANALYZER
 "
 
@@ -64,6 +70,8 @@ echo "  Weekly  Mon 07:30 PT — insight aggregator"
 echo "  Weekly  Mon 06:00 PT — topical map refresh"
 echo "  Daily   06:00 PT — clarity-collector (CRO)"
 echo "  Daily   06:05 PT — shopify-collector (CRO)"
+echo "  Daily   06:15 PDT / 05:15 PST — gsc-collector"
+echo "  Daily   06:20 PDT / 05:20 PST — ga4-collector"
 echo "  Weekly  Mon 07:45 PT — cro-analyzer"
 echo ""
 echo "View with: crontab -l"
