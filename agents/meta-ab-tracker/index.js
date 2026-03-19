@@ -17,6 +17,20 @@ import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
+
+function loadEnv() {
+  try {
+    const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
+    const e = {};
+    for (const l of lines) {
+      const t = l.trim(); if (!t || t.startsWith('#')) continue;
+      const i = t.indexOf('='); if (i === -1) continue;
+      e[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    }
+    return e;
+  } catch { return {}; }
+}
+
 const META_TESTS_DIR = join(ROOT, 'data', 'meta-tests');
 const GSC_DIR        = join(ROOT, 'data', 'snapshots', 'gsc');
 const RESULTS_DIR    = join(ROOT, 'data', 'reports', 'meta-tests');
@@ -58,18 +72,6 @@ function mean(arr) {
 // ── Shopify helper ─────────────────────────────────────────────────────────
 
 async function revertMetafield(articleId, blogId, originalTitle) {
-  function loadEnv() {
-    try {
-      const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
-      const e = {};
-      for (const l of lines) {
-        const t = l.trim(); if (!t || t.startsWith('#')) continue;
-        const i = t.indexOf('='); if (i === -1) continue;
-        e[t.slice(0, i).trim()] = t.slice(i + 1).trim();
-      }
-      return e;
-    } catch { return {}; }
-  }
   const env = loadEnv();
   const token = process.env.SHOPIFY_ACCESS_TOKEN || env.SHOPIFY_ACCESS_TOKEN;
   const store = process.env.SHOPIFY_STORE_DOMAIN || env.SHOPIFY_STORE_DOMAIN;

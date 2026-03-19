@@ -635,45 +635,6 @@ const HTML = `<!DOCTYPE html>
   .empty-state { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
   .section-note { font-size: 11px; color: var(--muted); }
 
-  /* ── legacy header (removed in Task 3) ── */
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
-  header h1 { font-size: 16px; font-weight: 600; }
-  .header-meta { font-size: 12px; color: var(--muted); margin-left: auto; }
-
-  /* ── metric cards (removed in Task 3/5) ── */
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
-  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
-  .metric-value { font-size: 28px; font-weight: 700; line-height: 1; }
-  .metric-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .metric-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .metric.green  .metric-value { color: var(--green); }
-  .metric.blue   .metric-value { color: var(--indigo); }
-  .metric.amber  .metric-value { color: var(--amber); }
-  .metric.purple .metric-value { color: var(--purple); }
-
-  /* ── kpi strip (removed in Task 5) ── */
-  .kpi-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
-  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; box-shadow: var(--shadow); }
-  .kpi-card.alert { background: #fef2f2; border-color: #fecaca; }
-  .kpi-value { font-size: 22px; font-weight: 700; line-height: 1; }
-  .kpi-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
-
-  /* ── data-item cards (replaced by .data-needed in Task 4) ── */
-  .alert-card { border-color: #fca5a5; }
-  .alert-card .card-header { background: #fff1f2; }
-  .alert-card .card-header h2 { color: var(--red); }
-  .alert-badge { background: var(--red); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; padding: 1px 7px; }
-  .data-item { border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
-  .data-item:last-child { margin-bottom: 0; }
-  .data-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-  .data-item-keyword { font-weight: 600; font-size: 13px; }
-  .data-item-date { font-size: 11px; color: var(--muted); }
-  .data-item-dir { font-family: monospace; font-size: 12px; color: var(--indigo); background: #eef2ff; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
-  .data-item-files { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-  .file-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid; }
-  .file-tag-missing { background: #fee2e2; color: var(--red); border-color: #fca5a5; }
-  .file-tag-present { background: #dcfce7; color: var(--green); border-color: #86efac; }
-
   /* ── badge aliases (removed in later task) ── */
   .badge-approved  { background: #dcfce7; color: var(--green); }
   .badge-needswork { background: #fee2e2; color: var(--red); }
@@ -1490,7 +1451,7 @@ function renderRankAlertBanner(alert) {
   el.innerHTML =
     (isNeg ? '🔻' : '🚀') + ' ' +
     '<strong>' + (isNeg ? alert.drops + ' rank drops' : alert.gains + ' rank gains') + ' today</strong> — ' +
-    alert.file.replace('.md', '') +
+    esc(alert.file.replace('.md', '')) +
     '<span class="alert-banner-dismiss" onclick="dismissAlert()">Dismiss ×</span>';
 }
 
