@@ -21,6 +21,7 @@ const CLARITY_DIR  = join(ROOT, 'data', 'snapshots', 'clarity');
 const SHOPIFY_DIR  = join(ROOT, 'data', 'snapshots', 'shopify');
 const GSC_DIR      = join(ROOT, 'data', 'snapshots', 'gsc');
 const GA4_DIR      = join(ROOT, 'data', 'snapshots', 'ga4');
+const GOOGLE_ADS_DIR = join(ROOT, 'data', 'snapshots', 'google-ads');
 const REPORTS_DIR  = join(ROOT, 'data', 'reports', 'cro');
 
 function loadRecentSnapshots(dir, days = 7) {
@@ -54,11 +55,13 @@ async function main() {
   const shopifySnaps  = loadRecentSnapshots(SHOPIFY_DIR);
   const gscSnaps      = loadRecentSnapshots(GSC_DIR);
   const ga4Snaps      = loadRecentSnapshots(GA4_DIR);
+  const adsSnaps      = loadRecentSnapshots(GOOGLE_ADS_DIR);
 
   console.log(`  Clarity snapshots:  ${claritySnaps.length}`);
   console.log(`  Shopify snapshots:  ${shopifySnaps.length}`);
   console.log(`  GSC snapshots:      ${gscSnaps.length}`);
   console.log(`  GA4 snapshots:      ${ga4Snaps.length}`);
+  console.log(`  Google Ads snapshots: ${adsSnaps.length}`);
 
   if (!claritySnaps.length && !shopifySnaps.length && !gscSnaps.length && !ga4Snaps.length) {
     console.log('  No snapshot data found — run collectors first.');
@@ -76,6 +79,7 @@ async function main() {
 - Shopify: orders, revenue, cart abandonment, top products
 - Google Search Console (GSC): organic search queries, impressions, CTR, ranking positions
 - Google Analytics 4 (GA4): sessions, bounce rate, conversion rate, revenue, traffic sources, top landing pages
+- Google Ads: campaign spend, clicks, CTR, average CPC, conversions, ROAS, top keywords by conversion
 
 Not all sources may be present — analyze what is available.
 
@@ -107,6 +111,7 @@ Output format (Markdown):
     shopifySnaps.length ? `### Shopify Snapshots (${shopifySnaps.length} days)\n${JSON.stringify(shopifySnaps, null, 2)}` : '',
     gscSnaps.length     ? `### GSC Snapshots (${gscSnaps.length} days)\n${JSON.stringify(gscSnaps, null, 2)}`     : '',
     ga4Snaps.length     ? `### GA4 Snapshots (${ga4Snaps.length} days)\n${JSON.stringify(ga4Snaps, null, 2)}`     : '',
+    adsSnaps.length ? `### Google Ads Performance (${adsSnaps.length} days)\n${JSON.stringify(adsSnaps, null, 2)}` : '',
     `Write the CRO brief now.`,
   ].filter(Boolean);
   const userMessage = parts.join('\n\n');
