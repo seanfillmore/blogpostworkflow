@@ -412,6 +412,7 @@ function aggregateData() {
 
   return {
     generatedAt: new Date().toISOString(),
+    config:      { name: config.name, url: config.url || '' },
     site:        { name: config.name },
     pipeline:    { counts: statusCounts, items: pipelineItems },
     rankings,
@@ -657,21 +658,34 @@ const HTML = `<!DOCTYPE html>
 </style>
 </head>
 <body>
-<header>
-  <h1 id="site-name">SEO Dashboard</h1>
-  <span class="header-meta">Updated <span id="updated-at">—</span> &nbsp;|&nbsp; Auto-refresh every 60s</span>
-  <button class="refresh-btn" onclick="loadData()"><span id="spin-icon"></span> Refresh</button>
+<header class="hero">
+  <div class="hero-top">
+    <div class="hero-logo" id="hero-logo"></div>
+    <div>
+      <div class="hero-name" id="site-name"></div>
+      <div class="hero-url" id="site-url"></div>
+    </div>
+    <div class="tab-pills">
+      <button class="tab-pill active" onclick="switchTab('seo',this)">SEO</button>
+      <button class="tab-pill" onclick="switchTab('cro',this)" id="pill-cro">CRO</button>
+      <button class="tab-pill" onclick="switchTab('ads',this)" id="pill-ads" style="display:none">Ads</button>
+    </div>
+    <div id="cro-filter-bar" style="display:none">
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setCroFilter('today',this)">Today</button>
+        <button class="filter-btn" onclick="setCroFilter('yesterday',this)">Yesterday</button>
+        <button class="filter-btn" onclick="setCroFilter('7days',this)">7 Days</button>
+        <button class="filter-btn" onclick="setCroFilter('30days',this)">30 Days</button>
+      </div>
+    </div>
+    <span class="hero-meta">Updated <span id="updated-at">—</span></span>
+    <button class="refresh-btn" onclick="loadData()"><span id="spin-icon"></span>↻ Refresh</button>
+  </div>
+  <div class="hero-kpis" id="hero-kpis"></div>
 </header>
 
 <main>
-<div class="tab-nav">
-  <button class="tab-btn active" onclick="switchTab('seo', this)">SEO</button>
-  <button class="tab-btn" onclick="switchTab('cro', this)">CRO</button>
-</div>
 <div id="tab-seo" class="tab-panel active">
-  <!-- Metrics row -->
-  <div class="metrics" id="metrics"></div>
-
   <!-- Data Needed alert (hidden when empty) -->
   <div class="card alert-card" id="data-needed-card" style="display:none">
     <div class="card-header">
@@ -705,13 +719,7 @@ const HTML = `<!DOCTYPE html>
   </div>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
-  <div class="filter-bar">
-    <button class="filter-btn active" onclick="setCroFilter('today',this)">Today</button>
-    <button class="filter-btn" onclick="setCroFilter('yesterday',this)">Yesterday</button>
-    <button class="filter-btn" onclick="setCroFilter('7days',this)">Last 7 Days</button>
-    <button class="filter-btn" onclick="setCroFilter('30days',this)">Last 30 Days</button>
-  </div>
-  <div id="cro-kpi-strip" style="margin-bottom:16px"></div>
+  <div id="cro-kpi-strip" style="display:none"></div>
   <div class="cro-grid" style="margin-bottom:16px">
     <div id="cro-clarity-card"></div>
     <div id="cro-shopify-card"></div>
@@ -725,11 +733,74 @@ const HTML = `<!DOCTYPE html>
 <script>
 let data = null;
 
+let activeTab = 'seo';
+
 function switchTab(name, btn) {
+  activeTab = name;
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+  // Show/hide CRO date filter
+  document.getElementById('cro-filter-bar').style.display = name === 'cro' ? '' : 'none';
+  // Update hero KPIs for this tab
+  if (data) renderHeroKpis(data);
+}
+
+function renderHeroKpis(d) {
+  const seoKpis = buildSeoKpis(d);
+  const croKpis = buildCroKpis(d);
+  const adsKpis = buildAdsKpis(d);
+  const kpis = activeTab === 'cro' ? croKpis : activeTab === 'ads' ? adsKpis : seoKpis;
+  document.getElementById('hero-kpis').innerHTML = kpis.map(k =>
+    '<div class="hero-kpi">' +
+    '<div class="hero-kpi-value" style="color:' + k.color + '">' + k.value + '</div>' +
+    '<div class="hero-kpi-label">' + k.label + '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function buildSeoKpis(d) {
+  const c = d.pipeline.counts;
+  const r = d.rankings;
+  const page1 = r.summary.page1;
+  const rankItems = r.items.filter(x => x.change != null);
+  const avgChange = rankItems.length
+    ? (rankItems.reduce((s, x) => s + x.change, 0) / rankItems.length).toFixed(1)
+    : null;
+  const gscClicks = d.gscSEO?.summary?.clicks ?? null;
+  return [
+    { label: 'Published',   value: c.published || 0,                                          color: '#10b981' },
+    { label: 'Scheduled',   value: c.scheduled  || 0,                                          color: '#818cf8' },
+    { label: 'Pg 1 KWs',    value: page1,                                                      color: '#f59e0b' },
+    { label: 'Avg Rank Δ',  value: avgChange != null ? (avgChange > 0 ? '+' : '') + avgChange : '—', color: '#c084fc' },
+    { label: 'GSC Clicks',  value: gscClicks != null ? gscClicks.toLocaleString() : '—',       color: '#38bdf8' },
+  ];
+}
+
+function buildCroKpis(d) {
+  const cro = d.cro || {};
+  const ga4 = cro.ga4All?.[0];
+  const sh  = cro.shopifyAll?.[0];
+  const cl  = cro.clarityAll?.[0];
+  return [
+    { label: 'Conv. Rate',  value: ga4?.conversionRate != null ? (ga4.conversionRate * 100).toFixed(1) + '%' : '—', color: '#10b981' },
+    { label: 'Avg Order',   value: sh?.orders?.aov != null ? '$' + Math.round(sh.orders.aov) : '—',                  color: '#fb923c' },
+    { label: 'Bounce Rate', value: ga4?.bounceRate != null ? (ga4.bounceRate * 100).toFixed(1) + '%' : '—',           color: '#ef4444' },
+    { label: 'Sessions',    value: cl?.sessions?.real ?? ga4?.sessions ?? '—',                                        color: '#38bdf8' },
+    { label: 'Cart Abandon',value: sh?.cartAbandonmentRate != null ? (sh.cartAbandonmentRate * 100).toFixed(1) + '%' : '—', color: '#f59e0b' },
+  ];
+}
+
+function buildAdsKpis(d) {
+  const snap = d.googleAdsAll?.[0];
+  return [
+    { label: 'Daily Spend',  value: snap?.cost_micros != null ? '$' + (snap.cost_micros / 1e6).toFixed(2) : '—', color: '#fb923c' },
+    { label: 'Impressions',  value: snap?.impressions != null ? snap.impressions.toLocaleString() : '—',          color: '#38bdf8' },
+    { label: 'Clicks',       value: snap?.clicks != null ? snap.clicks.toLocaleString() : '—',                    color: '#818cf8' },
+    { label: 'CTR',          value: snap?.ctr != null ? (snap.ctr * 100).toFixed(2) + '%' : '—',                  color: '#f59e0b' },
+    { label: 'ROAS',         value: snap?.roas != null ? snap.roas.toFixed(2) + 'x' : '—',                        color: '#10b981' },
+  ];
 }
 
 function fmtDate(iso) {
@@ -1384,15 +1455,27 @@ async function loadData() {
     const res = await fetch('/api/data', { credentials: 'same-origin' });
     if (!res.ok) throw new Error('API error: ' + res.status + ' ' + await res.text());
     data = await res.json();
-    document.getElementById('site-name').textContent = (data.site?.name || 'SEO') + ' Dashboard';
+    // Populate hero branding
+    const nameEl = document.getElementById('site-name');
+    const urlEl  = document.getElementById('site-url');
+    const logoEl = document.getElementById('hero-logo');
+    if (nameEl && data.config) {
+      nameEl.textContent = data.config.name || 'SEO Dashboard';
+      urlEl.textContent  = data.config.url  || '';
+      logoEl.textContent = (data.config.name || 'S').charAt(0).toUpperCase();
+    }
+    // Show ads tab pill if data present
+    if (data.googleAdsAll?.length) document.getElementById('pill-ads').style.display = '';
+    // Render hero KPIs
+    renderHeroKpis(data);
     document.getElementById('updated-at').textContent = new Date(data.generatedAt).toLocaleTimeString();
-    renderMetrics(data);
     renderDataNeeded(data);
     renderKanban(data);
     renderRankings(data);
     renderPosts(data);
     renderGSCSEOPanel(data);
     renderCROTab(data);
+
   } catch(e) {
     console.error(e);
     document.getElementById('updated-at').textContent = 'Error: ' + e.message;
