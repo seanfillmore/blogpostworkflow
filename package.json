@@ -51,7 +51,11 @@
     "publish-due": "node agents/calendar-runner/index.js --publish-due",
     "dashboard": "node agents/dashboard/index.js",
     "dashboard-open": "node agents/dashboard/index.js --open",
-    "meta-test": "node scripts/create-meta-test.js"
+    "meta-test": "node scripts/create-meta-test.js",
+    "rank-alerter": "node agents/rank-alerter/index.js",
+    "pipeline-scheduler": "node agents/pipeline-scheduler/index.js",
+    "meta-ab-tracker": "node agents/meta-ab-tracker/index.js",
+    "meta-test-create": "node scripts/create-meta-test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

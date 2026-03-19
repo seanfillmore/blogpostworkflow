@@ -36,6 +36,9 @@ DAILY_SHOPIFY="5 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/shopify-collector/
 DAILY_GSC="15 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-collector/index.js >> data/reports/scheduler/gsc-collector.log 2>&1"
 DAILY_GA4="20 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/ga4-collector/index.js >> data/reports/scheduler/ga4-collector.log 2>&1"
 WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyzer/index.js >> data/reports/scheduler/cro-analyzer.log 2>&1"
+DAILY_RANK_ALERTER="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/rank-alerter/index.js >> data/reports/scheduler/rank-alerter.log 2>&1"
+DAILY_PIPELINE_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-scheduler/index.js >> data/reports/scheduler/pipeline-scheduler.log 2>&1"
+WEEKLY_META_AB_TRACKER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-tracker/index.js >> data/reports/scheduler/meta-ab-tracker.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
 EXISTING=$(crontab -l 2>/dev/null || true)
@@ -56,6 +59,9 @@ $DAILY_SHOPIFY
 $DAILY_GSC
 $DAILY_GA4
 $WEEKLY_CRO_ANALYZER
+$DAILY_RANK_ALERTER
+$DAILY_PIPELINE_SCHEDULER
+$WEEKLY_META_AB_TRACKER
 "
 
 echo "Installing cron jobs..."
@@ -73,6 +79,9 @@ echo "  Daily   06:05 PT — shopify-collector (CRO)"
 echo "  Daily   06:15 PDT / 05:15 PST — gsc-collector"
 echo "  Daily   06:20 PDT / 05:20 PST — ga4-collector"
 echo "  Weekly  Mon 07:45 PT — cro-analyzer"
+echo "  Daily   13:30 UTC — rank-alerter (after GSC collector)"
+echo "  Daily   15:00 UTC — pipeline-scheduler"
+echo "  Weekly  Mon 15:00 UTC — meta-ab-tracker"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"
