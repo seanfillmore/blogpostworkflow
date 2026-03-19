@@ -10,7 +10,7 @@
  *   node agents/pipeline-scheduler/index.js --dry-run   (show what would run, skip research)
  */
 
-import { existsSync, readFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -83,7 +83,12 @@ async function main() {
     { stdio: 'inherit', cwd: ROOT }
   );
 
-  if (result.status === 0) {
+  if (result.error) {
+    const msg = `content-researcher failed to launch: ${result.error.message}`;
+    await notify({ subject: `Brief FAILED: "${target.keyword}"`, body: msg, status: 'error' });
+    console.error(msg);
+    process.exit(1);
+  } else if (result.status === 0) {
     await notify({
       subject: `Brief ready: "${target.keyword}"`,
       body: `Pipeline scheduler created brief for "${target.keyword}".\nSlug: ${target.slug}`,
@@ -91,12 +96,9 @@ async function main() {
     });
     console.log('Brief created and notification sent.');
   } else {
-    await notify({
-      subject: `Brief FAILED: "${target.keyword}"`,
-      body: `content-researcher exited with status ${result.status}`,
-      status: 'error',
-    });
-    console.error('content-researcher failed.');
+    const reason = result.signal ? `killed by signal ${result.signal}` : `exited with status ${result.status}`;
+    await notify({ subject: `Brief FAILED: "${target.keyword}"`, body: `content-researcher ${reason}`, status: 'error' });
+    console.error('content-researcher failed:', reason);
     process.exit(1);
   }
 }
