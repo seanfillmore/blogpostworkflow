@@ -68,9 +68,9 @@ Three panels stacked vertically:
 ### Panel 2: SEO Authority (new)
 Reads Ahrefs CSV exports from `data/ahrefs/`. Expected files determined by parsing filenames for known Ahrefs export types (domain overview, backlinks summary, referring domains).
 
-**If files present:** Displays a compact 4-metric row — Domain Rating, Total Backlinks, Referring Domains, Organic Traffic Value (divide by 100 for USD display per project convention). Uses the most recent file by modification date.
+**File detection:** Any CSV in `data/ahrefs/` is treated as a domain overview export. The dashboard reads the most recent CSV by modification date and looks for these columns (case-insensitive): `Domain Rating`, `Backlinks`, `Referring Domains`, `Organic Traffic Value`. If a column is found, display its value; if not, show `—` for that metric. Organic Traffic Value is divided by 100 for USD display (per project convention).
 
-**If files missing:** Shows "Data Needed" banner with instructions: *"Download Ahrefs domain overview export and place in data/ahrefs/"*
+**If no CSV present:** Shows "Data Needed" banner: *"Download Ahrefs domain overview export and place in data/ahrefs/"*
 
 No cron job, no API calls. Manual file drop only.
 
@@ -162,12 +162,15 @@ The publisher agent (`agents/publisher/index.js`) gains a `--verify` flag (defau
      "status": "active"
    }
    ```
-4. Apply Variant B to the live Shopify post via API (`title` field update)
+4. Apply Variant B to the live Shopify post by updating the `global.title_tag` metafield on the article (not the article `title` field — `global.title_tag` controls the `<title>` element that Google indexes and uses to compute CTR)
 
 **Weekly tracking:** `agents/meta-ab-tracker/index.js`
 - Runs Mondays at 08:00 PT
-- For each active test in `data/meta-tests/`, loads daily GSC snapshots covering the test period, computes CTR mean for Variant B vs baseline
-- Updates test file with `currentDelta` and `daysRemaining`
+- For each active test in `data/meta-tests/`, computes two CTR means from GSC snapshots:
+  - **Baseline mean:** average daily CTR for the 28 days prior to `startDate` (using existing `data/snapshots/gsc/` files for that page)
+  - **Test mean:** average daily CTR for all days since `startDate` with available snapshots
+- `currentDelta` is stored as absolute percentage points (e.g., `+0.004` means CTR improved from 3.2% to 3.6%)
+- Updates test file with `currentDelta`, `daysRemaining`, `baselineMean`, `testMean`
 
 **Conclusion (28 days):**
 - Tracker marks test `concluded`, declares winner
@@ -175,7 +178,7 @@ The publisher agent (`agents/publisher/index.js`) gains a `--verify` flag (defau
 - Notify alert with recommendation
 - Results logged to `data/reports/meta-tests/<slug>-result.md`
 
-**Dashboard:** CRO tab gets a compact "Active Tests" row above the CRO Brief card. Shows each active test as a pill: `<slug> · Day N/28 · CTR Δ +0.4%`. Click opens the test file.
+**Dashboard:** CRO tab gets a compact "Active Tests" row above the CRO Brief card. Shows each active test as a pill: `<slug> · Day N/28 · CTR Δ +0.4pp`. Delta is displayed in percentage points (pp). Click opens the test file in the default editor via a file:// link.
 
 ---
 
