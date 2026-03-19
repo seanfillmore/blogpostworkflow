@@ -660,6 +660,8 @@ const HTML = `<!DOCTYPE html>
   <div class="cro-grid" style="margin-bottom:16px">
     <div id="cro-clarity-card"></div>
     <div id="cro-shopify-card"></div>
+    <div id="cro-ga4-card"></div>
+    <div id="cro-gsc-card"></div>
   </div>
   <div id="cro-brief-card"></div>
 </div><!-- /tab-cro -->
@@ -1080,7 +1082,7 @@ function renderGSCSEOPanel(data) {
   html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Queries</div>' +
     '<table class="gsc-table"><thead><tr><th>Query</th><th>Clicks</th><th>Impr</th><th>CTR</th><th>Pos</th></tr></thead><tbody>' +
     (gsc.topQueries || []).map(q =>
-      '<tr><td>' + esc(q.query.length > 40 ? q.query.slice(0,40) + '...' : q.query) + '</td>' +
+      '<tr><td>' + esc((q.query || '').length > 40 ? (q.query || '').slice(0,40) + '...' : (q.query || '')) + '</td>' +
       '<td>' + esc(String(q.clicks)) + '</td><td>' + esc(String(q.impressions)) + '</td>' +
       '<td>' + fmtPct(q.ctr) + '</td><td>' + fmtPos(q.position) + '</td></tr>'
     ).join('') +
@@ -1147,25 +1149,27 @@ function renderCROTab(data) {
     return '<span class="kpi-delta ' + dir + '">' + sign + ' ' + display + '</span>';
   };
 
-  // Conversion rate = orders / real sessions (cross-source)
-  const convRate  = (sh?.orders?.count != null && cl?.sessions?.real)
-    ? (sh.orders.count / cl.sessions.real * 100) : null;
-  const pConvRate = (psh?.orders?.count != null && pcl?.sessions?.real)
-    ? (psh.orders.count / pcl.sessions.real * 100) : null;
-
   // ── KPI strip ──────────────────────────────────────────────────────────────
   const kpis = [
-    { label: 'Conversion Rate', value: convRate != null ? fmtPct(convRate) : '—', d: delta(convRate, pConvRate), alert: false },
-    { label: 'Avg Order Value', value: sh ? fmtDollar(sh.orders.aov) : '—', d: delta(sh?.orders?.aov, psh?.orders?.aov), alert: false },
+    { label: 'Conversion Rate', value: ga4 ? fmtPct(ga4.conversionRate * 100) : '—',
+      d: delta(ga4?.conversionRate != null ? ga4.conversionRate * 100 : null,
+               pga4?.conversionRate != null ? pga4.conversionRate * 100 : null), alert: false },
+    { label: 'Bounce Rate',     value: ga4 ? fmtPct(ga4.bounceRate * 100) : '—',
+      d: delta(ga4?.bounceRate != null ? ga4.bounceRate * 100 : null,
+               pga4?.bounceRate != null ? pga4.bounceRate * 100 : null, false), alert: false },
+    { label: 'Avg Order Value', value: sh ? fmtDollar(sh.orders.aov) : '—',
+      d: delta(sh?.orders?.aov, psh?.orders?.aov), alert: false },
     { label: 'Real Sessions',   value: cl ? cl.sessions.real : '—',
-      sub: cl ? 'of ' + cl.sessions.total + ' total' : '', d: delta(cl?.sessions?.real, pcl?.sessions?.real), alert: false },
+      sub: cl ? 'of ' + cl.sessions.total + ' total' : '',
+      d: delta(cl?.sessions?.real, pcl?.sessions?.real), alert: false },
     { label: 'Script Errors',   value: cl ? fmtPct(cl.behavior.scriptErrorPct) : '—',
       d: delta(cl?.behavior?.scriptErrorPct, pcl?.behavior?.scriptErrorPct, false),
       alert: cl?.behavior?.scriptErrorPct > 5 },
     { label: 'Scroll Depth',    value: cl ? fmtPct(cl.behavior.scrollDepth) : '—',
       d: delta(cl?.behavior?.scrollDepth, pcl?.behavior?.scrollDepth), alert: false },
     { label: 'Cart Abandon',    value: sh ? fmtPct(sh.cartAbandonmentRate * 100) : '—',
-      d: delta(sh?.cartAbandonmentRate != null ? sh.cartAbandonmentRate * 100 : null, psh?.cartAbandonmentRate != null ? psh.cartAbandonmentRate * 100 : null, false), alert: false },
+      d: delta(sh?.cartAbandonmentRate != null ? sh.cartAbandonmentRate * 100 : null,
+               psh?.cartAbandonmentRate != null ? psh.cartAbandonmentRate * 100 : null, false), alert: false },
   ];
 
   document.getElementById('cro-kpi-strip').innerHTML =
@@ -1222,6 +1226,53 @@ function renderCROTab(data) {
   ) : '<div class="card"><div class="card-body"><p class="empty-state">No Shopify data collected yet — run shopify-collector to get started.</p></div></div>';
 
   document.getElementById('cro-shopify-card').innerHTML = shopifyHtml;
+
+  // ── GA4 card ────────────────────────────────────────────────────────────────
+  const ga4Html = ga4 ? (
+    '<div class="card">' +
+    '<div class="card-header"><h2>GA4</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
+    '<div class="card-body">' +
+    '<table class="cro-table">' +
+    '<tr><td>Sessions</td><td>' + fmtNum(ga4.sessions) + '</td></tr>' +
+    '<tr><td>Users</td><td>' + fmtNum(ga4.users) + ' <span class="cro-sub">(' + fmtNum(ga4.newUsers) + ' new)</span></td></tr>' +
+    '<tr><td>Bounce Rate</td><td>' + (ga4.bounceRate != null ? fmtPct(ga4.bounceRate * 100) : '—') + '</td></tr>' +
+    '<tr><td>Avg Session</td><td>' + (ga4.avgSessionDuration != null ? Math.round(ga4.avgSessionDuration) + 's' : '—') + '</td></tr>' +
+    '<tr><td>Conversions</td><td>' + fmtNum(ga4.conversions) + ' <span class="cro-sub">(' + fmtPct(ga4.conversionRate * 100) + ')</span></td></tr>' +
+    '<tr><td>Revenue</td><td>' + fmtDollar(ga4.revenue) + '</td></tr>' +
+    '</table>' +
+    '<div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Sources</div>' +
+    (ga4.topSources || []).map((s, i) =>
+      '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + esc(String(i+1)) + '. ' + esc(s.source) + ' / ' + esc(s.medium) + ' — ' + fmtNum(s.sessions) + ' sessions</div>'
+    ).join('') +
+    '<div style="margin-top:10px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Landing Pages</div>' +
+    (ga4.topLandingPages || []).map((p, i) => {
+      const slug = (p.page || '').replace(/^https?:\/\/[^/]+/, '').slice(0, 40) || '/';
+      return '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + esc(String(i+1)) + '. ' + esc(slug) + ' — ' + fmtDollar(p.revenue) + '</div>';
+    }).join('') +
+    '</div></div>'
+  ) : '<div class="card"><div class="card-body"><p class="empty-state">No GA4 data yet — run ga4-collector to get started.</p></div></div>';
+
+  document.getElementById('cro-ga4-card').innerHTML = ga4Html;
+
+  // ── GSC card (CRO tab) ──────────────────────────────────────────────────────
+  const gscCROHtml = gsc ? (
+    '<div class="card">' +
+    '<div class="card-header"><h2>Search Console</h2><span style="font-size:11px;color:var(--muted)">' + esc(dateLabel) + '</span></div>' +
+    '<div class="card-body">' +
+    '<table class="cro-table">' +
+    '<tr><td>Clicks</td><td>' + esc(String(gsc.summary?.clicks ?? '—')) + '</td></tr>' +
+    '<tr><td>Impressions</td><td>' + esc(String(gsc.summary?.impressions ?? '—')) + '</td></tr>' +
+    '<tr><td>CTR</td><td>' + (gsc.summary?.ctr != null ? (gsc.summary.ctr * 100).toFixed(1) + '%' : '—') + '</td></tr>' +
+    '<tr><td>Avg Position</td><td>' + (gsc.summary?.position != null ? gsc.summary.position.toFixed(1) : '—') + '</td></tr>' +
+    '</table>' +
+    '<div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Top Queries</div>' +
+    (gsc.topQueries || []).slice(0, 5).map((q, i) =>
+      '<div style="font-size:11px;color:var(--muted);padding:2px 0">' + esc(String(i+1)) + '. ' + esc((q.query || '').length > 40 ? (q.query || '').slice(0,40) + '...' : (q.query || '')) + ' — ' + esc(String(q.clicks)) + ' clicks</div>'
+    ).join('') +
+    '</div></div>'
+  ) : '<div class="card"><div class="card-body"><p class="empty-state">No GSC data yet — run gsc-collector to get started.</p></div></div>';
+
+  document.getElementById('cro-gsc-card').innerHTML = gscCROHtml;
 
   // ── CRO Brief ──────────────────────────────────────────────────────────────
   const brief = cro.brief;
