@@ -74,6 +74,7 @@ async function revertMetafield(articleId, blogId, originalTitle) {
   const token = process.env.SHOPIFY_ACCESS_TOKEN || env.SHOPIFY_ACCESS_TOKEN;
   const store = process.env.SHOPIFY_STORE_DOMAIN || env.SHOPIFY_STORE_DOMAIN;
   if (!token || !store) { console.warn('Shopify credentials not set, skipping revert.'); return; }
+  if (!blogId) { console.warn('Skipping revert: shopify_blog_id missing from post meta.'); return; }
 
   const url = `https://${store}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}/metafields.json`;
   const res = await fetch(url, {
@@ -137,7 +138,7 @@ async function main() {
     t.currentDelta  = delta;
     t.daysRemaining = daysRemaining;
 
-    // Conclude if past 28 days
+    // Conclude if past 28 days (equivalent to daysRemaining === 0)
     if (new Date() >= conclude) {
       const winner = delta != null && delta > 0 ? 'B' : 'A';
       t.status  = 'concluded';
