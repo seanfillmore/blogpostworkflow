@@ -591,6 +591,14 @@ const HTML = `<!DOCTYPE html>
   .filter-btn { padding: 5px 12px; font-size: 12px; font-weight: 500; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 5px; cursor: pointer; transition: all .15s; }
   .filter-btn:hover { color: var(--text); border-color: #94a3b8; }
   .filter-btn.active { color: var(--accent); background: #eff6ff; border-color: var(--accent); font-weight: 600; }
+  .gsc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .gsc-table th { text-align: left; font-size: 11px; color: var(--muted); font-weight: 500; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .gsc-table td { padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .gsc-table td:not(:first-child) { text-align: right; }
+  .gsc-summary { display: flex; gap: 24px; margin-bottom: 16px; flex-wrap: wrap; }
+  .gsc-stat { display: flex; flex-direction: column; }
+  .gsc-stat-value { font-size: 20px; font-weight: 700; color: var(--text); }
+  .gsc-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -634,6 +642,11 @@ const HTML = `<!DOCTYPE html>
   <div class="card">
     <div class="card-header"><h2>Posts</h2><span class="section-note" id="posts-note"></span></div>
     <div class="card-body table-wrap"><div id="posts-table"></div></div>
+  </div>
+
+  <div class="card" id="gsc-seo-card">
+    <div class="card-header"><h2>Search Console</h2><span class="section-note" id="gsc-seo-note"></span></div>
+    <div class="card-body" id="gsc-seo-body"><p class="empty-state">Loading...</p></div>
   </div>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
@@ -1021,6 +1034,72 @@ function aggregateGA4(snaps) {
   };
 }
 
+function renderGSCSEOPanel(data) {
+  const gscAll = data.cro?.gscAll || [];
+  const gsc  = gscAll[0] || null;
+  const pgsc = gscAll[1] || null;
+
+  const fmtPos = v => v != null ? v.toFixed(1) : '—';
+  const fmtPct = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
+  const deltaStr = (curr, prev, higherBetter) => {
+    if (curr == null || prev == null) return '';
+    const d = curr - prev;
+    if (Math.abs(d) < 0.001) return '';
+    const up = d > 0;
+    const good = higherBetter ? up : !up;
+    const color = good ? 'var(--green)' : 'var(--red)';
+    const sign = up ? '+' : '';
+    return ' <span style="font-size:10px;color:' + color + '">' + sign + (Math.abs(d) < 1 ? d.toFixed(2) : Math.round(d)) + '</span>';
+  };
+
+  const noteEl = document.getElementById('gsc-seo-note');
+  const bodyEl = document.getElementById('gsc-seo-body');
+  if (noteEl) noteEl.textContent = gsc ? esc(gsc.date) : '';
+
+  if (!gsc) {
+    bodyEl.innerHTML = '<p class="empty-state">No GSC data yet — run gsc-collector to get started.</p>';
+    return;
+  }
+
+  const s = gsc.summary;
+  if (!s) {
+    bodyEl.innerHTML = '<p class="empty-state">GSC data is incomplete.</p>';
+    return;
+  }
+  const ps = pgsc?.summary;
+
+  let html = '<div class="gsc-summary">' +
+    '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtNum(s.clicks) + deltaStr(s.clicks, ps?.clicks, true) + '</span><span class="gsc-stat-label">Clicks</span></div>' +
+    '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtNum(s.impressions) + deltaStr(s.impressions, ps?.impressions, true) + '</span><span class="gsc-stat-label">Impressions</span></div>' +
+    '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtPct(s.ctr) + deltaStr(s.ctr, ps?.ctr, true) + '</span><span class="gsc-stat-label">CTR</span></div>' +
+    '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtPos(s.position) + deltaStr(s.position != null ? -s.position : null, ps?.position != null ? -ps.position : null, true) + '</span><span class="gsc-stat-label">Avg Position</span></div>' +
+    '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">';
+
+  html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Queries</div>' +
+    '<table class="gsc-table"><thead><tr><th>Query</th><th>Clicks</th><th>Impr</th><th>CTR</th><th>Pos</th></tr></thead><tbody>' +
+    (gsc.topQueries || []).map(q =>
+      '<tr><td>' + esc(q.query.length > 40 ? q.query.slice(0,40) + '...' : q.query) + '</td>' +
+      '<td>' + esc(String(q.clicks)) + '</td><td>' + esc(String(q.impressions)) + '</td>' +
+      '<td>' + fmtPct(q.ctr) + '</td><td>' + fmtPos(q.position) + '</td></tr>'
+    ).join('') +
+    '</tbody></table></div>';
+
+  html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Pages</div>' +
+    '<table class="gsc-table"><thead><tr><th>Page</th><th>Clicks</th><th>Impr</th><th>CTR</th><th>Pos</th></tr></thead><tbody>' +
+    (gsc.topPages || []).map(p => {
+      const slug = p.page.replace(/^https?:\/\/[^/]+/, '').slice(0, 35) || '/';
+      return '<tr><td title="' + esc(p.page) + '">' + esc(slug) + '</td>' +
+        '<td>' + esc(String(p.clicks)) + '</td><td>' + esc(String(p.impressions)) + '</td>' +
+        '<td>' + fmtPct(p.ctr) + '</td><td>' + fmtPos(p.position) + '</td></tr>';
+    }).join('') +
+    '</tbody></table></div>';
+
+  html += '</div>';
+  bodyEl.innerHTML = html;
+}
+
 function renderCROTab(data) {
   const cro = data.cro || {};
   const clarityAll = cro.clarityAll || [];
@@ -1206,6 +1285,7 @@ async function loadData() {
     renderKanban(data);
     renderRankings(data);
     renderPosts(data);
+    renderGSCSEOPanel(data);
     renderCROTab(data);
   } catch(e) {
     console.error(e);
