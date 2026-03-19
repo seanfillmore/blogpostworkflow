@@ -48,7 +48,6 @@ if (!slug) {
 }
 
 const POSTS_DIR      = join(ROOT, 'data', 'posts');
-const BRIEFS_DIR     = join(ROOT, 'data', 'briefs');
 const META_TESTS_DIR = join(ROOT, 'data', 'meta-tests');
 const GSC_DIR        = join(ROOT, 'data', 'snapshots', 'gsc');
 
@@ -58,8 +57,8 @@ const metaPath = join(POSTS_DIR, `${slug}.json`);
 if (!existsSync(metaPath)) { console.error(`Post not found: ${metaPath}`); process.exit(1); }
 const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
 
-if (!meta.shopify_article_id) {
-  console.error('Post is not published to Shopify. Publish it first.');
+if (!meta.shopify_article_id || !meta.shopify_blog_id) {
+  console.error('Post is missing shopify_article_id or shopify_blog_id. Re-publish it first.');
   process.exit(1);
 }
 
@@ -80,7 +79,8 @@ function getBaselineCTR() {
   if (!existsSync(GSC_DIR)) return null;
   const end = new Date();
   const start = new Date(end.getTime() - 28 * 86400000);
-  const path  = meta.shopify_url ? new URL(meta.shopify_url).pathname : null;
+  let path = null;
+  try { path = meta.shopify_url ? new URL(meta.shopify_url).pathname : null; } catch { /* skip */ }
   if (!path) return null;
 
   const snapFiles = readdirSync(GSC_DIR)
