@@ -413,7 +413,6 @@ function aggregateData() {
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
-    site:        { name: config.name },
     pipeline:    { counts: statusCounts, items: pipelineItems },
     rankings,
     posts,
@@ -733,7 +732,8 @@ function switchTab(name, btn) {
   activeTab = name;
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+  const panel = document.getElementById('tab-' + name);
+  if (panel) panel.classList.add('active');
   btn.classList.add('active');
   // Show/hide CRO date filter
   document.getElementById('cro-filter-bar').style.display = name === 'cro' ? '' : 'none';
@@ -754,14 +754,14 @@ function renderHeroKpis(d) {
 }
 
 function buildSeoKpis(d) {
-  const c = d.pipeline.counts;
-  const r = d.rankings;
-  const page1 = r.summary.page1;
+  const c = d.pipeline?.counts || {};
+  const r = d.rankings || {};
+  const page1 = r.summary?.page1 ?? '—';
   const rankItems = r.items.filter(x => x.change != null);
   const avgChange = rankItems.length
     ? (rankItems.reduce((s, x) => s + x.change, 0) / rankItems.length).toFixed(1)
     : null;
-  const gscClicks = d.gscSEO?.summary?.clicks ?? null;
+  const gscClicks = d.cro?.gscAll?.[0]?.summary?.clicks ?? null;
   return [
     { label: 'Published',   value: c.published || 0,                                          color: '#10b981' },
     { label: 'Scheduled',   value: c.scheduled  || 0,                                          color: '#818cf8' },
@@ -1443,7 +1443,6 @@ async function loadData() {
     renderPosts(data);
     renderGSCSEOPanel(data);
     renderCROTab(data);
-
   } catch(e) {
     console.error(e);
     document.getElementById('updated-at').textContent = 'Error: ' + e.message;
