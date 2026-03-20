@@ -682,12 +682,11 @@ const HTML = `<!DOCTYPE html>
   .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
   .spin { animation: spin .8s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .actions-panel { margin-top: 2rem; border: 1px solid var(--border); border-radius: 8px; }
-  .actions-panel summary { padding: 0.75rem 1rem; cursor: pointer; font-weight: 600; color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  .actions-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
-  .actions-grid button { padding: 0.4rem 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
-  .actions-grid button:hover { background: var(--indigo); color: white; border-color: var(--indigo); }
-  .run-log { margin: 0 1rem 1rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+  .tab-actions-bar { display:flex; justify-content:flex-end; align-items:center; gap:0.5rem; padding:8px 24px; background:var(--bg); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .tab-actions-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+  .tab-actions-bar button { padding:0.4rem 0.85rem; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.85rem; }
+  .tab-actions-bar button:hover { background:var(--indigo); color:white; border-color:var(--indigo); }
+  .run-log { margin: 0.5rem 24px 0.5rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
 
   /* ── Optimize tab ── */
   .kanban-optimize { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
@@ -748,6 +747,26 @@ const HTML = `<!DOCTYPE html>
   <div class="hero-kpis" id="hero-kpis"></div>
 </header>
 
+<div class="tab-actions-bar">
+  <div class="tab-actions-group" id="tab-actions-seo">
+    <button onclick="runAgent('agents/rank-tracker/index.js')">Run Rank Tracker</button>
+    <button onclick="runAgent('agents/content-gap/index.js')">Run Content Gap</button>
+    <button onclick="runAgent('agents/gsc-query-miner/index.js')">Run GSC Query Miner</button>
+    <button onclick="runAgent('agents/sitemap-indexer/index.js')">Refresh Sitemap</button>
+    <button onclick="runAgent('agents/insight-aggregator/index.js')">Run Insight Aggregator</button>
+  </div>
+  <div class="tab-actions-group" id="tab-actions-cro" style="display:none">
+    <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')">Create Meta A/B Test</button>
+    <button onclick="runAgent('agents/meta-ab-tracker/index.js')">Run Meta A/B Tracker</button>
+    <button onclick="runAgent('agents/cro-analyzer/index.js')">Run CRO Analyzer</button>
+  </div>
+  <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
+    <button onclick="runAgent('agents/competitor-intelligence/index.js')">Run Competitor Intelligence</button>
+    <span id="ahrefs-upload-status" style="font-size:0.8rem;color:var(--muted)"></span>
+    <button onclick="uploadAhrefs()">Upload Ahrefs CSV</button>
+  </div>
+</div>
+
 <main>
 <div id="tab-seo" class="tab-panel active">
   <!-- Data Needed alert (hidden when empty) -->
@@ -790,21 +809,11 @@ const HTML = `<!DOCTYPE html>
     <div class="card-header"><h2>Search Console</h2><span class="section-note" id="gsc-seo-note"></span></div>
     <div class="card-body" id="gsc-seo-body"><p class="empty-state">Loading...</p></div>
   </div>
-  <details class="actions-panel">
-    <summary>Actions</summary>
-    <div class="actions-grid">
-      <button onclick="runAgent('agents/rank-tracker/index.js')">Run Rank Tracker</button>
-      <button onclick="runAgent('agents/content-gap/index.js')">Run Content Gap</button>
-      <button onclick="runAgent('agents/gsc-query-miner/index.js')">Run GSC Query Miner</button>
-      <button onclick="runAgent('agents/sitemap-indexer/index.js')">Refresh Sitemap</button>
-      <button onclick="runAgent('agents/insight-aggregator/index.js')">Run Insight Aggregator</button>
-    </div>
-    <pre id="run-log-agents-rank-tracker-index-js" class="run-log" style="display:none"></pre>
-    <pre id="run-log-agents-content-gap-index-js" class="run-log" style="display:none"></pre>
-    <pre id="run-log-agents-gsc-query-miner-index-js" class="run-log" style="display:none"></pre>
-    <pre id="run-log-agents-sitemap-indexer-index-js" class="run-log" style="display:none"></pre>
-    <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
-  </details>
+  <pre id="run-log-agents-rank-tracker-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-gap-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-gsc-query-miner-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-sitemap-indexer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
   <div id="cro-kpi-strip" style="display:none"></div>
@@ -821,17 +830,9 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
   <div id="cro-brief-card"></div>
-  <details class="actions-panel">
-    <summary>Actions</summary>
-    <div class="actions-grid">
-      <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')">Create Meta A/B Test</button>
-      <button onclick="runAgent('agents/meta-ab-tracker/index.js')">Run Meta A/B Tracker</button>
-      <button onclick="runAgent('agents/cro-analyzer/index.js')">Run CRO Analyzer</button>
-    </div>
-    <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
-    <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
-    <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
-  </details>
+  <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
 </div><!-- /tab-cro -->
 <div id="tab-optimize" class="tab-panel">
   <div class="empty-state">Loading optimization briefs...</div>
@@ -852,6 +853,11 @@ function switchTab(name, btn) {
   btn.classList.add('active');
   // Show/hide CRO date filter
   document.getElementById('cro-filter-bar').style.display = name === 'cro' ? '' : 'none';
+  // Show/hide tab action groups
+  ['seo','cro','optimize'].forEach(function(t) {
+    const g = document.getElementById('tab-actions-' + t);
+    if (g) g.style.display = t === name ? '' : 'none';
+  });
   // Update hero KPIs for this tab
   if (data) renderHeroKpis(data);
   if (name === 'optimize' && data) renderOptimizeTab(data);
@@ -945,17 +951,9 @@ function renderOptimizeTab(d) {
         (applied.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">None applied yet</div>') +
       '</div>' +
     '</div>' +
-    '<details class="actions-panel">' +
-      '<summary>Actions</summary>' +
-      '<div class="actions-grid">' +
-        '<button onclick="runAgent(&apos;agents/competitor-intelligence/index.js&apos;)">Run Competitor Intelligence</button>' +
-        '<div class="upload-zone">' +
-          '<span id="ahrefs-upload-status">' + ahrefsStatus + '</span>' +
-          '<button onclick="uploadAhrefs()">Upload Ahrefs CSV</button>' +
-        '</div>' +
-      '</div>' +
-      '<pre id="run-log-agents-competitor-intelligence-index-js" class="run-log" style="display:none"></pre>' +
-    '</details>';
+    '<pre id="run-log-agents-competitor-intelligence-index-js" class="run-log" style="display:none"></pre>';
+  const uploadStatusEl = document.getElementById('ahrefs-upload-status');
+  if (uploadStatusEl) uploadStatusEl.textContent = ahrefsStatus;
 }
 
 function renderBriefCard(b) {
