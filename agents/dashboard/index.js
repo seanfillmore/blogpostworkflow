@@ -1886,7 +1886,7 @@ function runAgent(script, args = []) {
   const logId = 'run-log-' + script.replace(/[^a-z0-9]/gi, '-');
   const logEl = document.getElementById(logId);
   if (!logEl) return;
-  logEl.textContent = 'Running...\n';
+  logEl.textContent = 'Running...\\n';
   logEl.style.display = 'block';
   fetch('/run-agent', {
     method: 'POST',
