@@ -682,10 +682,12 @@ const HTML = `<!DOCTYPE html>
   .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
   .spin { animation: spin .8s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .tab-actions-bar { display:flex; justify-content:flex-end; align-items:center; gap:0.5rem; padding:8px 24px; background:var(--bg); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  .tab-actions-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
-  .tab-actions-bar button { padding:0.4rem 0.85rem; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.85rem; }
+  .tab-actions-bar { display:flex; justify-content:center; align-items:center; gap:0.5rem; padding:8px 24px; background:var(--bg); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .tab-actions-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; justify-content:center; }
+  .tab-actions-bar button { padding:0.4rem 0.85rem; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.85rem; position:relative; }
   .tab-actions-bar button:hover { background:var(--indigo); color:white; border-color:var(--indigo); }
+  .tab-actions-bar button[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1e1b4b; color:#fff; font-size:0.72rem; white-space:nowrap; padding:4px 8px; border-radius:5px; pointer-events:none; z-index:100; }
+  .tab-actions-bar button[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 1px); left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1e1b4b; pointer-events:none; z-index:100; }
   .run-log { margin: 0.5rem 24px 0.5rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
 
   /* ── Optimize tab ── */
@@ -749,21 +751,21 @@ const HTML = `<!DOCTYPE html>
 
 <div class="tab-actions-bar">
   <div class="tab-actions-group" id="tab-actions-seo">
-    <button onclick="runAgent('agents/rank-tracker/index.js')">Run Rank Tracker</button>
-    <button onclick="runAgent('agents/content-gap/index.js')">Run Content Gap</button>
-    <button onclick="runAgent('agents/gsc-query-miner/index.js')">Run GSC Query Miner</button>
-    <button onclick="runAgent('agents/sitemap-indexer/index.js')">Refresh Sitemap</button>
-    <button onclick="runAgent('agents/insight-aggregator/index.js')">Run Insight Aggregator</button>
+    <button onclick="runAgent('agents/rank-tracker/index.js')" data-tip="Pull latest keyword positions from Ahrefs and update rankings">Run Rank Tracker</button>
+    <button onclick="runAgent('agents/content-gap/index.js')" data-tip="Find topics competitors rank for that this site doesn't cover">Run Content Gap</button>
+    <button onclick="runAgent('agents/gsc-query-miner/index.js')" data-tip="Surface high-impression GSC queries with low CTR to optimise">Run GSC Query Miner</button>
+    <button onclick="runAgent('agents/sitemap-indexer/index.js')" data-tip="Re-index the sitemap so all agents have the latest page list">Refresh Sitemap</button>
+    <button onclick="runAgent('agents/insight-aggregator/index.js')" data-tip="Aggregate Ahrefs + GSC signals into a prioritised insight report">Run Insight Aggregator</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-cro" style="display:none">
-    <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')">Create Meta A/B Test</button>
-    <button onclick="runAgent('agents/meta-ab-tracker/index.js')">Run Meta A/B Tracker</button>
-    <button onclick="runAgent('agents/cro-analyzer/index.js')">Run CRO Analyzer</button>
+    <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')" data-tip="Generate a Variant B meta title and start an A/B test for a post">Create Meta A/B Test</button>
+    <button onclick="runAgent('agents/meta-ab-tracker/index.js')" data-tip="Check CTR results for active meta title tests and conclude winners">Run Meta A/B Tracker</button>
+    <button onclick="runAgent('agents/cro-analyzer/index.js')" data-tip="Analyse Clarity heatmaps and session data for conversion issues">Run CRO Analyzer</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
-    <button onclick="runAgent('agents/competitor-intelligence/index.js')">Run Competitor Intelligence</button>
+    <button onclick="runAgent('agents/competitor-intelligence/index.js')" data-tip="Scrape top competitor pages and generate optimisation briefs">Run Competitor Intelligence</button>
     <span id="ahrefs-upload-status" style="font-size:0.8rem;color:var(--muted)"></span>
-    <button onclick="uploadAhrefs()">Upload Ahrefs CSV</button>
+    <button onclick="uploadAhrefs()" data-tip="Upload an Ahrefs top-pages CSV to use as competitor input data">Upload Ahrefs CSV</button>
   </div>
 </div>
 
