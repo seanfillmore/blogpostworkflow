@@ -21,6 +21,7 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 NODE="$(which node)"
 
+mkdir -p "$PROJECT_DIR/data/reports"
 mkdir -p "$PROJECT_DIR/data/reports/scheduler"
 
 echo "Project: $PROJECT_DIR"
