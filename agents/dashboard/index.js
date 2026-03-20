@@ -661,6 +661,12 @@ const HTML = `<!DOCTYPE html>
   .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
   .spin { animation: spin .8s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .actions-panel { margin-top: 2rem; border: 1px solid var(--border); border-radius: 8px; }
+  .actions-panel summary { padding: 0.75rem 1rem; cursor: pointer; font-weight: 600; color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .actions-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
+  .actions-grid button { padding: 0.4rem 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  .actions-grid button:hover { background: var(--indigo); color: white; border-color: var(--indigo); }
+  .run-log { margin: 0 1rem 1rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -732,6 +738,21 @@ const HTML = `<!DOCTYPE html>
     <div class="card-header"><h2>Search Console</h2><span class="section-note" id="gsc-seo-note"></span></div>
     <div class="card-body" id="gsc-seo-body"><p class="empty-state">Loading...</p></div>
   </div>
+  <details class="actions-panel">
+    <summary>Actions</summary>
+    <div class="actions-grid">
+      <button onclick="runAgent('agents/rank-tracker/index.js')">Run Rank Tracker</button>
+      <button onclick="runAgent('agents/content-gap/index.js')">Run Content Gap</button>
+      <button onclick="runAgent('agents/gsc-query-miner/index.js')">Run GSC Query Miner</button>
+      <button onclick="runAgent('agents/sitemap-indexer/index.js')">Refresh Sitemap</button>
+      <button onclick="runAgent('agents/insight-aggregator/index.js')">Run Insight Aggregator</button>
+    </div>
+    <pre id="run-log-agents-rank-tracker-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-content-gap-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-gsc-query-miner-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-sitemap-indexer-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
+  </details>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
   <div id="cro-kpi-strip" style="display:none"></div>
@@ -748,6 +769,17 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
   <div id="cro-brief-card"></div>
+  <details class="actions-panel">
+    <summary>Actions</summary>
+    <div class="actions-grid">
+      <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')">Create Meta A/B Test</button>
+      <button onclick="runAgent('agents/meta-ab-tracker/index.js')">Run Meta A/B Tracker</button>
+      <button onclick="runAgent('agents/cro-analyzer/index.js')">Run CRO Analyzer</button>
+    </div>
+    <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
+  </details>
 </div><!-- /tab-cro -->
 </main>
 
@@ -1611,6 +1643,58 @@ function closeKeywordCard() {
 document.getElementById('kw-modal').addEventListener('click', function(e) {
   if (e.target === this) closeKeywordCard();
 });
+
+function runAgent(script, args = []) {
+  const logId = 'run-log-' + script.replace(/[^a-z0-9]/gi, '-');
+  const logEl = document.getElementById(logId);
+  if (!logEl) return;
+  logEl.textContent = 'Running...\n';
+  logEl.style.display = 'block';
+  fetch('/run-agent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ script, args }),
+  }).then(res => {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    function read() {
+      reader.read().then(({ done, value }) => {
+        if (done) return;
+        for (const line of decoder.decode(value).split('\n')) {
+          if (line.startsWith('data: ')) logEl.textContent += line.slice(6) + '\n';
+        }
+        logEl.scrollTop = logEl.scrollHeight;
+        read();
+      });
+    }
+    read();
+  });
+}
+
+function promptAndRun(script, argLabel) {
+  const val = prompt(argLabel);
+  if (val) runAgent(script, [val]);
+}
+
+function uploadAhrefs() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv,.zip';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('ahrefs-upload-status');
+    if (statusEl) statusEl.textContent = 'Uploading...';
+    const res = await fetch('/upload/ahrefs', {
+      method: 'POST',
+      headers: { 'X-Filename': file.name, 'Content-Type': 'application/octet-stream' },
+      body: file,
+    });
+    const json = await res.json();
+    if (statusEl) statusEl.textContent = json.ok ? \`Uploaded: \${json.filename}\` : \`Error: \${json.error}\`;
+  };
+  input.click();
+}
 </script>
 
 <!-- keyword detail modal -->
