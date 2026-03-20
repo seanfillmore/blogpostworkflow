@@ -1558,11 +1558,17 @@ function renderAdsOptimization(d) {
 }
 
 async function adsUpdateSuggestion(date, id, status) {
-  await fetch('/ads/' + date + '/suggestion/' + id, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: status }),
-  });
+  try {
+    var res = await fetch('/ads/' + date + '/suggestion/' + id, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: status }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  } catch (err) {
+    console.error('Failed to update suggestion:', err);
+    return;
+  }
   loadData();
 }
 
@@ -1580,11 +1586,16 @@ async function saveCopyEdit(id, date) {
   if (!input) return;
   var maxLen = parseInt(input.getAttribute('maxlength') || '90', 10);
   if (input.value.length > maxLen) return;
-  await fetch('/ads/' + date + '/suggestion/' + id, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ editedValue: input.value }),
-  });
+  try {
+    var res = await fetch('/ads/' + date + '/suggestion/' + id, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ editedValue: input.value }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  } catch (err) {
+    console.error('Failed to save copy edit:', err);
+  }
 }
 
 async function runAgent(script) {
@@ -1760,6 +1771,7 @@ const server = http.createServer((req, res) => {
     const parts = req.url.split('/'); // ['', 'ads', date, 'suggestion', id]
     const date = parts[2], id = parts[4];
     if (!date || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing date or id' })); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid date' })); return; }
     let body = '';
     req.on('data', d => { body += d; });
     req.on('end', () => {
@@ -1774,7 +1786,10 @@ const server = http.createServer((req, res) => {
         if (!['approved', 'rejected'].includes(payload.status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
         suggestion.status = payload.status;
       }
-      if (payload.editedValue !== undefined) suggestion.editedValue = payload.editedValue;
+      if (payload.editedValue !== undefined) {
+        if (typeof payload.editedValue !== 'string' || payload.editedValue.length > 200) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid editedValue' })); return; }
+        suggestion.editedValue = payload.editedValue;
+      }
       writeFileSync(filePath, JSON.stringify(data, null, 2));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, suggestion }));
