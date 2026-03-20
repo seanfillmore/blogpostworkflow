@@ -12,6 +12,7 @@
  */
 
 import http from 'http';
+import { spawn } from 'child_process';
 import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
@@ -67,6 +68,21 @@ const IMAGES_DIR    = join(ROOT, 'data', 'images');
 const REPORTS_DIR   = join(ROOT, 'data', 'reports');
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
 const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
+
+const COMP_BRIEFS_DIR      = join(ROOT, 'data', 'competitor-intelligence', 'briefs');
+const COMP_SCREENSHOTS_DIR = join(ROOT, 'data', 'competitor-intelligence', 'screenshots');
+
+const RUN_AGENT_ALLOWLIST = new Set([
+  'agents/rank-tracker/index.js',
+  'agents/content-gap/index.js',
+  'agents/gsc-query-miner/index.js',
+  'agents/sitemap-indexer/index.js',
+  'agents/insight-aggregator/index.js',
+  'agents/meta-ab-tracker/index.js',
+  'agents/cro-analyzer/index.js',
+  'agents/competitor-intelligence/index.js',
+  'scripts/create-meta-test.js',
+]);
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
 
@@ -443,6 +459,25 @@ function aggregateData() {
         .filter(Boolean)
     : [];
 
+  // Load competitor briefs
+  const briefs = [];
+  if (existsSync(COMP_BRIEFS_DIR)) {
+    for (const f of readdirSync(COMP_BRIEFS_DIR).filter(f => f.endsWith('.json'))) {
+      try { briefs.push(JSON.parse(readFileSync(join(COMP_BRIEFS_DIR, f), 'utf8'))); } catch {}
+    }
+  }
+
+  // Latest Ahrefs file
+  let ahrefsFile = null;
+  if (existsSync(AHREFS_DIR)) {
+    const aFiles = readdirSync(AHREFS_DIR).filter(f => f.endsWith('.csv') || f.endsWith('.zip'));
+    if (aFiles.length) {
+      ahrefsFile = aFiles
+        .map(f => ({ name: f, mtime: statSync(join(AHREFS_DIR, f)).mtimeMs }))
+        .sort((a, b) => b.mtime - a.mtime)[0];
+    }
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -454,6 +489,8 @@ function aggregateData() {
     ahrefsData,
     rankAlert,
     metaTests,
+    briefs,
+    ahrefsFile,
   };
 }
 
@@ -645,6 +682,42 @@ const HTML = `<!DOCTYPE html>
   .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
   .spin { animation: spin .8s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .actions-panel { margin-top: 2rem; border: 1px solid var(--border); border-radius: 8px; }
+  .actions-panel summary { padding: 0.75rem 1rem; cursor: pointer; font-weight: 600; color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .actions-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
+  .actions-grid button { padding: 0.4rem 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  .actions-grid button:hover { background: var(--indigo); color: white; border-color: var(--indigo); }
+  .run-log { margin: 0 1rem 1rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+
+  /* ── Optimize tab ── */
+  .kanban-optimize { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+  .kanban-optimize-col h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 1rem; }
+  .brief-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: border-color 0.15s; }
+  .brief-card:hover { border-color: var(--indigo); }
+  .brief-card-title { font-weight: 600; margin-bottom: 0.4rem; font-size: 0.9rem; }
+  .brief-card-meta { font-size: 0.78rem; color: var(--muted); display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .brief-detail { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+  .screenshot-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .screenshot-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.4rem; }
+  .page-screenshot { width: 100%; border-radius: 6px; border: 1px solid var(--border); }
+  .screenshot-missing { height: 120px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.8rem; border: 1px dashed var(--border); border-radius: 6px; }
+  .change-card { border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem; }
+  .change-card.change-approved { border-color: #2ea043; }
+  .change-card.change-rejected { opacity: 0.5; }
+  .change-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .change-label { font-weight: 600; font-size: 0.9rem; }
+  .change-status-pill { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--border); }
+  .diff-current { text-decoration: line-through; color: var(--muted); font-size: 0.82rem; }
+  .diff-proposed { color: #2ea043; font-size: 0.82rem; margin-top: 0.25rem; }
+  .html-preview { width: 100%; height: 200px; border: 1px solid var(--border); border-radius: 4px; }
+  .change-rationale { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.5rem; }
+  .change-actions { display: flex; gap: 0.5rem; }
+  .btn-approve { background: #2ea043; color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+  .btn-reject { background: #da3633; color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+  .btn-apply { background: var(--indigo); color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  .apply-section { margin-top: 1rem; }
+  .badge-type { background: var(--indigo); color: white; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .upload-zone { display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -659,6 +732,7 @@ const HTML = `<!DOCTYPE html>
       <button class="tab-pill active" onclick="switchTab('seo',this)">SEO</button>
       <button class="tab-pill" onclick="switchTab('cro',this)" id="pill-cro">CRO</button>
       <button class="tab-pill" onclick="switchTab('ads',this)" id="pill-ads" style="display:none">Ads</button>
+      <button class="tab-pill" onclick="switchTab('optimize',this)" id="pill-optimize">Optimize</button>
     </div>
     <div id="cro-filter-bar" style="display:none">
       <div class="filter-bar">
@@ -716,6 +790,21 @@ const HTML = `<!DOCTYPE html>
     <div class="card-header"><h2>Search Console</h2><span class="section-note" id="gsc-seo-note"></span></div>
     <div class="card-body" id="gsc-seo-body"><p class="empty-state">Loading...</p></div>
   </div>
+  <details class="actions-panel">
+    <summary>Actions</summary>
+    <div class="actions-grid">
+      <button onclick="runAgent('agents/rank-tracker/index.js')">Run Rank Tracker</button>
+      <button onclick="runAgent('agents/content-gap/index.js')">Run Content Gap</button>
+      <button onclick="runAgent('agents/gsc-query-miner/index.js')">Run GSC Query Miner</button>
+      <button onclick="runAgent('agents/sitemap-indexer/index.js')">Refresh Sitemap</button>
+      <button onclick="runAgent('agents/insight-aggregator/index.js')">Run Insight Aggregator</button>
+    </div>
+    <pre id="run-log-agents-rank-tracker-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-content-gap-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-gsc-query-miner-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-sitemap-indexer-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
+  </details>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
   <div id="cro-kpi-strip" style="display:none"></div>
@@ -732,7 +821,21 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
   <div id="cro-brief-card"></div>
+  <details class="actions-panel">
+    <summary>Actions</summary>
+    <div class="actions-grid">
+      <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')">Create Meta A/B Test</button>
+      <button onclick="runAgent('agents/meta-ab-tracker/index.js')">Run Meta A/B Tracker</button>
+      <button onclick="runAgent('agents/cro-analyzer/index.js')">Run CRO Analyzer</button>
+    </div>
+    <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
+    <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
+  </details>
 </div><!-- /tab-cro -->
+<div id="tab-optimize" class="tab-panel">
+  <div class="empty-state">Loading optimization briefs...</div>
+</div>
 </main>
 
 <script>
@@ -751,11 +854,13 @@ function switchTab(name, btn) {
   document.getElementById('cro-filter-bar').style.display = name === 'cro' ? '' : 'none';
   // Update hero KPIs for this tab
   if (data) renderHeroKpis(data);
+  if (name === 'optimize' && data) renderOptimizeTab(data);
 }
 
 function renderHeroKpis(d) {
-  const kpis = activeTab === 'cro' ? buildCroKpis(d)
-             : activeTab === 'ads' ? buildAdsKpis(d)
+  const kpis = activeTab === 'cro'      ? buildCroKpis(d)
+             : activeTab === 'ads'      ? buildAdsKpis(d)
+             : activeTab === 'optimize' ? buildOptimizeKpis(d)
              : buildSeoKpis(d);
   document.getElementById('hero-kpis').innerHTML = kpis.map(k =>
     '<div class="hero-kpi">' +
@@ -805,6 +910,186 @@ function buildAdsKpis(d) {
     { label: 'Clicks',       value: snap?.clicks != null ? snap.clicks.toLocaleString() : '—',                    color: '#818cf8' },
     { label: 'CTR',          value: snap?.ctr != null ? (snap.ctr * 100).toFixed(2) + '%' : '—',                  color: '#f59e0b' },
     { label: 'ROAS',         value: snap?.roas != null ? snap.roas.toFixed(2) + 'x' : '—',                        color: '#10b981' },
+  ];
+}
+
+function renderOptimizeTab(d) {
+  const briefs = d.briefs || [];
+
+  const pending  = briefs.filter(b => (b.proposed_changes || []).some(c => c.status === 'pending'));
+  const approved = briefs.filter(b => {
+    const ch = b.proposed_changes || [];
+    return !ch.some(c => c.status === 'pending') && ch.some(c => c.status === 'approved') && !ch.some(c => c.status === 'applied');
+  });
+  const applied  = briefs.filter(b => {
+    const ch = b.proposed_changes || [];
+    return ch.some(c => c.status === 'applied') && !ch.some(c => c.status === 'approved');
+  });
+
+  const ahrefsStatus = d.ahrefsFile
+    ? esc(d.ahrefsFile.name) + ' \u2014 uploaded ' + new Date(d.ahrefsFile.mtime).toLocaleDateString()
+    : 'No file uploaded';
+
+  document.getElementById('tab-optimize').innerHTML =
+    '<div class="kanban-optimize">' +
+      '<div class="kanban-optimize-col">' +
+        '<h3>Pending Review <span class="badge">' + pending.length + '</span></h3>' +
+        (pending.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">No pending briefs</div>') +
+      '</div>' +
+      '<div class="kanban-optimize-col">' +
+        '<h3>Approved <span class="badge">' + approved.length + '</span></h3>' +
+        (approved.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">None approved yet</div>') +
+      '</div>' +
+      '<div class="kanban-optimize-col">' +
+        '<h3>Applied <span class="badge">' + applied.length + '</span></h3>' +
+        (applied.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">None applied yet</div>') +
+      '</div>' +
+    '</div>' +
+    '<details class="actions-panel">' +
+      '<summary>Actions</summary>' +
+      '<div class="actions-grid">' +
+        '<button onclick="runAgent(\'agents/competitor-intelligence/index.js\')">Run Competitor Intelligence</button>' +
+        '<div class="upload-zone">' +
+          '<span id="ahrefs-upload-status">' + ahrefsStatus + '</span>' +
+          '<button onclick="uploadAhrefs()">Upload Ahrefs CSV</button>' +
+        '</div>' +
+      '</div>' +
+      '<pre id="run-log-agents-competitor-intelligence-index-js" class="run-log" style="display:none"></pre>' +
+    '</details>';
+}
+
+function renderBriefCard(b) {
+  const pendingCount  = (b.proposed_changes || []).filter(c => c.status === 'pending').length;
+  const approvedCount = (b.proposed_changes || []).filter(c => c.status === 'approved').length;
+  const topTV = b.competitors && b.competitors[0] && b.competitors[0].traffic_value
+    ? '$' + ((b.competitors[0].traffic_value) / 100).toLocaleString() : '\u2014';
+  return '<div class="brief-card" onclick="toggleBriefDetail(\'' + esc(b.slug) + '\')">' +
+      '<div class="brief-card-title">' + esc(b.slug) + '</div>' +
+      '<div class="brief-card-meta">' +
+        '<span class="badge-type">' + esc(b.page_type) + '</span>' +
+        '<span>' + pendingCount + ' pending \u00b7 ' + approvedCount + ' approved</span>' +
+        '<span>' + topTV + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div id="detail-' + esc(b.slug) + '" class="brief-detail" style="display:none">' +
+      renderBriefDetail(b) +
+    '</div>';
+}
+
+function toggleBriefDetail(slug) {
+  const el = document.getElementById('detail-' + slug);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderBriefDetail(b) {
+  const topComp = (b.competitors || []).slice().sort(function(a, z) { return z.traffic_value - a.traffic_value; })[0];
+  const pair =
+    '<div class="screenshot-pair">' +
+      '<div>' +
+        '<div class="screenshot-label">Your Page</div>' +
+        (b.store_screenshot
+          ? '<img src="/screenshot?path=' + encodeURIComponent(b.store_screenshot) + '" class="page-screenshot">'
+          : '<div class="screenshot-missing">No screenshot</div>') +
+      '</div>' +
+      '<div>' +
+        '<div class="screenshot-label">Top Competitor' + (topComp ? ' (' + esc(topComp.domain) + ')' : '') + '</div>' +
+        (topComp && topComp.screenshot
+          ? '<img src="/screenshot?path=' + encodeURIComponent(topComp.screenshot) + '" class="page-screenshot">'
+          : '<div class="screenshot-missing">No screenshot</div>') +
+      '</div>' +
+    '</div>';
+
+  const changes = (b.proposed_changes || []).map(function(c) {
+    return '<div class="change-card change-' + esc(c.status) + '">' +
+      '<div class="change-header">' +
+        '<span class="change-label">' + esc(c.label) + '</span>' +
+        '<span class="change-status-pill">' + esc(c.status) + '</span>' +
+      '</div>' +
+      '<div class="change-diff">' +
+        (c.type === 'body_html'
+          ? '<iframe srcdoc="' + esc(c.proposed || '') + '" class="html-preview" sandbox=""></iframe>'
+          : '<div class="diff-current">' + esc(c.current || '\u2014') + '</div>' +
+            '<div class="diff-proposed">' + esc(c.proposed || '') + '</div>') +
+      '</div>' +
+      '<div class="change-rationale">' + esc(c.rationale || '') + '</div>' +
+      (c.status === 'pending'
+        ? '<div class="change-actions">' +
+            '<button class="btn-approve" onclick="updateChange(\'' + esc(b.slug) + '\',\'' + esc(c.id) + '\',\'approved\')">Approve</button>' +
+            '<button class="btn-reject"  onclick="updateChange(\'' + esc(b.slug) + '\',\'' + esc(c.id) + '\',\'rejected\')">Reject</button>' +
+          '</div>'
+        : '') +
+    '</div>';
+  }).join('');
+
+  const hasApproved = (b.proposed_changes || []).some(function(c) { return c.status === 'approved'; });
+  const applyBtn = hasApproved
+    ? '<div class="apply-section">' +
+        '<button class="btn-apply" onclick="applyBrief(\'' + esc(b.slug) + '\')">Apply Approved Changes</button>' +
+        '<pre id="apply-log-' + esc(b.slug) + '" class="run-log" style="display:none"></pre>' +
+      '</div>'
+    : '';
+
+  return pair + changes + applyBtn;
+}
+
+async function updateChange(slug, id, status) {
+  await fetch('/brief/' + slug + '/change/' + id, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status }),
+  });
+  loadData(); // re-render with updated brief
+}
+
+async function applyBrief(slug) {
+  const logEl = document.getElementById('apply-log-' + slug);
+  if (logEl) { logEl.style.display = 'block'; logEl.textContent = ''; }
+  const res = await fetch('/apply/' + slug, { method: 'POST' });
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  function read() {
+    reader.read().then(function({ done, value }) {
+      if (done) { loadData(); return; }
+      for (const line of decoder.decode(value).split('\n')) {
+        if (line.startsWith('data: ') && logEl) {
+          logEl.textContent += line.slice(6) + '\n';
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+      }
+      read();
+    });
+  }
+  read();
+}
+
+function buildOptimizeKpis(d) {
+  const briefs = d.briefs || [];
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const pendingPages = briefs.filter(b =>
+    (b.proposed_changes || []).some(c => c.status === 'pending')
+  ).length;
+
+  const approvedChanges = briefs
+    .flatMap(b => b.proposed_changes || [])
+    .filter(c => c.status === 'approved').length;
+
+  const optimizedThisMonth = briefs.filter(b => {
+    const changes = b.proposed_changes || [];
+    return changes.some(c => c.status === 'applied')
+      && !changes.some(c => c.status === 'approved')
+      && new Date(b.generated_at) >= monthStart;
+  }).length;
+
+  const allTV = briefs.flatMap(b => (b.competitors || []).map(c => (c.traffic_value || 0) / 100));
+  const avgTV = allTV.length ? Math.round(allTV.reduce((s, v) => s + v, 0) / allTV.length) : 0;
+
+  return [
+    { label: 'Pending Review',        value: pendingPages,          color: '#f59e0b' },
+    { label: 'Changes Approved',      value: approvedChanges,       color: '#818cf8' },
+    { label: 'Optimized This Month',  value: optimizedThisMonth,    color: '#10b981' },
+    { label: 'Avg Traffic Value',     value: '$' + avgTV.toLocaleString(), color: '#38bdf8' },
   ];
 }
 
@@ -1520,6 +1805,7 @@ async function loadData() {
     renderActiveTests(data);
     renderSEOAuthorityPanel(data.ahrefsData);
     renderRankAlertBanner(data.rankAlert);
+    if (activeTab === 'optimize') renderOptimizeTab(data);
   } catch(e) {
     console.error(e);
     document.getElementById('updated-at').textContent = 'Error: ' + e.message;
@@ -1595,6 +1881,58 @@ function closeKeywordCard() {
 document.getElementById('kw-modal').addEventListener('click', function(e) {
   if (e.target === this) closeKeywordCard();
 });
+
+function runAgent(script, args = []) {
+  const logId = 'run-log-' + script.replace(/[^a-z0-9]/gi, '-');
+  const logEl = document.getElementById(logId);
+  if (!logEl) return;
+  logEl.textContent = 'Running...\n';
+  logEl.style.display = 'block';
+  fetch('/run-agent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ script, args }),
+  }).then(res => {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    function read() {
+      reader.read().then(({ done, value }) => {
+        if (done) return;
+        for (const line of decoder.decode(value).split('\n')) {
+          if (line.startsWith('data: ')) logEl.textContent += line.slice(6) + '\n';
+        }
+        logEl.scrollTop = logEl.scrollHeight;
+        read();
+      });
+    }
+    read();
+  });
+}
+
+function promptAndRun(script, argLabel) {
+  const val = prompt(argLabel);
+  if (val) runAgent(script, [val]);
+}
+
+function uploadAhrefs() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv,.zip';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('ahrefs-upload-status');
+    if (statusEl) statusEl.textContent = 'Uploading...';
+    const res = await fetch('/upload/ahrefs', {
+      method: 'POST',
+      headers: { 'X-Filename': file.name, 'Content-Type': 'application/octet-stream' },
+      body: file,
+    });
+    const json = await res.json();
+    if (statusEl) statusEl.textContent = json.ok ? \`Uploaded: \${json.filename}\` : \`Error: \${json.error}\`;
+  };
+  input.click();
+}
 </script>
 
 <!-- keyword detail modal -->
@@ -1609,6 +1947,101 @@ document.getElementById('kw-modal').addEventListener('click', function(e) {
 
 const server = http.createServer((req, res) => {
   if (!checkAuth(req, res)) return;
+
+  if (req.method === 'POST' && req.url === '/run-agent') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let script, args = [];
+      try { ({ script, args = [] } = JSON.parse(body)); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      if (!RUN_AGENT_ALLOWLIST.has(script)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Script not in allowlist' }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+      const child = spawn('node', [join(ROOT, script), ...args], { cwd: ROOT });
+      const send = line => res.write(`data: ${line}\n\n`);
+      child.stdout.on('data', d => String(d).split('\n').filter(Boolean).forEach(send));
+      child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => send(`[stderr] ${l}`)));
+      child.on('close', code => { res.write(`event: done\ndata: ${JSON.stringify({ code })}\n\n`); res.end(); });
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/upload/ahrefs') {
+    mkdirSync(AHREFS_DIR, { recursive: true });
+    const chunks = [];
+    req.on('data', d => chunks.push(d));
+    req.on('end', () => {
+      const rawName = req.headers['x-filename'] || 'ahrefs-upload.csv';
+      const filename = rawName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      writeFileSync(join(AHREFS_DIR, filename), Buffer.concat(chunks));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, filename, saved_at: new Date().toISOString() }));
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url.startsWith('/brief/')) {
+    const parts = req.url.split('/'); // ['', 'brief', slug, 'change', id]
+    const slug = parts[2], id = parts[4];
+    if (!slug || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing slug or id' })); return; }
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let status;
+      try { ({ status } = JSON.parse(body)); } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
+      if (!['approved', 'rejected'].includes(status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
+      const briefPath = join(COMP_BRIEFS_DIR, `${slug}.json`);
+      if (!existsSync(briefPath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Brief not found' })); return; }
+      const brief = JSON.parse(readFileSync(briefPath, 'utf8'));
+      const change = brief.proposed_changes?.find(c => c.id === id);
+      if (!change) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Change not found' })); return; }
+      change.status = status;
+      writeFileSync(briefPath, JSON.stringify(brief, null, 2));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, change }));
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url.startsWith('/apply/')) {
+    const slug = req.url.slice('/apply/'.length);
+    const briefPath = join(COMP_BRIEFS_DIR, `${slug}.json`);
+    if (!existsSync(briefPath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Brief not found' })); return; }
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+    const child = spawn('node', [join(ROOT, 'agents', 'apply-optimization', 'index.js'), slug], { cwd: ROOT });
+    child.stdout.on('data', d => {
+      for (const line of String(d).split('\n').filter(Boolean)) {
+        if (line.startsWith('DONE ')) {
+          try { res.write(`event: done\ndata: ${JSON.stringify(JSON.parse(line.slice(5)))}\n\n`); }
+          catch { res.write(`event: done\ndata: {}\n\n`); }
+        } else {
+          res.write(`data: ${line}\n\n`);
+        }
+      }
+    });
+    child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => res.write(`data: [err] ${l}\n\n`)));
+    child.on('close', () => res.end());
+    return;
+  }
+
+  if (req.method === 'GET' && req.url.startsWith('/screenshot?')) {
+    const urlObj = new URL(req.url, 'http://localhost');
+    const imgPath = urlObj.searchParams.get('path');
+    const resolved = join(ROOT, imgPath || '');
+    if (!resolved.startsWith(COMP_SCREENSHOTS_DIR) || !existsSync(resolved)) {
+      res.writeHead(404); res.end(); return;
+    }
+    res.writeHead(200, { 'Content-Type': 'image/png' });
+    res.end(readFileSync(resolved));
+    return;
+  }
 
   if (req.method === 'POST' && req.url === '/dismiss-alert') {
     mkdirSync(RANK_ALERTS_DIR, { recursive: true });

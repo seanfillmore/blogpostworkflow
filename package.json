@@ -55,7 +55,9 @@
     "rank-alerter": "node agents/rank-alerter/index.js",
     "pipeline-scheduler": "node agents/pipeline-scheduler/index.js",
     "meta-ab-tracker": "node agents/meta-ab-tracker/index.js",
-    "meta-test-create": "node scripts/create-meta-test.js"
+    "meta-test-create": "node scripts/create-meta-test.js",
+    "competitor-intel": "node agents/competitor-intelligence/index.js",
+    "apply-optimization": "node agents/apply-optimization/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -63,6 +65,7 @@
     "cheerio": "^1.2.0",
     "fast-xml-parser": "^4.5.1",
     "openai": "^4.104.0",
+    "puppeteer": "^24.40.0",
     "sharp": "^0.34.5"
   }
 }
