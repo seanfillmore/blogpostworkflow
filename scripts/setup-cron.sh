@@ -13,12 +13,15 @@
 #   Daily   06:00 PT — clarity-collector (CRO)
 #   Daily   06:05 PT — shopify-collector (CRO)
 #   Weekly  Mon 07:45 PT — cro-analyzer
+#   Daily   06:45 PT — ads-optimizer (alert email if suggestions exist)
+#   Weekly  Sun 07:00 PT — ads-weekly-recap
 
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 NODE="$(which node)"
 
+mkdir -p "$PROJECT_DIR/data/reports"
 mkdir -p "$PROJECT_DIR/data/reports/scheduler"
 
 echo "Project: $PROJECT_DIR"
@@ -35,7 +38,10 @@ DAILY_CLARITY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/clarity-collector/
 DAILY_SHOPIFY="5 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/shopify-collector/index.js >> data/reports/scheduler/shopify-collector.log 2>&1"
 DAILY_GSC="15 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-collector/index.js >> data/reports/scheduler/gsc-collector.log 2>&1"
 DAILY_GA4="20 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/ga4-collector/index.js >> data/reports/scheduler/ga4-collector.log 2>&1"
+DAILY_GOOGLE_ADS="25 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/google-ads-collector/index.js >> data/reports/scheduler/google-ads-collector.log 2>&1"
 WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyzer/index.js >> data/reports/scheduler/cro-analyzer.log 2>&1"
+DAILY_ADS_OPTIMIZER="45 6 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/ads-optimizer/index.js >> data/reports/ads-optimizer.log 2>&1"
+WEEKLY_ADS_RECAP="0 7 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/ads-weekly-recap.js >> data/reports/ads-weekly-recap.log 2>&1"
 DAILY_RANK_ALERTER="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/rank-alerter/index.js >> data/reports/scheduler/rank-alerter.log 2>&1"
 DAILY_PIPELINE_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-scheduler/index.js >> data/reports/scheduler/pipeline-scheduler.log 2>&1"
 WEEKLY_META_AB_TRACKER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-tracker/index.js >> data/reports/scheduler/meta-ab-tracker.log 2>&1"
@@ -60,7 +66,10 @@ $DAILY_CLARITY
 $DAILY_SHOPIFY
 $DAILY_GSC
 $DAILY_GA4
+$DAILY_GOOGLE_ADS
 $WEEKLY_CRO_ANALYZER
+$DAILY_ADS_OPTIMIZER
+$WEEKLY_ADS_RECAP
 $DAILY_RANK_ALERTER
 $DAILY_PIPELINE_SCHEDULER
 $WEEKLY_META_AB_TRACKER
@@ -81,7 +90,10 @@ echo "  Daily   06:00 PT — clarity-collector (CRO)"
 echo "  Daily   06:05 PT — shopify-collector (CRO)"
 echo "  Daily   06:15 PDT / 05:15 PST — gsc-collector"
 echo "  Daily   06:20 PDT / 05:20 PST — ga4-collector"
+echo "  Daily   06:25 PDT / 05:25 PST — google-ads-collector"
 echo "  Weekly  Mon 07:45 PT — cro-analyzer"
+echo "  Daily   06:45 PT — ads-optimizer (alert email if suggestions)"
+echo "  Weekly  Sun 07:00 PT — ads-weekly-recap"
 echo "  Daily   13:30 UTC — rank-alerter (after GSC collector)"
 echo "  Daily   15:00 UTC — pipeline-scheduler"
 echo "  Weekly  Mon 15:00 UTC — meta-ab-tracker"
