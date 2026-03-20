@@ -32,3 +32,30 @@ test('skips non-product non-collection URLs', () => {
   const result = matchCompetitorUrl('https://competitor.com/blogs/news/some-post', pages);
   assert.equal(result, null);
 });
+
+import { extractPageStructure } from '../../agents/competitor-intelligence/scraper.js';
+
+test('extracts H1 and heading hierarchy', () => {
+  const html = '<html><body><h1>Best Deodorant</h1><h2>Why It Works</h2></body></html>';
+  const result = extractPageStructure(html, ['best', 'deodorant']);
+  assert.equal(result.h1, 'Best Deodorant');
+  assert.deepEqual(result.h2s, ['Why It Works']);
+});
+
+test('detects keyword in H1', () => {
+  const html = '<html><body><h1>Best Natural Deodorant</h1><p>First paragraph.</p></body></html>';
+  const result = extractPageStructure(html, ['natural', 'deodorant']);
+  assert.equal(result.keyword_in_h1, true);
+});
+
+test('identifies benefit list format as bullets', () => {
+  const html = '<html><body><ul><li>Works all day</li><li>No stains</li></ul></body></html>';
+  const result = extractPageStructure(html, []);
+  assert.equal(result.benefit_format, 'bullets');
+});
+
+test('extracts CTA button text', () => {
+  const html = '<html><body><button class="add-to-cart">Add to Cart — Free Shipping</button></button></body></html>';
+  const result = extractPageStructure(html, []);
+  assert.equal(result.cta_text, 'Add to Cart — Free Shipping');
+});
