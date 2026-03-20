@@ -73,3 +73,118 @@ export function parseDoneLine(line) {
   if (!line.startsWith('DONE ')) return null;
   try { return JSON.parse(line.slice(5)); } catch { return null; }
 }
+
+// ── Copy rewrite helper (requires API call) ────────────────────────────────────
+
+async function applyCopyRewrite(suggestion, mutate, gaqlQuery) {
+  const pc = suggestion.proposedChange;
+  const newText = resolveEditValue(suggestion);
+
+  // Fetch current RSA headlines/descriptions
+  const query = `
+    SELECT
+      ad_group_ad.ad.responsive_search_ad.headlines,
+      ad_group_ad.ad.responsive_search_ad.descriptions
+    FROM ad_group_ad
+    WHERE ad_group_ad.resource_name = '${pc.adGroupAdResourceName}'
+  `;
+  const rows = await gaqlQuery(query);
+  if (!rows.length) throw new Error(`Ad not found: ${pc.adGroupAdResourceName}`);
+
+  const currentAd = rows[0].ad_group_ad?.ad?.responsive_search_ad;
+  const headlines = [...(currentAd?.headlines || [])];
+  const descriptions = [...(currentAd?.descriptions || [])];
+
+  // Determine field type and index (headline_4 → index 3, description_2 → index 1)
+  const field = pc.field; // e.g. "headline_4"
+  const match = field.match(/^(headline|description)_(\d+)$/);
+  if (!match) throw new Error(`Unknown field format: ${field}`);
+  const fieldType = match[1];
+  const idx = parseInt(match[2], 10) - 1;
+
+  if (fieldType === 'headline') {
+    if (!headlines[idx]) throw new Error(`No headline at index ${idx}`);
+    headlines[idx] = { ...headlines[idx], text: newText };
+    return mutate([{
+      adGroupAdOperation: {
+        update: {
+          resourceName: pc.adGroupAdResourceName,
+          ad: { responsiveSearchAd: { headlines } },
+        },
+        updateMask: 'ad.responsive_search_ad.headlines',
+      },
+    }]);
+  } else {
+    if (!descriptions[idx]) throw new Error(`No description at index ${idx}`);
+    descriptions[idx] = { ...descriptions[idx], text: newText };
+    return mutate([{
+      adGroupAdOperation: {
+        update: {
+          resourceName: pc.adGroupAdResourceName,
+          ad: { responsiveSearchAd: { descriptions } },
+        },
+        updateMask: 'ad.responsive_search_ad.descriptions',
+      },
+    }]);
+  }
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────────
+
+async function main() {
+  const { mutate, gaqlQuery } = await import('../../lib/google-ads.js');
+
+  const dateArg = process.argv.find(a => a.startsWith('--date='))?.split('=')[1]
+    ?? (process.argv.includes('--date') ? process.argv[process.argv.indexOf('--date') + 1] : null);
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const date = dateArg || today;
+
+  const filePath = join(ROOT, 'data', 'ads-optimizer', `${date}.json`);
+
+  if (!existsSync(filePath)) {
+    console.log('No suggestion file for today');
+    console.log('DONE {"applied":0,"failed":0}'); // always emit DONE — dashboard SSE needs it to fire event:done
+    return;
+  }
+
+  const data = JSON.parse(readFileSync(filePath, 'utf8'));
+  const approved = filterApprovedSuggestions(data);
+
+  if (!approved.length) {
+    console.log('No approved suggestions to apply');
+    console.log('DONE {"applied":0,"failed":0}'); // always emit DONE — dashboard SSE needs it to fire event:done
+    return;
+  }
+
+  console.log(`Applying ${approved.length} approved suggestion(s) for ${date}...`);
+  let applied = 0, failed = 0;
+
+  for (const s of approved) {
+    console.log(`  ${s.id} (${s.type}: ${s.target})...`);
+    try {
+      if (s.type === 'copy_rewrite') {
+        const result = await applyCopyRewrite(s, mutate, gaqlQuery);
+        if (result?.partialFailureError) throw new Error(JSON.stringify(result.partialFailureError));
+      } else {
+        const op = buildMutateOperation(s);
+        const result = await mutate([op]);
+        if (result?.partialFailureError) throw new Error(JSON.stringify(result.partialFailureError));
+      }
+      s.status = 'applied';
+      applied++;
+      console.log(`  ✓ ${s.id} applied`);
+    } catch (err) {
+      console.log(`  ✗ ${s.id} failed: ${err.message}`);
+      // Leave status as 'approved' for retry
+      failed++;
+    }
+  }
+
+  writeFileSync(filePath, JSON.stringify(data, null, 2));
+  console.log(`\nDone: ${applied} applied, ${failed} failed`);
+  console.log(`DONE {"applied":${applied},"failed":${failed}}`);
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch(e => { console.error('Error:', e.message); process.exit(1); });
+}
