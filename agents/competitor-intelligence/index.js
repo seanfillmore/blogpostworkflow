@@ -70,19 +70,21 @@ async function getTopPages(domain) {
 
 // ── Puppeteer screenshot ───────────────────────────────────────────────────────
 
-async function takeScreenshot(url, outputPath) {
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+async function takeScreenshot(url, outputPath, browser) {
+  const ownBrowser = !browser;
+  if (ownBrowser) browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900 });
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     await page.screenshot({ path: outputPath, fullPage: true });
+    await page.close();
     return outputPath;
   } catch (err) {
     console.warn(`  [screenshot] Failed for ${url}: ${err.message}`);
     return null;
   } finally {
-    await browser.close();
+    if (ownBrowser) await browser.close();
   }
 }
 
@@ -91,19 +93,19 @@ async function takeScreenshot(url, outputPath) {
 async function resolveShopifyId(slug, type) {
   if (type === 'product') {
     const products = await getProducts({ handle: slug });
-    return products?.[0]?.id || null;
+    const id = products?.[0]?.id || null;
+    return { id, resource: 'products' };
   }
   const custom = await getCustomCollections({ handle: slug });
-  if (custom?.[0]?.id) return custom[0].id;
+  if (custom?.[0]?.id) return { id: custom[0].id, resource: 'custom_collections' };
   const smart = await getSmartCollections({ handle: slug });
-  return smart?.[0]?.id || null;
+  return { id: smart?.[0]?.id || null, resource: 'smart_collections' };
 }
 
 // ── Current page content snapshot ─────────────────────────────────────────────
 
-async function fetchCurrentContent(shopify_id, type) {
-  const resource = type === 'product' ? 'products' : 'custom_collections';
-  const items = type === 'product'
+async function fetchCurrentContent(shopify_id, resource) {
+  const items = resource === 'products'
     ? await getProducts({ ids: shopify_id })
     : await getCustomCollections({ ids: shopify_id });
   const item = items?.[0];
@@ -186,130 +188,135 @@ async function main() {
   // Accumulate results per store slug before writing briefs
   const briefMap = new Map(); // slug → { type, competitors[], allChanges[] }
 
-  for (const competitor of competitors) {
-    const domain = competitor.domain;
-    if (!domain) continue;
-    console.log(`\nProcessing: ${domain}`);
+  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  try {
+    for (const competitor of competitors) {
+      const domain = competitor.domain;
+      if (!domain) continue;
+      console.log(`\nProcessing: ${domain}`);
 
-    let topPages = [];
-    try {
-      topPages = await getTopPages(domain);
-    } catch (err) {
-      console.warn(`  [ahrefs] ${err.message}`);
-      continue;
-    }
-
-    // Filter client-side to product/collection URLs, sort by traffic_value desc, top 5
-    const filtered = topPages
-      .filter(p => /\/products\/|\/collections\//.test(p.url))
-      .sort((a, b) => (b.traffic_value || 0) - (a.traffic_value || 0))
-      .slice(0, 5);
-
-    console.log(`  ${filtered.length} relevant pages (from ${topPages.length} total)`);
-
-    for (const page of filtered) {
-      const match = matchCompetitorUrl(page.url, sitemapPages);
-      if (!match) { console.log(`  skip (no match): ${page.url}`); continue; }
-
-      const { slug, type } = match;
-      const slugTokens = slug.split('-').filter(t => t.length > 2);
-      console.log(`  matched: ${page.url} → ${slug}`);
-
-      if (!briefMap.has(slug)) {
-        briefMap.set(slug, { slug, type, competitors: [], allChanges: [] });
-      }
-      const acc = briefMap.get(slug);
-
-      // Scrape competitor page
-      let structure = { h1: '', section_order: [], cta_text: '', description_words: 0, benefit_format: 'prose', keyword_in_h1: false, keyword_in_first_paragraph: false };
+      let topPages = [];
       try {
-        const res = await fetch(page.url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36' } });
-        if (res.ok) {
-          structure = extractPageStructure(await res.text(), slugTokens);
-        } else {
-          console.warn(`  [scrape] HTTP ${res.status} — skipping`);
-        }
+        topPages = await getTopPages(domain);
       } catch (err) {
-        console.warn(`  [scrape] ${err.message}`);
+        console.warn(`  [ahrefs] ${err.message}`);
+        continue;
       }
 
-      // Screenshot competitor
-      const domainSlug = domain.replace(/\./g, '-');
-      const screenshotFile = `${domainSlug}-${slug}.png`;
-      const screenshotSaved = await takeScreenshot(page.url, join(SCREENSHOTS_DIR, screenshotFile));
+      // Filter client-side to product/collection URLs, sort by traffic_value desc, top 5
+      const filtered = topPages
+        .filter(p => /\/products\/|\/collections\//.test(p.url))
+        .sort((a, b) => (b.traffic_value || 0) - (a.traffic_value || 0))
+        .slice(0, 5);
 
-      // Claude vision
-      const analysis = await analyzeWithVision(screenshotSaved, structure, slug);
-      const taggedChanges = (analysis.recommended_changes || []).map(c => ({
-        ...c, fromTrafficValue: page.traffic_value || 0,
-      }));
+      console.log(`  ${filtered.length} relevant pages (from ${topPages.length} total)`);
 
-      acc.competitors.push({
-        domain,
-        url: page.url,
-        traffic_value: page.traffic_value || 0,
-        screenshot: screenshotSaved
-          ? join('data', 'competitor-intelligence', 'screenshots', screenshotFile)
-          : null,
-        analysis: {
-          h1: analysis.h1,
-          section_order: analysis.section_order,
-          cta_text: analysis.cta_text,
-          description_words: analysis.description_words,
-          keyword_in_h1: analysis.keyword_in_h1,
-          keyword_in_first_paragraph: analysis.keyword_in_first_paragraph,
-          benefit_format: analysis.benefit_format,
-          conversion_patterns: analysis.conversion_patterns || [],
-          recommended_changes: [],
-        },
+      for (const page of filtered) {
+        const match = matchCompetitorUrl(page.url, sitemapPages);
+        if (!match) { console.log(`  skip (no match): ${page.url}`); continue; }
+
+        const { slug, type } = match;
+        const slugTokens = slug.split('-').filter(t => t.length > 2);
+        console.log(`  matched: ${page.url} → ${slug}`);
+
+        if (!briefMap.has(slug)) {
+          briefMap.set(slug, { slug, type, competitors: [], allChanges: [] });
+        }
+        const acc = briefMap.get(slug);
+
+        // Scrape competitor page
+        let structure = { h1: '', section_order: [], cta_text: '', description_words: 0, benefit_format: 'prose', keyword_in_h1: false, keyword_in_first_paragraph: false };
+        try {
+          const res = await fetch(page.url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36' } });
+          if (res.ok) {
+            structure = extractPageStructure(await res.text(), slugTokens);
+          } else {
+            console.warn(`  [scrape] HTTP ${res.status} — skipping`);
+          }
+        } catch (err) {
+          console.warn(`  [scrape] ${err.message}`);
+        }
+
+        // Screenshot competitor
+        const domainSlug = domain.replace(/\./g, '-');
+        const screenshotFile = `${domainSlug}-${slug}.png`;
+        const screenshotSaved = await takeScreenshot(page.url, join(SCREENSHOTS_DIR, screenshotFile), browser);
+
+        // Claude vision
+        const analysis = await analyzeWithVision(screenshotSaved, structure, slug);
+        const taggedChanges = (analysis.recommended_changes || []).map(c => ({
+          ...c, fromTrafficValue: page.traffic_value || 0,
+        }));
+
+        acc.competitors.push({
+          domain,
+          url: page.url,
+          traffic_value: page.traffic_value || 0,
+          screenshot: screenshotSaved
+            ? join('data', 'competitor-intelligence', 'screenshots', screenshotFile)
+            : null,
+          analysis: {
+            h1: analysis.h1,
+            section_order: analysis.section_order,
+            cta_text: analysis.cta_text,
+            description_words: analysis.description_words,
+            keyword_in_h1: analysis.keyword_in_h1,
+            keyword_in_first_paragraph: analysis.keyword_in_first_paragraph,
+            benefit_format: analysis.benefit_format,
+            conversion_patterns: analysis.conversion_patterns || [],
+            recommended_changes: [],
+          },
+        });
+        acc.allChanges.push(...taggedChanges);
+      }
+    }
+
+    // Write briefs
+    for (const [slug, acc] of briefMap) {
+      if (!acc.competitors.length) continue;
+
+      // Resolve shopify_id via Shopify API (sitemap never includes it)
+      const { id: shopify_id, resource } = await resolveShopifyId(slug, acc.type);
+      console.log(`\n${slug}: shopify_id=${shopify_id}`);
+
+      let current = { title: '', meta_title: '', meta_description: '', body_html: '', theme_sections: [] };
+      if (shopify_id) {
+        try { current = await fetchCurrentContent(shopify_id, resource); }
+        catch (err) { console.warn(`  [shopify] ${err.message}`); }
+      }
+
+      // Screenshot store page
+      const storeUrl = `https://${STORE}/${acc.type === 'product' ? 'products' : 'collections'}/${slug}`;
+      const storeSaved = await takeScreenshot(storeUrl, join(SCREENSHOTS_DIR, `store-${slug}.png`), browser);
+
+      // Deduplicate and tag with display-only current values
+      const proposed_changes = deduplicateChanges(acc.allChanges).map(c => {
+        const currentVal = c.type === 'meta_title' ? current.meta_title
+                         : c.type === 'meta_description' ? current.meta_description
+                         : c.type === 'body_html' ? current.body_html
+                         : undefined; // theme_section: no inline current
+        return currentVal !== undefined ? { ...c, current: currentVal } : c;
       });
-      acc.allChanges.push(...taggedChanges);
+
+      const brief = {
+        slug,
+        page_type: acc.type,
+        shopify_id,
+        generated_at: new Date().toISOString(),
+        status: 'pending',
+        store_screenshot: storeSaved
+          ? join('data', 'competitor-intelligence', 'screenshots', `store-${slug}.png`)
+          : null,
+        current,
+        competitors: acc.competitors.sort((a, b) => b.traffic_value - a.traffic_value),
+        proposed_changes,
+      };
+
+      writeFileSync(join(BRIEFS_DIR, `${slug}.json`), JSON.stringify(brief, null, 2));
+      console.log(`  brief written: ${proposed_changes.length} proposed changes`);
     }
-  }
-
-  // Write briefs
-  for (const [slug, acc] of briefMap) {
-    if (!acc.competitors.length) continue;
-
-    // Resolve shopify_id via Shopify API (sitemap never includes it)
-    const shopify_id = await resolveShopifyId(slug, acc.type);
-    console.log(`\n${slug}: shopify_id=${shopify_id}`);
-
-    let current = { title: '', meta_title: '', meta_description: '', body_html: '', theme_sections: [] };
-    if (shopify_id) {
-      try { current = await fetchCurrentContent(shopify_id, acc.type); }
-      catch (err) { console.warn(`  [shopify] ${err.message}`); }
-    }
-
-    // Screenshot store page
-    const storeUrl = `https://${STORE}/${acc.type === 'product' ? 'products' : 'collections'}/${slug}`;
-    const storeSaved = await takeScreenshot(storeUrl, join(SCREENSHOTS_DIR, `store-${slug}.png`));
-
-    // Deduplicate and tag with display-only current values
-    const proposed_changes = deduplicateChanges(acc.allChanges).map(c => {
-      const currentVal = c.type === 'meta_title' ? current.meta_title
-                       : c.type === 'meta_description' ? current.meta_description
-                       : c.type === 'body_html' ? current.body_html
-                       : undefined; // theme_section: no inline current
-      return currentVal !== undefined ? { ...c, current: currentVal } : c;
-    });
-
-    const brief = {
-      slug,
-      page_type: acc.type,
-      shopify_id,
-      generated_at: new Date().toISOString(),
-      status: 'pending',
-      store_screenshot: storeSaved
-        ? join('data', 'competitor-intelligence', 'screenshots', `store-${slug}.png`)
-        : null,
-      current,
-      competitors: acc.competitors.sort((a, b) => b.traffic_value - a.traffic_value),
-      proposed_changes,
-    };
-
-    writeFileSync(join(BRIEFS_DIR, `${slug}.json`), JSON.stringify(brief, null, 2));
-    console.log(`  brief written: ${proposed_changes.length} proposed changes`);
+  } finally {
+    await browser.close();
   }
 
   console.log('\nCompetitor intelligence complete.');
