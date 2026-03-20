@@ -963,7 +963,7 @@ function renderBriefCard(b) {
   const approvedCount = (b.proposed_changes || []).filter(c => c.status === 'approved').length;
   const topTV = b.competitors && b.competitors[0] && b.competitors[0].traffic_value
     ? '$' + ((b.competitors[0].traffic_value) / 100).toLocaleString() : '\u2014';
-  return '<div class="brief-card" onclick="toggleBriefDetail(\'' + esc(b.slug) + '\')">' +
+  return '<div class="brief-card" onclick="toggleBriefDetail(&apos;' + esc(b.slug) + '&apos;)">' +
       '<div class="brief-card-title">' + esc(b.slug) + '</div>' +
       '<div class="brief-card-meta">' +
         '<span class="badge-type">' + esc(b.page_type) + '</span>' +
@@ -1014,8 +1014,8 @@ function renderBriefDetail(b) {
       '<div class="change-rationale">' + esc(c.rationale || '') + '</div>' +
       (c.status === 'pending'
         ? '<div class="change-actions">' +
-            '<button class="btn-approve" onclick="updateChange(\'' + esc(b.slug) + '\',\'' + esc(c.id) + '\',\'approved\')">Approve</button>' +
-            '<button class="btn-reject"  onclick="updateChange(\'' + esc(b.slug) + '\',\'' + esc(c.id) + '\',\'rejected\')">Reject</button>' +
+            '<button class="btn-approve" onclick="updateChange(&apos;' + esc(b.slug) + '&apos;,&apos;' + esc(c.id) + '&apos;,&apos;approved&apos;)">Approve</button>' +
+            '<button class="btn-reject"  onclick="updateChange(&apos;' + esc(b.slug) + '&apos;,&apos;' + esc(c.id) + '&apos;,&apos;rejected&apos;)">Reject</button>' +
           '</div>'
         : '') +
     '</div>';
@@ -1024,7 +1024,7 @@ function renderBriefDetail(b) {
   const hasApproved = (b.proposed_changes || []).some(function(c) { return c.status === 'approved'; });
   const applyBtn = hasApproved
     ? '<div class="apply-section">' +
-        '<button class="btn-apply" onclick="applyBrief(\'' + esc(b.slug) + '\')">Apply Approved Changes</button>' +
+        '<button class="btn-apply" onclick="applyBrief(&apos;' + esc(b.slug) + '&apos;)">Apply Approved Changes</button>' +
         '<pre id="apply-log-' + esc(b.slug) + '" class="run-log" style="display:none"></pre>' +
       '</div>'
     : '';
