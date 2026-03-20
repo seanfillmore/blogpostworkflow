@@ -1878,7 +1878,8 @@ function closeKeywordCard() {
   document.getElementById('kw-modal').style.display = 'none';
 }
 
-document.getElementById('kw-modal').addEventListener('click', function(e) {
+const _kwModal = document.getElementById('kw-modal');
+if (_kwModal) _kwModal.addEventListener('click', function(e) {
   if (e.target === this) closeKeywordCard();
 });
 
