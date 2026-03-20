@@ -59,3 +59,38 @@ test('extracts CTA button text', () => {
   const result = extractPageStructure(html, []);
   assert.equal(result.cta_text, 'Add to Cart — Free Shipping');
 });
+
+import { deduplicateChanges, computeOptimizeKpis } from '../../agents/competitor-intelligence/brief-writer.js';
+
+test('deduplicates by type, keeps highest traffic_value competitor', () => {
+  const changes = [
+    { type: 'meta_title', label: 'Meta A', proposed: 'Title A', rationale: 'reason A', fromTrafficValue: 1000 },
+    { type: 'meta_title', label: 'Meta B', proposed: 'Title B', rationale: 'reason B', fromTrafficValue: 5000 },
+    { type: 'body_html',  label: 'Desc',   proposed: '<p>Desc</p>', rationale: 'reason C', fromTrafficValue: 2000 },
+  ];
+  const result = deduplicateChanges(changes);
+  assert.equal(result.length, 2);
+  const metaChange = result.find(c => c.type === 'meta_title');
+  assert.equal(metaChange.proposed, 'Title B'); // higher traffic value wins
+});
+
+test('assigns sequential IDs to changes', () => {
+  const changes = [
+    { type: 'meta_title', label: 'Meta', proposed: 'T', rationale: 'r', fromTrafficValue: 100 },
+    { type: 'body_html',  label: 'Body', proposed: 'B', rationale: 'r', fromTrafficValue: 100 },
+  ];
+  const result = deduplicateChanges(changes);
+  assert.equal(result[0].id, 'change-001');
+  assert.equal(result[1].id, 'change-002');
+});
+
+test('computeOptimizeKpis counts pending pages correctly', () => {
+  const briefs = [
+    { proposed_changes: [{ status: 'pending' }, { status: 'approved' }], competitors: [], generated_at: new Date().toISOString() },
+    { proposed_changes: [{ status: 'applied' }], competitors: [], generated_at: new Date().toISOString() },
+  ];
+  const kpis = computeOptimizeKpis({ briefs });
+  assert.equal(kpis.pendingPages, 1);
+  assert.equal(kpis.approvedChanges, 1);
+  assert.equal(kpis.optimizedThisMonth, 1); // second brief: all changes applied, none approved
+});
