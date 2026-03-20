@@ -77,6 +77,16 @@ This project builds a team of AI agents and skills for auditing, improving, and 
 | Content Gap | Markdown report with priority ranking |
 | SEO Reporting | Markdown summary report |
 
+## Development Rules
+
+These rules are non-negotiable and apply to every change in every conversation:
+
+1. **Always work on a branch** — never commit directly to `main`. Create a feature branch (`feature/<name>`) or fix branch (`fix/<name>`) before writing any code.
+2. **Test locally before pushing to the server** — run the agent or script locally, verify output, and check the local dashboard if UI is involved. Only push to the server after local verification passes.
+3. **These rules apply even for small fixes** — a one-line bug fix still requires a branch and local test.
+
+Failure to follow these rules risks deploying broken code to the production server and losing work that cannot be recovered from context.
+
 ## Project Conventions
 
 - All agents operate on a single configured Shopify site at a time (site config stored in project settings)
