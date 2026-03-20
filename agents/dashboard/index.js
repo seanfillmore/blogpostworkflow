@@ -459,6 +459,25 @@ function aggregateData() {
         .filter(Boolean)
     : [];
 
+  // Load competitor briefs
+  const briefs = [];
+  if (existsSync(COMP_BRIEFS_DIR)) {
+    for (const f of readdirSync(COMP_BRIEFS_DIR).filter(f => f.endsWith('.json'))) {
+      try { briefs.push(JSON.parse(readFileSync(join(COMP_BRIEFS_DIR, f), 'utf8'))); } catch {}
+    }
+  }
+
+  // Latest Ahrefs file
+  let ahrefsFile = null;
+  if (existsSync(AHREFS_DIR)) {
+    const aFiles = readdirSync(AHREFS_DIR).filter(f => f.endsWith('.csv') || f.endsWith('.zip'));
+    if (aFiles.length) {
+      ahrefsFile = aFiles
+        .map(f => ({ name: f, mtime: statSync(join(AHREFS_DIR, f)).mtimeMs }))
+        .sort((a, b) => b.mtime - a.mtime)[0];
+    }
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -470,6 +489,8 @@ function aggregateData() {
     ahrefsData,
     rankAlert,
     metaTests,
+    briefs,
+    ahrefsFile,
   };
 }
 
@@ -667,6 +688,36 @@ const HTML = `<!DOCTYPE html>
   .actions-grid button { padding: 0.4rem 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
   .actions-grid button:hover { background: var(--indigo); color: white; border-color: var(--indigo); }
   .run-log { margin: 0 1rem 1rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+
+  /* ── Optimize tab ── */
+  .kanban-optimize { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+  .kanban-optimize-col h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 1rem; }
+  .brief-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: border-color 0.15s; }
+  .brief-card:hover { border-color: var(--indigo); }
+  .brief-card-title { font-weight: 600; margin-bottom: 0.4rem; font-size: 0.9rem; }
+  .brief-card-meta { font-size: 0.78rem; color: var(--muted); display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .brief-detail { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+  .screenshot-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .screenshot-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.4rem; }
+  .page-screenshot { width: 100%; border-radius: 6px; border: 1px solid var(--border); }
+  .screenshot-missing { height: 120px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.8rem; border: 1px dashed var(--border); border-radius: 6px; }
+  .change-card { border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem; }
+  .change-card.change-approved { border-color: #2ea043; }
+  .change-card.change-rejected { opacity: 0.5; }
+  .change-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .change-label { font-weight: 600; font-size: 0.9rem; }
+  .change-status-pill { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--border); }
+  .diff-current { text-decoration: line-through; color: var(--muted); font-size: 0.82rem; }
+  .diff-proposed { color: #2ea043; font-size: 0.82rem; margin-top: 0.25rem; }
+  .html-preview { width: 100%; height: 200px; border: 1px solid var(--border); border-radius: 4px; }
+  .change-rationale { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.5rem; }
+  .change-actions { display: flex; gap: 0.5rem; }
+  .btn-approve { background: #2ea043; color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+  .btn-reject { background: #da3633; color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+  .btn-apply { background: var(--indigo); color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  .apply-section { margin-top: 1rem; }
+  .badge-type { background: var(--indigo); color: white; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .upload-zone { display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -681,6 +732,7 @@ const HTML = `<!DOCTYPE html>
       <button class="tab-pill active" onclick="switchTab('seo',this)">SEO</button>
       <button class="tab-pill" onclick="switchTab('cro',this)" id="pill-cro">CRO</button>
       <button class="tab-pill" onclick="switchTab('ads',this)" id="pill-ads" style="display:none">Ads</button>
+      <button class="tab-pill" onclick="switchTab('optimize',this)" id="pill-optimize">Optimize</button>
     </div>
     <div id="cro-filter-bar" style="display:none">
       <div class="filter-bar">
@@ -781,6 +833,9 @@ const HTML = `<!DOCTYPE html>
     <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
   </details>
 </div><!-- /tab-cro -->
+<div id="tab-optimize" class="tab-panel">
+  <div class="empty-state">Loading optimization briefs...</div>
+</div>
 </main>
 
 <script>
@@ -799,11 +854,13 @@ function switchTab(name, btn) {
   document.getElementById('cro-filter-bar').style.display = name === 'cro' ? '' : 'none';
   // Update hero KPIs for this tab
   if (data) renderHeroKpis(data);
+  if (name === 'optimize' && data) renderOptimizeTab(data);
 }
 
 function renderHeroKpis(d) {
-  const kpis = activeTab === 'cro' ? buildCroKpis(d)
-             : activeTab === 'ads' ? buildAdsKpis(d)
+  const kpis = activeTab === 'cro'      ? buildCroKpis(d)
+             : activeTab === 'ads'      ? buildAdsKpis(d)
+             : activeTab === 'optimize' ? buildOptimizeKpis(d)
              : buildSeoKpis(d);
   document.getElementById('hero-kpis').innerHTML = kpis.map(k =>
     '<div class="hero-kpi">' +
@@ -853,6 +910,186 @@ function buildAdsKpis(d) {
     { label: 'Clicks',       value: snap?.clicks != null ? snap.clicks.toLocaleString() : '—',                    color: '#818cf8' },
     { label: 'CTR',          value: snap?.ctr != null ? (snap.ctr * 100).toFixed(2) + '%' : '—',                  color: '#f59e0b' },
     { label: 'ROAS',         value: snap?.roas != null ? snap.roas.toFixed(2) + 'x' : '—',                        color: '#10b981' },
+  ];
+}
+
+function renderOptimizeTab(d) {
+  const briefs = d.briefs || [];
+
+  const pending  = briefs.filter(b => (b.proposed_changes || []).some(c => c.status === 'pending'));
+  const approved = briefs.filter(b => {
+    const ch = b.proposed_changes || [];
+    return !ch.some(c => c.status === 'pending') && ch.some(c => c.status === 'approved') && !ch.some(c => c.status === 'applied');
+  });
+  const applied  = briefs.filter(b => {
+    const ch = b.proposed_changes || [];
+    return ch.some(c => c.status === 'applied') && !ch.some(c => c.status === 'approved');
+  });
+
+  const ahrefsStatus = d.ahrefsFile
+    ? esc(d.ahrefsFile.name) + ' \u2014 uploaded ' + new Date(d.ahrefsFile.mtime).toLocaleDateString()
+    : 'No file uploaded';
+
+  document.getElementById('tab-optimize').innerHTML =
+    '<div class="kanban-optimize">' +
+      '<div class="kanban-optimize-col">' +
+        '<h3>Pending Review <span class="badge">' + pending.length + '</span></h3>' +
+        (pending.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">No pending briefs</div>') +
+      '</div>' +
+      '<div class="kanban-optimize-col">' +
+        '<h3>Approved <span class="badge">' + approved.length + '</span></h3>' +
+        (approved.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">None approved yet</div>') +
+      '</div>' +
+      '<div class="kanban-optimize-col">' +
+        '<h3>Applied <span class="badge">' + applied.length + '</span></h3>' +
+        (applied.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">None applied yet</div>') +
+      '</div>' +
+    '</div>' +
+    '<details class="actions-panel">' +
+      '<summary>Actions</summary>' +
+      '<div class="actions-grid">' +
+        '<button onclick="runAgent(\'agents/competitor-intelligence/index.js\')">Run Competitor Intelligence</button>' +
+        '<div class="upload-zone">' +
+          '<span id="ahrefs-upload-status">' + ahrefsStatus + '</span>' +
+          '<button onclick="uploadAhrefs()">Upload Ahrefs CSV</button>' +
+        '</div>' +
+      '</div>' +
+      '<pre id="run-log-agents-competitor-intelligence-index-js" class="run-log" style="display:none"></pre>' +
+    '</details>';
+}
+
+function renderBriefCard(b) {
+  const pendingCount  = (b.proposed_changes || []).filter(c => c.status === 'pending').length;
+  const approvedCount = (b.proposed_changes || []).filter(c => c.status === 'approved').length;
+  const topTV = b.competitors && b.competitors[0] && b.competitors[0].traffic_value
+    ? '$' + ((b.competitors[0].traffic_value) / 100).toLocaleString() : '\u2014';
+  return '<div class="brief-card" onclick="toggleBriefDetail(\'' + esc(b.slug) + '\')">' +
+      '<div class="brief-card-title">' + esc(b.slug) + '</div>' +
+      '<div class="brief-card-meta">' +
+        '<span class="badge-type">' + esc(b.page_type) + '</span>' +
+        '<span>' + pendingCount + ' pending \u00b7 ' + approvedCount + ' approved</span>' +
+        '<span>' + topTV + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div id="detail-' + esc(b.slug) + '" class="brief-detail" style="display:none">' +
+      renderBriefDetail(b) +
+    '</div>';
+}
+
+function toggleBriefDetail(slug) {
+  const el = document.getElementById('detail-' + slug);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderBriefDetail(b) {
+  const topComp = (b.competitors || []).slice().sort(function(a, z) { return z.traffic_value - a.traffic_value; })[0];
+  const pair =
+    '<div class="screenshot-pair">' +
+      '<div>' +
+        '<div class="screenshot-label">Your Page</div>' +
+        (b.store_screenshot
+          ? '<img src="/screenshot?path=' + encodeURIComponent(b.store_screenshot) + '" class="page-screenshot">'
+          : '<div class="screenshot-missing">No screenshot</div>') +
+      '</div>' +
+      '<div>' +
+        '<div class="screenshot-label">Top Competitor' + (topComp ? ' (' + esc(topComp.domain) + ')' : '') + '</div>' +
+        (topComp && topComp.screenshot
+          ? '<img src="/screenshot?path=' + encodeURIComponent(topComp.screenshot) + '" class="page-screenshot">'
+          : '<div class="screenshot-missing">No screenshot</div>') +
+      '</div>' +
+    '</div>';
+
+  const changes = (b.proposed_changes || []).map(function(c) {
+    return '<div class="change-card change-' + esc(c.status) + '">' +
+      '<div class="change-header">' +
+        '<span class="change-label">' + esc(c.label) + '</span>' +
+        '<span class="change-status-pill">' + esc(c.status) + '</span>' +
+      '</div>' +
+      '<div class="change-diff">' +
+        (c.type === 'body_html'
+          ? '<iframe srcdoc="' + esc(c.proposed || '') + '" class="html-preview" sandbox=""></iframe>'
+          : '<div class="diff-current">' + esc(c.current || '\u2014') + '</div>' +
+            '<div class="diff-proposed">' + esc(c.proposed || '') + '</div>') +
+      '</div>' +
+      '<div class="change-rationale">' + esc(c.rationale || '') + '</div>' +
+      (c.status === 'pending'
+        ? '<div class="change-actions">' +
+            '<button class="btn-approve" onclick="updateChange(\'' + esc(b.slug) + '\',\'' + esc(c.id) + '\',\'approved\')">Approve</button>' +
+            '<button class="btn-reject"  onclick="updateChange(\'' + esc(b.slug) + '\',\'' + esc(c.id) + '\',\'rejected\')">Reject</button>' +
+          '</div>'
+        : '') +
+    '</div>';
+  }).join('');
+
+  const hasApproved = (b.proposed_changes || []).some(function(c) { return c.status === 'approved'; });
+  const applyBtn = hasApproved
+    ? '<div class="apply-section">' +
+        '<button class="btn-apply" onclick="applyBrief(\'' + esc(b.slug) + '\')">Apply Approved Changes</button>' +
+        '<pre id="apply-log-' + esc(b.slug) + '" class="run-log" style="display:none"></pre>' +
+      '</div>'
+    : '';
+
+  return pair + changes + applyBtn;
+}
+
+async function updateChange(slug, id, status) {
+  await fetch('/brief/' + slug + '/change/' + id, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status }),
+  });
+  loadData(); // re-render with updated brief
+}
+
+async function applyBrief(slug) {
+  const logEl = document.getElementById('apply-log-' + slug);
+  if (logEl) { logEl.style.display = 'block'; logEl.textContent = ''; }
+  const res = await fetch('/apply/' + slug, { method: 'POST' });
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  function read() {
+    reader.read().then(function({ done, value }) {
+      if (done) { loadData(); return; }
+      for (const line of decoder.decode(value).split('\n')) {
+        if (line.startsWith('data: ') && logEl) {
+          logEl.textContent += line.slice(6) + '\n';
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+      }
+      read();
+    });
+  }
+  read();
+}
+
+function buildOptimizeKpis(d) {
+  const briefs = d.briefs || [];
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const pendingPages = briefs.filter(b =>
+    (b.proposed_changes || []).some(c => c.status === 'pending')
+  ).length;
+
+  const approvedChanges = briefs
+    .flatMap(b => b.proposed_changes || [])
+    .filter(c => c.status === 'approved').length;
+
+  const optimizedThisMonth = briefs.filter(b => {
+    const changes = b.proposed_changes || [];
+    return changes.some(c => c.status === 'applied')
+      && !changes.some(c => c.status === 'approved')
+      && new Date(b.generated_at) >= monthStart;
+  }).length;
+
+  const allTV = briefs.flatMap(b => (b.competitors || []).map(c => (c.traffic_value || 0) / 100));
+  const avgTV = allTV.length ? Math.round(allTV.reduce((s, v) => s + v, 0) / allTV.length) : 0;
+
+  return [
+    { label: 'Pending Review',        value: pendingPages,          color: '#f59e0b' },
+    { label: 'Changes Approved',      value: approvedChanges,       color: '#818cf8' },
+    { label: 'Optimized This Month',  value: optimizedThisMonth,    color: '#10b981' },
+    { label: 'Avg Traffic Value',     value: '$' + avgTV.toLocaleString(), color: '#38bdf8' },
   ];
 }
 
@@ -1568,6 +1805,7 @@ async function loadData() {
     renderActiveTests(data);
     renderSEOAuthorityPanel(data.ahrefsData);
     renderRankAlertBanner(data.rankAlert);
+    if (activeTab === 'optimize') renderOptimizeTab(data);
   } catch(e) {
     console.error(e);
     document.getElementById('updated-at').textContent = 'Error: ' + e.message;
