@@ -55,7 +55,7 @@ test('identifies benefit list format as bullets', () => {
 });
 
 test('extracts CTA button text', () => {
-  const html = '<html><body><button class="add-to-cart">Add to Cart — Free Shipping</button></button></body></html>';
+  const html = '<html><body><button class="add-to-cart">Add to Cart — Free Shipping</button></body></html>';
   const result = extractPageStructure(html, []);
   assert.equal(result.cta_text, 'Add to Cart — Free Shipping');
 });

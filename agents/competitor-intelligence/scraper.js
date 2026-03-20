@@ -39,7 +39,8 @@ export function extractPageStructure(html, slugTokens) {
   // Description word count
   let descWords = 0;
   $('p, [class*="description"]').each((_, el) => {
-    const wc = $(el).text().trim().split(/\s+/).length;
+    const text = $(el).text().trim();
+    const wc = text.length > 0 ? text.split(/\s+/).length : 0;
     if (wc > descWords) descWords = wc;
   });
 
