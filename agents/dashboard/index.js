@@ -496,6 +496,7 @@ function aggregateData() {
     }
   }
 
+  const cro = parseCROData();
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -503,7 +504,8 @@ function aggregateData() {
     rankings,
     posts,
     pendingAhrefsData,
-    cro: parseCROData(),
+    cro,
+    googleAdsAll: cro.googleAdsAll,
     adsOptimization,
     ahrefsData,
     rankAlert,
