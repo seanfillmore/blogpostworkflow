@@ -10,6 +10,7 @@
  *   node agents/publisher/index.js data/posts/<slug>.json
  *   node agents/publisher/index.js data/posts/<slug>.json --publish-at "2026-03-17T08:00:00-05:00"
  *   node agents/publisher/index.js data/posts/<slug>.json --draft
+ *   node agents/publisher/index.js data/posts/<slug>.json --no-verify  (skip post-publish check)
  *
  * Options:
  *   --publish-at <ISO 8601>   Schedule publish at this datetime (e.g. 2026-03-17T08:00:00-05:00)
@@ -43,6 +44,7 @@ const publishAtArg = (() => {
 })();
 const isDraft = args.includes('--draft');
 const forcePublish = args.includes('--force');
+const skipVerify = args.includes('--no-verify');
 
 if (!metaArg) {
   console.error('Usage: node agents/publisher/index.js data/posts/<slug>.json [--publish-at "ISO8601"] [--draft]');
@@ -226,6 +228,26 @@ async function main() {
   console.log(`  Status:     ${meta.shopify_status}`);
   if (publishedAt) console.log(`  Goes live:  ${publishedAt}`);
   console.log(`\n  Metadata updated: ${metaPath}`);
+
+  // Post-publish verification (skippable with --no-verify)
+  if (!skipVerify && meta.shopify_status === 'published') {
+    console.log('\nRunning post-publish verifier...');
+    const { spawnSync } = await import('node:child_process');
+    const result = spawnSync(
+      process.execPath,
+      [join(ROOT, 'agents', 'blog-post-verifier', 'index.js'), `data/posts/${slug}.json`],
+      { stdio: 'inherit', cwd: ROOT }
+    );
+    if (result.status !== 0) {
+      console.warn('⚠ Verifier found issues — check data/reports/verifier/' + slug + '-*.md');
+      const { notify } = await import('../../lib/notify.js');
+      await notify({
+        subject: `Verifier issues: "${meta.title}"`,
+        body: `Post published but verifier flagged issues.\nCheck: data/reports/verifier/${slug}-*.md`,
+        status: 'error',
+      });
+    }
+  }
 }
 
 main().then(() => {

@@ -38,3 +38,4 @@ data/reports/ads-weekly-recap.log
 # Misc
 Ingredients/
 *.DS_Store
+.worktrees/
