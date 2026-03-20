@@ -1,4 +1,6 @@
 import { strict as assert } from 'assert';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { buildHeaders, parseCustomerId, yesterdayPT } from '../../lib/google-ads.js';
 
 // buildHeaders returns required headers
@@ -17,7 +19,7 @@ assert.match(y, /^\d{4}-\d{2}-\d{2}$/);
 
 // fetchDailySnapshot returns resource-name fields
 // (tested structurally — we check the export exists and the query strings)
-const src = (await import('fs')).readFileSync('lib/google-ads.js', 'utf8');
+const src = readFileSync(fileURLToPath(new URL('../../lib/google-ads.js', import.meta.url)), 'utf8');
 assert.ok(src.includes('campaign.resource_name'), 'campaign query must select resource_name');
 assert.ok(src.includes('ad_group.resource_name'),  'must query ad group resource names');
 assert.ok(src.includes('ad_group_ad.resource_name'), 'must query adGroupAd resource names');
