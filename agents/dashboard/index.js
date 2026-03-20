@@ -1785,18 +1785,20 @@ const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/apply-ads') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
     const child = spawn('node', [join(ROOT, 'agents', 'apply-ads-changes', 'index.js')], { cwd: ROOT });
+    let doneSent = false;
     child.stdout.on('data', d => {
       for (const line of String(d).split('\n').filter(Boolean)) {
         if (line.startsWith('DONE ')) {
           try { res.write(`event: done\ndata: ${JSON.stringify(JSON.parse(line.slice(5)))}\n\n`); }
           catch { res.write('event: done\ndata: {}\n\n'); }
+          doneSent = true;
         } else {
           res.write(`data: ${line}\n\n`);
         }
       }
     });
     child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => res.write(`data: [err] ${l}\n\n`)));
-    child.on('close', () => res.end());
+    child.on('close', () => { if (!doneSent) res.write('event: done\ndata: {}\n\n'); res.end(); });
     return;
   }
 
