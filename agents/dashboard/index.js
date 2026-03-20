@@ -1050,9 +1050,9 @@ async function applyBrief(slug) {
   function read() {
     reader.read().then(function({ done, value }) {
       if (done) { loadData(); return; }
-      for (const line of decoder.decode(value).split('\n')) {
+      for (const line of decoder.decode(value).split('\\n')) {
         if (line.startsWith('data: ') && logEl) {
-          logEl.textContent += line.slice(6) + '\n';
+          logEl.textContent += line.slice(6) + '\\n';
           logEl.scrollTop = logEl.scrollHeight;
         }
       }
@@ -1898,8 +1898,8 @@ function runAgent(script, args = []) {
     function read() {
       reader.read().then(({ done, value }) => {
         if (done) return;
-        for (const line of decoder.decode(value).split('\n')) {
-          if (line.startsWith('data: ')) logEl.textContent += line.slice(6) + '\n';
+        for (const line of decoder.decode(value).split('\\n')) {
+          if (line.startsWith('data: ')) logEl.textContent += line.slice(6) + '\\n';
         }
         logEl.scrollTop = logEl.scrollHeight;
         read();
