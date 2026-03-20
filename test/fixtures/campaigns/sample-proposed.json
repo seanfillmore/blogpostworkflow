@@ -1,0 +1,62 @@
+{
+  "id": "2026-03-20-natural-toothpaste-search",
+  "status": "proposed",
+  "createdAt": "2026-03-20T08:00:00.000Z",
+  "proposal": {
+    "campaignName": "RSC | Toothpaste | Search",
+    "objective": "Drive purchases of coconut oil toothpaste",
+    "landingPage": "/products/coconut-oil-toothpaste",
+    "network": "Search",
+    "suggestedBudget": 5.00,
+    "approvedBudget": null,
+    "mobileAdjustmentPct": 30,
+    "adGroups": [
+      {
+        "name": "Natural Toothpaste",
+        "keywords": [
+          { "text": "natural toothpaste", "matchType": "EXACT" },
+          { "text": "coconut oil toothpaste", "matchType": "EXACT" }
+        ],
+        "headlines": [
+          "Natural Coconut Oil Toothpaste",
+          "Only Clean Ingredients",
+          "Fluoride-Free Formula",
+          "Skip Harsh Chemicals"
+        ],
+        "descriptions": [
+          "Made with organic coconut oil and no harsh chemicals. Clean teeth, clean ingredients.",
+          "Fluoride-free toothpaste for a cleaner routine. 6 real ingredients you can pronounce."
+        ]
+      }
+    ],
+    "negativeKeywords": ["diy", "recipe", "homemade", "wholesale"]
+  },
+  "rationale": "GSC shows 420 impressions/mo for 'natural toothpaste' with 0 paid coverage.",
+  "dataPoints": {
+    "gscImpressions": 420,
+    "gscCTR": 0.031,
+    "ga4CVR": 0.022,
+    "shopifyRevenue": 612.00,
+    "competitorsCovering": ["hello", "dr. bronner's"]
+  },
+  "projections": {
+    "ctr": 0.035,
+    "cpc": 0.65,
+    "cvr": 0.022,
+    "dailyClicks": 8,
+    "monthlyCost": 150,
+    "monthlyConversions": 5,
+    "monthlyRevenue": 180
+  },
+  "clarificationNeeded": null,
+  "clarificationResponse": null,
+  "googleAds": {
+    "campaignResourceName": null,
+    "campaignId": null,
+    "budgetResourceName": null,
+    "adGroupResourceNames": [],
+    "createdAt": null
+  },
+  "performance": [],
+  "alerts": []
+}

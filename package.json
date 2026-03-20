@@ -57,7 +57,10 @@
     "meta-ab-tracker": "node agents/meta-ab-tracker/index.js",
     "meta-test-create": "node scripts/create-meta-test.js",
     "competitor-intel": "node agents/competitor-intelligence/index.js",
-    "apply-optimization": "node agents/apply-optimization/index.js"
+    "apply-optimization": "node agents/apply-optimization/index.js",
+    "campaign-analyzer": "node agents/campaign-analyzer/index.js",
+    "campaign-creator": "node agents/campaign-creator/index.js",
+    "campaign-monitor": "node agents/campaign-monitor/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

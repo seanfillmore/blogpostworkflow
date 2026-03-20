@@ -17,6 +17,9 @@ data/backlinks/
 data/content_gap/
 data/articles/
 
+# Campaign data
+data/campaigns/*.json
+
 # Generated log files
 data/reports/scheduler.log
 data/reports/scheduler/
