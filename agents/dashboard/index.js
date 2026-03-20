@@ -948,7 +948,7 @@ function renderOptimizeTab(d) {
     '<details class="actions-panel">' +
       '<summary>Actions</summary>' +
       '<div class="actions-grid">' +
-        '<button onclick="runAgent(\'agents/competitor-intelligence/index.js\')">Run Competitor Intelligence</button>' +
+        '<button onclick="runAgent(&apos;agents/competitor-intelligence/index.js&apos;)">Run Competitor Intelligence</button>' +
         '<div class="upload-zone">' +
           '<span id="ahrefs-upload-status">' + ahrefsStatus + '</span>' +
           '<button onclick="uploadAhrefs()">Upload Ahrefs CSV</button>' +
