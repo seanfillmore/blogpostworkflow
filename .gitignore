@@ -36,3 +36,4 @@ data/reports/rank-tracker.log
 # Misc
 Ingredients/
 *.DS_Store
+.worktrees/
