@@ -19,7 +19,7 @@ const suggestions = [
 ];
 const body = buildAlertEmailBody(snap, suggestions, 'http://localhost:4242');
 assert.ok(body.includes('$9.12'), 'body must include spend');
-assert.ok(body.includes('2 suggestion'), 'body must include count');
+assert.ok(body.includes('Suggestions:'), 'body must include suggestions header');
 assert.ok(body.includes('localhost:4242'), 'body must include dashboard URL');
 assert.ok(body.includes('[HIGH]'), 'body must include confidence badge');
 assert.ok(body.includes('coconut oil lotion'), 'body must include target');
@@ -38,6 +38,14 @@ assert.equal(parsed.suggestions[0].status, 'pending');
 const wrapped = '```json\n' + raw + '\n```';
 const parsed2 = parseSuggestionsResponse(wrapped);
 assert.equal(parsed2.suggestions.length, 1);
+
+// parseSuggestionsResponse — adds status: 'pending' when missing
+const noStatus = JSON.stringify({
+  analysisNotes: 'Test',
+  suggestions: [{ id: 's-001', type: 'keyword_pause', confidence: 'high', target: 'test', rationale: 'test', proposedChange: {} }],
+});
+const parsed3 = parseSuggestionsResponse(noStatus);
+assert.equal(parsed3.suggestions[0].status, 'pending', 'must default status to pending');
 
 // parseSuggestionsResponse — invalid JSON throws
 assert.throws(() => parseSuggestionsResponse('not json'), /JSON/);

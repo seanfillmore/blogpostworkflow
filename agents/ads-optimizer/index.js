@@ -11,12 +11,7 @@
  *   node agents/ads-optimizer/index.js --date 2026-03-19
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-export const __dirname = dirname(fileURLToPath(import.meta.url));
-export const ROOT = join(__dirname, '..', '..');
+import { join } from 'node:path';
 
 // ── Pure exports (tested) ──────────────────────────────────────────────────────
 
@@ -28,7 +23,7 @@ export function buildAlertEmailBody(snap, suggestions, dashboardUrl) {
   const lines = [
     `Yesterday: $${snap.spend.toFixed(2)} spend · ${snap.clicks} clicks · ${snap.conversions} conv · ${snap.roas.toFixed(2)}x ROAS`,
     '',
-    `${suggestions.length} suggestion${suggestions.length === 1 ? '' : 's'}:`,
+    'Suggestions:',
   ];
   for (const s of suggestions) {
     const badge = s.confidence === 'high' ? 'HIGH' : s.confidence === 'medium' ? 'MED' : 'LOW';
