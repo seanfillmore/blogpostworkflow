@@ -5,6 +5,7 @@
  * Returns { slug, type } or null if no match.
  */
 export function matchCompetitorUrl(url, sitemapPages) {
+  if (!Array.isArray(sitemapPages)) return null;
   let pathSegment = null;
   let type = null;
 
@@ -22,9 +23,10 @@ export function matchCompetitorUrl(url, sitemapPages) {
   if (exact) return { slug: exact.slug, type: exact.type };
 
   // (b) Token overlap — tokenize on '-', require ≥2 tokens of length >2 to match
+  // Tokens ≤2 chars (e.g. "oz", "xl") are intentionally excluded to reduce false positives
   const competitorTokens = new Set(pathSegment.split('-').filter(t => t.length > 2));
   let best = null;
-  let bestOverlap = 1; // require strictly more than 1 to match
+  let bestOverlap = 1; // require strictly more than 1 to match; ties resolved by first occurrence in sitemapPages
 
   for (const page of candidates) {
     const pageTokens = page.slug.split('-').filter(t => t.length > 2);
