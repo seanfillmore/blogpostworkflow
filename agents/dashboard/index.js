@@ -12,6 +12,7 @@
  */
 
 import http from 'http';
+import { spawn } from 'child_process';
 import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
@@ -67,6 +68,21 @@ const IMAGES_DIR    = join(ROOT, 'data', 'images');
 const REPORTS_DIR   = join(ROOT, 'data', 'reports');
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
 const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
+
+const COMP_BRIEFS_DIR      = join(ROOT, 'data', 'competitor-intelligence', 'briefs');
+const COMP_SCREENSHOTS_DIR = join(ROOT, 'data', 'competitor-intelligence', 'screenshots');
+
+const RUN_AGENT_ALLOWLIST = new Set([
+  'agents/rank-tracker/index.js',
+  'agents/content-gap/index.js',
+  'agents/gsc-query-miner/index.js',
+  'agents/sitemap-indexer/index.js',
+  'agents/insight-aggregator/index.js',
+  'agents/meta-ab-tracker/index.js',
+  'agents/cro-analyzer/index.js',
+  'agents/competitor-intelligence/index.js',
+  'scripts/create-meta-test.js',
+]);
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
 
