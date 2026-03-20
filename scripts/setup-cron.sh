@@ -13,6 +13,8 @@
 #   Daily   06:00 PT — clarity-collector (CRO)
 #   Daily   06:05 PT — shopify-collector (CRO)
 #   Weekly  Mon 07:45 PT — cro-analyzer
+#   Daily   06:45 PT — ads-optimizer (alert email if suggestions exist)
+#   Weekly  Sun 07:00 PT — ads-weekly-recap
 
 set -e
 
@@ -37,6 +39,8 @@ DAILY_GSC="15 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-collector/index.j
 DAILY_GA4="20 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/ga4-collector/index.js >> data/reports/scheduler/ga4-collector.log 2>&1"
 DAILY_GOOGLE_ADS="25 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/google-ads-collector/index.js >> data/reports/scheduler/google-ads-collector.log 2>&1"
 WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyzer/index.js >> data/reports/scheduler/cro-analyzer.log 2>&1"
+DAILY_ADS_OPTIMIZER="45 6 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/ads-optimizer/index.js >> data/reports/ads-optimizer.log 2>&1"
+WEEKLY_ADS_RECAP="0 7 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/ads-weekly-recap.js >> data/reports/ads-weekly-recap.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
 EXISTING=$(crontab -l 2>/dev/null || true)
@@ -58,6 +62,8 @@ $DAILY_GSC
 $DAILY_GA4
 $DAILY_GOOGLE_ADS
 $WEEKLY_CRO_ANALYZER
+$DAILY_ADS_OPTIMIZER
+$WEEKLY_ADS_RECAP
 "
 
 echo "Installing cron jobs..."
@@ -76,6 +82,8 @@ echo "  Daily   06:15 PDT / 05:15 PST — gsc-collector"
 echo "  Daily   06:20 PDT / 05:20 PST — ga4-collector"
 echo "  Daily   06:25 PDT / 05:25 PST — google-ads-collector"
 echo "  Weekly  Mon 07:45 PT — cro-analyzer"
+echo "  Daily   06:45 PT — ads-optimizer (alert email if suggestions)"
+echo "  Weekly  Sun 07:00 PT — ads-weekly-recap"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"

@@ -32,6 +32,8 @@ data/reports/collection-creator.log
 data/reports/cannibalization-resolver.log
 data/reports/gsc-query-miner.log
 data/reports/rank-tracker.log
+data/reports/ads-optimizer.log
+data/reports/ads-weekly-recap.log
 
 # Misc
 Ingredients/
