@@ -12,9 +12,10 @@
  */
 
 import http from 'http';
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 // ── basic auth ─────────────────────────────────────────────────────────────────
 // Set DASHBOARD_USER and DASHBOARD_PASSWORD in .env to enable.
@@ -65,6 +66,7 @@ const BRIEFS_DIR    = join(ROOT, 'data', 'briefs');
 const IMAGES_DIR    = join(ROOT, 'data', 'images');
 const REPORTS_DIR   = join(ROOT, 'data', 'reports');
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
+const ADS_OPTIMIZER_DIR = join(ROOT, 'data', 'ads-optimizer');
 const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
@@ -419,6 +421,12 @@ function aggregateData() {
 
   const pendingAhrefsData = getPendingAhrefsData(calItems);
 
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const adsOptPath = join(ADS_OPTIMIZER_DIR, `${today}.json`);
+  const adsOptimization = existsSync(adsOptPath)
+    ? JSON.parse(readFileSync(adsOptPath, 'utf8'))
+    : null;
+
   return {
     generatedAt: new Date().toISOString(),
     site:        { name: config.name },
@@ -427,6 +435,7 @@ function aggregateData() {
     posts,
     pendingAhrefsData,
     cro: parseCROData(),
+    adsOptimization,
   };
 }
 
@@ -608,6 +617,26 @@ const HTML = `<!DOCTYPE html>
   .gsc-stat { display: flex; flex-direction: column; }
   .gsc-stat-value { font-size: 20px; font-weight: 700; color: var(--text); }
   .gsc-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .ads-opt-card { margin-bottom: 1rem; }
+  .ads-opt-analysis { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--surface); border-radius: 6px; border: 1px solid var(--border); }
+  .ads-suggestion { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; background: var(--bg); }
+  .ads-suggestion-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .ads-suggestion-rationale { font-size: 0.85rem; color: var(--fg); margin-bottom: 0.75rem; line-height: 1.5; }
+  .ads-suggestion-change { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem; }
+  .ads-suggestion-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .ads-suggestion-actions button { padding: 0.3rem 0.75rem; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; font-size: 0.82rem; background: var(--surface); }
+  .btn-ads-approve { background: #d1fae5 !important; border-color: #6ee7b7 !important; color: #065f46 !important; }
+  .btn-ads-approve:hover { background: #6ee7b7 !important; }
+  .btn-ads-reject { background: #fee2e2 !important; border-color: #fca5a5 !important; color: #7f1d1d !important; }
+  .btn-ads-reject:hover { background: #fca5a5 !important; }
+  .ads-copy-edit { padding: 0.3rem 0.5rem; border: 1px solid var(--indigo); border-radius: 4px; font-size: 0.82rem; width: 260px; }
+  .ads-char-count { font-size: 0.75rem; color: var(--muted); }
+  .ads-char-count.over { color: #ef4444; }
+  .ads-applied-section summary { font-size: 0.8rem; color: var(--muted); cursor: pointer; }
+  .run-log { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; font-size: 0.8rem; max-height: 300px; overflow-y: auto; white-space: pre-wrap; margin-top: 0.75rem; }
+  .tab-actions-group { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab-actions-group button { padding: 0.4rem 0.9rem; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; font-size: 0.82rem; background: var(--surface); }
+  .tab-actions-group button:hover { border-color: #94a3b8; }
 </style>
 </head>
 <body>
@@ -676,11 +705,19 @@ const HTML = `<!DOCTYPE html>
   <div id="cro-brief-card"></div>
 </div><!-- /tab-cro -->
 <div id="tab-ads" class="tab-panel">
-  <div id="ads-kpi-strip" style="margin-bottom:16px"></div>
-  <div class="cro-grid" style="margin-bottom:16px">
-    <div id="ads-overview-card"></div>
-    <div id="ads-keywords-card"></div>
+  <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
+    <button onclick="runAgent(&apos;agents/ads-optimizer/index.js&apos;)" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
+    <button onclick="applyAdsChanges()" data-tip="Execute all approved suggestions via the Google Ads Mutate API">Apply Approved</button>
+    <button onclick="runAgent(&apos;scripts/ads-weekly-recap.js&apos;)" data-tip="Send the weekly recap email now (normally runs automatically Sunday morning)">Send Weekly Recap</button>
   </div>
+  <div class="card ads-opt-card">
+    <div class="card-header accent-indigo"><h2>Optimization Queue</h2></div>
+    <div class="card-body" id="ads-opt-body"><p class="empty-state">Loading...</p></div>
+  </div>
+  <div id="ads-kpi-strip"></div>
+  <div id="ads-overview-card"></div>
+  <div id="ads-keywords-card"></div>
+  <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
 </div><!-- /tab-ads -->
 </main>
 
@@ -692,6 +729,10 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+  ['seo','cro','optimize','ads'].forEach(function(t) {
+    var el = document.getElementById('tab-actions-' + t);
+    if (el) el.style.display = t === name ? 'flex' : 'none';
+  });
 }
 
 function fmtDate(iso) {
@@ -1347,6 +1388,7 @@ function kpiCard(label, value, sub) {
 }
 
 function renderAdsTab(data) {
+  renderAdsOptimization(data);
   const adsAll = data.cro?.googleAdsAll || [];
   const snap = adsAll[0];
 
@@ -1407,6 +1449,186 @@ function renderAdsTab(data) {
       ).join('') +
       '</tbody></table>') +
     '</div></div>';
+}
+
+function renderAdsOptimization(d) {
+  var optEl = document.getElementById('ads-opt-body');
+  if (!optEl) return;
+
+  var opt = d.adsOptimization || null;
+  if (!opt) {
+    optEl.innerHTML = '<div class="ads-opt-analysis">No optimization analysis yet. Run Ads Optimizer to generate suggestions.</div>';
+    return;
+  }
+
+  var pending  = (opt.suggestions || []).filter(function(s) { return s.status === 'pending'; });
+  var approved = (opt.suggestions || []).filter(function(s) { return s.status === 'approved'; });
+  var applied  = (opt.suggestions || []).filter(function(s) { return s.status === 'applied'; });
+  var rejected = (opt.suggestions || []).filter(function(s) { return s.status === 'rejected'; });
+
+  var allActionable = [].concat(pending, approved);
+  var actionable = [].concat(
+    allActionable.filter(function(s) { return s.type !== 'copy_rewrite'; }),
+    allActionable.filter(function(s) { return s.type === 'copy_rewrite'; })
+  );
+
+  function confidenceBadge(c) {
+    var label = c === 'high' ? 'HIGH' : c === 'medium' ? 'MED' : 'LOW';
+    var color = c === 'high' ? '#065f46' : c === 'medium' ? '#92400e' : '#374151';
+    var bg    = c === 'high' ? '#d1fae5' : c === 'medium' ? '#fef3c7' : '#f3f4f6';
+    return '<span class="badge" style="background:' + bg + ';color:' + color + ';font-size:0.7rem">' + label + '</span>';
+  }
+
+  function typeLabel(s) {
+    if (s.type === 'keyword_pause') return 'Pause keyword';
+    if (s.type === 'keyword_add')   return 'Add keyword';
+    if (s.type === 'negative_add')  return 'Add negative';
+    if (s.type === 'copy_rewrite')  return 'Rewrite copy';
+    return s.type;
+  }
+
+  function changeDesc(s) {
+    var pc = s.proposedChange || {};
+    if (s.type === 'copy_rewrite') return esc(pc.field) + ': &ldquo;' + esc(pc.current) + '&rdquo; &rarr; &ldquo;' + esc(pc.suggested) + '&rdquo;';
+    if (s.type === 'keyword_add')  return esc(pc.keyword) + ' [' + esc((pc.matchType || '').toLowerCase()) + ']';
+    if (s.type === 'negative_add') return '&minus;' + esc(pc.keyword);
+    return esc(s.target);
+  }
+
+  function renderSuggestionCard(s) {
+    var isApproved = s.status === 'approved';
+    var isCopyRewrite = s.type === 'copy_rewrite';
+    var maxLen = (s.proposedChange?.field || '').startsWith('headline') ? 30 : 90;
+    var currentVal = s.editedValue || s.proposedChange?.suggested || '';
+
+    var copyEditHtml = '';
+    if (isCopyRewrite) {
+      var count = currentVal.length;
+      var over = count > maxLen;
+      copyEditHtml =
+        '<div style="margin-bottom:0.5rem">' +
+        '<input class="ads-copy-edit" id="copy-edit-' + esc(s.id) + '" maxlength="' + maxLen + '" value="' + esc(currentVal) + '" ' +
+        'oninput="updateCopyCount(&apos;' + esc(s.id) + '&apos;,' + maxLen + ')" ' +
+        'onblur="saveCopyEdit(&apos;' + esc(s.id) + '&apos;,&apos;' + esc(opt.date) + '&apos;)"> ' +
+        '<span class="ads-char-count' + (over ? ' over' : '') + '" id="count-' + esc(s.id) + '">' + count + '/' + maxLen + '</span>' +
+        '</div>';
+    }
+
+    return '<div class="ads-suggestion" id="suggestion-card-' + esc(s.id) + '">' +
+      '<div class="ads-suggestion-header">' +
+        confidenceBadge(s.confidence) +
+        '<strong>' + typeLabel(s) + '</strong>' +
+        (s.adGroup ? '<span class="badge-type">' + esc(s.adGroup) + '</span>' : '') +
+        (isApproved ? '<span class="badge" style="background:#dbeafe;color:#1e40af;font-size:0.7rem">APPROVED</span>' : '') +
+      '</div>' +
+      '<div class="ads-suggestion-rationale">' + esc(s.rationale) + '</div>' +
+      '<div class="ads-suggestion-change">' + changeDesc(s) + '</div>' +
+      copyEditHtml +
+      '<div class="ads-suggestion-actions">' +
+        '<button class="btn-ads-approve" onclick="adsUpdateSuggestion(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;,&apos;approved&apos;)">' +
+          (isApproved ? '&#10003; Approved' : 'Approve') +
+        '</button>' +
+        '<button class="btn-ads-reject" onclick="adsUpdateSuggestion(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;,&apos;rejected&apos;)">Reject</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  var html = '';
+  if (opt.analysisNotes) html += '<div class="ads-opt-analysis">' + esc(opt.analysisNotes) + '</div>';
+
+  if (actionable.length === 0) {
+    html += '<p class="empty-state">No pending suggestions. Run Ads Optimizer to generate new analysis.</p>';
+  } else {
+    html += actionable.map(renderSuggestionCard).join('');
+  }
+
+  if (applied.length > 0 || rejected.length > 0) {
+    html += '<details class="ads-applied-section"><summary>' + (applied.length + rejected.length) + ' resolved suggestion(s)</summary>' +
+      '<div style="margin-top:0.5rem;opacity:0.6">' +
+        [].concat(applied, rejected).map(function(s) {
+          return '<div style="font-size:0.8rem;padding:0.25rem 0">' +
+          '<span class="badge" style="background:' + (s.status === 'applied' ? '#d1fae5' : '#fee2e2') + ';font-size:0.7rem">' + s.status.toUpperCase() + '</span> ' +
+          esc(s.target) + ' — ' + esc(s.rationale) +
+          '</div>';
+        }).join('') +
+      '</div></details>';
+  }
+
+  optEl.innerHTML = html;
+}
+
+async function adsUpdateSuggestion(date, id, status) {
+  await fetch('/ads/' + date + '/suggestion/' + id, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status }),
+  });
+  loadData();
+}
+
+function updateCopyCount(id, maxLen) {
+  var input = document.getElementById('copy-edit-' + id);
+  var counter = document.getElementById('count-' + id);
+  if (!input || !counter) return;
+  var count = input.value.length;
+  counter.textContent = count + '/' + maxLen;
+  counter.className = 'ads-char-count' + (count > maxLen ? ' over' : '');
+}
+
+async function saveCopyEdit(id, date) {
+  var input = document.getElementById('copy-edit-' + id);
+  if (!input) return;
+  var maxLen = parseInt(input.getAttribute('maxlength') || '90', 10);
+  if (input.value.length > maxLen) return;
+  await fetch('/ads/' + date + '/suggestion/' + id, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ editedValue: input.value }),
+  });
+}
+
+async function runAgent(script) {
+  var logEl = document.getElementById('run-log-apply-ads');
+  if (logEl) { logEl.style.display = 'block'; logEl.textContent = ''; }
+  var res = await fetch('/run-agent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ script: script }),
+  });
+  var reader = res.body.getReader();
+  var decoder = new TextDecoder();
+  function read() {
+    reader.read().then(function(result) {
+      if (result.done) { loadData(); return; }
+      var lines = decoder.decode(result.value).split('\\n');
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('data: ') && logEl) logEl.textContent += lines[i].slice(6) + '\\n';
+      }
+      if (logEl) logEl.scrollTop = logEl.scrollHeight;
+      read();
+    });
+  }
+  read();
+}
+
+async function applyAdsChanges() {
+  var logEl = document.getElementById('run-log-apply-ads');
+  if (logEl) { logEl.style.display = 'block'; logEl.textContent = ''; }
+  var res = await fetch('/apply-ads', { method: 'POST' });
+  var reader = res.body.getReader();
+  var decoder = new TextDecoder();
+  function read() {
+    reader.read().then(function(result) {
+      if (result.done) { loadData(); return; }
+      var lines = decoder.decode(result.value).split('\\n');
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('data: ') && logEl) logEl.textContent += lines[i].slice(6) + '\\n';
+      }
+      if (logEl) logEl.scrollTop = logEl.scrollHeight;
+      read();
+    });
+  }
+  read();
 }
 
 async function loadData() {
@@ -1514,6 +1736,11 @@ document.getElementById('kw-modal').addEventListener('click', function(e) {
 
 // ── HTTP server ────────────────────────────────────────────────────────────────
 
+const RUN_AGENT_ALLOWLIST = [
+  'agents/ads-optimizer/index.js',
+  'scripts/ads-weekly-recap.js',
+];
+
 const server = http.createServer((req, res) => {
   if (!checkAuth(req, res)) return;
 
@@ -1526,6 +1753,71 @@ const server = http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
     }
+    return;
+  }
+
+  if (req.method === 'POST' && req.url.startsWith('/ads/') && req.url.includes('/suggestion/')) {
+    const parts = req.url.split('/'); // ['', 'ads', date, 'suggestion', id]
+    const date = parts[2], id = parts[4];
+    if (!date || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing date or id' })); return; }
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
+      const filePath = join(ADS_OPTIMIZER_DIR, `${date}.json`);
+      if (!existsSync(filePath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion file not found' })); return; }
+      const data = JSON.parse(readFileSync(filePath, 'utf8'));
+      const suggestion = data.suggestions?.find(s => s.id === id);
+      if (!suggestion) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
+      if (payload.status !== undefined) {
+        if (!['approved', 'rejected'].includes(payload.status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
+        suggestion.status = payload.status;
+      }
+      if (payload.editedValue !== undefined) suggestion.editedValue = payload.editedValue;
+      writeFileSync(filePath, JSON.stringify(data, null, 2));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, suggestion }));
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/apply-ads') {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+    const child = spawn('node', [join(ROOT, 'agents', 'apply-ads-changes', 'index.js')], { cwd: ROOT });
+    child.stdout.on('data', d => {
+      for (const line of String(d).split('\n').filter(Boolean)) {
+        if (line.startsWith('DONE ')) {
+          try { res.write(`event: done\ndata: ${JSON.stringify(JSON.parse(line.slice(5)))}\n\n`); }
+          catch { res.write('event: done\ndata: {}\n\n'); }
+        } else {
+          res.write(`data: ${line}\n\n`);
+        }
+      }
+    });
+    child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => res.write(`data: [err] ${l}\n\n`)));
+    child.on('close', () => res.end());
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/run-agent') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
+      const script = payload.script;
+      if (!script || !RUN_AGENT_ALLOWLIST.includes(script)) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Script not in allowlist' })); return; }
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+      const child = spawn('node', [join(ROOT, script)], { cwd: ROOT });
+      child.stdout.on('data', d => {
+        for (const line of String(d).split('\n').filter(Boolean)) {
+          res.write(`data: ${line}\n\n`);
+        }
+      });
+      child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => res.write(`data: [err] ${l}\n\n`)));
+      child.on('close', () => res.end());
+    });
     return;
   }
 
