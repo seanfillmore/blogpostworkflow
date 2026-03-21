@@ -266,14 +266,6 @@ async function main() {
   const { notify } = await import('../../lib/notify.js');
   const lines = [];
 
-  if (urlIssues.length) {
-    lines.push(`⚠ ${urlIssues.length} ad(s) disapproved for DESTINATION_NOT_WORKING — manual action required:\n`);
-    for (const { ad, finalUrl } of urlIssues) {
-      lines.push(`  Campaign: ${ad.campaignName} / ${ad.adGroupName}`);
-      lines.push(`  Final URL: ${finalUrl}`);
-      lines.push(`  Fix: Verify the URL is publicly accessible (not password-protected), then re-submit for review.\n`);
-    }
-  }
 
   if (fixed.length) {
     lines.push(`Fixed ${fixed.length} disapproved ad(s)${isDryRun ? ' [DRY RUN]' : ''}:\n`);
@@ -298,7 +290,7 @@ async function main() {
     }
   }
 
-  if (!urlIssues.length && !fixed.length && !failed.length) {
+  if (!fixed.length && !failed.length) {
     log('Nothing to report.');
     return;
   }
