@@ -2345,9 +2345,9 @@ function renderCampaignCards(campaigns, aovBarrier) {
         '</div>' +
         '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Recommendations</div>' +
         '<div style="font-size:12px;color:var(--text);line-height:1.8">' +
-          '• Add product bundles to push AOV above $' + Math.round(aovBarrier.breakEvenCpa / 0.03) + ' (unlocks $0.90+ CPC keywords)<br>' +
-          '• Add upsells at checkout to increase order value<br>' +
-          '• Focus on branded search only — lowest CPCs, highest CVR<br>' +
+          '• Current AOV supports keywords up to $' + esc(String((aovBarrier.aov * 0.03 / aovBarrier.minRoas).toFixed(2))) + ' CPC at 3% CVR — target long-tail terms in that range<br>' +
+          '• Push AOV to ~$42 via bundles or upsells to unlock $1.50 CPC keywords<br>' +
+          '• Brand search is the best near-term bet — CPCs $0.30–0.50, CVR 8–15%<br>' +
           '• See CRO brief for detailed AOV improvement recommendations' +
         '</div>' +
       '</div>';
