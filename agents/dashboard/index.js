@@ -85,6 +85,8 @@ const RUN_AGENT_ALLOWLIST = new Set([
   'agents/ads-optimizer/index.js',
   'scripts/create-meta-test.js',
   'scripts/ads-weekly-recap.js',
+  'agents/campaign-creator/index.js',
+  'agents/campaign-analyzer/index.js',
 ]);
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
@@ -2427,6 +2429,114 @@ const server = http.createServer((req, res) => {
     });
     child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => res.write(`data: [err] ${l}\n\n`)));
     child.on('close', () => { if (!doneSent) res.write('event: done\ndata: {}\n\n'); res.end(); });
+    return;
+  }
+
+  // ── Campaign API ──────────────────────────────────────────────────────────────
+
+  const CAMPAIGN_PLANS_DIR = join(ROOT, 'data', 'campaigns');
+
+  function readCampaigns() {
+    if (!existsSync(CAMPAIGN_PLANS_DIR)) return [];
+    return readdirSync(CAMPAIGN_PLANS_DIR)
+      .filter(f => f.endsWith('.json'))
+      .map(f => { try { return JSON.parse(readFileSync(join(CAMPAIGN_PLANS_DIR, f), 'utf8')); } catch { return null; } })
+      .filter(Boolean);
+  }
+
+  // GET /api/campaigns
+  if (req.method === 'GET' && req.url === '/api/campaigns') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(readCampaigns()));
+    return;
+  }
+
+  // GET /api/campaigns/:id
+  if (req.method === 'GET' && /^\/api\/campaigns\/[\w-]+$/.test(req.url)) {
+    const id = req.url.split('/')[3];
+    const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
+    if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(readFileSync(file, 'utf8'));
+    return;
+  }
+
+  // POST /api/campaigns/:id/approve
+  if (req.method === 'POST' && /^\/api\/campaigns\/[\w-]+\/approve$/.test(req.url)) {
+    const id = req.url.split('/')[3];
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { approvedBudget } = JSON.parse(body);
+        if (!approvedBudget || approvedBudget <= 0) throw new Error('approvedBudget must be a positive number');
+        const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
+        if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+        const campaign = JSON.parse(readFileSync(file, 'utf8'));
+        campaign.proposal.approvedBudget = approvedBudget;
+        campaign.status = 'approved';
+        writeFileSync(file, JSON.stringify(campaign, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /api/campaigns/:id/dismiss
+  if (req.method === 'POST' && /^\/api\/campaigns\/[\w-]+\/dismiss$/.test(req.url)) {
+    const id = req.url.split('/')[3];
+    const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
+    if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+    const campaign = JSON.parse(readFileSync(file, 'utf8'));
+    campaign.status = 'dismissed';
+    writeFileSync(file, JSON.stringify(campaign, null, 2));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // POST /api/campaigns/:id/clarify
+  if (req.method === 'POST' && /^\/api\/campaigns\/[\w-]+\/clarify$/.test(req.url)) {
+    const id = req.url.split('/')[3];
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { clarificationResponse } = JSON.parse(body);
+        if (typeof clarificationResponse !== 'string' || !clarificationResponse.trim()) throw new Error('clarificationResponse must be a non-empty string');
+        const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
+        if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+        const campaign = JSON.parse(readFileSync(file, 'utf8'));
+        campaign.clarificationResponse = clarificationResponse.trim();
+        writeFileSync(file, JSON.stringify(campaign, null, 2));
+        // Spawn re-analysis (non-blocking)
+        spawn('node', [join(ROOT, 'agents/campaign-analyzer/index.js'), '--campaign', id], { cwd: ROOT, detached: true, stdio: 'ignore' }).unref();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /api/campaigns/:id/alerts/:type/resolve
+  if (req.method === 'POST' && /^\/api\/campaigns\/[\w-]+\/alerts\/[\w_]+\/resolve$/.test(req.url)) {
+    const parts = req.url.split('/');
+    const id = parts[3];
+    const alertType = parts[5];
+    const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
+    if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+    const campaign = JSON.parse(readFileSync(file, 'utf8'));
+    const alert = campaign.alerts.find(a => a.type === alertType && !a.resolved);
+    if (alert) { alert.resolved = true; writeFileSync(file, JSON.stringify(campaign, null, 2)); }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
     return;
   }
 
