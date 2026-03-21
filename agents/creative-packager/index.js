@@ -269,14 +269,17 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ? process.argv[process.argv.indexOf('--job-id') + 1] : null;
   const jobPath = jobIdArg ? join(JOBS_DIR, `${jobIdArg}.json`) : null;
 
+  let jobError = null;
   try {
     await main();
   } catch (err) {
+    jobError = err;
     console.error('Error:', err.message);
-    if (jobPath && existsSync(jobPath)) {
-      writeJobStatus(jobPath, { status: 'error', error: err.message });
-    }
     await notify({ subject: 'Creative Packager failed', body: err.message, status: 'error' }).catch(() => {});
-    process.exit(1);
+  } finally {
+    if (jobError && jobPath && existsSync(jobPath)) {
+      try { writeJobStatus(jobPath, { status: 'error', error: jobError.message }); } catch {}
+    }
   }
+  if (jobError) process.exit(1);
 }
