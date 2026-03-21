@@ -155,7 +155,7 @@ async function main() {
   // Validate
   validateCampaignFile(campaign);
 
-  const { mutate, CUSTOMER_ID } = await import('../../lib/google-ads.js');
+  const { mutate, gaqlQuery, CUSTOMER_ID } = await import('../../lib/google-ads.js');
   const customerResourceName = `customers/${CUSTOMER_ID}`;
   const { proposal } = campaign;
   const mobileAdj = mobileAdjustmentValue(proposal.mobileAdjustmentPct ?? 30);
@@ -180,32 +180,62 @@ async function main() {
     return;
   }
 
-  // Step 1: Create budget + campaign in one mutate call
-  const budgetName = `${proposal.campaignName} — ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
-  const budgetOp = buildBudgetOperation(budget, customerResourceName, budgetName);
-  const campaignOp = buildCampaignOperation(proposal.campaignName, `${customerResourceName}/campaignBudgets/-1`, mobileAdj, customerResourceName);
+  // Step 1: Create budget + campaign (or find existing campaign by name)
+  let campaignRN, campaignId, budgetRN;
 
-  process.stdout.write('  Creating budget + campaign... ');
-  const res1 = await mutate([budgetOp, campaignOp]);
-  const budgetRN = res1.mutateOperationResponses?.[0]?.campaignBudgetResult?.resourceName;
-  const campaignRN = res1.mutateOperationResponses?.[1]?.campaignResult?.resourceName;
-  if (!budgetRN || !campaignRN) {
-    throw new Error(`Budget/campaign creation returned no resource names. Response: ${JSON.stringify(res1)}`);
+  process.stdout.write('  Checking for existing campaign... ');
+  const existing = await gaqlQuery(
+    `SELECT campaign.resource_name, campaign.id, campaign.campaign_budget
+     FROM campaign
+     WHERE campaign.name = '${proposal.campaignName.replace(/'/g, "\\'")}'
+       AND campaign.status IN ('PAUSED', 'ENABLED')`
+  );
+
+  if (existing.length > 0) {
+    campaignRN = existing[0].campaign.resource_name;
+    campaignId = existing[0].campaign.id;
+    budgetRN = existing[0].campaign.campaign_budget;
+    console.log(`found (${campaignRN})`);
+  } else {
+    console.log('none');
+    const budgetName = `${proposal.campaignName} — ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
+    const budgetOp = buildBudgetOperation(budget, customerResourceName, budgetName);
+    const campaignOp = buildCampaignOperation(proposal.campaignName, `${customerResourceName}/campaignBudgets/-1`, mobileAdj, customerResourceName);
+
+    process.stdout.write('  Creating budget + campaign... ');
+    const res1 = await mutate([budgetOp, campaignOp]);
+    budgetRN = res1.mutateOperationResponses?.[0]?.campaignBudgetResult?.resourceName;
+    campaignRN = res1.mutateOperationResponses?.[1]?.campaignResult?.resourceName;
+    if (!budgetRN || !campaignRN) {
+      throw new Error(`Budget/campaign creation returned no resource names. Response: ${JSON.stringify(res1)}`);
+    }
+    campaignId = campaignRN.split('/').pop();
+    console.log(`done (${campaignRN})`);
   }
-  const campaignId = campaignRN.split('/').pop();
-  console.log(`done (${campaignRN})`);
 
   // Step 2: Create ad groups + RSAs + keywords per ad group
   const adGroupResourceNames = [];
   for (const ag of proposal.adGroups) {
-    const adGroupOp = buildAdGroupOperation(ag.name, campaignRN, customerResourceName);
-    const adGroupRes = await mutate([adGroupOp]);
-    const adGroupRN = adGroupRes.mutateOperationResponses?.[0]?.adGroupResult?.resourceName;
-    if (!adGroupRN) {
-      throw new Error(`Ad group '${ag.name}' creation returned no resource name. Response: ${JSON.stringify(adGroupRes)}`);
+    const existingAg = await gaqlQuery(
+      `SELECT ad_group.resource_name FROM ad_group
+       WHERE ad_group.name = '${ag.name.replace(/'/g, "\\'")}'
+         AND campaign.resource_name = '${campaignRN}'
+         AND ad_group.status != 'REMOVED'`
+    );
+    let adGroupRN;
+    if (existingAg.length > 0) {
+      adGroupRN = existingAg[0].ad_group.resource_name;
+      console.log(`  Ad group: ${ag.name} (existing: ${adGroupRN})`);
+    } else {
+      const adGroupOp = buildAdGroupOperation(ag.name, campaignRN, customerResourceName);
+      const adGroupRes = await mutate([adGroupOp]);
+      adGroupRN = adGroupRes.mutateOperationResponses?.[0]?.adGroupResult?.resourceName;
+      if (!adGroupRN) {
+        throw new Error(`Ad group '${ag.name}' creation returned no resource name. Response: ${JSON.stringify(adGroupRes)}`);
+      }
+      console.log(`  Ad group: ${ag.name} (${adGroupRN})`);
     }
     adGroupResourceNames.push(adGroupRN);
-    console.log(`  Ad group: ${ag.name} (${adGroupRN})`);
 
     const rsaOp = buildRsaOperation(ag.headlines, ag.descriptions, adGroupRN);
     const kwOps = buildKeywordOperations(ag.keywords, adGroupRN);
