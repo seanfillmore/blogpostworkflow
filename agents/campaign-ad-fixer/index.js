@@ -195,66 +195,45 @@ async function main() {
   log(`Found ${disapproved.length} disapproved ad(s)`);
 
   const fixed = [];
-  const urlIssues = [];
   const failed = [];
 
-  // Separate URL violations (need manual fix) from copy violations (can auto-fix)
+  // RSAs are fully immutable — every fix requires REMOVE + CREATE
   const URL_VIOLATIONS = new Set(['DESTINATION_NOT_WORKING', 'DESTINATION_NOT_CRAWLABLE', 'BAD_DESTINATION_URL_TAG']);
+  const storeDomain = process.env.STORE_DOMAIN || env.STORE_DOMAIN;
 
   for (const ad of disapproved) {
-    log(`  Checking: ${ad.campaignName} / ${ad.adGroupName}`);
+    log(`  Fixing: ${ad.campaignName} / ${ad.adGroupName}`);
     log(`  Violations: ${ad.violations.map(v => v.topic).join(', ')}`);
 
     const hasUrlViolation = ad.violations.some(v => URL_VIOLATIONS.has(v.topic));
     const hasCopyViolation = ad.violations.some(v => !URL_VIOLATIONS.has(v.topic));
 
+    // Determine correct final URL
+    const landingPath = (ad.finalUrl ?? '').replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '');
+    const correctedUrl = storeDomain
+      ? `https://${storeDomain}/${landingPath}`
+      : ad.finalUrl;
+
     if (hasUrlViolation) {
-      // Fix by updating the final URL to current STORE_DOMAIN value
-      const storeDomain = process.env.STORE_DOMAIN || env.STORE_DOMAIN;
-      if (!storeDomain) {
-        urlIssues.push({ ad, reason: 'STORE_DOMAIN not set in .env' });
-        log(`  URL violation — STORE_DOMAIN missing, cannot auto-fix`);
-        if (!hasCopyViolation) continue;
-      } else {
-        const landingPath = (ad.finalUrl ?? '').replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '');
-        const newUrl = `https://${storeDomain}/${landingPath}`;
-        log(`  URL violation — updating final URL: ${ad.finalUrl} → ${newUrl}`);
-        try {
-          if (!isDryRun) {
-            await mutate([{
-              adGroupAdOperation: {
-                updateMask: 'ad.finalUrls',
-                update: {
-                  resourceName: ad.resourceName,
-                  ad: { finalUrls: [newUrl] },
-                },
-              },
-            }]);
-            log(`  Final URL updated`);
-          } else {
-            log(`  [DRY RUN] Would update finalUrl to ${newUrl}`);
-          }
-          fixed.push({ ad, urlFix: { from: ad.finalUrl, to: newUrl } });
-        } catch (err) {
-          log(`  Error updating URL: ${err.message}`);
-          urlIssues.push({ ad, reason: err.message });
-        }
-        if (!hasCopyViolation) continue;
-      }
+      log(`  URL fix: ${ad.finalUrl} → ${correctedUrl}`);
     }
 
-    if (!hasCopyViolation && !hasUrlViolation) continue;
-    if (!hasCopyViolation) continue; // only URL issues, already logged above
-
     try {
-      const rewritten = await rewriteAd(client, ad);
-      log(`  New headlines: ${rewritten.headlines.join(' | ')}`);
-      log(`  New descriptions: ${rewritten.descriptions.join(' | ')}`);
+      // Get rewritten copy if needed; otherwise keep existing copy
+      let headlines = ad.headlines;
+      let descriptions = ad.descriptions;
+
+      if (hasCopyViolation) {
+        const rewritten = await rewriteAd(client, ad);
+        headlines = rewritten.headlines;
+        descriptions = rewritten.descriptions;
+        log(`  New headlines: ${headlines.join(' | ')}`);
+        log(`  New descriptions: ${descriptions.join(' | ')}`);
+      }
 
       if (!isDryRun) {
-        // RSA copy is IMMUTABLE — must REMOVE old ad and CREATE new one
         await mutate([{ adGroupAdOperation: { remove: ad.resourceName } }]);
-        log(`  Removed old ad: ${ad.resourceName}`);
+        log(`  Removed: ${ad.resourceName}`);
 
         await mutate([{
           adGroupAdOperation: {
@@ -262,23 +241,23 @@ async function main() {
               adGroup: ad.adGroupResourceName,
               status: 'ENABLED',
               ad: {
-                finalUrls: [ad.finalUrl],
+                finalUrls: [correctedUrl],
                 responsiveSearchAd: {
-                  headlines: rewritten.headlines.map(text => ({ text })),
-                  descriptions: rewritten.descriptions.map(text => ({ text })),
+                  headlines: headlines.map(text => ({ text })),
+                  descriptions: descriptions.map(text => ({ text })),
                 },
               },
             },
           },
         }]);
-        log(`  Created replacement ad in ${ad.adGroupResourceName}`);
+        log(`  Created replacement ad`);
       } else {
-        log(`  [DRY RUN] Would remove ${ad.resourceName} and create replacement`);
+        log(`  [DRY RUN] Would remove and recreate with URL: ${correctedUrl}`);
       }
 
-      fixed.push({ ad, rewritten });
+      fixed.push({ ad, urlFix: hasUrlViolation ? { from: ad.finalUrl, to: correctedUrl } : null, rewritten: hasCopyViolation ? { headlines, descriptions } : null });
     } catch (err) {
-      log(`  Error fixing ${ad.adGroupName}: ${err.message}`);
+      log(`  Error: ${err.message}`);
       failed.push({ ad, error: err.message });
     }
   }
