@@ -11,7 +11,7 @@ export function campaignFilePath(date, slug, rootDir) {
   return join(rootDir, 'data', 'campaigns', `${date}-${slug}.json`);
 }
 
-const FALLBACK_AOV = 16; // USD — used when no real order data is available yet
+const FALLBACK_AOV = 29.61; // USD — 90-day AOV from Shopify (orders > $1), as of 2026-03-20
 
 export function computeAov(shopifySnaps) {
   const totalRevenue = shopifySnaps.reduce((s, d) => s + (d.orders?.revenue || 0), 0);
