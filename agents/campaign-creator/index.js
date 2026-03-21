@@ -84,16 +84,21 @@ export function buildAdGroupOperation(name, campaignResourceName, customerResour
   };
 }
 
-export function buildRsaOperation(headlines, descriptions, adGroupResourceName) {
+export function truncateField(text, max) {
+  return text.length <= max ? text : text.slice(0, max - 1) + '…';
+}
+
+export function buildRsaOperation(headlines, descriptions, adGroupResourceName, finalUrl) {
   return {
     adGroupAdOperation: {
       create: {
         adGroup: adGroupResourceName,
         status: 'ENABLED',
         ad: {
+          finalUrls: [finalUrl],
           responsiveSearchAd: {
-            headlines: headlines.map(text => ({ text })),
-            descriptions: descriptions.map(text => ({ text })),
+            headlines: headlines.map(text => ({ text: truncateField(text, 30) })),
+            descriptions: descriptions.map(text => ({ text: truncateField(text, 90) })),
           },
         },
       },
@@ -160,6 +165,15 @@ async function main() {
   const { proposal } = campaign;
   const mobileAdj = mobileAdjustmentValue(proposal.mobileAdjustmentPct ?? 30);
   const budget = proposal.approvedBudget;
+
+  // Build final URL from env store domain + proposal landing page
+  const { loadEnv } = await import('../../lib/env.js').catch(() => ({ loadEnv: null }));
+  const envVars = loadEnv ? loadEnv() : (() => {
+    try { return Object.fromEntries(readFileSync(join(ROOT, '.env'), 'utf8').split('\n').filter(l => l.includes('=')).map(l => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])); } catch { return {}; }
+  })();
+  const storeDomain = (envVars.STORE_DOMAIN || envVars.SHOPIFY_STORE || '').replace(/\.myshopify\.com$/, '.com').replace(/^https?:\/\//, '');
+  const landingPath = (proposal.landingPage || '/').replace(/^\//, '');
+  const finalUrl = `https://${storeDomain}/${landingPath}`;
 
   console.log(`  Campaign: ${proposal.campaignName}`);
   console.log(`  Budget: $${budget}/day | Mobile adj: ${mobileAdj}x`);
@@ -240,7 +254,7 @@ async function main() {
     }
     adGroupResourceNames.push(adGroupRN);
 
-    const rsaOp = buildRsaOperation(ag.headlines, ag.descriptions, adGroupRN);
+    const rsaOp = buildRsaOperation(ag.headlines, ag.descriptions, adGroupRN, finalUrl);
     const kwOps = buildKeywordOperations(ag.keywords, adGroupRN);
     await mutate([rsaOp, ...kwOps]);
     console.log(`    RSA + ${ag.keywords.length} keywords created`);
