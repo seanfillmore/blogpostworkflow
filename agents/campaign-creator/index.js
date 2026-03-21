@@ -22,6 +22,9 @@ export function validateCampaignFile(campaign) {
     if (!ag.descriptions || ag.descriptions.length < 2) {
       throw new Error(`Ad group '${ag.name}' must have at least 2 descriptions`);
     }
+    if (!ag.keywords || ag.keywords.length < 1) {
+      throw new Error(`Ad group '${ag.name}' must have at least 1 keyword`);
+    }
   }
 }
 
@@ -163,6 +166,21 @@ async function main() {
   console.log(`  Budget: $${budget}/day | Mobile adj: ${mobileAdj}x`);
   console.log(`  Ad groups: ${proposal.adGroups.length}`);
 
+  const isDryRun = process.argv.includes('--dry-run');
+
+  if (isDryRun) {
+    console.log(`[DRY RUN] Would create CampaignBudget: $${budget}/day`);
+    console.log(`[DRY RUN] Would create Campaign: ${proposal.campaignName}`);
+    for (const ag of proposal.adGroups) {
+      console.log(`[DRY RUN] Would create AdGroup: ${ag.name} with ${ag.keywords.length} keywords`);
+    }
+    if (proposal.negativeKeywords?.length > 0) {
+      console.log(`[DRY RUN] Would add ${proposal.negativeKeywords.length} negative keywords`);
+    }
+    console.log('[DRY RUN] No API calls made.');
+    return;
+  }
+
   // Step 1: Create budget + campaign in one mutate call
   const budgetOp = buildBudgetOperation(budget, customerResourceName);
   const campaignOp = buildCampaignOperation(proposal.campaignName, `${customerResourceName}/campaignBudgets/-1`, mobileAdj, customerResourceName);
@@ -208,6 +226,7 @@ async function main() {
   writeFileSync(file, JSON.stringify(campaign, null, 2));
   console.log(`\n  Campaign file updated: ${file}`);
   console.log(`  Status: active | Campaign ID: ${campaignId}`);
+  console.log(`DONE ${JSON.stringify({ campaignId, status: 'active' })}`);
 
   // Notify
   const { notify } = await import('../../lib/notify.js');

@@ -35,6 +35,10 @@ assert.throws(() => validateCampaignFile(noHeadlines), /headline/);
 const noDesc = { ...approved, proposal: { ...approved.proposal, adGroups: [{ ...approved.proposal.adGroups[0], descriptions: ['only one'] }] } };
 assert.throws(() => validateCampaignFile(noDesc), /description/);
 
+// validateCampaignFile — rejects empty keywords
+const noKeywords = { ...approved, proposal: { ...approved.proposal, adGroups: [{ ...approved.proposal.adGroups[0], keywords: [] }] } };
+assert.throws(() => validateCampaignFile(noKeywords), /keyword/);
+
 // mobileAdjustmentValue
 assert.equal(mobileAdjustmentValue(30), 1.3);
 assert.equal(mobileAdjustmentValue(-20), 0.8);

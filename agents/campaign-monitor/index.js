@@ -135,7 +135,6 @@ function loadYesterdaySnap() {
 
 async function main() {
   console.log('Campaign Monitor\n');
-  loadEnv(); // ensure env loaded (for any future use)
 
   const campaigns = loadActiveCampaigns();
   if (!campaigns.length) {

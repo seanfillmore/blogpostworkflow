@@ -2396,7 +2396,7 @@ function launchCampaign(id) {
   fetch('/run-agent', {
     method: 'POST', credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ agent: 'agents/campaign-creator/index.js', args: ['--campaign', id] }),
+    body: JSON.stringify({ script: 'agents/campaign-creator/index.js', args: ['--campaign', id] }),
   }).then(res => {
     const reader = res.body.getReader();
     const log = document.getElementById('run-log-apply-ads');
