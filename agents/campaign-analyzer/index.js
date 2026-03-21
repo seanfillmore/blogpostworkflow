@@ -108,6 +108,11 @@ For each opportunity output a complete proposal with:
 - dataPoints (key metrics that informed the proposal)
 - projections: { ctr, cpc, cvr, dailyClicks, monthlyCost, monthlyConversions, monthlyRevenue }
 
+ROAS REQUIREMENT: Only propose campaigns where projected ROAS (monthlyRevenue ÷ monthlyCost) ≥ 0.85.
+The AOV will be provided in the data. Use it to compute monthlyRevenue = monthlyConversions × AOV.
+Prioritize niche, high-intent, long-tail keywords with lower CPCs that can clear this threshold.
+If no keyword opportunity meets the ROAS minimum, do not force a proposal — output clarificationNeeded instead.
+
 If you cannot form a confident proposal due to missing or insufficient data, output:
 { "clarificationNeeded": ["Question 1?", "Question 2?"] }
 
