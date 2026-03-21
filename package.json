@@ -61,7 +61,8 @@
     "campaign-analyzer": "node agents/campaign-analyzer/index.js",
     "campaign-creator": "node agents/campaign-creator/index.js",
     "campaign-monitor": "node agents/campaign-monitor/index.js",
-    "campaign-status": "node agents/campaign-status-checker/index.js"
+    "campaign-status": "node agents/campaign-status-checker/index.js",
+    "campaign-ad-fixer": "node agents/campaign-ad-fixer/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
