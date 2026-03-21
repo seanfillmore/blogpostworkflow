@@ -64,7 +64,7 @@ export function buildCampaignOperation(name, budgetResourceName, mobileAdjustmen
           positiveGeoTargetType: 'PRESENCE_OR_INTEREST',
         },
         biddingStrategyType: 'MANUAL_CPC',
-        containsEuPoliticalAdvertising: 3,
+        containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
       },
     },
   };
