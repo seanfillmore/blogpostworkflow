@@ -11,11 +11,25 @@ export function campaignFilePath(date, slug, rootDir) {
   return join(rootDir, 'data', 'campaigns', `${date}-${slug}.json`);
 }
 
+const FALLBACK_AOV = 16; // USD — used when no real order data is available yet
+
+export function computeAov(shopifySnaps) {
+  const totalRevenue = shopifySnaps.reduce((s, d) => s + (d.orders?.revenue || 0), 0);
+  const totalOrders  = shopifySnaps.reduce((s, d) => s + (d.orders?.count  || 0), 0);
+  return totalOrders > 0 ? totalRevenue / totalOrders : FALLBACK_AOV;
+}
+
 export function buildAnalyzerPrompt(context) {
   const { activeSlugs, adsSnaps, gscSnaps, ga4Snaps, shopifySnaps, ahrefsPresent, pastOutcomes } = context;
 
+  const aov = computeAov(shopifySnaps);
+  const aovLabel = shopifySnaps.reduce((s, d) => s + (d.orders?.count || 0), 0) > 0
+    ? `$${aov.toFixed(2)} (computed from ${shopifySnaps.length} days of Shopify data)`
+    : `$${aov.toFixed(2)} (fallback — no real order data yet)`;
+
   const sections = [
     `## Active/Proposed Campaigns (do not duplicate these)\n${activeSlugs.length ? activeSlugs.join('\n') : 'None yet.'}`,
+    `## Average Order Value (use this for revenue projections)\nAOV: ${aovLabel}\nIMPORTANT: Use this AOV when computing projections.monthlyRevenue = monthlyConversions × AOV. Do not invent a different revenue per conversion.`,
     `## Google Ads (last ${adsSnaps.length} days)\n${adsSnaps.length ? JSON.stringify(adsSnaps, null, 2) : 'No Google Ads snapshots available.'}`,
     `## Google Search Console\n${gscSnaps.length ? JSON.stringify(gscSnaps, null, 2) : 'No GSC snapshots available.'}`,
     `## Google Analytics 4\n${ga4Snaps.length ? JSON.stringify(ga4Snaps, null, 2) : 'No GA4 snapshots available.'}`,
@@ -182,7 +196,7 @@ async function main() {
     adsSnaps: loadSnaps(ADS_SNAPS_DIR),
     gscSnaps: loadSnaps(GSC_SNAPS_DIR),
     ga4Snaps: loadSnaps(GA4_SNAPS_DIR),
-    shopifySnaps: loadSnaps(SHOPIFY_SNAPS_DIR),
+    shopifySnaps: loadSnaps(SHOPIFY_SNAPS_DIR, 90),
     ahrefsPresent: existsSync(AHREFS_DIR) && readdirSync(AHREFS_DIR).some(f => f.endsWith('.csv')),
     pastOutcomes,
   };
