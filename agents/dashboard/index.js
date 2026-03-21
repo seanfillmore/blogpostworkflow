@@ -758,6 +758,20 @@ const HTML = `<!DOCTYPE html>
   .apply-section { margin-top: 1rem; }
   .badge-type { background: var(--indigo); color: white; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
   .upload-zone { display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; color: var(--muted); }
+  .camp-proposal { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+  .camp-proposal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .camp-proposal-name { font-weight: 600; font-size: 14px; }
+  .camp-proposal-meta { font-size: 12px; color: #64748b; margin-top: 3px; }
+  .camp-proposal-rationale { font-size: 12px; color: #475569; margin-bottom: 10px; line-height: 1.4; }
+  .camp-proposal-actions { display: flex; gap: 8px; }
+  .camp-budget-input { width: 70px; padding: 3px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; }
+  .delta-up { color: #10b981; }
+  .delta-down { color: #ef4444; }
+  .alert-badge-inline { background: #fef3c7; color: #92400e; border-radius: 4px; padding: 2px 6px; font-size: 11px; margin-right: 4px; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .section-title { font-weight: 600; font-size: 15px; }
+  .badge-gray { background: #f3f4f6; color: #6b7280; }
+  .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
 </style>
 </head>
 <body>
@@ -889,6 +903,28 @@ const HTML = `<!DOCTYPE html>
   <div id="ads-overview-card"></div>
   <div id="ads-keywords-card"></div>
   <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
+  <!-- Campaign Proposals -->
+  <div class="card" id="campaign-proposals-card" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Campaign Proposals</div>
+      <div class="section-note" id="campaign-proposals-note"></div>
+    </div>
+    <div id="campaign-proposals-body"></div>
+  </div>
+  <!-- Clarifications Needed -->
+  <div class="card" id="campaign-clarify-card" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Clarifications Needed</div>
+    </div>
+    <div id="campaign-clarify-body"></div>
+  </div>
+  <!-- Active Campaigns -->
+  <div class="card" id="campaign-active-card" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Active Campaigns</div>
+    </div>
+    <div id="campaign-active-body"></div>
+  </div>
 </div><!-- /tab-ads -->
 <div id="tab-optimize" class="tab-panel">
   <div class="empty-state">Loading optimization briefs...</div>
@@ -2120,6 +2156,7 @@ async function loadData() {
     renderGSCSEOPanel(data);
     renderCROTab(data);
     renderAdsTab(data);
+    loadCampaignCards();
     renderActiveTests(data);
     renderSEOAuthorityPanel(data.ahrefsData);
     renderRankAlertBanner(data.rankAlert);
@@ -2251,6 +2288,142 @@ function uploadAhrefs() {
     if (statusEl) statusEl.textContent = json.ok ? \`Uploaded: \${json.filename}\` : \`Error: \${json.error}\`;
   };
   input.click();
+}
+
+async function loadCampaignCards() {
+  try {
+    const res = await fetch('/api/campaigns', { credentials: 'same-origin' });
+    if (!res.ok) return;
+    const campaigns = await res.json();
+    renderCampaignCards(campaigns);
+  } catch {}
+}
+
+function renderCampaignCards(campaigns) {
+  // --- Proposals ---
+  const proposals = campaigns.filter(c => c.status === 'proposed' && !c.clarificationNeeded);
+  const propCard = document.getElementById('campaign-proposals-card');
+  const propBody = document.getElementById('campaign-proposals-body');
+  if (proposals.length > 0) {
+    propCard.style.display = '';
+    document.getElementById('campaign-proposals-note').textContent = proposals.length + ' pending';
+    propBody.innerHTML = proposals.map(c => {
+      const p = c.proposal;
+      return '<div class="camp-proposal" id="prop-' + esc(c.id) + '">' +
+        '<div class="camp-proposal-header">' +
+        '<div><div class="camp-proposal-name">' + esc(p.campaignName) + '</div>' +
+        '<div class="camp-proposal-meta">Budget: $<input class="camp-budget-input" id="budget-' + esc(c.id) + '" type="number" min="1" step="0.5" value="' + (p.suggestedBudget || 5) + '">/day &nbsp;|&nbsp; ' +
+        'Proj: $' + (c.projections?.monthlyRevenue || '—') + '/mo · ' + (c.projections?.monthlyConversions || '—') + ' conv</div></div>' +
+        '<span class="badge badge-gray">' + esc(c.status) + '</span></div>' +
+        '<div class="camp-proposal-rationale">' + esc((c.rationale || '').slice(0, 160)) + (c.rationale?.length > 160 ? '…' : '') + '</div>' +
+        '<div class="camp-proposal-actions">' +
+        '<button onclick="approveCampaign(&apos;' + esc(c.id) + '&apos;)" id="approve-btn-' + esc(c.id) + '">Approve</button>' +
+        '<button onclick="dismissCampaign(&apos;' + esc(c.id) + '&apos;)" class="btn-secondary">Dismiss</button>' +
+        '</div>' +
+        '<div id="launch-row-' + esc(c.id) + '" style="display:none;margin-top:8px">' +
+        '<button onclick="launchCampaign(&apos;' + esc(c.id) + '&apos;)" style="background:#10b981">Confirm &amp; Launch</button>' +
+        '</div></div>';
+    }).join('');
+  } else { propCard.style.display = 'none'; }
+
+  // --- Clarifications ---
+  const clarify = campaigns.filter(c => c.clarificationNeeded && c.clarificationNeeded.length > 0);
+  const clarCard = document.getElementById('campaign-clarify-card');
+  const clarBody = document.getElementById('campaign-clarify-body');
+  if (clarify.length > 0) {
+    clarCard.style.display = '';
+    clarBody.innerHTML = clarify.map(c =>
+      '<div class="camp-proposal"><strong>' + esc(c.id) + '</strong>' +
+      '<ol>' + c.clarificationNeeded.map(q => '<li>' + esc(q) + '</li>').join('') + '</ol>' +
+      '<textarea id="clarify-text-' + esc(c.id) + '" rows="3" style="width:100%;margin-top:8px" placeholder="Your answer..."></textarea>' +
+      '<button style="margin-top:6px" onclick="submitClarification(&apos;' + esc(c.id) + '&apos;)">Submit</button>' +
+      '</div>'
+    ).join('');
+  } else { clarCard.style.display = 'none'; }
+
+  // --- Active campaigns ---
+  const active = campaigns.filter(c => c.status === 'active');
+  const actCard = document.getElementById('campaign-active-card');
+  const actBody = document.getElementById('campaign-active-body');
+  if (active.length > 0) {
+    actCard.style.display = '';
+    actBody.innerHTML = active.map(c => {
+      const recent = c.performance.slice(-1)[0] || {};
+      const budget = c.proposal?.approvedBudget || 0;
+      const spendPct = budget > 0 ? Math.round((recent.spend || 0) / budget * 100) : 0;
+      const openAlerts = (c.alerts || []).filter(a => !a.resolved);
+      const ctrDelta = recent.vsProjection?.ctrDelta ?? null;
+      const cpcDelta = recent.vsProjection?.cpcDelta ?? null;
+      const cvrDelta = recent.vsProjection?.cvrDelta ?? null;
+      const days = c.googleAds?.createdAt ? Math.floor((Date.now() - new Date(c.googleAds.createdAt)) / 86400000) : '?';
+      return '<div class="camp-proposal">' +
+        '<div class="camp-proposal-name">' + esc(c.proposal?.campaignName || c.id) + ' <span class="section-note">Day ' + days + '</span></div>' +
+        '<div style="margin:8px 0;background:#f1f5f9;border-radius:4px;height:6px"><div style="background:#818cf8;height:6px;border-radius:4px;width:' + Math.min(spendPct, 100) + '%"></div></div>' +
+        '<div class="camp-proposal-meta">Spend: $' + (recent.spend ?? '—') + '/' + budget + ' (' + spendPct + '%) &nbsp;|&nbsp; ' +
+        'CTR: <span class="' + (ctrDelta >= 0 ? 'delta-up' : 'delta-down') + '">' + (ctrDelta !== null ? (ctrDelta >= 0 ? '+' : '') + (ctrDelta * 100).toFixed(2) + 'pp' : '—') + '</span> &nbsp;|&nbsp; ' +
+        'CPC: <span class="' + (cpcDelta <= 0 ? 'delta-up' : 'delta-down') + '">' + (cpcDelta !== null ? (cpcDelta >= 0 ? '+' : '') + '$' + cpcDelta.toFixed(2) : '—') + '</span> &nbsp;|&nbsp; ' +
+        'CVR: <span class="' + (cvrDelta >= 0 ? 'delta-up' : 'delta-down') + '">' + (cvrDelta !== null ? (cvrDelta >= 0 ? '+' : '') + (cvrDelta * 100).toFixed(2) + 'pp' : '—') + '</span></div>' +
+        (openAlerts.length > 0 ? '<div style="margin-top:8px">' + openAlerts.map(a =>
+          '<span class="alert-badge-inline">' + esc(a.type.replace(/_/g, ' ')) + '</span>' +
+          '<button style="font-size:11px;padding:2px 6px" onclick="resolveAlert(&apos;' + esc(c.id) + '&apos;,&apos;' + esc(a.type) + '&apos;)">Resolve</button> '
+        ).join('') + '</div>' : '') +
+        '</div>';
+    }).join('');
+  } else { actCard.style.display = 'none'; }
+}
+
+async function approveCampaign(id) {
+  const budget = parseFloat(document.getElementById('budget-' + id)?.value);
+  if (!budget || budget <= 0) { alert('Enter a valid budget before approving.'); return; }
+  try {
+    const res = await fetch('/api/campaigns/' + id + '/approve', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approvedBudget: budget }) });
+    if (!res.ok) throw new Error(await res.text());
+    document.getElementById('approve-btn-' + id).disabled = true;
+    document.getElementById('launch-row-' + id).style.display = '';
+  } catch (e) { alert('Approve failed: ' + e.message); }
+}
+
+async function dismissCampaign(id) {
+  if (!confirm('Dismiss this campaign proposal?')) return;
+  try {
+    await fetch('/api/campaigns/' + id + '/dismiss', { method: 'POST', credentials: 'same-origin' });
+    document.getElementById('prop-' + id)?.remove();
+  } catch (e) { alert('Dismiss failed: ' + e.message); }
+}
+
+function launchCampaign(id) {
+  if (!confirm('Create this campaign in Google Ads? This cannot be undone.')) return;
+  fetch('/run-agent', {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agent: 'agents/campaign-creator/index.js', args: ['--campaign', id] }),
+  }).then(res => {
+    const reader = res.body.getReader();
+    const log = document.getElementById('run-log-apply-ads');
+    if (log) { log.style.display = ''; log.textContent = ''; }
+    const read = () => reader.read().then(({ done, value }) => {
+      if (done) { loadCampaignCards(); return; }
+      if (log) log.textContent += new TextDecoder().decode(value);
+      read();
+    });
+    read();
+  }).catch(e => alert('Launch failed: ' + e.message));
+}
+
+async function submitClarification(id) {
+  const text = document.getElementById('clarify-text-' + id)?.value?.trim();
+  if (!text) { alert('Please enter your answer before submitting.'); return; }
+  try {
+    await fetch('/api/campaigns/' + id + '/clarify', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clarificationResponse: text }) });
+    alert('Response submitted. Re-analysis is running in the background.');
+  } catch (e) { alert('Submit failed: ' + e.message); }
+}
+
+async function resolveAlert(campaignId, alertType) {
+  try {
+    await fetch('/api/campaigns/' + campaignId + '/alerts/' + alertType + '/resolve', { method: 'POST', credentials: 'same-origin' });
+    loadCampaignCards();
+  } catch (e) { alert('Resolve failed: ' + e.message); }
 }
 </script>
 
