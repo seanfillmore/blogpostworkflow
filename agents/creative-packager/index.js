@@ -9,7 +9,7 @@
  *   node agents/creative-packager/index.js --job-id <jobId>
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -83,4 +83,200 @@ Write a Gemini image generation prompt that:
 6. Specifies NOT to include any text, logos, or labels in the generated image
 
 Return only the image prompt as plain text — no JSON, no explanation.`;
+}
+
+// ── Job file helpers ───────────────────────────────────────────────────────────
+
+function loadEnv() {
+  try {
+    const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
+    const e = {};
+    for (const l of lines) {
+      const t = l.trim(); if (!t || t.startsWith('#')) continue;
+      const i = t.indexOf('='); if (i === -1) continue;
+      e[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    }
+    return e;
+  } catch { return {}; }
+}
+
+function writeJobStatus(jobPath, updates) {
+  const current = existsSync(jobPath)
+    ? JSON.parse(readFileSync(jobPath, 'utf8')) : {};
+  writeFileSync(jobPath, JSON.stringify({ ...current, ...updates }, null, 2));
+}
+
+async function generateImage(gemini, prompt, productImagePaths) {
+  const contents = [];
+
+  // Add product reference images
+  for (const imgPath of productImagePaths) {
+    const imageData = readFileSync(imgPath).toString('base64');
+    const ext = imgPath.endsWith('.png') ? 'image/png' : 'image/webp';
+    contents.push({ inlineData: { data: imageData, mimeType: ext } });
+  }
+  contents.push({ text: prompt });
+
+  const response = await gemini.models.generateContent({
+    model: 'gemini-2.0-flash-preview-image-generation',
+    contents: [{ role: 'user', parts: contents }],
+    generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+  });
+
+  const imgPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+  if (!imgPart) throw new Error('Gemini returned no image');
+  return Buffer.from(imgPart.inlineData.data, 'base64');
+}
+
+async function createZip(zipPath, files) {
+  const { default: archiver } = await import('archiver');
+  const { createWriteStream } = await import('node:fs');
+  return new Promise((resolve, reject) => {
+    const output = createWriteStream(zipPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    output.on('close', resolve);
+    archive.on('error', reject);
+    archive.pipe(output);
+    for (const { name, content } of files) archive.append(content, { name });
+    archive.finalize();
+  });
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────────
+
+async function main() {
+  const jobIdArg = process.argv.includes('--job-id')
+    ? process.argv[process.argv.indexOf('--job-id') + 1] : null;
+  if (!jobIdArg) throw new Error('--job-id required');
+
+  const JOBS_DIR = join(ROOT, 'data', 'creative-jobs');
+  const jobPath = join(JOBS_DIR, `${jobIdArg}.json`);
+  if (!existsSync(jobPath)) throw new Error(`Job file not found: ${jobPath}`);
+
+  const job = JSON.parse(readFileSync(jobPath, 'utf8'));
+  const { adId, productImages = [] } = job;
+
+  writeJobStatus(jobPath, { status: 'running' });
+
+  const env = loadEnv();
+  const apiKey = env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY');
+  if (!geminiKey) throw new Error('Missing GEMINI_API_KEY');
+
+  // Find the ad in the latest insights file
+  const insightsDir = join(ROOT, 'data', 'meta-ads-insights');
+  const insightFiles = readdirSync(insightsDir)
+    .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+  if (!insightFiles.length) throw new Error('No insights files found');
+  const insights = JSON.parse(readFileSync(join(insightsDir, insightFiles[0]), 'utf8'));
+  const ad = insights.ads.find(a => a.id === adId);
+  if (!ad) throw new Error(`Ad ${adId} not found in latest insights`);
+
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const { GoogleGenAI } = await import('@google/genai');
+  const { default: sharp } = await import('sharp');
+  const client = new Anthropic({ apiKey });
+  const gemini = new GoogleGenAI({ apiKey: geminiKey });
+
+  // Step 1: Style extraction
+  process.stdout.write('  Extracting style... ');
+  const styleResponse = await client.messages.create({
+    model: 'claude-opus-4-6', max_tokens: 512,
+    messages: [{ role: 'user', content: buildStylePrompt(ad) }],
+  });
+  const stylePrompt = styleResponse.content[0].text.trim();
+  console.log('done');
+
+  // Step 2: Generate images per placement size
+  const sizes = placementSizes(ad.publisherPlatforms || ['instagram', 'facebook']);
+  const PRODUCT_IMAGES_DIR = join(ROOT, 'data', 'product-images');
+  const productImagePaths = productImages
+    .map(f => join(PRODUCT_IMAGES_DIR, f))
+    .filter(p => existsSync(p));
+
+  const generatedImages = [];
+  for (const size of sizes) {
+    process.stdout.write(`  Generating ${size.name}... `);
+    let imgBuffer = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const raw = await generateImage(gemini, `${stylePrompt}\n\nGenerate as ${size.width}x${size.height} pixel image. No text, logos, or labels.`, productImagePaths);
+        imgBuffer = await sharp(raw).resize(size.width, size.height, { fit: 'cover' }).webp({ quality: 85 }).toBuffer();
+        break;
+      } catch (e) {
+        if (attempt === 1) throw new Error(`Gemini failed for ${size.name}: ${e.message}`);
+        console.warn(`  retry...`);
+      }
+    }
+    generatedImages.push({ size, buffer: imgBuffer });
+    console.log('done');
+  }
+
+  // Step 3: Copy generation
+  process.stdout.write('  Generating copy... ');
+  const copyResponse = await client.messages.create({
+    model: 'claude-opus-4-6', max_tokens: 1024,
+    messages: [{
+      role: 'user', content: `Write 3 ad copy variations for Real Skin Care (realskincare.com) inspired by this competitor ad.
+
+Competitor messaging angle: ${ad.analysis?.messagingAngle || 'unknown'}
+Why the competitor's ad works: ${ad.analysis?.copyInsights || 'unknown'}
+Competitor body copy: ${ad.adCreativeBody || '(none)'}
+
+Our brand makes natural skincare products. Match the messaging angle but make it authentic to Real Skin Care.
+
+Return ONLY valid JSON (no markdown):
+[
+  { "headline": "max 40 chars", "body": "max 125 chars", "cta": "2-4 words", "placement": "general" },
+  { "headline": "...", "body": "...", "cta": "...", "placement": "instagram-feed" },
+  { "headline": "...", "body": "...", "cta": "...", "placement": "facebook-feed" }
+]`
+    }],
+  });
+  const copyVariations = JSON.parse(copyResponse.content[0].text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+  console.log('done');
+
+  // Step 4 + 5: Package ZIP
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const zipName = `${ad.pageSlug}-${today}.zip`;
+  const PACKAGES_DIR = join(ROOT, 'data', 'creative-packages');
+  mkdirSync(PACKAGES_DIR, { recursive: true });
+  const zipPath = join(PACKAGES_DIR, zipName);
+
+  const zipFiles = [
+    { name: 'copy.txt', content: formatCopyFile(copyVariations) },
+    { name: 'specs.txt', content: formatSpecsFile(sizes) },
+    { name: 'analysis.txt', content: ad.analysis ? JSON.stringify(ad.analysis, null, 2) : '(no analysis available)' },
+  ];
+  for (const { size, buffer } of generatedImages) {
+    zipFiles.push({ name: `images/${size.name}.webp`, content: buffer });
+  }
+
+  process.stdout.write('  Packaging ZIP... ');
+  await createZip(zipPath, zipFiles);
+  console.log(`done → ${zipName}`);
+
+  // Step 6: Update job complete
+  writeJobStatus(jobPath, { status: 'complete', downloadUrl: `/api/creative-packages/download/${jobIdArg}`, zipPath });
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const { notify } = await import('../../lib/notify.js');
+  const { readdirSync } = await import('node:fs');
+  const JOBS_DIR = join(ROOT, 'data', 'creative-jobs');
+  const jobIdArg = process.argv.includes('--job-id')
+    ? process.argv[process.argv.indexOf('--job-id') + 1] : null;
+  const jobPath = jobIdArg ? join(JOBS_DIR, `${jobIdArg}.json`) : null;
+
+  try {
+    await main();
+  } catch (err) {
+    console.error('Error:', err.message);
+    if (jobPath && existsSync(jobPath)) {
+      writeJobStatus(jobPath, { status: 'error', error: err.message });
+    }
+    await notify({ subject: 'Creative Packager failed', body: err.message, status: 'error' }).catch(() => {});
+    process.exit(1);
+  }
 }

@@ -68,6 +68,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@google/genai": "^1.44.0",
+    "archiver": "^7.0.1",
     "cheerio": "^1.2.0",
     "fast-xml-parser": "^4.5.1",
     "openai": "^4.104.0",
