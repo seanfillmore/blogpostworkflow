@@ -64,9 +64,11 @@ async function getDisapprovedAds(gaqlQuery, campaignIds) {
     SELECT
       campaign.id,
       campaign.name,
+      ad_group.resource_name,
       ad_group.name,
       ad_group_ad.resource_name,
       ad_group_ad.ad.id,
+      ad_group_ad.ad.final_urls,
       ad_group_ad.ad.responsive_search_ad.headlines,
       ad_group_ad.ad.responsive_search_ad.descriptions,
       ad_group_ad.policy_summary.review_status,
@@ -95,10 +97,15 @@ async function getDisapprovedAds(gaqlQuery, campaignIds) {
           evidences: (field(e, 'evidences', 'evidences') ?? []).map(ev => field(ev, 'textList', 'text_list')?.texts ?? []).flat(),
         }));
 
+      const adGroupRN = field(r.adGroup ?? r.ad_group, 'resourceName', 'resource_name');
+      const finalUrls = field(field(ada, 'ad', 'ad'), 'finalUrls', 'final_urls') ?? [];
+
       return {
         resourceName: field(ada, 'resourceName', 'resource_name'),
-        campaignId: String(field(r.campaign ?? r.campaign, 'id', 'id')),
-        campaignName: field(r.campaign ?? r.campaign, 'name', 'name'),
+        adGroupResourceName: adGroupRN,
+        finalUrl: finalUrls[0] ?? null,
+        campaignId: String(field(r.campaign, 'id', 'id')),
+        campaignName: field(r.campaign, 'name', 'name'),
         adGroupName: field(r.adGroup ?? r.ad_group, 'name', 'name'),
         headlines,
         descriptions,
@@ -187,25 +194,48 @@ async function main() {
   log(`Found ${disapproved.length} disapproved ad(s)`);
 
   const fixed = [];
+  const urlIssues = [];
   const failed = [];
 
+  // Separate URL violations (need manual fix) from copy violations (can auto-fix)
+  const URL_VIOLATIONS = new Set(['DESTINATION_NOT_WORKING', 'DESTINATION_NOT_CRAWLABLE', 'BAD_DESTINATION_URL_TAG']);
+
   for (const ad of disapproved) {
-    log(`  Fixing: ${ad.campaignName} / ${ad.adGroupName}`);
+    log(`  Checking: ${ad.campaignName} / ${ad.adGroupName}`);
     log(`  Violations: ${ad.violations.map(v => v.topic).join(', ')}`);
+
+    const hasUrlViolation = ad.violations.some(v => URL_VIOLATIONS.has(v.topic));
+    const hasCopyViolation = ad.violations.some(v => !URL_VIOLATIONS.has(v.topic));
+
+    if (hasUrlViolation) {
+      // URL issues can't be fixed by rewriting copy — flag for manual action
+      const finalUrl = ad.finalUrl ?? '(unknown — check campaign JSON)';
+      urlIssues.push({ ad, finalUrl });
+      log(`  URL violation — needs manual fix. Final URL: ${finalUrl}`);
+      // If there are ALSO copy violations, fall through to fix those
+      if (!hasCopyViolation) continue;
+    }
+
+    if (!hasCopyViolation && !hasUrlViolation) continue;
+    if (!hasCopyViolation) continue; // only URL issues, already logged above
 
     try {
       const rewritten = await rewriteAd(client, ad);
-
       log(`  New headlines: ${rewritten.headlines.join(' | ')}`);
       log(`  New descriptions: ${rewritten.descriptions.join(' | ')}`);
 
       if (!isDryRun) {
+        // RSA copy is IMMUTABLE — must REMOVE old ad and CREATE new one
+        await mutate([{ adGroupAdOperation: { remove: ad.resourceName } }]);
+        log(`  Removed old ad: ${ad.resourceName}`);
+
         await mutate([{
           adGroupAdOperation: {
-            updateMask: 'ad.responsiveSearchAd.headlines,ad.responsiveSearchAd.descriptions',
-            update: {
-              resourceName: ad.resourceName,
+            create: {
+              adGroup: ad.adGroupResourceName,
+              status: 'ENABLED',
               ad: {
+                finalUrls: [ad.finalUrl],
                 responsiveSearchAd: {
                   headlines: rewritten.headlines.map(text => ({ text })),
                   descriptions: rewritten.descriptions.map(text => ({ text })),
@@ -214,9 +244,9 @@ async function main() {
             },
           },
         }]);
-        log(`  Updated: ${ad.resourceName}`);
+        log(`  Created replacement ad in ${ad.adGroupResourceName}`);
       } else {
-        log(`  [DRY RUN] Would update: ${ad.resourceName}`);
+        log(`  [DRY RUN] Would remove ${ad.resourceName} and create replacement`);
       }
 
       fixed.push({ ad, rewritten });
@@ -230,8 +260,17 @@ async function main() {
   const { notify } = await import('../../lib/notify.js');
   const lines = [];
 
+  if (urlIssues.length) {
+    lines.push(`⚠ ${urlIssues.length} ad(s) disapproved for DESTINATION_NOT_WORKING — manual action required:\n`);
+    for (const { ad, finalUrl } of urlIssues) {
+      lines.push(`  Campaign: ${ad.campaignName} / ${ad.adGroupName}`);
+      lines.push(`  Final URL: ${finalUrl}`);
+      lines.push(`  Fix: Verify the URL is publicly accessible (not password-protected), then re-submit for review.\n`);
+    }
+  }
+
   if (fixed.length) {
-    lines.push(`Fixed ${fixed.length} disapproved ad(s)${isDryRun ? ' [DRY RUN]' : ''}:\n`);
+    lines.push(`Fixed ${fixed.length} disapproved ad(s) — copy replaced${isDryRun ? ' [DRY RUN]' : ''}:\n`);
     for (const { ad, rewritten } of fixed) {
       lines.push(`Campaign: ${ad.campaignName} / ${ad.adGroupName}`);
       lines.push(`Violations: ${ad.violations.map(v => v.topic).join(', ')}`);
@@ -245,6 +284,11 @@ async function main() {
     for (const { ad, error } of failed) {
       lines.push(`  • ${ad.campaignName} / ${ad.adGroupName}: ${error}`);
     }
+  }
+
+  if (!urlIssues.length && !fixed.length && !failed.length) {
+    log('Nothing to report.');
+    return;
   }
 
   await notify({
