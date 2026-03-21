@@ -20,6 +20,41 @@ export function computeAov(shopifySnaps) {
   return computed > 1 ? computed : FALLBACK_AOV;
 }
 
+// CVR expectations by page type — used in both prompt and reviewer
+export const PAGE_TYPE_CVR = {
+  homepage:    { min: 0.01, max: 0.03, label: 'homepage' },
+  collection:  { min: 0.02, max: 0.05, label: 'collection page' },
+  product:     { min: 0.03, max: 0.07, label: 'product page' },
+  blog:        { min: 0.005, max: 0.02, label: 'blog post' },
+  landing:     { min: 0.04, max: 0.10, label: 'dedicated landing page' },
+};
+
+export function classifyPageType(url) {
+  const path = url.replace(/^https?:\/\/[^/]+/, '');
+  if (path === '/' || path === '') return 'homepage';
+  if (path.includes('/products/')) return 'product';
+  if (path.includes('/collections/')) return 'collection';
+  if (path.includes('/blogs/') || path.includes('/blog/')) return 'blog';
+  if (path.includes('/pages/')) return 'landing';
+  return 'landing';
+}
+
+export function extractKnownPages(gscSnaps) {
+  const pageMap = new Map();
+  for (const snap of gscSnaps) {
+    for (const p of (snap.topPages || [])) {
+      const url = p.page;
+      if (!pageMap.has(url)) pageMap.set(url, { clicks: 0, impressions: 0 });
+      const entry = pageMap.get(url);
+      entry.clicks += p.clicks || 0;
+      entry.impressions += p.impressions || 0;
+    }
+  }
+  return Array.from(pageMap.entries())
+    .map(([url, stats]) => ({ url, ...stats, type: classifyPageType(url) }))
+    .sort((a, b) => b.impressions - a.impressions);
+}
+
 export function buildAnalyzerPrompt(context) {
   const { activeSlugs, adsSnaps, gscSnaps, ga4Snaps, shopifySnaps, ahrefsPresent, pastOutcomes } = context;
 
@@ -28,9 +63,15 @@ export function buildAnalyzerPrompt(context) {
     ? `$${aov.toFixed(2)} (computed from ${shopifySnaps.length} days of Shopify data)`
     : `$${aov.toFixed(2)} (fallback — no real order data yet)`;
 
+  const knownPages = extractKnownPages(gscSnaps);
+  const knownPagesText = knownPages.length
+    ? knownPages.map(p => `- ${p.url} [${p.type}] (${p.impressions} impressions, ${p.clicks} clicks)`).join('\n')
+    : 'No page data available.';
+
   const sections = [
     `## Active/Proposed Campaigns (do not duplicate these)\n${activeSlugs.length ? activeSlugs.join('\n') : 'None yet.'}`,
     `## Average Order Value (use this for revenue projections)\nAOV: ${aovLabel}\nIMPORTANT: Use this AOV when computing projections.monthlyRevenue = monthlyConversions × AOV. Do not invent a different revenue per conversion.`,
+    `## Known Site Pages (choose landingPage from this list only)\nPick the most specific page that matches the campaign intent. Prefer product > collection > homepage > blog. Do NOT invent URLs.\nExpected CVR by page type: homepage 1–3%, collection 2–5%, product 3–7%, blog 0.5–2%, dedicated landing page 4–10%.\nYour CVR projection MUST fall within the range for the page type you select.\n${knownPagesText}`,
     `## Google Ads (last ${adsSnaps.length} days)\n${adsSnaps.length ? JSON.stringify(adsSnaps, null, 2) : 'No Google Ads snapshots available.'}`,
     `## Google Search Console\n${gscSnaps.length ? JSON.stringify(gscSnaps, null, 2) : 'No GSC snapshots available.'}`,
     `## Google Analytics 4\n${ga4Snaps.length ? JSON.stringify(ga4Snaps, null, 2) : 'No GA4 snapshots available.'}`,
@@ -87,17 +128,46 @@ export function mathCheck(p, aov) {
   return issues;
 }
 
-export async function reviewProposal(p, aov, client) {
+export async function reviewProposal(p, aov, client, knownPages = []) {
   const proj = p.projections || {};
 
   // Layer 1: math consistency (free)
   const mathIssues = mathCheck(p, aov);
   if (mathIssues.length > 0) return { approved: false, reasons: mathIssues };
 
+  // Layer 1b: landing page validation (free)
+  const landingPage = p.landingPage || '';
+  const landingIssues = [];
+  const pageType = classifyPageType(landingPage);
+  const isBrandSearch = /brand/i.test(p.campaignName || p.slug || '');
+  const cvrRange = isBrandSearch ? null : PAGE_TYPE_CVR[pageType]; // brand search has its own CVR norms
+  if (cvrRange && proj.cvr != null) {
+    if (proj.cvr < cvrRange.min || proj.cvr > cvrRange.max) {
+      landingIssues.push(
+        `CVR of ${(proj.cvr * 100).toFixed(1)}% is outside the expected range for a ${cvrRange.label} (${(cvrRange.min * 100).toFixed(0)}–${(cvrRange.max * 100).toFixed(0)}%). Landing page: ${landingPage}`
+      );
+    }
+  }
+  if (knownPages.length > 0) {
+    const knownUrls = new Set(knownPages.map(p => p.url));
+    // Normalize: strip trailing slash for comparison
+    const normalize = u => u.replace(/\/$/, '');
+    const fullUrl = landingPage.startsWith('http') ? landingPage : `https://www.realskincare.com${landingPage}`;
+    if (!knownUrls.has(normalize(fullUrl)) && !knownUrls.has(normalize(fullUrl) + '/') && landingPage !== '/') {
+      landingIssues.push(`Landing page "${landingPage}" was not found in GSC data — may not exist or have no search presence`);
+    }
+  }
+  if (landingIssues.length > 0) return { approved: false, reasons: landingIssues };
+
   // Layer 2: Claude narrative vs numbers review
+  const knownPagesContext = knownPages.length
+    ? `\nKnown site pages (from GSC): ${knownPages.slice(0, 20).map(p => p.url).join(', ')}`
+    : '';
+
   const reviewPrompt = `Review this Google Ads campaign proposal for consistency between the rationale and the projection numbers.
 
 Campaign: ${p.campaignName}
+Landing Page: ${landingPage} [${pageType}]
 Rationale: ${p.rationale}
 
 Projections:
@@ -109,12 +179,14 @@ Projections:
 - Monthly Conversions: ${proj.monthlyConversions}
 - Monthly Revenue: $${proj.monthlyRevenue}
 - ROAS: ${proj.monthlyCost > 0 ? (proj.monthlyRevenue / proj.monthlyCost).toFixed(2) : 'n/a'}x
+${knownPagesContext}
 
 Check:
 1. Does the CVR in projections match any CVR range cited in the rationale? Flag if they differ by more than 5 percentage points.
 2. Does the CPC match any CPC estimate in the rationale?
-3. Are CTR, CPC, and CVR realistic for this keyword type (branded / generic / long-tail)?
-4. Any other contradictions between the narrative and the numbers?
+3. Are CTR, CPC, and CVR realistic for this keyword type (branded / generic / long-tail) and this landing page type (${pageType})?
+4. Is the landing page appropriate for the campaign intent — does it match the ad messaging?
+5. Any other contradictions between the narrative and the numbers?
 
 IMPORTANT — Brand search exception: If this is a branded search campaign (targeting the store/brand name), the following ranges are accepted industry benchmarks and do NOT require site-specific data to justify: CTR 15–30%, CVR 8–15%, CPC $0.30–$0.60. Only flag brand search projections if they fall OUTSIDE these ranges, not merely because they weren't derived from observed GSC data.
 
@@ -376,12 +448,13 @@ async function main() {
   });
 
   const aov = computeAov(context.shopifySnaps);
+  const knownPages = extractKnownPages(context.gscSnaps);
   const written = [];
   for (const p of proposals) {
     process.stdout.write(`  Reviewing: ${p.campaignName}... `);
     let review;
     try {
-      review = await reviewProposal(p, aov, client);
+      review = await reviewProposal(p, aov, client, knownPages);
     } catch (e) {
       console.log(`review error — skipping (${e.message})`);
       continue;
