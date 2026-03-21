@@ -176,6 +176,7 @@ async function main() {
 
   const env = loadEnv();
   const apiKey = process.env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY;
+  // Make env available in the fix loop via closure
   if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY');
 
   const { gaqlQuery, mutate } = await import('../../lib/google-ads.js');
@@ -208,12 +209,38 @@ async function main() {
     const hasCopyViolation = ad.violations.some(v => !URL_VIOLATIONS.has(v.topic));
 
     if (hasUrlViolation) {
-      // URL issues can't be fixed by rewriting copy — flag for manual action
-      const finalUrl = ad.finalUrl ?? '(unknown — check campaign JSON)';
-      urlIssues.push({ ad, finalUrl });
-      log(`  URL violation — needs manual fix. Final URL: ${finalUrl}`);
-      // If there are ALSO copy violations, fall through to fix those
-      if (!hasCopyViolation) continue;
+      // Fix by updating the final URL to current STORE_DOMAIN value
+      const storeDomain = process.env.STORE_DOMAIN || env.STORE_DOMAIN;
+      if (!storeDomain) {
+        urlIssues.push({ ad, reason: 'STORE_DOMAIN not set in .env' });
+        log(`  URL violation — STORE_DOMAIN missing, cannot auto-fix`);
+        if (!hasCopyViolation) continue;
+      } else {
+        const landingPath = (ad.finalUrl ?? '').replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '');
+        const newUrl = `https://${storeDomain}/${landingPath}`;
+        log(`  URL violation — updating final URL: ${ad.finalUrl} → ${newUrl}`);
+        try {
+          if (!isDryRun) {
+            await mutate([{
+              adGroupAdOperation: {
+                updateMask: 'ad.finalUrls',
+                update: {
+                  resourceName: ad.resourceName,
+                  ad: { finalUrls: [newUrl] },
+                },
+              },
+            }]);
+            log(`  Final URL updated`);
+          } else {
+            log(`  [DRY RUN] Would update finalUrl to ${newUrl}`);
+          }
+          fixed.push({ ad, urlFix: { from: ad.finalUrl, to: newUrl } });
+        } catch (err) {
+          log(`  Error updating URL: ${err.message}`);
+          urlIssues.push({ ad, reason: err.message });
+        }
+        if (!hasCopyViolation) continue;
+      }
     }
 
     if (!hasCopyViolation && !hasUrlViolation) continue;
@@ -270,12 +297,18 @@ async function main() {
   }
 
   if (fixed.length) {
-    lines.push(`Fixed ${fixed.length} disapproved ad(s) — copy replaced${isDryRun ? ' [DRY RUN]' : ''}:\n`);
-    for (const { ad, rewritten } of fixed) {
+    lines.push(`Fixed ${fixed.length} disapproved ad(s)${isDryRun ? ' [DRY RUN]' : ''}:\n`);
+    for (const { ad, rewritten, urlFix } of fixed) {
       lines.push(`Campaign: ${ad.campaignName} / ${ad.adGroupName}`);
       lines.push(`Violations: ${ad.violations.map(v => v.topic).join(', ')}`);
-      lines.push(`New headlines:\n${rewritten.headlines.map((h, i) => `  ${i + 1}. ${h}`).join('\n')}`);
-      lines.push(`New descriptions:\n${rewritten.descriptions.map((d, i) => `  ${i + 1}. ${d}`).join('\n')}\n`);
+      if (urlFix) {
+        lines.push(`URL updated: ${urlFix.from} → ${urlFix.to}`);
+      }
+      if (rewritten) {
+        lines.push(`New headlines:\n${rewritten.headlines.map((h, i) => `  ${i + 1}. ${h}`).join('\n')}`);
+        lines.push(`New descriptions:\n${rewritten.descriptions.map((d, i) => `  ${i + 1}. ${d}`).join('\n')}`);
+      }
+      lines.push('');
     }
   }
 
