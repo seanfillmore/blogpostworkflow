@@ -105,6 +105,9 @@ Output format (Markdown):
 ## Raw Data
 [paste key metrics as a compact table]`;
 
+  const aovBarrierFile = join(ROOT, 'data', 'campaigns', 'aov-barrier.json');
+  const aovBarrier = existsSync(aovBarrierFile) ? (() => { try { return JSON.parse(readFileSync(aovBarrierFile, 'utf8')); } catch { return null; } })() : null;
+
   const parts = [
     `Here is the available CRO data (most recent first):`,
     claritySnaps.length ? `### Clarity Snapshots (${claritySnaps.length} days)\n${JSON.stringify(claritySnaps, null, 2)}` : '',
@@ -112,6 +115,7 @@ Output format (Markdown):
     gscSnaps.length     ? `### GSC Snapshots (${gscSnaps.length} days)\n${JSON.stringify(gscSnaps, null, 2)}`     : '',
     ga4Snaps.length     ? `### GA4 Snapshots (${ga4Snaps.length} days)\n${JSON.stringify(ga4Snaps, null, 2)}`     : '',
     adsSnaps.length ? `### Google Ads Performance (${adsSnaps.length} days)\n${JSON.stringify(adsSnaps, null, 2)}` : '',
+    aovBarrier ? `### Paid Search Readiness\nThe campaign analyzer was unable to find viable Google Ads campaigns because the store's AOV is too low to support profitable search spend at typical keyword CPCs.\n${JSON.stringify(aovBarrier, null, 2)}\nInclude a "Paid Search Readiness" section in the brief recommending specific actions to increase AOV (e.g. product bundles, upsells, cross-sells) that would unlock search advertising. State the target AOV needed and which campaign types become viable at that level.` : '',
     `Write the CRO brief now.`,
   ].filter(Boolean);
   const userMessage = parts.join('\n\n');

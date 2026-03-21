@@ -185,7 +185,7 @@ For each opportunity output a complete proposal with:
 - mobileAdjustmentPct (integer, positive = bid up, negative = bid down)
 - adGroups (array): each with name, keywords (text + matchType: EXACT|PHRASE|BROAD), headlines (3–15 strings), descriptions (2–4 strings)
 - negativeKeywords (array of strings)
-- rationale (cite specific data points)
+- rationale (cite specific data points — see RATIONALE REQUIREMENTS below)
 - dataPoints (key metrics that informed the proposal)
 - projections: { ctr, cpc, cvr, dailyClicks, monthlyCost, monthlyConversions, monthlyRevenue }
 
@@ -193,6 +193,16 @@ ROAS REQUIREMENT: Only propose campaigns where projected ROAS (monthlyRevenue ÷
 The AOV will be provided in the data. Use it to compute monthlyRevenue = monthlyConversions × AOV.
 Prioritize niche, high-intent, long-tail keywords with lower CPCs that can clear this threshold.
 If no keyword opportunity meets the ROAS minimum, do not force a proposal — output clarificationNeeded instead.
+
+RATIONALE REQUIREMENTS — the rationale field MUST explicitly address all four of these or the proposal will be rejected:
+
+1. CTR source: State the projected CTR and cite where it comes from — e.g. "GSC shows X% organic CTR on this query" or "industry benchmark for long-tail branded terms is X–Y%". If projecting higher than observed organic CTR, explain why paid would outperform organic.
+
+2. CVR source: State the projected CVR and cite its basis — e.g. "branded search typically converts at X–Y%" or "prior campaign data shows X%". Do not invent a CVR without grounding it in a benchmark or observed signal.
+
+3. AOV disclosure: Explicitly state the AOV being used for revenue projections and confirm it matches the value provided in the data section. Example: "Using AOV of $29.61 as provided. Monthly revenue = N conversions × $29.61 = $X."
+
+4. Paused campaign explanation: If any prior campaign for this keyword space is listed as PAUSED or REMOVED, state why it was paused (if inferable from data) and what has changed that makes a new campaign viable now.
 
 If you cannot form a confident proposal due to missing or insufficient data, output:
 { "clarificationNeeded": ["Question 1?", "Question 2?"] }
@@ -398,11 +408,38 @@ async function main() {
     console.log(`  Saved: ${filePath}`);
   }
 
+  const barrierFile = join(CAMPAIGNS_DIR, 'aov-barrier.json');
   if (written.length > 0) {
+    // Clear any stale barrier file now that we have viable proposals
+    if (existsSync(barrierFile)) { try { const { unlinkSync } = await import('node:fs'); unlinkSync(barrierFile); } catch {} }
     const { notify } = await import('../../lib/notify.js');
     await notify({
       subject: `Campaign Analyzer — ${written.length} new proposal${written.length > 1 ? 's' : ''}`,
       body: `New campaign proposals ready for review:\n${written.map(n => `• ${n}`).join('\n')}\n\nReview at dashboard → Ads tab`,
+    }).catch(() => {});
+  } else if (allProposals.length > 0) {
+    // Proposals were generated but all rejected — write AOV barrier summary
+    const breakEvenCpa = aov / MIN_ROAS;
+    const barrier = {
+      date: today,
+      aov,
+      minRoas: MIN_ROAS,
+      breakEvenCpa: Math.round(breakEvenCpa * 100) / 100,
+      breakEvenCpc: {
+        at2pctCvr: Math.round(breakEvenCpa * 0.02 * 100) / 100,
+        at3pctCvr: Math.round(breakEvenCpa * 0.03 * 100) / 100,
+        at5pctCvr: Math.round(breakEvenCpa * 0.05 * 100) / 100,
+      },
+      proposalsAnalyzed: allProposals.length,
+      proposalsSaved: 0,
+      message: `All ${allProposals.length} proposals rejected. At $${aov.toFixed(2)} AOV and ${MIN_ROAS}x minimum ROAS, campaigns need CPC ≤ $${(breakEvenCpa * 0.02).toFixed(2)} at 2% CVR or ≤ $${(breakEvenCpa * 0.03).toFixed(2)} at 3% CVR. Most natural skincare keywords cost $0.80–$1.50 CPC. Consider increasing AOV via bundles or upsells.`,
+    };
+    writeFileSync(barrierFile, JSON.stringify(barrier, null, 2));
+    console.log(`  No viable campaigns — AOV barrier written: ${barrierFile}`);
+    const { notify } = await import('../../lib/notify.js');
+    await notify({
+      subject: 'Campaign Analyzer — no viable campaigns',
+      body: barrier.message + '\n\nSee dashboard → Ads tab for details.',
     }).catch(() => {});
   }
 }

@@ -2319,17 +2319,39 @@ async function loadCampaignCards() {
   try {
     const res = await fetch('/api/campaigns', { credentials: 'same-origin' });
     if (!res.ok) return;
-    const campaigns = await res.json();
-    renderCampaignCards(campaigns);
+    const data = await res.json();
+    renderCampaignCards(data.campaigns || data, data.aovBarrier || null);
   } catch {}
 }
 
-function renderCampaignCards(campaigns) {
+function renderCampaignCards(campaigns, aovBarrier) {
   // --- Proposals ---
   const proposals = campaigns.filter(c => (c.status === 'proposed' || c.status === 'approved') && !c.clarificationNeeded);
   const propCard = document.getElementById('campaign-proposals-card');
   const propBody = document.getElementById('campaign-proposals-body');
-  if (proposals.length > 0) {
+  if (proposals.length === 0 && aovBarrier) {
+    propCard.style.display = '';
+    document.getElementById('campaign-proposals-note').textContent = 'Paid search readiness';
+    propBody.innerHTML =
+      '<div style="padding:4px 0 12px">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">No viable campaigns at current AOV</div>' +
+        '<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px">' + esc(aovBarrier.message) + '</div>' +
+        '<div class="metrics-row" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px">' +
+          '<div class="metric"><div class="metric-label">Store AOV</div><div class="metric-value">$' + esc(String(aovBarrier.aov.toFixed(2))) + '</div><div class="metric-note">90-day average</div></div>' +
+          '<div class="metric"><div class="metric-label">Min ROAS</div><div class="metric-value">' + esc(String(aovBarrier.minRoas)) + '×</div><div class="metric-note">Required threshold</div></div>' +
+          '<div class="metric"><div class="metric-label">Max CPA</div><div class="metric-value">$' + esc(String(aovBarrier.breakEvenCpa)) + '</div><div class="metric-note">at ' + esc(String(aovBarrier.minRoas)) + '× ROAS</div></div>' +
+          '<div class="metric"><div class="metric-label">Max CPC @ 2% CVR</div><div class="metric-value">$' + esc(String(aovBarrier.breakEvenCpc?.at2pctCvr)) + '</div><div class="metric-note">long-tail threshold</div></div>' +
+          '<div class="metric"><div class="metric-label">Max CPC @ 3% CVR</div><div class="metric-value">$' + esc(String(aovBarrier.breakEvenCpc?.at3pctCvr)) + '</div><div class="metric-note">branded threshold</div></div>' +
+        '</div>' +
+        '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Recommendations</div>' +
+        '<div style="font-size:12px;color:var(--text);line-height:1.8">' +
+          '• Add product bundles to push AOV above $' + Math.round(aovBarrier.breakEvenCpa / 0.03) + ' (unlocks $0.90+ CPC keywords)<br>' +
+          '• Add upsells at checkout to increase order value<br>' +
+          '• Focus on branded search only — lowest CPCs, highest CVR<br>' +
+          '• See CRO brief for detailed AOV improvement recommendations' +
+        '</div>' +
+      '</div>';
+  } else if (proposals.length > 0) {
     propCard.style.display = '';
     document.getElementById('campaign-proposals-note').textContent = proposals.length + ' pending';
     propBody.innerHTML = proposals.map(c => {
@@ -2402,7 +2424,9 @@ function renderCampaignCards(campaigns) {
         '</div>'
       );
     }).join('');
-  } else { propCard.style.display = 'none'; }
+  } else {
+    propCard.style.display = 'none';
+  }
 
   // --- Clarifications ---
   const clarify = campaigns.filter(c => c.clarificationNeeded && c.clarificationNeeded.length > 0);
@@ -2723,8 +2747,10 @@ const server = http.createServer((req, res) => {
 
   // GET /api/campaigns
   if (req.method === 'GET' && req.url === '/api/campaigns') {
+    const barrierFile = join(CAMPAIGN_PLANS_DIR, 'aov-barrier.json');
+    const aovBarrier = existsSync(barrierFile) ? (() => { try { return JSON.parse(readFileSync(barrierFile, 'utf8')); } catch { return null; } })() : null;
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(readCampaigns()));
+    res.end(JSON.stringify({ campaigns: readCampaigns(), aovBarrier }));
     return;
   }
 
