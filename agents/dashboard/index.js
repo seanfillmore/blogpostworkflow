@@ -1935,7 +1935,7 @@ function renderAdCard(ad) {
     analysisHtml +
     '</div>' +
     '<div style="padding:0.75rem 1rem;border-top:1px solid #f3f4f6">' +
-    '<button onclick="openCreativeGenerator(\'' + esc(ad.id) + '\',\'' + esc(ad.pageName) + '\')" style="width:100%;padding:0.5rem;background:#1a6fa8;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer">Generate Creative</button>' +
+    '<button data-ad-id="' + esc(ad.id) + '" data-page-name="' + esc(ad.pageName) + '" onclick="openCreativeGenerator(this.dataset.adId,this.dataset.pageName)" style="width:100%;padding:0.5rem;background:#1a6fa8;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer">Generate Creative</button>' +
     '</div></div>';
 }
 
