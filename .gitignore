@@ -37,6 +37,8 @@ data/reports/gsc-query-miner.log
 data/reports/rank-tracker.log
 data/reports/ads-optimizer.log
 data/reports/ads-weekly-recap.log
+data/reports/campaign-monitor.log
+data/reports/campaign-analyzer.log
 
 # Misc
 Ingredients/

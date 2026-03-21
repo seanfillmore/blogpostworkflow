@@ -46,6 +46,8 @@ DAILY_RANK_ALERTER="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/rank-alerter
 DAILY_PIPELINE_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-scheduler/index.js >> data/reports/scheduler/pipeline-scheduler.log 2>&1"
 WEEKLY_META_AB_TRACKER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-tracker/index.js >> data/reports/scheduler/meta-ab-tracker.log 2>&1"
 AHREFS_REMINDER="0 7 * * 0 cd \"$PROJECT_DIR\" && $NODE scripts/ahrefs-reminder.js >> data/reports/scheduler/ahrefs-reminder.log 2>&1"
+DAILY_CAMPAIGN_MONITOR="30 7 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-monitor/index.js >> data/reports/campaign-monitor.log 2>&1"
+WEEKLY_CAMPAIGN_ANALYZER="0 6 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-analyzer/index.js >> data/reports/campaign-analyzer.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
 EXISTING=$(crontab -l 2>/dev/null || true)
@@ -73,6 +75,8 @@ $WEEKLY_ADS_RECAP
 $DAILY_RANK_ALERTER
 $DAILY_PIPELINE_SCHEDULER
 $WEEKLY_META_AB_TRACKER
+$DAILY_CAMPAIGN_MONITOR
+$WEEKLY_CAMPAIGN_ANALYZER
 "
 
 echo "Installing cron jobs..."
@@ -97,6 +101,8 @@ echo "  Weekly  Sun 07:00 PT — ads-weekly-recap"
 echo "  Daily   13:30 UTC — rank-alerter (after GSC collector)"
 echo "  Daily   15:00 UTC — pipeline-scheduler"
 echo "  Weekly  Mon 15:00 UTC — meta-ab-tracker"
+echo "  Daily   07:30 PT — campaign-monitor"
+echo "  Weekly  Sun 06:00 PT — campaign-analyzer"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"
