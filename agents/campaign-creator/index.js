@@ -128,3 +128,94 @@ export function buildNegativeKeywordOperations(negativeKeywords, campaignResourc
     },
   }));
 }
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
+const CAMPAIGNS_DIR = join(ROOT, 'data', 'campaigns');
+
+async function main() {
+  const campaignArg = process.argv.includes('--campaign')
+    ? process.argv[process.argv.indexOf('--campaign') + 1]
+    : null;
+
+  if (!campaignArg) {
+    console.error('Usage: node agents/campaign-creator/index.js --campaign <id>');
+    process.exit(1);
+  }
+
+  console.log(`Campaign Creator — ${campaignArg}\n`);
+
+  // Load campaign file
+  const file = join(CAMPAIGNS_DIR, `${campaignArg}.json`);
+  if (!existsSync(file)) throw new Error(`Campaign file not found: ${file}`);
+  const campaign = JSON.parse(readFileSync(file, 'utf8'));
+
+  // Validate
+  validateCampaignFile(campaign);
+
+  const { mutate, CUSTOMER_ID } = await import('../../lib/google-ads.js');
+  const customerResourceName = `customers/${CUSTOMER_ID}`;
+  const { proposal } = campaign;
+  const mobileAdj = mobileAdjustmentValue(proposal.mobileAdjustmentPct ?? 30);
+  const budget = proposal.approvedBudget;
+
+  console.log(`  Campaign: ${proposal.campaignName}`);
+  console.log(`  Budget: $${budget}/day | Mobile adj: ${mobileAdj}x`);
+  console.log(`  Ad groups: ${proposal.adGroups.length}`);
+
+  // Step 1: Create budget + campaign in one mutate call
+  const budgetOp = buildBudgetOperation(budget, customerResourceName);
+  const campaignOp = buildCampaignOperation(proposal.campaignName, `${customerResourceName}/campaignBudgets/-1`, mobileAdj, customerResourceName);
+
+  process.stdout.write('  Creating budget + campaign... ');
+  const res1 = await mutate([budgetOp, campaignOp]);
+  const budgetRN = res1.mutateOperationResponses?.[0]?.campaignBudgetResult?.resourceName;
+  const campaignRN = res1.mutateOperationResponses?.[1]?.campaignResult?.resourceName;
+  const campaignId = campaignRN?.split('/').pop();
+  console.log(`done (${campaignRN})`);
+
+  // Step 2: Create ad groups + RSAs + keywords per ad group
+  const adGroupResourceNames = [];
+  for (const ag of proposal.adGroups) {
+    const adGroupOp = buildAdGroupOperation(ag.name, campaignRN, customerResourceName);
+    const adGroupRes = await mutate([adGroupOp]);
+    const adGroupRN = adGroupRes.mutateOperationResponses?.[0]?.adGroupResult?.resourceName;
+    adGroupResourceNames.push(adGroupRN);
+    console.log(`  Ad group: ${ag.name} (${adGroupRN})`);
+
+    const rsaOp = buildRsaOperation(ag.headlines, ag.descriptions, adGroupRN, customerResourceName);
+    const kwOps = buildKeywordOperations(ag.keywords, adGroupRN, customerResourceName);
+    await mutate([rsaOp, ...kwOps]);
+    console.log(`    RSA + ${ag.keywords.length} keywords created`);
+  }
+
+  // Step 3: Negative keywords (campaign-level)
+  if (proposal.negativeKeywords?.length > 0) {
+    const negOps = buildNegativeKeywordOperations(proposal.negativeKeywords, campaignRN, customerResourceName);
+    await mutate(negOps);
+    console.log(`  Negative keywords: ${proposal.negativeKeywords.length}`);
+  }
+
+  // Update campaign file
+  campaign.status = 'active';
+  campaign.googleAds = {
+    campaignResourceName: campaignRN,
+    campaignId,
+    budgetResourceName: budgetRN,
+    adGroupResourceNames,
+    createdAt: new Date().toISOString(),
+  };
+  writeFileSync(file, JSON.stringify(campaign, null, 2));
+  console.log(`\n  Campaign file updated: ${file}`);
+  console.log(`  Status: active | Campaign ID: ${campaignId}`);
+
+  // Notify
+  const { notify } = await import('../../lib/notify.js');
+  await notify({
+    subject: `Campaign Created — ${proposal.campaignName}`,
+    body: `Campaign "${proposal.campaignName}" created in Google Ads.\nCampaign ID: ${campaignId}\nBudget: $${budget}/day\nStatus: PAUSED (enable in Google Ads dashboard)`,
+  }).catch(() => {});
+}
+
+const isMain = fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) main().catch(err => { console.error('Error:', err.message); process.exit(1); });
