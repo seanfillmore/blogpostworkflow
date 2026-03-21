@@ -16,7 +16,8 @@ const FALLBACK_AOV = 29.61; // USD — 90-day AOV from Shopify (orders > $1), as
 export function computeAov(shopifySnaps) {
   const totalRevenue = shopifySnaps.reduce((s, d) => s + (d.orders?.revenue || 0), 0);
   const totalOrders  = shopifySnaps.reduce((s, d) => s + (d.orders?.count  || 0), 0);
-  return totalOrders > 0 ? totalRevenue / totalOrders : FALLBACK_AOV;
+  const computed = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  return computed > 1 ? computed : FALLBACK_AOV;
 }
 
 export function buildAnalyzerPrompt(context) {
@@ -253,8 +254,23 @@ async function main() {
     return;
   }
 
+  const MIN_ROAS = 0.85;
+  const allProposals = result.proposals || [];
+  const rejected = allProposals.filter(p => {
+    const proj = p.projections || {};
+    return proj.monthlyCost > 0 && (proj.monthlyRevenue / proj.monthlyCost) < MIN_ROAS;
+  });
+  if (rejected.length > 0) {
+    console.log(`  Filtered ${rejected.length} proposal(s) below ${MIN_ROAS}x ROAS: ${rejected.map(p => p.campaignName).join(', ')}`);
+  }
+  const proposals = allProposals.filter(p => {
+    const proj = p.projections || {};
+    if (!proj.monthlyCost) return true; // no cost data, let it through
+    return (proj.monthlyRevenue / proj.monthlyCost) >= MIN_ROAS;
+  });
+
   const written = [];
-  for (const p of (result.proposals || [])) {
+  for (const p of proposals) {
     const slug = p.slug || p.campaignName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const filePath = campaignFilePath(today, slug, ROOT);
     const doc = {
