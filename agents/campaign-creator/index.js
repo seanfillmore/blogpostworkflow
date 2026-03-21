@@ -32,11 +32,12 @@ export function mobileAdjustmentValue(pct) {
   return Math.round((1 + pct / 100) * 1000) / 1000;
 }
 
-export function buildBudgetOperation(dailyBudgetUSD, customerResourceName) {
+export function buildBudgetOperation(dailyBudgetUSD, customerResourceName, name) {
   return {
     campaignBudgetOperation: {
       create: {
         resourceName: `${customerResourceName}/campaignBudgets/-1`,
+        name,
         amountMicros: Math.round(dailyBudgetUSD * 1_000_000),
         deliveryMethod: 'STANDARD',
       },
@@ -182,7 +183,7 @@ async function main() {
   }
 
   // Step 1: Create budget + campaign in one mutate call
-  const budgetOp = buildBudgetOperation(budget, customerResourceName);
+  const budgetOp = buildBudgetOperation(budget, customerResourceName, proposal.campaignName);
   const campaignOp = buildCampaignOperation(proposal.campaignName, `${customerResourceName}/campaignBudgets/-1`, mobileAdj, customerResourceName);
 
   process.stdout.write('  Creating budget + campaign... ');
