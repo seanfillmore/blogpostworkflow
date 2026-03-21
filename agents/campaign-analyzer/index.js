@@ -52,6 +52,86 @@ export function isClarification(parsed) {
   return Array.isArray(parsed.clarificationNeeded) && parsed.clarificationNeeded.length > 0;
 }
 
+// ── Proposal reviewer ──────────────────────────────────────────────────────────
+
+const MATH_TOLERANCE = 0.15; // 15% — accounts for rounding in Claude's output
+
+export function mathCheck(p, aov) {
+  const proj = p.projections || {};
+  const issues = [];
+
+  if (proj.dailyClicks && proj.cvr && proj.monthlyConversions) {
+    const expected = proj.dailyClicks * proj.cvr * 30;
+    const ratio = proj.monthlyConversions / expected;
+    if (ratio < 1 - MATH_TOLERANCE || ratio > 1 + MATH_TOLERANCE) {
+      issues.push(`monthlyConversions (${proj.monthlyConversions}) doesn't match dailyClicks × cvr × 30 = ${expected.toFixed(1)}`);
+    }
+  }
+
+  if (proj.cpc && proj.dailyClicks && proj.monthlyCost) {
+    const expected = proj.cpc * proj.dailyClicks * 30;
+    const ratio = proj.monthlyCost / expected;
+    if (ratio < 1 - MATH_TOLERANCE || ratio > 1 + MATH_TOLERANCE) {
+      issues.push(`monthlyCost ($${proj.monthlyCost}) doesn't match cpc × dailyClicks × 30 = $${expected.toFixed(0)}`);
+    }
+  }
+
+  if (proj.monthlyConversions && proj.monthlyRevenue && aov) {
+    const expected = proj.monthlyConversions * aov;
+    const ratio = proj.monthlyRevenue / expected;
+    if (ratio < 1 - MATH_TOLERANCE || ratio > 1 + MATH_TOLERANCE) {
+      issues.push(`monthlyRevenue ($${proj.monthlyRevenue}) doesn't match monthlyConversions × AOV ($${aov.toFixed(2)}) = $${expected.toFixed(2)}`);
+    }
+  }
+
+  return issues;
+}
+
+export async function reviewProposal(p, aov, client) {
+  const proj = p.projections || {};
+
+  // Layer 1: math consistency (free)
+  const mathIssues = mathCheck(p, aov);
+  if (mathIssues.length > 0) return { approved: false, reasons: mathIssues };
+
+  // Layer 2: Claude narrative vs numbers review
+  const reviewPrompt = `Review this Google Ads campaign proposal for consistency between the rationale and the projection numbers.
+
+Campaign: ${p.campaignName}
+Rationale: ${p.rationale}
+
+Projections:
+- CTR: ${((proj.ctr || 0) * 100).toFixed(1)}%
+- CPC: $${proj.cpc}
+- CVR: ${((proj.cvr || 0) * 100).toFixed(1)}%
+- Daily Clicks: ${proj.dailyClicks}
+- Monthly Cost: $${proj.monthlyCost}
+- Monthly Conversions: ${proj.monthlyConversions}
+- Monthly Revenue: $${proj.monthlyRevenue}
+- ROAS: ${proj.monthlyCost > 0 ? (proj.monthlyRevenue / proj.monthlyCost).toFixed(2) : 'n/a'}x
+
+Check:
+1. Does the CVR in projections match any CVR range cited in the rationale? Flag if they differ by more than 5 percentage points.
+2. Does the CPC match any CPC estimate in the rationale?
+3. Are CTR, CPC, and CVR realistic for this keyword type (branded / generic / long-tail)?
+4. Any other contradictions between the narrative and the numbers?
+
+Output ONLY valid JSON — no markdown:
+{ "approved": true }
+OR
+{ "approved": false, "reasons": ["specific issue 1", "specific issue 2"] }`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: reviewPrompt }],
+  });
+
+  const raw = response.content?.[0]?.text || '';
+  const cleaned = raw.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+  return JSON.parse(cleaned);
+}
+
 // ── Data paths ────────────────────────────────────────────────────────────────
 
 const CAMPAIGNS_DIR     = join(ROOT, 'data', 'campaigns');
@@ -269,8 +349,24 @@ async function main() {
     return (proj.monthlyRevenue / proj.monthlyCost) >= MIN_ROAS;
   });
 
+  const aov = computeAov(context.shopifySnaps);
   const written = [];
   for (const p of proposals) {
+    process.stdout.write(`  Reviewing: ${p.campaignName}... `);
+    let review;
+    try {
+      review = await reviewProposal(p, aov, client);
+    } catch (e) {
+      console.log(`review error — skipping (${e.message})`);
+      continue;
+    }
+    if (!review.approved) {
+      console.log('rejected');
+      (review.reasons || []).forEach(r => console.log(`    ✗ ${r}`));
+      continue;
+    }
+    console.log('approved');
+
     const slug = p.slug || p.campaignName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const filePath = campaignFilePath(today, slug, ROOT);
     const doc = {
