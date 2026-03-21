@@ -189,7 +189,10 @@ async function main() {
   const res1 = await mutate([budgetOp, campaignOp]);
   const budgetRN = res1.mutateOperationResponses?.[0]?.campaignBudgetResult?.resourceName;
   const campaignRN = res1.mutateOperationResponses?.[1]?.campaignResult?.resourceName;
-  const campaignId = campaignRN?.split('/').pop();
+  if (!budgetRN || !campaignRN) {
+    throw new Error(`Budget/campaign creation returned no resource names. Response: ${JSON.stringify(res1)}`);
+  }
+  const campaignId = campaignRN.split('/').pop();
   console.log(`done (${campaignRN})`);
 
   // Step 2: Create ad groups + RSAs + keywords per ad group
@@ -198,6 +201,9 @@ async function main() {
     const adGroupOp = buildAdGroupOperation(ag.name, campaignRN, customerResourceName);
     const adGroupRes = await mutate([adGroupOp]);
     const adGroupRN = adGroupRes.mutateOperationResponses?.[0]?.adGroupResult?.resourceName;
+    if (!adGroupRN) {
+      throw new Error(`Ad group '${ag.name}' creation returned no resource name. Response: ${JSON.stringify(adGroupRes)}`);
+    }
     adGroupResourceNames.push(adGroupRN);
     console.log(`  Ad group: ${ag.name} (${adGroupRN})`);
 
