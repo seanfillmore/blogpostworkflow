@@ -2301,7 +2301,7 @@ async function loadCampaignCards() {
 
 function renderCampaignCards(campaigns) {
   // --- Proposals ---
-  const proposals = campaigns.filter(c => c.status === 'proposed' && !c.clarificationNeeded);
+  const proposals = campaigns.filter(c => (c.status === 'proposed' || c.status === 'approved') && !c.clarificationNeeded);
   const propCard = document.getElementById('campaign-proposals-card');
   const propBody = document.getElementById('campaign-proposals-body');
   if (proposals.length > 0) {
@@ -2315,7 +2315,7 @@ function renderCampaignCards(campaigns) {
         '<div class="camp-proposal-meta">Budget: $<input class="camp-budget-input" id="budget-' + esc(c.id) + '" type="number" min="1" step="0.5" value="' + (p.suggestedBudget || 5) + '">/day &nbsp;|&nbsp; ' +
         'Proj: $' + (c.projections?.monthlyRevenue || '—') + '/mo · ' + (c.projections?.monthlyConversions || '—') + ' conv</div></div>' +
         '<span class="badge badge-gray">' + esc(c.status) + '</span></div>' +
-        '<div class="camp-proposal-rationale">' + esc((c.rationale || '').slice(0, 160)) + (c.rationale?.length > 160 ? '…' : '') + '</div>' +
+        '<div class="camp-proposal-rationale">' + esc((c.rationale || '').slice(0, 120)) + (c.rationale?.length > 120 ? '…' : '') + '</div>' +
         '<div class="camp-proposal-actions">' +
         '<button onclick="approveCampaign(&apos;' + esc(c.id) + '&apos;)" id="approve-btn-' + esc(c.id) + '">Approve</button>' +
         '<button onclick="dismissCampaign(&apos;' + esc(c.id) + '&apos;)" class="btn-secondary">Dismiss</button>' +
@@ -2376,7 +2376,7 @@ async function approveCampaign(id) {
   const budget = parseFloat(document.getElementById('budget-' + id)?.value);
   if (!budget || budget <= 0) { alert('Enter a valid budget before approving.'); return; }
   try {
-    const res = await fetch('/api/campaigns/' + id + '/approve', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approvedBudget: budget }) });
+    const res = await fetch('/api/campaigns/' + encodeURIComponent(id) + '/approve', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approvedBudget: budget }) });
     if (!res.ok) throw new Error(await res.text());
     document.getElementById('approve-btn-' + id).disabled = true;
     document.getElementById('launch-row-' + id).style.display = '';
@@ -2386,7 +2386,7 @@ async function approveCampaign(id) {
 async function dismissCampaign(id) {
   if (!confirm('Dismiss this campaign proposal?')) return;
   try {
-    await fetch('/api/campaigns/' + id + '/dismiss', { method: 'POST', credentials: 'same-origin' });
+    await fetch('/api/campaigns/' + encodeURIComponent(id) + '/dismiss', { method: 'POST', credentials: 'same-origin' });
     document.getElementById('prop-' + id)?.remove();
   } catch (e) { alert('Dismiss failed: ' + e.message); }
 }
@@ -2414,14 +2414,14 @@ async function submitClarification(id) {
   const text = document.getElementById('clarify-text-' + id)?.value?.trim();
   if (!text) { alert('Please enter your answer before submitting.'); return; }
   try {
-    await fetch('/api/campaigns/' + id + '/clarify', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clarificationResponse: text }) });
+    await fetch('/api/campaigns/' + encodeURIComponent(id) + '/clarify', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clarificationResponse: text }) });
     alert('Response submitted. Re-analysis is running in the background.');
   } catch (e) { alert('Submit failed: ' + e.message); }
 }
 
 async function resolveAlert(campaignId, alertType) {
   try {
-    await fetch('/api/campaigns/' + campaignId + '/alerts/' + alertType + '/resolve', { method: 'POST', credentials: 'same-origin' });
+    await fetch('/api/campaigns/' + encodeURIComponent(campaignId) + '/alerts/' + encodeURIComponent(alertType) + '/resolve', { method: 'POST', credentials: 'same-origin' });
     loadCampaignCards();
   } catch (e) { alert('Resolve failed: ' + e.message); }
 }
