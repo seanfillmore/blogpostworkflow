@@ -166,12 +166,12 @@ async function main() {
   const mobileAdj = mobileAdjustmentValue(proposal.mobileAdjustmentPct ?? 30);
   const budget = proposal.approvedBudget;
 
-  // Build final URL from env store domain + proposal landing page
-  const { loadEnv } = await import('../../lib/env.js').catch(() => ({ loadEnv: null }));
-  const envVars = loadEnv ? loadEnv() : (() => {
+  // Build final URL from STORE_DOMAIN env var + proposal landing page
+  const envVars = (() => {
     try { return Object.fromEntries(readFileSync(join(ROOT, '.env'), 'utf8').split('\n').filter(l => l.includes('=')).map(l => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])); } catch { return {}; }
   })();
-  const storeDomain = (envVars.STORE_DOMAIN || envVars.SHOPIFY_STORE || '').replace(/\.myshopify\.com$/, '.com').replace(/^https?:\/\//, '');
+  const storeDomain = process.env.STORE_DOMAIN || envVars.STORE_DOMAIN;
+  if (!storeDomain) throw new Error('Missing STORE_DOMAIN in .env');
   const landingPath = (proposal.landingPage || '/').replace(/^\//, '');
   const finalUrl = `https://${storeDomain}/${landingPath}`;
 

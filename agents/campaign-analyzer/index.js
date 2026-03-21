@@ -125,6 +125,16 @@ export function mathCheck(p, aov) {
     }
   }
 
+  // Ad copy character limits
+  for (const ag of (p.proposal?.adGroups || [])) {
+    for (const h of (ag.headlines || [])) {
+      if (h.length > 30) issues.push(`Headline too long (${h.length} chars, max 30): "${h}"`);
+    }
+    for (const d of (ag.descriptions || [])) {
+      if (d.length > 90) issues.push(`Description too long (${d.length} chars, max 90): "${d.slice(0, 40)}…"`);
+    }
+  }
+
   return issues;
 }
 
@@ -257,7 +267,7 @@ For each opportunity output a complete proposal with:
 - network: "Search"
 - suggestedBudget (daily USD, number)
 - mobileAdjustmentPct (integer, positive = bid up, negative = bid down)
-- adGroups (array): each with name, keywords (text + matchType: EXACT|PHRASE|BROAD), headlines (3–15 strings), descriptions (2–4 strings)
+- adGroups (array): each with name, keywords (text + matchType: EXACT|PHRASE|BROAD), headlines (3–15 strings, each ≤30 characters), descriptions (2–4 strings, each ≤90 characters)
 - negativeKeywords (array of strings)
 - rationale (cite specific data points — see RATIONALE REQUIREMENTS below)
 - dataPoints (key metrics that informed the proposal)
