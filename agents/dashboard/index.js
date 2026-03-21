@@ -775,8 +775,6 @@ const HTML = `<!DOCTYPE html>
   .budget-row   { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
   .budget-input { width: 72px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; font-weight: 800; font-family: inherit; color: var(--text); background: white; }
   .budget-input:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(67,56,202,.12); }
-  .update-btn { padding: 4px 10px; font-size: 11px; font-weight: 600; background: var(--indigo); color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; display: none; }
-  .update-btn.visible { display: block; }
   .rationale-row  { padding: 13px 16px; border-bottom: 1px solid var(--border); }
   .rationale-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 5px; }
   .rationale-text  { font-size: 12px; color: #374151; line-height: 1.6; }
@@ -2353,7 +2351,7 @@ function renderCampaignCards(campaigns) {
       const projJson = JSON.stringify(proj).replace(/"/g, '&quot;');
       const budgetCell = isApproved
         ? '<div class="metric budget-metric"><div class="metric-label">Approved Budget</div><div class="metric-value">$' + approvedBudget + ' <span class="metric-unit">/day</span></div><div class="metric-note">$' + (approvedBudget * 30).toFixed(0) + '/mo</div></div>'
-        : '<div class="metric budget-metric"><div class="metric-label">Daily Budget</div><div class="budget-row"><span style="font-size:14px;font-weight:700;color:var(--muted)">$</span><input class="budget-input" id="budget-' + esc(c.id) + '" type="number" min="1" step="0.5" value="' + sugBudget + '" oninput="handleBudgetChange(&apos;' + esc(c.id) + '&apos;)"><button class="update-btn" id="upd-btn-' + esc(c.id) + '" data-sug="' + sugBudget + '" data-proj="' + projJson + '" onclick="updateProjections(&apos;' + esc(c.id) + '&apos;)">Update</button></div><div class="metric-note">$' + (sugBudget * 30).toFixed(0) + '/mo suggested</div></div>';
+        : '<div class="metric budget-metric"><div class="metric-label">Daily Budget</div><div class="budget-row"><span style="font-size:14px;font-weight:700;color:var(--muted)">$</span><input class="budget-input" id="budget-' + esc(c.id) + '" type="number" min="1" step="0.5" value="' + sugBudget + '" data-sug="' + sugBudget + '" data-proj="' + projJson + '" oninput="updateProjections(&apos;' + esc(c.id) + '&apos;)"></div><div class="metric-note">$' + (sugBudget * 30).toFixed(0) + '/mo suggested</div></div>';
 
       // Ad groups pills
       const adGroupPills = (p.adGroups || []).map(ag =>
@@ -2389,7 +2387,7 @@ function renderCampaignCards(campaigns) {
           '<div class="metric"><div class="metric-label">Est. Clicks/day</div><div class="metric-value" id="clicks-' + esc(c.id) + '">' + esc(String(proj.dailyClicks || '—')) + ' <span class="metric-unit">clicks</span></div><div class="metric-note">CTR ' + ((proj.ctr || 0) * 100).toFixed(1) + '%</div></div>' +
           '<div class="metric"><div class="metric-label">Monthly Cost</div><div class="metric-value" id="cost-' + esc(c.id) + '">$' + esc(String(proj.monthlyCost || '—')) + '</div><div class="metric-note">$' + esc(String(proj.cpc || '—')) + ' avg CPC</div></div>' +
           '<div class="metric"><div class="metric-label">Est. Conversions</div><div class="metric-value" id="conv-' + esc(c.id) + '">' + esc(String(proj.monthlyConversions || '—')) + ' <span class="metric-unit">/mo</span></div><div class="metric-note">CVR ' + ((proj.cvr || 0) * 100).toFixed(1) + '%</div></div>' +
-          '<div class="metric"><div class="metric-label">Est. Revenue</div><div class="metric-value" style="color:var(--green)" id="rev-' + esc(c.id) + '">$' + esc(String(proj.monthlyRevenue || '—')) + '</div><div class="metric-note">~$' + aov + '/conversion</div></div>' +
+          '<div class="metric"><div class="metric-label">Est. Revenue</div><div class="metric-value" style="color:var(--green)" id="rev-' + esc(c.id) + '">$' + esc(String(proj.monthlyRevenue || '—')) + '</div><div class="metric-note" id="aov-' + esc(c.id) + '">~$' + aov + '/conversion</div></div>' +
         '</div>' +
 
         // 3. Rationale
@@ -2452,17 +2450,12 @@ function renderCampaignCards(campaigns) {
   } else { actCard.style.display = 'none'; }
 }
 
-function handleBudgetChange(id) {
-  document.getElementById('upd-btn-' + id)?.classList.add('visible');
-}
-
 function updateProjections(id) {
   const input = document.getElementById('budget-' + id);
-  const btn   = document.getElementById('upd-btn-' + id);
-  const newBudget      = parseFloat(input?.value);
-  const suggestedBudget = parseFloat(btn?.dataset.sug);
+  const newBudget       = parseFloat(input?.value);
+  const suggestedBudget = parseFloat(input?.dataset.sug);
   let baseProj = {};
-  try { baseProj = JSON.parse(btn?.dataset.proj || '{}'); } catch { return; }
+  try { baseProj = JSON.parse(input?.dataset.proj || '{}'); } catch { return; }
   if (!newBudget || newBudget <= 0) return;
   if (!suggestedBudget) { console.warn('updateProjections: suggestedBudget is 0 or missing for campaign', id); return; }
   const ratio = newBudget / suggestedBudget;
@@ -2470,15 +2463,17 @@ function updateProjections(id) {
   const cost   = Math.round((baseProj.monthlyCost || 0) * ratio);
   const conv   = Math.round((baseProj.monthlyConversions || 0) * ratio);
   const rev    = Math.round((baseProj.monthlyRevenue || 0) * ratio);
+  const aov = conv > 0 ? Math.round(rev / conv) : '—';
   const clickEl = document.getElementById('clicks-' + id);
   const costEl  = document.getElementById('cost-' + id);
   const convEl  = document.getElementById('conv-' + id);
   const revEl   = document.getElementById('rev-' + id);
+  const aovEl   = document.getElementById('aov-' + id);
   if (clickEl) clickEl.innerHTML = clicks + ' <span class="metric-unit">clicks</span>';
   if (costEl)  costEl.textContent = '$' + cost;
   if (convEl)  convEl.innerHTML = conv + ' <span class="metric-unit">/mo</span>';
   if (revEl)   revEl.textContent = '$' + rev;
-  document.getElementById('upd-btn-' + id)?.classList.remove('visible');
+  if (aovEl)   aovEl.textContent = '~$' + aov + '/conversion';
 }
 
 async function approveCampaign(id) {
