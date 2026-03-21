@@ -97,3 +97,110 @@ export function evaluateAlerts(performance, projections, approvedBudget, existin
 
   return newAlerts;
 }
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
+const CAMPAIGNS_DIR   = join(ROOT, 'data', 'campaigns');
+const ADS_SNAPS_DIR   = join(ROOT, 'data', 'snapshots', 'google-ads');
+
+function loadEnv() {
+  try {
+    const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
+    const env = {};
+    for (const l of lines) {
+      const t = l.trim(); if (!t || t.startsWith('#')) continue;
+      const i = t.indexOf('='); if (i === -1) continue;
+      env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    }
+    return env;
+  } catch { return {}; }
+}
+
+function loadActiveCampaigns() {
+  if (!existsSync(CAMPAIGNS_DIR)) return [];
+  return readdirSync(CAMPAIGNS_DIR)
+    .filter(f => f.endsWith('.json'))
+    .map(f => { try { return JSON.parse(readFileSync(join(CAMPAIGNS_DIR, f), 'utf8')); } catch { return null; } })
+    .filter(c => c && c.status === 'active');
+}
+
+function loadYesterdaySnap() {
+  if (!existsSync(ADS_SNAPS_DIR)) return null;
+  const files = readdirSync(ADS_SNAPS_DIR)
+    .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    .sort().reverse();
+  if (!files.length) return null;
+  try { return JSON.parse(readFileSync(join(ADS_SNAPS_DIR, files[0]), 'utf8')); } catch { return null; }
+}
+
+async function main() {
+  console.log('Campaign Monitor\n');
+  loadEnv(); // ensure env loaded (for any future use)
+
+  const campaigns = loadActiveCampaigns();
+  if (!campaigns.length) {
+    console.log('  No active campaigns found.');
+    return;
+  }
+  console.log(`  Active campaigns: ${campaigns.length}`);
+
+  const snap = loadYesterdaySnap();
+  if (!snap) {
+    console.log('  No Google Ads snapshot found. Skipping.');
+    return;
+  }
+  console.log(`  Snapshot date: ${snap.date}`);
+
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const updated = [];
+  const alertsFired = [];
+
+  for (const campaign of campaigns) {
+    const campaignRN = campaign.googleAds?.campaignResourceName;
+    if (!campaignRN) {
+      console.log(`  Skipping ${campaign.id} — no campaignResourceName`);
+      continue;
+    }
+
+    // Find this campaign's data in yesterday's snapshot
+    const snapCampaign = (snap.campaigns || []).find(c => c.resourceName === campaignRN);
+    if (!snapCampaign) {
+      console.log(`  No snapshot data for ${campaign.id}`);
+      continue;
+    }
+
+    const entry = buildPerformanceEntry(snap.date || today, snapCampaign, campaign.projections);
+    campaign.performance.push(entry);
+
+    const newAlerts = evaluateAlerts(campaign.performance, campaign.projections, campaign.proposal.approvedBudget, campaign.alerts);
+    campaign.alerts.push(...newAlerts);
+
+    if (newAlerts.length > 0) {
+      alertsFired.push({ campaign: campaign.id, alerts: newAlerts });
+      console.log(`  ${campaign.id}: ${newAlerts.length} new alert(s): ${newAlerts.map(a => a.type).join(', ')}`);
+    } else {
+      console.log(`  ${campaign.id}: no new alerts`);
+    }
+
+    const file = join(CAMPAIGNS_DIR, `${campaign.id}.json`);
+    writeFileSync(file, JSON.stringify(campaign, null, 2));
+    updated.push(campaign.id);
+  }
+
+  console.log(`\n  Updated: ${updated.length} campaign(s)`);
+
+  // Notify if any alerts fired
+  if (alertsFired.length > 0) {
+    const { notify } = await import('../../lib/notify.js');
+    const body = alertsFired.map(({ campaign: id, alerts }) =>
+      `${id}:\n${alerts.map(a => `  • ${a.type}: ${a.message}`).join('\n')}`
+    ).join('\n\n');
+    await notify({
+      subject: `Campaign Monitor — ${alertsFired.reduce((s, x) => s + x.alerts.length, 0)} alert(s) fired`,
+      body,
+    }).catch(() => {});
+  }
+}
+
+const isMain = fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) main().catch(err => { console.error('Error:', err.message); process.exit(1); });
