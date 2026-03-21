@@ -2441,7 +2441,8 @@ const server = http.createServer((req, res) => {
     return readdirSync(CAMPAIGN_PLANS_DIR)
       .filter(f => f.endsWith('.json'))
       .map(f => { try { return JSON.parse(readFileSync(join(CAMPAIGN_PLANS_DIR, f), 'utf8')); } catch { return null; } })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   }
 
   // GET /api/campaigns
@@ -2455,7 +2456,7 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && /^\/api\/campaigns\/[\w-]+$/.test(req.url)) {
     const id = req.url.split('/')[3];
     const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
-    if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+    if (!existsSync(file)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Not found' })); return; }
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(readFileSync(file, 'utf8'));
     return;
@@ -2471,7 +2472,7 @@ const server = http.createServer((req, res) => {
         const { approvedBudget } = JSON.parse(body);
         if (!approvedBudget || approvedBudget <= 0) throw new Error('approvedBudget must be a positive number');
         const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
-        if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+        if (!existsSync(file)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Not found' })); return; }
         const campaign = JSON.parse(readFileSync(file, 'utf8'));
         campaign.proposal.approvedBudget = approvedBudget;
         campaign.status = 'approved';
@@ -2490,7 +2491,7 @@ const server = http.createServer((req, res) => {
   if (req.method === 'POST' && /^\/api\/campaigns\/[\w-]+\/dismiss$/.test(req.url)) {
     const id = req.url.split('/')[3];
     const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
-    if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+    if (!existsSync(file)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Not found' })); return; }
     const campaign = JSON.parse(readFileSync(file, 'utf8'));
     campaign.status = 'dismissed';
     writeFileSync(file, JSON.stringify(campaign, null, 2));
@@ -2509,7 +2510,7 @@ const server = http.createServer((req, res) => {
         const { clarificationResponse } = JSON.parse(body);
         if (typeof clarificationResponse !== 'string' || !clarificationResponse.trim()) throw new Error('clarificationResponse must be a non-empty string');
         const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
-        if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+        if (!existsSync(file)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Not found' })); return; }
         const campaign = JSON.parse(readFileSync(file, 'utf8'));
         campaign.clarificationResponse = clarificationResponse.trim();
         writeFileSync(file, JSON.stringify(campaign, null, 2));
@@ -2531,7 +2532,7 @@ const server = http.createServer((req, res) => {
     const id = parts[3];
     const alertType = parts[5];
     const file = join(CAMPAIGN_PLANS_DIR, `${id}.json`);
-    if (!existsSync(file)) { res.writeHead(404); res.end('Not found'); return; }
+    if (!existsSync(file)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Not found' })); return; }
     const campaign = JSON.parse(readFileSync(file, 'utf8'));
     const alert = campaign.alerts.find(a => a.type === alertType && !a.resolved);
     if (alert) { alert.resolved = true; writeFileSync(file, JSON.stringify(campaign, null, 2)); }
