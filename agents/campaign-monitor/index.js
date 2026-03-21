@@ -156,14 +156,14 @@ async function main() {
   const alertsFired = [];
 
   for (const campaign of campaigns) {
-    const campaignRN = campaign.googleAds?.campaignResourceName;
-    if (!campaignRN) {
-      console.log(`  Skipping ${campaign.id} — no campaignResourceName`);
+    const campaignId = campaign.googleAds?.campaignId;
+    if (!campaignId) {
+      console.log(`  Skipping ${campaign.id} — no campaignId`);
       continue;
     }
 
     // Find this campaign's data in yesterday's snapshot
-    const snapCampaign = (snap.campaigns || []).find(c => c.resourceName === campaignRN);
+    const snapCampaign = (snap.campaigns || []).find(c => String(c.id) === String(campaignId));
     if (!snapCampaign) {
       console.log(`  No snapshot data for ${campaign.id}`);
       continue;
