@@ -84,11 +84,10 @@ export function buildAdGroupOperation(name, campaignResourceName, customerResour
   };
 }
 
-export function buildRsaOperation(headlines, descriptions, adGroupResourceName, customerResourceName) {
+export function buildRsaOperation(headlines, descriptions, adGroupResourceName) {
   return {
     adGroupAdOperation: {
       create: {
-        resourceName: `${customerResourceName}/adGroupAds/-4`,
         adGroup: adGroupResourceName,
         status: 'ENABLED',
         ad: {
@@ -102,11 +101,10 @@ export function buildRsaOperation(headlines, descriptions, adGroupResourceName, 
   };
 }
 
-export function buildKeywordOperations(keywords, adGroupResourceName, customerResourceName) {
-  return keywords.map((kw, i) => ({
+export function buildKeywordOperations(keywords, adGroupResourceName) {
+  return keywords.map(kw => ({
     adGroupCriterionOperation: {
       create: {
-        resourceName: `${customerResourceName}/adGroupCriteria/-${10 + i}`,
         adGroup: adGroupResourceName,
         status: 'ENABLED',
         keyword: {
@@ -118,11 +116,10 @@ export function buildKeywordOperations(keywords, adGroupResourceName, customerRe
   }));
 }
 
-export function buildNegativeKeywordOperations(negativeKeywords, campaignResourceName, customerResourceName) {
-  return negativeKeywords.map((text, i) => ({
+export function buildNegativeKeywordOperations(negativeKeywords, campaignResourceName) {
+  return negativeKeywords.map(text => ({
     campaignCriterionOperation: {
       create: {
-        resourceName: `${customerResourceName}/campaignCriteria/-${20 + i}`,
         campaign: campaignResourceName,
         negative: true,
         keyword: {
@@ -210,15 +207,15 @@ async function main() {
     adGroupResourceNames.push(adGroupRN);
     console.log(`  Ad group: ${ag.name} (${adGroupRN})`);
 
-    const rsaOp = buildRsaOperation(ag.headlines, ag.descriptions, adGroupRN, customerResourceName);
-    const kwOps = buildKeywordOperations(ag.keywords, adGroupRN, customerResourceName);
+    const rsaOp = buildRsaOperation(ag.headlines, ag.descriptions, adGroupRN);
+    const kwOps = buildKeywordOperations(ag.keywords, adGroupRN);
     await mutate([rsaOp, ...kwOps]);
     console.log(`    RSA + ${ag.keywords.length} keywords created`);
   }
 
   // Step 3: Negative keywords (campaign-level)
   if (proposal.negativeKeywords?.length > 0) {
-    const negOps = buildNegativeKeywordOperations(proposal.negativeKeywords, campaignRN, customerResourceName);
+    const negOps = buildNegativeKeywordOperations(proposal.negativeKeywords, campaignRN);
     await mutate(negOps);
     console.log(`  Negative keywords: ${proposal.negativeKeywords.length}`);
   }
