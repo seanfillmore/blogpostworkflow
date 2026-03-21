@@ -1886,7 +1886,7 @@ function kpiCard(label, value, sub) {
 
 async function renderAdIntelligenceTab() {
   const el = document.getElementById('ad-intelligence-content');
-  el.innerHTML = '<p class="muted" style="padding:2rem">Loading…</p>';
+  el.innerHTML = '<p class="muted" style="padding:2rem">Loading\u2026</p>';
   try {
     const res = await fetch('/api/meta-ads-insights', { credentials: 'same-origin' });
     const data = await res.json();
@@ -1895,55 +1895,52 @@ async function renderAdIntelligenceTab() {
       return;
     }
     const ads = data.ads.slice(0, 12);
-    el.innerHTML = `
-      <div style="padding:1.5rem">
-        <h2 style="margin:0 0 0.25rem">Ad Intelligence</h2>
-        <p class="muted" style="margin:0 0 1.5rem">Competitor ads from Meta Ads Library · Last updated ${data.date || 'unknown'}</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem">
-          ${ads.map(ad => renderAdCard(ad)).join('')}
-        </div>
-      </div>`;
+    el.innerHTML =
+      '<div style="padding:1.5rem">' +
+      '<h2 style="margin:0 0 0.25rem">Ad Intelligence</h2>' +
+      '<p class="muted" style="margin:0 0 1.5rem">Competitor ads from Meta Ads Library \u00b7 Last updated ' + esc(data.date || 'unknown') + '</p>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem">' +
+      ads.map(function(ad) { return renderAdCard(ad); }).join('') +
+      '</div></div>';
   } catch (e) {
-    el.innerHTML = `<p class="muted" style="padding:2rem">Error loading data: ${esc(e.message)}</p>`;
+    el.innerHTML = '<p class="muted" style="padding:2rem">Error loading data: ' + esc(e.message) + '</p>';
   }
 }
 
 function renderAdCard(ad) {
-  const platforms = (ad.publisherPlatforms || []).map(p =>
-    `<span style="background:#e8f4fd;color:#1a6fa8;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:600;text-transform:uppercase">${esc(p)}</span>`
-  ).join(' ');
-  const analysisHtml = ad.analysis ? `
-    <div style="background:#f8f9fa;border-radius:6px;padding:0.75rem;margin-top:0.75rem;font-size:13px">
-      <div style="font-weight:600;margin-bottom:0.25rem">${esc(ad.analysis.headline || '')}</div>
-      <div class="muted">${esc(ad.analysis.whyEffective || '')}</div>
-      ${ad.analysis.messagingAngle ? `<div style="margin-top:0.5rem"><span style="font-weight:600">Angle:</span> ${esc(ad.analysis.messagingAngle)}</div>` : ''}
-    </div>` : '';
-  return `
-    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
-      <div style="padding:0.875rem 1rem 0.75rem;border-bottom:1px solid #f3f4f6">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.35rem">
-          <span style="font-weight:700;font-size:14px">${esc(ad.pageName)}</span>
-          <span style="font-size:11px;color:#6b7280;white-space:nowrap;margin-left:0.5rem">Score: ${ad.effectivenessScore}</span>
-        </div>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
-          ${platforms}
-          <span style="font-size:11px;color:#6b7280">Running ${ad.longevityDays}d</span>
-          <span style="font-size:11px;color:#6b7280">${ad.variationCount} variations</span>
-        </div>
-      </div>
-      ${ad.adSnapshotUrl ? `<iframe src="${esc(ad.adSnapshotUrl)}" style="width:100%;height:280px;border:none" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>` : ''}
-      <div style="padding:0.75rem 1rem;font-size:13px;flex:1">
-        ${ad.adCreativeBody ? `<div style="margin-bottom:0.5rem">${esc(ad.adCreativeBody.slice(0, 200))}${ad.adCreativeBody.length > 200 ? '…' : ''}</div>` : ''}
-        ${analysisHtml}
-      </div>
-      <div style="padding:0.75rem 1rem;border-top:1px solid #f3f4f6">
-        <button onclick="openCreativeGenerator('${esc(ad.id)}','${esc(ad.pageName)}')" style="width:100%;padding:0.5rem;background:#1a6fa8;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer">Generate Creative</button>
-      </div>
-    </div>`;
+  const platforms = (ad.publisherPlatforms || []).map(function(p) {
+    return '<span style="background:#e8f4fd;color:#1a6fa8;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:600;text-transform:uppercase">' + esc(p) + '</span>';
+  }).join(' ');
+  const analysisHtml = ad.analysis
+    ? '<div style="background:#f8f9fa;border-radius:6px;padding:0.75rem;margin-top:0.75rem;font-size:13px">' +
+      '<div style="font-weight:600;margin-bottom:0.25rem">' + esc(ad.analysis.headline || '') + '</div>' +
+      '<div class="muted">' + esc(ad.analysis.whyEffective || '') + '</div>' +
+      (ad.analysis.messagingAngle ? '<div style="margin-top:0.5rem"><span style="font-weight:600">Angle:</span> ' + esc(ad.analysis.messagingAngle) + '</div>' : '') +
+      '</div>'
+    : '';
+  return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">' +
+    '<div style="padding:0.875rem 1rem 0.75rem;border-bottom:1px solid #f3f4f6">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.35rem">' +
+    '<span style="font-weight:700;font-size:14px">' + esc(ad.pageName) + '</span>' +
+    '<span style="font-size:11px;color:#6b7280;white-space:nowrap;margin-left:0.5rem">Score: ' + ad.effectivenessScore + '</span>' +
+    '</div>' +
+    '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">' +
+    platforms +
+    '<span style="font-size:11px;color:#6b7280">Running ' + ad.longevityDays + 'd</span>' +
+    '<span style="font-size:11px;color:#6b7280">' + ad.variationCount + ' variations</span>' +
+    '</div></div>' +
+    (ad.adSnapshotUrl ? '<iframe src="' + esc(ad.adSnapshotUrl) + '" style="width:100%;height:280px;border:none" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>' : '') +
+    '<div style="padding:0.75rem 1rem;font-size:13px;flex:1">' +
+    (ad.adCreativeBody ? '<div style="margin-bottom:0.5rem">' + esc(ad.adCreativeBody.slice(0, 200)) + (ad.adCreativeBody.length > 200 ? '\u2026' : '') + '</div>' : '') +
+    analysisHtml +
+    '</div>' +
+    '<div style="padding:0.75rem 1rem;border-top:1px solid #f3f4f6">' +
+    '<button onclick="openCreativeGenerator(\'' + esc(ad.id) + '\',\'' + esc(ad.pageName) + '\')" style="width:100%;padding:0.5rem;background:#1a6fa8;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer">Generate Creative</button>' +
+    '</div></div>';
 }
 
 function openCreativeGenerator(adId, pageName) {
-  const name = prompt(`Generate creative for "${pageName}".\n\nEnter product image filenames (comma-separated, from data/product-images/) or leave blank for lifestyle-only:\nExample: deodorant-stick.webp,deodorant-lifestyle.webp`);
+  const name = prompt('Generate creative for "' + pageName + '".\n\nEnter product image filenames (comma-separated, from data/product-images/) or leave blank for lifestyle-only:\nExample: deodorant-stick.webp,deodorant-lifestyle.webp');
   // name=null means user cancelled; name='' means they left it blank (lifestyle-only) — both are valid
   if (name === null) return; // user cancelled the prompt
   const productImages = name ? name.split(',').map(s => s.trim()).filter(Boolean) : [];
