@@ -165,8 +165,14 @@ async function main() {
         console.log(`  Proposal updated: ${p.campaignName}`);
       }
     }
-    if (!isDryRun) writeFileSync(file, JSON.stringify(campaign, null, 2));
-    else console.log('[DRY RUN] Would write:', JSON.stringify(campaign, null, 2).slice(0, 200));
+    if (!isDryRun) {
+      writeFileSync(file, JSON.stringify(campaign, null, 2));
+      const { notify } = await import('../../lib/notify.js');
+      const body = isClarification(result)
+        ? `Campaign re-analysis complete. Still needs clarification:\n${result.clarificationNeeded.join('\n')}`
+        : `Campaign re-analysis complete. Proposal updated: ${result.proposals?.[0]?.campaignName || campaign.proposal?.campaignName || campaignArg}`;
+      await notify({ subject: 'Campaign Analyzer — re-analysis complete', body }).catch(() => {});
+    } else console.log('[DRY RUN] Would write:', JSON.stringify(campaign, null, 2).slice(0, 200));
     return;
   }
 
