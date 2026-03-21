@@ -116,6 +116,8 @@ Check:
 3. Are CTR, CPC, and CVR realistic for this keyword type (branded / generic / long-tail)?
 4. Any other contradictions between the narrative and the numbers?
 
+IMPORTANT — Brand search exception: If this is a branded search campaign (targeting the store/brand name), the following ranges are accepted industry benchmarks and do NOT require site-specific data to justify: CTR 15–30%, CVR 8–15%, CPC $0.30–$0.60. Only flag brand search projections if they fall OUTSIDE these ranges, not merely because they weren't derived from observed GSC data.
+
 Output ONLY valid JSON — no markdown:
 { "approved": true }
 OR
@@ -188,6 +190,20 @@ For each opportunity output a complete proposal with:
 - rationale (cite specific data points — see RATIONALE REQUIREMENTS below)
 - dataPoints (key metrics that informed the proposal)
 - projections: { ctr, cpc, cvr, dailyClicks, monthlyCost, monthlyConversions, monthlyRevenue }
+
+BRAND SEARCH: Always include one brand search campaign (targeting the store name and close variants) if no active brand campaign exists. Use these fixed conservative benchmarks — do not deviate:
+- CPC: $0.50
+- CTR: 15%
+- CVR: 8%
+- suggestedBudget: $5/day
+
+Compute projections from these inputs in order, then write the rationale from the computed numbers:
+  dailyClicks = suggestedBudget / CPC = $5 / $0.50 = 10
+  monthlyCost = dailyClicks × CPC × 30 = 10 × $0.50 × 30 = $150
+  monthlyConversions = dailyClicks × CVR × 30 = 10 × 0.08 × 30 = 24
+  monthlyRevenue = monthlyConversions × AOV = 24 × [AOV from data]
+  ROAS = monthlyRevenue / monthlyCost
+The rationale must cite these same computed numbers — do not recalculate independently.
 
 ROAS REQUIREMENT: Only propose campaigns where projected ROAS (monthlyRevenue ÷ monthlyCost) ≥ 0.85.
 The AOV will be provided in the data. Use it to compute monthlyRevenue = monthlyConversions × AOV.
