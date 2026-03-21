@@ -183,7 +183,8 @@ async function main() {
   }
 
   // Step 1: Create budget + campaign in one mutate call
-  const budgetOp = buildBudgetOperation(budget, customerResourceName, proposal.campaignName);
+  const budgetName = `${proposal.campaignName} — ${new Date().toISOString().slice(0, 10)}`;
+  const budgetOp = buildBudgetOperation(budget, customerResourceName, budgetName);
   const campaignOp = buildCampaignOperation(proposal.campaignName, `${customerResourceName}/campaignBudgets/-1`, mobileAdj, customerResourceName);
 
   process.stdout.write('  Creating budget + campaign... ');
