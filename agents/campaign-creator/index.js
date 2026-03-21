@@ -192,9 +192,11 @@ async function main() {
   );
 
   if (existing.length > 0) {
-    campaignRN = existing[0].campaign.resource_name;
-    campaignId = existing[0].campaign.id;
-    budgetRN = existing[0].campaign.campaign_budget;
+    const c = existing[0].campaign;
+    campaignRN = c?.resourceName ?? c?.resource_name;
+    campaignId = c?.id;
+    budgetRN = c?.campaignBudget ?? c?.campaign_budget;
+    if (!campaignRN) throw new Error(`Found existing campaign but could not read resource name. Raw: ${JSON.stringify(existing[0])}`);
     console.log(`found (${campaignRN})`);
   } else {
     console.log('none');
@@ -224,7 +226,8 @@ async function main() {
     );
     let adGroupRN;
     if (existingAg.length > 0) {
-      adGroupRN = existingAg[0].ad_group.resource_name;
+      const ag0 = existingAg[0].adGroup ?? existingAg[0].ad_group;
+      adGroupRN = ag0?.resourceName ?? ag0?.resource_name;
       console.log(`  Ad group: ${ag.name} (existing: ${adGroupRN})`);
     } else {
       const adGroupOp = buildAdGroupOperation(ag.name, campaignRN, customerResourceName);
