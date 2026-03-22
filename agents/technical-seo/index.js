@@ -287,9 +287,21 @@ async function audit() {
   sections.push('');
 
   // Pages with links to broken pages
-  const linksTo404 = csvs['Error-indexable-Page_has_links_to_broken_page'] || [];
+  // Filter out cdn-cgi/l/email-protection — Cloudflare obfuscates footer email addresses into this
+  // URL, which Ahrefs flags as a 404. These are false positives in the site template, not fixable
+  // by editing article body_html, and grow linearly with every new page published.
+  const allLinksTo404 = csvs['Error-indexable-Page_has_links_to_broken_page'] || [];
+  const linksTo404 = allLinksTo404.filter((r) => {
+    // internal_outlinks_to_4xx contains the broken URL(s); internal_outlinks_codes_(4xx) contains the HTTP code
+    const brokenUrl = r.internal_outlinks_to_4xx || r['internal_outlinks_codes_(4xx)'] || '';
+    return !brokenUrl.includes('cdn-cgi/l/email-protection');
+  });
+  const cdnCgiCount = allLinksTo404.length - linksTo404.length;
   sections.push(`### 2. Pages Linking to 404s — ${linksTo404.length} pages`);
   sections.push('**Fixable with:** `fix-links`\n');
+  if (cdnCgiCount > 0) {
+    sections.push(`> ℹ️ ${cdnCgiCount} pages filtered out — they only link to \`cdn-cgi/l/email-protection\` (Cloudflare email obfuscation in site footer, not fixable via article content)\n`);
+  }
   for (const r of linksTo404.slice(0, 15)) {
     const broken = r['internal_outlinks_codes_(4xx)'] || r.internal_outlinks_to_4xx || '';
     sections.push(`- ${r.url} → ${broken.split('\n')[0]}`);
@@ -515,11 +527,15 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
   // Also load link details
   const linkRows = loadCSV('Error-indexable-Page_has_links_to_broken_page-links');
   // Build: sourceUrl → Set of broken hrefs
+  // Skip cdn-cgi/l/email-protection — Cloudflare obfuscates footer email addresses into this URL.
+  // Ahrefs flags it as a 404 on every page with the footer email. It lives in the theme template,
+  // not in article body_html, so it cannot be fixed by editing article content.
   const brokenBySource = {};
   for (const r of linkRows) {
-    const src = r.source || r.url || '';
-    const target = r.url_to || r.target || r.broken_url || '';
+    const src = r.source_url || r.source || r.url || '';
+    const target = r.target_url || r.url_to || r.target || r.broken_url || '';
     if (!src || !target) continue;
+    if (target.includes('cdn-cgi/l/email-protection')) continue;
     if (!brokenBySource[src]) brokenBySource[src] = new Set();
     brokenBySource[src].add(target);
   }
@@ -650,8 +666,8 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
   const linkRows = loadCSV('Warning-indexable-Page_has_links_to_redirect-links');
   const redirectBySource = {};
   for (const r of linkRows) {
-    const src = r.source || r.url || '';
-    const target = r.url_to || r.target || '';
+    const src = r.source_url || r.source || r.url || '';
+    const target = r.target_url || r.url_to || r.target || '';
     if (!src || !target) continue;
     if (!redirectBySource[src]) redirectBySource[src] = new Set();
     redirectBySource[src].add(target);

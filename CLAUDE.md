@@ -85,7 +85,63 @@ These rules are non-negotiable and apply to every change in every conversation:
 2. **Test locally before pushing to the server** — run the agent or script locally, verify output, and check the local dashboard if UI is involved. Only push to the server after local verification passes.
 3. **These rules apply even for small fixes** — a one-line bug fix still requires a branch and local test.
 
+## Code Review Checklist — Dashboard (`agents/dashboard/index.js`)
+
+Any code added to the dashboard must pass these checks before approval. These are recurring bug sources discovered through repeated post-merge fixes.
+
+### Template Literal Escape Sequences (Critical)
+
+The dashboard serves all browser JavaScript inside a single Node.js template literal:
+```js
+const HTML = `
+  ...
+  <script>
+    // ALL browser JS lives here
+  </script>
+`;
+```
+
+Node.js processes escape sequences in the template literal before the browser ever sees the string. This means:
+
+- `\n` inside the template literal → Node.js converts to a literal newline character → browser receives a multi-line string literal → **SyntaxError**
+- `\\n` in source → Node.js produces `\n` → browser receives the escape sequence → correct
+
+**Required check:** Grep every new or modified function inside the `<script>` block for `[^\\]\n` patterns inside string literals (single-quoted, double-quoted, or template strings that are part of the browser JS). Every occurrence must use `\\n` instead of `\n`.
+
+Common locations where this error appears:
+- `alert()` and `prompt()` calls with multi-line messages
+- `confirm()` calls
+- Any string built with `\n` for display purposes
+
+**Reviewer action:** Run this before approving any dashboard PR:
+```bash
+grep -n "\\\\n\|'[^']*\\n[^']*'" agents/dashboard/index.js | grep -v "^Binary"
+```
+Flag any `\n` (single backslash) inside string literals that will be rendered as browser JavaScript.
+
 Failure to follow these rules risks deploying broken code to the production server and losing work that cannot be recovered from context.
+
+## Code Review Checklist — Blog Post Writer (`agents/blog-post-writer/index.js`)
+
+These checks must be in the writer and must throw (not warn) before saving the HTML file:
+
+1. **`stop_reason === 'max_tokens'`** — the Claude API reports this when output is cut off at the token limit. If true, the post is incomplete. **Throw an error, do not save.** The file will be truncated mid-tag and produce broken links when published.
+2. **Unclosed `href` attribute** — regex `/href="[^"]*$/` on the HTML. If matched, output was truncated mid-link. **Throw an error, do not save.** Shopify will auto-close the broken tag into a malformed URL (e.g. `https://domain.com/blogs/news/best`) that 404s.
+3. Both checks must be fatal (throw), not warnings, because truncated HTML published to Shopify creates broken links that require a manual audit cycle to discover and fix.
+
+## Code Review Checklist — Technical SEO Agent (`agents/technical-seo/index.js`)
+
+**Cloudflare `cdn-cgi/l/email-protection` false positives:**
+
+Ahrefs flags `https://www.realskincare.com/cdn-cgi/l/email-protection` as a 404 on every page that has the site footer email address. This is Cloudflare's email obfuscation feature — it replaces email addresses in the rendered HTML with a script-decoded URL. Ahrefs crawls the raw HTML and sees a 404.
+
+**This is not a real broken link. Do not include it in audit reports or attempt to fix it.**
+
+Rules:
+- Filter `cdn-cgi/l/email-protection` from all broken-link counts and listings in the audit report
+- Filter it from `fix-links` processing — the URL lives in the theme template, not `body_html`, so it cannot be fixed by editing article content
+- If the filter removes all broken links for a given page, skip that page entirely
+- Add a note in the audit report explaining how many pages were filtered and why
 
 ## Project Conventions
 
