@@ -233,6 +233,28 @@ Rules:
   return msg.content[0].text.trim().replace(/^["']|["']$/g, '');
 }
 
+async function generateSeoTitle(currentTitle, url) {
+  const msg = await claude.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 100,
+    messages: [{
+      role: 'user',
+      content: `Write a concise SEO title tag for this page.
+
+Brand: ${config.name}
+Current title (too long): "${currentTitle}"
+Page URL: ${url}
+
+Rules:
+- 50–60 characters maximum (strictly)
+- Keep the primary keyword from the current title
+- Format: [Keyword/Topic] – ${config.name}
+- Return ONLY the title text, nothing else`,
+    }],
+  });
+  return msg.content[0].text.trim().replace(/^["']|["']$/g, '');
+}
+
 async function generateAltText(imageUrl, pageTitle, pageUrl) {
   const msg = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -859,6 +881,46 @@ async function fixMeta({ dryRun = false } = {}) {
   }
 
   console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} meta descriptions`);
+
+  // ── Title tags too long ──────────────────────────────────────────────────
+  console.log('\n  Collecting title tag issues...');
+  const titleTooLong = loadCSV('Warning-indexable-Title_too_long');
+  const titleToFix = titleTooLong.filter((r) => ['product', 'collection'].includes(pageType(r.url)));
+  console.log(`  ${titleToFix.length} products/collections with title tags too long\n`);
+  let titleFixed = 0;
+
+  for (const row of titleToFix) {
+    const type = pageType(row.url);
+    const path = urlPath(row.url);
+    const currentTitle = row.title?.split('\n')[0] || path;
+    process.stdout.write(`  ${path} [title_too_long] → generating title... `);
+    const newTitle = await generateSeoTitle(currentTitle, row.url);
+    console.log(`(${newTitle.length} chars)`);
+
+    if (!dryRun) {
+      try {
+        if (type === 'product') {
+          const entry = productIdx[path];
+          if (!entry) { console.log(`    [SKIP] Product not found`); continue; }
+          await upsertMetafield('products', entry.productId, 'global', 'title_tag', newTitle);
+          titleFixed++;
+        } else if (type === 'collection') {
+          const entry = collectionIdx[path];
+          if (!entry) { console.log(`    [SKIP] Collection not found`); continue; }
+          const resource = entry.type === 'custom_collections' ? 'custom_collections' : 'smart_collections';
+          await upsertMetafield(resource, entry.collectionId, 'global', 'title_tag', newTitle);
+          titleFixed++;
+        }
+      } catch (e) {
+        console.log(`    Error: ${e.message}`);
+      }
+    } else {
+      console.log(`    Would set: "${newTitle}"`);
+      titleFixed++;
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${titleFixed} title tags`);
 }
 
 // ── COMMAND: fix-alt-text ─────────────────────────────────────────────────────
