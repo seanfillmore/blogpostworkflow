@@ -789,8 +789,13 @@ const HTML = `<!DOCTYPE html>
   .rationale-details summary:hover { color: var(--indigo); }
   .camp-proposal { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; background: var(--bg); }
   .camp-proposal:last-child { margin-bottom: 0; }
-  .camp-proposal-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .camp-proposal-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
   .camp-proposal-meta { font-size: 12px; color: var(--muted); line-height: 1.8; }
+  .camp-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .camp-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .camp-kpi-value { font-size: 18px; font-weight: 800; line-height: 1; color: var(--text); }
+  .camp-kpi-label { font-size: 9px; color: var(--muted); margin-top: 3px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+  .camp-kpi-delta { font-size: 10px; margin-top: 3px; font-weight: 600; }
   .adgroups-row    { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .adgroups-label  { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 4px; flex-shrink: 0; }
   .adgroup-pill    { background: #f1f5f9; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--text); }
@@ -2563,15 +2568,24 @@ function renderCampaignCards(campaigns, aovBarrier) {
       const cpcDelta = recent.vsProjection?.cpcDelta ?? null;
       const cvrDelta = recent.vsProjection?.cvrDelta ?? null;
       const days = c.googleAds?.createdAt ? Math.floor((Date.now() - new Date(c.googleAds.createdAt)) / 86400000) : '?';
+      const spendVal  = recent.spend != null ? '$' + recent.spend : '—';
+      const ctrVal    = recent.ctr != null ? (recent.ctr * 100).toFixed(2) + '%' : '—';
+      const cpcVal    = recent.avgCpc != null ? '$' + recent.avgCpc.toFixed(2) : '—';
+      const cvrVal    = recent.conversionRate != null ? (recent.conversionRate * 100).toFixed(2) + '%' : '—';
+      const fmtDelta  = (v, fmt) => v !== null ? '<span class="camp-kpi-delta ' + (v >= 0 ? 'delta-up' : 'delta-down') + '">' + (v >= 0 ? '+' : '') + fmt(v) + ' vs proj</span>' : '';
+      const fmtDeltaInv = (v, fmt) => v !== null ? '<span class="camp-kpi-delta ' + (v <= 0 ? 'delta-up' : 'delta-down') + '">' + (v >= 0 ? '+' : '') + fmt(v) + ' vs proj</span>' : '';
       return '<div class="camp-proposal">' +
         '<div class="camp-proposal-name">' + esc(c.proposal?.campaignName || c.id) + ' <span class="section-note">Day ' + days + '</span></div>' +
-        '<div style="margin:8px 0;background:#f1f5f9;border-radius:4px;height:6px"><div style="background:#818cf8;height:6px;border-radius:4px;width:' + Math.min(spendPct, 100) + '%"></div></div>' +
-        '<div class="camp-proposal-meta">Spend: $' + (recent.spend ?? '—') + '/' + budget + ' (' + spendPct + '%) &nbsp;|&nbsp; ' +
-        'CTR: <span class="' + (ctrDelta >= 0 ? 'delta-up' : 'delta-down') + '">' + (ctrDelta !== null ? (ctrDelta >= 0 ? '+' : '') + (ctrDelta * 100).toFixed(2) + 'pp' : '—') + '</span> &nbsp;|&nbsp; ' +
-        'CPC: <span class="' + (cpcDelta <= 0 ? 'delta-up' : 'delta-down') + '">' + (cpcDelta !== null ? (cpcDelta >= 0 ? '+' : '') + '$' + cpcDelta.toFixed(2) : '—') + '</span> &nbsp;|&nbsp; ' +
-        'CVR: <span class="' + (cvrDelta >= 0 ? 'delta-up' : 'delta-down') + '">' + (cvrDelta !== null ? (cvrDelta >= 0 ? '+' : '') + (cvrDelta * 100).toFixed(2) + 'pp' : '—') + '</span></div>' +
-        (openAlerts.length > 0 ? '<div style="margin-top:8px">' + openAlerts.map(a =>
-          '<span class="alert-badge-inline">' + esc(a.type.replace(/_/g, ' ')) + '</span>' +
+        '<div style="background:#f1f5f9;border-radius:4px;height:5px;margin-bottom:4px"><div style="background:#818cf8;height:5px;border-radius:4px;width:' + Math.min(spendPct, 100) + '%"></div></div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">$' + (recent.spend ?? '—') + ' of $' + budget + '/day (' + spendPct + '%)</div>' +
+        '<div class="camp-kpi-grid">' +
+          '<div class="camp-kpi"><div class="camp-kpi-value">' + spendVal + '</div><div class="camp-kpi-label">Spend</div></div>' +
+          '<div class="camp-kpi"><div class="camp-kpi-value">' + ctrVal + '</div><div class="camp-kpi-label">CTR</div>' + fmtDelta(ctrDelta, v => (v * 100).toFixed(2) + 'pp') + '</div>' +
+          '<div class="camp-kpi"><div class="camp-kpi-value">' + cpcVal + '</div><div class="camp-kpi-label">Avg CPC</div>' + fmtDeltaInv(cpcDelta, v => '$' + Math.abs(v).toFixed(2)) + '</div>' +
+          '<div class="camp-kpi"><div class="camp-kpi-value">' + cvrVal + '</div><div class="camp-kpi-label">CVR</div>' + fmtDelta(cvrDelta, v => (v * 100).toFixed(2) + 'pp') + '</div>' +
+        '</div>' +
+        (openAlerts.length > 0 ? '<div style="margin-top:10px">' + openAlerts.map(a =>
+          '<span class="alert-badge-inline">' + esc(a.type.replace(/_/g, ' ')) + '</span> ' +
           '<button style="font-size:11px;padding:2px 6px" onclick="resolveAlert(&apos;' + esc(c.id) + '&apos;,&apos;' + esc(a.type) + '&apos;)">Resolve</button> '
         ).join('') + '</div>' : '') +
         '</div>';
