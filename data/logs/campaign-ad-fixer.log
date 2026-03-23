@@ -1,0 +1,383 @@
+[2026-03-21T15:05:30.501Z] Campaign Ad Fixer starting
+[2026-03-21T15:05:30.510Z] Checking campaigns: 23681754187
+[2026-03-21T15:05:31.568Z] Found 2 disapproved ad(s)
+[2026-03-21T15:05:31.569Z]   Fixing: RSC | Brand | Search / Brand - Phrase
+[2026-03-21T15:05:31.569Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:05:34.165Z]   New headlines: Real Skin Care | Official Site | Natural Skincare Products | Shop Real Skin Care Online | Coconut Oil Body Care | Non-Toxic & Clean Formulas | Honest Ingredients You Trust
+[2026-03-21T15:05:34.165Z]   New descriptions: Visit the official Real Skin Care store. Natural coconut oil lotions, soaps & toothpaste. | Shop clean, non-toxic skincare at Real Skin Care. Paraben-free, SLS-free, cruelty-free.
+[2026-03-21T15:05:34.382Z]   Error fixing Brand - Phrase: Google Ads mutate partial failure: {"code":3,"message":"Multiple errors in ‘details’. First error: Field 'ad.responsive_search_ad.descriptions' cannot be modified by 'UPDATE' operation., at mutate_operations[0].ad_group_ad_operation.update.ad.responsive_search_ad.descriptions","details":[{"@type":"type.googleapis.com/google.ads.googleads.v20.errors.GoogleAdsFailure","errors":[{"errorCode":{"requestError":"IMMUTABLE_FIELD"},"message":"Field 'ad.responsive_search_ad.descriptions' cannot be modified by 'UPDATE' operation.","location":{"fieldPathElements":[{"fieldName":"mutate_operations","index":0},{"fieldName":"ad_group_ad_operation"},{"fieldName":"update"},{"fieldName":"ad"},{"fieldName":"responsive_search_ad"},{"fieldName":"descriptions"}]}},{"errorCode":{"requestError":"IMMUTABLE_FIELD"},"message":"Field 'ad.responsive_search_ad.headlines' cannot be modified by 'UPDATE' operation.","location":{"fieldPathElements":[{"fieldName":"mutate_operations","index":0},{"fieldName":"ad_group_ad_operation"},{"fieldName":"update"},{"fieldName":"ad"},{"fieldName":"responsive_search_ad"},{"fieldName":"headlines"}]}}],"requestId":"SNKl3y1OubJbWH_RP7ppZQ"}]}
+[2026-03-21T15:05:34.382Z]   Fixing: RSC | Brand | Search / Brand - Exact
+[2026-03-21T15:05:34.382Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:05:37.432Z]   New headlines: Real Skin Care | Official Site | Natural Skincare Products | Shop Real Skin Care Today | Clean & Non-Toxic Skincare | Coconut Oil Skincare Experts | Free of Harsh Chemicals | Real Ingredients Real Results | Trusted Natural Body Care
+[2026-03-21T15:05:37.432Z]   New descriptions: Shop our full line of natural, non-toxic skincare made with real coconut oil. Visit us tod | Discover clean skincare that works. Paraben-free, SLS-free & made with organic coconut oil | Real Skin Care offers honest ingredients for your body. Browse coconut oil lotions & soaps
+[2026-03-21T15:05:37.664Z]   Error fixing Brand - Exact: Google Ads mutate partial failure: {"code":3,"message":"Multiple errors in ‘details’. First error: Field 'ad.responsive_search_ad.descriptions' cannot be modified by 'UPDATE' operation., at mutate_operations[0].ad_group_ad_operation.update.ad.responsive_search_ad.descriptions","details":[{"@type":"type.googleapis.com/google.ads.googleads.v20.errors.GoogleAdsFailure","errors":[{"errorCode":{"requestError":"IMMUTABLE_FIELD"},"message":"Field 'ad.responsive_search_ad.descriptions' cannot be modified by 'UPDATE' operation.","location":{"fieldPathElements":[{"fieldName":"mutate_operations","index":0},{"fieldName":"ad_group_ad_operation"},{"fieldName":"update"},{"fieldName":"ad"},{"fieldName":"responsive_search_ad"},{"fieldName":"descriptions"}]}},{"errorCode":{"requestError":"IMMUTABLE_FIELD"},"message":"Field 'ad.responsive_search_ad.headlines' cannot be modified by 'UPDATE' operation.","location":{"fieldPathElements":[{"fieldName":"mutate_operations","index":0},{"fieldName":"ad_group_ad_operation"},{"fieldName":"update"},{"fieldName":"ad"},{"fieldName":"responsive_search_ad"},{"fieldName":"headlines"}]}}],"requestId":"uiRQ5qoOAFwifdyFUVy3Gg"}]}
+[2026-03-21T15:05:37.856Z] Done.
+[2026-03-21T15:11:27.481Z] Campaign Ad Fixer starting
+[2026-03-21T15:11:27.493Z] Checking campaigns: 23681754187
+[2026-03-21T15:11:28.486Z] Found 2 disapproved ad(s)
+[2026-03-21T15:11:28.488Z]   Checking: RSC | Brand | Search / Brand - Exact
+[2026-03-21T15:11:28.489Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:11:28.489Z]   URL violation — STORE_DOMAIN missing, cannot auto-fix
+[2026-03-21T15:11:28.490Z]   Checking: RSC | Brand | Search / Brand - Phrase
+[2026-03-21T15:11:28.490Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:11:28.491Z]   URL violation — STORE_DOMAIN missing, cannot auto-fix
+[2026-03-21T15:11:28.751Z] Done.
+[2026-03-21T15:12:36.975Z] Campaign Ad Fixer starting
+[2026-03-21T15:12:36.983Z] Checking campaigns: 23681754187
+[2026-03-21T15:12:38.010Z] Found 2 disapproved ad(s)
+[2026-03-21T15:12:38.010Z]   Checking: RSC | Brand | Search / Brand - Phrase
+[2026-03-21T15:12:38.010Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:12:38.011Z]   URL violation — updating final URL: https://realskincare-com.com/ → https://www.realskincare.com/
+[2026-03-21T15:12:38.206Z]   Error updating URL: Google Ads mutate partial failure: {"code":3,"message":"Field 'ad.final_urls' cannot be modified by 'UPDATE' operation., at mutate_operations[0].ad_group_ad_operation.update.ad.final_urls","details":[{"@type":"type.googleapis.com/google.ads.googleads.v20.errors.GoogleAdsFailure","errors":[{"errorCode":{"requestError":"IMMUTABLE_FIELD"},"message":"Field 'ad.final_urls' cannot be modified by 'UPDATE' operation.","location":{"fieldPathElements":[{"fieldName":"mutate_operations","index":0},{"fieldName":"ad_group_ad_operation"},{"fieldName":"update"},{"fieldName":"ad"},{"fieldName":"final_urls"}]}}],"requestId":"eVNLWmv7XGoXdy8MiqBMnA"}]}
+[2026-03-21T15:12:38.206Z]   Checking: RSC | Brand | Search / Brand - Exact
+[2026-03-21T15:12:38.206Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:12:38.206Z]   URL violation — updating final URL: https://realskincare-com.com/ → https://www.realskincare.com/
+[2026-03-21T15:12:38.414Z]   Error updating URL: Google Ads mutate partial failure: {"code":3,"message":"Field 'ad.final_urls' cannot be modified by 'UPDATE' operation., at mutate_operations[0].ad_group_ad_operation.update.ad.final_urls","details":[{"@type":"type.googleapis.com/google.ads.googleads.v20.errors.GoogleAdsFailure","errors":[{"errorCode":{"requestError":"IMMUTABLE_FIELD"},"message":"Field 'ad.final_urls' cannot be modified by 'UPDATE' operation.","location":{"fieldPathElements":[{"fieldName":"mutate_operations","index":0},{"fieldName":"ad_group_ad_operation"},{"fieldName":"update"},{"fieldName":"ad"},{"fieldName":"final_urls"}]}}],"requestId":"yBcHPkX9AfzqOakLPftz3w"}]}
+[2026-03-21T15:12:38.668Z] Done.
+[2026-03-21T15:13:59.300Z] Campaign Ad Fixer starting
+[2026-03-21T15:13:59.311Z] Checking campaigns: 23681754187
+[2026-03-21T15:14:00.313Z] Found 2 disapproved ad(s)
+[2026-03-21T15:14:00.313Z]   Fixing: RSC | Brand | Search / Brand - Exact
+[2026-03-21T15:14:00.314Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:14:00.314Z]   URL fix: https://realskincare-com.com/ → https://www.realskincare.com/
+[2026-03-21T15:14:00.883Z]   Removed: customers/5099369750/adGroupAds/197033363720~801428135939
+[2026-03-21T15:14:01.463Z]   Created replacement ad
+[2026-03-21T15:14:01.463Z]   Fixing: RSC | Brand | Search / Brand - Phrase
+[2026-03-21T15:14:01.464Z]   Violations: DESTINATION_NOT_WORKING
+[2026-03-21T15:14:01.464Z]   URL fix: https://realskincare-com.com/ → https://www.realskincare.com/
+[2026-03-21T15:14:01.823Z]   Removed: customers/5099369750/adGroupAds/199703715332~801313290402
+[2026-03-21T15:14:02.379Z]   Created replacement ad
+[2026-03-21T15:14:02.381Z] Fatal: urlIssues is not defined
+[2026-03-21T15:15:22.565Z] Campaign Ad Fixer starting
+[2026-03-21T15:15:22.576Z] Checking campaigns: 23681754187
+[2026-03-21T15:15:23.509Z] No disapproved ads found — exiting.
+[2026-03-21T15:26:57.996Z] Campaign Ad Fixer starting
+[2026-03-21T15:26:57.996Z] Campaign Ad Fixer starting
+[2026-03-21T15:26:58.002Z] Checking campaigns: 23681754187
+[2026-03-21T15:26:58.002Z] Checking campaigns: 23681754187
+[2026-03-21T15:26:58.928Z] No disapproved ads found — exiting.
+[2026-03-21T15:26:58.928Z] No disapproved ads found — exiting.
+[2026-03-21T16:05:01.912Z] Campaign Ad Fixer starting
+[2026-03-21T16:05:01.912Z] Campaign Ad Fixer starting
+[2026-03-21T16:05:01.919Z] Checking campaigns: 23681754187
+[2026-03-21T16:05:01.919Z] Checking campaigns: 23681754187
+[2026-03-21T16:05:02.940Z] No disapproved ads found — exiting.
+[2026-03-21T16:05:02.940Z] No disapproved ads found — exiting.
+[2026-03-21T17:05:01.498Z] Campaign Ad Fixer starting
+[2026-03-21T17:05:01.498Z] Campaign Ad Fixer starting
+[2026-03-21T17:05:01.504Z] Checking campaigns: 23681754187
+[2026-03-21T17:05:01.504Z] Checking campaigns: 23681754187
+[2026-03-21T17:05:02.529Z] No disapproved ads found — exiting.
+[2026-03-21T17:05:02.529Z] No disapproved ads found — exiting.
+[2026-03-21T18:05:02.103Z] Campaign Ad Fixer starting
+[2026-03-21T18:05:02.103Z] Campaign Ad Fixer starting
+[2026-03-21T18:05:02.110Z] Checking campaigns: 23681754187
+[2026-03-21T18:05:02.110Z] Checking campaigns: 23681754187
+[2026-03-21T18:05:03.221Z] No disapproved ads found — exiting.
+[2026-03-21T18:05:03.221Z] No disapproved ads found — exiting.
+[2026-03-21T19:05:01.836Z] Campaign Ad Fixer starting
+[2026-03-21T19:05:01.836Z] Campaign Ad Fixer starting
+[2026-03-21T19:05:01.842Z] Checking campaigns: 23681754187
+[2026-03-21T19:05:01.842Z] Checking campaigns: 23681754187
+[2026-03-21T19:05:02.802Z] No disapproved ads found — exiting.
+[2026-03-21T19:05:02.802Z] No disapproved ads found — exiting.
+[2026-03-21T20:05:02.012Z] Campaign Ad Fixer starting
+[2026-03-21T20:05:02.012Z] Campaign Ad Fixer starting
+[2026-03-21T20:05:02.019Z] Checking campaigns: 23681754187
+[2026-03-21T20:05:02.019Z] Checking campaigns: 23681754187
+[2026-03-21T20:05:03.198Z] No disapproved ads found — exiting.
+[2026-03-21T20:05:03.198Z] No disapproved ads found — exiting.
+[2026-03-21T21:05:01.603Z] Campaign Ad Fixer starting
+[2026-03-21T21:05:01.603Z] Campaign Ad Fixer starting
+[2026-03-21T21:05:01.609Z] Checking campaigns: 23681754187
+[2026-03-21T21:05:01.609Z] Checking campaigns: 23681754187
+[2026-03-21T21:05:02.884Z] No disapproved ads found — exiting.
+[2026-03-21T21:05:02.884Z] No disapproved ads found — exiting.
+[2026-03-21T22:05:01.381Z] Campaign Ad Fixer starting
+[2026-03-21T22:05:01.381Z] Campaign Ad Fixer starting
+[2026-03-21T22:05:01.387Z] Checking campaigns: 23681754187
+[2026-03-21T22:05:01.387Z] Checking campaigns: 23681754187
+[2026-03-21T22:05:02.380Z] No disapproved ads found — exiting.
+[2026-03-21T22:05:02.380Z] No disapproved ads found — exiting.
+[2026-03-21T23:05:01.899Z] Campaign Ad Fixer starting
+[2026-03-21T23:05:01.899Z] Campaign Ad Fixer starting
+[2026-03-21T23:05:01.905Z] Checking campaigns: 23681754187
+[2026-03-21T23:05:01.905Z] Checking campaigns: 23681754187
+[2026-03-21T23:05:02.812Z] No disapproved ads found — exiting.
+[2026-03-21T23:05:02.812Z] No disapproved ads found — exiting.
+[2026-03-22T00:05:01.370Z] Campaign Ad Fixer starting
+[2026-03-22T00:05:01.370Z] Campaign Ad Fixer starting
+[2026-03-22T00:05:01.376Z] Checking campaigns: 23681754187
+[2026-03-22T00:05:01.376Z] Checking campaigns: 23681754187
+[2026-03-22T00:05:02.302Z] No disapproved ads found — exiting.
+[2026-03-22T00:05:02.302Z] No disapproved ads found — exiting.
+[2026-03-22T01:05:01.972Z] Campaign Ad Fixer starting
+[2026-03-22T01:05:01.972Z] Campaign Ad Fixer starting
+[2026-03-22T01:05:01.980Z] Checking campaigns: 23681754187
+[2026-03-22T01:05:01.980Z] Checking campaigns: 23681754187
+[2026-03-22T01:05:02.942Z] No disapproved ads found — exiting.
+[2026-03-22T01:05:02.942Z] No disapproved ads found — exiting.
+[2026-03-22T02:05:01.744Z] Campaign Ad Fixer starting
+[2026-03-22T02:05:01.744Z] Campaign Ad Fixer starting
+[2026-03-22T02:05:01.751Z] Checking campaigns: 23681754187
+[2026-03-22T02:05:01.751Z] Checking campaigns: 23681754187
+[2026-03-22T02:05:02.921Z] No disapproved ads found — exiting.
+[2026-03-22T02:05:02.921Z] No disapproved ads found — exiting.
+[2026-03-22T03:05:01.544Z] Campaign Ad Fixer starting
+[2026-03-22T03:05:01.544Z] Campaign Ad Fixer starting
+[2026-03-22T03:05:01.551Z] Checking campaigns: 23681754187
+[2026-03-22T03:05:01.551Z] Checking campaigns: 23681754187
+[2026-03-22T03:05:02.478Z] No disapproved ads found — exiting.
+[2026-03-22T03:05:02.478Z] No disapproved ads found — exiting.
+[2026-03-22T04:05:02.082Z] Campaign Ad Fixer starting
+[2026-03-22T04:05:02.082Z] Campaign Ad Fixer starting
+[2026-03-22T04:05:02.087Z] Checking campaigns: 23681754187
+[2026-03-22T04:05:02.087Z] Checking campaigns: 23681754187
+[2026-03-22T04:05:03.067Z] No disapproved ads found — exiting.
+[2026-03-22T04:05:03.067Z] No disapproved ads found — exiting.
+[2026-03-22T05:05:01.718Z] Campaign Ad Fixer starting
+[2026-03-22T05:05:01.718Z] Campaign Ad Fixer starting
+[2026-03-22T05:05:01.726Z] Checking campaigns: 23681754187
+[2026-03-22T05:05:01.726Z] Checking campaigns: 23681754187
+[2026-03-22T05:05:02.867Z] No disapproved ads found — exiting.
+[2026-03-22T05:05:02.867Z] No disapproved ads found — exiting.
+[2026-03-22T06:05:01.783Z] Campaign Ad Fixer starting
+[2026-03-22T06:05:01.783Z] Campaign Ad Fixer starting
+[2026-03-22T06:05:01.790Z] Checking campaigns: 23681754187
+[2026-03-22T06:05:01.790Z] Checking campaigns: 23681754187
+[2026-03-22T06:05:02.907Z] No disapproved ads found — exiting.
+[2026-03-22T06:05:02.907Z] No disapproved ads found — exiting.
+[2026-03-22T07:05:01.272Z] Campaign Ad Fixer starting
+[2026-03-22T07:05:01.272Z] Campaign Ad Fixer starting
+[2026-03-22T07:05:01.277Z] Checking campaigns: 23681754187
+[2026-03-22T07:05:01.277Z] Checking campaigns: 23681754187
+[2026-03-22T07:05:01.991Z] No disapproved ads found — exiting.
+[2026-03-22T07:05:01.991Z] No disapproved ads found — exiting.
+[2026-03-22T08:05:01.852Z] Campaign Ad Fixer starting
+[2026-03-22T08:05:01.852Z] Campaign Ad Fixer starting
+[2026-03-22T08:05:01.858Z] Checking campaigns: 23681754187
+[2026-03-22T08:05:01.858Z] Checking campaigns: 23681754187
+[2026-03-22T08:05:02.993Z] No disapproved ads found — exiting.
+[2026-03-22T08:05:02.993Z] No disapproved ads found — exiting.
+[2026-03-22T09:05:01.623Z] Campaign Ad Fixer starting
+[2026-03-22T09:05:01.623Z] Campaign Ad Fixer starting
+[2026-03-22T09:05:01.629Z] Checking campaigns: 23681754187
+[2026-03-22T09:05:01.629Z] Checking campaigns: 23681754187
+[2026-03-22T09:05:02.509Z] No disapproved ads found — exiting.
+[2026-03-22T09:05:02.509Z] No disapproved ads found — exiting.
+[2026-03-22T10:05:01.158Z] Campaign Ad Fixer starting
+[2026-03-22T10:05:01.158Z] Campaign Ad Fixer starting
+[2026-03-22T10:05:01.163Z] Checking campaigns: 23681754187
+[2026-03-22T10:05:01.163Z] Checking campaigns: 23681754187
+[2026-03-22T10:05:02.073Z] No disapproved ads found — exiting.
+[2026-03-22T10:05:02.073Z] No disapproved ads found — exiting.
+[2026-03-22T11:05:01.395Z] Campaign Ad Fixer starting
+[2026-03-22T11:05:01.395Z] Campaign Ad Fixer starting
+[2026-03-22T11:05:01.399Z] Checking campaigns: 23681754187
+[2026-03-22T11:05:01.399Z] Checking campaigns: 23681754187
+[2026-03-22T11:05:02.132Z] No disapproved ads found — exiting.
+[2026-03-22T11:05:02.132Z] No disapproved ads found — exiting.
+[2026-03-22T12:05:01.530Z] Campaign Ad Fixer starting
+[2026-03-22T12:05:01.530Z] Campaign Ad Fixer starting
+[2026-03-22T12:05:01.536Z] Checking campaigns: 23681754187
+[2026-03-22T12:05:01.536Z] Checking campaigns: 23681754187
+[2026-03-22T12:05:02.573Z] No disapproved ads found — exiting.
+[2026-03-22T12:05:02.573Z] No disapproved ads found — exiting.
+[2026-03-22T13:05:01.697Z] Campaign Ad Fixer starting
+[2026-03-22T13:05:01.697Z] Campaign Ad Fixer starting
+[2026-03-22T13:05:01.718Z] Checking campaigns: 23681754187
+[2026-03-22T13:05:01.718Z] Checking campaigns: 23681754187
+[2026-03-22T13:05:02.690Z] No disapproved ads found — exiting.
+[2026-03-22T13:05:02.690Z] No disapproved ads found — exiting.
+[2026-03-22T14:05:01.781Z] Campaign Ad Fixer starting
+[2026-03-22T14:05:01.781Z] Campaign Ad Fixer starting
+[2026-03-22T14:05:01.787Z] Checking campaigns: 23681754187
+[2026-03-22T14:05:01.787Z] Checking campaigns: 23681754187
+[2026-03-22T14:05:02.652Z] No disapproved ads found — exiting.
+[2026-03-22T14:05:02.652Z] No disapproved ads found — exiting.
+[2026-03-22T15:05:01.311Z] Campaign Ad Fixer starting
+[2026-03-22T15:05:01.311Z] Campaign Ad Fixer starting
+[2026-03-22T15:05:01.317Z] Checking campaigns: 23681754187
+[2026-03-22T15:05:01.317Z] Checking campaigns: 23681754187
+[2026-03-22T15:05:02.262Z] No disapproved ads found — exiting.
+[2026-03-22T15:05:02.262Z] No disapproved ads found — exiting.
+[2026-03-22T16:05:01.849Z] Campaign Ad Fixer starting
+[2026-03-22T16:05:01.849Z] Campaign Ad Fixer starting
+[2026-03-22T16:05:01.855Z] Checking campaigns: 23681754187
+[2026-03-22T16:05:01.855Z] Checking campaigns: 23681754187
+[2026-03-22T16:05:03.030Z] No disapproved ads found — exiting.
+[2026-03-22T16:05:03.030Z] No disapproved ads found — exiting.
+[2026-03-22T17:05:02.056Z] Campaign Ad Fixer starting
+[2026-03-22T17:05:02.056Z] Campaign Ad Fixer starting
+[2026-03-22T17:05:02.062Z] Checking campaigns: 23681754187
+[2026-03-22T17:05:02.062Z] Checking campaigns: 23681754187
+[2026-03-22T17:05:03.148Z] No disapproved ads found — exiting.
+[2026-03-22T17:05:03.148Z] No disapproved ads found — exiting.
+[2026-03-22T18:05:01.878Z] Campaign Ad Fixer starting
+[2026-03-22T18:05:01.878Z] Campaign Ad Fixer starting
+[2026-03-22T18:05:01.885Z] Checking campaigns: 23681754187
+[2026-03-22T18:05:01.885Z] Checking campaigns: 23681754187
+[2026-03-22T18:05:02.970Z] No disapproved ads found — exiting.
+[2026-03-22T18:05:02.970Z] No disapproved ads found — exiting.
+[2026-03-22T19:05:01.519Z] Campaign Ad Fixer starting
+[2026-03-22T19:05:01.519Z] Campaign Ad Fixer starting
+[2026-03-22T19:05:01.524Z] Checking campaigns: 23681754187
+[2026-03-22T19:05:01.524Z] Checking campaigns: 23681754187
+[2026-03-22T19:05:02.507Z] No disapproved ads found — exiting.
+[2026-03-22T19:05:02.507Z] No disapproved ads found — exiting.
+[2026-03-22T20:05:02.112Z] Campaign Ad Fixer starting
+[2026-03-22T20:05:02.112Z] Campaign Ad Fixer starting
+[2026-03-22T20:05:02.118Z] Checking campaigns: 23681754187
+[2026-03-22T20:05:02.118Z] Checking campaigns: 23681754187
+[2026-03-22T20:05:03.282Z] No disapproved ads found — exiting.
+[2026-03-22T20:05:03.282Z] No disapproved ads found — exiting.
+[2026-03-22T21:05:01.918Z] Campaign Ad Fixer starting
+[2026-03-22T21:05:01.918Z] Campaign Ad Fixer starting
+[2026-03-22T21:05:01.924Z] Checking campaigns: 23681754187
+[2026-03-22T21:05:01.924Z] Checking campaigns: 23681754187
+[2026-03-22T21:05:03.074Z] No disapproved ads found — exiting.
+[2026-03-22T21:05:03.074Z] No disapproved ads found — exiting.
+[2026-03-22T22:05:01.565Z] Campaign Ad Fixer starting
+[2026-03-22T22:05:01.565Z] Campaign Ad Fixer starting
+[2026-03-22T22:05:01.571Z] Checking campaigns: 23681754187
+[2026-03-22T22:05:01.571Z] Checking campaigns: 23681754187
+[2026-03-22T22:05:02.721Z] No disapproved ads found — exiting.
+[2026-03-22T22:05:02.721Z] No disapproved ads found — exiting.
+[2026-03-22T23:05:02.083Z] Campaign Ad Fixer starting
+[2026-03-22T23:05:02.083Z] Campaign Ad Fixer starting
+[2026-03-22T23:05:02.090Z] Checking campaigns: 23681754187
+[2026-03-22T23:05:02.090Z] Checking campaigns: 23681754187
+[2026-03-22T23:05:03.392Z] No disapproved ads found — exiting.
+[2026-03-22T23:05:03.392Z] No disapproved ads found — exiting.
+[2026-03-23T00:05:01.298Z] Campaign Ad Fixer starting
+[2026-03-23T00:05:01.298Z] Campaign Ad Fixer starting
+[2026-03-23T00:05:01.305Z] Checking campaigns: 23681754187
+[2026-03-23T00:05:01.305Z] Checking campaigns: 23681754187
+[2026-03-23T00:05:02.100Z] No disapproved ads found — exiting.
+[2026-03-23T00:05:02.100Z] No disapproved ads found — exiting.
+[2026-03-23T01:05:01.691Z] Campaign Ad Fixer starting
+[2026-03-23T01:05:01.691Z] Campaign Ad Fixer starting
+[2026-03-23T01:05:01.698Z] Checking campaigns: 23681754187
+[2026-03-23T01:05:01.698Z] Checking campaigns: 23681754187
+[2026-03-23T01:05:02.821Z] No disapproved ads found — exiting.
+[2026-03-23T01:05:02.821Z] No disapproved ads found — exiting.
+[2026-03-23T02:05:01.324Z] Campaign Ad Fixer starting
+[2026-03-23T02:05:01.324Z] Campaign Ad Fixer starting
+[2026-03-23T02:05:01.329Z] Checking campaigns: 23681754187
+[2026-03-23T02:05:01.329Z] Checking campaigns: 23681754187
+[2026-03-23T02:05:02.280Z] No disapproved ads found — exiting.
+[2026-03-23T02:05:02.280Z] No disapproved ads found — exiting.
+[2026-03-23T03:05:01.820Z] Campaign Ad Fixer starting
+[2026-03-23T03:05:01.820Z] Campaign Ad Fixer starting
+[2026-03-23T03:05:01.827Z] Checking campaigns: 23681754187
+[2026-03-23T03:05:01.827Z] Checking campaigns: 23681754187
+[2026-03-23T03:05:03.013Z] No disapproved ads found — exiting.
+[2026-03-23T03:05:03.013Z] No disapproved ads found — exiting.
+[2026-03-23T04:05:01.954Z] Campaign Ad Fixer starting
+[2026-03-23T04:05:01.954Z] Campaign Ad Fixer starting
+[2026-03-23T04:05:01.964Z] Checking campaigns: 23681754187
+[2026-03-23T04:05:01.964Z] Checking campaigns: 23681754187
+[2026-03-23T04:05:03.114Z] No disapproved ads found — exiting.
+[2026-03-23T04:05:03.114Z] No disapproved ads found — exiting.
+[2026-03-23T05:05:01.781Z] Campaign Ad Fixer starting
+[2026-03-23T05:05:01.781Z] Campaign Ad Fixer starting
+[2026-03-23T05:05:01.796Z] Checking campaigns: 23681754187
+[2026-03-23T05:05:01.796Z] Checking campaigns: 23681754187
+[2026-03-23T05:05:02.961Z] No disapproved ads found — exiting.
+[2026-03-23T05:05:02.961Z] No disapproved ads found — exiting.
+[2026-03-23T06:05:01.483Z] Campaign Ad Fixer starting
+[2026-03-23T06:05:01.483Z] Campaign Ad Fixer starting
+[2026-03-23T06:05:01.491Z] Checking campaigns: 23681754187
+[2026-03-23T06:05:01.491Z] Checking campaigns: 23681754187
+[2026-03-23T06:05:02.433Z] No disapproved ads found — exiting.
+[2026-03-23T06:05:02.433Z] No disapproved ads found — exiting.
+[2026-03-23T07:05:01.255Z] Campaign Ad Fixer starting
+[2026-03-23T07:05:01.255Z] Campaign Ad Fixer starting
+[2026-03-23T07:05:01.263Z] Checking campaigns: 23681754187
+[2026-03-23T07:05:01.263Z] Checking campaigns: 23681754187
+[2026-03-23T07:05:02.206Z] No disapproved ads found — exiting.
+[2026-03-23T07:05:02.206Z] No disapproved ads found — exiting.
+[2026-03-23T08:05:01.735Z] Campaign Ad Fixer starting
+[2026-03-23T08:05:01.735Z] Campaign Ad Fixer starting
+[2026-03-23T08:05:01.744Z] Checking campaigns: 23681754187
+[2026-03-23T08:05:01.744Z] Checking campaigns: 23681754187
+[2026-03-23T08:05:02.876Z] No disapproved ads found — exiting.
+[2026-03-23T08:05:02.876Z] No disapproved ads found — exiting.
+[2026-03-23T09:05:01.638Z] Campaign Ad Fixer starting
+[2026-03-23T09:05:01.638Z] Campaign Ad Fixer starting
+[2026-03-23T09:05:01.647Z] Checking campaigns: 23681754187
+[2026-03-23T09:05:01.647Z] Checking campaigns: 23681754187
+[2026-03-23T09:05:02.874Z] No disapproved ads found — exiting.
+[2026-03-23T09:05:02.874Z] No disapproved ads found — exiting.
+[2026-03-23T10:05:01.774Z] Campaign Ad Fixer starting
+[2026-03-23T10:05:01.774Z] Campaign Ad Fixer starting
+[2026-03-23T10:05:01.781Z] Checking campaigns: 23681754187
+[2026-03-23T10:05:01.781Z] Checking campaigns: 23681754187
+[2026-03-23T10:05:02.846Z] No disapproved ads found — exiting.
+[2026-03-23T10:05:02.846Z] No disapproved ads found — exiting.
+[2026-03-23T11:05:01.410Z] Campaign Ad Fixer starting
+[2026-03-23T11:05:01.410Z] Campaign Ad Fixer starting
+[2026-03-23T11:05:01.415Z] Checking campaigns: 23681754187
+[2026-03-23T11:05:01.415Z] Checking campaigns: 23681754187
+[2026-03-23T11:05:02.335Z] No disapproved ads found — exiting.
+[2026-03-23T11:05:02.335Z] No disapproved ads found — exiting.
+[2026-03-23T12:05:01.214Z] Campaign Ad Fixer starting
+[2026-03-23T12:05:01.214Z] Campaign Ad Fixer starting
+[2026-03-23T12:05:01.221Z] Checking campaigns: 23681754187
+[2026-03-23T12:05:01.221Z] Checking campaigns: 23681754187
+[2026-03-23T12:05:02.273Z] No disapproved ads found — exiting.
+[2026-03-23T12:05:02.273Z] No disapproved ads found — exiting.
+[2026-03-23T13:05:01.722Z] Campaign Ad Fixer starting
+[2026-03-23T13:05:01.722Z] Campaign Ad Fixer starting
+[2026-03-23T13:05:01.751Z] Checking campaigns: 23681754187
+[2026-03-23T13:05:01.751Z] Checking campaigns: 23681754187
+[2026-03-23T13:05:03.263Z] No disapproved ads found — exiting.
+[2026-03-23T13:05:03.263Z] No disapproved ads found — exiting.
+[2026-03-23T14:05:01.793Z] Campaign Ad Fixer starting
+[2026-03-23T14:05:01.793Z] Campaign Ad Fixer starting
+[2026-03-23T14:05:01.798Z] Checking campaigns: 23681754187
+[2026-03-23T14:05:01.798Z] Checking campaigns: 23681754187
+[2026-03-23T14:05:03.057Z] No disapproved ads found — exiting.
+[2026-03-23T14:05:03.057Z] No disapproved ads found — exiting.
+[2026-03-23T15:05:01.203Z] Campaign Ad Fixer starting
+[2026-03-23T15:05:01.203Z] Campaign Ad Fixer starting
+[2026-03-23T15:05:01.208Z] Checking campaigns: 23681754187
+[2026-03-23T15:05:01.208Z] Checking campaigns: 23681754187
+[2026-03-23T15:05:02.183Z] No disapproved ads found — exiting.
+[2026-03-23T15:05:02.183Z] No disapproved ads found — exiting.
+[2026-03-23T16:05:01.814Z] Campaign Ad Fixer starting
+[2026-03-23T16:05:01.814Z] Campaign Ad Fixer starting
+[2026-03-23T16:05:01.821Z] Checking campaigns: 23681754187
+[2026-03-23T16:05:01.821Z] Checking campaigns: 23681754187
+[2026-03-23T16:05:02.958Z] No disapproved ads found — exiting.
+[2026-03-23T16:05:02.958Z] No disapproved ads found — exiting.
+[2026-03-23T17:05:01.471Z] Campaign Ad Fixer starting
+[2026-03-23T17:05:01.471Z] Campaign Ad Fixer starting
+[2026-03-23T17:05:01.477Z] Checking campaigns: 23681754187
+[2026-03-23T17:05:01.477Z] Checking campaigns: 23681754187
+[2026-03-23T17:05:02.479Z] No disapproved ads found — exiting.
+[2026-03-23T17:05:02.479Z] No disapproved ads found — exiting.
+[2026-03-23T18:05:01.332Z] Campaign Ad Fixer starting
+[2026-03-23T18:05:01.332Z] Campaign Ad Fixer starting
+[2026-03-23T18:05:01.339Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T18:05:01.339Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T18:05:02.260Z] No disapproved ads found — exiting.
+[2026-03-23T18:05:02.260Z] No disapproved ads found — exiting.
+[2026-03-23T19:05:02.053Z] Campaign Ad Fixer starting
+[2026-03-23T19:05:02.053Z] Campaign Ad Fixer starting
+[2026-03-23T19:05:02.060Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T19:05:02.060Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T19:05:03.319Z] No disapproved ads found — exiting.
+[2026-03-23T19:05:03.319Z] No disapproved ads found — exiting.
+[2026-03-23T20:05:02.058Z] Campaign Ad Fixer starting
+[2026-03-23T20:05:02.058Z] Campaign Ad Fixer starting
+[2026-03-23T20:05:02.065Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T20:05:02.065Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T20:05:03.321Z] No disapproved ads found — exiting.
+[2026-03-23T20:05:03.321Z] No disapproved ads found — exiting.
+[2026-03-23T21:05:01.266Z] Campaign Ad Fixer starting
+[2026-03-23T21:05:01.266Z] Campaign Ad Fixer starting
+[2026-03-23T21:05:01.271Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T21:05:01.271Z] Checking campaigns: 23681754187, 23683460846
+[2026-03-23T21:05:02.331Z] No disapproved ads found — exiting.
+[2026-03-23T21:05:02.331Z] No disapproved ads found — exiting.

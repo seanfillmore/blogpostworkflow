@@ -1,0 +1,153 @@
+{
+  "date": "2026-03-20",
+  "summary": {
+    "clicks": 2,
+    "impressions": 17,
+    "ctr": 0.1176,
+    "position": 26.7
+  },
+  "topQueries": [
+    {
+      "query": "coconut oil as deodorant",
+      "clicks": 1,
+      "impressions": 6,
+      "ctr": 0.16666666666666666,
+      "position": 10.666666666666666
+    },
+    {
+      "query": "harmful soap ingredients",
+      "clicks": 1,
+      "impressions": 1,
+      "ctr": 1,
+      "position": 1
+    },
+    {
+      "query": "100 coconut oil lip balm",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 14
+    },
+    {
+      "query": "30 hand soaps to avoid",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 15
+    },
+    {
+      "query": "absolutely natural lotion",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 70
+    },
+    {
+      "query": "aceite de coco para axilas",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 11
+    },
+    {
+      "query": "actual soap bars",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 1
+    },
+    {
+      "query": "advantages of coconut oil for skin",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 53
+    },
+    {
+      "query": "all natural and organic lip balm",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 54
+    },
+    {
+      "query": "all natural body cream",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 47
+    }
+  ],
+  "topPages": [
+    {
+      "page": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+      "clicks": 2,
+      "impressions": 54,
+      "ctr": 0.037037037037037035,
+      "position": 4.666666666666666
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "clicks": 1,
+      "impressions": 111,
+      "ctr": 0.009009009009009009,
+      "position": 4.8108108108108105
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-risewell-alternatives-2025",
+      "clicks": 1,
+      "impressions": 6,
+      "ctr": 0.16666666666666666,
+      "position": 4.666666666666666
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-tom-s-of-maine-alternatives-2025",
+      "clicks": 1,
+      "impressions": 22,
+      "ctr": 0.045454545454545456,
+      "position": 9.545454545454545
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free",
+      "clicks": 1,
+      "impressions": 252,
+      "ctr": 0.003968253968253968,
+      "position": 5.400793650793651
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "clicks": 1,
+      "impressions": 60,
+      "ctr": 0.016666666666666666,
+      "position": 9.433333333333334
+    },
+    {
+      "page": "https://www.realskincare.com/collections/organic-body-lotion",
+      "clicks": 1,
+      "impressions": 97,
+      "ctr": 0.010309278350515464,
+      "position": 33.68041237113402
+    },
+    {
+      "page": "https://realskincare.com/",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 13
+    },
+    {
+      "page": "https://www.realskincare.com/",
+      "clicks": 0,
+      "impressions": 52,
+      "ctr": 0,
+      "position": 5.211538461538462
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+      "clicks": 0,
+      "impressions": 103,
+      "ctr": 0,
+      "position": 48.970873786407765
+    }
+  ]
+}

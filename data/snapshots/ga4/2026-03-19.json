@@ -1,0 +1,59 @@
+{
+  "date": "2026-03-19",
+  "sessions": 7,
+  "users": 7,
+  "newUsers": 7,
+  "bounceRate": 0.571,
+  "avgSessionDuration": 7,
+  "conversions": 0,
+  "conversionRate": 0,
+  "revenue": 0,
+  "topSources": [
+    {
+      "source": "(direct)",
+      "medium": "(none)",
+      "sessions": 6,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "source": "m.facebook.com",
+      "medium": "referral",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    }
+  ],
+  "topLandingPages": [
+    {
+      "page": "/",
+      "sessions": 2,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "/collections/main-menu-3/products/coconut-soap",
+      "sessions": 2,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "/blogs/news/best-natural-toothpaste-2025",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "/collections/aluminum-free-deodorant/products/coconut-oil-deodorant",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "page": "/collections/paraben-free-lotion",
+      "sessions": 1,
+      "conversions": 0,
+      "revenue": 0
+    }
+  ]
+}

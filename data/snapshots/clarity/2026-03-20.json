@@ -1,0 +1,100 @@
+{
+  "date": "2026-03-20",
+  "sessions": {
+    "total": 33,
+    "bots": 17,
+    "real": 16,
+    "distinctUsers": 55,
+    "pagesPerSession": 1.4821428571428572
+  },
+  "engagement": {
+    "totalTime": 42,
+    "activeTime": 23
+  },
+  "behavior": {
+    "scrollDepth": 43.51,
+    "rageClickPct": 0,
+    "deadClickPct": 0,
+    "scriptErrorPct": 15.15,
+    "quickbackPct": 3.03,
+    "excessiveScrollPct": 0
+  },
+  "devices": [
+    {
+      "name": "PC",
+      "sessions": 25
+    },
+    {
+      "name": "Mobile",
+      "sessions": 8
+    }
+  ],
+  "countries": [
+    {
+      "name": "China",
+      "sessions": 14
+    },
+    {
+      "name": "United States",
+      "sessions": 13
+    },
+    {
+      "name": "Denmark",
+      "sessions": 2
+    },
+    {
+      "name": "Italy",
+      "sessions": 2
+    },
+    {
+      "name": "India",
+      "sessions": 1
+    },
+    {
+      "name": "Israel",
+      "sessions": 1
+    }
+  ],
+  "topPages": [
+    {
+      "title": "Coconut Lotion | 6-Ingredient Clean Body Moisturizer – realskincare.com",
+      "sessions": 7
+    },
+    {
+      "title": "Coconut Oil Based Skin Care Products | Real Skin Care – realskincare.com",
+      "sessions": 6
+    },
+    {
+      "title": "Best Aluminum Free Deodorant in 2026 (That Actually Works) – realskincare.com",
+      "sessions": 3
+    },
+    {
+      "title": "Best Natural Toothpaste - 2026 – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Best Fluoride Free Toothpaste – 2025 – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "All Natural Coconut Oil Deodorant | Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Coconut Oil Chapstick – Natural Lip Balm 4-Pack – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Shop Natural Lip Balm - Real Skin Care – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Best Body Lotion for Sensitive Skin 2025 – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Shop Coconut Moisturizer- Real Skin Care – realskincare.com",
+      "sessions": 1
+    }
+  ]
+}

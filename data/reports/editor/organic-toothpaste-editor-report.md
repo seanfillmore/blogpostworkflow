@@ -1,19 +1,16 @@
 # Editor Report — Best Organic Toothpaste: What to Look For & Why It Matters
 **Post:** data/posts/organic-toothpaste.html
 **Target keyword:** organic toothpaste
-**Reviewed:** March 18, 2026
+**Reviewed:** March 23, 2026
 
 ---
 ## 1. Link Health
 
-**14 links OK** | **5 broken/unreachable**
+**17 links OK** | **2 broken/unreachable**
 
 | URL | Anchor Text | Status | Error |
 |-----|-------------|--------|-------|
-| https://www.realskincare.com/collections/vegan-toothpaste | vegan toothpaste | 503 |  |
-| https://www.realskincare.com/blogs/news/toothpaste-without-sodium-lauryl-sulfate-why-it-matters | Toothpaste Without Sodium Lauryl Sulfate: Why It Matters | 404 |  |
 | https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2026 | Best Toothpaste Without SLS – 2026 | 404 |  |
-| https://www.realskincare.com/blogs/news/sls-free-toothpaste-the-gentle-switch-worth-making | SLS Free Toothpaste: The Gentle Switch Worth Making | 404 |  |
 | https://www.realskincare.com/blogs/news/best-natural-toothpaste-2026 | Best Natural Toothpaste – 2026 | 404 |  |
 
 ---
@@ -36,104 +33,123 @@ No external source links found in the post.
 
 The following posts are in the same topical cluster and should be linked from this post (or vice versa) as the cluster grows:
 
+- **[Best Organic Toothpaste: What to Look For & Why It Matters](https://www.realskincare.com/blogs/news/best-organic-toothpaste-what-to-look-for-why-it-matters)** *(0 inbound links)*
+- **[No Fluoride Toothpaste: What to Use & Why It Works](https://www.realskincare.com/blogs/news/no-fluoride-toothpaste-what-to-use-why-it-works)** *(0 inbound links)*
+- **[Toothpaste Without SLS: What to Know & Best Options](https://www.realskincare.com/blogs/news/toothpaste-without-sls-what-to-know-best-options)** *(0 inbound links)*
+- **[SLS Toothpaste: What It Is & Why to Go SLS-Free](https://www.realskincare.com/blogs/news/sls-toothpaste-what-it-is-why-to-go-sls-free)** *(0 inbound links)*
 - **[Best Fluoride Free Toothpaste – 2025](https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025)** *(9 inbound links)*
 - **[Best Davids Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-davids-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
 - **[Best Dr. Bronner’s Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
 - **[Best Hello Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-hello-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
-- **[Best Natural Toothpaste - 2025](https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025)** *(6 inbound links)*
-- **[Best SLS Free Toothpaste - 2026](https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025)** *(5 inbound links)*
+- **[Best Natural Toothpaste - 2026](https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025)** *(6 inbound links)*
+- **[SLS Free Toothpaste: The Gentle Switch Worth Making](https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025)** *(5 inbound links)*
 - **[Can You Use Coconut Oil as Toothpaste? Here’s What Science Says](https://www.realskincare.com/blogs/news/can-coconut-oil-replace-toothpaste-discover-the-benefits-of-this-natural-alternative)** *(0 inbound links)*
 - **[Can You Use Coconut Oil as Toothpaste? 2026 Guide + DIY Recipes](https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste)** *(0 inbound links)*
 - **[Discover the Power of Coconut Whitening Toothpaste](https://www.realskincare.com/blogs/news/discover-the-power-of-coconut-whitening-toothpaste)** *(orphan — no inbound links yet)*
+- **[Best Natural Bar Soap for Men: Clean Skin Starts Here](https://www.realskincare.com/blogs/news/best-natural-bar-soap-for-men-clean-skin-starts-here)** *(0 inbound links)*
+- **[Best Organic Toothpaste: What to Look For & Why It Matters](https://www.realskincare.com/blogs/news/best-organic-toothpaste-what-to-look-for-why-it-matters)** *(0 inbound links)*
+- **[No Fluoride Toothpaste: What to Use & Why It Works](https://www.realskincare.com/blogs/news/no-fluoride-toothpaste-what-to-use-why-it-works)** *(0 inbound links)*
+- **[Toothpaste Without SLS: What to Know & Best Options](https://www.realskincare.com/blogs/news/toothpaste-without-sls-what-to-know-best-options)** *(0 inbound links)*
+- **[SLS Toothpaste: What It Is & Why to Go SLS-Free](https://www.realskincare.com/blogs/news/sls-toothpaste-what-it-is-why-to-go-sls-free)** *(0 inbound links)*
+- **[Best Organic Lip Balm: What to Look For & Top Picks](https://www.realskincare.com/blogs/news/best-organic-lip-balm-what-to-look-for-top-picks)** *(0 inbound links)*
+- **[Natural Lip Balm: Best Ingredients & How to Choose](https://www.realskincare.com/blogs/news/natural-lip-balm-best-ingredients-how-to-choose)** *(0 inbound links)*
+- **[Best Aluminum Free Deodorant in 2026 (That Actually Works)](https://www.realskincare.com/blogs/news/best-aluminum-free-deodorant-in-2026-that-actually-works)** *(0 inbound links)*
+- **[Best Natural Deodorant for Sensitive Skin in 2026](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-sensitive-skin-in-2026)** *(0 inbound links)*
+- **[Best Natural Roll On Deodorant: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-roll-on-deodorant-clean-picks-that-work)** *(0 inbound links)*
+- **[Best Natural Deodorant for Men in 2026 (That Works)](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-men-in-2025-that-works)** *(0 inbound links)*
+- **[Best Natural Deodorant for Women: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-women-clean-picks-that-work)** *(0 inbound links)*
+- **[Why Use Natural Deodorant? Benefits & Reasons to Switch](https://www.realskincare.com/blogs/news/why-use-natural-deodorants)** *(orphan — no inbound links yet)*
 
 > Note: As new deodorant posts are published, revisit this post to add cross-links to the growing cluster.
 
 ---
 ## 5. Editorial Review
 
-# REVIEW: Best Organic Toothpaste: What to Look For & Why It Matters
-
----
+# EDITORIAL REVIEW
 
 ## 1. TOPICAL RELEVANCE
-**VERDICT:** Excellent
+**VERDICT:** Pass
 
-**NOTES:** Post is tightly focused on the target keyword "organic toothpaste" throughout. All sections directly address what makes organic toothpaste genuinely organic, how to evaluate certifications and ingredients, and how to choose the right formula. No off-topic tangents; content moves methodically from definition → ingredients → avoidance → fluoride decision → use cases → decision framework → FAQs. Strong topical coherence.
+**NOTES:** The post is tightly focused on "organic toothpaste" and the target keyword threads throughout. The content systematically covers what "organic" means, ingredient breakdowns, use cases, and decision-making frameworks — all directly supporting the keyword intent. No significant off-topic tangents detected.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
-**VERDICT:** Excellent
+**VERDICT:** Pass
 
-**NOTES:** Voice is warm, conversational, and accessible. Short paragraphs (mostly 2–3 sentences), frequent use of "you/your," and plain language throughout. Examples: "The label says clean. The formula doesn't." and "Flip the tube over and the ingredient list often tells a completely different story." Jargon (RDA scale, hydroxyapatite, fluorosis) is introduced with plain-language explanations immediately following. No clinical tone; the post reads like trusted advice from a knowledgeable friend.
+**NOTES:** Voice is warm, conversational, and conversational. Sentences are mostly short; the post uses "you/your" naturally ("you'll see," "your dentist," "you can trust"). Plain-language explanations follow jargon (e.g., "RDA scale — a measure of how much a toothpaste abrades enamel"). Paragraph lengths are appropriate; only one or two exceed 4 sentences, and those are justified by list content. Eighth-grade readability is maintained throughout.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-**VERDICT:** ✓ PASS
+**VERDICT:** Pass
 
-**NOTES:** Post accurately reflects Real Skin Care's coconut oil toothpaste formula. All ingredients listed in the breakdown section match the canonical list: coconut oil ✓, baking soda ✓, myrrh powder ✓, stevia ✓, peppermint/spearmint/cinnamon/clove essential oils ✓, xanthan gum ✓, purified spring water ✓. Product format (squeeze bottle) is correctly identified. No false ingredient claims. The post explicitly states RSC uses "stevia" (not xylitol), and correctly identifies baking soda as the abrasive and primary polishing agent.
+**NOTES:** The post accurately describes RSC's toothpaste ingredients: baking soda (abrasive), coconut oil (base), stevia (sweetener — not xylitol), myrrh powder, peppermint/spearmint/cinnamon/clove essential oils, xanthan gum, purified spring water. Product format (squeeze bottle) is correctly referenced. All ingredient descriptions align with the provided spec sheet.
 
 ---
 
 ## 4. YEAR ACCURACY
 **VERDICT:** Pass
 
-**NOTES:** Code pre-checks passed. Byline states "Reviewed for accuracy: March 2026," which aligns with the standing feedback date (March 9, 2026). No stale years in headings or body text. Related articles section includes "Best Toothpaste Without SLS – 2026" and "Best Natural Toothpaste – 2026" with matching 2026 dates. No year mismatches detected between titles, URLs, or body content.
+**NOTES:** Code pre-check confirmed no stale years in headings. The byline states "Reviewed for accuracy: March 2026," which is current. Related articles section includes "– 2026" dating conventions for evergreen updates.
 
 ---
 
 ## 5. FACTUAL CONCERNS
-**VERDICT:** Good (minor unsourced claim flagged)
+**VERDICT:** Pass (with minor note)
 
-**NOTES:** Post makes strong factual claims supported by reference to clinical evidence (coconut oil antibacterial properties, baking soda RDA scale, myrrh antimicrobial research, fluorosis in children). Most claims are well-grounded or clearly attributed to dentistry consensus. However, the statement "Studies have examined coconut oil's role in reducing harmful oral bacteria" is cited to an NCBI link that is not displayed with a full URL in the source list, making independent verification difficult. The claim itself is reasonable and widely supported, but source transparency could be stronger. No exaggerated or false claims detected. Fluoride discussion is balanced and non-alarmist.
+**NOTES:** Claims are well-supported and appropriately hedged. The post correctly attributes coconut oil's antimicrobial properties to "laboratory studies" and "examined" claims (not absolute statements). The RDA scale explanation is accurate. Fluoride guidance is balanced and defers to dentist consultation. One minor issue: the post states baking soda "alkalizes the mouth" — this is simplified but not inaccurate in context (baking soda does raise oral pH). No exaggerated or unsubstantiated claims detected.
 
 ---
 
 ## 6. CTA QUALITY
-**VERDICT:** Excellent
+**VERDICT:** BLOCKER — URL verification required
 
-**NOTES:** Multiple well-placed CTAs throughout the post, all pointing to Real Skin Care products. Early CTA directs to the coconut oil toothpaste product page (appears 6 times). Mid-post CTAs link to relevant collections (vegan toothpaste, SLS-free, fluoride-free, cinnamon, mint, natural). Final CTA encourages exploration of the full natural toothpaste collection. CTAs feel natural within context (e.g., "Want to See the Full Ingredient List?" → "Add to Cart" / product page link). No forced or jarring placement.
+**NOTES:** The post contains 6 instances of `/products/coconut-oil-toothpaste` links plus multiple collection links. **Critical issue:** Per standing feedback, CTA URLs must return HTTP 200 status before a Pass verdict. The URLs listed (e.g., `https://www.realskincare.com/products/coconut-oil-toothpaste`) have not been verified as live. Additionally, per standing feedback, the "best-clean-body-lotion-2025" post revealed product URL mismatches; this post must be verified to confirm `/products/coconut-oil-toothpaste` is in the sitemap AND returns 200. Collection links appear reasonable but also require verification. **Action required:** Web team must confirm all CTA URLs return 200 before publication.
 
 ---
 
 ## 7. FORMATTING
-**VERDICT:** Excellent
+**VERDICT:** Pass
 
-**NOTES:** H1 not present in body (pre-checked ✓). Heading hierarchy is clean and logical: H2 for major sections ("What Does 'Organic Toothpaste' Actually Mean?", "Ingredients to Look For", "Ingredients to Avoid", etc.), H3 for subsections ("Best Organic Toothpaste for Adults", "Best Organic Toothpaste for Kids", etc.). No orphaned sections. FAQ section is properly marked and structured with schema. Related Articles list is clearly separated. Bullet points and bold text used effectively for readability.
+**NOTES:** Heading hierarchy is clean (H2s and H3 present; no H1 in body — correct Shopify behavior per standing instructions). No orphaned sections detected. All subsections are properly nested. HTML submission appears complete (no truncation mid-tag detected). JSON-LD schemas are present and properly formatted.
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
 **VERDICT:** Pass
 
-**NOTES:** FAQ Q&As provided contain no competitor brand names. All four Q&As focus on Real Skin Care's formula and general educational content about organic toothpaste. No competitor names appear in the FAQ schema or body text. Clean.
+**NOTES:** FAQ Q&As contain no competitor brand names. All references are to Real Skin Care products or generic category language ("other organic formulas," "mainstream dentistry," "broader market"). No blockers present.
 
 ---
 
 ## 9. OVERALL QUALITY
-**VERDICT:** Excellent
+**VERDICT:** Good
 
-**NOTES:** This is a high-quality, well-researched post that delivers genuine educational value while naturally showcasing Real Skin Care's product. Ingredient accuracy is strong, voice is warm and accessible, CTAs are well-integrated, and formatting is clean. The post balances detailed product information with broader market context in a way that builds credibility rather than sounding like pure marketing. No blockers detected. Minor source transparency issue noted above but does not prevent approval.
-
----
-
-## ADDITIONAL OBSERVATIONS
-
-**Recurring Issues Check:**
-- ✓ No broken internal links detected in this post.
-- ✓ No stale years or year-in-title/URL mismatches.
-- ✓ Ingredient accuracy is correctly verified against canonical formula.
-- ⚠ **Source links:** The NCBI link "Antibacterial Effect of Lauric Acid and Coconut Oil on Streptococcus mutans — NCBI" is cited but no full URL is provided. Other sources (USDA, JADA, ADA) are referenced by name/title but URLs are not displayed. On next pass, confirm whether these links are functional or if they fall into the systemic broken-link pattern noted in standing feedback.
-
-**Standing Instructions Compliance:**
-- ✓ Post body contains full prose content (not a JSON wrapper).
-- ✓ Product format (squeeze bottle) correctly identified.
-- ✓ Baking soda IS correctly identified as present in the formula.
-- ✓ Stevia correctly identified (not xylitol).
-- ✓ Cinnamon and clove essential oils correctly listed in ingredient breakdown.
-- ✓ Grapefruit seed extract: Not applicable (this is a toothpaste, not deodorant).
+**NOTES:** This is a well-researched, brand-aligned, ingredient-accurate post with strong topical focus and voice consistency. Content directly supports the target keyword and clearly highlights RSC's formula advantages. **However, it cannot advance to publication without CTA URL verification.** The BLOCKER in dimension 6 must be resolved: confirm all product and collection links return HTTP 200 before final sign-off. Once URLs are verified live, this post merits an "Excellent" rating.
 
 ---
 
-**RECOMMENDATION:** Approve for publication. This post is ready to go live.
+## STANDING FEEDBACK ITEMS FLAGGED
+
+### Systemic Source Issue
+- The post cites "Antibacterial Effect of Lauric Acid and Coconut Oil on Streptococcus mutans — NCBI" without a direct PMC URL. Cross-reference against the broken PMC list; if this is one of the 10 flagged URLs, escalate to web team for systemic replacement.
+
+### Internal Link Validation Required
+- Related Articles section includes:
+  - `Toothpaste Without Sodium Lauryl Sulfate: Why It Matters`
+  - `Best Cinnamon Toothpaste: Benefits, Brands & What to Know`
+  - `Best Toothpaste Without SLS – 2026`
+  - `SLS Free Toothpaste: The Gentle Switch Worth Making`
+  - `Best Natural Toothpaste – 2026`
+  - `Fluoride Free Toothpaste: Benefits, How It Works & Best Picks`
+  - `Why Glycerin-Free Toothpaste Matters`
+  - `7 Ingredients to Avoid in Natural Toothpaste`
+
+Per standing feedback, these slugs must be verified to return 200 status. Several resemble patterns flagged in prior audits (e.g., "best-natural-toothpaste-2026," "best-toothpaste-without-sls-2026"). Confirm HTTP status before publication.
+
+---
+
+## RECOMMENDATION
+
+**Hold for publication pending CTA and internal link verification.** Once web team confirms all linked URLs return 200, approve as-is. No editorial revisions required.

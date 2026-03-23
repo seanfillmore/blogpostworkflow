@@ -1,0 +1,116 @@
+{
+  "date": "2026-03-22",
+  "sessions": {
+    "total": 50,
+    "bots": 665,
+    "real": -615,
+    "distinctUsers": 719,
+    "pagesPerSession": 1.0208044382801664
+  },
+  "engagement": {
+    "totalTime": 112,
+    "activeTime": 48
+  },
+  "behavior": {
+    "scrollDepth": 48.4,
+    "rageClickPct": 0,
+    "deadClickPct": 4,
+    "scriptErrorPct": 10,
+    "quickbackPct": 2,
+    "excessiveScrollPct": 0
+  },
+  "devices": [
+    {
+      "name": "Mobile",
+      "sessions": 27
+    },
+    {
+      "name": "PC",
+      "sessions": 23
+    }
+  ],
+  "countries": [
+    {
+      "name": "United States",
+      "sessions": 30
+    },
+    {
+      "name": "China",
+      "sessions": 10
+    },
+    {
+      "name": "France",
+      "sessions": 2
+    },
+    {
+      "name": "United Arab Emirates",
+      "sessions": 1
+    },
+    {
+      "name": "South Africa",
+      "sessions": 1
+    },
+    {
+      "name": "Romania",
+      "sessions": 1
+    },
+    {
+      "name": "United Kingdom",
+      "sessions": 1
+    },
+    {
+      "name": "Netherlands",
+      "sessions": 1
+    },
+    {
+      "name": "Liberia",
+      "sessions": 1
+    },
+    {
+      "name": "Indonesia",
+      "sessions": 1
+    }
+  ],
+  "topPages": [
+    {
+      "title": "Coconut Oil Based Skin Care Products | Real Skin Care – realskincare.com",
+      "sessions": 8
+    },
+    {
+      "title": "Best Toothpaste Without SLS – 2026 – realskincare.com",
+      "sessions": 4
+    },
+    {
+      "title": "Coconut Lotion | 6-Ingredient Clean Body Moisturizer – realskincare.com",
+      "sessions": 4
+    },
+    {
+      "title": "Can You Use Coconut Oil as Toothpaste? 2026 Guide + DIY Recipes – realskincare.com",
+      "sessions": 3
+    },
+    {
+      "title": "404 Not Found – realskincare.com",
+      "sessions": 3
+    },
+    {
+      "title": "Is Coconut Oil a Good Moisturizer? Here's the Truth – realskincare.com",
+      "sessions": 3
+    },
+    {
+      "title": "Shop Coconut Oil Toothpaste - Real Skin Care – realskincare.com",
+      "sessions": 3
+    },
+    {
+      "title": "All Natural Coconut Oil Deodorant | Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Best Fluoride Free Toothpaste – 2025 – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Coconut Oil Soap Benefits | Natural & Nourishing for Your Skin – realskincare.com",
+      "sessions": 2
+    }
+  ]
+}

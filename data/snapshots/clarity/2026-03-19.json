@@ -1,0 +1,100 @@
+{
+  "date": "2026-03-19",
+  "sessions": {
+    "total": 32,
+    "bots": 41,
+    "real": -9,
+    "distinctUsers": 74,
+    "pagesPerSession": 1.144736842105263
+  },
+  "engagement": {
+    "totalTime": 60,
+    "activeTime": 25
+  },
+  "behavior": {
+    "scrollDepth": 35.78,
+    "rageClickPct": 0,
+    "deadClickPct": 0,
+    "scriptErrorPct": 18.75,
+    "quickbackPct": 3.12,
+    "excessiveScrollPct": 0
+  },
+  "devices": [
+    {
+      "name": "PC",
+      "sessions": 19
+    },
+    {
+      "name": "Mobile",
+      "sessions": 13
+    }
+  ],
+  "countries": [
+    {
+      "name": "United States",
+      "sessions": 21
+    },
+    {
+      "name": "China",
+      "sessions": 6
+    },
+    {
+      "name": "India",
+      "sessions": 2
+    },
+    {
+      "name": "Canada",
+      "sessions": 1
+    },
+    {
+      "name": "Mexico",
+      "sessions": 1
+    },
+    {
+      "name": "Singapore",
+      "sessions": 1
+    }
+  ],
+  "topPages": [
+    {
+      "title": "Coconut Oil Based Skin Care Products | Real Skin Care – realskincare.com",
+      "sessions": 9
+    },
+    {
+      "title": "Coconut Lotion | 6-Ingredient Clean Body Moisturizer – realskincare.com",
+      "sessions": 4
+    },
+    {
+      "title": "Coconut Oil Soap Benefits | Natural & Nourishing for Your Skin – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Shop Coconut Soap - Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Coconut Oil Body Lotion That Actually Works for Dry Skin (2026 Roundup – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Body Lotion Without Chemicals | Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Best Coconut Oil Body Lotions for Extremely Dry Skin (2026 Clean & Nat – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Coconut Oil Lotion | Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Collections – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Shop Natural Lip Balm - Real Skin Care – realskincare.com",
+      "sessions": 1
+    }
+  ]
+}

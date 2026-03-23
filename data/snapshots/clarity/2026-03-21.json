@@ -1,0 +1,96 @@
+{
+  "date": "2026-03-21",
+  "sessions": {
+    "total": 25,
+    "bots": 14,
+    "real": 11,
+    "distinctUsers": 42,
+    "pagesPerSession": 1.0476190476190477
+  },
+  "engagement": {
+    "totalTime": 42,
+    "activeTime": 30
+  },
+  "behavior": {
+    "scrollDepth": 44.46,
+    "rageClickPct": 0,
+    "deadClickPct": 4,
+    "scriptErrorPct": 12,
+    "quickbackPct": 0,
+    "excessiveScrollPct": 0
+  },
+  "devices": [
+    {
+      "name": "PC",
+      "sessions": 14
+    },
+    {
+      "name": "Mobile",
+      "sessions": 11
+    }
+  ],
+  "countries": [
+    {
+      "name": "United States",
+      "sessions": 15
+    },
+    {
+      "name": "China",
+      "sessions": 7
+    },
+    {
+      "name": "Germany",
+      "sessions": 1
+    },
+    {
+      "name": "Israel",
+      "sessions": 1
+    },
+    {
+      "name": "United Kingdom",
+      "sessions": 1
+    }
+  ],
+  "topPages": [
+    {
+      "title": "Coconut Oil Based Skin Care Products | Real Skin Care – realskincare.com",
+      "sessions": 5
+    },
+    {
+      "title": "Coconut Lotion | 6-Ingredient Clean Body Moisturizer – realskincare.com",
+      "sessions": 4
+    },
+    {
+      "title": "Dr. Bronner Alternative? Meet Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Toxic Chemicals In Soap To Keep An Eye On – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Best Fluoride Free Toothpaste – 2025 – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Coconut Oil as Deodorant: What Actually Works – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Shop Organic Body Lotion - Real Skin Care – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "How To Do A Skin Care Patch Test - Updated for 2025 – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Best Toothpaste Without SLS – 2026 – realskincare.com",
+      "sessions": 1
+    },
+    {
+      "title": "Why Use Organic Lip Balm in Your Routine – realskincare.com",
+      "sessions": 1
+    }
+  ]
+}

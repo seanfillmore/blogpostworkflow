@@ -1,18 +1,16 @@
 # Editor Report — SLS Toothpaste: What It Is & Why to Go SLS-Free
 **Post:** data/posts/sls-toothpaste.html
 **Target keyword:** sls toothpaste
-**Reviewed:** March 18, 2026
+**Reviewed:** March 23, 2026
 
 ---
 ## 1. Link Health
 
-**11 links OK** | **4 broken/unreachable**
+**13 links OK** | **2 broken/unreachable**
 
 | URL | Anchor Text | Status | Error |
 |-----|-------------|--------|-------|
 | https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2026 | Best Toothpaste Without SLS – 2026 | 404 |  |
-| https://www.realskincare.com/blogs/news/sls-free-toothpaste-the-gentle-switch-worth-making | SLS Free Toothpaste: The Gentle Switch Worth Making | 404 |  |
-| https://www.realskincare.com/blogs/news/toothpaste-without-sodium-lauryl-sulfate-why-it-matters | Toothpaste Without Sodium Lauryl Sulfate: Why It Matters | 404 |  |
 | https://www.realskincare.com/blogs/news/best-natural-toothpaste-2026 | Best Natural Toothpaste – 2026 | 404 |  |
 
 ---
@@ -35,13 +33,17 @@ No external source links found in the post.
 
 The following posts are in the same topical cluster and should be linked from this post (or vice versa) as the cluster grows:
 
+- **[Best Organic Toothpaste: What to Look For & Why It Matters](https://www.realskincare.com/blogs/news/best-organic-toothpaste-what-to-look-for-why-it-matters)** *(0 inbound links)*
+- **[No Fluoride Toothpaste: What to Use & Why It Works](https://www.realskincare.com/blogs/news/no-fluoride-toothpaste-what-to-use-why-it-works)** *(0 inbound links)*
+- **[Toothpaste Without SLS: What to Know & Best Options](https://www.realskincare.com/blogs/news/toothpaste-without-sls-what-to-know-best-options)** *(0 inbound links)*
+- **[SLS Toothpaste: What It Is & Why to Go SLS-Free](https://www.realskincare.com/blogs/news/sls-toothpaste-what-it-is-why-to-go-sls-free)** *(0 inbound links)*
 - **[Why Glycerin-Free Toothpaste Matters](https://www.realskincare.com/blogs/news/why-glycerin-free-toothpaste-matters)** *(0 inbound links)*
 - **[7 Ingredients to Avoid in Natural Toothpaste](https://www.realskincare.com/blogs/news/7-ingredients-to-avoid-in-natural-toothpaste)** *(0 inbound links)*
 - **[Best Fluoride Free Toothpaste – 2025](https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025)** *(9 inbound links)*
 - **[Best Davids Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-davids-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
 - **[Best Dr. Bronner’s Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
 - **[Best Hello Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-hello-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
-- **[Best Natural Toothpaste - 2025](https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025)** *(6 inbound links)*
+- **[Best Natural Toothpaste - 2026](https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025)** *(6 inbound links)*
 - **[Can You Use Coconut Oil as Toothpaste? Here’s What Science Says](https://www.realskincare.com/blogs/news/can-coconut-oil-replace-toothpaste-discover-the-benefits-of-this-natural-alternative)** *(0 inbound links)*
 - **[Can You Use Coconut Oil as Toothpaste? 2026 Guide + DIY Recipes](https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste)** *(0 inbound links)*
 - **[Discover the Power of Coconut Whitening Toothpaste](https://www.realskincare.com/blogs/news/discover-the-power-of-coconut-whitening-toothpaste)** *(orphan — no inbound links yet)*
@@ -51,65 +53,68 @@ The following posts are in the same topical cluster and should be linked from th
 ---
 ## 5. Editorial Review
 
-# EDITORIAL REVIEW: SLS Toothpaste: What It Is & Why to Go SLS-Free
-
----
-
 ## 1. TOPICAL RELEVANCE
-**VERDICT:** Excellent  
-**NOTES:** Post is tightly focused on the target keyword "sls toothpaste" throughout. Structure moves logically from definition → why it's used → safety concerns → specific conditions (canker sores) → who should switch → effectiveness. No meaningful off-topic tangents. The deep dive into SLS chemistry and regulatory status directly supports the core argument.
+**VERDICT:** Pass
+**NOTES:** Post is tightly focused on the target keyword "SLS toothpaste" throughout. Covers what SLS is, why brands use it, safety concerns, canker sore connection, who should switch, effectiveness comparison, and product alternatives. No off-topic tangents detected. FAQ Q&As are aligned with the main content.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
-**VERDICT:** Excellent  
-**NOTES:** Conversational, warm tone throughout ("Let's be direct," "That's totally understandable," "You're not swallowing it"). Sentence length is short and varied. Plain language is used consistently ("think of it like dish soap for your mouth"). Paragraphs stay well under 4 sentences in most sections. The FAQ uses accessible Q&A format. One minor note: the section "What a genuinely clean SLS-free formula looks like" reads slightly more listy but remains readable at ~8th grade level.
+**VERDICT:** Pass
+**NOTES:** Voice is conversational and warm throughout ("Think of it like dish soap for your mouth," "Let's be direct," "That's totally understandable"). Sentences are short and punchy; paragraphs are well-controlled (most under 4 sentences). Uses "you/your" naturally. Technical terms (anionic surfactant, mucosal lining, xerostomia, perioral dermatitis) are all followed by plain-language explanations. ~8th grade level maintained effectively.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-**VERDICT:** BLOCKER — Critical Error Found  
-**NOTES:** The product description lists the toothpaste ingredients correctly per the canonical list provided: "purified spring water, organic virgin coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder, stevia, and organic essential oils of peppermint, spearmint, cinnamon, and clove." However, the post contains a material misrepresentation in the "What to Look for in an SLS-Free Toothpaste" section. Under "Natural actives that genuinely contribute," the text states: "Ingredients like baking soda have a well-documented role in oral care — they're mildly abrasive, help neutralize acids, and support a healthy mouth environment." This is accurate. BUT the same section then says: "Clove, cinnamon, and myrrh have histories of use in traditional oral care and are studied for their antimicrobial properties in laboratory research." While this is factually defensible for those ingredients, it is NOT paired with any acknowledgment that Real Skin Care's toothpaste *also contains* these ingredients—it reads as generic advice about what to look for "in an SLS-free formula" rather than as a direct description of RSC's formula. The standing feedback explicitly flags that "cinnamon and clove essential oils [were] omitted from the SLS-free toothpaste product description" in a prior post. This post *does* include them in the full ingredient list in "What a genuinely clean SLS-free formula looks like," but they are conspicuously absent from earlier product mentions in subsections like "Looking for a Toothpaste That's Gentle on Your Mouth?" (which mentions "clean essential oils" generically) and the main CTA copy. The product format (squeeze bottle) is correctly noted once but not emphasized consistently. **Do not approve** until the product description in all CTAs and early mentions explicitly calls out the full active ingredient profile including the specific essential oils.
+**VERDICT:** Pass
+**NOTES:** Product description correctly lists: purified spring water, organic virgin coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder, stevia, and organic essential oils of peppermint, spearmint, cinnamon, and clove. Format correctly identified as squeeze bottle. Cinnamon and clove are both mentioned. Sweetener correctly identified as stevia (not xylitol). Abrasive correctly identified as baking soda (not "polishing minerals"). No ingredient inaccuracies detected.
 
 ---
 
 ## 4. YEAR ACCURACY
-**VERDICT:** Pass  
-**NOTES:** Code pre-check confirmed no stale years in headings. Byline reads "Updated March 2026," which aligns with the standing feedback's current date of March 9, 2026. No mismatches between title, body text, and URL slugs detected in the submission.
+**VERDICT:** Pass
+**NOTES:** Code pre-check confirms no stale years in headings. Post updated March 2026 as noted in the byline. Related articles section includes "Best Toothpaste Without SLS – 2026" and "Best Natural Toothpaste – 2026" which are current-year references appropriate for a March 2026 update.
 
 ---
 
 ## 5. FACTUAL CONCERNS
-**VERDICT:** Good — Minor Source Qualification Needed  
-**NOTES:** The post makes well-sourced claims overall. The central canker sore claim references the Herlofson & Barkvoll 1994 study (Journal of Clinical Periodontology) and later research — these are real, cited sources. The FDA approval statement ("FDA-approved for use in oral care products at regulated concentrations, typically around 1–2% in toothpaste") is accurate and appropriately caveated. The EU/US regulatory framing is responsible. However, the FAQ answer for "Is SLS in Toothpaste Bad for You?" ends mid-sentence: "Anyone telling you otherwise is overstating the science." This appears to be a truncation error in the JSON-LD schema — the body text completes this thought properly ("Anyone telling you otherwise is overstating the science."), but the schema cutoff creates an unfinished claim in structured data. Verify the schema JSON before publishing to avoid confusing search engines or social sharers.
+**VERDICT:** Needs Review – Minor Issue
+**NOTES:** The Herlofson & Barkvoll (1994) study cited as the "most frequently cited study" on SLS and canker sores is well-documented and commonly referenced in this context. However, the post claims "Later research has broadly supported this direction" without providing those citations. The claim is reasonable but would benefit from at least one supporting citation. FAQ answer 3 ("Is SLS in Toothpaste Bad for You?") appears truncated mid-sentence: "Anyone telling you otherwise is overstating the science" — the sentence ends abruptly. This is a formatting issue rather than a factual error, but it undermines credibility. Overall claims about foam having no cleaning function and SLS having no therapeutic benefit are well-supported and appropriately framed.
 
 ---
 
 ## 6. CTA QUALITY
-**VERDICT:** Good — Repetition Issue  
-**NOTES:** CTAs are natural and well-placed. The post includes 14 CTA links total—all pointing to RSC product pages (coconut oil toothpaste product page, plus related collections). However, the product link (`https://www.realskincare.com/products/coconut-oil-toothpaste`) appears 7 times, which creates redundancy and may dilute click-through intent. The related collections links (SLS-free, fluoride-free, natural toothpaste) provide variety and are positioned logically at section breaks and the conclusion. Recommendation: audit the excessive product-page linking; 2–3 mentions of the product URL is standard, not 7. The final "Ready to Drop the SLS for Good?" CTA is well-crafted and natural.
+**VERDICT:** Pass with Flag – URL Verification Required
+**NOTES:** Multiple natural CTAs appear throughout post: "Add to Cart" buttons, inline links to `/products/coconut-oil-toothpaste`, and collection links to `/collections/natural-toothpaste`, `/collections/fluoride-free-toothpaste`, and `/collections/sls-free-toothpaste`. CTAs are well-placed and natural (e.g., "Shop Now," "Try our coconut oil toothpaste"). **FLAG:** Per standing instructions, all CTA URLs must return HTTP 200. The post repeats `/products/coconut-oil-toothpaste` 7 times. Verify this product page is live and returns 200 status before issuing final approval. Collection links should also be verified.
 
 ---
 
 ## 7. FORMATTING
-**VERDICT:** Pass  
-**NOTES:** Heading hierarchy is clean—no H1 in body (confirmed by code pre-check). H2+ used throughout. Sections are logically organized with clear transitions. FAQ is presented as a subsection under H2 "Frequently Asked Questions," which is appropriate. No orphaned sections. Bullet lists are properly formatted and readable. One minor observation: the "Related Articles" section at the bottom uses a simple list format without a preceding H2, but this is a standard footer pattern and doesn't break hierarchy.
+**VERDICT:** Pass
+**NOTES:** Heading hierarchy is clean (H2 and H3 only, no H1 in body per code pre-check). Orphaned sections not detected. FAQ section properly formatted with Q&A structure. Bullet lists are used effectively. Related articles section is organized. **Minor note:** FAQ answer 3 ("Is SLS in Toothpaste Bad for You?") ends mid-sentence in JSON schema ("Anyone telling you" — text cuts off). This suggests either a truncation in the FAQ schema or in the original content. Verify the full text of this answer is captured correctly in the CMS before publishing.
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
-**VERDICT:** CONCERN — Brand Mention Detected  
-**NOTES:** The FAQ section contains a direct competitor brand name in the question "Does Sensodyne toothpaste have SLS?" The answer discusses Sensodyne Pronamel and Sensodyne variants. Per the standing instruction to flag any brand names other than Real Skin Care in FAQ Q&As as a blocker, this is a violation. While the answer is factually neutral (doesn't disparage Sensodyne; simply notes that formulations vary), the instruction is explicit: "flag any brand names other than Real Skin Care" as a blocker. **Recommendation:** Either remove the Sensodyne Q&A entirely, or replace it with a generic question like "How can I tell if a toothpaste is truly SLS-free?" that uses Sensodyne only in parenthetical reference within body text, not as the Q title. The FAQ currently introduces competitor brand visibility in the structured schema, which may not align with content strategy.
+**VERDICT:** BLOCKER
+**NOTES:** FAQ Q&A section (in the main post body) does not reference competitor brands. However, in the FAQ questions embedded in the post body, the text "Does Sensodyne toothpaste have SLS?" and "Some Sensodyne variants" appear in the Frequently Asked Questions section. Per standing instructions, **competitor brand names in FAQ Q&As are a blocker.** Sensodyne is a competitor brand. This reference must be removed or the FAQ section must be restructured to avoid direct competitor comparison.
 
 ---
 
 ## 9. OVERALL QUALITY
-**VERDICT:** NEEDS WORK  
-**NOTES:** The post is well-researched, well-written, and well-structured—strong editorial quality overall. However, it contains **two blockers**: (1) ingredient description inconsistency (essential oils omitted from early product mentions, despite being in the formula), and (2) competitor brand name in FAQ schema. Both must be resolved before approval. Additionally, the excessive repetition of a single product link (7 instances) should be consolidated, and the truncated FAQ answer in the schema should be verified. Once these issues are corrected, this post will be publication-ready.
+**VERDICT:** Needs Work – BLOCKER EXISTS
+**NOTES:** Post is substantive, well-written, and brand-aligned. However, the BLOCKER in dimension 8 (competitor brand name "Sensodyne" in FAQ) prevents a "Good" or "Excellent" verdict. Remove or replace the Sensodyne FAQ Q&A ("Does Sensodyne toothpaste have SLS?") with a generic reference (e.g., "Do mainstream toothpaste brands have SLS?") that does not name competitors. Additionally, verify all CTA URLs return 200 status, and correct the truncated FAQ answer 3 in the schema. Once these issues are resolved, post is ready for approval.
 
 ---
 
-## STANDING ISSUES IDENTIFIED
+## ADDITIONAL NOTES
 
-### Broken External Sources
-No broken external URLs detected in the source citations provided. The
+**Internal Link Validation Required:**
+- Post references "our guide to the best SLS-free toothpastes" and "our guide to the best toothpaste without SLS" — these should be verified as live pages returning 200 status.
+- Related Articles section lists "Best Toothpaste Without SLS – 2026" and "Best Natural Toothpaste – 2026" — verify these exist and are live.
+
+**Systemic Issue Flag:**
+- No broken PMC/NCBI URLs detected in this post. All external sources cited (Herlofson & Barkvoll 1994, 1996; Chahine et al. 1997; FDA Cosmetic Ingredients) are traditional citations without PMC links.
+
+**Source Completeness:**
+- Chahine et al. (1997) is cited in sources but not referenced in the body text. No factual concern, but verify this citation is being used or remove it from the sources list.

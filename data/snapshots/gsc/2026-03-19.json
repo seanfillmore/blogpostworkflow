@@ -1,0 +1,153 @@
+{
+  "date": "2026-03-19",
+  "summary": {
+    "clicks": 3,
+    "impressions": 26,
+    "ctr": 0.1154,
+    "position": 12.8
+  },
+  "topQueries": [
+    {
+      "query": "real skin care",
+      "clicks": 2,
+      "impressions": 5,
+      "ctr": 0.4,
+      "position": 1.2
+    },
+    {
+      "query": "list of toothpaste without fluoride",
+      "clicks": 1,
+      "impressions": 5,
+      "ctr": 0.2,
+      "position": 8.6
+    },
+    {
+      "query": "\"patch test for castor oil inner arm 24 hours\"",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 8
+    },
+    {
+      "query": "3 sided toothbrush",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 6
+    },
+    {
+      "query": "absolutely natural lotion",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 48
+    },
+    {
+      "query": "actual soap",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 1
+    },
+    {
+      "query": "advantages of applying coconut oil on face",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 3
+    },
+    {
+      "query": "affordable sls-free toothpaste buy online",
+      "clicks": 0,
+      "impressions": 7,
+      "ctr": 0,
+      "position": 11.857142857142858
+    },
+    {
+      "query": "all natural body cream",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 43
+    },
+    {
+      "query": "all natural body lotion",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 49
+    }
+  ],
+  "topPages": [
+    {
+      "page": "https://www.realskincare.com/",
+      "clicks": 3,
+      "impressions": 116,
+      "ctr": 0.02586206896551724,
+      "position": 5.827586206896552
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-boka-alternatives-2025",
+      "clicks": 1,
+      "impressions": 39,
+      "ctr": 0.02564102564102564,
+      "position": 9.051282051282051
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "clicks": 1,
+      "impressions": 106,
+      "ctr": 0.009433962264150943,
+      "position": 4.660377358490566
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+      "clicks": 1,
+      "impressions": 909,
+      "ctr": 0.0011001100110011,
+      "position": 7.141914191419142
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste",
+      "clicks": 1,
+      "impressions": 250,
+      "ctr": 0.004,
+      "position": 3.836
+    },
+    {
+      "page": "https://www.realskincare.com/collections/vegan-body-lotion",
+      "clicks": 1,
+      "impressions": 129,
+      "ctr": 0.007751937984496124,
+      "position": 23.124031007751938
+    },
+    {
+      "page": "https://realskincare.com/",
+      "clicks": 0,
+      "impressions": 4,
+      "ctr": 0,
+      "position": 6.5
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+      "clicks": 0,
+      "impressions": 108,
+      "ctr": 0,
+      "position": 32.58333333333333
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/7-ingredients-to-avoid-in-natural-toothpaste",
+      "clicks": 0,
+      "impressions": 7,
+      "ctr": 0,
+      "position": 12.714285714285714
+    },
+    {
+      "page": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+      "clicks": 0,
+      "impressions": 11,
+      "ctr": 0,
+      "position": 8
+    }
+  ]
+}

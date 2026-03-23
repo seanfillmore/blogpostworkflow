@@ -1,0 +1,7 @@
+{"ts":"2026-03-23T13:00:05.373Z","subject":"Clarity Collector completed","body":"Snapshot saved for 2026-03-23","status":"success"}
+{"ts":"2026-03-23T13:05:02.598Z","subject":"Shopify Collector completed","body":"Snapshot saved for 2026-03-23","status":"success"}
+{"ts":"2026-03-23T13:15:01.934Z","subject":"GSC Collector completed","body":"Snapshot saved for 2026-03-20","status":"success"}
+{"ts":"2026-03-23T13:20:03.528Z","subject":"GA4 Collector completed","body":"Snapshot saved for 2026-03-23","status":"success"}
+{"ts":"2026-03-23T13:25:03.055Z","subject":"Google Ads Collector completed","body":"Snapshot saved for 2026-03-22","status":"success"}
+{"ts":"2026-03-23T14:45:52.743Z","subject":"CRO Analyzer completed","body":"Weekly CRO brief generated.","status":"success"}
+{"ts":"2026-03-23T18:00:03.219Z","subject":"Campaign Review Status — 2 ad(s) pending approval","body":"Campaign: RSC | Coconut Oil Lotion Dry Skin | Search (ID: 23683460846) — Google Ads status: ENABLED\n  • Coconut Oil Lotion - Exact: REVIEW_IN_PROGRESS / UNKNOWN\n  • Coconut Oil Lotion - Phrase/Broad: REVIEW_IN_PROGRESS / UNKNOWN\nCampaign: RSC | Brand | Search (ID: 23681754187) — Google Ads status: ENABLED\n  • Brand - Exact: REVIEWED / APPROVED\n  • Brand - Phrase: REVIEWED / APPROVED","status":"info"}

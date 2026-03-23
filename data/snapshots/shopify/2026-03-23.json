@@ -1,0 +1,13 @@
+{
+  "date": "2026-03-23",
+  "orders": {
+    "count": 0,
+    "revenue": 0,
+    "aov": 0
+  },
+  "abandonedCheckouts": {
+    "count": 0
+  },
+  "cartAbandonmentRate": 0,
+  "topProducts": []
+}

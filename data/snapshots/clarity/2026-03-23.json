@@ -1,0 +1,116 @@
+{
+  "date": "2026-03-23",
+  "sessions": {
+    "total": 36,
+    "bots": 665,
+    "real": -629,
+    "distinctUsers": 702,
+    "pagesPerSession": 1.0156028368794325
+  },
+  "engagement": {
+    "totalTime": 146,
+    "activeTime": 53
+  },
+  "behavior": {
+    "scrollDepth": 40.91,
+    "rageClickPct": 0,
+    "deadClickPct": 8.33,
+    "scriptErrorPct": 19.44,
+    "quickbackPct": 2.78,
+    "excessiveScrollPct": 0
+  },
+  "devices": [
+    {
+      "name": "PC",
+      "sessions": 18
+    },
+    {
+      "name": "Mobile",
+      "sessions": 16
+    },
+    {
+      "name": "Tablet",
+      "sessions": 2
+    }
+  ],
+  "countries": [
+    {
+      "name": "United States",
+      "sessions": 19
+    },
+    {
+      "name": "United Kingdom",
+      "sessions": 5
+    },
+    {
+      "name": "China",
+      "sessions": 4
+    },
+    {
+      "name": "India",
+      "sessions": 3
+    },
+    {
+      "name": "Canada",
+      "sessions": 1
+    },
+    {
+      "name": "Germany",
+      "sessions": 1
+    },
+    {
+      "name": "Guam",
+      "sessions": 1
+    },
+    {
+      "name": "Jamaica",
+      "sessions": 1
+    },
+    {
+      "name": "Singapore",
+      "sessions": 1
+    }
+  ],
+  "topPages": [
+    {
+      "title": "Best Aluminum Free Deodorant in 2026 (That Actually Works) – realskincare.com",
+      "sessions": 5
+    },
+    {
+      "title": "Best Coconut Oil Body Lotions for Extremely Dry Skin (2026 Clean & Nat – realskincare.com",
+      "sessions": 4
+    },
+    {
+      "title": "Coconut Oil Based Skin Care Products | Real Skin Care – realskincare.com",
+      "sessions": 4
+    },
+    {
+      "title": "Coconut Lotion – Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Is Coconut Oil a Good Moisturizer? Here's the Truth – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Shop Coconut Oil Toothpaste - Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Shop Body Cream - Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "FAQS – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Shop Coconut Moisturizer- Real Skin Care – realskincare.com",
+      "sessions": 2
+    },
+    {
+      "title": "Best Hello Toothpaste Alternatives – 2025 – realskincare.com",
+      "sessions": 2
+    }
+  ]
+}
