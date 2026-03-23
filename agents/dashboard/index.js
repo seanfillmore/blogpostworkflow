@@ -637,7 +637,7 @@ const HTML = `<!DOCTYPE html>
 
   /* ── tab panels ── */
   .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+  .tab-panel.active { display: grid; gap: 20px; align-content: start; }
 
   /* ── rank alerts ── */
   .alert-banner { border-radius: var(--radius); padding: 12px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -930,36 +930,35 @@ const HTML = `<!DOCTYPE html>
   </div>
 </div>
 <div id="tab-ads" class="tab-panel">
+  <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
+  <!-- Active Campaigns -->
+  <div class="card" id="campaign-active-card">
+    <div class="card-header accent-indigo">
+      <h2>Active Campaigns</h2>
+    </div>
+    <div id="campaign-active-body"><p class="empty-state">No active campaigns yet.</p></div>
+  </div>
+  <!-- Campaign Suggestions -->
+  <div class="card" id="campaign-proposals-card">
+    <div class="card-header accent-indigo">
+      <h2>Campaign Suggestions</h2>
+      <span style="font-size:11px;color:var(--muted)" id="campaign-proposals-note"></span>
+    </div>
+    <div style="padding:16px" id="campaign-proposals-body"><p class="empty-state">No campaign suggestions yet. Run Campaign Creator to generate proposals.</p></div>
+  </div>
+  <!-- Clarifications Needed -->
+  <div class="card" id="campaign-clarify-card" style="display:none">
+    <div class="card-header accent-indigo">
+      <h2>Clarifications Needed</h2>
+    </div>
+    <div id="campaign-clarify-body"></div>
+  </div>
+  <!-- Optimization Queue -->
   <div class="card ads-opt-card">
     <div class="card-header accent-indigo"><h2>Optimization Queue</h2></div>
     <div class="card-body" id="ads-opt-body"><p class="empty-state">Loading...</p></div>
   </div>
-  <div id="ads-kpi-strip"></div>
-  <div id="ads-overview-card"></div>
   <div id="ads-keywords-card"></div>
-  <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
-  <!-- Campaign Proposals -->
-  <div class="card" id="campaign-proposals-card" style="display:none">
-    <div class="card-header accent-indigo">
-      <h2>Campaign Proposals</h2>
-      <span style="font-size:11px;color:var(--muted)" id="campaign-proposals-note"></span>
-    </div>
-    <div style="padding:16px" id="campaign-proposals-body"></div>
-  </div>
-  <!-- Clarifications Needed -->
-  <div class="card" id="campaign-clarify-card" style="display:none">
-    <div class="section-header">
-      <div class="section-title">Clarifications Needed</div>
-    </div>
-    <div id="campaign-clarify-body"></div>
-  </div>
-  <!-- Active Campaigns -->
-  <div class="card" id="campaign-active-card" style="display:none">
-    <div class="section-header">
-      <div class="section-title">Active Campaigns</div>
-    </div>
-    <div id="campaign-active-body"></div>
-  </div>
 </div><!-- /tab-ads -->
 <div id="tab-optimize" class="tab-panel">
   <div class="empty-state">Loading optimization briefs...</div>
@@ -1940,7 +1939,7 @@ function renderAdCard(ad) {
 }
 
 function openCreativeGenerator(adId, pageName) {
-  const name = prompt('Generate creative for "' + pageName + '".\n\nEnter product image filenames (comma-separated, from data/product-images/) or leave blank for lifestyle-only:\nExample: deodorant-stick.webp,deodorant-lifestyle.webp');
+  const name = prompt('Generate creative for "' + pageName + '".\\n\\nEnter product image filenames (comma-separated, from data/product-images/) or leave blank for lifestyle-only:\\nExample: deodorant-stick.webp,deodorant-lifestyle.webp');
   // name=null means user cancelled; name='' means they left it blank (lifestyle-only) — both are valid
   if (name === null) return; // user cancelled the prompt
   const productImages = name ? name.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -1957,7 +1956,7 @@ async function generateCreative(adId, productImages) {
     });
     if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.status)); return; }
     const { jobId } = await res.json();
-    alert('Creative generation started! Job ID: ' + jobId + '\n\nThe download link will appear here when ready. Check back in ~2 minutes.');
+    alert('Creative generation started! Job ID: ' + jobId + '\\n\\nThe download link will appear here when ready. Check back in ~2 minutes.');
     pollCreativeJob(jobId);
   } catch (e) { alert('Error: ' + e.message); }
 }
@@ -1984,42 +1983,9 @@ function renderAdsTab(data) {
   const snap = adsAll[0];
 
   if (!snap) {
-    document.getElementById('ads-kpi-strip').innerHTML = '';
-    document.getElementById('ads-overview-card').innerHTML =
-      '<div class="card"><div class="card-header"><h2>Campaign Overview</h2></div>' +
-      '<div class="card-body"><p class="empty-state">No Google Ads data yet — run google-ads-collector to get started.</p></div></div>';
     document.getElementById('ads-keywords-card').innerHTML = '';
     return;
   }
-
-  // KPI strip inside the Paid Search tab (2 cards — Ad Spend and ROAS)
-  document.getElementById('ads-kpi-strip').innerHTML =
-    '<div class="kpi-strip" style="grid-template-columns: repeat(2, 1fr)">' +
-    kpiCard('Ad Spend', '$' + snap.spend.toFixed(2), 'of $10.00/day') +
-    kpiCard('ROAS', snap.roas.toFixed(2) + 'x', 'paid search') +
-    '</div>';
-
-  // Campaign overview card
-  const overviewRows = [
-    ['Spend', '$' + snap.spend.toFixed(2)],
-    ['Daily Budget', '$10.00'],
-    ['Impressions', fmtNum(snap.impressions)],
-    ['Clicks', fmtNum(snap.clicks)],
-    ['CTR', (snap.ctr * 100).toFixed(2) + '%'],
-    ['Avg CPC', '$' + snap.avgCpc.toFixed(2)],
-    ['Conversions', snap.conversions],
-    ['CVR', (snap.conversionRate * 100).toFixed(2) + '%'],
-    ['Revenue', '$' + snap.revenue.toFixed(2)],
-    ['ROAS', snap.roas.toFixed(2) + 'x'],
-    ['Cost/Conv', snap.costPerConversion > 0 ? '$' + snap.costPerConversion.toFixed(2) : '—'],
-  ];
-
-  document.getElementById('ads-overview-card').innerHTML =
-    '<div class="card"><div class="card-header"><h2>Campaign Overview</h2>' +
-    '<span class="section-note">' + esc(snap.date) + '</span></div>' +
-    '<div class="card-body"><table class="cro-table">' +
-    overviewRows.map(([l, v]) => '<tr><td>' + esc(l) + '</td><td>' + esc(String(v)) + '</td></tr>').join('') +
-    '</table></div></div>';
 
   // Top keywords card
   const kws = snap.topKeywords || [];
@@ -2530,7 +2496,9 @@ function renderCampaignCards(campaigns, aovBarrier) {
       );
     }).join('');
   } else {
-    propCard.style.display = 'none';
+    propCard.style.display = '';
+    propBody.innerHTML = '<p class="empty-state">No campaign suggestions yet. Run Campaign Creator to generate proposals.</p>';
+    document.getElementById('campaign-proposals-note').textContent = '';
   }
 
   // --- Clarifications ---
@@ -2576,7 +2544,10 @@ function renderCampaignCards(campaigns, aovBarrier) {
         ).join('') + '</div>' : '') +
         '</div>';
     }).join('');
-  } else { actCard.style.display = 'none'; }
+  } else {
+    actCard.style.display = '';
+    actBody.innerHTML = '<p class="empty-state">No active campaigns yet.</p>';
+  }
 }
 
 function updateProjections(id) {
