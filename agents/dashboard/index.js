@@ -72,6 +72,10 @@ const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.
 
 const COMP_BRIEFS_DIR      = join(ROOT, 'data', 'competitor-intelligence', 'briefs');
 const COMP_SCREENSHOTS_DIR = join(ROOT, 'data', 'competitor-intelligence', 'screenshots');
+const META_ADS_INSIGHTS_DIR = join(ROOT, 'data', 'meta-ads-insights');
+const CREATIVE_JOBS_DIR      = join(ROOT, 'data', 'creative-jobs');
+const CREATIVE_PACKAGES_DIR  = join(ROOT, 'data', 'creative-packages');
+const PRODUCT_IMAGES_DIR_MA  = join(ROOT, 'data', 'product-images');
 
 const RUN_AGENT_ALLOWLIST = new Set([
   'agents/rank-tracker/index.js',
@@ -633,7 +637,7 @@ const HTML = `<!DOCTYPE html>
 
   /* ── tab panels ── */
   .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+  .tab-panel.active { display: grid; gap: 20px; align-content: start; }
 
   /* ── rank alerts ── */
   .alert-banner { border-radius: var(--radius); padding: 12px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -778,6 +782,11 @@ const HTML = `<!DOCTYPE html>
   .rationale-row  { padding: 13px 16px; border-bottom: 1px solid var(--border); }
   .rationale-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 5px; }
   .rationale-text  { font-size: 12px; color: #374151; line-height: 1.6; }
+  .rationale-summary { font-size: 12px; color: #374151; font-weight: 500; line-height: 1.6; margin-bottom: 6px; }
+  .rationale-bullets { margin: 0 0 6px 16px; padding: 0; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+  .rationale-bullets li { margin-bottom: 3px; }
+  .rationale-details summary { font-size: 11px; color: var(--muted); cursor: pointer; margin-top: 2px; }
+  .rationale-details summary:hover { color: var(--indigo); }
   .adgroups-row    { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .adgroups-label  { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 4px; flex-shrink: 0; }
   .adgroup-pill    { background: #f1f5f9; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--text); }
@@ -811,6 +820,7 @@ const HTML = `<!DOCTYPE html>
       <button class="tab-pill active" onclick="switchTab('seo',this)">SEO</button>
       <button class="tab-pill" onclick="switchTab('cro',this)" id="pill-cro">CRO</button>
       <button class="tab-pill" onclick="switchTab('ads',this)" id="pill-ads" style="display:none">Ads</button>
+      <button class="tab-pill" onclick="switchTab('ad-intelligence',this)" id="pill-ad-intelligence">Ad Intelligence</button>
       <button class="tab-pill" onclick="switchTab('optimize',this)" id="pill-optimize">Optimize</button>
     </div>
     <div id="cro-filter-bar" style="display:none">
@@ -919,37 +929,41 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
 </div><!-- /tab-cro -->
+<div id="tab-ad-intelligence" class="tab-panel" style="display:none">
+  <div id="ad-intelligence-content">
+    <p class="muted" style="padding:2rem">Loading ad intelligence data…</p>
+  </div>
+</div>
 <div id="tab-ads" class="tab-panel">
+  <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
+  <!-- Active Campaigns -->
+  <div class="card" id="campaign-active-card">
+    <div class="card-header accent-indigo">
+      <h2>Active Campaigns</h2>
+    </div>
+    <div id="campaign-active-body"><p class="empty-state">No active campaigns yet.</p></div>
+  </div>
+  <!-- Campaign Suggestions -->
+  <div class="card" id="campaign-proposals-card">
+    <div class="card-header accent-indigo">
+      <h2>Campaign Suggestions</h2>
+      <span style="font-size:11px;color:var(--muted)" id="campaign-proposals-note"></span>
+    </div>
+    <div style="padding:16px" id="campaign-proposals-body"><p class="empty-state">No campaign suggestions yet. Run Campaign Creator to generate proposals.</p></div>
+  </div>
+  <!-- Clarifications Needed -->
+  <div class="card" id="campaign-clarify-card" style="display:none">
+    <div class="card-header accent-indigo">
+      <h2>Clarifications Needed</h2>
+    </div>
+    <div id="campaign-clarify-body"></div>
+  </div>
+  <!-- Optimization Queue -->
   <div class="card ads-opt-card">
     <div class="card-header accent-indigo"><h2>Optimization Queue</h2></div>
     <div class="card-body" id="ads-opt-body"><p class="empty-state">Loading...</p></div>
   </div>
-  <div id="ads-kpi-strip"></div>
-  <div id="ads-overview-card"></div>
   <div id="ads-keywords-card"></div>
-  <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
-  <!-- Campaign Proposals -->
-  <div class="card" id="campaign-proposals-card" style="display:none">
-    <div class="card-header accent-indigo">
-      <h2>Campaign Proposals</h2>
-      <span style="font-size:11px;color:var(--muted)" id="campaign-proposals-note"></span>
-    </div>
-    <div style="padding:16px" id="campaign-proposals-body"></div>
-  </div>
-  <!-- Clarifications Needed -->
-  <div class="card" id="campaign-clarify-card" style="display:none">
-    <div class="section-header">
-      <div class="section-title">Clarifications Needed</div>
-    </div>
-    <div id="campaign-clarify-body"></div>
-  </div>
-  <!-- Active Campaigns -->
-  <div class="card" id="campaign-active-card" style="display:none">
-    <div class="section-header">
-      <div class="section-title">Active Campaigns</div>
-    </div>
-    <div id="campaign-active-body"></div>
-  </div>
 </div><!-- /tab-ads -->
 <div id="tab-optimize" class="tab-panel">
   <div class="empty-state">Loading optimization briefs...</div>
@@ -978,6 +992,7 @@ function switchTab(name, btn) {
   // Update hero KPIs for this tab
   if (data) renderHeroKpis(data);
   if (name === 'optimize' && data) renderOptimizeTab(data);
+  if (name === 'ad-intelligence') renderAdIntelligenceTab();
 }
 
 function renderHeroKpis(d) {
@@ -1873,48 +1888,109 @@ function kpiCard(label, value, sub) {
     '</div>';
 }
 
+async function renderAdIntelligenceTab() {
+  const el = document.getElementById('ad-intelligence-content');
+  el.innerHTML = '<p class="muted" style="padding:2rem">Loading\u2026</p>';
+  try {
+    const res = await fetch('/api/meta-ads-insights', { credentials: 'same-origin' });
+    const data = await res.json();
+    if (!data.ads || data.ads.length === 0) {
+      el.innerHTML = '<p class="muted" style="padding:2rem">No ad intelligence data yet. Run the meta-ads-collector and meta-ads-analyzer agents first.</p>';
+      return;
+    }
+    const ads = data.ads.slice(0, 12);
+    el.innerHTML =
+      '<div style="padding:1.5rem">' +
+      '<h2 style="margin:0 0 0.25rem">Ad Intelligence</h2>' +
+      '<p class="muted" style="margin:0 0 1.5rem">Competitor ads from Meta Ads Library \u00b7 Last updated ' + esc(data.date || 'unknown') + '</p>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem">' +
+      ads.map(function(ad) { return renderAdCard(ad); }).join('') +
+      '</div></div>';
+  } catch (e) {
+    el.innerHTML = '<p class="muted" style="padding:2rem">Error loading data: ' + esc(e.message) + '</p>';
+  }
+}
+
+function renderAdCard(ad) {
+  const platforms = (ad.publisherPlatforms || []).map(function(p) {
+    return '<span style="background:#e8f4fd;color:#1a6fa8;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:600;text-transform:uppercase">' + esc(p) + '</span>';
+  }).join(' ');
+  const analysisHtml = ad.analysis
+    ? '<div style="background:#f8f9fa;border-radius:6px;padding:0.75rem;margin-top:0.75rem;font-size:13px">' +
+      '<div style="font-weight:600;margin-bottom:0.25rem">' + esc(ad.analysis.headline || '') + '</div>' +
+      '<div class="muted">' + esc(ad.analysis.whyEffective || '') + '</div>' +
+      (ad.analysis.messagingAngle ? '<div style="margin-top:0.5rem"><span style="font-weight:600">Angle:</span> ' + esc(ad.analysis.messagingAngle) + '</div>' : '') +
+      '</div>'
+    : '';
+  return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">' +
+    '<div style="padding:0.875rem 1rem 0.75rem;border-bottom:1px solid #f3f4f6">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.35rem">' +
+    '<span style="font-weight:700;font-size:14px">' + esc(ad.pageName) + '</span>' +
+    '<span style="font-size:11px;color:#6b7280;white-space:nowrap;margin-left:0.5rem">Score: ' + ad.effectivenessScore + '</span>' +
+    '</div>' +
+    '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">' +
+    platforms +
+    '<span style="font-size:11px;color:#6b7280">Running ' + ad.longevityDays + 'd</span>' +
+    '<span style="font-size:11px;color:#6b7280">' + ad.variationCount + ' variations</span>' +
+    '</div></div>' +
+    (ad.adSnapshotUrl ? '<iframe src="' + esc(ad.adSnapshotUrl) + '" style="width:100%;height:280px;border:none" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>' : '') +
+    '<div style="padding:0.75rem 1rem;font-size:13px;flex:1">' +
+    (ad.adCreativeBody ? '<div style="margin-bottom:0.5rem">' + esc(ad.adCreativeBody.slice(0, 200)) + (ad.adCreativeBody.length > 200 ? '\u2026' : '') + '</div>' : '') +
+    analysisHtml +
+    '</div>' +
+    '<div style="padding:0.75rem 1rem;border-top:1px solid #f3f4f6">' +
+    '<button data-ad-id="' + esc(ad.id) + '" data-page-name="' + esc(ad.pageName) + '" onclick="openCreativeGenerator(this.dataset.adId,this.dataset.pageName)" style="width:100%;padding:0.5rem;background:#1a6fa8;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer">Generate Creative</button>' +
+    '</div></div>';
+}
+
+function openCreativeGenerator(adId, pageName) {
+  const name = prompt('Generate creative for "' + pageName + '".\\n\\nEnter product image filenames (comma-separated, from data/product-images/) or leave blank for lifestyle-only:\\nExample: deodorant-stick.webp,deodorant-lifestyle.webp');
+  // name=null means user cancelled; name='' means they left it blank (lifestyle-only) — both are valid
+  if (name === null) return; // user cancelled the prompt
+  const productImages = name ? name.split(',').map(s => s.trim()).filter(Boolean) : [];
+  // productImages may be empty — that's valid (lifestyle-only prompt, no product reference)
+  generateCreative(adId, productImages);
+}
+
+async function generateCreative(adId, productImages) {
+  try {
+    const res = await fetch('/api/generate-creative', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adId, productImages }),
+    });
+    if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.status)); return; }
+    const { jobId } = await res.json();
+    alert('Creative generation started! Job ID: ' + jobId + '\\n\\nThe download link will appear here when ready. Check back in ~2 minutes.');
+    pollCreativeJob(jobId);
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function pollCreativeJob(jobId, attempts = 0) {
+  if (attempts > 30) { alert('Creative generation timed out. Check the dashboard for errors.'); return; }
+  await new Promise(r => setTimeout(r, 5000));
+  try {
+    const res = await fetch('/api/creative-packages/' + encodeURIComponent(jobId), { credentials: 'same-origin' });
+    const job = await res.json();
+    if (job.status === 'complete') {
+      if (confirm('Creative package ready! Download now?')) window.location.href = '/api/creative-packages/download/' + encodeURIComponent(jobId);
+    } else if (job.status === 'error') {
+      alert('Creative generation failed: ' + (job.error || 'unknown error'));
+    } else {
+      pollCreativeJob(jobId, attempts + 1);
+    }
+  } catch { pollCreativeJob(jobId, attempts + 1); }
+}
+
 function renderAdsTab(data) {
   renderAdsOptimization(data);
   const adsAll = data.cro?.googleAdsAll || [];
   const snap = adsAll[0];
 
   if (!snap) {
-    document.getElementById('ads-kpi-strip').innerHTML = '';
-    document.getElementById('ads-overview-card').innerHTML =
-      '<div class="card"><div class="card-header"><h2>Campaign Overview</h2></div>' +
-      '<div class="card-body"><p class="empty-state">No Google Ads data yet — run google-ads-collector to get started.</p></div></div>';
     document.getElementById('ads-keywords-card').innerHTML = '';
     return;
   }
-
-  // KPI strip inside the Paid Search tab (2 cards — Ad Spend and ROAS)
-  document.getElementById('ads-kpi-strip').innerHTML =
-    '<div class="kpi-strip" style="grid-template-columns: repeat(2, 1fr)">' +
-    kpiCard('Ad Spend', '$' + snap.spend.toFixed(2), 'of $10.00/day') +
-    kpiCard('ROAS', snap.roas.toFixed(2) + 'x', 'paid search') +
-    '</div>';
-
-  // Campaign overview card
-  const overviewRows = [
-    ['Spend', '$' + snap.spend.toFixed(2)],
-    ['Daily Budget', '$10.00'],
-    ['Impressions', fmtNum(snap.impressions)],
-    ['Clicks', fmtNum(snap.clicks)],
-    ['CTR', (snap.ctr * 100).toFixed(2) + '%'],
-    ['Avg CPC', '$' + snap.avgCpc.toFixed(2)],
-    ['Conversions', snap.conversions],
-    ['CVR', (snap.conversionRate * 100).toFixed(2) + '%'],
-    ['Revenue', '$' + snap.revenue.toFixed(2)],
-    ['ROAS', snap.roas.toFixed(2) + 'x'],
-    ['Cost/Conv', snap.costPerConversion > 0 ? '$' + snap.costPerConversion.toFixed(2) : '—'],
-  ];
-
-  document.getElementById('ads-overview-card').innerHTML =
-    '<div class="card"><div class="card-header"><h2>Campaign Overview</h2>' +
-    '<span class="section-note">' + esc(snap.date) + '</span></div>' +
-    '<div class="card-body"><table class="cro-table">' +
-    overviewRows.map(([l, v]) => '<tr><td>' + esc(l) + '</td><td>' + esc(String(v)) + '</td></tr>').join('') +
-    '</table></div></div>';
 
   // Top keywords card
   const kws = snap.topKeywords || [];
@@ -2324,6 +2400,29 @@ async function loadCampaignCards() {
   } catch {}
 }
 
+function formatRationale(text) {
+  if (!text) return '';
+  // Split on sentence boundaries
+  var sentences = (text.match(/[^.!?]+(?:[.!?]+(?:[ ]|$))/g) || [text]).map(function(s) { return s.trim(); }).filter(Boolean);
+  if (sentences.length <= 1) return '<span>' + esc(text) + '</span>';
+
+  var summary  = sentences[0];
+  // Skip pure-math sentences (lots of = and $ signs) and cap at 5 bullets
+  var bullets  = sentences.slice(1).filter(function(s) { return (s.match(/=/g) || []).length < 3; }).slice(0, 5);
+  var overflow = sentences.slice(1 + bullets.length);
+
+  var html = '<div class="rationale-summary">' + esc(summary) + '</div>';
+  if (bullets.length) {
+    html += '<ul class="rationale-bullets">' + bullets.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>';
+  }
+  if (overflow.length) {
+    html += '<details class="rationale-details"><summary>Show full analysis (' + overflow.length + ' more)</summary>' +
+      '<ul class="rationale-bullets">' + overflow.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' +
+      '</details>';
+  }
+  return html;
+}
+
 function renderCampaignCards(campaigns, aovBarrier) {
   // --- Proposals ---
   const proposals = campaigns.filter(c => (c.status === 'proposed' || c.status === 'approved') && !c.clarificationNeeded);
@@ -2413,7 +2512,7 @@ function renderCampaignCards(campaigns, aovBarrier) {
         '</div>' +
 
         // 3. Rationale
-        '<div class="rationale-row"><div class="rationale-label">Why this campaign</div><div class="rationale-text">' + esc(c.rationale || '') + '</div></div>' +
+        '<div class="rationale-row"><div class="rationale-label">Why this campaign</div><div class="rationale-text">' + formatRationale(c.rationale || '') + '</div></div>' +
 
         // 4. Ad groups
         '<div class="adgroups-row"><span class="adgroups-label">Ad Groups</span>' + adGroupPills + (negCount > 0 ? '<span style="font-size:11px;color:var(--muted);margin-left:auto">' + negCount + ' neg. keywords</span>' : '') + '</div>' +
@@ -2425,7 +2524,9 @@ function renderCampaignCards(campaigns, aovBarrier) {
       );
     }).join('');
   } else {
-    propCard.style.display = 'none';
+    propCard.style.display = '';
+    propBody.innerHTML = '<p class="empty-state">No campaign suggestions yet. Run Campaign Creator to generate proposals.</p>';
+    document.getElementById('campaign-proposals-note').textContent = '';
   }
 
   // --- Clarifications ---
@@ -2471,7 +2572,10 @@ function renderCampaignCards(campaigns, aovBarrier) {
         ).join('') + '</div>' : '') +
         '</div>';
     }).join('');
-  } else { actCard.style.display = 'none'; }
+  } else {
+    actCard.style.display = '';
+    actBody.innerHTML = '<p class="empty-state">No active campaigns yet.</p>';
+  }
 }
 
 function updateProjections(id) {
@@ -2843,9 +2947,116 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // GET /api/meta-ads-insights
+  if (req.method === 'GET' && req.url === '/api/meta-ads-insights') {
+    if (!checkAuth(req, res)) return;
+    if (!existsSync(META_ADS_INSIGHTS_DIR)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ date: null, ads: [] })); return; }
+    const files = readdirSync(META_ADS_INSIGHTS_DIR).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+    if (!files.length) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ date: null, ads: [] })); return; }
+    try {
+      const data = readFileSync(join(META_ADS_INSIGHTS_DIR, files[0]), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    } catch { res.writeHead(500); res.end('{}'); }
+    return;
+  }
+
+  // POST /api/generate-creative
+  if (req.method === 'POST' && req.url === '/api/generate-creative') {
+    if (!checkAuth(req, res)) return;
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { adId, productImages = [] } = JSON.parse(body);
+        if (!adId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'adId required' })); return; }
+        if (productImages.length > 3) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'max 3 product images' })); return; }
+        for (const f of productImages) {
+          if (!existsSync(join(PRODUCT_IMAGES_DIR_MA, f))) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: `Product image not found: ${f}` })); return; }
+        }
+        // Find pageId for the adId from latest insights
+        let pageId = 'unknown';
+        if (existsSync(META_ADS_INSIGHTS_DIR)) {
+          const iFiles = readdirSync(META_ADS_INSIGHTS_DIR).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+          if (iFiles.length) {
+            try {
+              const ins = JSON.parse(readFileSync(join(META_ADS_INSIGHTS_DIR, iFiles[0]), 'utf8'));
+              pageId = ins.ads.find(a => a.id === adId)?.pageId || 'unknown';
+            } catch {}
+          }
+        }
+        const jobId = `${pageId}-${Date.now()}`;
+        mkdirSync(CREATIVE_JOBS_DIR, { recursive: true });
+        writeFileSync(join(CREATIVE_JOBS_DIR, `${jobId}.json`), JSON.stringify({ status: 'pending', adId, productImages, createdAt: new Date().toISOString() }, null, 2));
+        spawn('node', ['agents/creative-packager/index.js', '--job-id', jobId], { detached: true, stdio: 'ignore' }).unref();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ jobId }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // GET /api/creative-packages/download/:jobId  ← MUST be registered before /:jobId
+  // (otherwise "download" would be matched as the jobId parameter)
+  if (req.method === 'GET' && req.url.startsWith('/api/creative-packages/download/')) {
+    if (!checkAuth(req, res)) return;
+    const jobId = req.url.slice('/api/creative-packages/download/'.length);
+    const jobPath = join(CREATIVE_JOBS_DIR, `${jobId}.json`);
+    if (!existsSync(jobPath)) { res.writeHead(404); res.end('Not found'); return; }
+    try {
+      const job = JSON.parse(readFileSync(jobPath, 'utf8'));
+      const zipPath = job.zipPath;
+      if (!zipPath || !existsSync(zipPath)) { res.writeHead(404); res.end('ZIP not found'); return; }
+      const zipName = basename(zipPath);
+      res.writeHead(200, { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${zipName}"` });
+      import('node:fs').then(({ createReadStream }) => createReadStream(zipPath).pipe(res));
+    } catch { res.writeHead(500); res.end('Error'); }
+    return;
+  }
+
+  // GET /api/creative-packages/:jobId  (status polling)
+  if (req.method === 'GET' && /^\/api\/creative-packages\/[^/]+$/.test(req.url)) {
+    if (!checkAuth(req, res)) return;
+    const jobId = req.url.split('/').pop();
+    const jobPath = join(CREATIVE_JOBS_DIR, `${jobId}.json`);
+    if (!existsSync(jobPath)) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'error', error: 'Job not found', downloadUrl: null }));
+      return;
+    }
+    try {
+      const job = JSON.parse(readFileSync(jobPath, 'utf8'));
+      const age = Date.now() - new Date(job.createdAt).getTime();
+      if (age > 10 * 60 * 1000 && job.status !== 'complete') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'error', error: 'Job timed out', downloadUrl: null }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: job.status, downloadUrl: job.downloadUrl || null, error: job.error || null }));
+    } catch { res.writeHead(500); res.end('{}'); }
+    return;
+  }
+
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
   res.end(HTML);
 });
+
+// Clean up creative job files older than 7 days
+if (existsSync(CREATIVE_JOBS_DIR)) {
+  const cutoff = Date.now() - 7 * 86400 * 1000;
+  for (const f of readdirSync(CREATIVE_JOBS_DIR).filter(f => f.endsWith('.json'))) {
+    try {
+      const job = JSON.parse(readFileSync(join(CREATIVE_JOBS_DIR, f), 'utf8'));
+      if (new Date(job.createdAt).getTime() < cutoff) {
+        import('node:fs').then(({ unlinkSync }) => unlinkSync(join(CREATIVE_JOBS_DIR, f))).catch(() => {});
+      }
+    } catch {}
+  }
+}
 
 const BIND = args.includes('--public') ? '0.0.0.0' : '127.0.0.1';
 server.listen(PORT, BIND, () => {

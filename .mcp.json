@@ -3,6 +3,14 @@
     "shopify-dev": {
       "command": "npx",
       "args": ["-y", "@shopify/dev-mcp@latest"]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "google-ads": {
+      "command": "npx",
+      "args": ["-y", "@samihalawa/google-ads-mcp-server"]
     }
   }
 }

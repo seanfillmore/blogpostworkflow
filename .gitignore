@@ -21,6 +21,7 @@ data/articles/
 data/campaigns/*.json
 
 # Generated log files
+data/logs/
 data/reports/scheduler.log
 data/reports/scheduler/
 data/reports/backlink-monitor.log
@@ -39,8 +40,17 @@ data/reports/ads-optimizer.log
 data/reports/ads-weekly-recap.log
 data/reports/campaign-monitor.log
 data/reports/campaign-analyzer.log
+data/reports/daily-summary/
+data/reports/cro/
+data/reports/editor/
+
+# Collector snapshots and raw data
+data/snapshots/
+data/clarity/
 
 # Misc
 Ingredients/
 *.DS_Store
 .worktrees/
+.superpowers/
+docs/google-ads-api-design-doc.html

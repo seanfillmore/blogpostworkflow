@@ -375,6 +375,10 @@ async function writePost(briefPath) {
     const finalMessage = await stream.finalMessage();
     inputTokens = finalMessage.usage?.input_tokens || 0;
     outputTokens = finalMessage.usage?.output_tokens || 0;
+    const stopReason = finalMessage.stop_reason;
+    if (stopReason === 'max_tokens') {
+      throw new Error(`Output was truncated (stop_reason=max_tokens, ${outputTokens} tokens). Post is incomplete — increase max_tokens or shorten the brief and re-run.`);
+    }
   }, { label: 'blog-post-writer' });
 
   // Strip any accidental markdown fences
@@ -385,11 +389,17 @@ async function writePost(briefPath) {
   // Validate output before saving
   const hasH2 = /<h2[\s>]/i.test(html);
   const hasCTA = /<section\s[^>]*style/i.test(html);
+  // Detect unclosed href attributes — a truncated href="https://... without closing quote
+  // causes a malformed link to be published to Shopify (e.g. href="https://domain.com/blogs/news/best")
+  const unclosedHref = /href="[^"]*$/.test(html);
   if (wordCount < 300) {
     throw new Error(`Stream produced too little content: ${wordCount} words (minimum 300). Re-run or check brief.`);
   }
   if (!hasH2) {
     throw new Error('Stream produced HTML with no H2 headings — likely truncated or malformed. Re-run.');
+  }
+  if (unclosedHref) {
+    throw new Error('HTML contains an unclosed href attribute — output was truncated mid-link. Re-run.');
   }
   if (!hasCTA) {
     console.warn('  Warning: No CTA section blocks detected. Editor will flag this.');

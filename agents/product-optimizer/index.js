@@ -150,6 +150,13 @@ Write an improved product description that:
 4. Ends with a subtle call to action or reassurance statement
 5. Is between 120–200 words — concise but complete
 6. Matches ${config.name}'s voice: clean, expert, trustworthy, ingredient-focused
+7. Passes AI detection — avoid patterns that trigger AI content flags:
+   - Vary sentence length aggressively: mix short punchy sentences with longer ones
+   - Lead with a specific concrete detail, NOT a generic opening statement
+   - Cut all filler phrases: "designed with care", "made with intention", "more than just",
+     "you deserve", "no compromise", "real results", "peace of mind", "feel confident"
+   - Use brand-specific details: organic virgin coconut oil, handmade in small batches, specific scents
+   - Avoid uniform sentence patterns like "Whether you..." or "If you're looking for..."
 
 Also write:
 - SEO title (50–60 chars, includes keyword)
@@ -197,6 +204,13 @@ Write an improved collection page description that:
 5. Ends with a brief reassurance (natural ingredients, no harsh chemicals, etc.)
 6. Is 100–160 words total
 7. Uses ${config.name}'s voice: clean, knowledgeable, not salesy
+8. Passes AI detection — avoid patterns that trigger AI content flags:
+   - Vary sentence length aggressively: mix short punchy sentences with longer ones
+   - Lead with a specific concrete detail, NOT a generic opening statement
+   - Cut all filler phrases: "designed with care", "made with intention", "more than just",
+     "you deserve", "no compromise", "real results", "peace of mind", "feel confident"
+   - Use brand-specific details: organic virgin coconut oil, handmade in small batches, specific scents
+   - Avoid uniform sentence patterns like "Whether you..." or "If you're looking for..."
 
 Also write:
 - SEO title (50–60 chars, includes keyword, format: "[Category] | ${config.name}")

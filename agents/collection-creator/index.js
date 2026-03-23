@@ -280,6 +280,15 @@ ${opportunities.map((o, i) => `${i + 1}. "${o.query}" — position ${o.position.
   "body_html": "..."           // 150–300 words of SEO-optimized collection description in clean HTML
                                // Use <p>, <h2>, <ul> tags. Include the keyword naturally 2–3 times.
                                // Write for the shopper, not search engines. No fluff.
+                               //
+                               // ANTI-AI-DETECTION RULES (mandatory — AI-flagged content hurts SEO):
+                               // - Vary sentence length aggressively: mix short punchy sentences with longer ones
+                               // - Lead with a specific concrete detail, NOT a generic statement about the product
+                               // - Cut all filler phrases: "designed with care", "made with intention", "more than just",
+                               //   "you deserve", "no compromise", "real results", "peace of mind", "feel confident"
+                               // - Use brand-specific details: organic virgin coconut oil, handmade in small batches, specific scents
+                               // - Avoid uniform sentence patterns like "Whether you..." or "If you're looking for..."
+                               // - Write as a knowledgeable person would speak, not a content template
 }
 
 Respond ONLY with a valid JSON array of approved collections (may be empty [] if none qualify).

@@ -13,6 +13,7 @@
  *   fix-redirects [--dry-run] Update internal links pointing to 301 redirected URLs
  *   fix-alt-text [--dry-run]  Generate + insert alt text on <img> tags in blog post bodies
  *   create-redirects [--dry-run] Create 301 redirects for known 404 pages
+ *   fix-ai-content [--dry-run]  Rewrite high-AI-content pages in data/ai-detection/*.csv
  *   fix-all [--dry-run]    Run all fixes in order
  *
  * Requires: ANTHROPIC_API_KEY in .env
@@ -233,6 +234,28 @@ Rules:
   return msg.content[0].text.trim().replace(/^["']|["']$/g, '');
 }
 
+async function generateSeoTitle(currentTitle, url) {
+  const msg = await claude.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 100,
+    messages: [{
+      role: 'user',
+      content: `Write a concise SEO title tag for this page.
+
+Brand: ${config.name}
+Current title (too long): "${currentTitle}"
+Page URL: ${url}
+
+Rules:
+- 50–60 characters maximum (strictly)
+- Keep the primary keyword from the current title
+- Format: [Keyword/Topic] – ${config.name}
+- Return ONLY the title text, nothing else`,
+    }],
+  });
+  return msg.content[0].text.trim().replace(/^["']|["']$/g, '');
+}
+
 async function generateAltText(imageUrl, pageTitle, pageUrl) {
   const msg = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -287,9 +310,21 @@ async function audit() {
   sections.push('');
 
   // Pages with links to broken pages
-  const linksTo404 = csvs['Error-indexable-Page_has_links_to_broken_page'] || [];
+  // Filter out cdn-cgi/l/email-protection — Cloudflare obfuscates footer email addresses into this
+  // URL, which Ahrefs flags as a 404. These are false positives in the site template, not fixable
+  // by editing article body_html, and grow linearly with every new page published.
+  const allLinksTo404 = csvs['Error-indexable-Page_has_links_to_broken_page'] || [];
+  const linksTo404 = allLinksTo404.filter((r) => {
+    // internal_outlinks_to_4xx contains the broken URL(s); internal_outlinks_codes_(4xx) contains the HTTP code
+    const brokenUrl = r.internal_outlinks_to_4xx || r['internal_outlinks_codes_(4xx)'] || '';
+    return !brokenUrl.includes('cdn-cgi/l/email-protection');
+  });
+  const cdnCgiCount = allLinksTo404.length - linksTo404.length;
   sections.push(`### 2. Pages Linking to 404s — ${linksTo404.length} pages`);
   sections.push('**Fixable with:** `fix-links`\n');
+  if (cdnCgiCount > 0) {
+    sections.push(`> ℹ️ ${cdnCgiCount} pages filtered out — they only link to \`cdn-cgi/l/email-protection\` (Cloudflare email obfuscation in site footer, not fixable via article content)\n`);
+  }
   for (const r of linksTo404.slice(0, 15)) {
     const broken = r['internal_outlinks_codes_(4xx)'] || r.internal_outlinks_to_4xx || '';
     sections.push(`- ${r.url} → ${broken.split('\n')[0]}`);
@@ -515,11 +550,15 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
   // Also load link details
   const linkRows = loadCSV('Error-indexable-Page_has_links_to_broken_page-links');
   // Build: sourceUrl → Set of broken hrefs
+  // Skip cdn-cgi/l/email-protection — Cloudflare obfuscates footer email addresses into this URL.
+  // Ahrefs flags it as a 404 on every page with the footer email. It lives in the theme template,
+  // not in article body_html, so it cannot be fixed by editing article content.
   const brokenBySource = {};
   for (const r of linkRows) {
-    const src = r.source || r.url || '';
-    const target = r.url_to || r.target || r.broken_url || '';
+    const src = r.source_url || r.source || r.url || '';
+    const target = r.target_url || r.url_to || r.target || r.broken_url || '';
     if (!src || !target) continue;
+    if (target.includes('cdn-cgi/l/email-protection')) continue;
     if (!brokenBySource[src]) brokenBySource[src] = new Set();
     brokenBySource[src].add(target);
   }
@@ -650,8 +689,8 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
   const linkRows = loadCSV('Warning-indexable-Page_has_links_to_redirect-links');
   const redirectBySource = {};
   for (const r of linkRows) {
-    const src = r.source || r.url || '';
-    const target = r.url_to || r.target || '';
+    const src = r.source_url || r.source || r.url || '';
+    const target = r.target_url || r.url_to || r.target || '';
     if (!src || !target) continue;
     if (!redirectBySource[src]) redirectBySource[src] = new Set();
     redirectBySource[src].add(target);
@@ -843,6 +882,46 @@ async function fixMeta({ dryRun = false } = {}) {
   }
 
   console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} meta descriptions`);
+
+  // ── Title tags too long ──────────────────────────────────────────────────
+  console.log('\n  Collecting title tag issues...');
+  const titleTooLong = loadCSV('Warning-indexable-Title_too_long');
+  const titleToFix = titleTooLong.filter((r) => ['product', 'collection'].includes(pageType(r.url)));
+  console.log(`  ${titleToFix.length} products/collections with title tags too long\n`);
+  let titleFixed = 0;
+
+  for (const row of titleToFix) {
+    const type = pageType(row.url);
+    const path = urlPath(row.url);
+    const currentTitle = row.title?.split('\n')[0] || path;
+    process.stdout.write(`  ${path} [title_too_long] → generating title... `);
+    const newTitle = await generateSeoTitle(currentTitle, row.url);
+    console.log(`(${newTitle.length} chars)`);
+
+    if (!dryRun) {
+      try {
+        if (type === 'product') {
+          const entry = productIdx[path];
+          if (!entry) { console.log(`    [SKIP] Product not found`); continue; }
+          await upsertMetafield('products', entry.productId, 'global', 'title_tag', newTitle);
+          titleFixed++;
+        } else if (type === 'collection') {
+          const entry = collectionIdx[path];
+          if (!entry) { console.log(`    [SKIP] Collection not found`); continue; }
+          const resource = entry.type === 'custom_collections' ? 'custom_collections' : 'smart_collections';
+          await upsertMetafield(resource, entry.collectionId, 'global', 'title_tag', newTitle);
+          titleFixed++;
+        }
+      } catch (e) {
+        console.log(`    Error: ${e.message}`);
+      }
+    } else {
+      console.log(`    Would set: "${newTitle}"`);
+      titleFixed++;
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${titleFixed} title tags`);
 }
 
 // ── COMMAND: fix-alt-text ─────────────────────────────────────────────────────
@@ -1208,6 +1287,144 @@ async function compare({ apply = false, fix = false } = {}) {
   }
 }
 
+// ── COMMAND: fix-ai-content ───────────────────────────────────────────────────
+
+async function fixAiContent({ dryRun = false } = {}) {
+  const AI_DETECTION_DIR = join(ROOT, 'data', 'ai-detection');
+
+  // Load all CSVs from data/ai-detection/
+  let rows = [];
+  try {
+    const files = readdirSync(AI_DETECTION_DIR).filter((f) => f.endsWith('.csv'));
+    for (const f of files) {
+      rows.push(...parseCSV(readFileSync(join(AI_DETECTION_DIR, f), 'utf8')));
+    }
+  } catch {
+    console.log('  No files found in data/ai-detection/');
+    return;
+  }
+
+  // Filter to High/Very high AI content, collections and pages only
+  const toFix = rows.filter((r) => {
+    const level = (r.ai_content_level || '').toLowerCase();
+    return (level === 'high' || level === 'very high') && ['collection', 'page'].includes(pageType(r.url));
+  });
+
+  console.log(`\n  ${toFix.length} pages with high AI content to rewrite\n`);
+
+  const collectionIdx = await getCollectionIndex();
+  const pageIdx = await getPageIndex();
+  const env = loadEnv();
+  const SHOP = env.SHOPIFY_STORE;
+  const TOKEN = env.SHOPIFY_SECRET;
+
+  let fixed = 0;
+
+  for (const row of toFix) {
+    const type = pageType(row.url);
+    const path = urlPath(row.url);
+    const handle = path.split('/').pop();
+
+    // Fetch current body_html
+    let body = '';
+    let resourceId = null;
+    let resourceType = null;
+
+    if (type === 'collection') {
+      // Try both collection types
+      for (const ct of ['custom_collections', 'smart_collections']) {
+        const res = await fetch(`https://${SHOP}/admin/api/2025-01/${ct}.json?handle=${handle}`, {
+          headers: { 'X-Shopify-Access-Token': TOKEN },
+        });
+        const data = await res.json();
+        const col = (data[ct] || [])[0];
+        if (col) { body = col.body_html || ''; resourceId = col.id; resourceType = ct; break; }
+      }
+    } else {
+      const entry = pageIdx[path];
+      if (!entry) { console.log(`  [SKIP] Page not found: ${path}`); continue; }
+      const res = await fetch(`https://${SHOP}/admin/api/2025-01/pages/${entry.pageId}.json`, {
+        headers: { 'X-Shopify-Access-Token': TOKEN },
+      });
+      const data = await res.json();
+      body = data.page?.body_html || '';
+      resourceId = entry.pageId;
+      resourceType = 'pages';
+    }
+
+    if (!body) { console.log(`  [SKIP] No content: ${path}`); continue; }
+
+    // Preserve schema-injector and links blocks — only rewrite visible prose
+    const schemaMatch = body.match(/<!-- schema-injector -->[\s\S]*?<!-- schema-injector -->/);
+    const schemaBlock = schemaMatch ? schemaMatch[0] : '';
+    const contentOnly = schemaBlock ? body.replace(schemaBlock, '').trim() : body;
+
+    console.log(`  ${path} — rewriting ${contentOnly.length} chars of content...`);
+
+    const msg = await claude.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      messages: [{
+        role: 'user',
+        content: `You are rewriting collection page content for ${config.name}, a natural skincare brand. The content has been flagged by AI detection tools as obviously AI-generated. Rewrite it to sound authentically human while keeping the same SEO structure and keyword focus.
+
+Page URL: ${row.url}
+Brand: ${config.name} — handmade in the USA, organic coconut oil-based skincare, paraben-free, vegan, cruelty-free
+
+RULES for avoiding AI detection:
+- Vary sentence length aggressively — mix 5-word sentences with 20-word ones in the same paragraph
+- Lead with a specific concrete detail, not a generic statement or question
+- Cut all generic filler phrases: "designed with care", "made with intention", "more than just", "you deserve", "no compromise", "real results", "peace of mind", "feel confident", "clean beauty"
+- Write in active voice with direct, specific language about what the product actually does
+- Use brand-specific details: handmade in small batches, organic virgin coconut oil, specific scents (lavender, rose, unscented options)
+- FAQs should sound like real customer questions, not scripted Q&A pairs — vary the answer length and tone
+- Some paragraphs should be 1-2 sentences. Others 3-4. Never uniform.
+- Avoid starting multiple sections with "Whether you..." or "If you're looking for..."
+- Keep all HTML tags, heading hierarchy (H2/H3/H4), class attributes, and the <!---Split---> divider exactly as-is
+- Preserve the <ul class="links"> block and <div class="faq-block"> structure but rewrite the text inside FAQ answers
+- Do NOT rewrite the links list text or hrefs — keep those exactly as-is
+- Return ONLY the rewritten HTML, no preamble
+
+CURRENT CONTENT:
+${contentOnly}`,
+      }],
+    });
+
+    const rewritten = msg.content[0].text.trim();
+    const newBody = schemaBlock ? `${schemaBlock}\n${rewritten}` : rewritten;
+
+    if (dryRun) {
+      console.log(`  [DRY RUN] Would update ${path}`);
+      console.log(rewritten.slice(0, 300) + '...\n');
+      fixed++;
+      continue;
+    }
+
+    try {
+      if (type === 'collection') {
+        const colType = resourceType === 'custom_collections' ? 'custom_collections' : 'smart_collections';
+        await fetch(`https://${SHOP}/admin/api/2025-01/${colType}/${resourceId}.json`, {
+          method: 'PUT',
+          headers: { 'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [colType.slice(0, -1)]: { id: resourceId, body_html: newBody } }),
+        });
+      } else {
+        await fetch(`https://${SHOP}/admin/api/2025-01/pages/${resourceId}.json`, {
+          method: 'PUT',
+          headers: { 'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: { id: resourceId, body_html: newBody } }),
+        });
+      }
+      console.log(`  [DONE] ${path}`);
+      fixed++;
+    } catch (e) {
+      console.log(`  [ERROR] ${path}: ${e.message}`);
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would rewrite' : 'Rewrote'}: ${fixed} pages`);
+}
+
 // ── COMMAND: fix-all ──────────────────────────────────────────────────────────
 
 async function fixAll({ dryRun = false } = {}) {
@@ -1236,6 +1453,7 @@ Usage:
   node agents/technical-seo/index.js fix-redirects [--dry-run]
   node agents/technical-seo/index.js fix-alt-text [--dry-run]
   node agents/technical-seo/index.js create-redirects [--dry-run]
+  node agents/technical-seo/index.js fix-ai-content [--dry-run]
   node agents/technical-seo/index.js fix-all [--dry-run]
 `.trim();
 
@@ -1266,6 +1484,9 @@ async function main() {
       break;
     case 'create-redirects':
       await createRedirects({ dryRun });
+      break;
+    case 'fix-ai-content':
+      await fixAiContent({ dryRun });
       break;
     case 'fix-all':
       await fixAll({ dryRun });
