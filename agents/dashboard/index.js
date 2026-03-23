@@ -657,9 +657,15 @@ const HTML = `<!DOCTYPE html>
   .kpi-delta.down, .cro-delta.down { color: var(--red); }
   .kpi-delta.flat, .cro-delta.flat { color: var(--muted); }
   .brief-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
-  .brief-item { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 12px; }
-  .brief-item-title { font-size: 11px; font-weight: 700; color: #c2410c; margin-bottom: 6px; }
-  .brief-item-body  { font-size: 11px; color: #78350f; line-height: 1.5; }
+  .brief-item { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .brief-item-title { font-size: 11px; font-weight: 700; color: #c2410c; }
+  .brief-item-body  { font-size: 11px; color: #78350f; line-height: 1.5; flex: 1; }
+  .brief-item-actions { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .btn-cro-resolve { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 5px; border: 1px solid #16a34a; background: #dcfce7; color: #15803d; cursor: pointer; }
+  .btn-cro-resolve:hover { background: #bbf7d0; }
+  .btn-cro-preview { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 5px; border: 1px solid #d97706; background: #fef3c7; color: #92400e; cursor: pointer; }
+  .btn-cro-preview:hover { background: #fde68a; }
+  .badge-manual { font-size: 10px; padding: 3px 8px; border-radius: 4px; background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; font-weight: 600; }
   .filter-bar { display: flex; gap: 6px; }
   .filter-btn { padding: 4px 12px; font-size: 11px; font-weight: 600; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; color: var(--muted); font-family: inherit; transition: all .15s; }
   .filter-btn:hover { color: var(--text); border-color: #94a3b8; }
@@ -858,6 +864,7 @@ const HTML = `<!DOCTYPE html>
     <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')" data-tip="Generate a Variant B meta title and start an A/B test for a post">Create Meta A/B Test</button>
     <button onclick="runAgent('agents/meta-ab-tracker/index.js')" data-tip="Check CTR results for active meta title tests and conclude winners">Run Meta A/B Tracker</button>
     <button onclick="runAgent('agents/cro-analyzer/index.js')" data-tip="Analyse Clarity heatmaps and session data for conversion issues">Run CRO Analyzer</button>
+    <button onclick="runAgent('agents/cro-cta-injector/index.js', ['--apply'])" data-tip="Insert product CTA blocks into top-traffic blog posts with 0 conversions">Inject CTAs</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
     <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
@@ -937,6 +944,7 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-cta-injector-index-js" class="run-log" style="display:none"></pre>
 </div><!-- /tab-cro -->
 <div id="tab-ad-intelligence" class="tab-panel" style="display:none">
   <div id="ad-intelligence-content">
@@ -1827,18 +1835,31 @@ function renderCROTab(data) {
 
     const prioColor = p => p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280';
 
+    // Map item title keywords → agent script + label
+    const CRO_RESOLVERS = [
+      { keyword: 'Add Prominent CTAs',   script: 'agents/cro-cta-injector/index.js', label: 'Inject CTAs' },
+    ];
+
     briefHtml = '<div class="card" style="background:#fffbeb;border-color:#fde68a">' +
       '<div class="card-header"><h2 style="color:#92400e">AI CRO Brief</h2>' +
       '<span style="font-size:11px;color:#92400e">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
       '<div class="card-body">' +
       (items.length ? '<div class="brief-grid">' +
-        items.map(item =>
-          '<div class="brief-item">' +
-          '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
-          (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
-          '<div class="brief-item-body">' + esc(item.body.join(' ')) + '</div>' +
-          '</div>'
-        ).join('') + '</div>'
+        items.map(item => {
+          const resolver = CRO_RESOLVERS.find(r => item.title.includes(r.keyword));
+          const actions = resolver
+            ? '<div class="brief-item-actions">' +
+              '<button class="btn-cro-resolve" onclick="runAgent(\'' + resolver.script + '\', [\'--apply\'])">' + resolver.label + '</button>' +
+              '<button class="btn-cro-preview" onclick="runAgent(\'' + resolver.script + '\', [])">Preview</button>' +
+              '</div>'
+            : '<div class="brief-item-actions"><span class="badge-manual">Manual</span></div>';
+          return '<div class="brief-item">' +
+            '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
+            (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
+            '<div class="brief-item-body">' + esc(item.body.join(' ')) + '</div>' +
+            actions +
+            '</div>';
+        }).join('') + '</div>'
       : '<pre style="font-size:11px;white-space:pre-wrap;color:#78350f">' + esc(brief.content) + '</pre>') +
       '</div></div>';
   }
