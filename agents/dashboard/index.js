@@ -782,6 +782,11 @@ const HTML = `<!DOCTYPE html>
   .rationale-row  { padding: 13px 16px; border-bottom: 1px solid var(--border); }
   .rationale-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 5px; }
   .rationale-text  { font-size: 12px; color: #374151; line-height: 1.6; }
+  .rationale-summary { font-size: 12px; color: #374151; font-weight: 500; line-height: 1.6; margin-bottom: 6px; }
+  .rationale-bullets { margin: 0 0 6px 16px; padding: 0; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+  .rationale-bullets li { margin-bottom: 3px; }
+  .rationale-details summary { font-size: 11px; color: var(--muted); cursor: pointer; margin-top: 2px; }
+  .rationale-details summary:hover { color: var(--indigo); }
   .adgroups-row    { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .adgroups-label  { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 4px; flex-shrink: 0; }
   .adgroup-pill    { background: #f1f5f9; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--text); }
@@ -2395,6 +2400,29 @@ async function loadCampaignCards() {
   } catch {}
 }
 
+function formatRationale(text) {
+  if (!text) return '';
+  // Split on sentence boundaries
+  var sentences = (text.match(/[^.!?]+(?:[.!?]+(?:[ ]|$))/g) || [text]).map(function(s) { return s.trim(); }).filter(Boolean);
+  if (sentences.length <= 1) return '<span>' + esc(text) + '</span>';
+
+  var summary  = sentences[0];
+  // Skip pure-math sentences (lots of = and $ signs) and cap at 5 bullets
+  var bullets  = sentences.slice(1).filter(function(s) { return (s.match(/=/g) || []).length < 3; }).slice(0, 5);
+  var overflow = sentences.slice(1 + bullets.length);
+
+  var html = '<div class="rationale-summary">' + esc(summary) + '</div>';
+  if (bullets.length) {
+    html += '<ul class="rationale-bullets">' + bullets.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>';
+  }
+  if (overflow.length) {
+    html += '<details class="rationale-details"><summary>Show full analysis (' + overflow.length + ' more)</summary>' +
+      '<ul class="rationale-bullets">' + overflow.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' +
+      '</details>';
+  }
+  return html;
+}
+
 function renderCampaignCards(campaigns, aovBarrier) {
   // --- Proposals ---
   const proposals = campaigns.filter(c => (c.status === 'proposed' || c.status === 'approved') && !c.clarificationNeeded);
@@ -2484,7 +2512,7 @@ function renderCampaignCards(campaigns, aovBarrier) {
         '</div>' +
 
         // 3. Rationale
-        '<div class="rationale-row"><div class="rationale-label">Why this campaign</div><div class="rationale-text">' + esc(c.rationale || '') + '</div></div>' +
+        '<div class="rationale-row"><div class="rationale-label">Why this campaign</div><div class="rationale-text">' + formatRationale(c.rationale || '') + '</div></div>' +
 
         // 4. Ad groups
         '<div class="adgroups-row"><span class="adgroups-label">Ad Groups</span>' + adGroupPills + (negCount > 0 ? '<span style="font-size:11px;color:var(--muted);margin-left:auto">' + negCount + ' neg. keywords</span>' : '') + '</div>' +

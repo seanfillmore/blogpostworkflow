@@ -106,12 +106,20 @@ Node.js processes escape sequences in the template literal before the browser ev
 - `\n` inside the template literal → Node.js converts to a literal newline character → browser receives a multi-line string literal → **SyntaxError**
 - `\\n` in source → Node.js produces `\n` → browser receives the escape sequence → correct
 
+This applies to **all** recognized escape sequences: `\n`, `\t`, `\r`, `\s` (in regex), etc.
+
+**Regex inside the script block — special rule:** Do NOT use `\s`, `\t`, `\r`, `\n` inside regex literals written in the browser JS block. Node.js converts these before the browser sees them, producing literal whitespace characters inside the regex pattern, which breaks the regex with `SyntaxError: Invalid regular expression: missing /`. Use explicit alternatives instead:
+- `\s` → `[ ]` (space only, usually sufficient) or `[ \\t\\r\\n]` with double-escaped sequences
+- `\t` → `\\t` or a literal tab character
+- `\n` → `\\n` (double-backslash)
+
 **Required check:** Grep every new or modified function inside the `<script>` block for `[^\\]\n` patterns inside string literals (single-quoted, double-quoted, or template strings that are part of the browser JS). Every occurrence must use `\\n` instead of `\n`.
 
 Common locations where this error appears:
 - `alert()` and `prompt()` calls with multi-line messages
 - `confirm()` calls
 - Any string built with `\n` for display purposes
+- **Regex patterns** using `\s`, `\t`, `\r`, or `\n`
 
 **Reviewer action:** Run this before approving any dashboard PR:
 ```bash
