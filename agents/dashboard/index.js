@@ -787,6 +787,10 @@ const HTML = `<!DOCTYPE html>
   .rationale-bullets li { margin-bottom: 3px; }
   .rationale-details summary { font-size: 11px; color: var(--muted); cursor: pointer; margin-top: 2px; }
   .rationale-details summary:hover { color: var(--indigo); }
+  .camp-proposal { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; background: var(--bg); }
+  .camp-proposal:last-child { margin-bottom: 0; }
+  .camp-proposal-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .camp-proposal-meta { font-size: 12px; color: var(--muted); line-height: 1.8; }
   .adgroups-row    { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .adgroups-label  { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 4px; flex-shrink: 0; }
   .adgroup-pill    { background: #f1f5f9; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--text); }
