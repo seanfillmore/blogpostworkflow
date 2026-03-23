@@ -13,6 +13,7 @@
  *   fix-redirects [--dry-run] Update internal links pointing to 301 redirected URLs
  *   fix-alt-text [--dry-run]  Generate + insert alt text on <img> tags in blog post bodies
  *   create-redirects [--dry-run] Create 301 redirects for known 404 pages
+ *   fix-ai-content [--dry-run]  Rewrite high-AI-content pages in data/ai-detection/*.csv
  *   fix-all [--dry-run]    Run all fixes in order
  *
  * Requires: ANTHROPIC_API_KEY in .env
@@ -1286,6 +1287,144 @@ async function compare({ apply = false, fix = false } = {}) {
   }
 }
 
+// ── COMMAND: fix-ai-content ───────────────────────────────────────────────────
+
+async function fixAiContent({ dryRun = false } = {}) {
+  const AI_DETECTION_DIR = join(ROOT, 'data', 'ai-detection');
+
+  // Load all CSVs from data/ai-detection/
+  let rows = [];
+  try {
+    const files = readdirSync(AI_DETECTION_DIR).filter((f) => f.endsWith('.csv'));
+    for (const f of files) {
+      rows.push(...parseCSV(readFileSync(join(AI_DETECTION_DIR, f), 'utf8')));
+    }
+  } catch {
+    console.log('  No files found in data/ai-detection/');
+    return;
+  }
+
+  // Filter to High/Very high AI content, collections and pages only
+  const toFix = rows.filter((r) => {
+    const level = (r.ai_content_level || '').toLowerCase();
+    return (level === 'high' || level === 'very high') && ['collection', 'page'].includes(pageType(r.url));
+  });
+
+  console.log(`\n  ${toFix.length} pages with high AI content to rewrite\n`);
+
+  const collectionIdx = await getCollectionIndex();
+  const pageIdx = await getPageIndex();
+  const env = loadEnv();
+  const SHOP = env.SHOPIFY_STORE;
+  const TOKEN = env.SHOPIFY_SECRET;
+
+  let fixed = 0;
+
+  for (const row of toFix) {
+    const type = pageType(row.url);
+    const path = urlPath(row.url);
+    const handle = path.split('/').pop();
+
+    // Fetch current body_html
+    let body = '';
+    let resourceId = null;
+    let resourceType = null;
+
+    if (type === 'collection') {
+      // Try both collection types
+      for (const ct of ['custom_collections', 'smart_collections']) {
+        const res = await fetch(`https://${SHOP}/admin/api/2025-01/${ct}.json?handle=${handle}`, {
+          headers: { 'X-Shopify-Access-Token': TOKEN },
+        });
+        const data = await res.json();
+        const col = (data[ct] || [])[0];
+        if (col) { body = col.body_html || ''; resourceId = col.id; resourceType = ct; break; }
+      }
+    } else {
+      const entry = pageIdx[path];
+      if (!entry) { console.log(`  [SKIP] Page not found: ${path}`); continue; }
+      const res = await fetch(`https://${SHOP}/admin/api/2025-01/pages/${entry.pageId}.json`, {
+        headers: { 'X-Shopify-Access-Token': TOKEN },
+      });
+      const data = await res.json();
+      body = data.page?.body_html || '';
+      resourceId = entry.pageId;
+      resourceType = 'pages';
+    }
+
+    if (!body) { console.log(`  [SKIP] No content: ${path}`); continue; }
+
+    // Preserve schema-injector and links blocks — only rewrite visible prose
+    const schemaMatch = body.match(/<!-- schema-injector -->[\s\S]*?<!-- schema-injector -->/);
+    const schemaBlock = schemaMatch ? schemaMatch[0] : '';
+    const contentOnly = schemaBlock ? body.replace(schemaBlock, '').trim() : body;
+
+    console.log(`  ${path} — rewriting ${contentOnly.length} chars of content...`);
+
+    const msg = await claude.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      messages: [{
+        role: 'user',
+        content: `You are rewriting collection page content for ${config.name}, a natural skincare brand. The content has been flagged by AI detection tools as obviously AI-generated. Rewrite it to sound authentically human while keeping the same SEO structure and keyword focus.
+
+Page URL: ${row.url}
+Brand: ${config.name} — handmade in the USA, organic coconut oil-based skincare, paraben-free, vegan, cruelty-free
+
+RULES for avoiding AI detection:
+- Vary sentence length aggressively — mix 5-word sentences with 20-word ones in the same paragraph
+- Lead with a specific concrete detail, not a generic statement or question
+- Cut all generic filler phrases: "designed with care", "made with intention", "more than just", "you deserve", "no compromise", "real results", "peace of mind", "feel confident", "clean beauty"
+- Write in active voice with direct, specific language about what the product actually does
+- Use brand-specific details: handmade in small batches, organic virgin coconut oil, specific scents (lavender, rose, unscented options)
+- FAQs should sound like real customer questions, not scripted Q&A pairs — vary the answer length and tone
+- Some paragraphs should be 1-2 sentences. Others 3-4. Never uniform.
+- Avoid starting multiple sections with "Whether you..." or "If you're looking for..."
+- Keep all HTML tags, heading hierarchy (H2/H3/H4), class attributes, and the <!---Split---> divider exactly as-is
+- Preserve the <ul class="links"> block and <div class="faq-block"> structure but rewrite the text inside FAQ answers
+- Do NOT rewrite the links list text or hrefs — keep those exactly as-is
+- Return ONLY the rewritten HTML, no preamble
+
+CURRENT CONTENT:
+${contentOnly}`,
+      }],
+    });
+
+    const rewritten = msg.content[0].text.trim();
+    const newBody = schemaBlock ? `${schemaBlock}\n${rewritten}` : rewritten;
+
+    if (dryRun) {
+      console.log(`  [DRY RUN] Would update ${path}`);
+      console.log(rewritten.slice(0, 300) + '...\n');
+      fixed++;
+      continue;
+    }
+
+    try {
+      if (type === 'collection') {
+        const colType = resourceType === 'custom_collections' ? 'custom_collections' : 'smart_collections';
+        await fetch(`https://${SHOP}/admin/api/2025-01/${colType}/${resourceId}.json`, {
+          method: 'PUT',
+          headers: { 'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [colType.slice(0, -1)]: { id: resourceId, body_html: newBody } }),
+        });
+      } else {
+        await fetch(`https://${SHOP}/admin/api/2025-01/pages/${resourceId}.json`, {
+          method: 'PUT',
+          headers: { 'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: { id: resourceId, body_html: newBody } }),
+        });
+      }
+      console.log(`  [DONE] ${path}`);
+      fixed++;
+    } catch (e) {
+      console.log(`  [ERROR] ${path}: ${e.message}`);
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would rewrite' : 'Rewrote'}: ${fixed} pages`);
+}
+
 // ── COMMAND: fix-all ──────────────────────────────────────────────────────────
 
 async function fixAll({ dryRun = false } = {}) {
@@ -1314,6 +1453,7 @@ Usage:
   node agents/technical-seo/index.js fix-redirects [--dry-run]
   node agents/technical-seo/index.js fix-alt-text [--dry-run]
   node agents/technical-seo/index.js create-redirects [--dry-run]
+  node agents/technical-seo/index.js fix-ai-content [--dry-run]
   node agents/technical-seo/index.js fix-all [--dry-run]
 `.trim();
 
@@ -1344,6 +1484,9 @@ async function main() {
       break;
     case 'create-redirects':
       await createRedirects({ dryRun });
+      break;
+    case 'fix-ai-content':
+      await fixAiContent({ dryRun });
       break;
     case 'fix-all':
       await fixAll({ dryRun });
