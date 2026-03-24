@@ -82,6 +82,24 @@ function stripTags(html) {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Extract article body content, stripping JSON-LD schema scripts and meta tags.
+ * The blog-post-writer stores a full HTML document in body_html; <article> wraps
+ * the actual content. Without this, above-the-fold word positions are off.
+ */
+function extractArticleContent(html) {
+  const articleStart = html.indexOf('<article');
+  const articleEnd = html.lastIndexOf('</article>');
+  if (articleStart !== -1 && articleEnd > articleStart) {
+    const afterTag = html.indexOf('>', articleStart);
+    return html.slice(afterTag + 1, articleEnd);
+  }
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<meta[^>]*/gi, '')
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+}
+
 // ── Analysis step 1: above-the-fold proxy (first 200 words) ──────────────────
 function extractFirstWords(html, wordLimit) {
   const text = stripTags(html);
@@ -156,20 +174,33 @@ function extractLinkedHandles(html) {
 function auditCtaCopy(html) {
   const results = [];
 
-  // Simpler approach: find each rsc-cta-block and extract text
+  // Pattern 1: rsc-cta-block divs (from cro-cta-injector)
   let searchFrom = 0;
   while (true) {
     const idx = html.indexOf('rsc-cta-block', searchFrom);
     if (idx === -1) break;
-    // Find the enclosing div end — look ahead up to 800 chars
     const snippet = html.slice(idx, idx + 800);
     const text = stripTags(snippet).trim();
-    // Take first 100 chars as representative CTA text
     const ctaText = text.slice(0, 100);
-    // Flag if text is only generic "shop now" without any product noun
     const genericOnly = /^shop now[.!]?[ ]*$/i.test(ctaText.trim());
     results.push({ ctaText: ctaText.trim(), genericOnly });
     searchFrom = idx + 1;
+  }
+
+  // Pattern 2: <section> blocks with collection/product links (from blog-post-writer)
+  let sectionSearch = 0;
+  while (true) {
+    const idx = html.indexOf('<section', sectionSearch);
+    if (idx === -1) break;
+    const sectionEnd = html.indexOf('</section>', idx);
+    const section = html.slice(idx, sectionEnd > idx ? sectionEnd + 10 : idx + 1000);
+    if (/href="[^"]*\/(collections|products)\/[^"]*"/.test(section)) {
+      const linkMatch = section.match(/>([^<]{2,80})<\/a>/);
+      const ctaText = linkMatch ? linkMatch[1].trim().slice(0, 100) : 'Shop Now';
+      const genericOnly = /^shop now[.!]?[ ]*$/i.test(ctaText.trim());
+      results.push({ ctaText, genericOnly });
+    }
+    sectionSearch = idx + 1;
   }
 
   return results;
@@ -291,7 +322,9 @@ async function main() {
 
   console.log('  Fetching article from Shopify...');
   const article = await fetchArticle(handle);
-  const html = article.body_html || '';
+  // Extract article body only — body_html may contain a full HTML document
+  // (meta tags, JSON-LD schema scripts) written by the blog-post-writer
+  const html = extractArticleContent(article.body_html || '');
   const pageUrl = `https://www.realskincare.com/blogs/news/${handle}`;
   console.log('  Article:', article.title);
 

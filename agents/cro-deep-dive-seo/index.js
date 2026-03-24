@@ -83,9 +83,22 @@ function stripTags(html) {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-function extractH1(html) {
-  const m = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-  return m ? stripTags(m[1]) : null;
+/**
+ * Extract article body content, stripping JSON-LD schema scripts and meta tags.
+ * The blog-post-writer stores a full HTML document in body_html; <article> wraps
+ * the actual content. Without this, word counts and element positions are off.
+ */
+function extractArticleContent(html) {
+  const articleStart = html.indexOf('<article');
+  const articleEnd = html.lastIndexOf('</article>');
+  if (articleStart !== -1 && articleEnd > articleStart) {
+    const afterTag = html.indexOf('>', articleStart);
+    return html.slice(afterTag + 1, articleEnd);
+  }
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<meta[^>]*/gi, '')
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
 }
 
 function countInternalLinks(html) {
@@ -101,13 +114,16 @@ async function main() {
 
   console.log('  Fetching article from Shopify...');
   const article = await fetchArticle(handle);
-  const html = article.body_html || '';
+  // Extract article body only — body_html may contain a full HTML document
+  // (meta tags, JSON-LD schema scripts) written by the blog-post-writer
+  const html = extractArticleContent(article.body_html || '');
   const pageUrl = `https://www.realskincare.com/blogs/news/${handle}`;
   console.log('  Article:', article.title);
 
   const titleTag      = article.title || '';
   const metaDesc      = article.summary_html ? stripTags(article.summary_html) : '';
-  const h1            = extractH1(html);
+  // H1 is rendered by the Shopify theme from article.title — it is never in body_html
+  const h1            = article.title || '';
   const internalLinks = countInternalLinks(html);
 
   // GSC per-page keyword data
@@ -148,7 +164,7 @@ async function main() {
     '',
     '--- On-Page SEO ---',
     `Title tag: "${titleTag}" (${titleTag.length} chars)`,
-    `H1: ${h1 ? '"' + h1 + '"' : 'NOT FOUND'}`,
+    `H1 (Shopify theme renders article.title as H1): "${h1}"`,
     `Meta description: ${metaDesc ? '"' + metaDesc.slice(0, 200) + (metaDesc.length > 200 ? '...' : '') + '" (' + metaDesc.length + ' chars)' : 'MISSING'}`,
     `Internal links to collections/products: ${internalLinks}`,
     '',
