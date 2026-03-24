@@ -91,6 +91,9 @@ const RUN_AGENT_ALLOWLIST = new Set([
   'scripts/ads-weekly-recap.js',
   'agents/campaign-creator/index.js',
   'agents/campaign-analyzer/index.js',
+  'agents/cro-deep-dive-content/index.js',
+  'agents/cro-deep-dive-seo/index.js',
+  'agents/cro-deep-dive-trust/index.js',
 ]);
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
@@ -657,9 +660,15 @@ const HTML = `<!DOCTYPE html>
   .kpi-delta.down, .cro-delta.down { color: var(--red); }
   .kpi-delta.flat, .cro-delta.flat { color: var(--muted); }
   .brief-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
-  .brief-item { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 12px; }
-  .brief-item-title { font-size: 11px; font-weight: 700; color: #c2410c; margin-bottom: 6px; }
-  .brief-item-body  { font-size: 11px; color: #78350f; line-height: 1.5; }
+  .brief-item { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .brief-item-title { font-size: 11px; font-weight: 700; color: #c2410c; }
+  .brief-item-body  { font-size: 11px; color: #78350f; line-height: 1.5; flex: 1; }
+  .brief-item-actions { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .btn-cro-resolve { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 5px; border: 1px solid #16a34a; background: #dcfce7; color: #15803d; cursor: pointer; }
+  .btn-cro-resolve:hover { background: #bbf7d0; }
+  .btn-cro-preview { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 5px; border: 1px solid #d97706; background: #fef3c7; color: #92400e; cursor: pointer; }
+  .btn-cro-preview:hover { background: #fde68a; }
+  .badge-manual { font-size: 10px; padding: 3px 8px; border-radius: 4px; background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; font-weight: 600; }
   .filter-bar { display: flex; gap: 6px; }
   .filter-btn { padding: 4px 12px; font-size: 11px; font-weight: 600; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; color: var(--muted); font-family: inherit; transition: all .15s; }
   .filter-btn:hover { color: var(--text); border-color: #94a3b8; }
@@ -858,6 +867,7 @@ const HTML = `<!DOCTYPE html>
     <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')" data-tip="Generate a Variant B meta title and start an A/B test for a post">Create Meta A/B Test</button>
     <button onclick="runAgent('agents/meta-ab-tracker/index.js')" data-tip="Check CTR results for active meta title tests and conclude winners">Run Meta A/B Tracker</button>
     <button onclick="runAgent('agents/cro-analyzer/index.js')" data-tip="Analyse Clarity heatmaps and session data for conversion issues">Run CRO Analyzer</button>
+    <button onclick="runAgent('agents/cro-cta-injector/index.js', ['--apply'])" data-tip="Insert product CTA blocks into top-traffic blog posts with 0 conversions">Inject CTAs</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
     <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
@@ -934,9 +944,20 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
   <div id="cro-brief-card"></div>
+  <!-- Brief detail modal -->
+  <div id="brief-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="closeBriefModal(event)">
+    <div id="brief-modal" style="background:#fff;border-radius:12px;max-width:660px;width:90%;max-height:82vh;overflow-y:auto;position:relative;padding:28px 32px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <button onclick="document.getElementById('brief-modal-overlay').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+      <div id="brief-modal-content"></div>
+    </div>
+  </div>
   <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-cta-injector-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-deep-dive-content-index-js" style="display:none" class="run-log"></pre>
+  <pre id="run-log-agents-cro-deep-dive-seo-index-js" style="display:none" class="run-log"></pre>
+  <pre id="run-log-agents-cro-deep-dive-trust-index-js" style="display:none" class="run-log"></pre>
 </div><!-- /tab-cro -->
 <div id="tab-ad-intelligence" class="tab-panel" style="display:none">
   <div id="ad-intelligence-content">
@@ -1052,7 +1073,7 @@ function buildCroKpis(d) {
 function buildAdsKpis(d) {
   const snap = d.googleAdsAll?.[0];
   return [
-    { label: 'Daily Spend',  value: snap?.spend != null ? '$' + snap.spend.toFixed(2) : '—',           color: '#fb923c' },
+    { label: 'Ad Spend',     value: snap?.spend != null ? '$' + snap.spend.toFixed(2) : '—',            color: '#fb923c' },
     { label: 'Impressions',  value: snap?.impressions != null ? snap.impressions.toLocaleString() : '—', color: '#38bdf8' },
     { label: 'Clicks',       value: snap?.clicks != null ? snap.clicks.toLocaleString() : '—',           color: '#818cf8' },
     { label: 'CTR',          value: snap?.ctr != null ? (snap.ctr * 100).toFixed(2) + '%' : '—',         color: '#f59e0b' },
@@ -1632,6 +1653,54 @@ function renderGSCSEOPanel(data) {
   bodyEl.innerHTML = html;
 }
 
+var briefItemContents = [];
+
+function prioColor(p) { return p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280'; }
+
+function openBriefModal(idx) {
+  var item = briefItemContents[idx];
+  if (!item) return;
+  var bodyText = item.body.join('\\n');
+  var bodyHtml = esc(bodyText).replace(/[*][*]([^*]+)[*][*]/g, '<strong>$1</strong>');
+  var sections = bodyHtml.split('\\n');
+  var out = '';
+  var inPre = false;
+  for (var si = 0; si < sections.length; si++) {
+    var sl = sections[si];
+    var isTableRow = sl.trim().charAt(0) === '|';
+    if (isTableRow && !inPre) { out += '<pre style="font-size:12px;line-height:1.5;overflow-x:auto;background:#f9fafb;border-radius:6px;padding:10px 12px;margin:8px 0">'; inPre = true; }
+    if (!isTableRow && inPre) { out += '</pre>'; inPre = false; }
+    if (isTableRow) {
+      out += sl + '\\n';
+    } else if (sl.trim()) {
+      out += '<p style="margin:6px 0;font-size:13px;line-height:1.6">' + sl + '</p>';
+    }
+  }
+  if (inPre) out += '</pre>';
+  var prioLabel = item.priority ? '<span style="font-size:11px;font-weight:700;color:' + prioColor(item.priority) + ';text-transform:uppercase;letter-spacing:.06em;margin-right:8px">' + item.priority + '</span>' : '';
+  document.getElementById('brief-modal-content').innerHTML =
+    '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">' + prioLabel +
+    '<span style="font-size:16px;font-weight:700;color:#1f2937">' + esc(item.title) + '</span></div>' +
+    out;
+  document.getElementById('brief-modal-overlay').style.display = 'flex';
+}
+
+function closeBriefModal(e) {
+  if (e && e.target !== document.getElementById('brief-modal-overlay')) return;
+  document.getElementById('brief-modal-overlay').style.display = 'none';
+}
+
+function runDeepDive(category, handle, itemTitle) {
+    var agentMap = {
+      'content-formatting': 'agents/cro-deep-dive-content/index.js',
+      'seo-discovery':      'agents/cro-deep-dive-seo/index.js',
+      'trust-conversion':   'agents/cro-deep-dive-trust/index.js',
+    };
+    var agent = agentMap[category];
+    if (!agent) return;
+    runAgent(agent, ['--handle', handle, '--item', itemTitle]);
+  }
+
 function renderCROTab(data) {
   const cro = data.cro || {};
   const clarityAll = cro.clarityAll || [];
@@ -1811,35 +1880,59 @@ function renderCROTab(data) {
     briefHtml = '<div class="card"><div class="card-body"><p class="empty-state">No brief generated yet — run cro-analyzer to generate your first brief.</p></div></div>';
   } else {
     // Parse action items from markdown (lines starting with ### N.)
-    const items = [];
-    const lines = brief.content.split('\\n');
-    let current = null;
-    for (const line of lines) {
-      if (/^### \d+\./.test(line)) {
+    var items = [];
+    var lines = brief.content.split('\\n');
+    var current = null;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^### [ ]*[0-9]+\./.test(line)) {
         if (current) items.push(current);
-        const titleMatch = line.match(/^### \d+\.\s+(.+?)\s+—\s+(HIGH|MED|LOW)/i);
-        current = { title: titleMatch?.[1] || line.replace(/^### \d+\.\s*/, ''), priority: titleMatch?.[2] || '', body: [] };
+        // Extract category and page handle from HTML comment
+        var catMatch = line.match(/<!--[ ]*category:(\S+)[ ]+page:(\S+)[ ]*-->/);
+        var category = catMatch ? catMatch[1] : null;
+        var pageHandle = catMatch ? catMatch[2] : null;
+        // Strip comment, then strip priority suffix, then strip "### N. " prefix
+        var cleanLine = line
+          .replace(/<!--.*?-->/g, '')
+          .replace(/[ ]*[—\-][ ]*(HIGH|MED|LOW)[ ]*$/i, '')
+          .replace(/^### [ ]*[0-9]+\.[ ]*/, '')
+          .trim();
+        // Extract priority from original line
+        var prioMatch = line.match(/[—\-][ ]*(HIGH|MED|LOW)/i);
+        var priority = prioMatch ? prioMatch[1].toUpperCase() : '';
+        current = { title: cleanLine, priority: priority, category: category, pageHandle: pageHandle, body: [] };
       } else if (current && line.trim() && !/^##/.test(line)) {
         current.body.push(line.trim());
       }
     }
     if (current) items.push(current);
 
-    const prioColor = p => p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280';
+    // Store items globally so openBriefModal can access full body content
+    briefItemContents = items;
 
-    briefHtml = '<div class="card" style="background:#fffbeb;border-color:#fde68a">' +
-      '<div class="card-header"><h2 style="color:#92400e">AI CRO Brief</h2>' +
-      '<span style="font-size:11px;color:#92400e">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
+    briefHtml = '<div class="card">' +
+      '<div class="card-header accent-amber"><h2>AI CRO Brief</h2>' +
+      '<span class="section-note">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
       '<div class="card-body">' +
       (items.length ? '<div class="brief-grid">' +
-        items.map(item =>
-          '<div class="brief-item">' +
-          '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
-          (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
-          '<div class="brief-item-body">' + esc(item.body.join(' ')) + '</div>' +
-          '</div>'
-        ).join('') + '</div>'
-      : '<pre style="font-size:11px;white-space:pre-wrap;color:#78350f">' + esc(brief.content) + '</pre>') +
+        items.map(function(item, idx) {
+          var actions;
+          if (item.category && item.pageHandle) {
+            var safeTitle = esc(item.title);
+            actions = '<div class="brief-item-actions">' +
+              '<button class="btn-cro-resolve" onclick="event.stopPropagation();runDeepDive(\\'' + esc(item.category) + '\\', \\'' + esc(item.pageHandle) + '\\', \\'' + safeTitle + '\\')">' +
+              'Deep Dive</button>' +
+              '</div>';
+          } else {
+            actions = '<div class="brief-item-actions"><span class="badge-manual">Manual</span></div>';
+          }
+          return '<div class="brief-item" onclick="openBriefModal(' + idx + ')" style="cursor:pointer" title="Click to expand">' +
+            '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
+            (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
+            actions +
+            '</div>';
+        }).join('') + '</div>'
+      : '<pre style="font-size:11px;white-space:pre-wrap">' + esc(brief.content) + '</pre>') +
       '</div></div>';
   }
 
