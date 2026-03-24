@@ -1873,7 +1873,7 @@ function renderCROTab(data) {
         items.map(function(item) {
           var actions;
           if (item.category && item.pageHandle) {
-            var safeTitle = esc(item.title.replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+            var safeTitle = esc(item.title);
             actions = '<div class="brief-item-actions">' +
               '<button class="btn-cro-resolve" onclick="runDeepDive(\'' + esc(item.category) + '\', \'' + esc(item.pageHandle) + '\', \'' + safeTitle + '\')">' +
               'Deep Dive</button>' +
