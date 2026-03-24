@@ -158,3 +158,30 @@ Rules:
 - When writing content (blog posts, product copy), always incorporate internal links informed by the current sitemap index
 - Ahrefs monetary values are returned in USD cents — always divide by 100 before displaying
 - Store no sensitive credentials in code; use environment variables or config files excluded from version control
+
+## Server Deployment
+
+**Server:** `root@137.184.119.230` (DigitalOcean, Ubuntu)
+**Project path:** `/root/seo-claude`
+**Process manager:** PM2 — process name `seo-dashboard`
+**SSH:** Key-based auth configured (no password needed from this machine)
+
+### Deploy command
+
+```bash
+ssh root@137.184.119.230 'cd ~/seo-claude && git pull && pm2 restart seo-dashboard'
+```
+
+### Check server status
+
+```bash
+ssh root@137.184.119.230 'pm2 status && pm2 logs seo-dashboard --lines 20 --nostream'
+```
+
+### Deploy workflow
+
+1. Merge PR to `main` on GitHub
+2. Run the deploy command above
+3. Verify dashboard is still `online` in PM2 output
+
+**Never commit passwords or credentials to the repo.** SSH key auth is set up — no password required.
