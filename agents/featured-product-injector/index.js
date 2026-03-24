@@ -26,7 +26,7 @@ export const ROOT = join(__dirname, '..', '..');
  */
 export function findPrimaryProduct(html) {
   const counts = {};
-  const re = /href="\/products\/([^"/?#]+)"/g;
+  const re = /href="(?:https?:\/\/[^"]*)?\/products\/([^"/?#]+)"/g;
   let m;
   while ((m = re.exec(html)) !== null) {
     const handle = m[1];
@@ -242,10 +242,10 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
 async function main() {
   const env = loadEnv();
   const judgemeToken = process.env.JUDGEME_API_TOKEN || env.JUDGEME_API_TOKEN || null;
-  const judgemeShopDomain = process.env.JUDGEME_SHOP_DOMAIN || env.JUDGEME_SHOP_DOMAIN || null;
+  const judgemeShopDomain = process.env.SHOPIFY_STORE || env.SHOPIFY_STORE || null;
 
   if (!judgemeToken || !judgemeShopDomain) {
-    throw new Error('Missing JUDGEME_API_TOKEN or JUDGEME_SHOP_DOMAIN in .env');
+    throw new Error('Missing JUDGEME_API_TOKEN or SHOPIFY_STORE in .env');
   }
 
   const args = process.argv.slice(2);

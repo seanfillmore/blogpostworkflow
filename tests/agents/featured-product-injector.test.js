@@ -17,6 +17,11 @@ assert.equal(
   findPrimaryProduct('<a href="/collections/foo">x</a>'),
   null
 );
+// also matches absolute URLs
+assert.equal(
+  findPrimaryProduct('<a href="https://www.realskincare.com/products/coconut-oil-deodorant">x</a><a href="https://www.realskincare.com/products/coconut-oil-deodorant">x</a>'),
+  'coconut-oil-deodorant'
+);
 
 // renderStars: rounds to nearest integer, returns ★/☆ string
 assert.equal(renderStars(4.8), '★★★★★');
