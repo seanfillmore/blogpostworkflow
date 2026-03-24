@@ -94,6 +94,7 @@ const RUN_AGENT_ALLOWLIST = new Set([
   'agents/cro-deep-dive-content/index.js',
   'agents/cro-deep-dive-seo/index.js',
   'agents/cro-deep-dive-trust/index.js',
+  'agents/featured-product-injector/index.js',
 ]);
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
@@ -868,6 +869,7 @@ const HTML = `<!DOCTYPE html>
     <button onclick="runAgent('agents/meta-ab-tracker/index.js')" data-tip="Check CTR results for active meta title tests and conclude winners">Run Meta A/B Tracker</button>
     <button onclick="runAgent('agents/cro-analyzer/index.js')" data-tip="Analyse Clarity heatmaps and session data for conversion issues">Run CRO Analyzer</button>
     <button onclick="runAgent('agents/cro-cta-injector/index.js', ['--apply'])" data-tip="Insert product CTA blocks into top-traffic blog posts with 0 conversions">Inject CTAs</button>
+    <button onclick="runAgent('agents/featured-product-injector/index.js', ['--top', '3'])" data-tip="Inject featured product sections into the 3 highest-traffic blog posts">Inject Featured Products</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
     <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
@@ -958,6 +960,7 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-agents-cro-deep-dive-content-index-js" style="display:none" class="run-log"></pre>
   <pre id="run-log-agents-cro-deep-dive-seo-index-js" style="display:none" class="run-log"></pre>
   <pre id="run-log-agents-cro-deep-dive-trust-index-js" style="display:none" class="run-log"></pre>
+  <pre id="run-log-agents-featured-product-injector-index-js" style="display:none" class="run-log"></pre>
 </div><!-- /tab-cro -->
 <div id="tab-ad-intelligence" class="tab-panel" style="display:none">
   <div id="ad-intelligence-content">
