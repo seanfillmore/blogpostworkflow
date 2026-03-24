@@ -96,11 +96,23 @@ Output format (Markdown):
 
 ## Action Items
 
-### 1. [SHORT TITLE] — [HIGH/MED/LOW]
+### 1. [SHORT TITLE] <!-- category:[CATEGORY] page:[HANDLE] --> — [HIGH/MED/LOW]
 **Evidence:** [specific metric + value]
 **Action:** [concrete thing to do]
 
 [repeat for each item]
+
+CATEGORY/HANDLE tag rules:
+- The HTML comment tag MUST appear BEFORE the priority suffix (before " — HIGH/MED/LOW"), never after.
+- CATEGORY: pick exactly one of:
+  - content-formatting — CTA placement, image gaps, heading cadence, readability, paragraph length
+  - seo-discovery — meta title/description, keyword ranking, internal linking, content gaps
+  - trust-conversion — social proof, CTA copy, above-the-fold value prop, product framing
+  Omit the tag entirely if the item is not page-specific (e.g. checkout improvements, site-wide issues).
+- HANDLE: extract the article handle from a blog URL in the GSC snapshot data.
+  Example: https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste → handle is can-you-use-coconut-oil-as-toothpaste
+  If the item is not tied to a specific blog post, omit the tag.
+- If both CATEGORY and HANDLE are omitted (site-wide or non-page-specific item), write the heading without any HTML comment: ### 1. [SHORT TITLE] — [HIGH/MED/LOW]
 
 ## Raw Data
 [paste key metrics as a compact table]`;
