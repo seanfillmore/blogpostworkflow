@@ -99,7 +99,8 @@ export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote
     : '';
 
   return (
-    '<div class="rsc-featured-product" style="border:2px solid #e5e7eb;border-radius:14px;overflow:hidden;margin:28px 0;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);max-width:80%">' +
+    '<style>.rsc-featured-product{max-width:80%}@media(max-width:768px){.rsc-featured-product{max-width:100%}}</style>' +
+    '<div class="rsc-featured-product" style="border:2px solid #e5e7eb;border-radius:14px;overflow:hidden;margin:28px 0;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06)">' +
     '<div style="display:flex;gap:0">' +
     imgHtml +
     '<div style="padding:16px 18px;flex:1">' +
