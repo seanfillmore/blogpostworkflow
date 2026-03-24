@@ -83,7 +83,7 @@ export function findInsertionPoint(html, targetWords) {
  */
 export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote, verified, stars, reviewCount }) {
   const imgHtml = imageUrl
-    ? `<div style="flex-shrink:0;padding:5px"><img src="${escHtml(imageUrl)}" style="width:120px;height:100%;object-fit:cover;border-radius:10px;display:block" alt="${escHtml(title)}"></div>`
+    ? `<div style="flex-shrink:0;padding:5px"><img src="${escHtml(imageUrl)}" style="width:120px;object-fit:contain;border-radius:10px;display:block" alt="${escHtml(title)}"></div>`
     : '';
 
   const quoteHtml = quote
