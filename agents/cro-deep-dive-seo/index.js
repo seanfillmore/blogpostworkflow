@@ -97,6 +97,7 @@ function countInternalLinks(html) {
 async function main() {
   console.log('CRO Deep Dive — SEO & Discovery\n');
   console.log('  Handle:', handle);
+  console.log('  Item:', item);
 
   console.log('  Fetching article from Shopify...');
   const article = await fetchArticle(handle);
@@ -126,12 +127,12 @@ async function main() {
   const topQuery = gscKeywords[0]?.keyword;
   if (topQuery && ahrefsKey) {
     console.log(`  Fetching Ahrefs data for top query: "${topQuery}"...`);
-    const today30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const todayStr = new Date().toISOString().split('T')[0];
     kwOverview = await ahrefs('/keywords-explorer/overview', {
       keywords: topQuery,
       country: 'us',
-      date_from: today30,
+      date_from: thirtyDaysAgo,
       date_to: todayStr,
     });
     serpData = await ahrefs('/serp-overview', {
