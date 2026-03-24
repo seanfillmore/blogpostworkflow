@@ -166,11 +166,8 @@ function auditCtaCopy(html) {
     const text = stripTags(snippet).trim();
     // Take first 100 chars as representative CTA text
     const ctaText = text.slice(0, 100);
-    const lower = ctaText.toLowerCase();
     // Flag if text is only generic "shop now" without any product noun
-    // A product noun = any word that isn't in the generic set
-    const genericOnly = /^shop now\.?$/i.test(ctaText.trim()) ||
-      /^shop now\s*$/.test(ctaText.trim());
+    const genericOnly = /^shop now[.!]?[ ]*$/i.test(ctaText.trim());
     results.push({ ctaText: ctaText.trim(), genericOnly });
     searchFrom = idx + 1;
   }
