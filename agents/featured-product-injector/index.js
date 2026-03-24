@@ -298,13 +298,13 @@ async function main() {
   const gscFiles = readdirSync(gscDir).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
   if (gscFiles.length === 0) throw new Error('No GSC snapshots found in data/snapshots/gsc/');
   const gscSnap = JSON.parse(readFileSync(join(gscDir, gscFiles.at(-1)), 'utf8'));
-  const blogPages = (gscSnap.pages || [])
-    .filter(p => p.url && p.url.includes('/blogs/news/'))
+  const blogPages = (gscSnap.topPages || gscSnap.pages || [])
+    .filter(p => (p.page || p.url || '').includes('/blogs/news/'))
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0))
     .slice(0, topN);
 
   if (blogPages.length === 0) throw new Error('No blog pages found in GSC snapshot');
-  console.log(`  Top ${blogPages.length} pages: ${blogPages.map(p => p.url.split('/').at(-1)).join(', ')}`);
+  console.log(`  Top ${blogPages.length} pages: ${blogPages.map(p => (p.page || p.url).split('/').at(-1)).join(', ')}`);
 
   // Fetch all articles from Shopify once
   const { getBlogs, getArticles, updateArticle } = await import('../../lib/shopify.js');
@@ -316,7 +316,7 @@ async function main() {
 
   const results = [];
   for (const page of blogPages) {
-    const pageHandle = page.url.split('/').at(-1);
+    const pageHandle = (page.page || page.url).split('/').at(-1);
     const article = articleMap.get(pageHandle);
     if (!article) {
       console.log(`  ⚠  Article not found in Shopify: ${pageHandle}`);
