@@ -91,6 +91,9 @@ const RUN_AGENT_ALLOWLIST = new Set([
   'scripts/ads-weekly-recap.js',
   'agents/campaign-creator/index.js',
   'agents/campaign-analyzer/index.js',
+  'agents/cro-deep-dive-content/index.js',
+  'agents/cro-deep-dive-seo/index.js',
+  'agents/cro-deep-dive-trust/index.js',
 ]);
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
@@ -945,6 +948,9 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-cro-cta-injector-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-deep-dive-content-index-js" style="display:none" class="run-log"></pre>
+  <pre id="run-log-agents-cro-deep-dive-seo-index-js" style="display:none" class="run-log"></pre>
+  <pre id="run-log-agents-cro-deep-dive-trust-index-js" style="display:none" class="run-log"></pre>
 </div><!-- /tab-cro -->
 <div id="tab-ad-intelligence" class="tab-panel" style="display:none">
   <div id="ad-intelligence-content">
@@ -1640,6 +1646,17 @@ function renderGSCSEOPanel(data) {
   bodyEl.innerHTML = html;
 }
 
+function runDeepDive(category, handle, itemTitle) {
+    var agentMap = {
+      'content-formatting': 'agents/cro-deep-dive-content/index.js',
+      'seo-discovery':      'agents/cro-deep-dive-seo/index.js',
+      'trust-conversion':   'agents/cro-deep-dive-trust/index.js',
+    };
+    var agent = agentMap[category];
+    if (!agent) return;
+    runAgent(agent, ['--handle', handle, '--item', itemTitle]);
+  }
+
 function renderCROTab(data) {
   const cro = data.cro || {};
   const clarityAll = cro.clarityAll || [];
@@ -1819,40 +1836,51 @@ function renderCROTab(data) {
     briefHtml = '<div class="card"><div class="card-body"><p class="empty-state">No brief generated yet — run cro-analyzer to generate your first brief.</p></div></div>';
   } else {
     // Parse action items from markdown (lines starting with ### N.)
-    const items = [];
-    const lines = brief.content.split('\\n');
-    let current = null;
-    for (const line of lines) {
-      if (/^### \d+\./.test(line)) {
+    var items = [];
+    var lines = brief.content.split('\\n');
+    var current = null;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^### [ ]*[0-9]+\./.test(line)) {
         if (current) items.push(current);
-        const titleMatch = line.match(/^### \d+\.\s+(.+?)\s+—\s+(HIGH|MED|LOW)/i);
-        current = { title: titleMatch?.[1] || line.replace(/^### \d+\.\s*/, ''), priority: titleMatch?.[2] || '', body: [] };
+        // Extract category and page handle from HTML comment
+        var catMatch = line.match(/<!--[ ]*category:(\S+)[ ]+page:(\S+)[ ]*-->/);
+        var category = catMatch ? catMatch[1] : null;
+        var pageHandle = catMatch ? catMatch[2] : null;
+        // Strip comment, then strip priority suffix, then strip "### N. " prefix
+        var cleanLine = line
+          .replace(/<!--.*?-->/g, '')
+          .replace(/[ ]*[—\-][ ]*(HIGH|MED|LOW)[ ]*$/i, '')
+          .replace(/^### [ ]*[0-9]+\.[ ]*/, '')
+          .trim();
+        // Extract priority from original line
+        var prioMatch = line.match(/[—\-][ ]*(HIGH|MED|LOW)/i);
+        var priority = prioMatch ? prioMatch[1].toUpperCase() : '';
+        current = { title: cleanLine, priority: priority, category: category, pageHandle: pageHandle, body: [] };
       } else if (current && line.trim() && !/^##/.test(line)) {
         current.body.push(line.trim());
       }
     }
     if (current) items.push(current);
 
-    const prioColor = p => p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280';
-
-    // Map item title keywords → agent script + label
-    const CRO_RESOLVERS = [
-      { keyword: 'Add Prominent CTAs',   script: 'agents/cro-cta-injector/index.js', label: 'Inject CTAs' },
-    ];
+    var prioColor = function(p) { return p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280'; };
 
     briefHtml = '<div class="card" style="background:#fffbeb;border-color:#fde68a">' +
       '<div class="card-header"><h2 style="color:#92400e">AI CRO Brief</h2>' +
       '<span style="font-size:11px;color:#92400e">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
       '<div class="card-body">' +
       (items.length ? '<div class="brief-grid">' +
-        items.map(item => {
-          const resolver = CRO_RESOLVERS.find(r => item.title.includes(r.keyword));
-          const actions = resolver
-            ? '<div class="brief-item-actions">' +
-              '<button class="btn-cro-resolve" onclick="runAgent(\'' + resolver.script + '\', [\'--apply\'])">' + resolver.label + '</button>' +
-              '<button class="btn-cro-preview" onclick="runAgent(\'' + resolver.script + '\', [])">Preview</button>' +
-              '</div>'
-            : '<div class="brief-item-actions"><span class="badge-manual">Manual</span></div>';
+        items.map(function(item) {
+          var actions;
+          if (item.category && item.pageHandle) {
+            var safeTitle = item.title.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            actions = '<div class="brief-item-actions">' +
+              '<button class="btn-cro-resolve" onclick="runDeepDive(\'' + esc(item.category) + '\', \'' + esc(item.pageHandle) + '\', \'' + safeTitle + '\')">' +
+              'Deep Dive</button>' +
+              '</div>';
+          } else {
+            actions = '<div class="brief-item-actions"><span class="badge-manual">Manual</span></div>';
+          }
           return '<div class="brief-item">' +
             '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
             (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
