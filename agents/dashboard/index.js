@@ -1875,7 +1875,7 @@ function renderCROTab(data) {
           if (item.category && item.pageHandle) {
             var safeTitle = esc(item.title);
             actions = '<div class="brief-item-actions">' +
-              '<button class="btn-cro-resolve" onclick="runDeepDive(\'' + esc(item.category) + '\', \'' + esc(item.pageHandle) + '\', \'' + safeTitle + '\')">' +
+              '<button class="btn-cro-resolve" onclick="runDeepDive(\\'' + esc(item.category) + '\\', \\'' + esc(item.pageHandle) + '\\', \\'' + safeTitle + '\\')">' +
               'Deep Dive</button>' +
               '</div>';
           } else {
