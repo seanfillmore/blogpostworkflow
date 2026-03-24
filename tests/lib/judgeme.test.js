@@ -4,7 +4,7 @@ import { stripHtmlForReview, truncateToWord, renderReviewBody } from '../../lib/
 // stripHtmlForReview removes tags and collapses whitespace
 assert.equal(
   stripHtmlForReview('<p>Great <strong>product</strong>!</p>'),
-  'Great product !'
+  'Great product!'
 );
 assert.equal(
   stripHtmlForReview('  <br>  Hello  <br>  world  '),
