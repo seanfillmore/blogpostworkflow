@@ -157,6 +157,8 @@ Rules:
 - Agents should be composable — the sitemap index is a shared input used by multiple agents
 - When writing content (blog posts, product copy), always incorporate internal links informed by the current sitemap index
 - Ahrefs monetary values are returned in USD cents — always divide by 100 before displaying
+- `JUDGEME_API_TOKEN` — Judge.me private API token (from Judge.me dashboard → Settings → API)
+- `JUDGEME_SHOP_DOMAIN` — must be the `.myshopify.com` domain (e.g. `realskincare.myshopify.com`), not the custom domain
 - Store no sensitive credentials in code; use environment variables or config files excluded from version control
 
 ## Server Deployment
