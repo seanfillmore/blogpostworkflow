@@ -1910,9 +1910,9 @@ function renderCROTab(data) {
     // Store items globally so openBriefModal can access full body content
     briefItemContents = items;
 
-    briefHtml = '<div class="card" style="background:#fffbeb;border-color:#fde68a">' +
-      '<div class="card-header"><h2 style="color:#92400e">AI CRO Brief</h2>' +
-      '<span style="font-size:11px;color:#92400e">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
+    briefHtml = '<div class="card">' +
+      '<div class="card-header accent-amber"><h2>AI CRO Brief</h2>' +
+      '<span class="section-note">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
       '<div class="card-body">' +
       (items.length ? '<div class="brief-grid">' +
         items.map(function(item, idx) {
@@ -1932,7 +1932,7 @@ function renderCROTab(data) {
             actions +
             '</div>';
         }).join('') + '</div>'
-      : '<pre style="font-size:11px;white-space:pre-wrap;color:#78350f">' + esc(brief.content) + '</pre>') +
+      : '<pre style="font-size:11px;white-space:pre-wrap">' + esc(brief.content) + '</pre>') +
       '</div></div>';
   }
 
