@@ -148,7 +148,7 @@ function extractArticleContent(html) {
   }
   return html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<meta[^>]*/gi, '')
+    .replace(/<meta[^>]*\/?>/gi, '')
     .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
 }
 
@@ -223,14 +223,13 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
 
   // Remove mid-article dashed CTA, then insert block at scroll-depth position
   let processed = removeMidArticleCta(rawHtml);
-  const plainText = stripText(extractArticleContent(processed));
-  const total = wordCount(plainText);
-  const targetWords = Math.floor(avgScrollDepth / 100 * total * 0.9);
-  const insertIdx = findInsertionPoint(extractArticleContent(processed), targetWords);
-
-  // Re-find the insertion point in the full rawHtml by adjusting for the article wrapper offset
   const articleStart = processed.indexOf('<article');
   const contentStart = articleStart !== -1 ? processed.indexOf('>', articleStart) + 1 : 0;
+  const innerHtml = articleStart !== -1 ? processed.slice(contentStart, processed.lastIndexOf('</article>')) : processed;
+  const plainText = stripText(innerHtml);
+  const total = wordCount(plainText);
+  const targetWords = Math.floor(avgScrollDepth / 100 * total * 0.9);
+  const insertIdx = findInsertionPoint(innerHtml, targetWords);
   const absoluteIdx = contentStart + insertIdx;
 
   const result = processed.slice(0, absoluteIdx) + block + processed.slice(absoluteIdx);
@@ -255,7 +254,7 @@ async function main() {
   const handle = handleIdx !== -1 ? args[handleIdx + 1] : null;
   const topN = topIdx !== -1 ? parseInt(args[topIdx + 1], 10) : null;
 
-  if (!handle && !topN) {
+  if (!handle && (!topN || !Number.isInteger(topN) || topN < 1)) {
     console.error('Usage: node index.js --handle <slug>  OR  --top <n>');
     process.exit(1);
   }
@@ -270,6 +269,9 @@ async function main() {
   if (handle) {
     console.log(`  Mode: pipeline\n  Handle: ${handle}`);
     const filePath = join(ROOT, 'data', 'posts', `${handle}.html`);
+    if (!existsSync(filePath)) {
+      throw new Error(`No HTML file found at ${filePath}. Run the blog post writer first.`);
+    }
     const rawHtml = readFileSync(filePath, 'utf8');
     const result = await injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShopDomain);
 
