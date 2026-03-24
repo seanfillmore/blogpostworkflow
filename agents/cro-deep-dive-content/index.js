@@ -82,12 +82,37 @@ function wordCount(text) {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
-function analyzeHtml(html) {
+/**
+ * Extract just the article body content.
+ * If <article> tags are present (blog post writer output includes them), use that.
+ * Otherwise strip <script> blocks and <meta> tags to remove schema/head content.
+ */
+function extractArticleContent(html) {
+  const articleStart = html.indexOf('<article');
+  const articleEnd = html.lastIndexOf('</article>');
+  if (articleStart !== -1 && articleEnd > articleStart) {
+    const afterTag = html.indexOf('>', articleStart);
+    return html.slice(afterTag + 1, articleEnd);
+  }
+  // Fallback: strip script blocks (JSON-LD etc.) and meta/title tags
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<meta[^>]*/gi, '')
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+}
+
+function analyzeHtml(rawHtml) {
+  // Work on article body only — strips JSON-LD schema and meta tags from word count
+  const html = extractArticleContent(rawHtml);
+
   const totalText = stripTags(html);
   const wordTotal = wordCount(totalText);
 
-  // CTA positions
+  // CTA positions — detect rsc-cta-block divs (from cro-cta-injector) AND
+  // <section> blocks with collection/product links (from blog-post-writer)
   const ctas = [];
+
+  // Pattern 1: rsc-cta-block
   let ctaSearchFrom = 0;
   while (true) {
     const idx = html.indexOf('rsc-cta-block', ctaSearchFrom);
@@ -102,6 +127,27 @@ function analyzeHtml(html) {
     ctaSearchFrom = idx + 1;
   }
 
+  // Pattern 2: <section> blocks containing collection/product links
+  let sectionSearch = 0;
+  while (true) {
+    const idx = html.indexOf('<section', sectionSearch);
+    if (idx === -1) break;
+    const sectionEnd = html.indexOf('</section>', idx);
+    const section = html.slice(idx, sectionEnd > idx ? sectionEnd + 10 : idx + 1000);
+    if (/href="[^"]*\/(collections|products)\/[^"]*"/.test(section)) {
+      const linkMatch = section.match(/>([^<]{2,50})<\/a>/);
+      const buttonText = linkMatch ? linkMatch[1].trim() : 'Shop Now';
+      const wordsBefore = wordCount(stripTags(html.slice(0, idx)));
+      const positionPct = wordTotal > 0 ? Math.round((wordsBefore / wordTotal) * 100) : 0;
+      ctas.push({ positionPct, buttonText, wordOffset: wordsBefore });
+    }
+    sectionSearch = idx + 1;
+  }
+
+  // Sort by position and deduplicate (same word offset within 5 words = same block)
+  ctas.sort((a, b) => a.wordOffset - b.wordOffset);
+  const dedupedCtas = ctas.filter((c, i) => i === 0 || c.wordOffset - ctas[i - 1].wordOffset > 5);
+
   // Image positions
   const imageOffsets = [];
   let imgSearch = 0;
@@ -113,7 +159,7 @@ function analyzeHtml(html) {
   }
 
   // Visual gaps (images + CTAs combined)
-  const visualOffsets = [...imageOffsets, ...ctas.map(c => c.wordOffset)].sort((a, b) => a - b);
+  const visualOffsets = [...imageOffsets, ...dedupedCtas.map(c => c.wordOffset)].sort((a, b) => a - b);
   const imagGaps = [];
   const checkpoints = [0, ...visualOffsets, wordTotal];
   for (let i = 0; i < checkpoints.length - 1; i++) {
@@ -147,9 +193,9 @@ function analyzeHtml(html) {
     }
   }
 
-  const wordsBeforeFirstCta = ctas.length > 0 ? ctas[0].wordOffset : null;
+  const wordsBeforeFirstCta = dedupedCtas.length > 0 ? dedupedCtas[0].wordOffset : null;
 
-  return { wordTotal, ctas, imagGaps, headingGaps, longParas, wordsBeforeFirstCta };
+  return { wordTotal, ctas: dedupedCtas, imagGaps, headingGaps, longParas, wordsBeforeFirstCta };
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
