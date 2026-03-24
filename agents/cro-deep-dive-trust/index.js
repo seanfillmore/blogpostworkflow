@@ -22,8 +22,10 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'cro', 'deep-dive');
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
-const handle = args[args.indexOf('--handle') + 1];
-const item   = args[args.indexOf('--item') + 1] || '';
+const handleIdx = args.indexOf('--handle');
+const handle = handleIdx !== -1 ? args[handleIdx + 1] : undefined;
+const itemIdx = args.indexOf('--item');
+const item = itemIdx !== -1 ? args[itemIdx + 1] : undefined;
 
 if (!handle || !item) {
   console.error('Usage: node index.js --handle <handle> --item "<item title>"');
@@ -153,7 +155,6 @@ function extractLinkedHandles(html) {
 // ── Analysis step 4: CTA copy audit ──────────────────────────────────────────
 function auditCtaCopy(html) {
   const results = [];
-  const ctaPattern = /class="[^"]*rsc-cta-block[^"]*"[\s\S]*?(?=class="[^"]*rsc-cta-block|$)/gi;
 
   // Simpler approach: find each rsc-cta-block and extract text
   let searchFrom = 0;
