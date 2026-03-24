@@ -83,7 +83,7 @@ export function findInsertionPoint(html, targetWords) {
  */
 export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote, verified, stars, reviewCount }) {
   const imgHtml = imageUrl
-    ? `<div style="flex-shrink:0;padding:5px"><img src="${escHtml(imageUrl)}" style="width:120px;object-fit:contain;border-radius:10px;display:block" alt="${escHtml(title)}"></div>`
+    ? `<div style="flex-shrink:0;align-self:stretch;padding:5px;display:flex;align-items:center"><img src="${escHtml(imageUrl)}" style="width:130px;height:100%;object-fit:contain;border-radius:10px;display:block" alt="${escHtml(title)}"></div>`
     : '';
 
   const quoteHtml = quote
@@ -99,7 +99,7 @@ export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote
     : '';
 
   return (
-    '<div class="rsc-featured-product" style="border:2px solid #e5e7eb;border-radius:14px;overflow:hidden;margin:28px 0;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);max-width:50%">' +
+    '<div class="rsc-featured-product" style="border:2px solid #e5e7eb;border-radius:14px;overflow:hidden;margin:28px 0;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);max-width:80%">' +
     '<div style="display:flex;gap:0">' +
     imgHtml +
     '<div style="padding:16px 18px;flex:1">' +
