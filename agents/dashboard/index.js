@@ -944,6 +944,13 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
   <div id="cro-brief-card"></div>
+  <!-- Brief detail modal -->
+  <div id="brief-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="closeBriefModal(event)">
+    <div id="brief-modal" style="background:#fff;border-radius:12px;max-width:660px;width:90%;max-height:82vh;overflow-y:auto;position:relative;padding:28px 32px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <button onclick="document.getElementById('brief-modal-overlay').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+      <div id="brief-modal-content"></div>
+    </div>
+  </div>
   <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
@@ -1646,6 +1653,43 @@ function renderGSCSEOPanel(data) {
   bodyEl.innerHTML = html;
 }
 
+var briefItemContents = [];
+
+function prioColor(p) { return p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280'; }
+
+function openBriefModal(idx) {
+  var item = briefItemContents[idx];
+  if (!item) return;
+  var bodyText = item.body.join('\\n');
+  var bodyHtml = esc(bodyText).replace(/[*][*]([^*]+)[*][*]/g, '<strong>$1</strong>');
+  var sections = bodyHtml.split('\\n');
+  var out = '';
+  var inPre = false;
+  for (var si = 0; si < sections.length; si++) {
+    var sl = sections[si];
+    var isTableRow = sl.trim().charAt(0) === '|';
+    if (isTableRow && !inPre) { out += '<pre style="font-size:12px;line-height:1.5;overflow-x:auto;background:#f9fafb;border-radius:6px;padding:10px 12px;margin:8px 0">'; inPre = true; }
+    if (!isTableRow && inPre) { out += '</pre>'; inPre = false; }
+    if (isTableRow) {
+      out += sl + '\\n';
+    } else if (sl.trim()) {
+      out += '<p style="margin:6px 0;font-size:13px;line-height:1.6">' + sl + '</p>';
+    }
+  }
+  if (inPre) out += '</pre>';
+  var prioLabel = item.priority ? '<span style="font-size:11px;font-weight:700;color:' + prioColor(item.priority) + ';text-transform:uppercase;letter-spacing:.06em;margin-right:8px">' + item.priority + '</span>' : '';
+  document.getElementById('brief-modal-content').innerHTML =
+    '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">' + prioLabel +
+    '<span style="font-size:16px;font-weight:700;color:#1f2937">' + esc(item.title) + '</span></div>' +
+    out;
+  document.getElementById('brief-modal-overlay').style.display = 'flex';
+}
+
+function closeBriefModal(e) {
+  if (e && e.target !== document.getElementById('brief-modal-overlay')) return;
+  document.getElementById('brief-modal-overlay').style.display = 'none';
+}
+
 function runDeepDive(category, handle, itemTitle) {
     var agentMap = {
       'content-formatting': 'agents/cro-deep-dive-content/index.js',
@@ -1863,28 +1907,28 @@ function renderCROTab(data) {
     }
     if (current) items.push(current);
 
-    var prioColor = function(p) { return p === 'HIGH' ? '#dc2626' : p === 'MED' ? '#d97706' : '#6b7280'; };
+    // Store items globally so openBriefModal can access full body content
+    briefItemContents = items;
 
     briefHtml = '<div class="card" style="background:#fffbeb;border-color:#fde68a">' +
       '<div class="card-header"><h2 style="color:#92400e">AI CRO Brief</h2>' +
       '<span style="font-size:11px;color:#92400e">Generated ' + esc(brief.date) + ' · Next run: Every Monday</span></div>' +
       '<div class="card-body">' +
       (items.length ? '<div class="brief-grid">' +
-        items.map(function(item) {
+        items.map(function(item, idx) {
           var actions;
           if (item.category && item.pageHandle) {
             var safeTitle = esc(item.title);
             actions = '<div class="brief-item-actions">' +
-              '<button class="btn-cro-resolve" onclick="runDeepDive(\\'' + esc(item.category) + '\\', \\'' + esc(item.pageHandle) + '\\', \\'' + safeTitle + '\\')">' +
+              '<button class="btn-cro-resolve" onclick="event.stopPropagation();runDeepDive(\\'' + esc(item.category) + '\\', \\'' + esc(item.pageHandle) + '\\', \\'' + safeTitle + '\\')">' +
               'Deep Dive</button>' +
               '</div>';
           } else {
             actions = '<div class="brief-item-actions"><span class="badge-manual">Manual</span></div>';
           }
-          return '<div class="brief-item">' +
+          return '<div class="brief-item" onclick="openBriefModal(' + idx + ')" style="cursor:pointer" title="Click to expand">' +
             '<div class="brief-item-title" style="color:' + prioColor(item.priority) + '">' +
             (item.priority ? item.priority + ' — ' : '') + esc(item.title) + '</div>' +
-            '<div class="brief-item-body">' + esc(item.body.join(' ')) + '</div>' +
             actions +
             '</div>';
         }).join('') + '</div>'
