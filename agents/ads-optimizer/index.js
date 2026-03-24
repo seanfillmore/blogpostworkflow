@@ -139,11 +139,16 @@ async function main() {
 
 Your job: identify the highest-impact keyword and ad copy changes for this account. Be conservative — only suggest changes with strong evidence. Never suggest changes that increase spend without a clear ROAS improvement case.
 
-Suggestion types allowed:
+Suggestion types allowed (these are the ONLY valid types — no others):
 - keyword_pause: pause a keyword (requires ≥100 impressions OR ≥10 clicks with 0 conversions, OR CPA > $25 after 3+ conversions)
 - keyword_add: add a keyword (must have GSC evidence of organic impressions and not already rank top-3 organically)
 - negative_add: add a campaign-level negative keyword (must have clear non-buyer intent evidence)
 - copy_rewrite: rewrite a specific headline or description (must cite a specific GSC query or GA4 metric)
+
+Prohibited suggestions (never include these in suggestions or analysisNotes):
+- Do NOT suggest restarting, re-enabling, pausing, or creating campaigns
+- Do NOT suggest that campaigns should be turned on or off
+- If ENABLED campaigns show zero impressions, note this in analysisNotes as "campaigns appear newly launched or bids were non-competitive" — do not recommend campaign changes
 
 Return ONLY valid JSON (no markdown, no explanation) matching this schema exactly:
 {
@@ -170,8 +175,16 @@ Return ONLY valid JSON (no markdown, no explanation) matching this schema exactl
 
 If you have no suggestions with strong evidence, return { "analysisNotes": "...", "suggestions": [] }.`;
 
+  // Summarize active campaign state for the prompt so Claude does not suggest
+  // restarting campaigns that are already running.
+  const enabledCampaigns = (adsSnap.campaigns || []).filter(c => c.status === 'ENABLED');
+  const campaignContext = enabledCampaigns.length > 0
+    ? `IMPORTANT: The following campaigns are currently ENABLED and actively running in Google Ads:\n${enabledCampaigns.map(c => `  - "${c.name}" (ID: ${c.id})`).join('\n')}\nDo NOT suggest restarting, re-enabling, or creating new versions of these campaigns. Zero impressions on a given day may simply mean the campaigns are new or bids were not competitive — this is not a reason to suggest campaign changes.`
+    : '';
+
   const parts = [
     `Analyze the following Google Ads account data and return optimization suggestions as JSON.`,
+    campaignContext,
     `### Google Ads Snapshot (${adsSnap.date})\n${JSON.stringify(adsSnap, null, 2)}`,
     gscSnaps.length ? `### GSC Data (${gscSnaps.length} days, most recent first)\n${JSON.stringify(gscSnaps, null, 2)}` : '',
     ga4Snaps.length ? `### GA4 Data (${ga4Snaps.length} days, most recent first)\n${JSON.stringify(ga4Snaps, null, 2)}` : '',

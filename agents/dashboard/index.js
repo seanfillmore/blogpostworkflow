@@ -1073,7 +1073,7 @@ function buildCroKpis(d) {
 function buildAdsKpis(d) {
   const snap = d.googleAdsAll?.[0];
   return [
-    { label: 'Daily Spend',  value: snap?.spend != null ? '$' + snap.spend.toFixed(2) : '—',           color: '#fb923c' },
+    { label: 'Ad Spend',     value: snap?.spend != null ? '$' + snap.spend.toFixed(2) : '—',            color: '#fb923c' },
     { label: 'Impressions',  value: snap?.impressions != null ? snap.impressions.toLocaleString() : '—', color: '#38bdf8' },
     { label: 'Clicks',       value: snap?.clicks != null ? snap.clicks.toLocaleString() : '—',           color: '#818cf8' },
     { label: 'CTR',          value: snap?.ctr != null ? (snap.ctr * 100).toFixed(2) + '%' : '—',         color: '#f59e0b' },
