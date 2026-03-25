@@ -115,7 +115,10 @@ function extractFAQs(html) {
   let match;
   while ((match = pattern.exec(html)) !== null) {
     const q = match[1].replace(/<[^>]+>/g, '').trim();
-    const a = match[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 400);
+    const raw = match[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    // Truncate at last sentence boundary (max 600 chars) to avoid mid-sentence cuts in schema
+    const MAX = 600;
+    const a = raw.length <= MAX ? raw : (raw.slice(0, MAX).match(/^[\s\S]*[.!?]/)?.[0] || raw.slice(0, MAX)).trim();
     if (q && a) faqs.push({ q, a });
     if (faqs.length >= 10) break;
   }
