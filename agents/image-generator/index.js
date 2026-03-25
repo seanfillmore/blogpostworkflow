@@ -272,7 +272,7 @@ HARD RULES:
 - Do NOT include people
 - Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced, don't force the maximum
 - Every prop must be physically plausible in the chosen setting
-- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a stick/push-up format. Our lip balm is a small round tin or pot. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
+- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a stick/push-up format. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
     }],
   });
 
@@ -625,7 +625,7 @@ async function generateImage(metaPath) {
     : kw.includes('deodorant')
     ? 'This post is about deodorant. Our deodorant comes in a roll-on bottle format. Reject if a stick, spray, or any other format is shown.'
     : kw.includes('lip balm')
-    ? 'This post is about lip balm. Our lip balm comes in a small round tin or pot — not a twist-up stick. Reject if a stick-format lip balm is shown.'
+    ? 'This post is about lip balm. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube). Reject if a tin, pot, jar, or any non-tube format is shown.'
     : kw.includes('lotion') || kw.includes('body lotion') || kw.includes('moisturizer')
     ? 'This post is about body lotion. Our lotion comes in a pump bottle — not a tube. Reject if a tube is shown.'
     : null;
