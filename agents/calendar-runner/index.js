@@ -377,13 +377,19 @@ async function runItem(item) {
     }
   }
 
-  // Step 5: Schema
+  // Step 5: Featured product injection
+  run(
+    `node agents/featured-product-injector/index.js --handle ${postSlug}`,
+    `featured-product: ${postSlug}`
+  );
+
+  // Step 6: Schema
   run(
     `node agents/schema-injector/index.js --slug ${postSlug}`,
     `schema: ${postSlug}`
   );
 
-  // Step 6: Publish + schedule
+  // Step 7: Publish + schedule
   const ok = run(
     `node agents/publisher/index.js data/posts/${postSlug}.json --publish-at "${publishAt}"`,
     `publish: ${postSlug} → ${publishAt}`
