@@ -507,13 +507,39 @@ async function publishDueArticles() {
 
   // Load Shopify helpers inline
   const { updateArticle } = await import('../../lib/shopify.js');
+  const { notify } = await import('../../lib/notify.js');
 
   for (const { meta, path, missed } of due) {
+    const slug = meta.slug;
+
+    // Editorial gate — check before going live; attempt auto-repair if needed
+    const gate = checkEditGate(slug);
+    if (!gate.pass) {
+      console.log(`  ⚠️  "${meta.title}" has editorial issues — attempting auto-repair...`);
+      run(`node agents/link-repair/index.js ${slug}`, `link-repair: ${slug}`);
+      run(`node agents/schema-injector/index.js --slug ${slug}`, `schema: ${slug}`);
+      run(`node agents/editor/index.js data/posts/${slug}.html`, `edit (re-check): ${slug}`);
+
+      const recheck = checkEditGate(slug);
+      if (!recheck.pass) {
+        console.error(`  ✗  "${meta.title}" still Needs Work after repair — blocked from publishing.`);
+        console.error(`     Reason: ${recheck.reason}`);
+        console.error(`     Review data/reports/editor/${slug}-editor-report.md and fix manually.`);
+        await notify({
+          subject: `Post blocked from publishing: ${meta.title}`,
+          body: `Scheduled post "${meta.title}" (${slug}) was due to publish but failed the editorial gate after auto-repair.\n\nReason: ${recheck.reason}\n\nReview: data/reports/editor/${slug}-editor-report.md`,
+          status: 'error',
+        }).catch(() => {});
+        continue;
+      }
+      console.log(`  ✓  Auto-repair succeeded for "${meta.title}"`);
+    }
+
     const label = missed ? `  ⚠️  Missed publish — recovering "${meta.title}"... ` : `  Publishing "${meta.title}"... `;
     process.stdout.write(label);
     if (dryRun) {
       console.log('(dry-run)');
-      console.log(`     Would run post-publish steps for ${meta.slug}`);
+      console.log(`     Would run post-publish steps for ${slug}`);
       continue;
     }
     try {
@@ -524,7 +550,6 @@ async function publishDueArticles() {
       console.log('✓ live');
 
       // Post-publish feedback loop
-      const slug = meta.slug;
       console.log(`\n  Post-publish steps for ${slug}:`);
       run(`node agents/blog-content/index.js list`, 'refresh blog-index');
       run(`node agents/internal-linker/index.js --slug ${slug} --apply`, `internal-link: ${slug}`);
