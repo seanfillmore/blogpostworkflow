@@ -375,7 +375,7 @@ const WEB_QUALITY   = 75;
 async function compressToWebP(sourcePath) {
   const { statSync, renameSync: rename } = await import('fs');
   const isWebP = sourcePath.endsWith('.webp');
-  const webpPath = sourcePath.replace(/\.(png|webp)$/, '.webp');
+  const webpPath = sourcePath.replace(/\.(png|webp|jpg|jpeg)$/i, '.webp');
   const tmpPath  = webpPath + '.tmp.webp';
   const outPath  = isWebP ? tmpPath : webpPath;
 
