@@ -39,6 +39,9 @@ const dryFlag = args.includes('--dry-run') ? ' --dry-run' : '';
 log('──────────────────────────────────────────────────────────────────');
 log('Content Scheduler starting');
 
+// Defer all notifications from this process and any child processes to the daily summary
+process.env.NOTIFY_DEFERRED = '1';
+
 // Step 1: flip any scheduled drafts that are due live (+ post-publish steps)
 const NODE = process.execPath; // full path to the running node binary
 
