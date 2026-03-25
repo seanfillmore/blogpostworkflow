@@ -38,6 +38,8 @@ export function buildAlertEmailBody(snap, suggestions, dashboardUrl) {
       ? `Pause "${s.target}"`
       : s.type === 'keyword_add'
       ? `Add keyword "${s.target}"`
+      : s.type === 'bid_adjust'
+      ? `Bid adjust "${s.target}" $${(s.proposedChange?.currentCpcMicros / 1e6).toFixed(2)} → $${(s.proposedChange?.proposedCpcMicros / 1e6).toFixed(2)}`
       : `Add negative "${s.target}"`;
     lines.push(`• [${badge}] ${label} — ${s.rationale}`);
   }
@@ -144,6 +146,10 @@ Suggestion types allowed (these are the ONLY valid types — no others):
 - keyword_add: add a keyword (must have GSC evidence of organic impressions and not already rank top-3 organically)
 - negative_add: add a campaign-level negative keyword (must have clear non-buyer intent evidence)
 - copy_rewrite: rewrite a specific headline or description (must cite a specific GSC query or GA4 metric)
+- bid_adjust: change the max CPC bid on an ad group. Rules:
+    RAISE (max +$0.25 per suggestion) when: impressions < 10/day across 3+ days AND quality score ≥ 5, suggesting the bid is below first-page threshold
+    LOWER (max $0.15 per suggestion) when: avgCpc is within $0.10 of maxCpc AND conversions = 0 after ≥ 20 clicks AND ROAS < 1
+    Never raise a bid above $3.00. Never lower below $0.30. Only one bid_adjust per ad group per day.
 
 Prohibited suggestions (never include these in suggestions or analysisNotes):
 - Do NOT suggest restarting, re-enabling, pausing, or creating campaigns
@@ -167,6 +173,7 @@ Return ONLY valid JSON (no markdown, no explanation) matching this schema exactl
         // For keyword_add: { "keyword": "...", "matchType": "EXACT|PHRASE|BROAD", "adGroupResourceName": "..." }
         // For negative_add: { "keyword": "...", "matchType": "BROAD", "campaignResourceName": "..." }
         // For copy_rewrite: { "field": "headline_N or description_N", "current": "...", "suggested": "...", "adGroupAdResourceName": "..." }
+        // For bid_adjust: { "adGroupResourceName": "...", "currentCpcMicros": 800000, "proposedCpcMicros": 1050000 }
       },
       "editedValue": null
     }

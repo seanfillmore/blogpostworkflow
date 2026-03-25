@@ -60,6 +60,16 @@ export function buildMutateOperation(suggestion) {
           },
         },
       };
+    case 'bid_adjust':
+      return {
+        adGroupOperation: {
+          update: {
+            resourceName: pc.adGroupResourceName,
+            cpcBidMicros: String(pc.proposedCpcMicros),
+          },
+          updateMask: 'cpc_bid_micros',
+        },
+      };
     case 'copy_rewrite':
       // copy_rewrite requires a GAQL fetch of current headlines before mutating.
       // This is handled in applyCopyRewrite() below — not a pure buildMutateOperation call.
