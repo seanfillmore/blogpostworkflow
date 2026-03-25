@@ -70,18 +70,16 @@ export function buildCampaignOperation(name, budgetResourceName, mobileAdjustmen
   };
 }
 
-export function buildAdGroupOperation(name, campaignResourceName, customerResourceName) {
-  return {
-    adGroupOperation: {
-      create: {
-        resourceName: `${customerResourceName}/adGroups/-3`,
-        name,
-        campaign: campaignResourceName,
-        status: 'ENABLED',
-        type: 'SEARCH_STANDARD',
-      },
-    },
+export function buildAdGroupOperation(name, campaignResourceName, customerResourceName, maxCpcUSD) {
+  const group = {
+    resourceName: `${customerResourceName}/adGroups/-3`,
+    name,
+    campaign: campaignResourceName,
+    status: 'ENABLED',
+    type: 'SEARCH_STANDARD',
   };
+  if (maxCpcUSD != null) group.cpcBidMicros = String(Math.round(maxCpcUSD * 1_000_000));
+  return { adGroupOperation: { create: group } };
 }
 
 export function truncateField(text, max) {
@@ -244,7 +242,7 @@ async function main() {
       adGroupRN = ag0?.resourceName ?? ag0?.resource_name;
       console.log(`  Ad group: ${ag.name} (existing: ${adGroupRN})`);
     } else {
-      const adGroupOp = buildAdGroupOperation(ag.name, campaignRN, customerResourceName);
+      const adGroupOp = buildAdGroupOperation(ag.name, campaignRN, customerResourceName, proposal.maxCpcUSD);
       const adGroupRes = await mutate([adGroupOp]);
       adGroupRN = adGroupRes.mutateOperationResponses?.[0]?.adGroupResult?.resourceName;
       if (!adGroupRN) {
