@@ -2376,7 +2376,7 @@ async function loadData() {
 }
 
 loadData();
-setInterval(loadData, 60000);
+setInterval(loadData, 3600000);
 
 // ── keyword detail modal ──────────────────────────────────────────────────────
 
@@ -3176,7 +3176,7 @@ server.listen(PORT, BIND, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`\nSEO Dashboard — ${config.name}`);
   console.log(`  ${url}`);
-  console.log('  Auto-refreshes every 60s. Ctrl+C to stop.\n');
+  console.log('  Auto-refreshes every 60m. Ctrl+C to stop.\n');
 
   if (doOpen) {
     import('child_process').then(({ execSync }) => {
