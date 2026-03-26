@@ -266,6 +266,9 @@ Write the prompt using this structure:
 4. State the lighting and camera angle from the template
 5. End with: "photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders."
 
+BANNER COMPOSITION RULES:
+- Compose the scene for a wide landscape banner format (approximately 3:1 width-to-height ratio). Place the key subject(s) in the center of the frame with space on the left and right. The image will be displayed at roughly 500px tall spanning a full-width website header — avoid placing subjects at the very top or bottom edge of the frame.
+
 HARD RULES:
 - Props must make real-world sense together on that surface — no random unrelated objects
 - Contextual scene elements (toothbrush, faucet, towel, cup, soap dish, etc.) are encouraged for bathroom/kitchen/bedroom scenes — make it look like a real lived-in space
