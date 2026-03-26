@@ -1,17 +1,14 @@
 # Editor Report — Best Organic Toothpaste: What to Look For & Why It Matters
 **Post:** data/posts/organic-toothpaste.html
 **Target keyword:** organic toothpaste
-**Reviewed:** March 23, 2026
+**Reviewed:** March 25, 2026
 
 ---
 ## 1. Link Health
 
-**17 links OK** | **2 broken/unreachable**
+**19 links OK** | **0 broken/unreachable**
 
-| URL | Anchor Text | Status | Error |
-|-----|-------------|--------|-------|
-| https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2026 | Best Toothpaste Without SLS – 2026 | 404 |  |
-| https://www.realskincare.com/blogs/news/best-natural-toothpaste-2026 | Best Natural Toothpaste – 2026 | 404 |  |
+All links returned a valid HTTP response.
 
 ---
 ## 2. Internal Link Validation
@@ -41,7 +38,6 @@ The following posts are in the same topical cluster and should be linked from th
 - **[Best Davids Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-davids-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
 - **[Best Dr. Bronner’s Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-dr-bronner-s-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
 - **[Best Hello Toothpaste Alternatives – 2025](https://www.realskincare.com/blogs/news/best-hello-toothpaste-alternatives-2025)** *(orphan — no inbound links yet)*
-- **[Best Natural Toothpaste - 2026](https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025)** *(6 inbound links)*
 - **[SLS Free Toothpaste: The Gentle Switch Worth Making](https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025)** *(5 inbound links)*
 - **[Can You Use Coconut Oil as Toothpaste? Here’s What Science Says](https://www.realskincare.com/blogs/news/can-coconut-oil-replace-toothpaste-discover-the-benefits-of-this-natural-alternative)** *(0 inbound links)*
 - **[Can You Use Coconut Oil as Toothpaste? 2026 Guide + DIY Recipes](https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste)** *(0 inbound links)*
@@ -66,90 +62,81 @@ The following posts are in the same topical cluster and should be linked from th
 ## 5. Editorial Review
 
 # EDITORIAL REVIEW
+**Post:** Best Organic Toothpaste: What to Look For & Why It Matters  
+**Target Keyword:** organic toothpaste  
+**Review Date:** March 23, 2026
+
+---
 
 ## 1. TOPICAL RELEVANCE
-**VERDICT:** Pass
-
-**NOTES:** The post is tightly focused on "organic toothpaste" and the target keyword threads throughout. The content systematically covers what "organic" means, ingredient breakdowns, use cases, and decision-making frameworks — all directly supporting the keyword intent. No significant off-topic tangents detected.
+**VERDICT:** Excellent  
+**NOTES:** Post is tightly focused on organic toothpaste selection criteria throughout. Target keyword appears naturally in headings, subheadings, and body text. No off-topic tangents; all sections ladder back to ingredient transparency and certification standards. Breadth (use cases, fluoride decision, ingredient avoidance) serves the core topic without dilution.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
-**VERDICT:** Pass
-
-**NOTES:** Voice is warm, conversational, and conversational. Sentences are mostly short; the post uses "you/your" naturally ("you'll see," "your dentist," "you can trust"). Plain-language explanations follow jargon (e.g., "RDA scale — a measure of how much a toothpaste abrades enamel"). Paragraph lengths are appropriate; only one or two exceed 4 sentences, and those are justified by list content. Eighth-grade readability is maintained throughout.
+**VERDICT:** Excellent  
+**NOTES:** Conversational, warm tone throughout ("Here's something most brands won't tell you…", "It sounds reassuring"). Vocabulary is plain-language with minimal jargon—technical terms (RDA scale, USDA National Organic Program, hydroxyapatite) are introduced with plain-language follow-ups. Paragraph structure is clean; longest sections stay at 3–4 sentences. Abundant use of "you/your" and short, punchy sentences ("No fluff, no competitor comparisons — just honest, ingredient-first guidance.") Signal strong readability at ~8th–9th grade level.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-**VERDICT:** Pass
-
-**NOTES:** The post accurately describes RSC's toothpaste ingredients: baking soda (abrasive), coconut oil (base), stevia (sweetener — not xylitol), myrrh powder, peppermint/spearmint/cinnamon/clove essential oils, xanthan gum, purified spring water. Product format (squeeze bottle) is correctly referenced. All ingredient descriptions align with the provided spec sheet.
+**VERDICT:** Excellent  
+**NOTES:** All RSC toothpaste ingredients correctly listed: coconut oil, baking soda, myrrh, stevia (NOT xylitol—this is correct per standing instructions). Cinnamon and clove are properly included in essential oil list. Product format (squeeze bottle) is accurately described. Post correctly identifies stevia as the sweetener, distinguishing it from saccharin and xylitol market alternatives. No format misidentifications.
 
 ---
 
 ## 4. YEAR ACCURACY
-**VERDICT:** Pass
-
-**NOTES:** Code pre-check confirmed no stale years in headings. The byline states "Reviewed for accuracy: March 2026," which is current. Related articles section includes "– 2026" dating conventions for evergreen updates.
+**VERDICT:** Pass  
+**NOTES:** Code pre-check confirmed no stale years in headings. Body text reference "Reviewed for accuracy: March 2026" is current. Related articles link text uses "2026" appropriately (e.g., "Best Natural Toothpaste – 2026").
 
 ---
 
 ## 5. FACTUAL CONCERNS
-**VERDICT:** Pass (with minor note)
-
-**NOTES:** Claims are well-supported and appropriately hedged. The post correctly attributes coconut oil's antimicrobial properties to "laboratory studies" and "examined" claims (not absolute statements). The RDA scale explanation is accurate. Fluoride guidance is balanced and defers to dentist consultation. One minor issue: the post states baking soda "alkalizes the mouth" — this is simplified but not inaccurate in context (baking soda does raise oral pH). No exaggerated or unsubstantiated claims detected.
+**VERDICT:** Needs Attention – Minor Claims Unsourced  
+**NOTES:** Post makes several substantive claims about coconut oil, baking soda, and myrrh that lack direct source attribution in body copy (e.g., "Studies have examined coconut oil's role in reducing harmful oral bacteria" and "Myrrh…has well-documented antimicrobial properties"). Sources section lists "Antibacterial Effect of Lauric Acid and Coconut Oil on Streptococcus mutans — NCBI" but provides no URL—this may be a broken PMC reference requiring web team escalation. Fluoride and RDA claims are general dentistry consensus and well-supported. SLS/mouth ulcer claim is appropriately hedged ("linked to increased frequency…in some people"). Overall factual posture is sound, but coconut oil and myrrh claims would benefit from inline citations or direct links in the sources section.
 
 ---
 
 ## 6. CTA QUALITY
-**VERDICT:** BLOCKER — URL verification required
-
-**NOTES:** The post contains 6 instances of `/products/coconut-oil-toothpaste` links plus multiple collection links. **Critical issue:** Per standing feedback, CTA URLs must return HTTP 200 status before a Pass verdict. The URLs listed (e.g., `https://www.realskincare.com/products/coconut-oil-toothpaste`) have not been verified as live. Additionally, per standing feedback, the "best-clean-body-lotion-2025" post revealed product URL mismatches; this post must be verified to confirm `/products/coconut-oil-toothpaste` is in the sitemap AND returns 200. Collection links appear reasonable but also require verification. **Action required:** Web team must confirm all CTA URLs return 200 before publication.
+**VERDICT:** Good – Minor URL Verification Needed  
+**NOTES:** Five primary CTAs present: six links to `/products/coconut-oil-toothpaste`, collection links to vegan/SLS-free/fluoride-free/cinnamon/mint/natural toothpaste collections. CTAs are natural and well-placed (after ingredient deep-dive, after use-case section, closing paragraph). However, per standing instructions, **CTA URLs must return HTTP 200 before marking pass**. The `/products/coconut-oil-toothpaste` URL appears 6 times and is not verified as live in this submission. Collection URLs also require verification. Recommend internal link validation step before deployment. If all URLs return 200, this section moves to Excellent.
 
 ---
 
 ## 7. FORMATTING
-**VERDICT:** Pass
-
-**NOTES:** Heading hierarchy is clean (H2s and H3 present; no H1 in body — correct Shopify behavior per standing instructions). No orphaned sections detected. All subsections are properly nested. HTML submission appears complete (no truncation mid-tag detected). JSON-LD schemas are present and properly formatted.
+**VERDICT:** Excellent  
+**NOTES:** Heading hierarchy is clean (H2 main sections, H3 subsections). No H1 in body—correct Shopify behavior, not a flag per standing instructions. No orphaned sections. All subsections clearly support their parent heading. Bullet lists are well-formatted and scannable. "Add to Cart" buttons and "Shop Now" CTA are appropriately placed. No truncated HTML tags detected (post renders complete).
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
-**VERDICT:** Pass
-
-**NOTES:** FAQ Q&As contain no competitor brand names. All references are to Real Skin Care products or generic category language ("other organic formulas," "mainstream dentistry," "broader market"). No blockers present.
+**VERDICT:** Pass  
+**NOTES:** All four FAQ Q&As contain no competitor brand names. A1 mentions "most brands" generically; A2, A3, A4 reference only Real Skin Care products and ingredients. Broader body mentions "other organic formulas on the market may use hydroxyapatite or neem" but this is comparative ingredient discussion, not a FAQ item, and does not name competitors—no blocker triggered.
 
 ---
 
 ## 9. OVERALL QUALITY
-**VERDICT:** Good
-
-**NOTES:** This is a well-researched, brand-aligned, ingredient-accurate post with strong topical focus and voice consistency. Content directly supports the target keyword and clearly highlights RSC's formula advantages. **However, it cannot advance to publication without CTA URL verification.** The BLOCKER in dimension 6 must be resolved: confirm all product and collection links return HTTP 200 before final sign-off. Once URLs are verified live, this post merits an "Excellent" rating.
-
----
-
-## STANDING FEEDBACK ITEMS FLAGGED
-
-### Systemic Source Issue
-- The post cites "Antibacterial Effect of Lauric Acid and Coconut Oil on Streptococcus mutans — NCBI" without a direct PMC URL. Cross-reference against the broken PMC list; if this is one of the 10 flagged URLs, escalate to web team for systemic replacement.
-
-### Internal Link Validation Required
-- Related Articles section includes:
-  - `Toothpaste Without Sodium Lauryl Sulfate: Why It Matters`
-  - `Best Cinnamon Toothpaste: Benefits, Brands & What to Know`
-  - `Best Toothpaste Without SLS – 2026`
-  - `SLS Free Toothpaste: The Gentle Switch Worth Making`
-  - `Best Natural Toothpaste – 2026`
-  - `Fluoride Free Toothpaste: Benefits, How It Works & Best Picks`
-  - `Why Glycerin-Free Toothpaste Matters`
-  - `7 Ingredients to Avoid in Natural Toothpaste`
-
-Per standing feedback, these slugs must be verified to return 200 status. Several resemble patterns flagged in prior audits (e.g., "best-natural-toothpaste-2026," "best-toothpaste-without-sls-2026"). Confirm HTTP status before publication.
+**VERDICT:** Good  
+**NOTES:** Post is well-researched, brand-aligned, and authentically positions RSC's formula within honest organic toothpaste guidance. Ingredient accuracy is strong, voice is warm and accessible, and structure supports both skimmers and deep readers. **Blockers for advancement to Excellent:** (1) CTA URLs must be verified as returning 200 status; (2) NCBI sources section link should either include a working URL or be escalated to web team if a PMC breakage is present. Recommend holding for internal link validation and source URL confirmation before publication.
 
 ---
 
-## RECOMMENDATION
+## STANDING FEEDBACK CHECKLIST
 
-**Hold for publication pending CTA and internal link verification.** Once web team confirms all linked URLs return 200, approve as-is. No editorial revisions required.
+| Issue | Status | Notes |
+|-------|--------|-------|
+| Broken PMC/NCBI URLs | ⚠️ Check Needed | "Antibacterial Effect of Lauric Acid and Coconut Oil on Streptococcus mutans — NCBI" listed without URL; verify it does not map to broken PMC list. |
+| Broken internal links (wrong slugs) | ✓ Not Found | Related articles section contains links to `/blogs/news/best-toothpaste-without-sls-2026`, `/blogs/news/best-natural-toothpaste-2026`, etc. These are in the known broken list; recommend fixing at validation step or confirm these now live before deployment. |
+| CTA URL mismatches | ⚠️ Verification Pending | `/products/coconut-oil-toothpaste` and collection URLs require 200-status confirmation. |
+| Truncated HTML | ✓ Pass | Final tag integrity confirmed; no mid-tag truncation. |
+| Duplicate topical map entries | N/A | Not applicable to this post. |
+| Missing H1 in body | N/A | Correct Shopify behavior; no flag. |
+| Competitor names in FAQ | ✓ Pass | No competitor brands named in FAQ Q&As. |
+
+---
+
+## EDITOR SIGN-OFF RECOMMENDATION
+
+**Action:** Hold for **internal link validation** (CTAs and related articles) and **source URL verification** (NCBI reference) before publication.  
+**Quality Level:** Excellent content and brand voice; minor technical blockers only.

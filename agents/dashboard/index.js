@@ -91,6 +91,7 @@ const RUN_AGENT_ALLOWLIST = new Set([
   'scripts/ads-weekly-recap.js',
   'agents/campaign-creator/index.js',
   'agents/campaign-analyzer/index.js',
+  'agents/campaign-monitor/index.js',
   'agents/cro-deep-dive-content/index.js',
   'agents/cro-deep-dive-seo/index.js',
   'agents/cro-deep-dive-trust/index.js',
@@ -874,6 +875,7 @@ const HTML = `<!DOCTYPE html>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
     <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
     <button onclick="applyAdsChanges()" data-tip="Execute all approved suggestions via the Google Ads Mutate API">Apply Approved</button>
+    <button onclick="runAgent('agents/campaign-monitor/index.js', [], loadCampaignCards)" data-tip="Fetch latest Google Ads performance data and update active campaign metrics">Run Campaign Monitor</button>
     <button onclick="runAgent('scripts/ads-weekly-recap.js')" data-tip="Send the weekly recap email now (normally runs automatically Sunday morning)">Send Weekly Recap</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
@@ -968,6 +970,9 @@ const HTML = `<!DOCTYPE html>
 </div>
 <div id="tab-ads" class="tab-panel">
   <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-ads-optimizer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-campaign-monitor-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-scripts-ads-weekly-recap-js" class="run-log" style="display:none"></pre>
   <!-- Active Campaigns -->
   <div class="card" id="campaign-active-card">
     <div class="card-header accent-indigo">
@@ -1015,7 +1020,7 @@ function switchTab(name, btn) {
   if (panel) panel.classList.add('active');
   btn.classList.add('active');
   // Show/hide CRO date filter
-  document.getElementById('cro-filter-bar').style.display = name === 'cro' ? '' : 'none';
+  document.getElementById('cro-filter-bar').style.display = (name === 'cro' || name === 'ads') ? '' : 'none';
   // Show/hide tab action groups
   ['seo','cro','optimize','ads'].forEach(function(t) {
     const g = document.getElementById('tab-actions-' + t);
@@ -1452,6 +1457,7 @@ function setCroFilter(name, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (data) renderCROTab(data);
+  loadCampaignCards();
 }
 
 function aggregateClarity(snaps) {
@@ -2264,29 +2270,6 @@ async function saveCopyEdit(id, date) {
   }
 }
 
-async function runAgent(script) {
-  var logEl = document.getElementById('run-log-apply-ads');
-  if (logEl) { logEl.style.display = 'block'; logEl.textContent = ''; }
-  var res = await fetch('/run-agent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ script: script }),
-  });
-  var reader = res.body.getReader();
-  var decoder = new TextDecoder();
-  function read() {
-    reader.read().then(function(result) {
-      if (result.done) { loadData(); return; }
-      var lines = decoder.decode(result.value).split('\\n');
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('data: ') && logEl) logEl.textContent += lines[i].slice(6) + '\\n';
-      }
-      if (logEl) logEl.scrollTop = logEl.scrollHeight;
-      read();
-    });
-  }
-  read();
-}
 
 async function applyAdsChanges() {
   var logEl = document.getElementById('run-log-apply-ads');
@@ -2443,7 +2426,7 @@ if (_kwModal) _kwModal.addEventListener('click', function(e) {
   if (e.target === this) closeKeywordCard();
 });
 
-function runAgent(script, args = []) {
+function runAgent(script, args = [], onDone = null) {
   const logId = 'run-log-' + script.replace(/[^a-z0-9]/gi, '-');
   const logEl = document.getElementById(logId);
   if (!logEl) return;
@@ -2458,7 +2441,7 @@ function runAgent(script, args = []) {
     const decoder = new TextDecoder();
     function read() {
       reader.read().then(({ done, value }) => {
-        if (done) return;
+        if (done) { if (onDone) onDone(); return; }
         for (const line of decoder.decode(value).split('\\n')) {
           if (line.startsWith('data: ')) logEl.textContent += line.slice(6) + '\\n';
         }
@@ -2655,24 +2638,34 @@ function renderCampaignCards(campaigns, aovBarrier) {
   if (active.length > 0) {
     actCard.style.display = '';
     actBody.innerHTML = active.map(c => {
-      const recent = c.performance.slice(-1)[0] || {};
+      const numDays   = croFilter === '30days' ? 30 : croFilter === '7days' ? 7 : 1;
+      const entries   = c.performance.slice(-numDays);
+      const recent    = c.performance.slice(-1)[0] || {};
+      const aggSpend  = entries.reduce((s, e) => s + (e.spend || 0), 0);
+      const aggClicks = entries.reduce((s, e) => s + (e.clicks || 0), 0);
+      const aggImpr   = entries.reduce((s, e) => s + (e.impressions || 0), 0);
+      const aggConv   = entries.reduce((s, e) => s + (e.conversions || 0), 0);
+      const aggCtr    = aggImpr   > 0 ? aggClicks / aggImpr : null;
+      const aggCpc    = aggClicks > 0 ? aggSpend  / aggClicks : null;
+      const aggCvr    = aggClicks > 0 ? aggConv   / aggClicks : null;
       const budget = c.proposal?.approvedBudget || 0;
-      const spendPct = budget > 0 ? Math.round((recent.spend || 0) / budget * 100) : 0;
+      const periodBudget = budget * numDays;
+      const spendPct = periodBudget > 0 ? Math.round(aggSpend / periodBudget * 100) : 0;
       const openAlerts = (c.alerts || []).filter(a => !a.resolved);
       const ctrDelta = recent.vsProjection?.ctrDelta ?? null;
       const cpcDelta = recent.vsProjection?.cpcDelta ?? null;
       const cvrDelta = recent.vsProjection?.cvrDelta ?? null;
-      const days = c.googleAds?.createdAt ? Math.floor((Date.now() - new Date(c.googleAds.createdAt)) / 86400000) : '?';
-      const spendVal  = recent.spend != null ? '$' + recent.spend : '—';
-      const ctrVal    = recent.ctr != null ? (recent.ctr * 100).toFixed(2) + '%' : '—';
-      const cpcVal    = recent.avgCpc != null ? '$' + recent.avgCpc.toFixed(2) : '—';
-      const cvrVal    = recent.conversionRate != null ? (recent.conversionRate * 100).toFixed(2) + '%' : '—';
+      const campaignDays = c.googleAds?.createdAt ? Math.floor((Date.now() - new Date(c.googleAds.createdAt)) / 86400000) : '?';
+      const spendVal  = aggSpend  > 0 ? '$' + aggSpend.toFixed(2)          : '—';
+      const ctrVal    = aggCtr   != null ? (aggCtr  * 100).toFixed(2) + '%' : '—';
+      const cpcVal    = aggCpc   != null ? '$' + aggCpc.toFixed(2)          : '—';
+      const cvrVal    = aggCvr   != null ? (aggCvr  * 100).toFixed(2) + '%' : '—';
       const fmtDelta  = (v, fmt) => v !== null ? '<span class="camp-kpi-delta ' + (v >= 0 ? 'delta-up' : 'delta-down') + '">' + (v >= 0 ? '+' : '') + fmt(v) + ' vs proj</span>' : '';
       const fmtDeltaInv = (v, fmt) => v !== null ? '<span class="camp-kpi-delta ' + (v <= 0 ? 'delta-up' : 'delta-down') + '">' + (v >= 0 ? '+' : '') + fmt(v) + ' vs proj</span>' : '';
       return '<div class="camp-proposal">' +
-        '<div class="camp-proposal-name">' + esc(c.proposal?.campaignName || c.id) + ' <span class="section-note">Day ' + days + '</span></div>' +
+        '<div class="camp-proposal-name">' + esc(c.proposal?.campaignName || c.id) + ' <span class="section-note">Day ' + campaignDays + '</span></div>' +
         '<div style="background:#f1f5f9;border-radius:4px;height:5px;margin-bottom:4px"><div style="background:#818cf8;height:5px;border-radius:4px;width:' + Math.min(spendPct, 100) + '%"></div></div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">$' + (recent.spend ?? '—') + ' of $' + budget + '/day (' + spendPct + '%)</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">$' + aggSpend.toFixed(2) + ' of $' + (numDays === 1 ? budget + '/day' : periodBudget.toFixed(0)) + ' (' + spendPct + '%)</div>' +
         '<div class="camp-kpi-grid">' +
           '<div class="camp-kpi"><div class="camp-kpi-value">' + spendVal + '</div><div class="camp-kpi-label">Spend</div></div>' +
           '<div class="camp-kpi"><div class="camp-kpi-value">' + ctrVal + '</div><div class="camp-kpi-label">CTR</div>' + fmtDelta(ctrDelta, v => (v * 100).toFixed(2) + 'pp') + '</div>' +

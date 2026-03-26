@@ -70,6 +70,7 @@
     "@google/genai": "^1.44.0",
     "archiver": "^7.0.1",
     "cheerio": "^1.2.0",
+    "dotenv": "^17.3.1",
     "fast-xml-parser": "^4.5.1",
     "openai": "^4.104.0",
     "puppeteer": "^24.40.0",
