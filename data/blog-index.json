@@ -5,13 +5,22 @@
     "handle": "news",
     "articles": [
       {
+        "id": 563380846762,
+        "title": "Best Natural Bar Soap for Women: Clean Picks That Work",
+        "handle": "best-natural-bar-soap-for-women-clean-picks-that-work",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural soap, organic, soap",
+        "published_at": null,
+        "updated_at": "2026-03-25T06:41:57-06:00"
+      },
+      {
         "id": 563334185130,
         "title": "Best Natural Bar Soap for Men: Clean Skin Starts Here",
         "handle": "best-natural-bar-soap-for-men-clean-skin-starts-here",
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural soap, organic, soap",
         "published_at": null,
-        "updated_at": "2026-03-19T02:01:37-06:00"
+        "updated_at": "2026-03-25T06:41:45-06:00"
       },
       {
         "id": 563324649642,
@@ -20,7 +29,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": null,
-        "updated_at": "2026-03-22T02:01:22-06:00"
+        "updated_at": "2026-03-25T10:04:01-06:00"
       },
       {
         "id": 563317997738,
@@ -29,7 +38,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": null,
-        "updated_at": "2026-03-22T02:00:58-06:00"
+        "updated_at": "2026-03-25T10:03:33-06:00"
       },
       {
         "id": 563313508522,
@@ -38,7 +47,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": null,
-        "updated_at": "2026-03-22T02:02:29-06:00"
+        "updated_at": "2026-03-25T10:04:32-06:00"
       },
       {
         "id": 563310231722,
@@ -47,7 +56,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": null,
-        "updated_at": "2026-03-22T02:01:50-06:00"
+        "updated_at": "2026-03-25T06:41:24-06:00"
       },
       {
         "id": 563309609130,
@@ -55,8 +64,8 @@
         "handle": "best-organic-lip-balm-what-to-look-for-top-picks",
         "author": "Sean Fillmore",
         "tags": "natural skincare, organic",
-        "published_at": null,
-        "updated_at": "2026-03-18T01:00:16-06:00"
+        "published_at": "2026-03-24T08:00:03-06:00",
+        "updated_at": "2026-03-25T06:52:15-06:00"
       },
       {
         "id": 563296305322,
@@ -74,7 +83,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, organic",
         "published_at": "2026-03-17T08:00:04-06:00",
-        "updated_at": "2026-03-22T09:46:36-06:00"
+        "updated_at": "2026-03-24T20:15:09-06:00"
       },
       {
         "id": 563291750570,
@@ -119,16 +128,16 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-11T17:59:32-06:00",
-        "updated_at": "2026-03-22T09:46:24-06:00"
+        "updated_at": "2026-03-24T20:18:13-06:00"
       },
       {
         "id": 563289555114,
         "title": "Benefits Of Using Coconut Oil Lotion",
-        "handle": "benefits-of-using-coconut-oil-lotion-1",
+        "handle": "benefits-of-using-coconut-oil-lotion",
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-13T17:21:35-06:00",
-        "updated_at": "2026-03-22T09:46:19-06:00"
+        "updated_at": "2026-03-24T22:06:00-06:00"
       },
       {
         "id": 563282182314,
@@ -146,7 +155,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-17T08:00:04-06:00",
-        "updated_at": "2026-03-22T09:46:16-06:00"
+        "updated_at": "2026-03-24T20:15:18-06:00"
       },
       {
         "id": 563281559722,
@@ -173,7 +182,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-11T18:05:13-06:00",
-        "updated_at": "2026-03-22T09:46:28-06:00"
+        "updated_at": "2026-03-24T20:15:24-06:00"
       },
       {
         "id": 563281395882,
@@ -182,7 +191,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-11T18:05:19-06:00",
-        "updated_at": "2026-03-22T09:46:22-06:00"
+        "updated_at": "2026-03-24T20:15:27-06:00"
       },
       {
         "id": 562398396586,
@@ -191,7 +200,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-12T13:58:17-06:00",
-        "updated_at": "2026-03-22T09:43:25-06:00"
+        "updated_at": "2026-03-24T06:34:14-06:00"
       },
       {
         "id": 562396725418,
@@ -281,7 +290,7 @@
         "author": "Sean Fillmore",
         "tags": "general, TOF",
         "published_at": "2025-06-21T10:00:03-06:00",
-        "updated_at": "2026-03-22T09:46:18-06:00"
+        "updated_at": "2026-03-24T06:34:15-06:00"
       },
       {
         "id": 562334040234,
@@ -326,7 +335,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-09T17:05:29-06:00",
-        "updated_at": "2026-03-22T09:26:06-06:00"
+        "updated_at": "2026-03-24T20:18:31-06:00"
       },
       {
         "id": 562330894506,
@@ -479,7 +488,7 @@
         "author": "Sean Fillmore",
         "tags": "general, TOF",
         "published_at": "2024-04-22T17:26:52-06:00",
-        "updated_at": "2026-03-22T09:46:04-06:00"
+        "updated_at": "2026-03-24T20:15:31-06:00"
       },
       {
         "id": 561046257834,
@@ -488,7 +497,7 @@
         "author": "Sean Fillmore",
         "tags": "lip_balm, MOF",
         "published_at": "2024-04-18T16:38:12-06:00",
-        "updated_at": "2026-03-22T09:46:43-06:00"
+        "updated_at": "2026-03-25T23:34:56-06:00"
       },
       {
         "id": 561046159530,
@@ -533,7 +542,7 @@
         "author": "Sean Fillmore",
         "tags": "general, MOF",
         "published_at": "2023-02-13T00:55:39-07:00",
-        "updated_at": "2026-03-08T13:10:37-06:00"
+        "updated_at": "2026-03-24T20:18:46-06:00"
       },
       {
         "id": 559771746474,
@@ -554,15 +563,6 @@
         "updated_at": "2025-08-14T11:03:42-06:00"
       },
       {
-        "id": 559727378602,
-        "title": "Benefits Of Using Coconut Oil Lotion",
-        "handle": "benefits-of-using-coconut-oil-lotion",
-        "author": "Sean Fillmore",
-        "tags": "",
-        "published_at": "2026-03-09T17:05:13-06:00",
-        "updated_at": "2026-03-20T02:01:02-06:00"
-      },
-      {
         "id": 559688384682,
         "title": "Why Use Unscented Skincare Products",
         "handle": "why-use-unscented-skincare-products",
@@ -578,7 +578,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2023-01-04T20:58:03-07:00",
-        "updated_at": "2026-03-22T09:26:20-06:00"
+        "updated_at": "2026-03-24T20:15:40-06:00"
       },
       {
         "id": 559636119722,
@@ -623,7 +623,7 @@
         "author": "Sean Fillmore",
         "tags": "lip_balm, MOF",
         "published_at": "2022-12-05T04:43:00-07:00",
-        "updated_at": "2026-03-22T09:26:19-06:00"
+        "updated_at": "2026-03-24T20:15:43-06:00"
       },
       {
         "id": 559520252074,
@@ -650,7 +650,7 @@
         "author": "Sean Fillmore",
         "tags": "general, MOF",
         "published_at": "2022-11-21T07:00:07-07:00",
-        "updated_at": "2026-03-22T09:26:09-06:00"
+        "updated_at": "2026-03-24T20:18:53-06:00"
       }
     ]
   }
