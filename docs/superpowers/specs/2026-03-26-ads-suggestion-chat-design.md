@@ -23,8 +23,8 @@ Each suggestion gains a `chat` array (absent or empty by default):
   "chat": [
     { "role": "user",        "content": "What if I reduce the bid instead?", "ts": "2026-03-26T14:00:00Z" },
     { "role": "assistant",   "content": "A bid reduction could work here...", "ts": "2026-03-26T14:00:02Z" },
-    { "role": "tool_call",   "tool": "update_suggestion", "input": { "proposedCpcMicros": 550000 }, "ts": "2026-03-26T14:00:03Z" },
-    { "role": "tool_result", "content": "Bid updated to $0.55 and approved.", "ts": "2026-03-26T14:00:03Z" }
+    { "role": "tool_call",   "tool": "update_suggestion", "tool_use_id": "toolu_01XyzAbc", "input": { "proposedCpcMicros": 550000 }, "ts": "2026-03-26T14:00:03Z" },
+    { "role": "tool_result", "tool_use_id": "toolu_01XyzAbc", "content": "Bid updated to $0.55 and approved.", "ts": "2026-03-26T14:00:03Z" }
   ]
 }
 ```
