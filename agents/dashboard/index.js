@@ -91,6 +91,7 @@ const RUN_AGENT_ALLOWLIST = new Set([
   'scripts/ads-weekly-recap.js',
   'agents/campaign-creator/index.js',
   'agents/campaign-analyzer/index.js',
+  'agents/campaign-monitor/index.js',
   'agents/cro-deep-dive-content/index.js',
   'agents/cro-deep-dive-seo/index.js',
   'agents/cro-deep-dive-trust/index.js',
@@ -874,6 +875,7 @@ const HTML = `<!DOCTYPE html>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
     <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
     <button onclick="applyAdsChanges()" data-tip="Execute all approved suggestions via the Google Ads Mutate API">Apply Approved</button>
+    <button onclick="runAgent('agents/campaign-monitor/index.js', [], loadCampaignCards)" data-tip="Fetch latest Google Ads performance data and update active campaign metrics">Run Campaign Monitor</button>
     <button onclick="runAgent('scripts/ads-weekly-recap.js')" data-tip="Send the weekly recap email now (normally runs automatically Sunday morning)">Send Weekly Recap</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
@@ -968,6 +970,9 @@ const HTML = `<!DOCTYPE html>
 </div>
 <div id="tab-ads" class="tab-panel">
   <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-ads-optimizer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-campaign-monitor-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-scripts-ads-weekly-recap-js" class="run-log" style="display:none"></pre>
   <!-- Active Campaigns -->
   <div class="card" id="campaign-active-card">
     <div class="card-header accent-indigo">
@@ -2264,29 +2269,6 @@ async function saveCopyEdit(id, date) {
   }
 }
 
-async function runAgent(script) {
-  var logEl = document.getElementById('run-log-apply-ads');
-  if (logEl) { logEl.style.display = 'block'; logEl.textContent = ''; }
-  var res = await fetch('/run-agent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ script: script }),
-  });
-  var reader = res.body.getReader();
-  var decoder = new TextDecoder();
-  function read() {
-    reader.read().then(function(result) {
-      if (result.done) { loadData(); return; }
-      var lines = decoder.decode(result.value).split('\\n');
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('data: ') && logEl) logEl.textContent += lines[i].slice(6) + '\\n';
-      }
-      if (logEl) logEl.scrollTop = logEl.scrollHeight;
-      read();
-    });
-  }
-  read();
-}
 
 async function applyAdsChanges() {
   var logEl = document.getElementById('run-log-apply-ads');
@@ -2443,7 +2425,7 @@ if (_kwModal) _kwModal.addEventListener('click', function(e) {
   if (e.target === this) closeKeywordCard();
 });
 
-function runAgent(script, args = []) {
+function runAgent(script, args = [], onDone = null) {
   const logId = 'run-log-' + script.replace(/[^a-z0-9]/gi, '-');
   const logEl = document.getElementById(logId);
   if (!logEl) return;
@@ -2458,7 +2440,7 @@ function runAgent(script, args = []) {
     const decoder = new TextDecoder();
     function read() {
       reader.read().then(({ done, value }) => {
-        if (done) return;
+        if (done) { if (onDone) onDone(); return; }
         for (const line of decoder.decode(value).split('\\n')) {
           if (line.startsWith('data: ')) logEl.textContent += line.slice(6) + '\\n';
         }
