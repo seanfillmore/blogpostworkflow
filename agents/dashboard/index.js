@@ -2649,14 +2649,12 @@ function renderCampaignCards(campaigns, aovBarrier) {
       const aggCpc    = aggClicks > 0 ? aggSpend  / aggClicks : null;
       const aggCvr    = aggClicks > 0 ? aggConv   / aggClicks : null;
       const budget = c.proposal?.approvedBudget || 0;
-      const periodBudget = budget * numDays;
-      const spendPct = periodBudget > 0 ? Math.round(aggSpend / periodBudget * 100) : 0;
+      const dailySpendPct = budget > 0 ? Math.round((recent.spend || 0) / budget * 100) : 0;
       const openAlerts = (c.alerts || []).filter(a => !a.resolved);
       const ctrDelta = recent.vsProjection?.ctrDelta ?? null;
       const cpcDelta = recent.vsProjection?.cpcDelta ?? null;
       const cvrDelta = recent.vsProjection?.cvrDelta ?? null;
       const campaignDays = c.googleAds?.createdAt ? Math.floor((Date.now() - new Date(c.googleAds.createdAt)) / 86400000) : '?';
-      const periodLabel = numDays === 1 ? '/day' : (numDays + '-day');
       const spendVal  = aggSpend  > 0 ? '$' + aggSpend.toFixed(2)          : '—';
       const ctrVal    = aggCtr   != null ? (aggCtr  * 100).toFixed(2) + '%' : '—';
       const cpcVal    = aggCpc   != null ? '$' + aggCpc.toFixed(2)          : '—';
@@ -2665,8 +2663,8 @@ function renderCampaignCards(campaigns, aovBarrier) {
       const fmtDeltaInv = (v, fmt) => v !== null ? '<span class="camp-kpi-delta ' + (v <= 0 ? 'delta-up' : 'delta-down') + '">' + (v >= 0 ? '+' : '') + fmt(v) + ' vs proj</span>' : '';
       return '<div class="camp-proposal">' +
         '<div class="camp-proposal-name">' + esc(c.proposal?.campaignName || c.id) + ' <span class="section-note">Day ' + campaignDays + '</span></div>' +
-        '<div style="background:#f1f5f9;border-radius:4px;height:5px;margin-bottom:4px"><div style="background:#818cf8;height:5px;border-radius:4px;width:' + Math.min(spendPct, 100) + '%"></div></div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">$' + aggSpend.toFixed(2) + ' of $' + (numDays === 1 ? budget + '/day' : (periodBudget.toFixed(0) + ' ' + periodLabel + ' budget')) + ' (' + spendPct + '%)</div>' +
+        '<div style="background:#f1f5f9;border-radius:4px;height:5px;margin-bottom:4px"><div style="background:#818cf8;height:5px;border-radius:4px;width:' + Math.min(dailySpendPct, 100) + '%"></div></div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">$' + (recent.spend ?? '0') + ' of $' + budget + '/day (' + dailySpendPct + '%)</div>' +
         '<div class="camp-kpi-grid">' +
           '<div class="camp-kpi"><div class="camp-kpi-value">' + spendVal + '</div><div class="camp-kpi-label">Spend</div></div>' +
           '<div class="camp-kpi"><div class="camp-kpi-value">' + ctrVal + '</div><div class="camp-kpi-label">CTR</div>' + fmtDelta(ctrDelta, v => (v * 100).toFixed(2) + 'pp') + '</div>' +
