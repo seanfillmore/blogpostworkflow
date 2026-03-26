@@ -2261,7 +2261,7 @@ function renderAdsOptimization(d) {
       '<div style="display:flex;gap:6px;margin-top:8px">' +
         '<input id="chat-input-' + esc(s.id) + '" placeholder="Ask a follow-up question..." ' +
           'style="flex:1;padding:7px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff" ' +
-          'onkeydown="if(event.key===\'Enter\')sendChatMessage(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;)">' +
+          'onkeydown="if(event.key===\\'Enter\\')sendChatMessage(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;)">' +
         '<button onclick="sendChatMessage(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;)" ' +
           'style="padding:7px 14px;background:#818cf8;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">Send</button>' +
       '</div>' +
