@@ -2129,6 +2129,52 @@ function renderAdsTab(data) {
     '</div></div>';
 }
 
+    function renderToolActionCard(tc, tr) {
+      var label = tc.tool === 'approve_suggestion' ? 'Suggestion approved' :
+                  tc.tool === 'reject_suggestion'  ? 'Suggestion rejected' :
+                                                     'Suggestion updated & approved';
+      var detail = tr ? esc(tr.content) : '';
+      return '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+        '<div style="width:24px;flex-shrink:0"></div>' +
+        '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 12px;font-size:11px;color:#166534;display:flex;align-items:center;gap:8px;max-width:480px">' +
+          '<span style="font-size:14px">&#9881;&#65039;</span>' +
+          '<div><div style="font-weight:700;margin-bottom:2px">' + label + '</div>' +
+          '<div style="font-family:monospace;color:#166534">' + esc(detail) + '</div></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function renderChatMessages(chatArr) {
+      var html = '';
+      var i = 0;
+      while (i < chatArr.length) {
+        var m = chatArr[i];
+        if (m.role === 'user') {
+          html += '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:flex-end">' +
+            '<div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px 0 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px">' + esc(m.content) + '</div>' +
+            '<div style="background:#6d28d9;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">Y</div>' +
+            '</div>';
+          i++;
+        } else if (m.role === 'assistant') {
+          html += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+            '<div style="background:#818cf8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">C</div>' +
+            '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px">' + esc(m.content) + '</div>' +
+            '</div>';
+          if (i + 1 < chatArr.length && chatArr[i + 1].role === 'tool_call') {
+            var tc = chatArr[i + 1];
+            var tr = (i + 2 < chatArr.length && chatArr[i + 2].role === 'tool_result') ? chatArr[i + 2] : null;
+            html += renderToolActionCard(tc, tr);
+            i += tr ? 3 : 2;
+          } else {
+            i++;
+          }
+        } else {
+          i++; // tool_call / tool_result consumed above
+        }
+      }
+      return html;
+    }
+
 function renderAdsOptimization(d) {
   var optEl = document.getElementById('ads-opt-body');
   if (!optEl) return;
@@ -2192,7 +2238,7 @@ function renderAdsOptimization(d) {
         '</div>';
     }
 
-    return '<div class="ads-suggestion" id="suggestion-card-' + esc(s.id) + '">' +
+    return '<div class="ads-suggestion" id="suggestion-card-' + esc(s.id) + '" style="' + (chatOpen.has(s.id) ? 'border-bottom-left-radius:0;border-bottom-right-radius:0' : '') + '">' +
       '<div class="ads-suggestion-header">' +
         confidenceBadge(s.confidence) +
         '<strong>' + typeLabel(s) + '</strong>' +
@@ -2207,6 +2253,17 @@ function renderAdsOptimization(d) {
           (isApproved ? '&#10003; Approved' : 'Approve') +
         '</button>' +
         '<button class="btn-ads-reject" onclick="adsUpdateSuggestion(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;,&apos;rejected&apos;)">Reject</button>' +
+        '<button class="btn-ads-discuss" onclick="toggleChat(&apos;' + esc(s.id) + '&apos;)" style="background:#818cf8">&#128172; Discuss</button>' +
+      '</div>' +
+    '</div>' +
+    '<div id="chat-panel-' + esc(s.id) + '" style="display:' + (chatOpen.has(s.id) ? 'block' : 'none') + ';border:1px solid #818cf8;border-top:none;border-radius:0 0 8px 8px;background:#f8fafc;padding:12px">' +
+      '<div id="chat-messages-' + esc(s.id) + '" style="max-height:320px;overflow-y:auto">' + renderChatMessages(s.chat || []) + '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:8px">' +
+        '<input id="chat-input-' + esc(s.id) + '" placeholder="Ask a follow-up question..." ' +
+          'style="flex:1;padding:7px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff" ' +
+          'onkeydown="if(event.key===\'Enter\')sendChatMessage(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;)">' +
+        '<button onclick="sendChatMessage(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;)" ' +
+          'style="padding:7px 14px;background:#818cf8;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">Send</button>' +
       '</div>' +
     '</div>';
   }

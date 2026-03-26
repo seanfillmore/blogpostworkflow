@@ -34,4 +34,14 @@ assert.ok(src.includes('async function loadAdsOptimization()'), 'must have loadA
 assert.ok(src.includes("fetch('/api/data'"), 'loadAdsOptimization must fetch /api/data');
 assert.ok(src.includes('renderAdsOptimization(d)'), 'loadAdsOptimization must call renderAdsOptimization');
 
+// Task 5: Chat panel rendering
+assert.ok(src.includes('function renderChatMessages('), 'must have renderChatMessages helper');
+assert.ok(src.includes('function renderToolActionCard('), 'must have renderToolActionCard helper');
+assert.ok(src.includes('chat-panel-'), 'must use chat-panel- prefix for panel element ids');
+assert.ok(src.includes('chat-messages-'), 'must use chat-messages- prefix for message container ids');
+assert.ok(src.includes('chat-input-'), 'must use chat-input- prefix for input element ids');
+assert.ok(src.includes('btn-ads-discuss'), 'must add Discuss button with btn-ads-discuss class');
+assert.ok(src.includes('toggleChat('), 'Discuss button must call toggleChat');
+assert.ok(src.includes('chatOpen.has(s.id)'), 'renderSuggestionCard must check chatOpen for initial panel visibility');
+
 console.log('✓ ads suggestion chat tests pass');
