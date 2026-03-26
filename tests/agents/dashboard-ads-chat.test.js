@@ -44,4 +44,15 @@ assert.ok(src.includes('btn-ads-discuss'), 'must add Discuss button with btn-ads
 assert.ok(src.includes('toggleChat('), 'Discuss button must call toggleChat');
 assert.ok(src.includes('chatOpen.has(s.id)'), 'renderSuggestionCard must check chatOpen for initial panel visibility');
 
+// Task 6: Interactive functions
+assert.ok(src.includes('function toggleChat('), 'must have toggleChat function');
+assert.ok(src.includes('chatOpen.has(id)'), 'toggleChat must check chatOpen');
+assert.ok(src.includes('chatOpen.delete(id)'), 'toggleChat must remove from chatOpen on close');
+assert.ok(src.includes('chatOpen.add(id)'), 'toggleChat must add to chatOpen on open');
+assert.ok(src.includes('async function sendChatMessage('), 'must have sendChatMessage function');
+assert.ok(src.includes('/suggestion/'), 'sendChatMessage must POST to suggestion chat endpoint');
+assert.ok(src.includes("endsWith('/chat')") || src.includes("+ '/chat'"), 'sendChatMessage must target /chat endpoint');
+assert.ok(src.includes('data: [DONE]'), 'sendChatMessage must handle DONE sentinel');
+assert.ok(src.includes('loadAdsOptimization()'), 'sendChatMessage must call loadAdsOptimization on completion');
+
 console.log('✓ ads suggestion chat tests pass');
