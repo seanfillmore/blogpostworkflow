@@ -10,7 +10,7 @@
  *   node scripts/apply-blog-sidebar.js --apply  # backs up + uploads to live theme
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -117,6 +117,7 @@ const NEW_CONTENT_BLOCK = `        {%- when 'content'-%}
               var target = headings.length >= 2 ? headings[1] : null;
               var wrapper = document.createElement('div');
               wrapper.style.cssText = 'margin:32px 0;';
+              // Klaviyo embedded form ID — update in Klaviyo dashboard under Forms if the form changes
               wrapper.innerHTML = '<div class="klaviyo-form-Xr4S7X"></div>';
               if (target) {
                 target.insertAdjacentElement('afterend', wrapper);
@@ -177,6 +178,9 @@ async function main() {
     throw new Error(`CSS anchor not found: "${CSS_ANCHOR}". Cannot inject sidebar CSS.`);
   }
   modified = modified.replace(CSS_ANCHOR, CSS_ANCHOR + '\n' + SIDEBAR_CSS);
+  if (!modified.includes('<style>') || !modified.includes('.rsc-article-with-sidebar')) {
+    throw new Error('CSS injection failed — SIDEBAR_CSS not found after replace. Do not upload.');
+  }
 
   console.log(`  Modified: ${modified.length} chars (${modified.length - original.length > 0 ? '+' : ''}${modified.length - original.length})`);
 
@@ -189,7 +193,7 @@ async function main() {
 
   // 5. Backup
   const backupDir = join(ROOT, 'backup');
-  if (!existsSync(backupDir)) mkdirSync(backupDir);
+  mkdirSync(backupDir, { recursive: true });
   const date = new Date().toISOString().slice(0, 10);
   const backupPath = join(backupDir, `main-article-${date}.liquid`);
   writeFileSync(backupPath, original);
