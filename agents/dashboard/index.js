@@ -2922,11 +2922,194 @@ const server = http.createServer((req, res) => {
       const suggestion = fileData.suggestions?.find(s => s.id === id);
       if (!suggestion) { cleanup(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
 
-      // === Chat logic continues in Task 3 ===
-      cleanup();
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+      // Append user message to chat history
+      if (!suggestion.chat) suggestion.chat = [];
+      const now = () => new Date().toISOString();
+      suggestion.chat.push({ role: 'user', content: message, ts: now() });
+
+      // Reconstruct Anthropic SDK message array from chat history
+      const messages = [];
+      for (let i = 0; i < suggestion.chat.length; i++) {
+        const entry = suggestion.chat[i];
+        if (entry.role === 'user') {
+          messages.push({ role: 'user', content: entry.content });
+        } else if (entry.role === 'assistant') {
+          const content = [{ type: 'text', text: entry.content }];
+          // Merge adjacent tool_call into this assistant message
+          if (i + 1 < suggestion.chat.length && suggestion.chat[i + 1].role === 'tool_call') {
+            const tc = suggestion.chat[i + 1];
+            content.push({ type: 'tool_use', id: tc.tool_use_id, name: tc.tool, input: tc.input });
+            i++; // skip the tool_call entry
+          }
+          messages.push({ role: 'assistant', content });
+        } else if (entry.role === 'tool_result') {
+          messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: entry.tool_use_id, content: entry.content }] });
+        }
+        // tool_call entries are consumed above alongside their assistant message
+      }
+
+      // Build system prompt
+      const pc = suggestion.proposedChange || {};
+      const systemPrompt = [
+        `You are an expert Google Ads advisor helping a user decide on an optimization suggestion.`,
+        ``,
+        `SUGGESTION DETAILS:`,
+        `Type: ${suggestion.type}`,
+        `Ad Group: ${suggestion.adGroup || 'Campaign-level'}`,
+        `Confidence: ${suggestion.confidence}`,
+        `Rationale: ${suggestion.rationale}`,
+        `Proposed Change: ${JSON.stringify(pc)}`,
+        suggestion.ahrefsMetrics ? `Ahrefs Metrics: ${JSON.stringify(suggestion.ahrefsMetrics)}` : null,
+        fileData.analysisNotes ? `\nAccount Analysis Notes:\n${fileData.analysisNotes}` : null,
+        ``,
+        `INSTRUCTIONS:`,
+        `Answer the user's questions about this suggestion clearly and concisely.`,
+        `Only call approve_suggestion, reject_suggestion, or update_suggestion when the user has explicitly signalled a decision — never speculatively.`,
+        `For update_suggestion, only provide fields valid for this suggestion type (${suggestion.type}).`,
+      ].filter(Boolean).join('\n');
+
+      // Tool definitions
+      const ALLOWED_UPDATE_FIELDS = {
+        bid_adjust:    ['proposedCpcMicros'],
+        keyword_add:   ['keyword', 'matchType'],
+        negative_add:  ['keyword', 'matchType'],
+        copy_rewrite:  ['suggestedCopy'],
+        keyword_pause: [],
+      };
+
+      const tools = [
+        {
+          name: 'approve_suggestion',
+          description: 'Approve the suggestion as-is, setting its status to approved.',
+          input_schema: { type: 'object', properties: {}, required: [] },
+        },
+        {
+          name: 'reject_suggestion',
+          description: 'Reject the suggestion, setting its status to rejected.',
+          input_schema: { type: 'object', properties: {}, required: [] },
+        },
+        {
+          name: 'update_suggestion',
+          description: 'Modify specific fields of the proposed change and approve the suggestion. Only provide fields valid for this suggestion type.',
+          input_schema: {
+            type: 'object',
+            properties: {
+              proposedCpcMicros: { type: 'integer', description: 'New max CPC in micros (bid_adjust only)' },
+              keyword:           { type: 'string',  description: 'Keyword text (keyword_add / negative_add only)' },
+              matchType:         { type: 'string',  enum: ['EXACT', 'PHRASE', 'BROAD'], description: 'Match type (keyword_add / negative_add only)' },
+              suggestedCopy:     { type: 'string',  description: 'Replacement copy text (copy_rewrite only)' },
+            },
+            required: [],
+          },
+        },
+      ];
+
+      // First Claude call (non-streaming) to detect tool use
+      let firstResponse;
+      try {
+        firstResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages,
+          tools,
+        });
+      } catch (err) {
+        cleanup();
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        res.write(`data: Error contacting Claude: ${err.message}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+        return;
+      }
+
+      // Extract text and tool use from first response
+      const textBlock   = firstResponse.content.find(b => b.type === 'text');
+      const toolBlock   = firstResponse.content.find(b => b.type === 'tool_use');
+      let finalText     = textBlock?.text || '';
+      let toolCallEntry = null;
+      let toolResultEntry = null;
+
+      if (toolBlock) {
+        // Validate and execute tool
+        const allowedFields = ALLOWED_UPDATE_FIELDS[suggestion.type] || [];
+        let toolSummary = '';
+
+        if (toolBlock.name === 'approve_suggestion') {
+          suggestion.status = 'approved';
+          toolSummary = 'status: approved';
+        } else if (toolBlock.name === 'reject_suggestion') {
+          suggestion.status = 'rejected';
+          toolSummary = 'status: rejected';
+        } else if (toolBlock.name === 'update_suggestion') {
+          const input = toolBlock.input || {};
+          const changes = [];
+          for (const field of allowedFields) {
+            if (input[field] !== undefined) {
+              const oldVal = suggestion.proposedChange[field];
+              suggestion.proposedChange[field] = input[field];
+              changes.push(`${field}: ${oldVal} → ${input[field]}`);
+            }
+          }
+          suggestion.status = 'approved';
+          toolSummary = [...changes, 'status: approved'].join(' · ');
+        }
+
+        toolCallEntry   = { role: 'tool_call',   tool: toolBlock.name, tool_use_id: toolBlock.id, input: toolBlock.input, ts: now() };
+        toolResultEntry = { role: 'tool_result', tool_use_id: toolBlock.id, content: toolSummary, ts: now() };
+
+        // Second Claude call (streaming) to get narration after tool execution
+        const messagesWithTool = [
+          ...messages,
+          { role: 'assistant', content: firstResponse.content },
+          { role: 'user',      content: [{ type: 'tool_result', tool_use_id: toolBlock.id, content: toolSummary }] },
+        ];
+
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+
+        try {
+          const stream = anthropic.messages.stream({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 512,
+            system: systemPrompt,
+            messages: messagesWithTool,
+            tools,
+          });
+          finalText = '';
+          for await (const event of stream) {
+            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+              const chunk = event.delta.text;
+              finalText += chunk;
+              res.write(`data: ${chunk}\n\n`);
+            }
+          }
+        } catch (err) {
+          res.write(`data: Error: ${err.message}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          cleanup();
+          return;
+        }
+      } else {
+        // No tool use — write first response text as a single SSE chunk
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        if (finalText) res.write(`data: ${finalText}\n\n`);
+      }
+
+      // Persist to chat history and write file
+      suggestion.chat.push({ role: 'assistant', content: finalText, ts: now() });
+      if (toolCallEntry)   suggestion.chat.push(toolCallEntry);
+      if (toolResultEntry) suggestion.chat.push(toolResultEntry);
+
+      try {
+        writeFileSync(filePath, JSON.stringify(fileData, null, 2));
+      } catch (err) {
+        console.error('[chat] Failed to write suggestion file:', err.message);
+      }
+
       res.write('data: [DONE]\n\n');
       res.end();
+      cleanup();
     });
     return;
   }

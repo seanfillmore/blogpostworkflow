@@ -19,4 +19,13 @@ assert.ok(chatHandlerIdx < genericHandlerIdx, 'chat route must be registered bef
 assert.ok(src.includes("'date/id' key"), 'must have 429 in-flight guard comment or equivalent');
 assert.ok(src.includes('message.length > 2000'), 'must validate message length');
 
+// Task 3: Claude integration
+assert.ok(src.includes('approve_suggestion'), 'must define approve_suggestion tool');
+assert.ok(src.includes('reject_suggestion'), 'must define reject_suggestion tool');
+assert.ok(src.includes('update_suggestion'), 'must define update_suggestion tool');
+assert.ok(src.includes('proposedCpcMicros'), 'update_suggestion must include proposedCpcMicros param');
+assert.ok(src.includes('ALLOWED_UPDATE_FIELDS'), 'must have type-validation table for update_suggestion');
+assert.ok(src.includes("role: 'tool_result'"), 'must build tool_result messages for history reconstruction');
+assert.ok(src.includes('data: [DONE]'), 'must send DONE sentinel to close stream');
+
 console.log('✓ ads suggestion chat tests pass');
