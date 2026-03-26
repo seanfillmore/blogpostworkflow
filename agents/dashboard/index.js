@@ -71,6 +71,7 @@ const IMAGES_DIR    = join(ROOT, 'data', 'images');
 const REPORTS_DIR   = join(ROOT, 'data', 'reports');
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
 const ADS_OPTIMIZER_DIR = join(ROOT, 'data', 'ads-optimizer');
+const adsInFlight = new Set(); // concurrency guard: 'date/id' key
 const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
 
 const COMP_BRIEFS_DIR      = join(ROOT, 'data', 'competitor-intelligence', 'briefs');
@@ -2892,6 +2893,41 @@ const server = http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
     }
+    return;
+  }
+
+  if (req.method === 'POST' && req.url.startsWith('/ads/') && req.url.endsWith('/chat') && req.url.includes('/suggestion/')) {
+    const parts = req.url.split('/'); // ['', 'ads', date, 'suggestion', id, 'chat']
+    const date = parts[2], id = parts[4];
+    if (!date || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing date or id' })); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid date' })); return; }
+
+    const inFlightKey = `${date}/${id}`;
+    if (adsInFlight.has(inFlightKey)) { res.writeHead(429, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Request already in progress' })); return; }
+    adsInFlight.add(inFlightKey);
+
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', async () => {
+      const cleanup = () => adsInFlight.delete(inFlightKey);
+      let payload;
+      try { payload = JSON.parse(body); } catch { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
+      const message = (payload.message || '').trim();
+      if (!message) { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message is required' })); return; }
+      if (message.length > 2000) { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message exceeds 2000 characters' })); return; }
+
+      const filePath = join(ADS_OPTIMIZER_DIR, `${date}.json`);
+      if (!existsSync(filePath)) { cleanup(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion file not found' })); return; }
+      const fileData = JSON.parse(readFileSync(filePath, 'utf8'));
+      const suggestion = fileData.suggestions?.find(s => s.id === id);
+      if (!suggestion) { cleanup(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
+
+      // === Chat logic continues in Task 3 ===
+      cleanup();
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+      res.write('data: [DONE]\n\n');
+      res.end();
+    });
     return;
   }
 
