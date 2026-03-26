@@ -17,6 +17,9 @@ import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSy
 import { join, dirname, basename } from 'path';
 import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 import { fileURLToPath } from 'url';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic();
 
 // ── basic auth ─────────────────────────────────────────────────────────────────
 // Set DASHBOARD_USER and DASHBOARD_PASSWORD in .env to enable.
