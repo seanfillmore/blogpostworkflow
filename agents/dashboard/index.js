@@ -3017,7 +3017,7 @@ const server = http.createServer((req, res) => {
       } catch (err) {
         cleanup();
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-        res.write(`data: Error contacting Claude: ${err.message}\n\n`);
+        res.write(`data: Error contacting Claude: ${err.message.replace(/\n/g, '\\n')}\n\n`);
         res.write('data: [DONE]\n\n');
         res.end();
         return;
@@ -3080,11 +3080,11 @@ const server = http.createServer((req, res) => {
             if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
               const chunk = event.delta.text;
               finalText += chunk;
-              res.write(`data: ${chunk}\n\n`);
+              res.write(`data: ${chunk.replace(/\n/g, '\\n')}\n\n`);
             }
           }
         } catch (err) {
-          res.write(`data: Error: ${err.message}\n\n`);
+          res.write(`data: Error: ${err.message.replace(/\n/g, '\\n')}\n\n`);
           res.write('data: [DONE]\n\n');
           res.end();
           cleanup();
@@ -3093,11 +3093,11 @@ const server = http.createServer((req, res) => {
       } else {
         // No tool use — write first response text as a single SSE chunk
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-        if (finalText) res.write(`data: ${finalText}\n\n`);
+        if (finalText) res.write(`data: ${finalText.replace(/\n/g, '\\n')}\n\n`);
       }
 
       // Persist to chat history and write file
-      suggestion.chat.push({ role: 'assistant', content: finalText, ts: now() });
+      if (finalText) suggestion.chat.push({ role: 'assistant', content: finalText, ts: now() });
       if (toolCallEntry)   suggestion.chat.push(toolCallEntry);
       if (toolResultEntry) suggestion.chat.push(toolResultEntry);
 
