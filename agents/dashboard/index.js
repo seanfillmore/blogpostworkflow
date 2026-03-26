@@ -1016,6 +1016,8 @@ let data = null;
 
 let activeTab = 'seo';
 
+var chatOpen = new Set();
+
 function switchTab(name, btn) {
   activeTab = name;
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -2317,6 +2319,14 @@ function renderActiveTests(d) {
       '<span class="' + deltaClass + '">CTR ' + deltaStr + '</span>' +
       '</span>';
   }).join('');
+}
+
+async function loadAdsOptimization() {
+  try {
+    var res = await fetch('/api/data', { credentials: 'same-origin' });
+    var d = await res.json();
+    renderAdsOptimization(d);
+  } catch(e) { console.error('loadAdsOptimization failed', e); }
 }
 
 async function loadData() {

@@ -28,4 +28,10 @@ assert.ok(src.includes('ALLOWED_UPDATE_FIELDS'), 'must have type-validation tabl
 assert.ok(src.includes("role: 'tool_result'"), 'must build tool_result messages for history reconstruction');
 assert.ok(src.includes('data: [DONE]'), 'must send DONE sentinel to close stream');
 
+// Task 4: Browser globals
+assert.ok(src.includes('var chatOpen = new Set()'), 'must have chatOpen Set');
+assert.ok(src.includes('async function loadAdsOptimization()'), 'must have loadAdsOptimization function');
+assert.ok(src.includes("fetch('/api/data'"), 'loadAdsOptimization must fetch /api/data');
+assert.ok(src.includes('renderAdsOptimization(d)'), 'loadAdsOptimization must call renderAdsOptimization');
+
 console.log('✓ ads suggestion chat tests pass');
