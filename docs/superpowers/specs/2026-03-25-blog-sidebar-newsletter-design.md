@@ -52,7 +52,7 @@ All other blocks (title, hero image, breadcrumb, share, back to blog) are unchan
 
 **Klaviyo form ID:** `Xr4S7X`
 
-**Pre-implementation check:** Before deploying, verify that the Klaviyo Shopify app is configured to inject its script on all storefront pages (not limited to cart/product pages). In Klaviyo → Integrations → Shopify, confirm "Enable on all pages" is active. If not, add a `<script async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=COMPANY_ID"></script>` tag to the section as a fallback. Replace `COMPANY_ID` with the actual Klaviyo public API key (found in Klaviyo → Settings → API Keys) before deploying.
+**Pre-implementation check:** Before deploying, verify that the Klaviyo Shopify app is configured to inject its script on all storefront pages (not limited to cart/product pages). In Klaviyo → Integrations → Shopify, confirm "Enable on all pages" is active. If not, add `<script async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=VcMJJb"></script>` to the section as a fallback.
 
 **Placement:** After the 2nd `<h2>` or `<h3>` heading in the article body.
 
