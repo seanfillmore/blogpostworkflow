@@ -2386,87 +2386,87 @@ async function loadAdsOptimization() {
   } catch(e) { console.error('loadAdsOptimization failed', e); }
 }
 
-    function toggleChat(id) {
-      var panel = document.getElementById('chat-panel-' + id);
-      var card  = document.getElementById('suggestion-card-' + id);
-      if (!panel) return;
-      if (chatOpen.has(id)) {
-        chatOpen.delete(id);
-        panel.style.display = 'none';
-        if (card) { card.style.borderBottomLeftRadius = ''; card.style.borderBottomRightRadius = ''; }
-      } else {
-        chatOpen.add(id);
-        panel.style.display = 'block';
-        if (card) { card.style.borderBottomLeftRadius = '0'; card.style.borderBottomRightRadius = '0'; }
-      }
-    }
+function toggleChat(id) {
+  var panel = document.getElementById('chat-panel-' + id);
+  var card  = document.getElementById('suggestion-card-' + id);
+  if (!panel) return;
+  if (chatOpen.has(id)) {
+    chatOpen.delete(id);
+    panel.style.display = 'none';
+    if (card) { card.style.borderBottomLeftRadius = ''; card.style.borderBottomRightRadius = ''; }
+  } else {
+    chatOpen.add(id);
+    panel.style.display = 'block';
+    if (card) { card.style.borderBottomLeftRadius = '0'; card.style.borderBottomRightRadius = '0'; }
+  }
+}
 
-    async function sendChatMessage(date, id) {
-      var inputEl = document.getElementById('chat-input-' + id);
-      if (!inputEl) return;
-      var msg = inputEl.value.trim();
-      if (!msg) return;
-      inputEl.value = '';
-      inputEl.disabled = true;
+async function sendChatMessage(date, id) {
+  var inputEl = document.getElementById('chat-input-' + id);
+  if (!inputEl) return;
+  var msg = inputEl.value.trim();
+  if (!msg) return;
+  inputEl.value = '';
+  inputEl.disabled = true;
 
-      // Append user bubble immediately
-      var msgsEl = document.getElementById('chat-messages-' + id);
-      if (msgsEl) {
-        msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:flex-end">' +
-          '<div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px 0 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px">' + esc(msg) + '</div>' +
-          '<div style="background:#6d28d9;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">Y</div>' +
-          '</div>';
-      }
+  // Append user bubble immediately
+  var msgsEl = document.getElementById('chat-messages-' + id);
+  if (msgsEl) {
+    msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:flex-end">' +
+      '<div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px 0 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px">' + esc(msg) + '</div>' +
+      '<div style="background:#6d28d9;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">Y</div>' +
+      '</div>';
+  }
 
-      // Append streaming Claude bubble
-      var bubbleId = 'chat-bubble-' + id + '-' + Date.now();
-      if (msgsEl) {
-        msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
-          '<div style="background:#818cf8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">C</div>' +
-          '<div id="' + bubbleId + '" style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px"></div>' +
-          '</div>';
-        msgsEl.scrollTop = msgsEl.scrollHeight;
-      }
+  // Append streaming Claude bubble
+  var bubbleId = 'chat-bubble-' + id + '-' + Date.now();
+  if (msgsEl) {
+    msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="background:#818cf8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">C</div>' +
+      '<div id="' + bubbleId + '" style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px"></div>' +
+      '</div>';
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
 
-      var bubbleEl = document.getElementById(bubbleId);
-      var done = false;
+  var bubbleEl = document.getElementById(bubbleId);
+  var done = false;
 
-      function finish() {
-        if (done) return;
-        done = true;
-        if (inputEl) inputEl.disabled = false;
-        loadAdsOptimization();
-      }
+  function finish() {
+    if (done) return;
+    done = true;
+    if (inputEl) inputEl.disabled = false;
+    loadAdsOptimization();
+  }
 
-      try {
-        var res = await fetch('/ads/' + date + '/suggestion/' + id + '/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: msg }),
-        });
-        var reader = res.body.getReader();
-        var decoder = new TextDecoder();
-        function read() {
-          reader.read().then(function(result) {
-            if (result.done) { finish(); return; }
-            var lines = decoder.decode(result.value).split('\\n');
-            for (var i = 0; i < lines.length; i++) {
-              var line = lines[i];
-              if (line === 'data: [DONE]') { finish(); return; }
-              if (line.startsWith('data: ')) {
-                var chunk = line.slice(6);
-                if (bubbleEl) { bubbleEl.textContent += chunk; if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight; }
-              }
-            }
-            read();
-          }).catch(function() { finish(); });
+  try {
+    var res = await fetch('/ads/' + date + '/suggestion/' + id + '/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg }),
+    });
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    function read() {
+      reader.read().then(function(result) {
+        if (result.done) { finish(); return; }
+        var lines = decoder.decode(result.value).split('\\n');
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line === 'data: [DONE]') { finish(); return; }
+          if (line.startsWith('data: ')) {
+            var chunk = line.slice(6);
+            if (bubbleEl) { bubbleEl.textContent += chunk; if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight; }
+          }
         }
         read();
-      } catch(e) {
-        if (bubbleEl) bubbleEl.textContent = 'Error: ' + e.message;
-        if (inputEl) inputEl.disabled = false;
-      }
+      }).catch(function() { finish(); });
     }
+    read();
+  } catch(e) {
+    if (bubbleEl) bubbleEl.textContent = 'Error: ' + e.message;
+    if (inputEl) inputEl.disabled = false;
+  }
+}
 
 async function loadData() {
   document.getElementById('spin-icon').textContent = '⟳';
