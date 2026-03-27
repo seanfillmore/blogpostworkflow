@@ -460,9 +460,10 @@ function aggregateData() {
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   const adsOptPath = join(ADS_OPTIMIZER_DIR, `${today}.json`);
-  const adsOptimization = existsSync(adsOptPath)
+  const adsOptimizationRaw = existsSync(adsOptPath)
     ? JSON.parse(readFileSync(adsOptPath, 'utf8'))
     : null;
+  const adsOptimization = adsOptimizationRaw ? { ...adsOptimizationRaw, date: today } : null;
 
   // Ahrefs authority
   const ahrefsData = loadLatestAhrefsOverview(AHREFS_DIR);
