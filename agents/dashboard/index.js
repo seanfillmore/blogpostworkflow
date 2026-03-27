@@ -3122,10 +3122,11 @@ const server = http.createServer((req, res) => {
 
       // Build system prompt
       const micros = v => v != null ? `$${(v / 1000000).toFixed(2)} (${v} micros)` : null;
+      const otherSuggestions = (fileData.suggestions || []).filter(s => s.id !== suggestion.id);
       const systemPrompt = [
-        `You are an expert Google Ads advisor helping a user decide on an optimization suggestion.`,
+        `You are an expert Google Ads advisor. The user is reviewing an optimization suggestion and may ask questions about it, about the broader campaign, or about Google Ads strategy in general. Answer all questions helpfully — do not refuse or redirect if the question goes beyond the single suggestion.`,
         ``,
-        `SUGGESTION DETAILS:`,
+        `THIS SUGGESTION:`,
         `Type: ${suggestion.type}`,
         `Campaign: ${suggestion.campaign || 'Unknown'}`,
         `Ad Group: ${suggestion.adGroup || 'Campaign-level'}`,
@@ -3144,12 +3145,14 @@ const server = http.createServer((req, res) => {
         suggestion.avgCpcMicros      != null ? `Avg CPC: ${micros(suggestion.avgCpcMicros)}` : null,
         suggestion.costMicros        != null ? `Cost: ${micros(suggestion.costMicros)}` : null,
         suggestion.ahrefsMetrics     ? `Ahrefs Metrics: ${JSON.stringify(suggestion.ahrefsMetrics)}` : null,
-        fileData.analysisNotes       ? `\nAccount Analysis Notes:\n${fileData.analysisNotes}` : null,
+        otherSuggestions.length > 0  ? `\nOTHER PENDING SUGGESTIONS:\n${otherSuggestions.map(s => `- [${s.type}] ${s.campaign || ''}${s.adGroup ? ' / ' + s.adGroup : ''}${s.keyword ? ' — ' + s.keyword : ''}: ${s.rationale}`).join('\n')}` : null,
+        fileData.analysisNotes       ? `\nACCOUNT ANALYSIS:\n${fileData.analysisNotes}` : null,
         ``,
         `INSTRUCTIONS:`,
-        `Answer the user's questions about this suggestion clearly and concisely. Use the data above — never claim data is missing if it appears above.`,
-        `Only call approve_suggestion, reject_suggestion, or update_suggestion when the user has explicitly signalled a decision — never speculatively.`,
-        `For update_suggestion, only provide fields valid for this suggestion type (${suggestion.type}).`,
+        `- Use all data above when answering. Never say data is missing if it appears above.`,
+        `- Answer general campaign questions using the account analysis and other suggestions as context.`,
+        `- Only call approve_suggestion, reject_suggestion, or update_suggestion when the user has explicitly signalled a decision — never speculatively.`,
+        `- For update_suggestion, only provide fields valid for this suggestion type (${suggestion.type}).`,
       ].filter(Boolean).join('\n');
 
       // Tool definitions
