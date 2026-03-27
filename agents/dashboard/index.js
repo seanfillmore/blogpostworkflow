@@ -1106,6 +1106,16 @@ function switchTab(name, btn) {
   if (data) renderHeroKpis(data);
   if (name === 'optimize' && data) renderOptimizeTab(data);
   if (name === 'ad-intelligence') renderAdIntelligenceTab();
+  // Update chat sidebar when tab switches
+  if (tabChatOpen) {
+    var chatTitle = document.getElementById('tab-chat-title');
+    if (chatTitle) chatTitle.textContent = '\\u2736 ' + (TAB_CHAT_NAMES[name] || name) + ' Chat';
+    ['seo','cro','ads','optimize'].forEach(function(t) {
+      var btn2 = document.getElementById('btn-chat-' + t);
+      if (btn2) { if (t === name) btn2.classList.add('active'); else btn2.classList.remove('active'); }
+    });
+    renderTabChatMessages();
+  }
 }
 
 function renderHeroKpis(d) {
