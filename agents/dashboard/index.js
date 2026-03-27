@@ -2420,17 +2420,18 @@ async function sendChatMessage(date, id) {
       '</div>';
   }
 
-  // Append streaming Claude bubble
+  // Append Claude bubble with typing indicator
   var bubbleId = 'chat-bubble-' + id + '-' + Date.now();
   if (msgsEl) {
     msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<div style="background:#818cf8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">C</div>' +
-      '<div id="' + bubbleId + '" style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px"></div>' +
+      '<div id="' + bubbleId + '" style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:12px;color:#818cf8;max-width:480px">&#x2022;&#x2022;&#x2022;</div>' +
       '</div>';
     msgsEl.scrollTop = msgsEl.scrollHeight;
   }
 
   var bubbleEl = document.getElementById(bubbleId);
+  var firstChunk = true;
   var done = false;
 
   function finish() {
@@ -2438,6 +2439,13 @@ async function sendChatMessage(date, id) {
     done = true;
     if (inputEl) inputEl.disabled = false;
     loadAdsOptimization();
+    setTimeout(function() {
+      var newMsgs = document.getElementById('chat-messages-' + id);
+      if (newMsgs) {
+        newMsgs.scrollTop = newMsgs.scrollHeight;
+        newMsgs.scrollIntoView({ block: 'nearest' });
+      }
+    }, 80);
   }
 
   try {
@@ -2457,7 +2465,16 @@ async function sendChatMessage(date, id) {
           if (line === 'data: [DONE]') { finish(); return; }
           if (line.startsWith('data: ')) {
             var chunk = line.slice(6);
-            if (bubbleEl) { bubbleEl.textContent += chunk; if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight; }
+            if (bubbleEl) {
+              if (firstChunk) {
+                firstChunk = false;
+                bubbleEl.style.color = '#374151';
+                bubbleEl.textContent = chunk;
+              } else {
+                bubbleEl.textContent += chunk;
+              }
+              if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+            }
           }
         }
         read();
@@ -2465,7 +2482,7 @@ async function sendChatMessage(date, id) {
     }
     read();
   } catch(e) {
-    if (bubbleEl) bubbleEl.textContent = 'Error: ' + e.message;
+    if (bubbleEl) { bubbleEl.style.color = '#374151'; bubbleEl.textContent = 'Error: ' + e.message; }
     if (inputEl) inputEl.disabled = false;
   }
 }
