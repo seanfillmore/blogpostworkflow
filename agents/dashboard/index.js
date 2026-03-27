@@ -13,7 +13,7 @@
 
 import http from 'http';
 import { spawn } from 'child_process';
-import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync, createReadStream } from 'fs';
 import { join, dirname, basename } from 'path';
 import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 import { fileURLToPath } from 'url';
@@ -3058,6 +3058,20 @@ const server = http.createServer((req, res) => {
     writeFileSync(ALERTS_VIEWED, new Date().toISOString());
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  if (req.method === 'GET' && req.url.startsWith('/images/')) {
+    if (!checkAuth(req, res)) return;
+    const slug = req.url.slice('/images/'.length).split('?')[0];
+    if (!/^[a-z0-9-]+$/.test(slug)) { res.writeHead(400); res.end('Bad request'); return; }
+    const webp = join(IMAGES_DIR, `${slug}.webp`);
+    const png  = join(IMAGES_DIR, `${slug}.png`);
+    const imgPath = existsSync(webp) ? webp : existsSync(png) ? png : null;
+    if (!imgPath) { res.writeHead(404); res.end('Not found'); return; }
+    const ct = imgPath.endsWith('.webp') ? 'image/webp' : 'image/png';
+    res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600' });
+    createReadStream(imgPath).pipe(res);
     return;
   }
 
