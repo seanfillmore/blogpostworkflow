@@ -3100,21 +3100,33 @@ const server = http.createServer((req, res) => {
       }
 
       // Build system prompt
-      const pc = suggestion.proposedChange || {};
+      const micros = v => v != null ? `$${(v / 1000000).toFixed(2)} (${v} micros)` : null;
       const systemPrompt = [
         `You are an expert Google Ads advisor helping a user decide on an optimization suggestion.`,
         ``,
         `SUGGESTION DETAILS:`,
         `Type: ${suggestion.type}`,
+        `Campaign: ${suggestion.campaign || 'Unknown'}`,
         `Ad Group: ${suggestion.adGroup || 'Campaign-level'}`,
-        `Confidence: ${suggestion.confidence}`,
+        suggestion.keyword      ? `Keyword: ${suggestion.keyword}` : null,
+        suggestion.matchType    ? `Match Type: ${suggestion.matchType}` : null,
+        `Confidence: ${suggestion.confidence || 'unset'}`,
         `Rationale: ${suggestion.rationale}`,
-        `Proposed Change: ${JSON.stringify(pc)}`,
-        suggestion.ahrefsMetrics ? `Ahrefs Metrics: ${JSON.stringify(suggestion.ahrefsMetrics)}` : null,
-        fileData.analysisNotes ? `\nAccount Analysis Notes:\n${fileData.analysisNotes}` : null,
+        suggestion.currentCpcMicros  != null ? `Current Max CPC: ${micros(suggestion.currentCpcMicros)}` : null,
+        suggestion.proposedCpcMicros != null ? `Proposed Max CPC: ${micros(suggestion.proposedCpcMicros)}` : null,
+        suggestion.suggestedCopy     ? `Suggested Copy: ${suggestion.suggestedCopy}` : null,
+        suggestion.impressions       != null ? `Impressions: ${suggestion.impressions}` : null,
+        suggestion.clicks            != null ? `Clicks: ${suggestion.clicks}` : null,
+        suggestion.ctr               != null ? `CTR: ${(suggestion.ctr * 100).toFixed(2)}%` : null,
+        suggestion.conversions       != null ? `Conversions: ${suggestion.conversions}` : null,
+        suggestion.cvr               != null ? `CVR: ${(suggestion.cvr * 100).toFixed(2)}%` : null,
+        suggestion.avgCpcMicros      != null ? `Avg CPC: ${micros(suggestion.avgCpcMicros)}` : null,
+        suggestion.costMicros        != null ? `Cost: ${micros(suggestion.costMicros)}` : null,
+        suggestion.ahrefsMetrics     ? `Ahrefs Metrics: ${JSON.stringify(suggestion.ahrefsMetrics)}` : null,
+        fileData.analysisNotes       ? `\nAccount Analysis Notes:\n${fileData.analysisNotes}` : null,
         ``,
         `INSTRUCTIONS:`,
-        `Answer the user's questions about this suggestion clearly and concisely.`,
+        `Answer the user's questions about this suggestion clearly and concisely. Use the data above — never claim data is missing if it appears above.`,
         `Only call approve_suggestion, reject_suggestion, or update_suggestion when the user has explicitly signalled a decision — never speculatively.`,
         `For update_suggestion, only provide fields valid for this suggestion type (${suggestion.type}).`,
       ].filter(Boolean).join('\n');
