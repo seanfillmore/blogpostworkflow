@@ -1354,8 +1354,51 @@ function renderKanban(d) {
   document.getElementById('pipeline-note').textContent = d.pipeline.items.length + ' total calendar items';
 }
 
-let rankPage = 0;
-const RANK_PAGE_SIZE = 20;
+let rankPage    = 0;
+let rankSearch  = '';
+let rankSort    = { col: null, dir: null };
+let rankFilters = { position: 'all', change: 'all', volume: 'all', tier: 'all' };
+const RANK_PAGE_SIZE = 10;
+
+function sortRankBy(col) {
+  if (rankSort.col === col) {
+    if (rankSort.dir === 'asc') { rankSort.dir = 'desc'; }
+    else if (rankSort.dir === 'desc') { rankSort.col = null; rankSort.dir = null; }
+    else { rankSort.dir = 'asc'; }
+  } else {
+    rankSort.col = col; rankSort.dir = 'asc';
+  }
+  rankPage = 0;
+  renderRankings(data);
+}
+
+function toggleRankMenu(key) {
+  const el = document.getElementById('rmenu-' + key);
+  if (!el) return;
+  const wasOpen = el.classList.contains('open');
+  ['position', 'change', 'volume', 'tier'].forEach(function(k) {
+    const m = document.getElementById('rmenu-' + k);
+    if (m) m.classList.remove('open');
+  });
+  if (!wasOpen) el.classList.add('open');
+}
+
+function setRankFilter(key, val) {
+  rankFilters[key] = val;
+  rankPage = 0;
+  const el = document.getElementById('rmenu-' + key);
+  if (el) el.classList.remove('open');
+  renderRankings(data);
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.th-filter-wrap')) {
+    ['position', 'change', 'volume', 'tier'].forEach(function(k) {
+      const m = document.getElementById('rmenu-' + k);
+      if (m) m.classList.remove('open');
+    });
+  }
+});
 
 function renderRankings(d) {
   const r = d.rankings;
@@ -1367,45 +1410,169 @@ function renderRankings(d) {
   const note = r.latestDate ? r.latestDate + (r.previousDate ? ' vs ' + r.previousDate : '') : '';
   document.getElementById('rank-note').textContent = note;
 
-  const tierBadge = t => {
+  const tierBadge = function(t) {
     if (t === 'page1')     return badge('page1', 'Page 1');
     if (t === 'quickWins') return badge('quickwins', 'Quick Win');
     if (t === 'needsWork') return badge('needswork-rank', 'Needs Work');
     return badge('notranking', 'Not Ranking');
   };
 
-  const changeHtml = x => {
-    if (x.change == null) return '<span class="muted">—</span>';
-    if (x.change > 0) return '<span class="change change-up">↑ ' + x.change + '</span>';
-    if (x.change < 0) return '<span class="change change-down">↓ ' + Math.abs(x.change) + '</span>';
-    return '<span class="change change-flat">→ 0</span>';
+  const changeHtml = function(x) {
+    if (x.change == null) return '<span class="muted">&#8212;</span>';
+    if (x.change > 0) return '<span class="change change-up">&#8593; ' + x.change + '</span>';
+    if (x.change < 0) return '<span class="change change-down">&#8595; ' + Math.abs(x.change) + '</span>';
+    return '<span class="change change-flat">&#8594; 0</span>';
   };
 
-  const totalPages = Math.ceil(r.items.length / RANK_PAGE_SIZE);
-  rankPage = Math.max(0, Math.min(rankPage, totalPages - 1));
-  const pageItems = r.items.slice(rankPage * RANK_PAGE_SIZE, (rankPage + 1) * RANK_PAGE_SIZE);
+  // ── apply search ──
+  const q = rankSearch.toLowerCase();
+  let items = q ? r.items.filter(function(x) { return x.keyword.toLowerCase().indexOf(q) !== -1; }) : r.items.slice();
 
-  const rows = pageItems.map((x, i) => {
-    const idx = rankPage * RANK_PAGE_SIZE + i;
-    return '<tr style="cursor:pointer" onclick="openKeywordCard(data.rankings.items[' + idx + '])">' +
-    '<td>' + esc(x.keyword) + (x.tracked ? ' <span class="muted" style="font-size:10px">●</span>' : '') + '</td>' +
-    '<td class="nowrap"><span class="pos">' + (x.position != null ? '#' + x.position : '—') + '</span></td>' +
-    '<td class="nowrap">' + changeHtml(x) + (x.previousPosition != null ? '<span class="muted" style="font-size:11px;margin-left:4px">was #' + x.previousPosition + '</span>' : '') + '</td>' +
-    '<td class="nowrap muted">' + fmtNum(x.volume) + '</td>' +
-    '<td>' + tierBadge(x.tier) + '</td>' +
-    '</tr>';
+  // ── apply filters ──
+  if (rankFilters.position !== 'all') {
+    items = items.filter(function(x) {
+      if (rankFilters.position === 'top3')     return x.position != null && x.position <= 3;
+      if (rankFilters.position === 'top10')    return x.position != null && x.position <= 10;
+      if (rankFilters.position === 'top20')    return x.position != null && x.position <= 20;
+      if (rankFilters.position === 'beyond20') return x.position != null && x.position > 20;
+      if (rankFilters.position === 'norank')   return x.position == null;
+      return true;
+    });
+  }
+  if (rankFilters.change !== 'all') {
+    items = items.filter(function(x) {
+      if (rankFilters.change === 'improved') return x.change != null && x.change > 0;
+      if (rankFilters.change === 'declined') return x.change != null && x.change < 0;
+      if (rankFilters.change === 'flat')     return x.change != null && x.change === 0;
+      if (rankFilters.change === 'new')      return x.change == null && x.position != null;
+      return true;
+    });
+  }
+  if (rankFilters.volume !== 'all') {
+    items = items.filter(function(x) {
+      if (rankFilters.volume === 'high') return (x.volume || 0) >= 1000;
+      if (rankFilters.volume === 'med')  return (x.volume || 0) >= 100 && (x.volume || 0) < 1000;
+      if (rankFilters.volume === 'low')  return (x.volume || 0) < 100;
+      return true;
+    });
+  }
+  if (rankFilters.tier !== 'all') {
+    items = items.filter(function(x) { return x.tier === rankFilters.tier; });
+  }
+
+  // ── apply sort ──
+  if (rankSort.col) {
+    const dir = rankSort.dir === 'asc' ? 1 : -1;
+    items = items.slice().sort(function(a, b) {
+      if (rankSort.col === 'keyword') {
+        return dir * a.keyword.localeCompare(b.keyword);
+      }
+      if (rankSort.col === 'position') {
+        if (a.position == null && b.position == null) return 0;
+        if (a.position == null) return 1;
+        if (b.position == null) return -1;
+        return dir * (a.position - b.position);
+      }
+      if (rankSort.col === 'change') {
+        const ac = a.change != null ? a.change : -999;
+        const bc = b.change != null ? b.change : -999;
+        return dir * (ac - bc);
+      }
+      if (rankSort.col === 'volume') {
+        return dir * ((a.volume || 0) - (b.volume || 0));
+      }
+      if (rankSort.col === 'tier') {
+        const order = { page1: 0, quickWins: 1, needsWork: 2, notRanking: 3 };
+        return dir * ((order[a.tier] || 0) - (order[b.tier] || 0));
+      }
+      return 0;
+    });
+  }
+
+  // ── paginate ──
+  const totalPages = Math.max(1, Math.ceil(items.length / RANK_PAGE_SIZE));
+  rankPage = Math.max(0, Math.min(rankPage, totalPages - 1));
+  const pageItems = items.slice(rankPage * RANK_PAGE_SIZE, (rankPage + 1) * RANK_PAGE_SIZE);
+
+  // ── active filter chips ──
+  const chipLabels = {
+    position: { top3: 'Pos: Top 3', top10: 'Pos: Top 10', top20: 'Pos: Top 20', beyond20: 'Pos: 20+', norank: 'Pos: Not ranking' },
+    change:   { improved: 'Change: Improved', declined: 'Change: Declined', flat: 'Change: Flat', new: 'Change: New' },
+    volume:   { high: 'Vol: High', med: 'Vol: Med', low: 'Vol: Low' },
+    tier:     { page1: 'Tier: Page 1', quickWins: 'Tier: Quick Win', needsWork: 'Tier: Needs Work', notRanking: 'Tier: Not Ranking' },
+  };
+  const chips = Object.keys(rankFilters).filter(function(k) { return rankFilters[k] !== 'all'; }).map(function(k) {
+    const label = (chipLabels[k] || {})[rankFilters[k]] || rankFilters[k];
+    return '<span class="filter-chip">' + label + '<span class="filter-chip-x" onclick="setRankFilter(\'' + k + '\',\'all\')">&#215;</span></span>';
+  }).join('');
+  const chipsHtml = chips ? '<div class="filter-chips">' + chips + '</div>' : '';
+
+  // ── search bar ──
+  const searchBar = '<div style="margin-bottom:8px"><input id="rank-search-input" type="text" placeholder="Search keywords..." value="' + esc(rankSearch) + '" oninput="rankSearch=this.value;rankPage=0;renderRankings(data)" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box" /></div>';
+
+  // ── column header builder ──
+  function thHtml(label, sortCol, filterKey, filterOpts) {
+    const sortInd = rankSort.col === sortCol ? (rankSort.dir === 'asc' ? ' &#8593;' : ' &#8595;') : '';
+    const sortAttr = sortCol ? ' class="th-sort" onclick="sortRankBy(\'' + sortCol + '\')"' : '';
+    let filterHtml = '';
+    if (filterKey) {
+      const isActive = rankFilters[filterKey] !== 'all';
+      const opts = filterOpts.map(function(o) {
+        const sel = rankFilters[filterKey] === o.val ? ' selected' : '';
+        return '<div class="th-filter-opt' + sel + '" onclick="event.stopPropagation();setRankFilter(\'' + filterKey + '\',\'' + o.val + '\')">' + o.label + '</div>';
+      }).join('');
+      filterHtml = '<div class="th-filter-wrap">' +
+        '<span class="th-filter-btn' + (isActive ? ' active' : '') + '" onclick="event.stopPropagation();toggleRankMenu(\'' + filterKey + '\')">&#9660;</span>' +
+        '<div id="rmenu-' + filterKey + '" class="th-filter-menu">' + opts + '</div>' +
+        '</div>';
+    }
+    return '<th><div class="th-inner"><span' + sortAttr + '>' + label + sortInd + '</span>' + filterHtml + '</div></th>';
+  }
+
+  const posOpts = [
+    { val: 'all', label: 'All' }, { val: 'top3', label: 'Top 3' }, { val: 'top10', label: 'Top 10' },
+    { val: 'top20', label: 'Top 20' }, { val: 'beyond20', label: '20+' }, { val: 'norank', label: 'Not ranking' },
+  ];
+  const chgOpts = [
+    { val: 'all', label: 'All' }, { val: 'improved', label: 'Improved' },
+    { val: 'declined', label: 'Declined' }, { val: 'flat', label: 'No change' }, { val: 'new', label: 'New entry' },
+  ];
+  const volOpts = [
+    { val: 'all', label: 'All' }, { val: 'high', label: 'High (1k+)' },
+    { val: 'med', label: 'Med (100-999)' }, { val: 'low', label: 'Low (<100)' },
+  ];
+  const tierOpts = [
+    { val: 'all', label: 'All' }, { val: 'page1', label: 'Page 1' },
+    { val: 'quickWins', label: 'Quick Win' }, { val: 'needsWork', label: 'Needs Work' }, { val: 'notRanking', label: 'Not Ranking' },
+  ];
+
+  const rows = pageItems.map(function(x, i) {
+    const globalIdx = r.items.indexOf(x);
+    const idxRef = globalIdx !== -1 ? globalIdx : rankPage * RANK_PAGE_SIZE + i;
+    return '<tr style="cursor:pointer" onclick="openKeywordCard(data.rankings.items[' + idxRef + '])">' +
+      '<td>' + esc(x.keyword) + (x.tracked ? ' <span class="muted" style="font-size:10px">&#9679;</span>' : '') + '</td>' +
+      '<td class="nowrap"><span class="pos">' + (x.position != null ? '#' + x.position : '&#8212;') + '</span></td>' +
+      '<td class="nowrap">' + changeHtml(x) + (x.previousPosition != null ? '<span class="muted" style="font-size:11px;margin-left:4px">was #' + x.previousPosition + '</span>' : '') + '</td>' +
+      '<td class="nowrap muted">' + fmtNum(x.volume) + '</td>' +
+      '<td>' + tierBadge(x.tier) + '</td>' +
+      '</tr>';
   }).join('');
 
   const pagination =
     '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;font-size:13px;">' +
-    '<button onclick="rankPage--;renderRankings(data)" ' + (rankPage === 0 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">← Prev</button>' +
-    '<span class="muted">Page ' + (rankPage + 1) + ' of ' + totalPages + ' (' + r.items.length + ' keywords)</span>' +
-    '<button onclick="rankPage++;renderRankings(data)" ' + (rankPage >= totalPages - 1 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">Next →</button>' +
+    '<button onclick="rankPage--;renderRankings(data)" ' + (rankPage === 0 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">&#8592; Prev</button>' +
+    '<span class="muted">Page ' + (rankPage + 1) + ' of ' + totalPages + ' (' + items.length + ' keywords)</span>' +
+    '<button onclick="rankPage++;renderRankings(data)" ' + (rankPage >= totalPages - 1 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">Next &#8594;</button>' +
     '</div>';
 
   document.getElementById('rankings-table').innerHTML =
+    searchBar + chipsHtml +
     '<table><thead><tr>' +
-    '<th>Keyword</th><th>Position</th><th>Change</th><th>Volume</th><th>Tier</th>' +
+    thHtml('Keyword', 'keyword', null, []) +
+    thHtml('Position', 'position', 'position', posOpts) +
+    thHtml('Change', 'change', 'change', chgOpts) +
+    thHtml('Volume', 'volume', 'volume', volOpts) +
+    thHtml('Tier', 'tier', 'tier', tierOpts) +
     '</tr></thead><tbody>' + rows + '</tbody></table>' + pagination;
 }
 
