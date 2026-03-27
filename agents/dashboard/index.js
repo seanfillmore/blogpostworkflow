@@ -2810,6 +2810,187 @@ async function loadData() {
 loadData();
 setInterval(loadData, 3600000);
 
+// ── tab chat ─────────────────────────────────────────────────────────────────
+
+var tabChatOpen = false;
+var tabChatMessages = { seo: [], cro: [], ads: [], optimize: [] };
+var tabChatInFlight = false;
+var TAB_CHAT_NAMES = { seo: 'SEO', cro: 'CRO', ads: 'Ads', 'ad-intelligence': 'Ad Intelligence', optimize: 'Optimize' };
+
+function renderTabChatMessages() {
+  var msgs = tabChatMessages[activeTab] || [];
+  var msgsEl = document.getElementById('tab-chat-messages');
+  if (!msgsEl) return;
+  if (!msgs.length) {
+    msgsEl.innerHTML = '<div class="tab-chat-empty">Ask anything about the data on this tab.<br>I can also create action items for you to review.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < msgs.length; i++) {
+    var m = msgs[i];
+    if (m.role === 'user') {
+      html += '<div class="tab-chat-user-bubble">' + esc(m.content) + '</div>';
+    } else if (m.role === 'assistant') {
+      html += '<div class="tab-chat-ai-bubble">' + esc(m.content) + '</div>';
+      if (m.action) {
+        var msgIdx = i;
+        html += '<div class="tab-chat-action-card">' +
+          '<div class="tab-chat-action-label">&#128203; Proposed Action</div>' +
+          '<div class="tab-chat-action-desc">' + esc(m.action.title) + ': ' + esc(m.action.description) + '</div>' +
+          '<button class="btn-add-to-queue" id="tab-chat-action-btn-' + msgIdx + '"' +
+          (m.action.added ? ' disabled' : '') + '>' +
+          (m.action.added ? '&#x2713; Added' : '+ Add to Queue') + '</button>' +
+          '</div>';
+      }
+    }
+  }
+  msgsEl.innerHTML = html;
+  // Attach action button listeners after render
+  for (var j = 0; j < msgs.length; j++) {
+    if (msgs[j].action && !msgs[j].action.added) {
+      (function(idx) {
+        var btn = document.getElementById('tab-chat-action-btn-' + idx);
+        if (btn) btn.onclick = function() { addTabChatActionItem(activeTab, idx, btn); };
+      })(j);
+    }
+  }
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function toggleTabChat(tab) {
+  if (tabChatOpen && activeTab === tab) {
+    closeTabChat();
+    return;
+  }
+  tabChatOpen = true;
+  var sidebar = document.getElementById('tab-chat-sidebar');
+  if (sidebar) sidebar.style.display = 'flex';
+  var title = document.getElementById('tab-chat-title');
+  if (title) title.textContent = '\\u2736 ' + (TAB_CHAT_NAMES[tab] || tab) + ' Chat';
+  ['seo','cro','ads','optimize'].forEach(function(t) {
+    var btn = document.getElementById('btn-chat-' + t);
+    if (btn) {
+      if (t === tab) btn.classList.add('active'); else btn.classList.remove('active');
+    }
+  });
+  renderTabChatMessages();
+  var inp = document.getElementById('tab-chat-input');
+  if (inp) inp.focus();
+}
+
+function closeTabChat() {
+  tabChatOpen = false;
+  var sidebar = document.getElementById('tab-chat-sidebar');
+  if (sidebar) sidebar.style.display = 'none';
+  ['seo','cro','ads','optimize'].forEach(function(t) {
+    var btn = document.getElementById('btn-chat-' + t);
+    if (btn) btn.classList.remove('active');
+  });
+}
+
+async function sendTabChatMessage() {
+  if (tabChatInFlight) return;
+  var inputEl = document.getElementById('tab-chat-input');
+  if (!inputEl) return;
+  var msg = inputEl.value.trim();
+  if (!msg) return;
+  inputEl.value = '';
+
+  if (!tabChatMessages[activeTab]) tabChatMessages[activeTab] = [];
+  tabChatMessages[activeTab].push({ role: 'user', content: msg });
+  renderTabChatMessages();
+
+  tabChatInFlight = true;
+  inputEl.disabled = true;
+
+  // Add typing indicator
+  var msgsEl = document.getElementById('tab-chat-messages');
+  if (msgsEl) {
+    msgsEl.innerHTML += '<div class="tab-chat-ai-bubble" id="tab-chat-typing"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span></div>';
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  // Build message array for API (user/assistant turns only)
+  var apiMessages = tabChatMessages[activeTab]
+    .filter(function(m) { return m.role === 'user' || m.role === 'assistant'; })
+    .map(function(m) { return { role: m.role, content: m.content }; });
+
+  try {
+    var res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tab: activeTab, messages: apiMessages }),
+    });
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var assistantText = '';
+    var actionItem = null;
+
+    function readTabChatChunk() {
+      reader.read().then(function(result) {
+        if (result.done) { finishTabChat(assistantText, actionItem); return; }
+        var lines = decoder.decode(result.value).split('\\n');
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line === 'data: [DONE]') { finishTabChat(assistantText, actionItem); return; }
+          if (line.startsWith('data: ACTION_ITEM:')) {
+            try { actionItem = JSON.parse(line.slice(18)); } catch(e) {}
+          } else if (line.startsWith('data: ')) {
+            assistantText += line.slice(6);
+          }
+        }
+        readTabChatChunk();
+      }).catch(function() { finishTabChat(assistantText, actionItem); });
+    }
+    readTabChatChunk();
+  } catch(e) {
+    var typingEl = document.getElementById('tab-chat-typing');
+    if (typingEl) typingEl.remove();
+    if (!tabChatMessages[activeTab]) tabChatMessages[activeTab] = [];
+    tabChatMessages[activeTab].push({ role: 'assistant', content: 'Error: ' + e.message });
+    renderTabChatMessages();
+    tabChatInFlight = false;
+    if (inputEl) inputEl.disabled = false;
+  }
+}
+
+function finishTabChat(text, action) {
+  var typingEl = document.getElementById('tab-chat-typing');
+  if (typingEl) typingEl.remove();
+  if (!tabChatMessages[activeTab]) tabChatMessages[activeTab] = [];
+  var entry = { role: 'assistant', content: text || '(no response)' };
+  if (action) entry.action = { title: action.title || '', description: action.description || '', type: action.type || 'chat_action', added: false };
+  tabChatMessages[activeTab].push(entry);
+  renderTabChatMessages();
+  tabChatInFlight = false;
+  var inputEl = document.getElementById('tab-chat-input');
+  if (inputEl) inputEl.disabled = false;
+}
+
+async function addTabChatActionItem(tab, msgIdx, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Adding...'; }
+  var msgs = tabChatMessages[tab];
+  if (!msgs || !msgs[msgIdx] || !msgs[msgIdx].action) return;
+  var action = msgs[msgIdx].action;
+  try {
+    var res = await fetch('/api/chat/action-item', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tab: tab, title: action.title, description: action.description, type: action.type }),
+    });
+    var json = await res.json();
+    if (json.ok) {
+      action.added = true;
+      if (btn) { btn.textContent = '\\u2713 Added'; }
+      loadData();
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = 'Error \\u2014 retry'; }
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Error \\u2014 retry'; }
+  }
+}
+
 // ── keyword detail modal ──────────────────────────────────────────────────────
 
 function openKeywordCard(item) {
