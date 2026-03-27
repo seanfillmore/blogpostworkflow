@@ -3676,6 +3676,60 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === 'POST' && req.url === '/api/chat/action-item') {
+    if (!checkAuth(req, res)) return;
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      const { tab, title, description, type } = payload;
+      if (!tab || !title) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'tab and title required' }));
+        return;
+      }
+
+      if (tab === 'ads') {
+        const today = new Date().toISOString().slice(0, 10);
+        const filePath = join(ADS_OPTIMIZER_DIR, `${today}.json`);
+        let fileData = { analysisNotes: '', suggestions: [] };
+        if (existsSync(filePath)) {
+          try { fileData = JSON.parse(readFileSync(filePath, 'utf8')); } catch {}
+        } else {
+          mkdirSync(ADS_OPTIMIZER_DIR, { recursive: true });
+        }
+        if (!Array.isArray(fileData.suggestions)) fileData.suggestions = [];
+        const id = 'chat-' + Date.now();
+        fileData.suggestions.push({
+          id,
+          type: type || 'chat_action',
+          status: 'pending',
+          source: 'chat',
+          rationale: description || title,
+          campaign: null,
+          adGroup: null,
+        });
+        try {
+          writeFileSync(filePath, JSON.stringify(fileData, null, 2));
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, id }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        }
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, message: 'Action noted' }));
+      }
+    });
+    return;
+  }
+
   if (req.url === '/api/data') {
     try {
       const data = aggregateData();
