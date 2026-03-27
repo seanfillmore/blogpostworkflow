@@ -366,11 +366,13 @@ function aggregateData() {
 
   // Start with all post files as the source of truth
   const seen = new Set();
+  const seenKeywords = new Set();
   const pipelineItems = [];
 
   // Add calendar items first (in calendar order)
   for (const item of calItems) {
     seen.add(item.slug);
+    seenKeywords.add(item.keyword.toLowerCase());
     pipelineItems.push({
       keyword:     item.keyword,
       title:       item.title,
@@ -392,6 +394,8 @@ function aggregateData() {
       if (seen.has(slug)) continue;
       try {
         const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+        const kw = (meta.target_keyword || '').toLowerCase();
+        if (kw && seenKeywords.has(kw)) continue;
         const status = meta.shopify_status === 'published' ? 'published'
                      : meta.shopify_publish_at             ? 'scheduled'
                      : meta.shopify_article_id             ? 'draft'
@@ -410,6 +414,7 @@ function aggregateData() {
           status,
         });
         seen.add(slug);
+        if (kw) seenKeywords.add(kw);
       } catch {}
     }
   }
