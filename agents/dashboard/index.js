@@ -923,28 +923,31 @@ const HTML = `<!DOCTYPE html>
     <button onclick="runAgent('agents/gsc-query-miner/index.js')" data-tip="Surface high-impression GSC queries with low CTR to optimise">Run GSC Query Miner</button>
     <button onclick="runAgent('agents/sitemap-indexer/index.js')" data-tip="Re-index the sitemap so all agents have the latest page list">Refresh Sitemap</button>
     <button onclick="runAgent('agents/insight-aggregator/index.js')" data-tip="Aggregate Ahrefs + GSC signals into a prioritised insight report">Run Insight Aggregator</button>
+    <button id="btn-chat-seo" class="btn-open-chat" onclick="toggleTabChat('seo')" data-tip="Ask Claude about the SEO data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-cro" style="display:none">
     <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')" data-tip="Generate a Variant B meta title and start an A/B test for a post">Create Meta A/B Test</button>
     <button onclick="runAgent('agents/meta-ab-tracker/index.js')" data-tip="Check CTR results for active meta title tests and conclude winners">Run Meta A/B Tracker</button>
     <button onclick="runAgent('agents/cro-analyzer/index.js')" data-tip="Analyse Clarity heatmaps and session data for conversion issues">Run CRO Analyzer</button>
     <button onclick="runAgent('agents/cro-cta-injector/index.js', ['--apply'])" data-tip="Insert product CTA blocks into top-traffic blog posts with 0 conversions">Inject CTAs</button>
-
+    <button id="btn-chat-cro" class="btn-open-chat" onclick="toggleTabChat('cro')" data-tip="Ask Claude about the CRO data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
     <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
     <button onclick="applyAdsChanges()" data-tip="Execute all approved suggestions via the Google Ads Mutate API">Apply Approved</button>
     <button onclick="runAgent('agents/campaign-monitor/index.js', [], loadCampaignCards)" data-tip="Fetch latest Google Ads performance data and update active campaign metrics">Run Campaign Monitor</button>
     <button onclick="runAgent('scripts/ads-weekly-recap.js')" data-tip="Send the weekly recap email now (normally runs automatically Sunday morning)">Send Weekly Recap</button>
+    <button id="btn-chat-ads" class="btn-open-chat" onclick="toggleTabChat('ads')" data-tip="Ask Claude about your Ads data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
     <button onclick="runAgent('agents/competitor-intelligence/index.js')" data-tip="Scrape top competitor pages and generate optimisation briefs">Run Competitor Intelligence</button>
     <span id="ahrefs-upload-status" style="font-size:0.8rem;color:var(--muted)"></span>
     <button onclick="uploadAhrefs()" data-tip="Upload an Ahrefs top-pages CSV to use as competitor input data">Upload Ahrefs CSV</button>
+    <button id="btn-chat-optimize" class="btn-open-chat" onclick="toggleTabChat('optimize')" data-tip="Ask Claude about optimization data on this tab">&#x2736; Chat</button>
   </div>
 </div>
 
-<main>
+<main style="display:flex;align-items:start">
 <div id="tab-seo" class="tab-panel active">
   <!-- Data Needed alert (hidden when empty) -->
   <div class="card alert-card" id="data-needed-card" style="display:none">
@@ -1063,6 +1066,18 @@ const HTML = `<!DOCTYPE html>
 </div><!-- /tab-ads -->
 <div id="tab-optimize" class="tab-panel">
   <div class="empty-state">Loading optimization briefs...</div>
+</div>
+<div id="tab-chat-sidebar" class="tab-chat-sidebar" style="display:none">
+  <div class="tab-chat-header">
+    <span id="tab-chat-title">&#x2736; Chat</span>
+    <button onclick="closeTabChat()" style="background:none;border:none;cursor:pointer;color:#818cf8;font-size:15px;line-height:1;padding:0">&#x2715;</button>
+  </div>
+  <div id="tab-chat-messages" class="tab-chat-messages"></div>
+  <div class="tab-chat-input-row">
+    <input id="tab-chat-input" class="tab-chat-input" placeholder="Ask about this tab..."
+      onkeydown="if(event.key===&quot;Enter&quot;&amp;&amp;!event.shiftKey){event.preventDefault();sendTabChatMessage();}">
+    <button class="tab-chat-send" onclick="sendTabChatMessage()">&#x2191;</button>
+  </div>
 </div>
 </main>
 
