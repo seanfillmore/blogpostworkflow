@@ -19,8 +19,6 @@ import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 import { fileURLToPath } from 'url';
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic();
-
 // ── basic auth ─────────────────────────────────────────────────────────────────
 // Set DASHBOARD_USER and DASHBOARD_PASSWORD in .env to enable.
 // If neither is set the dashboard is open (safe for local-only use).
@@ -39,6 +37,9 @@ function loadEnvAuth() {
 }
 
 const _authEnv  = loadEnvAuth();
+// Populate process.env from .env file for SDK integrations (e.g. Anthropic)
+for (const [k, v] of Object.entries(_authEnv)) { if (!process.env[k]) process.env[k] = v; }
+const anthropic = new Anthropic();
 const AUTH_USER = _authEnv.DASHBOARD_USER || '';
 const AUTH_PASS = _authEnv.DASHBOARD_PASSWORD || '';
 const AUTH_REQUIRED = AUTH_USER && AUTH_PASS;
