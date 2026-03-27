@@ -1576,31 +1576,67 @@ function renderRankings(d) {
     '</tr></thead><tbody>' + rows + '</tbody></table>' + pagination;
 }
 
+let postsPage = 0;
+const POSTS_PAGE_SIZE = 10;
+
+function openImageModal(src) {
+  closeImageModal();
+  const ov = document.createElement('div');
+  ov.id = 'img-modal-overlay';
+  ov.onclick = closeImageModal;
+  const img = document.createElement('img');
+  img.src = src;
+  img.onclick = function(e) { e.stopPropagation(); };
+  ov.appendChild(img);
+  document.body.appendChild(ov);
+  document.addEventListener('keydown', _imgModalKey);
+}
+function closeImageModal() {
+  const ov = document.getElementById('img-modal-overlay');
+  if (ov) ov.remove();
+  document.removeEventListener('keydown', _imgModalKey);
+}
+function _imgModalKey(e) {
+  if (e.key === 'Escape') closeImageModal();
+}
+
 function renderPosts(d) {
   if (!d.posts.length) {
     document.getElementById('posts-table').innerHTML = '<div class="empty">No posts found.</div>';
     return;
   }
+  const totalPages = Math.max(1, Math.ceil(d.posts.length / POSTS_PAGE_SIZE));
+  postsPage = Math.max(0, Math.min(postsPage, totalPages - 1));
   document.getElementById('posts-note').textContent = d.posts.length + ' posts';
 
-  const rows = d.posts.map(p => {
+  const pageItems = d.posts.slice(postsPage * POSTS_PAGE_SIZE, (postsPage + 1) * POSTS_PAGE_SIZE);
+
+  const rows = pageItems.map(function(p) {
     const titleHtml = p.shopifyUrl
       ? '<a class="link" href="' + p.shopifyUrl + '" target="_blank">' + esc(p.title || p.slug) + '</a>'
       : esc(p.title || p.slug);
-    const editorHtml = p.editorVerdict === 'Approved'    ? badge('approved', '✓ Approved')
-                     : p.editorVerdict === 'Needs Work'  ? badge('needswork', '⚠ Needs Work')
-                     : '<span class="muted">—</span>';
+    const editorHtml = p.editorVerdict === 'Approved'
+      ? badge('approved', '&#10003; Approved')
+      : p.editorVerdict === 'Needs Work'
+      ? badge('needswork', '&#9888; Needs Work')
+      : '<span class="muted">&#8212;</span>';
     const linksHtml = p.brokenLinks > 0
       ? '<span style="color:var(--red);font-weight:600">' + p.brokenLinks + ' broken</span>'
-      : '<span class="muted">—</span>';
-    const imgHtml = p.hasImage ? '🖼' : '<span class="muted">—</span>';
+      : '<span class="muted">&#8212;</span>';
+    let imgHtml;
+    if (p.hasImage) {
+      const imgSrc = p.shopifyImageUrl || ('/images/' + p.slug);
+      imgHtml = '<a href="#" onclick="event.preventDefault();openImageModal(\'' + esc(imgSrc) + '\')" title="View image" style="font-size:16px;text-decoration:none">&#128444;</a>';
+    } else {
+      imgHtml = '<span class="muted">&#8212;</span>';
+    }
     const dateHtml = p.status === 'scheduled' && p.publishAt
       ? fmtDate(p.publishAt)
       : fmtDate(p.uploadedAt);
 
     return '<tr>' +
       '<td>' + titleHtml + '</td>' +
-      '<td class="muted">' + esc(p.keyword || '—') + '</td>' +
+      '<td class="muted">' + (p.keyword ? esc(p.keyword) : '&#8212;') + '</td>' +
       '<td>' + statusBadge(p.status) + '</td>' +
       '<td class="nowrap muted">' + dateHtml + '</td>' +
       '<td>' + editorHtml + '</td>' +
@@ -1609,10 +1645,17 @@ function renderPosts(d) {
       '</tr>';
   }).join('');
 
+  const pagination =
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;font-size:13px;">' +
+    '<button onclick="postsPage--;renderPosts(data)" ' + (postsPage === 0 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">&#8592; Prev</button>' +
+    '<span class="muted">Page ' + (postsPage + 1) + ' of ' + totalPages + ' (' + d.posts.length + ' posts)</span>' +
+    '<button onclick="postsPage++;renderPosts(data)" ' + (postsPage >= totalPages - 1 ? 'disabled' : '') + ' style="padding:4px 12px;cursor:pointer;border:1px solid #d1d5db;border-radius:4px;background:#fff;">Next &#8594;</button>' +
+    '</div>';
+
   document.getElementById('posts-table').innerHTML =
     '<table><thead><tr>' +
     '<th>Title</th><th>Keyword</th><th>Status</th><th>Date</th><th>Editor</th><th>Links</th><th>Image</th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table>';
+    '</tr></thead><tbody>' + rows + '</tbody></table>' + pagination;
 }
 
 function renderDataNeeded(d) {
