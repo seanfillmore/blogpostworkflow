@@ -3636,7 +3636,8 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      const systemPrompt = buildTabChatSystemPrompt(tab);
+      let systemPrompt;
+      try { systemPrompt = buildTabChatSystemPrompt(tab); } catch (e) { systemPrompt = `You are an SEO advisor. Data for this tab could not be loaded (${e.message}).`; }
       const cappedMessages = messages.slice(-20).map(m => ({
         role: m.role === 'user' ? 'user' : 'assistant',
         content: String(m.content || '').slice(0, 4000),
