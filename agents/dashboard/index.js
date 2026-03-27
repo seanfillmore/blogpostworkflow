@@ -17,6 +17,7 @@ import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSy
 import { join, dirname, basename } from 'path';
 import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 import { fileURLToPath } from 'url';
+import Anthropic from '@anthropic-ai/sdk';
 
 // ── basic auth ─────────────────────────────────────────────────────────────────
 // Set DASHBOARD_USER and DASHBOARD_PASSWORD in .env to enable.
@@ -36,6 +37,9 @@ function loadEnvAuth() {
 }
 
 const _authEnv  = loadEnvAuth();
+// Populate process.env from .env file for SDK integrations (e.g. Anthropic)
+for (const [k, v] of Object.entries(_authEnv)) { if (!process.env[k]) process.env[k] = v; }
+const anthropic = new Anthropic();
 const AUTH_USER = _authEnv.DASHBOARD_USER || '';
 const AUTH_PASS = _authEnv.DASHBOARD_PASSWORD || '';
 const AUTH_REQUIRED = AUTH_USER && AUTH_PASS;
@@ -68,6 +72,7 @@ const IMAGES_DIR    = join(ROOT, 'data', 'images');
 const REPORTS_DIR   = join(ROOT, 'data', 'reports');
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
 const ADS_OPTIMIZER_DIR = join(ROOT, 'data', 'ads-optimizer');
+const adsInFlight = new Set(); // concurrency guard: 'date/id' key
 const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
 
 const COMP_BRIEFS_DIR      = join(ROOT, 'data', 'competitor-intelligence', 'briefs');
@@ -455,9 +460,10 @@ function aggregateData() {
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   const adsOptPath = join(ADS_OPTIMIZER_DIR, `${today}.json`);
-  const adsOptimization = existsSync(adsOptPath)
+  const adsOptimizationRaw = existsSync(adsOptPath)
     ? JSON.parse(readFileSync(adsOptPath, 'utf8'))
     : null;
+  const adsOptimization = adsOptimizationRaw ? { ...adsOptimizationRaw, date: today } : null;
 
   // Ahrefs authority
   const ahrefsData = loadLatestAhrefsOverview(AHREFS_DIR);
@@ -736,6 +742,10 @@ const HTML = `<!DOCTYPE html>
   .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
   .spin { animation: spin .8s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes chat-dot { 0%,80%,100% { opacity:.2; transform:scale(.8); } 40% { opacity:1; transform:scale(1); } }
+  .chat-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#818cf8; margin:0 2px; animation:chat-dot 1.2s ease-in-out infinite; }
+  .chat-dot:nth-child(2) { animation-delay:.2s; }
+  .chat-dot:nth-child(3) { animation-delay:.4s; }
   .tab-actions-bar { display:flex; justify-content:center; align-items:center; gap:0.5rem; padding:8px 24px; background:var(--bg); border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .tab-actions-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; justify-content:center; }
   .tab-actions-bar button { padding:0.4rem 0.85rem; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.85rem; position:relative; }
@@ -1011,6 +1021,8 @@ const HTML = `<!DOCTYPE html>
 let data = null;
 
 let activeTab = 'seo';
+
+var chatOpen = new Set();
 
 function switchTab(name, btn) {
   activeTab = name;
@@ -2123,6 +2135,52 @@ function renderAdsTab(data) {
     '</div></div>';
 }
 
+    function renderToolActionCard(tc, tr) {
+      var label = tc.tool === 'approve_suggestion' ? 'Suggestion approved' :
+                  tc.tool === 'reject_suggestion'  ? 'Suggestion rejected' :
+                                                     'Suggestion updated & approved';
+      var detail = tr ? esc(tr.content) : '';
+      return '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+        '<div style="width:24px;flex-shrink:0"></div>' +
+        '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 12px;font-size:11px;color:#166534;display:flex;align-items:center;gap:8px;max-width:480px">' +
+          '<span style="font-size:14px">&#9881;&#65039;</span>' +
+          '<div><div style="font-weight:700;margin-bottom:2px">' + label + '</div>' +
+          '<div style="font-family:monospace;color:#166534">' + esc(detail) + '</div></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function renderChatMessages(chatArr) {
+      var html = '';
+      var i = 0;
+      while (i < chatArr.length) {
+        var m = chatArr[i];
+        if (m.role === 'user') {
+          html += '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:flex-end">' +
+            '<div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px 0 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px">' + esc(m.content) + '</div>' +
+            '<div style="background:#6d28d9;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">Y</div>' +
+            '</div>';
+          i++;
+        } else if (m.role === 'assistant') {
+          html += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+            '<div style="background:#818cf8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">C</div>' +
+            '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px">' + esc(m.content) + '</div>' +
+            '</div>';
+          if (i + 1 < chatArr.length && chatArr[i + 1].role === 'tool_call') {
+            var tc = chatArr[i + 1];
+            var tr = (i + 2 < chatArr.length && chatArr[i + 2].role === 'tool_result') ? chatArr[i + 2] : null;
+            html += renderToolActionCard(tc, tr);
+            i += tr ? 3 : 2;
+          } else {
+            i++;
+          }
+        } else {
+          i++; // tool_call / tool_result consumed above
+        }
+      }
+      return html;
+    }
+
 function renderAdsOptimization(d) {
   var optEl = document.getElementById('ads-opt-body');
   if (!optEl) return;
@@ -2186,7 +2244,7 @@ function renderAdsOptimization(d) {
         '</div>';
     }
 
-    return '<div class="ads-suggestion" id="suggestion-card-' + esc(s.id) + '">' +
+    return '<div class="ads-suggestion" id="suggestion-card-' + esc(s.id) + '" style="' + (chatOpen.has(s.id) ? 'border-bottom-left-radius:0;border-bottom-right-radius:0' : '') + '">' +
       '<div class="ads-suggestion-header">' +
         confidenceBadge(s.confidence) +
         '<strong>' + typeLabel(s) + '</strong>' +
@@ -2201,6 +2259,17 @@ function renderAdsOptimization(d) {
           (isApproved ? '&#10003; Approved' : 'Approve') +
         '</button>' +
         '<button class="btn-ads-reject" onclick="adsUpdateSuggestion(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;,&apos;rejected&apos;)">Reject</button>' +
+        '<button class="btn-ads-discuss" onclick="toggleChat(&apos;' + esc(s.id) + '&apos;)" style="background:#818cf8">&#128172; Discuss</button>' +
+      '</div>' +
+    '</div>' +
+    '<div id="chat-panel-' + esc(s.id) + '" style="display:' + (chatOpen.has(s.id) ? 'block' : 'none') + ';border:1px solid #818cf8;border-top:none;border-radius:0 0 8px 8px;background:#f8fafc;padding:12px">' +
+      '<div id="chat-messages-' + esc(s.id) + '" style="max-height:320px;overflow-y:auto">' + renderChatMessages(s.chat || []) + '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:8px">' +
+        '<input id="chat-input-' + esc(s.id) + '" placeholder="Ask a follow-up question..." ' +
+          'style="flex:1;padding:7px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff" ' +
+          'onkeydown="if(event.key===\\'Enter\\')sendChatMessage(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;)">' +
+        '<button onclick="sendChatMessage(&apos;' + esc(opt.date) + '&apos;,&apos;' + esc(s.id) + '&apos;)" ' +
+          'style="padding:7px 14px;background:#818cf8;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">Send</button>' +
       '</div>' +
     '</div>';
   }
@@ -2313,6 +2382,113 @@ function renderActiveTests(d) {
       '<span class="' + deltaClass + '">CTR ' + deltaStr + '</span>' +
       '</span>';
   }).join('');
+}
+
+async function loadAdsOptimization() {
+  try {
+    var res = await fetch('/api/data', { credentials: 'same-origin' });
+    var d = await res.json();
+    renderAdsOptimization(d);
+  } catch(e) { console.error('loadAdsOptimization failed', e); }
+}
+
+function toggleChat(id) {
+  var panel = document.getElementById('chat-panel-' + id);
+  var card  = document.getElementById('suggestion-card-' + id);
+  if (!panel) return;
+  if (chatOpen.has(id)) {
+    chatOpen.delete(id);
+    panel.style.display = 'none';
+    if (card) { card.style.borderBottomLeftRadius = ''; card.style.borderBottomRightRadius = ''; }
+  } else {
+    chatOpen.add(id);
+    panel.style.display = 'block';
+    if (card) { card.style.borderBottomLeftRadius = '0'; card.style.borderBottomRightRadius = '0'; }
+  }
+}
+
+async function sendChatMessage(date, id) {
+  var inputEl = document.getElementById('chat-input-' + id);
+  if (!inputEl) return;
+  var msg = inputEl.value.trim();
+  if (!msg) return;
+  inputEl.value = '';
+  inputEl.disabled = true;
+
+  // Append user bubble immediately
+  var msgsEl = document.getElementById('chat-messages-' + id);
+  if (msgsEl) {
+    msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:flex-end">' +
+      '<div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px 0 8px 8px;padding:8px 10px;font-size:12px;color:#374151;max-width:480px">' + esc(msg) + '</div>' +
+      '<div style="background:#6d28d9;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">Y</div>' +
+      '</div>';
+  }
+
+  // Append Claude bubble with typing indicator
+  var bubbleId = 'chat-bubble-' + id + '-' + Date.now();
+  if (msgsEl) {
+    msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="background:#818cf8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">C</div>' +
+      '<div id="' + bubbleId + '" style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:10px 12px;font-size:12px;color:#374151;max-width:480px"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span></div>' +
+      '</div>';
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  var bubbleEl = document.getElementById(bubbleId);
+  var firstChunk = true;
+  var done = false;
+
+  function finish() {
+    if (done) return;
+    done = true;
+    if (inputEl) inputEl.disabled = false;
+    loadAdsOptimization();
+    setTimeout(function() {
+      var newMsgs = document.getElementById('chat-messages-' + id);
+      if (newMsgs) {
+        newMsgs.scrollTop = newMsgs.scrollHeight;
+        newMsgs.scrollIntoView({ block: 'nearest' });
+      }
+    }, 80);
+  }
+
+  try {
+    var res = await fetch('/ads/' + date + '/suggestion/' + id + '/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg }),
+    });
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    function read() {
+      reader.read().then(function(result) {
+        if (result.done) { finish(); return; }
+        var lines = decoder.decode(result.value).split('\\n');
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line === 'data: [DONE]') { finish(); return; }
+          if (line.startsWith('data: ')) {
+            var chunk = line.slice(6);
+            if (bubbleEl) {
+              if (firstChunk) {
+                firstChunk = false;
+                bubbleEl.style.color = '#374151';
+                bubbleEl.textContent = chunk;
+              } else {
+                bubbleEl.textContent += chunk;
+              }
+              if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+            }
+          }
+        }
+        read();
+      }).catch(function() { finish(); });
+    }
+    read();
+  } catch(e) {
+    if (bubbleEl) { bubbleEl.style.color = '#374151'; bubbleEl.textContent = 'Error: ' + e.message; }
+    if (inputEl) inputEl.disabled = false;
+  }
 }
 
 async function loadData() {
@@ -2889,6 +3065,239 @@ const server = http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
     }
+    return;
+  }
+
+  if (req.method === 'POST' && req.url.startsWith('/ads/') && req.url.endsWith('/chat') && req.url.includes('/suggestion/')) {
+    const parts = req.url.split('/'); // ['', 'ads', date, 'suggestion', id, 'chat']
+    const date = parts[2], id = parts[4];
+    if (!date || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing date or id' })); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid date' })); return; }
+
+    const inFlightKey = `${date}/${id}`;
+    if (adsInFlight.has(inFlightKey)) { res.writeHead(429, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Request already in progress' })); return; }
+    adsInFlight.add(inFlightKey);
+
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', async () => {
+      const cleanup = () => adsInFlight.delete(inFlightKey);
+      let payload;
+      try { payload = JSON.parse(body); } catch { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
+      const message = (payload.message || '').trim();
+      if (!message) { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message is required' })); return; }
+      if (message.length > 2000) { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message exceeds 2000 characters' })); return; }
+
+      const filePath = join(ADS_OPTIMIZER_DIR, `${date}.json`);
+      if (!existsSync(filePath)) { cleanup(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion file not found' })); return; }
+      const fileData = JSON.parse(readFileSync(filePath, 'utf8'));
+      const suggestion = fileData.suggestions?.find(s => s.id === id);
+      if (!suggestion) { cleanup(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
+
+      // Append user message to chat history
+      if (!suggestion.chat) suggestion.chat = [];
+      const now = () => new Date().toISOString();
+      suggestion.chat.push({ role: 'user', content: message, ts: now() });
+
+      // Reconstruct Anthropic SDK message array from chat history
+      const messages = [];
+      for (let i = 0; i < suggestion.chat.length; i++) {
+        const entry = suggestion.chat[i];
+        if (entry.role === 'user') {
+          messages.push({ role: 'user', content: entry.content });
+        } else if (entry.role === 'assistant') {
+          const content = [{ type: 'text', text: entry.content }];
+          // Merge adjacent tool_call into this assistant message
+          if (i + 1 < suggestion.chat.length && suggestion.chat[i + 1].role === 'tool_call') {
+            const tc = suggestion.chat[i + 1];
+            content.push({ type: 'tool_use', id: tc.tool_use_id, name: tc.tool, input: tc.input });
+            i++; // skip the tool_call entry
+          }
+          messages.push({ role: 'assistant', content });
+        } else if (entry.role === 'tool_result') {
+          messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: entry.tool_use_id, content: entry.content }] });
+        }
+        // tool_call entries are consumed above alongside their assistant message
+      }
+
+      // Build system prompt
+      const micros = v => v != null ? `$${(v / 1000000).toFixed(2)} (${v} micros)` : null;
+      const otherSuggestions = (fileData.suggestions || []).filter(s => s.id !== suggestion.id);
+      const systemPrompt = [
+        `You are an expert Google Ads advisor. The user is reviewing an optimization suggestion and may ask questions about it, about the broader campaign, or about Google Ads strategy in general. Answer all questions helpfully — do not refuse or redirect if the question goes beyond the single suggestion.`,
+        ``,
+        `THIS SUGGESTION:`,
+        `Type: ${suggestion.type}`,
+        `Campaign: ${suggestion.campaign || 'Unknown'}`,
+        `Ad Group: ${suggestion.adGroup || 'Campaign-level'}`,
+        suggestion.keyword      ? `Keyword: ${suggestion.keyword}` : null,
+        suggestion.matchType    ? `Match Type: ${suggestion.matchType}` : null,
+        `Confidence: ${suggestion.confidence || 'unset'}`,
+        `Rationale: ${suggestion.rationale}`,
+        suggestion.currentCpcMicros  != null ? `Current Max CPC: ${micros(suggestion.currentCpcMicros)}` : null,
+        suggestion.proposedCpcMicros != null ? `Proposed Max CPC: ${micros(suggestion.proposedCpcMicros)}` : null,
+        suggestion.suggestedCopy     ? `Suggested Copy: ${suggestion.suggestedCopy}` : null,
+        suggestion.impressions       != null ? `Impressions: ${suggestion.impressions}` : null,
+        suggestion.clicks            != null ? `Clicks: ${suggestion.clicks}` : null,
+        suggestion.ctr               != null ? `CTR: ${(suggestion.ctr * 100).toFixed(2)}%` : null,
+        suggestion.conversions       != null ? `Conversions: ${suggestion.conversions}` : null,
+        suggestion.cvr               != null ? `CVR: ${(suggestion.cvr * 100).toFixed(2)}%` : null,
+        suggestion.avgCpcMicros      != null ? `Avg CPC: ${micros(suggestion.avgCpcMicros)}` : null,
+        suggestion.costMicros        != null ? `Cost: ${micros(suggestion.costMicros)}` : null,
+        suggestion.ahrefsMetrics     ? `Ahrefs Metrics: ${JSON.stringify(suggestion.ahrefsMetrics)}` : null,
+        otherSuggestions.length > 0  ? `\nOTHER PENDING SUGGESTIONS:\n${otherSuggestions.map(s => `- [${s.type}] ${s.campaign || ''}${s.adGroup ? ' / ' + s.adGroup : ''}${s.keyword ? ' — ' + s.keyword : ''}: ${s.rationale}`).join('\n')}` : null,
+        fileData.analysisNotes       ? `\nACCOUNT ANALYSIS:\n${fileData.analysisNotes}` : null,
+        ``,
+        `INSTRUCTIONS:`,
+        `- Use all data above when answering. Never say data is missing if it appears above.`,
+        `- Answer general campaign questions using the account analysis and other suggestions as context.`,
+        `- Only call approve_suggestion, reject_suggestion, or update_suggestion when the user has explicitly signalled a decision — never speculatively.`,
+        `- For update_suggestion, only provide fields valid for this suggestion type (${suggestion.type}).`,
+      ].filter(Boolean).join('\n');
+
+      // Tool definitions
+      const ALLOWED_UPDATE_FIELDS = {
+        bid_adjust:    ['proposedCpcMicros'],
+        keyword_add:   ['keyword', 'matchType'],
+        negative_add:  ['keyword', 'matchType'],
+        copy_rewrite:  ['suggestedCopy'],
+        keyword_pause: [],
+      };
+
+      const tools = [
+        {
+          name: 'approve_suggestion',
+          description: 'Approve the suggestion as-is, setting its status to approved.',
+          input_schema: { type: 'object', properties: {}, required: [] },
+        },
+        {
+          name: 'reject_suggestion',
+          description: 'Reject the suggestion, setting its status to rejected.',
+          input_schema: { type: 'object', properties: {}, required: [] },
+        },
+        {
+          name: 'update_suggestion',
+          description: 'Modify specific fields of the proposed change and approve the suggestion. Only provide fields valid for this suggestion type.',
+          input_schema: {
+            type: 'object',
+            properties: {
+              proposedCpcMicros: { type: 'integer', description: 'New max CPC in micros (bid_adjust only)' },
+              keyword:           { type: 'string',  description: 'Keyword text (keyword_add / negative_add only)' },
+              matchType:         { type: 'string',  enum: ['EXACT', 'PHRASE', 'BROAD'], description: 'Match type (keyword_add / negative_add only)' },
+              suggestedCopy:     { type: 'string',  description: 'Replacement copy text (copy_rewrite only)' },
+            },
+            required: [],
+          },
+        },
+      ];
+
+      // First Claude call (non-streaming) to detect tool use
+      let firstResponse;
+      try {
+        firstResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages,
+          tools,
+        });
+      } catch (err) {
+        cleanup();
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        res.write(`data: Error contacting Claude: ${err.message.replace(/\n/g, '\\n')}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+        return;
+      }
+
+      // Extract text and tool use from first response
+      const textBlock   = firstResponse.content.find(b => b.type === 'text');
+      const toolBlock   = firstResponse.content.find(b => b.type === 'tool_use');
+      let finalText     = textBlock?.text || '';
+      let toolCallEntry = null;
+      let toolResultEntry = null;
+
+      if (toolBlock) {
+        // Validate and execute tool
+        const allowedFields = ALLOWED_UPDATE_FIELDS[suggestion.type] || [];
+        let toolSummary = '';
+
+        if (toolBlock.name === 'approve_suggestion') {
+          suggestion.status = 'approved';
+          toolSummary = 'status: approved';
+        } else if (toolBlock.name === 'reject_suggestion') {
+          suggestion.status = 'rejected';
+          toolSummary = 'status: rejected';
+        } else if (toolBlock.name === 'update_suggestion') {
+          const input = toolBlock.input || {};
+          const changes = [];
+          for (const field of allowedFields) {
+            if (input[field] !== undefined) {
+              const oldVal = suggestion.proposedChange[field];
+              suggestion.proposedChange[field] = input[field];
+              changes.push(`${field}: ${oldVal} → ${input[field]}`);
+            }
+          }
+          suggestion.status = 'approved';
+          toolSummary = [...changes, 'status: approved'].join(' · ');
+        }
+
+        toolCallEntry   = { role: 'tool_call',   tool: toolBlock.name, tool_use_id: toolBlock.id, input: toolBlock.input, ts: now() };
+        toolResultEntry = { role: 'tool_result', tool_use_id: toolBlock.id, content: toolSummary, ts: now() };
+
+        // Second Claude call (streaming) to get narration after tool execution
+        const messagesWithTool = [
+          ...messages,
+          { role: 'assistant', content: firstResponse.content },
+          { role: 'user',      content: [{ type: 'tool_result', tool_use_id: toolBlock.id, content: toolSummary }] },
+        ];
+
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+
+        try {
+          const stream = anthropic.messages.stream({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 512,
+            system: systemPrompt,
+            messages: messagesWithTool,
+            tools,
+          });
+          finalText = '';
+          for await (const event of stream) {
+            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+              const chunk = event.delta.text;
+              finalText += chunk;
+              res.write(`data: ${chunk.replace(/\n/g, '\\n')}\n\n`);
+            }
+          }
+        } catch (err) {
+          res.write(`data: Error: ${err.message.replace(/\n/g, '\\n')}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          cleanup();
+          return;
+        }
+      } else {
+        // No tool use — write first response text as a single SSE chunk
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        if (finalText) res.write(`data: ${finalText.replace(/\n/g, '\\n')}\n\n`);
+      }
+
+      // Persist to chat history and write file
+      if (finalText) suggestion.chat.push({ role: 'assistant', content: finalText, ts: now() });
+      if (toolCallEntry)   suggestion.chat.push(toolCallEntry);
+      if (toolResultEntry) suggestion.chat.push(toolResultEntry);
+
+      try {
+        writeFileSync(filePath, JSON.stringify(fileData, null, 2));
+      } catch (err) {
+        console.error('[chat] Failed to write suggestion file:', err.message);
+      }
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+      cleanup();
+    });
     return;
   }
 
