@@ -742,6 +742,10 @@ const HTML = `<!DOCTYPE html>
   .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
   .spin { animation: spin .8s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes chat-dot { 0%,80%,100% { opacity:.2; transform:scale(.8); } 40% { opacity:1; transform:scale(1); } }
+  .chat-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#818cf8; margin:0 2px; animation:chat-dot 1.2s ease-in-out infinite; }
+  .chat-dot:nth-child(2) { animation-delay:.2s; }
+  .chat-dot:nth-child(3) { animation-delay:.4s; }
   .tab-actions-bar { display:flex; justify-content:center; align-items:center; gap:0.5rem; padding:8px 24px; background:var(--bg); border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .tab-actions-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; justify-content:center; }
   .tab-actions-bar button { padding:0.4rem 0.85rem; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.85rem; position:relative; }
@@ -2425,7 +2429,7 @@ async function sendChatMessage(date, id) {
   if (msgsEl) {
     msgsEl.innerHTML += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<div style="background:#818cf8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">C</div>' +
-      '<div id="' + bubbleId + '" style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:12px;color:#818cf8;max-width:480px">&#x2022;&#x2022;&#x2022;</div>' +
+      '<div id="' + bubbleId + '" style="background:#fff;border:1px solid #e2e8f0;border-radius:0 8px 8px 8px;padding:10px 12px;font-size:12px;color:#374151;max-width:480px"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span></div>' +
       '</div>';
     msgsEl.scrollTop = msgsEl.scrollHeight;
   }
