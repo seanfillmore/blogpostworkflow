@@ -2921,6 +2921,7 @@ async function sendTabChatMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tab: activeTab, messages: apiMessages }),
     });
+    if (!res.ok) { throw new Error('Server error ' + res.status); }
     var reader = res.body.getReader();
     var decoder = new TextDecoder();
     var assistantText = '';
@@ -2968,9 +2969,9 @@ function finishTabChat(text, action) {
 }
 
 async function addTabChatActionItem(tab, msgIdx, btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Adding...'; }
   var msgs = tabChatMessages[tab];
   if (!msgs || !msgs[msgIdx] || !msgs[msgIdx].action) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Adding...'; }
   var action = msgs[msgIdx].action;
   try {
     var res = await fetch('/api/chat/action-item', {
