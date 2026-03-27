@@ -3071,7 +3071,7 @@ const server = http.createServer((req, res) => {
     if (!imgPath) { res.writeHead(404); res.end('Not found'); return; }
     const ct = imgPath.endsWith('.webp') ? 'image/webp' : 'image/png';
     res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600' });
-    createReadStream(imgPath).pipe(res);
+    createReadStream(imgPath).on('error', () => { res.end(); }).pipe(res);
     return;
   }
 
