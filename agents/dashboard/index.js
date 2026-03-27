@@ -677,7 +677,7 @@ const HTML = `<!DOCTYPE html>
 
   /* ── tab panels ── */
   .tab-panel { display: none; }
-  .tab-panel.active { display: grid; gap: 20px; align-content: start; }
+  .tab-panel.active { display: grid; gap: 20px; align-content: start; flex: 1; min-width: 0; }
 
   /* ── rank alerts ── */
   .alert-banner { border-radius: var(--radius); padding: 12px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -852,6 +852,26 @@ const HTML = `<!DOCTYPE html>
   .adgroup-kw      { font-size: 10px; color: var(--muted); font-weight: 400; }
   .proposal-actions { padding: 12px 16px; display: flex; gap: 8px; align-items: center; }
   .proposal-action-note { font-size: 11px; color: var(--muted); margin-left: auto; }
+  /* ── tab chat sidebar ── */
+  .tab-chat-sidebar { width: 300px; flex-shrink: 0; background: white; border-left: 2px solid #818cf8; display: flex; flex-direction: column; position: sticky; top: 0; max-height: 100vh; overflow: hidden; align-self: stretch; }
+  .tab-chat-header { background: #eef2ff; padding: 10px 14px; border-bottom: 1px solid #c7d2fe; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; color: #312e81; flex-shrink: 0; }
+  .tab-chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .tab-chat-user-bubble { align-self: flex-end; background: #818cf8; color: white; border-radius: 12px 12px 2px 12px; padding: 8px 11px; max-width: 220px; font-size: 12px; word-break: break-word; white-space: pre-wrap; }
+  .tab-chat-ai-bubble { align-self: flex-start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 2px 12px 12px 12px; padding: 8px 11px; max-width: 240px; color: #374151; font-size: 12px; word-break: break-word; white-space: pre-wrap; }
+  .tab-chat-action-card { background: #fffbeb; border: 1px solid #fbbf24; border-radius: 6px; padding: 8px 11px; margin-top: 4px; max-width: 240px; align-self: flex-start; }
+  .tab-chat-action-label { font-weight: 600; color: #92400e; font-size: 10px; margin-bottom: 3px; }
+  .tab-chat-action-desc { color: #374151; font-size: 11px; margin-bottom: 6px; }
+  .btn-add-to-queue { background: #f59e0b; color: white; border: none; border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
+  .btn-add-to-queue:hover { background: #d97706; }
+  .btn-add-to-queue:disabled { background: #fcd34d; cursor: default; }
+  .tab-chat-input-row { padding: 10px; border-top: 1px solid #e2e8f0; display: flex; gap: 6px; flex-shrink: 0; }
+  .tab-chat-input { flex: 1; border: 1px solid #c7d2fe; border-radius: 6px; padding: 7px 9px; font-size: 12px; font-family: inherit; background: #f8fafc; outline: none; }
+  .tab-chat-input:focus { border-color: #818cf8; }
+  .tab-chat-send { background: #818cf8; color: white; border: none; border-radius: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  .tab-chat-send:hover { background: #6366f1; }
+  .btn-open-chat { background: #eef2ff !important; color: #4338ca !important; border-color: #c7d2fe !important; }
+  .btn-open-chat.active { background: #818cf8 !important; color: white !important; border-color: #818cf8 !important; }
+  .tab-chat-empty { color: #94a3b8; font-size: 11px; text-align: center; padding: 20px 8px; line-height: 1.5; }
   .btn-camp-approve  { padding: 7px 16px; font-size: 12px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; background: var(--green); color: white; }
   .btn-camp-approve:hover { background: #15803d; }
   .btn-launch   { padding: 7px 16px; font-size: 12px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; background: var(--indigo); color: white; }
