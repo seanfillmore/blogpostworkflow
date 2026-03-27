@@ -605,7 +605,7 @@ const HTML = `<!DOCTYPE html>
   .kanban-col { border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
   .kanban-head { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; justify-content: space-between; }
   .kanban-count { font-size: 22px; font-weight: 800; padding: 4px 12px 8px; }
-  .kanban-items { padding: 0 8px 8px; display: grid; gap: 4px; }
+  .kanban-items { padding: 0 8px 8px; display: grid; gap: 4px; max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #d1d5db transparent; }
   .kanban-item { font-size: 11px; padding: 5px 7px; border-radius: 5px; line-height: 1.35; }
   .kanban-item .kw  { font-weight: 500; }
   .kanban-item .vol { color: var(--muted); font-size: 10px; }
@@ -623,6 +623,30 @@ const HTML = `<!DOCTYPE html>
   .col-briefed   .kanban-item { background: #ecfeff; }
   .col-pending   .kanban-head { background: #f8fafc; color: var(--muted); }
   .col-pending   .kanban-item { background: #f8fafc; }
+
+  /* ── image lightbox ── */
+  #img-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.85); z-index: 9999; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  #img-modal-overlay img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,.5); cursor: default; }
+
+  /* ── rank filter chips ── */
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .filter-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #e0e7ff; color: #3730a3; display: flex; align-items: center; gap: 4px; }
+  .filter-chip-x { cursor: pointer; font-size: 13px; line-height: 1; color: #6366f1; }
+  .filter-chip-x:hover { color: #ef4444; }
+
+  /* ── rank table header sort/filter ── */
+  .th-inner { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .th-sort { cursor: pointer; user-select: none; }
+  .th-sort:hover { color: var(--text); }
+  .th-filter-wrap { position: relative; display: inline-flex; }
+  .th-filter-btn { cursor: pointer; font-size: 10px; padding: 0 3px; color: var(--muted); user-select: none; }
+  .th-filter-btn:hover { color: var(--text); }
+  .th-filter-btn.active { color: #3b82f6; }
+  .th-filter-menu { display: none; position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 4px; z-index: 200; min-width: 130px; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+  .th-filter-menu.open { display: block; }
+  .th-filter-opt { padding: 5px 10px; font-size: 12px; cursor: pointer; border-radius: 4px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text); }
+  .th-filter-opt:hover { background: #f3f4f6; }
+  .th-filter-opt.selected { font-weight: 600; color: #3b82f6; }
 
   /* ── tables ── */
   .table-wrap { overflow-x: auto; }
@@ -1310,7 +1334,7 @@ function renderKanban(d) {
 
   const html = cols.map(col => {
     const items = byStatus[col.key];
-    const itemsHtml = items.slice(0, 20).map(i => {
+    const itemsHtml = items.map(i => {
       const dateStr = i.publishDate ? fmtDate(i.publishDate) : null;
       const dateLine = dateStr && col.key === 'scheduled' ? '<div class="pub-date-scheduled">' + dateStr + '</div>'
                      : dateStr && col.key === 'published'  ? '<div class="pub-date-published">' + dateStr + '</div>'
@@ -1319,11 +1343,10 @@ function renderKanban(d) {
         dateLine +
         (i.volume ? '<div class="vol">' + fmtNum(i.volume) + '/mo</div>' : '') + '</div>';
     }).join('');
-    const more = items.length > 20 ? '<div class="muted" style="font-size:11px;padding-top:4px">+' + (items.length - 20) + ' more</div>' : '';
     return '<div class="kanban-col col-' + col.key + '">' +
       '<div class="kanban-head">' + col.label + '</div>' +
       '<div class="kanban-count">' + items.length + '</div>' +
-      (items.length ? '<div class="kanban-items">' + itemsHtml + more + '</div>' : '') +
+      (items.length ? '<div class="kanban-items">' + itemsHtml + '</div>' : '') +
       '</div>';
   }).join('');
 
