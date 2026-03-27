@@ -1503,7 +1503,7 @@ function renderRankings(d) {
   };
   const chips = Object.keys(rankFilters).filter(function(k) { return rankFilters[k] !== 'all'; }).map(function(k) {
     const label = (chipLabels[k] || {})[rankFilters[k]] || rankFilters[k];
-    return '<span class="filter-chip">' + label + '<span class="filter-chip-x" onclick="setRankFilter(\'' + k + '\',\'all\')">&#215;</span></span>';
+    return '<span class="filter-chip">' + label + '<span class="filter-chip-x" onclick="setRankFilter(&#39;' + k + '&#39;,&#39;all&#39;)">&#215;</span></span>';
   }).join('');
   const chipsHtml = chips ? '<div class="filter-chips">' + chips + '</div>' : '';
 
@@ -1513,16 +1513,16 @@ function renderRankings(d) {
   // ── column header builder ──
   function thHtml(label, sortCol, filterKey, filterOpts) {
     const sortInd = rankSort.col === sortCol ? (rankSort.dir === 'asc' ? ' &#8593;' : ' &#8595;') : '';
-    const sortAttr = sortCol ? ' class="th-sort" onclick="sortRankBy(\'' + sortCol + '\')"' : '';
+    const sortAttr = sortCol ? ' class="th-sort" onclick="sortRankBy(&#39;' + sortCol + '&#39;)"' : '';
     let filterHtml = '';
     if (filterKey) {
       const isActive = rankFilters[filterKey] !== 'all';
       const opts = filterOpts.map(function(o) {
         const sel = rankFilters[filterKey] === o.val ? ' selected' : '';
-        return '<div class="th-filter-opt' + sel + '" onclick="event.stopPropagation();setRankFilter(\'' + filterKey + '\',\'' + o.val + '\')">' + o.label + '</div>';
+        return '<div class="th-filter-opt' + sel + '" onclick="event.stopPropagation();setRankFilter(&#39;' + filterKey + '&#39;,&#39;' + o.val + '&#39;)">' + o.label + '</div>';
       }).join('');
       filterHtml = '<div class="th-filter-wrap">' +
-        '<span class="th-filter-btn' + (isActive ? ' active' : '') + '" onclick="event.stopPropagation();toggleRankMenu(\'' + filterKey + '\')">&#9660;</span>' +
+        '<span class="th-filter-btn' + (isActive ? ' active' : '') + '" onclick="event.stopPropagation();toggleRankMenu(&#39;' + filterKey + '&#39;)">&#9660;</span>' +
         '<div id="rmenu-' + filterKey + '" class="th-filter-menu">' + opts + '</div>' +
         '</div>';
     }
@@ -1626,7 +1626,7 @@ function renderPosts(d) {
     let imgHtml;
     if (p.hasImage) {
       const imgSrc = p.shopifyImageUrl || ('/images/' + p.slug);
-      imgHtml = '<a href="#" onclick="event.preventDefault();openImageModal(\'' + esc(imgSrc) + '\')" title="View image" style="font-size:16px;text-decoration:none">&#128444;</a>';
+      imgHtml = '<a href="#" onclick="event.preventDefault();openImageModal(&#39;' + esc(imgSrc) + '&#39;)" title="View image" style="font-size:16px;text-decoration:none">&#128444;</a>';
     } else {
       imgHtml = '<span class="muted">&#8212;</span>';
     }
