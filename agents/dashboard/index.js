@@ -354,6 +354,83 @@ function getPendingAhrefsData(calItems) {
   return pending;
 }
 
+// ── tab chat context builder ────────────────────────────────────────────────
+
+function buildTabChatSystemPrompt(tab) {
+  const site = config.name || config.url || 'this site';
+  const lines = [
+    `You are an expert SEO and digital marketing advisor for ${site}.`,
+    `The user is viewing the ${(tab || '').toUpperCase()} tab of their SEO dashboard.`,
+    `Answer questions about the data shown, explain trends, and make recommendations.`,
+    ``,
+    `When you have a specific, concrete action to recommend, include exactly one ACTION_ITEM block at the very end of your response using this format:`,
+    `<ACTION_ITEM>{"title": "Short action title", "description": "What should be done and why", "type": "action_type"}</ACTION_ITEM>`,
+    `Only include ACTION_ITEM when you have a concrete recommendation the user can act on immediately. Omit it for general advice or clarification responses.`,
+    `Keep responses concise (2-4 sentences unless the question requires more detail).`,
+    ``,
+  ];
+
+  if (tab === 'seo') {
+    const rankings = parseRankings();
+    const top10 = rankings.items.slice(0, 10).map(r =>
+      `${r.keyword || r.slug}: pos ${r.position != null ? r.position : 'unranked'}${r.change != null ? ' (' + (r.change > 0 ? '+' : '') + r.change + ')' : ''}`
+    );
+    lines.push('KEYWORD RANKINGS (latest):');
+    lines.push(top10.length ? top10.join('\n') : 'No ranking data available.');
+    const calendar = parseCalendar();
+    const upcoming = calendar.slice(0, 5).map(c => `${c.keyword} (${c.publishDate.toISOString().slice(0, 10)})`);
+    if (upcoming.length) { lines.push('', 'UPCOMING CONTENT CALENDAR:'); lines.push(upcoming.join('\n')); }
+  } else if (tab === 'cro') {
+    const cro = parseCROData();
+    if (cro.brief) {
+      lines.push('LATEST CRO BRIEF (excerpt):');
+      lines.push(cro.brief.content.slice(0, 2000));
+    } else {
+      lines.push('No CRO brief available yet.');
+    }
+  } else if (tab === 'ads') {
+    if (existsSync(ADS_OPTIMIZER_DIR)) {
+      const adsFiles = readdirSync(ADS_OPTIMIZER_DIR)
+        .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+      if (adsFiles.length) {
+        const latest = JSON.parse(readFileSync(join(ADS_OPTIMIZER_DIR, adsFiles[0]), 'utf8'));
+        const pending = (latest.suggestions || []).filter(s => s.status === 'pending');
+        lines.push(`OPTIMIZATION QUEUE (${pending.length} pending suggestions):`);
+        pending.slice(0, 10).forEach(s => {
+          lines.push(`- [${s.type}] ${s.campaign || ''}${s.adGroup ? ' / ' + s.adGroup : ''}${s.keyword ? ' — ' + s.keyword : ''}: ${s.rationale || ''}`);
+        });
+        if (latest.analysisNotes) {
+          lines.push('', 'ACCOUNT ANALYSIS:');
+          lines.push(latest.analysisNotes.slice(0, 1000));
+        }
+      } else {
+        lines.push('No ads optimization data yet.');
+      }
+    } else {
+      lines.push('No Google Ads data available yet.');
+    }
+  } else if (tab === 'optimize') {
+    if (existsSync(COMP_BRIEFS_DIR)) {
+      const briefFiles = readdirSync(COMP_BRIEFS_DIR).filter(f => f.endsWith('.json')).sort().reverse().slice(0, 5);
+      if (briefFiles.length) {
+        lines.push('RECENT OPTIMIZATION BRIEFS:');
+        briefFiles.forEach(f => {
+          try {
+            const b = JSON.parse(readFileSync(join(COMP_BRIEFS_DIR, f), 'utf8'));
+            lines.push(`- ${b.url || f}: ${(b.proposed_changes || []).length} proposed changes`);
+          } catch {}
+        });
+      } else {
+        lines.push('No optimization briefs available yet.');
+      }
+    } else {
+      lines.push('No optimization briefs available yet.');
+    }
+  }
+
+  return lines.join('\n');
+}
+
 // ── aggregate ──────────────────────────────────────────────────────────────────
 
 function aggregateData() {
@@ -3532,6 +3609,70 @@ const server = http.createServer((req, res) => {
     const ct = imgPath.endsWith('.webp') ? 'image/webp' : 'image/png';
     res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600' });
     createReadStream(imgPath).on('error', () => { res.end(); }).pipe(res);
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/chat') {
+    if (!checkAuth(req, res)) return;
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', async () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      const { tab, messages } = payload;
+      if (!tab || !Array.isArray(messages)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'tab and messages required' }));
+        return;
+      }
+      const VALID_TABS = new Set(['seo', 'cro', 'ads', 'optimize', 'ad-intelligence']);
+      if (!VALID_TABS.has(tab)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid tab' }));
+        return;
+      }
+
+      const systemPrompt = buildTabChatSystemPrompt(tab);
+      const cappedMessages = messages.slice(-20).map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: String(m.content || '').slice(0, 4000),
+      }));
+
+      let response;
+      try {
+        response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: cappedMessages,
+        });
+      } catch (err) {
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        res.write(`data: Error contacting Claude: ${err.message.replace(/\n/g, '\\n')}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+        return;
+      }
+
+      const fullText = (response.content.find(b => b.type === 'text') || {}).text || '';
+      const actionMatch = fullText.match(/<ACTION_ITEM>([\s\S]*?)<\/ACTION_ITEM>/);
+      const cleanText = fullText.replace(/<ACTION_ITEM>[\s\S]*?<\/ACTION_ITEM>/g, '').trim();
+
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+      if (cleanText) res.write(`data: ${cleanText.replace(/\n/g, '\\n')}\n\n`);
+      if (actionMatch) {
+        try {
+          const actionJson = JSON.parse(actionMatch[1].trim());
+          res.write(`data: ACTION_ITEM:${JSON.stringify(actionJson)}\n\n`);
+        } catch { /* skip malformed ACTION_ITEM */ }
+      }
+      res.write('data: [DONE]\n\n');
+      res.end();
+    });
     return;
   }
 
