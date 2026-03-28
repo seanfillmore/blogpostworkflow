@@ -378,8 +378,20 @@ function buildTabChatSystemPrompt(tab) {
     lines.push('KEYWORD RANKINGS (latest):');
     lines.push(top10.length ? top10.join('\n') : 'No ranking data available.');
     const calendar = parseCalendar();
-    const upcoming = calendar.slice(0, 5).map(c => `${c.keyword} (${c.publishDate.toISOString().slice(0, 10)})`);
-    if (upcoming.length) { lines.push('', 'UPCOMING CONTENT CALENDAR:'); lines.push(upcoming.join('\n')); }
+    if (calendar.length) {
+      const byStatus = { published: [], scheduled: [], draft: [], written: [], briefed: [], pending: [] };
+      for (const c of calendar) {
+        const status = getItemStatus(c);
+        (byStatus[status] || byStatus.pending).push(`${c.keyword} (${c.publishDate.toISOString().slice(0, 10)})`);
+      }
+      lines.push('', 'CONTENT PIPELINE STATUS:');
+      if (byStatus.published.length) lines.push(`Published (${byStatus.published.length}): ${byStatus.published.join(', ')}`);
+      if (byStatus.scheduled.length) lines.push(`Scheduled (${byStatus.scheduled.length}): ${byStatus.scheduled.join(', ')}`);
+      if (byStatus.draft.length) lines.push(`Draft (${byStatus.draft.length}): ${byStatus.draft.join(', ')}`);
+      if (byStatus.written.length) lines.push(`Written (${byStatus.written.length}): ${byStatus.written.join(', ')}`);
+      if (byStatus.briefed.length) lines.push(`Briefed (${byStatus.briefed.length}): ${byStatus.briefed.join(', ')}`);
+      if (byStatus.pending.length) lines.push(`Pending/not started (${byStatus.pending.length}): ${byStatus.pending.join(', ')}`);
+    }
   } else if (tab === 'cro') {
     const cro = parseCROData();
     if (cro.brief) {
@@ -930,11 +942,17 @@ const HTML = `<!DOCTYPE html>
   .proposal-actions { padding: 12px 16px; display: flex; gap: 8px; align-items: center; }
   .proposal-action-note { font-size: 11px; color: var(--muted); margin-left: auto; }
   /* ── tab chat sidebar ── */
-  .tab-chat-sidebar { width: 300px; flex-shrink: 0; background: white; border-left: 2px solid #818cf8; display: flex; flex-direction: column; position: sticky; top: 0; max-height: 100vh; overflow: hidden; align-self: stretch; }
+  .tab-chat-sidebar { width: 300px; background: white; border: 2px solid #818cf8; border-radius: 8px; display: flex; flex-direction: column; position: fixed; top: 170px; right: 8px; bottom: 8px; overflow: hidden; z-index: 9; }
   .tab-chat-header { background: #eef2ff; padding: 10px 14px; border-bottom: 1px solid #c7d2fe; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; color: #312e81; flex-shrink: 0; }
   .tab-chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
   .tab-chat-user-bubble { align-self: flex-end; background: #818cf8; color: white; border-radius: 12px 12px 2px 12px; padding: 8px 11px; max-width: 220px; font-size: 12px; word-break: break-word; white-space: pre-wrap; }
-  .tab-chat-ai-bubble { align-self: flex-start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 2px 12px 12px 12px; padding: 8px 11px; max-width: 240px; color: #374151; font-size: 12px; word-break: break-word; white-space: pre-wrap; }
+  .tab-chat-ai-bubble { align-self: flex-start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 2px 12px 12px 12px; padding: 8px 11px; max-width: 240px; color: #374151; font-size: 12px; word-break: break-word; }
+  .tab-chat-ai-bubble .chat-md-h2 { font-weight: 700; font-size: 13px; color: #312e81; margin: 6px 0 2px; }
+  .tab-chat-ai-bubble .chat-md-h3 { font-weight: 600; font-size: 12px; color: #4338ca; margin: 5px 0 2px; }
+  .tab-chat-ai-bubble .chat-md-ul { margin: 4px 0 4px 14px; padding: 0; }
+  .tab-chat-ai-bubble .chat-md-ul li { margin-bottom: 3px; list-style: disc; }
+  .tab-chat-ai-bubble .chat-md-gap { height: 6px; }
+  .tab-chat-ai-bubble code { background: #e0e7ff; color: #3730a3; border-radius: 3px; padding: 1px 4px; font-size: 11px; }
   .tab-chat-action-card { background: #fffbeb; border: 1px solid #fbbf24; border-radius: 6px; padding: 8px 11px; margin-top: 4px; max-width: 240px; align-self: flex-start; }
   .tab-chat-action-label { font-weight: 600; color: #92400e; font-size: 10px; margin-bottom: 3px; }
   .tab-chat-action-desc { color: #374151; font-size: 11px; margin-bottom: 6px; }
@@ -1738,7 +1756,7 @@ function renderPosts(d) {
       ? '<a class="link" href="' + p.shopifyUrl + '" target="_blank">' + esc(p.title || p.slug) + '</a>'
       : esc(p.title || p.slug);
     const editorHtml = p.editorVerdict === 'Approved'
-      ? badge('approved', '&#10003; Approved')
+      ? badge('approved', 'Approved')
       : p.editorVerdict === 'Needs Work'
       ? badge('needswork', '&#9888; Needs Work')
       : '<span class="muted">&#8212;</span>';
@@ -2362,6 +2380,44 @@ function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function mdToHtml(md) {
+  if (!md) return '';
+  var s = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var lines = s.split('\\n');
+  var out = [];
+  var inList = false;
+  for (var li = 0; li < lines.length; li++) {
+    var ln = lines[li];
+    ln = ln.replace(/\\*\\*([^*]+)\\*\\*/g,'<strong>$1</strong>');
+    ln = ln.replace(/\\*([^*]+)\\*/g,'<em>$1</em>');
+    ln = ln.replace(/\`([^\`]+)\`/g,'<code>$1</code>');
+    var stripped = ln.replace(/^[ ]*/,'');
+    if (stripped.indexOf('### ') === 0) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div class="chat-md-h3">' + stripped.slice(4) + '</div>');
+    } else if (stripped.indexOf('## ') === 0) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div class="chat-md-h2">' + stripped.slice(3) + '</div>');
+    } else if (stripped.indexOf('# ') === 0) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div class="chat-md-h2">' + stripped.slice(2) + '</div>');
+    } else if (stripped.indexOf('- ') === 0 || stripped.indexOf('* ') === 0) {
+      if (!inList) { out.push('<ul class="chat-md-ul">'); inList = true; }
+      out.push('<li>' + stripped.slice(2) + '</li>');
+    } else if (stripped === '') {
+      if (inList) { out.push('</ul>'); inList = false; }
+      if (out.length && out[out.length - 1] !== '<div class="chat-md-gap"></div>') {
+        out.push('<div class="chat-md-gap"></div>');
+      }
+    } else {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div>' + ln + '</div>');
+    }
+  }
+  if (inList) out.push('</ul>');
+  return out.join('');
+}
+
 function kpiCard(label, value, sub) {
   return '<div class="kpi-card">' +
     '<div class="kpi-value">' + esc(String(value)) + '</div>' +
@@ -2918,7 +2974,9 @@ function renderTabChatMessages() {
     if (m.role === 'user') {
       html += '<div class="tab-chat-user-bubble">' + esc(m.content) + '</div>';
     } else if (m.role === 'assistant') {
-      html += '<div class="tab-chat-ai-bubble">' + esc(m.content) + '</div>';
+      var aiHtml;
+      try { aiHtml = mdToHtml(m.content); } catch(e) { aiHtml = esc(m.content); }
+      html += '<div class="tab-chat-ai-bubble">' + aiHtml + '</div>';
       if (m.action) {
         var msgIdx = i;
         html += '<div class="tab-chat-action-card">' +
@@ -2952,6 +3010,8 @@ function toggleTabChat(tab) {
   tabChatOpen = true;
   var sidebar = document.getElementById('tab-chat-sidebar');
   if (sidebar) sidebar.style.display = 'flex';
+  var mainEl = document.querySelector('main');
+  if (mainEl) mainEl.style.paddingRight = '316px';
   var title = document.getElementById('tab-chat-title');
   if (title) title.textContent = '\\u2736 ' + (TAB_CHAT_NAMES[tab] || tab) + ' Chat';
   ['seo','cro','ads','optimize'].forEach(function(t) {
@@ -2969,6 +3029,8 @@ function closeTabChat() {
   tabChatOpen = false;
   var sidebar = document.getElementById('tab-chat-sidebar');
   if (sidebar) sidebar.style.display = 'none';
+  var mainEl = document.querySelector('main');
+  if (mainEl) mainEl.style.paddingRight = '';
   ['seo','cro','ads','optimize'].forEach(function(t) {
     var btn = document.getElementById('btn-chat-' + t);
     if (btn) btn.classList.remove('active');
@@ -3024,7 +3086,7 @@ async function sendTabChatMessage() {
           if (line.startsWith('data: ACTION_ITEM:')) {
             try { actionItem = JSON.parse(line.slice(18)); } catch(e) {}
           } else if (line.startsWith('data: ')) {
-            assistantText += line.slice(6);
+            assistantText += line.slice(6).replace(/\\\\n/g, '\\n');
           }
         }
         readTabChatChunk();
@@ -3049,7 +3111,7 @@ function finishTabChat(text, action) {
   var entry = { role: 'assistant', content: text || '(no response)' };
   if (action) entry.action = { title: action.title || '', description: action.description || '', type: action.type || 'chat_action', added: false };
   tabChatMessages[activeTab].push(entry);
-  renderTabChatMessages();
+  try { renderTabChatMessages(); } catch(e) { console.error('renderTabChatMessages failed:', e); }
   tabChatInFlight = false;
   var inputEl = document.getElementById('tab-chat-input');
   if (inputEl) inputEl.disabled = false;
