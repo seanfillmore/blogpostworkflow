@@ -3768,14 +3768,43 @@ const server = http.createServer((req, res) => {
         }
         if (!Array.isArray(fileData.suggestions)) fileData.suggestions = [];
         const id = 'chat-' + Date.now();
+
+        // For landing_page_update, extract URL and match campaign resource name from latest snapshot
+        let proposedChange = undefined;
+        if (type === 'landing_page_update') {
+          const text = description || title || '';
+          const urlMatch = text.match(/https?:\/\/[^\s,)]+/);
+          const finalUrl = urlMatch ? urlMatch[0].replace(/[.,]+$/, '') : null;
+          let campaignResourceName = null;
+          try {
+            const snapDir = join(ROOT, 'data', 'snapshots', 'google-ads');
+            const snapFiles = readdirSync(snapDir).filter(f => f.endsWith('.json')).sort();
+            if (snapFiles.length) {
+              const snap = JSON.parse(readFileSync(join(snapDir, snapFiles[snapFiles.length - 1]), 'utf8'));
+              const textLower = text.toLowerCase();
+              const matched = (snap.campaigns || []).find(c => {
+                const parts = c.name.toLowerCase().split(/[\s|]+/).filter(p => p.length > 3);
+                return parts.filter(p => textLower.includes(p)).length >= 2;
+              });
+              if (matched) campaignResourceName = matched.resourceName;
+            }
+          } catch {}
+          if (finalUrl || campaignResourceName) {
+            proposedChange = {};
+            if (finalUrl) proposedChange.finalUrl = finalUrl;
+            if (campaignResourceName) proposedChange.campaignResourceName = campaignResourceName;
+          }
+        }
+
         fileData.suggestions.push({
           id,
           type: type || 'chat_action',
           status: 'pending',
           source: 'chat',
           rationale: description || title,
-          campaign: null,
+          campaign: proposedChange?.campaignResourceName || null,
           adGroup: null,
+          ...(proposedChange ? { proposedChange } : {}),
         });
         try {
           writeFileSync(filePath, JSON.stringify(fileData, null, 2));
