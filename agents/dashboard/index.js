@@ -680,6 +680,9 @@ const HTML = `<!DOCTYPE html>
   /* ── cards ── */
   .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); }
   .card-header { padding: 14px 18px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-header-right { display: flex; align-items: center; gap: 8px; }
+  .upload-btn { padding: 3px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; cursor: pointer; font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .upload-btn:hover { background: var(--indigo); color: white; border-color: var(--indigo); }
   .card-header h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
   .card-header.accent-green  { border-left: 3px solid var(--green); }
   .card-header.accent-sky    { border-left: 3px solid var(--sky); }
@@ -1058,7 +1061,7 @@ const HTML = `<!DOCTYPE html>
 
   <!-- SEO Authority -->
   <div class="card">
-    <div class="card-header accent-indigo"><h2>SEO Authority</h2><span class="section-note">Ahrefs · Updated manually</span></div>
+    <div class="card-header accent-indigo"><h2>SEO Authority</h2><div class="card-header-right"><span class="section-note">Ahrefs · Updated manually</span><button class="upload-btn" onclick="uploadAhrefs()" data-tip="Upload Ahrefs domain overview CSV">&#8593; Upload CSV</button></div></div>
     <div class="card-body" id="seo-authority-panel"><p class="empty-state">Loading...</p></div>
   </div>
 
@@ -1070,7 +1073,7 @@ const HTML = `<!DOCTYPE html>
 
   <!-- Rankings -->
   <div class="card">
-    <div class="card-header"><h2>Keyword Rankings</h2><span class="section-note" id="rank-note"></span></div>
+    <div class="card-header"><h2>Keyword Rankings</h2><div class="card-header-right"><span class="section-note" id="rank-note"></span><span id="rank-upload-status" style="font-size:0.8rem;color:var(--muted)"></span><button class="upload-btn" onclick="uploadRankSnapshot()" data-tip="Upload a rank snapshot JSON exported from the rank-tracker agent">&#8593; Upload Snapshot</button></div></div>
     <div class="card-body table-wrap"><div id="rankings-table"></div></div>
   </div>
 
@@ -3258,6 +3261,27 @@ function uploadAhrefs() {
   input.click();
 }
 
+function uploadRankSnapshot() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('rank-upload-status');
+    if (statusEl) statusEl.textContent = 'Uploading...';
+    const res = await fetch('/upload/rank-snapshot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file,
+    });
+    const json = await res.json();
+    if (statusEl) statusEl.textContent = json.ok ? ('Saved: ' + json.filename) : ('Error: ' + json.error);
+    if (json.ok) loadData();
+  };
+  input.click();
+}
+
 async function loadCampaignCards() {
   try {
     const res = await fetch('/api/campaigns', { credentials: 'same-origin' });
@@ -3592,6 +3616,31 @@ const server = http.createServer((req, res) => {
       writeFileSync(join(AHREFS_DIR, filename), Buffer.concat(chunks));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, filename, saved_at: new Date().toISOString() }));
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/upload/rank-snapshot') {
+    if (!checkAuth(req, res)) return;
+    const chunks = [];
+    req.on('data', d => chunks.push(d));
+    req.on('end', () => {
+      let snapshot;
+      try { snapshot = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      if (!snapshot.date || !Array.isArray(snapshot.posts) || !Array.isArray(snapshot.allKeywords)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'File must contain date, posts, and allKeywords fields' }));
+        return;
+      }
+      const filename = `${snapshot.date}.json`;
+      mkdirSync(SNAPSHOTS_DIR, { recursive: true });
+      writeFileSync(join(SNAPSHOTS_DIR, filename), JSON.stringify(snapshot, null, 2));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, filename, date: snapshot.date, posts: snapshot.posts.length, keywords: snapshot.allKeywords.length }));
     });
     return;
   }
