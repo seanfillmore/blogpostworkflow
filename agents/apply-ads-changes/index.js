@@ -74,6 +74,10 @@ export function buildMutateOperation(suggestion) {
       // copy_rewrite requires a GAQL fetch of current headlines before mutating.
       // This is handled in applyCopyRewrite() below — not a pure buildMutateOperation call.
       throw new Error('copy_rewrite must be applied via applyCopyRewrite(), not buildMutateOperation()');
+    case 'landing_page_update':
+      // landing_page_update requires a GAQL fetch of ad resource names before mutating.
+      // This is handled in applyLandingPageUpdate() below — not a pure buildMutateOperation call.
+      throw new Error('landing_page_update must be applied via applyLandingPageUpdate(), not buildMutateOperation()');
     default:
       throw new Error(`Unknown suggestion type: ${type}`);
   }
@@ -139,6 +143,47 @@ async function applyCopyRewrite(suggestion, mutate, gaqlQuery) {
   }
 }
 
+// ── Landing page update helper (requires API call) ────────────────────────────
+
+async function applyLandingPageUpdate(suggestion, mutate, gaqlQuery) {
+  const pc = suggestion.proposedChange || {};
+
+  // Get final URL — from proposedChange or parse from rationale
+  let finalUrl = pc.finalUrl;
+  if (!finalUrl) {
+    const urlMatch = (suggestion.rationale || '').match(/https?:\/\/[^\s,)]+/);
+    if (!urlMatch) throw new Error('landing_page_update: no target URL found in suggestion');
+    finalUrl = urlMatch[0].replace(/[.,]+$/, '');
+  }
+
+  // Get campaign resource name — from proposedChange or suggestion.campaign
+  const campaignResourceName = pc.campaignResourceName || suggestion.campaign;
+  if (!campaignResourceName) {
+    throw new Error('landing_page_update: missing campaign resource name. Re-add the action item from chat to capture campaign data automatically.');
+  }
+
+  // Query all non-removed ads in the campaign
+  const adRows = await gaqlQuery(`
+    SELECT ad_group_ad.resource_name
+    FROM ad_group_ad
+    WHERE campaign.resource_name = '${campaignResourceName}'
+      AND ad_group_ad.status != 'REMOVED'
+  `);
+  if (!adRows.length) throw new Error('landing_page_update: no active ads found in campaign');
+
+  const operations = adRows.map(row => ({
+    adGroupAdOperation: {
+      update: {
+        resourceName: row.adGroupAd?.resourceName,
+        ad: { finalUrls: [finalUrl] },
+      },
+      updateMask: 'ad.final_urls',
+    },
+  }));
+
+  return mutate(operations);
+}
+
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -174,6 +219,9 @@ async function main() {
     try {
       if (s.type === 'copy_rewrite') {
         const result = await applyCopyRewrite(s, mutate, gaqlQuery);
+        if (result?.partialFailureError) throw new Error(JSON.stringify(result.partialFailureError));
+      } else if (s.type === 'landing_page_update') {
+        const result = await applyLandingPageUpdate(s, mutate, gaqlQuery);
         if (result?.partialFailureError) throw new Error(JSON.stringify(result.partialFailureError));
       } else {
         const op = buildMutateOperation(s);
