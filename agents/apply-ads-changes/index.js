@@ -162,24 +162,51 @@ async function applyLandingPageUpdate(suggestion, mutate, gaqlQuery) {
     throw new Error('landing_page_update: missing campaign resource name. Re-add the action item from chat to capture campaign data automatically.');
   }
 
-  // Query all non-removed ads in the campaign
+  // final_urls is immutable on existing ads — must CREATE new ad + REMOVE old one.
+  // Query full RSA structure so we can recreate the ad with the new URL.
   const adRows = await gaqlQuery(`
-    SELECT ad_group_ad.resource_name
+    SELECT
+      ad_group_ad.resource_name,
+      ad_group_ad.status,
+      ad_group_ad.ad.final_urls,
+      ad_group_ad.ad.responsive_search_ad.headlines,
+      ad_group_ad.ad.responsive_search_ad.descriptions,
+      ad_group_ad.ad.responsive_search_ad.path1,
+      ad_group_ad.ad.responsive_search_ad.path2,
+      ad_group.resource_name
     FROM ad_group_ad
     WHERE campaign.resource_name = '${campaignResourceName}'
       AND ad_group_ad.status != 'REMOVED'
   `);
   if (!adRows.length) throw new Error('landing_page_update: no active ads found in campaign');
 
-  const operations = adRows.map(row => ({
-    adGroupAdOperation: {
-      update: {
-        resourceName: row.adGroupAd?.resourceName,
-        ad: { finalUrls: [finalUrl] },
+  // Build create+remove pairs for each ad
+  const operations = [];
+  for (const row of adRows) {
+    const rsa = row.adGroupAd?.ad?.responsiveSearchAd;
+    if (!rsa) continue; // skip non-RSA ads
+    operations.push({
+      adGroupAdOperation: {
+        create: {
+          adGroup: row.adGroup?.resourceName,
+          status: row.adGroupAd?.status || 'ENABLED',
+          ad: {
+            finalUrls: [finalUrl],
+            responsiveSearchAd: {
+              headlines: rsa.headlines || [],
+              descriptions: rsa.descriptions || [],
+              ...(rsa.path1 ? { path1: rsa.path1 } : {}),
+              ...(rsa.path2 ? { path2: rsa.path2 } : {}),
+            },
+          },
+        },
       },
-      updateMask: 'ad.final_urls',
-    },
-  }));
+    });
+    operations.push({
+      adGroupAdOperation: { remove: row.adGroupAd?.resourceName },
+    });
+  }
+  if (!operations.length) throw new Error('landing_page_update: no RSA ads found in campaign');
 
   return mutate(operations);
 }
