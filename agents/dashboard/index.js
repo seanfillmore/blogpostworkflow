@@ -354,6 +354,95 @@ function getPendingAhrefsData(calItems) {
   return pending;
 }
 
+// ── tab chat context builder ────────────────────────────────────────────────
+
+function buildTabChatSystemPrompt(tab) {
+  const site = config.name || config.url || 'this site';
+  const lines = [
+    `You are an expert SEO and digital marketing advisor for ${site}.`,
+    `The user is viewing the ${(tab || '').toUpperCase()} tab of their SEO dashboard.`,
+    `Answer questions about the data shown, explain trends, and make recommendations.`,
+    ``,
+    `When you have a specific, concrete action to recommend, include exactly one ACTION_ITEM block at the very end of your response using this format:`,
+    `<ACTION_ITEM>{"title": "Short action title", "description": "What should be done and why", "type": "action_type"}</ACTION_ITEM>`,
+    `Only include ACTION_ITEM when you have a concrete recommendation the user can act on immediately. Omit it for general advice or clarification responses.`,
+    `Keep responses concise (2-4 sentences unless the question requires more detail).`,
+    ``,
+  ];
+
+  if (tab === 'seo') {
+    const rankings = parseRankings();
+    const top10 = rankings.items.slice(0, 10).map(r =>
+      `${r.keyword || r.slug}: pos ${r.position != null ? r.position : 'unranked'}${r.change != null ? ' (' + (r.change > 0 ? '+' : '') + r.change + ')' : ''}`
+    );
+    lines.push('KEYWORD RANKINGS (latest):');
+    lines.push(top10.length ? top10.join('\n') : 'No ranking data available.');
+    const calendar = parseCalendar();
+    if (calendar.length) {
+      const byStatus = { published: [], scheduled: [], draft: [], written: [], briefed: [], pending: [] };
+      for (const c of calendar) {
+        const status = getItemStatus(c);
+        (byStatus[status] || byStatus.pending).push(`${c.keyword} (${c.publishDate.toISOString().slice(0, 10)})`);
+      }
+      lines.push('', 'CONTENT PIPELINE STATUS:');
+      if (byStatus.published.length) lines.push(`Published (${byStatus.published.length}): ${byStatus.published.join(', ')}`);
+      if (byStatus.scheduled.length) lines.push(`Scheduled (${byStatus.scheduled.length}): ${byStatus.scheduled.join(', ')}`);
+      if (byStatus.draft.length) lines.push(`Draft (${byStatus.draft.length}): ${byStatus.draft.join(', ')}`);
+      if (byStatus.written.length) lines.push(`Written (${byStatus.written.length}): ${byStatus.written.join(', ')}`);
+      if (byStatus.briefed.length) lines.push(`Briefed (${byStatus.briefed.length}): ${byStatus.briefed.join(', ')}`);
+      if (byStatus.pending.length) lines.push(`Pending/not started (${byStatus.pending.length}): ${byStatus.pending.join(', ')}`);
+    }
+  } else if (tab === 'cro') {
+    const cro = parseCROData();
+    if (cro.brief) {
+      lines.push('LATEST CRO BRIEF (excerpt):');
+      lines.push(cro.brief.content.slice(0, 2000));
+    } else {
+      lines.push('No CRO brief available yet.');
+    }
+  } else if (tab === 'ads') {
+    if (existsSync(ADS_OPTIMIZER_DIR)) {
+      const adsFiles = readdirSync(ADS_OPTIMIZER_DIR)
+        .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+      if (adsFiles.length) {
+        const latest = JSON.parse(readFileSync(join(ADS_OPTIMIZER_DIR, adsFiles[0]), 'utf8'));
+        const pending = (latest.suggestions || []).filter(s => s.status === 'pending');
+        lines.push(`OPTIMIZATION QUEUE (${pending.length} pending suggestions):`);
+        pending.slice(0, 10).forEach(s => {
+          lines.push(`- [${s.type}] ${s.campaign || ''}${s.adGroup ? ' / ' + s.adGroup : ''}${s.keyword ? ' — ' + s.keyword : ''}: ${s.rationale || ''}`);
+        });
+        if (latest.analysisNotes) {
+          lines.push('', 'ACCOUNT ANALYSIS:');
+          lines.push(latest.analysisNotes.slice(0, 1000));
+        }
+      } else {
+        lines.push('No ads optimization data yet.');
+      }
+    } else {
+      lines.push('No Google Ads data available yet.');
+    }
+  } else if (tab === 'optimize') {
+    if (existsSync(COMP_BRIEFS_DIR)) {
+      const briefFiles = readdirSync(COMP_BRIEFS_DIR).filter(f => f.endsWith('.json')).sort().reverse().slice(0, 5);
+      if (briefFiles.length) {
+        lines.push('RECENT OPTIMIZATION BRIEFS:');
+        briefFiles.forEach(f => {
+          try {
+            const b = JSON.parse(readFileSync(join(COMP_BRIEFS_DIR, f), 'utf8'));
+            lines.push(`- ${b.url || f}: ${(b.proposed_changes || []).length} proposed changes`);
+          } catch {}
+        });
+      } else {
+        lines.push('No optimization briefs available yet.');
+      }
+    } else {
+      lines.push('No optimization briefs available yet.');
+    }
+  }
+
+  return lines.join('\n');
+}
+
 // ── aggregate ──────────────────────────────────────────────────────────────────
 
 function aggregateData() {
@@ -677,7 +766,7 @@ const HTML = `<!DOCTYPE html>
 
   /* ── tab panels ── */
   .tab-panel { display: none; }
-  .tab-panel.active { display: grid; gap: 20px; align-content: start; }
+  .tab-panel.active { display: grid; gap: 20px; align-content: start; flex: 1; min-width: 0; }
 
   /* ── rank alerts ── */
   .alert-banner { border-radius: var(--radius); padding: 12px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -852,6 +941,32 @@ const HTML = `<!DOCTYPE html>
   .adgroup-kw      { font-size: 10px; color: var(--muted); font-weight: 400; }
   .proposal-actions { padding: 12px 16px; display: flex; gap: 8px; align-items: center; }
   .proposal-action-note { font-size: 11px; color: var(--muted); margin-left: auto; }
+  /* ── tab chat sidebar ── */
+  .tab-chat-sidebar { width: 300px; background: white; border: 2px solid #818cf8; border-radius: 8px; display: flex; flex-direction: column; position: fixed; top: 170px; right: 8px; bottom: 8px; overflow: hidden; z-index: 9; }
+  .tab-chat-header { background: #eef2ff; padding: 10px 14px; border-bottom: 1px solid #c7d2fe; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; color: #312e81; flex-shrink: 0; }
+  .tab-chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .tab-chat-user-bubble { align-self: flex-end; background: #818cf8; color: white; border-radius: 12px 12px 2px 12px; padding: 8px 11px; max-width: 220px; font-size: 12px; word-break: break-word; white-space: pre-wrap; }
+  .tab-chat-ai-bubble { align-self: flex-start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 2px 12px 12px 12px; padding: 8px 11px; max-width: 240px; color: #374151; font-size: 12px; word-break: break-word; }
+  .tab-chat-ai-bubble .chat-md-h2 { font-weight: 700; font-size: 13px; color: #312e81; margin: 6px 0 2px; }
+  .tab-chat-ai-bubble .chat-md-h3 { font-weight: 600; font-size: 12px; color: #4338ca; margin: 5px 0 2px; }
+  .tab-chat-ai-bubble .chat-md-ul { margin: 4px 0 4px 14px; padding: 0; }
+  .tab-chat-ai-bubble .chat-md-ul li { margin-bottom: 3px; list-style: disc; }
+  .tab-chat-ai-bubble .chat-md-gap { height: 6px; }
+  .tab-chat-ai-bubble code { background: #e0e7ff; color: #3730a3; border-radius: 3px; padding: 1px 4px; font-size: 11px; }
+  .tab-chat-action-card { background: #fffbeb; border: 1px solid #fbbf24; border-radius: 6px; padding: 8px 11px; margin-top: 4px; max-width: 240px; align-self: flex-start; }
+  .tab-chat-action-label { font-weight: 600; color: #92400e; font-size: 10px; margin-bottom: 3px; }
+  .tab-chat-action-desc { color: #374151; font-size: 11px; margin-bottom: 6px; }
+  .btn-add-to-queue { background: #f59e0b; color: white; border: none; border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
+  .btn-add-to-queue:hover { background: #d97706; }
+  .btn-add-to-queue:disabled { background: #fcd34d; cursor: default; }
+  .tab-chat-input-row { padding: 10px; border-top: 1px solid #e2e8f0; display: flex; gap: 6px; flex-shrink: 0; }
+  .tab-chat-input { flex: 1; border: 1px solid #c7d2fe; border-radius: 6px; padding: 7px 9px; font-size: 12px; font-family: inherit; background: #f8fafc; outline: none; }
+  .tab-chat-input:focus { border-color: #818cf8; }
+  .tab-chat-send { background: #818cf8; color: white; border: none; border-radius: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  .tab-chat-send:hover { background: #6366f1; }
+  .btn-open-chat { background: #eef2ff !important; color: #4338ca !important; border-color: #c7d2fe !important; }
+  .btn-open-chat.active { background: #818cf8 !important; color: white !important; border-color: #818cf8 !important; }
+  .tab-chat-empty { color: #94a3b8; font-size: 11px; text-align: center; padding: 20px 8px; line-height: 1.5; }
   .btn-camp-approve  { padding: 7px 16px; font-size: 12px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; background: var(--green); color: white; }
   .btn-camp-approve:hover { background: #15803d; }
   .btn-launch   { padding: 7px 16px; font-size: 12px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; background: var(--indigo); color: white; }
@@ -903,28 +1018,31 @@ const HTML = `<!DOCTYPE html>
     <button onclick="runAgent('agents/gsc-query-miner/index.js')" data-tip="Surface high-impression GSC queries with low CTR to optimise">Run GSC Query Miner</button>
     <button onclick="runAgent('agents/sitemap-indexer/index.js')" data-tip="Re-index the sitemap so all agents have the latest page list">Refresh Sitemap</button>
     <button onclick="runAgent('agents/insight-aggregator/index.js')" data-tip="Aggregate Ahrefs + GSC signals into a prioritised insight report">Run Insight Aggregator</button>
+    <button id="btn-chat-seo" class="btn-open-chat" onclick="toggleTabChat('seo')" data-tip="Ask Claude about the SEO data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-cro" style="display:none">
     <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')" data-tip="Generate a Variant B meta title and start an A/B test for a post">Create Meta A/B Test</button>
     <button onclick="runAgent('agents/meta-ab-tracker/index.js')" data-tip="Check CTR results for active meta title tests and conclude winners">Run Meta A/B Tracker</button>
     <button onclick="runAgent('agents/cro-analyzer/index.js')" data-tip="Analyse Clarity heatmaps and session data for conversion issues">Run CRO Analyzer</button>
     <button onclick="runAgent('agents/cro-cta-injector/index.js', ['--apply'])" data-tip="Insert product CTA blocks into top-traffic blog posts with 0 conversions">Inject CTAs</button>
-
+    <button id="btn-chat-cro" class="btn-open-chat" onclick="toggleTabChat('cro')" data-tip="Ask Claude about the CRO data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
     <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
     <button onclick="applyAdsChanges()" data-tip="Execute all approved suggestions via the Google Ads Mutate API">Apply Approved</button>
     <button onclick="runAgent('agents/campaign-monitor/index.js', [], loadCampaignCards)" data-tip="Fetch latest Google Ads performance data and update active campaign metrics">Run Campaign Monitor</button>
     <button onclick="runAgent('scripts/ads-weekly-recap.js')" data-tip="Send the weekly recap email now (normally runs automatically Sunday morning)">Send Weekly Recap</button>
+    <button id="btn-chat-ads" class="btn-open-chat" onclick="toggleTabChat('ads')" data-tip="Ask Claude about your Ads data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
     <button onclick="runAgent('agents/competitor-intelligence/index.js')" data-tip="Scrape top competitor pages and generate optimisation briefs">Run Competitor Intelligence</button>
     <span id="ahrefs-upload-status" style="font-size:0.8rem;color:var(--muted)"></span>
     <button onclick="uploadAhrefs()" data-tip="Upload an Ahrefs top-pages CSV to use as competitor input data">Upload Ahrefs CSV</button>
+    <button id="btn-chat-optimize" class="btn-open-chat" onclick="toggleTabChat('optimize')" data-tip="Ask Claude about optimization data on this tab">&#x2736; Chat</button>
   </div>
 </div>
 
-<main>
+<main style="display:flex;align-items:start">
 <div id="tab-seo" class="tab-panel active">
   <!-- Data Needed alert (hidden when empty) -->
   <div class="card alert-card" id="data-needed-card" style="display:none">
@@ -1044,6 +1162,18 @@ const HTML = `<!DOCTYPE html>
 <div id="tab-optimize" class="tab-panel">
   <div class="empty-state">Loading optimization briefs...</div>
 </div>
+<div id="tab-chat-sidebar" class="tab-chat-sidebar" style="display:none">
+  <div class="tab-chat-header">
+    <span id="tab-chat-title">&#x2736; Chat</span>
+    <button onclick="closeTabChat()" style="background:none;border:none;cursor:pointer;color:#818cf8;font-size:15px;line-height:1;padding:0">&#x2715;</button>
+  </div>
+  <div id="tab-chat-messages" class="tab-chat-messages"></div>
+  <div class="tab-chat-input-row">
+    <input id="tab-chat-input" class="tab-chat-input" placeholder="Ask about this tab..."
+      onkeydown="if(event.key===&quot;Enter&quot;&amp;&amp;!event.shiftKey){event.preventDefault();sendTabChatMessage();}">
+    <button class="tab-chat-send" onclick="sendTabChatMessage()">&#x2191;</button>
+  </div>
+</div>
 </main>
 
 <script>
@@ -1071,6 +1201,16 @@ function switchTab(name, btn) {
   if (data) renderHeroKpis(data);
   if (name === 'optimize' && data) renderOptimizeTab(data);
   if (name === 'ad-intelligence') renderAdIntelligenceTab();
+  // Update chat sidebar when tab switches
+  if (tabChatOpen) {
+    var chatTitle = document.getElementById('tab-chat-title');
+    if (chatTitle) chatTitle.textContent = '\\u2736 ' + (TAB_CHAT_NAMES[name] || name) + ' Chat';
+    ['seo','cro','ads','optimize'].forEach(function(t) {
+      var btn2 = document.getElementById('btn-chat-' + t);
+      if (btn2) { if (t === name) btn2.classList.add('active'); else btn2.classList.remove('active'); }
+    });
+    renderTabChatMessages();
+  }
 }
 
 function renderHeroKpis(d) {
@@ -1616,7 +1756,7 @@ function renderPosts(d) {
       ? '<a class="link" href="' + p.shopifyUrl + '" target="_blank">' + esc(p.title || p.slug) + '</a>'
       : esc(p.title || p.slug);
     const editorHtml = p.editorVerdict === 'Approved'
-      ? badge('approved', '&#10003; Approved')
+      ? badge('approved', 'Approved')
       : p.editorVerdict === 'Needs Work'
       ? badge('needswork', '&#9888; Needs Work')
       : '<span class="muted">&#8212;</span>';
@@ -2240,6 +2380,44 @@ function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function mdToHtml(md) {
+  if (!md) return '';
+  var s = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var lines = s.split('\\n');
+  var out = [];
+  var inList = false;
+  for (var li = 0; li < lines.length; li++) {
+    var ln = lines[li];
+    ln = ln.replace(/\\*\\*([^*]+)\\*\\*/g,'<strong>$1</strong>');
+    ln = ln.replace(/\\*([^*]+)\\*/g,'<em>$1</em>');
+    ln = ln.replace(/\`([^\`]+)\`/g,'<code>$1</code>');
+    var stripped = ln.replace(/^[ ]*/,'');
+    if (stripped.indexOf('### ') === 0) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div class="chat-md-h3">' + stripped.slice(4) + '</div>');
+    } else if (stripped.indexOf('## ') === 0) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div class="chat-md-h2">' + stripped.slice(3) + '</div>');
+    } else if (stripped.indexOf('# ') === 0) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div class="chat-md-h2">' + stripped.slice(2) + '</div>');
+    } else if (stripped.indexOf('- ') === 0 || stripped.indexOf('* ') === 0) {
+      if (!inList) { out.push('<ul class="chat-md-ul">'); inList = true; }
+      out.push('<li>' + stripped.slice(2) + '</li>');
+    } else if (stripped === '') {
+      if (inList) { out.push('</ul>'); inList = false; }
+      if (out.length && out[out.length - 1] !== '<div class="chat-md-gap"></div>') {
+        out.push('<div class="chat-md-gap"></div>');
+      }
+    } else {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<div>' + ln + '</div>');
+    }
+  }
+  if (inList) out.push('</ul>');
+  return out.join('');
+}
+
 function kpiCard(label, value, sub) {
   return '<div class="kpi-card">' +
     '<div class="kpi-value">' + esc(String(value)) + '</div>' +
@@ -2775,6 +2953,194 @@ async function loadData() {
 loadData();
 setInterval(loadData, 3600000);
 
+// ── tab chat ─────────────────────────────────────────────────────────────────
+
+var tabChatOpen = false;
+var tabChatMessages = { seo: [], cro: [], ads: [], optimize: [] };
+var tabChatInFlight = false;
+var TAB_CHAT_NAMES = { seo: 'SEO', cro: 'CRO', ads: 'Ads', 'ad-intelligence': 'Ad Intelligence', optimize: 'Optimize' };
+
+function renderTabChatMessages() {
+  var msgs = tabChatMessages[activeTab] || [];
+  var msgsEl = document.getElementById('tab-chat-messages');
+  if (!msgsEl) return;
+  if (!msgs.length) {
+    msgsEl.innerHTML = '<div class="tab-chat-empty">Ask anything about the data on this tab.<br>I can also create action items for you to review.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < msgs.length; i++) {
+    var m = msgs[i];
+    if (m.role === 'user') {
+      html += '<div class="tab-chat-user-bubble">' + esc(m.content) + '</div>';
+    } else if (m.role === 'assistant') {
+      var aiHtml;
+      try { aiHtml = mdToHtml(m.content); } catch(e) { aiHtml = esc(m.content); }
+      html += '<div class="tab-chat-ai-bubble">' + aiHtml + '</div>';
+      if (m.action) {
+        var msgIdx = i;
+        html += '<div class="tab-chat-action-card">' +
+          '<div class="tab-chat-action-label">&#128203; Proposed Action</div>' +
+          '<div class="tab-chat-action-desc">' + esc(m.action.title) + ': ' + esc(m.action.description) + '</div>' +
+          '<button class="btn-add-to-queue" id="tab-chat-action-btn-' + msgIdx + '"' +
+          (m.action.added ? ' disabled' : '') + '>' +
+          (m.action.added ? '&#x2713; Added' : '+ Add to Queue') + '</button>' +
+          '</div>';
+      }
+    }
+  }
+  msgsEl.innerHTML = html;
+  // Attach action button listeners after render
+  for (var j = 0; j < msgs.length; j++) {
+    if (msgs[j].action && !msgs[j].action.added) {
+      (function(idx) {
+        var btn = document.getElementById('tab-chat-action-btn-' + idx);
+        if (btn) btn.onclick = function() { addTabChatActionItem(activeTab, idx, btn); };
+      })(j);
+    }
+  }
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function toggleTabChat(tab) {
+  if (tabChatOpen && activeTab === tab) {
+    closeTabChat();
+    return;
+  }
+  tabChatOpen = true;
+  var sidebar = document.getElementById('tab-chat-sidebar');
+  if (sidebar) sidebar.style.display = 'flex';
+  var mainEl = document.querySelector('main');
+  if (mainEl) mainEl.style.paddingRight = '316px';
+  var title = document.getElementById('tab-chat-title');
+  if (title) title.textContent = '\\u2736 ' + (TAB_CHAT_NAMES[tab] || tab) + ' Chat';
+  ['seo','cro','ads','optimize'].forEach(function(t) {
+    var btn = document.getElementById('btn-chat-' + t);
+    if (btn) {
+      if (t === tab) btn.classList.add('active'); else btn.classList.remove('active');
+    }
+  });
+  renderTabChatMessages();
+  var inp = document.getElementById('tab-chat-input');
+  if (inp) inp.focus();
+}
+
+function closeTabChat() {
+  tabChatOpen = false;
+  var sidebar = document.getElementById('tab-chat-sidebar');
+  if (sidebar) sidebar.style.display = 'none';
+  var mainEl = document.querySelector('main');
+  if (mainEl) mainEl.style.paddingRight = '';
+  ['seo','cro','ads','optimize'].forEach(function(t) {
+    var btn = document.getElementById('btn-chat-' + t);
+    if (btn) btn.classList.remove('active');
+  });
+}
+
+async function sendTabChatMessage() {
+  if (tabChatInFlight) return;
+  var inputEl = document.getElementById('tab-chat-input');
+  if (!inputEl) return;
+  var msg = inputEl.value.trim();
+  if (!msg) return;
+  inputEl.value = '';
+
+  if (!tabChatMessages[activeTab]) tabChatMessages[activeTab] = [];
+  tabChatMessages[activeTab].push({ role: 'user', content: msg });
+  renderTabChatMessages();
+
+  tabChatInFlight = true;
+  inputEl.disabled = true;
+
+  // Add typing indicator
+  var msgsEl = document.getElementById('tab-chat-messages');
+  if (msgsEl) {
+    msgsEl.innerHTML += '<div class="tab-chat-ai-bubble" id="tab-chat-typing"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span></div>';
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  // Build message array for API (user/assistant turns only)
+  var apiMessages = tabChatMessages[activeTab]
+    .filter(function(m) { return m.role === 'user' || m.role === 'assistant'; })
+    .map(function(m) { return { role: m.role, content: m.content }; });
+
+  try {
+    var res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tab: activeTab, messages: apiMessages }),
+    });
+    if (!res.ok) { throw new Error('Server error ' + res.status); }
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var assistantText = '';
+    var actionItem = null;
+
+    function readTabChatChunk() {
+      reader.read().then(function(result) {
+        if (result.done) { finishTabChat(assistantText, actionItem); return; }
+        var lines = decoder.decode(result.value).split('\\n');
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line === 'data: [DONE]') { finishTabChat(assistantText, actionItem); return; }
+          if (line.startsWith('data: ACTION_ITEM:')) {
+            try { actionItem = JSON.parse(line.slice(18)); } catch(e) {}
+          } else if (line.startsWith('data: ')) {
+            assistantText += line.slice(6).replace(/\\\\n/g, '\\n');
+          }
+        }
+        readTabChatChunk();
+      }).catch(function() { finishTabChat(assistantText, actionItem); });
+    }
+    readTabChatChunk();
+  } catch(e) {
+    var typingEl = document.getElementById('tab-chat-typing');
+    if (typingEl) typingEl.remove();
+    if (!tabChatMessages[activeTab]) tabChatMessages[activeTab] = [];
+    tabChatMessages[activeTab].push({ role: 'assistant', content: 'Error: ' + e.message });
+    renderTabChatMessages();
+    tabChatInFlight = false;
+    if (inputEl) inputEl.disabled = false;
+  }
+}
+
+function finishTabChat(text, action) {
+  var typingEl = document.getElementById('tab-chat-typing');
+  if (typingEl) typingEl.remove();
+  if (!tabChatMessages[activeTab]) tabChatMessages[activeTab] = [];
+  var entry = { role: 'assistant', content: text || '(no response)' };
+  if (action) entry.action = { title: action.title || '', description: action.description || '', type: action.type || 'chat_action', added: false };
+  tabChatMessages[activeTab].push(entry);
+  try { renderTabChatMessages(); } catch(e) { console.error('renderTabChatMessages failed:', e); }
+  tabChatInFlight = false;
+  var inputEl = document.getElementById('tab-chat-input');
+  if (inputEl) inputEl.disabled = false;
+}
+
+async function addTabChatActionItem(tab, msgIdx, btn) {
+  var msgs = tabChatMessages[tab];
+  if (!msgs || !msgs[msgIdx] || !msgs[msgIdx].action) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Adding...'; }
+  var action = msgs[msgIdx].action;
+  try {
+    var res = await fetch('/api/chat/action-item', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tab: tab, title: action.title, description: action.description, type: action.type }),
+    });
+    var json = await res.json();
+    if (json.ok) {
+      action.added = true;
+      if (btn) { btn.textContent = '\\u2713 Added'; }
+      loadData();
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = 'Error \\u2014 retry'; }
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Error \\u2014 retry'; }
+  }
+}
+
 // ── keyword detail modal ──────────────────────────────────────────────────────
 
 function openKeywordCard(item) {
@@ -3305,6 +3671,125 @@ const server = http.createServer((req, res) => {
     const ct = imgPath.endsWith('.webp') ? 'image/webp' : 'image/png';
     res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600' });
     createReadStream(imgPath).on('error', () => { res.end(); }).pipe(res);
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/chat') {
+    if (!checkAuth(req, res)) return;
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', async () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      const { tab, messages } = payload;
+      if (!tab || !Array.isArray(messages)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'tab and messages required' }));
+        return;
+      }
+      const VALID_TABS = new Set(['seo', 'cro', 'ads', 'optimize', 'ad-intelligence']);
+      if (!VALID_TABS.has(tab)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid tab' }));
+        return;
+      }
+
+      let systemPrompt;
+      try { systemPrompt = buildTabChatSystemPrompt(tab); } catch (e) { systemPrompt = `You are an SEO advisor. Data for this tab could not be loaded (${e.message}).`; }
+      const cappedMessages = messages.slice(-20).map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: String(m.content || '').slice(0, 4000),
+      }));
+
+      let response;
+      try {
+        response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: cappedMessages,
+        });
+      } catch (err) {
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        res.write(`data: Error contacting Claude: ${err.message.replace(/\n/g, '\\n')}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+        return;
+      }
+
+      const fullText = (response.content.find(b => b.type === 'text') || {}).text || '';
+      const actionMatch = fullText.match(/<ACTION_ITEM>([\s\S]*?)<\/ACTION_ITEM>/);
+      const cleanText = fullText.replace(/<ACTION_ITEM>[\s\S]*?<\/ACTION_ITEM>/g, '').trim();
+
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+      if (cleanText) res.write(`data: ${cleanText.replace(/\n/g, '\\n')}\n\n`);
+      if (actionMatch) {
+        try {
+          const actionJson = JSON.parse(actionMatch[1].trim());
+          res.write(`data: ACTION_ITEM:${JSON.stringify(actionJson)}\n\n`);
+        } catch { /* skip malformed ACTION_ITEM */ }
+      }
+      res.write('data: [DONE]\n\n');
+      res.end();
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/chat/action-item') {
+    if (!checkAuth(req, res)) return;
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      const { tab, title, description, type } = payload;
+      if (!tab || !title) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'tab and title required' }));
+        return;
+      }
+
+      if (tab === 'ads') {
+        const today = new Date().toISOString().slice(0, 10);
+        const filePath = join(ADS_OPTIMIZER_DIR, `${today}.json`);
+        let fileData = { analysisNotes: '', suggestions: [] };
+        if (existsSync(filePath)) {
+          try { fileData = JSON.parse(readFileSync(filePath, 'utf8')); } catch {}
+        } else {
+          mkdirSync(ADS_OPTIMIZER_DIR, { recursive: true });
+        }
+        if (!Array.isArray(fileData.suggestions)) fileData.suggestions = [];
+        const id = 'chat-' + Date.now();
+        fileData.suggestions.push({
+          id,
+          type: type || 'chat_action',
+          status: 'pending',
+          source: 'chat',
+          rationale: description || title,
+          campaign: null,
+          adGroup: null,
+        });
+        try {
+          writeFileSync(filePath, JSON.stringify(fileData, null, 2));
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, id }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        }
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, message: 'Action noted' }));
+      }
+    });
     return;
   }
 
