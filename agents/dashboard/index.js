@@ -15,9 +15,9 @@ import http from 'http';
 import { spawn } from 'child_process';
 import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync, createReadStream } from 'fs';
 import { join, dirname, basename } from 'path';
-import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 import { fileURLToPath } from 'url';
 import Anthropic from '@anthropic-ai/sdk';
+import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 
 // ── basic auth ─────────────────────────────────────────────────────────────────
 // Set DASHBOARD_USER and DASHBOARD_PASSWORD in .env to enable.
@@ -71,6 +71,7 @@ const BRIEFS_DIR    = join(ROOT, 'data', 'briefs');
 const IMAGES_DIR    = join(ROOT, 'data', 'images');
 const REPORTS_DIR   = join(ROOT, 'data', 'reports');
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
+const KEYWORD_TRACKER_DIR = join(ROOT, 'data', 'keyword-tracker');
 const ADS_OPTIMIZER_DIR = join(ROOT, 'data', 'ads-optimizer');
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key
 const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
@@ -562,6 +563,17 @@ function aggregateData() {
   // Ahrefs authority
   const ahrefsData = loadLatestAhrefsOverview(AHREFS_DIR);
 
+  // Latest Ahrefs file
+  let ahrefsFile = null;
+  if (existsSync(AHREFS_DIR)) {
+    const aFiles = readdirSync(AHREFS_DIR).filter(f => f.endsWith('.csv') || f.endsWith('.zip'));
+    if (aFiles.length) {
+      ahrefsFile = aFiles
+        .map(f => ({ name: f, mtime: statSync(join(AHREFS_DIR, f)).mtimeMs }))
+        .sort((a, b) => b.mtime - a.mtime)[0];
+    }
+  }
+
   // Rank alerts
   let rankAlert = null;
   if (existsSync(RANK_ALERTS_DIR)) {
@@ -596,17 +608,6 @@ function aggregateData() {
     }
   }
 
-  // Latest Ahrefs file
-  let ahrefsFile = null;
-  if (existsSync(AHREFS_DIR)) {
-    const aFiles = readdirSync(AHREFS_DIR).filter(f => f.endsWith('.csv') || f.endsWith('.zip'));
-    if (aFiles.length) {
-      ahrefsFile = aFiles
-        .map(f => ({ name: f, mtime: statSync(join(AHREFS_DIR, f)).mtimeMs }))
-        .sort((a, b) => b.mtime - a.mtime)[0];
-    }
-  }
-
   const cro = parseCROData();
   return {
     generatedAt: new Date().toISOString(),
@@ -619,10 +620,10 @@ function aggregateData() {
     googleAdsAll: cro.googleAdsAll,
     adsOptimization,
     ahrefsData,
+    ahrefsFile,
     rankAlert,
     metaTests,
     briefs,
-    ahrefsFile,
   };
 }
 
@@ -1039,8 +1040,6 @@ const HTML = `<!DOCTYPE html>
   </div>
   <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
     <button onclick="runAgent('agents/competitor-intelligence/index.js')" data-tip="Scrape top competitor pages and generate optimisation briefs">Run Competitor Intelligence</button>
-    <span id="ahrefs-upload-status" style="font-size:0.8rem;color:var(--muted)"></span>
-    <button onclick="uploadAhrefs()" data-tip="Upload an Ahrefs top-pages CSV to use as competitor input data">Upload Ahrefs CSV</button>
     <button id="btn-chat-optimize" class="btn-open-chat" onclick="toggleTabChat('optimize')" data-tip="Ask Claude about optimization data on this tab">&#x2736; Chat</button>
   </div>
 </div>
@@ -1061,7 +1060,7 @@ const HTML = `<!DOCTYPE html>
 
   <!-- SEO Authority -->
   <div class="card">
-    <div class="card-header accent-indigo"><h2>SEO Authority</h2><div class="card-header-right"><span class="section-note">Ahrefs · Updated manually</span><button class="upload-btn" onclick="uploadAhrefs()" data-tip="Upload Ahrefs domain overview CSV">&#8593; Upload CSV</button></div></div>
+    <div class="card-header accent-indigo"><h2>SEO Authority</h2><div class="card-header-right"><span class="section-note">Ahrefs · Updated manually</span><button class="upload-btn" onclick="openAhrefsModal()" data-tip="Enter latest Ahrefs domain overview metrics">Update</button></div></div>
     <div class="card-body" id="seo-authority-panel"><p class="empty-state">Loading...</p></div>
   </div>
 
@@ -1073,7 +1072,7 @@ const HTML = `<!DOCTYPE html>
 
   <!-- Rankings -->
   <div class="card">
-    <div class="card-header"><h2>Keyword Rankings</h2><div class="card-header-right"><span class="section-note" id="rank-note"></span><span id="rank-upload-status" style="font-size:0.8rem;color:var(--muted)"></span><button class="upload-btn" onclick="uploadRankSnapshot()" data-tip="Upload a rank snapshot JSON exported from the rank-tracker agent">&#8593; Upload Snapshot</button></div></div>
+    <div class="card-header"><h2>Keyword Rankings</h2><div class="card-header-right"><span class="section-note" id="rank-note"></span><button id="rank-upload-btn" class="upload-btn" onclick="uploadRankSnapshot()" data-tip="Upload an Ahrefs keyword tracker CSV export">&#8593; Upload CSV</button></div></div>
     <div class="card-body table-wrap"><div id="rankings-table"></div></div>
   </div>
 
@@ -1285,10 +1284,6 @@ function renderOptimizeTab(d) {
     return ch.some(c => c.status === 'applied') && !ch.some(c => c.status === 'approved');
   });
 
-  const ahrefsStatus = d.ahrefsFile
-    ? esc(d.ahrefsFile.name) + ' \u2014 uploaded ' + new Date(d.ahrefsFile.mtime).toLocaleDateString()
-    : 'No file uploaded';
-
   document.getElementById('tab-optimize').innerHTML =
     '<div class="kanban-optimize">' +
       '<div class="kanban-optimize-col">' +
@@ -1305,8 +1300,6 @@ function renderOptimizeTab(d) {
       '</div>' +
     '</div>' +
     '<pre id="run-log-agents-competitor-intelligence-index-js" class="run-log" style="display:none"></pre>';
-  const uploadStatusEl = document.getElementById('ahrefs-upload-status');
-  if (uploadStatusEl) uploadStatusEl.textContent = ahrefsStatus;
 }
 
 function renderBriefCard(b) {
@@ -2340,25 +2333,6 @@ function renderCROTab(data) {
   document.getElementById('cro-brief-card').innerHTML = briefHtml;
 }
 
-function renderSEOAuthorityPanel(ahrefs) {
-  const el = document.getElementById('seo-authority-panel');
-  if (!el) return;
-  if (!ahrefs) {
-    el.innerHTML = '<div class="data-needed"><strong>⚠ SEO Authority Data Needed</strong>Download Ahrefs domain overview export and place in <code>data/ahrefs/</code></div>';
-    return;
-  }
-  const fmt    = v => (v != null && v !== '' && !isNaN(Number(v))) ? Number(v).toLocaleString() : '—';
-  const fmtDr  = v => (v != null && v !== '') ? v : '—';
-  const fmtVal = v => (v != null && v !== '' && !isNaN(Number(v))) ? '$' + (Number(v) / 100).toLocaleString() : '—';
-  el.innerHTML =
-    '<div class="authority-row">' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmtDr(ahrefs.domainRating) + '</div><div class="authority-stat-label">Domain Rating</div></div>' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.backlinks) + '</div><div class="authority-stat-label">Backlinks</div></div>' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.referringDomains) + '</div><div class="authority-stat-label">Referring Domains</div></div>' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmtVal(ahrefs.organicTrafficValue) + '</div><div class="authority-stat-label">Organic Traffic Value</div></div>' +
-    '</div>';
-}
-
 function renderRankAlertBanner(alert) {
   const el = document.getElementById('rank-alert-banner');
   if (!el) return;
@@ -3241,43 +3215,92 @@ function promptAndRun(script, argLabel) {
   if (val) runAgent(script, [val]);
 }
 
-function uploadAhrefs() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.csv,.zip';
-  input.onchange = async () => {
-    const file = input.files[0];
-    if (!file) return;
-    const statusEl = document.getElementById('ahrefs-upload-status');
-    if (statusEl) statusEl.textContent = 'Uploading...';
-    const res = await fetch('/upload/ahrefs', {
+function renderSEOAuthorityPanel(ahrefs) {
+  const el = document.getElementById('seo-authority-panel');
+  if (!el) return;
+  if (!ahrefs) {
+    el.innerHTML = '<div class="data-needed"><strong>&#9888; SEO Authority Data Needed</strong>Click Update to enter your Ahrefs metrics.</div>';
+    return;
+  }
+  const fmt    = v => (v != null && v !== '' && !isNaN(Number(v))) ? Number(v).toLocaleString() : '\u2014';
+  const fmtDr  = v => (v != null && v !== '') ? v : '\u2014';
+  const fmtVal = v => (v != null && v !== '' && !isNaN(Number(v))) ? '$' + (Number(v) / 100).toLocaleString() : '\u2014';
+  el.innerHTML =
+    '<div class="authority-row">' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmtDr(ahrefs.domainRating) + '</div><div class="authority-stat-label">Domain Rating</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.backlinks) + '</div><div class="authority-stat-label">Backlinks</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.referringDomains) + '</div><div class="authority-stat-label">Referring Domains</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmtVal(ahrefs.organicTrafficValue) + '</div><div class="authority-stat-label">Organic Traffic Value</div></div>' +
+    '</div>';
+}
+
+function openAhrefsModal() {
+  const ov = document.getElementById('ahrefs-modal-overlay');
+  if (!ov) return;
+  ov.style.display = 'flex';
+  try { document.getElementById('ahrefs-dr').focus(); } catch(e) {}
+}
+
+function closeAhrefsModal(e) {
+  if (e && e.target !== document.getElementById('ahrefs-modal-overlay')) return;
+  document.getElementById('ahrefs-modal-overlay').style.display = 'none';
+}
+
+async function saveAhrefsOverview() {
+  const btn = document.getElementById('ahrefs-save-btn');
+  const dr = document.getElementById('ahrefs-dr').value.trim();
+  const backlinks = document.getElementById('ahrefs-backlinks').value.trim();
+  const refdomains = document.getElementById('ahrefs-refdomains').value.trim();
+  const value = document.getElementById('ahrefs-value').value.trim();
+  if (!dr && !backlinks && !refdomains && !value) return;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+  try {
+    const res = await fetch('/api/ahrefs-overview', {
       method: 'POST',
-      headers: { 'X-Filename': file.name, 'Content-Type': 'application/octet-stream' },
-      body: file,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domainRating: dr, backlinks, referringDomains: refdomains, trafficValue: value }),
     });
     const json = await res.json();
-    if (statusEl) statusEl.textContent = json.ok ? \`Uploaded: \${json.filename}\` : \`Error: \${json.error}\`;
-  };
-  input.click();
+    if (json.ok) {
+      document.getElementById('ahrefs-modal-overlay').style.display = 'none';
+      loadData();
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  }
 }
 
 function uploadRankSnapshot() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.json';
+  input.accept = '.csv,.tsv';
+  input.style.display = 'none';
+  document.body.appendChild(input);
   input.onchange = async () => {
+    document.body.removeChild(input);
     const file = input.files[0];
     if (!file) return;
-    const statusEl = document.getElementById('rank-upload-status');
-    if (statusEl) statusEl.textContent = 'Uploading...';
-    const res = await fetch('/upload/rank-snapshot', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/octet-stream' },
-      body: file,
-    });
-    const json = await res.json();
-    if (statusEl) statusEl.textContent = json.ok ? ('Saved: ' + json.filename) : ('Error: ' + json.error);
-    if (json.ok) loadData();
+    const btn = document.getElementById('rank-upload-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+    try {
+      const res = await fetch('/upload/rank-snapshot', {
+        method: 'POST',
+        headers: { 'X-Filename': file.name, 'Content-Type': 'application/octet-stream' },
+        body: file,
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload CSV'; }
+        return;
+      }
+      // CSV saved — now run rank tracker to process it, then reload
+      runAgent('agents/rank-tracker/index.js', [], function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Updated'; }
+        loadData();
+      });
+    } catch (e) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload CSV'; }
+    }
   };
   input.click();
 }
@@ -3568,6 +3591,24 @@ async function resolveAlert(campaignId, alertType) {
 }
 </script>
 
+<!-- Ahrefs overview modal -->
+<div id="ahrefs-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="closeAhrefsModal(event)">
+  <div style="background:#fff;border-radius:12px;width:340px;position:relative;padding:28px 28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <button onclick="closeAhrefsModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+    <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:18px">Update SEO Authority</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <label style="font-size:12px;color:#374151;font-weight:500">Domain Rating<input id="ahrefs-dr" type="number" placeholder="e.g. 19" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+      <label style="font-size:12px;color:#374151;font-weight:500">Backlinks<input id="ahrefs-backlinks" type="number" placeholder="e.g. 329" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+      <label style="font-size:12px;color:#374151;font-weight:500">Referring Domains<input id="ahrefs-refdomains" type="number" placeholder="e.g. 251" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+      <label style="font-size:12px;color:#374151;font-weight:500">Organic Traffic Value (USD)<input id="ahrefs-value" type="number" placeholder="e.g. 89" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+      <button onclick="closeAhrefsModal()" style="padding:7px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Cancel</button>
+      <button id="ahrefs-save-btn" onclick="saveAhrefsOverview()" style="padding:7px 16px;border:none;border-radius:6px;background:#6366f1;color:white;cursor:pointer;font-size:13px;font-weight:600">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- keyword detail modal -->
 <div id="kw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center">
   <div id="kw-modal-body" style="background:#fff;border-radius:10px;padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)"></div>
@@ -3606,6 +3647,30 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === 'POST' && req.url === '/api/ahrefs-overview') {
+    if (!checkAuth(req, res)) return;
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      const { domainRating, backlinks, referringDomains, trafficValue } = payload;
+      const csv = 'Domain Rating,Backlinks,Referring Domains,Organic Traffic Value\n' +
+        [domainRating || '', backlinks || '', referringDomains || '', trafficValue || ''].join(',') + '\n';
+      const date = new Date().toISOString().slice(0, 10);
+      const filename = `overview-${date}.csv`;
+      mkdirSync(AHREFS_DIR, { recursive: true });
+      writeFileSync(join(AHREFS_DIR, filename), csv);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, filename }));
+    });
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/upload/ahrefs') {
     mkdirSync(AHREFS_DIR, { recursive: true });
     const chunks = [];
@@ -3625,22 +3690,12 @@ const server = http.createServer((req, res) => {
     const chunks = [];
     req.on('data', d => chunks.push(d));
     req.on('end', () => {
-      let snapshot;
-      try { snapshot = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
-        return;
-      }
-      if (!snapshot.date || !Array.isArray(snapshot.posts) || !Array.isArray(snapshot.allKeywords)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'File must contain date, posts, and allKeywords fields' }));
-        return;
-      }
-      const filename = `${snapshot.date}.json`;
-      mkdirSync(SNAPSHOTS_DIR, { recursive: true });
-      writeFileSync(join(SNAPSHOTS_DIR, filename), JSON.stringify(snapshot, null, 2));
+      const rawName = req.headers['x-filename'] || 'keywords.csv';
+      const filename = rawName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      mkdirSync(KEYWORD_TRACKER_DIR, { recursive: true });
+      writeFileSync(join(KEYWORD_TRACKER_DIR, filename), Buffer.concat(chunks));
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, filename, date: snapshot.date, posts: snapshot.posts.length, keywords: snapshot.allKeywords.length }));
+      res.end(JSON.stringify({ ok: true, filename }));
     });
     return;
   }
