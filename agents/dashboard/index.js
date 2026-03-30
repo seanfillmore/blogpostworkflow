@@ -1097,11 +1097,20 @@ const HTML = `<!DOCTYPE html>
     <div class="card-header"><h2>Search Console</h2><span class="section-note" id="gsc-seo-note"></span></div>
     <div class="card-body" id="gsc-seo-body"><p class="empty-state">Loading...</p></div>
   </div>
+
+  <!-- Content Gap Data -->
+  <div class="card" id="content-gap-card">
+    <div class="card-header accent-indigo"><h2>Content Gap Data</h2><div class="card-header-right"><span class="section-note">Ahrefs content gap CSV export</span><button id="content-gap-upload-btn" class="upload-btn" onclick="uploadContentGapZip()">&#8593; Upload Zip</button><button id="content-gap-run-btn" class="upload-btn" onclick="runGapAnalysis()">Run Gap Analysis</button></div></div>
+    <div class="card-body" id="content-gap-files"><p class="empty-state">Loading...</p></div>
+  </div>
+
   <pre id="run-log-agents-rank-tracker-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-content-gap-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-gsc-query-miner-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-sitemap-indexer-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-researcher-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-strategist-index-js" class="run-log" style="display:none"></pre>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
   <div id="cro-kpi-strip" style="display:none"></div>
@@ -1834,6 +1843,7 @@ function renderDataNeeded(d) {
       '<div class="data-item-header">' +
         '<span class="data-item-keyword">' + esc(item.keyword) + '</span>' +
         '<span class="data-item-date">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
+        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug) + ',' + JSON.stringify(item.keyword) + ')">&#8593; Upload Zip</button>' +
       '</div>' +
       '<div class="data-item-dir">' + esc(item.dir) + '</div>' +
       '<div class="data-item-files">' + fileTags + '</div>' +
@@ -2922,6 +2932,7 @@ async function loadData() {
     renderRankings(data);
     renderPosts(data);
     renderGSCSEOPanel(data);
+    renderContentGapCard(data);
     renderCROTab(data);
     renderAdsTab(data);
     loadCampaignCards();
@@ -3279,6 +3290,88 @@ async function saveAhrefsOverview() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
   }
+}
+
+function uploadKeywordZip(slug, keyword) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.zip';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = function() {
+    document.body.removeChild(input);
+    var file = input.files[0];
+    if (!file) return;
+    var btn = document.getElementById('kw-zip-btn-' + slug);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+    fetch('/upload/ahrefs-keyword-zip', {
+      method: 'POST',
+      headers: { 'X-Slug': slug, 'Content-Type': 'application/octet-stream' },
+      body: file
+    }).then(function(r) { return r.json(); }).then(function(json) {
+      if (!json.ok) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
+        alert('Upload failed: ' + json.error);
+        return;
+      }
+      if (btn) btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>';
+      runAgent('agents/content-researcher/index.js', [keyword], function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Brief created'; }
+        loadData();
+      });
+    }).catch(function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
+    });
+  };
+  input.click();
+}
+
+function uploadContentGapZip() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.zip';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = function() {
+    document.body.removeChild(input);
+    var file = input.files[0];
+    if (!file) return;
+    var btn = document.getElementById('content-gap-upload-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+    fetch('/upload/content-gap-zip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file
+    }).then(function(r) { return r.json(); }).then(function(json) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Uploaded'; }
+      if (!json.ok) { alert('Upload failed: ' + json.error); return; }
+      loadData();
+    }).catch(function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
+    });
+  };
+  input.click();
+}
+
+function runGapAnalysis() {
+  var btn = document.getElementById('content-gap-run-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+  runAgent('agents/content-gap/index.js', [], function() {
+    runAgent('agents/content-strategist/index.js', [], function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Done'; }
+      loadData();
+    });
+  });
+}
+
+function renderContentGapCard(d) {
+  var files = d.contentGapFiles || [];
+  var el = document.getElementById('content-gap-files');
+  if (!el) return;
+  if (!files.length) { el.innerHTML = '<span class="file-tag file-tag-missing">No CSV files found in data/content_gap/</span>'; return; }
+  el.innerHTML = files.map(function(f) {
+    return '<span class="file-tag file-tag-present">&#10003; ' + esc(f.name) + ' &mdash; ' + new Date(f.mtime).toLocaleDateString() + '</span>';
+  }).join(' ');
 }
 
 function uploadRankSnapshot() {
