@@ -715,6 +715,8 @@ const HTML = `<!DOCTYPE html>
   .kanban-item { font-size: 11px; padding: 5px 7px; border-radius: 5px; line-height: 1.35; }
   .kanban-item .kw  { font-weight: 500; }
   .kanban-item .vol { color: var(--muted); font-size: 10px; }
+  .kw-reject-btn { margin-top:6px; font-size:0.7rem; color:#ef4444; background:none; border:1px solid #fca5a5; border-radius:5px; padding:2px 8px; cursor:pointer; width:100%; }
+  .kw-reject-btn:hover { background:#fef2f2; }
   .kanban-item .pub-date-scheduled { color: var(--red);   font-size: 10px; font-weight: 600; }
   .kanban-item .pub-date-published  { color: var(--green); font-size: 10px; font-weight: 600; }
   .col-published .kanban-head { background: #f0fdf4; color: var(--green); }
@@ -1508,9 +1510,13 @@ function renderKanban(d) {
       const dateLine = dateStr && col.key === 'scheduled' ? '<div class="pub-date-scheduled">' + dateStr + '</div>'
                      : dateStr && col.key === 'published'  ? '<div class="pub-date-published">' + dateStr + '</div>'
                      : '';
-      return '<div class="kanban-item"><div class="kw">' + esc(i.keyword) + '</div>' +
+      const rejectBtn = (col.key === 'pending' || col.key === 'briefed')
+        ? '<button class="kw-reject-btn" onclick="event.stopPropagation();rejectKeyword(this.closest(&quot;.kanban-item&quot;).dataset.keyword,this.closest(&quot;.kanban-item&quot;))">&#10005; Reject</button>'
+        : '';
+      return '<div class="kanban-item" data-keyword="' + esc(i.keyword) + '"><div class="kw">' + esc(i.keyword) + '</div>' +
         dateLine +
-        (i.volume ? '<div class="vol">' + fmtNum(i.volume) + '/mo</div>' : '') + '</div>';
+        (i.volume ? '<div class="vol">' + fmtNum(i.volume) + '/mo</div>' : '') +
+        rejectBtn + '</div>';
     }).join('');
     return '<div class="kanban-col col-' + col.key + '">' +
       '<div class="kanban-head">' + col.label + '</div>' +
@@ -3223,6 +3229,64 @@ if (_kwModal) _kwModal.addEventListener('click', function(e) {
   if (e.target === this) closeKeywordCard();
 });
 
+var _rejectKeyword = null;
+var _rejectCardEl  = null;
+
+function rejectKeyword(keyword, cardEl) {
+  _rejectKeyword = keyword;
+  _rejectCardEl  = cardEl || null;
+  document.getElementById('reject-modal-keyword').textContent = keyword;
+  document.getElementById('reject-modal-reason').value = '';
+  document.getElementById('reject-modal-error').style.display = 'none';
+  selectRejectMatch('exact');
+  document.getElementById('reject-modal-overlay').style.display = 'flex';
+}
+
+function selectRejectMatch(type) {
+  ['exact', 'phrase', 'broad'].forEach(function(t) {
+    var el    = document.getElementById('reject-opt-' + t);
+    var radio = el.querySelector('input[type=radio]');
+    if (t === type) {
+      el.style.border     = '1.5px solid #6366f1';
+      el.style.background = '#f5f3ff';
+      radio.checked = true;
+    } else {
+      el.style.border     = '1.5px solid #e2e8f0';
+      el.style.background = '';
+      radio.checked = false;
+    }
+  });
+}
+
+function closeRejectModal() {
+  document.getElementById('reject-modal-overlay').style.display = 'none';
+  _rejectKeyword = null;
+  _rejectCardEl  = null;
+}
+
+function confirmRejectKeyword() {
+  var matchType = document.querySelector('input[name=reject-match]:checked').value;
+  var reason    = document.getElementById('reject-modal-reason').value.trim();
+  var errEl     = document.getElementById('reject-modal-error');
+  errEl.style.display = 'none';
+  fetch('/api/reject-keyword', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keyword: _rejectKeyword, matchType: matchType, reason: reason || null }),
+  }).then(function(r) { return r.json(); }).then(function(json) {
+    if (!json.ok) {
+      errEl.textContent = json.error || 'Failed to save rejection.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (_rejectCardEl) _rejectCardEl.remove();
+    closeRejectModal();
+  }).catch(function() {
+    errEl.textContent = 'Network error - rejection not saved.';
+    errEl.style.display = 'block';
+  });
+}
+
 function showRunBanner(script, tabName, success, logId) {
   var tabEl = document.getElementById('tab-' + tabName);
   if (!tabEl) return;
@@ -3829,6 +3893,38 @@ async function resolveAlert(campaignId, alertType) {
 <!-- keyword detail modal -->
 <div id="kw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center">
   <div id="kw-modal-body" style="background:#fff;border-radius:10px;padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)"></div>
+</div>
+
+<!-- keyword rejection modal -->
+<div id="reject-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeRejectModal()">
+  <div style="background:#fff;border-radius:12px;width:380px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-size:0.95rem;font-weight:700;color:#111;margin-bottom:4px">Reject keyword</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-bottom:16px">How broadly should this rejection apply to future research?</div>
+    <div style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:6px">KEYWORD</div>
+    <div id="reject-modal-keyword" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:0.85rem;font-weight:600;color:#111;margin-bottom:16px"></div>
+    <div style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:8px">MATCH TYPE</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <label id="reject-opt-exact" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1.5px solid #6366f1;border-radius:8px;background:#f5f3ff" onclick="selectRejectMatch(&apos;exact&apos;)">
+        <input type="radio" name="reject-match" value="exact" checked style="margin-top:2px;pointer-events:none">
+        <div><div style="font-size:0.83rem;font-weight:600;color:#111">Exact match</div><div style="font-size:0.75rem;color:#64748b">Only block this exact keyword</div></div>
+      </label>
+      <label id="reject-opt-phrase" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px" onclick="selectRejectMatch(&apos;phrase&apos;)">
+        <input type="radio" name="reject-match" value="phrase" style="margin-top:2px;pointer-events:none">
+        <div><div style="font-size:0.83rem;font-weight:600;color:#111">Phrase match</div><div style="font-size:0.75rem;color:#64748b">Block any keyword containing this phrase</div></div>
+      </label>
+      <label id="reject-opt-broad" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px" onclick="selectRejectMatch(&apos;broad&apos;)">
+        <input type="radio" name="reject-match" value="broad" style="margin-top:2px;pointer-events:none">
+        <div><div style="font-size:0.83rem;font-weight:600;color:#111">Broad match</div><div style="font-size:0.75rem;color:#64748b">Tell agents to avoid this topic and related ideas broadly</div></div>
+      </label>
+    </div>
+    <div style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:6px">REASON <span style="font-weight:400;color:#94a3b8">(optional)</span></div>
+    <input id="reject-modal-reason" type="text" placeholder="e.g. too broad, off-brand topic" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.83rem;box-sizing:border-box;margin-bottom:16px">
+    <div id="reject-modal-error" style="display:none;color:#ef4444;font-size:0.8rem;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeRejectModal()" style="padding:7px 16px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:0.83rem;cursor:pointer">Cancel</button>
+      <button onclick="confirmRejectKeyword()" style="padding:7px 16px;border:none;border-radius:6px;background:#ef4444;color:#fff;font-size:0.83rem;font-weight:600;cursor:pointer">Reject keyword</button>
+    </div>
+  </div>
 </div>
 
 </body>
@@ -4706,6 +4802,39 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ status: job.status, downloadUrl: job.downloadUrl || null, error: job.error || null }));
     } catch { res.writeHead(500); res.end('{}'); }
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/reject-keyword') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      const { keyword, matchType, reason } = payload;
+      if (!keyword || !matchType) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'keyword and matchType are required' }));
+        return;
+      }
+      try {
+        const filePath = join(ROOT, 'data', 'rejected-keywords.json');
+        const existing = existsSync(filePath)
+          ? JSON.parse(readFileSync(filePath, 'utf8'))
+          : [];
+        existing.push({ keyword, matchType, reason: reason || null, rejectedAt: new Date().toISOString() });
+        writeFileSync(filePath, JSON.stringify(existing, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
     return;
   }
 

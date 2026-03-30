@@ -25,6 +25,22 @@ function kwToSlug(kw) {
   return kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+export function loadRejections() {
+  const path = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(path)) return [];
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return []; }
+}
+
+export function isRejected(keyword, rejections) {
+  const kw = keyword.toLowerCase();
+  return rejections.some(r => {
+    const term = r.keyword.toLowerCase();
+    // Slug comparison normalises punctuation/casing from calendar markdown
+    if (r.matchType === 'exact') return kwToSlug(keyword) === kwToSlug(r.keyword);
+    return kw.includes(term);
+  });
+}
+
 function parseCalendar() {
   if (!existsSync(CALENDAR_PATH)) return [];
   const md = readFileSync(CALENDAR_PATH, 'utf8');
@@ -57,12 +73,17 @@ async function main() {
   const now = new Date();
   const horizon = new Date(now.getTime() + 14 * 86400000);
 
-  // Find keywords due within 14 days with no brief
-  const due = rows.filter(r =>
-    r.publishDate >= now &&
-    r.publishDate <= horizon &&
-    !existsSync(join(BRIEFS_DIR, `${r.slug}.json`))
-  );
+  // Find keywords due within 14 days with no brief and not rejected
+  const rejections = loadRejections();
+  const due = rows.filter(r => {
+    if (r.publishDate < now || r.publishDate > horizon) return false;
+    if (existsSync(join(BRIEFS_DIR, `${r.slug}.json`))) return false;
+    if (isRejected(r.keyword, rejections)) {
+      console.log(`  [SKIP] Rejected keyword: "${r.keyword}"`);
+      return false;
+    }
+    return true;
+  });
 
   if (!due.length) {
     console.log('No briefs needed in the next 14 days.');
@@ -103,4 +124,6 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(e.message); process.exit(1); });
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch(e => { console.error(e.message); process.exit(1); });
+}

@@ -64,6 +64,36 @@ function loadLatestRankReport() {
   return readFileSync(path, 'utf8').slice(0, 3000);
 }
 
+export function loadRejections() {
+  const path = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(path)) return [];
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return []; }
+}
+
+export function isRejected(keyword, rejections) {
+  const kw = keyword.toLowerCase().trim();
+  return rejections.some(r => {
+    const term = r.keyword.toLowerCase().trim();
+    if (r.matchType === 'exact') return kw === term;
+    return kw.includes(term);
+  });
+}
+
+export function buildRejectionSection(rejections) {
+  if (!rejections.length) return '';
+  const lines = rejections.map(r => {
+    const note = r.reason ? ` — ${r.reason}` : '';
+    if (r.matchType === 'broad') {
+      return `- "${r.keyword}" (broad match) — avoid this topic and closely related ideas${note}`;
+    }
+    if (r.matchType === 'phrase') {
+      return `- "${r.keyword}" (phrase match) — do not include keywords containing this phrase${note}`;
+    }
+    return `- "${r.keyword}" (exact match) — do not schedule this exact keyword${note}`;
+  });
+  return `\n## Rejected Keywords\nDo not schedule or suggest content related to these topics:\n${lines.join('\n')}\n`;
+}
+
 function loadInventory() {
   const existing = new Set();
 
@@ -136,6 +166,8 @@ async function main() {
   const today = new Date();
   const todayStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
+  const rejections = loadRejections();
+
   const calendarPrompt = `You are a senior SEO content strategist for Real Skin Care (realskincare.com), a clean beauty ecommerce brand selling natural skincare products on Shopify.
 
 TODAY'S DATE: ${todayStr}
@@ -157,7 +189,7 @@ ${rankReport}
 
 ` : ''}CONTENT GAP REPORT:
 ${gapReport}
-
+${buildRejectionSection(rejections)}
 OUTPUT REQUIREMENTS:
 Produce a Markdown content calendar with the following sections:
 
@@ -224,6 +256,13 @@ ${calendarMd}`;
     const raw = extractResponse.content[0].text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
     briefQueue = JSON.parse(raw);
     if (limit) briefQueue = briefQueue.slice(0, limit);
+    briefQueue = briefQueue.filter(item => {
+      if (isRejected(item.keyword, rejections)) {
+        console.log(`  [SKIP] Rejected keyword: "${item.keyword}"`);
+        return false;
+      }
+      return true;
+    });
   } catch (e) {
     console.log('(parse error — queue will be empty)');
     console.error(e.message);
@@ -291,9 +330,11 @@ ${calendarMd}`;
   }
 }
 
-main().then(() => {
-  console.log('\nStrategy complete.');
-}).catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().then(() => {
+    console.log('\nStrategy complete.');
+  }).catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}
