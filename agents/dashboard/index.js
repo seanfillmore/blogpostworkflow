@@ -1111,6 +1111,7 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-content-researcher-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-content-strategist-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-pipeline-scheduler-index-js" class="run-log" style="display:none"></pre>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
   <div id="cro-kpi-strip" style="display:none"></div>
@@ -3358,8 +3359,10 @@ function runGapAnalysis() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
   runAgent('agents/content-gap/index.js', [], function() {
     runAgent('agents/content-strategist/index.js', [], function() {
-      if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Done'; }
-      loadData();
+      runAgent('agents/pipeline-scheduler/index.js', [], function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Done'; }
+        loadData();
+      });
     });
   });
 }
