@@ -3367,11 +3367,17 @@ function runGapAnalysis() {
 function renderContentGapCard(d) {
   var files = d.contentGapFiles || [];
   var el = document.getElementById('content-gap-files');
+  var runBtn = document.getElementById('content-gap-run-btn');
   if (!el) return;
-  if (!files.length) { el.innerHTML = '<span class="file-tag file-tag-missing">No CSV files found in data/content_gap/</span>'; return; }
+  if (!files.length) {
+    el.innerHTML = '<span class="file-tag file-tag-missing">No CSV files found in data/content_gap/ &mdash; upload a zip first</span>';
+    if (runBtn) { runBtn.disabled = true; runBtn.title = 'Upload CSV files first'; }
+    return;
+  }
   el.innerHTML = files.map(function(f) {
     return '<span class="file-tag file-tag-present">&#10003; ' + esc(f.name) + ' &mdash; ' + new Date(f.mtime).toLocaleDateString() + '</span>';
   }).join(' ');
+  if (runBtn) { runBtn.disabled = false; runBtn.title = ''; }
 }
 
 function uploadRankSnapshot() {
