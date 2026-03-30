@@ -64,6 +64,34 @@ export function parseSuggestionsResponse(raw) {
   return parsed;
 }
 
+export function loadRecentHistory(dir, days = 30) {
+  if (!existsSync(dir)) return [];
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  return readdirSync(dir)
+    .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f) && f.slice(0, 10) >= cutoffStr)
+    .sort()
+    .flatMap(f => {
+      try {
+        const { suggestions = [] } = JSON.parse(readFileSync(join(dir, f), 'utf8'));
+        const date = f.slice(0, 10);
+        return suggestions
+          .filter(s => s.status !== 'pending')
+          .map(s => ({ date, id: s.id, type: s.type, target: s.target, status: s.status, rationale: s.rationale }));
+      } catch { return []; }
+    });
+}
+
+export function buildHistorySection(history) {
+  if (!history.length) return '';
+  const lines = ['### Previous Recommendation History (last 30 days)'];
+  for (const h of history) {
+    lines.push(`- ${h.date} [${h.status.toUpperCase()}] ${h.type}: "${h.target}" — ${h.rationale}`);
+  }
+  return lines.join('\n');
+}
+
 // ── Data loading ───────────────────────────────────────────────────────────────
 
 function loadEnv() {
