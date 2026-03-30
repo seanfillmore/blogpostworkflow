@@ -208,7 +208,12 @@ Return ONLY valid JSON (no markdown, no explanation) matching this schema exactl
   ]
 }
 
-If you have no suggestions with strong evidence, return { "analysisNotes": "...", "suggestions": [] }.`;
+If you have no suggestions with strong evidence, return { "analysisNotes": "...", "suggestions": [] }.
+
+When Previous Recommendation History is provided:
+- Do NOT re-recommend items with status "applied" — they have already been executed.
+- Do NOT re-recommend items with status "approved" that have no newer "applied" entry — they are awaiting action.
+- DO re-recommend items with status "rejected" if the underlying data still supports the suggestion. In the rationale, cite the prior rejection: e.g. "Previously recommended YYYY-MM-DD, rejected — keyword continues to waste spend with X clicks and 0 conversions."`;
 
   // Summarize active campaign state for the prompt so Claude does not suggest
   // restarting campaigns that are already running.
@@ -217,9 +222,17 @@ If you have no suggestions with strong evidence, return { "analysisNotes": "..."
     ? `IMPORTANT: The following campaigns are currently ENABLED and actively running in Google Ads:\n${enabledCampaigns.map(c => `  - "${c.name}" (ID: ${c.id})`).join('\n')}\nDo NOT suggest restarting, re-enabling, or creating new versions of these campaigns. Zero impressions on a given day may simply mean the campaigns are new or bids were not competitive — this is not a reason to suggest campaign changes.`
     : '';
 
+  // Load previous recommendation history
+  const history = loadRecentHistory(join(ROOT, 'data', 'ads-optimizer'));
+  const historySection = buildHistorySection(history);
+  if (history.length > 0) {
+    console.log(`  History: ${history.length} prior decisions loaded`);
+  }
+
   const parts = [
     `Analyze the following Google Ads account data and return optimization suggestions as JSON.`,
     campaignContext,
+    historySection,
     `### Google Ads Snapshot (${adsSnap.date})\n${JSON.stringify(adsSnap, null, 2)}`,
     gscSnaps.length ? `### GSC Data (${gscSnaps.length} days, most recent first)\n${JSON.stringify(gscSnaps, null, 2)}` : '',
     ga4Snaps.length ? `### GA4 Data (${ga4Snaps.length} days, most recent first)\n${JSON.stringify(ga4Snaps, null, 2)}` : '',
