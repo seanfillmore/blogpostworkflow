@@ -64,6 +64,36 @@ function loadLatestRankReport() {
   return readFileSync(path, 'utf8').slice(0, 3000);
 }
 
+export function loadRejections() {
+  const path = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(path)) return [];
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return []; }
+}
+
+export function isRejected(keyword, rejections) {
+  const kw = keyword.toLowerCase().trim();
+  return rejections.some(r => {
+    const term = r.keyword.toLowerCase().trim();
+    if (r.matchType === 'exact') return kw === term;
+    return kw.includes(term);
+  });
+}
+
+export function buildRejectionSection(rejections) {
+  if (!rejections.length) return '';
+  const lines = rejections.map(r => {
+    const note = r.reason ? ` — ${r.reason}` : '';
+    if (r.matchType === 'broad') {
+      return `- "${r.keyword}" (broad match) — avoid this topic and closely related ideas${note}`;
+    }
+    if (r.matchType === 'phrase') {
+      return `- "${r.keyword}" (phrase match) — do not include keywords containing this phrase${note}`;
+    }
+    return `- "${r.keyword}" (exact match) — do not schedule this exact keyword${note}`;
+  });
+  return `\n## Rejected Keywords\nDo not schedule or suggest content related to these topics:\n${lines.join('\n')}\n`;
+}
+
 function loadInventory() {
   const existing = new Set();
 
@@ -291,9 +321,11 @@ ${calendarMd}`;
   }
 }
 
-main().then(() => {
-  console.log('\nStrategy complete.');
-}).catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().then(() => {
+    console.log('\nStrategy complete.');
+  }).catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

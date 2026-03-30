@@ -25,6 +25,22 @@ function kwToSlug(kw) {
   return kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+export function loadRejections() {
+  const path = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(path)) return [];
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return []; }
+}
+
+export function isRejected(keyword, rejections) {
+  const kw = keyword.toLowerCase();
+  return rejections.some(r => {
+    const term = r.keyword.toLowerCase();
+    // Slug comparison normalises punctuation/casing from calendar markdown
+    if (r.matchType === 'exact') return kwToSlug(keyword) === kwToSlug(r.keyword);
+    return kw.includes(term);
+  });
+}
+
 function parseCalendar() {
   if (!existsSync(CALENDAR_PATH)) return [];
   const md = readFileSync(CALENDAR_PATH, 'utf8');
@@ -103,4 +119,6 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(e.message); process.exit(1); });
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch(e => { console.error(e.message); process.exit(1); });
+}
