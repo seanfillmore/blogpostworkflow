@@ -166,6 +166,8 @@ async function main() {
   const today = new Date();
   const todayStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
+  const rejections = loadRejections();
+
   const calendarPrompt = `You are a senior SEO content strategist for Real Skin Care (realskincare.com), a clean beauty ecommerce brand selling natural skincare products on Shopify.
 
 TODAY'S DATE: ${todayStr}
@@ -187,7 +189,7 @@ ${rankReport}
 
 ` : ''}CONTENT GAP REPORT:
 ${gapReport}
-
+${buildRejectionSection(rejections)}
 OUTPUT REQUIREMENTS:
 Produce a Markdown content calendar with the following sections:
 
@@ -254,6 +256,13 @@ ${calendarMd}`;
     const raw = extractResponse.content[0].text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
     briefQueue = JSON.parse(raw);
     if (limit) briefQueue = briefQueue.slice(0, limit);
+    briefQueue = briefQueue.filter(item => {
+      if (isRejected(item.keyword, rejections)) {
+        console.log(`  [SKIP] Rejected keyword: "${item.keyword}"`);
+        return false;
+      }
+      return true;
+    });
   } catch (e) {
     console.log('(parse error — queue will be empty)');
     console.error(e.message);
