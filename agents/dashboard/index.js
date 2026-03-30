@@ -4709,6 +4709,39 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === 'POST' && req.url === '/api/reject-keyword') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      const { keyword, matchType, reason } = payload;
+      if (!keyword || !matchType) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'keyword and matchType are required' }));
+        return;
+      }
+      try {
+        const filePath = join(ROOT, 'data', 'rejected-keywords.json');
+        const existing = existsSync(filePath)
+          ? JSON.parse(readFileSync(filePath, 'utf8'))
+          : [];
+        existing.push({ keyword, matchType, reason: reason || null, rejectedAt: new Date().toISOString() });
+        writeFileSync(filePath, JSON.stringify(existing, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
   res.end(HTML);
 });
