@@ -400,13 +400,22 @@ async function runItem(item) {
   return true;
 }
 
-function formatPublishAt(date) {
-  // Returns Pacific time ISO string e.g. "2026-03-22T08:00:00-07:00"
+export function formatPublishAt(date) {
+  const PUBLISH_DAYS = new Set([1, 3, 5]); // Mon, Wed, Fri
   const d = new Date(date);
-  const y = d.getUTCFullYear();
-  const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(d.getUTCDate()).padStart(2, '0');
-  return `${y}-${mo}-${day}T08:00:00-07:00`;
+  // Snap forward to next publish day
+  while (!PUBLISH_DAYS.has(d.getDay())) {
+    d.setDate(d.getDate() + 1);
+  }
+  // If that date is in the past, advance by 1 week until it is future
+  const now = new Date();
+  while (d < now) {
+    d.setDate(d.getDate() + 7);
+  }
+  const y  = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${dy}T08:00:00-07:00`;
 }
 
 // ── display ───────────────────────────────────────────────────────────────────
