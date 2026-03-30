@@ -3932,8 +3932,17 @@ const server = http.createServer((req, res) => {
         writeFileSync(tmpZip, Buffer.concat(chunks));
         const extract = (await import('extract-zip')).default;
         await extract(tmpZip, { dir: destDir });
-        const { unlinkSync } = await import('node:fs');
+        const { unlinkSync, renameSync, rmdirSync } = await import('node:fs');
         unlinkSync(tmpZip);
+        // Flatten single nested subdirectory (zip may contain a folder with the same name)
+        const top = readdirSync(destDir).filter(f => !f.startsWith('.'));
+        if (top.length === 1) {
+          const sub = join(destDir, top[0]);
+          if (statSync(sub).isDirectory()) {
+            for (const f of readdirSync(sub)) renameSync(join(sub, f), join(destDir, f));
+            rmdirSync(sub);
+          }
+        }
         const files = readdirSync(destDir).filter(f => !f.startsWith('.'));
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, slug, files }));
