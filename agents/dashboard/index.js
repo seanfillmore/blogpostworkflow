@@ -886,6 +886,10 @@ const HTML = `<!DOCTYPE html>
   .tab-actions-bar button[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1e1b4b; color:#fff; font-size:0.72rem; white-space:nowrap; padding:4px 8px; border-radius:5px; pointer-events:none; z-index:100; }
   .tab-actions-bar button[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 1px); left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1e1b4b; pointer-events:none; z-index:100; }
   .run-log { margin: 0.5rem 24px 0.5rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+  .run-banner { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; margin: 0 0 0.5rem; }
+  .run-banner-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+  .run-banner-error { background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; }
+  .run-banner-dismiss { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 1rem; color: inherit; padding: 0 0.25rem; line-height: 1; }
 
   /* ── Optimize tab ── */
   .kanban-optimize { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
@@ -3206,24 +3210,55 @@ if (_kwModal) _kwModal.addEventListener('click', function(e) {
   if (e.target === this) closeKeywordCard();
 });
 
-function runAgent(script, args = [], onDone = null) {
-  const logId = 'run-log-' + script.replace(/[^a-z0-9]/gi, '-');
-  const logEl = document.getElementById(logId);
+function showRunBanner(script, tabName, success, logId) {
+  var tabEl = document.getElementById('tab-' + tabName);
+  if (!tabEl) return;
+  var bannerId = 'run-banner-' + tabName;
+  var existing = document.getElementById(bannerId);
+  if (existing) existing.remove();
+  var name = script.split('/').pop().replace('.js', '');
+  var banner = document.createElement('div');
+  banner.id = bannerId;
+  banner.className = 'run-banner ' + (success ? 'run-banner-success' : 'run-banner-error');
+  var showLog = !success ? ' &mdash; <a href="#" onclick="document.getElementById(&quot;' + logId + '&quot;).style.display=&quot;block&quot;;return false">show log</a>' : '';
+  banner.innerHTML = (success ? '&#10003; ' : '&#10007; ') + esc(name) + (success ? ' completed' : ' failed') + showLog +
+    '<button class="run-banner-dismiss" onclick="this.parentNode.remove()">&#10005;</button>';
+  tabEl.insertBefore(banner, tabEl.firstChild);
+}
+
+function runAgent(script, args, onDone) {
+  if (args === undefined) args = [];
+  if (onDone === undefined) onDone = null;
+  var logId = 'run-log-' + script.replace(/[^a-z0-9]/gi, '-');
+  var logEl = document.getElementById(logId);
   if (!logEl) return;
   logEl.textContent = 'Running...\\n';
   logEl.style.display = 'block';
+  var capturedTab = activeTab;
+  var exitCode = null;
   fetch('/run-agent', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ script, args }),
-  }).then(res => {
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
+    body: JSON.stringify({ script: script, args: args }),
+  }).then(function(res) {
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
     function read() {
-      reader.read().then(({ done, value }) => {
-        if (done) { if (onDone) onDone(); return; }
-        for (const line of decoder.decode(value).split('\\n')) {
-          if (line.startsWith('data: ')) logEl.textContent += line.slice(6) + '\\n';
+      reader.read().then(function(chunk) {
+        if (chunk.done) {
+          logEl.style.display = 'none';
+          showRunBanner(script, capturedTab, exitCode === 0, logId);
+          if (onDone) onDone(); else loadData();
+          return;
+        }
+        var lines = decoder.decode(chunk.value).split('\\n');
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line.startsWith('data: __exit__:')) {
+            try { exitCode = JSON.parse(line.slice(15)).code; } catch(e) {}
+          } else if (line.startsWith('data: ')) {
+            logEl.textContent += line.slice(6) + '\\n';
+          }
         }
         logEl.scrollTop = logEl.scrollHeight;
         read();
