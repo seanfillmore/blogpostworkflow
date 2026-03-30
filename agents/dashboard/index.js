@@ -3366,6 +3366,7 @@ function uploadKeywordZip(slug, keyword) {
         alert('Upload failed: ' + json.error);
         return;
       }
+      loadData(); // remove row from data-needed immediately
       if (btn) btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>';
       runAgent('agents/content-researcher/index.js', [keyword], function() {
         if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Brief created'; }
