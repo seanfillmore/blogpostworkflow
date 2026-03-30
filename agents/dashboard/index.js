@@ -305,6 +305,7 @@ function parseCROData() {
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
 
 const AHREFS_DIR      = join(ROOT, 'data', 'ahrefs');
+const CONTENT_GAP_DIR = join(ROOT, 'data', 'content_gap');
 const RANK_ALERTS_DIR = join(ROOT, 'data', 'reports', 'rank-alerts');
 const ALERTS_VIEWED   = join(RANK_ALERTS_DIR, '.last-viewed');
 
@@ -609,6 +610,14 @@ function aggregateData() {
   }
 
   const cro = parseCROData();
+
+  const contentGapFiles = existsSync(CONTENT_GAP_DIR)
+    ? readdirSync(CONTENT_GAP_DIR)
+        .filter(f => f.endsWith('.csv'))
+        .map(f => ({ name: f, mtime: statSync(join(CONTENT_GAP_DIR, f)).mtimeMs }))
+        .sort((a, b) => a.name.localeCompare(b.name))
+    : [];
+
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -624,6 +633,7 @@ function aggregateData() {
     rankAlert,
     metaTests,
     briefs,
+    contentGapFiles,
   };
 }
 
@@ -3696,6 +3706,63 @@ const server = http.createServer((req, res) => {
       writeFileSync(join(KEYWORD_TRACKER_DIR, filename), Buffer.concat(chunks));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, filename }));
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/upload/ahrefs-keyword-zip') {
+    if (!checkAuth(req, res)) return;
+    const slug = (req.headers['x-slug'] || '').replace(/[^a-z0-9-]/g, '');
+    if (!slug) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Missing or invalid X-Slug header' }));
+      return;
+    }
+    const chunks = [];
+    req.on('data', d => chunks.push(d));
+    req.on('end', async () => {
+      const destDir = join(AHREFS_DIR, slug);
+      const tmpZip  = join(destDir, '.upload.zip');
+      try {
+        mkdirSync(destDir, { recursive: true });
+        writeFileSync(tmpZip, Buffer.concat(chunks));
+        const extract = (await import('extract-zip')).default;
+        await extract(tmpZip, { dir: destDir });
+        const { unlinkSync } = await import('node:fs');
+        unlinkSync(tmpZip);
+        const files = readdirSync(destDir).filter(f => !f.startsWith('.'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, slug, files }));
+      } catch (err) {
+        try { const { unlinkSync } = await import('node:fs'); unlinkSync(tmpZip); } catch {}
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/upload/content-gap-zip') {
+    if (!checkAuth(req, res)) return;
+    const chunks = [];
+    req.on('data', d => chunks.push(d));
+    req.on('end', async () => {
+      const tmpZip = join(CONTENT_GAP_DIR, '.upload.zip');
+      try {
+        mkdirSync(CONTENT_GAP_DIR, { recursive: true });
+        writeFileSync(tmpZip, Buffer.concat(chunks));
+        const extract = (await import('extract-zip')).default;
+        await extract(tmpZip, { dir: CONTENT_GAP_DIR });
+        const { unlinkSync } = await import('node:fs');
+        unlinkSync(tmpZip);
+        const files = readdirSync(CONTENT_GAP_DIR).filter(f => f.endsWith('.csv'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, files }));
+      } catch (err) {
+        try { const { unlinkSync } = await import('node:fs'); unlinkSync(tmpZip); } catch {}
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
     });
     return;
   }
