@@ -886,6 +886,12 @@ const HTML = `<!DOCTYPE html>
   .tab-actions-bar button[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1e1b4b; color:#fff; font-size:0.72rem; white-space:nowrap; padding:4px 8px; border-radius:5px; pointer-events:none; z-index:100; }
   .tab-actions-bar button[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 1px); left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1e1b4b; pointer-events:none; z-index:100; }
   .run-log { margin: 0.5rem 24px 0.5rem; padding: 0.75rem; background: #0d0d0d; color: #7ee787; font-size: 0.78rem; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+  .gap-file-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 5px; margin-bottom: 0.35rem; font-size: 0.85rem; }
+  .gap-file-row.present { background: #d1fae5; color: #065f46; }
+  .gap-file-row.missing { background: #fee2e2; color: #7f1d1d; }
+  .gap-file-row-label { font-weight: 500; }
+  .gap-file-row-name { font-size: 0.78rem; opacity: 0.75; margin-left: 0.5rem; }
+  .gap-file-row-status { font-size: 0.8rem; white-space: nowrap; }
 
   /* ── Optimize tab ── */
   .kanban-optimize { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
@@ -3368,19 +3374,68 @@ function runGapAnalysis() {
 }
 
 function renderContentGapCard(d) {
-  var files = d.contentGapFiles || [];
+  var uploaded = d.contentGapFiles || [];
   var el = document.getElementById('content-gap-files');
   var runBtn = document.getElementById('content-gap-run-btn');
   if (!el) return;
-  if (!files.length) {
-    el.innerHTML = '<span class="file-tag file-tag-missing">No CSV files found in data/content_gap/ &mdash; upload a zip first</span>';
-    if (runBtn) { runBtn.disabled = true; runBtn.title = 'Upload CSV files first'; }
-    return;
+
+  var names = uploaded.map(function(f) { return f.name; });
+  var mtimeOf = {};
+  uploaded.forEach(function(f) { mtimeOf[f.name] = f.mtime; });
+
+  var EXPECTED = [
+    { file: 'top100.csv',                       label: 'Content gap (top 100)' },
+    { file: 'realskincare_organic_keywords.csv', label: 'RSC organic keywords' },
+    { file: 'natural_deodorant.csv',             label: 'Natural deodorant' },
+    { file: 'natural_toothpaste.csv',            label: 'Natural toothpaste' },
+    { file: 'natural_body_lotion.csv',           label: 'Natural body lotion' },
+    { file: 'natural_lip_balm.csv',              label: 'Natural lip balm' },
+    { file: 'natural_bar_soap.csv',              label: 'Natural bar soap' },
+    { file: 'natural_hand_soap.csv',             label: 'Natural hand soap' },
+    { file: 'natural_coconut_oil.csv',           label: 'Natural coconut oil' },
+    { file: 'top_pages_*',                       label: 'Competitor top pages' },
+  ];
+
+  function isPresent(spec) {
+    if (spec.file === 'top_pages_*') return names.some(function(n) { return n.startsWith('top_pages_') && n.endsWith('.csv'); });
+    return names.indexOf(spec.file) !== -1;
   }
-  el.innerHTML = files.map(function(f) {
-    return '<span class="file-tag file-tag-present">&#10003; ' + esc(f.name) + ' &mdash; ' + new Date(f.mtime).toLocaleDateString() + '</span>';
-  }).join(' ');
-  if (runBtn) { runBtn.disabled = false; runBtn.title = ''; }
+
+  function dateStr(spec) {
+    if (spec.file === 'top_pages_*') {
+      var match = uploaded.filter(function(f) { return f.name.startsWith('top_pages_') && f.name.endsWith('.csv'); });
+      if (!match.length) return '';
+      var latest = match.reduce(function(a, b) { return a.mtime > b.mtime ? a : b; });
+      return new Date(latest.mtime).toLocaleDateString();
+    }
+    return mtimeOf[spec.file] ? new Date(mtimeOf[spec.file]).toLocaleDateString() : '';
+  }
+
+  function extraNames(spec) {
+    if (spec.file !== 'top_pages_*') return '';
+    var matches = names.filter(function(n) { return n.startsWith('top_pages_') && n.endsWith('.csv'); });
+    return matches.length ? matches.map(function(n) { return n.replace('top_pages_', '').replace('.csv', ''); }).join(', ') : '';
+  }
+
+  el.innerHTML = EXPECTED.map(function(spec) {
+    var present = isPresent(spec);
+    var extra = extraNames(spec);
+    var right = present
+      ? ('&#10003; ' + dateStr(spec))
+      : '&#8943; awaiting upload';
+    return '<div class="gap-file-row ' + (present ? 'present' : 'missing') + '">' +
+      '<span><span class="gap-file-row-label">' + esc(spec.label) + '</span>' +
+      (extra ? '<span class="gap-file-row-name">(' + esc(extra) + ')</span>' : (spec.file !== 'top_pages_*' ? '<span class="gap-file-row-name">' + esc(spec.file) + '</span>' : '')) +
+      '</span>' +
+      '<span class="gap-file-row-status">' + right + '</span>' +
+      '</div>';
+  }).join('');
+
+  var hasRequired = isPresent({ file: 'top100.csv' }) && isPresent({ file: 'realskincare_organic_keywords.csv' });
+  if (runBtn) {
+    runBtn.disabled = !hasRequired;
+    runBtn.title = hasRequired ? '' : 'top100.csv and realskincare_organic_keywords.csv required';
+  }
 }
 
 function uploadRankSnapshot() {
