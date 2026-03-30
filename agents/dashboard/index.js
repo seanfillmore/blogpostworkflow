@@ -1843,7 +1843,7 @@ function renderDataNeeded(d) {
       '<div class="data-item-header">' +
         '<span class="data-item-keyword">' + esc(item.keyword) + '</span>' +
         '<span class="data-item-date">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
-        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug) + ',' + JSON.stringify(item.keyword) + ')">&#8593; Upload Zip</button>' +
+        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload Zip</button>' +
       '</div>' +
       '<div class="data-item-dir">' + esc(item.dir) + '</div>' +
       '<div class="data-item-files">' + fileTags + '</div>' +
@@ -3343,8 +3343,8 @@ function uploadContentGapZip() {
       headers: { 'Content-Type': 'application/octet-stream' },
       body: file
     }).then(function(r) { return r.json(); }).then(function(json) {
+      if (!json.ok) { if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; } alert('Upload failed: ' + json.error); return; }
       if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Uploaded'; }
-      if (!json.ok) { alert('Upload failed: ' + json.error); return; }
       loadData();
     }).catch(function() {
       if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
