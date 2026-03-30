@@ -197,6 +197,86 @@ function loadCompetitorTopPages() {
   return result;
 }
 
+// ── site performance snapshots ────────────────────────────────────────────────
+
+function loadRecentSnapshots(subdir, days = 30) {
+  const dir = join(ROOT, 'data', 'snapshots', subdir);
+  if (!existsSync(dir)) return [];
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return readdirSync(dir)
+    .filter((f) => f.endsWith('.json') && f.slice(0, 10) >= cutoff.toISOString().slice(0, 10))
+    .sort()
+    .map((f) => { try { return JSON.parse(readFileSync(join(dir, f), 'utf8')); } catch { return null; } })
+    .filter(Boolean);
+}
+
+function loadLatestSnapshot(subdir) {
+  const dir = join(ROOT, 'data', 'snapshots', subdir);
+  if (!existsSync(dir)) return null;
+  const files = readdirSync(dir).filter((f) => f.endsWith('.json')).sort();
+  if (!files.length) return null;
+  try { return JSON.parse(readFileSync(join(dir, files[files.length - 1]), 'utf8')); } catch { return null; }
+}
+
+function loadSitePerformance() {
+  // GSC: aggregate last 30 days of daily snapshots for stable per-page totals
+  const gscSnapshots = loadRecentSnapshots('gsc', 30);
+  const gscTotals = {};
+  for (const snap of gscSnapshots) {
+    for (const p of (snap.topPages || [])) {
+      const path = p.page.replace(/^https?:\/\/[^/]+/, '') || '/';
+      if (!gscTotals[path]) gscTotals[path] = { clicks: 0, impressions: 0, positionSum: 0, positionDays: 0 };
+      gscTotals[path].clicks      += p.clicks;
+      gscTotals[path].impressions += p.impressions;
+      gscTotals[path].positionSum += p.position * p.impressions; // weighted by impressions
+      gscTotals[path].positionDays += p.impressions;
+    }
+  }
+  const gscPages = Object.entries(gscTotals)
+    .map(([path, t]) => ({
+      path,
+      clicks: t.clicks,
+      impressions: t.impressions,
+      ctr: t.impressions ? Math.round(t.clicks / t.impressions * 1000) / 10 : 0,
+      position: t.positionDays ? Math.round(t.positionSum / t.positionDays * 10) / 10 : null,
+    }))
+    .sort((a, b) => b.impressions - a.impressions);
+  const gscDateRange = gscSnapshots.length
+    ? `${gscSnapshots[0].date} to ${gscSnapshots[gscSnapshots.length - 1].date} (${gscSnapshots.length} days)`
+    : null;
+
+  // GA4: aggregate last 30 days of daily snapshots
+  const ga4Snapshots = loadRecentSnapshots('ga4', 30);
+  const ga4Totals = {};
+  for (const snap of ga4Snapshots) {
+    for (const p of (snap.topLandingPages || [])) {
+      if (!ga4Totals[p.page]) ga4Totals[p.page] = { sessions: 0, conversions: 0, revenue: 0 };
+      ga4Totals[p.page].sessions    += p.sessions;
+      ga4Totals[p.page].conversions += p.conversions;
+      ga4Totals[p.page].revenue     += p.revenue;
+    }
+  }
+  const ga4Pages = Object.entries(ga4Totals)
+    .map(([path, t]) => ({ path, sessions: t.sessions, conversions: t.conversions, revenue: Math.round(t.revenue * 100) / 100 }))
+    .sort((a, b) => b.sessions - a.sessions);
+  const ga4DateRange = ga4Snapshots.length
+    ? `${ga4Snapshots[0].date} to ${ga4Snapshots[ga4Snapshots.length - 1].date} (${ga4Snapshots.length} days)`
+    : null;
+
+  // Shopify: top products from latest snapshot
+  const shopify = loadLatestSnapshot('shopify');
+  const topProducts = (shopify?.topProducts || []).slice(0, 10);
+
+  return {
+    gscDateRange,
+    ga4DateRange,
+    gscPages,
+    ga4Pages,
+    topProducts,
+  };
+}
+
 // ── content inventory ─────────────────────────────────────────────────────────
 
 function loadInventory() {
@@ -248,7 +328,7 @@ function isCovered(keyword, articles) {
 
 // ── claude analysis ────────────────────────────────────────────────────────────
 
-async function analyzeGaps({ inventory, contentGap, ownKeywords, categoryKeywords, competitorTopPages }) {
+async function analyzeGaps({ inventory, contentGap, ownKeywords, categoryKeywords, competitorTopPages, sitePerformance }) {
   // Build concise summaries for the prompt
   const inventorySummary = {
     blog_posts: inventory.articles.map((a) => a.title),
@@ -302,6 +382,16 @@ async function analyzeGaps({ inventory, contentGap, ownKeywords, categoryKeyword
     .slice(0, 50)
     .map((k) => `${k.keyword} (#${k.position}, ${k.volume}/mo)`);
 
+  // Pages with high impressions but low CTR — opportunity to update titles/meta
+  const lowCtrPages = (sitePerformance.gscPages || [])
+    .filter((p) => p.impressions >= 100 && p.ctr < 3)
+    .map((p) => `${p.path} — ${p.impressions} impr, ${p.ctr}% CTR, pos ${p.position}`);
+
+  // Pages already getting traction — candidates for cluster content
+  const tractionPages = (sitePerformance.gscPages || [])
+    .filter((p) => p.clicks >= 2)
+    .map((p) => `${p.path} — ${p.clicks} clicks, ${p.impressions} impr, pos ${p.position}`);
+
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 8192,
@@ -318,6 +408,21 @@ Products: ${inventorySummary.products.join(', ')}
 
 ## KEYWORDS RSC ALREADY RANKS FOR (top 50 by volume)
 ${ownTopKeywords.join('\n')}
+
+## SITE PERFORMANCE — GSC TOP PAGES (${sitePerformance.gscDateRange || 'latest snapshot'})
+${sitePerformance.gscPages.map((p) => `${p.path} — ${p.clicks} clicks, ${p.impressions} impr, ${p.ctr}% CTR, pos ${p.position}`).join('\n') || 'No data'}
+
+## PAGES WITH HIGH IMPRESSIONS BUT LOW CTR (title/meta optimization candidates)
+${lowCtrPages.join('\n') || 'None'}
+
+## PAGES ALREADY GETTING TRACTION (cluster content candidates)
+${tractionPages.join('\n') || 'None'}
+
+## GA4 TOP LANDING PAGES BY SESSIONS (${sitePerformance.ga4DateRange || 'latest snapshot'})
+${sitePerformance.ga4Pages.map((p) => `${p.path} — ${p.sessions} sessions, ${p.conversions} conversions`).join('\n') || 'No data'}
+
+## TOP SELLING PRODUCTS (Shopify)
+${sitePerformance.topProducts.map((p) => `${p.title || p.name || JSON.stringify(p)}`).join('\n') || 'No data'}
 
 ## CONTENT GAP: KEYWORDS COMPETITORS RANK FOR (RSC does not rank top 20)
 ${JSON.stringify(gapKeywords, null, 2)}
@@ -351,10 +456,16 @@ Which stages (TOF/MOF/BOF) are underserved? Use actual post titles and keyword d
 ## 4. Quick Wins (top 5)
 KD ≤ 10, Volume ≥ 300. Include exact keyword, volume, KD, and why it's winnable.
 
-## 5. Competitor Insights
+## 5. Cluster Opportunities (based on site traction)
+Which existing posts are gaining impressions or clicks and should have cluster content written around them? What supporting articles would strengthen those topics?
+
+## 6. CTR Optimization Targets
+Which published posts have strong impression counts but low CTR (< 3%)? Suggest specific title or meta description rewrites for the top 3.
+
+## 7. Competitor Insights
 What content strategies are Tom's, Dr. Bronner's, and OSEA using that RSC is not? What topics drive their traffic that RSC ignores?
 
-## 6. Strategic Recommendations
+## 8. Strategic Recommendations
 5 concrete recommendations with the specific keywords to target first.`,
     }],
   });
@@ -415,9 +526,14 @@ async function main() {
   const compNames = Object.keys(competitorTopPages);
   console.log(`done (${compNames.join(', ')})`);
 
+  // Load site performance from snapshots
+  process.stdout.write('  Loading site performance snapshots (GSC, GA4, Shopify)... ');
+  const sitePerformance = loadSitePerformance();
+  console.log(`done (GSC: ${sitePerformance.gscPages.length} pages over ${sitePerformance.gscDateRange || 'n/a'}, GA4: ${sitePerformance.ga4Pages.length} pages)`);
+
   // Run Claude analysis
   console.log('\n  Analyzing gaps with Claude...');
-  const report = await analyzeGaps({ inventory, contentGap, ownKeywords, categoryKeywords, competitorTopPages });
+  const report = await analyzeGaps({ inventory, contentGap, ownKeywords, categoryKeywords, competitorTopPages, sitePerformance });
 
   // Save report
   mkdirSync(join(ROOT, 'data', 'reports', 'content-gap'), { recursive: true });
@@ -425,7 +541,8 @@ async function main() {
   const header = `# Content Gap Analysis — ${config.name}
 **Generated:** ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
 **Site:** ${config.url}
-**Data sources:** ${readdirSync(DATA_DIR).filter((f) => f.endsWith('.csv')).join(', ')}
+**Ahrefs files:** ${readdirSync(DATA_DIR).filter((f) => f.endsWith('.csv')).join(', ')}
+**GSC:** ${sitePerformance.gscDateRange || 'n/a'} | **GA4:** ${sitePerformance.ga4DateRange || 'n/a'}
 
 ---
 
