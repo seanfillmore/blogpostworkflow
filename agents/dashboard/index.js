@@ -3220,7 +3220,7 @@ function showRunBanner(script, tabName, success, logId) {
   var banner = document.createElement('div');
   banner.id = bannerId;
   banner.className = 'run-banner ' + (success ? 'run-banner-success' : 'run-banner-error');
-  var showLog = !success ? ' &mdash; <a href="#" onclick="document.getElementById(&quot;' + logId + '&quot;).style.display=&quot;block&quot;;return false">show log</a>' : '';
+  var showLog = !success ? ' &mdash; <a href="#" onclick="document.getElementById(&quot;' + esc(logId) + '&quot;).style.display=&quot;block&quot;;return false">show log</a>' : '';
   banner.innerHTML = (success ? '&#10003; ' : '&#10007; ') + esc(name) + (success ? ' completed' : ' failed') + showLog +
     '<button class="run-banner-dismiss" onclick="this.parentNode.remove()">&#10005;</button>';
   tabEl.insertBefore(banner, tabEl.firstChild);
@@ -3262,9 +3262,15 @@ function runAgent(script, args, onDone) {
         }
         logEl.scrollTop = logEl.scrollHeight;
         read();
+      }).catch(function() {
+        logEl.style.display = 'none';
+        showRunBanner(script, capturedTab, false, logId);
       });
     }
     read();
+  }).catch(function() {
+    logEl.style.display = 'none';
+    showRunBanner(script, capturedTab, false, logId);
   });
 }
 
