@@ -114,10 +114,9 @@ function parseCalendar() {
   if (!existsSync(CALENDAR_PATH)) return [];
   const md = readFileSync(CALENDAR_PATH, 'utf8');
   const rows = [];
-  const re = /^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
+  const re = /^\|\s*\*{0,2}(\d+)\*{0,2}\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
   for (const m of md.matchAll(re)) {
     const [, week, dateStr, category, keyword, title, kd, volume, contentType, priority] = m;
-    if (week.trim() === 'Week' || week.trim() === '---') continue;
     const dm = dateStr.trim().match(/([A-Za-z]+)\s+(\d+),?\s+(\d{4})/);
     if (!dm) continue;
     const publishDate = new Date(`${dm[1]} ${dm[2]}, ${dm[3]} 08:00:00 GMT-0700`);
@@ -890,6 +889,12 @@ const HTML = `<!DOCTYPE html>
   .run-banner-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
   .run-banner-error { background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; }
   .run-banner-dismiss { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 1rem; color: inherit; padding: 0 0.25rem; line-height: 1; }
+  .gap-file-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 5px; margin-bottom: 0.35rem; font-size: 0.85rem; }
+  .gap-file-row.present { background: #d1fae5; color: #065f46; }
+  .gap-file-row.missing { background: #fee2e2; color: #7f1d1d; }
+  .gap-file-row-label { font-weight: 500; }
+  .gap-file-row-name { font-size: 0.78rem; opacity: 0.75; margin-left: 0.5rem; }
+  .gap-file-row-status { font-size: 0.8rem; white-space: nowrap; }
 
   /* ── Optimize tab ── */
   .kanban-optimize { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
@@ -1067,7 +1072,7 @@ const HTML = `<!DOCTYPE html>
       <h2>⚠ Ahrefs Data Needed <span class="alert-badge" id="data-needed-count">0</span></h2>
       <span class="section-note">Upload these CSV exports before the research agent can run</span>
     </div>
-    <div class="card-body" id="data-needed-body"></div>
+    <div class="card-body" id="data-needed-body" style="max-height:320px;overflow-y:auto"></div>
   </div>
 
   <!-- Rank alert banner -->
@@ -1844,21 +1849,26 @@ function renderDataNeeded(d) {
       (f.present ? '✓ ' : '✗ ') + f.label + '</span>'
     ).join('');
 
-    return '<div class="data-item">' +
-      '<div class="data-item-header">' +
-        '<span class="data-item-keyword">' + esc(item.keyword) + '</span>' +
-        '<span class="data-item-date">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
-        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload Zip</button>' +
+    var statusIcon = (item.hasSerp && item.hasKeywords) ? '&#10003;' : '&#8943;';
+    var statusColor = (item.hasSerp && item.hasKeywords) ? 'color:#065f46' : 'color:#7f1d1d';
+    return '<details style="border-bottom:1px solid var(--border);padding:6px 0">' +
+      '<summary style="list-style:none;display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:4px 2px">' +
+        '<span style="' + statusColor + ';font-size:0.8rem;width:1rem;text-align:center">' + statusIcon + '</span>' +
+        '<span style="flex:1;font-weight:500;font-size:0.85rem">' + esc(item.keyword) + '</span>' +
+        '<span style="font-size:0.78rem;color:var(--muted);margin-right:0.5rem">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
+        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="event.preventDefault();uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload Zip</button>' +
+      '</summary>' +
+      '<div style="padding:8px 4px 4px 1.5rem;font-size:0.82rem">' +
+        '<div style="color:var(--muted);margin-bottom:4px">' + esc(item.dir) + '</div>' +
+        '<div style="margin-bottom:6px">' + fileTags + '</div>' +
+        '<div class="data-instructions">' +
+          'In Ahrefs Keywords Explorer → search "<strong>' + esc(item.keyword) + '</strong>" →<br>' +
+          (!item.hasSerp     ? '&nbsp;• <strong>SERP Overview</strong> tab → Export → save to folder above<br>' : '') +
+          (!item.hasKeywords ? '&nbsp;• <strong>Matching Terms</strong> tab → Export (vol ≥100, KD ≤40) → save to folder above<br>' : '') +
+          (!item.hasHistory  ? '&nbsp;• <em>Optional:</em> Overview → Volume History chart → Export → save to folder above<br>' : '') +
+        '</div>' +
       '</div>' +
-      '<div class="data-item-dir">' + esc(item.dir) + '</div>' +
-      '<div class="data-item-files">' + fileTags + '</div>' +
-      '<div class="data-instructions">' +
-        'In Ahrefs Keywords Explorer → search "<strong>' + esc(item.keyword) + '</strong>" →<br>' +
-        (!item.hasSerp     ? '&nbsp;• <strong>SERP Overview</strong> tab → Export → save to folder above<br>' : '') +
-        (!item.hasKeywords ? '&nbsp;• <strong>Matching Terms</strong> tab → Export (vol ≥100, KD ≤40) → save to folder above<br>' : '') +
-        (!item.hasHistory  ? '&nbsp;• <em>Optional:</em> Overview → Volume History chart → Export → save to folder above<br>' : '') +
-      '</div>' +
-    '</div>';
+    '</details>';
   }).join('');
 }
 
@@ -3409,19 +3419,68 @@ function runGapAnalysis() {
 }
 
 function renderContentGapCard(d) {
-  var files = d.contentGapFiles || [];
+  var uploaded = d.contentGapFiles || [];
   var el = document.getElementById('content-gap-files');
   var runBtn = document.getElementById('content-gap-run-btn');
   if (!el) return;
-  if (!files.length) {
-    el.innerHTML = '<span class="file-tag file-tag-missing">No CSV files found in data/content_gap/ &mdash; upload a zip first</span>';
-    if (runBtn) { runBtn.disabled = true; runBtn.title = 'Upload CSV files first'; }
-    return;
+
+  var names = uploaded.map(function(f) { return f.name; });
+  var mtimeOf = {};
+  uploaded.forEach(function(f) { mtimeOf[f.name] = f.mtime; });
+
+  var EXPECTED = [
+    { file: 'top100.csv',                       label: 'Content gap (top 100)' },
+    { file: 'realskincare_organic_keywords.csv', label: 'RSC organic keywords' },
+    { file: 'natural_deodorant.csv',             label: 'Natural deodorant' },
+    { file: 'natural_toothpaste.csv',            label: 'Natural toothpaste' },
+    { file: 'natural_body_lotion.csv',           label: 'Natural body lotion' },
+    { file: 'natural_lip_balm.csv',              label: 'Natural lip balm' },
+    { file: 'natural_bar_soap.csv',              label: 'Natural bar soap' },
+    { file: 'natural_hand_soap.csv',             label: 'Natural hand soap' },
+    { file: 'natural_coconut_oil.csv',           label: 'Natural coconut oil' },
+    { file: 'top_pages_*',                       label: 'Competitor top pages' },
+  ];
+
+  function isPresent(spec) {
+    if (spec.file === 'top_pages_*') return names.some(function(n) { return n.startsWith('top_pages_') && n.endsWith('.csv'); });
+    return names.indexOf(spec.file) !== -1;
   }
-  el.innerHTML = files.map(function(f) {
-    return '<span class="file-tag file-tag-present">&#10003; ' + esc(f.name) + ' &mdash; ' + new Date(f.mtime).toLocaleDateString() + '</span>';
-  }).join(' ');
-  if (runBtn) { runBtn.disabled = false; runBtn.title = ''; }
+
+  function dateStr(spec) {
+    if (spec.file === 'top_pages_*') {
+      var match = uploaded.filter(function(f) { return f.name.startsWith('top_pages_') && f.name.endsWith('.csv'); });
+      if (!match.length) return '';
+      var latest = match.reduce(function(a, b) { return a.mtime > b.mtime ? a : b; });
+      return new Date(latest.mtime).toLocaleDateString();
+    }
+    return mtimeOf[spec.file] ? new Date(mtimeOf[spec.file]).toLocaleDateString() : '';
+  }
+
+  function extraNames(spec) {
+    if (spec.file !== 'top_pages_*') return '';
+    var matches = names.filter(function(n) { return n.startsWith('top_pages_') && n.endsWith('.csv'); });
+    return matches.length ? matches.map(function(n) { return n.replace('top_pages_', '').replace('.csv', ''); }).join(', ') : '';
+  }
+
+  el.innerHTML = EXPECTED.map(function(spec) {
+    var present = isPresent(spec);
+    var extra = extraNames(spec);
+    var right = present
+      ? ('&#10003; ' + dateStr(spec))
+      : '&#8943; awaiting upload';
+    return '<div class="gap-file-row ' + (present ? 'present' : 'missing') + '">' +
+      '<span><span class="gap-file-row-label">' + esc(spec.label) + '</span>' +
+      (extra ? '<span class="gap-file-row-name">(' + esc(extra) + ')</span>' : (spec.file !== 'top_pages_*' ? '<span class="gap-file-row-name">' + esc(spec.file) + '</span>' : '')) +
+      '</span>' +
+      '<span class="gap-file-row-status">' + right + '</span>' +
+      '</div>';
+  }).join('');
+
+  var hasRequired = isPresent({ file: 'top100.csv' }) && isPresent({ file: 'realskincare_organic_keywords.csv' });
+  if (runBtn) {
+    runBtn.disabled = !hasRequired;
+    runBtn.title = hasRequired ? '' : 'top100.csv and realskincare_organic_keywords.csv required';
+  }
 }
 
 function uploadRankSnapshot() {
