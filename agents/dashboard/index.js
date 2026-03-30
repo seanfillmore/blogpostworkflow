@@ -3755,7 +3755,7 @@ const server = http.createServer((req, res) => {
       const send = line => res.write(`data: ${line}\n\n`);
       child.stdout.on('data', d => String(d).split('\n').filter(Boolean).forEach(send));
       child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => send(`[stderr] ${l}`)));
-      child.on('close', code => { res.write(`event: done\ndata: ${JSON.stringify({ code })}\n\n`); res.end(); });
+      child.on('close', code => { res.write(`data: __exit__:${JSON.stringify({ code })}\n\n`); res.end(); });
     });
     return;
   }
