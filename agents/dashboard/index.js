@@ -1068,7 +1068,7 @@ const HTML = `<!DOCTYPE html>
       <h2>⚠ Ahrefs Data Needed <span class="alert-badge" id="data-needed-count">0</span></h2>
       <span class="section-note">Upload these CSV exports before the research agent can run</span>
     </div>
-    <div class="card-body" id="data-needed-body"></div>
+    <div class="card-body" id="data-needed-body" style="max-height:320px;overflow-y:auto"></div>
   </div>
 
   <!-- Rank alert banner -->
@@ -1845,21 +1845,26 @@ function renderDataNeeded(d) {
       (f.present ? '✓ ' : '✗ ') + f.label + '</span>'
     ).join('');
 
-    return '<div class="data-item">' +
-      '<div class="data-item-header">' +
-        '<span class="data-item-keyword">' + esc(item.keyword) + '</span>' +
-        '<span class="data-item-date">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
-        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload Zip</button>' +
+    var statusIcon = (item.hasSerp && item.hasKeywords) ? '&#10003;' : '&#8943;';
+    var statusColor = (item.hasSerp && item.hasKeywords) ? 'color:#065f46' : 'color:#7f1d1d';
+    return '<details style="border-bottom:1px solid var(--border);padding:6px 0">' +
+      '<summary style="list-style:none;display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:4px 2px">' +
+        '<span style="' + statusColor + ';font-size:0.8rem;width:1rem;text-align:center">' + statusIcon + '</span>' +
+        '<span style="flex:1;font-weight:500;font-size:0.85rem">' + esc(item.keyword) + '</span>' +
+        '<span style="font-size:0.78rem;color:var(--muted);margin-right:0.5rem">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
+        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="event.preventDefault();uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload Zip</button>' +
+      '</summary>' +
+      '<div style="padding:8px 4px 4px 1.5rem;font-size:0.82rem">' +
+        '<div style="color:var(--muted);margin-bottom:4px">' + esc(item.dir) + '</div>' +
+        '<div style="margin-bottom:6px">' + fileTags + '</div>' +
+        '<div class="data-instructions">' +
+          'In Ahrefs Keywords Explorer → search "<strong>' + esc(item.keyword) + '</strong>" →<br>' +
+          (!item.hasSerp     ? '&nbsp;• <strong>SERP Overview</strong> tab → Export → save to folder above<br>' : '') +
+          (!item.hasKeywords ? '&nbsp;• <strong>Matching Terms</strong> tab → Export (vol ≥100, KD ≤40) → save to folder above<br>' : '') +
+          (!item.hasHistory  ? '&nbsp;• <em>Optional:</em> Overview → Volume History chart → Export → save to folder above<br>' : '') +
+        '</div>' +
       '</div>' +
-      '<div class="data-item-dir">' + esc(item.dir) + '</div>' +
-      '<div class="data-item-files">' + fileTags + '</div>' +
-      '<div class="data-instructions">' +
-        'In Ahrefs Keywords Explorer → search "<strong>' + esc(item.keyword) + '</strong>" →<br>' +
-        (!item.hasSerp     ? '&nbsp;• <strong>SERP Overview</strong> tab → Export → save to folder above<br>' : '') +
-        (!item.hasKeywords ? '&nbsp;• <strong>Matching Terms</strong> tab → Export (vol ≥100, KD ≤40) → save to folder above<br>' : '') +
-        (!item.hasHistory  ? '&nbsp;• <em>Optional:</em> Overview → Volume History chart → Export → save to folder above<br>' : '') +
-      '</div>' +
-    '</div>';
+    '</details>';
   }).join('');
 }
 
