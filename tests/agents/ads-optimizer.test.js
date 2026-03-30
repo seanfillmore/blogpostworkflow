@@ -80,12 +80,18 @@ writeFileSync(join(tmpDir, `${oldDate}.json`), JSON.stringify({
   suggestions: [{ id: 's4', type: 'keyword_pause', target: 'old keyword', status: 'rejected', rationale: 'Old.' }],
 }));
 
+// Write a corrupted file — should be silently skipped
+writeFileSync(join(tmpDir, `${today.slice(0, 7)}-15.json`), 'not valid json');
+
 const history = loadRecentHistory(tmpDir, 30);
 
 // Only returns non-pending suggestions within the 30-day window
 assert.equal(history.length, 2, 'must return only non-pending suggestions within 30 days');
 assert.ok(history.every(h => h.status !== 'pending'), 'must not include pending suggestions');
 assert.ok(history.every(h => h.date === today), 'must not include suggestions outside 30-day window');
+
+// Corrupted file must be silently skipped — valid entries still returned
+assert.equal(history.length, 2, 'corrupted file must be silently skipped');
 
 // History items have required shape
 const h = history[0];
