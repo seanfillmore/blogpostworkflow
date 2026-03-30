@@ -101,7 +101,10 @@ const RUN_AGENT_ALLOWLIST = new Set([
   'agents/cro-deep-dive-content/index.js',
   'agents/cro-deep-dive-seo/index.js',
   'agents/cro-deep-dive-trust/index.js',
-
+  'agents/content-researcher/index.js',
+  'agents/content-strategist/index.js',
+  'agents/pipeline-scheduler/index.js',
+  'agents/cro-cta-injector/index.js',
 ]);
 
 // ── calendar parsing ───────────────────────────────────────────────────────────
