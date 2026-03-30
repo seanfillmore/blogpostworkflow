@@ -305,6 +305,7 @@ function parseCROData() {
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
 
 const AHREFS_DIR      = join(ROOT, 'data', 'ahrefs');
+const CONTENT_GAP_DIR = join(ROOT, 'data', 'content_gap');
 const RANK_ALERTS_DIR = join(ROOT, 'data', 'reports', 'rank-alerts');
 const ALERTS_VIEWED   = join(RANK_ALERTS_DIR, '.last-viewed');
 
@@ -609,6 +610,15 @@ function aggregateData() {
   }
 
   const cro = parseCROData();
+
+  const contentGapFiles = existsSync(CONTENT_GAP_DIR)
+    ? readdirSync(CONTENT_GAP_DIR)
+        .filter(f => f.endsWith('.csv'))
+        .map(f => { try { return { name: f, mtime: statSync(join(CONTENT_GAP_DIR, f)).mtimeMs }; } catch { return null; } })
+        .filter(Boolean)
+        .sort((a, b) => a.name.localeCompare(b.name))
+    : [];
+
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -624,6 +634,7 @@ function aggregateData() {
     rankAlert,
     metaTests,
     briefs,
+    contentGapFiles,
   };
 }
 
@@ -1086,11 +1097,20 @@ const HTML = `<!DOCTYPE html>
     <div class="card-header"><h2>Search Console</h2><span class="section-note" id="gsc-seo-note"></span></div>
     <div class="card-body" id="gsc-seo-body"><p class="empty-state">Loading...</p></div>
   </div>
+
+  <!-- Content Gap Data -->
+  <div class="card" id="content-gap-card">
+    <div class="card-header accent-indigo"><h2>Content Gap Data</h2><div class="card-header-right"><span class="section-note">Ahrefs content gap CSV export</span><button id="content-gap-upload-btn" class="upload-btn" onclick="uploadContentGapZip()">&#8593; Upload Zip</button><button id="content-gap-run-btn" class="upload-btn" onclick="runGapAnalysis()">Run Gap Analysis</button></div></div>
+    <div class="card-body" id="content-gap-files"><p class="empty-state">Loading...</p></div>
+  </div>
+
   <pre id="run-log-agents-rank-tracker-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-content-gap-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-gsc-query-miner-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-sitemap-indexer-index-js" class="run-log" style="display:none"></pre>
   <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-researcher-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-strategist-index-js" class="run-log" style="display:none"></pre>
 </div><!-- /tab-seo -->
 <div id="tab-cro" class="tab-panel">
   <div id="cro-kpi-strip" style="display:none"></div>
@@ -1823,6 +1843,7 @@ function renderDataNeeded(d) {
       '<div class="data-item-header">' +
         '<span class="data-item-keyword">' + esc(item.keyword) + '</span>' +
         '<span class="data-item-date">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
+        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload Zip</button>' +
       '</div>' +
       '<div class="data-item-dir">' + esc(item.dir) + '</div>' +
       '<div class="data-item-files">' + fileTags + '</div>' +
@@ -2911,6 +2932,7 @@ async function loadData() {
     renderRankings(data);
     renderPosts(data);
     renderGSCSEOPanel(data);
+    renderContentGapCard(data);
     renderCROTab(data);
     renderAdsTab(data);
     loadCampaignCards();
@@ -3268,6 +3290,88 @@ async function saveAhrefsOverview() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
   }
+}
+
+function uploadKeywordZip(slug, keyword) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.zip';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = function() {
+    document.body.removeChild(input);
+    var file = input.files[0];
+    if (!file) return;
+    var btn = document.getElementById('kw-zip-btn-' + slug);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+    fetch('/upload/ahrefs-keyword-zip', {
+      method: 'POST',
+      headers: { 'X-Slug': slug, 'Content-Type': 'application/octet-stream' },
+      body: file
+    }).then(function(r) { return r.json(); }).then(function(json) {
+      if (!json.ok) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
+        alert('Upload failed: ' + json.error);
+        return;
+      }
+      if (btn) btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>';
+      runAgent('agents/content-researcher/index.js', [keyword], function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Brief created'; }
+        loadData();
+      });
+    }).catch(function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
+    });
+  };
+  input.click();
+}
+
+function uploadContentGapZip() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.zip';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = function() {
+    document.body.removeChild(input);
+    var file = input.files[0];
+    if (!file) return;
+    var btn = document.getElementById('content-gap-upload-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+    fetch('/upload/content-gap-zip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file
+    }).then(function(r) { return r.json(); }).then(function(json) {
+      if (!json.ok) { if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; } alert('Upload failed: ' + json.error); return; }
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Uploaded'; }
+      loadData();
+    }).catch(function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
+    });
+  };
+  input.click();
+}
+
+function runGapAnalysis() {
+  var btn = document.getElementById('content-gap-run-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
+  runAgent('agents/content-gap/index.js', [], function() {
+    runAgent('agents/content-strategist/index.js', [], function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Done'; }
+      loadData();
+    });
+  });
+}
+
+function renderContentGapCard(d) {
+  var files = d.contentGapFiles || [];
+  var el = document.getElementById('content-gap-files');
+  if (!el) return;
+  if (!files.length) { el.innerHTML = '<span class="file-tag file-tag-missing">No CSV files found in data/content_gap/</span>'; return; }
+  el.innerHTML = files.map(function(f) {
+    return '<span class="file-tag file-tag-present">&#10003; ' + esc(f.name) + ' &mdash; ' + new Date(f.mtime).toLocaleDateString() + '</span>';
+  }).join(' ');
 }
 
 function uploadRankSnapshot() {
@@ -3696,6 +3800,63 @@ const server = http.createServer((req, res) => {
       writeFileSync(join(KEYWORD_TRACKER_DIR, filename), Buffer.concat(chunks));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, filename }));
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/upload/ahrefs-keyword-zip') {
+    if (!checkAuth(req, res)) return;
+    const slug = (req.headers['x-slug'] || '').replace(/[^a-z0-9-]/g, '');
+    if (!slug) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Missing or invalid X-Slug header' }));
+      return;
+    }
+    const chunks = [];
+    req.on('data', d => chunks.push(d));
+    req.on('end', async () => {
+      const destDir = join(AHREFS_DIR, slug);
+      const tmpZip  = join(destDir, '.upload.zip');
+      try {
+        mkdirSync(destDir, { recursive: true });
+        writeFileSync(tmpZip, Buffer.concat(chunks));
+        const extract = (await import('extract-zip')).default;
+        await extract(tmpZip, { dir: destDir });
+        const { unlinkSync } = await import('node:fs');
+        unlinkSync(tmpZip);
+        const files = readdirSync(destDir).filter(f => !f.startsWith('.'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, slug, files }));
+      } catch (err) {
+        try { const { unlinkSync } = await import('node:fs'); unlinkSync(tmpZip); } catch {}
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/upload/content-gap-zip') {
+    if (!checkAuth(req, res)) return;
+    const chunks = [];
+    req.on('data', d => chunks.push(d));
+    req.on('end', async () => {
+      const tmpZip = join(CONTENT_GAP_DIR, '.upload.zip');
+      try {
+        mkdirSync(CONTENT_GAP_DIR, { recursive: true });
+        writeFileSync(tmpZip, Buffer.concat(chunks));
+        const extract = (await import('extract-zip')).default;
+        await extract(tmpZip, { dir: CONTENT_GAP_DIR });
+        const { unlinkSync } = await import('node:fs');
+        unlinkSync(tmpZip);
+        const files = readdirSync(CONTENT_GAP_DIR).filter(f => f.endsWith('.csv'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, files }));
+      } catch (err) {
+        try { const { unlinkSync } = await import('node:fs'); unlinkSync(tmpZip); } catch {}
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
     });
     return;
   }
