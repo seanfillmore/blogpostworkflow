@@ -73,12 +73,17 @@ async function main() {
   const now = new Date();
   const horizon = new Date(now.getTime() + 14 * 86400000);
 
-  // Find keywords due within 14 days with no brief
-  const due = rows.filter(r =>
-    r.publishDate >= now &&
-    r.publishDate <= horizon &&
-    !existsSync(join(BRIEFS_DIR, `${r.slug}.json`))
-  );
+  // Find keywords due within 14 days with no brief and not rejected
+  const rejections = loadRejections();
+  const due = rows.filter(r => {
+    if (r.publishDate < now || r.publishDate > horizon) return false;
+    if (existsSync(join(BRIEFS_DIR, `${r.slug}.json`))) return false;
+    if (isRejected(r.keyword, rejections)) {
+      console.log(`  [SKIP] Rejected keyword: "${r.keyword}"`);
+      return false;
+    }
+    return true;
+  });
 
   if (!due.length) {
     console.log('No briefs needed in the next 14 days.');
