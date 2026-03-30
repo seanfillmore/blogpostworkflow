@@ -114,10 +114,9 @@ function parseCalendar() {
   if (!existsSync(CALENDAR_PATH)) return [];
   const md = readFileSync(CALENDAR_PATH, 'utf8');
   const rows = [];
-  const re = /^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
+  const re = /^\|\s*\*{0,2}(\d+)\*{0,2}\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
   for (const m of md.matchAll(re)) {
     const [, week, dateStr, category, keyword, title, kd, volume, contentType, priority] = m;
-    if (week.trim() === 'Week' || week.trim() === '---') continue;
     const dm = dateStr.trim().match(/([A-Za-z]+)\s+(\d+),?\s+(\d{4})/);
     if (!dm) continue;
     const publishDate = new Date(`${dm[1]} ${dm[2]}, ${dm[3]} 08:00:00 GMT-0700`);
