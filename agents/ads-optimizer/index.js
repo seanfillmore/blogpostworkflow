@@ -212,7 +212,7 @@ If you have no suggestions with strong evidence, return { "analysisNotes": "..."
 
 When Previous Recommendation History is provided:
 - Do NOT re-recommend items with status "applied" — they have already been executed.
-- Do NOT re-recommend items with status "approved" that have no newer "applied" entry — they are awaiting action.
+- Do NOT re-recommend items with status "approved" — they are already queued for action.
 - DO re-recommend items with status "rejected" if the underlying data still supports the suggestion. In the rationale, cite the prior rejection: e.g. "Previously recommended YYYY-MM-DD, rejected — keyword continues to waste spend with X clicks and 0 conversions."`;
 
   // Summarize active campaign state for the prompt so Claude does not suggest
