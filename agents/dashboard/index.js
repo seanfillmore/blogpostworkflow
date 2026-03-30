@@ -614,7 +614,8 @@ function aggregateData() {
   const contentGapFiles = existsSync(CONTENT_GAP_DIR)
     ? readdirSync(CONTENT_GAP_DIR)
         .filter(f => f.endsWith('.csv'))
-        .map(f => ({ name: f, mtime: statSync(join(CONTENT_GAP_DIR, f)).mtimeMs }))
+        .map(f => { try { return { name: f, mtime: statSync(join(CONTENT_GAP_DIR, f)).mtimeMs }; } catch { return null; } })
+        .filter(Boolean)
         .sort((a, b) => a.name.localeCompare(b.name))
     : [];
 
