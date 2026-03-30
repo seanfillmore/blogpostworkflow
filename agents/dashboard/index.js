@@ -304,6 +304,23 @@ function parseCROData() {
   return { clarityAll, shopifyAll, gscAll, ga4All, brief, googleAdsAll };
 }
 
+// ── rejection helpers (server-side) ───────────────────────────────────────────
+
+function loadRejections() {
+  const p = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(p)) return [];
+  try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return []; }
+}
+
+function isRejectedKw(keyword, rejections) {
+  const kw = keyword.toLowerCase();
+  return rejections.some(r => {
+    const term = r.keyword.toLowerCase();
+    if (r.matchType === 'exact') return kwToSlug(keyword) === kwToSlug(r.keyword);
+    return kw.includes(term);
+  });
+}
+
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
 
 const AHREFS_DIR      = join(ROOT, 'data', 'ahrefs');
@@ -331,11 +348,13 @@ function checkAhrefsData(keyword) {
 
 function getPendingAhrefsData(calItems) {
   const pending = [];
+  const rejections = loadRejections();
   for (const item of calItems) {
     const slug     = item.slug;
     const hasBrief = existsSync(join(BRIEFS_DIR, `${slug}.json`));
     const hasPost  = existsSync(join(POSTS_DIR,  `${slug}.html`));
     if (hasBrief || hasPost) continue; // already past research stage
+    if (isRejectedKw(item.keyword, rejections)) continue; // rejected by user
 
     const status = checkAhrefsData(item.keyword);
     if (!status.ready) {
