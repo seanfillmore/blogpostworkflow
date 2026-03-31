@@ -3337,7 +3337,7 @@ async function openProductImageModal() {
       return p.images.map(function(imgPath) {
         var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
         var border = selected ? '3px solid #6c5ce7' : '2px solid var(--border)';
-        return '<div onclick="selectProductImage(\'' + esc(p.handle) + '\',\'' + esc(imgPath) + '\',this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
+        return '<div onclick="selectProductImage(&apos;' + esc(p.handle) + '&apos;,&apos;' + esc(imgPath) + '&apos;,this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
           '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;aspect-ratio:1;object-fit:cover" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
           '<div style="padding:0.25rem 0.4rem;font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.title || p.handle) + '</div>' +
           '</div>';
@@ -3400,8 +3400,8 @@ function renderTemplateList() {
         '<div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(t.name) + '</div>' +
         (t.prompt ? '<div style="font-size:0.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(t.prompt.slice(0, 60)) + '</div>' : '') +
       '</div>' +
-      '<button onclick="editTemplate(\'' + esc(t.id) + '\')" style="padding:0.25rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;cursor:pointer;background:var(--surface)">Edit</button>' +
-      '<button onclick="deleteTemplate(\'' + esc(t.id) + '\')" style="padding:0.25rem 0.6rem;border:1px solid #fca5a5;border-radius:5px;font-size:0.78rem;cursor:pointer;background:#fff5f5;color:#dc2626">Delete</button>' +
+      '<button onclick="editTemplate(&apos;' + esc(t.id) + '&apos;)" style="padding:0.25rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;cursor:pointer;background:var(--surface)">Edit</button>' +
+      '<button onclick="deleteTemplate(&apos;' + esc(t.id) + '&apos;)" style="padding:0.25rem 0.6rem;border:1px solid #fca5a5;border-radius:5px;font-size:0.78rem;cursor:pointer;background:#fff5f5;color:#dc2626">Delete</button>' +
       '</div>';
   }).join('');
 }
