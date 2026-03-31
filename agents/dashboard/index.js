@@ -1281,7 +1281,10 @@ const HTML = `<!DOCTYPE html>
         </div>
       </div>
       <!-- Generate button -->
-      <button onclick="generateCreativeImage()" style="padding:0.65rem;background:#6c5ce7;color:white;border:none;border-radius:7px;font-size:0.95rem;font-weight:700;cursor:pointer;width:100%;margin-top:auto">Generate Image</button>
+      <div style="display:flex;gap:0.5rem;margin-top:auto">
+        <button onclick="generateCreativeImage()" style="padding:0.65rem;background:#6c5ce7;color:white;border:none;border-radius:7px;font-size:0.95rem;font-weight:700;cursor:pointer;flex:1">Generate Image</button>
+        <button onclick="clearCreativesForm()" style="padding:0.65rem 0.75rem;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:7px;font-size:0.82rem;cursor:pointer;white-space:nowrap" title="Clear all prompts and references">Clear</button>
+      </div>
     </div>
     <!-- RIGHT PANEL -->
     <div id="creatives-right-panel" style="overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--bg);position:relative">
@@ -3251,6 +3254,19 @@ async function editSessionName() {
   } catch (e) {
     showCreativesError('Rename failed: ' + e.message);
   }
+}
+
+function clearCreativesForm() {
+  var promptEl = document.getElementById('creatives-prompt');
+  var negEl = document.getElementById('creatives-negative-prompt');
+  if (promptEl) promptEl.value = '';
+  if (negEl) negEl.value = '';
+  creativesState.referenceImages = [];
+  renderCreativesRefImages();
+  updateProductContext();
+  var templateSel = document.getElementById('creatives-template-select');
+  if (templateSel) templateSel.value = '';
+  setAspectRatio('1:1', document.querySelector('.ar-btn[data-ar="1:1"]'));
 }
 
 async function createNewCreativesSession() {
