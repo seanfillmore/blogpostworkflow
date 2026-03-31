@@ -1306,7 +1306,7 @@ const HTML = `<!DOCTYPE html>
           <div style="font-size:0.9rem">Generated image will appear here</div>
         </div>
         <!-- Compare mode container -->
-        <div id="creatives-compare-wrap" style="display:none;width:100%;padding:0.75rem;gap:0.75rem;display:none"></div>
+        <div id="creatives-compare-wrap" style="display:none;width:100%;padding:0.75rem;gap:0.75rem;flex-wrap:wrap;align-items:flex-start"></div>
       </div>
       <!-- Refinement row -->
       <div style="display:flex;gap:0.5rem;align-items:stretch">
@@ -3265,22 +3265,17 @@ function toggleProductContext() {
 function toggleCompareMode() {
   creativesState.compareMode = !creativesState.compareMode;
   var btn = document.getElementById('compare-btn');
+  var compareWrap = document.getElementById('creatives-compare-wrap');
+  var img = document.getElementById('creatives-current-img');
+  var placeholder = document.getElementById('creatives-img-placeholder');
   if (creativesState.compareMode) {
-    if (btn) btn.style.background = '#6c5ce7', btn.style.color = 'white';
-    var compareWrap = document.getElementById('creatives-compare-wrap');
-    var img = document.getElementById('creatives-current-img');
-    if (compareWrap) compareWrap.style.display = 'flex';
+    if (btn) { btn.style.background = '#6c5ce7'; btn.style.color = 'white'; }
+    if (compareWrap) { compareWrap.style.display = 'flex'; compareWrap.innerHTML = '<div style="flex:1;text-align:center;color:var(--muted);font-size:0.85rem;padding:2rem">Select two versions from the filmstrip below to compare</div>'; }
     if (img) img.style.display = 'none';
-    compareWrap.innerHTML = '<div style="flex:1;text-align:center;color:var(--muted);font-size:0.85rem;padding:1rem">Click a version in the filmstrip to select for comparison</div>';
-    creativesState.compareVersions = creativesState.currentVersion ? [creativesState.currentVersion] : [];
-  } else {
-    if (btn) btn.style.background = '', btn.style.color = '';
+    if (placeholder) placeholder.style.display = 'none';
     creativesState.compareVersions = [];
-    var compareWrap = document.getElementById('creatives-compare-wrap');
-    if (compareWrap) compareWrap.style.display = 'none';
-    if (creativesState.currentVersion) {
-      showCreativeImage(creativesState.currentVersion.imagePath, creativesState.currentVersion);
-    }
+  } else {
+    exitCompareMode();
   }
 }
 
@@ -3309,9 +3304,12 @@ function exitCompareMode() {
   creativesState.compareMode = false;
   creativesState.compareVersions = [];
   var btn = document.getElementById('compare-btn');
-  if (btn) btn.style.background = '', btn.style.color = '';
+  if (btn) { btn.style.background = ''; btn.style.color = ''; }
   var compareWrap = document.getElementById('creatives-compare-wrap');
-  if (compareWrap) compareWrap.style.display = 'none';
+  if (compareWrap) { compareWrap.style.display = 'none'; compareWrap.innerHTML = ''; }
+  if (creativesState.currentImagePath) {
+    showCreativeImage(creativesState.currentImagePath, creativesState.currentVersion);
+  }
 }
 
 function useCompareVersion(version) {
