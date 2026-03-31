@@ -1203,7 +1203,7 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-agents-cro-deep-dive-seo-index-js" style="display:none" class="run-log"></pre>
   <pre id="run-log-agents-cro-deep-dive-trust-index-js" style="display:none" class="run-log"></pre>
 </div><!-- /tab-cro -->
-<div id="tab-creatives" class="tab-panel" style="display:none">
+<div id="tab-creatives" class="tab-panel">
   <!-- Top bar -->
   <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap">
     <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap">Model</label>
