@@ -3321,38 +3321,39 @@ function toggleProductContext() {
 function toggleCompareMode() {
   creativesState.compareMode = !creativesState.compareMode;
   var btn = document.getElementById('compare-btn');
-  var compareWrap = document.getElementById('creatives-compare-wrap');
-  var img = document.getElementById('creatives-current-img');
-  var placeholder = document.getElementById('creatives-img-placeholder');
   if (creativesState.compareMode) {
     if (btn) { btn.style.background = '#6c5ce7'; btn.style.color = 'white'; }
-    if (compareWrap) { compareWrap.style.display = 'flex'; compareWrap.innerHTML = '<div style="flex:1;text-align:center;color:var(--muted);font-size:0.85rem;padding:2rem">Select two versions from the filmstrip below to compare</div>'; }
-    if (img) img.style.display = 'none';
-    if (placeholder) placeholder.style.display = 'none';
     creativesState.compareVersions = [];
+    // Open lightbox with instructions
+    var modal = document.getElementById('compare-lightbox');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.getElementById('compare-lightbox-body').innerHTML = '<div style="color:rgba(255,255,255,0.6);font-size:1rem;padding:3rem;text-align:center">Select two versions from the filmstrip below</div>';
+    }
   } else {
     exitCompareMode();
   }
 }
 
 function renderCompareView() {
-  var wrap = document.getElementById('creatives-compare-wrap');
-  if (!wrap) return;
+  var body = document.getElementById('compare-lightbox-body');
+  if (!body) return;
   var versions = creativesState.compareVersions;
-  if (!versions || versions.length === 0) {
-    wrap.innerHTML = '<div style="flex:1;text-align:center;color:var(--muted);font-size:0.85rem;padding:1rem">Click a version in the filmstrip to select for comparison</div>';
-    return;
-  }
-  var versionsHtml = versions.map(function(v) {
-    return '<div style="flex:1;display:flex;flex-direction:column;gap:0.5rem;min-width:0">' +
-      '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:100%;border-radius:8px;object-fit:contain;max-height:400px">' +
-      '<div style="font-size:0.78rem;color:var(--muted);text-align:center">' + esc(v.prompt ? v.prompt.slice(0, 80) : 'v' + (v.versionNumber || '?')) + '</div>' +
-      '<button onclick="useCompareVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="padding:0.3rem 0.75rem;background:#6c5ce7;color:white;border:none;border-radius:5px;font-size:0.8rem;cursor:pointer;font-weight:600">Use This Version</button>' +
+  if (!versions || versions.length < 2) return;
+  var makePanel = function(v) {
+    var label = v.favorite ? '\\u2605 Version ' + (v.version || '?') : 'Version ' + (v.version || '?');
+    var promptText = v.refinement ? 'Refinement: ' + v.refinement : (v.prompt ? v.prompt.slice(0, 120) + '...' : '');
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.75rem;min-width:0;max-width:50%">' +
+      '<div style="font-size:0.9rem;font-weight:600;color:white">' + label + '</div>' +
+      '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="max-width:100%;max-height:65vh;border-radius:8px;object-fit:contain">' +
+      '<div style="font-size:0.75rem;color:rgba(255,255,255,0.5);text-align:center;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(promptText) + '</div>' +
+      '<button onclick="useCompareVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="padding:0.4rem 1rem;background:#6c5ce7;color:white;border:none;border-radius:6px;font-size:0.82rem;cursor:pointer;font-weight:600">Use This Version</button>' +
       '</div>';
-  }).join('<div style="width:1px;background:var(--border);flex-shrink:0"></div>');
-  wrap.innerHTML = versionsHtml +
-    '<div style="width:100%;display:flex;justify-content:center;padding-top:0.75rem;border-top:1px solid var(--border);margin-top:0.5rem">' +
-    '<button onclick="exitCompareMode()" style="padding:0.4rem 1.2rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem;cursor:pointer;font-weight:600">Exit Compare</button>' +
+  };
+  body.innerHTML = '<div style="display:flex;gap:2rem;align-items:flex-start;justify-content:center;width:100%;max-width:95vw;padding:1rem">' +
+    makePanel(versions[0]) +
+    '<div style="width:1px;background:rgba(255,255,255,0.15);align-self:stretch;flex-shrink:0"></div>' +
+    makePanel(versions[1]) +
     '</div>';
 }
 
@@ -3361,11 +3362,8 @@ function exitCompareMode() {
   creativesState.compareVersions = [];
   var btn = document.getElementById('compare-btn');
   if (btn) { btn.style.background = ''; btn.style.color = ''; }
-  var compareWrap = document.getElementById('creatives-compare-wrap');
-  if (compareWrap) { compareWrap.style.display = 'none'; compareWrap.innerHTML = ''; }
-  if (creativesState.currentImagePath) {
-    showCreativeImage(creativesState.currentImagePath, creativesState.currentVersion);
-  }
+  var modal = document.getElementById('compare-lightbox');
+  if (modal) { modal.style.display = 'none'; }
 }
 
 function useCompareVersion(version) {
@@ -5067,6 +5065,14 @@ async function resolveAlert(campaignId, alertType) {
 <div id="image-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1100;align-items:center;justify-content:center;cursor:pointer" onclick="closeImageLightbox()">
   <button onclick="closeImageLightbox()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:white;font-size:28px;cursor:pointer;z-index:1101">&times;</button>
   <img id="lightbox-img" src="" style="max-width:95vw;max-height:95vh;object-fit:contain;border-radius:4px" onclick="event.stopPropagation()">
+</div>
+
+<!-- Compare lightbox modal -->
+<div id="compare-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1100;flex-direction:column;align-items:center;justify-content:center">
+  <div style="position:absolute;top:12px;right:20px;display:flex;gap:12px;z-index:1101">
+    <button onclick="exitCompareMode()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 16px;border-radius:6px;font-size:0.82rem;cursor:pointer;font-weight:600">Exit Compare</button>
+  </div>
+  <div id="compare-lightbox-body" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"></div>
 </div>
 
 <!-- Product image picker modal (Task 17) -->
