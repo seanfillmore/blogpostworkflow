@@ -1426,9 +1426,10 @@ function switchTab(name, btn) {
 }
 
 function renderHeroKpis(d) {
-  const kpis = activeTab === 'cro'      ? buildCroKpis(d)
-             : activeTab === 'ads'      ? buildAdsKpis(d)
-             : activeTab === 'optimize' ? buildOptimizeKpis(d)
+  const kpis = activeTab === 'cro'       ? buildCroKpis(d)
+             : activeTab === 'ads'       ? buildAdsKpis(d)
+             : activeTab === 'optimize'  ? buildOptimizeKpis(d)
+             : activeTab === 'creatives' ? buildCreativesKpis()
              : buildSeoKpis(d);
   document.getElementById('hero-kpis').innerHTML = kpis.map(k =>
     '<div class="hero-kpi">' +
@@ -1644,6 +1645,26 @@ function buildOptimizeKpis(d) {
     { label: 'Changes Approved',      value: approvedChanges,       color: '#818cf8' },
     { label: 'Optimized This Month',  value: optimizedThisMonth,    color: '#10b981' },
     { label: 'Avg Traffic Value',     value: '$' + avgTV.toLocaleString(), color: '#38bdf8' },
+  ];
+}
+
+function buildCreativesKpis() {
+  // Pull stats from creativesState (populated by renderCreativesTab)
+  var sessions = creativesState.sessions || [];
+  var totalImages = sessions.reduce(function(sum, s) { return sum + (s.versionCount || 0); }, 0);
+  var totalSessions = sessions.length;
+  var templates = creativesState.templates || [];
+  // This month
+  var now = new Date();
+  var monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  var thisMonth = sessions.filter(function(s) { return s.updatedAt >= monthStart; });
+  var imagesThisMonth = thisMonth.reduce(function(sum, s) { return sum + (s.versionCount || 0); }, 0);
+  return [
+    { label: 'Total Images',       value: totalImages,        color: '#6c5ce7' },
+    { label: 'This Month',         value: imagesThisMonth,    color: '#00b894' },
+    { label: 'Sessions',           value: totalSessions,      color: '#818cf8' },
+    { label: 'Templates',          value: templates.length,   color: '#f59e0b' },
+    { label: 'Models Available',   value: (creativesState.models || []).length, color: '#38bdf8' },
   ];
 }
 
@@ -2672,6 +2693,8 @@ async function renderCreativesTab() {
     renderCreativesModels();
     renderCreativesTemplates();
     renderCreativesSessions();
+    // Update hero KPIs for creatives tab
+    renderHeroKpis(data || {});
     // Load most recent session
     if (creativesState.sessions.length > 0) {
       var latest = creativesState.sessions[0];
