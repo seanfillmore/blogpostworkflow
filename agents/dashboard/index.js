@@ -2876,6 +2876,7 @@ function removeRefImage(index) {
 
 function showCreativeImage(imagePath, version) {
   creativesState.currentVersion = version;
+  creativesState.currentImagePath = imagePath;
   var img = document.getElementById('creatives-current-img');
   var placeholder = document.getElementById('creatives-img-placeholder');
   var actionBtns = document.getElementById('creatives-action-btns');
@@ -3125,8 +3126,8 @@ function handleRefImageDrop(event) {
 }
 
 function downloadCreativeImage() {
-  if (!creativesState.currentVersion) return;
-  window.open('/api/creatives/image/' + creativesState.currentVersion.imagePath + '?download=1', '_blank');
+  if (!creativesState.currentImagePath) return;
+  window.open('/api/creatives/image/' + creativesState.currentImagePath + '?download=1', '_blank');
 }
 
 async function packageCreative() {
@@ -3138,7 +3139,7 @@ async function packageCreative() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify({ sessionId: creativesState.sessionId, versionId: creativesState.currentVersion.id })
+      body: JSON.stringify({ sessionId: creativesState.sessionId, version: creativesState.currentVersion })
     });
     var data = await res.json();
     if (!data.ok) { resetPackageBtn(); showCreativesError(data.error || 'Package failed'); return; }
