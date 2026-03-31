@@ -5272,6 +5272,167 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── Task 9: POST /api/creatives/generate ─────────────────────────────────────
+
+  if (req.method === 'POST' && req.url === '/api/creatives/generate') {
+    upload.array('referenceImages', 20)(req, res, async (err) => {
+      if (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+        return;
+      }
+      if (!geminiClient) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Gemini API key not configured' }));
+        return;
+      }
+      try {
+        const prompt = req.body.prompt || '';
+        const negativePrompt = req.body.negativePrompt || '';
+        const model = req.body.model || GEMINI_MODELS[0].id;
+        const aspectRatio = req.body.aspectRatio || '1:1';
+        const sessionId = req.body.sessionId || null;
+
+        // Load or create session
+        let session;
+        if (sessionId) {
+          const sessionPath = join(CREATIVE_SESSIONS_DIR, sessionId + '.json');
+          session = existsSync(sessionPath)
+            ? JSON.parse(readFileSync(sessionPath, 'utf8'))
+            : createSession();
+        } else {
+          session = createSession();
+        }
+
+        // Build Gemini request parts
+        const parts = [];
+
+        // Add product images from PRODUCT_IMAGES_DIR
+        let productImagePaths = [];
+        try {
+          productImagePaths = JSON.parse(req.body.productImagePaths || '[]');
+        } catch {}
+        for (const relPath of productImagePaths) {
+          const absPath = join(PRODUCT_IMAGES_DIR, relPath);
+          if (existsSync(absPath)) {
+            const imgData = readFileSync(absPath);
+            const ext = extname(absPath).toLowerCase();
+            const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+            const mimeType = mimeMap[ext] || 'image/jpeg';
+            parts.push({ inlineData: { mimeType, data: imgData.toString('base64') } });
+          }
+        }
+
+        // Add uploaded reference files
+        for (const file of (req.files || [])) {
+          const imgData = readFileSync(file.path);
+          const mimeType = file.mimetype || 'image/jpeg';
+          parts.push({ inlineData: { mimeType, data: imgData.toString('base64') } });
+          try { unlinkSync(file.path); } catch {}
+        }
+
+        // Build full prompt text
+        let fullPrompt = prompt;
+        if (negativePrompt) {
+          fullPrompt += '\nDo NOT include: ' + negativePrompt;
+        }
+        parts.push({ text: fullPrompt });
+
+        // Call Gemini
+        const result = await geminiClient.models.generateContent({
+          model,
+          contents: [{ role: 'user', parts }],
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+            aspectRatio,
+          }
+        });
+
+        // Check for safety/policy rejection
+        const candidate = result.candidates?.[0];
+        if (!candidate) {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No candidates returned — possible safety rejection' }));
+          return;
+        }
+        if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'OTHER') {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Image generation blocked by safety policy', finishReason: candidate.finishReason }));
+          return;
+        }
+
+        // Find the image part in the response
+        const imagePart = candidate.content?.parts?.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+        if (!imagePart) {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No image returned from Gemini' }));
+          return;
+        }
+
+        // Derive extension from mimeType
+        const mimeType = imagePart.inlineData.mimeType;
+        const extMap = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
+        const imgExt = extMap[mimeType] || '.png';
+
+        // Save image to disk
+        const versionNum = (session.versions || []).length + 1;
+        const imageFilename = `v${versionNum}${imgExt}`;
+        const sessionDir = join(CREATIVES_DIR, session.id);
+        ensureDir(sessionDir);
+        const absImagePath = join(sessionDir, imageFilename);
+        writeFileSync(absImagePath, Buffer.from(imagePart.inlineData.data, 'base64'));
+
+        // Relative path for client
+        const imagePath = session.id + '/' + imageFilename;
+
+        // Add version to session
+        const version = {
+          version: versionNum,
+          imagePath,
+          prompt,
+          negativePrompt,
+          model,
+          aspectRatio,
+          createdAt: new Date().toISOString()
+        };
+        if (!session.versions) session.versions = [];
+        session.versions.push(version);
+        saveSession(session);
+
+        // Auto-generate session name on first generation
+        let sessionName = session.name;
+        if (versionNum === 1 && session.nameAutoGenerated) {
+          try {
+            const nameMsg = await anthropic.messages.create({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 64,
+              messages: [{
+                role: 'user',
+                content: 'Generate a short, descriptive session name (3-5 words, title case) for an image generation session with this prompt: ' + prompt + '\nReturn ONLY the name, nothing else.'
+              }]
+            });
+            const generatedName = nameMsg.content[0]?.text?.trim() || session.name;
+            session.name = generatedName;
+            session.nameAutoGenerated = false;
+            sessionName = generatedName;
+            saveSession(session);
+          } catch {}
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ imagePath, version: versionNum, sessionId: session.id, sessionName }));
+      } catch (err2) {
+        // Clean up any temp files from multer
+        for (const file of (req.files || [])) {
+          try { unlinkSync(file.path); } catch {}
+        }
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err2.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/api/reject-keyword') {
     let body = '';
     req.on('data', d => { body += d; });
