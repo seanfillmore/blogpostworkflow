@@ -94,8 +94,9 @@ const PRODUCT_IMAGES_DIR              = join(ROOT, 'data', 'product-images');
 const PRODUCT_MANIFEST_PATH           = join(PRODUCT_IMAGES_DIR, 'manifest.json');
 
 const GEMINI_MODELS = [
-  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Exp)', maxReferenceImages: 10 },
-  { id: 'gemini-2.0-flash-preview-image-generation', name: 'Gemini 2.0 Flash Preview', maxReferenceImages: 10 },
+  { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash', maxReferenceImages: 16 },
+  { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro', maxReferenceImages: 16 },
+  { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash', maxReferenceImages: 10 },
 ];
 
 const geminiClient = process.env.GEMINI_API_KEY
