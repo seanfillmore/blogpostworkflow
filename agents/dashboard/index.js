@@ -3324,11 +3324,12 @@ function toggleCompareMode() {
   if (creativesState.compareMode) {
     if (btn) { btn.style.background = '#6c5ce7'; btn.style.color = 'white'; }
     creativesState.compareVersions = [];
-    // Open lightbox with instructions
+    // Open lightbox and render filmstrip inside it
     var modal = document.getElementById('compare-lightbox');
     if (modal) {
       modal.style.display = 'flex';
-      document.getElementById('compare-lightbox-body').innerHTML = '<div style="color:rgba(255,255,255,0.6);font-size:1rem;padding:3rem;text-align:center">Select two versions from the filmstrip below</div>';
+      document.getElementById('compare-lightbox-body').innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:1rem;padding:3rem;text-align:center">Select two versions below to compare</div>';
+      renderCompareFilmstrip();
     }
   } else {
     exitCompareMode();
@@ -3369,6 +3370,39 @@ function exitCompareMode() {
 function useCompareVersion(version) {
   exitCompareMode();
   showCreativeImage(version.imagePath, version);
+}
+
+function renderCompareFilmstrip() {
+  var strip = document.getElementById('compare-filmstrip');
+  if (!strip || !creativesState.sessionId) return;
+  fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(session) {
+      var versions = session.versions || [];
+      strip.innerHTML = versions.map(function(v) {
+        var isSelected = creativesState.compareVersions.some(function(cv) { return cv.version === v.version; });
+        var border = isSelected ? '3px solid #6c5ce7' : '2px solid rgba(255,255,255,0.2)';
+        return '<div onclick="selectCompareVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="flex-shrink:0;cursor:pointer;border-radius:6px;overflow:hidden;border:' + border + '">' +
+          '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:70px;height:70px;object-fit:cover;display:block">' +
+          '</div>';
+      }).join('');
+    });
+}
+
+function selectCompareVersion(version) {
+  var idx = creativesState.compareVersions.findIndex(function(v) { return v.version === version.version; });
+  if (idx !== -1) {
+    creativesState.compareVersions.splice(idx, 1);
+  } else {
+    creativesState.compareVersions.push(version);
+    if (creativesState.compareVersions.length > 2) creativesState.compareVersions.shift();
+  }
+  renderCompareFilmstrip();
+  if (creativesState.compareVersions.length === 2) {
+    renderCompareView();
+  } else {
+    document.getElementById('compare-lightbox-body').innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:1rem;padding:3rem;text-align:center">Select ' + (2 - creativesState.compareVersions.length) + ' more version' + (creativesState.compareVersions.length === 1 ? '' : 's') + '</div>';
+  }
 }
 
 // ── Task 17: Product image picker modal ─────────────────────────────────────
@@ -5068,11 +5102,15 @@ async function resolveAlert(campaignId, alertType) {
 </div>
 
 <!-- Compare lightbox modal -->
-<div id="compare-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1100;flex-direction:column;align-items:center;justify-content:center">
-  <div style="position:absolute;top:12px;right:20px;display:flex;gap:12px;z-index:1101">
+<div id="compare-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1100;flex-direction:column">
+  <div style="position:absolute;top:12px;right:20px;z-index:1101">
     <button onclick="exitCompareMode()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 16px;border-radius:6px;font-size:0.82rem;cursor:pointer;font-weight:600">Exit Compare</button>
   </div>
-  <div id="compare-lightbox-body" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"></div>
+  <div id="compare-lightbox-body" style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
+  <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.5)">
+    <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:8px">Select two versions to compare</div>
+    <div id="compare-filmstrip" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
+  </div>
 </div>
 
 <!-- Product image picker modal (Task 17) -->
