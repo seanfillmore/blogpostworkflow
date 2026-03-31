@@ -3342,7 +3342,7 @@ async function openProductImageModal() {
         var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
         var border = selected ? '3px solid #6c5ce7' : '2px solid var(--border)';
         return '<div onclick="selectProductImage(&apos;' + esc(p.handle) + '&apos;,&apos;' + esc(imgPath) + '&apos;,this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
-          '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;aspect-ratio:1;object-fit:cover" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
+          '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;display:block;border-radius:4px" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
           '<div style="padding:0.25rem 0.4rem;font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.title || p.handle) + '</div>' +
           '</div>';
       }).join('');
