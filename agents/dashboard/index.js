@@ -1225,7 +1225,7 @@ const HTML = `<!DOCTYPE html>
     <button onclick="createNewCreativesSession()" style="padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:5px;font-size:0.8rem;background:var(--surface);cursor:pointer;margin-left:auto">+ New Session</button>
   </div>
   <!-- Two-panel layout -->
-  <div style="display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 220px);overflow:hidden">
+  <div style="display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 220px);overflow:hidden">
     <!-- LEFT PANEL -->
     <div style="border-right:1px solid var(--border);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;background:var(--bg)">
       <!-- Product context (hidden by default, shown for 2+ selected products) -->
