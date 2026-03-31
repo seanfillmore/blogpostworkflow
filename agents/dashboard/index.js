@@ -1055,7 +1055,7 @@ const HTML = `<!DOCTYPE html>
   .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
   .ar-btn { background:var(--card);color:var(--muted);border:1px solid var(--border);transition:all 0.15s; }
   .ar-btn.active { background:#6c5ce7;color:white;border-color:#6c5ce7;font-weight:600; }
-  .filmstrip-thumb:hover .filmstrip-delete { display:block !important; }
+  .filmstrip-thumb:hover .filmstrip-delete, .filmstrip-thumb:hover .filmstrip-ref { display:block !important; }
 </style>
 </head>
 <body>
@@ -2828,9 +2828,13 @@ function renderCreativesRefImages() {
   creativesState.referenceImages.forEach(function(img, i) {
     var div = document.createElement('div');
     div.className = 'ref-thumb';
-    div.style.cssText = 'position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:2px solid ' + (img.type === 'product' ? '#a78bfa' : '#34d399') + ';flex-shrink:0';
+    var borderColor = img.type === 'product' ? '#a78bfa' : img.type === 'history' ? '#f59e0b' : '#34d399';
+    div.style.cssText = 'position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:2px solid ' + borderColor + ';flex-shrink:0';
     var imgEl = document.createElement('img');
-    imgEl.src = img.url || img.path || '';
+    var imgSrc = img.url || img.path || '';
+    if (img.type === 'product') imgSrc = '/api/creatives/product-image/' + img.path;
+    else if (img.type === 'history') imgSrc = '/api/creatives/image/' + img.path;
+    imgEl.src = imgSrc;
     imgEl.style.cssText = 'width:100%;height:100%;object-fit:cover';
     var rm = document.createElement('button');
     rm.innerHTML = '&times;';
@@ -2927,6 +2931,7 @@ function renderCreativesFilmstrip(versions) {
       '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:' + border + '" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
       '<button onclick="event.stopPropagation();toggleFavorite(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.5);border:none;color:' + starColor + ';font-size:12px;width:18px;height:18px;border-radius:3px;cursor:pointer;padding:0;line-height:1">' + star + '</button>' +
       '<button class="filmstrip-delete" onclick="event.stopPropagation();deleteVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="position:absolute;bottom:2px;right:2px;background:rgba(220,38,38,0.85);border:none;color:white;font-size:10px;width:18px;height:18px;border-radius:3px;cursor:pointer;padding:0;line-height:1;display:none">&#128465;</button>' +
+      '<button class="filmstrip-ref" onclick="event.stopPropagation();useHistoryAsReference(&apos;' + esc(v.imagePath) + '&apos;)" style="position:absolute;bottom:2px;left:2px;background:rgba(108,92,231,0.85);border:none;color:white;font-size:8px;width:18px;height:18px;border-radius:3px;cursor:pointer;padding:0;line-height:1;display:none" title="Use as reference">&#128206;</button>' +
       '</div>';
   }).join('');
 }
@@ -3044,14 +3049,18 @@ async function generateCreativeImage() {
   // Reference images: separate product paths vs uploaded files
   var productPaths = [];
   var uploadFiles = [];
+  var historyPaths = [];
   creativesState.referenceImages.forEach(function(img) {
     if (img.type === 'product' && img.path) {
       productPaths.push(img.path);
+    } else if (img.type === 'history' && img.path) {
+      historyPaths.push(img.path);
     } else if (img.file) {
       uploadFiles.push(img.file);
     }
   });
   if (productPaths.length > 0) { formData.append('productImagePaths', JSON.stringify(productPaths)); }
+  if (historyPaths.length > 0) { formData.append('historyImagePaths', JSON.stringify(historyPaths)); }
   uploadFiles.forEach(function(f) { formData.append('referenceImages', f); });
   showCreativesSpinner('Generating...');
   try {
@@ -3265,6 +3274,21 @@ function openImageLightbox(src) {
 function closeImageLightbox() {
   var modal = document.getElementById('image-lightbox');
   if (modal) modal.style.display = 'none';
+}
+
+function useHistoryAsReference(imagePath) {
+  // Check if already added
+  if (creativesState.referenceImages.some(function(r) { return r.path === imagePath; })) return;
+  // Check model limit
+  var model = getSelectedModel();
+  var max = model ? model.maxReferenceImages : 16;
+  if (creativesState.referenceImages.length >= max) {
+    showCreativesError('Maximum reference images reached for this model (' + max + ')');
+    return;
+  }
+  creativesState.referenceImages.push({ type: 'history', path: imagePath });
+  renderCreativesRefImages();
+  updateProductContext();
 }
 
 function clearCreativesForm() {
@@ -6606,6 +6630,29 @@ const server = http.createServer((req, res) => {
         } catch {}
         for (const relPath of productImagePaths) {
           const absPath = join(PRODUCT_IMAGES_DIR, relPath);
+          if (existsSync(absPath)) {
+            const imgData = readFileSync(absPath);
+            const ext = extname(absPath).toLowerCase();
+            const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+            const mimeType = mimeMap[ext] || 'image/jpeg';
+            parts.push({ inlineData: { mimeType, data: imgData.toString('base64') } });
+          }
+        }
+
+        // Add history images (previously generated images used as references)
+        let historyImagePaths = [];
+        try {
+          if (req.body.historyImagePaths) {
+            const rawHist = req.body.historyImagePaths;
+            if (Array.isArray(rawHist)) {
+              historyImagePaths = rawHist;
+            } else {
+              historyImagePaths = JSON.parse(rawHist);
+            }
+          }
+        } catch {}
+        for (const relPath of historyImagePaths) {
+          const absPath = join(CREATIVES_DIR, relPath);
           if (existsSync(absPath)) {
             const imgData = readFileSync(absPath);
             const ext = extname(absPath).toLowerCase();
