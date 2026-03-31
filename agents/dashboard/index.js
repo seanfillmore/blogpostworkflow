@@ -6695,6 +6695,10 @@ const server = http.createServer((req, res) => {
 
         // Build full prompt text
         let fullPrompt = prompt;
+        // Add aspect ratio instruction to prompt
+        const arLabels = { '1:1': 'square (1:1)', '4:5': 'portrait (4:5)', '9:16': 'tall portrait (9:16)', '16:9': 'landscape (16:9)' };
+        const arLabel = arLabels[aspectRatio];
+        if (arLabel) fullPrompt += '\n\nIMPORTANT: Generate this image in ' + arLabel + ' aspect ratio.';
         if (negativePrompt) {
           fullPrompt += '\nDo NOT include: ' + negativePrompt;
         }
