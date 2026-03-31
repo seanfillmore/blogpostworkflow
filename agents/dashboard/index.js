@@ -5433,6 +5433,138 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── Task 10: POST /api/creatives/refine ──────────────────────────────────────
+
+  if (req.method === 'POST' && req.url === '/api/creatives/refine') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', async () => {
+      if (!geminiClient) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Gemini API key not configured' }));
+        return;
+      }
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      const { sessionId, version, refinement, model } = payload;
+      if (!sessionId || !version || !refinement) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'sessionId, version, and refinement are required' }));
+        return;
+      }
+      try {
+        // Load session
+        const sessionPath = join(CREATIVE_SESSIONS_DIR, sessionId + '.json');
+        if (!existsSync(sessionPath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Session not found' }));
+          return;
+        }
+        const session = JSON.parse(readFileSync(sessionPath, 'utf8'));
+
+        // Find previous version
+        const prevVersion = (session.versions || []).find(v => v.version === version);
+        if (!prevVersion) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Version not found' }));
+          return;
+        }
+
+        // Load previous image from disk
+        const prevImagePath = join(CREATIVES_DIR, prevVersion.imagePath);
+        if (!existsSync(prevImagePath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Previous image not found on disk' }));
+          return;
+        }
+        const prevImageData = readFileSync(prevImagePath);
+
+        // Detect mime type from file extension
+        const prevExt = extname(prevImagePath).toLowerCase();
+        const mimeExtMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+        const prevMimeType = mimeExtMap[prevExt] || 'image/jpeg';
+
+        const geminiModel = model || prevVersion.model || GEMINI_MODELS[0].id;
+
+        // Send previous image + refinement text to Gemini
+        const result = await geminiClient.models.generateContent({
+          model: geminiModel,
+          contents: [{
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: prevMimeType, data: prevImageData.toString('base64') } },
+              { text: refinement }
+            ]
+          }],
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          }
+        });
+
+        // Check for safety/policy rejection
+        const candidate = result.candidates?.[0];
+        if (!candidate) {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No candidates returned — possible safety rejection' }));
+          return;
+        }
+        if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'OTHER') {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Image refinement blocked by safety policy', finishReason: candidate.finishReason }));
+          return;
+        }
+
+        // Find the image part
+        const imagePart = candidate.content?.parts?.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+        if (!imagePart) {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No image returned from Gemini' }));
+          return;
+        }
+
+        // Save new image in original format from Gemini
+        const newMimeType = imagePart.inlineData.mimeType;
+        const newExtMap = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
+        const newExt = newExtMap[newMimeType] || '.png';
+
+        const newVersionNum = (session.versions || []).length + 1;
+        const newImageFilename = `v${newVersionNum}${newExt}`;
+        const sessionDir = join(CREATIVES_DIR, session.id);
+        ensureDir(sessionDir);
+        const absImagePath = join(sessionDir, newImageFilename);
+        writeFileSync(absImagePath, Buffer.from(imagePart.inlineData.data, 'base64'));
+
+        const imagePath = session.id + '/' + newImageFilename;
+
+        // Add new version to session with refinement field
+        const newVersion = {
+          version: newVersionNum,
+          imagePath,
+          prompt: prevVersion.prompt,
+          negativePrompt: prevVersion.negativePrompt,
+          refinement,
+          model: geminiModel,
+          aspectRatio: prevVersion.aspectRatio,
+          basedOnVersion: version,
+          createdAt: new Date().toISOString()
+        };
+        session.versions.push(newVersion);
+        saveSession(session);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ imagePath, version: newVersionNum }));
+      } catch (err2) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err2.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/api/reject-keyword') {
     let body = '';
     req.on('data', d => { body += d; });
