@@ -1,0 +1,14 @@
+{
+  "id": "ingredient-spotlight",
+  "name": "Ingredient Spotlight",
+  "description": "Product surrounded by its natural or key ingredients with earthy tones",
+  "prompt": "{{product}} placed at the center of the frame, surrounded by its key natural ingredients: {{ingredients}}. The ingredients are fresh and arranged organically on a {{surface}} surface. Earthy, natural color palette with warm, soft lighting. The composition suggests purity and natural origin. Slight depth of field keeping the product sharp.",
+  "negativePrompt": "text, watermarks, logos, artificial ingredients, plastic, processed look, harsh lighting",
+  "tags": ["ingredients", "natural", "organic", "earthy"],
+  "defaultAspectRatio": "1:1",
+  "defaultModel": "gemini-2.0-flash-exp",
+  "source": "manual",
+  "previewImage": null,
+  "createdAt": "2026-03-30T00:00:00Z",
+  "updatedAt": "2026-03-30T00:00:00Z"
+}

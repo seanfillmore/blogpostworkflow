@@ -1,0 +1,14 @@
+{
+  "id": "product-hero",
+  "name": "Product Hero",
+  "description": "Single product on clean background with studio lighting for a premium feel",
+  "prompt": "A single {{product}} centered on a pure white surface. Soft diffused studio lighting from directly above creates a gentle, natural shadow beneath the product. The composition is minimal and premium — nothing else in frame. The product occupies roughly 40% of the frame, leaving generous negative space. Colors are clean and neutral with slight warmth.",
+  "negativePrompt": "text, watermarks, logos, multiple products, busy background, harsh shadows",
+  "tags": ["product", "studio", "clean", "premium"],
+  "defaultAspectRatio": "1:1",
+  "defaultModel": "gemini-2.0-flash-exp",
+  "source": "manual",
+  "previewImage": null,
+  "createdAt": "2026-03-30T00:00:00Z",
+  "updatedAt": "2026-03-30T00:00:00Z"
+}

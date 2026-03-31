@@ -1,0 +1,14 @@
+{
+  "id": "seasonal-promo",
+  "name": "Seasonal Promo",
+  "description": "Festive or seasonal themed creative with holiday-appropriate decorative elements",
+  "prompt": "{{product}} arranged in a festive {{season}} scene. Warm, inviting colors appropriate for the season. Seasonal decorative elements placed tastefully around the product — not overwhelming. Soft, warm lighting that evokes comfort and celebration. The product remains the clear focal point.",
+  "negativePrompt": "text, watermarks, logos, garish colors, too many decorations, cluttered",
+  "tags": ["seasonal", "holiday", "festive", "promo"],
+  "defaultAspectRatio": "4:5",
+  "defaultModel": "gemini-2.0-flash-exp",
+  "source": "manual",
+  "previewImage": null,
+  "createdAt": "2026-03-30T00:00:00Z",
+  "updatedAt": "2026-03-30T00:00:00Z"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "minimalist",
+  "name": "Minimalist",
+  "description": "Extreme simplicity with generous negative space, single product, muted palette",
+  "prompt": "{{product}} positioned in the lower third of the frame against a smooth, monochrome {{color}} background. Extreme negative space — the product occupies no more than 20% of the frame. Soft, even lighting with almost no visible shadow. The overall feeling is calm, luxurious, and intentional. Muted color palette, no distractions.",
+  "negativePrompt": "text, watermarks, logos, busy background, multiple objects, strong shadows, bright colors",
+  "tags": ["minimal", "negative-space", "luxury", "calm"],
+  "defaultAspectRatio": "9:16",
+  "defaultModel": "gemini-2.0-flash-exp",
+  "source": "manual",
+  "previewImage": null,
+  "createdAt": "2026-03-30T00:00:00Z",
+  "updatedAt": "2026-03-30T00:00:00Z"
+}

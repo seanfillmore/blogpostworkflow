@@ -1,0 +1,14 @@
+{
+  "id": "flat-lay",
+  "name": "Flat Lay",
+  "description": "Top-down arrangement of product(s) with complementary props on a textured surface",
+  "prompt": "A top-down flat lay photograph of {{product}} arranged on a {{surface}} surface. Complementary props scattered artfully around the product: fresh botanicals, a linen napkin, a small ceramic dish. Even, diffused overhead lighting with no harsh shadows. The arrangement feels curated but effortless. Muted, earthy color palette.",
+  "negativePrompt": "text, watermarks, logos, angled perspective, harsh shadows, cluttered, neon colors",
+  "tags": ["flat-lay", "overhead", "styled", "props"],
+  "defaultAspectRatio": "1:1",
+  "defaultModel": "gemini-2.0-flash-exp",
+  "source": "manual",
+  "previewImage": null,
+  "createdAt": "2026-03-30T00:00:00Z",
+  "updatedAt": "2026-03-30T00:00:00Z"
+}

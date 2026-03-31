@@ -1,0 +1,14 @@
+{
+  "id": "lifestyle-scene",
+  "name": "Lifestyle Scene",
+  "description": "Product in a natural, everyday setting with warm lighting and human interaction",
+  "prompt": "A person using {{product}} in a bright, airy {{setting}}. Natural morning light streaming through a window. Clean, minimal aesthetic. Product prominently displayed on a surface nearby. Warm, inviting color palette with soft shadows.",
+  "negativePrompt": "text, watermarks, logos, blurry, artificial lighting, cluttered background",
+  "tags": ["lifestyle", "natural", "warm", "human"],
+  "defaultAspectRatio": "4:5",
+  "defaultModel": "gemini-2.0-flash-exp",
+  "source": "manual",
+  "previewImage": null,
+  "createdAt": "2026-03-30T00:00:00Z",
+  "updatedAt": "2026-03-30T00:00:00Z"
+}
