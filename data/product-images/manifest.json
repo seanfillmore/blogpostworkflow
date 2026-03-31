@@ -122,60 +122,60 @@
     "handle": "culina-brush",
     "title": "Culina Cast Iron Cleaning Brush",
     "tags": ["cast iron", "cleaning", "brush", "culina"],
-    "imageDir": "Culina Products/brush"
+    "imageDir": "culina-products/brush"
   },
   {
     "handle": "culina-cast-iron-oil",
     "title": "Culina Cast Iron Oil",
     "tags": ["cast iron", "seasoning", "oil", "culina"],
-    "imageDir": "Culina Products/cast-iron-oil"
+    "imageDir": "culina-products/cast-iron-oil"
   },
   {
     "handle": "culina-cast-iron-soap",
     "title": "Culina Cast Iron Soap",
     "tags": ["cast iron", "cleaning", "soap", "culina"],
-    "imageDir": "Culina Products/cast-iron-soap"
+    "imageDir": "culina-products/cast-iron-soap"
   },
   {
     "handle": "culina-handle-black",
     "title": "Culina Cast Iron Handle Cover (Black)",
     "tags": ["cast iron", "handle", "silicone", "culina"],
-    "imageDir": "Culina Products/handle-black"
+    "imageDir": "culina-products/handle-black"
   },
   {
     "handle": "culina-handle-red",
     "title": "Culina Cast Iron Handle Cover (Red)",
     "tags": ["cast iron", "handle", "silicone", "culina"],
-    "imageDir": "Culina Products/handle-red"
+    "imageDir": "culina-products/handle-red"
   },
   {
     "handle": "culina-salt-scrub",
     "title": "Culina Cast Iron Salt Scrub",
     "tags": ["cast iron", "cleaning", "salt scrub", "culina"],
-    "imageDir": "Culina Products/salt-scrub"
+    "imageDir": "culina-products/salt-scrub"
   },
   {
     "handle": "culina-scraper-1",
     "title": "Culina Cast Iron Scraper",
     "tags": ["cast iron", "cleaning", "scraper", "culina"],
-    "imageDir": "Culina Products/scraper-1"
+    "imageDir": "culina-products/scraper-1"
   },
   {
     "handle": "culina-scraper-2",
     "title": "Culina Cast Iron Scraper (Wide)",
     "tags": ["cast iron", "cleaning", "scraper", "culina"],
-    "imageDir": "Culina Products/scraper-2"
+    "imageDir": "culina-products/scraper-2"
   },
   {
     "handle": "culina-scraper-stainless",
     "title": "Culina Stainless Steel Scraper",
     "tags": ["cast iron", "cleaning", "scraper", "stainless steel", "culina"],
-    "imageDir": "Culina Products/scraper-stainless"
+    "imageDir": "culina-products/scraper-stainless"
   },
   {
     "handle": "culina-seasoning-stick",
     "title": "Culina Cast Iron Seasoning Stick",
     "tags": ["cast iron", "seasoning", "wax", "culina"],
-    "imageDir": "Culina Products/seasoning-stick"
+    "imageDir": "culina-products/seasoning-stick"
   }
 ]
