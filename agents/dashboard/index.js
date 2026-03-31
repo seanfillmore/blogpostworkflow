@@ -2875,7 +2875,7 @@ function removeRefImage(index) {
 }
 
 function showCreativeImage(imagePath, version) {
-  creativesState.currentVersion = version;
+  creativesState.currentVersion = (typeof version === 'object' && version !== null) ? (version.version || version.versionNumber || 1) : version;
   creativesState.currentImagePath = imagePath;
   var img = document.getElementById('creatives-current-img');
   var placeholder = document.getElementById('creatives-img-placeholder');
@@ -6618,7 +6618,8 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: 'Invalid JSON' }));
         return;
       }
-      const { sessionId, version, refinement, model } = payload;
+      const { sessionId, refinement, model } = payload;
+      const version = parseInt(payload.version, 10);
       if (!sessionId || !version || !refinement) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'sessionId, version, and refinement are required' }));
