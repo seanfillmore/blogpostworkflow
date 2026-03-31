@@ -17,6 +17,8 @@ import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSy
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import Anthropic from '@anthropic-ai/sdk';
+import multer from 'multer';
+import { GoogleGenAI } from '@google/genai';
 import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 
 // ── basic auth ─────────────────────────────────────────────────────────────────
@@ -82,6 +84,28 @@ const META_ADS_INSIGHTS_DIR = join(ROOT, 'data', 'meta-ads-insights');
 const CREATIVE_JOBS_DIR      = join(ROOT, 'data', 'creative-jobs');
 const CREATIVE_PACKAGES_DIR  = join(ROOT, 'data', 'creative-packages');
 const PRODUCT_IMAGES_DIR_MA  = join(ROOT, 'data', 'product-images');
+
+const CREATIVE_TEMPLATES_DIR          = join(ROOT, 'data', 'creative-templates');
+const CREATIVE_TEMPLATES_PREVIEWS_DIR = join(ROOT, 'data', 'creative-templates', 'previews');
+const CREATIVE_SESSIONS_DIR           = join(ROOT, 'data', 'creative-sessions');
+const CREATIVES_DIR                   = join(ROOT, 'data', 'creatives');
+const REFERENCE_IMAGES_DIR            = join(ROOT, 'data', 'reference-images');
+const PRODUCT_IMAGES_DIR              = join(ROOT, 'data', 'product-images');
+const PRODUCT_MANIFEST_PATH           = join(PRODUCT_IMAGES_DIR, 'manifest.json');
+
+const GEMINI_MODELS = [
+  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Exp)', maxReferenceImages: 10 },
+  { id: 'gemini-2.0-flash-preview-image-generation', name: 'Gemini 2.0 Flash Preview', maxReferenceImages: 10 },
+];
+
+const geminiClient = process.env.GEMINI_API_KEY
+  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+  : null;
+
+const upload = multer({ dest: join(ROOT, 'data', '.uploads-tmp'), limits: { fileSize: 20 * 1024 * 1024 } });
+
+function ensureDir(dir) { if (!existsSync(dir)) mkdirSync(dir, { recursive: true }); }
+[CREATIVE_TEMPLATES_DIR, CREATIVE_TEMPLATES_PREVIEWS_DIR, CREATIVE_SESSIONS_DIR, CREATIVES_DIR, REFERENCE_IMAGES_DIR].forEach(ensureDir);
 
 const RUN_AGENT_ALLOWLIST = new Set([
   'agents/rank-tracker/index.js',
