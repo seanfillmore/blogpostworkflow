@@ -3330,12 +3330,15 @@ async function openProductImageModal() {
     var res = await fetch('/api/creatives/product-images', { credentials: 'same-origin' });
     var data = await res.json();
     if (!grid) return;
-    if (!data.products || data.products.length === 0) {
-      grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No product images found. Run the product image sync first.</p>';
+    var products = Array.isArray(data) ? data : (data.products || []);
+    if (products.length === 0) {
+      grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No product images found.</p>';
       return;
     }
-    grid.innerHTML = data.products.map(function(p) {
-      return p.images.map(function(imgPath) {
+    grid.innerHTML = products.map(function(p) {
+      var imgDir = p.imageDir || p.handle || '';
+      return (p.images || []).map(function(imgFile) {
+        var imgPath = imgDir + '/' + imgFile;
         var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
         var border = selected ? '3px solid #6c5ce7' : '2px solid var(--border)';
         return '<div onclick="selectProductImage(&apos;' + esc(p.handle) + '&apos;,&apos;' + esc(imgPath) + '&apos;,this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
