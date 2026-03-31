@@ -6293,7 +6293,7 @@ const server = http.createServer((req, res) => {
       const manifest = JSON.parse(readFileSync(PRODUCT_MANIFEST_PATH, 'utf8'));
       const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
       const result = manifest.map(product => {
-        const dir = join(PRODUCT_IMAGES_DIR, product.id || product.handle || '');
+        const dir = join(PRODUCT_IMAGES_DIR, product.imageDir || product.id || product.handle || '');
         let images = [];
         if (existsSync(dir)) {
           images = readdirSync(dir).filter(f => IMAGE_EXTS.has(extname(f).toLowerCase()));
