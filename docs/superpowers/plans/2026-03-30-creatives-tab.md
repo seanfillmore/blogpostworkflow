@@ -828,11 +828,13 @@ app.post('/api/creatives/generate', upload.array('referenceImages', 20), async (
     const imgPart = candidate.content.parts.find(p => p.inlineData && p.inlineData.mimeType && p.inlineData.mimeType.startsWith('image/'));
     if (!imgPart) return res.status(500).json({ error: 'No image in Gemini response' });
 
-    // Save image to disk
+    // Save image to disk — full resolution, original format from Gemini
     const version = (session.versions || []).length + 1;
     const sessionDir = path.join(CREATIVES_DIR, session.id);
     ensureDir(sessionDir);
-    const imgFilename = 'v' + version + '.webp';
+    const mimeToExt = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif' };
+    const ext = mimeToExt[imgPart.inlineData.mimeType] || '.png';
+    const imgFilename = 'v' + version + ext;
     const imgPath = path.join(sessionDir, imgFilename);
 
     const imgBuffer = Buffer.from(imgPart.inlineData.data, 'base64');
@@ -926,8 +928,11 @@ app.post('/api/creatives/refine', express.json(), async (req, res) => {
     const prevImgBuf = fs.readFileSync(prevImgPath);
     const modelId = model || session.model || GEMINI_MODELS[0].id;
 
+    const prevExt = path.extname(prevImgPath).toLowerCase();
+    const extToMime = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif' };
+    const prevMime = extToMime[prevExt] || 'image/png';
     const parts = [
-      { inlineData: { mimeType: 'image/webp', data: prevImgBuf.toString('base64') } },
+      { inlineData: { mimeType: prevMime, data: prevImgBuf.toString('base64') } },
       { text: 'This is the current image. Please modify it with the following changes: ' + refinement + (session.negativePrompt ? '\\n\\nDo NOT include: ' + session.negativePrompt : '') }
     ];
 
@@ -950,7 +955,9 @@ app.post('/api/creatives/refine', express.json(), async (req, res) => {
     if (!imgPart) return res.status(500).json({ error: 'No image in Gemini response' });
 
     const newVersion = session.versions.length + 1;
-    const imgFilename = 'v' + newVersion + '.webp';
+    const mimeToExt = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif' };
+    const ext = mimeToExt[imgPart.inlineData.mimeType] || '.png';
+    const imgFilename = 'v' + newVersion + ext;
     const imgPath = path.join(CREATIVES_DIR, session.id, imgFilename);
     fs.writeFileSync(imgPath, Buffer.from(imgPart.inlineData.data, 'base64'));
 

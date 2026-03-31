@@ -288,9 +288,9 @@ All new endpoints are prefixed with `/api/creatives/`.
 
 - **Browser to server:** `multipart/form-data` for all image uploads (reference images, template source images). No base64 over the wire.
 - **Server to Gemini:** Read image from disk, send as inline data to Gemini API.
-- **Gemini to server:** Receive generated image, save to `data/creatives/{sessionId}/v{N}.webp`.
+- **Gemini to server:** Receive generated image at full resolution. Save in the original format Gemini returns — derive the file extension from the response `mimeType` (`image/png` → `.png`, `image/jpeg` → `.jpg`, `image/webp` → `.webp`). No compression, no resizing, no format conversion. Save to `data/creatives/{sessionId}/v{N}.{ext}`.
 - **Server to browser:** Return the file path in JSON. Browser loads via `<img src="/api/creatives/image/{path}">`.
-- **Individual download:** Download button on the current image triggers a direct file download via the image serving endpoint with a `Content-Disposition: attachment` header.
+- **Individual download:** Download button on the current image triggers a direct file download via the image serving endpoint with a `Content-Disposition: attachment` header. The downloaded file is the original full-resolution image from Gemini.
 
 ## Model Configuration
 
