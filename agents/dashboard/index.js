@@ -3335,17 +3335,21 @@ async function openProductImageModal() {
       grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No product images found.</p>';
       return;
     }
-    grid.innerHTML = products.map(function(p) {
+    grid.style.display = 'block';
+    grid.innerHTML = products.filter(function(p) { return p.images && p.images.length > 0; }).map(function(p) {
       var imgDir = p.imageDir || p.handle || '';
-      return (p.images || []).map(function(imgFile) {
-        var imgPath = imgDir + '/' + imgFile;
-        var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
-        var border = selected ? '3px solid #6c5ce7' : '2px solid var(--border)';
-        return '<div onclick="selectProductImage(&apos;' + esc(p.handle) + '&apos;,&apos;' + esc(imgPath) + '&apos;,this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
-          '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;display:block;border-radius:4px" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
-          '<div style="padding:0.25rem 0.4rem;font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.title || p.handle) + '</div>' +
-          '</div>';
-      }).join('');
+      return '<div style="margin-bottom:1rem">' +
+        '<div style="font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:0.5rem;padding-bottom:0.25rem;border-bottom:1px solid #e5e7eb">' + esc(p.title || p.handle) + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        (p.images || []).map(function(imgFile) {
+          var imgPath = imgDir + '/' + imgFile;
+          var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
+          var border = selected ? '3px solid #6c5ce7' : '1px solid #e5e7eb';
+          return '<div onclick="selectProductImage(&apos;' + esc(p.handle) + '&apos;,&apos;' + esc(imgPath) + '&apos;,this)" style="cursor:pointer;border-radius:6px;overflow:hidden;border:' + border + ';width:100px;height:100px;flex-shrink:0" data-selected="' + selected + '">' +
+            '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;height:100%;object-fit:contain;display:block;background:#fafafa" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
+            '</div>';
+        }).join('') +
+        '</div></div>';
     }).join('');
   } catch (e) {
     if (grid) grid.innerHTML = '<p style="color:#ef4444;font-size:0.85rem">Error: ' + esc(e.message) + '</p>';
