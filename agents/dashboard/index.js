@@ -2918,7 +2918,7 @@ function renderCreativesFilmstrip(versions) {
     var isCurrent = creativesState.currentVersion && creativesState.currentVersion.id === v.id;
     var outline = isCurrent ? 'outline:2px solid #6c5ce7;outline-offset:2px' : '';
     return '<div style="position:relative;flex-shrink:0;cursor:pointer;' + outline + '" onclick="selectFilmstripVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" title="v' + (v.versionNumber || (i+1)) + '">' +
-      '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:' + border + '" onerror="this.style.background=\'#f3f4f6\'">' +
+      '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:' + border + '" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
       '<button onclick="event.stopPropagation();toggleFavorite(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.5);border:none;color:' + starColor + ';font-size:12px;width:18px;height:18px;border-radius:3px;cursor:pointer;padding:0;line-height:1">' + star + '</button>' +
       '</div>';
   }).join('');
@@ -3338,7 +3338,7 @@ async function openProductImageModal() {
         var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
         var border = selected ? '3px solid #6c5ce7' : '2px solid var(--border)';
         return '<div onclick="selectProductImage(\'' + esc(p.handle) + '\',\'' + esc(imgPath) + '\',this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
-          '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;aspect-ratio:1;object-fit:cover" onerror="this.style.background=\'#f3f4f6\'">' +
+          '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;aspect-ratio:1;object-fit:cover" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
           '<div style="padding:0.25rem 0.4rem;font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.title || p.handle) + '</div>' +
           '</div>';
       }).join('');
