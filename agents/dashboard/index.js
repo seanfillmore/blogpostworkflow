@@ -1303,7 +1303,7 @@ const HTML = `<!DOCTYPE html>
         <!-- Error message -->
         <div id="creatives-error" style="display:none;position:absolute;bottom:0.75rem;left:0.75rem;right:0.75rem;background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.82rem;z-index:3"></div>
         <!-- Generated image -->
-        <img id="creatives-current-img" src="" alt="Generated creative" style="display:none;max-width:100%;max-height:500px;border-radius:8px;object-fit:contain">
+        <img id="creatives-current-img" src="" alt="Generated creative" style="display:none;max-width:100%;max-height:500px;border-radius:8px;object-fit:contain;cursor:pointer" onclick="openImageLightbox(this.src)">
         <!-- Placeholder -->
         <div id="creatives-img-placeholder" style="text-align:center;padding:2rem;color:var(--muted)">
           <div style="font-size:2.5rem;margin-bottom:0.5rem">&#127912;</div>
@@ -3256,6 +3256,17 @@ async function editSessionName() {
   }
 }
 
+function openImageLightbox(src) {
+  var modal = document.getElementById('image-lightbox');
+  var img = document.getElementById('lightbox-img');
+  if (modal && img) { img.src = src; modal.style.display = 'flex'; }
+}
+
+function closeImageLightbox() {
+  var modal = document.getElementById('image-lightbox');
+  if (modal) modal.style.display = 'none';
+}
+
 function clearCreativesForm() {
   var promptEl = document.getElementById('creatives-prompt');
   var negEl = document.getElementById('creatives-negative-prompt');
@@ -5050,6 +5061,12 @@ async function resolveAlert(campaignId, alertType) {
 <!-- keyword detail modal -->
 <div id="kw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center">
   <div id="kw-modal-body" style="background:#fff;border-radius:10px;padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)"></div>
+</div>
+
+<!-- Image lightbox modal -->
+<div id="image-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1100;align-items:center;justify-content:center;cursor:pointer" onclick="closeImageLightbox()">
+  <button onclick="closeImageLightbox()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:white;font-size:28px;cursor:pointer;z-index:1101">&times;</button>
+  <img id="lightbox-img" src="" style="max-width:95vw;max-height:95vh;object-fit:contain;border-radius:4px" onclick="event.stopPropagation()">
 </div>
 
 <!-- Product image picker modal (Task 17) -->
