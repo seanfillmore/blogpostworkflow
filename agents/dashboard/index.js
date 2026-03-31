@@ -6590,7 +6590,8 @@ const server = http.createServer((req, res) => {
         const imgExt = extMap[mimeType] || '.png';
 
         // Save image to disk
-        const versionNum = (session.versions || []).length + 1;
+        const maxVer = (session.versions || []).reduce((m, v) => Math.max(m, v.version || 0), 0);
+        const versionNum = maxVer + 1;
         const imageFilename = `v${versionNum}${imgExt}`;
         const sessionDir = join(CREATIVES_DIR, session.id);
         ensureDir(sessionDir);
@@ -6747,7 +6748,8 @@ const server = http.createServer((req, res) => {
         const newExtMap = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
         const newExt = newExtMap[newMimeType] || '.png';
 
-        const newVersionNum = (session.versions || []).length + 1;
+        const maxVer = (session.versions || []).reduce((m, v) => Math.max(m, v.version || 0), 0);
+        const newVersionNum = maxVer + 1;
         const newImageFilename = `v${newVersionNum}${newExt}`;
         const sessionDir = join(CREATIVES_DIR, session.id);
         ensureDir(sessionDir);
