@@ -1055,6 +1055,7 @@ const HTML = `<!DOCTYPE html>
   .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
   .ar-btn { background:var(--card);color:var(--muted);border:1px solid var(--border);transition:all 0.15s; }
   .ar-btn.active { background:#6c5ce7;color:white;border-color:#6c5ce7;font-weight:600; }
+  .filmstrip-thumb:hover .filmstrip-delete { display:block !important; }
 </style>
 </head>
 <body>
@@ -2919,9 +2920,10 @@ function renderCreativesFilmstrip(versions) {
     var starColor = v.favorite ? '#f59e0b' : '#d1d5db';
     var isCurrent = creativesState.currentVersion && creativesState.currentVersion.id === v.id;
     var outline = isCurrent ? 'outline:2px solid #6c5ce7;outline-offset:2px' : '';
-    return '<div style="position:relative;flex-shrink:0;cursor:pointer;' + outline + '" onclick="selectFilmstripVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" title="v' + (v.versionNumber || (i+1)) + '">' +
+    return '<div class="filmstrip-thumb" style="position:relative;flex-shrink:0;cursor:pointer;' + outline + '" onclick="selectFilmstripVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" title="v' + (v.versionNumber || (i+1)) + '">' +
       '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:' + border + '" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
       '<button onclick="event.stopPropagation();toggleFavorite(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.5);border:none;color:' + starColor + ';font-size:12px;width:18px;height:18px;border-radius:3px;cursor:pointer;padding:0;line-height:1">' + star + '</button>' +
+      '<button class="filmstrip-delete" onclick="event.stopPropagation();deleteVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="position:absolute;bottom:2px;right:2px;background:rgba(220,38,38,0.85);border:none;color:white;font-size:10px;width:18px;height:18px;border-radius:3px;cursor:pointer;padding:0;line-height:1;display:none">&#128465;</button>' +
       '</div>';
   }).join('');
 }
@@ -2970,6 +2972,33 @@ async function toggleFavorite(version) {
     renderCreativesFilmstrip(session.versions || []);
   } catch (e) {
     console.error('toggleFavorite error', e);
+  }
+}
+
+async function deleteVersion(version) {
+  if (!creativesState.sessionId) return;
+  if (!confirm('Delete this version?')) return;
+  try {
+    await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ deleteVersion: version.version || version.versionNumber })
+    });
+    var res = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
+    var session = await res.json();
+    renderCreativesFilmstrip(session.versions || []);
+    // If we deleted the current version, show the latest remaining
+    var currentVer = creativesState.currentVersion;
+    var stillExists = (session.versions || []).some(function(v) { return v.version === currentVer; });
+    if (!stillExists && session.versions && session.versions.length > 0) {
+      var latest = session.versions[session.versions.length - 1];
+      showCreativeImage(latest.imagePath, latest.version);
+    } else if (!session.versions || session.versions.length === 0) {
+      hideCreativeImage();
+    }
+  } catch (e) {
+    console.error('deleteVersion error', e);
   }
 }
 
@@ -6324,6 +6353,26 @@ const server = http.createServer((req, res) => {
       }
       try {
         const existing = existsSync(filePath) ? JSON.parse(readFileSync(filePath, 'utf8')) : createSession();
+        // Handle deleteVersion
+        if (updates.deleteVersion !== undefined) {
+          const delVer = parseInt(updates.deleteVersion, 10);
+          const verObj = (existing.versions || []).find(v => v.version === delVer);
+          existing.versions = (existing.versions || []).filter(v => v.version !== delVer);
+          // Delete image file from disk
+          if (verObj && verObj.imagePath) {
+            const imgFile = join(CREATIVES_DIR, verObj.imagePath);
+            if (existsSync(imgFile)) unlinkSync(imgFile);
+          }
+          delete updates.deleteVersion;
+        }
+        // Handle toggleFavorite
+        if (updates.toggleFavorite !== undefined) {
+          const toggleId = updates.toggleFavorite;
+          (existing.versions || []).forEach(function(v) {
+            if (v.id === toggleId || v.version === toggleId) v.favorite = !v.favorite;
+          });
+          delete updates.toggleFavorite;
+        }
         const session = saveSession({ ...existing, ...updates, id });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(session));
