@@ -2763,10 +2763,25 @@ function onCreativesModelChange() {
 function onCreativesTemplateChange() {
   var sel = document.getElementById('creatives-template-select');
   if (!sel || !sel.value) return;
-  var tpl = creativesState.templates.find(function(t) { return t.id === sel.value; });
-  if (tpl && tpl.prompt) {
+  var t = creativesState.templates.find(function(tpl) { return tpl.id === sel.value; });
+  if (!t) return;
+  if (t.prompt) {
     var promptEl = document.getElementById('creatives-prompt');
-    if (promptEl && !promptEl.value) promptEl.value = tpl.prompt;
+    if (promptEl) promptEl.value = t.prompt;
+  }
+  if (t.negativePrompt) {
+    var negEl = document.getElementById('creatives-negative-prompt');
+    if (negEl) negEl.value = t.negativePrompt;
+  }
+  if (t.defaultAspectRatio) {
+    setAspectRatio(t.defaultAspectRatio, null);
+  }
+  if (t.defaultModel) {
+    var modelSel = document.getElementById('creatives-model-select');
+    if (modelSel) {
+      modelSel.value = t.defaultModel;
+      onCreativesModelChange();
+    }
   }
 }
 
@@ -2818,6 +2833,15 @@ function renderCreativesRefImages() {
     rm.onclick = (function(idx) { return function() { removeRefImage(idx); }; })(i);
     div.appendChild(imgEl);
     div.appendChild(rm);
+    // For uploaded refs not yet saved to library, add a Save button
+    if (img.file) {
+      var saveBtn = document.createElement('button');
+      saveBtn.textContent = 'Save';
+      saveBtn.title = 'Save to reference library';
+      saveBtn.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.65);color:white;border:none;font-size:10px;line-height:1.4;cursor:pointer;padding:2px 0;text-align:center';
+      saveBtn.onclick = (function(idx) { return function(e) { e.stopPropagation(); saveRefToLibrary(idx); }; })(i);
+      div.appendChild(saveBtn);
+    }
     area.appendChild(div);
   });
   updateRefCount();
@@ -2901,6 +2925,25 @@ function renderCreativesFilmstrip(versions) {
 }
 
 function selectFilmstripVersion(version) {
+  if (creativesState.compareMode) {
+    // In compare mode: collect versions; render when 2 are selected
+    var alreadyIdx = creativesState.compareVersions.findIndex(function(v) { return v.imagePath === version.imagePath; });
+    if (alreadyIdx !== -1) {
+      // Deselect if already selected
+      creativesState.compareVersions.splice(alreadyIdx, 1);
+    } else {
+      creativesState.compareVersions.push(version);
+      if (creativesState.compareVersions.length > 2) {
+        creativesState.compareVersions.shift();
+      }
+    }
+    if (creativesState.compareVersions.length === 2) {
+      var compareWrap = document.getElementById('creatives-compare-wrap');
+      if (compareWrap) compareWrap.style.display = 'flex';
+      renderCompareView();
+    }
+    return;
+  }
   showCreativeImage(version.imagePath, version);
   // Re-render filmstrip to update outline
   if (creativesState.sessionId) {
@@ -2974,16 +3017,23 @@ async function generateCreativeImage() {
       uploadFiles.push(img.file);
     }
   });
-  productPaths.forEach(function(p) { formData.append('productImagePaths', p); });
+  if (productPaths.length > 0) { formData.append('productImagePaths', JSON.stringify(productPaths)); }
   uploadFiles.forEach(function(f) { formData.append('referenceImages', f); });
   showCreativesSpinner('Generating...');
   try {
     var res = await fetch('/api/creatives/generate', { method: 'POST', credentials: 'same-origin', body: formData });
     var data = await res.json();
     hideCreativesSpinner();
-    if (!data.ok) { showCreativesError(data.error || 'Generation failed'); return; }
+    if (data.error) { showCreativesError(data.error); return; }
+    creativesState.sessionId = data.sessionId;
     creativesState.currentVersion = data.version;
-    showCreativeImage(data.version.imagePath, data.version);
+    showCreativeImage(data.imagePath, data.version);
+    // Update session name if it was auto-generated
+    if (data.sessionName) {
+      var sessionObj = creativesState.sessions.find(function(s) { return s.id === data.sessionId; });
+      if (sessionObj) sessionObj.name = data.sessionName;
+      renderCreativesSessions();
+    }
     // Refresh filmstrip
     var sRes = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
     var session = await sRes.json();
@@ -3000,8 +3050,10 @@ async function refineCreativeImage() {
     showCreativesError('No image to refine. Generate an image first.');
     return;
   }
-  var refinePrompt = (document.getElementById('creatives-refine-prompt') || {}).value || '';
-  if (!refinePrompt.trim()) { showCreativesError('Please enter a refinement instruction.'); return; }
+  var refinement = (document.getElementById('creatives-refine-prompt') || {}).value || '';
+  if (!refinement.trim()) { showCreativesError('Please enter a refinement instruction.'); return; }
+  var refineModel = document.getElementById('creatives-model-select');
+  var refineModelId = refineModel ? refineModel.value : '';
   showCreativesSpinner('Refining...');
   try {
     var res = await fetch('/api/creatives/refine', {
@@ -3010,15 +3062,16 @@ async function refineCreativeImage() {
       credentials: 'same-origin',
       body: JSON.stringify({
         sessionId: creativesState.sessionId,
-        parentVersionId: creativesState.currentVersion.id,
-        refinePrompt: refinePrompt
+        version: creativesState.currentVersion,
+        refinement: refinement,
+        model: refineModelId
       })
     });
     var data = await res.json();
     hideCreativesSpinner();
-    if (!data.ok) { showCreativesError(data.error || 'Refinement failed'); return; }
+    if (data.error) { showCreativesError(data.error); return; }
     creativesState.currentVersion = data.version;
-    showCreativeImage(data.version.imagePath, data.version);
+    showCreativeImage(data.imagePath, data.version);
     var sRes = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
     var session = await sRes.json();
     renderCreativesFilmstrip(session.versions || []);
@@ -3237,22 +3290,30 @@ function renderCompareView() {
     wrap.innerHTML = '<div style="flex:1;text-align:center;color:var(--muted);font-size:0.85rem;padding:1rem">Click a version in the filmstrip to select for comparison</div>';
     return;
   }
-  wrap.innerHTML = versions.map(function(v) {
+  var versionsHtml = versions.map(function(v) {
     return '<div style="flex:1;display:flex;flex-direction:column;gap:0.5rem;min-width:0">' +
       '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:100%;border-radius:8px;object-fit:contain;max-height:400px">' +
       '<div style="font-size:0.78rem;color:var(--muted);text-align:center">' + esc(v.prompt ? v.prompt.slice(0, 80) : 'v' + (v.versionNumber || '?')) + '</div>' +
       '<button onclick="useCompareVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="padding:0.3rem 0.75rem;background:#6c5ce7;color:white;border:none;border-radius:5px;font-size:0.8rem;cursor:pointer;font-weight:600">Use This Version</button>' +
       '</div>';
   }).join('<div style="width:1px;background:var(--border);flex-shrink:0"></div>');
+  wrap.innerHTML = versionsHtml +
+    '<div style="width:100%;display:flex;justify-content:center;padding-top:0.75rem;border-top:1px solid var(--border);margin-top:0.5rem">' +
+    '<button onclick="exitCompareMode()" style="padding:0.4rem 1.2rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem;cursor:pointer;font-weight:600">Exit Compare</button>' +
+    '</div>';
 }
 
-function useCompareVersion(version) {
+function exitCompareMode() {
   creativesState.compareMode = false;
   creativesState.compareVersions = [];
   var btn = document.getElementById('compare-btn');
   if (btn) btn.style.background = '', btn.style.color = '';
   var compareWrap = document.getElementById('creatives-compare-wrap');
   if (compareWrap) compareWrap.style.display = 'none';
+}
+
+function useCompareVersion(version) {
+  exitCompareMode();
   showCreativeImage(version.imagePath, version);
 }
 
@@ -3277,7 +3338,7 @@ async function openProductImageModal() {
         var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
         var border = selected ? '3px solid #6c5ce7' : '2px solid var(--border)';
         return '<div onclick="selectProductImage(\'' + esc(p.handle) + '\',\'' + esc(imgPath) + '\',this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
-          '<img src="/api/creatives/product-images/' + esc(imgPath) + '" style="width:100%;aspect-ratio:1;object-fit:cover" onerror="this.style.background=\'#f3f4f6\'">' +
+          '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;aspect-ratio:1;object-fit:cover" onerror="this.style.background=\'#f3f4f6\'">' +
           '<div style="padding:0.25rem 0.4rem;font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.title || p.handle) + '</div>' +
           '</div>';
       }).join('');
@@ -3298,7 +3359,7 @@ function selectProductImage(handle, imgPath, el) {
       showCreativesError('Maximum ' + (model ? model.maxReferenceImages : 10) + ' reference images allowed.');
       return;
     }
-    creativesState.referenceImages.push({ type: 'product', path: imgPath, url: '/api/creatives/product-images/' + imgPath, handle: handle });
+    creativesState.referenceImages.push({ type: 'product', path: imgPath, url: '/api/creatives/product-image/' + imgPath, handle: handle });
     if (el) { el.style.border = '3px solid #6c5ce7'; el.dataset.selected = 'true'; }
   }
   updateRefCount();
@@ -3372,20 +3433,49 @@ function openTemplateForm(existing) {
   formWrap.style.display = 'block';
   var nameInput = document.getElementById('template-form-name');
   var promptInput = document.getElementById('template-form-prompt');
+  var negativePromptInput = document.getElementById('template-form-negative-prompt');
+  var tagsInput = document.getElementById('template-form-tags');
+  var aspectRatioInput = document.getElementById('template-form-aspect-ratio');
+  var modelInput = document.getElementById('template-form-model');
   var idInput = document.getElementById('template-form-id');
   if (nameInput) nameInput.value = existing ? (existing.name || '') : '';
   if (promptInput) promptInput.value = existing ? (existing.prompt || '') : '';
+  if (negativePromptInput) negativePromptInput.value = existing ? (existing.negativePrompt || '') : '';
+  if (tagsInput) tagsInput.value = existing && existing.tags ? existing.tags.join(', ') : '';
+  if (aspectRatioInput) aspectRatioInput.value = existing ? (existing.defaultAspectRatio || '1:1') : '1:1';
   if (idInput) idInput.value = existing ? (existing.id || '') : '';
   var title = document.getElementById('template-form-title');
   if (title) title.textContent = existing ? 'Edit Template' : 'New Template';
+  // Populate model select from creativesState.models
+  if (modelInput && creativesState.models) {
+    var prevModelVal = modelInput.value;
+    modelInput.innerHTML = '<option value="">-- same as current --</option>';
+    creativesState.models.forEach(function(m) {
+      var opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name;
+      modelInput.appendChild(opt);
+    });
+    modelInput.value = existing ? (existing.defaultModel || '') : prevModelVal;
+  }
 }
 
 async function saveTemplateForm(existingId, isEdit) {
   var nameInput = document.getElementById('template-form-name');
   var promptInput = document.getElementById('template-form-prompt');
+  var negativePromptInput = document.getElementById('template-form-negative-prompt');
+  var tagsInput = document.getElementById('template-form-tags');
+  var aspectRatioInput = document.getElementById('template-form-aspect-ratio');
+  var modelInput = document.getElementById('template-form-model');
   var name = nameInput ? nameInput.value.trim() : '';
   var prompt = promptInput ? promptInput.value.trim() : '';
+  var negativePrompt = negativePromptInput ? negativePromptInput.value.trim() : '';
+  var tagsRaw = tagsInput ? tagsInput.value.trim() : '';
+  var tags = tagsRaw ? tagsRaw.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+  var defaultAspectRatio = aspectRatioInput ? aspectRatioInput.value : '1:1';
+  var defaultModel = modelInput ? modelInput.value : '';
   if (!name) { showCreativesError('Template name is required.'); return; }
+  var id = isEdit ? existingId : name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   try {
     var url = isEdit ? '/api/creatives/templates/' + encodeURIComponent(existingId) : '/api/creatives/templates';
     var method = isEdit ? 'PUT' : 'POST';
@@ -3393,7 +3483,7 @@ async function saveTemplateForm(existingId, isEdit) {
       method: method,
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify({ name: name, prompt: prompt })
+      body: JSON.stringify({ id: id, name: name, prompt: prompt, negativePrompt: negativePrompt, tags: tags, defaultAspectRatio: defaultAspectRatio, defaultModel: defaultModel })
     });
     var saved = await res.json();
     if (isEdit) {
@@ -4948,6 +5038,27 @@ async function resolveAlert(campaignId, alertType) {
         <input id="template-form-name" type="text" placeholder="Template name..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
         <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">PROMPT</label>
         <textarea id="template-form-prompt" rows="4" placeholder="Template prompt..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit;resize:vertical"></textarea>
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">NEGATIVE PROMPT</label>
+        <input id="template-form-negative-prompt" type="text" placeholder="What to avoid..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">TAGS (comma-separated)</label>
+        <input id="template-form-tags" type="text" placeholder="e.g. product, lifestyle, square" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1">
+            <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">DEFAULT ASPECT RATIO</label>
+            <select id="template-form-aspect-ratio" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;font-family:inherit">
+              <option value="1:1">1:1</option>
+              <option value="16:9">16:9</option>
+              <option value="9:16">9:16</option>
+              <option value="4:3">4:3</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">DEFAULT MODEL</label>
+            <select id="template-form-model" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;font-family:inherit">
+              <option value="">-- same as current --</option>
+            </select>
+          </div>
+        </div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
           <button onclick="document.getElementById(&apos;template-form-wrap&apos;).style.display=&apos;none&apos;" style="padding:6px 14px;border:1px solid #d1d5db;border-radius:6px;background:#fff;font-size:0.82rem;cursor:pointer">Cancel</button>
           <button onclick="saveTemplateForm(document.getElementById(&apos;template-form-id&apos;).value, !!document.getElementById(&apos;template-form-id&apos;).value)" style="padding:6px 14px;border:none;border-radius:6px;background:#6c5ce7;color:white;font-size:0.82rem;cursor:pointer;font-weight:600">Save</button>
@@ -5906,7 +6017,8 @@ const server = http.createServer((req, res) => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        writeFileSync(join(CREATIVE_TEMPLATES_DIR, id + '.json'), JSON.stringify(template, null, 2));
+        // Do NOT save to disk here — return the template object unsaved.
+        // The client's "Save Template" button will POST to /api/creatives/templates to persist it.
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(template));
       } catch (err2) {
@@ -6348,7 +6460,16 @@ const server = http.createServer((req, res) => {
         // Add product images from PRODUCT_IMAGES_DIR
         let productImagePaths = [];
         try {
-          productImagePaths = JSON.parse(req.body.productImagePaths || '[]');
+          const rawPaths = req.body.productImagePaths;
+          if (rawPaths) {
+            if (Array.isArray(rawPaths)) {
+              productImagePaths = rawPaths;
+            } else if (typeof rawPaths === 'string' && rawPaths.startsWith('[')) {
+              productImagePaths = JSON.parse(rawPaths);
+            } else if (typeof rawPaths === 'string') {
+              productImagePaths = [rawPaths];
+            }
+          }
         } catch {}
         for (const relPath of productImagePaths) {
           const absPath = join(PRODUCT_IMAGES_DIR, relPath);
