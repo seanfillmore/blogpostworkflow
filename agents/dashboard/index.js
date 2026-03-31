@@ -1052,6 +1052,8 @@ const HTML = `<!DOCTYPE html>
   .section-title { font-weight: 600; font-size: 15px; }
   .badge-gray { background: #f3f4f6; color: #6b7280; }
   .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+  .ar-btn { background:var(--card);color:var(--muted);border:1px solid var(--border);transition:all 0.15s; }
+  .ar-btn.active { background:#6c5ce7;color:white;border-color:#6c5ce7;font-weight:600; }
 </style>
 </head>
 <body>
@@ -1202,8 +1204,126 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-agents-cro-deep-dive-trust-index-js" style="display:none" class="run-log"></pre>
 </div><!-- /tab-cro -->
 <div id="tab-creatives" class="tab-panel" style="display:none">
-  <div id="creatives-content">
-    <p class="muted" style="padding:2rem">Loading creatives studio...</p>
+  <!-- Top bar -->
+  <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap">
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap">Model</label>
+    <select id="creatives-model-select" onchange="onCreativesModelChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="">Loading...</option>
+    </select>
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:0.5rem">Template</label>
+    <select id="creatives-template-select" onchange="onCreativesTemplateChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="">None</option>
+    </select>
+    <button onclick="openManageTemplates()" style="padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:5px;font-size:0.8rem;background:var(--surface);cursor:pointer">Manage</button>
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:0.5rem">Session</label>
+    <select id="creatives-session-select" onchange="onCreativesSessionChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="">Loading...</option>
+    </select>
+    <span id="creatives-session-name" onclick="editSessionName()" style="font-size:0.82rem;color:var(--fg);cursor:pointer;padding:0.2rem 0.4rem;border-radius:4px;border:1px solid transparent" title="Click to rename"></span>
+    <span id="creatives-autosave" style="font-size:0.75rem;color:var(--muted);opacity:0;transition:opacity 0.5s">Saved</span>
+    <button onclick="createNewCreativesSession()" style="padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:5px;font-size:0.8rem;background:var(--surface);cursor:pointer;margin-left:auto">+ New Session</button>
+  </div>
+  <!-- Two-panel layout -->
+  <div style="display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 220px);overflow:hidden">
+    <!-- LEFT PANEL -->
+    <div style="border-right:1px solid var(--border);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;background:var(--bg)">
+      <!-- Product context (hidden by default, shown for 2+ selected products) -->
+      <div id="creatives-product-context" style="display:none;border:1px solid var(--border);border-radius:7px;overflow:hidden">
+        <div onclick="toggleProductContext()" style="padding:0.5rem 0.75rem;background:var(--card);display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:0.82rem;font-weight:600">
+          <span>Product Context</span>
+          <span id="product-context-toggle" style="color:var(--muted)">&#9660;</span>
+        </div>
+        <div id="product-context-body" style="display:none;padding:0.75rem;font-size:0.82rem">
+          <textarea id="creatives-product-context-text" rows="4" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:5px;padding:0.5rem;font-size:0.82rem;font-family:inherit;resize:vertical" placeholder="Multi-product context..."></textarea>
+        </div>
+      </div>
+      <!-- Prompt -->
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:0.35rem">PROMPT</label>
+        <textarea id="creatives-prompt" rows="6" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:vertical;background:var(--surface)" placeholder="Describe the image you want to generate..."></textarea>
+      </div>
+      <!-- Negative prompt -->
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:0.35rem">NEGATIVE PROMPT</label>
+        <textarea id="creatives-negative-prompt" rows="3" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:vertical;background:#fff5f5;border-color:#fecaca" placeholder="What to avoid in the image..."></textarea>
+      </div>
+      <!-- Aspect ratio -->
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:0.35rem">ASPECT RATIO</label>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+          <button class="ar-btn active" onclick="setAspectRatio('1:1',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">1:1</button>
+          <button class="ar-btn" onclick="setAspectRatio('4:5',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">4:5</button>
+          <button class="ar-btn" onclick="setAspectRatio('9:16',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">9:16</button>
+          <button class="ar-btn" onclick="setAspectRatio('16:9',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">16:9</button>
+          <button class="ar-btn" id="ar-custom-btn" onclick="setAspectRatio('custom',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">Custom</button>
+        </div>
+        <div id="ar-custom-inputs" style="display:none;gap:0.5rem;align-items:center;margin-top:0.5rem">
+          <input id="ar-custom-w" type="number" placeholder="W" min="64" max="4096" style="width:70px;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem">
+          <span style="color:var(--muted)">&#215;</span>
+          <input id="ar-custom-h" type="number" placeholder="H" min="64" max="4096" style="width:70px;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem">
+          <span style="font-size:0.75rem;color:var(--muted)">px</span>
+        </div>
+      </div>
+      <!-- Reference images -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem">
+          <label style="font-size:0.78rem;font-weight:600;color:var(--muted)">REFERENCE IMAGES <span id="ref-image-count" style="font-weight:400"></span></label>
+          <div style="display:flex;gap:0.4rem">
+            <button onclick="openProductImagePicker()" style="padding:0.25rem 0.6rem;border:1px solid #a78bfa;border-radius:5px;background:#f5f3ff;color:#6d28d9;font-size:0.75rem;cursor:pointer;font-weight:600">+ Product</button>
+            <button onclick="openReferenceUpload()" style="padding:0.25rem 0.6rem;border:1px solid var(--border);border-radius:5px;background:var(--surface);font-size:0.75rem;cursor:pointer">+ Upload</button>
+          </div>
+        </div>
+        <input type="file" id="ref-image-input" accept="image/*" multiple onchange="handleReferenceUpload(this)" style="display:none">
+        <div id="ref-images-area" ondragover="event.preventDefault()" ondrop="handleRefImageDrop(event)" style="min-height:60px;border:1px dashed var(--border);border-radius:6px;padding:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:flex-start;background:var(--surface)">
+          <span id="ref-images-placeholder" style="font-size:0.78rem;color:var(--muted);padding:0.5rem">Drop images here or use buttons above</span>
+        </div>
+      </div>
+      <!-- Generate button -->
+      <button onclick="generateCreativeImage()" style="padding:0.65rem;background:#6c5ce7;color:white;border:none;border-radius:7px;font-size:0.95rem;font-weight:700;cursor:pointer;width:100%;margin-top:auto">Generate Image</button>
+    </div>
+    <!-- RIGHT PANEL -->
+    <div id="creatives-right-panel" style="overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--bg);position:relative">
+      <!-- Action buttons (top right, hidden until image generated) -->
+      <div id="creatives-action-btns" style="display:none;position:absolute;top:1rem;right:1rem;display:flex;gap:0.5rem;z-index:2">
+        <button onclick="downloadCreativeImage()" style="padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">&#8681; Download</button>
+        <button onclick="toggleCompareMode()" id="compare-btn" style="padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">&#9741; Compare</button>
+      </div>
+      <!-- Image display area -->
+      <div id="creatives-image-wrap" style="position:relative;display:flex;align-items:center;justify-content:center;min-height:300px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <!-- Spinner overlay -->
+        <div id="creatives-spinner" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.85);flex-direction:column;align-items:center;justify-content:center;gap:0.75rem;z-index:3">
+          <div style="width:36px;height:36px;border:3px solid #6c5ce7;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+          <span id="creatives-spinner-text" style="font-size:0.85rem;color:#6c5ce7;font-weight:600">Generating...</span>
+        </div>
+        <!-- Error message -->
+        <div id="creatives-error" style="display:none;position:absolute;bottom:0.75rem;left:0.75rem;right:0.75rem;background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.82rem;z-index:3"></div>
+        <!-- Generated image -->
+        <img id="creatives-current-img" src="" alt="Generated creative" style="display:none;max-width:100%;max-height:500px;border-radius:8px;object-fit:contain">
+        <!-- Placeholder -->
+        <div id="creatives-img-placeholder" style="text-align:center;padding:2rem;color:var(--muted)">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">&#127912;</div>
+          <div style="font-size:0.9rem">Generated image will appear here</div>
+        </div>
+        <!-- Compare mode container -->
+        <div id="creatives-compare-wrap" style="display:none;width:100%;padding:0.75rem;gap:0.75rem;display:none"></div>
+      </div>
+      <!-- Refinement row -->
+      <div style="display:flex;gap:0.5rem;align-items:stretch">
+        <textarea id="creatives-refine-prompt" rows="2" placeholder="Describe changes to refine the image..." style="flex:1;border:1px solid var(--border);border-radius:6px;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:none;background:var(--surface)"></textarea>
+        <button onclick="refineCreativeImage()" style="padding:0.5rem 1rem;background:#6c5ce7;color:white;border:none;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;white-space:nowrap">Refine</button>
+      </div>
+      <!-- History filmstrip -->
+      <div>
+        <div style="font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:0.5rem">HISTORY</div>
+        <div id="creatives-filmstrip" style="display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.5rem;min-height:80px;align-items:center">
+          <span style="font-size:0.78rem;color:var(--muted)">No versions yet</span>
+        </div>
+      </div>
+      <!-- Package button (hidden until image generated) -->
+      <div id="creatives-package-wrap" style="display:none;border-top:1px solid var(--border);padding-top:0.75rem">
+        <button id="creatives-package-btn" onclick="packageCreative()" style="padding:0.6rem 1.25rem;background:#0f172a;color:white;border:none;border-radius:7px;font-size:0.88rem;font-weight:600;cursor:pointer">&#128230; Package for All Placements</button>
+      </div>
+    </div>
   </div>
 </div>
 <div id="tab-ad-intelligence" class="tab-panel" style="display:none">
@@ -2521,10 +2641,849 @@ async function renderAdIntelligenceTab() {
   }
 }
 
-function renderCreativesTab() {
-  var el = document.getElementById('creatives-content');
+// ── Creatives tab state ─────────────────────────────────────────────────────
+var creativesState = {
+  sessionId: null,
+  currentVersion: null,
+  aspectRatio: '1:1',
+  referenceImages: [],
+  models: [],
+  templates: [],
+  sessions: [],
+  compareMode: false,
+  compareVersions: []
+};
+
+async function renderCreativesTab() {
+  try {
+    var [modelsRes, templatesRes, sessionsRes] = await Promise.all([
+      fetch('/api/creatives/models', { credentials: 'same-origin' }),
+      fetch('/api/creatives/templates', { credentials: 'same-origin' }),
+      fetch('/api/creatives/sessions', { credentials: 'same-origin' })
+    ]);
+    creativesState.models = await modelsRes.json();
+    creativesState.templates = await templatesRes.json();
+    creativesState.sessions = await sessionsRes.json();
+    renderCreativesModels();
+    renderCreativesTemplates();
+    renderCreativesSessions();
+    // Load most recent session
+    if (creativesState.sessions.length > 0) {
+      var latest = creativesState.sessions[0];
+      document.getElementById('creatives-session-select').value = latest.id;
+      await loadCreativesSession(latest.id);
+    }
+  } catch (e) {
+    console.error('renderCreativesTab error', e);
+  }
+}
+
+function renderCreativesModels() {
+  var sel = document.getElementById('creatives-model-select');
+  if (!sel) return;
+  sel.innerHTML = creativesState.models.map(function(m) {
+    return '<option value="' + esc(m.id) + '">' + esc(m.name) + '</option>';
+  }).join('');
+  if (creativesState.models.length > 0) sel.value = creativesState.models[0].id;
+}
+
+function renderCreativesTemplates() {
+  var sel = document.getElementById('creatives-template-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">None</option>' +
+    creativesState.templates.map(function(t) {
+      return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
+    }).join('');
+}
+
+function renderCreativesSessions() {
+  var sel = document.getElementById('creatives-session-select');
+  if (!sel) return;
+  if (creativesState.sessions.length === 0) {
+    sel.innerHTML = '<option value="">No sessions</option>';
+    return;
+  }
+  sel.innerHTML = creativesState.sessions.map(function(s) {
+    var label = s.name || ('Session ' + s.id.slice(-6));
+    return '<option value="' + esc(s.id) + '">' + esc(label) + '</option>';
+  }).join('');
+}
+
+async function loadCreativesSession(sessionId) {
+  if (!sessionId) return;
+  try {
+    var res = await fetch('/api/creatives/sessions/' + encodeURIComponent(sessionId), { credentials: 'same-origin' });
+    var session = await res.json();
+    creativesState.sessionId = session.id;
+    creativesState.referenceImages = session.referenceImages || [];
+    creativesState.aspectRatio = session.aspectRatio || '1:1';
+    // Populate form
+    var promptEl = document.getElementById('creatives-prompt');
+    var negEl = document.getElementById('creatives-negative-prompt');
+    if (promptEl) promptEl.value = session.prompt || '';
+    if (negEl) negEl.value = session.negativePrompt || '';
+    // Set session name
+    var nameEl = document.getElementById('creatives-session-name');
+    if (nameEl) nameEl.textContent = session.name || '';
+    // Set model
+    var modelSel = document.getElementById('creatives-model-select');
+    if (modelSel && session.model) modelSel.value = session.model;
+    // Set template
+    var tplSel = document.getElementById('creatives-template-select');
+    if (tplSel) tplSel.value = session.templateId || '';
+    // Set aspect ratio buttons
+    setAspectRatio(creativesState.aspectRatio, null);
+    // Render ref images
+    renderCreativesRefImages();
+    // Render filmstrip
+    renderCreativesFilmstrip(session.versions || []);
+    // Show latest image
+    if (session.versions && session.versions.length > 0) {
+      var favorites = session.versions.filter(function(v) { return v.favorite; });
+      var latest = favorites.length > 0 ? favorites[0] : session.versions[session.versions.length - 1];
+      creativesState.currentVersion = latest;
+      showCreativeImage(latest.imagePath, latest);
+    } else {
+      hideCreativeImage();
+    }
+  } catch (e) {
+    console.error('loadCreativesSession error', e);
+  }
+}
+
+function onCreativesSessionChange() {
+  var sel = document.getElementById('creatives-session-select');
+  if (sel && sel.value) loadCreativesSession(sel.value);
+}
+
+function onCreativesModelChange() {
+  updateRefCount();
+}
+
+function onCreativesTemplateChange() {
+  var sel = document.getElementById('creatives-template-select');
+  if (!sel || !sel.value) return;
+  var tpl = creativesState.templates.find(function(t) { return t.id === sel.value; });
+  if (tpl && tpl.prompt) {
+    var promptEl = document.getElementById('creatives-prompt');
+    if (promptEl && !promptEl.value) promptEl.value = tpl.prompt;
+  }
+}
+
+function setAspectRatio(ar, btn) {
+  creativesState.aspectRatio = ar;
+  // Update button classes
+  var btns = document.querySelectorAll('.ar-btn');
+  btns.forEach(function(b) { b.classList.remove('active'); });
+  if (btn) {
+    btn.classList.add('active');
+  } else {
+    // Find by text content
+    btns.forEach(function(b) {
+      if (b.textContent.trim() === ar) b.classList.add('active');
+    });
+  }
+  // Show/hide custom inputs
+  var customInputs = document.getElementById('ar-custom-inputs');
+  if (customInputs) {
+    customInputs.style.display = ar === 'custom' ? 'flex' : 'none';
+  }
+}
+
+function renderCreativesRefImages() {
+  var area = document.getElementById('ref-images-area');
+  var placeholder = document.getElementById('ref-images-placeholder');
+  if (!area) return;
+  if (creativesState.referenceImages.length === 0) {
+    if (placeholder) placeholder.style.display = '';
+    // Remove any thumbnails
+    var thumbs = area.querySelectorAll('.ref-thumb');
+    thumbs.forEach(function(t) { t.remove(); });
+    return;
+  }
+  if (placeholder) placeholder.style.display = 'none';
+  // Remove old thumbs
+  var thumbs = area.querySelectorAll('.ref-thumb');
+  thumbs.forEach(function(t) { t.remove(); });
+  creativesState.referenceImages.forEach(function(img, i) {
+    var div = document.createElement('div');
+    div.className = 'ref-thumb';
+    div.style.cssText = 'position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:2px solid ' + (img.type === 'product' ? '#a78bfa' : '#34d399') + ';flex-shrink:0';
+    var imgEl = document.createElement('img');
+    imgEl.src = img.url || img.path || '';
+    imgEl.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    var rm = document.createElement('button');
+    rm.innerHTML = '&times;';
+    rm.style.cssText = 'position:absolute;top:0;right:0;background:rgba(0,0,0,0.6);color:white;border:none;width:18px;height:18px;font-size:12px;line-height:1;cursor:pointer;border-radius:0 0 0 4px;padding:0';
+    rm.onclick = (function(idx) { return function() { removeRefImage(idx); }; })(i);
+    div.appendChild(imgEl);
+    div.appendChild(rm);
+    area.appendChild(div);
+  });
+  updateRefCount();
+}
+
+function updateRefCount() {
+  var countEl = document.getElementById('ref-image-count');
+  if (!countEl) return;
+  var model = getSelectedModel();
+  var maxRef = model ? model.maxReferenceImages : 10;
+  var cnt = creativesState.referenceImages.length;
+  countEl.textContent = '(' + cnt + '/' + maxRef + ')';
+}
+
+function getSelectedModel() {
+  var sel = document.getElementById('creatives-model-select');
+  if (!sel) return null;
+  return creativesState.models.find(function(m) { return m.id === sel.value; }) || null;
+}
+
+function checkRefImageLimit() {
+  var model = getSelectedModel();
+  var max = model ? model.maxReferenceImages : 10;
+  return creativesState.referenceImages.length < max;
+}
+
+function removeRefImage(index) {
+  creativesState.referenceImages.splice(index, 1);
+  renderCreativesRefImages();
+}
+
+function showCreativeImage(imagePath, version) {
+  creativesState.currentVersion = version;
+  var img = document.getElementById('creatives-current-img');
+  var placeholder = document.getElementById('creatives-img-placeholder');
+  var actionBtns = document.getElementById('creatives-action-btns');
+  var packageWrap = document.getElementById('creatives-package-wrap');
+  if (img) {
+    img.src = '/api/creatives/image/' + imagePath;
+    img.style.display = 'block';
+  }
+  if (placeholder) placeholder.style.display = 'none';
+  if (actionBtns) actionBtns.style.display = 'flex';
+  if (packageWrap) packageWrap.style.display = 'block';
+}
+
+function hideCreativeImage() {
+  creativesState.currentVersion = null;
+  var img = document.getElementById('creatives-current-img');
+  var placeholder = document.getElementById('creatives-img-placeholder');
+  var actionBtns = document.getElementById('creatives-action-btns');
+  var packageWrap = document.getElementById('creatives-package-wrap');
+  if (img) { img.src = ''; img.style.display = 'none'; }
+  if (placeholder) placeholder.style.display = '';
+  if (actionBtns) actionBtns.style.display = 'none';
+  if (packageWrap) packageWrap.style.display = 'none';
+}
+
+function renderCreativesFilmstrip(versions) {
+  var strip = document.getElementById('creatives-filmstrip');
+  if (!strip) return;
+  if (!versions || versions.length === 0) {
+    strip.innerHTML = '<span style="font-size:0.78rem;color:var(--muted)">No versions yet</span>';
+    return;
+  }
+  // Favorites (gold border) first
+  var favs = versions.filter(function(v) { return v.favorite; });
+  var rest = versions.filter(function(v) { return !v.favorite; });
+  var ordered = favs.concat(rest).slice().reverse(); // most recent first within each group
+  strip.innerHTML = ordered.map(function(v, i) {
+    var border = v.favorite ? '2px solid #f59e0b' : '2px solid var(--border)';
+    var star = v.favorite ? '\u2605' : '\u2606';
+    var starColor = v.favorite ? '#f59e0b' : '#d1d5db';
+    var isCurrent = creativesState.currentVersion && creativesState.currentVersion.id === v.id;
+    var outline = isCurrent ? 'outline:2px solid #6c5ce7;outline-offset:2px' : '';
+    return '<div style="position:relative;flex-shrink:0;cursor:pointer;' + outline + '" onclick="selectFilmstripVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" title="v' + (v.versionNumber || (i+1)) + '">' +
+      '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:' + border + '" onerror="this.style.background=\'#f3f4f6\'">' +
+      '<button onclick="event.stopPropagation();toggleFavorite(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.5);border:none;color:' + starColor + ';font-size:12px;width:18px;height:18px;border-radius:3px;cursor:pointer;padding:0;line-height:1">' + star + '</button>' +
+      '</div>';
+  }).join('');
+}
+
+function selectFilmstripVersion(version) {
+  showCreativeImage(version.imagePath, version);
+  // Re-render filmstrip to update outline
+  if (creativesState.sessionId) {
+    fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(s) { renderCreativesFilmstrip(s.versions || []); })
+      .catch(function() {});
+  }
+}
+
+async function toggleFavorite(version) {
+  if (!creativesState.sessionId) return;
+  try {
+    await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ toggleFavorite: version.id })
+    });
+    var res = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
+    var session = await res.json();
+    renderCreativesFilmstrip(session.versions || []);
+  } catch (e) {
+    console.error('toggleFavorite error', e);
+  }
+}
+
+// ── Task 15: Generate, refine, upload, download, package ────────────────────
+
+async function generateCreativeImage() {
+  if (!creativesState.sessionId) {
+    // Create a new session first
+    try {
+      var newRes = await fetch('/api/creatives/sessions', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+      var newSession = await newRes.json();
+      creativesState.sessionId = newSession.id;
+      creativesState.sessions.unshift(newSession);
+      renderCreativesSessions();
+      var sel = document.getElementById('creatives-session-select');
+      if (sel) sel.value = newSession.id;
+    } catch (e) {
+      showCreativesError('Could not create session: ' + e.message);
+      return;
+    }
+  }
+  var prompt = (document.getElementById('creatives-prompt') || {}).value || '';
+  if (!prompt.trim()) { showCreativesError('Please enter a prompt.'); return; }
+  var negativePrompt = (document.getElementById('creatives-negative-prompt') || {}).value || '';
+  var model = document.getElementById('creatives-model-select');
+  var modelId = model ? model.value : '';
+  var ar = creativesState.aspectRatio;
+  var formData = new FormData();
+  formData.append('sessionId', creativesState.sessionId);
+  formData.append('prompt', prompt);
+  formData.append('negativePrompt', negativePrompt);
+  formData.append('model', modelId);
+  formData.append('aspectRatio', ar);
+  if (ar === 'custom') {
+    var cw = (document.getElementById('ar-custom-w') || {}).value || '';
+    var ch = (document.getElementById('ar-custom-h') || {}).value || '';
+    formData.append('customWidth', cw);
+    formData.append('customHeight', ch);
+  }
+  // Reference images: separate product paths vs uploaded files
+  var productPaths = [];
+  var uploadFiles = [];
+  creativesState.referenceImages.forEach(function(img) {
+    if (img.type === 'product' && img.path) {
+      productPaths.push(img.path);
+    } else if (img.file) {
+      uploadFiles.push(img.file);
+    }
+  });
+  productPaths.forEach(function(p) { formData.append('productImagePaths', p); });
+  uploadFiles.forEach(function(f) { formData.append('referenceImages', f); });
+  showCreativesSpinner('Generating...');
+  try {
+    var res = await fetch('/api/creatives/generate', { method: 'POST', credentials: 'same-origin', body: formData });
+    var data = await res.json();
+    hideCreativesSpinner();
+    if (!data.ok) { showCreativesError(data.error || 'Generation failed'); return; }
+    creativesState.currentVersion = data.version;
+    showCreativeImage(data.version.imagePath, data.version);
+    // Refresh filmstrip
+    var sRes = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
+    var session = await sRes.json();
+    renderCreativesFilmstrip(session.versions || []);
+    showAutosaveIndicator();
+  } catch (e) {
+    hideCreativesSpinner();
+    showCreativesError('Generate failed: ' + e.message);
+  }
+}
+
+async function refineCreativeImage() {
+  if (!creativesState.sessionId || !creativesState.currentVersion) {
+    showCreativesError('No image to refine. Generate an image first.');
+    return;
+  }
+  var refinePrompt = (document.getElementById('creatives-refine-prompt') || {}).value || '';
+  if (!refinePrompt.trim()) { showCreativesError('Please enter a refinement instruction.'); return; }
+  showCreativesSpinner('Refining...');
+  try {
+    var res = await fetch('/api/creatives/refine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        sessionId: creativesState.sessionId,
+        parentVersionId: creativesState.currentVersion.id,
+        refinePrompt: refinePrompt
+      })
+    });
+    var data = await res.json();
+    hideCreativesSpinner();
+    if (!data.ok) { showCreativesError(data.error || 'Refinement failed'); return; }
+    creativesState.currentVersion = data.version;
+    showCreativeImage(data.version.imagePath, data.version);
+    var sRes = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
+    var session = await sRes.json();
+    renderCreativesFilmstrip(session.versions || []);
+    var refEl = document.getElementById('creatives-refine-prompt');
+    if (refEl) refEl.value = '';
+    showAutosaveIndicator();
+  } catch (e) {
+    hideCreativesSpinner();
+    showCreativesError('Refine failed: ' + e.message);
+  }
+}
+
+function openProductImagePicker() {
+  openProductImageModal();
+}
+
+function openReferenceUpload() {
+  var input = document.getElementById('ref-image-input');
+  if (input) input.click();
+}
+
+function handleReferenceUpload(input) {
+  if (!input.files || !input.files.length) return;
+  if (!checkRefImageLimit()) {
+    var model = getSelectedModel();
+    var max = model ? model.maxReferenceImages : 10;
+    showCreativesError('Maximum ' + max + ' reference images allowed for this model.');
+    return;
+  }
+  for (var i = 0; i < input.files.length; i++) {
+    if (!checkRefImageLimit()) break;
+    var f = input.files[i];
+    creativesState.referenceImages.push({ type: 'upload', file: f, url: URL.createObjectURL(f), name: f.name });
+  }
+  renderCreativesRefImages();
+  input.value = '';
+}
+
+function handleRefImageDrop(event) {
+  event.preventDefault();
+  var files = event.dataTransfer.files;
+  if (!files || !files.length) return;
+  for (var i = 0; i < files.length; i++) {
+    if (!checkRefImageLimit()) break;
+    var f = files[i];
+    if (!f.type.startsWith('image/')) continue;
+    creativesState.referenceImages.push({ type: 'upload', file: f, url: URL.createObjectURL(f), name: f.name });
+  }
+  renderCreativesRefImages();
+}
+
+function downloadCreativeImage() {
+  if (!creativesState.currentVersion) return;
+  window.open('/api/creatives/image/' + creativesState.currentVersion.imagePath + '?download=1', '_blank');
+}
+
+async function packageCreative() {
+  if (!creativesState.sessionId || !creativesState.currentVersion) return;
+  var btn = document.getElementById('creatives-package-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Packaging...'; }
+  try {
+    var res = await fetch('/api/creatives/package', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ sessionId: creativesState.sessionId, versionId: creativesState.currentVersion.id })
+    });
+    var data = await res.json();
+    if (!data.ok) { resetPackageBtn(); showCreativesError(data.error || 'Package failed'); return; }
+    pollCreativePackage(data.jobId);
+  } catch (e) {
+    resetPackageBtn();
+    showCreativesError('Package failed: ' + e.message);
+  }
+}
+
+function pollCreativePackage(jobId) {
+  fetch('/api/creatives/package/' + encodeURIComponent(jobId), { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'done') {
+        resetPackageBtn();
+        window.open('/api/creatives/package/download/' + encodeURIComponent(jobId), '_blank');
+      } else if (data.status === 'error') {
+        resetPackageBtn();
+        showCreativesError(data.error || 'Package failed');
+      } else {
+        setTimeout(function() { pollCreativePackage(jobId); }, 3000);
+      }
+    })
+    .catch(function(e) { resetPackageBtn(); showCreativesError('Polling failed: ' + e.message); });
+}
+
+function resetPackageBtn() {
+  var btn = document.getElementById('creatives-package-btn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '&#128230; Package for All Placements'; }
+}
+
+function showCreativesSpinner(text) {
+  var spinner = document.getElementById('creatives-spinner');
+  var spinnerText = document.getElementById('creatives-spinner-text');
+  if (spinner) spinner.style.display = 'flex';
+  if (spinnerText) spinnerText.textContent = text || 'Working...';
+}
+
+function hideCreativesSpinner() {
+  var spinner = document.getElementById('creatives-spinner');
+  if (spinner) spinner.style.display = 'none';
+}
+
+function showCreativesError(msg) {
+  var errEl = document.getElementById('creatives-error');
+  if (!errEl) return;
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+  setTimeout(function() { errEl.style.display = 'none'; }, 6000);
+}
+
+function showAutosaveIndicator() {
+  var el = document.getElementById('creatives-autosave');
   if (!el) return;
-  el.innerHTML = '<p class="muted" style="padding:2rem">Creatives studio loading...</p>';
+  el.style.opacity = '1';
+  setTimeout(function() { el.style.opacity = '0'; }, 2000);
+}
+
+async function editSessionName() {
+  var current = (document.getElementById('creatives-session-name') || {}).textContent || '';
+  var newName = prompt('Rename session:', current);
+  if (!newName || !newName.trim() || !creativesState.sessionId) return;
+  try {
+    await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ name: newName.trim() })
+    });
+    var nameEl = document.getElementById('creatives-session-name');
+    if (nameEl) nameEl.textContent = newName.trim();
+    // Update sessions list
+    var session = creativesState.sessions.find(function(s) { return s.id === creativesState.sessionId; });
+    if (session) session.name = newName.trim();
+    renderCreativesSessions();
+    var sel = document.getElementById('creatives-session-select');
+    if (sel) sel.value = creativesState.sessionId;
+    showAutosaveIndicator();
+  } catch (e) {
+    showCreativesError('Rename failed: ' + e.message);
+  }
+}
+
+async function createNewCreativesSession() {
+  try {
+    var res = await fetch('/api/creatives/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({})
+    });
+    var session = await res.json();
+    creativesState.sessions.unshift(session);
+    renderCreativesSessions();
+    var sel = document.getElementById('creatives-session-select');
+    if (sel) sel.value = session.id;
+    await loadCreativesSession(session.id);
+  } catch (e) {
+    showCreativesError('Could not create session: ' + e.message);
+  }
+}
+
+function updateProductContext() {
+  var ctx = document.getElementById('creatives-product-context');
+  if (!ctx) return;
+  // Show if 2+ products in reference images
+  var productCount = creativesState.referenceImages.filter(function(img) { return img.type === 'product'; }).length;
+  ctx.style.display = productCount >= 2 ? 'block' : 'none';
+}
+
+function toggleProductContext() {
+  var body = document.getElementById('product-context-body');
+  var toggle = document.getElementById('product-context-toggle');
+  if (!body) return;
+  var hidden = body.style.display === 'none';
+  body.style.display = hidden ? 'block' : 'none';
+  if (toggle) toggle.innerHTML = hidden ? '&#9650;' : '&#9660;';
+}
+
+// ── Task 16: Compare mode ───────────────────────────────────────────────────
+
+function toggleCompareMode() {
+  creativesState.compareMode = !creativesState.compareMode;
+  var btn = document.getElementById('compare-btn');
+  if (creativesState.compareMode) {
+    if (btn) btn.style.background = '#6c5ce7', btn.style.color = 'white';
+    var compareWrap = document.getElementById('creatives-compare-wrap');
+    var img = document.getElementById('creatives-current-img');
+    if (compareWrap) compareWrap.style.display = 'flex';
+    if (img) img.style.display = 'none';
+    compareWrap.innerHTML = '<div style="flex:1;text-align:center;color:var(--muted);font-size:0.85rem;padding:1rem">Click a version in the filmstrip to select for comparison</div>';
+    creativesState.compareVersions = creativesState.currentVersion ? [creativesState.currentVersion] : [];
+  } else {
+    if (btn) btn.style.background = '', btn.style.color = '';
+    creativesState.compareVersions = [];
+    var compareWrap = document.getElementById('creatives-compare-wrap');
+    if (compareWrap) compareWrap.style.display = 'none';
+    if (creativesState.currentVersion) {
+      showCreativeImage(creativesState.currentVersion.imagePath, creativesState.currentVersion);
+    }
+  }
+}
+
+function renderCompareView() {
+  var wrap = document.getElementById('creatives-compare-wrap');
+  if (!wrap) return;
+  var versions = creativesState.compareVersions;
+  if (!versions || versions.length === 0) {
+    wrap.innerHTML = '<div style="flex:1;text-align:center;color:var(--muted);font-size:0.85rem;padding:1rem">Click a version in the filmstrip to select for comparison</div>';
+    return;
+  }
+  wrap.innerHTML = versions.map(function(v) {
+    return '<div style="flex:1;display:flex;flex-direction:column;gap:0.5rem;min-width:0">' +
+      '<img src="/api/creatives/image/' + esc(v.imagePath) + '" style="width:100%;border-radius:8px;object-fit:contain;max-height:400px">' +
+      '<div style="font-size:0.78rem;color:var(--muted);text-align:center">' + esc(v.prompt ? v.prompt.slice(0, 80) : 'v' + (v.versionNumber || '?')) + '</div>' +
+      '<button onclick="useCompareVersion(' + JSON.stringify(v).replace(/"/g,'&quot;') + ')" style="padding:0.3rem 0.75rem;background:#6c5ce7;color:white;border:none;border-radius:5px;font-size:0.8rem;cursor:pointer;font-weight:600">Use This Version</button>' +
+      '</div>';
+  }).join('<div style="width:1px;background:var(--border);flex-shrink:0"></div>');
+}
+
+function useCompareVersion(version) {
+  creativesState.compareMode = false;
+  creativesState.compareVersions = [];
+  var btn = document.getElementById('compare-btn');
+  if (btn) btn.style.background = '', btn.style.color = '';
+  var compareWrap = document.getElementById('creatives-compare-wrap');
+  if (compareWrap) compareWrap.style.display = 'none';
+  showCreativeImage(version.imagePath, version);
+}
+
+// ── Task 17: Product image picker modal ─────────────────────────────────────
+
+async function openProductImageModal() {
+  var modal = document.getElementById('product-image-modal');
+  if (!modal) return;
+  var grid = document.getElementById('product-image-grid');
+  if (grid) grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">Loading...</p>';
+  modal.style.display = 'flex';
+  try {
+    var res = await fetch('/api/creatives/product-images', { credentials: 'same-origin' });
+    var data = await res.json();
+    if (!grid) return;
+    if (!data.products || data.products.length === 0) {
+      grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No product images found. Run the product image sync first.</p>';
+      return;
+    }
+    grid.innerHTML = data.products.map(function(p) {
+      return p.images.map(function(imgPath) {
+        var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
+        var border = selected ? '3px solid #6c5ce7' : '2px solid var(--border)';
+        return '<div onclick="selectProductImage(\'' + esc(p.handle) + '\',\'' + esc(imgPath) + '\',this)" style="cursor:pointer;border-radius:7px;overflow:hidden;border:' + border + ';transition:border 0.15s" data-selected="' + selected + '">' +
+          '<img src="/api/creatives/product-images/' + esc(imgPath) + '" style="width:100%;aspect-ratio:1;object-fit:cover" onerror="this.style.background=\'#f3f4f6\'">' +
+          '<div style="padding:0.25rem 0.4rem;font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.title || p.handle) + '</div>' +
+          '</div>';
+      }).join('');
+    }).join('');
+  } catch (e) {
+    if (grid) grid.innerHTML = '<p style="color:#ef4444;font-size:0.85rem">Error: ' + esc(e.message) + '</p>';
+  }
+}
+
+function selectProductImage(handle, imgPath, el) {
+  var alreadyIdx = creativesState.referenceImages.findIndex(function(r) { return r.path === imgPath; });
+  if (alreadyIdx !== -1) {
+    creativesState.referenceImages.splice(alreadyIdx, 1);
+    if (el) { el.style.border = '2px solid var(--border)'; el.dataset.selected = 'false'; }
+  } else {
+    if (!checkRefImageLimit()) {
+      var model = getSelectedModel();
+      showCreativesError('Maximum ' + (model ? model.maxReferenceImages : 10) + ' reference images allowed.');
+      return;
+    }
+    creativesState.referenceImages.push({ type: 'product', path: imgPath, url: '/api/creatives/product-images/' + imgPath, handle: handle });
+    if (el) { el.style.border = '3px solid #6c5ce7'; el.dataset.selected = 'true'; }
+  }
+  updateRefCount();
+  updateProductContext();
+}
+
+function closeProductImageModal() {
+  var modal = document.getElementById('product-image-modal');
+  if (modal) modal.style.display = 'none';
+  renderCreativesRefImages();
+}
+
+// ── Task 18: Template management modal ─────────────────────────────────────
+
+function openManageTemplates() {
+  var modal = document.getElementById('template-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  renderTemplateList();
+}
+
+function closeTemplateModal() {
+  var modal = document.getElementById('template-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderTemplateList() {
+  var list = document.getElementById('template-modal-list');
+  if (!list) return;
+  if (creativesState.templates.length === 0) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem">No templates yet. Create one below.</p>';
+    return;
+  }
+  list.innerHTML = creativesState.templates.map(function(t) {
+    return '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.75rem;border:1px solid var(--border);border-radius:7px;background:var(--bg)">' +
+      (t.previewImage ? '<img src="/api/creatives/template-preview/' + esc(t.previewImage) + '" style="width:48px;height:48px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">' : '<div style="width:48px;height:48px;background:var(--card);border-radius:5px;border:1px solid var(--border)"></div>') +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(t.name) + '</div>' +
+        (t.prompt ? '<div style="font-size:0.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(t.prompt.slice(0, 60)) + '</div>' : '') +
+      '</div>' +
+      '<button onclick="editTemplate(\'' + esc(t.id) + '\')" style="padding:0.25rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;cursor:pointer;background:var(--surface)">Edit</button>' +
+      '<button onclick="deleteTemplate(\'' + esc(t.id) + '\')" style="padding:0.25rem 0.6rem;border:1px solid #fca5a5;border-radius:5px;font-size:0.78rem;cursor:pointer;background:#fff5f5;color:#dc2626">Delete</button>' +
+      '</div>';
+  }).join('');
+}
+
+async function deleteTemplate(id) {
+  if (!confirm('Delete this template?')) return;
+  try {
+    await fetch('/api/creatives/templates/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin' });
+    creativesState.templates = creativesState.templates.filter(function(t) { return t.id !== id; });
+    renderTemplateList();
+    renderCreativesTemplates();
+  } catch (e) {
+    showCreativesError('Delete failed: ' + e.message);
+  }
+}
+
+function editTemplate(id) {
+  var tpl = creativesState.templates.find(function(t) { return t.id === id; });
+  if (tpl) openTemplateForm(tpl);
+}
+
+function openNewTemplateForm() {
+  openTemplateForm(null);
+}
+
+function openTemplateForm(existing) {
+  var formWrap = document.getElementById('template-form-wrap');
+  if (!formWrap) return;
+  formWrap.style.display = 'block';
+  var nameInput = document.getElementById('template-form-name');
+  var promptInput = document.getElementById('template-form-prompt');
+  var idInput = document.getElementById('template-form-id');
+  if (nameInput) nameInput.value = existing ? (existing.name || '') : '';
+  if (promptInput) promptInput.value = existing ? (existing.prompt || '') : '';
+  if (idInput) idInput.value = existing ? (existing.id || '') : '';
+  var title = document.getElementById('template-form-title');
+  if (title) title.textContent = existing ? 'Edit Template' : 'New Template';
+}
+
+async function saveTemplateForm(existingId, isEdit) {
+  var nameInput = document.getElementById('template-form-name');
+  var promptInput = document.getElementById('template-form-prompt');
+  var name = nameInput ? nameInput.value.trim() : '';
+  var prompt = promptInput ? promptInput.value.trim() : '';
+  if (!name) { showCreativesError('Template name is required.'); return; }
+  try {
+    var url = isEdit ? '/api/creatives/templates/' + encodeURIComponent(existingId) : '/api/creatives/templates';
+    var method = isEdit ? 'PUT' : 'POST';
+    var res = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ name: name, prompt: prompt })
+    });
+    var saved = await res.json();
+    if (isEdit) {
+      var idx = creativesState.templates.findIndex(function(t) { return t.id === existingId; });
+      if (idx !== -1) creativesState.templates[idx] = saved;
+    } else {
+      creativesState.templates.push(saved);
+    }
+    renderTemplateList();
+    renderCreativesTemplates();
+    var formWrap = document.getElementById('template-form-wrap');
+    if (formWrap) formWrap.style.display = 'none';
+  } catch (e) {
+    showCreativesError('Save failed: ' + e.message);
+  }
+}
+
+function openCreateFromImage() {
+  var wrap = document.getElementById('template-from-image-wrap');
+  if (wrap) wrap.style.display = 'block';
+}
+
+function previewFromImage(input) {
+  if (!input.files || !input.files.length) return;
+  var f = input.files[0];
+  var preview = document.getElementById('template-from-image-preview');
+  if (preview) {
+    preview.src = URL.createObjectURL(f);
+    preview.style.display = 'block';
+  }
+}
+
+async function analyzeTemplateImage() {
+  var input = document.getElementById('template-from-image-input');
+  if (!input || !input.files || !input.files.length) {
+    showCreativesError('Please select an image first.');
+    return;
+  }
+  var formData = new FormData();
+  formData.append('image', input.files[0]);
+  try {
+    var res = await fetch('/api/creatives/templates/from-image', { method: 'POST', credentials: 'same-origin', body: formData });
+    var data = await res.json();
+    if (!data.ok) { showCreativesError(data.error || 'Analysis failed'); return; }
+    var promptEl = document.getElementById('template-from-image-result');
+    if (promptEl) promptEl.value = data.prompt || '';
+    var saveWrap = document.getElementById('template-from-image-save-wrap');
+    if (saveWrap) saveWrap.style.display = 'block';
+    // Store preview path for saving
+    creativesState._fromImagePreviewPath = data.previewPath || '';
+  } catch (e) {
+    showCreativesError('Analysis failed: ' + e.message);
+  }
+}
+
+async function saveAiTemplate(previewPath) {
+  var promptEl = document.getElementById('template-from-image-result');
+  var nameInput = document.getElementById('template-from-image-name');
+  var prompt = promptEl ? promptEl.value.trim() : '';
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!name) { showCreativesError('Template name is required.'); return; }
+  try {
+    var res = await fetch('/api/creatives/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ name: name, prompt: prompt, previewImage: previewPath || creativesState._fromImagePreviewPath || '' })
+    });
+    var saved = await res.json();
+    creativesState.templates.push(saved);
+    renderTemplateList();
+    renderCreativesTemplates();
+    var wrap = document.getElementById('template-from-image-wrap');
+    if (wrap) wrap.style.display = 'none';
+  } catch (e) {
+    showCreativesError('Save failed: ' + e.message);
+  }
+}
+
+function saveRefToLibrary(index) {
+  var img = creativesState.referenceImages[index];
+  if (!img || !img.file) return;
+  var formData = new FormData();
+  formData.append('image', img.file);
+  fetch('/api/creatives/reference-images', { method: 'POST', credentials: 'same-origin', body: formData })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) showAutosaveIndicator();
+    })
+    .catch(function(e) { showCreativesError('Save to library failed: ' + e.message); });
 }
 
 function renderAdCard(ad) {
@@ -3951,6 +4910,71 @@ async function resolveAlert(campaignId, alertType) {
   <div id="kw-modal-body" style="background:#fff;border-radius:10px;padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)"></div>
 </div>
 
+<!-- Product image picker modal (Task 17) -->
+<div id="product-image-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeProductImageModal()">
+  <div style="background:#fff;border-radius:12px;width:680px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e5e7eb">
+      <div style="font-size:14px;font-weight:700;color:#111">Select Product Image</div>
+      <button onclick="closeProductImageModal()" style="background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+    </div>
+    <div id="product-image-grid" style="flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;align-content:start">
+      <p style="color:#9ca3af;font-size:0.85rem">Loading...</p>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="closeProductImageModal()" style="padding:7px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Template management modal (Task 18) -->
+<div id="template-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeTemplateModal()">
+  <div style="background:#fff;border-radius:12px;width:560px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e5e7eb">
+      <div style="font-size:14px;font-weight:700;color:#111">Manage Templates</div>
+      <button onclick="closeTemplateModal()" style="background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div id="template-modal-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <!-- New template form -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button onclick="openNewTemplateForm()" style="padding:6px 14px;border:1px solid #6c5ce7;border-radius:6px;background:#f5f3ff;color:#5b21b6;font-size:0.82rem;cursor:pointer;font-weight:600">+ New Template</button>
+        <button onclick="openCreateFromImage()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">+ From Image</button>
+      </div>
+      <!-- Template form -->
+      <div id="template-form-wrap" style="display:none;border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg)">
+        <input type="hidden" id="template-form-id">
+        <div id="template-form-title" style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:#111">New Template</div>
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">NAME</label>
+        <input id="template-form-name" type="text" placeholder="Template name..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">PROMPT</label>
+        <textarea id="template-form-prompt" rows="4" placeholder="Template prompt..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit;resize:vertical"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById(&apos;template-form-wrap&apos;).style.display=&apos;none&apos;" style="padding:6px 14px;border:1px solid #d1d5db;border-radius:6px;background:#fff;font-size:0.82rem;cursor:pointer">Cancel</button>
+          <button onclick="saveTemplateForm(document.getElementById(&apos;template-form-id&apos;).value, !!document.getElementById(&apos;template-form-id&apos;).value)" style="padding:6px 14px;border:none;border-radius:6px;background:#6c5ce7;color:white;font-size:0.82rem;cursor:pointer;font-weight:600">Save</button>
+        </div>
+      </div>
+      <!-- From image form -->
+      <div id="template-from-image-wrap" style="display:none;border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg)">
+        <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:#111">Create Template from Image</div>
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:6px">Upload an image to analyze</label>
+        <input type="file" id="template-from-image-input" accept="image/*" onchange="previewFromImage(this)" style="margin-bottom:8px">
+        <img id="template-from-image-preview" src="" alt="Preview" style="display:none;max-width:200px;max-height:150px;object-fit:contain;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button onclick="analyzeTemplateImage()" style="padding:6px 14px;border:none;border-radius:6px;background:#6c5ce7;color:white;font-size:0.82rem;cursor:pointer;font-weight:600">Analyze Image</button>
+          <button onclick="document.getElementById(&apos;template-from-image-wrap&apos;).style.display=&apos;none&apos;" style="padding:6px 14px;border:1px solid #d1d5db;border-radius:6px;background:#fff;font-size:0.82rem;cursor:pointer">Cancel</button>
+        </div>
+        <div id="template-from-image-save-wrap" style="display:none">
+          <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">EXTRACTED PROMPT</label>
+          <textarea id="template-from-image-result" rows="4" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit;resize:vertical"></textarea>
+          <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">TEMPLATE NAME</label>
+          <input id="template-from-image-name" type="text" placeholder="Template name..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+          <button onclick="saveAiTemplate()" style="padding:6px 14px;border:none;border-radius:6px;background:#0f172a;color:white;font-size:0.82rem;cursor:pointer;font-weight:600">Save Template</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- keyword rejection modal -->
 <div id="reject-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeRejectModal()">
   <div style="background:#fff;border-radius:12px;width:380px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
@@ -5126,6 +6150,20 @@ const server = http.createServer((req, res) => {
       }).filter(Boolean).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(sessions));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // POST /api/creatives/sessions (create new session)
+  if (req.method === 'POST' && req.url === '/api/creatives/sessions') {
+    try {
+      mkdirSync(CREATIVE_SESSIONS_DIR, { recursive: true });
+      const session = createSession();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(session));
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
