@@ -1066,8 +1066,9 @@ const HTML = `<!DOCTYPE html>
       <button class="tab-pill active" onclick="switchTab('seo',this)">SEO</button>
       <button class="tab-pill" onclick="switchTab('cro',this)" id="pill-cro">CRO</button>
       <button class="tab-pill" onclick="switchTab('ads',this)" id="pill-ads" style="display:none">Ads</button>
-      <button class="tab-pill" onclick="switchTab('ad-intelligence',this)" id="pill-ad-intelligence">Ad Intelligence</button>
-      <button class="tab-pill" onclick="switchTab('optimize',this)" id="pill-optimize">Optimize</button>
+      <button class="tab-pill" onclick="switchTab('creatives',this)" id="pill-creatives">Creatives</button>
+      <button class="tab-pill disabled" id="pill-ad-intelligence" title="Coming soon" style="opacity:0.4;cursor:not-allowed;pointer-events:none;">Ad Intelligence</button>
+      <button class="tab-pill disabled" id="pill-optimize" title="Coming soon" style="opacity:0.4;cursor:not-allowed;pointer-events:none;">Optimize</button>
     </div>
     <div id="cro-filter-bar" style="display:none">
       <div class="filter-bar">
@@ -1200,6 +1201,11 @@ const HTML = `<!DOCTYPE html>
   <pre id="run-log-agents-cro-deep-dive-seo-index-js" style="display:none" class="run-log"></pre>
   <pre id="run-log-agents-cro-deep-dive-trust-index-js" style="display:none" class="run-log"></pre>
 </div><!-- /tab-cro -->
+<div id="tab-creatives" class="tab-panel" style="display:none">
+  <div id="creatives-content">
+    <p class="muted" style="padding:2rem">Loading creatives studio...</p>
+  </div>
+</div>
 <div id="tab-ad-intelligence" class="tab-panel" style="display:none">
   <div id="ad-intelligence-content">
     <p class="muted" style="padding:2rem">Loading ad intelligence data…</p>
@@ -1273,7 +1279,7 @@ function switchTab(name, btn) {
   // Show/hide CRO date filter
   document.getElementById('cro-filter-bar').style.display = (name === 'cro' || name === 'ads') ? '' : 'none';
   // Show/hide tab action groups
-  ['seo','cro','optimize','ads'].forEach(function(t) {
+  ['seo','cro','optimize','ads','creatives'].forEach(function(t) {
     const g = document.getElementById('tab-actions-' + t);
     if (g) g.style.display = t === name ? '' : 'none';
   });
@@ -1281,6 +1287,7 @@ function switchTab(name, btn) {
   if (data) renderHeroKpis(data);
   if (name === 'optimize' && data) renderOptimizeTab(data);
   if (name === 'ad-intelligence') renderAdIntelligenceTab();
+  if (name === 'creatives') renderCreativesTab();
   // Update chat sidebar when tab switches
   if (tabChatOpen) {
     var chatTitle = document.getElementById('tab-chat-title');
@@ -2514,6 +2521,12 @@ async function renderAdIntelligenceTab() {
   }
 }
 
+function renderCreativesTab() {
+  var el = document.getElementById('creatives-content');
+  if (!el) return;
+  el.innerHTML = '<p class="muted" style="padding:2rem">Creatives studio loading...</p>';
+}
+
 function renderAdCard(ad) {
   const platforms = (ad.publisherPlatforms || []).map(function(p) {
     return '<span style="background:#e8f4fd;color:#1a6fa8;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:600;text-transform:uppercase">' + esc(p) + '</span>';
@@ -3024,7 +3037,7 @@ setInterval(loadData, 3600000);
 var tabChatOpen = false;
 var tabChatMessages = { seo: [], cro: [], ads: [], optimize: [] };
 var tabChatInFlight = false;
-var TAB_CHAT_NAMES = { seo: 'SEO', cro: 'CRO', ads: 'Ads', 'ad-intelligence': 'Ad Intelligence', optimize: 'Optimize' };
+var TAB_CHAT_NAMES = { seo: 'SEO', cro: 'CRO', ads: 'Ads', 'ad-intelligence': 'Ad Intelligence', optimize: 'Optimize', creatives: 'Creatives' };
 
 function renderTabChatMessages() {
   var msgs = tabChatMessages[activeTab] || [];
