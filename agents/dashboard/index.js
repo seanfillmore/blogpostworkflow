@@ -5565,6 +5565,80 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── Task 11: Packaging endpoints ─────────────────────────────────────────────
+
+  // POST /api/creatives/package
+  if (req.method === 'POST' && req.url === '/api/creatives/package') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      let payload;
+      try { payload = JSON.parse(body); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      try {
+        const jobId = 'pkg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        ensureDir(CREATIVE_JOBS_DIR);
+        const jobData = { ...payload, jobId, status: 'pending', createdAt: new Date().toISOString() };
+        writeFileSync(join(CREATIVE_JOBS_DIR, jobId + '.json'), JSON.stringify(jobData, null, 2));
+        spawn('node', [join(ROOT, 'agents/creative-packager/index.js'), '--job-id', jobId], {
+          detached: true,
+          stdio: 'ignore',
+          cwd: ROOT
+        }).unref();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ jobId }));
+      } catch (err2) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err2.message }));
+      }
+    });
+    return;
+  }
+
+  // GET /api/creatives/package/download/:jobId  ← MUST be registered before /:jobId
+  const packageDownloadMatch = req.url.match(/^\/api\/creatives\/package\/download\/([^/]+)$/);
+  if (req.method === 'GET' && packageDownloadMatch) {
+    const jobId = packageDownloadMatch[1];
+    const jobPath = join(CREATIVE_JOBS_DIR, jobId + '.json');
+    if (!existsSync(jobPath)) { res.writeHead(404); res.end('Not found'); return; }
+    try {
+      const job = JSON.parse(readFileSync(jobPath, 'utf8'));
+      const zipPath = job.zipPath;
+      if (!zipPath || !existsSync(zipPath)) { res.writeHead(404); res.end('ZIP not found'); return; }
+      const zipName = basename(zipPath);
+      res.writeHead(200, { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${zipName}"` });
+      createReadStream(zipPath).pipe(res);
+    } catch { res.writeHead(500); res.end('Error'); }
+    return;
+  }
+
+  // GET /api/creatives/package/:jobId  (status polling)
+  const packagePollMatch = req.url.match(/^\/api\/creatives\/package\/([^/]+)$/);
+  if (req.method === 'GET' && packagePollMatch) {
+    const jobId = packagePollMatch[1];
+    const jobPath = join(CREATIVE_JOBS_DIR, jobId + '.json');
+    if (!existsSync(jobPath)) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'error', error: 'Job not found', downloadUrl: null }));
+      return;
+    }
+    try {
+      const job = JSON.parse(readFileSync(jobPath, 'utf8'));
+      const age = Date.now() - new Date(job.createdAt).getTime();
+      if (age > 10 * 60 * 1000 && job.status !== 'complete') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'error', error: 'Job timed out', downloadUrl: null }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: job.status, downloadUrl: job.downloadUrl || null, error: job.error || null }));
+    } catch { res.writeHead(500); res.end('{}'); }
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/api/reject-keyword') {
     let body = '';
     req.on('data', d => { body += d; });
