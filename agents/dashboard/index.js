@@ -3357,6 +3357,8 @@ function updateProductContext() {
   ctx.style.display = 'block';
   var body = document.getElementById('product-context-body');
   if (!body) return;
+  body.style.display = 'block';
+  body.innerHTML = '<p style="color:var(--muted);font-size:0.78rem;margin:0">Loading product descriptions...</p>';
   // Fetch product descriptions from manifest
   fetch('/api/creatives/product-images', { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
@@ -3365,14 +3367,14 @@ function updateProductContext() {
       body.innerHTML = productRefs.map(function(ref, i) {
         var product = products.find(function(p) { return p.handle === ref.handle; });
         var title = product ? (product.title || product.handle) : (ref.handle || 'Product');
-        var desc = product && product.productDescription ? product.productDescription : '';
-        return '<div style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--border)">' +
+        var desc = product && product.productDescription ? product.productDescription : 'No description available. Add one in manifest.json.';
+        return '<div style="padding:0.5rem 0;border-bottom:1px solid var(--border)">' +
           '<div style="font-size:0.8rem;font-weight:600;color:var(--fg);margin-bottom:0.25rem">' + (i + 1) + '. ' + esc(title) + '</div>' +
           '<textarea style="width:100%;font-size:0.78rem;border:1px solid var(--border);border-radius:4px;padding:0.4rem;resize:vertical;box-sizing:border-box;font-family:inherit;background:var(--surface);color:var(--fg)" rows="2" data-product-idx="' + i + '">' + esc(desc) + '</textarea>' +
           '</div>';
       }).join('');
     })
-    .catch(function() {});
+    .catch(function(e) { body.innerHTML = '<p style="color:#ef4444;font-size:0.78rem;margin:0">Failed to load: ' + esc(e.message) + '</p>'; });
 }
 
 function toggleProductContext() {
