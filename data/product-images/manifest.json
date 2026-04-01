@@ -122,60 +122,70 @@
     "handle": "culina-brush",
     "title": "Culina Cast Iron Cleaning Brush",
     "tags": ["cast iron", "cleaning", "brush", "culina"],
-    "imageDir": "culina-products/brush"
+    "imageDir": "culina-products/brush",
+    "productDescription": "The cast iron cleaning brush is a small bamboo handled brush with sisal bristles"
   },
   {
     "handle": "culina-cast-iron-oil",
     "title": "Culina Cast Iron Oil",
     "tags": ["cast iron", "seasoning", "oil", "culina"],
-    "imageDir": "culina-products/cast-iron-oil"
+    "imageDir": "culina-products/cast-iron-oil",
+    "productDescription": "The cast iron oil bottle is white plastic with a black disk top cap lid. The label is black and the text on the label is white. The text says culina, Cast Iron Oil, Seasons and Protects Cast Iron Cookwear, 8 fl oz 240ml"
   },
   {
     "handle": "culina-cast-iron-soap",
     "title": "Culina Cast Iron Soap",
     "tags": ["cast iron", "cleaning", "soap", "culina"],
-    "imageDir": "culina-products/cast-iron-soap"
+    "imageDir": "culina-products/cast-iron-soap",
+    "productDescription": "The cast iron soap bottle is white plastic with a black disk top cap lid. The label is black and the text on the label is white. The text says culina, Cast Iron Soap, Seasons and Protects Cast Iron Cookwear, 8 fl oz 240ml"
   },
   {
     "handle": "culina-handle-black",
     "title": "Culina Cast Iron Handle Cover (Black)",
     "tags": ["cast iron", "handle", "silicone", "culina"],
-    "imageDir": "culina-products/handle-black"
+    "imageDir": "culina-products/handle-black",
+    "productDescription": "The cast iron handle cover (black) is a silicone handle cover designed to insulate your hand from the hot handle"
   },
   {
     "handle": "culina-handle-red",
     "title": "Culina Cast Iron Handle Cover (Red)",
     "tags": ["cast iron", "handle", "silicone", "culina"],
-    "imageDir": "culina-products/handle-red"
+    "imageDir": "culina-products/handle-red",
+    "productDescription": "The cast iron handle cover (red) is a silicone handle cover designed to insulate your hand from the hot handle"
   },
   {
     "handle": "culina-salt-scrub",
     "title": "Culina Cast Iron Salt Scrub",
     "tags": ["cast iron", "cleaning", "salt scrub", "culina"],
-    "imageDir": "culina-products/salt-scrub"
+    "imageDir": "culina-products/salt-scrub",
+    "productDescription": "Cast Iron Salt Scrub is used for removing rust & burnt on food spots while helping to build & fortify the natural seasoning of your griddle cooking surface."
   },
   {
     "handle": "culina-scraper-1",
     "title": "Culina Cast Iron Scraper",
     "tags": ["cast iron", "cleaning", "scraper", "culina"],
-    "imageDir": "culina-products/scraper-1"
+    "imageDir": "culina-products/scraper-1",
+    "productDescription": "Culina cast iron scrapers are designed to help remove stubborn food and debris from the inside and outside of cast iron pans and griddles."
   },
   {
     "handle": "culina-scraper-2",
     "title": "Culina Cast Iron Scraper (Wide)",
     "tags": ["cast iron", "cleaning", "scraper", "culina"],
-    "imageDir": "culina-products/scraper-2"
+    "imageDir": "culina-products/scraper-2",
+    "productDescription": "Culina cast iron scrapers are designed to help remove stubborn food and debris from the inside and outside of cast iron pans and griddles."
   },
   {
     "handle": "culina-scraper-stainless",
     "title": "Culina Stainless Steel Scraper",
     "tags": ["cast iron", "cleaning", "scraper", "stainless steel", "culina"],
-    "imageDir": "culina-products/scraper-stainless"
+    "imageDir": "culina-products/scraper-stainless",
+    "productDescription": "The chainmail scrubber is spliced with high-quality stainless steel rings. The chainmail scrubber is designed to clean stubborn food debris from the bottom of your cast iron pan."
   },
   {
     "handle": "culina-seasoning-stick",
     "title": "Culina Cast Iron Seasoning Stick",
     "tags": ["cast iron", "seasoning", "wax", "culina"],
-    "imageDir": "culina-products/seasoning-stick"
+    "imageDir": "culina-products/seasoning-stick",
+    "productDescription": "The culina cast iron seasoning stick is an innovative design allowing the user to apply the seasoning from a deodorant style stick."
   }
 ]
