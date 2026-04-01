@@ -94,9 +94,9 @@ const PRODUCT_IMAGES_DIR              = join(ROOT, 'data', 'product-images');
 const PRODUCT_MANIFEST_PATH           = join(PRODUCT_IMAGES_DIR, 'manifest.json');
 
 const GEMINI_MODELS = [
-  { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash', maxReferenceImages: 16 },
-  { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro', maxReferenceImages: 16 },
-  { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash', maxReferenceImages: 10 },
+  { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash', maxReferenceImages: 16, resolutions: ['512', '1K', '2K', '4K'] },
+  { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro', maxReferenceImages: 16, resolutions: ['1K', '2K', '4K'] },
+  { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash', maxReferenceImages: 10, resolutions: ['1K'] },
 ];
 
 const geminiClient = process.env.GEMINI_API_KEY
@@ -1211,6 +1211,10 @@ const HTML = `<!DOCTYPE html>
     <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap">Model</label>
     <select id="creatives-model-select" onchange="onCreativesModelChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
       <option value="">Loading...</option>
+    </select>
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:0.5rem">Resolution</label>
+    <select id="creatives-resolution-select" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="1K">1K</option>
     </select>
     <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:0.5rem">Template</label>
     <select id="creatives-template-select" onchange="onCreativesTemplateChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
@@ -2686,6 +2690,7 @@ async function renderCreativesTab() {
     creativesState.templates = await templatesRes.json();
     creativesState.sessions = await sessionsRes.json();
     renderCreativesModels();
+    updateResolutionOptions();
     renderCreativesTemplates();
     renderCreativesSessions();
     // Update hero KPIs for creatives tab
@@ -2781,6 +2786,22 @@ function onCreativesSessionChange() {
 
 function onCreativesModelChange() {
   updateRefCount();
+  updateResolutionOptions();
+}
+
+function updateResolutionOptions() {
+  var model = getSelectedModel();
+  var resSel = document.getElementById('creatives-resolution-select');
+  if (!resSel || !model) return;
+  var resolutions = model.resolutions || ['1K'];
+  var current = resSel.value;
+  resSel.innerHTML = resolutions.map(function(r) {
+    return '<option value="' + r + '"' + (r === current ? ' selected' : '') + '>' + r + '</option>';
+  }).join('');
+  // If current selection not available in new model, default to highest available
+  if (resolutions.indexOf(current) === -1) {
+    resSel.value = resolutions[resolutions.length - 1];
+  }
 }
 
 function onCreativesTemplateChange() {
@@ -3054,10 +3075,13 @@ async function generateCreativeImage() {
   var ar = creativesState.aspectRatio;
   var formData = new FormData();
   formData.append('sessionId', creativesState.sessionId);
+  var resSel = document.getElementById('creatives-resolution-select');
+  var resolution = resSel ? resSel.value : '1K';
   formData.append('prompt', prompt);
   formData.append('negativePrompt', negativePrompt);
   formData.append('model', modelId);
   formData.append('aspectRatio', ar);
+  formData.append('imageSize', resolution);
   if (ar === 'custom') {
     var cw = (document.getElementById('ar-custom-w') || {}).value || '';
     var ch = (document.getElementById('ar-custom-h') || {}).value || '';
@@ -6717,12 +6741,14 @@ const server = http.createServer((req, res) => {
         parts.push({ text: fullPrompt });
 
         // Call Gemini
+        const imageSize = req.body.imageSize || '1K';
         const result = await geminiClient.models.generateContent({
           model,
           contents: [{ role: 'user', parts }],
           config: {
             responseModalities: ['TEXT', 'IMAGE'],
             aspectRatio,
+            imageSize,
           }
         });
 
