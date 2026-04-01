@@ -1230,14 +1230,9 @@ const HTML = `<!DOCTYPE html>
     <!-- LEFT PANEL -->
     <div style="border-right:1px solid var(--border);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;background:var(--bg)">
       <!-- Product context (hidden by default, shown for 2+ selected products) -->
-      <div id="creatives-product-context" style="display:none;border:1px solid var(--border);border-radius:7px;overflow:hidden">
-        <div onclick="toggleProductContext()" style="padding:0.5rem 0.75rem;background:var(--card);display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:0.82rem;font-weight:600">
-          <span>Product Context</span>
-          <span id="product-context-toggle" style="color:var(--muted)">&#9660;</span>
-        </div>
-        <div id="product-context-body" style="display:none;padding:0.75rem;font-size:0.82rem">
-          <textarea id="creatives-product-context-text" rows="4" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:5px;padding:0.5rem;font-size:0.82rem;font-family:inherit;resize:vertical" placeholder="Multi-product context..."></textarea>
-        </div>
+      <div id="creatives-product-context" style="display:none;border:1px solid var(--border);border-radius:7px;overflow:visible">
+        <div style="padding:0.5rem 0.75rem;background:var(--card);font-size:0.82rem;font-weight:600;border-bottom:1px solid var(--border)">Product Context</div>
+        <div id="product-context-body" style="padding:0.75rem;font-size:0.82rem"></div>
       </div>
       <!-- Prompt -->
       <div>
@@ -3357,7 +3352,6 @@ function updateProductContext() {
   ctx.style.display = 'block';
   var body = document.getElementById('product-context-body');
   if (!body) return;
-  body.style.display = 'block';
   body.innerHTML = '<p style="color:var(--muted);font-size:0.78rem;margin:0">Loading product descriptions...</p>';
   // Fetch product descriptions from manifest
   fetch('/api/creatives/product-images', { credentials: 'same-origin' })
@@ -3378,12 +3372,7 @@ function updateProductContext() {
 }
 
 function toggleProductContext() {
-  var body = document.getElementById('product-context-body');
-  var toggle = document.getElementById('product-context-toggle');
-  if (!body) return;
-  var hidden = body.style.display === 'none';
-  body.style.display = hidden ? 'block' : 'none';
-  if (toggle) toggle.innerHTML = hidden ? '&#9650;' : '&#9660;';
+  // No-op — product context is always visible when 2+ products selected
 }
 
 // ── Task 16: Compare mode ───────────────────────────────────────────────────
