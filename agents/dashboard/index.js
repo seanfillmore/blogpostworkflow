@@ -1290,6 +1290,13 @@ const HTML = `<!DOCTYPE html>
       <!-- Action buttons (top right, hidden until image generated) -->
       <div id="creatives-action-btns" style="display:none;position:absolute;top:1rem;right:1rem;display:flex;gap:0.5rem;z-index:2">
         <button onclick="downloadCreativeImage()" style="padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">&#8681; Download</button>
+        <div style="position:relative;display:inline-block">
+          <button onclick="toggleUpscaleMenu()" id="upscale-btn" style="padding:0.35rem 0.75rem;border:1px solid #6c5ce7;border-radius:6px;background:#f5f3ff;color:#6c5ce7;font-size:0.82rem;cursor:pointer;font-weight:600">&#8679; Upscale</button>
+          <div id="upscale-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:white;border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10;min-width:120px">
+            <div onclick="upscaleImage(&apos;2K&apos;)" style="padding:0.4rem 0.75rem;cursor:pointer;font-size:0.82rem;border-bottom:1px solid var(--border)" onmouseover="this.style.background=&apos;#f5f3ff&apos;" onmouseout="this.style.background=&apos;&apos;">2K Resolution</div>
+            <div onclick="upscaleImage(&apos;4K&apos;)" style="padding:0.4rem 0.75rem;cursor:pointer;font-size:0.82rem" onmouseover="this.style.background=&apos;#f5f3ff&apos;" onmouseout="this.style.background=&apos;&apos;">4K Resolution</div>
+          </div>
+        </div>
         <button onclick="toggleCompareMode()" id="compare-btn" style="padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">&#9741; Compare</button>
       </div>
       <!-- Image display area -->
@@ -3316,6 +3323,55 @@ function openImageLightbox(src) {
 function closeImageLightbox() {
   var modal = document.getElementById('image-lightbox');
   if (modal) modal.style.display = 'none';
+}
+
+function toggleUpscaleMenu() {
+  var menu = document.getElementById('upscale-menu');
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+async function upscaleImage(targetRes) {
+  var menu = document.getElementById('upscale-menu');
+  if (menu) menu.style.display = 'none';
+  if (!creativesState.sessionId || !creativesState.currentVersion) return;
+
+  // Fetch the current version's prompt data from the session
+  showCreativesSpinner('Regenerating at ' + targetRes + '...');
+  try {
+    var sRes = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
+    var session = await sRes.json();
+    var ver = (session.versions || []).find(function(v) { return v.version === creativesState.currentVersion; });
+    if (!ver) { showCreativesError('Version not found'); hideCreativesSpinner(); return; }
+
+    // Rebuild the generation request with the same prompt but higher resolution
+    var formData = new FormData();
+    formData.append('prompt', ver.prompt || '');
+    formData.append('negativePrompt', ver.negativePrompt || '');
+    formData.append('model', ver.model || session.model || creativesState.models[0].id);
+    formData.append('aspectRatio', ver.aspectRatio || session.aspectRatio || '1:1');
+    formData.append('imageSize', targetRes);
+    formData.append('sessionId', creativesState.sessionId);
+
+    // Include product image paths from session reference images
+    var productPaths = (session.referenceImages || []).filter(function(r) { return r.type === 'product'; }).map(function(r) { return r.path; });
+    if (productPaths.length > 0) formData.append('productImagePaths', JSON.stringify(productPaths));
+    var historyPaths = (session.referenceImages || []).filter(function(r) { return r.type === 'history'; }).map(function(r) { return r.path; });
+    if (historyPaths.length > 0) formData.append('historyImagePaths', JSON.stringify(historyPaths));
+
+    var res = await fetch('/api/creatives/generate', { method: 'POST', credentials: 'same-origin', body: formData });
+    var data = await res.json();
+    hideCreativesSpinner();
+    if (data.error) { showCreativesError(data.error); return; }
+    showCreativeImage(data.imagePath, data.version);
+
+    // Refresh filmstrip
+    var sRes2 = await fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), { credentials: 'same-origin' });
+    var session2 = await sRes2.json();
+    renderCreativesFilmstrip(session2.versions || []);
+  } catch (e) {
+    hideCreativesSpinner();
+    showCreativesError('Upscale failed: ' + e.message);
+  }
 }
 
 function useHistoryAsReference(imagePath) {
