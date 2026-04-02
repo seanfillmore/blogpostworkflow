@@ -3343,20 +3343,21 @@ async function upscaleImage(targetRes) {
     var ver = (session.versions || []).find(function(v) { return v.version === creativesState.currentVersion; });
     if (!ver) { showCreativesError('Version not found'); hideCreativesSpinner(); return; }
 
-    // Rebuild the generation request with the same prompt but higher resolution
+    // Rebuild the generation request with same prompt + original image as reference + higher resolution
     var formData = new FormData();
-    formData.append('prompt', ver.prompt || '');
+    formData.append('prompt', 'Reproduce this exact image at higher resolution. Keep everything identical — same composition, products, branding, colors, lighting, and layout. ' + (ver.prompt || ''));
     formData.append('negativePrompt', ver.negativePrompt || '');
     formData.append('model', ver.model || session.model || creativesState.models[0].id);
     formData.append('aspectRatio', ver.aspectRatio || session.aspectRatio || '1:1');
     formData.append('imageSize', targetRes);
     formData.append('sessionId', creativesState.sessionId);
 
-    // Include product image paths from session reference images
+    // Send the current image as a history reference so Gemini can see it
+    formData.append('historyImagePaths', JSON.stringify([ver.imagePath]));
+
+    // Also include original product image references
     var productPaths = (session.referenceImages || []).filter(function(r) { return r.type === 'product'; }).map(function(r) { return r.path; });
     if (productPaths.length > 0) formData.append('productImagePaths', JSON.stringify(productPaths));
-    var historyPaths = (session.referenceImages || []).filter(function(r) { return r.type === 'history'; }).map(function(r) { return r.path; });
-    if (historyPaths.length > 0) formData.append('historyImagePaths', JSON.stringify(historyPaths));
 
     var res = await fetch('/api/creatives/generate', { method: 'POST', credentials: 'same-origin', body: formData });
     var data = await res.json();
