@@ -6799,15 +6799,16 @@ const server = http.createServer((req, res) => {
 
         // Call Gemini
         const imageSize = req.body.imageSize || '1K';
+        console.log('[Creatives] Generating — model:', model, 'aspectRatio:', aspectRatio, 'imageSize:', imageSize);
+        const geminiConfig = { responseModalities: ['TEXT', 'IMAGE'] };
+        if (aspectRatio && aspectRatio !== 'custom') geminiConfig.aspectRatio = aspectRatio;
+        if (imageSize && imageSize !== '1K') geminiConfig.imageSize = imageSize;
         const result = await geminiClient.models.generateContent({
           model,
           contents: [{ role: 'user', parts }],
-          config: {
-            responseModalities: ['TEXT', 'IMAGE'],
-            aspectRatio,
-            imageSize,
-          }
+          config: geminiConfig,
         });
+        console.log('[Creatives] Gemini response received, checking for image...');
 
         // Check for safety/policy rejection
         const candidate = result.candidates?.[0];
