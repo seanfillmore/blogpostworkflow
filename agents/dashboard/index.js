@@ -6800,13 +6800,16 @@ const server = http.createServer((req, res) => {
         // Call Gemini
         const imageSize = req.body.imageSize || '1K';
         console.log('[Creatives] Generating — model:', model, 'aspectRatio:', aspectRatio, 'imageSize:', imageSize);
-        const geminiConfig = { responseModalities: ['TEXT', 'IMAGE'] };
-        if (aspectRatio && aspectRatio !== 'custom') geminiConfig.aspectRatio = aspectRatio;
-        if (imageSize && imageSize !== '1K') geminiConfig.imageSize = imageSize;
+        const imageConfig = {};
+        if (aspectRatio && aspectRatio !== 'custom') imageConfig.aspectRatio = aspectRatio;
+        if (imageSize) imageConfig.imageSize = imageSize;
         const result = await geminiClient.models.generateContent({
           model,
           contents: [{ role: 'user', parts }],
-          config: geminiConfig,
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+            imageConfig,
+          },
         });
         console.log('[Creatives] Gemini response received, checking for image...');
 
@@ -6966,6 +6969,7 @@ const server = http.createServer((req, res) => {
           }],
           config: {
             responseModalities: ['TEXT', 'IMAGE'],
+            imageConfig: {},
           }
         });
 
