@@ -341,7 +341,11 @@ Review this image and respond in this EXACT format (no extra lines):
 PASS: yes or no
 TEXT_VISIBLE: yes or no (is there problematic AI-generated fake text, gibberish, or wrong brand names? Incidental environmental signage in real-world scenes does NOT count.)
 BLACK_BARS: yes or no (solid-colour bars/borders on any edge — letterboxing or pillarboxing?)
-SURREAL: yes or no (physically impossible geometry, objects that couldn't coexist in real life, props that are nonsensical in the setting, distorted or impossible architecture? Note: a bathroom counter, shower shelf, kitchen counter, or bedside table is NOT surreal — only flag if the scene is physically impossible or incoherent.)
+SURREAL: yes or no — CHECK CAREFULLY FOR THESE COMMON AI FAILURES:
+  * ANATOMY: Count all visible hands, arms, fingers, legs. Does every limb belong to a plausible body? Extra or missing fingers? Too many arms? Limbs that connect to nothing?
+  * PHYSICS: Is a wrapped/packaged product being used as if unwrapped (e.g. lathering with a soap that still has its wrapper on)? Are objects floating? Is liquid defying gravity?
+  * GEOMETRY: Impossible architecture, objects merging into each other, surfaces that don't connect properly?
+  * LOGIC: Would this scene make sense in real life? (A bathroom counter or kitchen is fine — three-armed people or wrapped soap producing lather is not)
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
 WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the product shown match ALL packaging details above — container type, lid/cap type, shape? Mark yes if ANY detail is wrong)' : ' (n/a — write no)'}
 SCENE_DESCRIPTION: one sentence describing the surface, props, and lighting (e.g. "White linen flat lay with coconut oil jar, mint sprigs, and soft diffused light")
