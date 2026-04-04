@@ -1316,6 +1316,60 @@ const HTML = `<!DOCTYPE html>
     min-height: 60px;
   }
 
+  /* ── Modals → full-screen sheets ───────────────────────────────────── */
+  #product-image-modal > div,
+  #template-modal > div,
+  .brief-detail,
+  div[style*="max-width: 660px"],
+  div[style*="max-width:660px"] {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+  }
+  /* Modal close buttons — larger touch target */
+  #product-image-modal button[onclick*="close"],
+  #template-modal button[onclick*="close"],
+  .brief-detail button[onclick*="close"] {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    font-size: 20px !important;
+  }
+
+  /* ── Chat sidebar → full-screen overlay ────────────────────────────── */
+  .tab-chat-sidebar {
+    width: 100vw !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 56px !important;
+    border-radius: 0 !important;
+    z-index: 998 !important;
+  }
+  .tab-chat-input { font-size: 16px !important; }
+
+  /* ── CRO tab (2-col → 1-col) ───────────────────────────────────────── */
+  #tab-cro .tab-panel-grid,
+  #tab-cro > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+  .cro-grid, .cro-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Ads tab grids ─────────────────────────────────────────────────── */
+  #tab-ads .tab-panel-grid,
+  #tab-ads > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+  .campaign-cards, .ads-grid, .ads-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
 } /* end @media — more rules will be appended inside this block by subsequent tasks */
 
 </style>
