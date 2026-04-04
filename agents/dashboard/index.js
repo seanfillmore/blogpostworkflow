@@ -6964,7 +6964,7 @@ const server = http.createServer((req, res) => {
             role: 'user',
             parts: [
               { inlineData: { mimeType: prevMimeType, data: prevImageData.toString('base64') } },
-              { text: refinement }
+              { text: 'Edit this image with the following changes: ' + refinement }
             ]
           }],
           config: {
