@@ -1056,6 +1056,100 @@ const HTML = `<!DOCTYPE html>
   .ar-btn { background:var(--card);color:var(--muted);border:1px solid var(--border);transition:all 0.15s; }
   .ar-btn.active { background:#6c5ce7;color:white;border-color:#6c5ce7;font-weight:600; }
   .filmstrip-thumb:hover .filmstrip-delete, .filmstrip-thumb:hover .filmstrip-ref { display:block !important; }
+
+/* ── Mobile responsive ──────────────────────────────────────────────────── */
+
+#mobile-tab-bar { display: none; }
+#mobile-more-menu .mobile-more-backdrop { display: none; }
+#mobile-more-menu .mobile-more-sheet { display: none; }
+
+@media (max-width: 768px) {
+
+  /* ── Global foundation ─────────────────────────────────────────────── */
+  body { font-size: 16px; }
+  .main-container, [style*="max-width: 1400px"], [style*="max-width:1400px"] {
+    max-width: 100% !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    box-sizing: border-box;
+  }
+  .tab-panel.active { padding: 12px; padding-bottom: 80px; }
+  button, a, .filter-chip, .tab-pill, .kanban-item { min-height: 44px; }
+
+  /* ── Bottom tab bar ────────────────────────────────────────────────── */
+  #mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: #232342;
+    border-top: 1px solid rgba(255,255,255,.1);
+    z-index: 999;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 10px;
+    padding: 4px 0;
+    cursor: pointer;
+    flex: 1;
+    min-height: 56px;
+  }
+  .mobile-tab.active { color: #818cf8; }
+  .mobile-tab svg { stroke: currentColor; }
+
+  /* ── More menu ─────────────────────────────────────────────────────── */
+  #mobile-more-menu .mobile-more-backdrop {
+    display: block;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1000;
+  }
+  #mobile-more-menu .mobile-more-sheet {
+    display: block;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #1e1e3a;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 16px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 1001;
+  }
+  .mobile-more-title {
+    font-size: 16px; font-weight: 600; color: #e2e8f0;
+    margin-bottom: 12px;
+  }
+  .mobile-more-item {
+    display: block; width: 100%;
+    padding: 14px 12px;
+    background: none; border: none;
+    color: #e2e8f0; font-size: 15px;
+    text-align: left; cursor: pointer;
+    border-radius: 8px;
+  }
+  .mobile-more-item:active { background: rgba(255,255,255,.05); }
+  .mobile-more-divider {
+    height: 1px; background: rgba(255,255,255,.1);
+    margin: 8px 0;
+  }
+
+  /* ── Header ────────────────────────────────────────────────────────── */
+  .hero { padding: 10px 12px 8px; }
+  .tab-pills { display: none !important; }
+  .tab-actions-bar { display: none !important; }
+  .hero-meta { font-size: 12px; }
+
+} /* end @media — more rules will be appended inside this block by subsequent tasks */
+
 </style>
 </head>
 <body>
@@ -1429,6 +1523,48 @@ function switchTab(name, btn) {
     });
     renderTabChatMessages();
   }
+  // Sync mobile tab bar active state
+  document.querySelectorAll('.mobile-tab').forEach(function(t) { t.classList.remove('active'); });
+  var mobileNames = ['seo','cro','ads','creatives'];
+  var mobileIdx = mobileNames.indexOf(name);
+  var mobileTabs = document.querySelectorAll('.mobile-tab');
+  if (mobileIdx >= 0 && mobileTabs[mobileIdx]) {
+    mobileTabs[mobileIdx].classList.add('active');
+  } else if (mobileTabs.length > 4) {
+    mobileTabs[4].classList.add('active');
+  }
+}
+
+// ── Mobile responsive helpers ────────────────────────────────────────────────
+
+function mobileTabSwitch(name, btn) {
+  // Reuse existing switchTab — find the matching desktop pill to pass as btn arg
+  var pill = document.querySelector('.tab-pill[onclick*="' + name + '"]');
+  if (pill) switchTab(name, pill);
+  // Update mobile tab bar active state
+  document.querySelectorAll('.mobile-tab').forEach(function(t) { t.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  // If opened from More menu, highlight the More button
+  if (!btn) {
+    var moreBtn = document.querySelector('#mobile-tab-bar .mobile-tab:last-child');
+    if (moreBtn) moreBtn.classList.add('active');
+  }
+}
+
+function toggleMoreMenu() {
+  var menu = document.getElementById('mobile-more-menu');
+  if (!menu) return;
+  menu.style.display = menu.style.display === 'none' ? '' : 'none';
+}
+
+function toggleKanbanAccordion(header) {
+  var col = header.closest('.kanban-col');
+  if (!col) return;
+  var wasExpanded = col.classList.contains('expanded');
+  // Collapse all columns first (single-expand behavior)
+  document.querySelectorAll('.kanban-col.expanded').forEach(function(c) { c.classList.remove('expanded'); });
+  // Toggle clicked column
+  if (!wasExpanded) col.classList.add('expanded');
 }
 
 function renderHeroKpis(d) {
@@ -1721,7 +1857,11 @@ function renderKanban(d) {
         rejectBtn + '</div>';
     }).join('');
     return '<div class="kanban-col col-' + col.key + '">' +
-      '<div class="kanban-head">' + col.label + '</div>' +
+      '<div class="kanban-head" onclick="toggleKanbanAccordion(this)">' +
+        '<span class="kanban-head-label">' + col.label + '</span>' +
+        '<span class="kanban-head-count">' + items.length + '</span>' +
+        '<span class="kanban-chevron">&#9660;</span>' +
+      '</div>' +
       '<div class="kanban-count">' + items.length + '</div>' +
       (items.length ? '<div class="kanban-items">' + itemsHtml + '</div>' : '') +
       '</div>';
@@ -5368,6 +5508,42 @@ async function resolveAlert(campaignId, alertType) {
       <button onclick="closeRejectModal()" style="padding:7px 16px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:0.83rem;cursor:pointer">Cancel</button>
       <button onclick="confirmRejectKeyword()" style="padding:7px 16px;border:none;border-radius:6px;background:#ef4444;color:#fff;font-size:0.83rem;font-weight:600;cursor:pointer">Reject keyword</button>
     </div>
+  </div>
+</div>
+
+<!-- Mobile bottom tab bar -->
+<nav id="mobile-tab-bar">
+  <button class="mobile-tab active" onclick="mobileTabSwitch(&apos;seo&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+    <span>SEO</span>
+  </button>
+  <button class="mobile-tab" onclick="mobileTabSwitch(&apos;cro&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <span>CRO</span>
+  </button>
+  <button class="mobile-tab" onclick="mobileTabSwitch(&apos;ads&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span>Ads</span>
+  </button>
+  <button class="mobile-tab" onclick="mobileTabSwitch(&apos;creatives&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    <span>Creatives</span>
+  </button>
+  <button class="mobile-tab" onclick="toggleMoreMenu()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    <span>More</span>
+  </button>
+</nav>
+
+<!-- Mobile "More" menu overlay -->
+<div id="mobile-more-menu" style="display:none">
+  <div class="mobile-more-backdrop" onclick="toggleMoreMenu()"></div>
+  <div class="mobile-more-sheet">
+    <div class="mobile-more-title">More</div>
+    <button class="mobile-more-item" onclick="mobileTabSwitch(&apos;ad-intelligence&apos;);toggleMoreMenu()">Ad Intelligence</button>
+    <button class="mobile-more-item" onclick="mobileTabSwitch(&apos;optimize&apos;);toggleMoreMenu()">Optimize</button>
+    <div class="mobile-more-divider"></div>
+    <button class="mobile-more-item" onclick="toggleTabChat();toggleMoreMenu()">Chat</button>
   </div>
 </div>
 
