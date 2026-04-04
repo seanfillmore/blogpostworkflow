@@ -288,7 +288,7 @@ HARD RULES:
 - The setting should be WHERE a reader would encounter this topic in real life
 - Props must make real-world sense in the chosen setting — no random unrelated objects
 - Contextual scene elements are encouraged — make it look like a real place
-- Do NOT include people or body parts UNLESS the topic absolutely requires it (e.g. a tattooed forearm for a tattoo care article). When body parts are shown, never include full faces — show only the relevant area (arm, hand, leg). Default to NO people for product-focused and most lifestyle posts.
+- People are allowed when the topic benefits from showing human context (e.g. someone washing a tattoo, applying deodorant, doing laundry). Avoid close-up faces — show people from the shoulders down or in profile. For product-focused posts, people are optional.
 - Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
 - Every prop must be physically plausible in the chosen setting
 - PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a small white cylindrical rollerball bottle (~2oz/60ml) with a flat white snap-on cap — NOT a stick, push-up, or large translucent roll-on. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
