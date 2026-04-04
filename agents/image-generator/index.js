@@ -234,7 +234,7 @@ async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejec
     max_tokens: 700,
     messages: [{
       role: 'user',
-      content: `You write product photography prompts for Gemini image generation for a natural skincare brand.
+      content: `You write hero image prompts for Gemini image generation for a natural skincare brand's blog.
 
 Brand: ${config.name} — natural deodorant, toothpaste, coconut oil body lotion, lip balm. Visual aesthetic: bright, airy, minimal, warm natural tones. Real product photography style.
 
@@ -255,18 +255,26 @@ ${hasProductRef
   : `No product reference images are available. Describe a generic unlabeled product container appropriate to the post topic.`
 }
 
+TOPIC vs PRODUCT BALANCE (critical):
+The hero image must visually communicate what the blog post is ABOUT. Consider the post title and keyword:
+- If the topic IS the product (e.g. "Best Natural Deodorant"), the product is the hero and dominates the frame.
+- If the topic is a PROBLEM, PROCESS, or CONCEPT (e.g. "How to Remove Sweat Stains", "Dry Brushing Skin", "When Was Deodorant Invented"), the image must show the TOPIC as the hero — the relevant scene, situation, or visual concept. The product may appear as a secondary element in the scene, but the viewer should immediately understand what the article is about from the image alone.
+- Ask yourself: "If someone saw only this image as a thumbnail, would they know what the article is about?" If the answer is "they'd think it's about soap" but the article is about sweat stains, the prompt is wrong.
+
 Respond in this EXACT format — first line is the template key, second line onwards is the prompt:
 SELECTED_TEMPLATE: [key]
 Product photography, ...
 
 Write the prompt using this structure:
-1. Start with: "Product photography, "
-2. ${hasProductRef ? 'Describe the actual labeled product from the reference images as the hero item' : 'State the product container as the hero item'}, plus 1-2 natural props
-3. Describe the chosen surface and background from the template
-4. State the lighting and camera angle from the template
-5. End with: "photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders."
+1. Start with: "Product photography, " (or "Lifestyle photography, " if the topic calls for a scene-based image)
+2. Describe the primary subject — this is the TOPIC of the article. For product-focused posts, the product is the hero. For problem/process/concept posts, show the topic visually (e.g. a stained white shirt for sweat stains, dry brush on skin for dry brushing) with the product as a secondary element in the scene.
+3. Include 1-3 natural props that reinforce the topic
+4. Describe the chosen surface and background from the template
+5. State the lighting and camera angle from the template
+6. End with: "photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders."
 
 HARD RULES:
+- The image must visually match the blog post topic — a reader should understand the article subject from the image alone
 - Props must make real-world sense together on that surface — no random unrelated objects
 - Contextual scene elements (toothbrush, faucet, towel, cup, soap dish, etc.) are encouraged for bathroom/kitchen/bedroom scenes — make it look like a real lived-in space
 - Do NOT include people
