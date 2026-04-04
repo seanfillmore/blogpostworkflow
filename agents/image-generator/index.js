@@ -322,7 +322,10 @@ async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowP
         },
         {
           type: 'text',
-          text: `You are a creative director reviewing a hero image for a natural skincare brand blog post. Your job is to reject images that look obviously AI-generated or physically wrong.
+          text: `You are a creative director reviewing a hero image for a natural skincare brand's blog. Your job is to reject images that look obviously AI-generated or physically wrong.
+
+IMPORTANT — EDITORIAL CONTEXT:
+These images are hero images for blog posts. They are NOT product ads. The image should match the TOPIC of the blog post, which may include real-world settings like laundry rooms, airports, kitchens, bathrooms, etc. A stained shirt in a laundry room is perfectly appropriate for a "how to remove sweat stains" article. An airport security bin is appropriate for a TSA rules article. Do NOT reject images simply because the scene doesn't look like a typical product photography setup — judge whether the image looks realistic and high quality, not whether it fits a narrow "skincare brand aesthetic."
 
 ${allowProductLabel
   ? 'NOTE: This image intentionally includes the actual product with its label visible. A product label with readable text is EXPECTED and should NOT cause a rejection.'
