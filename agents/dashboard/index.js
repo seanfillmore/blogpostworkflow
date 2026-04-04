@@ -1219,6 +1219,42 @@ const HTML = `<!DOCTYPE html>
     padding: 8px 16px !important;
   }
 
+  /* ── Data tables ───────────────────────────────────────────────────── */
+  .gsc-table, .cro-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  table thead th { font-size: 11px; padding: 8px 10px; }
+  table tbody td { font-size: 13px; padding: 10px 12px; }
+  table thead th:first-child,
+  table tbody td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--card-bg, #fff);
+  }
+  table thead th:first-child::after,
+  table tbody td:first-child::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 4px;
+    box-shadow: 2px 0 4px rgba(0,0,0,.08);
+  }
+
+  /* ── Authority row (4-col → 2x2) ──────────────────────────────────── */
+  .authority-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .authority-stat { padding: 10px 12px; }
+
+  /* ── Brief grid (3-col → 1-col) ───────────────────────────────────── */
+  .brief-grid {
+    grid-template-columns: 1fr !important;
+  }
+
 } /* end @media — more rules will be appended inside this block by subsequent tasks */
 
 </style>

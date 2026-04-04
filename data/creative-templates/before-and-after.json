@@ -3,12 +3,17 @@
   "name": "Before & After",
   "description": "Split composition showing transformation or comparison",
   "prompt": "A split-frame composition divided vertically. Left side: {{before_state}}, muted and dull tones. Right side: {{after_state}} with {{product}} visible, vibrant and fresh tones. The dividing line is clean and subtle. Both sides share the same background environment for continuity. The transformation is clear and compelling.",
-  "negativePrompt": "text, watermarks, logos, blurry, inconsistent lighting between halves",
-  "tags": ["before-after", "comparison", "transformation", "split"],
-  "defaultAspectRatio": "16:9",
-  "defaultModel": "gemini-2.0-flash-exp",
+  "negativePrompt": "blurry, inconsistent lighting between halves",
+  "tags": [
+    "before-after",
+    "comparison",
+    "transformation",
+    "split"
+  ],
+  "defaultAspectRatio": "1:1",
+  "defaultModel": "gemini-3-pro-image-preview",
   "source": "manual",
   "previewImage": null,
   "createdAt": "2026-03-30T00:00:00Z",
-  "updatedAt": "2026-03-30T00:00:00Z"
+  "updatedAt": "2026-03-31T14:55:21.937Z"
 }
