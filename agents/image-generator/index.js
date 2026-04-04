@@ -287,6 +287,7 @@ HARD RULES:
 - The image must visually match the blog post topic — a reader should understand the article subject from the image alone
 - The setting should be WHERE a reader would encounter this topic in real life
 - Props must make real-world sense in the chosen setting — no random unrelated objects
+- NEVER invent or fabricate products that don't exist. Only show products that appear in the reference images provided. Do NOT add bottles, jars, tubes, or any other branded product that wasn't in the reference images. Generic unbranded props (towels, soap dishes, bowls) are fine, but any item that looks like a branded product must match a real reference image.
 - Contextual scene elements are encouraged — make it look like a real place
 - People are allowed when the topic benefits from showing human context (e.g. someone washing a tattoo, applying deodorant, doing laundry). Avoid close-up faces — show people from the shoulders down or in profile. For product-focused posts, people are optional.
 - Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
@@ -347,6 +348,7 @@ SURREAL: yes or no — CHECK CAREFULLY FOR THESE COMMON AI FAILURES:
   * PHYSICS: Is a wrapped/packaged product being used as if unwrapped? Specifically: is a bar soap still in its pleated paper wrapper but producing lather or being rubbed on skin? A wrapped soap CANNOT produce lather — this is an automatic rejection. Are objects floating? Is liquid defying gravity?
   * GEOMETRY: Impossible architecture, objects merging into each other, surfaces that don't connect properly?
   * LOGIC: Would this scene make sense in real life? (A bathroom counter or kitchen is fine — three-armed people or wrapped soap producing lather is not)
+  * FAKE PRODUCTS: Are there any branded bottles, jars, or products in the image that were NOT in the reference images? The AI sometimes invents fake products (e.g. "aftercare oil", "healing balm") that the brand doesn't sell. If you see a branded product that doesn't match any reference image provided, flag it as SURREAL.
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
 WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the product shown match ALL packaging details above — container type, lid/cap type, shape? Mark yes if ANY detail is wrong)' : ' (n/a — write no)'}
 SCENE_DESCRIPTION: one sentence describing the surface, props, and lighting (e.g. "White linen flat lay with coconut oil jar, mint sprigs, and soft diffused light")
