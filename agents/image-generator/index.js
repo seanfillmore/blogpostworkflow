@@ -291,7 +291,7 @@ HARD RULES:
 - Do NOT include people, but you CAN show hands or arms if needed for context (e.g. hands placing items in a TSA bin)
 - Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
 - Every prop must be physically plausible in the chosen setting
-- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a stick/push-up format. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
+- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a small white cylindrical rollerball bottle (~2oz/60ml) with a flat white snap-on cap — NOT a stick, push-up, or large translucent roll-on. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
     }],
   });
 
