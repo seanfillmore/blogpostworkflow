@@ -1148,6 +1148,77 @@ const HTML = `<!DOCTYPE html>
   .tab-actions-bar { display: none !important; }
   .hero-meta { font-size: 12px; }
 
+  /* ── KPI grid ──────────────────────────────────────────────────────── */
+  .hero-kpis {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .hero-kpi { padding: 8px 10px; }
+  .hero-kpi-value { font-size: 18px; }
+  .hero-kpi-label { font-size: 11px; }
+
+  /* ── Kanban accordion ──────────────────────────────────────────────── */
+  .kanban {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+  .kanban-col {
+    border-radius: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .kanban-col:first-child { border-radius: 8px 8px 0 0; }
+  .kanban-col:last-child { border-radius: 0 0 8px 8px; border-bottom: none; }
+  .kanban-head {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    cursor: pointer;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+  .kanban-head-label { font-size: 14px; font-weight: 600; }
+  .kanban-head-count {
+    background: var(--indigo);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+    margin-right: 8px;
+  }
+  .kanban-chevron {
+    font-size: 10px;
+    color: #94a3b8;
+    transition: transform 0.2s;
+  }
+  .kanban-col.expanded .kanban-chevron {
+    transform: rotate(180deg);
+  }
+  .kanban-count { display: none !important; }
+  .kanban-items {
+    display: none;
+    padding: 0 14px 12px;
+  }
+  .kanban-col.expanded .kanban-items { display: block; }
+  .kanban-item {
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .kanban-item .kw { font-size: 13px; }
+  .kw-reject-btn {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+    min-height: 36px;
+  }
+
+  /* ── Filter chips ──────────────────────────────────────────────────── */
+  .filter-chip {
+    font-size: 13px !important;
+    padding: 8px 16px !important;
+  }
+
 } /* end @media — more rules will be appended inside this block by subsequent tasks */
 
 </style>
