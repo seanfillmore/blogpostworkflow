@@ -291,7 +291,8 @@ HARD RULES:
 - People are allowed when the topic benefits from showing human context (e.g. someone washing a tattoo, applying deodorant, doing laundry). Avoid close-up faces — show people from the shoulders down or in profile. For product-focused posts, people are optional.
 - Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
 - Every prop must be physically plausible in the chosen setting
-- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a small white cylindrical rollerball bottle (~2oz/60ml) with a flat white snap-on cap — NOT a stick, push-up, or large translucent roll-on. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
+- PRODUCT USAGE RULES: If a product is being actively USED in the scene (lathering, applying, squeezing), it must be shown UNWRAPPED and OUT OF ITS PACKAGING. Our bar soap comes in a pleated paper wrapper — if someone is lathering with it, the wrapper must be OFF and the bar should be a plain white/cream puck shape. An unused/display product can show the wrapper. Never show a wrapped product producing lather or foam.
+- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a small white cylindrical rollerball bottle (~2oz/60ml) with a flat white snap-on cap — NOT a stick, push-up, or large translucent roll-on. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. Our bar soap is a round white puck (~3.4oz) in a pleated paper wrapper — when being used/lathered it should be UNWRAPPED. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
     }],
   });
 
@@ -343,7 +344,7 @@ TEXT_VISIBLE: yes or no (is there problematic AI-generated fake text, gibberish,
 BLACK_BARS: yes or no (solid-colour bars/borders on any edge — letterboxing or pillarboxing?)
 SURREAL: yes or no — CHECK CAREFULLY FOR THESE COMMON AI FAILURES:
   * ANATOMY: Count all visible hands, arms, fingers, legs. Does every limb belong to a plausible body? Extra or missing fingers? Too many arms? Limbs that connect to nothing?
-  * PHYSICS: Is a wrapped/packaged product being used as if unwrapped (e.g. lathering with a soap that still has its wrapper on)? Are objects floating? Is liquid defying gravity?
+  * PHYSICS: Is a wrapped/packaged product being used as if unwrapped? Specifically: is a bar soap still in its pleated paper wrapper but producing lather or being rubbed on skin? A wrapped soap CANNOT produce lather — this is an automatic rejection. Are objects floating? Is liquid defying gravity?
   * GEOMETRY: Impossible architecture, objects merging into each other, surfaces that don't connect properly?
   * LOGIC: Would this scene make sense in real life? (A bathroom counter or kitchen is fine — three-armed people or wrapped soap producing lather is not)
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
