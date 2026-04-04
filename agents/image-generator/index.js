@@ -325,13 +325,18 @@ async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowP
           text: `You are a creative director reviewing a hero image for a natural skincare brand blog post. Your job is to reject images that look obviously AI-generated or physically wrong.
 
 ${allowProductLabel
-  ? 'NOTE: This image intentionally includes the actual product with its label visible. A product label with readable text is EXPECTED and should NOT cause a rejection. Only reject for text on non-product elements (e.g. text floating in the background, text on props).'
-  : 'Reject if any text, logos, or labels are visible anywhere in the image.'}
+  ? 'NOTE: This image intentionally includes the actual product with its label visible. A product label with readable text is EXPECTED and should NOT cause a rejection.'
+  : ''}
+TEXT RULES:
+- REJECT for: AI-generated fake text/gibberish on products, floating text overlays, watermarks, obviously wrong brand names
+- ACCEPT: real-world incidental environmental text (airport signs, TSA labels, store signage, bathroom product labels in background, street signs) — these are natural parts of real-world scenes and should NOT cause rejection
+- ACCEPT: product labels that match the brand if product references were provided
+- The key question is: "Is the text an AI artifact/error, or a natural part of the scene?"
 ${productContext ? `\nPRODUCT ACCURACY — check ALL of the following details carefully:\n${productContext}\nThis includes the cap/lid type, container shape, and any other packaging details mentioned. A pump dispenser is NOT the same as a flip-top cap. A tube is NOT the same as a bottle. Flag any mismatch — even subtle ones like the wrong lid type.` : ''}
 Review this image and respond in this EXACT format (no extra lines):
 
 PASS: yes or no
-TEXT_VISIBLE: yes or no (any text, logos, labels, words, numbers visible${allowProductLabel ? ' on non-product elements?' : '?'})
+TEXT_VISIBLE: yes or no (is there problematic AI-generated fake text, gibberish, or wrong brand names? Incidental environmental signage in real-world scenes does NOT count.)
 BLACK_BARS: yes or no (solid-colour bars/borders on any edge — letterboxing or pillarboxing?)
 SURREAL: yes or no (physically impossible geometry, objects that couldn't coexist in real life, props that are nonsensical in the setting, distorted or impossible architecture? Note: a bathroom counter, shower shelf, kitchen counter, or bedside table is NOT surreal — only flag if the scene is physically impossible or incoherent.)
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
