@@ -287,7 +287,7 @@ HARD RULES:
 - The image must visually match the blog post topic — a reader should understand the article subject from the image alone
 - The setting should be WHERE a reader would encounter this topic in real life
 - Props must make real-world sense in the chosen setting — no random unrelated objects
-- NEVER invent or fabricate products that don't exist. Only show products that appear in the reference images provided. Do NOT add bottles, jars, tubes, or any other branded product that wasn't in the reference images. Generic unbranded props (towels, soap dishes, bowls) are fine, but any item that looks like a branded product must match a real reference image.
+- NEVER invent or fabricate products that don't exist. Only show our brand on products that appear in the reference images provided. Do NOT create fake product labels or put our brand name on products we don't sell. If the blog post topic is about a product category we don't carry (e.g. charcoal toothpaste, chemical deodorant), show the TOPIC generically (unbranded charcoal powder, generic toothbrush, etc.) — our actual product from the reference images can appear as a secondary element, or not at all. Generic unbranded props are always fine.
 - Contextual scene elements are encouraged — make it look like a real place
 - People are allowed when the topic benefits from showing human context (e.g. someone washing a tattoo, applying deodorant, doing laundry). Avoid close-up faces — show people from the shoulders down or in profile. For product-focused posts, people are optional.
 - Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
