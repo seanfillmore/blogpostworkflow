@@ -2776,7 +2776,7 @@ async function loadCreativesSession(sessionId) {
     if (session.versions && session.versions.length > 0) {
       var favorites = session.versions.filter(function(v) { return v.favorite; });
       var latest = favorites.length > 0 ? favorites[0] : session.versions[session.versions.length - 1];
-      creativesState.currentVersion = latest;
+      creativesState.currentVersion = latest.version || latest.versionNumber || 1;
       showCreativeImage(latest.imagePath, latest);
     } else {
       hideCreativeImage();
@@ -6958,6 +6958,7 @@ const server = http.createServer((req, res) => {
         const geminiModel = model || prevVersion.model || GEMINI_MODELS[0].id;
 
         // Send previous image + refinement text to Gemini
+        console.log('[Creatives Refine] model:', geminiModel, 'version:', version, 'refinement:', refinement.slice(0, 80));
         const result = await geminiClient.models.generateContent({
           model: geminiModel,
           contents: [{
