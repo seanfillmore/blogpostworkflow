@@ -1255,6 +1255,67 @@ const HTML = `<!DOCTYPE html>
     grid-template-columns: 1fr !important;
   }
 
+  /* ── Creatives tab ─────────────────────────────────────────────────── */
+  #tab-creatives .creatives-layout,
+  #tab-creatives > div[style*="grid-template-columns: 1fr 1fr"],
+  #tab-creatives > div[style*="grid-template-columns:1fr 1fr"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  #tab-creatives .creatives-layout > div,
+  #tab-creatives > div > div {
+    border-right: none !important;
+    overflow-y: visible !important;
+    height: auto !important;
+  }
+
+  /* Image preview full width */
+  #creatives-right-panel {
+    order: -1;
+    border-right: none !important;
+    padding: 12px !important;
+  }
+
+  /* Prompt panel below */
+  #tab-creatives .creatives-layout > div:first-child {
+    padding: 12px !important;
+  }
+
+  /* Action buttons row */
+  #tab-creatives button {
+    min-height: 44px;
+  }
+
+  /* Filmstrip */
+  .creatives-filmstrip, #creatives-filmstrip,
+  div[style*="overflow-x"] {
+    -webkit-overflow-scrolling: touch;
+  }
+  .creatives-filmstrip img,
+  #creatives-filmstrip img {
+    width: 54px !important;
+    height: 54px !important;
+  }
+
+  /* Delete icon always visible on mobile (no hover) */
+  .filmstrip-delete, .creative-delete {
+    opacity: 1 !important;
+  }
+
+  /* Compare mode — stack vertically */
+  .compare-grid,
+  div[style*="grid-template-columns: 1fr 1fr"][class*="compare"],
+  #compare-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Reference image drop zone → button */
+  .drop-zone, [class*="drop-zone"], [class*="dropzone"] {
+    min-height: 60px;
+  }
+
 } /* end @media — more rules will be appended inside this block by subsequent tasks */
 
 </style>
