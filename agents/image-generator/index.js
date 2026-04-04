@@ -290,6 +290,7 @@ HARD RULES:
 - NEVER invent or fabricate products that don't exist. Only show our brand on products that appear in the reference images provided. Do NOT create fake product labels or put our brand name on products we don't sell. If the blog post topic is about a product category we don't carry (e.g. charcoal toothpaste, chemical deodorant), show the TOPIC generically (unbranded charcoal powder, generic toothbrush, etc.) — our actual product from the reference images can appear as a secondary element, or not at all. Generic unbranded props are always fine.
 - Contextual scene elements are encouraged — make it look like a real place
 - People are allowed when the topic benefits from showing human context (e.g. someone washing a tattoo, applying deodorant, doing laundry). Avoid close-up faces — show people from the shoulders down or in profile. For product-focused posts, people are optional.
+- MODESTY RULES: Keep all images appropriate for a family-friendly ecommerce blog. No bare torsos, bare backs, bare shoulders, or any suggestion of nudity. For body care topics (dry brushing, hair masks, body lotion), show the product and tools in a styled setting WITHOUT showing bare skin beyond hands, forearms, and lower legs. A dry brush on a towel is better than a dry brush on a bare back.
 - Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
 - Every prop must be physically plausible in the chosen setting
 - PRODUCT USAGE RULES: If a product is being actively USED in the scene (lathering, applying, squeezing), it must be shown UNWRAPPED and OUT OF ITS PACKAGING. Our bar soap comes in a pleated paper wrapper — if someone is lathering with it, the wrapper must be OFF and the bar should be a plain white/cream puck shape. An unused/display product can show the wrapper. Never show a wrapped product producing lather or foam.
@@ -350,6 +351,7 @@ SURREAL: yes or no — CHECK CAREFULLY FOR THESE COMMON AI FAILURES:
   * LOGIC: Would this scene make sense in real life? (A bathroom counter or kitchen is fine — three-armed people or wrapped soap producing lather is not)
   * FAKE PRODUCTS: Are there any branded bottles, jars, or products in the image that were NOT in the reference images? The AI sometimes invents fake products (e.g. "aftercare oil", "healing balm") that the brand doesn't sell. If you see a branded product that doesn't match any reference image provided, flag it as SURREAL.
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
+MODESTY: yes or no (is there excessive bare skin — bare backs, bare torsos, bare shoulders, or anything suggestive of nudity? Hands, forearms, and lower legs are fine. This is a family-friendly ecommerce blog — reject if the image is too revealing.)
 WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the product shown match ALL packaging details above — container type, lid/cap type, shape? Mark yes if ANY detail is wrong)' : ' (n/a — write no)'}
 SCENE_DESCRIPTION: one sentence describing the surface, props, and lighting (e.g. "White linen flat lay with coconut oil jar, mint sprigs, and soft diffused light")
 REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong (name the specific problem objects or issues). If PASS is yes, write "None."`,
@@ -365,6 +367,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
   const surreal = /SURREAL:\s*yes/i.test(raw);
   const looksAi = /LOOKS_AI:\s*yes/i.test(raw);
   const wrongProductFormat = /WRONG_PRODUCT_FORMAT:\s*yes/i.test(raw);
+  const modesty = /MODESTY:\s*yes/i.test(raw);
   const sceneMatch = raw.match(/SCENE_DESCRIPTION:\s*(.+)/i);
   const rejectionMatch = raw.match(/REJECTION_REASON:\s*(.+)/i);
 
@@ -374,6 +377,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
     surreal && 'physically impossible/surreal elements',
     looksAi && 'obviously AI-generated appearance',
     wrongProductFormat && 'wrong product format (e.g. tube instead of bottle)',
+    modesty && 'excessive bare skin/nudity',
   ].filter(Boolean);
 
   const rejectionReason = rejectionMatch?.[1]?.trim() ?? '';
