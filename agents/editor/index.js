@@ -27,7 +27,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
-import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
@@ -151,6 +151,40 @@ function categoriseLinks(links) {
   return { internal, external };
 }
 
+// ── scheduled post index (for cross-referencing "broken" internal links) ──────
+
+function loadScheduledPostUrls() {
+  const postsDir = join(ROOT, 'data', 'posts');
+  const map = new Map(); // shopify_url → { slug, publish_at, title }
+  try {
+    const files = readdirSync(postsDir).filter(f => f.endsWith('.json'));
+    for (const f of files) {
+      try {
+        const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
+        if (meta.shopify_status === 'scheduled' && meta.shopify_publish_at) {
+          // Map both the myshopify URL and the public URL
+          const urls = [meta.shopify_url];
+          if (meta.shopify_url) {
+            // Also map the public domain version
+            const publicUrl = meta.shopify_url.replace(/realskincare-com\.myshopify\.com/, 'www.realskincare.com');
+            if (publicUrl !== meta.shopify_url) urls.push(publicUrl);
+          }
+          for (const url of urls) {
+            if (url) map.set(url, {
+              slug: meta.slug || f.replace('.json', ''),
+              publish_at: meta.shopify_publish_at,
+              title: meta.title,
+            });
+          }
+        }
+      } catch {}
+    }
+  } catch {}
+  return map;
+}
+
+const scheduledPosts = loadScheduledPostUrls();
+
 // ── http link checker ─────────────────────────────────────────────────────────
 
 async function checkUrl(href) {
@@ -163,6 +197,14 @@ async function checkUrl(href) {
     });
     // 403/405 = bot-blocked, treat as valid
     const ok = res.ok || res.status === 403 || res.status === 405;
+    if (!ok && (res.status === 404 || res.status === 410)) {
+      // Check if this is an internal link to a scheduled post
+      const scheduled = scheduledPosts.get(href);
+      if (scheduled) {
+        return { ok: true, status: res.status, scheduled: true,
+          note: `Scheduled to publish ${new Date(scheduled.publish_at).toLocaleDateString()} ("${scheduled.title}")` };
+      }
+    }
     return { ok, status: res.status, finalUrl: res.url };
   } catch (err) {
     return { ok: false, status: null, error: err.message };
@@ -453,8 +495,17 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
   // ── 1. Link health ────────────────────────────────────────────────────────
   lines.push('---\n## 1. Link Health\n');
   const broken = linkResults.filter((r) => !r.check.ok);
+  const scheduledOk = linkResults.filter((r) => r.check.ok && r.check.scheduled);
   const ok = linkResults.filter((r) => r.check.ok);
   lines.push(`**${ok.length} links OK** | **${broken.length} broken/unreachable**\n`);
+
+  if (scheduledOk.length > 0) {
+    lines.push(`> **Note:** ${scheduledOk.length} link(s) point to scheduled posts that will publish before this article:\n`);
+    for (const r of scheduledOk) {
+      lines.push(`> - ${r.text} — ${r.check.note}`);
+    }
+    lines.push('');
+  }
 
   if (broken.length === 0) {
     lines.push('All links returned a valid HTTP response.\n');
