@@ -1,26 +1,45 @@
 /**
  * Daily Summary Agent
  *
- * Reads today's deferred notification entries (written by lib/notify.js when
- * agents run with --scheduled) and sends one consolidated digest email.
+ * Sends one consolidated morning digest email at 5 AM PST with everything
+ * that happened the previous day. Non-error notifications are deferred here
+ * by lib/notify.js automatically.
  *
- * Run once per day after all scheduled cron jobs have completed.
+ * Sections:
+ *   1. Content Pipeline — posts written, edited, published, images generated
+ *   2. Pipeline Images — thumbnail links for all images generated yesterday
+ *   3. Ads & Campaigns — optimizer suggestions, campaign alerts, weekly recap
+ *   4. SEO & Rankings — rank alerts, rank tracker, insights
+ *   5. Errors — anything that failed (collectors, agents, etc.)
+ *
+ * Collector/snapshot successes are suppressed — only shown if they failed.
  *
  * Usage:
  *   node agents/daily-summary/index.js
+ *   node agents/daily-summary/index.js --date 2026-04-03  (specific date)
  *
- * Cron (server) — 11:55 PM PT (06:55 UTC):
- *   55 6 * * * cd ~/seo-claude && node agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1
+ * Cron (server) — 5:00 AM PST (13:00 UTC):
+ *   0 13 * * * cd ~/seo-claude && node agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1
  */
 
-import { readFileSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sendHtmlEmail } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const DAILY_SUMMARY_DIR = join(ROOT, 'data', 'reports', 'daily-summary');
+const POSTS_DIR = join(ROOT, 'data', 'posts');
 const LOG_DIR = join(ROOT, 'data', 'logs');
+
+// Collector/snapshot agents — suppress their success entries from the digest
+const SILENT_ON_SUCCESS = new Set([
+  'clarity', 'shopify', 'gsc', 'ga4', 'google-ads', 'google ads',
+  'blog-index', 'blog index', 'topical map', 'topical-map',
+  'insight aggregator', 'insight-aggregator',
+  'meta a/b', 'meta-ab',
+]);
 
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
@@ -35,96 +54,247 @@ function loadEnv() {
   try {
     return Object.fromEntries(
       readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
-        .filter(l => l.includes('='))
+        .filter(l => l.includes('=') && !l.trim().startsWith('#'))
         .map(l => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])
     );
   } catch { return {}; }
 }
 
-async function main() {
-  const date = new Date().toISOString().slice(0, 10);
-  const digestFile = join(DAILY_SUMMARY_DIR, `${date}.jsonl`);
+/**
+ * Categorize a digest entry based on its subject line.
+ */
+function categorize(entry) {
+  const s = (entry.subject || '').toLowerCase();
+  const cat = (entry.category || '').toLowerCase();
 
-  if (!existsSync(digestFile)) {
-    log(`No digest file for ${date} — nothing to send.`);
-    return;
+  if (cat) return cat;
+
+  // Pipeline
+  if (s.includes('brief') || s.includes('scheduler') || s.includes('pipeline')
+      || s.includes('published') || s.includes('writer') || s.includes('editor')
+      || s.includes('image gen')) return 'pipeline';
+
+  // Ads
+  if (s.includes('google ads') || s.includes('ads ') || s.includes('campaign')
+      || s.includes('ads—') || s.includes('ads —') || s.includes('weekly')) return 'ads';
+
+  // SEO
+  if (s.includes('rank') || s.includes('ahrefs')) return 'seo';
+
+  // Collectors
+  if (s.includes('collector') || s.includes('clarity') || s.includes('shopify')
+      || s.includes('gsc') || s.includes('ga4')) return 'collector';
+
+  return 'other';
+}
+
+/**
+ * Check if an entry is a silent collector success that should be suppressed.
+ */
+function isSilentSuccess(entry) {
+  if (entry.status === 'error') return false;
+  const s = (entry.subject || '').toLowerCase();
+  for (const keyword of SILENT_ON_SUCCESS) {
+    if (s.includes(keyword)) return true;
+  }
+  return false;
+}
+
+/**
+ * Find all pipeline images generated on the target date.
+ * Scans data/posts/*.json for image_generated_at matching the date.
+ */
+function findPipelineImages(targetDate) {
+  if (!existsSync(POSTS_DIR)) return [];
+
+  const images = [];
+  const files = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'));
+
+  for (const file of files) {
+    try {
+      const meta = JSON.parse(readFileSync(join(POSTS_DIR, file), 'utf8'));
+      const genDate = (meta.image_generated_at || '').slice(0, 10);
+      if (genDate !== targetDate) continue;
+
+      images.push({
+        title: meta.title || meta.slug || file,
+        slug: meta.slug || file.replace('.json', ''),
+        imageUrl: meta.shopify_image_url || null,
+        imagePath: meta.image_path || null,
+        status: meta.shopify_status || 'unknown',
+      });
+    } catch { /* skip unreadable files */ }
   }
 
-  const lines = readFileSync(digestFile, 'utf8').trim().split('\n').filter(Boolean);
-  if (!lines.length) {
-    log('Digest file is empty — nothing to send.');
-    return;
-  }
+  return images;
+}
 
-  const entries = lines.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-  if (!entries.length) {
-    log('No valid entries in digest file.');
-    return;
-  }
-
-  log(`Sending daily summary with ${entries.length} entries.`);
-
-  // Build email body
-  const successEntries = entries.filter(e => e.status === 'success');
-  const infoEntries = entries.filter(e => e.status === 'info' || !e.status);
-
-  const sections = [];
-
-  sections.push(`Daily Summary — ${date}`);
-  sections.push(`${'='.repeat(40)}`);
-  sections.push(`${entries.length} scheduled agent(s) ran today.\n`);
-
-  for (const entry of entries) {
-    const icon = entry.status === 'success' ? '✅' : 'ℹ️';
-    sections.push(`${icon} ${entry.subject}`);
-    sections.push(`   ${new Date(entry.ts).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit' })} PT`);
-    if (entry.body) {
-      // Indent body lines
-      const bodyLines = entry.body.split('\n').map(l => `   ${l}`).join('\n');
-      sections.push(bodyLines);
-    }
-    sections.push('');
-  }
-
-  const body = sections.join('\n');
-
-  const env = loadEnv();
-  const RESEND_API_KEY = process.env.RESEND_API_KEY || env.RESEND_API_KEY;
-  const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || env.NOTIFY_EMAIL;
-  const FROM_EMAIL = process.env.NOTIFY_FROM || env.NOTIFY_FROM || 'SEO Claude <notifications@resend.dev>';
-
-  if (!RESEND_API_KEY || !NOTIFY_EMAIL) {
-    log('RESEND_API_KEY or NOTIFY_EMAIL not set — skipping.');
-    return;
-  }
-
-  const escapeHtml = str => str
+/**
+ * Build the HTML email body.
+ */
+function buildDigestHtml(targetDate, entries, pipelineImages, dashboardUrl) {
+  const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  const html = `<div style="font-family:monospace;font-size:14px;white-space:pre-wrap;">${escapeHtml(body)}</div>`;
+  // Filter out silent successes
+  const visible = entries.filter(e => !isSilentSuccess(e));
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: FROM_EMAIL,
-      to: [NOTIFY_EMAIL],
-      subject: `📋 Daily Summary — ${date} (${entries.length} agents)`,
-      html,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    log(`Resend error: ${err}`);
-  } else {
-    log('Daily summary sent.');
+  // Group by category
+  const groups = { pipeline: [], ads: [], seo: [], other: [] };
+  for (const entry of visible) {
+    const cat = categorize(entry);
+    if (groups[cat]) groups[cat].push(entry);
+    else groups.other.push(entry);
   }
+
+  // Count suppressed
+  const suppressed = entries.length - visible.length;
+
+  const styles = `
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 640px; margin: 0 auto; padding: 16px; color: #1a1a1a; background: #f9fafb; }
+    h1 { font-size: 20px; margin: 0 0 4px 0; }
+    .date { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+    .section { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .section-title { font-size: 15px; font-weight: 600; color: #374151; margin: 0 0 12px 0; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px; }
+    .entry { margin-bottom: 10px; font-size: 13px; }
+    .entry-subject { font-weight: 500; }
+    .entry-time { color: #9ca3af; font-size: 12px; }
+    .entry-body { color: #6b7280; font-size: 12px; white-space: pre-wrap; margin-top: 2px; max-height: 120px; overflow: hidden; }
+    .image-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+    .image-card { text-align: center; width: 140px; }
+    .image-card img { width: 140px; height: 79px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; }
+    .image-card .label { font-size: 11px; color: #374151; margin-top: 4px; line-height: 1.3; }
+    .status-badge { font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+    .status-scheduled { background: #dbeafe; color: #1d4ed8; }
+    .status-draft { background: #fef3c7; color: #92400e; }
+    .status-active { background: #d1fae5; color: #065f46; }
+    .empty { color: #9ca3af; font-style: italic; font-size: 13px; }
+    .footer { color: #9ca3af; font-size: 12px; margin-top: 16px; text-align: center; }
+  `;
+
+  const formatTime = (ts) => {
+    try {
+      return new Date(ts).toLocaleTimeString('en-US', {
+        timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit', hour12: true,
+      });
+    } catch { return ''; }
+  };
+
+  const renderEntries = (items) => {
+    if (!items.length) return '<p class="empty">Nothing to report.</p>';
+    return items.map(e => {
+      const icon = e.status === 'success' ? '&#9989;' : e.status === 'error' ? '&#10060;' : '&#8505;&#65039;';
+      const bodyPreview = e.body ? `<div class="entry-body">${esc(e.body.slice(0, 500))}</div>` : '';
+      return `<div class="entry">
+        <div><span>${icon}</span> <span class="entry-subject">${esc(e.subject)}</span> <span class="entry-time">${formatTime(e.ts)}</span></div>
+        ${bodyPreview}
+      </div>`;
+    }).join('');
+  };
+
+  // Build image section
+  let imageSection = '';
+  if (pipelineImages.length > 0) {
+    const imageCards = pipelineImages.map(img => {
+      const src = img.imageUrl || '';
+      const statusClass = img.status === 'scheduled' ? 'status-scheduled'
+        : img.status === 'active' ? 'status-active' : 'status-draft';
+      const imgTag = src
+        ? `<a href="${esc(src)}" target="_blank"><img src="${esc(src)}" alt="${esc(img.title)}" /></a>`
+        : `<div style="width:140px;height:79px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9ca3af;">No CDN URL</div>`;
+      return `<div class="image-card">
+        ${imgTag}
+        <div class="label">${esc(img.title)}</div>
+        <span class="status-badge ${statusClass}">${esc(img.status)}</span>
+      </div>`;
+    }).join('');
+
+    imageSection = `
+      <div class="section">
+        <div class="section-title">Pipeline Images (${pipelineImages.length})</div>
+        <div class="image-grid">${imageCards}</div>
+      </div>`;
+  }
+
+  // Build sections
+  const pipelineSection = groups.pipeline.length > 0
+    ? `<div class="section"><div class="section-title">Content Pipeline</div>${renderEntries(groups.pipeline)}</div>` : '';
+
+  const adsSection = groups.ads.length > 0
+    ? `<div class="section"><div class="section-title">Ads &amp; Campaigns</div>${renderEntries(groups.ads)}</div>` : '';
+
+  const seoSection = groups.seo.length > 0
+    ? `<div class="section"><div class="section-title">SEO &amp; Rankings</div>${renderEntries(groups.seo)}</div>` : '';
+
+  const otherSection = groups.other.length > 0
+    ? `<div class="section"><div class="section-title">Other</div>${renderEntries(groups.other)}</div>` : '';
+
+  const nothingToReport = !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+
+  return `<!DOCTYPE html>
+<html><head><style>${styles}</style></head><body>
+  <h1>Daily Recap</h1>
+  <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
+  ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
+  ${pipelineSection}
+  ${imageSection}
+  ${adsSection}
+  ${seoSection}
+  ${otherSection}
+  <div class="footer"><a href="${esc(dashboardUrl)}" style="color:#6b7280;">Open Dashboard</a></div>
+</body></html>`;
+}
+
+async function main() {
+  // Default to yesterday's date (runs at 5 AM, reporting on previous day)
+  const dateArg = process.argv.indexOf('--date');
+  let targetDate;
+  if (dateArg !== -1 && process.argv[dateArg + 1]) {
+    targetDate = process.argv[dateArg + 1];
+  } else {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    targetDate = yesterday.toISOString().slice(0, 10);
+  }
+
+  const digestFile = join(DAILY_SUMMARY_DIR, `${targetDate}.jsonl`);
+
+  let entries = [];
+  if (existsSync(digestFile)) {
+    const lines = readFileSync(digestFile, 'utf8').trim().split('\n').filter(Boolean);
+    entries = lines.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  }
+
+  // Find pipeline images generated on the target date
+  const pipelineImages = findPipelineImages(targetDate);
+
+  // If nothing happened at all, still send a "quiet day" email
+  if (!entries.length && !pipelineImages.length) {
+    log(`No activity for ${targetDate} — sending quiet day summary.`);
+  } else {
+    log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images.`);
+  }
+
+  const env = loadEnv();
+  const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
+
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, dashboardUrl);
+
+  const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
+  const imageCount = pipelineImages.length;
+  const parts = [];
+  if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
+  if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
+  const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
+
+  await sendHtmlEmail(
+    `Daily Recap — ${targetDate} (${subtitle})`,
+    html,
+  );
+
+  log('Daily summary sent.');
 }
 
 main().catch(err => {

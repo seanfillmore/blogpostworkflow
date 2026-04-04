@@ -13,8 +13,9 @@
 #   Daily   06:00 PT — clarity-collector (CRO)
 #   Daily   06:05 PT — shopify-collector (CRO)
 #   Weekly  Mon 07:45 PT — cro-analyzer
-#   Daily   06:45 PT — ads-optimizer (alert email if suggestions exist)
+#   Daily   06:45 PT — ads-optimizer
 #   Weekly  Sun 07:00 PT — ads-weekly-recap
+#   Daily   05:00 PST — daily summary digest email
 
 set -e
 
@@ -49,6 +50,7 @@ AHREFS_REMINDER="0 7 * * 0 cd \"$PROJECT_DIR\" && $NODE scripts/ahrefs-reminder.
 DAILY_CAMPAIGN_MONITOR="30 7 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-monitor/index.js >> data/reports/campaign-monitor.log 2>&1"
 WEEKLY_CAMPAIGN_ANALYZER="0 6 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-analyzer/index.js >> data/reports/campaign-analyzer.log 2>&1"
 BIWEEKLY_STRATEGIST="0 12 * * 0 [ \$(( \$(date +%W) % 2 )) -eq 0 ] && cd \"$PROJECT_DIR\" && $NODE agents/content-strategist/index.js >> data/reports/scheduler/content-strategist.log 2>&1"
+DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
 EXISTING=$(crontab -l 2>/dev/null || true)
@@ -79,6 +81,7 @@ $WEEKLY_META_AB_TRACKER
 $DAILY_CAMPAIGN_MONITOR
 $WEEKLY_CAMPAIGN_ANALYZER
 $BIWEEKLY_STRATEGIST
+$DAILY_SUMMARY
 "
 
 echo "Installing cron jobs..."
@@ -105,6 +108,7 @@ echo "  Daily   15:00 UTC — pipeline-scheduler"
 echo "  Weekly  Mon 15:00 UTC — meta-ab-tracker"
 echo "  Daily   07:30 PT — campaign-monitor"
 echo "  Weekly  Sun 06:00 PT — campaign-analyzer"
+echo "  Daily   05:00 PST (13:00 UTC) — daily summary digest email"
 echo "  Bi-weekly Sun 05:00 PT — content-strategist calendar refresh"
 echo ""
 echo "View with: crontab -l"
