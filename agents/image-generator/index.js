@@ -261,24 +261,35 @@ The hero image must visually communicate what the blog post is ABOUT. Consider t
 - If the topic is a PROBLEM, PROCESS, or CONCEPT (e.g. "How to Remove Sweat Stains", "Dry Brushing Skin", "When Was Deodorant Invented"), the image must show the TOPIC as the hero — the relevant scene, situation, or visual concept. The product may appear as a secondary element in the scene, but the viewer should immediately understand what the article is about from the image alone.
 - Ask yourself: "If someone saw only this image as a thumbnail, would they know what the article is about?" If the answer is "they'd think it's about soap" but the article is about sweat stains, the prompt is wrong.
 
-Respond in this EXACT format — first line is the template key, second line onwards is the prompt:
-SELECTED_TEMPLATE: [key]
-Product photography, ...
+SCENE TEMPLATE vs REAL-WORLD SETTING:
+First decide: does this blog topic happen in a specific real-world location? Think about where a reader would actually encounter this topic in their life.
+- "Is Deodorant a Liquid for TSA?" → airport security checkpoint, TSA screening bins
+- "How to Remove Sweat Stains" → laundry room, bathroom counter with stained clothing
+- "Best Natural Deodorant" → product photography on a styled surface (use a template)
+- "When Was Deodorant Invented?" → vintage/historical styled scene (no template)
+- "Dry Brushing Skin" → spa-like bathroom setting with a dry brush
+
+If the topic has a natural real-world setting, use SELECTED_TEMPLATE: NONE and describe that real-world environment instead of picking from the template list. Only use a template when the topic is product-focused or doesn't have a strong location association.
+
+Respond in this EXACT format — first line is the template key (or NONE), second line onwards is the prompt:
+SELECTED_TEMPLATE: [key or NONE]
+[Photography type], ...
 
 Write the prompt using this structure:
-1. Start with: "Product photography, " (or "Lifestyle photography, " if the topic calls for a scene-based image)
-2. Describe the primary subject — this is the TOPIC of the article. For product-focused posts, the product is the hero. For problem/process/concept posts, show the topic visually (e.g. a stained white shirt for sweat stains, dry brush on skin for dry brushing) with the product as a secondary element in the scene.
-3. Include 1-3 natural props that reinforce the topic
-4. Describe the chosen surface and background from the template
-5. State the lighting and camera angle from the template
+1. Start with the appropriate photography type: "Product photography, " for product-focused posts, "Lifestyle photography, " for scene-based images, "Editorial photography, " for concept/story posts
+2. Describe the primary subject — this is the TOPIC of the article. For product-focused posts, the product is the hero. For problem/process/concept posts, show the real-world setting where this topic matters (e.g. airport security bin for TSA rules, laundry area for stain removal, bathroom vanity for skincare routine). The product should appear naturally within that setting as a secondary element.
+3. Include 1-3 natural props that reinforce the topic AND the real-world setting
+4. If using a template, describe the surface and background from it. If using NONE, describe the real-world environment in detail — the location, surfaces, objects, and atmosphere that make it immediately recognizable.
+5. State the lighting (natural for real-world scenes, or from the template)
 6. End with: "photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders."
 
 HARD RULES:
 - The image must visually match the blog post topic — a reader should understand the article subject from the image alone
-- Props must make real-world sense together on that surface — no random unrelated objects
-- Contextual scene elements (toothbrush, faucet, towel, cup, soap dish, etc.) are encouraged for bathroom/kitchen/bedroom scenes — make it look like a real lived-in space
-- Do NOT include people
-- Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced, don't force the maximum
+- The setting should be WHERE a reader would encounter this topic in real life
+- Props must make real-world sense in the chosen setting — no random unrelated objects
+- Contextual scene elements are encouraged — make it look like a real place
+- Do NOT include people, but you CAN show hands or arms if needed for context (e.g. hands placing items in a TSA bin)
+- Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
 - Every prop must be physically plausible in the chosen setting
 - PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a stick/push-up format. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
     }],
@@ -286,7 +297,7 @@ HARD RULES:
 
   const raw = message.content[0].text.trim();
   const keyMatch = raw.match(/^SELECTED_TEMPLATE:\s*(\S+)/m);
-  const selectedKey = keyMatch?.[1] ?? null;
+  const selectedKey = keyMatch?.[1] === 'NONE' ? null : (keyMatch?.[1] ?? null);
   const prompt = raw.replace(/^SELECTED_TEMPLATE:\s*\S+\n?/, '').trim();
   return { prompt, selectedKey };
 }
