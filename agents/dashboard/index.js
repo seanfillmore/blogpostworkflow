@@ -1256,16 +1256,17 @@ const HTML = `<!DOCTYPE html>
   }
 
   /* ── Creatives tab ─────────────────────────────────────────────────── */
-  #tab-creatives .creatives-layout,
-  #tab-creatives > div[style*="grid-template-columns: 1fr 1fr"],
-  #tab-creatives > div[style*="grid-template-columns:1fr 1fr"] {
+  #tab-creatives.tab-panel.active {
+    display: block !important;
+    overflow-y: auto !important;
+  }
+  #creatives-layout {
     display: flex !important;
     flex-direction: column !important;
     height: auto !important;
     overflow: visible !important;
   }
-  #tab-creatives .creatives-layout > div,
-  #tab-creatives > div > div {
+  #creatives-layout > div {
     border-right: none !important;
     overflow-y: visible !important;
     height: auto !important;
@@ -1546,7 +1547,7 @@ const HTML = `<!DOCTYPE html>
     <button onclick="createNewCreativesSession()" style="padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:5px;font-size:0.8rem;background:var(--surface);cursor:pointer;margin-left:auto">+ New Session</button>
   </div>
   <!-- Two-panel layout -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 220px);overflow:hidden">
+  <div id="creatives-layout" style="display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 220px);overflow:hidden">
     <!-- LEFT PANEL -->
     <div style="border-right:1px solid var(--border);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;background:var(--bg)">
       <!-- Product context (hidden by default, shown for 2+ selected products) -->
