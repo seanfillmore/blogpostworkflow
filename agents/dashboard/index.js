@@ -6038,71 +6038,65 @@ const server = http.createServer((req, res) => {
     const host = req.headers.host || `localhost:${PORT}`;
     const proto = req.headers['x-forwarded-proto'] || 'http';
     const redirectUri = `${proto}://${host}/api/google/callback`;
-    try {
-      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          code,
-          client_id: env.GOOGLE_CLIENT_ID,
-          client_secret: env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: redirectUri,
-          grant_type: 'authorization_code',
-        }),
-      });
-      if (!tokenRes.ok) {
-        const text = await tokenRes.text();
+    fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: env.GOOGLE_CLIENT_ID,
+        client_secret: env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    }).then(function(tokenRes) {
+      if (!tokenRes.ok) return tokenRes.text().then(function(text) {
         res.writeHead(500, { 'Content-Type': 'text/html' });
-        res.end(`<h2>Token exchange failed</h2><pre>${text}</pre><p><a href="/">Back to dashboard</a></p>`);
-        return;
-      }
-      const tokens = await tokenRes.json();
-      if (!tokens.refresh_token) {
-        res.writeHead(400, { 'Content-Type': 'text/html' });
-        res.end('<h2>No refresh token returned</h2><p>Try revoking access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a> and retry.</p><p><a href="/">Back to dashboard</a></p>');
-        return;
-      }
-      // Save to .env
-      const envPath = join(ROOT, '.env');
-      let content = readFileSync(envPath, 'utf8');
-      const regex = /^GOOGLE_REFRESH_TOKEN=.*/m;
-      if (regex.test(content)) {
-        content = content.replace(regex, `GOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`);
-      } else {
-        content = content.trimEnd() + `\nGOOGLE_REFRESH_TOKEN=${tokens.refresh_token}\n`;
-      }
-      writeFileSync(envPath, content);
-      // Also update process.env so current session uses the new token
-      process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token;
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end('<h2>Google token renewed successfully</h2><p>GSC + GA4 + Google Ads re-authorized.</p><p><a href="/">Back to dashboard</a></p>');
-    } catch (err) {
+        res.end('<h2>Token exchange failed</h2><pre>' + text + '</pre><p><a href="/">Back to dashboard</a></p>');
+      });
+      return tokenRes.json().then(function(tokens) {
+        if (!tokens.refresh_token) {
+          res.writeHead(400, { 'Content-Type': 'text/html' });
+          res.end('<h2>No refresh token returned</h2><p>Try revoking access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a> and retry.</p><p><a href="/">Back to dashboard</a></p>');
+          return;
+        }
+        var envPath = join(ROOT, '.env');
+        var content = readFileSync(envPath, 'utf8');
+        var regex = /^GOOGLE_REFRESH_TOKEN=.*/m;
+        if (regex.test(content)) {
+          content = content.replace(regex, 'GOOGLE_REFRESH_TOKEN=' + tokens.refresh_token);
+        } else {
+          content = content.trimEnd() + '\nGOOGLE_REFRESH_TOKEN=' + tokens.refresh_token + '\n';
+        }
+        writeFileSync(envPath, content);
+        process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token;
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end('<h2>Google token renewed successfully</h2><p>GSC + GA4 + Google Ads re-authorized.</p><p><a href="/">Back to dashboard</a></p>');
+      });
+    }).catch(function(err) {
       res.writeHead(500, { 'Content-Type': 'text/html' });
-      res.end(`<h2>Error</h2><pre>${err.message}</pre><p><a href="/">Back to dashboard</a></p>`);
-    }
+      res.end('<h2>Error</h2><pre>' + err.message + '</pre><p><a href="/">Back to dashboard</a></p>');
+    });
     return;
   }
 
   if (req.method === 'GET' && req.url === '/api/google/status') {
     if (!checkAuth(req, res)) return;
-    const env = loadEnvAuth();
-    if (!env.GOOGLE_REFRESH_TOKEN) {
+    var env2 = loadEnvAuth();
+    if (!env2.GOOGLE_REFRESH_TOKEN) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ status: 'missing', message: 'No refresh token configured' }));
       return;
     }
-    try {
-      const testRes = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: env.GOOGLE_CLIENT_ID,
-          client_secret: env.GOOGLE_CLIENT_SECRET,
-          refresh_token: env.GOOGLE_REFRESH_TOKEN,
-          grant_type: 'refresh_token',
-        }),
-      });
-      const data = await testRes.json();
+    fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: env2.GOOGLE_CLIENT_ID,
+        client_secret: env2.GOOGLE_CLIENT_SECRET,
+        refresh_token: env2.GOOGLE_REFRESH_TOKEN,
+        grant_type: 'refresh_token',
+      }),
+    }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.access_token) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'valid' }));
@@ -6110,10 +6104,10 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'expired', message: data.error_description || 'Token expired or revoked' }));
       }
-    } catch (err) {
+    }).catch(function(err) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ status: 'error', message: err.message }));
-    }
+    });
     return;
   }
 
