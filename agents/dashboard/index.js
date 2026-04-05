@@ -2794,7 +2794,7 @@ function renderCROTab(data) {
     '<div class="card-body">' +
     '<table class="cro-table">' +
     '<tr><td>Total Sessions</td><td>' + cl.sessions.total + ' <span class="cro-sub">(' + cl.sessions.bots + ' bots)</span></td></tr>' +
-    '<tr><td>Active Engagement</td><td>' + cl.engagement.activeTime + 's <span class="cro-sub">of ' + cl.engagement.totalTime + 's</span></td></tr>' +
+    '<tr><td>Active Engagement</td><td>' + parseFloat(cl.engagement.activeTime).toFixed(1) + 's <span class="cro-sub">of ' + parseFloat(cl.engagement.totalTime).toFixed(1) + 's</span></td></tr>' +
     '<tr><td>Device Split</td><td>' + (cl.devices[0] ? esc(cl.devices[0].name) + ': ' + cl.devices[0].sessions : '—') + '</td></tr>' +
     '<tr><td>Top Country</td><td>' + (cl.countries[0] ? esc(cl.countries[0].name) + ' (' + cl.countries[0].sessions + ')' : '—') + '</td></tr>' +
     '<tr><td>Rage Clicks</td><td>' + fmtPct(cl.behavior.rageClickPct) + '</td></tr>' +
