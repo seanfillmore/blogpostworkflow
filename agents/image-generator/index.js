@@ -580,12 +580,48 @@ function findProductImagesForPost(meta) {
 
   const postKeywords = postText.split(/\s+/).filter((k) => k.length > 3);
 
+  // Category-aware matching — map post topic to product category to prevent cross-category confusion
+  const CATEGORY_SIGNALS = {
+    deodorant: ['deodorant', 'antiperspirant', 'armpit', 'underarm', 'sweat'],
+    bar_soap: ['bar soap', 'soap bar', 'castile soap', 'antibacterial soap', 'body soap'],
+    toothpaste: ['toothpaste', 'fluoride', 'tooth', 'teeth', 'dental', 'brush teeth'],
+    lip_balm: ['lip balm', 'lip care', 'chapstick', 'chapped lips'],
+    lotion: ['body lotion', 'moisturizer', 'moisturiser', 'dry skin', 'body cream'],
+    liquid_soap: ['hand soap', 'foaming soap', 'liquid soap'],
+  };
+
+  // Detect the post's primary product category
+  let postCategory = null;
+  for (const [cat, signals] of Object.entries(CATEGORY_SIGNALS)) {
+    if (signals.some((s) => postText.includes(s))) {
+      postCategory = cat;
+      break;
+    }
+  }
+
+  // Find which manifest handle maps to which category
+  const categoryHandles = {};
+  for (const [cat, cfg] of Object.entries(ingredientsConfig)) {
+    if (cfg.shopify_handle) categoryHandles[cfg.shopify_handle] = cat;
+  }
+
   // Score each product against post keywords
   const scored = resolved
     .filter((p) => existsSync(p.imageDir))
     .map((p) => {
       const productTerms = [p.handle.replace(/-/g, ' '), p.title.toLowerCase(), ...p.tags].join(' ');
-      const score = postKeywords.filter((k) => productTerms.includes(k)).length;
+      let score = postKeywords.filter((k) => productTerms.includes(k)).length;
+
+      // If we detected a post category, boost matching products and penalize mismatches
+      if (postCategory) {
+        const productCategory = categoryHandles[p.handle] || null;
+        if (productCategory === postCategory) {
+          score += 10; // strong boost for correct category
+        } else if (productCategory && productCategory !== postCategory) {
+          score = 0; // eliminate wrong-category products entirely
+        }
+      }
+
       return { ...p, score };
     })
     .filter((p) => p.score > 0)
