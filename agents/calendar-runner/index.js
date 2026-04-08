@@ -102,6 +102,23 @@ function keywordToSlug(keyword) {
   return keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+// ── rejected keywords ─────────────────────────────────────────────────────────
+
+function loadRejections() {
+  const p = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(p)) return [];
+  try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return []; }
+}
+
+function isRejectedKw(keyword, rejections) {
+  const kw = keyword.toLowerCase();
+  return rejections.some(r => {
+    const term = r.keyword.toLowerCase();
+    if (r.matchType === 'exact') return keywordToSlug(keyword) === keywordToSlug(r.keyword);
+    return kw.includes(term);
+  });
+}
+
 // ── determine item status ─────────────────────────────────────────────────────
 
 function getPostMeta(slug) {
@@ -584,7 +601,11 @@ async function main() {
 
   const rawItems  = parseCalendar();
   const signals   = loadRankSignals();
-  const items     = applyFeedbackAdjustments(rawItems, signals);
+  const rejections = loadRejections();
+  const allItems  = applyFeedbackAdjustments(rawItems, signals);
+  const items     = allItems.filter(i => !isRejectedKw(i.keyword, rejections));
+  const skipped   = allItems.length - items.length;
+  if (skipped > 0) console.log(`  Skipping ${skipped} rejected keyword(s).`);
 
   if (!doRun && !dryRun) {
     printCalendar(items);
