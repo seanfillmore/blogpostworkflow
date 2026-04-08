@@ -191,9 +191,18 @@ function loadPostPerformance() {
 }
 
 /**
+ * Load latest GSC opportunity output (produced by gsc-opportunity agent).
+ */
+function loadGscOpportunities() {
+  const path = join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json');
+  if (!existsSync(path)) return null;
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+
+/**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, dashboardUrl) {
+function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, dashboardUrl) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -369,7 +378,30 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
       </div>`;
   }
 
-  const nothingToReport = !flopSection && !performanceSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+  // GSC opportunities — top 5 low-CTR queries (informational)
+  let gscSection = '';
+  if (gscOpps && (gscOpps.low_ctr?.length || gscOpps.unmapped?.length)) {
+    const top = (gscOpps.low_ctr || []).slice(0, 5);
+    const unmapped = (gscOpps.unmapped || []).slice(0, 3);
+    const lowCtrRows = top.map((r, i) => `
+      <div class="quick-win-row">
+        <div class="qw-rank">${i + 1}.</div>
+        <div class="qw-body">
+          <div class="qw-title">${esc(r.keyword)}</div>
+          <div class="qw-meta">${r.impressions.toLocaleString('en-US')} impressions &middot; ${(r.ctr * 100).toFixed(1)}% CTR &middot; pos ${r.position.toFixed(1)}</div>
+        </div>
+      </div>`).join('');
+    const unmappedList = unmapped.map((r) => `<li>${esc(r.keyword)} &mdash; ${r.impressions} impressions</li>`).join('');
+    gscSection = `
+      <div class="section">
+        <div class="section-title">GSC Opportunities</div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 8px 0;">Top low-CTR queries (rewrite title/meta):</p>
+        ${lowCtrRows}
+        ${unmappedList ? `<p style="font-size:12px;color:#6b7280;margin:12px 0 4px 0;">Unmapped (new-topic candidates):</p><ul style="font-size:12px;color:#374151;margin:0;padding-left:18px;">${unmappedList}</ul>` : ''}
+      </div>`;
+  }
+
+  const nothingToReport = !flopSection && !performanceSection && !gscSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -379,6 +411,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   ${blockedSection}
   ${flopSection}
   ${performanceSection}
+  ${gscSection}
   ${quickWinSection}
   ${pipelineSection}
   ${imageSection}
@@ -420,6 +453,7 @@ async function main() {
 
   // Load latest post-performance review output
   const postPerformance = loadPostPerformance();
+  const gscOpps = loadGscOpportunities();
 
   // If nothing happened at all, still send a "quiet day" email
   if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length)) {
@@ -431,7 +465,7 @@ async function main() {
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, dashboardUrl);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, dashboardUrl);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;

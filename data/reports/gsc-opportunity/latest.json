@@ -1,0 +1,464 @@
+{
+  "generated_at": "2026-04-08T12:19:42.222Z",
+  "low_ctr": [
+    {
+      "keyword": "reale skincare",
+      "clicks": 16,
+      "impressions": 1001,
+      "ctr": 0.015984015984015984,
+      "position": 7.232767232767233
+    },
+    {
+      "keyword": "real skin",
+      "clicks": 15,
+      "impressions": 1843,
+      "ctr": 0.008138903960933261,
+      "position": 7.439500813890396
+    },
+    {
+      "keyword": "sls free toothpaste list",
+      "clicks": 15,
+      "impressions": 950,
+      "ctr": 0.015789473684210527,
+      "position": 7.792631578947368
+    },
+    {
+      "keyword": "best sls free toothpaste",
+      "clicks": 14,
+      "impressions": 1268,
+      "ctr": 0.011041009463722398,
+      "position": 5.979495268138801
+    },
+    {
+      "keyword": "coconut oil as deodorant",
+      "clicks": 5,
+      "impressions": 306,
+      "ctr": 0.016339869281045753,
+      "position": 6.218954248366013
+    },
+    {
+      "keyword": "natural body lotion without chemicals",
+      "clicks": 5,
+      "impressions": 405,
+      "ctr": 0.012345679012345678,
+      "position": 25.664197530864197
+    },
+    {
+      "keyword": "sls free toothpaste",
+      "clicks": 5,
+      "impressions": 2055,
+      "ctr": 0.0024330900243309003,
+      "position": 31.197080291970803
+    },
+    {
+      "keyword": "non sls toothpaste",
+      "clicks": 4,
+      "impressions": 642,
+      "ctr": 0.006230529595015576,
+      "position": 13.901869158878505
+    },
+    {
+      "keyword": "benefits of coconut oil on skin everyday",
+      "clicks": 3,
+      "impressions": 760,
+      "ctr": 0.003947368421052632,
+      "position": 5.302631578947368
+    },
+    {
+      "keyword": "coconut oil toothpaste",
+      "clicks": 3,
+      "impressions": 2155,
+      "ctr": 0.0013921113689095127,
+      "position": 6.500232018561485
+    },
+    {
+      "keyword": "realskin",
+      "clicks": 3,
+      "impressions": 215,
+      "ctr": 0.013953488372093023,
+      "position": 7.27906976744186
+    },
+    {
+      "keyword": "best unscented lotion",
+      "clicks": 2,
+      "impressions": 256,
+      "ctr": 0.0078125,
+      "position": 13.1015625
+    },
+    {
+      "keyword": "can you use coconut oil as toothpaste",
+      "clicks": 2,
+      "impressions": 125,
+      "ctr": 0.016,
+      "position": 3.032
+    },
+    {
+      "keyword": "coconut oil as moisturizer",
+      "clicks": 2,
+      "impressions": 352,
+      "ctr": 0.005681818181818182,
+      "position": 13.34375
+    },
+    {
+      "keyword": "coconut oil deodorant",
+      "clicks": 2,
+      "impressions": 508,
+      "ctr": 0.003937007874015748,
+      "position": 11.188976377952756
+    },
+    {
+      "keyword": "coconut oil for stretch marks",
+      "clicks": 2,
+      "impressions": 2488,
+      "ctr": 0.0008038585209003215,
+      "position": 6.514067524115756
+    },
+    {
+      "keyword": "coconut oil on stretch marks before and after",
+      "clicks": 2,
+      "impressions": 167,
+      "ctr": 0.011976047904191617,
+      "position": 1.748502994011976
+    },
+    {
+      "keyword": "davids toothpaste alternative",
+      "clicks": 2,
+      "impressions": 133,
+      "ctr": 0.015037593984962405,
+      "position": 1.706766917293233
+    },
+    {
+      "keyword": "is coconut oil good for stretch marks",
+      "clicks": 2,
+      "impressions": 914,
+      "ctr": 0.002188183807439825,
+      "position": 4.060175054704596
+    },
+    {
+      "keyword": "list of sls free toothpaste",
+      "clicks": 2,
+      "impressions": 105,
+      "ctr": 0.01904761904761905,
+      "position": 10.971428571428572
+    }
+  ],
+  "page_2": [
+    {
+      "keyword": "non sls toothpaste",
+      "clicks": 4,
+      "impressions": 642,
+      "ctr": 0.006230529595015576,
+      "position": 13.901869158878505
+    },
+    {
+      "keyword": "best unscented lotion",
+      "clicks": 2,
+      "impressions": 256,
+      "ctr": 0.0078125,
+      "position": 13.1015625
+    },
+    {
+      "keyword": "coconut oil as moisturizer",
+      "clicks": 2,
+      "impressions": 352,
+      "ctr": 0.005681818181818182,
+      "position": 13.34375
+    },
+    {
+      "keyword": "coconut oil deodorant",
+      "clicks": 2,
+      "impressions": 508,
+      "ctr": 0.003937007874015748,
+      "position": 11.188976377952756
+    },
+    {
+      "keyword": "list of sls free toothpaste",
+      "clicks": 2,
+      "impressions": 105,
+      "ctr": 0.01904761904761905,
+      "position": 10.971428571428572
+    },
+    {
+      "keyword": "nontoxic body lotion",
+      "clicks": 2,
+      "impressions": 101,
+      "ctr": 0.019801980198019802,
+      "position": 11.891089108910892
+    },
+    {
+      "keyword": "best coconut body butter",
+      "clicks": 1,
+      "impressions": 252,
+      "ctr": 0.003968253968253968,
+      "position": 14.555555555555555
+    },
+    {
+      "keyword": "best coconut body oil",
+      "clicks": 1,
+      "impressions": 47,
+      "ctr": 0.02127659574468085,
+      "position": 10.127659574468085
+    },
+    {
+      "keyword": "best coconut scented lotion",
+      "clicks": 1,
+      "impressions": 97,
+      "ctr": 0.010309278350515464,
+      "position": 14.649484536082474
+    },
+    {
+      "keyword": "best non toxic body cream",
+      "clicks": 1,
+      "impressions": 19,
+      "ctr": 0.05263157894736842,
+      "position": 12.947368421052632
+    },
+    {
+      "keyword": "best non toxic body lotion",
+      "clicks": 1,
+      "impressions": 321,
+      "ctr": 0.003115264797507788,
+      "position": 15.981308411214954
+    },
+    {
+      "keyword": "best non toxic lotion",
+      "clicks": 1,
+      "impressions": 183,
+      "ctr": 0.00546448087431694,
+      "position": 17.437158469945356
+    },
+    {
+      "keyword": "best nontoxic lotion",
+      "clicks": 1,
+      "impressions": 44,
+      "ctr": 0.022727272727272728,
+      "position": 11.931818181818182
+    },
+    {
+      "keyword": "best sls free toothpaste list",
+      "clicks": 1,
+      "impressions": 10,
+      "ctr": 0.1,
+      "position": 10.8
+    },
+    {
+      "keyword": "best unscented moisturizing lotion",
+      "clicks": 1,
+      "impressions": 12,
+      "ctr": 0.08333333333333333,
+      "position": 14
+    },
+    {
+      "keyword": "body lotion that is non toxic",
+      "clicks": 1,
+      "impressions": 6,
+      "ctr": 0.16666666666666666,
+      "position": 10.666666666666666
+    },
+    {
+      "keyword": "coconut oil antiperspirant",
+      "clicks": 1,
+      "impressions": 32,
+      "ctr": 0.03125,
+      "position": 11.96875
+    },
+    {
+      "keyword": "coconut oil base soap",
+      "clicks": 1,
+      "impressions": 1,
+      "ctr": 1,
+      "position": 11
+    },
+    {
+      "keyword": "coconut oil soap ingredients",
+      "clicks": 1,
+      "impressions": 8,
+      "ctr": 0.125,
+      "position": 19.75
+    },
+    {
+      "keyword": "coconut toothpaste",
+      "clicks": 1,
+      "impressions": 231,
+      "ctr": 0.004329004329004329,
+      "position": 15.696969696969697
+    }
+  ],
+  "unmapped": [
+    {
+      "keyword": "coconut oil for stretch marks",
+      "clicks": 2,
+      "impressions": 2488,
+      "ctr": 0.0008038585209003215,
+      "position": 6.514067524115756
+    },
+    {
+      "keyword": "coconut oil toothpaste",
+      "clicks": 3,
+      "impressions": 2155,
+      "ctr": 0.0013921113689095127,
+      "position": 6.500232018561485
+    },
+    {
+      "keyword": "sls free toothpaste",
+      "clicks": 5,
+      "impressions": 2055,
+      "ctr": 0.0024330900243309003,
+      "position": 31.197080291970803
+    },
+    {
+      "keyword": "real skin",
+      "clicks": 15,
+      "impressions": 1843,
+      "ctr": 0.008138903960933261,
+      "position": 7.439500813890396
+    },
+    {
+      "keyword": "reale actives",
+      "clicks": 2,
+      "impressions": 1793,
+      "ctr": 0.0011154489682097045,
+      "position": 8.66090351366425
+    },
+    {
+      "keyword": "best sls free toothpaste",
+      "clicks": 14,
+      "impressions": 1268,
+      "ctr": 0.011041009463722398,
+      "position": 5.979495268138801
+    },
+    {
+      "keyword": "non toxic body lotion",
+      "clicks": 2,
+      "impressions": 1127,
+      "ctr": 0.001774622892635315,
+      "position": 35.451641526175685
+    },
+    {
+      "keyword": "does coconut oil help with stretch marks",
+      "clicks": 1,
+      "impressions": 1036,
+      "ctr": 0.0009652509652509653,
+      "position": 1.776061776061776
+    },
+    {
+      "keyword": "reale skincare",
+      "clicks": 16,
+      "impressions": 1001,
+      "ctr": 0.015984015984015984,
+      "position": 7.232767232767233
+    },
+    {
+      "keyword": "sls free toothpaste list",
+      "clicks": 15,
+      "impressions": 950,
+      "ctr": 0.015789473684210527,
+      "position": 7.792631578947368
+    },
+    {
+      "keyword": "is coconut oil good for stretch marks",
+      "clicks": 2,
+      "impressions": 914,
+      "ctr": 0.002188183807439825,
+      "position": 4.060175054704596
+    },
+    {
+      "keyword": "benefits of coconut oil on skin everyday",
+      "clicks": 3,
+      "impressions": 760,
+      "ctr": 0.003947368421052632,
+      "position": 5.302631578947368
+    },
+    {
+      "keyword": "dr bronner alternative",
+      "clicks": 1,
+      "impressions": 749,
+      "ctr": 0.0013351134846461949,
+      "position": 14.667556742323097
+    },
+    {
+      "keyword": "non toxic lotion",
+      "clicks": 1,
+      "impressions": 707,
+      "ctr": 0.0014144271570014145,
+      "position": 3.6223479490806225
+    },
+    {
+      "keyword": "coconut oil deodorant",
+      "clicks": 2,
+      "impressions": 508,
+      "ctr": 0.003937007874015748,
+      "position": 11.188976377952756
+    },
+    {
+      "keyword": "natural body lotion without chemicals",
+      "clicks": 5,
+      "impressions": 405,
+      "ctr": 0.012345679012345678,
+      "position": 25.664197530864197
+    },
+    {
+      "keyword": "reale skin",
+      "clicks": 2,
+      "impressions": 371,
+      "ctr": 0.005390835579514825,
+      "position": 7.218328840970351
+    },
+    {
+      "keyword": "coconut oil as moisturizer",
+      "clicks": 2,
+      "impressions": 352,
+      "ctr": 0.005681818181818182,
+      "position": 13.34375
+    },
+    {
+      "keyword": "can coconut oil remove stretch marks",
+      "clicks": 1,
+      "impressions": 337,
+      "ctr": 0.002967359050445104,
+      "position": 1.489614243323442
+    },
+    {
+      "keyword": "best non toxic body lotion",
+      "clicks": 1,
+      "impressions": 321,
+      "ctr": 0.003115264797507788,
+      "position": 15.981308411214954
+    },
+    {
+      "keyword": "coconut oil as deodorant",
+      "clicks": 5,
+      "impressions": 306,
+      "ctr": 0.016339869281045753,
+      "position": 6.218954248366013
+    },
+    {
+      "keyword": "coconut oil as toothpaste",
+      "clicks": 1,
+      "impressions": 296,
+      "ctr": 0.0033783783783783786,
+      "position": 4.706081081081081
+    },
+    {
+      "keyword": "sls free toothpaste brands",
+      "clicks": 2,
+      "impressions": 269,
+      "ctr": 0.007434944237918215,
+      "position": 9.646840148698885
+    },
+    {
+      "keyword": "best unscented lotion",
+      "clicks": 2,
+      "impressions": 256,
+      "ctr": 0.0078125,
+      "position": 13.1015625
+    },
+    {
+      "keyword": "best coconut body butter",
+      "clicks": 1,
+      "impressions": 252,
+      "ctr": 0.003968253968253968,
+      "position": 14.555555555555555
+    }
+  ]
+}
