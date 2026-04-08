@@ -143,7 +143,32 @@ function detectProductIngredients(keyword) {
   return { name: 'our products', ingredients: all };
 }
 
-function buildSystemPrompt(productIngredients) {
+function detectPostType(brief) {
+  const kw = (brief?.target_keyword || '').toLowerCase();
+  const title = (brief?.recommended_title || '').toLowerCase();
+  const text = kw + ' ' + title;
+
+  // DIY/educational signals — light-touch CTA pattern
+  const diyPatterns = [
+    /\bhow to make\b/, /\bhow to\s+(do|apply|use)\b/, /\brecipe\b/,
+    /\bdiy\b/, /\bat home\b/, /\bhomemade\b/, /\btutorial\b/,
+    /\bstep-by-step\b/, /\bguide to (making|building|creating)\b/,
+  ];
+  if (diyPatterns.some((p) => p.test(text))) return 'diy';
+
+  // Informational/concept posts — light-touch CTA pattern
+  const infoPatterns = [
+    /^why\b/, /^what (is|are|does)\b/, /^when (was|did|is)\b/,
+    /^is\b.*\?/, /^are\b.*\?/, /^can\b.*\?/, /^should\b.*\?/,
+    /\bbenefits of\b/, /\bhow does\b/,
+  ];
+  if (infoPatterns.some((p) => p.test(text))) return 'informational';
+
+  // Default: product-focused ("best X", "X for Y", product comparisons, etc.) — heavier CTAs OK
+  return 'product';
+}
+
+function buildSystemPrompt(productIngredients, postType) {
   const feedback = loadAgentFeedback('blog-post-writer');
   const ingredientList = productIngredients.ingredients.join(', ');
   const formatNote = productIngredients.format
@@ -197,10 +222,28 @@ Your posts:
 - Lists use <strong> lead terms followed by a colon and explanation
 
 ═══════════════════════════════════
+POST TYPE: ${postType.toUpperCase()}
+═══════════════════════════════════
+${postType === 'product' ? `
+This is a PRODUCT-FOCUSED post (product comparisons, "best X" roundups, product category guides). The reader is in buying mode. Heavier CTAs are appropriate where each serves a distinct purpose.
+` : `
+This is a ${postType === 'diy' ? 'DIY / HOW-TO / TUTORIAL' : 'INFORMATIONAL / EDUCATIONAL'} post. The reader came to LEARN or MAKE something. You must respect that intent.
+
+CRITICAL CTA RULES for this post type:
+- **DO NOT place a sales CTA above or near the intro.** The intro sets up the guide — it does not sell.
+- **DO NOT open with "If you love X, you'll love our product — no DIY required" or any variant.** This is bait-and-switch and is explicitly forbidden.
+- **Deliver the full promised value** (recipes, steps, information) BEFORE any product mention.
+- **Place AT MOST ONE primary CTA**, positioned AFTER the reader has received the full value (typically after the main content, before the FAQ).
+- **Frame the CTA as a genuine shortcut alternative** — not a pitch. Use language like: *"Prefer a shortcut? If you'd rather skip the mixing, [Product Name] uses the same clean ingredients and is ready to use."*
+- **Maximum 2 CTA links total in the entire post** (the primary shortcut CTA and optionally one brief contextual mention). Do NOT repeat the same product link throughout the body.
+- **No hardcoded CTA blocks** (above-the-fold, mid-article, conversion). Use an organic inline mention instead.
+`}
+
+═══════════════════════════════════
 POST STRUCTURE (follow exactly in this order):
 ═══════════════════════════════════
-
-1. ABOVE-THE-FOLD CTA (always first, before intro):
+${postType === 'product' ? `
+1. ABOVE-THE-FOLD CTA (first, before intro):
 <section style="${CTA_STYLES.aboveTheFold}">
   <h2 style="${CTA_STYLES.h2}">[Short benefit headline — 5-8 words]</h2>
   <p style="${CTA_STYLES.p}">[One sentence pitch with linked product name]</p>
@@ -220,31 +263,36 @@ POST STRUCTURE (follow exactly in this order):
   <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Shop Now</a>
 </section>
 
-CTA BUTTON COPY RULES:
-- Link to a specific product page (/products/...) → use "Add to Cart"
-- Link to a collection page (/collections/...) → use "Shop Now" or "Browse Collection"
-- Never use "Add to Cart" on a collection page link — collections have no cart button
+5. COMPARISON TABLE (for roundup/review posts only): use standard <table> with inline border styles.
 
-5. COMPARISON TABLE (for roundup/review posts only):
-<table style="width:100%;border-collapse:collapse;text-align:left;">
-  <thead><tr>
-    <th style="border-bottom:2px solid #ccc;padding:8px;">Column</th>
-  </tr></thead>
-  <tbody><tr>
-    <td style="padding:8px;border-bottom:1px solid #eee;">Value</td>
-  </tr></tbody>
-</table>
+6. FAQ SECTION: <h2>Frequently Asked Questions</h2> followed by Q&A paragraphs.
 
-6. FAQ SECTION (always include, minimum 4 Q&As targeting common search queries):
-<h2>Frequently Asked Questions</h2>
-<p><strong>[Question?]</strong><br>[Concise, direct answer in 1-3 sentences.]</p>
-
-7. CONVERSION CTA (always last content block before references):
+7. CONVERSION CTA (last content block before references):
 <section style="${CTA_STYLES.conversion}">
   <h2 style="${CTA_STYLES.h2}">[Action headline]</h2>
   <p style="${CTA_STYLES.p}">[Final pitch sentence with product link]</p>
   <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Shop Now</a>
 </section>
+` : `
+1. INTRO — 1-2 engaging paragraphs. State the problem or frame the topic. DO NOT pitch any product here.
+
+2. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>. Deliver the full value of the guide. List items use <li><strong>Term:</strong> Explanation</li>. Never start a section with an H2 tag immediately — always follow with a <p>.
+
+3. SINGLE SHORTCUT CTA (ONE only, placed after the main content and BEFORE the FAQ):
+<section style="${CTA_STYLES.midArticle}">
+  <p style="${CTA_STYLES.p}">Prefer a shortcut? If you'd rather skip the [mixing/measuring/making], <a href="[PRODUCT_URL]">[Product Name]</a> uses the same clean ingredients and is ready to use.</p>
+</section>
+
+4. FAQ SECTION (always include, minimum 4 Q&As):
+<h2>Frequently Asked Questions</h2>
+<p><strong>[Question?]</strong><br>[Concise, direct answer in 1-3 sentences.]</p>
+
+No second CTA block, no conversion CTA. The single shortcut CTA above is the entire commerce placement for this post. Do NOT repeat product links throughout the body content.
+`}
+CTA BUTTON COPY RULES:
+- Link to a specific product page (/products/...) → use "Add to Cart"
+- Link to a collection page (/collections/...) → use "Shop Now" or "Browse Collection"
+- Never use "Add to Cart" on a collection page link — collections have no cart button
 
 8. REFERENCES (for informational posts with factual claims):
 <h2>Sources</h2>
@@ -361,7 +409,7 @@ async function writePost(briefPath) {
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,
-      system: buildSystemPrompt(productIngredients),
+      system: buildSystemPrompt(productIngredients, detectPostType(brief)),
       messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
     });
 

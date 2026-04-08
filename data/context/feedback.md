@@ -36,7 +36,7 @@
 
 ### Routed Intelligence
 - The content-gap report identifies that the "coconut oil good for hair" cluster is entirely new territory for RSC — there are no existing hair care CTAs or collections to link to. Coordinate with the product-optimizer to confirm which product page or collection is the most appropriate CTA destination for hair-focused posts before writing them.
-- The CRO briefs show that pages-per-session hover at ~1.0–1.3 and zero conversions are being recorded despite meaningful organic impressions. Every blog post must include at least one in-content product card (image + price + CTA) within the first 300 words, and a second one at or before the 50% scroll point.
+- **On CTA placement, the "CTA Strategy by Post Type" rules above are authoritative and override any older guidance.** Product-focused posts may carry more CTAs (still matched to reader intent); DIY/how-to/educational posts must follow the one-CTA-as-shortcut pattern. Do not place a CTA in the first 300 words of a DIY/how-to post just to hit a CRO target — that pattern demonstrably tanks trust and has been explicitly retired.
 
 ---
 
