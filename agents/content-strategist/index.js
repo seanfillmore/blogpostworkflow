@@ -327,6 +327,13 @@ async function main() {
   const rankReport = loadLatestRankReport();
   const clusterPerf = loadClusterPerformance();
 
+  // Load latest GSC opportunity report (unmapped queries are net-new topic candidates)
+  let gscOpps = null;
+  const gscOppPath = join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json');
+  if (existsSync(gscOppPath)) {
+    try { gscOpps = JSON.parse(readFileSync(gscOppPath, 'utf8')); } catch { /* ignore */ }
+  }
+
   // Persist computed cluster weights for dashboard / inspection
   if (clusterPerf) {
     mkdirSync(REPORTS_DIR, { recursive: true });
@@ -368,6 +375,7 @@ EXISTING CONTENT (already published or briefed — DO NOT include these):
 ${[...inventory].sort().join('\n')}
 
 ${buildClusterWeightSection(clusterPerf)}
+${gscOpps && (gscOpps.unmapped?.length || gscOpps.low_ctr?.length) ? `\n## GSC Opportunity Signals\nUse these to inform new-topic and rewrite priorities.\n\n**Unmapped high-impression queries (no current page targets these — strong new-topic candidates):**\n${(gscOpps.unmapped || []).slice(0, 15).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, position ${r.position.toFixed(1)}`).join('\n')}\n\n**Low-CTR queries (existing pages need title/meta rewrites — do not schedule as new posts):**\n${(gscOpps.low_ctr || []).slice(0, 10).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n` : ''}
 ${rankReport ? `RANK PERFORMANCE DATA (from latest rank tracker snapshot):
 Use this to inform cluster prioritization — double down on clusters with page-1 posts, prioritize quick wins for internal link boosts, and deprioritize clusters with no rankings yet unless high strategic value.
 ${rankReport}
