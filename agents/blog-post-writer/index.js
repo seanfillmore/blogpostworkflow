@@ -314,6 +314,7 @@ Only use image URLs that are explicitly provided. Do not invent image URLs.
 ═══════════════════════════════════
 HTML RULES:
 - Return ONLY body HTML — no <html>, <head>, or <body> tags
+- **NEVER include an <h1> tag in the body.** Shopify automatically renders the article title as the page H1. Any <h1> in the body creates duplicate H1s and fails the editorial gate. Start headings at <h2>.
 - All links must be absolute URLs (https://...)
 - No markdown, no CSS classes, no <div> tags
 - Inline styles exactly as shown in the templates above — do not deviate
