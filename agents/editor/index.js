@@ -161,7 +161,10 @@ function loadScheduledPostUrls() {
     for (const f of files) {
       try {
         const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
-        if (meta.shopify_status === 'scheduled' && meta.shopify_publish_at) {
+        // Treat any post with a future publish_at as scheduled (covers both 'scheduled' and 'draft' statuses —
+        // Shopify returns draft status for posts with a future published_at until the scheduler flips them)
+        const hasFuturePublishDate = meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date();
+        if (hasFuturePublishDate && (meta.shopify_status === 'scheduled' || meta.shopify_status === 'draft')) {
           // Map both the myshopify URL and the public URL
           const urls = [meta.shopify_url];
           if (meta.shopify_url) {
