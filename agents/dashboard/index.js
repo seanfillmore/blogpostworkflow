@@ -510,11 +510,14 @@ function aggregateData() {
   for (const item of calItems) {
     seen.add(item.slug);
     seenKeywords.add(item.keyword.toLowerCase());
+    const meta = getPostMeta(item.slug);
+    // Prefer the actual post's scheduled/published date over the stale calendar date
+    const actualDate = meta?.shopify_publish_at || meta?.published_at || item.publishDate.toISOString();
     pipelineItems.push({
       keyword:     item.keyword,
       title:       item.title,
       slug:        item.slug,
-      publishDate: item.publishDate.toISOString(),
+      publishDate: actualDate,
       week:        item.week,
       priority:    item.priority,
       volume:      item.volume,
