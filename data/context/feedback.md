@@ -7,19 +7,29 @@
 
 ## blog-post-writer
 
-**Last updated:** April 6, 2026
-
-### Recurring Issues
-- Posts across multiple clusters are linking to CTA URLs (product pages and collections) that cannot be confirmed live, and in some cases are returning 404. The writer is generating these links without verifying they exist.
-- CTAs in hair-care posts (e.g., "best hair mask for dry hair") link to body lotion collections, creating a topical mismatch — readers of hair content are being sent to body lotion pages.
-- The jojoba-as-sebum claim ("closely mimics the skin's natural sebum") appears in multiple posts without a source URL and is consistently flagged as overstated. This phrasing is being templated into posts repeatedly.
-- Posts reference scholarly sources (NIH, AAD, PubMed, EWG) by title only in a Sources section with no URLs. This is a systemic writing habit, not an occasional oversight — it appears in every reviewed post.
-- Internal links to scheduled posts are being added before those posts are live, which is acceptable, but the cluster note ("As new deodorant posts are published, revisit this post to add cross-links") is generic boilerplate that is not being acted upon.
+**Last updated:** April 8, 2026
 
 ### Standing Instructions
-- **Before writing CTAs:** Verify every product and collection URL you plan to reference against the current Shopify sitemap. Do not write CTA links to `/collections/coconut-oil-lotion`, `/products/organic-body-lotion`, `/collections/oral-care`, or any other URL you have not confirmed returns HTTP 200. If you are unsure, use the brand homepage as a fallback CTA rather than a potentially broken collection.
-- **Sources must include URLs at the time of writing.** When you cite a clinical claim, you must include a full HTTP URL inline, not a title reference. If you cannot find a live URL for a claim during drafting, either remove the claim or flag it clearly as "UNSOURCED — URL NEEDED" in the draft. Do not submit a draft with title-only sources expecting the editor to locate them.
+
+#### CTA Strategy by Post Type (critical)
+
+**Educational / DIY / How-To / Recipe / Tutorial posts** — the reader came to learn or make something. Respect that intent:
+- **The intro must never pivot to a sale.** Do NOT open with "If you love the idea of X, you'll love our product — no DIY required." This is bait-and-switch. The intro sets up the guide; it does not sell.
+- **Deliver the promised value in full** before mentioning our product. Give complete recipes, instructions, or information.
+- **Place AT MOST ONE primary CTA**, positioned AFTER the reader has received the full value (typically after the main recipes/instructions, before the FAQ).
+- **Frame the CTA as a genuine shortcut alternative**, not a pitch. Use language like:
+  > "Prefer a shortcut? If you'd rather skip the mixing, [Product Name] uses the same clean ingredients and is ready to use."
+- **Maximum 2 CTA links total** in a DIY/how-to post (the primary shortcut CTA and optionally one closing mention). **Do not repeat the same product link 7+ times in body copy.** That damages credibility.
+- The closing should reinforce the reader's empowerment, not push the product one last time.
+
+**Product-focused posts** (product comparisons, "best X" roundups, "what to look for in X") — the reader is in buying mode. Heavier CTAs are fine. 3–5 CTA placements are acceptable when each serves a distinct purpose.
+
+**Problem/process/concept posts** (e.g. "why does X happen", "is X safe", "when was X invented") — the reader wants information. Use the DIY rules: value first, at most 1–2 contextual CTAs positioned where they're genuinely useful.
+
+#### Other rules
+- **Before writing CTAs:** Verify every product and collection URL you plan to reference against the current Shopify sitemap. Do not write CTA links to URLs you have not confirmed exist. If unsure, use the brand homepage as a fallback.
 - **Match CTAs to article topic.** A hair care article must CTA to a hair care collection or, if none exists, to the general product collection. A body lotion article must CTA to a body lotion collection. Do not cross-wire topics.
+- **Sources must include URLs at the time of writing.** When you cite a clinical claim, include a full HTTP URL inline. If you cannot find a live URL for a claim during drafting, either remove the claim or rephrase it as editorial commentary that doesn't need a source.
 - **Soften the jojoba/sebum claim.** Use: "Jojoba's molecular structure is similar to the skin's natural sebum, making it lightweight and well-tolerated across skin types." Do not use "mimics."
 - **Do not insert competitor brand names in FAQ Q&A sections.** Competitor names may appear in body content for comparative context where editorially justified, but FAQ Q&A structured content must reference only Real Skin Care products and ingredient categories.
 - **Year accuracy:** All post titles, H1s, and in-body year references must reflect the current year (2026). Before submitting a draft, search the post body for any year references and confirm they are current.
