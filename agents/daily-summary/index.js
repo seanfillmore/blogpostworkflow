@@ -199,10 +199,16 @@ function loadGscOpportunities() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
+function loadCompetitorActivity() {
+  const path = join(ROOT, 'data', 'reports', 'competitor-watcher', 'latest.json');
+  if (!existsSync(path)) return null;
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+
 /**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, dashboardUrl) {
+function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -401,7 +407,21 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
       </div>`;
   }
 
-  const nothingToReport = !flopSection && !performanceSection && !gscSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+  // Competitor activity (only when there's something new)
+  let competitorSection = '';
+  if (competitors && competitors.new_post_count > 0) {
+    const items = (competitors.new_posts || []).slice(0, 8).map((p) => {
+      const overlap = p.overlaps_ours ? ' &mdash; <strong style="color:#991b1b;">overlaps our cluster</strong>' : '';
+      return `<li><strong>${esc(p.competitor)}:</strong> <a href="${esc(p.url)}" target="_blank">${esc(p.title)}</a>${overlap}</li>`;
+    }).join('');
+    competitorSection = `
+      <div class="section">
+        <div class="section-title">Competitor Activity (${competitors.new_post_count})</div>
+        <ul style="font-size:13px;color:#374151;margin:0;padding-left:18px;">${items}</ul>
+      </div>`;
+  }
+
+  const nothingToReport = !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -412,6 +432,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   ${flopSection}
   ${performanceSection}
   ${gscSection}
+  ${competitorSection}
   ${quickWinSection}
   ${pipelineSection}
   ${imageSection}
@@ -454,6 +475,7 @@ async function main() {
   // Load latest post-performance review output
   const postPerformance = loadPostPerformance();
   const gscOpps = loadGscOpportunities();
+  const competitors = loadCompetitorActivity();
 
   // If nothing happened at all, still send a "quiet day" email
   if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length)) {
@@ -465,7 +487,7 @@ async function main() {
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, dashboardUrl);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
