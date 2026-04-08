@@ -1,0 +1,92 @@
+[
+  {
+    "added_at": "2026-04-08",
+    "category": "factual concerns",
+    "pattern_count": 21,
+    "sample_slugs": [
+      "benefits-of-using-coconut-oil-lotion",
+      "benefits-of-using-coconut-oil-lotion.json",
+      "best-aluminum-free-deodorant",
+      "best-clean-body-lotion-2025",
+      "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed"
+    ],
+    "rule": "**factual concerns** — Editor flagged this category in 21 of the last 30 days of posts. Tighten on this dimension before submitting. Sample posts: benefits-of-using-coconut-oil-lotion, benefits-of-using-coconut-oil-lotion.json, best-aluminum-free-deodorant, best-clean-body-lotion-2025, best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed."
+  },
+  {
+    "added_at": "2026-04-08",
+    "category": "cta quality",
+    "pattern_count": 8,
+    "sample_slugs": [
+      "benefits-of-using-coconut-oil-lotion",
+      "benefits-of-using-coconut-oil-lotion.json",
+      "best-natural-deodorant-for-sensitive-skin",
+      "best-sls-free-toothpaste-2025",
+      "cinnamon-toothpaste"
+    ],
+    "rule": "**cta quality** — Editor flagged this category in 8 of the last 30 days of posts. Tighten on this dimension before submitting. Sample posts: benefits-of-using-coconut-oil-lotion, benefits-of-using-coconut-oil-lotion.json, best-natural-deodorant-for-sensitive-skin, best-sls-free-toothpaste-2025, cinnamon-toothpaste."
+  },
+  {
+    "added_at": "2026-04-08",
+    "category": "ingredient accuracy",
+    "pattern_count": 11,
+    "sample_slugs": [
+      "benefits-of-using-coconut-oil-lotion.json",
+      "best-clean-body-lotion-2025",
+      "best-natural-deodorant-for-sensitive-skin",
+      "best-natural-deodorant-for-women",
+      "best-natural-toothpaste-2025-refreshed"
+    ],
+    "rule": "**ingredient accuracy** — Editor flagged this category in 11 of the last 30 days of posts. Tighten on this dimension before submitting. Sample posts: benefits-of-using-coconut-oil-lotion.json, best-clean-body-lotion-2025, best-natural-deodorant-for-sensitive-skin, best-natural-deodorant-for-women, best-natural-toothpaste-2025-refreshed."
+  },
+  {
+    "added_at": "2026-04-08",
+    "category": "formatting",
+    "pattern_count": 6,
+    "sample_slugs": [
+      "benefits-of-using-coconut-oil-lotion.json",
+      "best-clean-body-lotion-2025",
+      "best-natural-deodorant-for-sensitive-skin",
+      "cinnamon-toothpaste",
+      "natural-lip-balm"
+    ],
+    "rule": "**formatting** — Editor flagged this category in 6 of the last 30 days of posts. Tighten on this dimension before submitting. Sample posts: benefits-of-using-coconut-oil-lotion.json, best-clean-body-lotion-2025, best-natural-deodorant-for-sensitive-skin, cinnamon-toothpaste, natural-lip-balm."
+  },
+  {
+    "added_at": "2026-04-08",
+    "category": "competitor names in faq",
+    "pattern_count": 6,
+    "sample_slugs": [
+      "benefits-of-using-coconut-oil-lotion.json",
+      "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed",
+      "best-natural-bar-soap-for-men",
+      "best-sls-free-toothpaste-2025",
+      "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup-refreshed"
+    ],
+    "rule": "**competitor names in faq** — Editor flagged this category in 6 of the last 30 days of posts. Tighten on this dimension before submitting. Sample posts: benefits-of-using-coconut-oil-lotion.json, best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed, best-natural-bar-soap-for-men, best-sls-free-toothpaste-2025, coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup-refreshed."
+  },
+  {
+    "added_at": "2026-04-08",
+    "category": "overall quality",
+    "pattern_count": 7,
+    "sample_slugs": [
+      "benefits-of-using-coconut-oil-lotion.json",
+      "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed",
+      "best-natural-bar-soap-for-men",
+      "best-sls-free-toothpaste-2025",
+      "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup-refreshed"
+    ],
+    "rule": "**overall quality** — Editor flagged this category in 7 of the last 30 days of posts. Tighten on this dimension before submitting. Sample posts: benefits-of-using-coconut-oil-lotion.json, best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed, best-natural-bar-soap-for-men, best-sls-free-toothpaste-2025, coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup-refreshed."
+  },
+  {
+    "added_at": "2026-04-08",
+    "category": "year accuracy",
+    "pattern_count": 4,
+    "sample_slugs": [
+      "best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed",
+      "best-sls-free-toothpaste-2025-refreshed",
+      "coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup-refreshed",
+      "toothpaste-without-sodium-lauryl-sulfate"
+    ],
+    "rule": "**year accuracy** — Editor flagged this category in 4 of the last 30 days of posts. Tighten on this dimension before submitting. Sample posts: best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed, best-sls-free-toothpaste-2025-refreshed, coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup-refreshed, toothpaste-without-sodium-lauryl-sulfate."
+  }
+]
