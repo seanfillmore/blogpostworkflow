@@ -334,6 +334,13 @@ async function main() {
     try { gscOpps = JSON.parse(readFileSync(gscOppPath, 'utf8')); } catch { /* ignore */ }
   }
 
+  // Load latest competitor activity (cluster boosts when competitors recently published)
+  let competitorSignals = null;
+  const compPath = join(ROOT, 'data', 'reports', 'competitor-watcher', 'latest.json');
+  if (existsSync(compPath)) {
+    try { competitorSignals = JSON.parse(readFileSync(compPath, 'utf8')); } catch { /* ignore */ }
+  }
+
   // Persist computed cluster weights for dashboard / inspection
   if (clusterPerf) {
     mkdirSync(REPORTS_DIR, { recursive: true });
@@ -375,6 +382,7 @@ EXISTING CONTENT (already published or briefed — DO NOT include these):
 ${[...inventory].sort().join('\n')}
 
 ${buildClusterWeightSection(clusterPerf)}
+${competitorSignals && Object.keys(competitorSignals.cluster_boosts || {}).length ? `\n## Competitor Activity Signals\nCompetitors have recently published in the following clusters. Treat these as a +1 priority boost — keep our cluster fresh and reinforce authority before the competitor post gains traction.\n${Object.entries(competitorSignals.cluster_boosts).map(([cl, n]) => `- **${cl}** — ${n} new competitor post${n > 1 ? 's' : ''}`).join('\n')}\n` : ''}
 ${gscOpps && (gscOpps.unmapped?.length || gscOpps.low_ctr?.length) ? `\n## GSC Opportunity Signals\nUse these to inform new-topic and rewrite priorities.\n\n**Unmapped high-impression queries (no current page targets these — strong new-topic candidates):**\n${(gscOpps.unmapped || []).slice(0, 15).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, position ${r.position.toFixed(1)}`).join('\n')}\n\n**Low-CTR queries (existing pages need title/meta rewrites — do not schedule as new posts):**\n${(gscOpps.low_ctr || []).slice(0, 10).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n` : ''}
 ${rankReport ? `RANK PERFORMANCE DATA (from latest rank tracker snapshot):
 Use this to inform cluster prioritization — double down on clusters with page-1 posts, prioritize quick wins for internal link boosts, and deprioritize clusters with no rankings yet unless high strategic value.
