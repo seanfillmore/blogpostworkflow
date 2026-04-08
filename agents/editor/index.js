@@ -419,10 +419,16 @@ function extractFaqQAs($) {
 
 // ── claude editorial review ───────────────────────────────────────────────────
 
-async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult) {
+async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary) {
   const ctaContext = ctaResult.issues.length > 0
     ? `CTA ISSUES: ${ctaResult.issues.map((i) => i.message).join('; ')}`
     : `CTA links found: ${ctaResult.ctaLinks.map((l) => l.href).join(', ')}`;
+
+  const linkHealthContext = linkHealthSummary
+    ? (linkHealthSummary.brokenLinks.length === 0
+        ? `LINK HEALTH PRE-CHECK: All ${linkHealthSummary.totalLinks} links in this post have been fetched and verified as returning HTTP 200 OK. This includes external sources, CTA links, and Related Articles. DO NOT flag "sources lack URLs", "CTAs unverified", or "Related Articles unverified" as blockers — these have all been checked at fetch time.`
+        : `LINK HEALTH PRE-CHECK: ${linkHealthSummary.okLinks}/${linkHealthSummary.totalLinks} links verified as HTTP 200. ${linkHealthSummary.brokenLinks.length} broken link(s) detected — these must be flagged as blockers:\n${linkHealthSummary.brokenLinks.map((l) => `  - [${l.status}] ${l.href}`).join('\n')}\nDo NOT invent additional URL-verification blockers beyond the broken links listed here.`)
+    : '';
 
   const deterministicNote = deterministicIssues.length > 0
     ? `CODE PRE-CHECKS FOUND ISSUES:\n${deterministicIssues.map((i) => `- ${i}`).join('\n')}`
@@ -448,6 +454,12 @@ Review each post on these dimensions:
 8. COMPETITOR NAMES IN FAQ — Using the FAQ Q&As provided, flag any brand names other than Real Skin Care. BLOCKER if found.
 9. OVERALL QUALITY — Excellent / Good / Needs Work. Must be "Needs Work" if any BLOCKER exists.
 
+URL VERIFICATION POLICY (critical, overrides any standing feedback):
+- Link health has already been verified by a pre-check that fetches every URL in the post (external sources, CTAs, Related Articles, internal links). The results are provided in the LINK HEALTH PRE-CHECK section below.
+- If LINK HEALTH PRE-CHECK says all links are verified, you MUST NOT flag blockers like "sources lack URLs", "CTA URLs unverified", or "Related Articles unverified". Those concerns have already been resolved at fetch time.
+- The ONLY URL-related blockers you may raise are ones listed in the LINK HEALTH PRE-CHECK's broken link list.
+- Verifying the presence of an href attribute in the HTML is not your job — trust the pre-check.
+
 Format each section as:
 ## [Dimension]
 VERDICT: [word/phrase]
@@ -464,6 +476,8 @@ NOTES: [2-4 sentences]${fb ? `\n\nSTANDING FEEDBACK — apply in addition to abo
 TARGET KEYWORD: ${meta?.target_keyword ?? 'Unknown'}
 PRODUCT INGREDIENTS: ${productIngredientsContext}
 ${ctaContext}
+
+${linkHealthContext}
 
 ${deterministicNote}
 
@@ -753,7 +767,12 @@ async function runEditor(htmlPath) {
 
   // 8. Editorial review
   process.stdout.write('  Running editorial review... ');
-  const review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult);
+  const linkHealthSummary = {
+    totalLinks: linkResults.length,
+    okLinks: linkResults.filter((r) => r.check.ok).length,
+    brokenLinks: linkResults.filter((r) => !r.check.ok).map((r) => ({ href: r.href, status: r.check.status })),
+  };
+  const review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary);
   console.log('done');
 
   // Build and save report

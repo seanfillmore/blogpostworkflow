@@ -101,6 +101,47 @@ function isSilentSuccess(entry) {
 }
 
 /**
+ * Find posts that are hard-blocked in the editorial gate.
+ * Scans data/reports/editor/*.md for "Needs Work" verdicts and extracts blocker reasons.
+ * Only includes posts whose HTML exists but have not been published/scheduled.
+ */
+function findBlockedPosts() {
+  const editorDir = join(ROOT, 'data', 'reports', 'editor');
+  if (!existsSync(editorDir)) return [];
+
+  const blocked = [];
+  const files = readdirSync(editorDir).filter(f => f.endsWith('-editor-report.md'));
+
+  for (const file of files) {
+    try {
+      const report = readFileSync(join(editorDir, file), 'utf8');
+      if (!/VERDICT:\s*\*?\*?Needs Work/i.test(report)) continue;
+
+      const slug = file.replace('-editor-report.md', '');
+      const postJson = join(POSTS_DIR, `${slug}.json`);
+      if (!existsSync(postJson)) continue;
+
+      const meta = JSON.parse(readFileSync(postJson, 'utf8'));
+      // Skip if already published or scheduled — only flag truly stuck posts
+      if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') continue;
+
+      // Extract the blocker reasons section
+      const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+      const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
+
+      blocked.push({
+        title: meta.title || slug,
+        slug,
+        blockers: blockerText,
+        reportPath: `data/reports/editor/${file}`,
+      });
+    } catch { /* skip */ }
+  }
+
+  return blocked;
+}
+
+/**
  * Find all pipeline images generated on the target date.
  * Scans data/posts/*.json for image_generated_at matching the date.
  */
@@ -132,7 +173,7 @@ function findPipelineImages(targetDate) {
 /**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, dashboardUrl) {
+function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, dashboardUrl) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -172,6 +213,12 @@ function buildDigestHtml(targetDate, entries, pipelineImages, dashboardUrl) {
     .status-active { background: #d1fae5; color: #065f46; }
     .empty { color: #9ca3af; font-style: italic; font-size: 13px; }
     .footer { color: #9ca3af; font-size: 12px; margin-top: 16px; text-align: center; }
+    .action-required { background: #fef2f2; border: 2px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .action-required .section-title { color: #991b1b; border-bottom-color: #fecaca; }
+    .blocked-post { background: #fff; border: 1px solid #fecaca; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+    .blocked-post .title { font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 4px; }
+    .blocked-post .blockers { font-size: 12px; color: #6b7280; white-space: pre-wrap; line-height: 1.4; }
+    .blocked-post .report-link { font-size: 11px; color: #991b1b; margin-top: 6px; font-family: monospace; }
   `;
 
   const formatTime = (ts) => {
@@ -231,13 +278,31 @@ function buildDigestHtml(targetDate, entries, pipelineImages, dashboardUrl) {
   const otherSection = groups.other.length > 0
     ? `<div class="section"><div class="section-title">Other</div>${renderEntries(groups.other)}</div>` : '';
 
-  const nothingToReport = !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+  // Blocked posts (hard-blocked in editorial gate — surfaced at the top as Action Required)
+  let blockedSection = '';
+  if (blockedPosts && blockedPosts.length > 0) {
+    const cards = blockedPosts.map(p => `
+      <div class="blocked-post">
+        <div class="title">${esc(p.title)}</div>
+        <div class="blockers">${esc(p.blockers)}</div>
+        <div class="report-link">${esc(p.reportPath)}</div>
+      </div>`).join('');
+    blockedSection = `
+      <div class="action-required">
+        <div class="section-title">&#9888;&#65039; Action Required — ${blockedPosts.length} post${blockedPosts.length > 1 ? 's' : ''} hard-blocked</div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">These posts failed the editorial gate and cannot be auto-published. Resolve the blockers below or reply to this email for guidance.</p>
+        ${cards}
+      </div>`;
+  }
+
+  const nothingToReport = !blockedSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
   <h1>Daily Recap</h1>
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
+  ${blockedSection}
   ${pipelineSection}
   ${imageSection}
   ${adsSection}
@@ -270,21 +335,25 @@ async function main() {
   // Find pipeline images generated on the target date
   const pipelineImages = findPipelineImages(targetDate);
 
+  // Find posts hard-blocked in the editorial gate (regardless of date — these are always surfaced until resolved)
+  const blockedPosts = findBlockedPosts();
+
   // If nothing happened at all, still send a "quiet day" email
-  if (!entries.length && !pipelineImages.length) {
+  if (!entries.length && !pipelineImages.length && !blockedPosts.length) {
     log(`No activity for ${targetDate} — sending quiet day summary.`);
   } else {
-    log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images.`);
+    log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images, ${blockedPosts.length} blocked.`);
   }
 
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, dashboardUrl);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, dashboardUrl);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
   const parts = [];
+  if (blockedPosts.length > 0) parts.push(`${blockedPosts.length} BLOCKED`);
   if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
   if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
   const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
