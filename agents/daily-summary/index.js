@@ -115,7 +115,7 @@ function findBlockedPosts() {
   for (const file of files) {
     try {
       const report = readFileSync(join(editorDir, file), 'utf8');
-      if (!/VERDICT:\s*\*?\*?Needs Work/i.test(report)) continue;
+      if (!/VERDICT[:*\s]*Needs Work/i.test(report)) continue;
 
       const slug = file.replace('-editor-report.md', '');
       const postJson = join(POSTS_DIR, `${slug}.json`);
