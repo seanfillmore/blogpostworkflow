@@ -28,6 +28,120 @@ const MANIFEST_PATH = join(CONTEXT_DIR, 'feedback-manifest.json');
 const VERBOSE = process.argv.includes('--verbose');
 const FORCE = process.argv.includes('--force');
 
+const WRITER_RULES_PATH = join(CONTEXT_DIR, 'writer-standing-rules.md');
+const WRITER_RULES_CHANGELOG = join(CONTEXT_DIR, 'writer-standing-rules-changelog.json');
+const EDITOR_REPORT_AGE_DAYS = 30;
+const PATTERN_THRESHOLD = 3;
+
+/**
+ * Editor-report category extractor.
+ * Returns a map of { category: verdict } for any "## <Category>" block whose
+ * first line matches "VERDICT: <text>".
+ */
+function extractEditorVerdicts(reportText) {
+  const verdicts = {};
+  const lines = reportText.split('\n');
+  let currentCategory = null;
+  for (const line of lines) {
+    // Accept ## or ### headings, optional leading numbering like "1. " or "2b. "
+    const headingMatch = line.match(/^#{2,3}\s+(?:\d+[a-z]?\.\s+)?(.+?)\s*$/);
+    if (headingMatch) {
+      const title = headingMatch[1].trim();
+      // Skip non-category headings (Link Health, Internal Link Validation, CTA Check, etc.)
+      // These get their own pseudo-categories.
+      currentCategory = title.replace(/\s*&\s*/g, ' & ').toLowerCase();
+      continue;
+    }
+    if (currentCategory) {
+      const v = line.match(/^\*{0,2}VERDICT[:*\s]+(.+?)\*{0,2}\s*$/i);
+      if (v) {
+        verdicts[currentCategory] = v[1].trim();
+        currentCategory = null;
+      }
+    }
+  }
+  return verdicts;
+}
+
+const POSITIVE_VERDICT_RE = /\b(Pass|Strong|Good|Excellent|Approve|OK)\b/i;
+
+/**
+ * Scan recent editor reports for recurring issues. Any (category, finding-type)
+ * that appears in PATTERN_THRESHOLD+ posts within EDITOR_REPORT_AGE_DAYS becomes
+ * a standing rule.
+ *
+ * Returns array of { category, count, sample_slugs }.
+ */
+function detectRecurringEditorIssues() {
+  const editorDir = join(REPORTS_DIR, 'editor');
+  if (!existsSync(editorDir)) return [];
+  const cutoff = Date.now() - EDITOR_REPORT_AGE_DAYS * 86400000;
+  const counts = {}; // category -> { count, slugs:Set }
+
+  for (const f of readdirSync(editorDir).filter((x) => x.endsWith('-editor-report.md'))) {
+    const full = join(editorDir, f);
+    const stat = statSync(full);
+    if (stat.mtimeMs < cutoff) continue;
+    const slug = f.replace(/-editor-report\.md$/, '');
+    let text;
+    try { text = readFileSync(full, 'utf8'); } catch { continue; }
+    const verdicts = extractEditorVerdicts(text);
+    for (const [cat, verdict] of Object.entries(verdicts)) {
+      if (POSITIVE_VERDICT_RE.test(verdict)) continue;
+      const entry = (counts[cat] = counts[cat] || { count: 0, slugs: new Set() });
+      entry.slugs.add(slug);
+      entry.count = entry.slugs.size;
+    }
+  }
+
+  return Object.entries(counts)
+    .filter(([, v]) => v.count >= PATTERN_THRESHOLD)
+    .map(([category, v]) => ({ category, count: v.count, sample_slugs: [...v.slugs].slice(0, 5) }));
+}
+
+/**
+ * Append-only update of data/context/writer-standing-rules.md. New rules
+ * are appended; existing rules are never modified or removed. A JSON
+ * changelog tracks every appended rule with its date and supporting evidence.
+ */
+function updateWriterStandingRules(patterns) {
+  if (!patterns.length) return { added: 0 };
+  mkdirSync(CONTEXT_DIR, { recursive: true });
+
+  const existing = existsSync(WRITER_RULES_PATH) ? readFileSync(WRITER_RULES_PATH, 'utf8') : '';
+  const changelog = existsSync(WRITER_RULES_CHANGELOG)
+    ? (() => { try { return JSON.parse(readFileSync(WRITER_RULES_CHANGELOG, 'utf8')); } catch { return []; } })()
+    : [];
+
+  const knownCategories = new Set(changelog.map((c) => c.category));
+  const today = new Date().toISOString().slice(0, 10);
+  const newEntries = [];
+
+  for (const p of patterns) {
+    if (knownCategories.has(p.category)) continue; // never duplicate
+    newEntries.push({
+      added_at: today,
+      category: p.category,
+      pattern_count: p.count,
+      sample_slugs: p.sample_slugs,
+      rule: `**${p.category}** — Editor flagged this category in ${p.count} of the last ${EDITOR_REPORT_AGE_DAYS} days of posts. Tighten on this dimension before submitting. Sample posts: ${p.sample_slugs.join(', ')}.`,
+    });
+  }
+
+  if (!newEntries.length) return { added: 0 };
+
+  let body = existing;
+  if (!body) {
+    body = `# Writer Standing Rules\n\n> Append-only. New rules are added by insight-aggregator when a recurring editor pattern is detected (≥${PATTERN_THRESHOLD} posts in ${EDITOR_REPORT_AGE_DAYS} days). Existing rules are never removed.\n\n`;
+  }
+  for (const e of newEntries) {
+    body += `\n## Added ${e.added_at} — ${e.category}\n\n${e.rule}\n`;
+  }
+  writeFileSync(WRITER_RULES_PATH, body);
+  writeFileSync(WRITER_RULES_CHANGELOG, JSON.stringify([...changelog, ...newEntries], null, 2));
+  return { added: newEntries.length, entries: newEntries };
+}
+
 // ── manifest ──────────────────────────────────────────────────────────────────
 
 function loadManifest() {
@@ -197,6 +311,18 @@ ${reportSections}`;
 async function run() {
   console.log('Insight Aggregator');
   console.log('==================');
+
+  // Pre-step: deterministic editor → writer feedback loop. Detect recurring
+  // editor findings and append new standing rules. This runs before the
+  // Claude pass and is always safe to run.
+  const patterns = detectRecurringEditorIssues();
+  if (patterns.length) {
+    console.log(`\nDetected ${patterns.length} recurring editor pattern(s) in last ${EDITOR_REPORT_AGE_DAYS} days:`);
+    for (const p of patterns) console.log(`  - ${p.category} (${p.count} posts)`);
+    const result = updateWriterStandingRules(patterns);
+    if (result.added > 0) console.log(`  Appended ${result.added} new standing rule(s) to writer-standing-rules.md`);
+    else console.log('  All detected patterns already covered by existing standing rules.');
+  }
 
   console.log('\nLoading reports...');
   const manifest = loadManifest();
