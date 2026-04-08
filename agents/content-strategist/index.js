@@ -16,6 +16,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import { writeCalendar } from '../../lib/calendar-store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -132,6 +133,52 @@ function loadInventory() {
   }
 
   return existing;
+}
+
+// ── schedule extraction ───────────────────────────────────────────────────────
+
+/**
+ * Extract structured calendar items from the markdown Publishing Schedule table.
+ * Expects the table with columns: Week | Publish Date | Category | Target Keyword | Suggested Title | KD | Volume | Content Type | Priority
+ */
+function extractScheduleItems(markdown) {
+  const items = [];
+  const tableRegex = /^\|\s*\*{0,2}(\d+)\*{0,2}\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
+
+  for (const match of markdown.matchAll(tableRegex)) {
+    const [, week, dateStr, category, keyword, title, kd, volume, contentType, priority] = match;
+    if (week.trim() === 'Week' || week.trim() === '---') continue;
+    const dm = dateStr.trim().match(/([A-Za-z]+)\s+(\d+),?\s+(\d{4})/);
+    if (!dm) continue;
+    const publishDate = new Date(`${dm[1]} ${dm[2]}, ${dm[3]} 08:00:00 GMT-0700`);
+    const slug = slugify(keyword.trim());
+    items.push({
+      slug,
+      keyword: keyword.trim(),
+      title: title.trim(),
+      category: category.trim(),
+      content_type: contentType.trim(),
+      priority: priority.trim(),
+      week: parseInt(week.trim(), 10),
+      publish_date: publishDate.toISOString(),
+      kd: parseInt(kd.trim(), 10) || 0,
+      volume: parseInt(volume.trim().replace(/,/g, ''), 10) || 0,
+      source: 'gap_report',
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Extract the non-table sections (Topical Clusters, Brief Queue, etc.) from
+ * Claude's markdown output so the rendered calendar preserves them.
+ */
+function extractNonScheduleSections(markdown) {
+  // Strip the Publishing Schedule section (header + table) and return the rest
+  const parts = markdown.split(/^##\s+/m);
+  const kept = parts.filter((p) => !/^Publishing Schedule/i.test(p.trim()));
+  return kept.map((p, i) => (i === 0 ? p : '## ' + p)).join('').trim();
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -269,20 +316,22 @@ ${calendarMd}`;
   }
   console.log(`done (${briefQueue.length} items)`);
 
-  // ── Step 3: Save calendar ─────────────────────────────────────────────────────
+  // ── Step 3: Extract structured items from Claude's markdown and save as JSON ──
 
-  mkdirSync(REPORTS_DIR, { recursive: true });
-  const calendarPath = join(REPORTS_DIR, 'content-calendar.md');
+  const extractedItems = extractScheduleItems(calendarMd);
+  console.log(`  Extracted ${extractedItems.length} calendar items from markdown`);
 
-  const calendarHeader = `# Content Calendar — Real Skin Care
-**Generated:** ${todayStr}
-**Mode:** ${generateBriefs ? `Plan + Brief generation (${briefQueue.length} items)` : 'Plan only'}
+  // Preserve any existing supporting sections (clusters, brief queue) in the markdown view
+  const markdownExtras = extractNonScheduleSections(calendarMd);
 
----
-
-`;
-  writeFileSync(calendarPath, calendarHeader + calendarMd);
-  console.log(`\n  Calendar saved: ${calendarPath}`);
+  // Write JSON as source of truth + regenerate markdown view automatically
+  writeCalendar({
+    items: extractedItems,
+    regenerated_at: new Date().toISOString(),
+    preserve_metadata: true,
+    markdown_extras: markdownExtras,
+  });
+  console.log(`\n  Calendar saved: data/calendar/calendar.json (+ markdown view)`);
 
   // ── Step 4: Generate briefs (optional) ───────────────────────────────────────
 

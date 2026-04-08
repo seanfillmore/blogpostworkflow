@@ -139,6 +139,32 @@ function kwToSlug(kw) {
 }
 
 function parseCalendar() {
+  // Prefer JSON; fall back to legacy markdown parse via calendar-store
+  try {
+    const calendarJsonPath = join(ROOT, 'data', 'calendar', 'calendar.json');
+    if (existsSync(calendarJsonPath)) {
+      const calendar = JSON.parse(readFileSync(calendarJsonPath, 'utf8'));
+      return (calendar.items || [])
+        .filter((i) => i.publish_date)
+        .map((i) => ({
+          week: i.week,
+          publishDate: new Date(i.publish_date),
+          category: i.category || '',
+          keyword: i.keyword,
+          title: i.title || '',
+          kd: i.kd ?? 0,
+          volume: i.volume ?? 0,
+          contentType: i.content_type || '',
+          priority: i.priority || '',
+          slug: i.slug,
+        }))
+        .sort((a, b) => a.publishDate - b.publishDate);
+    }
+  } catch (err) {
+    console.warn('[dashboard] calendar JSON parse failed:', err.message);
+  }
+
+  // Legacy markdown fallback
   if (!existsSync(CALENDAR_PATH)) return [];
   const md = readFileSync(CALENDAR_PATH, 'utf8');
   const rows = [];
