@@ -497,6 +497,7 @@ function aggregateData() {
   const calItems    = parseCalendar();
   const editorMap   = parseEditorReports();
   const rankings    = parseRankings();
+  const rejections  = loadRejections();
 
   // Build lookup from keyword slug → calendar metadata
   const calMap = new Map(calItems.map(c => [c.slug, c]));
@@ -506,8 +507,9 @@ function aggregateData() {
   const seenKeywords = new Set();
   const pipelineItems = [];
 
-  // Add calendar items first (in calendar order)
+  // Add calendar items first (in calendar order), skipping rejected keywords
   for (const item of calItems) {
+    if (isRejectedKw(item.keyword, rejections)) continue;
     seen.add(item.slug);
     seenKeywords.add(item.keyword.toLowerCase());
     const meta = getPostMeta(item.slug);
