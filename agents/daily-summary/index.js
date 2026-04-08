@@ -171,9 +171,19 @@ function findPipelineImages(targetDate) {
 }
 
 /**
+ * Load the latest quick-win targets (produced by quick-win-targeter agent).
+ * Returns { generated_at, candidate_count, top } or null if unavailable.
+ */
+function loadQuickWinTargets() {
+  const path = join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json');
+  if (!existsSync(path)) return null;
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+
+/**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, dashboardUrl) {
+function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, dashboardUrl) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -219,6 +229,13 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, dash
     .blocked-post .title { font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 4px; }
     .blocked-post .blockers { font-size: 12px; color: #6b7280; white-space: pre-wrap; line-height: 1.4; }
     .blocked-post .report-link { font-size: 11px; color: #991b1b; margin-top: 6px; font-family: monospace; }
+    .quick-wins { background: #f0fdf4; border-color: #bbf7d0; }
+    .quick-wins .section-title { color: #166534; border-bottom-color: #bbf7d0; }
+    .quick-win-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+    .quick-win-row:last-child { border-bottom: none; }
+    .qw-rank { font-weight: 600; color: #166534; min-width: 20px; }
+    .qw-title { font-weight: 500; color: #1f2937; }
+    .qw-meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
   `;
 
   const formatTime = (ts) => {
@@ -295,7 +312,26 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, dash
       </div>`;
   }
 
-  const nothingToReport = !blockedSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+  // Quick-win targets (posts at positions 11-20 ready for a rewrite push)
+  let quickWinSection = '';
+  if (quickWins && quickWins.top && quickWins.top.length > 0) {
+    const rows = quickWins.top.slice(0, 5).map((c, i) => `
+      <div class="quick-win-row">
+        <div class="qw-rank">${i + 1}.</div>
+        <div class="qw-body">
+          <div class="qw-title">${esc(c.title || c.slug)}</div>
+          <div class="qw-meta">Position ${c.position} &middot; ${c.impressions.toLocaleString('en-US')} impressions &middot; ${(c.ctr * 100).toFixed(1)}% CTR${c.top_query ? ` &middot; top query: "${esc(c.top_query)}"` : ''}</div>
+        </div>
+      </div>`).join('');
+    quickWinSection = `
+      <div class="section quick-wins">
+        <div class="section-title">&#128640; Quick-Win Targets (${quickWins.candidate_count} at page 2)</div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">These posts are ranking at positions 11&ndash;20 &mdash; the cheapest traffic gains available. A rewrite + internal links can push them to page 1.</p>
+        ${rows}
+      </div>`;
+  }
+
+  const nothingToReport = !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -303,6 +339,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, dash
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
   ${blockedSection}
+  ${quickWinSection}
   ${pipelineSection}
   ${imageSection}
   ${adsSection}
@@ -338,17 +375,20 @@ async function main() {
   // Find posts hard-blocked in the editorial gate (regardless of date — these are always surfaced until resolved)
   const blockedPosts = findBlockedPosts();
 
+  // Load latest quick-win targets from data/reports/quick-wins/latest.json
+  const quickWins = loadQuickWinTargets();
+
   // If nothing happened at all, still send a "quiet day" email
-  if (!entries.length && !pipelineImages.length && !blockedPosts.length) {
+  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length)) {
     log(`No activity for ${targetDate} — sending quiet day summary.`);
   } else {
-    log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images, ${blockedPosts.length} blocked.`);
+    log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images, ${blockedPosts.length} blocked, ${quickWins?.top?.length || 0} quick-wins.`);
   }
 
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, dashboardUrl);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, dashboardUrl);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
