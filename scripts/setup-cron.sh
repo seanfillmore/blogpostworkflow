@@ -30,7 +30,7 @@ echo "Node:    $NODE"
 echo ""
 
 # Build new cron entries
-DAILY_SCHEDULER="0 8 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
+DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
 DAILY_BLOG_INDEX="0 6 * * * cd \"$PROJECT_DIR\" && $NODE agents/blog-content/index.js list >> data/reports/scheduler/blog-index.log 2>&1"
 WEEKLY_RANK_TRACKER="0 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/rank-tracker/index.js >> data/reports/scheduler/rank-tracker.log 2>&1"
 WEEKLY_INSIGHTS="30 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/insight-aggregator/index.js >> data/reports/scheduler/insights.log 2>&1"
