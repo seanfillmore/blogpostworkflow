@@ -181,9 +181,19 @@ function loadQuickWinTargets() {
 }
 
 /**
+ * Load the latest post-performance review output (produced by post-performance agent).
+ * Returns { reviews_today, action_required } or null if unavailable.
+ */
+function loadPostPerformance() {
+  const path = join(ROOT, 'data', 'reports', 'post-performance', 'latest.json');
+  if (!existsSync(path)) return null;
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+
+/**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, dashboardUrl) {
+function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, dashboardUrl) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -331,7 +341,35 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
       </div>`;
   }
 
-  const nothingToReport = !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+  // Post performance flops — surfaced as Action Required (below blockers, above quick-wins)
+  let flopSection = '';
+  const flops = (postPerformance && postPerformance.action_required) || [];
+  if (flops.length > 0) {
+    const cards = flops.map((f) => `
+      <div class="blocked-post">
+        <div class="title">${esc(f.title || f.slug)} &mdash; ${esc(f.verdict)} (${f.milestone}d)</div>
+        <div class="blockers">${esc(f.reason || '')}</div>
+        <div class="report-link">data/reports/post-performance/${esc(f.slug)}-${f.milestone}d.md</div>
+      </div>`).join('');
+    flopSection = `
+      <div class="action-required">
+        <div class="section-title">&#9888;&#65039; Action Required &mdash; ${flops.length} underperforming post${flops.length > 1 ? 's' : ''}</div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Posts that have failed a 30/60/90 day performance check. Investigate (BLOCKED), refresh (REFRESH), or retire (DEMOTE).</p>
+        ${cards}
+      </div>`;
+  }
+
+  // Post performance — today's reviews summary (informational, shown when no flops or alongside)
+  let performanceSection = '';
+  if (postPerformance && postPerformance.reviews_today > 0) {
+    performanceSection = `
+      <div class="section">
+        <div class="section-title">Post Performance</div>
+        <p style="font-size:13px;color:#374151;margin:0;">${postPerformance.reviews_today} post${postPerformance.reviews_today > 1 ? 's' : ''} crossed a 30/60/90 day milestone today. ${flops.length} flagged for action.</p>
+      </div>`;
+  }
+
+  const nothingToReport = !flopSection && !performanceSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -339,6 +377,8 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
   ${blockedSection}
+  ${flopSection}
+  ${performanceSection}
   ${quickWinSection}
   ${pipelineSection}
   ${imageSection}
@@ -378,8 +418,11 @@ async function main() {
   // Load latest quick-win targets from data/reports/quick-wins/latest.json
   const quickWins = loadQuickWinTargets();
 
+  // Load latest post-performance review output
+  const postPerformance = loadPostPerformance();
+
   // If nothing happened at all, still send a "quiet day" email
-  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length)) {
+  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length)) {
     log(`No activity for ${targetDate} — sending quiet day summary.`);
   } else {
     log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images, ${blockedPosts.length} blocked, ${quickWins?.top?.length || 0} quick-wins.`);
@@ -388,12 +431,14 @@ async function main() {
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, dashboardUrl);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, dashboardUrl);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
   const parts = [];
   if (blockedPosts.length > 0) parts.push(`${blockedPosts.length} BLOCKED`);
+  const flopCount = postPerformance?.action_required?.length || 0;
+  if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''}`);
   if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
   if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
   const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
