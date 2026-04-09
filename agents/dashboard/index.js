@@ -27,7 +27,11 @@ import { loadData, invalidateDataCache } from './lib/data-loader.js';
 import { createRunAgentHandler } from './lib/run-agent.js';
 import { buildTabChatSystemPrompt } from './lib/tab-chat-prompt.js';
 import { GEMINI_MODELS, saveSession, createSession } from './lib/creatives-store.js';
-// responses.js import deferred — no existing code uses it yet
+import { dispatch } from './lib/router.js';
+import dataRoutes from './routes/data.js';
+import agentsRoutes from './routes/agents.js';
+import miscRoutes from './routes/misc.js';
+import * as paths from './lib/paths.js';
 import {
   ROOT, POSTS_DIR, BRIEFS_DIR, IMAGES_DIR, REPORTS_DIR, SNAPSHOTS_DIR,
   KEYWORD_TRACKER_DIR, ADS_OPTIMIZER_DIR, CALENDAR_PATH,
@@ -74,15 +78,28 @@ const upload = multer({ dest: join(ROOT, 'data', '.uploads-tmp'), limits: { file
 
 // ── HTML ───────────────────────────────────────────────────────────────────────
 
+// ── Router ─────────────────────────────────────────────────────────────────────
+
+const ROUTES = [
+  ...dataRoutes,
+  ...agentsRoutes,
+  ...miscRoutes,
+];
+
+const ctx = {
+  ...paths,
+  anthropic,
+  adsInFlight,
+  loadData,
+  invalidateDataCache,
+  runAgent,
+};
+
 // ── HTTP server ────────────────────────────────────────────────────────────────
 
 const server = http.createServer((req, res) => {
   if (!checkAuth(req, res)) return;
-
-  if (req.method === 'POST' && req.url === '/run-agent') {
-    runAgent(req, res);
-    return;
-  }
+  if (dispatch(ROUTES, req, res, ctx)) return;
 
   if (req.method === 'POST' && req.url === '/api/ahrefs-overview') {
     if (!checkAuth(req, res)) return;
@@ -203,62 +220,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.method === 'POST' && req.url.startsWith('/brief/')) {
-    const parts = req.url.split('/'); // ['', 'brief', slug, 'change', id]
-    const slug = parts[2], id = parts[4];
-    if (!slug || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing slug or id' })); return; }
-    let body = '';
-    req.on('data', d => { body += d; });
-    req.on('end', () => {
-      let status;
-      try { ({ status } = JSON.parse(body)); } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
-      if (!['approved', 'rejected'].includes(status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
-      const briefPath = join(COMP_BRIEFS_DIR, `${slug}.json`);
-      if (!existsSync(briefPath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Brief not found' })); return; }
-      const brief = JSON.parse(readFileSync(briefPath, 'utf8'));
-      const change = brief.proposed_changes?.find(c => c.id === id);
-      if (!change) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Change not found' })); return; }
-      change.status = status;
-      writeFileSync(briefPath, JSON.stringify(brief, null, 2));
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, change }));
-    });
-    return;
-  }
-
-  if (req.method === 'POST' && req.url.startsWith('/apply/')) {
-    const slug = req.url.slice('/apply/'.length);
-    const briefPath = join(COMP_BRIEFS_DIR, `${slug}.json`);
-    if (!existsSync(briefPath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Brief not found' })); return; }
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-    const child = spawn('node', [join(ROOT, 'agents', 'apply-optimization', 'index.js'), slug], { cwd: ROOT });
-    child.stdout.on('data', d => {
-      for (const line of String(d).split('\n').filter(Boolean)) {
-        if (line.startsWith('DONE ')) {
-          try { res.write(`event: done\ndata: ${JSON.stringify(JSON.parse(line.slice(5)))}\n\n`); }
-          catch { res.write(`event: done\ndata: {}\n\n`); }
-        } else {
-          res.write(`data: ${line}\n\n`);
-        }
-      }
-    });
-    child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => res.write(`data: [err] ${l}\n\n`)));
-    child.on('close', () => res.end());
-    return;
-  }
-
-  if (req.method === 'GET' && req.url.startsWith('/screenshot?')) {
-    const urlObj = new URL(req.url, 'http://localhost');
-    const imgPath = urlObj.searchParams.get('path');
-    const resolved = join(ROOT, imgPath || '');
-    if (!resolved.startsWith(COMP_SCREENSHOTS_DIR) || !existsSync(resolved)) {
-      res.writeHead(404); res.end(); return;
-    }
-    res.writeHead(200, { 'Content-Type': 'image/png' });
-    res.end(readFileSync(resolved));
-    return;
-  }
-
   // ── Google OAuth token renewal ────────────────────────────────────────────
   if (req.method === 'GET' && req.url === '/api/google/auth') {
     if (!checkAuth(req, res)) return;
@@ -363,27 +324,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.method === 'POST' && req.url === '/dismiss-alert') {
-    mkdirSync(RANK_ALERTS_DIR, { recursive: true });
-    writeFileSync(ALERTS_VIEWED, new Date().toISOString());
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true }));
-    return;
-  }
-
-  if (req.method === 'GET' && req.url.startsWith('/images/')) {
-    if (!checkAuth(req, res)) return;
-    const slug = req.url.slice('/images/'.length).split('?')[0];
-    if (!/^[a-z0-9-]+$/.test(slug)) { res.writeHead(400); res.end('Bad request'); return; }
-    const webp = join(IMAGES_DIR, `${slug}.webp`);
-    const png  = join(IMAGES_DIR, `${slug}.png`);
-    const imgPath = existsSync(webp) ? webp : existsSync(png) ? png : null;
-    if (!imgPath) { res.writeHead(404); res.end('Not found'); return; }
-    const ct = imgPath.endsWith('.webp') ? 'image/webp' : 'image/png';
-    res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600' });
-    createReadStream(imgPath).on('error', () => { res.end(); }).pipe(res);
-    return;
-  }
 
   if (req.method === 'POST' && req.url === '/api/chat') {
     if (!checkAuth(req, res)) return;
@@ -533,17 +473,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/api/data') {
-    try {
-      const data = loadData();
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
-      res.end(JSON.stringify(data));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
-    }
-    return;
-  }
 
   if (req.method === 'POST' && req.url.startsWith('/ads/') && req.url.endsWith('/chat') && req.url.includes('/suggestion/')) {
     const parts = req.url.split('/'); // ['', 'ads', date, 'suggestion', id, 'chat']
