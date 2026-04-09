@@ -141,10 +141,25 @@ async function main() {
   console.log(`Mode: ${apply ? 'APPLY (will update Shopify)' : 'DRY RUN (use --apply to write changes)'}`);
   console.log(`Criteria: impressions > ${minImpressions}, CTR < ${(maxCTR * 100).toFixed(0)}%, limit ${limitArg}\n`);
 
-  // Fetch low-CTR pages from GSC
-  process.stdout.write('  Querying GSC for low-CTR pages... ');
-  const lowCtrPages = await gsc.getLowCTRKeywords(minImpressions, maxCTR, limitArg * 2, 90);
-  console.log(`${lowCtrPages.length} pages found`);
+  // Prefer the pre-filtered gsc-opportunity report (respects rejection list,
+  // same source of truth as the dashboard and unmapped-query-promoter). Fall
+  // back to a fresh GSC query if the file is missing or stale.
+  // See docs/signal-manifest.md — closes the gap where meta-optimizer made
+  // its own raw GSC call and bypassed the rejection list.
+  let lowCtrPages = [];
+  const oppPath = join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json');
+  if (existsSync(oppPath)) {
+    try {
+      const opp = JSON.parse(readFileSync(oppPath, 'utf8'));
+      lowCtrPages = (opp.low_ctr || []).filter((r) => r.impressions >= minImpressions && r.ctr <= maxCTR);
+      console.log(`  Using gsc-opportunity/latest.json — ${lowCtrPages.length} low-CTR queries (already rejection-filtered)`);
+    } catch { /* fall through to live query */ }
+  }
+  if (lowCtrPages.length === 0) {
+    process.stdout.write('  Querying GSC for low-CTR pages... ');
+    lowCtrPages = await gsc.getLowCTRKeywords(minImpressions, maxCTR, limitArg * 2, 90);
+    console.log(`${lowCtrPages.length} pages found`);
+  }
 
   if (lowCtrPages.length === 0) {
     console.log('  No low-CTR pages found with current thresholds. Try --min-impr 50 or --max-ctr 0.10');

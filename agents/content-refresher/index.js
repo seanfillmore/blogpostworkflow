@@ -44,19 +44,58 @@ const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'
 // ── feedback loader ────────────────────────────────────────────────────────────
 
 function loadAgentFeedback(agentName) {
+  let combined = '';
   try {
     const feedbackPath = join(ROOT, 'data', 'context', 'feedback.md');
     const content = readFileSync(feedbackPath, 'utf8');
     const marker = `## ${agentName}`;
     const start = content.indexOf(marker);
-    if (start === -1) return '';
-    const rest = content.slice(start + marker.length);
-    const nextSection = rest.search(/\n## [a-z]/);
-    const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
-    return section.trim();
-  } catch {
-    return '';
-  }
+    if (start !== -1) {
+      const rest = content.slice(start + marker.length);
+      const nextSection = rest.search(/\n## [a-z]/);
+      const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
+      combined += section.trim();
+    }
+  } catch { /* ignore */ }
+
+  // Append writer standing rules — these are auto-detected editor patterns
+  // that the writer avoids. The refresher must also avoid them so refreshes
+  // don't reintroduce the same mistakes. See docs/signal-manifest.md.
+  try {
+    const rulesPath = join(ROOT, 'data', 'context', 'writer-standing-rules.md');
+    const rules = readFileSync(rulesPath, 'utf8').trim();
+    if (rules) combined += (combined ? '\n\n' : '') + rules;
+  } catch { /* ignore */ }
+  return combined;
+}
+
+/**
+ * Load the post-performance verdict for a specific slug, if one exists.
+ * Returns { verdict, reason, milestone, impressions, clicks, projection } or
+ * null. The refresher uses this to target the rewrite at the actual cause
+ * of the flop instead of running a generic refresh. See docs/signal-manifest.md.
+ */
+function loadPerformanceVerdict(slug) {
+  try {
+    const latestPath = join(ROOT, 'data', 'reports', 'post-performance', 'latest.json');
+    const pp = JSON.parse(readFileSync(latestPath, 'utf8'));
+    const match = (pp.action_required || []).find((r) => r.slug === slug);
+    if (match) return match;
+  } catch { /* ignore */ }
+  // Also try the per-post review on the post JSON itself.
+  try {
+    const meta = JSON.parse(readFileSync(join(ROOT, 'data', 'posts', `${slug}.json`), 'utf8'));
+    const review = meta.performance_review || {};
+    // Pick the most recent non-ON_TRACK review
+    const order = ['90d', '60d', '30d'];
+    for (const key of order) {
+      const r = review[key];
+      if (r && r.verdict && r.verdict !== 'ON_TRACK') {
+        return { ...r, milestone: parseInt(key, 10) };
+      }
+    }
+  } catch { /* ignore */ }
+  return null;
 }
 
 // ── env ───────────────────────────────────────────────────────────────────────
@@ -120,7 +159,7 @@ async function buildArticleIndex() {
 
 // ── claude refresh ────────────────────────────────────────────────────────────
 
-async function refreshContent(article, keyword, position, impressions, relatedKeywords) {
+async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null) {
   const bodyText = article.body_html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -198,6 +237,11 @@ IMPORTANT:
 - No markdown, no explanation — just the HTML${(() => {
   const fb = loadAgentFeedback('content-refresher');
   return fb ? `\n\n---\n\nSTANDING FEEDBACK (from insight-aggregator — follow these in addition to the above):\n${fb}` : '';
+})()}${(() => {
+  if (!slug) return '';
+  const verdict = loadPerformanceVerdict(slug);
+  if (!verdict) return '';
+  return `\n\n---\n\nPOST-PERFORMANCE VERDICT (why this post is being refreshed):\nAt the ${verdict.milestone || 'latest'}-day review this post was flagged ${verdict.verdict}. ${verdict.reason || ''}\n\nTarget your rewrite directly at this cause. Do not do a generic refresh. If the verdict says the projected traffic wasn't hit, figure out why — weak intro, missing topical coverage, title mismatch, thin sections — and fix that specific problem. If the verdict says BLOCKED (zero impressions), the issue is probably intent mismatch or indexing; focus on making the opening paragraph unambiguously match the target keyword and add a clearer content structure.`;
 })()}`,
     }],
   });
@@ -316,7 +360,7 @@ async function main() {
       const fullArticle = await getArticle(article.blogId, article.id);
       const originalHtml = fullArticle.body_html || '';
 
-      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords);
+      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug);
       console.log(`done (${refreshedHtml.split(' ').length} words)`);
 
       process.stdout.write('    Summarizing changes... ');

@@ -51,19 +51,29 @@ try {
 // ── feedback loader ────────────────────────────────────────────────────────────
 
 function loadAgentFeedback(agentName) {
+  let combined = '';
   try {
     const feedbackPath = join(ROOT, 'data', 'context', 'feedback.md');
     const content = readFileSync(feedbackPath, 'utf8');
     const marker = `## ${agentName}`;
     const start = content.indexOf(marker);
-    if (start === -1) return '';
-    const rest = content.slice(start + marker.length);
-    const nextSection = rest.search(/\n## [a-z]/);
-    const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
-    return section.trim();
-  } catch {
-    return '';
-  }
+    if (start !== -1) {
+      const rest = content.slice(start + marker.length);
+      const nextSection = rest.search(/\n## [a-z]/);
+      const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
+      combined += section.trim();
+    }
+  } catch { /* ignore */ }
+
+  // Editor also enforces the writer's standing rules — recurring patterns
+  // auto-detected from editor reports. If the writer is told to avoid X,
+  // the editor should verify X was avoided. See docs/signal-manifest.md.
+  try {
+    const rulesPath = join(ROOT, 'data', 'context', 'writer-standing-rules.md');
+    const rules = readFileSync(rulesPath, 'utf8').trim();
+    if (rules) combined += (combined ? '\n\n---\n\nWRITER STANDING RULES (enforce these on this post):\n' : '') + rules;
+  } catch { /* ignore */ }
+  return combined;
 }
 
 // ── env ───────────────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 # Content Calendar — Real Skin Care
-**Generated:** Apr 7, 2026
+**Generated:** Apr 8, 2026
 **Source of truth:** data/calendar/calendar.json (this file is auto-rendered)
 
 ---
@@ -22,6 +22,11 @@
 | 6 | Apr 14, 2026 | Bar Soap | natural soap bar | Best Natural Bar Soap in 2026 (Clean + Gentle Picks) | 6 | 300 | Listicle / Roundup (Pillar) | 🟠 Medium |
 | 6 | Apr 16, 2026 | Deodorant | natural deodorant for kids | Best Natural Deodorant for Kids in 2026 | 0 | 600 | Listicle / Guide | 🟠 Medium |
 | 7 | Apr 21, 2026 | Body Lotion | natural lotion | Best Natural Body Lotion in 2026 (Actually Clean Formulas) | 3 | 1,000 | Listicle / Roundup | 🔴 High |
+|  | Apr 22, 2026 | GSC Demand | coconut oil for stretch marks | Coconut Oil For Stretch Marks |  |  | Blog Post | 🔴 High |
+|  | Apr 22, 2026 | GSC Demand | coconut oil toothpaste | Coconut Oil Toothpaste |  |  | Blog Post | 🔴 High |
+|  | Apr 22, 2026 | GSC Demand | non toxic body lotion | Non Toxic Body Lotion |  |  | Blog Post | 🔴 High |
+|  | Apr 22, 2026 | GSC Demand | does coconut oil help with stretch marks | Does Coconut Oil Help With Stretch Marks |  |  | Blog Post | 🔴 High |
+|  | Apr 22, 2026 | GSC Demand | sls free toothpaste list | Sls Free Toothpaste List |  |  | Blog Post | 🔴 High |
 | 7 | Apr 23, 2026 | Body Lotion | organic body lotion | Best Organic Body Lotion in 2026 | 4 | 800 | Listicle / Roundup | 🟠 Medium |
 | 8 | Apr 28, 2026 | Body Lotion | all natural lotion | Best All-Natural Body Lotion in 2026 | 4 | 600 | Listicle / Roundup | 🟠 Medium |
 | 8 | Apr 28, 2026 | Coconut Oil | organic coconut oil for skin | Organic Coconut Oil for Skin: Benefits, Uses & What to Buy | 12 | 800 | Educational Guide (TOF/MOF) | 🟠 Medium |
