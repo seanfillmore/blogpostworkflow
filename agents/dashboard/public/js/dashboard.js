@@ -148,6 +148,12 @@ function renderOptimizeTab(d) {
   });
 
   document.getElementById('tab-optimize').innerHTML =
+    renderActionRequired(d) +
+    renderQuickWinCard(d) +
+    renderGscOpportunityCard(d) +
+    renderClusterAuthorityCard(d) +
+    '<div class="card"><div class="card-header accent-purple"><h2>Legacy Optimizer Briefs</h2></div>' +
+    '<div class="card-body">' +
     '<div class="kanban-optimize">' +
       '<div class="kanban-optimize-col">' +
         '<h3>Pending Review <span class="badge">' + pending.length + '</span></h3>' +
@@ -161,8 +167,159 @@ function renderOptimizeTab(d) {
         '<h3>Applied <span class="badge">' + applied.length + '</span></h3>' +
         (applied.map(b => renderBriefCard(b)).join('') || '<div class="empty-state">None applied yet</div>') +
       '</div>' +
-    '</div>' +
+    '</div></div></div>' +
     '<pre id="run-log-agents-competitor-intelligence-index-js" class="run-log" style="display:none"></pre>';
+}
+
+// ── Performance-driven SEO engine cards ───────────────────────────────────────
+
+function renderActionRequired(d) {
+  const flops = (d.postPerformance && d.postPerformance.action_required) || [];
+  if (flops.length === 0) return '';
+  const rows = flops.map(f => {
+    const verdictClass = f.verdict === 'BLOCKED' ? 'verdict-blocked'
+                      : f.verdict === 'REFRESH' ? 'verdict-refresh'
+                      : 'verdict-demote';
+    return '<div class="action-row">' +
+      '<div class="action-head">' +
+        '<span class="verdict-pill ' + verdictClass + '">' + esc(f.verdict) + '</span>' +
+        '<span class="action-title">' + esc(f.title || f.slug) + '</span>' +
+        '<span class="action-age">' + f.milestone + 'd</span>' +
+      '</div>' +
+      '<div class="action-reason">' + esc(f.reason || '') + '</div>' +
+      '<div class="action-buttons">' +
+        (f.url ? '<a href="' + esc(f.url) + '" target="_blank" class="btn-secondary">Open post</a>' : '') +
+        '<button class="btn-primary" onclick="refreshSlug(' + "'" + esc(f.slug) + "'" + ')">Refresh this post</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  return '<div class="card card-action"><div class="card-header accent-red">' +
+      '<h2>&#9888; Action Required &mdash; ' + flops.length + ' underperforming post' + (flops.length > 1 ? 's' : '') + '</h2>' +
+    '</div><div class="card-body">' + rows + '</div></div>';
+}
+
+function renderQuickWinCard(d) {
+  const qw = d.quickWins;
+  if (!qw || !qw.top || qw.top.length === 0) {
+    return '<div class="card"><div class="card-header accent-green"><h2>Quick-Win Targets</h2></div>' +
+      '<div class="card-body"><div class="empty-state">No page-2 candidates right now. Run the rank tracker to refresh.</div></div></div>';
+  }
+  const rows = qw.top.slice(0, 10).map((c, i) => {
+    const ctrPct = (c.ctr * 100).toFixed(1);
+    return '<tr>' +
+      '<td class="col-rank">' + (i + 1) + '</td>' +
+      '<td class="col-title">' + esc(c.title || c.slug) + '</td>' +
+      '<td class="col-pos">pos ' + c.position + '</td>' +
+      '<td class="col-impr">' + c.impressions.toLocaleString() + '</td>' +
+      '<td class="col-ctr">' + ctrPct + '%</td>' +
+      '<td class="col-query">' + (c.top_query ? esc(c.top_query) : '&mdash;') + '</td>' +
+      '<td class="col-action"><button class="btn-sm" onclick="refreshSlug(' + "'" + esc(c.slug) + "'" + ')">Refresh</button></td>' +
+    '</tr>';
+  }).join('');
+  const subtitle = qw.candidate_count + ' total page-2 candidates &middot; showing top ' + Math.min(qw.top.length, 10);
+  return '<div class="card"><div class="card-header accent-green">' +
+      '<h2>&#128640; Quick-Win Targets</h2>' +
+      '<span class="card-subtitle">' + subtitle + '</span>' +
+    '</div><div class="card-body"><table class="data-table">' +
+      '<thead><tr><th>#</th><th>Post</th><th>Pos</th><th>Impr</th><th>CTR</th><th>Top query</th><th></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table></div></div>';
+}
+
+function renderGscOpportunityCard(d) {
+  const g = d.gscOpportunity;
+  if (!g) return '';
+  const lowCtr = (g.low_ctr || []).slice(0, 10);
+  const page2  = (g.page_2  || []).slice(0, 10);
+  const unmapped = (g.unmapped || []).slice(0, 10);
+  const section = (label, items, showCtr) => {
+    if (items.length === 0) return '<div class="opp-section"><h3>' + label + '</h3><div class="empty-state">None.</div></div>';
+    const rows = items.map(r => '<tr>' +
+      '<td>' + esc(r.keyword) + '</td>' +
+      '<td>' + r.impressions.toLocaleString() + '</td>' +
+      (showCtr ? '<td>' + ((r.ctr || 0) * 100).toFixed(1) + '%</td>' : '') +
+      '<td>' + (r.position != null ? r.position.toFixed(1) : '&mdash;') + '</td>' +
+    '</tr>').join('');
+    return '<div class="opp-section"><h3>' + label + '</h3>' +
+      '<table class="data-table"><thead><tr><th>Query</th><th>Impr</th>' + (showCtr ? '<th>CTR</th>' : '') + '<th>Pos</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>';
+  };
+  return '<div class="card"><div class="card-header accent-sky">' +
+      '<h2>GSC Opportunities</h2>' +
+    '</div><div class="card-body opp-grid">' +
+      section('Low-CTR (rewrite title/meta)', lowCtr, true) +
+      section('Page-2 (quick-win candidates)', page2, true) +
+      section('Unmapped (new-topic candidates)', unmapped, false) +
+    '</div></div>';
+}
+
+function renderClusterAuthorityCard(d) {
+  const cw = d.clusterWeights;
+  if (!cw || !cw.clusters) return '';
+  const entries = Object.entries(cw.clusters)
+    .map(([name, c]) => ({ name, ...c }))
+    .sort((a, b) => b.weight - a.weight);
+  if (entries.length === 0) return '';
+  const rows = entries.map(c => {
+    const weightClass = c.weight > 0 ? 'weight-pos' : c.weight < 0 ? 'weight-neg' : 'weight-zero';
+    const sign = c.weight > 0 ? '+' : '';
+    return '<tr>' +
+      '<td class="col-cluster">' + esc(c.name) + '</td>' +
+      '<td><span class="weight-pill ' + weightClass + '">' + sign + c.weight + '</span></td>' +
+      '<td>' + c.post_count + '</td>' +
+      '<td>' + (c.median_position != null ? c.median_position : '&mdash;') + '</td>' +
+      '<td>' + c.page_1_count + '</td>' +
+      '<td class="col-reason">' + (c.reasons || []).map(esc).join('; ') + '</td>' +
+    '</tr>';
+  }).join('');
+  return '<div class="card"><div class="card-header accent-purple">' +
+      '<h2>Cluster Authority Weights</h2>' +
+      '<span class="card-subtitle">Page-1 clusters get +2, drag clusters get &minus;3. Used by the strategist.</span>' +
+    '</div><div class="card-body"><table class="data-table">' +
+      '<thead><tr><th>Cluster</th><th>Weight</th><th>Posts</th><th>Median pos</th><th>Page 1</th><th>Reason</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table></div></div>';
+}
+
+/**
+ * Trigger a refresh of a specific post via the refresh-runner agent.
+ * Streams the run output into a log area at the bottom of the page.
+ */
+function refreshSlug(slug) {
+  if (!confirm('Refresh "' + slug + '"? This runs content-refresher + editor. It does not publish.')) return;
+  const logId = 'refresh-log-' + slug;
+  let logEl = document.getElementById(logId);
+  if (!logEl) {
+    const container = document.getElementById('tab-optimize');
+    const wrap = document.createElement('div');
+    wrap.className = 'card';
+    wrap.innerHTML = '<div class="card-header accent-amber"><h2>Refreshing ' + esc(slug) + '</h2></div>' +
+      '<div class="card-body"><pre id="' + logId + '" class="run-log"></pre></div>';
+    container.insertBefore(wrap, container.firstChild);
+    logEl = document.getElementById(logId);
+  }
+  logEl.textContent = 'Starting refresh...\n';
+  fetch('/run-agent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ script: 'agents/refresh-runner/index.js', args: [slug] }),
+  }).then(res => {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    function read() {
+      reader.read().then(({ done, value }) => {
+        if (done) return;
+        for (const line of decoder.decode(value).split('\n')) {
+          if (line.startsWith('data: ')) {
+            logEl.textContent += line.slice(6) + '\n';
+            logEl.scrollTop = logEl.scrollHeight;
+          }
+        }
+        read();
+      });
+    }
+    read();
+  });
 }
 
 function renderBriefCard(b) {

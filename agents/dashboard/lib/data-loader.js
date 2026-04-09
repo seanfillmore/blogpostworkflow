@@ -191,6 +191,19 @@ export function aggregateData() {
         .sort((a, b) => a.name.localeCompare(b.name))
     : [];
 
+  // ── Performance-driven SEO engine signals ──────────────────────────────────
+  // Each of these files is written by a scheduled agent; read the latest if present.
+  const readJsonIfExists = (path) => {
+    if (!existsSync(path)) return null;
+    try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+  };
+
+  const quickWins       = readJsonIfExists(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
+  const postPerformance = readJsonIfExists(join(REPORTS_DIR, 'post-performance', 'latest.json'));
+  const gscOpportunity  = readJsonIfExists(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
+  const clusterWeights  = readJsonIfExists(join(REPORTS_DIR, 'content-strategist', 'cluster-weights.json'));
+  const competitorActivity = readJsonIfExists(join(REPORTS_DIR, 'competitor-watcher', 'latest.json'));
+
   return {
     generatedAt: new Date().toISOString(),
     config:      { name: config.name, url: config.url || '' },
@@ -207,6 +220,11 @@ export function aggregateData() {
     metaTests,
     briefs,
     contentGapFiles,
+    quickWins,
+    postPerformance,
+    gscOpportunity,
+    clusterWeights,
+    competitorActivity,
   };
 }
 

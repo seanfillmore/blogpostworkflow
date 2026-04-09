@@ -24,6 +24,11 @@ export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/content-strategist/index.js',
   'agents/pipeline-scheduler/index.js',
   'agents/cro-cta-injector/index.js',
+  'agents/refresh-runner/index.js',
+  'agents/quick-win-targeter/index.js',
+  'agents/post-performance/index.js',
+  'agents/gsc-opportunity/index.js',
+  'agents/competitor-watcher/index.js',
 ]);
 
 /**
