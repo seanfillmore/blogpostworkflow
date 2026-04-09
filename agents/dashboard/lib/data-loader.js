@@ -198,11 +198,32 @@ export function aggregateData() {
     try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
   };
 
-  const quickWins       = readJsonIfExists(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
-  const postPerformance = readJsonIfExists(join(REPORTS_DIR, 'post-performance', 'latest.json'));
-  const gscOpportunity  = readJsonIfExists(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
-  const clusterWeights  = readJsonIfExists(join(REPORTS_DIR, 'content-strategist', 'cluster-weights.json'));
+  const quickWinsRaw       = readJsonIfExists(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
+  const postPerformance    = readJsonIfExists(join(REPORTS_DIR, 'post-performance', 'latest.json'));
+  const gscOpportunityRaw  = readJsonIfExists(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
+  const clusterWeights     = readJsonIfExists(join(REPORTS_DIR, 'content-strategist', 'cluster-weights.json'));
   const competitorActivity = readJsonIfExists(join(REPORTS_DIR, 'competitor-watcher', 'latest.json'));
+
+  // Apply the existing keyword rejection list to signals produced by the
+  // agents. Rejections are brand-conflict or off-topic terms that must not
+  // be targeted (see data/rejected-keywords.json). Filtering here means the
+  // dashboard is immediately clean after a rejection is added — no need to
+  // re-run the upstream agents.
+  const dropRejectedByKeyword = (row) => !isRejectedKw(row.keyword || '', rejections);
+  const dropRejectedByQuery = (row) => !isRejectedKw(row.top_query || row.title || row.slug || '', rejections);
+
+  const quickWins = quickWinsRaw ? {
+    ...quickWinsRaw,
+    top: (quickWinsRaw.top || []).filter(dropRejectedByQuery),
+    candidate_count: (quickWinsRaw.top || []).filter(dropRejectedByQuery).length,
+  } : null;
+
+  const gscOpportunity = gscOpportunityRaw ? {
+    ...gscOpportunityRaw,
+    low_ctr:  (gscOpportunityRaw.low_ctr  || []).filter(dropRejectedByKeyword),
+    page_2:   (gscOpportunityRaw.page_2   || []).filter(dropRejectedByKeyword),
+    unmapped: (gscOpportunityRaw.unmapped || []).filter(dropRejectedByKeyword),
+  } : null;
 
   return {
     generatedAt: new Date().toISOString(),
