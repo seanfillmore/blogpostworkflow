@@ -81,6 +81,10 @@ function listPublishedPosts() {
     try {
       const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
       if (meta.shopify_status !== 'published' || !meta.shopify_url) continue;
+      // Fill in missing slug from the filename so log messages and downstream
+      // stamping work even on legacy posts that weren't written by the
+      // current writer. The canonical source of slug is the filename.
+      if (!meta.slug) meta.slug = f.replace(/\.json$/, '');
       out.push(meta);
     } catch { /* skip */ }
   }
@@ -132,6 +136,11 @@ function appendHistory(entries) {
  * a real problem?" — avoids flagging 3-day-old posts as broken.
  */
 function computeVerdict(state, ageDays) {
+  // Missing published_at is common on legacy posts; treat as "unknown age"
+  // and default to the conservative patience window (as if age = 0).
+  // Better to under-flag than flood the queue with false criticals.
+  const safeAge = ageDays == null ? 0 : ageDays;
+
   // Indexed is always fine.
   if (state === 'indexed') return { severity: 'ok', action: null };
 
@@ -143,8 +152,8 @@ function computeVerdict(state, ageDays) {
 
   // Not-yet-indexed states — patience window depends on age.
   if (state === 'discovered_not_crawled') {
-    if (ageDays == null || ageDays < 7)  return { severity: 'ok',      action: null };
-    if (ageDays < 14) return { severity: 'warning', action: 'resubmit_sitemap' };
+    if (safeAge < 7)  return { severity: 'ok',      action: null };
+    if (safeAge < 14) return { severity: 'warning', action: 'resubmit_sitemap' };
     return { severity: 'critical', action: 'submit_indexing_api' };
   }
   if (state === 'crawled_not_indexed') {
@@ -153,8 +162,8 @@ function computeVerdict(state, ageDays) {
     return { severity: 'critical', action: 'content_quality_review' };
   }
   if (state === 'submitted_not_indexed') {
-    if (ageDays == null || ageDays < 7)  return { severity: 'ok',      action: null };
-    if (ageDays < 14) return { severity: 'warning', action: 'resubmit_sitemap' };
+    if (safeAge < 7)  return { severity: 'ok',      action: null };
+    if (safeAge < 14) return { severity: 'warning', action: 'resubmit_sitemap' };
     return { severity: 'critical', action: 'submit_indexing_api' };
   }
   if (state === 'unknown') {
