@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>SEO Dashboard</title>
+<link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+<header class="hero">
+  <div class="hero-top">
+    <div class="hero-logo" id="hero-logo"></div>
+    <div>
+      <div class="hero-name" id="site-name"></div>
+      <div class="hero-url" id="site-url"></div>
+    </div>
+    <div class="tab-pills">
+      <button class="tab-pill active" onclick="switchTab('seo',this)">SEO</button>
+      <button class="tab-pill" onclick="switchTab('cro',this)" id="pill-cro">CRO</button>
+      <button class="tab-pill" onclick="switchTab('ads',this)" id="pill-ads" style="display:none">Ads</button>
+      <button class="tab-pill" onclick="switchTab('creatives',this)" id="pill-creatives">Creatives</button>
+      <button class="tab-pill disabled" id="pill-ad-intelligence" title="Coming soon" style="opacity:0.4;cursor:not-allowed;pointer-events:none;">Ad Intelligence</button>
+      <button class="tab-pill disabled" id="pill-optimize" title="Coming soon" style="opacity:0.4;cursor:not-allowed;pointer-events:none;">Optimize</button>
+    </div>
+    <div id="cro-filter-bar" style="display:none">
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setCroFilter('today',this)">Today</button>
+        <button class="filter-btn" onclick="setCroFilter('yesterday',this)">Yesterday</button>
+        <button class="filter-btn" onclick="setCroFilter('7days',this)">7 Days</button>
+        <button class="filter-btn" onclick="setCroFilter('30days',this)">30 Days</button>
+      </div>
+    </div>
+    <span class="hero-meta">Updated <span id="updated-at">—</span></span>
+    <button class="refresh-btn" onclick="loadData()"><span id="spin-icon"></span>↻ Refresh</button>
+  </div>
+  <div class="hero-kpis" id="hero-kpis"></div>
+</header>
+
+<div class="tab-actions-bar">
+  <div class="tab-actions-group" id="tab-actions-seo">
+    <button onclick="runAgent('agents/rank-tracker/index.js')" data-tip="Pull latest keyword positions from Ahrefs and update rankings">Run Rank Tracker</button>
+    <button onclick="runAgent('agents/content-gap/index.js')" data-tip="Find topics competitors rank for that this site doesn't cover">Run Content Gap</button>
+    <button onclick="runAgent('agents/gsc-query-miner/index.js')" data-tip="Surface high-impression GSC queries with low CTR to optimise">Run GSC Query Miner</button>
+    <button onclick="runAgent('agents/sitemap-indexer/index.js')" data-tip="Re-index the sitemap so all agents have the latest page list">Refresh Sitemap</button>
+    <button onclick="runAgent('agents/insight-aggregator/index.js')" data-tip="Aggregate Ahrefs + GSC signals into a prioritised insight report">Run Insight Aggregator</button>
+    <button id="btn-chat-seo" class="btn-open-chat" onclick="toggleTabChat('seo')" data-tip="Ask Claude about the SEO data on this tab">&#x2736; Chat</button>
+  </div>
+  <div class="tab-actions-group" id="tab-actions-cro" style="display:none">
+    <button onclick="promptAndRun('scripts/create-meta-test.js', 'Enter post slug:')" data-tip="Generate a Variant B meta title and start an A/B test for a post">Create Meta A/B Test</button>
+    <button onclick="runAgent('agents/meta-ab-tracker/index.js')" data-tip="Check CTR results for active meta title tests and conclude winners">Run Meta A/B Tracker</button>
+    <button onclick="runAgent('agents/cro-analyzer/index.js')" data-tip="Analyse Clarity heatmaps and session data for conversion issues">Run CRO Analyzer</button>
+    <button onclick="runAgent('agents/cro-cta-injector/index.js', ['--apply'])" data-tip="Insert product CTA blocks into top-traffic blog posts with 0 conversions">Inject CTAs</button>
+    <button id="btn-chat-cro" class="btn-open-chat" onclick="toggleTabChat('cro')" data-tip="Ask Claude about the CRO data on this tab">&#x2736; Chat</button>
+  </div>
+  <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
+    <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
+    <button onclick="applyAdsChanges()" data-tip="Execute all approved suggestions via the Google Ads Mutate API">Apply Approved</button>
+    <button onclick="runAgent('agents/campaign-monitor/index.js', [], loadCampaignCards)" data-tip="Fetch latest Google Ads performance data and update active campaign metrics">Run Campaign Monitor</button>
+    <button onclick="runAgent('scripts/ads-weekly-recap.js')" data-tip="Send the weekly recap email now (normally runs automatically Sunday morning)">Send Weekly Recap</button>
+    <button id="btn-chat-ads" class="btn-open-chat" onclick="toggleTabChat('ads')" data-tip="Ask Claude about your Ads data on this tab">&#x2736; Chat</button>
+  </div>
+  <div class="tab-actions-group" id="tab-actions-optimize" style="display:none">
+    <button onclick="runAgent('agents/competitor-intelligence/index.js')" data-tip="Scrape top competitor pages and generate optimisation briefs">Run Competitor Intelligence</button>
+    <button id="btn-chat-optimize" class="btn-open-chat" onclick="toggleTabChat('optimize')" data-tip="Ask Claude about optimization data on this tab">&#x2736; Chat</button>
+  </div>
+</div>
+
+<main style="display:flex;align-items:start">
+<div id="tab-seo" class="tab-panel active">
+  <!-- Data Needed alert (hidden when empty) -->
+  <div class="card alert-card" id="data-needed-card" style="display:none">
+    <div class="card-header">
+      <h2>⚠ Ahrefs Data Needed <span class="alert-badge" id="data-needed-count">0</span></h2>
+      <span class="section-note">Upload these CSV exports before the research agent can run</span>
+    </div>
+    <div class="card-body" id="data-needed-body" style="max-height:320px;overflow-y:auto"></div>
+  </div>
+
+  <!-- Rank alert banner -->
+  <div id="rank-alert-banner" style="display:none"></div>
+
+  <!-- SEO Authority -->
+  <div class="card">
+    <div class="card-header accent-indigo"><h2>SEO Authority</h2><div class="card-header-right"><span class="section-note">Ahrefs · Updated manually</span><button class="upload-btn" onclick="openAhrefsModal()" data-tip="Enter latest Ahrefs domain overview metrics">Update</button></div></div>
+    <div class="card-body" id="seo-authority-panel"><p class="empty-state">Loading...</p></div>
+  </div>
+
+  <!-- Pipeline kanban -->
+  <div class="card">
+    <div class="card-header"><h2>Content Pipeline</h2><span class="section-note" id="pipeline-note"></span></div>
+    <div class="card-body"><div class="kanban" id="kanban"></div></div>
+  </div>
+
+  <!-- Rankings -->
+  <div class="card">
+    <div class="card-header"><h2>Keyword Rankings</h2><div class="card-header-right"><span class="section-note" id="rank-note"></span><button id="rank-upload-btn" class="upload-btn" onclick="uploadRankSnapshot()" data-tip="Upload an Ahrefs keyword tracker CSV export">&#8593; Upload CSV</button></div></div>
+    <div class="card-body table-wrap"><div id="rankings-table"></div></div>
+  </div>
+
+  <!-- Posts -->
+  <div class="card">
+    <div class="card-header"><h2>Posts</h2><span class="section-note" id="posts-note"></span></div>
+    <div class="card-body table-wrap"><div id="posts-table"></div></div>
+  </div>
+
+  <div class="card" id="gsc-seo-card">
+    <div class="card-header"><h2>Search Console</h2><span class="section-note" id="gsc-seo-note"></span></div>
+    <div class="card-body" id="gsc-seo-body"><p class="empty-state">Loading...</p></div>
+  </div>
+
+  <!-- Content Gap Data -->
+  <div class="card" id="content-gap-card">
+    <div class="card-header accent-indigo"><h2>Content Gap Data</h2><div class="card-header-right"><span class="section-note">Ahrefs content gap CSV export</span><button id="content-gap-upload-btn" class="upload-btn" onclick="uploadContentGapZip()">&#8593; Upload Zip</button><button id="content-gap-run-btn" class="upload-btn" onclick="runGapAnalysis()">Run Gap Analysis</button></div></div>
+    <div class="card-body" id="content-gap-files"><p class="empty-state">Loading...</p></div>
+  </div>
+
+  <pre id="run-log-agents-rank-tracker-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-gap-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-gsc-query-miner-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-sitemap-indexer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-insight-aggregator-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-researcher-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-content-strategist-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-pipeline-scheduler-index-js" class="run-log" style="display:none"></pre>
+</div><!-- /tab-seo -->
+<div id="tab-cro" class="tab-panel">
+  <div id="cro-kpi-strip" style="display:none"></div>
+  <div class="cro-grid" style="margin-bottom:16px">
+    <div id="cro-clarity-card"></div>
+    <div id="cro-shopify-card"></div>
+    <div id="cro-ga4-card"></div>
+    <div id="cro-gsc-card"></div>
+  </div>
+  <div id="active-tests-row" style="display:none">
+    <div class="card">
+      <div class="card-header accent-indigo"><h2>Active A/B Tests</h2></div>
+      <div class="card-body"><div class="test-pills"></div></div>
+    </div>
+  </div>
+  <div id="cro-brief-card"></div>
+  <!-- Brief detail modal -->
+  <div id="brief-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="closeBriefModal(event)">
+    <div id="brief-modal" style="background:#fff;border-radius:12px;max-width:660px;width:90%;max-height:82vh;overflow-y:auto;position:relative;padding:28px 32px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <button onclick="document.getElementById('brief-modal-overlay').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+      <div id="brief-modal-content"></div>
+    </div>
+  </div>
+  <pre id="run-log-scripts-create-meta-test-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-meta-ab-tracker-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-analyzer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-cta-injector-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-cro-deep-dive-content-index-js" style="display:none" class="run-log"></pre>
+  <pre id="run-log-agents-cro-deep-dive-seo-index-js" style="display:none" class="run-log"></pre>
+  <pre id="run-log-agents-cro-deep-dive-trust-index-js" style="display:none" class="run-log"></pre>
+</div><!-- /tab-cro -->
+<div id="tab-creatives" class="tab-panel">
+  <!-- Top bar -->
+  <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap">
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap">Model</label>
+    <select id="creatives-model-select" onchange="onCreativesModelChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="">Loading...</option>
+    </select>
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:0.5rem">Resolution</label>
+    <select id="creatives-resolution-select" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="1K">1K</option>
+    </select>
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:0.5rem">Template</label>
+    <select id="creatives-template-select" onchange="onCreativesTemplateChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="">None</option>
+    </select>
+    <button onclick="openManageTemplates()" style="padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:5px;font-size:0.8rem;background:var(--surface);cursor:pointer">Manage</button>
+    <label style="font-size:0.8rem;font-weight:600;color:var(--muted);white-space:nowrap;margin-left:0.5rem">Session</label>
+    <select id="creatives-session-select" onchange="onCreativesSessionChange()" style="padding:0.3rem 0.6rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;background:var(--surface)">
+      <option value="">Loading...</option>
+    </select>
+    <span id="creatives-session-name" onclick="editSessionName()" style="font-size:0.82rem;color:var(--fg);cursor:pointer;padding:0.2rem 0.4rem;border-radius:4px;border:1px solid transparent" title="Click to rename"></span>
+    <span id="creatives-autosave" style="font-size:0.75rem;color:var(--muted);opacity:0;transition:opacity 0.5s">Saved</span>
+    <button onclick="createNewCreativesSession()" style="padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:5px;font-size:0.8rem;background:var(--surface);cursor:pointer;margin-left:auto">+ New Session</button>
+  </div>
+  <!-- Two-panel layout -->
+  <div id="creatives-layout" style="display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 220px);overflow:hidden">
+    <!-- LEFT PANEL -->
+    <div style="border-right:1px solid var(--border);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;background:var(--bg)">
+      <!-- Product context (hidden by default, shown for 2+ selected products) -->
+      <div id="creatives-product-context" style="display:none;border:1px solid var(--border);border-radius:7px;overflow:visible">
+        <div style="padding:0.5rem 0.75rem;background:var(--card);font-size:0.82rem;font-weight:600;border-bottom:1px solid var(--border)">Product Context</div>
+        <div id="product-context-body" style="padding:0.75rem;font-size:0.82rem"></div>
+      </div>
+      <!-- Prompt -->
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:0.35rem">PROMPT</label>
+        <textarea id="creatives-prompt" rows="6" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:vertical;background:var(--surface)" placeholder="Describe the image you want to generate..."></textarea>
+      </div>
+      <!-- Negative prompt -->
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:0.35rem">NEGATIVE PROMPT</label>
+        <textarea id="creatives-negative-prompt" rows="3" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:vertical;background:#fff5f5;border-color:#fecaca" placeholder="What to avoid in the image..."></textarea>
+      </div>
+      <!-- Aspect ratio -->
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:0.35rem">ASPECT RATIO</label>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+          <button class="ar-btn active" onclick="setAspectRatio('1:1',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">1:1</button>
+          <button class="ar-btn" onclick="setAspectRatio('4:5',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">4:5</button>
+          <button class="ar-btn" onclick="setAspectRatio('9:16',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">9:16</button>
+          <button class="ar-btn" onclick="setAspectRatio('16:9',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">16:9</button>
+          <button class="ar-btn" id="ar-custom-btn" onclick="setAspectRatio('custom',this)" style="padding:0.3rem 0.65rem;border-radius:5px;cursor:pointer;font-size:0.8rem">Custom</button>
+        </div>
+        <div id="ar-custom-inputs" style="display:none;gap:0.5rem;align-items:center;margin-top:0.5rem">
+          <input id="ar-custom-w" type="number" placeholder="W" min="64" max="4096" style="width:70px;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem">
+          <span style="color:var(--muted)">&#215;</span>
+          <input id="ar-custom-h" type="number" placeholder="H" min="64" max="4096" style="width:70px;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:5px;font-size:0.82rem">
+          <span style="font-size:0.75rem;color:var(--muted)">px</span>
+        </div>
+      </div>
+      <!-- Reference images -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem">
+          <label style="font-size:0.78rem;font-weight:600;color:var(--muted)">REFERENCE IMAGES <span id="ref-image-count" style="font-weight:400"></span></label>
+          <div style="display:flex;gap:0.4rem">
+            <button onclick="openProductImagePicker()" style="padding:0.25rem 0.6rem;border:1px solid #a78bfa;border-radius:5px;background:#f5f3ff;color:#6d28d9;font-size:0.75rem;cursor:pointer;font-weight:600">+ Product</button>
+            <button onclick="openReferenceUpload()" style="padding:0.25rem 0.6rem;border:1px solid var(--border);border-radius:5px;background:var(--surface);font-size:0.75rem;cursor:pointer">+ Upload</button>
+          </div>
+        </div>
+        <input type="file" id="ref-image-input" accept="image/*" multiple onchange="handleReferenceUpload(this)" style="display:none">
+        <div id="ref-images-area" ondragover="event.preventDefault()" ondrop="handleRefImageDrop(event)" style="min-height:60px;border:1px dashed var(--border);border-radius:6px;padding:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:flex-start;background:var(--surface)">
+          <span id="ref-images-placeholder" style="font-size:0.78rem;color:var(--muted);padding:0.5rem">Drop images here or use buttons above</span>
+        </div>
+      </div>
+      <!-- Generate button -->
+      <div style="display:flex;gap:0.5rem;margin-top:auto">
+        <button onclick="generateCreativeImage()" style="padding:0.65rem;background:#6c5ce7;color:white;border:none;border-radius:7px;font-size:0.95rem;font-weight:700;cursor:pointer;flex:1">Generate Image</button>
+        <button onclick="clearCreativesForm()" style="padding:0.65rem 0.75rem;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:7px;font-size:0.82rem;cursor:pointer;white-space:nowrap" title="Clear all prompts and references">Clear</button>
+      </div>
+    </div>
+    <!-- RIGHT PANEL -->
+    <div id="creatives-right-panel" style="overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--bg);position:relative">
+      <!-- Action buttons (top right, hidden until image generated) -->
+      <div id="creatives-action-btns" style="display:none;position:absolute;top:1rem;right:1rem;display:flex;gap:0.5rem;z-index:2">
+        <button onclick="downloadCreativeImage()" style="padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">&#8681; Download</button>
+        <div style="position:relative;display:inline-block">
+          <button onclick="toggleUpscaleMenu()" id="upscale-btn" style="padding:0.35rem 0.75rem;border:1px solid #6c5ce7;border-radius:6px;background:#f5f3ff;color:#6c5ce7;font-size:0.82rem;cursor:pointer;font-weight:600">&#8679; Upscale</button>
+          <div id="upscale-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:white;border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10;min-width:120px">
+            <div onclick="upscaleImage(&apos;2K&apos;)" style="padding:0.4rem 0.75rem;cursor:pointer;font-size:0.82rem;border-bottom:1px solid var(--border)" onmouseover="this.style.background=&apos;#f5f3ff&apos;" onmouseout="this.style.background=&apos;&apos;">2K Resolution</div>
+            <div onclick="upscaleImage(&apos;4K&apos;)" style="padding:0.4rem 0.75rem;cursor:pointer;font-size:0.82rem" onmouseover="this.style.background=&apos;#f5f3ff&apos;" onmouseout="this.style.background=&apos;&apos;">4K Resolution</div>
+          </div>
+        </div>
+        <button onclick="toggleCompareMode()" id="compare-btn" style="padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">&#9741; Compare</button>
+      </div>
+      <!-- Image display area -->
+      <div id="creatives-image-wrap" style="position:relative;display:flex;align-items:center;justify-content:center;min-height:300px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <!-- Spinner overlay -->
+        <div id="creatives-spinner" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.85);flex-direction:column;align-items:center;justify-content:center;gap:0.75rem;z-index:3">
+          <div style="width:36px;height:36px;border:3px solid #6c5ce7;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+          <span id="creatives-spinner-text" style="font-size:0.85rem;color:#6c5ce7;font-weight:600">Generating...</span>
+        </div>
+        <!-- Error message -->
+        <div id="creatives-error" style="display:none;position:absolute;bottom:0.75rem;left:0.75rem;right:0.75rem;background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.82rem;z-index:3"></div>
+        <!-- Generated image -->
+        <img id="creatives-current-img" src="" alt="Generated creative" style="display:none;max-width:100%;max-height:500px;border-radius:8px;object-fit:contain;cursor:pointer" onclick="openImageLightbox(this.src)">
+        <!-- Placeholder -->
+        <div id="creatives-img-placeholder" style="text-align:center;padding:2rem;color:var(--muted)">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">&#127912;</div>
+          <div style="font-size:0.9rem">Generated image will appear here</div>
+        </div>
+        <!-- Compare mode container -->
+        <div id="creatives-compare-wrap" style="display:none;width:100%;padding:0.75rem;gap:0.75rem;flex-wrap:wrap;align-items:flex-start"></div>
+      </div>
+      <!-- Refinement row -->
+      <div style="display:flex;gap:0.5rem;align-items:stretch">
+        <textarea id="creatives-refine-prompt" rows="2" placeholder="Describe changes to refine the image..." style="flex:1;border:1px solid var(--border);border-radius:6px;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:none;background:var(--surface)"></textarea>
+        <button onclick="refineCreativeImage()" style="padding:0.5rem 1rem;background:#6c5ce7;color:white;border:none;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;white-space:nowrap">Refine</button>
+      </div>
+      <!-- History filmstrip -->
+      <div>
+        <div style="font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:0.5rem">HISTORY</div>
+        <div id="creatives-filmstrip" style="display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.5rem;min-height:80px;align-items:center">
+          <span style="font-size:0.78rem;color:var(--muted)">No versions yet</span>
+        </div>
+      </div>
+      <!-- Package button (hidden until image generated) -->
+      <div id="creatives-package-wrap" style="display:none;border-top:1px solid var(--border);padding-top:0.75rem">
+        <button id="creatives-package-btn" onclick="packageCreative()" style="padding:0.6rem 1.25rem;background:#0f172a;color:white;border:none;border-radius:7px;font-size:0.88rem;font-weight:600;cursor:pointer">&#128230; Package for All Placements</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="tab-ad-intelligence" class="tab-panel" style="display:none">
+  <div id="ad-intelligence-content">
+    <p class="muted" style="padding:2rem">Loading ad intelligence data…</p>
+  </div>
+</div>
+<div id="tab-ads" class="tab-panel">
+  <pre id="run-log-apply-ads" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-ads-optimizer-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-agents-campaign-monitor-index-js" class="run-log" style="display:none"></pre>
+  <pre id="run-log-scripts-ads-weekly-recap-js" class="run-log" style="display:none"></pre>
+  <!-- Active Campaigns -->
+  <div class="card" id="campaign-active-card">
+    <div class="card-header accent-indigo">
+      <h2>Active Campaigns</h2>
+    </div>
+    <div id="campaign-active-body"><p class="empty-state">No active campaigns yet.</p></div>
+  </div>
+  <!-- Campaign Suggestions -->
+  <div class="card" id="campaign-proposals-card">
+    <div class="card-header accent-indigo">
+      <h2>Campaign Suggestions</h2>
+      <span style="font-size:11px;color:var(--muted)" id="campaign-proposals-note"></span>
+    </div>
+    <div style="padding:16px" id="campaign-proposals-body"><p class="empty-state">No campaign suggestions yet. Run Campaign Creator to generate proposals.</p></div>
+  </div>
+  <!-- Clarifications Needed -->
+  <div class="card" id="campaign-clarify-card" style="display:none">
+    <div class="card-header accent-indigo">
+      <h2>Clarifications Needed</h2>
+    </div>
+    <div id="campaign-clarify-body"></div>
+  </div>
+  <!-- Optimization Queue -->
+  <div class="card ads-opt-card">
+    <div class="card-header accent-indigo"><h2>Optimization Queue</h2></div>
+    <div class="card-body" id="ads-opt-body"><p class="empty-state">Loading...</p></div>
+  </div>
+  <div id="ads-keywords-card"></div>
+</div><!-- /tab-ads -->
+<div id="tab-optimize" class="tab-panel">
+  <div class="empty-state">Loading optimization briefs...</div>
+</div>
+<div id="tab-chat-sidebar" class="tab-chat-sidebar" style="display:none">
+  <div class="tab-chat-header">
+    <span id="tab-chat-title">&#x2736; Chat</span>
+    <button onclick="closeTabChat()" style="background:none;border:none;cursor:pointer;color:#818cf8;font-size:15px;line-height:1;padding:0">&#x2715;</button>
+  </div>
+  <div id="tab-chat-messages" class="tab-chat-messages"></div>
+  <div class="tab-chat-input-row">
+    <input id="tab-chat-input" class="tab-chat-input" placeholder="Ask about this tab..."
+      onkeydown="if(event.key===&quot;Enter&quot;&amp;&amp;!event.shiftKey){event.preventDefault();sendTabChatMessage();}">
+    <button class="tab-chat-send" onclick="sendTabChatMessage()">&#x2191;</button>
+  </div>
+</div>
+</main>
+
+<script src="/js/dashboard.js"></script>
+<!-- Ahrefs overview modal -->
+<div id="ahrefs-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="closeAhrefsModal(event)">
+  <div style="background:#fff;border-radius:12px;width:340px;position:relative;padding:28px 28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <button onclick="closeAhrefsModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+    <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:18px">Update SEO Authority</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <label style="font-size:12px;color:#374151;font-weight:500">Domain Rating<input id="ahrefs-dr" type="number" placeholder="e.g. 19" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+      <label style="font-size:12px;color:#374151;font-weight:500">Backlinks<input id="ahrefs-backlinks" type="number" placeholder="e.g. 329" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+      <label style="font-size:12px;color:#374151;font-weight:500">Referring Domains<input id="ahrefs-refdomains" type="number" placeholder="e.g. 251" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+      <label style="font-size:12px;color:#374151;font-weight:500">Organic Traffic Value (USD)<input id="ahrefs-value" type="number" placeholder="e.g. 89" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+      <button onclick="closeAhrefsModal()" style="padding:7px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Cancel</button>
+      <button id="ahrefs-save-btn" onclick="saveAhrefsOverview()" style="padding:7px 16px;border:none;border-radius:6px;background:#6366f1;color:white;cursor:pointer;font-size:13px;font-weight:600">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- keyword detail modal -->
+<div id="kw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center">
+  <div id="kw-modal-body" style="background:#fff;border-radius:10px;padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)"></div>
+</div>
+
+<!-- Image lightbox modal -->
+<div id="image-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1100;align-items:center;justify-content:center;cursor:pointer" onclick="closeImageLightbox()">
+  <button onclick="closeImageLightbox()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:white;font-size:28px;cursor:pointer;z-index:1101">&times;</button>
+  <img id="lightbox-img" src="" style="max-width:95vw;max-height:95vh;object-fit:contain;border-radius:4px" onclick="event.stopPropagation()">
+</div>
+
+<!-- Compare lightbox modal -->
+<div id="compare-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1100;flex-direction:column">
+  <div style="position:absolute;top:12px;right:20px;z-index:1101">
+    <button onclick="exitCompareMode()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 16px;border-radius:6px;font-size:0.82rem;cursor:pointer;font-weight:600">Exit Compare</button>
+  </div>
+  <div id="compare-lightbox-body" style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
+  <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.5)">
+    <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:8px">Select two versions to compare</div>
+    <div id="compare-filmstrip" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
+  </div>
+</div>
+
+<!-- Product image picker modal (Task 17) -->
+<div id="product-image-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeProductImageModal()">
+  <div style="background:#fff;border-radius:12px;width:800px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e5e7eb;flex-shrink:0">
+      <div style="font-size:14px;font-weight:700;color:#111">Select Product Image</div>
+      <button onclick="closeProductImageModal()" style="background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+    </div>
+    <div id="product-image-grid" style="flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;align-content:start">
+      <p style="color:#9ca3af;font-size:0.85rem">Loading...</p>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="closeProductImageModal()" style="padding:7px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Template management modal (Task 18) -->
+<div id="template-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeTemplateModal()">
+  <div style="background:#fff;border-radius:12px;width:560px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e5e7eb">
+      <div style="font-size:14px;font-weight:700;color:#111">Manage Templates</div>
+      <button onclick="closeTemplateModal()" style="background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div id="template-modal-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <!-- New template form -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button onclick="openNewTemplateForm()" style="padding:6px 14px;border:1px solid #6c5ce7;border-radius:6px;background:#f5f3ff;color:#5b21b6;font-size:0.82rem;cursor:pointer;font-weight:600">+ New Template</button>
+        <button onclick="openCreateFromImage()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:0.82rem;cursor:pointer">+ From Image</button>
+      </div>
+      <!-- Template form -->
+      <div id="template-form-wrap" style="display:none;border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg)">
+        <input type="hidden" id="template-form-id">
+        <div id="template-form-title" style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:#111">New Template</div>
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">NAME</label>
+        <input id="template-form-name" type="text" placeholder="Template name..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">PROMPT</label>
+        <textarea id="template-form-prompt" rows="4" placeholder="Template prompt..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit;resize:vertical"></textarea>
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">NEGATIVE PROMPT</label>
+        <input id="template-form-negative-prompt" type="text" placeholder="What to avoid..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">TAGS (comma-separated)</label>
+        <input id="template-form-tags" type="text" placeholder="e.g. product, lifestyle, square" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1">
+            <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">DEFAULT ASPECT RATIO</label>
+            <select id="template-form-aspect-ratio" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;font-family:inherit">
+              <option value="1:1">1:1</option>
+              <option value="16:9">16:9</option>
+              <option value="9:16">9:16</option>
+              <option value="4:3">4:3</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">DEFAULT MODEL</label>
+            <select id="template-form-model" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;font-family:inherit">
+              <option value="">-- same as current --</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById(&apos;template-form-wrap&apos;).style.display=&apos;none&apos;" style="padding:6px 14px;border:1px solid #d1d5db;border-radius:6px;background:#fff;font-size:0.82rem;cursor:pointer">Cancel</button>
+          <button onclick="saveTemplateForm(document.getElementById(&apos;template-form-id&apos;).value, !!document.getElementById(&apos;template-form-id&apos;).value)" style="padding:6px 14px;border:none;border-radius:6px;background:#6c5ce7;color:white;font-size:0.82rem;cursor:pointer;font-weight:600">Save</button>
+        </div>
+      </div>
+      <!-- From image form -->
+      <div id="template-from-image-wrap" style="display:none;border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg)">
+        <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:#111">Create Template from Image</div>
+        <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:6px">Upload an image to analyze</label>
+        <input type="file" id="template-from-image-input" accept="image/*" onchange="previewFromImage(this)" style="margin-bottom:8px">
+        <img id="template-from-image-preview" src="" alt="Preview" style="display:none;max-width:200px;max-height:150px;object-fit:contain;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button onclick="analyzeTemplateImage()" style="padding:6px 14px;border:none;border-radius:6px;background:#6c5ce7;color:white;font-size:0.82rem;cursor:pointer;font-weight:600">Analyze Image</button>
+          <button onclick="document.getElementById(&apos;template-from-image-wrap&apos;).style.display=&apos;none&apos;" style="padding:6px 14px;border:1px solid #d1d5db;border-radius:6px;background:#fff;font-size:0.82rem;cursor:pointer">Cancel</button>
+        </div>
+        <div id="template-from-image-save-wrap" style="display:none">
+          <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">EXTRACTED PROMPT</label>
+          <textarea id="template-from-image-result" rows="4" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit;resize:vertical"></textarea>
+          <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">TEMPLATE NAME</label>
+          <input id="template-from-image-name" type="text" placeholder="Template name..." style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.83rem;margin-bottom:10px;font-family:inherit">
+          <button onclick="saveAiTemplate()" style="padding:6px 14px;border:none;border-radius:6px;background:#0f172a;color:white;font-size:0.82rem;cursor:pointer;font-weight:600">Save Template</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- keyword rejection modal -->
+<div id="reject-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeRejectModal()">
+  <div style="background:#fff;border-radius:12px;width:380px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-size:0.95rem;font-weight:700;color:#111;margin-bottom:4px">Reject keyword</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-bottom:16px">How broadly should this rejection apply to future research?</div>
+    <div style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:6px">KEYWORD</div>
+    <div id="reject-modal-keyword" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:0.85rem;font-weight:600;color:#111;margin-bottom:16px"></div>
+    <div style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:8px">MATCH TYPE</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <label id="reject-opt-exact" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1.5px solid #6366f1;border-radius:8px;background:#f5f3ff" onclick="selectRejectMatch(&apos;exact&apos;)">
+        <input type="radio" name="reject-match" value="exact" checked style="margin-top:2px;pointer-events:none">
+        <div><div style="font-size:0.83rem;font-weight:600;color:#111">Exact match</div><div style="font-size:0.75rem;color:#64748b">Only block this exact keyword</div></div>
+      </label>
+      <label id="reject-opt-phrase" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px" onclick="selectRejectMatch(&apos;phrase&apos;)">
+        <input type="radio" name="reject-match" value="phrase" style="margin-top:2px;pointer-events:none">
+        <div><div style="font-size:0.83rem;font-weight:600;color:#111">Phrase match</div><div style="font-size:0.75rem;color:#64748b">Block any keyword containing this phrase</div></div>
+      </label>
+      <label id="reject-opt-broad" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px" onclick="selectRejectMatch(&apos;broad&apos;)">
+        <input type="radio" name="reject-match" value="broad" style="margin-top:2px;pointer-events:none">
+        <div><div style="font-size:0.83rem;font-weight:600;color:#111">Broad match</div><div style="font-size:0.75rem;color:#64748b">Tell agents to avoid this topic and related ideas broadly</div></div>
+      </label>
+    </div>
+    <div style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:6px">REASON <span style="font-weight:400;color:#94a3b8">(optional)</span></div>
+    <input id="reject-modal-reason" type="text" placeholder="e.g. too broad, off-brand topic" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.83rem;box-sizing:border-box;margin-bottom:16px">
+    <div id="reject-modal-error" style="display:none;color:#ef4444;font-size:0.8rem;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeRejectModal()" style="padding:7px 16px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:0.83rem;cursor:pointer">Cancel</button>
+      <button onclick="confirmRejectKeyword()" style="padding:7px 16px;border:none;border-radius:6px;background:#ef4444;color:#fff;font-size:0.83rem;font-weight:600;cursor:pointer">Reject keyword</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile bottom tab bar -->
+<nav id="mobile-tab-bar">
+  <button class="mobile-tab active" onclick="mobileTabSwitch(&apos;seo&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+    <span>SEO</span>
+  </button>
+  <button class="mobile-tab" onclick="mobileTabSwitch(&apos;cro&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <span>CRO</span>
+  </button>
+  <button class="mobile-tab" onclick="mobileTabSwitch(&apos;ads&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span>Ads</span>
+  </button>
+  <button class="mobile-tab" onclick="mobileTabSwitch(&apos;creatives&apos;,this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    <span>Creatives</span>
+  </button>
+  <button class="mobile-tab" onclick="toggleMoreMenu()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    <span>More</span>
+  </button>
+</nav>
+
+<!-- Mobile "More" menu overlay -->
+<div id="mobile-more-menu" style="display:none">
+  <div class="mobile-more-backdrop" onclick="toggleMoreMenu()"></div>
+  <div class="mobile-more-sheet">
+    <div class="mobile-more-title">More</div>
+    <button class="mobile-more-item" onclick="mobileTabSwitch(&apos;ad-intelligence&apos;);toggleMoreMenu()">Ad Intelligence</button>
+    <button class="mobile-more-item" onclick="mobileTabSwitch(&apos;optimize&apos;);toggleMoreMenu()">Optimize</button>
+    <div class="mobile-more-divider"></div>
+    <button class="mobile-more-item" onclick="toggleTabChat();toggleMoreMenu()">Chat</button>
+  </div>
+</div>
+
+</body>
+</html>
