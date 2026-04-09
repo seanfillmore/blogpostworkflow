@@ -212,11 +212,34 @@ export function aggregateData() {
   const dropRejectedByKeyword = (row) => !isRejectedKw(row.keyword || '', rejections);
   const dropRejectedByQuery = (row) => !isRejectedKw(row.top_query || row.title || row.slug || '', rejections);
 
-  const quickWins = quickWinsRaw ? {
-    ...quickWinsRaw,
-    top: (quickWinsRaw.top || []).filter(dropRejectedByQuery),
-    candidate_count: (quickWinsRaw.top || []).filter(dropRejectedByQuery).length,
-  } : null;
+  // Quick-wins: require posts to be at least 30 days old before they count
+  // as candidates. Brand-new posts need time to stabilize their GSC signals.
+  const QUICK_WIN_MIN_AGE_DAYS = 30;
+  const nowMs = Date.now();
+  const isOldEnough = (slug) => {
+    try {
+      const meta = JSON.parse(readFileSync(join(POSTS_DIR, `${slug}.json`), 'utf8'));
+      const pub = meta.published_at;
+      if (!pub) return false;
+      const age = Math.floor((nowMs - Date.parse(pub)) / 86400000);
+      return age >= QUICK_WIN_MIN_AGE_DAYS;
+    } catch { return false; }
+  };
+
+  // Also require real impression signal — a post with 0 impressions is not
+  // a "quick win", it's "not indexed yet" or "not matching any query".
+  const QUICK_WIN_MIN_IMPRESSIONS = 10;
+  const quickWins = quickWinsRaw ? (() => {
+    const filtered = (quickWinsRaw.top || [])
+      .filter(dropRejectedByQuery)
+      .filter((r) => isOldEnough(r.slug))
+      .filter((r) => (r.impressions || 0) >= QUICK_WIN_MIN_IMPRESSIONS);
+    return {
+      ...quickWinsRaw,
+      top: filtered,
+      candidate_count: filtered.length,
+    };
+  })() : null;
 
   const gscOpportunity = gscOpportunityRaw ? {
     ...gscOpportunityRaw,

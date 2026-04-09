@@ -104,11 +104,35 @@ async function main() {
     });
   };
 
-  // Step 1: Filter to positions 11–20 AND exclude rejected keywords
+  // Minimum post age before a post qualifies as a quick-win candidate.
+  // Brand-new posts need time to be indexed and stabilize their ranking before
+  // we start recommending rewrites — a 30-day floor gives Google time to crawl,
+  // assign a real position, and accumulate enough impressions/clicks to make
+  // the opportunity score meaningful.
+  const MIN_AGE_DAYS = 30;
+  const nowMs = Date.now();
+  const ageDays = (iso) => {
+    if (!iso) return null;
+    const t = Date.parse(iso);
+    return Number.isNaN(t) ? null : Math.floor((nowMs - t) / 86400000);
+  };
+
+  // Step 1: Filter to positions 11–20, exclude rejected keywords, and
+  // exclude posts younger than MIN_AGE_DAYS.
   const allCandidates = (snap.data.posts || []).filter((p) => p.position && p.position >= 11 && p.position <= 20);
-  const candidates = allCandidates.filter((p) => !isRejected(p.keyword) && !isRejected(p.slug));
-  const rejectedCount = allCandidates.length - candidates.length;
-  console.log(`  Posts at positions 11–20: ${candidates.length}${rejectedCount ? ` (${rejectedCount} filtered by rejection list)` : ''}`);
+  const afterRejection = allCandidates.filter((p) => !isRejected(p.keyword) && !isRejected(p.slug));
+  const candidates = afterRejection.filter((p) => {
+    const meta = loadPostMeta(p.slug);
+    const publishedAt = meta?.published_at || p.published_at;
+    const age = ageDays(publishedAt);
+    return age == null ? false : age >= MIN_AGE_DAYS;
+  });
+  const rejectedCount = allCandidates.length - afterRejection.length;
+  const tooYoungCount = afterRejection.length - candidates.length;
+  const filterNotes = [];
+  if (rejectedCount) filterNotes.push(`${rejectedCount} rejected keyword`);
+  if (tooYoungCount) filterNotes.push(`${tooYoungCount} under ${MIN_AGE_DAYS}-day age floor`);
+  console.log(`  Posts at positions 11–20: ${candidates.length}${filterNotes.length ? ` (${filterNotes.join(', ')} filtered)` : ''}`);
 
   if (candidates.length === 0) {
     console.log('\n  No quick-win candidates in the current snapshot.');
@@ -128,6 +152,10 @@ async function main() {
   } catch (err) {
     console.warn(`  [warn] GSC library unavailable: ${err.message}`);
   }
+
+  // Posts must show real impression signal in GSC — zero impressions means
+  // the post isn't actually matching any query and no rewrite will help.
+  const MIN_IMPRESSIONS = 10;
 
   const enriched = [];
   for (const post of candidates) {
@@ -178,9 +206,14 @@ async function main() {
     });
   }
 
-  // Step 3: Sort by score, take top N
-  enriched.sort((a, b) => b.score - a.score);
-  const top = enriched.slice(0, limitArg);
+  // Step 3: Drop posts without meaningful impression signal, then sort by score
+  const qualified = enriched.filter((e) => e.gsc.impressions >= MIN_IMPRESSIONS);
+  const droppedForNoSignal = enriched.length - qualified.length;
+  if (droppedForNoSignal > 0) {
+    console.log(`  Dropped ${droppedForNoSignal} post${droppedForNoSignal === 1 ? '' : 's'} with fewer than ${MIN_IMPRESSIONS} impressions (not yet showing GSC signal)`);
+  }
+  qualified.sort((a, b) => b.score - a.score);
+  const top = qualified.slice(0, limitArg);
 
   console.log(`\n  Top ${top.length} quick-win candidates:`);
   for (const c of top) {
@@ -190,7 +223,7 @@ async function main() {
   // Step 4: Write report
   mkdirSync(REPORTS_DIR, { recursive: true });
   const dateStr = new Date().toISOString().slice(0, 10);
-  const report = buildMarkdownReport(snap.file, enriched, top);
+  const report = buildMarkdownReport(snap.file, qualified, top);
   writeFileSync(join(REPORTS_DIR, `${dateStr}.md`), report);
   console.log(`\n  Report saved: data/reports/quick-wins/${dateStr}.md`);
 
@@ -198,7 +231,7 @@ async function main() {
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify({
     generated_at: new Date().toISOString(),
     snapshot_file: snap.file,
-    candidate_count: enriched.length,
+    candidate_count: qualified.length,
     top: top.map((c) => ({
       slug: c.slug,
       title: c.title,
