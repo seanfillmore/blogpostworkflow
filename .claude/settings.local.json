@@ -14,7 +14,9 @@
       "WebFetch(domain:realskincare-com.myshopify.com)",
       "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
       "WebFetch(domain:www.ncbi.nlm.nih.gov)",
-      "WebFetch(domain:html.duckduckgo.com)"
-    ]
+      "WebFetch(domain:html.duckduckgo.com)",
+      "Bash(git pull:*)"
+    ],
+    "defaultMode": "bypassPermissions"
   }
 }

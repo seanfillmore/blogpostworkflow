@@ -35,6 +35,8 @@ import * as cheerio from 'cheerio';
 import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
+import { getArticle, updateArticle } from '../../lib/shopify.js';
+import { checkAnswerFirst, extractFirstBodyParagraph } from '../../lib/answer-first.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -90,6 +92,8 @@ const args = process.argv.slice(2);
 const limitIdx = args.indexOf('--limit');
 const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : null;
 const noRewrite = args.includes('--no-rewrite');
+const apply = args.includes('--apply');
+const dryRun = args.includes('--dry-run');
 // Slug = first non-flag arg, ignoring positions that are flag values
 const flagValueIdxs = new Set();
 if (limitIdx !== -1) flagValueIdxs.add(limitIdx + 1);
@@ -113,43 +117,27 @@ function loadPosts() {
     })
     .filter(Boolean);
 
-  if (slugArg) return all.filter((p) => p.slug === slugArg);
-  if (limit) return all.slice(0, limit);
-  return all;
-}
+  // Dedupe by shopify_article_id — when both a brief-slug copy and a
+  // shopify-handle-slug copy exist for the same article, prefer the one
+  // most recently synced from Shopify (legacy_synced_at present).
+  const byArticleId = new Map();
+  for (const p of all) {
+    const aid = p.meta.shopify_article_id;
+    if (!aid) {
+      byArticleId.set(`__noid__${p.slug}`, p);
+      continue;
+    }
+    const existing = byArticleId.get(aid);
+    if (!existing) { byArticleId.set(aid, p); continue; }
+    const pIsSynced = !!p.meta.legacy_synced_at;
+    const eIsSynced = !!existing.meta.legacy_synced_at;
+    if (pIsSynced && !eIsSynced) byArticleId.set(aid, p);
+  }
+  const deduped = [...byArticleId.values()];
 
-// ── intro extraction ──────────────────────────────────────────────────────────
-
-/**
- * Pull the first "real" body paragraph — skipping promotional CTA sections,
- * transparency/disclosure notes, editorial bylines, and "Updated [date]" lines.
- * Returns { text, html } or null if no paragraph found before the first <h2>.
- */
-function extractFirstBodyParagraph(html) {
-  const $ = cheerio.load(html);
-  // Drop CTA <section> blocks (Real Skin Care wraps them in styled <section>)
-  $('section').remove();
-  // Walk top-level <p> elements until we hit something that looks like real
-  // body copy or run into an <h2> (which means there was no intro).
-  const skip = (text) => {
-    const t = text.trim();
-    if (!t) return true;
-    if (t.length < 40) return true;
-    if (/^Updated [A-Z]/.test(t)) return true;
-    if (/^Transparency note/i.test(t)) return true;
-    if (/Editorial Team/i.test(t) && t.length < 250) return true;
-    if (/^By the/i.test(t)) return true;
-    return false;
-  };
-
-  let found = null;
-  $('p').each((_, el) => {
-    const text = $(el).text();
-    if (skip(text)) return;
-    found = { text: text.trim(), html: $.html(el) };
-    return false;
-  });
-  return found;
+  if (slugArg) return deduped.filter((p) => p.slug === slugArg);
+  if (limit) return deduped.slice(0, limit);
+  return deduped;
 }
 
 function firstNWords(text, n) {
@@ -157,53 +145,6 @@ function firstNWords(text, n) {
 }
 function wordCount(text) {
   return text.split(/\s+/).filter(Boolean).length;
-}
-
-// ── heuristic ─────────────────────────────────────────────────────────────────
-
-/**
- * Returns { passes: bool, reasons: [...] } where reasons describe failures.
- * Pass criteria (all must be true):
- *   - Keyword (or core noun phrase from title) appears in first 60 words
- *   - First sentence is not a second-person hook ("You X..." anecdote)
- *   - Contains a definitional or factual marker (is/are/works by/uses/contains)
- *   - Doesn't open with a rhetorical question
- */
-function heuristicCheck(intro, title, keyword) {
-  const reasons = [];
-  if (!intro) {
-    return { passes: false, reasons: ['No intro paragraph found before first <h2>'] };
-  }
-  const first60 = firstNWords(intro.text, 60).toLowerCase();
-  const firstSentence = intro.text.split(/(?<=[.!?])\s+/)[0] || '';
-
-  // Keyword presence
-  const kw = (keyword || '').toLowerCase().trim();
-  const titleCore = (title || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
-  const kwTokens = kw.split(/\s+/).filter((t) => t.length > 3);
-  const kwHit = kw && first60.includes(kw);
-  // Loose match: ≥60% of keyword tokens in first 60 words
-  const tokenHits = kwTokens.filter((t) => first60.includes(t)).length;
-  const looseHit = kwTokens.length > 0 && tokenHits / kwTokens.length >= 0.6;
-  if (!kwHit && !looseHit) reasons.push(`Target keyword "${keyword}" not in first 60 words`);
-
-  // Anecdotal/second-person opener
-  if (/^(you |your |imagine |picture |let'?s )/i.test(firstSentence)) {
-    reasons.push('Opens with second-person/anecdotal hook (e.g. "You finally...")');
-  }
-
-  // Rhetorical question opener
-  if (firstSentence.trim().endsWith('?')) {
-    reasons.push('Opens with a rhetorical question instead of a direct answer');
-  }
-
-  // Factual marker
-  const factualPattern = /\b(is|are|works by|uses|contains|means|refers to|happens when|occurs|defined as)\b/i;
-  if (!factualPattern.test(intro.text.split(/(?<=[.!?])\s+/).slice(0, 2).join(' '))) {
-    reasons.push('First two sentences contain no definitional or factual statement');
-  }
-
-  return { passes: reasons.length === 0, reasons };
 }
 
 // ── Claude rewrite ────────────────────────────────────────────────────────────
@@ -346,6 +287,61 @@ function buildRewriteReport(r) {
   return lines.join('\n');
 }
 
+// ── apply: push rewrite into live Shopify article ────────────────────────────
+
+const BACKUPS_DIR = join(ROOT, 'data', 'backups', 'posts');
+
+/**
+ * Replace the first <p> in body_html whose text matches `oldText` with
+ * `newPHtml`. Returns null if no match found (so we never silently corrupt
+ * the article).
+ */
+function replaceParagraph(bodyHtml, oldText, newPHtml) {
+  const $ = cheerio.load(bodyHtml, { decodeEntities: false });
+  const target = oldText.trim();
+  let replaced = false;
+  $('p').each((_, el) => {
+    if (replaced) return;
+    if ($(el).text().trim() === target) {
+      $(el).replaceWith(newPHtml);
+      replaced = true;
+      return false;
+    }
+  });
+  if (!replaced) return null;
+  // cheerio.load wraps in <html><head><body>; extract body inner HTML
+  return $('body').html();
+}
+
+async function applyRewriteToShopify(post, intro, rewriteHtml) {
+  const { shopify_blog_id: blogId, shopify_article_id: articleId } = post.meta;
+  if (!blogId || !articleId) {
+    return { ok: false, reason: 'missing shopify_blog_id or shopify_article_id in local meta' };
+  }
+  // Fetch the LIVE article body — local HTML may be stale
+  const live = await getArticle(blogId, articleId);
+  const liveBody = live.body_html || '';
+  if (!liveBody) return { ok: false, reason: 'live body_html is empty' };
+
+  const newBody = replaceParagraph(liveBody, intro.text, rewriteHtml);
+  if (!newBody) {
+    return { ok: false, reason: 'could not find original first paragraph in live body_html (post may have been edited)' };
+  }
+
+  // Backup live body before write
+  mkdirSync(BACKUPS_DIR, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = join(BACKUPS_DIR, `${post.slug}.${stamp}.html`);
+  writeFileSync(backupPath, liveBody);
+
+  if (dryRun) {
+    return { ok: true, dryRun: true, backupPath, before: intro.text, after: rewriteHtml };
+  }
+
+  await updateArticle(blogId, articleId, { body_html: newBody });
+  return { ok: true, backupPath };
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -361,8 +357,9 @@ async function main() {
   for (let i = 0; i < posts.length; i++) {
     const post = posts[i];
     process.stdout.write(`  [${i + 1}/${posts.length}] ${post.slug.slice(0, 55).padEnd(56)} `);
-    const intro = extractFirstBodyParagraph(post.html);
-    const check = heuristicCheck(intro, post.meta.title, post.meta.target_keyword);
+    const result = checkAnswerFirst(post.html, { title: post.meta.title, keyword: post.meta.target_keyword });
+    const intro = result.intro;
+    const check = { passes: result.passes, reasons: result.reasons };
     let rewrite = null;
     if (!check.passes && !noRewrite) {
       try {
@@ -391,6 +388,35 @@ async function main() {
 
   const failed = results.filter((r) => !r.check.passes).length;
   console.log(`\n  ${failed}/${results.length} posts need an answer-first rewrite.`);
+
+  // Apply mode: push rewrites to Shopify
+  if (apply) {
+    console.log(`\n${dryRun ? '[DRY RUN] ' : ''}Applying ${failed} rewrite(s) to Shopify...\n`);
+    const applyTargets = results.filter((r) => !r.check.passes && r.rewrite);
+    let success = 0, skipped = 0;
+    for (let i = 0; i < applyTargets.length; i++) {
+      const r = applyTargets[i];
+      process.stdout.write(`  [${i + 1}/${applyTargets.length}] ${r.post.slug.slice(0, 55).padEnd(56)} `);
+      try {
+        const res = await applyRewriteToShopify(r.post, r.intro, r.rewrite);
+        if (!res.ok) {
+          console.log(`✗ skipped: ${res.reason}`);
+          skipped++;
+          continue;
+        }
+        if (res.dryRun) console.log(`✓ dry-run ok (would write, backup: ${basename(res.backupPath)})`);
+        else            console.log(`✓ applied (backup: ${basename(res.backupPath)})`);
+        success++;
+      } catch (e) {
+        console.log(`✗ error: ${e.message}`);
+        skipped++;
+      }
+    }
+    console.log(`\n  ${dryRun ? 'Dry run complete' : 'Applied'}: ${success}  Skipped: ${skipped}`);
+    if (!dryRun && success > 0) {
+      console.log(`  Backups: ${BACKUPS_DIR}`);
+    }
+  }
 }
 
 main().catch((err) => {
