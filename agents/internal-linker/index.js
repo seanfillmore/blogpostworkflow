@@ -150,7 +150,20 @@ function loadKeywordCsv() {
  * Within those, rank by volume (proxy for traffic potential).
  * Falls back to positions 21–50 if fewer than N quick-win pages exist.
  */
-function pickTopTargets(rows, n) {
+/**
+ * Load the slugs currently on the quick-win targeter list. Posts that are
+ * already one rank from page 1 get the highest priority for inbound links —
+ * pushing link equity at a page-2 post is the single best use of internal
+ * linking. See docs/signal-manifest.md.
+ */
+function loadQuickWinSlugs() {
+  try {
+    const qw = JSON.parse(readFileSync(join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json'), 'utf8'));
+    return new Set((qw.top || []).map((c) => c.slug));
+  } catch { return new Set(); }
+}
+
+function pickTopTargets(rows, n, quickWinSlugs = new Set()) {
   // Group keywords by URL, keeping best (highest-volume) keyword per URL
   const byUrl = new Map();
   for (const r of rows) {
@@ -161,14 +174,19 @@ function pickTopTargets(rows, n) {
 
   const pages = [...byUrl.values()];
 
-  // Score: position 5–20 = best internal-link leverage
+  // Score: position 5–20 = best internal-link leverage.
+  // Quick-win slugs (identified by the quick-win-targeter) get a 2x bonus
+  // so link equity flows toward posts that are measurably close to page 1.
   const score = (p) => {
     const pos = p.position;
     const vol = p.volume || 0;
-    if (pos >= 5 && pos <= 20)  return vol * 3;  // quick-win tier
-    if (pos >= 1 && pos <= 4)   return vol * 1;  // already page 1 — protect
-    if (pos >= 21 && pos <= 50) return vol * 2;  // refresh tier
-    return 0;
+    const slug = urlToSlug(p.url);
+    const quickWinBonus = quickWinSlugs.has(slug) ? 2 : 1;
+    let base = 0;
+    if (pos >= 5 && pos <= 20)  base = vol * 3;  // quick-win tier
+    else if (pos >= 1 && pos <= 4)   base = vol * 1;  // already page 1 — protect
+    else if (pos >= 21 && pos <= 50) base = vol * 2;  // refresh tier
+    return base * quickWinBonus;
   };
 
   return pages.sort((a, b) => score(b) - score(a)).slice(0, n);
@@ -529,6 +547,11 @@ async function main() {
 
   // ── Mode B: top targets from GSC (or CSV fallback) ───────────────────────
 
+  const quickWinSlugs = loadQuickWinSlugs();
+  if (quickWinSlugs.size > 0) {
+    console.log(`  Quick-win slugs loaded (${quickWinSlugs.size}) — these get 2x priority when picking link targets`);
+  }
+
   let targets = [];
   let dataSource = 'csv';
 
@@ -541,7 +564,7 @@ async function main() {
     const blogPages = gscPages
       .filter((p) => p.url.includes('/blogs/'))
       .map((p) => ({ keyword: p.keyword, position: p.position, volume: p.impressions, url: p.url }));
-    targets = pickTopTargets(blogPages, targetCount);
+    targets = pickTopTargets(blogPages, targetCount, quickWinSlugs);
     dataSource = 'gsc';
     console.log(`${gscPages.length} pages found, ${targets.length} blog targets selected`);
   } catch {
@@ -556,7 +579,7 @@ async function main() {
       process.exit(1);
     }
     console.log(`\n  Keyword CSV: ${csvFile} (${csvRows.length} rows)`);
-    targets = pickTopTargets(csvRows, targetCount);
+    targets = pickTopTargets(csvRows, targetCount, quickWinSlugs);
     dataSource = csvFile;
   }
 

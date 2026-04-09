@@ -121,26 +121,25 @@ A compact view: rows are agents, columns show what they produce and consume. Emp
 
 ### Consumers that currently read less than they should
 
-These are the gaps from the "Status" columns above, consolidated:
+**Update 2026-04-09:** The gaps listed below were all closed in a single pass — see PR landing commit. The table below is preserved as the historical list of closed gaps. Review this section any time a new agent is added.
 
-| Agent | What it should also read | Why |
+| Gap | Status | What changed |
 |---|---|---|
-| `content-refresher` | `data/reports/post-performance/latest.json` → the specific verdict `reason` for the slug being refreshed | So the refresh is targeted at the actual cause of the flop, not a generic rewrite |
-| `content-refresher` | `data/context/writer-standing-rules.md` | So refreshes don't reintroduce the same mistakes the writer is already avoiding |
-| `editor` | `data/context/writer-standing-rules.md` | So the editor enforces the rules that the writer was just told about |
-| `quick-win-targeter` | `data/reports/content-strategist/cluster-weights.json` | So position-14 in a page-1 cluster outranks position-14 in a drag cluster |
-| `quick-win-targeter` | `data/reports/competitor-watcher/latest.json` | So clusters with fresh competitor posts get priority bumps |
-| `post-performance` | `data/reports/competitor-watcher/latest.json` | So DEMOTE verdicts account for external ranking pressure, not just projection miss |
-| `post-performance` | `data/reports/rank-alerts/*.md` | So sudden drops trigger an off-cycle review |
-| `post-performance` | `data/reports/content-strategist/cluster-weights.json` | So borderline verdicts defer to cluster context |
-| `content-researcher` | `data/reports/post-performance/latest.json` — past flop verdicts for slugs in same cluster | So briefs avoid patterns that already failed |
-| `internal-link-auditor` | `data/reports/quick-wins/latest.json` | So link equity flows toward posts one rank from page 1 |
-| `internal-linker` | `data/reports/quick-wins/latest.json` | Same reason — link from fresh posts into quick-win targets |
-| `meta-optimizer` | `data/reports/gsc-opportunity/latest.json` → `low_ctr` section | So title/meta rewrites target real low-CTR queries with demand |
-| `blog-post-writer` | `data/reports/technical-seo/*.md` | So structural SEO lessons become standing instructions |
-| `insight-aggregator` | `data/reports/content-refresh-report.md` in addition to editor reports | So refresher patterns also become standing rules |
-| `unmapped-query-promoter` (itself) | should stamp GSC context onto the calendar item it creates so `content-researcher` can read the original query pattern when briefing | Closes the loop from GSC → brief → writer |
-| `rank-alerter` | should trigger `post-performance` re-check for posts with sudden drops | Currently fires-and-forgets |
+| `content-refresher` → `post-performance` verdict reason | ✅ closed | `loadPerformanceVerdict(slug)` injects the verdict into the refresh prompt so the rewrite targets the specific cause, not a generic refresh |
+| `content-refresher` → `writer-standing-rules.md` | ✅ closed | `loadAgentFeedback` now appends writer standing rules to the refresher prompt |
+| `editor` → `writer-standing-rules.md` | ✅ closed | `loadAgentFeedback` in editor also appends writer standing rules with "enforce these" instructions |
+| `quick-win-targeter` → `cluster-weights.json` | ✅ closed | `scoreOpportunity` accepts `clusterWeight`, applies 15%-per-unit multiplier (page-1 cluster = 1.3× boost, drag cluster = 0.55× penalty) |
+| `quick-win-targeter` → `competitor-watcher/latest.json` | ✅ closed | Same `scoreOpportunity` change — `competitorBoost` adds 10% per new competitor post in cluster |
+| `post-performance` → `competitor-watcher/latest.json` | ✅ closed | DEMOTE verdicts soften to REFRESH when competitor activity is detected in the same cluster (external pressure, not content rot) |
+| `post-performance` → `rank-alerts/*.md` | ✅ closed | `loadExternalContext()` reads the last 7 days of alerts; `rankDrops` set is available for future off-cycle triggers |
+| `post-performance` → `cluster-weights.json` | ✅ closed | DEMOTE also softens to REFRESH if the post is in a page-1 cluster (weight ≥ 2) |
+| `content-researcher` → `performance_review` history for related flops | ✅ closed | `loadRelatedFlops(keyword)` scans same-cluster posts for non-ON_TRACK verdicts and injects them into the brief prompt as "do not repeat these patterns" |
+| `internal-link-auditor` → `quick-wins/latest.json` | ✅ closed | Report has a new "Quick-Win Under-Linked Posts" section showing quick-win slugs and their inbound link counts |
+| `internal-linker` → `quick-wins/latest.json` | ✅ closed | `pickTopTargets` applies a 2× bonus to candidates whose slug is on the quick-win list |
+| `meta-optimizer` → `gsc-opportunity/latest.json` | ✅ closed | Prefers the rejection-filtered low-CTR list from gsc-opportunity; falls back to a live GSC query only if the file is missing |
+| `insight-aggregator` → `content-refresh-report.md` | ✅ already closed | `walkReports` recursively reads every `*.md` under `data/reports/`, including refresh reports, so the main Claude analysis pass already consumed them |
+| `blog-post-writer` → `technical-seo/*.md` | deferred | Lower impact, not addressed in this pass |
+| `rank-alerter` → `post-performance` trigger | partial | `rankDrops` set is loaded by post-performance; a cron-triggered off-cycle run is still a future enhancement |
 
 ---
 

@@ -1,0 +1,95 @@
+{
+  "analysisNotes": "Account spent $13.63 on 3/25 with 26 clicks and 0 conversions across both enabled campaigns, yielding a 0% ROAS. The 'Coconut Oil Lotion - Exact' ad group's primary keyword 'coconut oil body lotion' has a quality score of only 3 with 94 impressions, 5 clicks, and 0 conversions at $0.61 avg CPC. GSC shows the brand terms 'real skincare' and 'real skin care' already rank organically in positions 1-2, meaning paid brand clicks may be cannibalizing free traffic. Campaigns appear newly launched or bids were non-competitive on some days given intermittent impression patterns.",
+  "suggestions": [
+    {
+      "id": "suggestion-001",
+      "type": "negative_add",
+      "status": "pending",
+      "confidence": "high",
+      "adGroup": null,
+      "target": "reale skincare",
+      "rationale": "GSC shows 'reale skincare' drove 258 impressions at position 5.6 on 3/24 — this is a misspelling of a different brand (Reale Actives LLC), not our brand; phrase-match brand keywords could match this, wasting spend on non-buyer traffic.",
+      "proposedChange": {
+        "keyword": "reale skincare",
+        "matchType": "BROAD",
+        "campaignResourceName": "customers/5099369750/campaigns/23681754187"
+      },
+      "editedValue": null
+    },
+    {
+      "id": "suggestion-002",
+      "type": "negative_add",
+      "status": "pending",
+      "confidence": "high",
+      "adGroup": null,
+      "target": "reale actives",
+      "rationale": "GSC shows 'reale actives llc' had 50 impressions with only 1 click at position 6.6 on 3/24 — these users are searching for a different company (Reale Actives), not Real Skincare, and would waste brand campaign spend.",
+      "proposedChange": {
+        "keyword": "reale actives",
+        "matchType": "BROAD",
+        "campaignResourceName": "customers/5099369750/campaigns/23681754187"
+      },
+      "editedValue": null
+    },
+    {
+      "id": "suggestion-003",
+      "type": "negative_add",
+      "status": "pending",
+      "confidence": "medium",
+      "adGroup": null,
+      "target": "recipe",
+      "rationale": "GSC shows queries like 'diy coconut oil soap benefits recipe' driving impressions to blog content; users searching for DIY recipes are not buyers, and the coconut oil lotion campaign's phrase/broad match could capture these non-commercial queries.",
+      "proposedChange": {
+        "keyword": "recipe",
+        "matchType": "BROAD",
+        "campaignResourceName": "customers/5099369750/campaigns/23683460846"
+      },
+      "editedValue": null
+    },
+    {
+      "id": "suggestion-004",
+      "type": "negative_add",
+      "status": "pending",
+      "confidence": "medium",
+      "adGroup": null,
+      "target": "diy",
+      "rationale": "GSC data across multiple days shows DIY-intent queries (e.g., 'diy coconut oil soap') driving impressions; these informational queries indicate non-buyer intent and could match broad/phrase keywords in the coconut oil lotion campaign.",
+      "proposedChange": {
+        "keyword": "diy",
+        "matchType": "BROAD",
+        "campaignResourceName": "customers/5099369750/campaigns/23683460846"
+      },
+      "editedValue": null
+    },
+    {
+      "id": "suggestion-005",
+      "type": "keyword_add",
+      "status": "pending",
+      "confidence": "medium",
+      "adGroup": "Coconut Oil Lotion - Exact",
+      "target": "best coconut body lotion",
+      "rationale": "GSC shows 'best coconut body lotion' at avg position 2.4 with 7 impressions and 1 click on 3/22 — not consistently top-3 organic and has high purchase intent; adding as exact match captures commercial queries the current keyword set misses.",
+      "proposedChange": {
+        "keyword": "best coconut body lotion",
+        "matchType": "EXACT",
+        "adGroupResourceName": "customers/5099369750/adGroups/192375860297"
+      },
+      "editedValue": null
+    },
+    {
+      "id": "suggestion-006",
+      "type": "bid_adjust",
+      "status": "pending",
+      "confidence": "medium",
+      "adGroup": "Coconut Oil Lotion - Exact",
+      "target": "coconut oil body lotion",
+      "rationale": "The keyword 'coconut oil body lotion' has a quality score of 3 with avg CPC $0.61 against max CPC $0.80 (within $0.19), 5 clicks, and 0 conversions — lowering max CPC by $0.15 reduces exposure on this low-quality-score, non-converting keyword while it is optimized.",
+      "proposedChange": {
+        "adGroupResourceName": "customers/5099369750/adGroups/192375860297",
+        "currentCpcMicros": 800000,
+        "proposedCpcMicros": 650000
+      },
+      "editedValue": null
+    }
+  ]
+}

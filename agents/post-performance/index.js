@@ -97,7 +97,56 @@ async function fetchGscMetrics(pageUrl, days) {
  * Evaluate a milestone for a given post.
  * Returns a review object or null if the milestone hasn't been reached.
  */
-function evaluateMilestone({ milestone, age, metrics, trafficPotential }) {
+/**
+ * Load cross-agent context (cluster weights, competitor activity, rank alerts).
+ * Returns a single object the verdict logic reads to make context-aware calls.
+ * See docs/signal-manifest.md — closes gaps where post-performance was making
+ * verdict calls without considering external ranking pressure.
+ */
+function loadExternalContext() {
+  const ctx = { clusterWeights: {}, competitorBoosts: {}, rankDrops: new Set() };
+
+  try {
+    const cw = JSON.parse(readFileSync(join(ROOT, 'data', 'reports', 'content-strategist', 'cluster-weights.json'), 'utf8'));
+    for (const [name, c] of Object.entries(cw.clusters || {})) ctx.clusterWeights[name] = c.weight || 0;
+  } catch { /* optional */ }
+
+  try {
+    const comp = JSON.parse(readFileSync(join(ROOT, 'data', 'reports', 'competitor-watcher', 'latest.json'), 'utf8'));
+    for (const [name, count] of Object.entries(comp.cluster_boosts || {})) ctx.competitorBoosts[name] = count;
+  } catch { /* optional */ }
+
+  // Rank alerts: posts with sudden ranking drops in the last 7 days get an
+  // automatic off-cycle review regardless of milestone.
+  try {
+    const alertsDir = join(ROOT, 'data', 'reports', 'rank-alerts');
+    if (existsSync(alertsDir)) {
+      const files = readdirSync(alertsDir).filter((f) => f.endsWith('.md')).sort().reverse().slice(0, 7);
+      for (const f of files) {
+        const content = readFileSync(join(alertsDir, f), 'utf8');
+        // Extract slugs from lines mentioning a drop
+        for (const line of content.split('\n')) {
+          if (!/🔻|dropped|fell/i.test(line)) continue;
+          const slugMatch = line.match(/\/blogs\/news\/([a-z0-9-]+)/);
+          if (slugMatch) ctx.rankDrops.add(slugMatch[1]);
+        }
+      }
+    }
+  } catch { /* optional */ }
+
+  return ctx;
+}
+
+const KNOWN_CLUSTERS_PP = ['deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm', 'coconut oil', 'shampoo', 'conditioner', 'sunscreen', 'body wash', 'face cream', 'moisturizer', 'serum'];
+function clusterForPost(slug, keyword) {
+  const text = ((keyword || '') + ' ' + (slug || '')).toLowerCase();
+  for (const c of KNOWN_CLUSTERS_PP) {
+    if (text.includes(c)) return c;
+  }
+  return null;
+}
+
+function evaluateMilestone({ milestone, age, metrics, trafficPotential, slug, keyword, externalCtx }) {
   if (age < milestone) return null;
 
   const impressions = metrics?.impressions ?? 0;
@@ -132,6 +181,19 @@ function evaluateMilestone({ milestone, age, metrics, trafficPotential }) {
     if (projection != null && clicks < projection * DEMOTE_THRESHOLD_90D) {
       verdict = 'DEMOTE';
       reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). Under ${Math.round(DEMOTE_THRESHOLD_90D * 100)}% threshold — consider merging, refreshing, or removing.`;
+      // Context-aware softening: if a competitor just published in this cluster,
+      // an underperformance is probably external pressure, not content rot.
+      // Downgrade DEMOTE → REFRESH so the response is a rewrite, not a removal.
+      const cluster = externalCtx ? clusterForPost(slug, keyword) : null;
+      const competitorHits = cluster ? (externalCtx.competitorBoosts[cluster] || 0) : 0;
+      const clusterWeight = cluster ? (externalCtx.clusterWeights[cluster] || 0) : 0;
+      if (competitorHits > 0) {
+        verdict = 'REFRESH';
+        reason += ` [softened to REFRESH: ${competitorHits} new competitor post${competitorHits > 1 ? 's' : ''} in the "${cluster}" cluster — external ranking pressure suggests rewrite, not removal.]`;
+      } else if (clusterWeight >= 2) {
+        verdict = 'REFRESH';
+        reason += ` [softened to REFRESH: "${cluster}" is a page-1 cluster (weight +${clusterWeight}) — worth reinforcing, not removing.]`;
+      }
     } else if (projection == null) {
       reason = `No traffic_potential in brief — cannot score. ${clicks} clicks, ${impressions} impressions over 90 days.`;
     } else {
@@ -220,6 +282,14 @@ async function main() {
   const posts = listPublishedPosts();
   console.log(`  Published posts: ${posts.length}`);
 
+  const externalCtx = loadExternalContext();
+  const ctxNotes = [];
+  const weightedClusters = Object.keys(externalCtx.clusterWeights).filter((n) => externalCtx.clusterWeights[n] !== 0);
+  if (weightedClusters.length) ctxNotes.push(`${weightedClusters.length} weighted clusters`);
+  if (Object.keys(externalCtx.competitorBoosts).length) ctxNotes.push(`${Object.keys(externalCtx.competitorBoosts).length} competitor-active clusters`);
+  if (externalCtx.rankDrops.size) ctxNotes.push(`${externalCtx.rankDrops.size} recent rank drops`);
+  if (ctxNotes.length) console.log(`  External context loaded: ${ctxNotes.join(', ')}`);
+
   const todayReviews = []; // reviews produced this run
   const allFlops = [];      // any outstanding flops across all posts
 
@@ -244,7 +314,12 @@ async function main() {
       const metrics = metricsByDays[milestone];
       if (!metrics) continue; // GSC unavailable — skip this run
 
-      const review = evaluateMilestone({ milestone, age, metrics, trafficPotential });
+      const review = evaluateMilestone({
+        milestone, age, metrics, trafficPotential,
+        slug: meta.slug,
+        keyword: meta.target_keyword,
+        externalCtx,
+      });
       if (!review) continue;
 
       existing[key] = review;

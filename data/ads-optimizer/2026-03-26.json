@@ -1,0 +1,27 @@
+{
+  "analysisNotes": "Test data for local UI verification — real campaigns are paused.",
+  "suggestions": [
+    {
+      "id": "test-001",
+      "type": "bid_adjustment",
+      "campaign": "Brand — Exact",
+      "adGroup": "Real Skin Care",
+      "keyword": "real skin care deodorant",
+      "status": "pending",
+      "currentCpcMicros": 500000,
+      "proposedCpcMicros": 650000,
+      "rationale": "CTR of 8.2% with 0.4% CVR suggests strong intent. Increasing bid to capture top position.",
+      "chat": []
+    },
+    {
+      "id": "test-002",
+      "type": "negative_keyword",
+      "campaign": "Non-Brand — Broad",
+      "adGroup": "Natural Deodorant",
+      "keyword": "free deodorant samples",
+      "status": "pending",
+      "rationale": "142 impressions and 0 conversions over 30 days. Freebie intent — add as negative keyword.",
+      "chat": []
+    }
+  ]
+}

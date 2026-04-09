@@ -65,11 +65,54 @@ function loadPostMeta(slug) {
  * Compute opportunity score for a post at positions 11-20.
  * Higher impressions + closer to page 1 + worse CTR = higher score.
  */
-function scoreOpportunity({ position, impressions = 0, ctr = 0 }) {
+function scoreOpportunity({ position, impressions = 0, ctr = 0, clusterWeight = 0, competitorBoost = 0 }) {
   if (!position || position < 11 || position > 20) return 0;
   const proximityWeight = 21 - position; // 1 (pos 20) to 10 (pos 11)
   const ctrFactor = 1 / (ctr + 0.01);    // lower CTR → higher factor
-  return Math.round(impressions * proximityWeight * ctrFactor);
+  const base = impressions * proximityWeight * ctrFactor;
+  // Cluster-authority multiplier: +2 weight cluster gets +30% score boost,
+  // -3 weight drag cluster gets -45% score penalty. See docs/signal-manifest.md.
+  const clusterMultiplier = 1 + (clusterWeight * 0.15);
+  // Competitor activity multiplier: +1 per new competitor post in cluster.
+  const competitorMultiplier = 1 + (competitorBoost * 0.1);
+  return Math.round(base * clusterMultiplier * competitorMultiplier);
+}
+
+/**
+ * Load cluster-weights.json and competitor cluster_boosts. Returns maps
+ * keyed by cluster name. Both files are produced by upstream agents; this
+ * closes the signal-manifest gap where quick-win scoring ignored cluster
+ * authority and competitor pressure.
+ */
+function loadClusterContext() {
+  const weights = {};
+  const boosts = {};
+  try {
+    const cw = JSON.parse(readFileSync(join(ROOT, 'data', 'reports', 'content-strategist', 'cluster-weights.json'), 'utf8'));
+    for (const [name, c] of Object.entries(cw.clusters || {})) weights[name] = c.weight || 0;
+  } catch { /* optional */ }
+  try {
+    const comp = JSON.parse(readFileSync(join(ROOT, 'data', 'reports', 'competitor-watcher', 'latest.json'), 'utf8'));
+    for (const [name, count] of Object.entries(comp.cluster_boosts || {})) boosts[name] = count;
+  } catch { /* optional */ }
+  return { weights, boosts };
+}
+
+/**
+ * Best-effort mapping from a post's keyword/slug to a known cluster name.
+ * Mirrors the rule used in content-strategist/loadClusterPerformance.
+ */
+const KNOWN_CLUSTERS = [
+  'deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm',
+  'coconut oil', 'shampoo', 'conditioner', 'sunscreen',
+  'body wash', 'face cream', 'moisturizer', 'serum',
+];
+function clusterFor(post) {
+  const text = ((post.keyword || '') + ' ' + (post.slug || '')).toLowerCase();
+  for (const c of KNOWN_CLUSTERS) {
+    if (text.includes(c.replace('-', ' ')) || text.includes(c.replace(' ', '-'))) return c;
+  }
+  return null;
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -85,6 +128,12 @@ async function main() {
 
   console.log(`  Using snapshot: ${snap.file}`);
   console.log(`  Total tracked posts: ${snap.data.posts?.length || 0}`);
+
+  const clusterContext = loadClusterContext();
+  const weightedClusters = Object.entries(clusterContext.weights).filter(([, w]) => w !== 0);
+  if (weightedClusters.length) console.log(`  Cluster weights loaded: ${weightedClusters.map(([n, w]) => `${n}:${w > 0 ? '+' : ''}${w}`).join(', ')}`);
+  const boostedClusters = Object.keys(clusterContext.boosts);
+  if (boostedClusters.length) console.log(`  Competitor boosts: ${boostedClusters.join(', ')}`);
 
   // Load rejections (brand conflicts, off-topic terms). Filtered out of
   // candidate selection BEFORE GSC enrichment to avoid wasted API calls.
@@ -174,7 +223,10 @@ async function main() {
     const meta = loadPostMeta(post.slug);
     const impressions = gscMetrics?.impressions ?? 0;
     const ctr = gscMetrics?.ctr ?? 0;
-    const score = scoreOpportunity({ position: post.position, impressions, ctr });
+    const cluster = clusterFor(post);
+    const clusterWeight = cluster ? (clusterContext.weights[cluster] || 0) : 0;
+    const competitorBoost = cluster ? (clusterContext.boosts[cluster] || 0) : 0;
+    const score = scoreOpportunity({ position: post.position, impressions, ctr, clusterWeight, competitorBoost });
 
     // Prefer the post's actual title from metadata; fall back to slug prettified.
     const title = meta?.title
