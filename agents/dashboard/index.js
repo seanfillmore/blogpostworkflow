@@ -14,52 +14,37 @@
 import http from 'http';
 import { spawn } from 'child_process';
 import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync, createReadStream, unlinkSync, renameSync, copyFileSync } from 'fs';
-import { join, dirname, basename, extname } from 'path';
-import { fileURLToPath } from 'url';
+import { join, basename, extname } from 'path';
 import Anthropic from '@anthropic-ai/sdk';
 import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
 import { loadLatestAhrefsOverview } from '../../lib/ahrefs-parser.js';
 import { serveStatic } from './lib/static.js';
+import { loadEnvAuth, hydrateProcessEnv } from './lib/env.js';
+import { createAuthCheck } from './lib/auth.js';
+import {
+  ROOT, POSTS_DIR, BRIEFS_DIR, IMAGES_DIR, REPORTS_DIR, SNAPSHOTS_DIR,
+  KEYWORD_TRACKER_DIR, ADS_OPTIMIZER_DIR, CALENDAR_PATH,
+  COMP_BRIEFS_DIR, COMP_SCREENSHOTS_DIR, META_ADS_INSIGHTS_DIR,
+  CREATIVE_JOBS_DIR, CREATIVE_PACKAGES_DIR, PRODUCT_IMAGES_DIR_MA,
+  CREATIVE_TEMPLATES_DIR, CREATIVE_TEMPLATES_PREVIEWS_DIR,
+  CREATIVE_SESSIONS_DIR, CREATIVES_DIR, REFERENCE_IMAGES_DIR,
+  PRODUCT_IMAGES_DIR, PRODUCT_MANIFEST_PATH,
+  CLARITY_SNAPSHOTS_DIR, SHOPIFY_SNAPSHOTS_DIR, GSC_SNAPSHOTS_DIR,
+  GA4_SNAPSHOTS_DIR, GOOGLE_ADS_SNAPSHOTS_DIR, CRO_REPORTS_DIR, META_TESTS_DIR,
+  AHREFS_DIR, CONTENT_GAP_DIR, RANK_ALERTS_DIR, ALERTS_VIEWED,
+  PUBLIC_DIR,
+} from './lib/paths.js';
 
 // ── basic auth ─────────────────────────────────────────────────────────────────
 // Set DASHBOARD_USER and DASHBOARD_PASSWORD in .env to enable.
 // If neither is set the dashboard is open (safe for local-only use).
 
-function loadEnvAuth() {
-  try {
-    const lines = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.env'), 'utf8').split('\n');
-    const e = {};
-    for (const l of lines) {
-      const t = l.trim(); if (!t || t.startsWith('#')) continue;
-      const i = t.indexOf('='); if (i === -1) continue;
-      e[t.slice(0, i).trim()] = t.slice(i + 1).trim();
-    }
-    return e;
-  } catch { return {}; }
-}
-
-const _authEnv  = loadEnvAuth();
+const _authEnv = loadEnvAuth();
 // Populate process.env from .env file for SDK integrations (e.g. Anthropic)
-for (const [k, v] of Object.entries(_authEnv)) { if (!process.env[k]) process.env[k] = v; }
+hydrateProcessEnv(_authEnv);
 const anthropic = new Anthropic();
-const AUTH_USER = _authEnv.DASHBOARD_USER || '';
-const AUTH_PASS = _authEnv.DASHBOARD_PASSWORD || '';
-const AUTH_REQUIRED = AUTH_USER && AUTH_PASS;
-const AUTH_TOKEN = AUTH_REQUIRED
-  ? 'Basic ' + Buffer.from(`${AUTH_USER}:${AUTH_PASS}`).toString('base64')
-  : null;
-
-function checkAuth(req, res) {
-  if (!AUTH_REQUIRED) return true;
-  if (req.headers['authorization'] === AUTH_TOKEN) return true;
-  res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="SEO Dashboard"', 'Content-Type': 'text/plain' });
-  res.end('Unauthorized');
-  return false;
-}
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
+const checkAuth = createAuthCheck(_authEnv);
 
 const args = process.argv.slice(2);
 const PORT   = (() => { const i = args.indexOf('--port'); return i !== -1 ? parseInt(args[i+1], 10) : 4242; })();
@@ -67,34 +52,9 @@ const doOpen = args.includes('--open');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
-// ── paths ──────────────────────────────────────────────────────────────────────
+// ── paths ── (constants imported from ./lib/paths.js) ──────────────────────────
 
-const PUBLIC_DIR    = join(__dirname, 'public');
-
-const POSTS_DIR     = join(ROOT, 'data', 'posts');
-const BRIEFS_DIR    = join(ROOT, 'data', 'briefs');
-const IMAGES_DIR    = join(ROOT, 'data', 'images');
-const REPORTS_DIR   = join(ROOT, 'data', 'reports');
-const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
-const KEYWORD_TRACKER_DIR = join(ROOT, 'data', 'keyword-tracker');
-const ADS_OPTIMIZER_DIR = join(ROOT, 'data', 'ads-optimizer');
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key
-const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
-
-const COMP_BRIEFS_DIR      = join(ROOT, 'data', 'competitor-intelligence', 'briefs');
-const COMP_SCREENSHOTS_DIR = join(ROOT, 'data', 'competitor-intelligence', 'screenshots');
-const META_ADS_INSIGHTS_DIR = join(ROOT, 'data', 'meta-ads-insights');
-const CREATIVE_JOBS_DIR      = join(ROOT, 'data', 'creative-jobs');
-const CREATIVE_PACKAGES_DIR  = join(ROOT, 'data', 'creative-packages');
-const PRODUCT_IMAGES_DIR_MA  = join(ROOT, 'data', 'product-images');
-
-const CREATIVE_TEMPLATES_DIR          = join(ROOT, 'data', 'creative-templates');
-const CREATIVE_TEMPLATES_PREVIEWS_DIR = join(ROOT, 'data', 'creative-templates', 'previews');
-const CREATIVE_SESSIONS_DIR           = join(ROOT, 'data', 'creative-sessions');
-const CREATIVES_DIR                   = join(ROOT, 'data', 'creatives');
-const REFERENCE_IMAGES_DIR            = join(ROOT, 'data', 'reference-images');
-const PRODUCT_IMAGES_DIR              = join(ROOT, 'data', 'product-images');
-const PRODUCT_MANIFEST_PATH           = join(PRODUCT_IMAGES_DIR, 'manifest.json');
 
 const GEMINI_MODELS = [
   { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash', maxReferenceImages: 16, resolutions: ['512', '1K', '2K', '4K'] },
@@ -292,14 +252,6 @@ function parseRankings() {
 
 // ── CRO data ───────────────────────────────────────────────────────────────────
 
-const CLARITY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'clarity');
-const SHOPIFY_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
-const GSC_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'gsc');
-const GA4_SNAPSHOTS_DIR     = join(ROOT, 'data', 'snapshots', 'ga4');
-const GOOGLE_ADS_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'google-ads');
-const CRO_REPORTS_DIR       = join(ROOT, 'data', 'reports', 'cro');
-const META_TESTS_DIR        = join(ROOT, 'data', 'meta-tests');
-
 function parseCROData() {
   // Load up to 60 clarity snapshots (supports 30-day view + prior period comparison)
   let clarityAll = [];
@@ -376,11 +328,6 @@ function isRejectedKw(keyword, rejections) {
 }
 
 // ── ahrefs data readiness ──────────────────────────────────────────────────────
-
-const AHREFS_DIR      = join(ROOT, 'data', 'ahrefs');
-const CONTENT_GAP_DIR = join(ROOT, 'data', 'content_gap');
-const RANK_ALERTS_DIR = join(ROOT, 'data', 'reports', 'rank-alerts');
-const ALERTS_VIEWED   = join(RANK_ALERTS_DIR, '.last-viewed');
 
 function checkAhrefsData(keyword) {
   const slug = kwToSlug(keyword);
