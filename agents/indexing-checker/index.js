@@ -39,6 +39,30 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { inspectUrl, getQuotaStatus } from '../../lib/gsc-indexing.js';
 
+const config = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'config', 'site.json'), 'utf8'));
+const CANONICAL_ROOT = (config.url || '').replace(/\/$/, '');
+
+/**
+ * Rewrite a post URL to the canonical public domain so GSC URL Inspection
+ * accepts it under the sc-domain:realskincare.com property.
+ *
+ * Posts are stored with their *.myshopify.com internal URL, but Google only
+ * indexes the canonical https://www.realskincare.com variant. URL Inspection
+ * returns 403 if you query for a URL outside the property's domain.
+ */
+function toCanonicalUrl(meta) {
+  // Prefer the shopify_handle when available — reliable and doesn't depend
+  // on the stored shopify_url domain.
+  if (meta.shopify_handle) {
+    return `${CANONICAL_ROOT}/blogs/news/${meta.shopify_handle}`;
+  }
+  // Fallback: rewrite the myshopify URL to the canonical domain.
+  if (meta.shopify_url) {
+    return meta.shopify_url.replace(/https?:\/\/[^/]+/, CANONICAL_ROOT);
+  }
+  return null;
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const POSTS_DIR = join(ROOT, 'data', 'posts');
@@ -170,7 +194,11 @@ async function main() {
 
   for (let i = 0; i < targets.length; i++) {
     const meta = targets[i];
-    const url = meta.shopify_url;
+    const url = urlArg ? urlArg : toCanonicalUrl(meta);
+    if (!url) {
+      console.log(`  [${i + 1}/${targets.length}] ${meta.slug} ... SKIP (no canonical URL)`);
+      continue;
+    }
     const age = ageInDays(meta.published_at);
 
     process.stdout.write(`  [${i + 1}/${targets.length}] ${meta.slug} ... `);
