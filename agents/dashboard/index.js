@@ -23,8 +23,11 @@ import { serveStatic } from './lib/static.js';
 import { loadEnvAuth, hydrateProcessEnv } from './lib/env.js';
 import { createAuthCheck } from './lib/auth.js';
 import { ensureDir, kwToSlug } from './lib/fs-helpers.js';
-import { parseCalendar, parseRankings, parseCROData, getItemStatus } from './lib/data-parsers.js';
 import { loadData, invalidateDataCache } from './lib/data-loader.js';
+import { createRunAgentHandler } from './lib/run-agent.js';
+import { buildTabChatSystemPrompt } from './lib/tab-chat-prompt.js';
+import { GEMINI_MODELS, saveSession, createSession } from './lib/creatives-store.js';
+// responses.js import deferred — no existing code uses it yet
 import {
   ROOT, POSTS_DIR, BRIEFS_DIR, IMAGES_DIR, REPORTS_DIR, SNAPSHOTS_DIR,
   KEYWORD_TRACKER_DIR, ADS_OPTIMIZER_DIR, CALENDAR_PATH,
@@ -48,6 +51,7 @@ const _authEnv = loadEnvAuth();
 hydrateProcessEnv(_authEnv);
 const anthropic = new Anthropic();
 const checkAuth = createAuthCheck(_authEnv);
+const runAgent = createRunAgentHandler(ROOT);
 
 const args = process.argv.slice(2);
 const PORT   = (() => { const i = args.indexOf('--port'); return i !== -1 ? parseInt(args[i+1], 10) : 4242; })();
@@ -59,11 +63,6 @@ const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'
 
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key
 
-const GEMINI_MODELS = [
-  { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash', maxReferenceImages: 16, resolutions: ['512', '1K', '2K', '4K'] },
-  { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro', maxReferenceImages: 16, resolutions: ['1K', '2K', '4K'] },
-  { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash', maxReferenceImages: 10, resolutions: ['1K'] },
-];
 
 const geminiClient = process.env.GEMINI_API_KEY
   ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -73,150 +72,7 @@ const upload = multer({ dest: join(ROOT, 'data', '.uploads-tmp'), limits: { file
 
 [CREATIVE_TEMPLATES_DIR, CREATIVE_TEMPLATES_PREVIEWS_DIR, CREATIVE_SESSIONS_DIR, CREATIVES_DIR, REFERENCE_IMAGES_DIR].forEach(ensureDir);
 
-const RUN_AGENT_ALLOWLIST = new Set([
-  'agents/rank-tracker/index.js',
-  'agents/content-gap/index.js',
-  'agents/gsc-query-miner/index.js',
-  'agents/sitemap-indexer/index.js',
-  'agents/insight-aggregator/index.js',
-  'agents/meta-ab-tracker/index.js',
-  'agents/cro-analyzer/index.js',
-  'agents/competitor-intelligence/index.js',
-  'agents/ads-optimizer/index.js',
-  'scripts/create-meta-test.js',
-  'scripts/ads-weekly-recap.js',
-  'agents/campaign-creator/index.js',
-  'agents/campaign-analyzer/index.js',
-  'agents/campaign-monitor/index.js',
-  'agents/cro-deep-dive-content/index.js',
-  'agents/cro-deep-dive-seo/index.js',
-  'agents/cro-deep-dive-trust/index.js',
-  'agents/content-researcher/index.js',
-  'agents/content-strategist/index.js',
-  'agents/pipeline-scheduler/index.js',
-  'agents/cro-cta-injector/index.js',
-]);
-
-// ── tab chat context builder ────────────────────────────────────────────────
-
-function buildTabChatSystemPrompt(tab) {
-  const site = config.name || config.url || 'this site';
-  const lines = [
-    `You are an expert SEO and digital marketing advisor for ${site}.`,
-    `The user is viewing the ${(tab || '').toUpperCase()} tab of their SEO dashboard.`,
-    `Answer questions about the data shown, explain trends, and make recommendations.`,
-    ``,
-    `When you have a specific, concrete action to recommend, include exactly one ACTION_ITEM block at the very end of your response using this format:`,
-    `<ACTION_ITEM>{"title": "Short action title", "description": "What should be done and why", "type": "action_type"}</ACTION_ITEM>`,
-    `Only include ACTION_ITEM when you have a concrete recommendation the user can act on immediately. Omit it for general advice or clarification responses.`,
-    `Keep responses concise (2-4 sentences unless the question requires more detail).`,
-    ``,
-  ];
-
-  if (tab === 'seo') {
-    const rankings = parseRankings();
-    const top10 = rankings.items.slice(0, 10).map(r =>
-      `${r.keyword || r.slug}: pos ${r.position != null ? r.position : 'unranked'}${r.change != null ? ' (' + (r.change > 0 ? '+' : '') + r.change + ')' : ''}`
-    );
-    lines.push('KEYWORD RANKINGS (latest):');
-    lines.push(top10.length ? top10.join('\n') : 'No ranking data available.');
-    const calendar = parseCalendar();
-    if (calendar.length) {
-      const byStatus = { published: [], scheduled: [], draft: [], written: [], briefed: [], pending: [] };
-      for (const c of calendar) {
-        const status = getItemStatus(c);
-        (byStatus[status] || byStatus.pending).push(`${c.keyword} (${c.publishDate.toISOString().slice(0, 10)})`);
-      }
-      lines.push('', 'CONTENT PIPELINE STATUS:');
-      if (byStatus.published.length) lines.push(`Published (${byStatus.published.length}): ${byStatus.published.join(', ')}`);
-      if (byStatus.scheduled.length) lines.push(`Scheduled (${byStatus.scheduled.length}): ${byStatus.scheduled.join(', ')}`);
-      if (byStatus.draft.length) lines.push(`Draft (${byStatus.draft.length}): ${byStatus.draft.join(', ')}`);
-      if (byStatus.written.length) lines.push(`Written (${byStatus.written.length}): ${byStatus.written.join(', ')}`);
-      if (byStatus.briefed.length) lines.push(`Briefed (${byStatus.briefed.length}): ${byStatus.briefed.join(', ')}`);
-      if (byStatus.pending.length) lines.push(`Pending/not started (${byStatus.pending.length}): ${byStatus.pending.join(', ')}`);
-    }
-  } else if (tab === 'cro') {
-    const cro = parseCROData();
-    if (cro.brief) {
-      lines.push('LATEST CRO BRIEF (excerpt):');
-      lines.push(cro.brief.content.slice(0, 2000));
-    } else {
-      lines.push('No CRO brief available yet.');
-    }
-  } else if (tab === 'ads') {
-    if (existsSync(ADS_OPTIMIZER_DIR)) {
-      const adsFiles = readdirSync(ADS_OPTIMIZER_DIR)
-        .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
-      if (adsFiles.length) {
-        const latest = JSON.parse(readFileSync(join(ADS_OPTIMIZER_DIR, adsFiles[0]), 'utf8'));
-        const pending = (latest.suggestions || []).filter(s => s.status === 'pending');
-        lines.push(`OPTIMIZATION QUEUE (${pending.length} pending suggestions):`);
-        pending.slice(0, 10).forEach(s => {
-          lines.push(`- [${s.type}] ${s.campaign || ''}${s.adGroup ? ' / ' + s.adGroup : ''}${s.keyword ? ' — ' + s.keyword : ''}: ${s.rationale || ''}`);
-        });
-        if (latest.analysisNotes) {
-          lines.push('', 'ACCOUNT ANALYSIS:');
-          lines.push(latest.analysisNotes.slice(0, 1000));
-        }
-      } else {
-        lines.push('No ads optimization data yet.');
-      }
-    } else {
-      lines.push('No Google Ads data available yet.');
-    }
-  } else if (tab === 'optimize') {
-    if (existsSync(COMP_BRIEFS_DIR)) {
-      const briefFiles = readdirSync(COMP_BRIEFS_DIR).filter(f => f.endsWith('.json')).sort().reverse().slice(0, 5);
-      if (briefFiles.length) {
-        lines.push('RECENT OPTIMIZATION BRIEFS:');
-        briefFiles.forEach(f => {
-          try {
-            const b = JSON.parse(readFileSync(join(COMP_BRIEFS_DIR, f), 'utf8'));
-            lines.push(`- ${b.url || f}: ${(b.proposed_changes || []).length} proposed changes`);
-          } catch {}
-        });
-      } else {
-        lines.push('No optimization briefs available yet.');
-      }
-    } else {
-      lines.push('No optimization briefs available yet.');
-    }
-  }
-
-  return lines.join('\n');
-}
-
 // ── HTML ───────────────────────────────────────────────────────────────────────
-
-
-// ── Creatives session helpers ───────────────────────────────────────────────────
-
-function saveSession(session) {
-  session.updatedAt = new Date().toISOString();
-  const filePath = join(CREATIVE_SESSIONS_DIR, session.id + '.json');
-  writeFileSync(filePath, JSON.stringify(session, null, 2));
-  return session;
-}
-
-function createSession() {
-  const id = 'session-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-  const session = {
-    id,
-    name: 'New Session',
-    nameAutoGenerated: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    model: GEMINI_MODELS[0].id,
-    templateId: null,
-    prompt: '',
-    negativePrompt: '',
-    aspectRatio: '1:1',
-    referenceImages: [],
-    versions: []
-  };
-  ensureDir(join(CREATIVES_DIR, id));
-  return saveSession(session);
-}
 
 // ── HTTP server ────────────────────────────────────────────────────────────────
 
@@ -224,27 +80,7 @@ const server = http.createServer((req, res) => {
   if (!checkAuth(req, res)) return;
 
   if (req.method === 'POST' && req.url === '/run-agent') {
-    let body = '';
-    req.on('data', d => { body += d; });
-    req.on('end', () => {
-      let script, args = [];
-      try { ({ script, args = [] } = JSON.parse(body)); } catch {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
-        return;
-      }
-      if (!RUN_AGENT_ALLOWLIST.has(script)) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'Script not in allowlist' }));
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-      const child = spawn('node', [join(ROOT, script), ...args], { cwd: ROOT });
-      const send = line => res.write(`data: ${line}\n\n`);
-      child.stdout.on('data', d => String(d).split('\n').filter(Boolean).forEach(send));
-      child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => send(`[stderr] ${l}`)));
-      child.on('close', code => { res.write(`data: __exit__:${JSON.stringify({ code })}\n\n`); res.end(); });
-    });
+    runAgent(req, res);
     return;
   }
 
