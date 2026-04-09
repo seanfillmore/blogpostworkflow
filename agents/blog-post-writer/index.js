@@ -260,7 +260,7 @@ ${postType === 'product' ? `
   <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">[Shop CTA text]</a>
 </section>
 
-2. INTRO — 1-2 engaging paragraphs. State the problem, hint at the solution.
+2. INTRO — 1-2 engaging paragraphs. **The first sentence MUST directly answer the question implied by the title with a concrete factual statement** — no anecdotes, no "You finally..." openers, no rhetorical questions, no "If you've ever..." hooks. Include the target keyword (or its key nouns) within the first 60 words. After the answer-first opening sentence, the rest of the intro can frame the problem and tease what's coming. This is non-negotiable: LLM search engines (ChatGPT, Perplexity, AI Overviews) cite the first clear factual answer on the page.
 
 3. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>.
    - List items: <li><strong>Term:</strong> Explanation</li>
@@ -284,7 +284,7 @@ ${postType === 'product' ? `
   <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Shop Now</a>
 </section>
 ` : `
-1. INTRO — 1-2 engaging paragraphs. State the problem or frame the topic. DO NOT pitch any product here.
+1. INTRO — 1-2 engaging paragraphs. **The first sentence MUST directly answer the question implied by the title with a concrete factual statement** — no anecdotes, no "You finally..." openers, no rhetorical questions. Include the target keyword (or its key nouns) within the first 60 words. After the answer-first opening sentence, you may frame the problem and tease the rest. DO NOT pitch any product here. This is non-negotiable: LLM search engines cite the first clear factual answer on the page.
 
 2. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>. Deliver the full value of the guide. List items use <li><strong>Term:</strong> Explanation</li>. Never start a section with an H2 tag immediately — always follow with a <p>.
 
@@ -459,6 +459,20 @@ async function writePost(briefPath) {
   }
   if (unclosedHref) {
     throw new Error('HTML contains an unclosed href attribute — output was truncated mid-link. Re-run.');
+  }
+  // Answer-first check: the opening paragraph must lead with the answer
+  // to the question implied by the title. LLM search engines (ChatGPT,
+  // Perplexity, AI Overviews, claude.ai) cite the first clear factual
+  // statement they find on a page.
+  const { checkAnswerFirst } = await import('../../lib/answer-first.js');
+  const afCheck = checkAnswerFirst(html, {
+    title: brief.recommended_title || brief.title || '',
+    keyword: brief.target_keyword || '',
+  });
+  if (!afCheck.passes) {
+    throw new Error(
+      `Answer-first check failed: ${afCheck.reasons.join('; ')}. The intro must lead with a direct factual answer to the title within 60 words. Re-run with adjusted brief or writer notes.`
+    );
   }
   if (!hasCTA) {
     console.warn('  Warning: No CTA section blocks detected. Editor will flag this.');

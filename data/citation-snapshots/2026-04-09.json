@@ -1,0 +1,1894 @@
+{
+  "date": "2026-04-09",
+  "brand": {
+    "name": "Real Skin Care",
+    "domain": "realskincare.com",
+    "aliases": [
+      "real skin care",
+      "realskincare"
+    ]
+  },
+  "providers": [
+    "openai",
+    "anthropic",
+    "gemini"
+  ],
+  "results": [
+    {
+      "prompt": "best natural deodorant",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Lume"
+      ],
+      "citationCount": 5,
+      "citations": [
+        {
+          "url": "https://www.nykaaman.com/indus-valley-natural-unscented-deodorant-50-gm/reviews/396000?utm_source=openai",
+          "title": "Indus Valley Natural Unscented Deodorant Reviews | NykaaMan"
+        },
+        {
+          "url": "https://www.nykaaman.com/nivea-whitening-sensitive-roll-on/reviews/513039?utm_source=openai",
+          "title": "NIVEA Natural Glow Sensitive 72H Deodorant Roll Reviews | NykaaMan"
+        },
+        {
+          "url": "https://www.perspi-guard.com/product/perspi-guard-natural-deodorant-roll-on/?utm_source=openai",
+          "title": "Natural Roll on Deodorant"
+        },
+        {
+          "url": "https://mortonessentials.com/?utm_source=openai",
+          "title": "Morton Essentials Best Natural Deodorant"
+        },
+        {
+          "url": "https://lume-deodorant.tenereteam.com/?utm_source=openai",
+          "title": "Lume Deodorant Reviews - Read Customer Reviews of Lumedeodorant.com"
+        }
+      ],
+      "textPreview": "Choosing the best natural deodorant can be challenging, as effectiveness varies based on individual body chemistry and preferences. However, several products have garnered positive reviews for their performance and natural ingredients. Here are some top-rated options:\n\n\n\n**Indus Valley Natural Unscented Deodorant**  \nThis deodorant is praised for its effectiveness without added fragrances, making it suitable for those with sensitive skin. Users have noted its long-lasting protection against body"
+    },
+    {
+      "prompt": "best natural deodorant",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Schmidt's",
+        "Each & Every"
+      ],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://theecofriend.net/best-natural-deodorants-in-2026-zero-waste-options-that-actually-work/",
+          "title": "Best Natural Deodorants in 2026: Zero-Waste Options That Actually Work - The Eco Friend"
+        },
+        {
+          "url": "https://www.onegreenplanet.org/lifestyle/best-cruelty-free-natural-deodorants-2026/",
+          "title": "5 Best Cruelty-Free Natural Deodorants 2026 – One Green Planet"
+        },
+        {
+          "url": "https://www.onegreenplanet.org/lifestyle/best-cruelty-free-natural-deodorants-2026/",
+          "title": "5 Best Cruelty-Free Natural Deodorants 2026 – One Green Planet"
+        },
+        {
+          "url": "https://www.onegreenplanet.org/lifestyle/best-cruelty-free-natural-deodorants-2026/",
+          "title": "5 Best Cruelty-Free Natural Deodorants 2026 – One Green Planet"
+        },
+        {
+          "url": "https://mynaturaldeodorant.com/blogs/healthy-articles/the-best-aluminum-free-deodorant-of-2026-our-top-picks-that-actually-work",
+          "title": "The Best Aluminum-Free Deodorant of 2026: Our Top Picks That Actually - Purelygreat Natural Deodorant"
+        },
+        {
+          "url": "https://robbreport.com/style/grooming/lists/best-natural-deodorants-1237536635/",
+          "title": "The Best Natural Deodorants for 2026, Tested and Reviewed"
+        },
+        {
+          "url": "https://health.yahoo.com/your-body/dermatology/body-odor/article/best-natural-deodorants-185839418.html",
+          "title": "The 9 best natural deodorants of 2025, according to dermatologists"
+        },
+        {
+          "url": "https://robbreport.com/style/grooming/lists/best-natural-deodorants-1237536635/",
+          "title": "The Best Natural Deodorants for 2026, Tested and Reviewed"
+        },
+        {
+          "url": "https://www.onegreenplanet.org/lifestyle/best-cruelty-free-natural-deodorants-2026/",
+          "title": "5 Best Cruelty-Free Natural Deodorants 2026 – One Green Planet"
+        }
+      ],
+      "textPreview": "I'll search for information about the best natural deodorants to give you current recommendations.Based on recent reviews and testing, here are some of the best natural deodorants:\n\n## Top Overall Picks\n\nNative Plastic-Free Deodorant is a top pick for most people — it's proven, effective, and truly zero-waste. Native Plastic-Free is in a fully compostable cardboard tube with a formula that uses baking soda, coconut oil, shea butter, and probiotics for 72-hour odor control.\n\nSchmidt's Charcoal & "
+    },
+    {
+      "prompt": "best natural deodorant",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Schmidt's",
+        "Tom's of Maine",
+        "Each & Every",
+        "Lume"
+      ],
+      "citationCount": 17,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGO3XdFSYrBi77KCYUL4FC3uRXFdItexYgNTbCsY7nXUdEJ1GGbC3IMATfB77dQQ-gE8O0u38PznTA-R9DTM-UhMHiQeebEoV1J3nNv3xoUzqlgJtU8Un3RDXjPy36_mWf3LQlUbP92ttJTp556jatjIdFM7sDKgEImhWjgG00FwveQxPmiVBKH05aF5UoI-E0myEMI-4yjx8KJig==",
+          "title": "lonekauri.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGU4a_bNne2NLKIByMU7tXdUbtb-0lrokpwlfrt8e8fY6A4MnZm5Cb9P_mToc28TL372E9mdGsYUVqAAcaievo_aZLzundZH_wTcfk-YTugDPy6Hsh9asxj3L55uc1IBygxei5lgPxO_FYtUBLakCxclEeJKlIZB_oAmPZ5zjve0ApFYATMjfB_BmZta91bCKhh2ESnVTZpPPh6LMo5O8S6qF_JRBY=",
+          "title": "clayerworld.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzEQrhpSoetwZgTehqhiTArM-y62y0azXSwFxKqGx3OhhYcXo3WMoae4cDZFnkfNHVUdar-k8G1surAObzYzRP_A_M0eNyI1R0epJpc7SrIGBseolLxtuPf8Yv9NyoBSEG-iK5WO6C_kRGmj5wEBBT98X65FZCRvAG",
+          "title": "freshmonster.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE7e1kUdyW3tn-D7UUwnjR1IYeQteettSa9QSdJjNb1QjpNW76sahE-fUtLDK2L-ya0O_iCi0VeDVhSOExT_WAByrZ2uMn1T6Wr56RQHtLe_Ijlub8ogODFHolSrKChh8qj-ihAImA3LjNR0UIk1rpPzqeAG9VPWxB7Hc5tQrXGfzIeMBE=",
+          "title": "sheamoisture.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFX6-KVYczsrbN0NueR83VCZDjBnLKPwDyPICosp8ffKg-8IZEbDJyPIZsVBqXcfWABSfU_dxfteADQiv5ynGxVzWRvwZS6unKR3531hgmF9CNeEE7cB3MU7V-YD0qFIPnu1Ge_qfjdWVMoPMA=",
+          "title": "poosh.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5sqRlwvByuMLyIManK-Q7NRm6Z7uiJXmyKvVlxpjM1OESmL1Tx_3061zgkM3EyC6n8dc89MMMfBXH8LrOKi1MJ3NCq4SbqX1Q4wFvkjBEGsIc7nbTGozohy6m4kIVHOkbDZ-Hc_3wV2iROcQDK9NbQkOamsETrn-9D9R_2Oov4xClRmvVlkAw",
+          "title": "biomestores.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF6yXktHF-XS86slTSGuUWc8hw0600hOWliTIxyMMPLtJoFzZqgOBoeyP6d9923lKSJPPG2ia9E7FcEVXaucm2flefTuFHBoQ_uMqjwURc50AxpGok7oa6V1pEr6yIJDyRfHkOHjZGhJ7zGiC3zYIJ9N9sgroNx4fbs89mmz0e01C7WLKA=",
+          "title": "lavanila.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEmjnH4Ny8cz5YtfxhHfWW-Iu_c6-UoTd8zOMF5Og0Wz1XooZ_FpkvUNdJphXHFEOieejrruuomQYQPvUBf2N7i2Vq0hHbLfkp5KphTNAyq8JI3QsrqnshI0trMuiolvF0WZSwVdioYnFKvzS_NI6ebc-VQRbKJg6eIBa1jtMc=",
+          "title": "runnersworld.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFndysC7-y50ZwhABmpF91U2SEqwHHB_CKGapaxZTfh4mcNXLyl2apC0RrhGBr_YVrKKTQFs6V9GvpDth_kk1Vem3ni1RCCZ1jT9gX8eX9rH8DFekR8oJeGN_wMSh2uKqMtqHVkg09rxyfJJN_Yk2fwZZg=",
+          "title": "thewellnessway.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPvK8e6vnUzOLmNDViE68TZb1AS-B-B0fzxEz8tuoLdf2Bwt8Eg_vosiWXjQ35KufFVO78p9Q-mMv2TnM2qhZQKA6oyJazioIFw8bEhworsyHZGFsdzJ1lt3W8xj7V9cRPd9DHG5uyL_P4eX4grGW4dE2Dp_-Yi_eWlPxY3m9JhAuHn3X1HPNTLcrXNzWVfWSAjZUMbR4=",
+          "title": "earthmamaorganics.com"
+        }
+      ],
+      "textPreview": "Natural deodorants offer an alternative to traditional antiperspirants by using plant-derived or mineral-based ingredients to neutralize odor rather than blocking sweat. When choosing a natural deodorant, it's essential to consider ingredients, skin sensitivity, and personal needs like managing heavy perspiration.\n\n**Key Ingredients to Look For:**\nEffective natural deodorants often include ingredients that absorb moisture and neutralize odor. These include:\n*   **Arrowroot Powder** and **Tapioca"
+    },
+    {
+      "prompt": "best natural deodorant that actually works",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Schmidt's"
+      ],
+      "citationCount": 6,
+      "citations": [
+        {
+          "url": "https://www.realself.com/news/best-natural-deodorants?utm_source=openai",
+          "title": "11 Best Natural Deodorants That Actually Work | RealSelf News"
+        },
+        {
+          "url": "https://www.realself.com/news/best-natural-deodorants?utm_source=openai",
+          "title": "11 Best Natural Deodorants That Actually Work | RealSelf News"
+        },
+        {
+          "url": "https://www.realself.com/news/best-natural-deodorants?utm_source=openai",
+          "title": "11 Best Natural Deodorants That Actually Work | RealSelf News"
+        },
+        {
+          "url": "https://www.realself.com/news/best-natural-deodorants?utm_source=openai",
+          "title": "11 Best Natural Deodorants That Actually Work | RealSelf News"
+        },
+        {
+          "url": "https://www.realself.com/news/best-natural-deodorants?utm_source=openai",
+          "title": "11 Best Natural Deodorants That Actually Work | RealSelf News"
+        },
+        {
+          "url": "https://www.marieclaire.com/beauty/g3701/best-natural-deodorants/?utm_source=openai",
+          "title": "Surprise, Surprise-These Natural Deodorants Actually Work"
+        }
+      ],
+      "textPreview": "Finding a natural deodorant that effectively controls odor can be challenging, but several products have garnered positive reviews for their performance. Here are some top-rated options:\n\n\n\n**Native Deodorant**  \nKnown for its wide range of scents and effective odor control, Native combines shea butter and tapioca starch to absorb moisture without blocking sweat glands. ([realself.com](https://www.realself.com/news/best-natural-deodorants?utm_source=openai))\n\n\n\n\n**Schmidt's Natural Deodorant**  "
+    },
+    {
+      "prompt": "best natural deodorant that actually works",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [
+        "Each & Every"
+      ],
+      "citationCount": 11,
+      "citations": [
+        {
+          "url": "https://health.yahoo.com/your-body/dermatology/body-odor/article/best-natural-deodorants-185839418.html",
+          "title": "The 9 best natural deodorants of 2025, according to dermatologists"
+        },
+        {
+          "url": "https://health.yahoo.com/your-body/dermatology/body-odor/article/best-natural-deodorants-185839418.html",
+          "title": "The 9 best natural deodorants of 2025, according to dermatologists"
+        },
+        {
+          "url": "https://health.yahoo.com/your-body/dermatology/body-odor/article/best-natural-deodorants-185839418.html",
+          "title": "The 9 best natural deodorants of 2025, according to dermatologists"
+        },
+        {
+          "url": "https://health.yahoo.com/your-body/dermatology/body-odor/article/best-natural-deodorants-185839418.html",
+          "title": "The 9 best natural deodorants of 2025, according to dermatologists"
+        },
+        {
+          "url": "https://www.nourishmovelove.com/best-natural-deodorant/",
+          "title": "5 Best Natural Deodorants (2024 Honest Review) | Nourish Move Love"
+        },
+        {
+          "url": "https://mindfulmomma.com/natural-deodorant-that-works/",
+          "title": "Best Non-Toxic Deodorant That Actually Works (EWG Verified, Safe for Women & Men)"
+        },
+        {
+          "url": "https://thedaleydose.com/best-natural-deodorant-for-women/",
+          "title": "What's The Best Natural Deodorant for Women? - The Daley Dose"
+        },
+        {
+          "url": "https://robbreport.com/style/grooming/lists/best-natural-deodorants-1237536635/",
+          "title": "The 11 Best Natural Deodorants That Actually Work, From Sticks to Sprays"
+        },
+        {
+          "url": "https://robbreport.com/style/grooming/lists/best-natural-deodorants-1237536635/",
+          "title": "The 11 Best Natural Deodorants That Actually Work, From Sticks to Sprays"
+        },
+        {
+          "url": "https://robbreport.com/style/grooming/lists/best-natural-deodorants-1237536635/",
+          "title": "The 11 Best Natural Deodorants That Actually Work, From Sticks to Sprays"
+        }
+      ],
+      "textPreview": "I'll search for information about the best natural deodorants that are effective.Based on recent testing and expert recommendations, here are some of the best natural deodorants that actually work:\n\n## Top-Rated Picks\n\n**Each & Every**\nIf you're looking for an effective natural deodorant without baking soda, Each & Every is a winning pick made without parabens, baking soda or synthetic fragrance, but packed with natural ingredients: coconut oil, Dead Sea salt, tapioca starch and essential oils.\n"
+    },
+    {
+      "prompt": "best natural deodorant that actually works",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Schmidt's"
+      ],
+      "citationCount": 7,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE1u6UfVzsxXk6_-TFGX0S9Tglx5faJ22xnZJyOFYggim6c6uZzZeC_IEj6pAYWxFAvvMgM_Foo7RgbAWSV46jkz3O2CniaLrKa-wPxmRqjQ8ZDrsa84uXuI1tKx15durMpQG_54RMNysYNNwq42E0=",
+          "title": "anappleaday.net.au"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRT4CniI-YG_b3e-e-F6a0Ozep9yVpE_QCDkm0mNQXHOIMFQdWKMvoQ9a9ncuaxWTmKy0imdxigUdAd0h_pTbPmdyybGjSC6abkLDjk1jVKlk64mDUjNOIdvHC70HaTN4WQfNDHYm6Q-SwLbiF8JTNt8PY-w==",
+          "title": "brendid.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH9ZhB-mRt9gQps4LHKi7TAgi1yUpqZa2B3E33BnFmBH7AxoYsc3xAKQ0MolVNeXCztrDSQabgPqBox4-0iZyTWLi5kK0BDde_2yvgDJNxIKjUUK3Mus63I1NGPobzAgDuWso188on-xNRHeUUN7BgjFqIyFgk7QOYUW3qJiTpDE5EeoQHYku-VSTtgMZUOfrHaN-g3X7XkSWUV7b7Xsu_atWMZXg==",
+          "title": "reddit.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFye3hVwRT8fbqEGmLmslSUl_k7qWHIZiwN2HODRSxHzKpox_QHk1t6A0-e1Nk427oW5ZcLOnYinZSB0IpxPKxI3kM5ORY8ufsEq0I-Arg29nrqa-ZfAamlns3OV4EsQHVkf6FjG2juAYTwoDV7Gjzx",
+          "title": "danielle-moss.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjn6xQO5Ued0RFJCfVz0dZSoHdjzSa7obssuIcdamFcq0iqYxUcNvyq13--TH7dd_BcAb5Gvy7dXJz-SRn1-5MGeSEqr8LKLnNZAoJTa4pS11QfCrYCU5EvH_TPEXmSnGnBiBHcfLmN27gb7zckpvzuteLUSl9uNjGT7LHz_VgJaRTuPyX__n-Y7lQOQ3M2Q==",
+          "title": "hellohomestead.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-yKGyYXI7L-VrijTtRUteXNz_0dvjnErmrT4TawWT55G58zTolPhpeBSG8bVFiIV0G6pvFReEu_Mi_08jrTsYFjA69aIC7uhFb-QBVm3XTRDDRNwlbNzYsxTBxqajttIASJuk1CREyQ0oSOTRwEV9-9Fh_A==",
+          "title": "humnutrition.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE0jHYEEGgdnE5HgXR1bFmBmJUmDPfvMGGzvW5XgRJXD878cL81OPSy178KETfQGtc-PzhjXJ4yHBW5o2O2hG4pQ0N0s1LqfYL7Qqvssy2YzMixwlP3k6A7oX4n4U6wvgw5oFJwplEQvlLJhUWoQTJ08Wu5ieNT7bG-",
+          "title": "totalbeauty.com"
+        }
+      ],
+      "textPreview": "For individuals seeking an effective natural deodorant, several highly-rated options consistently emerge in reviews, often featuring ingredients like baking soda, arrowroot powder, magnesium hydroxide, and activated charcoal to combat odor and absorb moisture.\n\nAmong the top recommendations is **Black Chicken Axilla Deodorant Paste**, frequently lauded as one of the best on the market, offering all-day protection. Another strong contender is **MooGoo Fresh Cream Deodorant**, particularly favored"
+    },
+    {
+      "prompt": "is aluminum deodorant safe",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native"
+      ],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Aluminum-based compounds are common ingredients in many antiperspirants and deodorants. They work by temporarily blocking sweat glands to reduce perspiration. The safety of aluminum in deodorants has been debated, but here are some key points to consider:\n\n1. **Health Concerns**: Some studies have investigated links between aluminum and health issues, such as breast cancer and Alzheimer's disease. However, current research has not conclusively established any direct causal relationship.\n\n2. **Re"
+    },
+    {
+      "prompt": "is aluminum deodorant safe",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 6,
+      "citations": [
+        {
+          "url": "https://health.osu.edu/health/skin-and-body/aluminum-in-antiperspirant",
+          "title": "Should you worry about aluminum in antiperspirant | Ohio State Health & Discovery"
+        },
+        {
+          "url": "https://www.cancer.gov/about-cancer/causes-prevention/risk/myths/antiperspirants-fact-sheet",
+          "title": "Antiperspirants/Deodorants and Breast Cancer - NCI"
+        },
+        {
+          "url": "https://health.osu.edu/health/skin-and-body/aluminum-in-antiperspirant",
+          "title": "Should you worry about aluminum in antiperspirant | Ohio State Health & Discovery"
+        },
+        {
+          "url": "https://www.sheamoisture.com/us/en/blog/aluminum-in-deodorant.html",
+          "title": "Is Aluminum in Deodorant Safe? | SheaMoisture"
+        },
+        {
+          "url": "https://www.healthline.com/health/what-to-know-about-aluminum-in-deodorant",
+          "title": "Aluminum in Deodorant: Uses, Cancer Debate, Research and More"
+        },
+        {
+          "url": "https://www.sheamoisture.com/us/en/blog/aluminum-in-deodorant.html",
+          "title": "Is Aluminum in Deodorant Safe? | SheaMoisture"
+        }
+      ],
+      "textPreview": "I'll search for current information about the safety of aluminum deodorant.Based on current scientific research, aluminum deodorant is generally considered safe for most people:\n\n## Cancer Risk\n\nThe claim that aluminum-containing antiperspirants cause cancer is a myth that has been debunked in the minds of doctors and scientists. No studies to date have confirmed any substantial adverse effects of aluminum that could contribute to increased breast cancer risks, and a 2014 review concluded there "
+    },
+    {
+      "prompt": "is aluminum deodorant safe",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 15,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH4KXCiIzbiJfe86rVUtnE0Cs72fjQPYZS_zmId_te9FkDj_ka4IL5EHLpIxXgKSJSqrdyd6lxZI9818vp2FIE4c4qDsr5QyYyZ5GP4AWEYOK1ykGpiDB0lGbNXgNZCgkaNNkYL7kBIfp7oSwuNs2GhMu2ZNAeKMRBanq_4anxhRGtBI0a7",
+          "title": "healthline.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFFxG9Y1EVdIHAvGyP0cSP-JJCp3syeTC4HEIIN5E02wYh5roTAUnvmJzYlXmpJGBc-UYxgEwlVGYTpfTfk7Rax8cTuGYahDMiqo1guQbhqoutlaVw7SDLhP3ROdSY4I76UgbOOOzpy9myOFVEumYrp4-pt2AM2lj9HAYOraA==",
+          "title": "sheamoisture.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFJS8rH2ABdHcKgCi3_NTurFuvsPOfuEWA5dnSKvVncK03mGy45wvikZekRDaGV627H5DakFzIALbWbk8NYMiWNUQP4_A7bzB4ZA6grHtgNHiUXJJycEiPDbdDr0G5VD2j0rYJNpooiAhLuIYLQDfYFSGCKWsk58UqXM_tlP8e61-Q=",
+          "title": "osu.edu"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGcAFTLWkmx5pwfra0j0S758SXog9VWyNAnCxwLuZbg3_WXz7VijGZchkoEu5XRQ-QWDi-k-aFKCreEcS3Nr7pYb7ZT30lzVegqarBkcBiKkhj-YxVZGVoa1SuH0RWo6firYlMx_UtD5rYnVnGYZzpwQYCv5lBPSZsD",
+          "title": "breastcancer.org"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4enlDHnLmF7obNupAz1ymluoP19B_nOYaG13VidsdBsX_uHEJdXkZoKvQca4HzOd5eMhzdDOdXOjlkD8RApWbnUsknwiurD7oAk1fe9I9vm-Kwo3MhwjqZz_-SqwS6AuAz_i6yfsf7JqSpY_kTwxl5BFIILtLS9h6_xKSK0S-uunCvPaS5PVCHp3F",
+          "title": "axe.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdby8pwTItGkZgaprAY_GFheVP4Smg3hJhHVXDOmh9p7iohO7dvCqMQ-TBA8-Fy0AsMf25YqgWym9NH61cYSC5lNM1WN55VYmjYw_nW-WH6SXc8cy-I-w3hDUmYf1abJ4HOjOvOXcGLrQQTcdBZhCcLhxFW5OmdZpasuZr0DsHA8SVyXHnZj52",
+          "title": "hartfordhospital.org"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGlozcKEWeERWFm1pa4KAZhxv9VdKEWZsTAKxdkhZnKw_IUQKmNDeBA0pmj8BdTBVNfEHGUnmjxuLJiC9qjX9w7X0er2tO-LQtLbkIDBEJWW1ARCq2H60AhUVbTExiNVDydFJ5CMnowpcSslf2_ycN7TO6LHrir_AAXN_cKxTKlj69cChdoO_7-17TiqkdRKAetgn-UC2BuiUBwxfgINg==",
+          "title": "cancer.org"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENLYTysRdIe7gcGc-kbuXQH_mvly8tNcoOQiQCFuJMnaz2v4wK-FYLhL6n9Hz53WSsEnv2rQGuNU02mK8RQHIGP_1CobgyNQ-8GIR481q6CeXGVthSu136iZ86a0kgZxrwBpqUc9cq2V4FJucrxIpAeJ_wFGoa7dfVpphBcM48sRsssZRPeyy_dKmZltGy",
+          "title": "ewg.org"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFCRPqFmsfwCtJ5YXR4c_c2UgdBWre64TaiWR8n0pSMoz5Kbg9fOcloT7200JTPlCuloknLC_nOCTIcWu1HmFnxaVV6h6gEmI1BG0m8Nvk2_vYnLRQhytLaaT1OD3BRcdwhitaAItbvmg_M1s-RF9sh4zWUAXqp38jaCb2WTYlGUyKY8gnZbW7T5_HdH5YeGRgMhorI8AUDguPgLy8=",
+          "title": "myalzteam.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFJI5bYKLIxr6jmrWLJxpr0dR3hInsDtQVuFlApQFM7PKoNgk4eOX-ntadKPK8fpLZRpkvD73Yu5VYEL8FVg-drMb_yL7brVnGRlWQbBCgb3Qkmo1L27s53GSYLoI3qtrUN23p7m0w5QuC2W6znfAf7rsuX0AzmJWg2yt6eTpWCgUeuy8Bft9vUmZSeDnJf26-d7t8KUABxBCnLzw==",
+          "title": "sweathelp.org"
+        }
+      ],
+      "textPreview": "Aluminum in deodorants, specifically antiperspirants, is generally considered safe for most healthy individuals based on current scientific evidence. While deodorants primarily mask odor and typically do not contain aluminum, antiperspirants use aluminum compounds to temporarily block sweat ducts and reduce perspiration.\n\nHere's a breakdown of the common concerns and scientific consensus:\n\n*   **Cancer (especially Breast Cancer):** Major health organizations, including the American Cancer Societ"
+    },
+    {
+      "prompt": "natural deodorant for sensitive skin",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Schmidt's"
+      ],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "When choosing a natural deodorant for sensitive skin, look for products that are free from harsh chemicals, artificial fragrances, and allergens. Here are a few recommendations:\n\n1. **Schmidt's Natural Deodorant** - The sensitive skin formula is baking soda-free and uses magnesium instead.\n\n2. **Native Deodorant** - Offers a sensitive skin formula that is both aluminum-free and paraben-free, with gentle scents.\n\n3. **Lavanila The Healthy Deodorant** - This is a great option with natural ingredie"
+    },
+    {
+      "prompt": "natural deodorant for sensitive skin",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Schmidt's"
+      ],
+      "citationCount": 10,
+      "citations": [
+        {
+          "url": "https://www.sephora.com/buy/natural-deodorant-for-sensitive-skin",
+          "title": "Natural Deodorant For Sensitive Skin | Sephora"
+        },
+        {
+          "url": "https://humblebrands.com/blogs/humble-journal/everything-you-need-to-know-about-deodorant-for-sensitive-skin",
+          "title": "Natural Deodorant for Sensitive Skin That Actually Works - Humble Brands"
+        },
+        {
+          "url": "https://zerowastestore.com/blogs/sustainable-living/deodorant-for-sensitive-skin",
+          "title": "Best Deodorant for Sensitive Skin | Zero Waste Natural Deodorants – ZeroWasteStore.com"
+        },
+        {
+          "url": "https://zerowastestore.com/blogs/sustainable-living/deodorant-for-sensitive-skin",
+          "title": "Best Deodorant for Sensitive Skin | Zero Waste Natural Deodorants – ZeroWasteStore.com"
+        },
+        {
+          "url": "https://humblebrands.com/blogs/humble-journal/everything-you-need-to-know-about-deodorant-for-sensitive-skin",
+          "title": "Natural Deodorant for Sensitive Skin That Actually Works - Humble Brands"
+        },
+        {
+          "url": "https://magsskin.com/blogs/magsazine/best-natural-deodorant-for-sensitive-skin",
+          "title": "Best Natural Deodorant for Sensitive Skin – MAGS Skin"
+        },
+        {
+          "url": "https://humblebrands.com/blogs/humble-journal/everything-you-need-to-know-about-deodorant-for-sensitive-skin",
+          "title": "Natural Deodorant for Sensitive Skin That Actually Works - Humble Brands"
+        },
+        {
+          "url": "https://toupsandco.com/blogs/news/natural-deodorant-for-sensitive-skin-guide",
+          "title": "The Ultimate Guide to Natural Deodorant for Sensitive Skin – Toups and Co Organics"
+        },
+        {
+          "url": "https://www.usdermatologypartners.com/press-media/13-best-deodorants-for-sensitive-skin/",
+          "title": "The 13 Absolute Best Deodorants for Sensitive Skin That Actually Work"
+        },
+        {
+          "url": "https://www.usdermatologypartners.com/press-media/13-best-deodorants-for-sensitive-skin/",
+          "title": "The 13 Absolute Best Deodorants for Sensitive Skin That Actually Work"
+        }
+      ],
+      "textPreview": "I'll search for information about natural deodorants suitable for sensitive skin.Based on the search results, here's what you should know about natural deodorants for sensitive skin:\n\n## What to Look For\n\nNatural deodorants are made with ingredients like coconut oil, arrowroot powder, and baking soda that are known for their natural deodorizing properties. However, for sensitive skin specifically, you'll want to be selective about which ingredients are included.\n\n## Key Ingredients to Prioritize"
+    },
+    {
+      "prompt": "natural deodorant for sensitive skin",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Schmidt's",
+        "Tom's of Maine",
+        "Each & Every"
+      ],
+      "citationCount": 14,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1X38H0pewFYGS6m5HSIvfsE47VVMgwkE8liNptZiHX113vQfKtBDBtic7I5pA2oh8Soa72DCCGk_gBiBZEq3kwcwJ60uS3S2AxV48oueANADjd1oDCEjZZeRWyRKjkRRObYL8qj47-AY2-OoHk7o5ZTnz8zZps_wnw1N-mP_C9hYuThzNh-86cKi65MdsLBMnaHvqd1J2jY0twkKHGZD8",
+          "title": "blackchicken.com.au"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHf_96rOnebQDsEOLVcybLok3-q_8bphJ9VLnt82d0Vmu2JJ476ajBM0d-Poita0O_4onh1Vafzy7x9XDAuVlh61sLCPryUvbUtfcp4RNfoGf0esGezbSy8LmbXr4h0ljQugbnfyGF0j02lA1MC6j1JqUVCeMqdLVD1gJrrQnXSKRetL_zhubXlvd2VJZPUh8pca0MK0299_O11e8wUyRt7RwoPqYIOJLoaPB8=",
+          "title": "magsskin.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzzweifPJThVBi5DAqCPOIrSh8VKJ3Z-eNgOC7VBhoJqs1qlFH1pP3q7FyjCyTzUuDAmUjoC1uwQhS9zyqqxOnGVzSIe05SI3HRxN7SQ1mHRQNtXpvcy1FQkrhYr08ylETls25PPsy14Z_bPwh3CtteE_1n9DfHAAVvsghKRHzYuvdAAI=",
+          "title": "rebel.care"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFIwdp2i2FmYbYfYCn-Si9Ha6wMa4ggYxM5YUCrUgKk47DCdbnWrBG1THBb47Ky7G5KRkhsB9iqtl3AAm_Fp4LZvsOx9_ogNueSOa1JZ7CrSg2ZjNoRxV5-Jk3Kk-P0ZylS40-JKbN3FGxCv4BmirUB0WmZZcWZuV5gjbyixHm0KVy8MO2HqpK-lRngKPW4196LbqBp0gcm4K4slc-M6Zj3OZJ1I0dlXQ==",
+          "title": "humblebrands.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG_HZ4dblVRUwvqO9cOpi30ZJ7rQ8pmF0XkaUxOCWJPn7DPxGZoXBx3Vygmbq_QfoMNV38cRoF8bAAEvgNNNZffdrFlY1awZysuyS1SbrYYAqJrQecIfmJ2ro_iWOiAjWnllg-vXtjoQVEsdf0N8IrdWkbRHuPSf33_QJ9VMt1wsjQrZeOToLU=",
+          "title": "toupsandco.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQECpvyGz7tW-UB5WGw0gVdgcLJWQw9ndlGQfvq1KWTHfBNq8gais2wAJQhDlVJzeLhijDSbJ-x781Izra0e7EF_yw8gb8aaDvUvqyLuMOTYCM8rY8btsOh5uvXLljHtfqFxVS2pMfTouJqqj_myU5zBm8OqAw9vSWBm-oNkPNdXHlbrQ1s=",
+          "title": "scienceofessentials.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFNvRCjkSml-ZaMbn5TYpgiaF58LbilyiyI7YSttC98LjsVcIZuhhy2_sWS6lrtT69wmi4Y6SX0AapqRbq18zLYrhshAYmkPKWotMt7Uw83W-5csFG2Gy4PGqLHhXBCLO3VALVeuPK_Ngq1qW4yoIGJSNDaHzPv0ynBLbfynJKF",
+          "title": "runnersworld.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUrQ0il6Nw0Q2adoddhb2NzRxraEv-JVwleZSqF4mKuLojXZmwt0TXDrLKWoACZVJPGkAEF8otHXx94-ju9Wq6BBm1vAIQmmRA0dCJ0hhr_OzJPqIpIARKthwVQUKspH9lG8IE-pwDh0mKHDNzopPFqSHu3c_JlTruGWfGC7yF",
+          "title": "jfarell.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF7mbSNCYcCnhcIe58Gc2vBNfZxQGvFZb5IN4NWChd__-6rDys5irPqDiZlpqR5VPxqKaQUwWbojhgjzxYpWeVR4U7ysdSX1OxIwe0_49ar71FSOo-uZ_msFZc1j0sWKQQqx8ttwA7iwqt9tfA1Afkn-Ob1uZ2nveG4w3M10hXo5YXxEvYtyBG-C-gQCjNIu-yNzwi0KXR5Np7HCkVM",
+          "title": "mindbodygreen.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH16FyZ-16rvu6Uti4HLLSIp2deHgnN2AU_lhBNPCU9CYdH4XCADL2TsMjaK1JCfTh7Wsoew78EQj_iwksRCiyrcwj2fA63C_CROl998EHIVWkcYMhvb-2oSGlfuMR2l3ot6po6pj1mKWcGNNEpHSA4uQNpY3ICAv9dwJrMDw==",
+          "title": "dermondemand.com"
+        }
+      ],
+      "textPreview": "Finding a natural deodorant that's gentle on sensitive skin requires careful attention to ingredients. Many conventional and even some natural deodorants contain components that can cause irritation, redness, or itching in delicate underarm areas.\n\n**Key Ingredients to Avoid for Sensitive Skin:**\n*   **Baking Soda (Sodium Bicarbonate):** This is a common irritant in natural deodorants due to its high pH, which can disrupt the skin's natural balance. Signs of a reaction can include redness, itchi"
+    },
+    {
+      "prompt": "best fluoride free toothpaste",
+      "provider": "openai",
+      "brandCited": true,
+      "competitorsCited": [
+        "Native",
+        "Tom's of Maine",
+        "Hello",
+        "Davids",
+        "Boka"
+      ],
+      "citationCount": 5,
+      "citations": [
+        {
+          "url": "https://www.exact-net.com/best-fluoride-free-whitening-toothpastes/?utm_source=openai",
+          "title": "4 Best Fluoride Free Whitening Toothpastes Vetted by ExACT Dental"
+        },
+        {
+          "url": "https://www.exact-net.com/best-fluoride-free-whitening-toothpastes/?utm_source=openai",
+          "title": "4 Best Fluoride Free Whitening Toothpastes Vetted by ExACT Dental"
+        },
+        {
+          "url": "https://www.dentaly.org/us/oral-hygiene/best-toothpaste/fluoride-free/?utm_source=openai",
+          "title": "Fluoride-Free Toothpaste: 6 Best Options for Naturally Healthy Teeth - Dentaly.org"
+        },
+        {
+          "url": "https://finance.yahoo.com/news/best-fluoride-free-toothpaste-2025-170000579.html?utm_source=openai",
+          "title": "Best Fluoride-Free Toothpaste (2025): Boka Recognized as Top Non Fluoride Toothpaste by Expert Consumers"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025?utm_source=openai",
+          "title": "Best Fluoride Free Toothpaste – 2025 – realskincare.com"
+        }
+      ],
+      "textPreview": "Fluoride-free toothpastes are gaining popularity among individuals seeking natural oral care alternatives. While fluoride is effective in preventing cavities, some prefer to avoid it due to personal health concerns or sensitivities. Fluoride-free options often utilize ingredients like nano-hydroxyapatite, xylitol, and baking soda to promote oral health.\n\nHere are some top-rated fluoride-free toothpastes:\n\n\n\n**MySmile Fluoride-Free Whitening Toothpaste**  \nThis toothpaste features nano-hydroxyapa"
+    },
+    {
+      "prompt": "best fluoride free toothpaste",
+      "provider": "anthropic",
+      "brandCited": true,
+      "competitorsCited": [
+        "Native",
+        "Boka"
+      ],
+      "citationCount": 8,
+      "citations": [
+        {
+          "url": "https://www.flourish.dental/top-fluoride-free-toothpaste-brands-recommended-by-holistic-dentists/",
+          "title": "Best Fluoride-Free Toothpastes Recommended by Holistic Dentists"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-toothpaste-brands/",
+          "title": "9 Organic And Natural Fluoride Free Toothpastes (2026) - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-toothpaste-brands/",
+          "title": "9 Organic And Natural Fluoride Free Toothpastes (2026) - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-toothpaste-brands/",
+          "title": "9 Organic And Natural Fluoride Free Toothpastes (2026) - The Good Trade"
+        },
+        {
+          "url": "https://www.fulbrightdental.com/post/best-fluoride-free-toothpastes-of-2024",
+          "title": "Best Fluoride Free Toothpastes of 2024 | Fulbright Dental"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-toothpaste-brands/",
+          "title": "9 Organic And Natural Fluoride Free Toothpastes (2026) - The Good Trade"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "title": "Best Fluoride Free Toothpaste – 2025"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+          "title": "Best Fluoride Free Toothpaste – 2025"
+        }
+      ],
+      "textPreview": "I'll search for information about the best fluoride-free toothpaste options for you.Based on recent information, here are some of the best fluoride-free toothpaste options:\n\n## Top Fluoride-Free Brands\n\n**With Hydroxyapatite (recommended alternative to fluoride):**\n\nRiseWell, Ollie, and Boka toothpaste feature hydroxyapatite—a bioactive ingredient that rebuilds enamel naturally.\n\n**Natural/Organic Options:**\n\n- Dr. Bronner's is made with over 70 percent certified organic ingredients, free of flu"
+    },
+    {
+      "prompt": "best fluoride free toothpaste",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Tom's of Maine",
+        "Hello",
+        "Boka"
+      ],
+      "citationCount": 30,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4K5B5ORN2ThoDdgCuLcUjX7IkPIT7phlBwlylmHlbUnhM84VclS1pWZsQlt3BiogDJl9r0jtN1-WV-k5aMoBrENq6YU3kS1SSN9NeCfyEpTQt4bzFqUt46CRlVYT_Pv81d39HslOs6rOWBzqHid_PdGTQBHf6IFsDCu9zSW_5eRGCk9Mp519I",
+          "title": "revitin.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF18LSDzeB09XdooGYTbxiBs6x7RKp0wlOgR9QtfUbdM0fWuzXNG7b7E5h_yXydMT5ZYwuj3O6TpvKHRqx1k-fSYG1chhJIHqgbYA5OhjnYhev5h8j07KCHv4Z56wRh0sow0a1GBFCWhd9NOGZf-nMILuoVwTj0bCLDhr1qRy5lEPnmf9jWj7w=",
+          "title": "drgabe.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGp5UCraPcE41il2Tckr7ZeXU_SlG8G9kxiTAR2Q-SEhs6e7vyfkXurXDN2NiJvh-UH2QYK9nY1nTdsC0gk7aOh1eHEC6bxietTuOqRicD3XVMQNs9w8cotoM7JeV8VqDNqm-I1TmASpcr7K5noyREAbGML8F4gmoUl6CoMM-_-vkf57P-HUw==",
+          "title": "himed.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRFgCAQZJYaR4Klkl5xVD11D04S8-APFP1lvSkbFH9WmXj5vjgxhbWUtQn087bVFdd72Rl1AFHinXnOQW6rYtDDCz3YUhmEbhyX7mxpvuJ5nZEepg_SXTEgPwddxVIi2CDZxWGJAzQsx37eQ==",
+          "title": "dentistsunset.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEspVNHOhJR0mX3COfDJqvof61Sw2DDk3R-v3z4FWr5c1tMIcTw8Sf0IaqczGH62-hPYn4uz3AHdh7Hw0nIwh_mQ83lFlgPTLVEouIFT_y3rLMZoslW5GU0_GLh2meA4EuLRq5XBDVyi93prdoLq5vCSGW_dHJL8zi1jKG3PhV9cC2p",
+          "title": "petalumadental.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFAbfYnt814cDHt5l4ho1LWYLPHKODKVLyis3qKmQx59xWkI49U8mlInWd3CBpYs994t19P0IVwNz8TqQMuaoFzGFRkO0rAgym2hUjBaP-4Hj9Kedz8V-bTspNNoq7HtMaVg8y1ZdsDJAkbzBHo80EjZLrWiJ1NaitNlcQAm3QomXI=",
+          "title": "greatbeginningspd.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEwDc20bZ8wDlrFBhphp33YFekNjYpDtscSlX400ilkqCgld4JgRPriBLVRTq6iVtdiCZ8u7hEPyIZION_Recp6rCCHWqMLA5xLW6u3iKFA5oc0x5dxsWD99RMsF5F8I3VPB6Qab33ybGfzx3WKiOdtRSHVd1nPa2uD4GurgUl3MCHx_pcwQ4I7rh1buGONu6qZ2SMrBlV1FetLrsdwnw==",
+          "title": "stsmiles.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG1j-DAUooFmjB9GdUYfpkxwIMv7Mdc0Q7RCtD-LahBYB9sn9lqioXYkhJCfa30jogxCxsLY6vF17VdMzMqn7iLVnub6CSR_CESjDHGhJ8jEIraQaF8ckVQAYtLb_OSOM8xQYuc5hI9Tp1YhylacejSZWxmIvUF",
+          "title": "webmd.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG9Kgc5tnGGiAz6mHvLVMFmudCL48RCFv0zk9Rut39QnAfb1xaYoFYkwJe6d5pLQ0E9x14GDeypOVL_bpMYQo1fgOZYSR6auT7JccLXOs426yCSZeWE96esK3I8wt3Gnlgz7StWkO-SXYVumKwGz5fdQJfDHEP1Tysu-dx5yl67SP2-hXhjuioGFEzOR_n45EbxVuLByg==",
+          "title": "hastingsdentalcentre.com.au"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdMMtU3aumor_t49-m-afaQ0v_cw8qZBFd8-ybLusWVLON9otf7JI4UfOwD5Wu85NEE0Zw48mvOrah3ov77qHDKuAF24hq9BJHnEI1jGG60Nz-boy8nrcRASF93jPiGpAdiHxjZ-FIQ7HnDptFbqXdg3UOfG9BLGLAtHppF0AL2aurn8wyXdNhVW-pAoswOcYasr3ftQpp9QwR5HPAFDYaFenMLIgPvjM2bnSJW3TUZkSfzdDrDJLyw_tCKW0m",
+          "title": "bufordfamilydental.com"
+        }
+      ],
+      "textPreview": "For individuals seeking fluoride-free toothpaste, a variety of effective options are available, often featuring alternative ingredients to support oral health. These toothpastes cater to different needs, including overall oral hygiene, sensitivity, whitening, and sustainability.\n\n**Top Fluoride-Free Toothpaste Recommendations:**\n\nSeveral brands consistently appear in \"best of\" lists for their fluoride-free offerings:\n\n*   **Overall and Whitening:** Tom's of Maine Fluoride-Free Antiplaque and Whi"
+    },
+    {
+      "prompt": "best natural toothpaste",
+      "provider": "openai",
+      "brandCited": true,
+      "competitorsCited": [
+        "Tom's of Maine",
+        "Hello",
+        "Davids"
+      ],
+      "citationCount": 8,
+      "citations": [
+        {
+          "url": "https://www.healthline.com/health/best-charcoal-toothpastes?utm_source=openai",
+          "title": "10 Best Natural Toothpastes for Plaque, Gingivitis & Cavities"
+        },
+        {
+          "url": "https://www.harpersbazaar.com/beauty/health/g28565198/best-natural-toothpaste/?utm_source=openai",
+          "title": "The 11 Best Natural Organic Toothpastes in 2024"
+        },
+        {
+          "url": "https://www.dentaly.org/us/natural-tooth-care/natural-homemade-toothpaste/?utm_source=openai",
+          "title": "Best Natural Toothpastes: No More Chemicals In Your Mouth - Dentaly.org"
+        },
+        {
+          "url": "https://www.active.com/fitness/articles/best-natural-toothpastes?utm_source=openai",
+          "title": "Best Natural Toothpastes of 2023"
+        },
+        {
+          "url": "https://www.active.com/fitness/articles/best-natural-toothpastes?utm_source=openai",
+          "title": "Best Natural Toothpastes of 2023"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025?utm_source=openai",
+          "title": "Best Natural Toothpaste - 2026 – realskincare.com"
+        },
+        {
+          "url": "https://ecothes.com/blog/eco-friendly-toothpaste?utm_source=openai",
+          "title": "9 Best Natural and Eco Friendly Toothpaste Brands [2025] | Ecothes"
+        },
+        {
+          "url": "https://www.allure.com/gallery/best-natural-organic-toothpaste?utm_source=openai",
+          "title": "9 Best Natural and Organic Toothpastes, According to Dentists | Allure"
+        }
+      ],
+      "textPreview": "When selecting a natural toothpaste, it's essential to consider both the ingredients and their effectiveness in maintaining oral health. Natural toothpastes often utilize plant-based components and minerals to clean teeth and freshen breath, avoiding synthetic chemicals and additives.\n\n**Key Considerations:**\n\n- **Fluoride Content:** Fluoride is a naturally occurring mineral proven to prevent cavities and strengthen tooth enamel. Many natural toothpastes include fluoride, but some opt for fluori"
+    },
+    {
+      "prompt": "best natural toothpaste",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [
+        "Davids",
+        "Boka"
+      ],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://health.yahoo.com/article/best-nontoxic-toothpastes-152737423.html",
+          "title": "6 best natural toothpastes for a cleaner oral care routine — tested and reviewed"
+        },
+        {
+          "url": "https://health.yahoo.com/article/best-nontoxic-toothpastes-152737423.html",
+          "title": "6 best natural toothpastes for a cleaner oral care routine — tested and reviewed"
+        },
+        {
+          "url": "https://health.yahoo.com/article/best-nontoxic-toothpastes-152737423.html",
+          "title": "6 best natural toothpastes for a cleaner oral care routine — tested and reviewed"
+        },
+        {
+          "url": "https://www.thequalityedit.com/articles/best-natural-toothpastes",
+          "title": "The Best Natural Toothpaste of 2026: We Tried Them All | The Quality Edit"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-toothpaste-brands/",
+          "title": "9 Organic And Natural Fluoride Free Toothpastes (2026) - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-toothpaste-brands/",
+          "title": "9 Organic And Natural Fluoride Free Toothpastes (2026) - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-toothpaste-brands/",
+          "title": "9 Organic And Natural Fluoride Free Toothpastes (2026) - The Good Trade"
+        },
+        {
+          "url": "https://health.yahoo.com/article/best-nontoxic-toothpastes-152737423.html",
+          "title": "6 best natural toothpastes for a cleaner oral care routine — tested and reviewed"
+        },
+        {
+          "url": "https://girlboss.com/a/blog/best-natural-toothpaste",
+          "title": "Top 5 Best Natural Toothpaste in 2026– Girlboss"
+        }
+      ],
+      "textPreview": "I'll search for information about the best natural toothpaste options for you.Based on recent reviews and expert recommendations, here are some of the best natural toothpaste options:\n\n## Top Recommendations\n\n**Davids Premium Sensitive + Whitening Toothpaste earns top spot for delivering effective results without controversial or potentially irritating ingredients**. It carries the Environmental Working Group (EWG) Verified mark, meaning its entire ingredient list has been independently assessed"
+    },
+    {
+      "prompt": "best natural toothpaste",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Tom's of Maine",
+        "Davids",
+        "Boka"
+      ],
+      "citationCount": 16,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEEVqUCezTD-hMtfGPB3mL-WYO6S35yfCeBYscHHx-qaNuNTFG_WK24ZVIuh5QwMv6X0NIcwB2WXJeYSoyYnRsIKkE6q9BcihyEBOgsAkyM-qwbjJPKlypYvnyzU639U2rs5jhb9b4ey5QPQD8=",
+          "title": "nih.gov"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG3ETnJOBeCDAuN2uTLJ3w4zGU1Fw9Z_Xeu3E6GDFTeb4O17vLYCej64V1o3UlTdk8Lc4U6uNw-F7IkdsNlo-9CQEg-P1UU67-2f5SA7L-UwxGCt0Eh2V72jw4pVlwnG_UT991oczJaMqBJ_6s45P2lb6w5mpEr8_pkmWlYepUMtLGnCAlG9WGYrpYz",
+          "title": "transcendentaloral.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHNU9JVWQxVe7-X4cI2M-muAWXP4sA5EIoP1Faosg0FBAbLz3AqDboXassmGGCBu6FuXnULg-Q6w8a7B06Ny-PRyLHHBGoQiXdG-0SuP094yS_tvKiXkfMUTqZ-C23Uzk7hstHDcr7CfME4GzOx3EO-7K_Bh4lQ1d38qyg=",
+          "title": "getlivfresh.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHWZflsSivyiD6TKAIqRNXXDMpMXGT_-havD3SXPCNhsqqBdPwzDoKCpRSXJzc9ifr-4GevlyTNnKWZQ24307zJPtOeG0H7bXeSKjw0ticppmEbwPE0SH9a67uD7eTHKCSaKMJUbzNtaa9dFXzchoG5Oa4ITyU1zJMYy6J5bf_tBGhad6b34M8bYrY3iiT6MUz1Actk8UGZHXIoFfqQaolyWYXhfvyFWPEk",
+          "title": "zerolla.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF6FX9Hgh2ILtuBYdOnVA6zJQhIVIgdRMk05CuV_CBmNZ2eQ-Oc8y-QI2UOTgXRfOhVHlEIMK8Y245fFWh1h7MxT6ErAFGf1YZ_dSBMrCwM_2TWr_aONowQJO496tZGqnOkoQnF9ZkoKEJWArae6xJwhPJ6P2No51kvbpOJh3MuzPhSCEiWLrKSh_a-4-3Gd81D",
+          "title": "liveplusultra.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGVQ-NAnt09Ev_hIoLs6iIiXEQG6lgySakAfwv0t8EBzz9Mi-zPNnTTIZAhhrgh2SyNio5U7Cy-d87TJjozqPsOwB1nYdihRG6HOnBWT83ANgsOJzIPEn7nu1LXxnWUvWnUXVUUgTqxZHp8P__9WdwnmW2LRay0i1nnxszHF-x_vVq7bvKuEhYCg0ZonZepd1PLKqATAGPN3O4UXno=",
+          "title": "flourish.dental"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJSSh1jrCSf0-cpuh2cWvzZTk8dH3jAMfNw7YoKl0OmazsxZffvAwF3JDeM-TWoH5_CoQe7PYAIpEH2wvoUjjHsg3F-jxsOqN85AabwbZ2gktLxQR7p0mABO9jnuRquNPR6Di8aXO8AdhrjkU9oBZ5-nbu2bozKriGRAc=",
+          "title": "thequalityedit.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEDyMKg7qP7ZxWRdktvu5M-J6NB6NL53YT5hYhCCzXK3Q1ywfWuyr7cbOkMPgNi-M4Q85u3Bj7yytBU19aC-VDy4Ev8XpDqhNnLwzz6bET4jlvBnWzGhOFjflb1o2oz4b8t86cRnZqObWc2mNBWoDPsf2gQAuysQtRpr53q20l6BxFE",
+          "title": "greenmatters.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEHc16pURchjHVbwDkvUzXRdSDA6w2exq_pOG_fLdMwZA6CqQQRGos5NqkilCARYUBcEx10zb_2_espaFsFrZdGjMb824Uz9cla7ULqjzB_Y7ddRjVwzD77mcyzDqm6oiHgDQZM1bidJ9YhVDuY6wOs",
+          "title": "zerowaste.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFI5ptoXsNpS2q83qChb09qqm99slR9fUnN_BS97GF7r6QsLz7WF0PmGHmc6QbjU7EdU_K_ucwMSIOugcELOuT_tapN92-OtNBe_JW-wERf-TM_Q9CHL0WxW4dWy6o9f-3Q-cUa2m9ptTYddH1jlemkQI5wzSclaXfkt89ASVM=",
+          "title": "revitin.com"
+        }
+      ],
+      "textPreview": "When choosing a \"natural toothpaste,\" consumers generally look for formulas free from artificial sweeteners, flavors, colors, preservatives, and harsh foaming agents like sodium lauryl sulfate (SLS). Many natural toothpastes also emphasize plant-based or mineral-based ingredients and may offer fluoride-free options, often utilizing alternatives like hydroxyapatite or xylitol for remineralization and cavity prevention.\n\nHere are some of the best natural toothpastes, catering to different preferen"
+    },
+    {
+      "prompt": "is fluoride toothpaste safe",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Yes, fluoride toothpaste is considered safe and effective for most people. Fluoride helps to strengthen tooth enamel and reduce the risk of cavities. However, there are some important considerations:\n\n1. **Age**: For young children, it's advisable to use a small, pea-sized amount of fluoride toothpaste and supervise them while brushing to reduce the risk of swallowing too much.\n\n2. **Fluorosis**: Overexposure to fluoride during childhood can lead to dental fluorosis, a cosmetic condition that af"
+    },
+    {
+      "prompt": "is fluoride toothpaste safe",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Fluoride toothpaste is widely considered safe for dental health. Here's what the evidence shows:\n\n**Safety Profile:**\nFluoride toothpaste has been used for decades and is endorsed by major health organizations including the American Dental Association (ADA) and the World Health Organization (WHO). When used as directed—typically a pea-sized amount for adults and children over 3 years old—it's considered safe for regular use.\n\n**Key Safety Considerations:**\n\n1. **Normal use is safe**: The amount "
+    },
+    {
+      "prompt": "is fluoride toothpaste safe",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native"
+      ],
+      "citationCount": 5,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHzv4jrkeY3Pti9xbJBjlN4tfb3pEbC3fgBV_RjSxDKWOSvD2pkJiIKjwrkbsbOGbDATan_ZYmYhJuLx069Zn-o2dU29FIamrSDuMefBzuF_HFckRBIKELCkQQMeS3iKGIZsl3Ay7iQiKlVN926f26z",
+          "title": "healthline.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBU_-NO5GYx_EV8MtEuvZGgOuvr8NrjfRj6Ctn6mEBhQxKhnX3pTNz-TLKOa3T9W9iIung5SboOmsLlNeVa1ir_mwluhhIpuIi8Lx198oni_FxJggOHhtxjsfvN0frvzVmTWe5OtfVmAx-ARf5HvDEAxay1DenNranWYyJSDASVlQMaPsJaOgqLHk6OU4KoG12Jg==",
+          "title": "rochester.edu"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhXvSXdzH3jwmrranG6Y4FgPJKFnJ93g0g4VmzD36JFZgIjJo_UONqhVVWDVdhHCCcKw0b0XllSlKbKRaG-ZCaYjffViWiCtn0Lky5WieMI3HKOzFB7ark-PSIJxdcoONHbzCnMP3RyynyxwHWlzZx5d4CZACae93dDFDws1HpG0Eh5O49PEOjdr_CqLlsCJeu",
+          "title": "colgate.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFFVu5E7r5WJnhGHF_NqR55rD7tiHQ54vYtHJtyX5lD_Arpla2c_o_H3C6kHZQZTX8DewlwuufPKq8aWktJWYVEtFKvziMsvqFA-I_Pd9WiEF1vNiwP3LmOKIeUyodccwqIxMQ-cOzxIUV6d2Nobcy8cho3NIN3_sJ_",
+          "title": "cdc.gov"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRhiGffh5foOQXvY9GT_Ol3jaODICioH_FYbuRq991ehE9xtd6Qi4J4YEsev_BbVnrYJK0J6GWcRWWNDRzeCqc1FTfv1Hgk5dntA1l-3r0XAl7a48E9RvLtSxXdM3I6A1ql5cZWt2g2MPJncFfOV78LWyIy-Wcf-vvwzUooWWQ",
+          "title": "drbronner.com"
+        }
+      ],
+      "textPreview": "Fluoride toothpaste is widely considered safe and is recommended by leading health organizations for both children and adults to prevent tooth decay. Organizations such as the American Dental Association (ADA), the World Health Organization (WHO), and the Centers for Disease Control and Prevention (CDC) endorse its use.\n\n**Benefits of Fluoride Toothpaste:**\nFluoride works by repairing and preventing damage to teeth caused by bacteria, strengthening tooth enamel, and making it more resistant to a"
+    },
+    {
+      "prompt": "best sls free toothpaste",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Hello"
+      ],
+      "citationCount": 5,
+      "citations": [
+        {
+          "url": "https://www.dentaly.org/us/oral-hygiene/best-toothpaste/sls-free-toothpaste/?utm_source=openai",
+          "title": "Best SLS-Free Toothpaste with and without Fluoride"
+        },
+        {
+          "url": "https://www.dentaly.org/us/oral-hygiene/best-toothpaste/sls-free-toothpaste/?utm_source=openai",
+          "title": "Best SLS-Free Toothpaste with and without Fluoride"
+        },
+        {
+          "url": "https://www.dentaly.org/us/oral-hygiene/best-toothpaste/sls-free-toothpaste/?utm_source=openai",
+          "title": "Best SLS-Free Toothpaste with and without Fluoride"
+        },
+        {
+          "url": "https://www.dentaly.org/us/oral-hygiene/best-toothpaste/sls-free-toothpaste/?utm_source=openai",
+          "title": "Best SLS-Free Toothpaste with and without Fluoride"
+        },
+        {
+          "url": "https://www.dentaly.org/us/oral-hygiene/best-toothpaste/sls-free-toothpaste/?utm_source=openai",
+          "title": "Best SLS-Free Toothpaste with and without Fluoride"
+        }
+      ],
+      "textPreview": "Sodium Lauryl Sulfate (SLS) is a common foaming agent in many toothpastes, but it can cause irritation or sensitivity in some individuals. Opting for SLS-free toothpastes can alleviate these issues while maintaining effective oral hygiene. Here are some top-rated SLS-free toothpastes to consider:\n\n\n\n**Hismile Toothpaste**  \nAvailable in flavors like watermelon, grape, and vanilla, Hismile's toothpaste uses Sodium Lauroyl Sarcosinate as a gentle foaming agent. It contains fluoride for cavity prot"
+    },
+    {
+      "prompt": "best sls free toothpaste",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [
+        "Davids"
+      ],
+      "citationCount": 10,
+      "citations": [
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://www.pronamel.us/why-pronamel/about-sodium-lauryl-sulfate/",
+          "title": "What Is Sodium Lauryl Sulfate?"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        },
+        {
+          "url": "https://myprivatedentist.com/best-sls-free-toothpaste/",
+          "title": "8 Best SLS-Free Toothpastes (2025): A Dentist's Guide - My Private Dentist"
+        }
+      ],
+      "textPreview": "I'll search for information about the best SLS-free toothpaste options.Based on current reviews and recommendations, here are the best SLS-free toothpaste options:\n\n## Top Recommendations\n\n**Best Overall:** Oral-B Densify Decay Control is recommended as the best overall SLS-free toothpaste—it's gentle on the gums, has a pleasant taste, and contains stannous fluoride, an important ingredient for preventing gingivitis and decay.\n\n**For Sensitive Teeth:** Sensodyne Pronamel is a strong choice. SLS "
+    },
+    {
+      "prompt": "best sls free toothpaste",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native",
+        "Hello",
+        "Boka"
+      ],
+      "citationCount": 7,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF2cve3qUyaBg93xQ85px5qKPV3VFFtF27mA0w1JOUnhZgKVTtVqegSXBzRrkKiz_iAe0ot27jpQLbIDxFMl2imdo2f4dNthGs4HwToVpUOADphng14MBwln5Wo-UutidytDJ1J117W4rlCJwFL3YBEzw==",
+          "title": "myprivatedentist.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHX1zD7QtXcdS9XpD5rIBTmW645cx6wYOyB3H_cWRdgkOwlpJYPpcn5XPma6eXZBJhE6kbm-8pPX2AF3-ZZQG6gIv0lY7T4zi3FAl7f-LA1H8d7GOH1Y78ceQPN8SzNr8oK8KPs_C0=",
+          "title": "youtube.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbX_I5qtYifvGJK01Ym2VBAJ8zCZb65YTrSKGGJFNbeI5Xx--h6VGS6FZvBF40PB_Nbw9g0382wys07TUqzNBCI_xEIW-2Qo3zF7Go3dwLXPSdGJyKKITssqd4bpNtD8XOri5zQNg=",
+          "title": "youtube.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGG5WTNeGYzidGFylcf5w6JHX7FKIjQwSKxFaQwt7F5zP-iQaebQ9l6YY0mKgw2BW7AzUiqGFIaAGQOpa2eAXEwow5ql3SIi0FUZZtBk8YtAJpMjzof-SZUOOYOD_3NfAE_niXjEqignVeqm6inLWVdD4MRUElBnt0jK1dpw0q3voRqMvLOP4_yiLc=",
+          "title": "keynotesupport.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF-vb2D56zX65bZrkFMh6s22cJz98MYifOxzyAML1S3G0ItElWy69dXr1fbrT8tXYRgYxq6cCpMRdoV8bqN3QHo7wb1cCyd-fro-KI6C_v6NCJQdoLhADTwvPhSBr7XDrWuSSVOY6PORzI-fKi_l-Ce8kgJfg==",
+          "title": "nymag.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFWMUQBriUrC5Zu5DECrDVGQwKSp0DkoltVuUlxapWEArP_o2IzKOVqcMT_gJVMXqb_3xasg-BBU64-22w6LDXD06QKg2jZAaMGBiobllW11hGS9nwzxFG6WP_AmwJxhQpqZWrDQlEgRIjV-N0XU9o=",
+          "title": "implantjournal.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGB7YJ3A6zYmoXAEZf-bXjWkANexKJuiVfd5YS8rg9anGHEmoy5ARfI1q8WbQDoNStbONqw6C99aa_zERHDiFqZBTAMJqpP9vz7hzqTGo27hlrdXbSD-3HyFQdkZ0QJvpVXissPUPli_TdIz964mN0=",
+          "title": "boka.com"
+        }
+      ],
+      "textPreview": "For individuals seeking toothpaste free from Sodium Lauryl Sulfate (SLS), a common foaming agent that can cause irritation or sensitivity in some people, several excellent options are available. Many dentists recommend SLS-free alternatives for patients experiencing dry mouth, recurrent ulcers, or discomfort from conditions like oral lichen planus or burning mouth syndrome. While they may produce less foam, SLS-free toothpastes are equally effective at cleaning teeth.\n\nHere are some of the best "
+    },
+    {
+      "prompt": "best natural lip balm",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Burt's Bees"
+      ],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Here are some of the best natural lip balms you might consider:\n\n1. **Burt's Bees Beeswax Lip Balm** - Made from natural ingredients like beeswax, coconut oil, and sunflower oil.\n\n2. **Nivea Lip Care *Pure & Natural*** - Contains natural almond oil and is free from harmful chemicals.\n\n3. **Hurraw! Balm** - Vegan, organic, and made with cold-pressed oils, available in various flavors.\n\n4. **Eco Lips** - Offers a range of organic and fair trade certified lip balms.\n\n5. **Lip Balm by Badger** - Mad"
+    },
+    {
+      "prompt": "best natural lip balm",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [
+        "Burt's Bees"
+      ],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://parade.com/shopping/best-lip-balms-for-dry-lips",
+          "title": "13 Best Lip Balms for Dry Lips, Tested by Experts (2026) - Parade"
+        },
+        {
+          "url": "https://www.lucismorsels.com/best-moisturizing-lip-balms/",
+          "title": "Best Natural Lip Balms For Chapped, Dry Lips | Luci's Morsels"
+        },
+        {
+          "url": "https://organicallybecca.com/best-organic-lip-balms-petroleum-free/",
+          "title": "The Best Organic Lip Balms & Lip Care Products (Petroleum Free!) • Organically Becca"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/organic-lip-balms/",
+          "title": "9 Best Natural And Organic Lip Balms For Winter - The Good Trade"
+        },
+        {
+          "url": "https://www.lucismorsels.com/best-moisturizing-lip-balms/",
+          "title": "Best Natural Lip Balms For Chapped, Dry Lips | Luci's Morsels"
+        },
+        {
+          "url": "https://lowens.ca/blogs/seo-news/best-lip-balms-dry-lips-natural-2026-768-54",
+          "title": "Best Lip Balms 2026 | Top Natural & Hydrating Lip Balms for Dry Lips – Lowen's Natural Skincare"
+        },
+        {
+          "url": "https://thenewknew.com/kinda-obsessed-organic-lip-balms/",
+          "title": "10+ Best Organic & Natural Lip Balms (2026 Picks!) | The New Knew"
+        },
+        {
+          "url": "https://parade.com/shopping/best-lip-balms-for-dry-lips",
+          "title": "13 Best Lip Balms for Dry Lips, Tested by Experts (2026) - Parade"
+        },
+        {
+          "url": "https://humblebrands.com/products/hydrating-lip-balm",
+          "title": "Natural Hydrating Lip Balm | Organic Chapstick Alternative - Humble Brands"
+        }
+      ],
+      "textPreview": "I can help you find information about the best natural lip balms. Let me search for current recommendations.Based on current recommendations, here are some of the best natural lip balms:\n\n## Top Recommended Brands\n\n**Burt's Bees Beeswax Lip Balm** - A natural, nourishing and gentle formula that keeps lips soft and protected for everyday use. Made of beeswax, shea butter, and vitamin E.\n\n**Poppy & Pout** - Uses simple and natural ingredients such as ethically sourced beeswax, organic coconut oil,"
+    },
+    {
+      "prompt": "best natural lip balm",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Burt's Bees"
+      ],
+      "citationCount": 7,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFoOn2LwI_l6fJ3cnma4slIBnDbaw6zTpgcU8Xfx44t1IMNBx_4dKdZZIPCSt2tEyve2J7aY6wTrptpHpDF4qZlinnOTpYWZLyAlJi2PZY9wu_UnqQrC2b-MtlPzoa1jn5kYYY5qk10lgnAN9vYHUHExA==",
+          "title": "gurlgonegreen.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFYPifH-NNWsigABHDYFfe4ezDJyvpVbsruLvxvC6hJ73CPa0mx3LjBPQzd94KuNQjGacRX-GdfYcOuDKrBUlvZEVqcBzRcXZMxo65kdN6mvFizEaGlEIka8pzgpk_pn85Yp_BO3r-FLDMG4djpdClMIhyTiC5a__WHjubC8Q==",
+          "title": "organicallybecca.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEq-pwUvtaXrFJmQmMaIKaBneIhPgnPGNonJrpWvlDm1YyJwiW1wTHU4DQxgDHlM3nBGmfqR9kUn2x0TkxBw7HBn-QHnzzSymBLRsZrb7U2aSJb3X6z2o5mD9f9AtcV6daGGZZdOd4niK4km5oTtcDIZKtr",
+          "title": "lucismorsels.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMYjGuoKrjEpmhP01MGxETqGpl8b36afrfOzYf-kztYWd8yYjNa0n_THTWsq64-g1e5-2usbcF8jTrwV_cEyrUE0ZuqB6_3LfBhRSn56dLv4_jXKt_Ao47DfYa8mjtechYnJJROBahZVQHxoPr8H7FvQqM5KWVbtiBiUqIpfa642RrFwJaQiJ9M7uYzcSHKCY18Wkl5Vi2N7zjpgdiaSx9O77fj7KjQV8eISirmXqAC1y-iDl8c3TceVCQIg==",
+          "title": "motherearthliving.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHn0zb1ExpwVgnPb6Xb7rnF2Tpcc_n7aZH5pIYiT90SS1Wm4grGWsy6VoeK7YY5zMYaKIKK-H7mAhVUO1G2uxMaUhAmFROhyDlh970ut5Srqi8IGoxtbOkhHOSblS3hVyLxsX9ivM-pYDZIsf-OSyEa",
+          "title": "visionsofvogue.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF_33S9ACgZCSgGD3svXGO67wh-yFNvoJbjOOGUqWK6VF064EEOe8fjI5EqdlCvF8BTGwAN2_78RaudkHbvwZqcaaLpCzSRLaDzHr5DZEviE6XXiKjP2FEjya5OgYPTrc9dtVhafzIYoDRAvkGN7KrLROk=",
+          "title": "thenewknew.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDucS-FRbKhCzVdIodPUZ2fzgmwSetRPiTFzvlGmttwuLfr9LFXEykLyHpEu9cmhYivoHvcN8HZYSEZYkAunRsRnBduyArWNh4lbsHyc5vFqai51PqevhkZXNTntjaRr2b_c5MPUxeIOqt98hV6HbxmxRHn6d9K0IAKNJE",
+          "title": "organicbeautylover.com"
+        }
+      ],
+      "textPreview": "When seeking the best natural lip balm, look for products rich in ingredients such as beeswax, shea butter, coconut oil, jojoba oil, and vitamin E, all of which are known for their moisturizing, healing, and protective qualities. Many natural lip balms deliberately exclude petroleum-based ingredients, parabens, and synthetic fragrances.\n\nHighly-rated natural lip balm options include:\n\n*   **Alpyn Beauty Sweet Agave & Willow Bark Plumping Lip Mask** is highly praised for its ability to deliver lo"
+    },
+    {
+      "prompt": "best natural bar soap",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Burt's Bees"
+      ],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Choosing the best natural bar soap can depend on your specific skin type and preferences. Here are some popular options that are well-regarded for their natural ingredients and effectiveness:\n\n1. **Dr. Bronner's Pure-Castile Bar Soap**: Made with organic and fair-trade ingredients, it's versatile and gentle for all skin types.\n\n2. **Puracy Natural Bar Soap**: Crafted with plant-based ingredients, it's free from harsh chemicals and synthetic fragrances.\n\n3. **Nourish Bar Soap**: Known for its moi"
+    },
+    {
+      "prompt": "best natural bar soap",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 7,
+      "citations": [
+        {
+          "url": "https://www.stylecraze.com/articles/best-natural-soaps/",
+          "title": "13 Best Chemical-Free Soap Bars With Nature-Derived Ingredients – 2026"
+        },
+        {
+          "url": "https://gimmethegoodstuff.org/blogs/guides-and-product-reviews/the-best-natural-soap-guide-2024",
+          "title": "The Best Natural Bar Soap Guide 2025 - Gimme the Good Stuff"
+        },
+        {
+          "url": "https://gimmethegoodstuff.org/blogs/guides-and-product-reviews/the-best-natural-soap-guide-2024",
+          "title": "The Best Natural Bar Soap Guide 2025 - Gimme the Good Stuff"
+        },
+        {
+          "url": "https://gentlysoap.com/",
+          "title": "GENTLY SOAP ® Redefining care for eczema warriors ..."
+        },
+        {
+          "url": "https://www.lucismorsels.com/clean-beauty-bar-soaps/",
+          "title": "Natural Bar Soaps for Women + Men"
+        },
+        {
+          "url": "https://www.lucismorsels.com/clean-beauty-bar-soaps/",
+          "title": "Natural Bar Soaps for Women + Men"
+        },
+        {
+          "url": "https://www.thenaturalbeauty.blog/best-natural-organic-soap-bars/",
+          "title": "The 10 Best Natural and Organic Soap Bars of 2026 | The Natural Beauty Blog"
+        }
+      ],
+      "textPreview": "I can help you find information about the best natural bar soaps. Let me search for current recommendations.Based on recent reviews and recommendations, here are some of the best natural bar soaps:\n\n## Key Features to Look For\n\nLook at the ingredient list and pick soaps with natural and organic ingredients as these provide gentle nourishment and are free of harsh chemicals. Unless the label specifies that it contains only essential oils, you should avoid bar soap that has \"fragrance\" or \"parfum\""
+    },
+    {
+      "prompt": "best natural bar soap",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native"
+      ],
+      "citationCount": 7,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG61P83LoYyMVi-Rz0CKKaLSzLa_IVFvUpSOEANRQLSV1hSi3qott1ZAOBgxdNMQ2HlYJKEpf3utydheXmDMkWt5BnpuhQ3iIMMBOtM2v3vzOxw_kTxzOTmIKhNu3SJekxYP1Q0jmAEgmjdWxcs0vOGqztBB9n3Jg==",
+          "title": "amvital.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFtzQcnjL7vDtdq_CHkKSm1YHBZAM2jv4Pk4Iut1mVUmw8sulJtGT_YfLm05pa0mPZQDnCGavD6vpqDA8sZ5itaQ8nsmJ3x2xTEy_y08kKvphZrqOfcTyI=",
+          "title": "bearsvillesoaps.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEAWQwAz5OyfcDv84fW40HR_Fmfsn8JdFXS7R-jRJ6yd7T52-ypcrKqCIzcg5REKGaOmZ03_aMiQeH0eod6NlSsR2DaD8T5ml_dYy1oyDtFzz6vdCgXvrEuWN2hD7eAOZ9mvkArTJY=",
+          "title": "herbneden.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFUY2nVAU7MiEeYSa_e8aKKh2M4OUIJdo_p-gImyuNWijggcKdMhIqiuwI-RqpYM-P7vRYqgGUgioQKVYSAtVdY96My-tRVQzUz78pfPEhwg8qaW4GxxFSx3ENABJkhmdXZ3Fe4aoyLwjclOs3cfAUC95Q=",
+          "title": "thegoodtrade.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGwtiugzO7NX_xo1kkaoW486Sfr10bQQxdLQxFDnz58ll0gpAvY-n2B4k7HyvfA0dK4Ug6-TPu8yFX2w-P-o2I1m_Cp9JgmTM1mvEOoGNfhtUHYpBWeQ89ZXAyEhNi0cnXzm-3sQ5-JbkAvyHyAL_U2pis-QONve_GZqqMvqIaImQAttTC3L4GygQI8",
+          "title": "orbasics.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxbB8mxshJr8lKRFyEAsVxAvviWuxrWAyT2Y3twmqYQHjY2PMDGarHcenNfEIL1KaUtth0haMOxO1wJHDUVUPGbyu9txcW939jSdZXesdL4cxKz-LNL-p-_Eh8kWw2ZsE_h-cOcN2zHFL_a3z6xgdqXu-hgBA=",
+          "title": "organicbeautylover.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPAi-ldFQrb4Hs-xnLkTC8VV6YMztEzDIGSnpVIhKpVurSpq3ba7Wmg0hwIbZ57GniSvZRlwQ_BeRPpL3FGKJtfWd9j9Slrm-eEe0RFRUsYxt53NF0A0UFSxEkdVaU-zyds63VS3JEZmdP8E-T4wB2EQ_RwzKsTb4pi21iDQ==",
+          "title": "chagrinvalleysoapandsalve.com"
+        }
+      ],
+      "textPreview": "For those seeking a cleansing experience free from harsh chemicals, natural bar soaps offer a gentle and moisturizing alternative to commercial varieties. These soaps are typically crafted using traditional methods like cold-process, which retains natural glycerin to keep skin hydrated.\n\nWhen selecting a natural bar soap, look for products that avoid ingredients such as SLS, parabens, synthetic fragrances, triclosan, and artificial dyes. Instead, opt for those made with plant-based oils and natu"
+    },
+    {
+      "prompt": "best non toxic body lotion",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 6,
+      "citations": [
+        {
+          "url": "https://www.vosbody.com/whats-the-best-non-toxic-body-lotion/?utm_source=openai",
+          "title": "What’s the Best Non-Toxic Body Lotion? - VOS"
+        },
+        {
+          "url": "https://www.thesparkshops.com/non-toxic-body-lotion/?utm_source=openai",
+          "title": "Non Toxic Body Lotion - Complete Guide"
+        },
+        {
+          "url": "https://www.thesparkshops.com/non-toxic-body-lotion/?utm_source=openai",
+          "title": "Non Toxic Body Lotion - Complete Guide"
+        },
+        {
+          "url": "https://www.thesparkshops.com/non-toxic-body-lotion/?utm_source=openai",
+          "title": "Non Toxic Body Lotion - Complete Guide"
+        },
+        {
+          "url": "https://www.thesparkshops.com/non-toxic-body-lotion/?utm_source=openai",
+          "title": "Non Toxic Body Lotion - Complete Guide"
+        },
+        {
+          "url": "https://nokaps.com/8-best-non-toxic-body-lotions-for-healthy-nourished-skin/?utm_source=openai",
+          "title": "8 Best Non Toxic Body Lotions for Healthy, Nourished Skin - NØKAP"
+        }
+      ],
+      "textPreview": "Choosing a non-toxic body lotion is essential for maintaining skin health without exposing yourself to potentially harmful chemicals. Many conventional lotions contain synthetic fragrances, parabens, phthalates, and other additives that can irritate the skin or disrupt hormonal balance. ([vosbody.com](https://www.vosbody.com/whats-the-best-non-toxic-body-lotion/?utm_source=openai))\n\n**Key Ingredients to Look For:**\n\n- **Shea Butter:** Rich in fatty acids and vitamins, it helps soften and protect"
+    },
+    {
+      "prompt": "best non toxic body lotion",
+      "provider": "anthropic",
+      "brandCited": true,
+      "competitorsCited": [],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://www.consumerreports.org/health/lotions/body-lotions-without-harmful-chemicals-a9940433558/",
+          "title": "Best Body Lotions Without Harmful Chemicals - Consumer Reports"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/all-natural-body-lotion/",
+          "title": "9 Best Organic Body Lotions With Clean Ingredients - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/all-natural-body-lotion/",
+          "title": "9 Best Organic Body Lotions With Clean Ingredients - The Good Trade"
+        },
+        {
+          "url": "https://thefiltery.com/best-non-toxic-natural-body-lotion-butter-oil/",
+          "title": "I Tried 16 Popular Non-Toxic Body Lotions, Butters, & Oils."
+        },
+        {
+          "url": "https://thefiltery.com/best-non-toxic-natural-body-lotion-butter-oil/",
+          "title": "I Tried 16 Popular Non-Toxic Body Lotions, Butters, & Oils."
+        },
+        {
+          "url": "https://thedaleydose.com/non-toxic-body-lotion/",
+          "title": "Non-Toxic Body Lotion Deserves Space on Your Shelf - The Daley Dose"
+        },
+        {
+          "url": "https://mindfulmomma.com/best-natural-body-lotion-brands/",
+          "title": "Best Non-Toxic Body Lotion Brands (Safe, Natural & Hydrating Picks)"
+        },
+        {
+          "url": "https://www.realskincare.com/blogs/news/best-non-toxic-body-lotion-2025",
+          "title": "Best Non Toxic Body Lotion - 2026 – realskincare.com"
+        },
+        {
+          "url": "https://ceh.org/yourhealth/non-toxic-lotion/",
+          "title": "Non-Toxic Body Lotion Roundup - Center for Environmental Health"
+        }
+      ],
+      "textPreview": "I'll search for the best non-toxic body lotion options for you.Based on recent reviews and expert recommendations, here are some of the best non-toxic body lotion options:\n\n## Top Recommended Brands\n\nDr. Bronner's, Ursa Major, and Weleda are among the top spots for non-toxic body lotions. Here are some other standout options:\n\n**Plaine Products Body Lotion** - This is approved for sensitive baby skin and combines green tea, aloe, rosehip oil, and vegetable-derived squalane, using only vegan and "
+    },
+    {
+      "prompt": "best non toxic body lotion",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 10,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHkPRGYYnN1S2k9RH8uMmaXd2XRHjosSJciCnqOwY6yPb-2tVC7QYElxA4uXJuPdTAR1BIxoD65f2K9sgahHG3miN3gA3mAf3YacOvzf_a2MUFyMonA-uvjPNS7aI0WMmkMqeZh0_iQzHnVT10oPxcdgtTrxoBwE42gBBuvjfrk0_lNMUGY",
+          "title": "ireadlabelsforyou.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETQhOCqMaDDBrsUrBpiYvhB_CFV5WmuqTJAA45ZJUi1YMDsfSeI71AUbHgB-bq2TnHDWWldxA2t28tEWLtEHk7FTJUvzVvF7nrGUhsIrBx1BvocXqCp_lIqUwFZ4X436dE-CucjkGlUmPj798hdUmRv4pp7WV09Nk7ebeOsCnCoXWMLVwaBsgj-kIAmj58cFhGUtMGU6AdWptxHVMckVNRzpOPkbBOtg==",
+          "title": "oilinone.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHNBf2x2m1gwxXdFLJL_5cOvsnxTk8kxHM_1eZTMGlsk-bIzslI3NuCOlASwhrmwEEu96KGo9lcDFHNRDyXVfCHOmBisHgjeadnpxzoGoBSwKk1DJHvVu9fzSP_VKETbPgkOmn25H8PGHSi0mxtM_m_eFgAkhLdPvwU84XJRw5W8IatT8cZEg==",
+          "title": "sundaebody.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGabvAIi6nk2WGwoX-FlDh98dc3bBnk9efmY3l6WzqZQmC0atsSQfuzhmEqYi8ZqMchCC6Fg6stjOeYKJGzpeMnBESltEjziOm729NCQLda8ArVDBJT4nKtEfl14-12UdG5cFY1bBZVxodih6CS5RTjT0KOuGs93hoLiGWKWSFOXa9LGel7BOVFecGDXMrNhw==",
+          "title": "monamoonnaturals.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGIj0nG38ATIjTjUv3_qCkqTi_Jea2mSsrEX1RchqclFAboc5TEMGcciaRJ2JKgaJS5-4T00lytjbTG-DGtGmnlDoE2MTlwP4N1Z8YhlvU4DIzUlGvVVzFt4UIeXXsGywFKkj44NR18CFDg_xgz2Fo0Y3UqlRloYPkwY48FNVQHAGTPIp5lLZYrWcG86b66Imacx0Ow8iQ=",
+          "title": "muktiorganics.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBAf-aXEnwO_keicii4q0cjtLxyJvBF5EnvM-oGce6a4OymJaqh02-Xy9WBXTrEir7ARsu2krPfNKaD8h2q74xYeRFzR2x-ndAeEmTMeXbNK6ginkHQLfgYDPsR23-q9U-4PAZe54o6N1FJJW4dwHLjztmVc3LnXLE3dKJVxbZtMMxYQ2cz--3bZMeRIbC7J6iCDnRuunuhAGjntk=",
+          "title": "healthline.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGNoJU0lbOeLKLIV59PH6IKjn0GMoTaYH0VBNegfz0Vj_fFFZh4ufkiB1ojYjvg5HFUZcLkti0-VFw7d9cm-D-X62HlWM8u7bIK6pmguyp-wJr21lmQSjAWZEUINb8Xokh72-lPKjw=",
+          "title": "terilynadams.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUgWsfn6tzK_4qSE-8YQgok7LRurtuUPHZPOWmK_VexPaTkaiInETnR3hLCxpGFI5qs2AsYq5KiVRbphTLTn_n-onxXS9CJ8mgnC1IMcrXetvZjhUJA-EZMd5jNuvxsZIi-UpWuClmTJnZk10hSvT8bB0ISlUVB1vxDU8Ce9q7HA==",
+          "title": "thefiltery.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzzPOBLwRTsS2XsB_0GtXwSE9EK2RPtgDfXrDXUC6K93WTDtJMwFzScHyUk87MjnNq13dv5vB-V75pLT0mmIzuQRFWhDT-B2rLxgkK0H_TIJyS5u-Cd6S8AbobUK8mqKVPzab85ZaNUy1m",
+          "title": "thedaleydose.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKtspTUWtbbJqP3nx4J4q9c19VARBXM4_fjDCmlsNgNlBzEBsx7WV4VwmPudlSCYYkNdC9iHBgNIpogiqJ1yaZg8hltuJkD4AsyNRAMbl2JW20UzlE-oscABw3aElXdniUIzBYpSLVeMzCfA==",
+          "title": "target.com"
+        }
+      ],
+      "textPreview": "Choosing a non-toxic body lotion is an important step toward healthier skin, as many conventional lotions contain ingredients that can be irritating or have potential long-term health concerns. The skin, being the body's largest organ, absorbs what is applied to it, making ingredient choices crucial.\n\n**Key Ingredients to Avoid in Body Lotions:**\n\nWhen selecting a body lotion, it's advisable to steer clear of the following ingredients:\n*   **Parabens** (e.g., butylparaben, methylparaben, propylp"
+    },
+    {
+      "prompt": "best natural moisturizer",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Here are some of the best natural moisturizers you can consider:\n\n1. **Coconut Oil**: Rich in fatty acids, it's great for hydration and has antibacterial properties.\n\n2. **Shea Butter**: High in vitamins A and E, shea butter helps to nourish and repair skin.\n\n3. **Jojoba Oil**: Mimics the skin’s natural oils, making it great for all skin types and especially beneficial for acne-prone skin.\n\n4. **Olive Oil**: Contains antioxidants and is very hydrating; ideal for dry skin.\n\n5. **Aloe Vera Gel**: "
+    },
+    {
+      "prompt": "best natural moisturizer",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [
+        "Tom's of Maine"
+      ],
+      "citationCount": 6,
+      "citations": [
+        {
+          "url": "https://www.tomsofmaine.com/blogs/natural-products/4-natural-skin-moisturizer-options-for-the-face-and-body",
+          "title": "4 Natural Skin Moisturizer Options for the Face and Body – Tom's of Maine"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/best-natural-organic-face-moisturizers/",
+          "title": "11 Best Nontoxic Face Moisturizers (Editor Reviewed) - The Good Trade"
+        },
+        {
+          "url": "https://goodmakertales.com/diy-natural-moisturizers/",
+          "title": "8 Simple DIY Natural Moisturizers for Soft, Smooth Skin"
+        },
+        {
+          "url": "https://www.eastsidebodyandskin.com/6-natural-alternatives-lotion/",
+          "title": "6 Natural Alternatives to Face & Body Lotion"
+        },
+        {
+          "url": "https://www.tomsofmaine.com/blogs/natural-products/4-natural-skin-moisturizer-options-for-the-face-and-body",
+          "title": "4 Natural Skin Moisturizer Options for the Face and Body – Tom's of Maine"
+        },
+        {
+          "url": "https://moogoousa.com/blogs/moogoo/7-tips-for-finding-the-best-natural-moisturizer",
+          "title": "7 Tips For Finding The Best Natural Moisturizer – MooGoo USA"
+        }
+      ],
+      "textPreview": "I'd be happy to help you find the best natural moisturizer! Let me search for current information on this topic.Based on current research, there's no single \"best\" natural moisturizer since the right choice depends on your skin type and needs. However, here are the top options:\n\n## Popular Natural Moisturizers\n\n**Plant Oils:**\nAlmond oil, avocado oil, coconut oil, oat oil, olive oil, peanut oil, pomegranate seed oil, safflower seed oil, sesame oil, and soybean oil all offer benefits when applied"
+    },
+    {
+      "prompt": "best natural moisturizer",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native"
+      ],
+      "citationCount": 10,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExb7s1yg6ELU7PBynVaS2AjqqZs40wpEiLymBlBkOvjgP3c0pVd8yaFz6uTiosA_8qPqiuOuc1i5lxNpbssMK5sO8WCU8FFBOJTJxTzMgGugDkXKvudpw5rwpHBO9v29A4SLkxvLOykMQcs-4eWhpLxL0mijqiyPkH_FCO0KtDIkcRnZYcXU1Q3OpPpzpHdkRcGYAZXP5w",
+          "title": "ladione.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGtZafh-FThoh06jqgAOwmFAM4yGDKewcRh6V5JI1sOp17_Gwt8Yiph2POr-entXQcNhfch8rGO9ENEBplkCHJmypsPoF3wolu2O_H6OcOsC2LmB7O-jOJny4nFuHOY_skglAGg8baGDyr_mPMvljEhU6Tu3641ZD5Q10GFxsqcSqSOI-OCbQ==",
+          "title": "handmadenaturals.co.uk"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFfA39XMIUigzKPDXJZmGaP6t4bm2EfFKSdKIKXe3OW3YZErp7GXM6aVpJcB5IG2axbvXUnEvZjp4fsfo41o-Opa4NB52V88KmkFxXOISA6zGnh1lMxVJkUeYujtySQbtRNrpsA-8r3BwHgY7c_eLwcEiP9XFyKCAt4I_ADmtgjMor6",
+          "title": "urbanzora.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYnFR1Z9UFBkqMBEgZD3JOgIlaqgv4KkIQnbMDleWrfd319etd9b-YP-b50U3IOmwVQVMOc8He5oaaxtgNCq1X0w2Q-VMSMCgFa2FRgoVlHeobPs6wUZNdjm88hrNRWUntRHZM5xa3mcctKqmUHdeMomAtsdu0nTz7L4GEz-Q=",
+          "title": "sacredrituel.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkDfwHPmmttz-M0R4ypa73VjUzk-qXjE_gV7AmznB5omPo8lXM80IwllDQ0UV67ZedBa_YMl4qP6eizgOgLmKsxegI8IDq1RwZLhL8QuP8EbSZAfOJzSf5lkjg8vm6F_xcEeBqR1MAsa9qtNbOmlTM1JVkSTDO6gkuAV7mFyJLOqgM7bpvpsyJGBugQL0=",
+          "title": "moogoousa.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFK8gz9eSlN0H4-Zgb-tfvdTsx3LfsdKopF3DBCKgfggssL4g9P0zD462NVjXt-WXgXaCrJxdJDO06l4Sjw6SuG1cDH5Dtyj0uOvJXROWeL0gMgfi-GPGgcOMRG5Y9W4bRnXdJ2EEKE2VMgBRSwimt7csl-BBVq3BmLtU1Ur5TZdZ6kBFvNkfHNWw==",
+          "title": "jordanessentials.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdYwVwHZMB3erH-Ufg8JM3-17Wp-l1cXr0iR1RIIptOWpCz5joMvoiVAiQqGHboHmd7-oQCHWwcHWFVTUoANAQwHzlXkMeh5nZM5yOFQhNElcmkWJLZOL3wITcFNT3uMjmcSvxrgqYDvd62zMPU5TIwvWMhjRTjA==",
+          "title": "organicallybecca.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELL4P19j6JVzjyL73dDbrwsmZ-5cFXgfBRM1hVfBPgzJnajLukW_kutfbJNbqCm3O4HUPiTeDT4VfU7Iots1WYUp-OPDjq-jYt3cwF93ydYtjmXpbCgAh1B1w92XD69sU5OikzwT10FZaoSLizZzLib4PbbWYEGQ==",
+          "title": "organicbeautylover.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENmEW4cXd6RP7x0njBENhFkKxJmdebq0fVkIt0GpaUdNiz6XeejYUzIaP4MUcVc3OKjddQ3hnWn6cTc6Xp2nfBCLUz72nrIDIDqi95Hcjd8anLVEuw3Y728_KbohIrJchmHdhR0dy3vID6_8-HNtWJ",
+          "title": "sephora.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGbxvWpn8Hlu7F9op3YImoW7pfFP9hNGRycMSgOEwxTttHpLLwImMu6sIFXxsZKIMdCMgBKMxilCX6muCTtPwjVk90g_wWk-aDae5hpTG-mIXprUCLQQyLYp6n7XfjhnKMFzjvsCX8iPM7P",
+          "title": "thenewknew.com"
+        }
+      ],
+      "textPreview": "Natural moisturizers leverage the power of plant-based and organic ingredients to hydrate, repair, and rejuvenate the skin without the harsh chemicals often found in conventional products. They are a popular choice for those seeking gentle yet effective skincare.\n\n**Benefits of Natural Moisturizers:**\n*   **Nourishment Without Harmful Chemicals** Natural moisturizers are typically free from parabens, synthetic fragrances, formaldehyde-releasing agents, and petrolatum, which can irritate sensitiv"
+    },
+    {
+      "prompt": "benefits of coconut oil for skin",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Coconut oil offers numerous benefits for the skin, including:\n\n1. **Moisturizing**: Acts as an effective moisturizer, helping to hydrate and soothe dry skin.\n\n2. **Antimicrobial Properties**: Contains lauric acid, which has antibacterial and antifungal properties, potentially helping to prevent infections.\n\n3. **Anti-Inflammatory**: Reduces inflammation and can help with conditions like eczema and psoriasis.\n\n4. **Antioxidant Rich**: Contains antioxidants that can help protect the skin from dama"
+    },
+    {
+      "prompt": "benefits of coconut oil for skin",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "I have knowledge about the benefits of coconut oil for skin based on established information. Here are the main benefits:\n\n**Moisturizing**: Coconut oil is a natural emollient that penetrates the skin and helps retain moisture, making it beneficial for dry skin.\n\n**Antibacterial and Antifungal Properties**: Coconut oil contains lauric acid and other fatty acids that have antimicrobial properties, which may help reduce bacteria and fungi on the skin.\n\n**Anti-inflammatory Effects**: The compounds "
+    },
+    {
+      "prompt": "benefits of coconut oil for skin",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 5,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGbQWGrduDpkzIdFlx_NnKBybWQXYQBg32qN-dlLuqcbc8urvkuJFzQikceDtlC2EsPlyavfKnMBBZeKli7pGmmJF4CBfnb23LSwk3nqWJI0qDCUctsrxCPY3PU1Xe1Dm6g9onEQxevSwudTEQWXbed2tOEuFsAwm6tN4dQK9kb",
+          "title": "nivea.co.uk"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFpUg4tvKitg3viQDopuBYSH5GSyMpeizw3roiEck81wJH5dAyinDt1VrCZHtqB0s3EuoR1-J_dy0d-HwIP1g0COBbl5_t0W3yExEM0KkQMdUr_9Medgp-W_9stT2Od4F0kFfSjZpLycksK5aUsEcwFMI5czdBRw3WnnvAn_gXMc2ez8QZkRmmp",
+          "title": "upcirclebeauty.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFtKXDHZ6tbndmzofevRW1vtIt6Hd_JEkGvD3XhZ3FDjvqRB9hBFZ8rWpkT4Txv357_cRVF6JNXhgYphLF3nN1fJyQ37-GB0Wk3n5fIc319BoUlTNkJgi9NbcWbsw9Pj0ohEhjdh2S_0yXa-byfLAgcQlfQZA==",
+          "title": "healthline.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGN11Hq0fSBfPWRtxOuMHw-5Aa_UtFdI53J8FOf08lzM329evVymQYDjusXJ5R_g61RxdRdhldKKlr815Q9CHpaorNrUxPZEbpvz5FhTetmnZeTOUvx8ldxhRCZEGXyxLwqgT6HhyCKRCwLRB7-CSQQBlI=",
+          "title": "clevelandclinic.org"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO5yyOvupAdvU5ZCrvtyVDclsaBI8i1aI0UzkFTa1yhi9pgov8wCDHgLJA3rCnrAybP1si-IuHfiFTsGamwzL9dNwIFgcNDtd-2y_cX2is3l-eJNLOrzuzElz_tiWYGpmcmCnClVYbo6biHwoDVwaRos1Gs7jxyOCbIl7L6WOJrnKQOI43GlfeiUZWN9dPU_nwbAYoX0tp4JFf3OQ5y9c=",
+          "title": "sanovadermatology.com"
+        }
+      ],
+      "textPreview": "Coconut oil offers several benefits for the skin, primarily due to its moisturizing, antimicrobial, and anti-inflammatory properties. It can contribute to healthier and more resilient skin in various ways.\n\nKey benefits of coconut oil for the skin include:\n*   **Moisturization and Hydration** Coconut oil is an effective moisturizer that helps to significantly increase skin hydration and lock in moisture. It's particularly beneficial for dry, cracked, and flaking skin, and can strengthen the skin"
+    },
+    {
+      "prompt": "is real skincare legit",
+      "provider": "openai",
+      "brandCited": true,
+      "competitorsCited": [],
+      "citationCount": 3,
+      "citations": [
+        {
+          "url": "https://www.therealskincare.com/about?utm_source=openai",
+          "title": "Our Why | Real Skincare"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-lotion?utm_source=openai",
+          "title": "Coconut Lotion | 6-Ingredient Clean Body Moisturizer – realskincare.com"
+        },
+        {
+          "url": "https://www.skincarewatchdog.com/skin-care-scams/?utm_source=openai",
+          "title": "Skin Care Scams - How to Spot Them | Skin Care Watchdog"
+        }
+      ],
+      "textPreview": "Real Skincare is a skincare company based in Harrisburg, Pennsylvania, offering products and services aimed at enhancing skin and body health. Their mission is to boost confidence and self-esteem through high-quality skincare solutions and exceptional customer service. ([therealskincare.com](https://www.therealskincare.com/about?utm_source=openai))\n\nCustomer reviews for Real Skincare are predominantly positive. For instance, their Coconut Lotion has received over 90 five-star reviews, with users"
+    },
+    {
+      "prompt": "is real skincare legit",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "I can provide you with some general information about skincare effectiveness.\n\nThe effectiveness of skincare depends on several factors:\n\n**What scientific research supports:**\n- Certain active ingredients have strong evidence backing their benefits, such as:\n  - **Retinoids** - well-documented for reducing wrinkles and improving skin texture\n  - **Vitamin C** - supported for antioxidant protection and brightening\n  - **Hyaluronic acid** - proven to help with hydration\n  - **Sunscreen (SPF)** - "
+    },
+    {
+      "prompt": "is real skincare legit",
+      "provider": "gemini",
+      "brandCited": true,
+      "competitorsCited": [],
+      "citationCount": 6,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwOVLdWzIk-v-7H-UaCSKJmwHOdKf5r-UCkUb7k-V9NY5qOuAkny-5KvXITJ6FL0k3RrBFCrj6fWoHyYeHrmAmJoW_klrCwqUorSwliDuFasI97NlkM35NjaF8e7m_Sz38TwwowfSesoAMFgev",
+          "title": "trustpilot.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHFURUCSVcErt8eJ5EIyt7moTdfO_DRjIpegvJLlpzkOPDuNtu0IV1Umfc1hhT1F6AD3UO8aTdNx98r6rbseQt2a_cbq0XohyIu7HhzNobrjZMguobOjKKRDFjSrWLLStIrwSy1YRI=",
+          "title": "youtube.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHjdPei5TtBT3sIAw6gg8pxIwiitJsJQ90J0Jb-Z8olUfmp2tqNFwmUVRZ6tk2yqmUkKC_iqTA7uccVNHQQy5NEdg4N7Ur3A8SMmqKtU17zPt8g8Ez5a4ou01WD84t5J_Z9WjKW6ms=",
+          "title": "youtube.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDsuHbeo76cptM4J2_e589WSWmQyAcEFcrgSopcvPBQtKq-lYJtX_Rr8uFdVP6-I_celvgP78z0jRRjqby6DsY_aIoO1WcSS4Z4GduJhjyQQJyYyzEkToatVXxUT8tPS0mMUQSbzwP3mCVdyFQWglD-HBy3fFgQh65v5pnIrx4q59LW6q1-2D7SDUpINsYsyzhEU9PPriZjW_COQ==",
+          "title": "quora.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJ_riDdiHQrMfL_fMOH9TgVB-S6T6_mlhtzIrkcWhe9L5HJTLqxoiS2EHyanqkzK7iqf25UiKtKgwrPfBmb36qt6Md5bcqznZYzIwpr-q7vFNkkhpspqlAlm6SJUn2izIjqk0XyhKP0p9t7EAighnckK_ekF2EhirjWXypEjnU-bZ0QbV3BEhLa5E9gidP_BuJZQYO",
+          "title": "quora.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFtirj2Jf7t1KH2C43gi5WSBXbyY25IWSX_j_6Xf5_1tHRV9nkD3v2s4irKWu3ExjPZpcGTTpv_o07RI2ouEpCy27SEtpKtZRklMgwvJseFWPGlgDAuuLlBNqJv2dxLrcYwTDzO-ionxd1XSrsGbBJUQuTuMDRGlSKTa4k=",
+          "title": "dermacaredirect.com"
+        }
+      ],
+      "textPreview": "The term \"Real Skincare\" can be interpreted in two ways: as a general concept referring to effective and authentic skincare practices and products, or as a specific, albeit not widely recognized, brand or online retailer. Based on available information, there isn't a singular, highly prominent brand universally known as \"Real Skincare.\" However, there are entities operating under names like \"realskincare.com\" or \"real-skin-care.com,\" which currently have very few reviews on platforms like Trustp"
+    },
+    {
+      "prompt": "real skincare deodorant review",
+      "provider": "openai",
+      "brandCited": true,
+      "competitorsCited": [],
+      "citationCount": 3,
+      "citations": [
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-deodorant?utm_source=openai",
+          "title": "All Natural Coconut Oil Deodorant | Real Skin Care – realskincare.com"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-deodorant?utm_source=openai",
+          "title": "All Natural Coconut Oil Deodorant | Real Skin Care – realskincare.com"
+        },
+        {
+          "url": "https://www.realskincare.com/products/coconut-oil-deodorant?utm_source=openai",
+          "title": "All Natural Coconut Oil Deodorant | Real Skin Care – realskincare.com"
+        }
+      ],
+      "textPreview": "Real Skin Care offers an All Natural Coconut Oil Deodorant that emphasizes clean, effective ingredients for odor protection without harsh chemicals, aluminum, or synthetic fragrances. Formulated with organic virgin coconut oil, organic jojoba oil, and purified spring water, this deodorant aims to neutralize odor while nourishing sensitive underarm skin. ([realskincare.com](https://www.realskincare.com/products/coconut-oil-deodorant?utm_source=openai))\n\nCustomer reviews highlight its gentle and e"
+    },
+    {
+      "prompt": "real skincare deodorant review",
+      "provider": "anthropic",
+      "brandCited": true,
+      "competitorsCited": [],
+      "citationCount": 6,
+      "citations": [
+        {
+          "url": "https://www.amazon.com/Real-Skin-Care-Natural-Deodorant/dp/B0B687ZWZ6",
+          "title": "Amazon.com : Real Skin Care Organic Deodorant with Coconut Oil | Handmade in the USA | Geranium Flower | All Natural, Aluminum-Free Deodorant Infused with Essential Oils for Women and Men : Beauty & Personal Care"
+        },
+        {
+          "url": "https://www.amazon.com/Real-Skin-Care-Natural-Deodorant/dp/B0B687ZWZ6",
+          "title": "Amazon.com : Real Skin Care Organic Deodorant with Coconut Oil | Handmade in the USA | Geranium Flower | All Natural, Aluminum-Free Deodorant Infused with Essential Oils for Women and Men : Beauty & Personal Care"
+        },
+        {
+          "url": "https://www.amazon.com/Real-Skin-Care-Natural-Deodorant/dp/B0B687ZWZ6",
+          "title": "Amazon.com : Real Skin Care Organic Deodorant with Coconut Oil | Handmade in the USA | Geranium Flower | All Natural, Aluminum-Free Deodorant Infused with Essential Oils for Women and Men : Beauty & Personal Care"
+        },
+        {
+          "url": "https://www.amazon.com/Real-Skin-Care-Natural-Deodorant/dp/B0B687ZWZ6",
+          "title": "Amazon.com : Real Skin Care Organic Deodorant with Coconut Oil | Handmade in the USA | Geranium Flower | All Natural, Aluminum-Free Deodorant Infused with Essential Oils for Women and Men : Beauty & Personal Care"
+        },
+        {
+          "url": "https://www.amazon.com/Real-Skin-Care-Natural-Deodorant/dp/B0B687ZWZ6",
+          "title": "Amazon.com : Real Skin Care Organic Deodorant with Coconut Oil | Handmade in the USA | Geranium Flower | All Natural, Aluminum-Free Deodorant Infused with Essential Oils for Women and Men : Beauty & Personal Care"
+        },
+        {
+          "url": "https://www.amazon.com/Real-Skin-Care-Natural-Deodorant/dp/B0B687583D",
+          "title": "Amazon.com : Real Skin Care Organic Deodorant with Coconut Oil | Handmade in USA | Calming Lavender | All Natural, Aluminum Free Deodorant Infused with Essential Oils for Women and Men : Beauty & Personal Care"
+        }
+      ],
+      "textPreview": "I'll search for information about Real Skincare deodorant reviews for you.Based on the search results, I found information about **Real Skin Care** deodorant (a brand that makes organic coconut oil-based deodorant):\n\n## Product Overview\n\nReal Skin Care products are paraben-free, vegan, and completely plant-based. Their organic roll-on deodorant is crafted with a premium blend of organic virgin coconut oil, jojoba oil, and pure essential oils.\n\n## Key Features\n\nThe deodorant is aluminum-free and "
+    },
+    {
+      "prompt": "real skincare deodorant review",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 10,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvNwej1eAEn0f8-aC7n0yThOn4If6kC67oOu8MEHP1xoqWXL67qoIs_psl1vrJ-nN6lXCt6sfV2276oXem5Zx1gt52LIcAAMM4DQM6BXoAPucSB0QPs69aogqBqGygAx0b71NdNkJSQK1oi_5m",
+          "title": "poosh.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHfIiJN_ANvZuxE0-7T9lZgvFbJ9sDVqLYywm-NJV_2NpFc2Jo0wieAWIf4Zq8eAYvTeMoLiMUv10VJ98B7utnVO7zuACx-iYru6W9bjZM4jFVnBi1K1IzcHj7L82Q6FsQrvk9HZMzewgNuXj-guaB3nUaYN4lx1AD13-o=",
+          "title": "nymag.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH66ZFmTu2Y7rF3pWpFDFKBBI_lw5lwVScBHe_Ggj0vLI9d5AZGVfVPNgPrXE6_gJQAuLMAj4AihgVgEVqEm4kz7ifnwopv1kvZ4c09PQeEQo7Dbu61EN8aNUtTrYcHst7rSwL3fpwSctlYwe6ovTQjD4AX1nfAIwDnIuXrWs2vyLYlzPEgpLsTG7VI01PjUGmBfPhJfv02a0KVIA==",
+          "title": "reddit.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF8Mq1aBtRME1bRSU2a53N9V3OxFhUPB93MnDiDyw94cRz5R2ZE5pIBVJY9I3d2pZ3g2ocM192p_ErHgz43_CanBjsXlF3s3blUInSL2O_eDN3P-vDDnTwwa_4bCp4WmPbgvspDFwQ9A94bKsaBujkRMDKxYC-hI866epZFn7bKE5-aAUU=",
+          "title": "everydayhealth.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEu64LGsHNumbp_pNXxKUJCfYr6xNveKx5HbMx60ObYGJnmF05KddAjbE0owjmZ1Z1oQdqRDFOR5F800w-Sz9BuHfbHQC1Ub4jDXNVz28J1gwhWUGWxxJO2gjnF2RbLxTm_J4-ISi7lhptP66_aZVQ4gHLtCg==",
+          "title": "humnutrition.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEwPKXH5iYI-YFcke44TKTkFV4ZoXaRArjA31ehIQPiRfbMXkDbLtjk4mpHZnMebgGD387WCK7rMjj51oECcvi-u4UArcMk02ZsHXWOLLkUyXk3DzPyIfvbuwdsQWGXvIstFrRvGh9DCJ4VgzEPlD-917y6R8J-",
+          "title": "skinsort.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG0DgasSulFY_DW5DpctflbQpW2-bDsIuCIYJKaKNXKOQiZyC5EWptTbcPJv-E7Vh4x2A2OGd7OCz1ywQbZ6l48fbYBw4NByuJx5bOtkqTvOlx0kz3FIVNSicQsfH35x5bwBWWk5gR1LxIU7jw=",
+          "title": "walmart.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_h_JOT7oU1hIWNmMDIHczPm0a7nDAWwP680xmXF1f2XKUrLeQ7RW3T1gNkVoXuHYj1msZ1Sx9ImRzU5JStBmLC2rnTJVL8mU5Od2WFlbqC-cs26k1z1ocu2hKUpLVe9kKspzAcfQeJ7K-SeySyYtep6gV9fa3IGqUg_BIQ0rp9pIkvJTM_isp5g==",
+          "title": "realpurity.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGM4x-PIPnC0ZLAHxNghQNpRvcmQUY2ajZMLXB-MvyVUEvncPrHtwmenYD6JXNNTiqA_J0RMpd-4IVCLyRrRB-JTir7JWVzk9dJVV7n4OVb4TrvhQNbaq1l4HFWcvzBxXX7THNTk3uvxsODwP49cso0lsWw1J7i",
+          "title": "livesimply.me"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGcVfP4imROw0ThDKwwmuxMG2yLST78LC-yYcZLPTh-2Aupt4V6UuOTV-TtpSuj2H8sfMMu9zcqzftaYg-DKCgxVdYDuzNwZQ5BCgoIyhpwyobfeNglJlAqYULkkI7bGk23159qqKkAdO0sjxT1AS5b070Y9JCRe5K3Jw==",
+          "title": "bitetoothpastebits.com"
+        }
+      ],
+      "textPreview": "Real Purity Roll-On Deodorant, often associated with \"Real Skincare\" in discussions of natural deodorants, is a popular choice among those seeking aluminum-free and gentle odor protection. It has garnered a reputation for its effectiveness and suitability for sensitive skin.\n\n**Key Ingredients and Benefits:**\nReal Purity Roll-On Deodorant features a blend of natural and often organic ingredients. Its formulation avoids aluminum, parabens, phthalates, and synthetic fragrances, which are common co"
+    },
+    {
+      "prompt": "real skincare vs native",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [
+        "Native"
+      ],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "When comparing Real Skincare and Native, there are several factors to consider, including their product offerings, ingredients, target audience, and sustainability practices. Here's a breakdown:\n\n### Real Skincare\n- **Focus**: Specializes in personalized skincare solutions.\n- **Ingredients**: Often features a mix of natural and scientifically-backed ingredients tailored to individual skin concerns.\n- **Customization**: Users can often receive personalized mixes based on their skin type and needs"
+    },
+    {
+      "prompt": "real skincare vs native",
+      "provider": "anthropic",
+      "brandCited": true,
+      "competitorsCited": [
+        "Native"
+      ],
+      "citationCount": 5,
+      "citations": [
+        {
+          "url": "https://www.realskincare.com/",
+          "title": "Coconut Oil Based Skin Care Products | Real Skin Care – realskincare.com"
+        },
+        {
+          "url": "https://www.amazon.com/stores/RealSkinCare/Homepage/page/1658AEE3-1A58-4709-A7B5-8DC8A12BA160",
+          "title": "Amazon.com: Real Skin Care"
+        },
+        {
+          "url": "https://thefascination.com/blogs/the-edit/native-review",
+          "title": "8 Reasons Why Native Personal Care Products Are Better Than What You’re Using Right Now - The Fascination"
+        },
+        {
+          "url": "https://thefascination.com/blogs/the-edit/native-review",
+          "title": "8 Reasons Why Native Personal Care Products Are Better Than What You’re Using Right Now - The Fascination"
+        },
+        {
+          "url": "https://illuminatelabs.org/blogs/health/native-body-wash-review",
+          "title": "Native Body Wash Review: \"Natural\" or Unhealthy? – Illuminate Labs"
+        }
+      ],
+      "textPreview": "I'd be happy to help you compare these skincare brands! Let me search for current information about them.I found information about Native skincare, but I'm getting results about two different brands that could be called \"Real.\" Let me search more specifically:Great! Now I have information about both brands. Let me provide you with a comparison:\n\n## Real Skincare vs Native\n\nBased on the brands I found, here's how they compare:\n\n### **Real Skincare**\nReal Skincare emphasizes that their products ar"
+    },
+    {
+      "prompt": "real skincare vs native",
+      "provider": "gemini",
+      "brandCited": true,
+      "competitorsCited": [
+        "Native"
+      ],
+      "citationCount": 14,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGLVZwdzC7tQiIw7nVZI2rdtlW1BUL9yIK3YLCgkNEpu1lDvqbsJTz7VFplrZoSgbVSUetv05tPuVfjBzT8pdLEpqHClxGir_HEGFuIi_c5uTxx1DP_qkfUUiDCaYN2X76GotX224-E3JA_KM7BndDN5QIWXgWqXnvnll4qdRlOMgsT27kmpA4ozGUrik9VhhyeC1487u2SBsdKwynHkYqtvYF4uJb-FJoi2ETceXe_-drQQIUPVzN3V59eI464iwvg5twHMUuKa2xgaiPcm3l0LJI40ptHcP8t6SeVg==",
+          "title": "newsfilecorp.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFeRxbuoUzroJr4Lr0BSj7oEEVQtfIHVikrgT98dS0PEME6332O7Aul-kTbni2D71ZsEiZ94ahvr4iSL-pmyd3BxNC5T1khikCkXvaDnkNud0ByjQLXYnNeeWFc1fo1qh-MLtboxGsIiEr3Y1Ou1ufIRTiyc4ejeY7CFz2Lrd5sD0mG2P65uJv37BHM_IhYELVnic90WWSTS8fb9t47eNV-",
+          "title": "soletoscana.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGsE4x4gDPyqN455cDi_bRwA2nJi-4M2Ia4QQ6NXAfiLGDNbt9IockahG49tSpEm17hp77Fp5auX9ApFVdwqqvLWaE44joUcyAtmKqxzJaqK0R2Vye2jqeQs2uM4EjP1uUDWOX0zpBDJnhk1G-IPc3eaYeHYxL6boIHiKk_SkQ3pp49oyMzMnceXjMtSmRF1zxUZXdiqVvNccAixL1",
+          "title": "endlesspure.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE6gSPVuvnMgoJegfPy6TOVXtpP3W68OqVa57B1AMtuHaCDuj9ZXChTVGHQRhc-2UphsgiFOHV1FkhbwZlcxH8Ht_W9GWKDSAbFt85titYtKQnYvEMW46QLU_tpPddqoGhA0TB2LMGWQOvRWKh4qv6XGrCO6HMWXcyVDXGmgFoKX3QW-DIdvfeEvDftIr3-IXo4cgx4R0huwDkqR6rmUJmIg8k=",
+          "title": "revelacosmetics.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEW87yD3ccTNOTREis8S6DrTR2ylNzJ0PB6M5qAWbvRYJ83M5g_Y1k-KFStIKtrFUTv3J3lczVN9l_XZvn-lShlpexL0Ybo8lrM4DxnhfuV4GmL1jGgTd4JwA0kQCTL4_ssjt-HOYS7kLjZbx3G1EAyA_XypdUIVVGZT68=",
+          "title": "dermacaredirect.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQElC9EGlK42scsVLK56-2iU1IBcch8paH8AFNlS3yqujKkpCWXBB2Uh3yzlDr0XabXuYrdf0JH9c4Rb5UKBu3XkuKuvrKWGi6MYzLB20vGMLX5qf70PA5m36pjwDyyA0Aw05oc2kUf7tJKZ_QlUQeO1jI5ZQUXqk7_aHTSPnkBewJ1Qib4j0D5pexBvXw==",
+          "title": "cement.or.kr"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEW_S9OYudxScGZhDs_spyFNMmhLnKMd_88bMwZs6Z2ykaFQS9jsOyd9WjeEwyzQAA2j7yy2FymC994vBIoBsZiFWM-wzukU4hzJ-edT3A5DdUZRdKxKxaX6j6oKmcv6izXI24=",
+          "title": "nativecos.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEbgbOQhtw4q8sd1WUKY93-Tko8V1d3oOM2X-SvKM3FqqUffoMLCHyXEexOUdG10GXeN1l7KYAUTok9E5Zeu8B6upUXjHdy-bklhJYxqNJXWM64V7tG_fApdBYN4_Uhyd1DWeoHYB60Q5ucu0u2nvo4aqB3Ejnjcrc_eEtGvdPGaPYshtLDPB2xdclc",
+          "title": "sustainabilitytracker.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH67_BLbxF_M8afnk7DAgQSSCbx48i4nMTyoGleMcN3zQg8WLGnKs5zZKo8SVvJVXAuBsmIBpeORbwfzyBeG95bx_YWZSe91RxLRLm2HNsCec8aUOs0dir7V1qK8KX8mRCsle5_QbBXPDar9OTlJDQm",
+          "title": "organicallybecca.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPpjcIEUWkHLwfmxM14Qsr2bfbrTQQKbb4s9NtUglB_cWWw31cALpfvP-uJhJ50AVTBcnIPB5g-xchtDYF9jgrj1Wszzf-SrsYd3KcRsdtO5P7iMOXr2XxhER3TKCSAb2tVrAJQ6SuXw==",
+          "title": "walmart.com"
+        }
+      ],
+      "textPreview": "Native and \"real skincare\" can be compared in terms of their brand philosophies, ingredient transparency, product ranges, and overall approach to skin health. While \"Real Skincare\" can refer to a specific brand focused on organic and natural products, it also broadly encompasses the concept of genuine, effective, and high-quality skincare as opposed to counterfeit or misleadingly marketed products.\n\n**Native Skincare**\nNative is a well-known personal care brand that has expanded into skincare. I"
+    },
+    {
+      "prompt": "best clean beauty brands",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Here are some of the best clean beauty brands known for their commitment to using non-toxic, environmentally friendly ingredients:\n\n1. **ILIA Beauty**: Known for its high-performance makeup using organic ingredients.\n\n2. **RMS Beauty**: Focuses on raw, food-grade ingredients for their makeup and skincare products.\n\n3. **Fenty Beauty**: While not entirely a clean brand, Fenty advocates for clean formulations in many of its products.\n\n4. **Tata Harper**: Offers luxury skincare made from natural in"
+    },
+    {
+      "prompt": "best clean beauty brands",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://www.livetinted.com/blogs/learn/top-clean-beauty-brands",
+          "title": "Top Clean Beauty Brands 2026: 20 Best Picks, Tested – Live Tinted"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/clean-organic-makeup-brands/",
+          "title": "I Tested The Top Clean And Organic Makeup Brands In 2026 - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/clean-organic-makeup-brands/",
+          "title": "I Tested The Top Clean And Organic Makeup Brands In 2026 - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/clean-organic-makeup-brands/",
+          "title": "I Tested The Top Clean And Organic Makeup Brands In 2026 - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/clean-organic-makeup-brands/",
+          "title": "I Tested The Top Clean And Organic Makeup Brands In 2026 - The Good Trade"
+        },
+        {
+          "url": "https://kajabeauty.com/blogs/blog/popular-beauty-brands",
+          "title": "9 Best Popular Beauty Brands to Try in 2026 – Kaja Beauty"
+        },
+        {
+          "url": "https://kajabeauty.com/blogs/blog/popular-beauty-brands",
+          "title": "9 Best Popular Beauty Brands to Try in 2026 – Kaja Beauty"
+        },
+        {
+          "url": "https://www.livetinted.com/blogs/learn/clean-beauty-brands-delivering-results",
+          "title": "Best Clean Beauty Brands 2026: Makeup, Skincare & Hair"
+        },
+        {
+          "url": "https://www.livetinted.com/blogs/learn/best-clean-beauty-brands-for-every-skin-tone",
+          "title": "24 Best Clean Beauty Brands 2026 for Every Skin Tone – Live Tinted"
+        }
+      ],
+      "textPreview": "I'll search for current information on the best clean beauty brands.Based on current information, here are some of the best clean beauty brands to consider:\n\n## Top Clean Beauty Brands\n\nLeading clean beauty brands include Live Tinted, ILIA, Merit Beauty, Saie, Jones Road, RMS Beauty, Kjaer Weis, Kosas, Tata Harper, True Botanicals, May Lindstrom Skin, Juice Beauty, INIKA Organic, Ere Perez, Weleda, and 100% Pure.\n\n### Notable Brands:\n\n**ILIA** - ILIA continues to win over readers year after year"
+    },
+    {
+      "prompt": "best clean beauty brands",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUZNfpRp_1WO3-V61_xBf-Kt9TlGeKmVlzUWTKoeKweRiipJqHv_QuVStwgaJg3NMkub-d7CTulMkPpOLc-tXu5f2iJPG5ZPNXyIMIMyNUjkkw2ORE7Iq2TuT7_vdR7KnR9aPCIwoIOa9rINYgMIo9nYGizGH-LhBsZ9Wq338DWloNwg3ZPm5aiF3fAHpF6gxFIv2wBi5ZWs2LdWhPflLbiv2w",
+          "title": "nescens.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHm-xxz-fzGwPA1pLMs7Wiw3Ky_IerX_RDpPwG7jbsnKZMtAeToEb3-kft4_4F-8khe7GZ_HSdlqACj1NbwXK1k9_L8-6dcxdGxOLaQR4ZjzB_RnVUe9OXUCKyPK1MpqIRzN_fyDPUHtqHPGsdo6EqCNArEvA==",
+          "title": "rmsbeauty.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHueMv9PMbiTqJ_28Q3ydq-pGZojVSIZmblWBAmvhVnTNKUEgZJdDDw34huBO3K6M3EpQ7Qn7GJo5NJVaj-AFTflH3vX19zR6M_Cx_hIr2kH7W4AL0eHmgQ_vCQsntA3KMm8ESbuFUky8LQ0dbl3nje19qmItPIX3ThnPIweq4LDBlCt73qFYHtcpY=",
+          "title": "healthline.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHiKg0oIAB5oQsvrD4dxh9PrjGL1VxzH1c3NyfAAZrEck9GOW5pg1i7DSEGaoTlDfBn8r8-mpTqSpD2G1BPLVEN9NDbLrxN6jBMezNEvLUCZbhC0i8-rdH2X9Vsqb0nggbdxYfGaF04n16mhQOPDwewjRvFSjbum4FAo3u4",
+          "title": "quinndermatology.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVr7nBGAjV_uP6dLZi3rHpoK1Qgo4NYtZ8s39uTLgn7l9O_oYHNAybObEmogei8_iKvOTjriTwc-yc00O61IEDjEb_JZL5lacjef3ozs9EgxjBlbHuqGvFnFiaVxIIB3L-h9UqoDzH_CBAA24YKuE4RtN0fA2OnS6Xo7yXQA==",
+          "title": "axiologybeauty.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHWdGZhAAxC-bz4EZU8YNHL74OnL02Cjlvb28sbreZWD4jzYNOnZQyBhfoUse9qXrO3RXEBlhkeDqzlyRKUtSk1_-j-9ntf-vpY_skWBjQPJNkuzpJWdNQsLG6Lkct3E6yWoHLF5JBBXWFs1sYvrlx_-e9N0srsLre6Rj9nhH2K1-GDpgMtVAcwyQ==",
+          "title": "easystylewithsami.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqEk8dhM3wJ8GORbF_ohIGi83upAa0tekUsU1n6CofpCXfNgZaJUqTr42EEmdOk4c-kpMYqzufepGKomYZaEVE-QdgpbpQ0ertetX1GUyiRgZSaytndb-ISekCG8coLGdQzh68KzULKf8BjNMhTv0Wn3CcDTVPjUeXa5_SsEermj9hx4JyOy36T7eutLklapebSZBi8SPTY-fGHnKhBlDLxs_sGqe9Vq4=",
+          "title": "clean-circle.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHcsPEISYHM2-LBDJKhmwbuHDPs_aOKa6Go69PdzCFhPT3PnOdyssuFbk-pUvzLsSa-UGUXN0UttEhVO0K-re09YPGBBrqTL9-TxhIyzTcV89Px4ftmBDqfOIqCiVQcM-o3Yp0HHHqCIaQe",
+          "title": "zoobop.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE5DyLFdkHnMNXpiiQDeMr1kcSOBYbuxtTLd2HjjtvGUnb2P-rrh6VngAEggpQJdpC0FBejGxIyGUSB3KPyNjG2uA_0cERpy9UhJjO1mAQEODYqZpICgPOztyrNnZK7ifIi9aF01MeJFTfL7juTKzYX2x3lGe8sFsN9YwogBJDzsUfNxzJs",
+          "title": "organicallybecca.com"
+        }
+      ],
+      "textPreview": "The \"clean beauty\" movement emphasizes products formulated without ingredients considered harmful or toxic, prioritizing transparency, ethical sourcing, and often sustainable and cruelty-free practices. While there's no single legal definition of \"clean beauty,\" common criteria include avoiding specific ingredients and committing to responsible manufacturing.\n\nKey characteristics of clean beauty brands:\n*   **Ingredient Transparency** Brands are upfront about all ingredients, avoiding vague term"
+    },
+    {
+      "prompt": "best organic skincare brands",
+      "provider": "openai",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 0,
+      "citations": [],
+      "textPreview": "Here are some of the best organic skincare brands known for their commitment to natural ingredients and sustainability:\n\n1. **Dr. Hauschka**: Offers a range of holistic skincare products made with plant and flower extracts.\n\n2. **Tatcha**: Incorporates Japanese ingredients and focuses on traditional skincare rituals.\n\n3. **Herbivore Botanicals**: Focuses on simple, effective formulas with high-quality natural ingredients.\n\n4. **Burt’s Bees**: Known for their wide range of natural products, inclu"
+    },
+    {
+      "prompt": "best organic skincare brands",
+      "provider": "anthropic",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://www.oyubotanica.com/blogs/skincare-news/top-10-organic-skincare-brands-for-2026",
+          "title": "Top 10 Organic Skincare Brands For 2026 – Oyu Botanica"
+        },
+        {
+          "url": "https://www.oyubotanica.com/blogs/skincare-news/top-10-organic-skincare-brands-for-2026",
+          "title": "Top 10 Organic Skincare Brands For 2026 – Oyu Botanica"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-skincare-brands/",
+          "title": "11 Best Organic Skincare Brands For 2026 - The Good Trade"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-skincare-brands/",
+          "title": "11 Best Organic Skincare Brands For 2026 - The Good Trade"
+        },
+        {
+          "url": "https://organicskincare.com/",
+          "title": "OrganicSkinCare.com | Shop Natural & Organic Skincare Brands"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-skincare-brands/",
+          "title": "11 Best Organic Skincare Brands For 2026 - The Good Trade"
+        },
+        {
+          "url": "https://sustainablykindliving.com/top-reviewed-non-toxic-skincare-brands-for-healthy-skin-organic/",
+          "title": "10 Best Non-Toxic Skincare Brands For Healthy Skin (2026) - Sustainably Kind Living"
+        },
+        {
+          "url": "https://sustainablykindliving.com/top-reviewed-non-toxic-skincare-brands-for-healthy-skin-organic/",
+          "title": "10 Best Non-Toxic Skincare Brands For Healthy Skin (2026) - Sustainably Kind Living"
+        },
+        {
+          "url": "https://www.thegoodtrade.com/features/natural-and-organic-skincare-brands/",
+          "title": "11 Best Organic Skincare Brands For 2026 - The Good Trade"
+        }
+      ],
+      "textPreview": "I'll search for the best organic skincare brands to give you current information.Based on the latest information, here are some of the best organic skincare brands for 2026:\n\n## Top-Tier Brands\n\nSome of the top organic skincare brands for 2026 include True Botanicals, Tata Harper, Herbivore Botanicals, OSEA, and Melvita, which stand out for their commitment to certified organic ingredients, ethical sourcing, and sustainable packaging, and have built strong followings in major beauty capitals by "
+    },
+    {
+      "prompt": "best organic skincare brands",
+      "provider": "gemini",
+      "brandCited": false,
+      "competitorsCited": [],
+      "citationCount": 9,
+      "citations": [
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHKSu54E37OkRaVLPPeaK6odp34Su-tBtuZ4l7oDseygjZ55EbJeCpLLeHMXQINuJfTULOgxkelsVI9gIUfdgLmos6VrJd2EoGKTVzlQBHTzh3INRQynF51nL5BBQ0zdb9gIXqJK1sAvHAn7roPX1B-32idNx6g1DAKffyUnLg_aQy4Ljv3Lz7ILnirY372b4rZeW7CDGs=",
+          "title": "trueorganicofsweden.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE1FWNHgmLzxIkZYdQlNa2Z6jJgHBWdmJhzqb8hzTn1tuD9hoL4dj9gEV7kzvM3i4RZl6h0RvTPBrRpGutx_qfVovid8hggikEOWDPdhC_teFGIz73yzxLt8gdPhQspo3213l_yTC-r4Z44K2kUNsmUFR_wy0_BG903seCXJ2o6Q3FORw==",
+          "title": "triplesolutionskincare.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGb7H2mKlhpJmw0LOTS1T2A6601lWe66nFY_6blSNtmnXb-4tZCoIGj0pb3BHPTA5It4cS9JE2iY4ovZ5E5WPXouSNV9W22Vy38_GQlD9LeNvfDpZZoIaaMJIBW1yenxDRfpr7SbFBCGzxDEwRV3OcWDOE2Pdn9QVqd_z9yGr1meyPZiwVXV2Y=",
+          "title": "beauty-heroes.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4KZfM08bx-PZ4Fzl1jXNIsswI_j_ssYlJhxba3dRybrZotiwWkF7iI4-4cx7QBMh-Vl_XoHsXTjawvC-R9Rs2p1WCy2y4V3hQzLjP8BJYvdzomSjSNp1VmtQAiq5AIHT5XEcX5vEuUaqzQtEo2Po_IiAJgBqO5_5kAOnlQqx86Efi4-qCz3obhcH2sw==",
+          "title": "smytten.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHtAVgjGKL9NmqcOzEquXe35PnwH4pawRS_MzxkdNkbkPx0zs80p-a3SETxv4HBttJwabAliQo45dheeY6oYr9UW7HW7vhz2fnjtKFdxAIWa9Pc1x9kQB7qKwF3L_HJLcImdGyH1b4lNb4fEFhVmEr16RHPKrv_lA==",
+          "title": "aloderma.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7Gbid2GK-bxdi6uSaxbA60TzGWKxX4ei895YnCvS_8vB3lqnMVWRfwW4weGRZgN0dayQtywn5YQS2GE0ahWVgW7D_yf9zRkbMQ9okDfV4Jc1Ndx1ZRjY0c4pPtZKK9RrGLSJN6bjbuF3i8iQIWXudEMa_h14va8YKF9BphbnWxJasxoMRBcU1XUNyUfZsS2m_E6Y=",
+          "title": "versedskin.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGF6_aecO_dijfCao-JZN2I_FyrOto8FqW4-CyykWTp1UmqhKkBCdMQR47dbEw58pi8K4r8SwQioGKkip_9UI5bOCVYI_DijPMCSCdgpk9I7qHf6q4BWgnQy-gw5eOlSPh_mx3BtoD6_jAuBvbrmt7SrOcoIskB-KP7_RAEa7oR9iIoGhCPUO5z1Q==",
+          "title": "naturalorganicskincare.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEp9ssr4ILjwMRhEXfu0zqKvfi_3YmmNC_MZBADKiYR19DgmaFpNwSXSU5BR9qnfIty_byUpUnZstnz0aloaFd7tt1SkJX7RsJE0LD0vlquPIKUjmuLFnr0O74keMh1yTKbPRDJCjUHXKocs9r-MRrYInNyFQ7pz3FVeUT2plidw7JlM3Cq",
+          "title": "thegoodtrade.com"
+        },
+        {
+          "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF5NN6BNqj6jq_74D6VjCnKz5Rfk06QBMusL1r22p1ETPZLKMn_Zg0_U9UzaQVmwwv9QYfaBwNf75ha9ybFItDu8qurpaUXzDRlpYjOOdpEGHCNT12r7U0CR95TctZAP8kBNGiNMuL8fKoAmrNEwWjLzaxyg5mLrUT_JMWn1HmtOjbQJ4AoY0l8Ca1NaHg9R8XO8L7TyUU-yKPjuf0ZaHXuZlYdusIYGw==",
+          "title": "kiwi-spa.com"
+        }
+      ],
+      "textPreview": "Choosing the \"best\" organic skincare brand involves considering several key factors, including rigorous certifications, the quality and safety of ingredients, and a brand's overall ethical practices. Organic skincare products are formulated with ingredients grown without synthetic pesticides, herbicides, or fertilizers, aiming to be gentler on the skin and the environment.\n\n**Key Criteria for Identifying Top Organic Skincare Brands:**\n\n*   **Certifications:** Official third-party certifications "
+    }
+  ]
+}
