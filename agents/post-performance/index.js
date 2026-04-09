@@ -104,7 +104,16 @@ async function fetchGscMetrics(pageUrl, days) {
  * verdict calls without considering external ranking pressure.
  */
 function loadExternalContext() {
-  const ctx = { clusterWeights: {}, competitorBoosts: {}, rankDrops: new Set() };
+  const ctx = { clusterWeights: {}, competitorBoosts: {}, rankDrops: new Set(), indexingStateBySlug: {} };
+
+  // Load indexing-checker state per slug so the verdict logic can distinguish
+  // "not indexed" (fix indexing) from "indexed but no traffic" (fix content).
+  try {
+    const idx = JSON.parse(readFileSync(join(ROOT, 'data', 'reports', 'indexing', 'latest.json'), 'utf8'));
+    for (const r of (idx.results || [])) {
+      if (r.slug && r.state) ctx.indexingStateBySlug[r.slug] = r.state;
+    }
+  } catch { /* optional */ }
 
   try {
     const cw = JSON.parse(readFileSync(join(ROOT, 'data', 'reports', 'content-strategist', 'cluster-weights.json'), 'utf8'));
@@ -163,8 +172,23 @@ function evaluateMilestone({ milestone, age, metrics, trafficPotential, slug, ke
 
   if (milestone === 30) {
     if (impressions === 0 && clicks === 0) {
-      verdict = 'BLOCKED';
-      reason = 'Zero impressions and zero clicks after 30 days — likely not indexed, or targeting a query the page does not match. Investigate GSC coverage and intent.';
+      // Check whether the indexing-checker has already determined this is an
+      // indexing problem. If so, emit a more specific NOT_INDEXED verdict
+      // instead of the generic BLOCKED — different root cause, different fix.
+      // See docs/signal-manifest.md (indexing-checker → post-performance loop).
+      if (externalCtx && externalCtx.indexingStateBySlug && externalCtx.indexingStateBySlug[slug]) {
+        const idxState = externalCtx.indexingStateBySlug[slug];
+        if (idxState !== 'indexed') {
+          verdict = 'NOT_INDEXED';
+          reason = `Zero impressions and zero clicks after 30 days because the page is not indexed (state: ${idxState}). The indexing-checker flagged this; refreshing content will not help — fix indexing first.`;
+        } else {
+          verdict = 'BLOCKED';
+          reason = 'Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.';
+        }
+      } else {
+        verdict = 'BLOCKED';
+        reason = 'Zero impressions and zero clicks after 30 days — likely not indexed, or targeting a query the page does not match. Investigate GSC coverage and intent.';
+      }
     } else {
       reason = `Indexed. ${impressions} impressions, ${clicks} clicks over first 30 days.`;
     }

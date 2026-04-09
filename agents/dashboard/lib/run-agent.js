@@ -30,6 +30,8 @@ export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/gsc-opportunity/index.js',
   'agents/competitor-watcher/index.js',
   'agents/unmapped-query-promoter/index.js',
+  'agents/indexing-checker/index.js',
+  'agents/indexing-fixer/index.js',
 ]);
 
 /**

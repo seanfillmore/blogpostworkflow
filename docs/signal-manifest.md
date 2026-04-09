@@ -81,6 +81,18 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | Signal | Writer | Consumers | Status |
 |---|---|---|---|
 | `data/performance-queue/<slug>.json` | `performance-engine` (planned) | `daily-summary`, dashboard Optimize tab, `publisher` (approve flag) | **planned** — see `docs/superpowers/plans/2026-04-09-performance-engine-approval-loop.md` |
+| `data/performance-queue/indexing-submissions.json` | `indexing-fixer` | dashboard Optimize tab (Indexing Status card), `indexing-fixer --approve <slug>` | healthy |
+
+### Indexing signals
+
+| Signal | Writer | Consumers | Status |
+|---|---|---|---|
+| `data/reports/indexing/latest.json` | `indexing-checker` | `indexing-fixer`, `post-performance` (distinguishes NOT_INDEXED from BLOCKED), `refresh-runner` (suppresses refresh of non-indexed posts), dashboard Indexing Status card | healthy |
+| `data/reports/indexing/history.json` | `indexing-checker` (append-only) | audit trail; future use for tracking time-to-index | audit-only |
+| `data/posts/<slug>.json#indexing_state` | `indexing-checker` | `post-performance`, `refresh-runner`, `indexing-fixer` | healthy |
+| `data/posts/<slug>.json#indexing_submissions` | `indexing-fixer` | `indexing-fixer` (for escalation to Tier 3) | healthy |
+| `data/posts/<slug>.json#indexing_blocked` | `indexing-fixer` (Tier 3 manual flag) | dashboard (Action Required), `refresh-runner` (don't refresh blocked) | healthy |
+| `data/quota/indexing-api.json` | `lib/gsc-indexing.js` | `indexing-checker`, `indexing-fixer` | healthy |
 
 ---
 
