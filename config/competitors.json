@@ -1,8 +1,7 @@
 [
-  "piperwai.com",
-  "nativecos.com",
-  "schmidtsnaturals.com",
-  "captainblankenship.com",
-  "weleda.com",
-  "everydayroots.com"
+  { "name": "Piperwai", "domain": "piperwai.com", "feed": "https://piperwai.com/blogs/news.atom" },
+  { "name": "Native", "domain": "nativecos.com", "feed": "https://www.nativecos.com/blogs/news.atom" },
+  { "name": "Schmidt's Naturals", "domain": "schmidtsnaturals.com", "feed": "https://schmidtsnaturals.com/blogs/news.atom" },
+  { "name": "Captain Blankenship", "domain": "captainblankenship.com", "feed": "https://captainblankenship.com/blogs/news.atom" },
+  { "name": "Weleda", "domain": "weleda.com", "feed": "https://www.weleda.com/blog/feed" }
 ]

@@ -234,7 +234,7 @@ async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejec
     max_tokens: 700,
     messages: [{
       role: 'user',
-      content: `You write product photography prompts for Gemini image generation for a natural skincare brand.
+      content: `You write hero image prompts for Gemini image generation for a natural skincare brand's blog.
 
 Brand: ${config.name} — natural deodorant, toothpaste, coconut oil body lotion, lip balm. Visual aesthetic: bright, airy, minimal, warm natural tones. Real product photography style.
 
@@ -255,30 +255,53 @@ ${hasProductRef
   : `No product reference images are available. Describe a generic unlabeled product container appropriate to the post topic.`
 }
 
-Respond in this EXACT format — first line is the template key, second line onwards is the prompt:
-SELECTED_TEMPLATE: [key]
-Product photography, ...
+TOPIC vs PRODUCT BALANCE (critical):
+The hero image must visually communicate what the blog post is ABOUT. Consider the post title and keyword:
+- If the topic IS the product (e.g. "Best Natural Deodorant"), the product is the hero and dominates the frame.
+- If the topic is a PROBLEM, PROCESS, or CONCEPT (e.g. "How to Remove Sweat Stains", "Dry Brushing Skin", "When Was Deodorant Invented"), the image must show the TOPIC as the hero — the relevant scene, situation, or visual concept. The product may appear as a secondary element in the scene, but the viewer should immediately understand what the article is about from the image alone.
+- Ask yourself: "If someone saw only this image as a thumbnail, would they know what the article is about?" If the answer is "they'd think it's about soap" but the article is about sweat stains, the prompt is wrong.
+
+SCENE TEMPLATE vs REAL-WORLD SETTING:
+First decide: does this blog topic happen in a specific real-world location? Think about where a reader would actually encounter this topic in their life.
+- "Is Deodorant a Liquid for TSA?" → airport security checkpoint, TSA screening bins
+- "How to Remove Sweat Stains" → laundry room, bathroom counter with stained clothing
+- "Best Natural Deodorant" → product photography on a styled surface (use a template)
+- "When Was Deodorant Invented?" → vintage/historical styled scene (no template)
+- "Dry Brushing Skin" → spa-like bathroom setting with a dry brush
+
+If the topic has a natural real-world setting, use SELECTED_TEMPLATE: NONE and describe that real-world environment instead of picking from the template list. Only use a template when the topic is product-focused or doesn't have a strong location association.
+
+Respond in this EXACT format — first line is the template key (or NONE), second line onwards is the prompt:
+SELECTED_TEMPLATE: [key or NONE]
+[Photography type], ...
 
 Write the prompt using this structure:
-1. Start with: "Product photography, "
-2. ${hasProductRef ? 'Describe the actual labeled product from the reference images as the hero item' : 'State the product container as the hero item'}, plus 1-2 natural props
-3. Describe the chosen surface and background from the template
-4. State the lighting and camera angle from the template
-5. End with: "photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders."
+1. Start with the appropriate photography type: "Product photography, " for product-focused posts, "Lifestyle photography, " for scene-based images, "Editorial photography, " for concept/story posts
+2. Describe the primary subject — this is the TOPIC of the article. For product-focused posts, the product is the hero. For problem/process/concept posts, show the real-world setting where this topic matters (e.g. airport security bin for TSA rules, laundry area for stain removal, bathroom vanity for skincare routine). The product should appear naturally within that setting as a secondary element.
+3. Include 1-3 natural props that reinforce the topic AND the real-world setting
+4. If using a template, describe the surface and background from it. If using NONE, describe the real-world environment in detail — the location, surfaces, objects, and atmosphere that make it immediately recognizable.
+5. State the lighting (natural for real-world scenes, or from the template)
+6. End with: "photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders."
 
 HARD RULES:
-- Props must make real-world sense together on that surface — no random unrelated objects
-- Contextual scene elements (toothbrush, faucet, towel, cup, soap dish, etc.) are encouraged for bathroom/kitchen/bedroom scenes — make it look like a real lived-in space
-- Do NOT include people
-- Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced, don't force the maximum
+- The image must visually match the blog post topic — a reader should understand the article subject from the image alone
+- The setting should be WHERE a reader would encounter this topic in real life
+- Props must make real-world sense in the chosen setting — no random unrelated objects
+- BRANDING RULE (critical): NEVER put our brand name ("Real", "Real Skin Care") on products we don't actually sell. Our brand should ONLY appear on products that match the reference images provided. Generic unbranded props (a jar of coconut oil, a bowl of charcoal powder, a bottle of essential oil) are perfectly fine as contextual scene elements — just don't put our logo or brand name on them. If the blog topic is about a product category we don't carry, show that category generically/unbranded.
+- PRODUCT NAMING: When describing our products in the prompt, use ONLY the exact product names from the reference image titles above. Do NOT invent product names like "Organic Coconut Oil Body Lotion" or "Natural Healing Balm" — use the exact product name as provided (e.g. "Non-Toxic Body Lotion", "Moisturizing Coconut Soap"). If no product reference is provided, describe generic unbranded products only.
+- Contextual scene elements are encouraged — make it look like a real place
+- People are allowed when the topic benefits from showing human context (e.g. someone washing a tattoo, applying deodorant, doing laundry). Avoid close-up faces — show people from the shoulders down or in profile. For product-focused posts, people are optional.
+- MODESTY RULES: Keep all images appropriate for a family-friendly ecommerce blog. No bare torsos, bare backs, bare shoulders, or any suggestion of nudity. For body care topics (dry brushing, hair masks, body lotion), show the product and tools in a styled setting WITHOUT showing bare skin beyond hands, forearms, and lower legs. A dry brush on a towel is better than a dry brush on a bare back.
+- Use between 1 and 5 props — choose the number that makes the scene feel natural and balanced
 - Every prop must be physically plausible in the chosen setting
-- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a stick/push-up format. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
+- PRODUCT USAGE RULES: If a product is being actively USED in the scene (lathering, applying, squeezing), it must be shown UNWRAPPED and OUT OF ITS PACKAGING. Our bar soap comes in a pleated paper wrapper — if someone is lathering with it, the wrapper must be OFF and the bar should be a plain white/cream puck shape. An unused/display product can show the wrapper. Never show a wrapped product producing lather or foam.
+- PRODUCT FORMAT RULES (strictly enforced): Our toothpaste comes in a 4oz pump bottle or jar — NEVER a tube. Our deodorant is a small white cylindrical rollerball bottle (~2oz/60ml) with a flat white snap-on cap — NOT a stick, push-up, or large translucent roll-on. Our lip balm comes in a standard lip balm tube (cylindrical twist-up or slide-up tube) — NOT a tin, pot, or jar. Our body lotion comes in a pump bottle. Our bar soap is a round white puck (~3.4oz) in a pleated paper wrapper — when being used/lathered it should be UNWRAPPED. If the post is about toothpaste, describe a bottle or jar — never say "tube", "squeeze tube", or "toothpaste tube".`,
     }],
   });
 
   const raw = message.content[0].text.trim();
   const keyMatch = raw.match(/^SELECTED_TEMPLATE:\s*(\S+)/m);
-  const selectedKey = keyMatch?.[1] ?? null;
+  const selectedKey = keyMatch?.[1] === 'NONE' ? null : (keyMatch?.[1] ?? null);
   const prompt = raw.replace(/^SELECTED_TEMPLATE:\s*\S+\n?/, '').trim();
   return { prompt, selectedKey };
 }
@@ -303,19 +326,33 @@ async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowP
         },
         {
           type: 'text',
-          text: `You are a creative director reviewing a hero image for a natural skincare brand blog post. Your job is to reject images that look obviously AI-generated or physically wrong.
+          text: `You are a creative director reviewing a hero image for a natural skincare brand's blog. Your job is to reject images that look obviously AI-generated or physically wrong.
+
+IMPORTANT — EDITORIAL CONTEXT:
+These images are hero images for blog posts. They are NOT product ads. The image should match the TOPIC of the blog post, which may include real-world settings like laundry rooms, airports, kitchens, bathrooms, etc. A stained shirt in a laundry room is perfectly appropriate for a "how to remove sweat stains" article. An airport security bin is appropriate for a TSA rules article. Do NOT reject images simply because the scene doesn't look like a typical product photography setup — judge whether the image looks realistic and high quality, not whether it fits a narrow "skincare brand aesthetic."
 
 ${allowProductLabel
-  ? 'NOTE: This image intentionally includes the actual product with its label visible. A product label with readable text is EXPECTED and should NOT cause a rejection. Only reject for text on non-product elements (e.g. text floating in the background, text on props).'
-  : 'Reject if any text, logos, or labels are visible anywhere in the image.'}
+  ? 'NOTE: This image intentionally includes the actual product with its label visible. A product label with readable text is EXPECTED and should NOT cause a rejection.'
+  : ''}
+TEXT RULES:
+- REJECT for: AI-generated fake text/gibberish on products, floating text overlays, watermarks, obviously wrong brand names
+- ACCEPT: real-world incidental environmental text (airport signs, TSA labels, store signage, bathroom product labels in background, street signs) — these are natural parts of real-world scenes and should NOT cause rejection
+- ACCEPT: product labels that match the brand if product references were provided
+- The key question is: "Is the text an AI artifact/error, or a natural part of the scene?"
 ${productContext ? `\nPRODUCT ACCURACY — check ALL of the following details carefully:\n${productContext}\nThis includes the cap/lid type, container shape, and any other packaging details mentioned. A pump dispenser is NOT the same as a flip-top cap. A tube is NOT the same as a bottle. Flag any mismatch — even subtle ones like the wrong lid type.` : ''}
 Review this image and respond in this EXACT format (no extra lines):
 
 PASS: yes or no
-TEXT_VISIBLE: yes or no (any text, logos, labels, words, numbers visible${allowProductLabel ? ' on non-product elements?' : '?'})
+TEXT_VISIBLE: yes or no (is there problematic AI-generated fake text, gibberish, or wrong brand names? Incidental environmental signage in real-world scenes does NOT count.)
 BLACK_BARS: yes or no (solid-colour bars/borders on any edge — letterboxing or pillarboxing?)
-SURREAL: yes or no (physically impossible geometry, objects that couldn't coexist in real life, props that are nonsensical in the setting, distorted or impossible architecture? Note: a bathroom counter, shower shelf, kitchen counter, or bedside table is NOT surreal — only flag if the scene is physically impossible or incoherent.)
+SURREAL: yes or no — CHECK CAREFULLY FOR THESE COMMON AI FAILURES:
+  * ANATOMY: Count all visible hands, arms, fingers, legs. Does every limb belong to a plausible body? Extra or missing fingers? Too many arms? Limbs that connect to nothing?
+  * PHYSICS: Is a wrapped/packaged product being used as if unwrapped? Specifically: is a bar soap still in its pleated paper wrapper but producing lather or being rubbed on skin? A wrapped soap CANNOT produce lather — this is an automatic rejection. Are objects floating? Is liquid defying gravity?
+  * GEOMETRY: Impossible architecture, objects merging into each other, surfaces that don't connect properly?
+  * LOGIC: Would this scene make sense in real life? (A bathroom counter or kitchen is fine — three-armed people or wrapped soap producing lather is not)
+  * FAKE BRANDED PRODUCTS: Are there any products bearing the brand name/logo ("Real", "Real Skin Care") that were NOT in the reference images? Generic unbranded props are fine (a plain jar of coconut oil, a bowl of powder, an unlabeled bottle) — those are contextual scene elements. But if you see a product with our brand name/logo on it that doesn't match any reference image provided, that is a fake branded product and should be flagged as SURREAL.
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
+MODESTY: yes or no (is there excessive bare skin — bare backs, bare torsos, bare shoulders, or anything suggestive of nudity? Hands, forearms, and lower legs are fine. This is a family-friendly ecommerce blog — reject if the image is too revealing.)
 WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the product shown match ALL packaging details above — container type, lid/cap type, shape? Mark yes if ANY detail is wrong)' : ' (n/a — write no)'}
 SCENE_DESCRIPTION: one sentence describing the surface, props, and lighting (e.g. "White linen flat lay with coconut oil jar, mint sprigs, and soft diffused light")
 REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong (name the specific problem objects or issues). If PASS is yes, write "None."`,
@@ -331,6 +368,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
   const surreal = /SURREAL:\s*yes/i.test(raw);
   const looksAi = /LOOKS_AI:\s*yes/i.test(raw);
   const wrongProductFormat = /WRONG_PRODUCT_FORMAT:\s*yes/i.test(raw);
+  const modesty = /MODESTY:\s*yes/i.test(raw);
   const sceneMatch = raw.match(/SCENE_DESCRIPTION:\s*(.+)/i);
   const rejectionMatch = raw.match(/REJECTION_REASON:\s*(.+)/i);
 
@@ -340,6 +378,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
     surreal && 'physically impossible/surreal elements',
     looksAi && 'obviously AI-generated appearance',
     wrongProductFormat && 'wrong product format (e.g. tube instead of bottle)',
+    modesty && 'excessive bare skin/nudity',
   ].filter(Boolean);
 
   const rejectionReason = rejectionMatch?.[1]?.trim() ?? '';
@@ -541,12 +580,48 @@ function findProductImagesForPost(meta) {
 
   const postKeywords = postText.split(/\s+/).filter((k) => k.length > 3);
 
+  // Category-aware matching — map post topic to product category to prevent cross-category confusion
+  const CATEGORY_SIGNALS = {
+    deodorant: ['deodorant', 'antiperspirant', 'armpit', 'underarm', 'sweat'],
+    bar_soap: ['bar soap', 'soap bar', 'castile soap', 'antibacterial soap', 'body soap'],
+    toothpaste: ['toothpaste', 'fluoride', 'tooth', 'teeth', 'dental', 'brush teeth'],
+    lip_balm: ['lip balm', 'lip care', 'chapstick', 'chapped lips'],
+    lotion: ['body lotion', 'moisturizer', 'moisturiser', 'dry skin', 'body cream'],
+    liquid_soap: ['hand soap', 'foaming soap', 'liquid soap'],
+  };
+
+  // Detect the post's primary product category
+  let postCategory = null;
+  for (const [cat, signals] of Object.entries(CATEGORY_SIGNALS)) {
+    if (signals.some((s) => postText.includes(s))) {
+      postCategory = cat;
+      break;
+    }
+  }
+
+  // Find which manifest handle maps to which category
+  const categoryHandles = {};
+  for (const [cat, cfg] of Object.entries(ingredientsConfig)) {
+    if (cfg.shopify_handle) categoryHandles[cfg.shopify_handle] = cat;
+  }
+
   // Score each product against post keywords
   const scored = resolved
     .filter((p) => existsSync(p.imageDir))
     .map((p) => {
       const productTerms = [p.handle.replace(/-/g, ' '), p.title.toLowerCase(), ...p.tags].join(' ');
-      const score = postKeywords.filter((k) => productTerms.includes(k)).length;
+      let score = postKeywords.filter((k) => productTerms.includes(k)).length;
+
+      // If we detected a post category, boost matching products and penalize mismatches
+      if (postCategory) {
+        const productCategory = categoryHandles[p.handle] || null;
+        if (productCategory === postCategory) {
+          score += 10; // strong boost for correct category
+        } else if (productCategory && productCategory !== postCategory) {
+          score = 0; // eliminate wrong-category products entirely
+        }
+      }
+
       return { ...p, score };
     })
     .filter((p) => p.score > 0)

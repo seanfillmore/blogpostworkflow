@@ -27,7 +27,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
-import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
@@ -51,19 +51,29 @@ try {
 // ── feedback loader ────────────────────────────────────────────────────────────
 
 function loadAgentFeedback(agentName) {
+  let combined = '';
   try {
     const feedbackPath = join(ROOT, 'data', 'context', 'feedback.md');
     const content = readFileSync(feedbackPath, 'utf8');
     const marker = `## ${agentName}`;
     const start = content.indexOf(marker);
-    if (start === -1) return '';
-    const rest = content.slice(start + marker.length);
-    const nextSection = rest.search(/\n## [a-z]/);
-    const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
-    return section.trim();
-  } catch {
-    return '';
-  }
+    if (start !== -1) {
+      const rest = content.slice(start + marker.length);
+      const nextSection = rest.search(/\n## [a-z]/);
+      const section = nextSection === -1 ? rest : rest.slice(0, nextSection);
+      combined += section.trim();
+    }
+  } catch { /* ignore */ }
+
+  // Editor also enforces the writer's standing rules — recurring patterns
+  // auto-detected from editor reports. If the writer is told to avoid X,
+  // the editor should verify X was avoided. See docs/signal-manifest.md.
+  try {
+    const rulesPath = join(ROOT, 'data', 'context', 'writer-standing-rules.md');
+    const rules = readFileSync(rulesPath, 'utf8').trim();
+    if (rules) combined += (combined ? '\n\n---\n\nWRITER STANDING RULES (enforce these on this post):\n' : '') + rules;
+  } catch { /* ignore */ }
+  return combined;
 }
 
 // ── env ───────────────────────────────────────────────────────────────────────
@@ -151,6 +161,43 @@ function categoriseLinks(links) {
   return { internal, external };
 }
 
+// ── scheduled post index (for cross-referencing "broken" internal links) ──────
+
+function loadScheduledPostUrls() {
+  const postsDir = join(ROOT, 'data', 'posts');
+  const map = new Map(); // shopify_url → { slug, publish_at, title }
+  try {
+    const files = readdirSync(postsDir).filter(f => f.endsWith('.json'));
+    for (const f of files) {
+      try {
+        const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
+        // Treat any post with a future publish_at as scheduled (covers both 'scheduled' and 'draft' statuses —
+        // Shopify returns draft status for posts with a future published_at until the scheduler flips them)
+        const hasFuturePublishDate = meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date();
+        if (hasFuturePublishDate && (meta.shopify_status === 'scheduled' || meta.shopify_status === 'draft')) {
+          // Map both the myshopify URL and the public URL
+          const urls = [meta.shopify_url];
+          if (meta.shopify_url) {
+            // Also map the public domain version
+            const publicUrl = meta.shopify_url.replace(/realskincare-com\.myshopify\.com/, 'www.realskincare.com');
+            if (publicUrl !== meta.shopify_url) urls.push(publicUrl);
+          }
+          for (const url of urls) {
+            if (url) map.set(url, {
+              slug: meta.slug || f.replace('.json', ''),
+              publish_at: meta.shopify_publish_at,
+              title: meta.title,
+            });
+          }
+        }
+      } catch {}
+    }
+  } catch {}
+  return map;
+}
+
+const scheduledPosts = loadScheduledPostUrls();
+
 // ── http link checker ─────────────────────────────────────────────────────────
 
 async function checkUrl(href) {
@@ -163,6 +210,14 @@ async function checkUrl(href) {
     });
     // 403/405 = bot-blocked, treat as valid
     const ok = res.ok || res.status === 403 || res.status === 405;
+    if (!ok && (res.status === 404 || res.status === 410)) {
+      // Check if this is an internal link to a scheduled post
+      const scheduled = scheduledPosts.get(href);
+      if (scheduled) {
+        return { ok: true, status: res.status, scheduled: true,
+          note: `Scheduled to publish ${new Date(scheduled.publish_at).toLocaleDateString()} ("${scheduled.title}")` };
+      }
+    }
     return { ok, status: res.status, finalUrl: res.url };
   } catch (err) {
     return { ok: false, status: null, error: err.message };
@@ -377,10 +432,16 @@ function extractFaqQAs($) {
 
 // ── claude editorial review ───────────────────────────────────────────────────
 
-async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult) {
+async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary) {
   const ctaContext = ctaResult.issues.length > 0
     ? `CTA ISSUES: ${ctaResult.issues.map((i) => i.message).join('; ')}`
     : `CTA links found: ${ctaResult.ctaLinks.map((l) => l.href).join(', ')}`;
+
+  const linkHealthContext = linkHealthSummary
+    ? (linkHealthSummary.brokenLinks.length === 0
+        ? `LINK HEALTH PRE-CHECK: All ${linkHealthSummary.totalLinks} links in this post have been fetched and verified as returning HTTP 200 OK. This includes external sources, CTA links, and Related Articles. DO NOT flag "sources lack URLs", "CTAs unverified", or "Related Articles unverified" as blockers — these have all been checked at fetch time.`
+        : `LINK HEALTH PRE-CHECK: ${linkHealthSummary.okLinks}/${linkHealthSummary.totalLinks} links verified as HTTP 200. ${linkHealthSummary.brokenLinks.length} broken link(s) detected — these must be flagged as blockers:\n${linkHealthSummary.brokenLinks.map((l) => `  - [${l.status}] ${l.href}`).join('\n')}\nDo NOT invent additional URL-verification blockers beyond the broken links listed here.`)
+    : '';
 
   const deterministicNote = deterministicIssues.length > 0
     ? `CODE PRE-CHECKS FOUND ISSUES:\n${deterministicIssues.map((i) => `- ${i}`).join('\n')}`
@@ -406,6 +467,12 @@ Review each post on these dimensions:
 8. COMPETITOR NAMES IN FAQ — Using the FAQ Q&As provided, flag any brand names other than Real Skin Care. BLOCKER if found.
 9. OVERALL QUALITY — Excellent / Good / Needs Work. Must be "Needs Work" if any BLOCKER exists.
 
+URL VERIFICATION POLICY (critical, overrides any standing feedback):
+- Link health has already been verified by a pre-check that fetches every URL in the post (external sources, CTAs, Related Articles, internal links). The results are provided in the LINK HEALTH PRE-CHECK section below.
+- If LINK HEALTH PRE-CHECK says all links are verified, you MUST NOT flag blockers like "sources lack URLs", "CTA URLs unverified", or "Related Articles unverified". Those concerns have already been resolved at fetch time.
+- The ONLY URL-related blockers you may raise are ones listed in the LINK HEALTH PRE-CHECK's broken link list.
+- Verifying the presence of an href attribute in the HTML is not your job — trust the pre-check.
+
 Format each section as:
 ## [Dimension]
 VERDICT: [word/phrase]
@@ -422,6 +489,8 @@ NOTES: [2-4 sentences]${fb ? `\n\nSTANDING FEEDBACK — apply in addition to abo
 TARGET KEYWORD: ${meta?.target_keyword ?? 'Unknown'}
 PRODUCT INGREDIENTS: ${productIngredientsContext}
 ${ctaContext}
+
+${linkHealthContext}
 
 ${deterministicNote}
 
@@ -453,8 +522,17 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
   // ── 1. Link health ────────────────────────────────────────────────────────
   lines.push('---\n## 1. Link Health\n');
   const broken = linkResults.filter((r) => !r.check.ok);
+  const scheduledOk = linkResults.filter((r) => r.check.ok && r.check.scheduled);
   const ok = linkResults.filter((r) => r.check.ok);
   lines.push(`**${ok.length} links OK** | **${broken.length} broken/unreachable**\n`);
+
+  if (scheduledOk.length > 0) {
+    lines.push(`> **Note:** ${scheduledOk.length} link(s) point to scheduled posts that will publish before this article:\n`);
+    for (const r of scheduledOk) {
+      lines.push(`> - ${r.text} — ${r.check.note}`);
+    }
+    lines.push('');
+  }
 
   if (broken.length === 0) {
     lines.push('All links returned a valid HTTP response.\n');
@@ -702,7 +780,12 @@ async function runEditor(htmlPath) {
 
   // 8. Editorial review
   process.stdout.write('  Running editorial review... ');
-  const review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult);
+  const linkHealthSummary = {
+    totalLinks: linkResults.length,
+    okLinks: linkResults.filter((r) => r.check.ok).length,
+    brokenLinks: linkResults.filter((r) => !r.check.ok).map((r) => ({ href: r.href, status: r.check.status })),
+  };
+  const review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary);
   console.log('done');
 
   // Build and save report

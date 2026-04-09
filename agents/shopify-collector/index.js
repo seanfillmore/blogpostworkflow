@@ -22,7 +22,15 @@ const SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
 
 const dateArg = process.argv.find(a => a.startsWith('--date='))?.split('=')[1]
   ?? (process.argv.includes('--date') ? process.argv[process.argv.indexOf('--date') + 1] : null);
-const date = dateArg || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+
+// Default to yesterday so the cron (which runs early morning) captures the full previous day
+function getYesterdayPT() {
+  const now = new Date();
+  const pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  pt.setDate(pt.getDate() - 1);
+  return pt.toISOString().slice(0, 10);
+}
+const date = dateArg || getYesterdayPT();
 
 if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
   console.error('Invalid date format. Expected YYYY-MM-DD.');

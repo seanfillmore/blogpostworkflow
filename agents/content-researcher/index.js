@@ -348,6 +348,50 @@ function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+/**
+ * Load historical flop verdicts for posts in the same topical area. When
+ * briefing a new post similar to an existing flop, the researcher should
+ * surface what didn't work last time so the new post avoids the same
+ * pattern. See docs/signal-manifest.md.
+ *
+ * Matches on the first cluster token of the keyword (e.g., "best natural
+ * deodorant" → "deodorant") and returns any per-post review with a
+ * non-ON_TRACK verdict.
+ */
+function loadRelatedFlops(keyword) {
+  const lowerKw = (keyword || '').toLowerCase();
+  const clusters = ['deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm', 'coconut oil', 'shampoo', 'sunscreen', 'body wash', 'moisturizer', 'serum'];
+  const matchedCluster = clusters.find((c) => lowerKw.includes(c));
+  if (!matchedCluster) return [];
+
+  const flops = [];
+  try {
+    const postsDir = join(ROOT, 'data', 'posts');
+    if (!existsSync(postsDir)) return [];
+    for (const f of readdirSync(postsDir).filter((n) => n.endsWith('.json'))) {
+      try {
+        const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
+        const postKw = (meta.target_keyword || '').toLowerCase();
+        if (!postKw.includes(matchedCluster)) continue;
+        const review = meta.performance_review || {};
+        for (const [key, r] of Object.entries(review)) {
+          if (r && r.verdict && r.verdict !== 'ON_TRACK') {
+            flops.push({
+              slug: meta.slug,
+              target_keyword: meta.target_keyword,
+              milestone: key,
+              verdict: r.verdict,
+              reason: r.reason,
+            });
+            break; // one per post is enough
+          }
+        }
+      } catch { /* skip */ }
+    }
+  } catch { /* ignore */ }
+  return flops;
+}
+
 async function generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, volumeHistory, gscData = null) {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
@@ -377,6 +421,12 @@ async function generateBrief(keyword, kwData, serpResults, relatedKeywords, comp
     ? `The site already appears in Google for this keyword: avg position #${Math.round(gscData.position)}, ${gscData.impressions.toLocaleString()} impressions, ${gscData.clicks} clicks, ${(gscData.ctr * 100).toFixed(1)}% CTR over 90 days. The new post should target outranking existing results and improving CTR.`
     : 'The site has no current GSC impressions for this keyword — this is a fresh ranking opportunity.';
 
+  // Historical flops in the same cluster — teach the writer what not to repeat.
+  const flops = loadRelatedFlops(keyword);
+  const flopNote = flops.length === 0
+    ? 'No prior flops in this cluster.'
+    : flops.map((f) => `  - "${f.target_keyword}" (${f.slug}) — ${f.milestone} verdict ${f.verdict}: ${f.reason}`).join('\n');
+
   const prompt = `You are a senior SEO content strategist for a natural skincare and personal care brand called "${config.name}" (${config.url}).
 
 The brand sells natural, organic personal care products — primarily natural toothpaste, coconut oil-based products, natural deodorant, and clean body lotion.
@@ -405,6 +455,9 @@ ${internalSummary || 'None identified'}
 
 SITE'S CURRENT GOOGLE SEARCH CONSOLE PERFORMANCE FOR THIS KEYWORD:
 ${gscNote}
+
+HISTORICAL FLOPS IN THIS CLUSTER (lessons from posts that underperformed — do not repeat these patterns):
+${flopNote}
 
 ---
 

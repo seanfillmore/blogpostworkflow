@@ -5,13 +5,31 @@
     "handle": "news",
     "articles": [
       {
+        "id": 563398344874,
+        "title": "Best Natural Deodorant for Kids: Safe & Effective Picks",
+        "handle": "best-natural-deodorant-for-kids-safe-effective-picks",
+        "author": "Sean Fillmore",
+        "tags": "deodorant, natural deodorant, natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-03T02:03:24-06:00"
+      },
+      {
+        "id": 563395887274,
+        "title": "Natural Soap Bar: The Clean Skin Guide You Need",
+        "handle": "natural-soap-bar-the-clean-skin-guide-you-need",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural soap, organic, soap",
+        "published_at": null,
+        "updated_at": "2026-04-03T02:06:57-06:00"
+      },
+      {
         "id": 563380846762,
         "title": "Best Natural Bar Soap for Women: Clean Picks That Work",
         "handle": "best-natural-bar-soap-for-women-clean-picks-that-work",
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural soap, organic, soap",
         "published_at": null,
-        "updated_at": "2026-03-25T06:41:57-06:00"
+        "updated_at": "2026-04-03T02:03:29-06:00"
       },
       {
         "id": 563334185130,
@@ -20,7 +38,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural soap, organic, soap",
         "published_at": null,
-        "updated_at": "2026-03-25T06:41:45-06:00"
+        "updated_at": "2026-04-03T02:03:32-06:00"
       },
       {
         "id": 563324649642,
@@ -28,8 +46,8 @@
         "handle": "best-organic-toothpaste-what-to-look-for-why-it-matters",
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
-        "published_at": null,
-        "updated_at": "2026-03-25T10:04:01-06:00"
+        "published_at": "2026-04-02T09:00:02-06:00",
+        "updated_at": "2026-04-03T02:00:08-06:00"
       },
       {
         "id": 563317997738,
@@ -37,8 +55,8 @@
         "handle": "no-fluoride-toothpaste-what-to-use-why-it-works",
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
-        "published_at": null,
-        "updated_at": "2026-03-25T10:03:33-06:00"
+        "published_at": "2026-04-02T09:00:01-06:00",
+        "updated_at": "2026-04-03T02:03:35-06:00"
       },
       {
         "id": 563313508522,
@@ -46,8 +64,8 @@
         "handle": "toothpaste-without-sls-what-to-know-best-options",
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
-        "published_at": null,
-        "updated_at": "2026-03-25T10:04:32-06:00"
+        "published_at": "2026-03-31T08:00:04-06:00",
+        "updated_at": "2026-04-03T02:00:10-06:00"
       },
       {
         "id": 563310231722,
@@ -55,8 +73,8 @@
         "handle": "sls-toothpaste-what-it-is-why-to-go-sls-free",
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
-        "published_at": null,
-        "updated_at": "2026-03-25T06:41:24-06:00"
+        "published_at": "2026-03-26T08:00:03-06:00",
+        "updated_at": "2026-04-01T02:00:13-06:00"
       },
       {
         "id": 563309609130,
@@ -65,7 +83,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, organic",
         "published_at": "2026-03-24T08:00:03-06:00",
-        "updated_at": "2026-03-25T06:52:15-06:00"
+        "updated_at": "2026-03-31T02:01:20-06:00"
       },
       {
         "id": 563296305322,
@@ -74,7 +92,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": "2026-03-19T08:00:04-06:00",
-        "updated_at": "2026-03-22T09:46:31-06:00"
+        "updated_at": "2026-04-03T02:00:15-06:00"
       },
       {
         "id": 563294404778,
@@ -83,7 +101,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, organic",
         "published_at": "2026-03-17T08:00:04-06:00",
-        "updated_at": "2026-03-24T20:15:09-06:00"
+        "updated_at": "2026-04-03T02:03:46-06:00"
       },
       {
         "id": 563291750570,
@@ -92,7 +110,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": "2026-03-12T08:00:05-06:00",
-        "updated_at": "2026-03-22T09:46:39-06:00"
+        "updated_at": "2026-04-03T02:03:49-06:00"
       },
       {
         "id": 563289686186,
@@ -100,8 +118,8 @@
         "handle": "best-toothpaste-without-sls-2026",
         "author": "Sean Fillmore",
         "tags": "",
-        "published_at": null,
-        "updated_at": "2026-03-20T02:04:46-06:00"
+        "published_at": "2026-03-30T08:00:04-06:00",
+        "updated_at": "2026-04-03T02:03:52-06:00"
       },
       {
         "id": 563289653418,
@@ -110,7 +128,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-19T09:00:00-06:00",
-        "updated_at": "2026-03-22T09:46:35-06:00"
+        "updated_at": "2026-04-03T02:03:55-06:00"
       },
       {
         "id": 563289620650,
@@ -118,8 +136,8 @@
         "handle": "best-natural-toothpaste-2026",
         "author": "Sean Fillmore",
         "tags": "",
-        "published_at": null,
-        "updated_at": "2026-03-20T02:04:51-06:00"
+        "published_at": "2026-03-26T08:00:03-06:00",
+        "updated_at": "2026-04-03T02:03:57-06:00"
       },
       {
         "id": 563289587882,
@@ -137,7 +155,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-13T17:21:35-06:00",
-        "updated_at": "2026-03-24T22:06:00-06:00"
+        "updated_at": "2026-03-26T10:02:46-06:00"
       },
       {
         "id": 563282182314,
@@ -146,7 +164,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": "2026-03-11T18:08:24-06:00",
-        "updated_at": "2026-03-22T09:46:11-06:00"
+        "updated_at": "2026-04-03T02:04:00-06:00"
       },
       {
         "id": 563282051242,
@@ -155,7 +173,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-17T08:00:04-06:00",
-        "updated_at": "2026-03-24T20:15:18-06:00"
+        "updated_at": "2026-04-03T02:04:02-06:00"
       },
       {
         "id": 563281559722,
@@ -164,7 +182,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-11T17:29:41-06:00",
-        "updated_at": "2026-03-22T09:46:41-06:00"
+        "updated_at": "2026-03-31T02:01:34-06:00"
       },
       {
         "id": 563281461418,
@@ -173,7 +191,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-11T08:00:05-06:00",
-        "updated_at": "2026-03-22T09:46:13-06:00"
+        "updated_at": "2026-04-03T02:04:07-06:00"
       },
       {
         "id": 563281428650,
@@ -182,7 +200,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-11T18:05:13-06:00",
-        "updated_at": "2026-03-24T20:15:24-06:00"
+        "updated_at": "2026-03-31T02:01:44-06:00"
       },
       {
         "id": 563281395882,
@@ -191,7 +209,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-11T18:05:19-06:00",
-        "updated_at": "2026-03-24T20:15:27-06:00"
+        "updated_at": "2026-04-03T02:04:11-06:00"
       },
       {
         "id": 562398396586,
@@ -200,7 +218,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-12T13:58:17-06:00",
-        "updated_at": "2026-03-24T06:34:14-06:00"
+        "updated_at": "2026-03-31T02:03:15-06:00"
       },
       {
         "id": 562396725418,
@@ -209,7 +227,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-12T15:09:08-06:00",
-        "updated_at": "2026-03-22T09:46:23-06:00"
+        "updated_at": "2026-03-26T10:07:36-06:00"
       },
       {
         "id": 562341380266,
@@ -236,7 +254,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2025-07-03T11:00:02-06:00",
-        "updated_at": "2026-03-22T09:46:06-06:00"
+        "updated_at": "2026-04-03T02:00:35-06:00"
       },
       {
         "id": 562335908010,
@@ -245,7 +263,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2026-03-09T17:04:42-06:00",
-        "updated_at": "2026-03-22T09:45:54-06:00"
+        "updated_at": "2026-04-03T02:00:40-06:00"
       },
       {
         "id": 562334466218,
@@ -263,7 +281,7 @@
         "author": "Sean Fillmore",
         "tags": "TOF, toothpaste",
         "published_at": "2025-06-27T11:00:02-06:00",
-        "updated_at": "2026-03-22T09:45:59-06:00"
+        "updated_at": "2026-04-03T02:00:46-06:00"
       },
       {
         "id": 562334302378,
@@ -299,7 +317,7 @@
         "author": "Sean Fillmore",
         "tags": "general, TOF",
         "published_at": "2025-06-19T10:00:09-06:00",
-        "updated_at": "2026-03-22T09:26:21-06:00"
+        "updated_at": "2026-03-26T10:04:38-06:00"
       },
       {
         "id": 562333974698,
@@ -308,7 +326,7 @@
         "author": "Sean Fillmore",
         "tags": "TOF, toothpaste",
         "published_at": "2025-06-17T10:00:02-06:00",
-        "updated_at": "2026-03-22T09:46:34-06:00"
+        "updated_at": "2026-04-03T02:00:55-06:00"
       },
       {
         "id": 562333941930,
@@ -353,7 +371,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2025-06-12T10:23:56-06:00",
-        "updated_at": "2026-03-22T09:26:07-06:00"
+        "updated_at": "2026-03-31T02:01:48-06:00"
       },
       {
         "id": 562322768042,
@@ -362,7 +380,7 @@
         "author": "Sean Fillmore",
         "tags": "TOF, toothpaste",
         "published_at": "2026-03-09T17:04:51-06:00",
-        "updated_at": "2026-03-22T09:26:04-06:00"
+        "updated_at": "2026-04-03T02:01:00-06:00"
       },
       {
         "id": 562322571434,
@@ -488,7 +506,7 @@
         "author": "Sean Fillmore",
         "tags": "general, TOF",
         "published_at": "2024-04-22T17:26:52-06:00",
-        "updated_at": "2026-03-24T20:15:31-06:00"
+        "updated_at": "2026-03-31T02:01:50-06:00"
       },
       {
         "id": 561046257834,
@@ -569,7 +587,7 @@
         "author": "Sean Fillmore",
         "tags": "general, MOF",
         "published_at": "2023-01-17T01:03:29-07:00",
-        "updated_at": "2025-08-15T15:30:11-06:00"
+        "updated_at": "2026-03-31T02:01:52-06:00"
       },
       {
         "id": 559649194154,

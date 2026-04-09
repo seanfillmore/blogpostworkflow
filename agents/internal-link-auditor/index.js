@@ -242,6 +242,32 @@ async function run() {
   });
   lines.push('');
 
+  // Quick-win under-linked section: posts currently at positions 11-20 with
+  // fewer inbound links than the median. These are the single best targets
+  // for new internal links — a rank boost is one extra link away. See
+  // docs/signal-manifest.md.
+  lines.push('## Quick-Win Under-Linked Posts (Highest Leverage)');
+  try {
+    const qwPath = join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json');
+    const qw = JSON.parse(readFileSync(qwPath, 'utf8'));
+    const qwTop = qw.top || [];
+    if (qwTop.length === 0) {
+      lines.push('No quick-win candidates currently. Run agents/quick-win-targeter/index.js.');
+    } else {
+      lines.push('These posts are at positions 11-20 per the latest quick-win report. Prioritize adding links TO them from the pillar pages above.');
+      lines.push('');
+      lines.push(`| Quick-Win Slug | Pos | Inbound Links | Top Query |`);
+      lines.push(`|----------------|-----|---------------|-----------|`);
+      for (const c of qwTop) {
+        const inboundMatch = pillarPages.find((p) => (p.slug || '').includes(c.slug)) || { inbound_count: 0 };
+        lines.push(`| ${c.slug} | ${c.position} | ${inboundMatch.inbound_count} | ${c.top_query || '—'} |`);
+      }
+    }
+  } catch {
+    lines.push('(quick-wins/latest.json unavailable)');
+  }
+  lines.push('');
+
   lines.push('## Orphaned Blog Posts (No Inbound Links)');
   if (orphanedPosts.length === 0) {
     lines.push('No orphaned blog posts found.');

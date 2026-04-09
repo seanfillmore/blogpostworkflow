@@ -30,6 +30,7 @@ import { execSync } from 'child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadCalendar } from '../../lib/calendar-store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -53,53 +54,49 @@ const kwArg       = (() => { const i = args.indexOf('--keyword'); return i !== -
 // ── parse calendar markdown ───────────────────────────────────────────────────
 
 function parseCalendar() {
-  if (!existsSync(CALENDAR_PATH)) {
-    console.error(`Calendar not found at ${CALENDAR_PATH}`);
+  // Prefer the canonical JSON calendar; loadCalendar() falls back to markdown for legacy data.
+  const calendar = loadCalendar();
+  if (!calendar.items.length) {
+    console.error(`Calendar is empty. Check data/calendar/calendar.json or ${CALENDAR_PATH}`);
     console.error('Run: node agents/content-strategist/index.js');
     process.exit(1);
   }
 
-  const md = readFileSync(CALENDAR_PATH, 'utf8');
-  const items = [];
-
-  // Match the publishing schedule table rows (skip header and separator rows)
-  const tableRegex = /^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
-
-  for (const match of md.matchAll(tableRegex)) {
-    const [, week, publishDate, category, keyword, title, kd, volume, contentType, priority] = match;
-
-    // Skip header row
-    if (week.trim() === 'Week' || week.trim() === '---') continue;
-
-    const parsedDate = parseDate(publishDate.trim());
-    if (!parsedDate) continue;
-
-    items.push({
-      week: parseInt(week.trim(), 10),
-      publishDate: parsedDate,
-      category: category.trim(),
-      keyword: keyword.trim(),
-      title: title.trim(),
-      kd: parseInt(kd.trim(), 10) || 0,
-      volume: parseInt(volume.trim().replace(/,/g, ''), 10) || 0,
-      contentType: contentType.trim(),
-      priority: priority.trim(),
-      slug: keywordToSlug(keyword.trim()),
-    });
-  }
+  const items = calendar.items.map((i) => ({
+    week: i.week,
+    publishDate: i.publish_date ? new Date(i.publish_date) : null,
+    category: i.category || '',
+    keyword: i.keyword,
+    title: i.title || '',
+    kd: i.kd ?? 0,
+    volume: i.volume ?? 0,
+    contentType: i.content_type || '',
+    priority: i.priority || '',
+    slug: i.slug,
+  })).filter((i) => i.publishDate);
 
   return items.sort((a, b) => a.publishDate - b.publishDate);
 }
 
-function parseDate(str) {
-  // Handles "Mar 10, 2026" and "Apr 2, 2026"
-  const m = str.match(/([A-Za-z]+)\s+(\d+),?\s+(\d{4})/);
-  if (!m) return null;
-  return new Date(`${m[1]} ${m[2]}, ${m[3]} 08:00:00 GMT-0700`);
-}
-
 function keywordToSlug(keyword) {
   return keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+// ── rejected keywords ─────────────────────────────────────────────────────────
+
+function loadRejections() {
+  const p = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(p)) return [];
+  try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return []; }
+}
+
+function isRejectedKw(keyword, rejections) {
+  const kw = keyword.toLowerCase();
+  return rejections.some(r => {
+    const term = r.keyword.toLowerCase();
+    if (r.matchType === 'exact') return keywordToSlug(keyword) === keywordToSlug(r.keyword);
+    return kw.includes(term);
+  });
 }
 
 // ── determine item status ─────────────────────────────────────────────────────
@@ -584,7 +581,11 @@ async function main() {
 
   const rawItems  = parseCalendar();
   const signals   = loadRankSignals();
-  const items     = applyFeedbackAdjustments(rawItems, signals);
+  const rejections = loadRejections();
+  const allItems  = applyFeedbackAdjustments(rawItems, signals);
+  const items     = allItems.filter(i => !isRejectedKw(i.keyword, rejections));
+  const skipped   = allItems.length - items.length;
+  if (skipped > 0) console.log(`  Skipping ${skipped} rejected keyword(s).`);
 
   if (!doRun && !dryRun) {
     printCalendar(items);

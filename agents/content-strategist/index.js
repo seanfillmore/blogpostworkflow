@@ -16,6 +16,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import { writeCalendar } from '../../lib/calendar-store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -62,6 +63,134 @@ function loadLatestRankReport() {
   const path = join(ROOT, 'data', 'reports', 'rank-tracker', 'rank-tracker-report.md');
   if (!existsSync(path)) return null;
   return readFileSync(path, 'utf8').slice(0, 3000);
+}
+
+/**
+ * Load latest rank snapshot + post tags and compute per-cluster performance.
+ *
+ * A "cluster" is derived from a post's first tag (falls back to the first
+ * slug token). For each cluster we record median position, count of page-1
+ * posts, count of drag posts (position > 30 and age > 30d), and any
+ * outstanding flops surfaced by the post-performance agent.
+ *
+ * Weighting rules used by the strategist:
+ *   - page_1 cluster (≥1 post at positions 1–10 AND no outstanding flops):
+ *     +2 priority weight — reinforce with adjacent topics.
+ *   - drag cluster (median position > 30 AND median age > 30 days):
+ *     −3 priority weight — deprioritize new topics here.
+ *
+ * Returns { computed_at, clusters: { <name>: { weight, page_1, drag, ... } } }
+ * or null if no rank snapshot is available.
+ */
+export function loadClusterPerformance() {
+  const snapshotsDir = join(ROOT, 'data', 'rank-snapshots');
+  if (!existsSync(snapshotsDir)) return null;
+  const files = readdirSync(snapshotsDir).filter((f) => f.endsWith('.json')).sort();
+  if (!files.length) return null;
+  const snap = JSON.parse(readFileSync(join(snapshotsDir, files[files.length - 1]), 'utf8'));
+  const posts = snap.posts || [];
+
+  // Map slug -> tags from data/posts/*.json
+  const tagsBySlug = {};
+  if (existsSync(POSTS_DIR)) {
+    for (const f of readdirSync(POSTS_DIR).filter((x) => x.endsWith('.json'))) {
+      try {
+        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+        if (meta.slug) tagsBySlug[meta.slug] = meta.tags || [];
+      } catch { /* skip */ }
+    }
+  }
+
+  // Outstanding flops by slug from post-performance latest.json
+  const flopSlugs = new Set();
+  const ppPath = join(ROOT, 'data', 'reports', 'post-performance', 'latest.json');
+  if (existsSync(ppPath)) {
+    try {
+      const pp = JSON.parse(readFileSync(ppPath, 'utf8'));
+      for (const f of (pp.action_required || [])) flopSlugs.add(f.slug);
+    } catch { /* ignore */ }
+  }
+
+  // Known product clusters — checked against tags AND slug as a fallback so
+  // posts without proper tags still group correctly.
+  const KNOWN_CLUSTERS = [
+    'deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm', 'lip-balm',
+    'coconut oil', 'coconut-oil', 'shampoo', 'conditioner', 'sunscreen',
+  ];
+  function clusterFor(post) {
+    const tags = (tagsBySlug[post.slug] || []).map((t) => t.toLowerCase());
+    for (const c of KNOWN_CLUSTERS) {
+      if (tags.some((t) => t.includes(c.replace('-', ' ')))) return c.replace('-', ' ');
+    }
+    const slug = (post.slug || '').toLowerCase();
+    for (const c of KNOWN_CLUSTERS) {
+      if (slug.includes(c.replace(' ', '-'))) return c.replace('-', ' ');
+    }
+    if (tags.length) return tags[0];
+    return slug.split('-')[0];
+  }
+
+  const groups = {};
+  const now = Date.now();
+  for (const p of posts) {
+    if (!p.position) continue;
+    const cluster = clusterFor(p);
+    if (!cluster) continue;
+    const ageDays = p.published_at ? Math.floor((now - new Date(p.published_at).getTime()) / 86400000) : null;
+    (groups[cluster] = groups[cluster] || []).push({ ...p, age_days: ageDays });
+  }
+
+  const median = (arr) => {
+    if (!arr.length) return null;
+    const s = [...arr].sort((a, b) => a - b);
+    return s[Math.floor(s.length / 2)];
+  };
+
+  const clusters = {};
+  for (const [name, items] of Object.entries(groups)) {
+    const positions = items.map((i) => i.position);
+    const ages = items.map((i) => i.age_days).filter((a) => a != null);
+    const medianPos = median(positions);
+    const medianAge = median(ages);
+    const page1Count = items.filter((i) => i.position <= 10).length;
+    const dragCount = items.filter((i) => i.position > 30 && (i.age_days || 0) > 30).length;
+    const hasFlop = items.some((i) => flopSlugs.has(i.slug));
+
+    let weight = 0;
+    const reasons = [];
+    if (page1Count >= 1 && !hasFlop) {
+      weight += 2;
+      reasons.push(`+2 page-1 cluster (${page1Count} post${page1Count > 1 ? 's' : ''} on page 1)`);
+    }
+    if (medianPos != null && medianPos > 30 && medianAge != null && medianAge > 30) {
+      weight -= 3;
+      reasons.push(`-3 drag cluster (median pos ${medianPos}, median age ${medianAge}d)`);
+    }
+    if (hasFlop) reasons.push(`flop present — page-1 boost suppressed`);
+
+    clusters[name] = {
+      post_count: items.length,
+      median_position: medianPos,
+      median_age_days: medianAge,
+      page_1_count: page1Count,
+      drag_count: dragCount,
+      has_outstanding_flop: hasFlop,
+      weight,
+      reasons,
+    };
+  }
+
+  return { computed_at: new Date().toISOString(), snapshot_file: files[files.length - 1], clusters };
+}
+
+function buildClusterWeightSection(clusterPerf) {
+  if (!clusterPerf) return '';
+  const entries = Object.entries(clusterPerf.clusters)
+    .filter(([, c]) => c.weight !== 0)
+    .sort((a, b) => b[1].weight - a[1].weight);
+  if (!entries.length) return '';
+  const lines = entries.map(([name, c]) => `- **${name}** (weight ${c.weight > 0 ? '+' : ''}${c.weight}): ${c.reasons.join('; ')}`);
+  return `\n## Cluster Authority Weights\nApply these to your prioritization. Add the weight to the base priority score for any topic in that cluster:\n${lines.join('\n')}\n\nScoring rules:\n- Topics in **page-1 clusters** (+2): prefer these — reinforcing existing winners is higher ROI than breaking into new ones.\n- Topics in **drag clusters** (−3): deprioritize new topics here unless strategically essential. The cluster has not earned authority despite age.\n`;
 }
 
 export function loadRejections() {
@@ -134,6 +263,52 @@ function loadInventory() {
   return existing;
 }
 
+// ── schedule extraction ───────────────────────────────────────────────────────
+
+/**
+ * Extract structured calendar items from the markdown Publishing Schedule table.
+ * Expects the table with columns: Week | Publish Date | Category | Target Keyword | Suggested Title | KD | Volume | Content Type | Priority
+ */
+function extractScheduleItems(markdown) {
+  const items = [];
+  const tableRegex = /^\|\s*\*{0,2}(\d+)\*{0,2}\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
+
+  for (const match of markdown.matchAll(tableRegex)) {
+    const [, week, dateStr, category, keyword, title, kd, volume, contentType, priority] = match;
+    if (week.trim() === 'Week' || week.trim() === '---') continue;
+    const dm = dateStr.trim().match(/([A-Za-z]+)\s+(\d+),?\s+(\d{4})/);
+    if (!dm) continue;
+    const publishDate = new Date(`${dm[1]} ${dm[2]}, ${dm[3]} 08:00:00 GMT-0700`);
+    const slug = slugify(keyword.trim());
+    items.push({
+      slug,
+      keyword: keyword.trim(),
+      title: title.trim(),
+      category: category.trim(),
+      content_type: contentType.trim(),
+      priority: priority.trim(),
+      week: parseInt(week.trim(), 10),
+      publish_date: publishDate.toISOString(),
+      kd: parseInt(kd.trim(), 10) || 0,
+      volume: parseInt(volume.trim().replace(/,/g, ''), 10) || 0,
+      source: 'gap_report',
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Extract the non-table sections (Topical Clusters, Brief Queue, etc.) from
+ * Claude's markdown output so the rendered calendar preserves them.
+ */
+function extractNonScheduleSections(markdown) {
+  // Strip the Publishing Schedule section (header + table) and return the rest
+  const parts = markdown.split(/^##\s+/m);
+  const kept = parts.filter((p) => !/^Publishing Schedule/i.test(p.trim()));
+  return kept.map((p, i) => (i === 0 ? p : '## ' + p)).join('').trim();
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -150,6 +325,29 @@ async function main() {
   const gapReport = readFileSync(gapReportPath, 'utf8');
   const inventory = loadInventory();
   const rankReport = loadLatestRankReport();
+  const clusterPerf = loadClusterPerformance();
+
+  // Load latest GSC opportunity report (unmapped queries are net-new topic candidates)
+  let gscOpps = null;
+  const gscOppPath = join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json');
+  if (existsSync(gscOppPath)) {
+    try { gscOpps = JSON.parse(readFileSync(gscOppPath, 'utf8')); } catch { /* ignore */ }
+  }
+
+  // Load latest competitor activity (cluster boosts when competitors recently published)
+  let competitorSignals = null;
+  const compPath = join(ROOT, 'data', 'reports', 'competitor-watcher', 'latest.json');
+  if (existsSync(compPath)) {
+    try { competitorSignals = JSON.parse(readFileSync(compPath, 'utf8')); } catch { /* ignore */ }
+  }
+
+  // Persist computed cluster weights for dashboard / inspection
+  if (clusterPerf) {
+    mkdirSync(REPORTS_DIR, { recursive: true });
+    writeFileSync(join(REPORTS_DIR, 'cluster-weights.json'), JSON.stringify(clusterPerf, null, 2));
+    const weighted = Object.values(clusterPerf.clusters).filter((c) => c.weight !== 0).length;
+    console.log(`  Cluster weights: ${Object.keys(clusterPerf.clusters).length} clusters, ${weighted} weighted`);
+  }
 
   console.log(`  Gap report: ${gapReportPath}`);
   console.log(`  Existing content: ${inventory.size} slugs found (briefs + posts)`);
@@ -183,6 +381,9 @@ You have been given a content gap analysis report. Your job is to produce a deta
 EXISTING CONTENT (already published or briefed — DO NOT include these):
 ${[...inventory].sort().join('\n')}
 
+${buildClusterWeightSection(clusterPerf)}
+${competitorSignals && Object.keys(competitorSignals.cluster_boosts || {}).length ? `\n## Competitor Activity Signals\nCompetitors have recently published in the following clusters. Treat these as a +1 priority boost — keep our cluster fresh and reinforce authority before the competitor post gains traction.\n${Object.entries(competitorSignals.cluster_boosts).map(([cl, n]) => `- **${cl}** — ${n} new competitor post${n > 1 ? 's' : ''}`).join('\n')}\n` : ''}
+${gscOpps && (gscOpps.unmapped?.length || gscOpps.low_ctr?.length) ? `\n## GSC Opportunity Signals\nUse these to inform new-topic and rewrite priorities.\n\n**Unmapped high-impression queries (no current page targets these — strong new-topic candidates):**\n${(gscOpps.unmapped || []).slice(0, 15).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, position ${r.position.toFixed(1)}`).join('\n')}\n\n**Low-CTR queries (existing pages need title/meta rewrites — do not schedule as new posts):**\n${(gscOpps.low_ctr || []).slice(0, 10).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n` : ''}
 ${rankReport ? `RANK PERFORMANCE DATA (from latest rank tracker snapshot):
 Use this to inform cluster prioritization — double down on clusters with page-1 posts, prioritize quick wins for internal link boosts, and deprioritize clusters with no rankings yet unless high strategic value.
 ${rankReport}
@@ -269,20 +470,22 @@ ${calendarMd}`;
   }
   console.log(`done (${briefQueue.length} items)`);
 
-  // ── Step 3: Save calendar ─────────────────────────────────────────────────────
+  // ── Step 3: Extract structured items from Claude's markdown and save as JSON ──
 
-  mkdirSync(REPORTS_DIR, { recursive: true });
-  const calendarPath = join(REPORTS_DIR, 'content-calendar.md');
+  const extractedItems = extractScheduleItems(calendarMd);
+  console.log(`  Extracted ${extractedItems.length} calendar items from markdown`);
 
-  const calendarHeader = `# Content Calendar — Real Skin Care
-**Generated:** ${todayStr}
-**Mode:** ${generateBriefs ? `Plan + Brief generation (${briefQueue.length} items)` : 'Plan only'}
+  // Preserve any existing supporting sections (clusters, brief queue) in the markdown view
+  const markdownExtras = extractNonScheduleSections(calendarMd);
 
----
-
-`;
-  writeFileSync(calendarPath, calendarHeader + calendarMd);
-  console.log(`\n  Calendar saved: ${calendarPath}`);
+  // Write JSON as source of truth + regenerate markdown view automatically
+  writeCalendar({
+    items: extractedItems,
+    regenerated_at: new Date().toISOString(),
+    preserve_metadata: true,
+    markdown_extras: markdownExtras,
+  });
+  console.log(`\n  Calendar saved: data/calendar/calendar.json (+ markdown view)`);
 
   // ── Step 4: Generate briefs (optional) ───────────────────────────────────────
 
