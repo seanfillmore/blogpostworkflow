@@ -30,7 +30,11 @@ const ENV_PATH = join(ROOT, '.env');
 
 const PORT = 3458;
 const REDIRECT_URI = `http://localhost:${PORT}/callback`;
-const SCOPES = 'https://www.googleapis.com/auth/webmasters.readonly https://www.googleapis.com/auth/analytics.readonly';
+const SCOPES = [
+  'https://www.googleapis.com/auth/webmasters',        // read+write — sitemaps resubmission, URL inspection
+  'https://www.googleapis.com/auth/analytics.readonly',
+  'https://www.googleapis.com/auth/indexing',          // Indexing API — URL_UPDATED / URL_DELETED submissions
+].join(' ');
 
 // ── env helpers ───────────────────────────────────────────────────────────────
 

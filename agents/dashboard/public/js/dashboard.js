@@ -148,6 +148,7 @@ function renderOptimizeTab(d) {
   });
 
   document.getElementById('tab-optimize').innerHTML =
+    renderIndexingCard(d) +
     renderActionRequired(d) +
     renderQuickWinCard(d) +
     renderGscOpportunityCard(d) +
@@ -172,6 +173,98 @@ function renderOptimizeTab(d) {
 }
 
 // ── Performance-driven SEO engine cards ───────────────────────────────────────
+
+function renderIndexingCard(d) {
+  const idx = d.indexing;
+  const queue = (d.indexingQueue && d.indexingQueue.items) || [];
+  const pendingApproval = queue.filter((q) => q.status === 'pending_approval');
+
+  if (!idx) {
+    return '<div class="card"><div class="card-header accent-sky"><h2>&#128065; Indexing Status</h2></div>' +
+      '<div class="card-body"><div class="empty-state">No indexing check yet. Run the indexing-checker.</div></div></div>';
+  }
+
+  const byState = idx.by_state || {};
+  const total = idx.total_checked || 0;
+  const indexed = byState.indexed || 0;
+  const actionable = idx.actionable_count || 0;
+  const accent = actionable > 0 ? 'accent-red' : 'accent-sky';
+
+  // State pills
+  const pills = Object.entries(byState)
+    .sort((a, b) => b[1] - a[1])
+    .map(([state, count]) => {
+      const cls = state === 'indexed' ? 'weight-pos' : 'weight-neg';
+      return '<span class="weight-pill ' + cls + '" style="margin-right:6px">' + esc(state) + ': ' + count + '</span>';
+    }).join('');
+
+  // Pending approval queue (Tier 2)
+  let queueRows = '';
+  if (pendingApproval.length > 0) {
+    queueRows = pendingApproval.map((q) => '<div class="action-row">' +
+      '<div class="action-head">' +
+        '<span class="verdict-pill verdict-refresh">Tier 2</span>' +
+        '<span class="action-title">' + esc(q.title || q.slug) + '</span>' +
+        '<span class="action-age">' + (q.age_days || '?') + 'd &middot; ' + esc(q.state) + '</span>' +
+      '</div>' +
+      '<div class="action-reason">Not indexed after ' + (q.age_days || '?') + ' days. Tier 1 sitemap ping did not resolve. Submit via Google Indexing API?</div>' +
+      '<div class="action-buttons">' +
+        '<button class="btn-primary" onclick="approveIndexingSubmit(' + "'" + esc(q.slug) + "'" + ')">Submit to Indexing API</button>' +
+        '<button class="btn-sm" onclick="dismissIndexingSubmit(' + "'" + esc(q.slug) + "'" + ')">Dismiss</button>' +
+      '</div>' +
+    '</div>').join('');
+  }
+
+  // Actionable critical items (Tier 3 manual fixes)
+  const critical = (idx.results || []).filter((r) => r.verdict && r.verdict.severity === 'critical' && !['resubmit_sitemap', 'submit_indexing_api'].includes(r.verdict.action));
+  let criticalRows = '';
+  if (critical.length > 0) {
+    criticalRows = critical.map((r) => '<div class="action-row">' +
+      '<div class="action-head">' +
+        '<span class="verdict-pill verdict-blocked">Manual Fix</span>' +
+        '<span class="action-title">' + esc(r.title || r.slug) + '</span>' +
+        '<span class="action-age">' + esc(r.verdict.action) + '</span>' +
+      '</div>' +
+      '<div class="action-reason">' + esc(r.state) + ' &mdash; ' + esc(r.coverage_state || '') + (r.canonical_mismatch ? ' &middot; Google canonical: <code>' + esc(r.google_canonical || '') + '</code>' : '') + '</div>' +
+      '<div class="action-buttons"><a class="btn-secondary" href="' + esc(r.url) + '" target="_blank">Open post</a></div>' +
+    '</div>').join('');
+  }
+
+  const quotaNote = idx.quota && idx.quota.submission
+    ? '<span class="card-subtitle">Indexing API quota: ' + idx.quota.submission.used + '/' + idx.quota.submission.cap + ' used today</span>'
+    : '';
+
+  return '<div class="card"><div class="card-header ' + accent + '">' +
+      '<h2>&#128065; Indexing Status (' + indexed + '/' + total + ' indexed)</h2>' +
+      quotaNote +
+    '</div><div class="card-body">' +
+      '<div style="margin-bottom:12px">' + pills + '</div>' +
+      (queueRows ? '<h3 style="font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin:8px 0">Pending Approval</h3>' + queueRows : '') +
+      (criticalRows ? '<h3 style="font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin:12px 0 8px">Manual Fixes Needed</h3>' + criticalRows : '') +
+      (queueRows || criticalRows ? '' : '<div class="empty-state" style="padding:12px 0">All posts are either indexed or within their patience window.</div>') +
+    '</div></div>';
+}
+
+async function approveIndexingSubmit(slug) {
+  if (!confirm('Submit "' + slug + '" to the Google Indexing API?')) return;
+  const res = await fetch('/api/indexing-queue/' + encodeURIComponent(slug) + '/approve', { method: 'POST' });
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let log = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    log += decoder.decode(value);
+  }
+  alert('Submission complete. Check daily digest for result.\n\n' + log.slice(-400));
+  loadData();
+}
+
+async function dismissIndexingSubmit(slug) {
+  if (!confirm('Dismiss indexing submission for "' + slug + '"?')) return;
+  await fetch('/api/indexing-queue/' + encodeURIComponent(slug) + '/dismiss', { method: 'POST' });
+  loadData();
+}
 
 function renderActionRequired(d) {
   const flops = (d.postPerformance && d.postPerformance.action_required) || [];

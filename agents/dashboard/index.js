@@ -38,6 +38,7 @@ import metaAdsRoutes from './routes/meta-ads.js';
 import adsRoutes from './routes/ads.js';
 import creativesRoutes from './routes/creatives.js';
 import campaignsRoutes from './routes/campaigns.js';
+import indexingRoutes from './routes/indexing.js';
 
 const {
   ROOT, PUBLIC_DIR,
@@ -95,6 +96,7 @@ const ROUTES = [
   ...adsRoutes,
   ...creativesRoutes,
   ...campaignsRoutes,
+  ...indexingRoutes,
 ];
 
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key

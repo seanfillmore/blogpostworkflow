@@ -203,6 +203,8 @@ export function aggregateData() {
   const gscOpportunityRaw  = readJsonIfExists(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
   const clusterWeights     = readJsonIfExists(join(REPORTS_DIR, 'content-strategist', 'cluster-weights.json'));
   const competitorActivity = readJsonIfExists(join(REPORTS_DIR, 'competitor-watcher', 'latest.json'));
+  const indexing           = readJsonIfExists(join(REPORTS_DIR, 'indexing', 'latest.json'));
+  const indexingQueue      = readJsonIfExists(join(ROOT, 'data', 'performance-queue', 'indexing-submissions.json'));
 
   // Apply the existing keyword rejection list to signals produced by the
   // agents. Rejections are brand-conflict or off-topic terms that must not
@@ -269,6 +271,8 @@ export function aggregateData() {
     gscOpportunity,
     clusterWeights,
     competitorActivity,
+    indexing,
+    indexingQueue,
   };
 }
 

@@ -119,6 +119,18 @@ function refreshOne(slug) {
     return { slug, ok: false, reason: 'no metadata' };
   }
 
+  // Suppress refresh for non-indexed posts — refreshing a page Google hasn't
+  // indexed is wasted effort. Fix indexing first, then rewrite if needed.
+  // See docs/signal-manifest.md (indexing-checker → refresh-runner loop).
+  try {
+    const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    const idx = meta.indexing_state;
+    if (idx && idx.state && idx.state !== 'indexed') {
+      console.log(`  [skip] ${slug}: indexing state is "${idx.state}" — run indexing-fixer first, not refresh`);
+      return { slug, ok: false, reason: `indexing state ${idx.state}, refresh suppressed` };
+    }
+  } catch { /* fall through */ }
+
   console.log(`\n══ Refreshing: ${slug} ══`);
 
   try {
