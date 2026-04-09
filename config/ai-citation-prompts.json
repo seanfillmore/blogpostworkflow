@@ -1,0 +1,38 @@
+{
+  "brand": {
+    "name": "Real Skin Care",
+    "domain": "realskincare.com",
+    "aliases": ["real skin care", "realskincare"]
+  },
+  "competitors": [
+    { "name": "Native", "domain": "nativecos.com" },
+    { "name": "Schmidt's", "domain": "schmidts.com" },
+    { "name": "Tom's of Maine", "domain": "tomsofmaine.com" },
+    { "name": "Each & Every", "domain": "eachandevery.com" },
+    { "name": "Hello", "domain": "hello-products.com" },
+    { "name": "Davids", "domain": "davids-usa.com" },
+    { "name": "Boka", "domain": "boka.com" },
+    { "name": "Burt's Bees", "domain": "burtsbees.com" },
+    { "name": "Lume", "domain": "lumedeodorant.com" }
+  ],
+  "prompts": [
+    "best natural deodorant",
+    "best natural deodorant that actually works",
+    "is aluminum deodorant safe",
+    "natural deodorant for sensitive skin",
+    "best fluoride free toothpaste",
+    "best natural toothpaste",
+    "is fluoride toothpaste safe",
+    "best sls free toothpaste",
+    "best natural lip balm",
+    "best natural bar soap",
+    "best non toxic body lotion",
+    "best natural moisturizer",
+    "benefits of coconut oil for skin",
+    "is real skincare legit",
+    "real skincare deodorant review",
+    "real skincare vs native",
+    "best clean beauty brands",
+    "best organic skincare brands"
+  ]
+}
