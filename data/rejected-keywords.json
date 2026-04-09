@@ -1,0 +1,8 @@
+[
+  {
+    "keyword": "reale",
+    "matchType": "broad",
+    "reason": "Brand conflict — 'Reale Skincare' / 'Reale Actives' is a different company. Exclude all reale-* variants from targeting.",
+    "added_at": "2026-04-09"
+  }
+]

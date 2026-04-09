@@ -86,9 +86,29 @@ async function main() {
   console.log(`  Using snapshot: ${snap.file}`);
   console.log(`  Total tracked posts: ${snap.data.posts?.length || 0}`);
 
-  // Step 1: Filter to positions 11–20
-  const candidates = (snap.data.posts || []).filter((p) => p.position && p.position >= 11 && p.position <= 20);
-  console.log(`  Posts at positions 11–20: ${candidates.length}`);
+  // Load rejections (brand conflicts, off-topic terms). Filtered out of
+  // candidate selection BEFORE GSC enrichment to avoid wasted API calls.
+  const rejectionsPath = join(ROOT, 'data', 'rejected-keywords.json');
+  let rejections = [];
+  if (existsSync(rejectionsPath)) {
+    try { rejections = JSON.parse(readFileSync(rejectionsPath, 'utf8')); } catch { /* ignore */ }
+  }
+  const isRejected = (kw) => {
+    const k = (kw || '').toLowerCase().trim();
+    if (!k) return false;
+    return rejections.some((r) => {
+      const term = (r.keyword || '').toLowerCase().trim();
+      if (!term) return false;
+      if (r.matchType === 'exact') return k === term;
+      return k.includes(term);
+    });
+  };
+
+  // Step 1: Filter to positions 11–20 AND exclude rejected keywords
+  const allCandidates = (snap.data.posts || []).filter((p) => p.position && p.position >= 11 && p.position <= 20);
+  const candidates = allCandidates.filter((p) => !isRejected(p.keyword) && !isRejected(p.slug));
+  const rejectedCount = allCandidates.length - candidates.length;
+  console.log(`  Posts at positions 11–20: ${candidates.length}${rejectedCount ? ` (${rejectedCount} filtered by rejection list)` : ''}`);
 
   if (candidates.length === 0) {
     console.log('\n  No quick-win candidates in the current snapshot.');

@@ -35,6 +35,28 @@ const LOW_CTR_MIN_IMPRESSIONS = 100;
 const LOW_CTR_MAX_CTR = 0.02;
 const UNMAPPED_MIN_IMPRESSIONS = 50;
 
+/**
+ * Load the shared rejected-keywords list. Rows matching any rejection are
+ * filtered out of every section of the report. Uses the same matching
+ * semantics as the content-strategist / calendar-runner.
+ */
+function loadRejections() {
+  const p = join(ROOT, 'data', 'rejected-keywords.json');
+  if (!existsSync(p)) return [];
+  try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return []; }
+}
+
+function isRejected(keyword, rejections) {
+  const kw = (keyword || '').toLowerCase().trim();
+  if (!kw) return false;
+  return rejections.some((r) => {
+    const term = (r.keyword || '').toLowerCase().trim();
+    if (!term) return false;
+    if (r.matchType === 'exact') return kw === term;
+    return kw.includes(term);
+  });
+}
+
 function loadKeywordIndex() {
   // Build a set of keywords already targeted by an existing brief or post.
   const keywords = new Set();
@@ -72,13 +94,18 @@ async function main() {
 
   mkdirSync(REPORTS_DIR, { recursive: true });
 
+  const rejections = loadRejections();
+  if (rejections.length) console.log(`  Loaded ${rejections.length} keyword rejection${rejections.length === 1 ? '' : 's'}`);
+
   console.log('  Fetching low-CTR queries...');
-  const lowCTR = await getLowCTRKeywords(LOW_CTR_MIN_IMPRESSIONS, LOW_CTR_MAX_CTR, 50, 90);
-  console.log(`    ${lowCTR.length} low-CTR queries (impressions ≥ ${LOW_CTR_MIN_IMPRESSIONS}, CTR ≤ ${LOW_CTR_MAX_CTR * 100}%)`);
+  const lowCTRRaw = await getLowCTRKeywords(LOW_CTR_MIN_IMPRESSIONS, LOW_CTR_MAX_CTR, 50, 90);
+  const lowCTR = lowCTRRaw.filter((r) => !isRejected(r.keyword, rejections));
+  console.log(`    ${lowCTR.length} low-CTR queries (impressions ≥ ${LOW_CTR_MIN_IMPRESSIONS}, CTR ≤ ${LOW_CTR_MAX_CTR * 100}%)${lowCTRRaw.length !== lowCTR.length ? ` — ${lowCTRRaw.length - lowCTR.length} filtered by rejection list` : ''}`);
 
   console.log('  Fetching page-2 queries...');
-  const page2 = await getPage2Keywords(50, 90);
-  console.log(`    ${page2.length} page-2 queries (positions 11-20)`);
+  const page2Raw = await getPage2Keywords(50, 90);
+  const page2 = page2Raw.filter((r) => !isRejected(r.keyword, rejections));
+  console.log(`    ${page2.length} page-2 queries (positions 11-20)${page2Raw.length !== page2.length ? ` — ${page2Raw.length - page2.length} filtered` : ''}`);
 
   console.log('  Computing unmapped opportunities...');
   const index = loadKeywordIndex();
