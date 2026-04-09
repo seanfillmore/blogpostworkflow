@@ -60,6 +60,30 @@ const env = loadEnv();
 if (!env.ANTHROPIC_API_KEY) { console.error('Missing ANTHROPIC_API_KEY in .env'); process.exit(1); }
 const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
+// ── product ingredients (shared with blog-post-writer) ────────────────────────
+
+const ingredients = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+
+function flattenProduct(product) {
+  if (!product) return null;
+  const base = product.base_ingredients || product.ingredients || [];
+  const variationOils = (product.variations || []).flatMap((v) => v.essential_oils || []);
+  const all = [...new Set([...base, ...variationOils])];
+  return { name: product.name, format: product.format, ingredients: all };
+}
+
+function detectProductIngredients(keyword) {
+  const kw = (keyword || '').toLowerCase();
+  if (kw.includes('deodorant')) return flattenProduct(ingredients.deodorant);
+  if (kw.includes('toothpaste') || kw.includes('tooth paste') || kw.includes('oral')) return flattenProduct(ingredients.toothpaste);
+  if (kw.includes('lotion') || kw.includes('moisturizer') || kw.includes('moisturiser')) return flattenProduct(ingredients.lotion);
+  if (kw.includes('cream') || kw.includes('body butter')) return flattenProduct(ingredients.cream);
+  if (kw.includes('soap') && kw.includes('bar')) return flattenProduct(ingredients.bar_soap);
+  if (kw.includes('soap')) return flattenProduct(ingredients.liquid_soap);
+  if (kw.includes('lip balm') || kw.includes('lip')) return flattenProduct(ingredients.lip_balm);
+  return null;
+}
+
 // ── args ──────────────────────────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
@@ -185,26 +209,61 @@ function heuristicCheck(intro, title, keyword) {
 // ── Claude rewrite ────────────────────────────────────────────────────────────
 
 async function generateRewrite(post, intro, reasons) {
-  const prompt = `You are rewriting the opening paragraph of a blog post on a natural skincare brand's website (Real Skin Care, realskincare.com) to maximize the chance it gets cited by AI search engines (ChatGPT Search, Perplexity, Google AI Overviews, claude.ai).
+  const product = detectProductIngredients(post.meta.target_keyword);
+  const ingredientBlock = product
+    ? `\n═══════════════════════════════════\nOUR PRODUCT INGREDIENTS — CRITICAL\n═══════════════════════════════════\nThis post is about ${product.name}${product.format ? ` (${product.format})` : ''}. The Real Skin Care product contains ONLY these ingredients:\n${product.ingredients.join(', ')}\n\nIngredient rules:\n- When the rewrite mentions specific ingredients, ONLY use ingredients from the list above. Do NOT name ingredients we don't actually use (no shea butter, no arrowroot, no magnesium hydroxide, no probiotics, etc. unless they appear above).\n- It is fine to refer generically to "plant oils" or "natural ingredients" if you don't want to name specific ones.\n- Do NOT present ingredients we don't use as desirable features or "what to look for".\n`
+    : '';
 
-POST TITLE: ${post.meta.title}
+  const prompt = `You are rewriting the opening paragraph of a blog post for Real Skin Care (realskincare.com), a natural skincare and personal care brand. The goal is to make the opening BOTH cite-worthy for AI search engines (ChatGPT, Perplexity, AI Overviews, claude.ai) AND warm and human enough that real readers want to keep reading.${ingredientBlock}
+
+═══════════════════════════════════
+BRAND VOICE — NON-NEGOTIABLE
+═══════════════════════════════════
+Helpful, warm, conversational. Write like a trusted friend explaining something over coffee — not a clinician writing a report. 8th grade reading level.
+
+Voice rules:
+- Use short sentences. Break long ones in two.
+- Choose the plain word over the clinical one. "Bacteria that cause odor" not "odor-causing microflora". "Soothes skin" not "ameliorates dermal irritation". "Soaks in" not "penetrates the stratum corneum".
+- Speak directly to the reader: "you", "your", "here's what to look for".
+- Never use jargon without immediately explaining it in plain language. Better yet, just don't use it.
+- Vary sentence length — mix short punchy sentences with slightly longer ones.
+- It's fine to start a sentence with "And", "But", or "So".
+- Do NOT use em-dashes (—) or en-dashes (–). Use a period, comma, or "and" instead. This is a hard rule.
+- Avoid words like "stratum corneum", "transepidermal water loss", "humectants", "occlusives", "emollients", "active mechanism", "compound", "formulation". These sound like a chemistry textbook. Say what they DO instead.
+
+═══════════════════════════════════
+ANSWER-FIRST RULES
+═══════════════════════════════════
+1. The very first sentence must directly answer the question implied by the title — in plain language a friend would use. No anecdotes, no "You finally...", no rhetorical questions, no "If you've ever..." openers.
+2. Include the target keyword naturally in the first sentence if it fits. Otherwise within the first 30 words. Don't force it.
+3. Be specific where it matters — name the actual ingredients (coconut oil, baking soda, jojoba oil), say what they DO in plain words ("kills the bacteria that cause odor", not "exhibits antimicrobial properties").
+4. 50-80 words total. No longer.
+5. Do NOT mention competitor brand names.
+6. Do NOT include a sales pitch or CTA in the intro — the intro sets up the guide, it does not sell.
+
+═══════════════════════════════════
+THIS POST
+═══════════════════════════════════
+TITLE: ${post.meta.title}
 TARGET KEYWORD: ${post.meta.target_keyword}
 META DESCRIPTION: ${post.meta.meta_description || '(none)'}
 
-CURRENT FIRST PARAGRAPH (the one we want to replace):
+CURRENT FIRST PARAGRAPH (what you're replacing):
 ${intro.text}
 
 WHY IT FAILS:
 ${reasons.map((r) => `- ${r}`).join('\n')}
 
-REQUIREMENTS for the rewrite:
-1. 50-80 words. No longer.
-2. The very first sentence must directly answer the question implied by the title with a concrete, factual statement. No anecdotes, no "You finally...", no rhetorical questions.
-3. Include the target keyword naturally in the first sentence if possible, otherwise within the first 30 words.
-4. Use specific, citable claims — ingredients, mechanisms, numbers, named compounds. LLMs cite specifics, not adjectives like "premium" or "high-quality".
-5. Preserve a friendly, confident brand voice — informative, not clinical.
-6. Do NOT mention competitor brand names.
-7. Output ONLY the rewritten paragraph as plain HTML wrapped in a single <p> tag. No explanation, no code fence, no preamble.`;
+═══════════════════════════════════
+GOOD vs BAD EXAMPLE
+═══════════════════════════════════
+BAD (too clinical — what NOT to write):
+"The best aluminum free deodorant uses botanicals like baking soda and magnesium hydroxide to neutralize odor-causing bacteria without blocking sweat glands. Unlike antiperspirants containing aluminum compounds, these formulas work with your body's natural processes."
+
+GOOD (warm + answer-first — what TO write):
+"The best aluminum-free deodorant kills the bacteria that cause odor without plugging up your sweat glands. The ones that actually work use a few simple ingredients — coconut oil, baking soda, and a clean base oil like jojoba — to keep you fresh all day. Here's how to pick one that won't let you down on day three."
+
+Now write the rewrite for THIS post. Output ONLY the new paragraph wrapped in a single <p> tag. No explanation, no code fence, no preamble.`;
 
   const res = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
