@@ -189,7 +189,9 @@ async function main() {
   if (slugArg) {
     const p = join(POSTS_DIR, `${slugArg}.json`);
     if (!existsSync(p)) { console.error(`  No such post: ${slugArg}`); process.exit(1); }
-    targets = [JSON.parse(readFileSync(p, 'utf8'))];
+    const meta = JSON.parse(readFileSync(p, 'utf8'));
+    if (!meta.slug) meta.slug = slugArg;
+    targets = [meta];
   } else if (urlArg) {
     targets = [{ slug: 'ad-hoc', title: urlArg, shopify_url: urlArg, published_at: null }];
   } else {

@@ -125,7 +125,9 @@ function refreshOne(slug) {
   try {
     const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
     const idx = meta.indexing_state;
-    if (idx && idx.state && idx.state !== 'indexed') {
+    // crawled_not_indexed = Google reached the page but rejected it on content
+    // quality. Refreshing is exactly the right action here — allow it through.
+    if (idx && idx.state && idx.state !== 'indexed' && idx.state !== 'crawled_not_indexed') {
       console.log(`  [skip] ${slug}: indexing state is "${idx.state}" — run indexing-fixer first, not refresh`);
       return { slug, ok: false, reason: `indexing state ${idx.state}, refresh suppressed` };
     }

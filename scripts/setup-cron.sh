@@ -52,6 +52,8 @@ WEEKLY_CAMPAIGN_ANALYZER="0 6 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" &
 BIWEEKLY_STRATEGIST="0 12 * * 0 [ \$(( \$(date +%W) % 2 )) -eq 0 ] && cd \"$PROJECT_DIR\" && $NODE agents/content-strategist/index.js >> data/reports/scheduler/content-strategist.log 2>&1"
 DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1"
 WEEKLY_QUICK_WIN="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/quick-win-targeter/index.js >> data/reports/scheduler/quick-win-targeter.log 2>&1"
+DAILY_INDEXING_CHECKER="0 11 * * * cd \"$PROJECT_DIR\" && $NODE agents/indexing-checker/index.js >> data/reports/scheduler/indexing-checker.log 2>&1"
+DAILY_INDEXING_FIXER="30 11 * * * cd \"$PROJECT_DIR\" && $NODE agents/indexing-fixer/index.js >> data/reports/scheduler/indexing-fixer.log 2>&1"
 
 # Read existing crontab (ignore error if none exists)
 EXISTING=$(crontab -l 2>/dev/null || true)
@@ -84,6 +86,8 @@ $WEEKLY_CAMPAIGN_ANALYZER
 $BIWEEKLY_STRATEGIST
 $DAILY_SUMMARY
 $WEEKLY_QUICK_WIN
+$DAILY_INDEXING_CHECKER
+$DAILY_INDEXING_FIXER
 "
 
 echo "Installing cron jobs..."
@@ -112,6 +116,8 @@ echo "  Daily   07:30 PT — campaign-monitor"
 echo "  Weekly  Sun 06:00 PT — campaign-analyzer"
 echo "  Daily   05:00 PST (13:00 UTC) — daily summary digest email"
 echo "  Bi-weekly Sun 05:00 PT — content-strategist calendar refresh"
+echo "  Daily   03:00 AM PT (11:00 UTC) — indexing-checker"
+echo "  Daily   03:30 AM PT (11:30 UTC) — indexing-fixer (auto-submit + auto-refresh)"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"

@@ -2,40 +2,43 @@
 /**
  * Indexing Fixer
  *
- * Takes action on the indexing gaps identified by indexing-checker. Two-tier
+ * Takes action on the indexing gaps identified by indexing-checker. Three-tier
  * escalation:
  *
- *   Tier 1 — Automatic sitemap resubmission (fully supported, no approval)
+ *   Tier 1 — Automatic sitemap resubmission
  *     Posts flagged verdict.action === 'resubmit_sitemap' get a sitemap ping
- *     to nudge Google to re-crawl. Tracks which sitemap URL to submit per
- *     post (defaults to the main sitemap.xml).
+ *     to nudge Google to re-crawl.
  *
- *   Tier 2 — Indexing API submission (human approval required)
- *     Posts flagged verdict.action === 'submit_indexing_api' are queued to
- *     data/performance-queue/indexing-submissions.json with status
- *     pending_approval. The dashboard surfaces this as an Action Required
- *     card. Approval triggers the Indexing API call.
+ *   Tier 2 — Automatic Indexing API submission (no approval required)
+ *     Posts flagged verdict.action === 'submit_indexing_api' are submitted
+ *     directly to the Google Indexing API. No human approval step.
  *
  *   Tier 3 — Manual investigation flag
  *     Posts with >= 2 prior Tier 2 submissions that remain not-indexed at
- *     30+ days get indexing_blocked: true on their post JSON and surface
- *     as a red Action Required card: "manual fix needed".
+ *     30+ days get indexing_blocked: true on their post JSON.
  *
- * Critical verdicts (noindex tag, robots.txt block, canonical conflict,
- * soft 404) skip Tier 1/2 entirely and go straight to manual flag — these
- * are technical misconfigurations that resubmission cannot fix.
+ * crawled_not_indexed — Content quality path (separate from the tiers above)
+ *     Google crawled the page but declined to index it, signalling a content
+ *     quality issue. The fixer auto-triggers refresh-runner to rewrite the post
+ *     (if not refreshed within the last 30 days). After the refresh, the next
+ *     indexing-checker run will re-inspect and submit via Tier 2 if needed.
  *
- * Cron: daily 6:30 AM PT (after indexing-checker).
+ * True critical verdicts (noindex tag, robots.txt block, canonical conflict,
+ * page fetch failure) go straight to manual flag — these are technical
+ * misconfigurations that neither resubmission nor refresh can fix.
+ *
+ * Cron: daily 3:30 AM PT (after indexing-checker at 3:00 AM PT).
  *
  * Usage:
  *   node agents/indexing-fixer/index.js              # normal run
  *   node agents/indexing-fixer/index.js --dry-run    # preview actions
- *   node agents/indexing-fixer/index.js --approve <slug>   # manually submit via Indexing API
+ *   node agents/indexing-fixer/index.js --approve <slug>   # force Indexing API submit
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { resubmitSitemap, submitUrlForIndexing, getQuotaStatus } from '../../lib/gsc-indexing.js';
 
@@ -110,6 +113,12 @@ function countPriorSubmissions(slug, method) {
   return meta.indexing_submissions.filter((s) => s.method === method).length;
 }
 
+function ageInDays(iso) {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  return Number.isNaN(t) ? null : Math.floor((Date.now() - t) / 86400000);
+}
+
 // ── critical action handlers ──────────────────────────────────────────────────
 
 function handleCriticalVerdict(result) {
@@ -118,7 +127,6 @@ function handleCriticalVerdict(result) {
     fix_robots_txt: 'robots.txt blocks this URL. Check the Shopify theme robots.txt.liquid file.',
     fix_canonical_mismatch: `Google picked a different canonical (${result.google_canonical || '?'}) than what the page declares. Update the canonical tag or content to match.`,
     fix_page_fetch: `Page fetch failed with ${result.page_fetch_state}. URL may be 404 or returning an error.`,
-    content_quality_review: 'Google crawled but chose not to index — signals a content quality or duplicate-content issue. Manual review required.',
   };
   const action = result.verdict.action;
   return reasons[action] || 'Manual investigation required.';
@@ -150,13 +158,14 @@ async function processNormalRun() {
 
   const tierOne = actionable.filter((r) => r.verdict.action === 'resubmit_sitemap');
   const tierTwo = actionable.filter((r) => r.verdict.action === 'submit_indexing_api');
+  const contentQuality = actionable.filter((r) => r.verdict.action === 'content_quality_review');
   const critical = actionable.filter((r) => [
-    'fix_noindex_tag', 'fix_robots_txt', 'fix_canonical_mismatch',
-    'fix_page_fetch', 'content_quality_review',
+    'fix_noindex_tag', 'fix_robots_txt', 'fix_canonical_mismatch', 'fix_page_fetch',
   ].includes(r.verdict.action));
 
   console.log(`  Tier 1 (sitemap ping — auto):        ${tierOne.length}`);
-  console.log(`  Tier 2 (indexing API — approval):    ${tierTwo.length}`);
+  console.log(`  Tier 2 (indexing API — auto):        ${tierTwo.length}`);
+  console.log(`  Content quality (auto-refresh):      ${contentQuality.length}`);
   console.log(`  Tier 3 (manual investigation):       ${critical.length}\n`);
 
   // ── Tier 1: sitemap resubmission ──────────────────────────────────────────
@@ -186,7 +195,7 @@ async function processNormalRun() {
     }
   }
 
-  // ── Tier 2: queue for approval ─────────────────────────────────────────────
+  // ── Tier 2: auto-submit to Indexing API ───────────────────────────────────
   for (const r of tierTwo) {
     const priorSitemap = countPriorSubmissions(r.slug, 'sitemap_resubmit');
     const priorIndexing = countPriorSubmissions(r.slug, 'indexing_api');
@@ -205,24 +214,74 @@ async function processNormalRun() {
       continue;
     }
 
-    console.log(`  Tier 2 queued: ${r.slug} (prior: ${priorSitemap} sitemap, ${priorIndexing} indexing)`);
-    if (!DRY_RUN) {
-      upsertQueueItem({
-        slug: r.slug,
-        title: r.title,
-        url: r.url,
-        state: r.state,
-        age_days: r.age_days,
-        prior_sitemap_resubmits: priorSitemap,
-        prior_indexing_api_submits: priorIndexing,
-        status: 'pending_approval',
-        queued_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+    if (quota.submission.remaining === 0) {
+      console.log(`  Tier 2 skip: ${r.slug} — Indexing API quota exhausted for today`);
+      continue;
+    }
+
+    console.log(`  Tier 2 submitting: ${r.slug} (prior: ${priorSitemap} sitemap, ${priorIndexing} indexing)`);
+    if (DRY_RUN) {
+      console.log('    (dry-run — skipping)');
+    } else {
+      try {
+        const result = await submitUrlForIndexing(r.url, 'URL_UPDATED');
+        console.log(`    ✓ submitted ${r.url}`);
+        recordSubmission(r.slug, {
+          method: 'indexing_api',
+          type: 'URL_UPDATED',
+          submitted_at: result.submitted_at,
+          notification_time: result.notification_time,
+          result: 'ok',
+        });
+        upsertQueueItem({
+          slug: r.slug,
+          title: r.title,
+          url: r.url,
+          state: r.state,
+          age_days: r.age_days,
+          status: 'submitted',
+          submitted_at: result.submitted_at,
+          updated_at: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error(`    ✗ submission failed: ${err.message}`);
+        recordSubmission(r.slug, {
+          method: 'indexing_api',
+          submitted_at: new Date().toISOString(),
+          result: 'error',
+          error: err.message,
+        });
+      }
     }
   }
 
-  // ── Tier 3: critical misconfigurations ────────────────────────────────────
+  // ── Content quality: auto-refresh via refresh-runner ──────────────────────
+  // Google crawled but declined to index — content quality is the fix, not
+  // resubmission. Trigger refresh-runner if not refreshed in the last 30 days.
+  const REFRESH_COOLDOWN_DAYS = 30;
+  for (const r of contentQuality) {
+    const meta = loadPostMeta(r.slug);
+    const lastRefresh = meta ? ageInDays(meta.last_refreshed_at) : null;
+
+    if (lastRefresh != null && lastRefresh < REFRESH_COOLDOWN_DAYS) {
+      console.log(`  Content quality skip: ${r.slug} — refreshed ${lastRefresh}d ago, waiting for Google to re-crawl`);
+      continue;
+    }
+
+    console.log(`  Content quality: triggering refresh for ${r.slug} (last refresh: ${lastRefresh != null ? lastRefresh + 'd ago' : 'never'})`);
+    if (DRY_RUN) {
+      console.log('    (dry-run — skipping)');
+    } else {
+      try {
+        execSync(`node agents/refresh-runner/index.js ${r.slug}`, { cwd: ROOT, stdio: 'inherit' });
+        console.log(`    ✓ refresh complete for ${r.slug}`);
+      } catch (err) {
+        console.error(`    ✗ refresh failed for ${r.slug}: ${err.message}`);
+      }
+    }
+  }
+
+  // ── Tier 3: true technical misconfigurations ───────────────────────────────
   for (const r of critical) {
     const reason = handleCriticalVerdict(r);
     console.log(`  Tier 3 critical: ${r.slug} — ${r.verdict.action}`);
@@ -238,8 +297,9 @@ async function processNormalRun() {
 
   // ── Daily digest notification ────────────────────────────────────────────
   const summary = [];
-  if (tierOne.length) summary.push(`Sitemap pinged (${tierOne.length} URLs covered)`);
-  if (tierTwo.length) summary.push(`${tierTwo.length} queued for Indexing API approval`);
+  if (tierOne.length) summary.push(`Sitemap pinged (${tierOne.length} URLs)`);
+  if (tierTwo.length) summary.push(`${tierTwo.length} submitted to Indexing API`);
+  if (contentQuality.length) summary.push(`${contentQuality.length} content-quality refresh triggered`);
   if (critical.length) summary.push(`${critical.length} flagged for manual fix`);
 
   if (summary.length > 0) {
@@ -247,7 +307,8 @@ async function processNormalRun() {
       subject: `Indexing Fixer: ${summary.join(', ')}`,
       body: [
         ...tierOne.map((r) => `[tier1] ${r.slug}: sitemap pinged (${r.age_days}d old, ${r.state})`),
-        ...tierTwo.map((r) => `[tier2 pending approval] ${r.slug}: ${r.state} (${r.age_days}d old)`),
+        ...tierTwo.map((r) => `[tier2] ${r.slug}: submitted to Indexing API (${r.age_days}d old)`),
+        ...contentQuality.map((r) => `[refresh] ${r.slug}: refresh-runner triggered (crawled_not_indexed)`),
         ...critical.map((r) => `[critical] ${r.slug}: ${r.verdict.action}`),
       ].join('\n'),
       status: critical.length > 0 ? 'error' : 'info',
