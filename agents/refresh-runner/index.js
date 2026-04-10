@@ -133,6 +133,15 @@ function refreshOne(slug) {
     }
   } catch { /* fall through */ }
 
+  // Winner protection — legacy posts auto-locked by triage must not be refreshed
+  try {
+    const lockMeta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    if (lockMeta.legacy_locked) {
+      console.log(`  [skip] ${slug}: legacy winner (locked)`);
+      return { slug, ok: false, reason: 'legacy winner, locked' };
+    }
+  } catch { /* proceed */ }
+
   console.log(`\n══ Refreshing: ${slug} ══`);
 
   try {

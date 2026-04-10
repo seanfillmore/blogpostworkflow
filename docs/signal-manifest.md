@@ -94,6 +94,14 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | `data/posts/<slug>.json#indexing_blocked` | `indexing-fixer` (Tier 3 manual flag) | dashboard (Action Required), `refresh-runner` (don't refresh blocked) | healthy |
 | `data/quota/indexing-api.json` | `lib/gsc-indexing.js` | `indexing-checker`, `indexing-fixer` | healthy |
 
+### Legacy triage signals
+
+| Signal | Writer | Consumers | Status |
+|---|---|---|---|
+| `data/reports/legacy-triage/latest.json` | `legacy-triage` | `performance-engine` (picks legacy flops), `meta-optimizer` (picks rising), dashboard Optimize tab | healthy |
+| `data/posts/<slug>.json#legacy_bucket` | `legacy-triage` | `performance-engine`, `content-refresher`, `refresh-runner`, `meta-optimizer` | healthy |
+| `data/posts/<slug>.json#legacy_locked` | `legacy-triage` (auto-lock winners) | `content-refresher`, `refresh-runner`, `meta-optimizer` (skip if locked) | healthy |
+
 ---
 
 ## Producer / consumer matrix (SEO + content agents only)

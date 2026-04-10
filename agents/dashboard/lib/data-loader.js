@@ -213,6 +213,7 @@ export function aggregateData() {
   const competitorActivity = readJsonIfExists(join(REPORTS_DIR, 'competitor-watcher', 'latest.json'));
   const indexing           = readJsonIfExists(join(REPORTS_DIR, 'indexing', 'latest.json'));
   const indexingQueue      = readJsonIfExists(join(ROOT, 'data', 'performance-queue', 'indexing-submissions.json'));
+  const legacyTriage    = readJsonIfExists(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
 
   // Performance engine queue — items awaiting review/approval.
   // Read directly from the queue directory rather than importing the queue
@@ -297,6 +298,7 @@ export function aggregateData() {
     indexing,
     indexingQueue,
     performanceQueue,
+    legacyTriage,
   };
 }
 
