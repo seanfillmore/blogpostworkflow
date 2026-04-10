@@ -214,6 +214,21 @@ export function aggregateData() {
   const indexing           = readJsonIfExists(join(REPORTS_DIR, 'indexing', 'latest.json'));
   const indexingQueue      = readJsonIfExists(join(ROOT, 'data', 'performance-queue', 'indexing-submissions.json'));
 
+  // Performance engine queue — items awaiting review/approval.
+  // Read directly from the queue directory rather than importing the queue
+  // module (which would require async import in this sync function).
+  const queueDir = join(ROOT, 'data', 'performance-queue');
+  let performanceQueue = [];
+  if (existsSync(queueDir)) {
+    for (const f of readdirSync(queueDir).filter((n) => n.endsWith('.json') && n !== 'indexing-submissions.json')) {
+      try {
+        const item = JSON.parse(readFileSync(join(queueDir, f), 'utf8'));
+        if (item.status !== 'dismissed' && item.status !== 'published') performanceQueue.push(item);
+      } catch { /* skip */ }
+    }
+    performanceQueue.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  }
+
   // Apply the existing keyword rejection list to signals produced by the
   // agents. Rejections are brand-conflict or off-topic terms that must not
   // be targeted (see data/rejected-keywords.json). Filtering here means the
@@ -281,6 +296,7 @@ export function aggregateData() {
     competitorActivity,
     indexing,
     indexingQueue,
+    performanceQueue,
   };
 }
 
