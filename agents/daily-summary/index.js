@@ -458,13 +458,37 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
       </div>`;
   }
 
-  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+  // Reviews section — surfaces new reviews from review-monitor
+  let reviewSection = '';
+  const reviewPath = join(ROOT, 'data', 'reports', 'reviews', 'latest.json');
+  if (existsSync(reviewPath)) {
+    try {
+      const reviewData = JSON.parse(readFileSync(reviewPath, 'utf8'));
+      if (reviewData.new_reviews && reviewData.new_reviews.length > 0) {
+        const s = reviewData.summary;
+        let rhtml = `<div class="section"><div class="section-title" style="color:#312e81;border-bottom-color:#c7d2fe;">&#11088; Reviews &mdash; ${s.total_new} new</div>`;
+        rhtml += `<p style="font-size:13px;color:#6b7280;margin:0 0 8px">${s.positive} positive, ${s.neutral} neutral, ${s.negative} negative</p>`;
+        if (s.flagged_for_response && s.flagged_for_response.length > 0) {
+          rhtml += '<p style="color:#dc2626;font-weight:700;margin:8px 0 4px">Needs Response:</p><ul style="margin:0;padding-left:20px">';
+          for (const f of s.flagged_for_response) {
+            rhtml += `<li><strong>${esc(f.product_handle)}</strong> (${f.rating}&#9733;): ${esc(f.complaint || '').slice(0, 150)}</li>`;
+          }
+          rhtml += '</ul>';
+        }
+        rhtml += '</div>';
+        reviewSection = rhtml;
+      }
+    } catch { /* ignore */ }
+  }
+
+  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
   <h1>Daily Recap</h1>
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
+  ${reviewSection}
   ${queueSection}
   ${blockedSection}
   ${flopSection}
