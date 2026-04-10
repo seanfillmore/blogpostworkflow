@@ -139,5 +139,65 @@ try {
   log(`  ✗ collection-linker failed (exit ${e.status})`);
 }
 
+// ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
+if (new Date().getDay() === 0) {
+  log('  Weekly jobs (Sunday):');
+
+  // Step 6: product schema with Judge.me reviews (GSC-filtered)
+  const schemaCmd = `"${NODE}" agents/product-schema/index.js --auto --apply${dryFlag}`;
+  log(`    ${schemaCmd}`);
+  try {
+    execSync(schemaCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ product-schema --auto complete');
+  } catch (e) {
+    log(`    ✗ product-schema --auto failed (exit ${e.status})`);
+  }
+
+  // Step 7a: collection gap detection from GSC opportunities
+  const gapCmd = `"${NODE}" agents/collection-creator/index.js --from-opportunities --queue${dryFlag}`;
+  log(`    ${gapCmd}`);
+  try {
+    execSync(gapCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ collection-creator --from-opportunities complete');
+  } catch (e) {
+    log(`    ✗ collection-creator --from-opportunities failed (exit ${e.status})`);
+  }
+
+  // Step 7b: publish approved new collections
+  if (!dryFlag) {
+    const gapPubCmd = `"${NODE}" agents/collection-creator/index.js --publish-approved`;
+    log(`    ${gapPubCmd}`);
+    try {
+      execSync(gapPubCmd, { stdio: 'inherit', cwd: __dirname });
+      log('    ✓ collection-creator --publish-approved complete');
+    } catch (e) {
+      log(`    ✗ collection-creator --publish-approved failed (exit ${e.status})`);
+    }
+  }
+
+  // Step 8: cannibalization detection + resolution
+  const cannCmd = `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`;
+  log(`    ${cannCmd}`);
+  try {
+    execSync(cannCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ cannibalization-resolver complete');
+  } catch (e) {
+    log(`    ✗ cannibalization-resolver failed (exit ${e.status})`);
+  }
+
+  // Step 9: GA4 content analysis
+  const ga4Cmd = `"${NODE}" agents/ga4-content-analyzer/index.js`;
+  log(`    ${ga4Cmd}`);
+  try {
+    execSync(ga4Cmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ ga4-content-analyzer complete');
+  } catch (e) {
+    log(`    ✗ ga4-content-analyzer failed (exit ${e.status})`);
+  }
+
+} else {
+  log('  Weekly jobs: skipped (not Sunday)');
+}
+
 log('Scheduler done.');
 await notifyLatestReport('Scheduler completed', LOG_DIR);

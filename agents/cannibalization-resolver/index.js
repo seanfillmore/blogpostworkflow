@@ -31,6 +31,7 @@
  *   node agents/cannibalization-resolver/index.js --apply      # resolve HIGH-confidence cases
  *   node agents/cannibalization-resolver/index.js --days 28    # shorter GSC window
  *   node agents/cannibalization-resolver/index.js --min-impr 30
+ *   node agents/cannibalization-resolver/index.js --report-json  # write latest.json with all conflicts
  *
  * Output:
  *   data/reports/cannibalization-report.md
@@ -43,8 +44,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
-import {
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import {
   getBlogs, getArticles, updateArticle,
   getRedirects, createRedirect,
 } from '../../lib/shopify.js';
@@ -87,6 +88,7 @@ function getArg(flag) { const i = args.indexOf(flag); return i !== -1 ? args[i +
 const apply = args.includes('--apply');
 const days = parseInt(getArg('--days') || '90', 10);
 const minImpr = parseInt(getArg('--min-impr') || '50', 10);
+const reportJson = args.includes('--report-json');
 
 // ── URL helpers ───────────────────────────────────────────────────────────────
 
@@ -96,6 +98,16 @@ function urlPath(fullUrl) {
 
 function isBlogPost(url) {
   return urlPath(url).startsWith('/blogs/');
+}
+
+function isProduct(url) { return urlPath(url).startsWith('/products/'); }
+function isCollection(url) { return urlPath(url).startsWith('/collections/'); }
+
+function classifyUrl(url) {
+  if (isBlogPost(url)) return 'blog';
+  if (isProduct(url)) return 'product';
+  if (isCollection(url)) return 'collection';
+  return 'other';
 }
 
 function slugFromPath(path) {
@@ -144,6 +156,40 @@ function detectCannibalization(queryPageRows) {
           clicks: p.clicks,
           position: Math.round(p.position * 10) / 10,
           ctr: Math.round(p.ctr * 1000) / 10,
+        })),
+      };
+    })
+    .filter((g) => g.totalImpressions >= minImpr)
+    .sort((a, b) => b.totalImpressions - a.totalImpressions);
+}
+
+// ── extended cannibalization detection (blog + product + collection) ─────────
+
+function detectCannibalizationExtended(queryPageRows) {
+  const byQuery = new Map();
+  for (const row of queryPageRows) {
+    const type = classifyUrl(row.page);
+    if (type === 'other') continue;
+    if (!byQuery.has(row.query)) byQuery.set(row.query, []);
+    byQuery.get(row.query).push({ ...row, type });
+  }
+
+  return [...byQuery.entries()]
+    .filter(([, pages]) => pages.length >= 2)
+    .map(([query, pages]) => {
+      const sorted = [...pages].sort((a, b) => b.impressions - a.impressions);
+      const types = new Set(sorted.map((p) => p.type));
+      const conflictType = types.size === 1 ? `${[...types][0]}-vs-${[...types][0]}` :
+        [...types].sort().join('-vs-');
+      return {
+        query,
+        conflictType,
+        totalImpressions: pages.reduce((s, p) => s + p.impressions, 0),
+        pages: sorted.map((p) => ({
+          url: p.page,
+          type: p.type,
+          impressions: p.impressions,
+          position: p.position,
         })),
       };
     })
@@ -447,42 +493,64 @@ async function main() {
   const groups = detectCannibalization(queryPageRows);
   console.log(`${groups.length} groups`);
 
-  if (groups.length === 0) {
+  // Extended detection: blog + product + collection
+  process.stdout.write('  Detecting extended cannibalization (blog/product/collection)... ');
+  const extendedGroups = detectCannibalizationExtended(queryPageRows);
+  const crossTypeGroups = extendedGroups.filter((g) => g.conflictType !== 'blog-vs-blog');
+  console.log(`${extendedGroups.length} total, ${crossTypeGroups.length} cross-type`);
+
+  if (crossTypeGroups.length > 0) {
+    console.log('  Cross-type conflicts (recommendations only):');
+    crossTypeGroups.slice(0, 10).forEach((g) => {
+      console.log(`    "${g.query}" [${g.conflictType}] — ${g.totalImpressions} impr`);
+      g.pages.forEach((p) => console.log(`      ${p.url} (${p.type}, pos ${p.position})`));
+    });
+  }
+
+  if (groups.length === 0 && !reportJson) {
     console.log('  No blog cannibalization detected.');
+    if (crossTypeGroups.length > 0) {
+      console.log(`  ${crossTypeGroups.length} cross-type conflict(s) found. Run with --report-json for full report.`);
+    }
     process.exit(0);
   }
 
-  console.log('  Top groups:');
-  groups.slice(0, 5).forEach((g) => {
-    console.log(`    "${g.query}" — ${g.totalImpressions} impr`);
-    g.pages.forEach((p) => console.log(`      ${p.path} (pos ${p.position}, ${p.clicks} clicks)`));
-  });
-
-  // Load Shopify article index and existing redirects in parallel
-  process.stdout.write('\n  Loading Shopify articles and redirects... ');
-  const [articleIndex, existingRedirects] = await Promise.all([
-    buildArticleIndex(),
-    getRedirects(),
-  ]);
-  console.log(`${articleIndex.size} articles, ${existingRedirects.length} existing redirects`);
-
-  // Triage with Claude
-  process.stdout.write('  Triaging decisions with Claude... ');
-  const decisions = await triageWithClaude(groups);
-  console.log('done');
-
-  const highConf = decisions.filter((d) => d.confidence === 'HIGH');
-  const actionable = highConf.filter((d) => d.losers.some((l) => l.action !== 'MONITOR'));
-  console.log(`  HIGH confidence: ${highConf.length} | Actionable: ${actionable.length}`);
-
-  // Apply resolutions
+  let decisions = [];
   let results = [];
-  if (apply) {
-    console.log('\n  Applying resolutions...');
-    results = await applyResolutions(decisions, articleIndex, existingRedirects);
-    const redirectsCreated = results.filter((r) => r.status === 'redirect_created').length;
-    const drafts = results.filter((r) => r.status === 'draft_saved').length;
-    console.log(`\n  Done: ${redirectsCreated} redirects created, ${drafts} drafts saved`);
+  let actionable = [];
+
+  if (groups.length > 0) {
+    console.log('  Top blog-vs-blog groups:');
+    groups.slice(0, 5).forEach((g) => {
+      console.log(`    "${g.query}" — ${g.totalImpressions} impr`);
+      g.pages.forEach((p) => console.log(`      ${p.path} (pos ${p.position}, ${p.clicks} clicks)`));
+    });
+
+    // Load Shopify article index and existing redirects in parallel
+    process.stdout.write('\n  Loading Shopify articles and redirects... ');
+    const [articleIndex, existingRedirects] = await Promise.all([
+      buildArticleIndex(),
+      getRedirects(),
+    ]);
+    console.log(`${articleIndex.size} articles, ${existingRedirects.length} existing redirects`);
+
+    // Triage with Claude
+    process.stdout.write('  Triaging decisions with Claude... ');
+    decisions = await triageWithClaude(groups);
+    console.log('done');
+
+    const highConf = decisions.filter((d) => d.confidence === 'HIGH');
+    actionable = highConf.filter((d) => d.losers.some((l) => l.action !== 'MONITOR'));
+    console.log(`  HIGH confidence: ${highConf.length} | Actionable: ${actionable.length}`);
+
+    // Apply resolutions
+    if (apply) {
+      console.log('\n  Applying resolutions...');
+      results = await applyResolutions(decisions, articleIndex, existingRedirects);
+      const redirectsCreated = results.filter((r) => r.status === 'redirect_created').length;
+      const drafts = results.filter((r) => r.status === 'draft_saved').length;
+      console.log(`\n  Done: ${redirectsCreated} redirects created, ${drafts} drafts saved`);
+    }
   }
 
   // Save decisions JSON
@@ -496,11 +564,63 @@ async function main() {
   }, null, 2));
 
   // Write report
-  const reportPath = join(REPORTS_DIR, 'cannibalization-report.md');
-  writeFileSync(reportPath, buildReport(groups, decisions, results));
+  if (groups.length > 0) {
+    const reportPath = join(REPORTS_DIR, 'cannibalization-report.md');
+    writeFileSync(reportPath, buildReport(groups, decisions, results));
+    console.log(`\n  Decisions: ${decisionsPath}`);
+    console.log(`  Report:    ${reportPath}`);
+  } else {
+    console.log(`\n  Decisions: ${decisionsPath}`);
+  }
 
-  console.log(`\n  Decisions: ${decisionsPath}`);
-  console.log(`  Report:    ${reportPath}`);
+  // Write extended JSON report (--report-json)
+  if (reportJson) {
+    // Build a set of auto-resolved blog-vs-blog queries (applied with --apply)
+    const resolvedQueries = new Set(
+      results.filter((r) => r.status === 'redirect_created' || r.status === 'draft_saved')
+        .map((r) => r.query)
+    );
+
+    const conflicts = extendedGroups.map((g) => {
+      const isBlogVsBlog = g.conflictType === 'blog-vs-blog';
+      const decision = isBlogVsBlog ? decisions.find((d) => d.query === g.query) : null;
+      const autoApplied = isBlogVsBlog && apply && resolvedQueries.has(g.query);
+
+      let resolution = 'recommended';
+      if (decision) {
+        const actions = decision.losers.map((l) => l.action);
+        resolution = actions.includes('REDIRECT') || actions.includes('CONSOLIDATE')
+          ? decision.confidence : 'MONITOR';
+      }
+
+      return {
+        query: g.query,
+        total_impressions: g.totalImpressions,
+        urls: g.pages.map((p) => ({
+          url: p.url,
+          position: p.position,
+          impressions: p.impressions,
+          type: p.type,
+        })),
+        conflict_type: g.conflictType,
+        resolution,
+        auto_applied: autoApplied,
+      };
+    });
+
+    const autoResolved = conflicts.filter((c) => c.auto_applied).length;
+    const recommended = conflicts.filter((c) => !c.auto_applied).length;
+
+    const latestJsonPath = join(REPORTS_DIR, 'latest.json');
+    writeFileSync(latestJsonPath, JSON.stringify({
+      generated_at: new Date().toISOString(),
+      conflict_count: conflicts.length,
+      auto_resolved: autoResolved,
+      recommended,
+      conflicts,
+    }, null, 2));
+    console.log(`  JSON report: ${latestJsonPath}`);
+  }
 
   if (!apply && actionable.length > 0) {
     console.log(`\n  ${actionable.length} HIGH-confidence case(s) ready. Run with --apply to resolve.`);

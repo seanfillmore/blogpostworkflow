@@ -19,11 +19,14 @@
  * Output: data/reports/collection-creator/YYYY-MM.md
  *
  * Usage:
- *   node agents/collection-creator/index.js                  # dry-run: show opportunities
- *   node agents/collection-creator/index.js --apply          # create collections in Shopify
- *   node agents/collection-creator/index.js --limit 3        # max collections to create
- *   node agents/collection-creator/index.js --min-volume 200 # min monthly search volume
- *   node agents/collection-creator/index.js --gsc-days 90    # GSC lookback window (default 90)
+ *   node agents/collection-creator/index.js                          # dry-run: show opportunities
+ *   node agents/collection-creator/index.js --apply                  # create collections in Shopify
+ *   node agents/collection-creator/index.js --limit 3                # max collections to create
+ *   node agents/collection-creator/index.js --min-volume 200         # min monthly search volume
+ *   node agents/collection-creator/index.js --gsc-days 90            # GSC lookback window (default 90)
+ *   node agents/collection-creator/index.js --from-opportunities     # dry-run from GSC opportunity report
+ *   node agents/collection-creator/index.js --from-opportunities --queue  # evaluate & queue for approval
+ *   node agents/collection-creator/index.js --publish-approved       # publish approved queue items to Shopify
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -39,6 +42,8 @@ import {
 import * as gsc from '../../lib/gsc.js';
 import { withRetry } from '../../lib/retry.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/lib/queue.js';
+import { execSync } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -78,6 +83,9 @@ const apply     = args.includes('--apply');
 const limit     = parseInt(getArg('--limit') ?? '5', 10);
 const minVolume = parseInt(getArg('--min-volume') ?? '100', 10);
 const gscDays   = parseInt(getArg('--gsc-days') ?? '90', 10);
+const fromOpportunities = args.includes('--from-opportunities');
+const doQueue           = args.includes('--queue');
+const publishApproved   = args.includes('--publish-approved');
 
 // ── Ahrefs ────────────────────────────────────────────────────────────────────
 
@@ -423,6 +431,218 @@ function buildReport(opportunities, approved, created, runDate) {
   return lines.join('\n');
 }
 
+// ── from-opportunities mode ──────────────────────────────────────────────────
+
+/**
+ * --from-opportunities mode:
+ * Reads GSC opportunity report, filters to collection-intent keywords,
+ * excludes existing collections & active queue items, then either
+ * shows candidates (dry run) or queues them for approval.
+ */
+async function fromOpportunitiesMode() {
+  const runDate = new Date().toISOString().slice(0, 10);
+  console.log(`\n=== Collection Creator (from-opportunities) — ${runDate} ===\n`);
+
+  // 1. Read the GSC opportunity report
+  const oppPath = join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json');
+  if (!existsSync(oppPath)) {
+    console.error(`Missing opportunity report: ${oppPath}`);
+    console.error('Run the GSC opportunity agent first.');
+    process.exit(1);
+  }
+  const oppData = JSON.parse(readFileSync(oppPath, 'utf8'));
+
+  // 2. Flatten all sections, tagging each with _section
+  const allOpps = [];
+  for (const section of ['low_ctr', 'page_2', 'unmapped']) {
+    if (Array.isArray(oppData[section])) {
+      for (const item of oppData[section]) {
+        allOpps.push({ ...item, _section: section });
+      }
+    }
+  }
+  console.log(`  Loaded ${allOpps.length} total opportunities from latest.json`);
+
+  // 3. Filter to commercial-intent keywords
+  const commercial = allOpps.filter((o) => hasCollectionIntent(o.keyword));
+  console.log(`  ${commercial.length} have collection intent`);
+
+  // 4. Fetch existing collections from Shopify
+  const collections = await getExistingCollections();
+  const existingHandles = [...collections.byHandle.keys()];
+  console.log(`  ${existingHandles.length} existing collection handles`);
+
+  // 5. Filter out keywords matching existing collection handles (exact or partial)
+  const noExisting = commercial.filter((o) => {
+    const potentialHandle = slugify(o.keyword);
+    return !existingHandles.some((h) => h === potentialHandle || potentialHandle.includes(h) || h.includes(potentialHandle));
+  });
+  console.log(`  ${noExisting.length} after excluding existing collections`);
+
+  // 6. Exclude slugs already in active performance queue
+  const active = activeSlugs();
+  const filtered = noExisting.filter((o) => !active.has(slugify(o.keyword)));
+  console.log(`  ${filtered.length} after excluding active queue items`);
+
+  // 7. Sort by impressions descending, take top N
+  const candidates = filtered
+    .sort((a, b) => (b.impressions ?? 0) - (a.impressions ?? 0))
+    .slice(0, limit);
+
+  if (candidates.length === 0) {
+    console.log('\nNo collection opportunities found. Exiting.');
+    return;
+  }
+
+  // 8. Dry run (no --queue flag): show candidates and exit
+  if (!doQueue) {
+    console.log(`\n  Top ${candidates.length} candidates (dry run — add --queue to send to Claude):\n`);
+    for (const c of candidates) {
+      console.log(`    • "${c.keyword}" — ${c.impressions ?? 0} impressions, pos ${(c.position ?? 0).toFixed(1)}, section: ${c._section}`);
+    }
+    return;
+  }
+
+  // 9. Queue mode: send to Claude for evaluation
+  console.log(`\n  Sending ${candidates.length} candidates to Claude for evaluation...\n`);
+
+  // Adapt candidates to the format evaluateAndPlanCollections expects (query field)
+  const adapted = candidates.map((c) => ({
+    query: c.keyword,
+    position: c.position ?? 0,
+    impressions: c.impressions ?? 0,
+    clicks: c.clicks ?? 0,
+    metrics: null,
+    _original: c,
+  }));
+
+  const specs = await evaluateAndPlanCollections(adapted, collections);
+  console.log(`  Claude approved ${specs.length} collection(s)\n`);
+
+  // 10. Write queue items for each approved spec
+  let queued = 0;
+  for (const spec of specs) {
+    // Find the matching original opportunity
+    const opportunity = candidates.find(
+      (c) => c.keyword === spec.keyword || slugify(c.keyword) === spec.handle
+    ) || candidates[0];
+
+    const item = {
+      slug: spec.handle,
+      title: `New Collection: ${spec.title}`,
+      trigger: 'collection-gap',
+      signal_source: {
+        type: 'gsc-collection-gap',
+        keyword: opportunity.keyword,
+        impressions: opportunity.impressions,
+        position: opportunity.position,
+        source_section: opportunity._section,
+      },
+      proposed_collection: {
+        title: spec.title,
+        handle: spec.handle,
+        body_html: spec.body_html,
+        seo_title: spec.seo_title,
+        seo_description: spec.seo_description || spec.meta_description,
+      },
+      summary: {
+        what_changed: `Proposed new collection targeting '${opportunity.keyword}' (${opportunity.impressions} impressions).`,
+        why: `GSC shows commercial-intent demand with no matching collection page.`,
+        projected_impact: `New collection page could capture clicks currently going to blog posts.`,
+      },
+      resource_type: 'new-collection',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    };
+
+    writeItem(item);
+    console.log(`  Queued: ${spec.handle} (${opportunity.keyword})`);
+    queued++;
+  }
+
+  console.log(`\n  ${queued} collection(s) queued for approval in data/performance-queue/`);
+}
+
+// ── publish-approved mode ────────────────────────────────────────────────────
+
+/**
+ * --publish-approved mode:
+ * Reads approved collection-gap queue items and creates them in Shopify.
+ */
+async function publishApprovedCollections() {
+  const runDate = new Date().toISOString().slice(0, 10);
+  console.log(`\n=== Collection Creator (publish-approved) — ${runDate} ===\n`);
+
+  // 1. Find approved collection-gap items
+  const items = listQueueItems().filter(
+    (i) => i.trigger === 'collection-gap' && i.status === 'approved'
+  );
+
+  if (items.length === 0) {
+    console.log('No approved collection-gap items in the queue. Exiting.');
+    return;
+  }
+
+  console.log(`  Found ${items.length} approved collection(s) to publish\n`);
+
+  let successCount = 0;
+
+  for (const item of items) {
+    const pc = item.proposed_collection;
+    if (!pc || !pc.title || !pc.handle || !pc.body_html) {
+      console.error(`  Skipping "${item.slug}" — missing required proposed_collection fields`);
+      continue;
+    }
+
+    try {
+      // 2. Create the collection in Shopify
+      console.log(`  Creating collection: "${pc.title}" (/collections/${pc.handle})...`);
+      const newCollection = await withRetry(
+        () => createCustomCollection({
+          title: pc.title,
+          handle: pc.handle,
+          body_html: pc.body_html,
+          published: true,
+        }),
+        { label: `create collection ${pc.handle}` }
+      );
+
+      // 3. Set SEO metafields
+      if (pc.seo_title) {
+        await upsertMetafield('custom_collections', newCollection.id, 'global', 'title_tag', pc.seo_title);
+      }
+      if (pc.seo_description) {
+        await upsertMetafield('custom_collections', newCollection.id, 'global', 'description_tag', pc.seo_description);
+      }
+
+      console.log(`  Created: ${config.url}/collections/${pc.handle} (id: ${newCollection.id})`);
+
+      // 4. Run collection-linker for the new collection
+      const keyword = item.signal_source?.keyword || pc.title;
+      try {
+        execSync(
+          `"${process.execPath}" agents/collection-linker/index.js --url "${config.url}/collections/${pc.handle}" --keyword "${keyword}" --apply`,
+          { stdio: 'inherit', cwd: ROOT }
+        );
+      } catch (linkErr) {
+        console.error(`  Warning: collection-linker failed for ${pc.handle}:`, linkErr.message);
+      }
+
+      // 5. Update queue item status
+      item.status = 'published';
+      item.published_at = new Date().toISOString();
+      writeItem(item);
+
+      successCount++;
+      console.log(`  Published and linked: ${pc.handle}\n`);
+    } catch (err) {
+      console.error(`  Failed to create "${pc.title}":`, err.message);
+    }
+  }
+
+  console.log(`\n  ${successCount}/${items.length} collection(s) published successfully`);
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -528,7 +748,11 @@ async function main() {
   }
 }
 
-main()
+const run = fromOpportunities ? fromOpportunitiesMode
+  : publishApproved ? publishApprovedCollections
+  : main;
+
+run()
   .then(() => notifyLatestReport('Collection Creator completed', join(ROOT, 'data', 'reports', 'collection-creator')))
   .catch((err) => {
     notify({ subject: 'Collection Creator failed', body: err.message || String(err), status: 'error' });

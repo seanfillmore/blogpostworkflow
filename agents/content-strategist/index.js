@@ -111,6 +111,18 @@ export function loadClusterPerformance() {
     } catch { /* ignore */ }
   }
 
+  // GA4 conversion feedback — gives cluster weights based on actual revenue
+  const ga4Path = join(ROOT, 'data', 'reports', 'ga4-content-feedback', 'latest.json');
+  let ga4Clusters = {};
+  if (existsSync(ga4Path)) {
+    try {
+      const ga4 = JSON.parse(readFileSync(ga4Path, 'utf8'));
+      for (const c of (ga4.clusters || [])) {
+        ga4Clusters[c.cluster] = c;
+      }
+    } catch { /* ignore */ }
+  }
+
   // Known product clusters — checked against tags AND slug as a fallback so
   // posts without proper tags still group correctly.
   const KNOWN_CLUSTERS = [
@@ -167,6 +179,15 @@ export function loadClusterPerformance() {
       reasons.push(`-3 drag cluster (median pos ${medianPos}, median age ${medianAge}d)`);
     }
     if (hasFlop) reasons.push(`flop present — page-1 boost suppressed`);
+
+    const ga4 = ga4Clusters[name];
+    if (ga4 && ga4.expansion_signal) {
+      weight += 2;
+      reasons.push('+2 high-conversion cluster (GA4: low traffic but converting)');
+    }
+    if (ga4 && ga4.cro_signal) {
+      reasons.push('CRO flag: high traffic but low conversion (GA4)');
+    }
 
     clusters[name] = {
       post_count: items.length,

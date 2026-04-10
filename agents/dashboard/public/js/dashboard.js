@@ -149,6 +149,7 @@ function renderOptimizeTab(d) {
 
   document.getElementById('tab-optimize').innerHTML =
     renderPerformanceQueueCard(d) +
+    renderCannibalizationCard(d) +
     renderIndexingCard(d) +
     renderActionRequired(d) +
     renderQuickWinCard(d) +
@@ -175,6 +176,22 @@ function renderOptimizeTab(d) {
 }
 
 // ── Performance-driven SEO engine cards ───────────────────────────────────────
+
+function renderCannibalizationCard(d) {
+  var c = d.cannibalization;
+  if (!c || !c.conflicts || c.conflicts.length === 0) return '';
+  return '<div class="card"><div class="card-header accent-red"><h2>Keyword Cannibalization <span class="badge">' + c.conflict_count + '</span></h2></div>' +
+    '<div class="card-body">' +
+    '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + c.recommended + ' recommendations</p>' +
+    '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Type</th></tr></thead><tbody>' +
+    c.conflicts.slice(0, 10).map(function(conflict) {
+      var urls = conflict.urls.map(function(u) {
+        return '<div style="font-size:12px">' + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a></div>';
+      }).join('');
+      return '<tr><td><strong>' + conflict.query + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + conflict.conflict_type + '</td></tr>';
+    }).join('') +
+    '</tbody></table></div></div>';
+}
 
 function renderPerformanceQueueCard(d) {
   const items = d.performanceQueue || [];
