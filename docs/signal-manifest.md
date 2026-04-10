@@ -86,6 +86,11 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | `data/performance-queue/indexing-submissions.json` | `indexing-fixer` | dashboard Optimize tab (Indexing Status card), `indexing-fixer --approve <slug>` | healthy |
 | `data/reports/cannibalization/latest.json` | `cannibalization-resolver --report-json` | dashboard Optimize tab (cannibalization card) | healthy |
 | `data/reports/ga4-content-feedback/latest.json` | `ga4-content-analyzer` | `content-strategist` (cluster weighting), `cro-cta-injector --from-ga4` | healthy |
+| `data/reports/reviews/latest.json` | `review-monitor` | `daily-summary`, `product-optimizer` (sentiment context) | healthy |
+| `data/reports/theme-seo-audit/latest.json` | `theme-seo-auditor` | manual review | healthy |
+| `data/meta-tests/*.json` | `lib/meta-test.js` (via publish flows) | `meta-ab-tracker`, dashboard Optimize tab | healthy |
+| `data/performance-queue/<slug>.json` (trigger: `page-meta-rewrite`) | `product-optimizer --pages-from-gsc` | dashboard, `product-optimizer --publish-approved` | healthy |
+| `data/performance-queue/<slug>.json` (trigger: `faq-expansion`) | `product-optimizer --expand-faq` | dashboard, `product-optimizer --publish-approved` | healthy |
 
 ### Indexing signals
 

@@ -42,8 +42,19 @@ log('Content Scheduler starting');
 // Defer all notifications from this process and any child processes to the daily summary
 process.env.NOTIFY_DEFERRED = '1';
 
-// Step 1: flip any scheduled drafts that are due live (+ post-publish steps)
+// Step 0: daily review monitor
 const NODE = process.execPath; // full path to the running node binary
+
+const reviewCmd = `"${NODE}" agents/review-monitor/index.js`;
+log(`  ${reviewCmd}`);
+try {
+  execSync(reviewCmd, { stdio: 'inherit', cwd: __dirname });
+  log('  ✓ review-monitor complete');
+} catch (e) {
+  log(`  ✗ review-monitor failed (exit ${e.status})`);
+}
+
+// Step 1: flip any scheduled drafts that are due live (+ post-publish steps)
 
 const publishDueCmd = `"${NODE}" agents/calendar-runner/index.js --publish-due${dryFlag}`;
 log(`  ${publishDueCmd}`);
@@ -129,6 +140,16 @@ try {
   log(`  ✗ collection content publish-approved failed (exit ${e.status})`);
 }
 
+// Step 4c: pages from GSC
+const pagesCmd = `"${NODE}" agents/product-optimizer/index.js --pages-from-gsc${dryFlag}`;
+log(`  ${pagesCmd}`);
+try {
+  execSync(pagesCmd, { stdio: 'inherit', cwd: __dirname });
+  log('  ✓ pages-from-gsc complete');
+} catch (e) {
+  log(`  ✗ pages-from-gsc failed (exit ${e.status})`);
+}
+
 // Step 5: run collection linker to inject cross-links from blog posts to collections
 const collLinkCmd = `"${NODE}" agents/collection-linker/index.js --top-targets --apply${dryFlag}`;
 log(`  ${collLinkCmd}`);
@@ -195,8 +216,34 @@ if (new Date().getDay() === 0) {
     log(`    ✗ ga4-content-analyzer failed (exit ${e.status})`);
   }
 
+  // Step 9b: meta A/B tracker
+  const metaAbCmd = `"${NODE}" agents/meta-ab-tracker/index.js${dryFlag}`;
+  log(`    ${metaAbCmd}`);
+  try {
+    execSync(metaAbCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ meta-ab-tracker complete');
+  } catch (e) {
+    log(`    ✗ meta-ab-tracker failed (exit ${e.status})`);
+  }
+
 } else {
   log('  Weekly jobs: skipped (not Sunday)');
+}
+
+// ── Monthly jobs (1st of month) ──────────────────────────────────────────────
+if (new Date().getDate() === 1) {
+  log('  Monthly jobs (1st):');
+
+  const themeCmd = `"${NODE}" agents/theme-seo-auditor/index.js`;
+  log(`    ${themeCmd}`);
+  try {
+    execSync(themeCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ theme-seo-auditor complete');
+  } catch (e) {
+    log(`    ✗ theme-seo-auditor failed (exit ${e.status})`);
+  }
+} else {
+  log('  Monthly jobs: skipped (not 1st)');
 }
 
 log('Scheduler done.');
