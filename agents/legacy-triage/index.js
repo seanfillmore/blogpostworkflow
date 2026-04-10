@@ -134,7 +134,11 @@ async function main() {
     try {
       const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
       if (!meta.slug) meta.slug = basename(f, '.json');
-      if (meta.shopify_status !== 'published') continue;
+      // Match the dashboard's classification: posts with a past shopify_publish_at
+      // are effectively published even if shopify_status wasn't explicitly stamped.
+      const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
+      const isPublished = meta.shopify_status === 'published' || (!Number.isNaN(publishTs) && publishTs <= Date.now());
+      if (!isPublished) continue;
       if (!isLegacy(meta)) continue;
       if (meta.legacy_bucket && !FORCE) continue;
       meta._file = join(POSTS_DIR, f);
