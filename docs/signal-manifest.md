@@ -27,7 +27,7 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | `data/snapshots/shopify/*.json` | Shopify Admin API | `shopify-collector` | `sitemap-indexer`, `topical-mapper`, `blog-post-verifier` |
 | `data/snapshots/clarity/*.json` | Microsoft Clarity API | `clarity-collector` | `cro-analyzer` |
 | `config/site.json` | manual | n/a (static) | nearly every agent — brand name, domain, etc. |
-| `config/ingredients.json` | manual | n/a (static) | `blog-post-writer`, `content-refresher`, `editor` |
+| `config/ingredients.json` | manual | n/a (static) | `blog-post-writer`, `content-refresher`, `editor`, `collection-content-optimizer` |
 | `config/competitors.json` | manual | n/a (static) | `competitor-watcher`, `competitor-intelligence` |
 | `.env` | manual | n/a | every agent needing API keys |
 
@@ -72,7 +72,7 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | Signal | Writer | Consumers | Status |
 |---|---|---|---|
 | `data/sitemap-index.json` | `sitemap-indexer` | `internal-link-auditor`, `internal-linker`, `editor`, `content-researcher`, `topical-mapper` | healthy |
-| `data/topical-map.json` | `topical-mapper` | `content-researcher`, `internal-linker`, `content-strategist`, `editor` | healthy |
+| `data/topical-map.json` | `topical-mapper` | `content-researcher`, `internal-linker`, `content-strategist`, `editor`, `collection-content-optimizer` | healthy |
 | `data/reports/internal-linker/*.md` | `internal-linker` | `daily-summary`, dashboard | **gap** — doesn't feed back into `blog-post-writer` or `content-refresher` so the writer is unaware which internal links have already been placed |
 | `data/reports/technical-seo/*.md` | `technical-seo` | `daily-summary`, dashboard | **gap** — findings don't flow into `blog-post-writer` as "don't introduce this issue" standing rules |
 
@@ -80,7 +80,8 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 
 | Signal | Writer | Consumers | Status |
 |---|---|---|---|
-| `data/performance-queue/<slug>.json` | `performance-engine` (planned) | `daily-summary`, dashboard Optimize tab, `publisher` (approve flag) | **planned** — see `docs/superpowers/plans/2026-04-09-performance-engine-approval-loop.md` |
+| `data/performance-queue/<slug>.json` | `performance-engine`, `product-optimizer --from-gsc`, `collection-content-optimizer` | `daily-summary`, dashboard Optimize tab, `publisher` (approve flag), `product-optimizer --publish-approved`, `collection-content-optimizer --publish-approved` | healthy |
+| `data/collection-content/<handle>.html` | `collection-content-optimizer` | dashboard preview, `collection-content-optimizer --publish-approved` | healthy |
 | `data/performance-queue/indexing-submissions.json` | `indexing-fixer` | dashboard Optimize tab (Indexing Status card), `indexing-fixer --approve <slug>` | healthy |
 
 ### Indexing signals
