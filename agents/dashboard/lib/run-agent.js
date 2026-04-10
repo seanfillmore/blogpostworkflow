@@ -33,6 +33,7 @@ export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/indexing-checker/index.js',
   'agents/indexing-fixer/index.js',
   'agents/performance-engine/index.js',
+  'agents/legacy-triage/index.js',
 ]);
 
 /**

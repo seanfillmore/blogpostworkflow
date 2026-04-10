@@ -153,6 +153,7 @@ function renderOptimizeTab(d) {
     renderActionRequired(d) +
     renderQuickWinCard(d) +
     renderGscOpportunityCard(d) +
+    renderLegacyTriageCard(d) +
     renderClusterAuthorityCard(d) +
     '<div class="card"><div class="card-header accent-purple"><h2>Legacy Optimizer Briefs</h2></div>' +
     '<div class="card-body">' +
@@ -414,6 +415,54 @@ function renderGscOpportunityCard(d) {
       section('Low-CTR (rewrite title/meta)', lowCtr, true) +
       section('Page-2 (quick-win candidates)', page2, true) +
       section('Unmapped (new-topic candidates)', unmapped, false) +
+    '</div></div>';
+}
+
+function renderLegacyTriageCard(d) {
+  var t = d.legacyTriage;
+  if (!t) {
+    return '<div class="card"><div class="card-header accent-amber"><h2>Legacy Post Triage</h2></div>' +
+      '<div class="card-body"><div class="empty-state">No triage data. <button class="btn-sm" onclick="runAgent(\'agents/legacy-triage/index.js\')">Run triage</button></div></div></div>';
+  }
+  var c = t.counts || {};
+  var pills =
+    '<span class="weight-pill weight-pos" style="margin-right:6px">Winners: ' + (c.winner||0) + '</span>' +
+    '<span class="weight-pill" style="margin-right:6px;background:#dbeafe;color:#1e40af">Rising: ' + (c.rising||0) + '</span>' +
+    '<span class="weight-pill weight-neg" style="margin-right:6px">Flops: ' + (c.flop||0) + '</span>' +
+    '<span class="weight-pill" style="margin-right:6px;background:#fef3c7;color:#92400e">Broken: ' + (c.broken||0) + '</span>';
+
+  var topFlops = (t.results||[]).filter(function(r){ return r.bucket === 'flop'; }).slice(0, 5);
+  var topRising = (t.results||[]).filter(function(r){ return r.bucket === 'rising'; }).slice(0, 5);
+  var broken = (t.results||[]).filter(function(r){ return r.bucket === 'broken'; });
+
+  var flopRows = topFlops.length === 0 ? '<div class="empty-state">No flops.</div>'
+    : '<table class="data-table"><thead><tr><th>Post</th><th>Words</th><th>Reason</th></tr></thead><tbody>' +
+      topFlops.map(function(r) {
+        return '<tr><td class="col-title">' + esc(r.title) + '</td><td>' + r.words + '</td><td class="col-reason">' + esc(r.reason.slice(0, 60)) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+
+  var risingRows = topRising.length === 0 ? ''
+    : '<h3 style="font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin:12px 0 6px">Top Rising (meta-only)</h3>' +
+      '<table class="data-table"><thead><tr><th>Post</th><th>Pos</th><th>Impr</th></tr></thead><tbody>' +
+      topRising.map(function(r) {
+        return '<tr><td class="col-title">' + esc(r.title) + '</td><td>' + (r.position ? Math.round(r.position) : '?') + '</td><td>' + r.impressions + '</td></tr>';
+      }).join('') + '</tbody></table>';
+
+  var brokenRows = broken.length === 0 ? ''
+    : '<h3 style="font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin:12px 0 6px">Broken (manual fix)</h3>' +
+      broken.map(function(r) {
+        return '<div class="action-row"><div class="action-head"><span class="verdict-pill verdict-blocked">Broken</span><span class="action-title">' + esc(r.title) + '</span></div><div class="action-reason">' + esc(r.reason) + '</div></div>';
+      }).join('');
+
+  return '<div class="card"><div class="card-header accent-amber">' +
+      '<h2>Legacy Post Triage (' + t.total + ' posts)</h2>' +
+      '<button class="btn-sm" onclick="runAgent(\'agents/legacy-triage/index.js\')" style="margin-left:auto">Re-run</button>' +
+    '</div><div class="card-body">' +
+      '<div style="margin-bottom:12px">' + pills + '</div>' +
+      '<h3 style="font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin:0 0 6px">Top Flops (rewrite candidates)</h3>' +
+      flopRows +
+      risingRows +
+      brokenRows +
     '</div></div>';
 }
 
