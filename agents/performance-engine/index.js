@@ -104,7 +104,11 @@ function pickMetaRewrites(blocked) {
   if (!gsc || !gsc.low_ctr) return [];
   const postFiles = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'));
   const posts = postFiles.map(f => {
-    try { return JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8')); } catch { return null; }
+    try {
+      const m = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      if (!m.slug) m.slug = f.replace(/\.json$/, '');
+      return m;
+    } catch { return null; }
   }).filter(Boolean);
 
   const picks = [];
@@ -115,9 +119,11 @@ function pickMetaRewrites(blocked) {
       return tk && (q.keyword.toLowerCase().includes(tk) || tk.includes(q.keyword.toLowerCase()));
     });
     if (!match || blocked.has(match.slug)) continue;
+    // Only pick posts that actually have HTML — no point refreshing a stub
+    if (!existsSync(join(POSTS_DIR, `${match.slug}.html`))) continue;
     picks.push({
       slug: match.slug,
-      title: match.title,
+      title: match.title || match.slug,
       trigger: 'low-ctr-meta',
       signal_source: { type: 'gsc-opportunity', query: q.keyword, impressions: q.impressions, ctr: q.ctr, position: q.position },
     });
