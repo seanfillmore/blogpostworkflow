@@ -11,7 +11,7 @@
  *   node scripts/sync-legacy-posts.js
  *   node scripts/sync-legacy-posts.js --force   # overwrite local files too
  */
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../lib/shopify.js';
@@ -19,8 +19,6 @@ import { getBlogs, getArticles } from '../lib/shopify.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const POSTS_DIR = join(ROOT, 'data', 'posts');
-const CONFIG = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
-const CANONICAL_ROOT = (CONFIG.url || '').replace(/\/$/, '');
 
 const force = process.argv.includes('--force');
 
@@ -65,14 +63,6 @@ async function main() {
           shopify_article_id: a.id,
           shopify_handle: a.handle,
           shopify_publish_at: a.published_at,
-          // Canonical public URL — needed by indexing-checker and other agents
-          // that query GSC URL Inspection.
-          shopify_url: `${CANONICAL_ROOT}/blogs/${blog.handle}/${a.handle}`,
-          // Legacy posts come from Shopify's published article list, so they
-          // ARE published. Without this flag, indexing-checker and every other
-          // downstream agent skips them because they look unpublished.
-          shopify_status: 'published',
-          published_at: a.published_at,
           legacy_synced_at: new Date().toISOString(),
           legacy_source: 'sync-legacy-posts.js',
         };
