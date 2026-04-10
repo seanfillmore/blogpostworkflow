@@ -163,32 +163,49 @@ function categoriseLinks(links) {
 
 // ── scheduled post index (for cross-referencing "broken" internal links) ──────
 
-function loadScheduledPostUrls() {
+/**
+ * Build an index of ALL unpublished posts in the system — scheduled, draft,
+ * or written — so the link checker can distinguish "link to a future post"
+ * from "link to a genuinely broken URL."
+ *
+ * Returns Map<url, { slug, publish_at, title, status }>.
+ *
+ * The editor uses this to make smart decisions:
+ *   - Linked post scheduled BEFORE parent post → not a blocker (will be live in time)
+ *   - Linked post is a draft with no schedule → auto-remove the link (don't block
+ *     the parent for a dependency that has no ship date)
+ *   - Linked post scheduled AFTER parent → auto-remove the link (would 404 at publish)
+ *   - Linked post not in the system at all → real 404, flag as blocker
+ */
+function loadUnpublishedPostIndex() {
   const postsDir = join(ROOT, 'data', 'posts');
-  const map = new Map(); // shopify_url → { slug, publish_at, title }
+  const map = new Map();
   try {
-    const files = readdirSync(postsDir).filter(f => f.endsWith('.json'));
-    for (const f of files) {
+    for (const f of readdirSync(postsDir).filter(f => f.endsWith('.json'))) {
       try {
         const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
-        // Treat any post with a future publish_at as scheduled (covers both 'scheduled' and 'draft' statuses —
-        // Shopify returns draft status for posts with a future published_at until the scheduler flips them)
-        const hasFuturePublishDate = meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date();
-        if (hasFuturePublishDate && (meta.shopify_status === 'scheduled' || meta.shopify_status === 'draft')) {
-          // Map both the myshopify URL and the public URL
-          const urls = [meta.shopify_url];
-          if (meta.shopify_url) {
-            // Also map the public domain version
-            const publicUrl = meta.shopify_url.replace(/realskincare-com\.myshopify\.com/, 'www.realskincare.com');
-            if (publicUrl !== meta.shopify_url) urls.push(publicUrl);
-          }
-          for (const url of urls) {
-            if (url) map.set(url, {
-              slug: meta.slug || f.replace('.json', ''),
-              publish_at: meta.shopify_publish_at,
-              title: meta.title,
-            });
-          }
+        // Only index posts that are NOT currently live (scheduled, draft, or written)
+        const isLive = meta.shopify_status === 'published' ||
+          (meta.shopify_publish_at && new Date(meta.shopify_publish_at) <= new Date());
+        if (isLive) continue;
+        // Needs a shopify_handle or shopify_url to map
+        if (!meta.shopify_handle && !meta.shopify_url) continue;
+
+        const slug = meta.slug || f.replace('.json', '');
+        const entry = {
+          slug,
+          publish_at: meta.shopify_publish_at || null,
+          title: meta.title || slug,
+          status: meta.shopify_status || 'draft',
+        };
+        // Map every URL variant this post could be linked by
+        if (meta.shopify_url) {
+          map.set(meta.shopify_url, entry);
+          const publicUrl = meta.shopify_url.replace(/realskincare-com\.myshopify\.com/, 'www.realskincare.com');
+          if (publicUrl !== meta.shopify_url) map.set(publicUrl, entry);
+        }
+        if (meta.shopify_handle) {
+          map.set(`https://www.realskincare.com/blogs/news/${meta.shopify_handle}`, entry);
         }
       } catch {}
     }
@@ -196,7 +213,7 @@ function loadScheduledPostUrls() {
   return map;
 }
 
-const scheduledPosts = loadScheduledPostUrls();
+const unpublishedIndex = loadUnpublishedPostIndex();
 
 // ── http link checker ─────────────────────────────────────────────────────────
 
@@ -211,11 +228,25 @@ async function checkUrl(href) {
     // 403/405 = bot-blocked, treat as valid
     const ok = res.ok || res.status === 403 || res.status === 405;
     if (!ok && (res.status === 404 || res.status === 410)) {
-      // Check if this is an internal link to a scheduled post
-      const scheduled = scheduledPosts.get(href);
-      if (scheduled) {
-        return { ok: true, status: res.status, scheduled: true,
-          note: `Scheduled to publish ${new Date(scheduled.publish_at).toLocaleDateString()} ("${scheduled.title}")` };
+      // Check if this is a link to an unpublished post (scheduled, draft, or written).
+      // Smart handling per docs/signal-manifest.md:
+      //   - Linked post scheduled BEFORE parent → not a blocker (will be live in time)
+      //   - Linked post is a draft/unscheduled → auto-removable (no ship date)
+      //   - Linked post scheduled AFTER parent → auto-removable (would 404 at publish)
+      //   - Not in the system at all → real 404 blocker
+      const linked = unpublishedIndex.get(href);
+      if (linked) {
+        return {
+          ok: true,
+          status: res.status,
+          unpublished: true,
+          linked_slug: linked.slug,
+          linked_publish_at: linked.publish_at,
+          linked_status: linked.status,
+          note: linked.publish_at
+            ? `Unpublished — scheduled for ${new Date(linked.publish_at).toLocaleDateString()} ("${linked.title}")`
+            : `Unpublished draft — no publish date set ("${linked.title}")`,
+        };
       }
     }
     return { ok, status: res.status, finalUrl: res.url };
@@ -522,16 +553,44 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
   // ── 1. Link health ────────────────────────────────────────────────────────
   lines.push('---\n## 1. Link Health\n');
   const broken = linkResults.filter((r) => !r.check.ok);
-  const scheduledOk = linkResults.filter((r) => r.check.ok && r.check.scheduled);
+  const unpublishedLinks = linkResults.filter((r) => r.check.ok && r.check.unpublished);
   const ok = linkResults.filter((r) => r.check.ok);
   lines.push(`**${ok.length} links OK** | **${broken.length} broken/unreachable**\n`);
 
-  if (scheduledOk.length > 0) {
-    lines.push(`> **Note:** ${scheduledOk.length} link(s) point to scheduled posts that will publish before this article:\n`);
-    for (const r of scheduledOk) {
-      lines.push(`> - ${r.text} — ${r.check.note}`);
+  // Smart internal-link handling: links to unpublished posts aren't real 404s.
+  // Compare their publish dates to the parent post's publish date.
+  const parentPublishAt = meta?.shopify_publish_at ? new Date(meta.shopify_publish_at) : null;
+  if (unpublishedLinks.length > 0) {
+    const willBeLive = [];
+    const noSchedule = [];
+    const afterParent = [];
+    for (const r of unpublishedLinks) {
+      if (!r.check.linked_publish_at) {
+        noSchedule.push(r);
+      } else {
+        const linkedDate = new Date(r.check.linked_publish_at);
+        if (parentPublishAt && linkedDate <= parentPublishAt) {
+          willBeLive.push(r);
+        } else {
+          afterParent.push(r);
+        }
+      }
     }
-    lines.push('');
+    if (willBeLive.length > 0) {
+      lines.push(`> **Note:** ${willBeLive.length} link(s) point to posts scheduled to publish before this article — not a blocker:\n`);
+      for (const r of willBeLive) lines.push(`> - ${r.text} — ${r.check.note}`);
+      lines.push('');
+    }
+    if (noSchedule.length > 0) {
+      lines.push(`> **Auto-removed:** ${noSchedule.length} link(s) to unscheduled draft posts were removed from the HTML (no publish date set — the internal-linker will re-add them once both posts are live):\n`);
+      for (const r of noSchedule) lines.push(`> - ${r.text} — ${r.check.note}`);
+      lines.push('');
+    }
+    if (afterParent.length > 0) {
+      lines.push(`> **Auto-removed:** ${afterParent.length} link(s) to posts scheduled AFTER this one were removed (would 404 at publish time):\n`);
+      for (const r of afterParent) lines.push(`> - ${r.text} — ${r.check.note}`);
+      lines.push('');
+    }
   }
 
   if (broken.length === 0) {
@@ -615,10 +674,31 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
  *
  * Creates a timestamped backup before writing.
  */
-function applyAutoFixes(htmlPath, html, brokenLinks) {
+function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}) {
   const currentYear = new Date().getFullYear();
   let fixed = html;
   const changes = [];
+
+  // 0. Remove internal links to unpublished posts that would 404 at publish time.
+  //    These are links to drafts with no schedule, or links to posts scheduled
+  //    after the parent. The internal-linker will re-add them once both are live.
+  for (const link of linksToRemove) {
+    const escapedHref = link.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Try to remove the entire <li> if inside a list (common in related-articles)
+    const liRegex = new RegExp(`\\s*<li[^>]*>\\s*<a[^>]+href=["']${escapedHref}["'][^>]*>[\\s\\S]*?<\\/a>\\s*<\\/li>`, 'gi');
+    const before = fixed;
+    fixed = fixed.replace(liRegex, '');
+    if (fixed !== before) {
+      changes.push(`Auto-removed link to unpublished post: ${link.href} ("${link.text}")`);
+      continue;
+    }
+    // Fallback: just strip the <a> wrapper, keep the text
+    const aRegex = new RegExp(`<a[^>]+href=["']${escapedHref}["'][^>]*>(.*?)<\\/a>`, 'gis');
+    fixed = fixed.replace(aRegex, '$1');
+    if (fixed !== before) {
+      changes.push(`Auto-removed link to unpublished post: ${link.href} (kept text: "${link.text}")`);
+    }
+  }
 
   // 1. Remove broken external links
   const siteHost = new URL(config.url).hostname;
@@ -812,9 +892,21 @@ async function runEditor(htmlPath) {
   console.log(`    Sources to review:  ${needsReview}`);
   console.log(`    Topical suggestions:${topicalSuggestions.length}`);
 
-  // Auto-fix if requested
-  if (args.includes('--auto-fix')) {
-    applyAutoFixes(htmlPath, html, brokenLinks);
+  // Determine which unpublished-post links need auto-removal
+  const parentPublishDate = meta?.shopify_publish_at ? new Date(meta.shopify_publish_at) : null;
+  const linksToRemove = linkResults
+    .filter(r => r.check.ok && r.check.unpublished)
+    .filter(r => {
+      // Remove if: no publish date at all, or scheduled after the parent
+      if (!r.check.linked_publish_at) return true;
+      if (parentPublishDate && new Date(r.check.linked_publish_at) > parentPublishDate) return true;
+      return false;
+    });
+
+  // Always auto-fix unpublished-link removals (they're unambiguous).
+  // Other auto-fixes (broken externals, year corrections) still require --auto-fix.
+  if (linksToRemove.length > 0 || args.includes('--auto-fix')) {
+    applyAutoFixes(htmlPath, html, args.includes('--auto-fix') ? brokenLinks : [], { linksToRemove });
   }
 }
 
