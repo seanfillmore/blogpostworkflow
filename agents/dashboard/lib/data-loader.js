@@ -59,8 +59,16 @@ export function aggregateData() {
         const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
         const kw = (meta.target_keyword || '').toLowerCase();
         if (kw && seenKeywords.has(kw)) continue;
-        const status = meta.shopify_status === 'published' ? 'published'
-                     : meta.shopify_publish_at             ? 'scheduled'
+        // If shopify_publish_at exists and is in the past, the post is
+        // already live on Shopify — classify as 'published' regardless of
+        // whether shopify_status was explicitly stamped. This prevents
+        // legacy-synced posts (which have historical publish dates but no
+        // stamped status) from showing up as "scheduled" on the dashboard.
+        const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
+        const publishInPast = !Number.isNaN(publishTs) && publishTs <= Date.now();
+        const publishInFuture = !Number.isNaN(publishTs) && publishTs > Date.now();
+        const status = meta.shopify_status === 'published' || publishInPast ? 'published'
+                     : publishInFuture                     ? 'scheduled'
                      : meta.shopify_article_id             ? 'draft'
                      : existsSync(join(POSTS_DIR, `${slug}.html`)) ? 'written'
                      : existsSync(join(BRIEFS_DIR, `${slug}.json`)) ? 'briefed'

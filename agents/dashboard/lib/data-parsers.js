@@ -80,8 +80,11 @@ export function getItemStatus(item) {
   const meta = getPostMeta(item.slug);
   const hasBrief = existsSync(join(BRIEFS_DIR, `${item.slug}.json`));
   const hasHtml  = existsSync(join(POSTS_DIR, `${item.slug}.html`));
-  if (meta?.shopify_status === 'published') return 'published';
-  if (meta?.shopify_publish_at)             return 'scheduled';
+  const publishTs = meta?.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
+  const publishInPast = !Number.isNaN(publishTs) && publishTs <= Date.now();
+  const publishInFuture = !Number.isNaN(publishTs) && publishTs > Date.now();
+  if (meta?.shopify_status === 'published' || publishInPast) return 'published';
+  if (publishInFuture)                      return 'scheduled';
   if (meta?.shopify_article_id)             return 'draft';
   if (hasHtml)                              return 'written';
   if (hasBrief)                             return 'briefed';
