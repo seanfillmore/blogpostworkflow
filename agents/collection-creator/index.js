@@ -44,6 +44,7 @@ import { withRetry } from '../../lib/retry.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/lib/queue.js';
 import { execSync } from 'child_process';
+import { createMetaTest } from '../../lib/meta-test.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -632,6 +633,20 @@ async function publishApprovedCollections() {
       item.status = 'published';
       item.published_at = new Date().toISOString();
       writeItem(item);
+
+      // Auto-create A/B test
+      try {
+        await createMetaTest({
+          slug: item.proposed_collection.handle,
+          url: `${config.url}/collections/${item.proposed_collection.handle}`,
+          resourceType: 'collection',
+          resourceId: newCollection.id,
+          originalTitle: item.proposed_collection.title,
+          newTitle: item.proposed_collection.seo_title,
+        });
+      } catch (e) {
+        console.warn(`  A/B test creation failed: ${e.message}`);
+      }
 
       successCount++;
       console.log(`  Published and linked: ${pc.handle}\n`);
