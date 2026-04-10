@@ -34,6 +34,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/webmasters',        // read+write — sitemaps resubmission, URL inspection
   'https://www.googleapis.com/auth/analytics.readonly',
   'https://www.googleapis.com/auth/indexing',          // Indexing API — URL_UPDATED / URL_DELETED submissions
+  'https://www.googleapis.com/auth/adwords',           // Google Ads — campaign data collection
 ].join(' ');
 
 // ── env helpers ───────────────────────────────────────────────────────────────

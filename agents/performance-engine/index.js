@@ -102,11 +102,14 @@ function pickQuickWins(blocked) {
 function pickMetaRewrites(blocked) {
   const gsc = readJsonSafe(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
   if (!gsc || !gsc.low_ctr) return [];
-  const postFiles = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'));
+  const postFiles = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json') && !f.includes('-refreshed'));
   const posts = postFiles.map(f => {
     try {
       const m = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
       if (!m.slug) m.slug = f.replace(/\.json$/, '');
+      // Skip -refreshed artifacts — these are temp files from the content-refresher,
+      // not canonical posts. Their slug doesn't match the Shopify article handle.
+      if (m.slug.endsWith('-refreshed')) return null;
       return m;
     } catch { return null; }
   }).filter(Boolean);
