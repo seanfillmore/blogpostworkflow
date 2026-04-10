@@ -132,7 +132,7 @@ function pickMetaRewrites(blocked) {
 }
 
 function pickLegacyFlops(blocked) {
-  const triage = readJsonSafe(join(REPORTS_DIR, '..', 'legacy-triage', 'latest.json'));
+  const triage = readJsonSafe(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   if (!triage) return [];
   return (triage.results || [])
     .filter(r => r.bucket === 'flop' && !blocked.has(r.slug))
