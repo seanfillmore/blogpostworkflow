@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
+import { upsertMetafield } from '../../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -71,20 +72,29 @@ function mean(arr) {
 
 // ── Shopify helper ─────────────────────────────────────────────────────────
 
-async function revertMetafield(articleId, blogId, originalTitle) {
-  const env = loadEnv();
-  const token = process.env.SHOPIFY_ACCESS_TOKEN || env.SHOPIFY_ACCESS_TOKEN;
-  const store = process.env.SHOPIFY_STORE_DOMAIN || env.SHOPIFY_STORE_DOMAIN;
-  if (!token || !store) { console.warn('Shopify credentials not set, skipping revert.'); return; }
-  if (!blogId) { console.warn('Skipping revert: shopify_blog_id missing from post meta.'); return; }
+async function revertMetafield(test) {
+  const { resourceType, resourceId, blogId, variantA } = test;
+  if (!resourceId) { console.warn('  Skipping revert: no resourceId'); return; }
 
-  const url = `https://${store}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}/metafields.json`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ metafield: { namespace: 'global', key: 'title_tag', value: originalTitle, type: 'single_line_text_field' } }),
-  });
-  if (!res.ok) console.warn(`Revert failed: ${res.status}`);
+  if (resourceType === 'article' || (!resourceType && blogId)) {
+    // Legacy blog post revert
+    const env = loadEnv();
+    const token = process.env.SHOPIFY_ACCESS_TOKEN || env.SHOPIFY_ACCESS_TOKEN;
+    const store = process.env.SHOPIFY_STORE_DOMAIN || env.SHOPIFY_STORE_DOMAIN;
+    if (!token || !store || !blogId) { console.warn('  Skipping article revert: missing credentials or blogId'); return; }
+    const url = `https://${store}/admin/api/2024-01/blogs/${blogId}/articles/${resourceId}/metafields.json`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metafield: { namespace: 'global', key: 'title_tag', value: variantA, type: 'single_line_text_field' } }),
+    });
+    if (!res.ok) console.warn(`  Article revert failed: ${res.status}`);
+  } else {
+    const resourceMap = { product: 'products', collection: 'custom_collections', page: 'pages' };
+    const resource = resourceMap[resourceType];
+    if (!resource) { console.warn(`  Unknown resourceType: ${resourceType}`); return; }
+    await upsertMetafield(resource, resourceId, 'global', 'title_tag', variantA);
+  }
 }
 
 // ── main ──────────────────────────────────────────────────────────────────
@@ -113,9 +123,11 @@ async function main() {
     const metaPath = join(ROOT, 'data', 'posts', `${t.slug}.json`);
     const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8')) : null;
     let pagePath;
-    try {
-      pagePath = meta?.shopify_url ? new URL(meta.shopify_url).pathname : `/${t.slug}`;
-    } catch {
+    if (t.url) {
+      try { pagePath = new URL(t.url).pathname; } catch { pagePath = `/${t.slug}`; }
+    } else if (meta?.shopify_url) {
+      try { pagePath = new URL(meta.shopify_url).pathname; } catch { pagePath = `/${t.slug}`; }
+    } else {
       pagePath = `/${t.slug}`;
     }
 
@@ -150,9 +162,15 @@ async function main() {
 
       if (!dryRun) {
         // Revert to A if B lost
-        if (winner === 'A' && meta?.shopify_article_id) {
+        if (winner === 'A' && (t.resourceId || meta?.shopify_article_id)) {
+          // Backfill resourceId/blogId from legacy post meta if needed
+          if (!t.resourceId && meta?.shopify_article_id) {
+            t.resourceId = meta.shopify_article_id;
+            t.blogId = meta.shopify_blog_id;
+            t.resourceType = 'article';
+          }
           console.log('  Reverting to Variant A...');
-          await revertMetafield(meta.shopify_article_id, meta.shopify_blog_id, t.variantA);
+          await revertMetafield(t);
         }
 
         // Write result report
