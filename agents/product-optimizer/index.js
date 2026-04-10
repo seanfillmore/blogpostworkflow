@@ -47,6 +47,7 @@ import {
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/lib/queue.js';
+import { createMetaTest } from '../../lib/meta-test.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -790,6 +791,20 @@ async function publishApprovedProducts() {
       writeItem(item);
       console.log('published');
       published++;
+
+      // Auto-create A/B test
+      try {
+        await createMetaTest({
+          slug: item.slug,
+          url: `${config.url}/products/${item.slug}`,
+          resourceType: 'product',
+          resourceId: item.resource_id,
+          originalTitle: item.proposed_meta.original_title,
+          newTitle: item.proposed_meta.seo_title,
+        });
+      } catch (e) {
+        console.warn(`  A/B test creation failed: ${e.message}`);
+      }
     } catch (e) {
       console.error(`failed: ${e.message}`);
     }
@@ -820,6 +835,20 @@ async function publishApprovedProducts() {
         writeItem(item);
         console.log('published');
         pagePublished++;
+
+        // Auto-create A/B test
+        try {
+          await createMetaTest({
+            slug: item.slug,
+            url: `${config.url}/pages/${item.slug}`,
+            resourceType: 'page',
+            resourceId: item.resource_id,
+            originalTitle: item.proposed_meta.original_title,
+            newTitle: item.proposed_meta.seo_title,
+          });
+        } catch (e) {
+          console.warn(`  A/B test creation failed: ${e.message}`);
+        }
       } catch (e) {
         console.error(`failed: ${e.message}`);
       }
