@@ -199,6 +199,15 @@ async function main() {
     const article = articleMap.get(pageUrl);
     if (!article) continue;
 
+    // Winner protection
+    try {
+      const lockMeta = JSON.parse(readFileSync(join(ROOT, 'data', 'posts', `${article.handle}.json`), 'utf8'));
+      if (lockMeta.legacy_locked) {
+        console.log(`  [skip] "${keyword}": legacy winner (locked)`);
+        continue;
+      }
+    } catch { /* proceed */ }
+
     const currentTitle = article.title || '';
     const currentMeta = article.summary_html?.replace(/<[^>]+>/g, '').trim() || '';
 

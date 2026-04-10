@@ -353,6 +353,15 @@ async function main() {
     const { article, keyword, position, impressions, relatedKeywords } = targets[i];
     const slug = article.handle;
 
+    // Winner protection — legacy posts auto-locked by triage must not be refreshed
+    try {
+      const lockMeta = JSON.parse(readFileSync(join(ROOT, 'data', 'posts', `${slug}.json`), 'utf8'));
+      if (lockMeta.legacy_locked) {
+        console.log(`    [skip] ${slug}: legacy winner (locked)`);
+        continue;
+      }
+    } catch { /* proceed if metadata unreadable */ }
+
     console.log(`\n  [${i + 1}/${targets.length}] Refreshing "${article.title}"...`);
     process.stdout.write('    Generating refreshed content... ');
 
