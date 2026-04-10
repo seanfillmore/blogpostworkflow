@@ -150,6 +150,7 @@ function renderOptimizeTab(d) {
   document.getElementById('tab-optimize').innerHTML =
     renderPerformanceQueueCard(d) +
     renderCannibalizationCard(d) +
+    renderMetaTestCard(d) +
     renderIndexingCard(d) +
     renderActionRequired(d) +
     renderQuickWinCard(d) +
@@ -261,6 +262,45 @@ async function submitFeedback(slug) {
 
 function previewQueueItem(slug) {
   window.open('/api/performance-queue/' + encodeURIComponent(slug) + '/html', '_blank');
+}
+
+function renderMetaTestCard(d) {
+  var tests = d.metaTests || [];
+  if (tests.length === 0) return '';
+  var active = tests.filter(function(t) { return t.status === 'active'; });
+  var concluded = tests.filter(function(t) { return t.status === 'concluded'; })
+    .sort(function(a, b) { return (b.concludedDate || '').localeCompare(a.concludedDate || ''); })
+    .slice(0, 10);
+  var bWins = concluded.filter(function(t) { return t.winner === 'B'; }).length;
+  var winRate = concluded.length > 0 ? Math.round(bWins / concluded.length * 100) : 0;
+
+  var html = '<div class="card"><div class="card-header accent-blue"><h2>Meta A/B Tests <span class="badge">' + active.length + ' active</span></h2></div><div class="card-body">';
+
+  if (concluded.length > 0) {
+    html += '<p style="color:#6b7280;margin-bottom:12px">Win rate: ' + bWins + '/' + concluded.length + ' (' + winRate + '%) — Variant B kept</p>';
+  }
+
+  if (active.length > 0) {
+    html += '<h3 style="margin-top:0">Active Tests</h3><table class="data-table"><thead><tr><th>Page</th><th>Variant A</th><th>Variant B</th><th>CTR Delta</th><th>Days Left</th></tr></thead><tbody>';
+    active.forEach(function(t) {
+      var delta = t.currentDelta != null ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp' : 'n/a';
+      html += '<tr><td>' + t.slug + '</td><td style="font-size:12px">' + (t.variantA || '').slice(0, 40) + '</td><td style="font-size:12px">' + (t.variantB || '').slice(0, 40) + '</td><td>' + delta + '</td><td>' + (t.daysRemaining || '?') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+
+  if (concluded.length > 0) {
+    html += '<h3>Recent Results</h3><table class="data-table"><thead><tr><th>Page</th><th>Winner</th><th>CTR Change</th></tr></thead><tbody>';
+    concluded.forEach(function(t) {
+      var delta = t.currentDelta != null ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp' : 'n/a';
+      var color = t.winner === 'B' ? '#10b981' : '#ef4444';
+      html += '<tr><td>' + t.slug + '</td><td style="color:' + color + '">Variant ' + t.winner + '</td><td>' + delta + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+
+  html += '</div></div>';
+  return html;
 }
 
 function renderIndexingCard(d) {
