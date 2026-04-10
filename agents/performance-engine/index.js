@@ -131,6 +131,32 @@ function pickMetaRewrites(blocked) {
   return picks;
 }
 
+function pickLegacyFlops(blocked) {
+  const triage = readJsonSafe(join(REPORTS_DIR, '..', 'legacy-triage', 'latest.json'));
+  if (!triage) return [];
+  return (triage.results || [])
+    .filter(r => r.bucket === 'flop' && !blocked.has(r.slug))
+    .filter(r => {
+      const existing = listQueueItems().find(i => i.slug === r.slug);
+      return !existing || existing.status === 'dismissed';
+    })
+    .sort((a, b) => (b.impressions || 0) - (a.impressions || 0))
+    .slice(0, MAX_FLOPS)
+    .map(r => ({
+      slug: r.slug,
+      title: r.title || r.slug,
+      trigger: 'legacy-flop',
+      signal_source: {
+        type: 'legacy-triage',
+        bucket: 'flop',
+        reason: r.reason,
+        words: r.words,
+        position: r.position,
+        impressions: r.impressions,
+      },
+    }));
+}
+
 // ── refresh execution ─────────────────────────────────────────────────────────
 
 function runRefresh(slug, feedback = null) {
@@ -216,9 +242,11 @@ async function main() {
   const quickWins = pickQuickWins(blocked);
   quickWins.forEach(c => blocked.add(c.slug));
   const metaRewrites = pickMetaRewrites(blocked);
+  const legacyFlops = pickLegacyFlops(blocked);
+  legacyFlops.forEach(c => blocked.add(c.slug));
 
-  const candidates = [...flops, ...quickWins, ...metaRewrites].slice(0, MAX_ITEMS);
-  console.log(`    ${flops.length} flops, ${quickWins.length} quick-wins, ${metaRewrites.length} meta rewrites`);
+  const candidates = [...flops, ...quickWins, ...metaRewrites, ...legacyFlops].slice(0, MAX_ITEMS);
+  console.log(`    ${flops.length} flops, ${quickWins.length} quick-wins, ${metaRewrites.length} meta, ${legacyFlops.length} legacy flops`);
   console.log(`    Total candidates: ${candidates.length} / ${MAX_ITEMS}`);
 
   if (candidates.length === 0 && feedbackCount === 0) {

@@ -806,6 +806,7 @@
 .trigger-flop-refresh  { background: #fee2e2; color: #991b1b; }
 .trigger-quick-win     { background: #d1fae5; color: #065f46; }
 .trigger-low-ctr-meta  { background: #dbeafe; color: #1e40af; }
+.trigger-legacy-flop  { background: #fef3c7; color: #92400e; }
 .queue-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
 .queue-status { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .queue-summary { font-size: 12px; color: #374151; line-height: 1.6; margin-bottom: 12px; }
