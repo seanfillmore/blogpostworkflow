@@ -109,5 +109,35 @@ if (!dryFlag) {
   }
 }
 
+// Step 4a: publish approved product meta rewrites
+const pubProductCmd = `"${NODE}" agents/product-optimizer/index.js --publish-approved`;
+log(`  ${pubProductCmd}`);
+try {
+  execSync(pubProductCmd, { stdio: 'inherit', cwd: __dirname });
+  log('  ✓ product meta publish-approved complete');
+} catch (e) {
+  log(`  ✗ product meta publish-approved failed (exit ${e.status})`);
+}
+
+// Step 4b: publish approved collection content
+const pubCollectionCmd = `"${NODE}" agents/collection-content-optimizer/index.js --publish-approved`;
+log(`  ${pubCollectionCmd}`);
+try {
+  execSync(pubCollectionCmd, { stdio: 'inherit', cwd: __dirname });
+  log('  ✓ collection content publish-approved complete');
+} catch (e) {
+  log(`  ✗ collection content publish-approved failed (exit ${e.status})`);
+}
+
+// Step 5: run collection linker to inject cross-links from blog posts to collections
+const collLinkCmd = `"${NODE}" agents/collection-linker/index.js --top-targets --apply${dryFlag}`;
+log(`  ${collLinkCmd}`);
+try {
+  execSync(collLinkCmd, { stdio: 'inherit', cwd: __dirname });
+  log('  ✓ collection-linker complete');
+} catch (e) {
+  log(`  ✗ collection-linker failed (exit ${e.status})`);
+}
+
 log('Scheduler done.');
 await notifyLatestReport('Scheduler completed', LOG_DIR);
