@@ -27,7 +27,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { writeFileSync, readFileSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -138,6 +138,19 @@ async function rewriteProduct(product, keyword, gscData) {
     ? `This product page currently ranks around position #${Math.round(gscData.position)} for "${keyword}" with ${gscData.impressions} impressions/90 days and ${(gscData.ctr * 100).toFixed(1)}% CTR.`
     : `No GSC data yet for this page — this is a fresh optimization opportunity.`;
 
+  // Review sentiment context
+  let reviewNote = '';
+  try {
+    const reviewPath = join(ROOT, 'data', 'reports', 'reviews', 'latest.json');
+    if (existsSync(reviewPath)) {
+      const reviewData = JSON.parse(readFileSync(reviewPath, 'utf8'));
+      const sentiment = reviewData.product_sentiment?.[product.handle];
+      if (sentiment?.negative_themes?.length > 0) {
+        reviewNote = `\nREVIEW FEEDBACK: Customers have mentioned concerns about: ${sentiment.negative_themes.join(', ')}. Address these concerns naturally in the description (e.g., if "thick" → mention lightweight/fast-absorbing).`;
+      }
+    }
+  } catch { /* ignore */ }
+
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 2048,
@@ -148,7 +161,7 @@ async function rewriteProduct(product, keyword, gscData) {
 PRODUCT: ${product.title}
 TARGET KEYWORD: "${keyword}"
 CURRENT DESCRIPTION (${currentWords} words): ${currentDesc || '(none)'}
-${gscNote}
+${gscNote}${reviewNote}
 
 Write an improved product description that:
 1. Opens with a compelling hook that includes the target keyword naturally
