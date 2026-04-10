@@ -134,7 +134,7 @@ function loadIngredients() {
   catch { return {}; }
 }
 
-function findRelatedBlogPosts(topicalMap, collectionHandle, collectionTitle) {
+function findRelatedBlogPosts(topicalMap, collectionHandle) {
   const searchTerms = collectionHandle.replace(/-/g, ' ').toLowerCase().split(' ')
     .filter((w) => w.length > 3);
   const results = [];
@@ -261,9 +261,19 @@ No explanation, no markdown fences.`,
     }],
   });
 
+  if (message.stop_reason === 'max_tokens') {
+    throw new Error('Claude output truncated (max_tokens) — skipping');
+  }
+
   const raw = message.content[0].text.trim()
     .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+
+  if (/href="[^"]*$/.test(parsed.body_html)) {
+    throw new Error('Unclosed href detected — output likely truncated');
+  }
+
+  return parsed;
 }
 
 // -- publish approved ---------------------------------------------------------
