@@ -23,7 +23,7 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 |---|---|---|---|
 | `data/ahrefs/**.csv` | Ahrefs manual CSV upload | `routes/uploads.js` (dashboard) | `content-gap`, `keyword-research`, `content-researcher`, `technical-seo` |
 | `data/snapshots/gsc/*.json` | Google Search Console API | `gsc-collector` | `gsc-opportunity`, `post-performance`, `rank-tracker`, dashboard `renderGSCSEOPanel` |
-| `data/snapshots/ga4/*.json` | Google Analytics 4 API | `ga4-collector` | `dashboard data-loader`, `cro-analyzer` |
+| `data/snapshots/ga4/*.json` | Google Analytics 4 API | `ga4-collector` | `dashboard data-loader`, `cro-analyzer`, `ga4-content-analyzer` |
 | `data/snapshots/shopify/*.json` | Shopify Admin API | `shopify-collector` | `sitemap-indexer`, `topical-mapper`, `blog-post-verifier` |
 | `data/snapshots/clarity/*.json` | Microsoft Clarity API | `clarity-collector` | `cro-analyzer` |
 | `config/site.json` | manual | n/a (static) | nearly every agent — brand name, domain, etc. |
@@ -72,7 +72,7 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | Signal | Writer | Consumers | Status |
 |---|---|---|---|
 | `data/sitemap-index.json` | `sitemap-indexer` | `internal-link-auditor`, `internal-linker`, `editor`, `content-researcher`, `topical-mapper` | healthy |
-| `data/topical-map.json` | `topical-mapper` | `content-researcher`, `internal-linker`, `content-strategist`, `editor`, `collection-content-optimizer` | healthy |
+| `data/topical-map.json` | `topical-mapper` | `content-researcher`, `internal-linker`, `content-strategist`, `editor`, `collection-content-optimizer`, `ga4-content-analyzer` | healthy |
 | `data/reports/internal-linker/*.md` | `internal-linker` | `daily-summary`, dashboard | **gap** — doesn't feed back into `blog-post-writer` or `content-refresher` so the writer is unaware which internal links have already been placed |
 | `data/reports/technical-seo/*.md` | `technical-seo` | `daily-summary`, dashboard | **gap** — findings don't flow into `blog-post-writer` as "don't introduce this issue" standing rules |
 
@@ -82,7 +82,10 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 |---|---|---|---|
 | `data/performance-queue/<slug>.json` | `performance-engine`, `product-optimizer --from-gsc`, `collection-content-optimizer` | `daily-summary`, dashboard Optimize tab, `publisher` (approve flag), `product-optimizer --publish-approved`, `collection-content-optimizer --publish-approved` | healthy |
 | `data/collection-content/<handle>.html` | `collection-content-optimizer` | dashboard preview, `collection-content-optimizer --publish-approved` | healthy |
+| `data/performance-queue/<handle>.json` (trigger: `collection-gap`) | `collection-creator --from-opportunities` | dashboard, `collection-creator --publish-approved` | healthy |
 | `data/performance-queue/indexing-submissions.json` | `indexing-fixer` | dashboard Optimize tab (Indexing Status card), `indexing-fixer --approve <slug>` | healthy |
+| `data/reports/cannibalization/latest.json` | `cannibalization-resolver --report-json` | dashboard Optimize tab (cannibalization card) | healthy |
+| `data/reports/ga4-content-feedback/latest.json` | `ga4-content-analyzer` | `content-strategist` (cluster weighting), `cro-cta-injector --from-ga4` | healthy |
 
 ### Indexing signals
 
