@@ -39,6 +39,7 @@ import adsRoutes from './routes/ads.js';
 import creativesRoutes from './routes/creatives.js';
 import campaignsRoutes from './routes/campaigns.js';
 import indexingRoutes from './routes/indexing.js';
+import performanceQueueRoutes from './routes/performance-queue.js';
 
 const {
   ROOT, PUBLIC_DIR,
@@ -97,6 +98,7 @@ const ROUTES = [
   ...creativesRoutes,
   ...campaignsRoutes,
   ...indexingRoutes,
+  ...performanceQueueRoutes,
 ];
 
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key

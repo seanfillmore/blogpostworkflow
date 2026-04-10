@@ -59,8 +59,64 @@ if (!existsSync(metaPath)) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Pre-run: scan the performance queue for approved items and publish them
+ * to Shopify by overwriting the existing article. Each approved item has a
+ * refreshed HTML file and a backup. After publishing, the queue item is
+ * stamped 'published' and the canonical HTML is updated.
+ */
+async function publishApprovedQueueItems() {
+  const queueDir = join(ROOT, 'data', 'performance-queue');
+  if (!existsSync(queueDir)) return 0;
+  const { readdirSync } = await import('node:fs');
+  const files = readdirSync(queueDir).filter(f => f.endsWith('.json') && f !== 'indexing-submissions.json');
+  const approved = [];
+  for (const f of files) {
+    try {
+      const item = JSON.parse(readFileSync(join(queueDir, f), 'utf8'));
+      if (item.status === 'approved') approved.push({ file: join(queueDir, f), item });
+    } catch { /* skip */ }
+  }
+  if (approved.length === 0) return 0;
+
+  console.log(`  Performance Queue: ${approved.length} approved item${approved.length === 1 ? '' : 's'} to publish.\n`);
+  const blogs = await getBlogs();
+  const blogId = blogs[0].id;
+
+  let count = 0;
+  for (const { file, item } of approved) {
+    try {
+      const postMetaPath = join(ROOT, 'data', 'posts', `${item.slug}.json`);
+      if (!existsSync(postMetaPath)) { console.warn(`    [skip] ${item.slug}: no post JSON`); continue; }
+      const postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8'));
+      if (!postMeta.shopify_article_id) { console.warn(`    [skip] ${item.slug}: no shopify_article_id`); continue; }
+      if (!existsSync(item.refreshed_html_path)) { console.warn(`    [skip] ${item.slug}: no refreshed HTML`); continue; }
+
+      const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
+      await updateArticle(blogId, postMeta.shopify_article_id, { body_html: refreshedHtml });
+
+      // Copy refreshed HTML over canonical
+      writeFileSync(join(ROOT, 'data', 'posts', `${item.slug}.html`), refreshedHtml);
+
+      // Stamp the queue item
+      item.status = 'published';
+      item.published_at = new Date().toISOString();
+      writeFileSync(file, JSON.stringify(item, null, 2));
+
+      count++;
+      console.log(`    [published] ${item.slug}`);
+    } catch (err) {
+      console.error(`    [fail] ${item.slug}: ${err.message}`);
+    }
+  }
+  return count;
+}
+
 async function main() {
   console.log(`\nPublisher Agent — ${config.name}\n`);
+
+  // Process any approved performance-queue items first
+  await publishApprovedQueueItems();
 
   let meta;
   try {

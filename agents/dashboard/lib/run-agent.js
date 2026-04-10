@@ -32,6 +32,7 @@ export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/unmapped-query-promoter/index.js',
   'agents/indexing-checker/index.js',
   'agents/indexing-fixer/index.js',
+  'agents/performance-engine/index.js',
 ]);
 
 /**

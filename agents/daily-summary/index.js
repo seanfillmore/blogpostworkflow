@@ -205,10 +205,22 @@ function loadCompetitorActivity() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
+function loadPerformanceQueue() {
+  const queueDir = join(ROOT, 'data', 'performance-queue');
+  if (!existsSync(queueDir)) return [];
+  try {
+    return readdirSync(queueDir)
+      .filter(f => f.endsWith('.json') && f !== 'indexing-submissions.json')
+      .map(f => { try { return JSON.parse(readFileSync(join(queueDir, f), 'utf8')); } catch { return null; } })
+      .filter(i => i && i.status === 'pending')
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  } catch { return []; }
+}
+
 /**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl) {
+function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -421,13 +433,39 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
       </div>`;
   }
 
-  const nothingToReport = !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
+  // Optimization queue — items from the performance engine awaiting review
+  let queueSection = '';
+  if (perfQueue && perfQueue.length > 0) {
+    const rows = perfQueue.map(i => {
+      const triggerLabel = { 'flop-refresh': 'Refresh (flop)', 'quick-win': 'Quick win', 'low-ctr-meta': 'Meta rewrite' }[i.trigger] || i.trigger;
+      return `
+        <div style="background:white;border:1px solid #c7d2fe;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:#4338ca;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${esc(triggerLabel)}</div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:8px;">${esc(i.title)}</div>
+          <div style="font-size:12px;color:#374151;line-height:1.5;">
+            <p style="margin:4px 0;"><strong>What changed:</strong> ${esc(i.summary?.what_changed || '')}</p>
+            <p style="margin:4px 0;"><strong>Why:</strong> ${esc(i.summary?.why || '')}</p>
+            <p style="margin:4px 0;"><strong>Projected impact:</strong> ${esc(i.summary?.projected_impact || '')}</p>
+          </div>
+          <a href="${esc(dashboardUrl)}/#optimize" style="display:inline-block;margin-top:8px;padding:6px 12px;background:#6366f1;color:white;text-decoration:none;border-radius:6px;font-size:12px;font-weight:600;">Review on dashboard &rarr;</a>
+        </div>`;
+    }).join('');
+    queueSection = `
+      <div class="section" style="background:#eef2ff;border:1px solid #c7d2fe;">
+        <div class="section-title" style="color:#312e81;border-bottom-color:#c7d2fe;">&#9881;&#65039; Optimization Queue &mdash; ${perfQueue.length} item${perfQueue.length > 1 ? 's' : ''} ready for review</div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">The performance engine ran overnight and refreshed these posts. Approve on the dashboard to push the updated content to Shopify.</p>
+        ${rows}
+      </div>`;
+  }
+
+  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
   <h1>Daily Recap</h1>
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
+  ${queueSection}
   ${blockedSection}
   ${flopSection}
   ${performanceSection}
@@ -476,9 +514,10 @@ async function main() {
   const postPerformance = loadPostPerformance();
   const gscOpps = loadGscOpportunities();
   const competitors = loadCompetitorActivity();
+  const perfQueue = loadPerformanceQueue();
 
   // If nothing happened at all, still send a "quiet day" email
-  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length)) {
+  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length) && !perfQueue.length) {
     log(`No activity for ${targetDate} — sending quiet day summary.`);
   } else {
     log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images, ${blockedPosts.length} blocked, ${quickWins?.top?.length || 0} quick-wins.`);
@@ -487,7 +526,7 @@ async function main() {
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;

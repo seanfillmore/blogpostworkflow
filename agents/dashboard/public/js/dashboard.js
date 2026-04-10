@@ -148,6 +148,7 @@ function renderOptimizeTab(d) {
   });
 
   document.getElementById('tab-optimize').innerHTML =
+    renderPerformanceQueueCard(d) +
     renderIndexingCard(d) +
     renderActionRequired(d) +
     renderQuickWinCard(d) +
@@ -173,6 +174,76 @@ function renderOptimizeTab(d) {
 }
 
 // ── Performance-driven SEO engine cards ───────────────────────────────────────
+
+function renderPerformanceQueueCard(d) {
+  const items = d.performanceQueue || [];
+  if (items.length === 0) return '';
+  const cards = items.map(function(i) {
+    var statusClass = 'status-' + i.status;
+    return '<div class="queue-item ' + statusClass + '">' +
+      '<div class="queue-item-head">' +
+        '<span class="queue-trigger trigger-' + esc(i.trigger) + '">' + esc(i.trigger) + '</span>' +
+        '<span class="queue-title">' + esc(i.title) + '</span>' +
+        '<span class="queue-status">' + esc(i.status) + '</span>' +
+      '</div>' +
+      '<div class="queue-summary">' +
+        '<div><strong>What changed:</strong> ' + esc(i.summary.what_changed) + '</div>' +
+        '<div><strong>Why:</strong> ' + esc(i.summary.why) + '</div>' +
+        '<div><strong>Projected impact:</strong> ' + esc(i.summary.projected_impact) + '</div>' +
+      '</div>' +
+      '<div class="queue-actions">' +
+        (i.status === 'pending' || i.status === 'approved'
+          ? '<button class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')"' + (i.status === 'approved' ? ' disabled' : '') + '>' + (i.status === 'approved' ? 'Approved' : 'Approve') + '</button>' +
+            '<button class="btn-sm" onclick="openFeedbackEditor(\'' + esc(i.slug) + '\')">Feedback</button>' +
+            '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>'
+          : '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>') +
+      '</div>' +
+      '<div id="feedback-editor-' + esc(i.slug) + '" class="feedback-editor" style="display:none">' +
+        '<textarea id="feedback-text-' + esc(i.slug) + '" placeholder="Tell the engine what to change..."></textarea>' +
+        '<div class="feedback-buttons">' +
+          '<button class="btn-sm" onclick="closeFeedbackEditor(\'' + esc(i.slug) + '\')">Cancel</button>' +
+          '<button class="btn-primary" onclick="submitFeedback(\'' + esc(i.slug) + '\')">Submit feedback</button>' +
+        '</div>' +
+      '</div>' +
+      (i.feedback ? '<div class="queue-pending-feedback">Pending feedback: ' + esc(i.feedback) + '</div>' : '') +
+    '</div>';
+  }).join('');
+  return '<div class="card"><div class="card-header accent-indigo">' +
+      '<h2>Optimization Queue</h2>' +
+      '<span class="card-subtitle">' + items.length + ' item' + (items.length > 1 ? 's' : '') + ' awaiting review</span>' +
+    '</div><div class="card-body">' + cards + '</div></div>';
+}
+
+async function approveQueueItem(slug) {
+  var res = await fetch('/api/performance-queue/' + encodeURIComponent(slug) + '/approve', { method: 'POST' });
+  if (res.ok) loadData();
+}
+
+function openFeedbackEditor(slug) {
+  document.getElementById('feedback-editor-' + slug).style.display = 'block';
+}
+
+function closeFeedbackEditor(slug) {
+  document.getElementById('feedback-editor-' + slug).style.display = 'none';
+}
+
+async function submitFeedback(slug) {
+  var txt = document.getElementById('feedback-text-' + slug).value.trim();
+  if (!txt) { alert('Please enter feedback first.'); return; }
+  var res = await fetch('/api/performance-queue/' + encodeURIComponent(slug) + '/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ feedback: txt }),
+  });
+  if (res.ok) {
+    alert('Feedback saved. The next engine run will apply it.');
+    loadData();
+  }
+}
+
+function previewQueueItem(slug) {
+  window.open('/api/performance-queue/' + encodeURIComponent(slug) + '/html', '_blank');
+}
 
 function renderIndexingCard(d) {
   const idx = d.indexing;

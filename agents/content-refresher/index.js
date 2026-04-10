@@ -137,6 +137,7 @@ const apply = args.includes('--apply');
 const slugArg = getArg('--slug');
 const count = parseInt(getArg('--count') ?? '3', 10);
 const minImpressions = parseFloat(getArg('--min-impr') ?? '50');
+const FEEDBACK = getArg('--feedback');
 
 // ── article helpers ───────────────────────────────────────────────────────────
 
@@ -242,7 +243,7 @@ IMPORTANT:
   const verdict = loadPerformanceVerdict(slug);
   if (!verdict) return '';
   return `\n\n---\n\nPOST-PERFORMANCE VERDICT (why this post is being refreshed):\nAt the ${verdict.milestone || 'latest'}-day review this post was flagged ${verdict.verdict}. ${verdict.reason || ''}\n\nTarget your rewrite directly at this cause. Do not do a generic refresh. If the verdict says the projected traffic wasn't hit, figure out why — weak intro, missing topical coverage, title mismatch, thin sections — and fix that specific problem. If the verdict says BLOCKED (zero impressions), the issue is probably intent mismatch or indexing; focus on making the opening paragraph unambiguously match the target keyword and add a clearer content structure.`;
-})()}`,
+})()}${FEEDBACK ? `\n\n---\n\nFOUNDER FEEDBACK FROM PRIOR REFRESH:\nThe founder reviewed a previous version of this refresh and gave the following feedback. Apply it precisely — this is authoritative and overrides general strategy.\n\n${FEEDBACK}` : ''}`,
     }],
   });
 
