@@ -441,8 +441,13 @@ async function publishApprovedProducts() {
 
   console.log(`  Found ${items.length} approved item(s) to publish:\n`);
 
+  let published = 0;
   for (const item of items) {
     process.stdout.write(`  "${item.title}"... `);
+    if (!item.resource_id || !item.proposed_meta?.seo_title || !item.proposed_meta?.seo_description) {
+      console.error('skipped: missing resource_id or proposed_meta');
+      continue;
+    }
     try {
       await upsertMetafield('products', item.resource_id, 'global', 'title_tag', item.proposed_meta.seo_title);
       await upsertMetafield('products', item.resource_id, 'global', 'description_tag', item.proposed_meta.seo_description);
@@ -451,12 +456,13 @@ async function publishApprovedProducts() {
       item.published_at = new Date().toISOString();
       writeItem(item);
       console.log('published');
+      published++;
     } catch (e) {
       console.error(`failed: ${e.message}`);
     }
   }
 
-  console.log(`\n  Done — ${items.length} meta rewrite(s) pushed to Shopify.`);
+  console.log(`\n  Done — ${published}/${items.length} meta rewrite(s) pushed to Shopify.`);
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
