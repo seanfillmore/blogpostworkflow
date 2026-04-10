@@ -26,5 +26,14 @@
   "shopify_status": "published",
   "uploaded_at": "2026-03-11T23:29:43.305Z",
   "shopify_handle": "best-natural-deodorant-for-sensitive-skin-in-2026",
-  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-natural-deodorant-for-sensitive-skin.webp?v=1773271780"
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-natural-deodorant-for-sensitive-skin.webp?v=1773271780",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:11:22.081Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  }
 }

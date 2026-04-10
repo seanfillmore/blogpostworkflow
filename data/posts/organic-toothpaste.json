@@ -28,5 +28,14 @@
   "shopify_publish_at": "2026-04-02T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-toothpaste_9612c3a9-7ec7-4c35-af70-2ec36e54eaee.webp?v=1774339293",
   "uploaded_at": "2026-03-25T15:00:52.489Z",
-  "published_at": "2026-04-02T15:00:02.322Z"
+  "published_at": "2026-04-02T15:00:02.322Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:12:50.341Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  }
 }

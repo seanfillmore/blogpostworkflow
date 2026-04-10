@@ -1,17 +1,35 @@
 {
-  "slug": "best-sls-free-toothpaste-2025",
   "title": "SLS Free Toothpaste: The Gentle Switch Worth Making",
-  "meta_description": "SLS free toothpaste can reduce irritation and support a healthier mouth. Learn what to look for, what to skip, and which ingredients actually work.",
-  "target_keyword": "",
-  "tags": [
-    "TOF",
-    "toothpaste"
-  ],
+  "target_keyword": "best toothpaste without sls",
+  "image_path": "/Users/seanfillmore/Code/Claude/data/images/best-sls-free-toothpaste-2025.webp",
+  "image_prompt": "Product photography, a plain white toothpaste tube, a small bundle of fresh mint sprigs tied with natural twine, and a halved lemon resting cut-side up, arranged on a smooth white marble slab with subtle grey veining, background fading to a soft out-of-focus plain white surface, bright even natural light from above with minimal shadows, overhead flat lay filling the full frame. No text, no labels, no logos, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-03-10T03:51:53.716Z",
   "shopify_blog_id": 48998449187,
   "shopify_blog_handle": "news",
-  "shopify_article_id": 562322047146,
-  "shopify_handle": "best-sls-free-toothpaste-2025",
-  "shopify_publish_at": "2026-03-09T17:05:00-06:00",
-  "legacy_synced_at": "2026-04-09T23:17:12.633Z",
-  "legacy_source": "sync-legacy-posts.js"
+  "shopify_article_id": 563289653418,
+  "shopify_handle": "sls-free-toothpaste-the-gentle-switch-worth-making",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/sls-free-toothpaste-the-gentle-switch-worth-making",
+  "shopify_status": "published",
+  "uploaded_at": "2026-03-12T21:00:18.438Z",
+  "shopify_publish_at": "2026-03-19T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-sls-free-toothpaste-2025_6cbe678e-e186-46ab-8abc-4bd80f659b4e.webp?v=1773349215",
+  "published_at": "2026-03-20T08:00:02.250Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:11:47.201Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:07:08.266Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ]
 }

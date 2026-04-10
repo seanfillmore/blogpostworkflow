@@ -381,3 +381,423 @@
 [2026-03-23T21:05:01.271Z] Checking campaigns: 23681754187, 23683460846
 [2026-03-23T21:05:02.331Z] No disapproved ads found — exiting.
 [2026-03-23T21:05:02.331Z] No disapproved ads found — exiting.
+[2026-04-09T14:05:01.160Z] Campaign Ad Fixer starting
+[2026-04-09T14:05:01.160Z] Campaign Ad Fixer starting
+[2026-04-09T14:05:01.166Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T14:05:01.166Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T14:05:01.600Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T14:05:01.600Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T15:05:02.072Z] Campaign Ad Fixer starting
+[2026-04-09T15:05:02.072Z] Campaign Ad Fixer starting
+[2026-04-09T15:05:02.080Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T15:05:02.080Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T15:05:02.571Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T15:05:02.571Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T16:05:01.953Z] Campaign Ad Fixer starting
+[2026-04-09T16:05:01.953Z] Campaign Ad Fixer starting
+[2026-04-09T16:05:01.961Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T16:05:01.961Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T16:05:02.516Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T16:05:02.516Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T17:05:02.111Z] Campaign Ad Fixer starting
+[2026-04-09T17:05:02.111Z] Campaign Ad Fixer starting
+[2026-04-09T17:05:02.118Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T17:05:02.118Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T17:05:02.552Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T17:05:02.552Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T18:05:01.903Z] Campaign Ad Fixer starting
+[2026-04-09T18:05:01.903Z] Campaign Ad Fixer starting
+[2026-04-09T18:05:01.914Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T18:05:01.914Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T18:05:02.406Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T18:05:02.406Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T19:05:01.279Z] Campaign Ad Fixer starting
+[2026-04-09T19:05:01.279Z] Campaign Ad Fixer starting
+[2026-04-09T19:05:01.286Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T19:05:01.286Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T19:05:01.680Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T19:05:01.680Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T20:05:01.153Z] Campaign Ad Fixer starting
+[2026-04-09T20:05:01.153Z] Campaign Ad Fixer starting
+[2026-04-09T20:05:01.159Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T20:05:01.159Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T20:05:01.636Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T20:05:01.636Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T21:05:02.048Z] Campaign Ad Fixer starting
+[2026-04-09T21:05:02.048Z] Campaign Ad Fixer starting
+[2026-04-09T21:05:02.058Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T21:05:02.058Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T21:05:02.566Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T21:05:02.566Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T22:05:01.840Z] Campaign Ad Fixer starting
+[2026-04-09T22:05:01.840Z] Campaign Ad Fixer starting
+[2026-04-09T22:05:01.846Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T22:05:01.846Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T22:05:02.241Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T22:05:02.241Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T23:05:01.321Z] Campaign Ad Fixer starting
+[2026-04-09T23:05:01.321Z] Campaign Ad Fixer starting
+[2026-04-09T23:05:01.327Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T23:05:01.327Z] Checking campaigns: 23681754187, 23683460846
+[2026-04-09T23:05:01.750Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T23:05:01.750Z] Fatal: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+

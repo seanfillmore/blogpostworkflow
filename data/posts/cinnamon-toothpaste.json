@@ -28,5 +28,23 @@
   "uploaded_at": "2026-03-12T00:22:48.044Z",
   "shopify_publish_at": "2026-03-12T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cinnamon-toothpaste.webp?v=1773274964",
-  "published_at": "2026-03-12T18:49:53.777Z"
+  "published_at": "2026-03-12T18:49:53.777Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:11:59.705Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:07:13.055Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ]
 }

@@ -27,5 +27,23 @@
   "shopify_handle": "best-natural-deodorant-for-men-in-2025-that-works",
   "shopify_status": "published",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-natural-deodorant-for-men_6b464475-b064-4459-9568-405d5c3e4c68.webp?v=1773273911",
-  "published_at": "2026-03-11T18:05:13-06:00"
+  "published_at": "2026-03-11T18:05:13-06:00",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:11:15.795Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:06:57.646Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ]
 }

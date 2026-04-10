@@ -28,5 +28,14 @@
   "shopify_publish_at": "2026-04-02T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/no-fluoride-toothpaste_1527d691-dca8-4872-a36c-f1a46e15ec08.webp?v=1774339268",
   "uploaded_at": "2026-03-25T15:00:29.223Z",
-  "published_at": "2026-04-02T15:00:02.049Z"
+  "published_at": "2026-04-02T15:00:02.049Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:12:37.716Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  }
 }

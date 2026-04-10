@@ -25,5 +25,14 @@
   "shopify_status": "published",
   "uploaded_at": "2026-03-18T15:21:04.819Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/natural-lip-balm_4023c562-fb85-4397-9d67-d25dc3ad4f65.webp?v=1773847260",
-  "published_at": "2026-03-18T14:00:03.034Z"
+  "published_at": "2026-03-18T14:00:03.034Z",
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-04-09T13:12:31.424Z",
+    "last_crawled": "2026-03-17T23:46:52Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/natural-lip-balm-best-ingredients-how-to-choose",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  }
 }

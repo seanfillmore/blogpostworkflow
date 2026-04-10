@@ -128,3 +128,383 @@ Campaign: RSC | Brand | Search (ID: 23681754187) — Google Ads status: ENABLED
 [2026-03-23T20:00:02.889Z] All ads approved — no notification needed.
 [2026-03-23T21:00:03.108Z] All ads approved — no notification needed.
 [2026-03-23T21:00:03.108Z] All ads approved — no notification needed.
+[2026-04-09T14:00:01.892Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T14:00:01.892Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T15:00:02.365Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T15:00:02.365Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T16:00:01.641Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T16:00:01.641Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T17:00:01.709Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T17:00:01.709Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T18:00:02.586Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T18:00:02.586Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T19:00:02.969Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T19:00:02.969Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T20:00:01.875Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T20:00:01.875Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T21:00:01.661Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T21:00:01.661Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T22:00:02.458Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T22:00:02.458Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search",
+          "service": "googleads.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T23:00:02.122Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+
+[2026-04-09T23:00:02.122Z] Error: Google Ads GAQL query failed: HTTP 403 — {
+  "error": {
+    "code": 403,
+    "message": "Request had insufficient authentication scopes.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "googleads.googleapis.com",
+          "method": "google.ads.googleads.v20.services.GoogleAdsService.Search"
+        }
+      }
+    ]
+  }
+}
+

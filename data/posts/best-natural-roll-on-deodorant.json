@@ -24,5 +24,26 @@
   "shopify_article_id": 563281461418,
   "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-natural-roll-on-deodorant-clean-picks-that-work",
   "shopify_status": "published",
-  "uploaded_at": "2026-03-08T04:46:48.248Z"
+  "uploaded_at": "2026-03-08T04:46:48.248Z",
+  "indexing_state": {
+    "state": "unknown",
+    "coverage": "URL is unknown to Google",
+    "last_checked": "2026-04-09T13:11:34.650Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:13:53.025Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:30:03.025Z",
+      "result": "ok"
+    }
+  ]
 }

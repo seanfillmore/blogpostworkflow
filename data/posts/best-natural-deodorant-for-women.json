@@ -27,5 +27,26 @@
   "shopify_handle": "best-natural-deodorant-for-women-clean-picks-that-work",
   "shopify_status": "published",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-natural-deodorant-for-women_b7da5552-d59b-4aed-b90f-f56ceea9c11a.webp?v=1773273917",
-  "published_at": "2026-03-11T18:05:19-06:00"
+  "published_at": "2026-03-11T18:05:19-06:00",
+  "indexing_state": {
+    "state": "unknown",
+    "coverage": "URL is unknown to Google",
+    "last_checked": "2026-04-09T13:11:28.366Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:13:53.025Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:30:03.025Z",
+      "result": "ok"
+    }
+  ]
 }

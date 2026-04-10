@@ -28,5 +28,26 @@
   "shopify_publish_at": "2026-03-31T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/toothpaste-without-sls_19e771b9-ef32-47b0-8156-c1621221e24d.webp?v=1774339350",
   "uploaded_at": "2026-03-25T15:01:16.973Z",
-  "published_at": "2026-03-31T15:00:01.194Z"
+  "published_at": "2026-03-31T15:00:01.194Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:13:02.992Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:13:53.025Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:30:03.025Z",
+      "result": "ok"
+    }
+  ]
 }

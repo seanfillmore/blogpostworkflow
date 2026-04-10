@@ -5,13 +5,202 @@
     "handle": "news",
     "articles": [
       {
+        "id": 563451789482,
+        "title": "Natural Lotion: What It Is & How to Choose the Best",
+        "handle": "natural-lotion-what-it-is-how-to-choose-the-best",
+        "author": "Sean Fillmore",
+        "tags": "body lotion, moisturizer, natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:12:01-06:00"
+      },
+      {
+        "id": 563448610986,
+        "title": "How to Make a Natural Moisturizer at Home (Easy Recipes)",
+        "handle": "how-to-make-a-natural-moisturizer-at-home-easy-recipes",
+        "author": "Sean Fillmore",
+        "tags": "body lotion, moisturizer, natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:04:56-06:00"
+      },
+      {
+        "id": 563448479914,
+        "title": "Unscented Deodorant: What It Is & Why It Works",
+        "handle": "unscented-deodorant-what-it-is-why-it-works",
+        "author": "Sean Fillmore",
+        "tags": "deodorant, natural deodorant, natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:01:10-06:00"
+      },
+      {
+        "id": 563425607850,
+        "title": "Itchy Armpits: Causes, Fixes & When to Worry",
+        "handle": "itchy-armpits-causes-fixes-when-to-worry",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, organic",
+        "published_at": "2026-04-08T09:04:49-06:00",
+        "updated_at": "2026-04-08T09:04:49-06:00"
+      },
+      {
+        "id": 563424755882,
+        "title": "Charcoal Toothpaste: Does It Work & Is It Safe?",
+        "handle": "charcoal-toothpaste-does-it-work-is-it-safe",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural toothpaste, organic, toothpaste",
+        "published_at": null,
+        "updated_at": "2026-04-04T13:30:20-06:00"
+      },
+      {
+        "id": 563424690346,
+        "title": "Dry Brushing Skin: Benefits, Technique & What to Expect",
+        "handle": "dry-brushing-skin-benefits-technique-what-to-expect",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:01:18-06:00"
+      },
+      {
+        "id": 563424657578,
+        "title": "How to Dry Brush Your Body: Step-by-Step Guide",
+        "handle": "how-to-dry-brush-your-body-step-by-step-guide",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:03:49-06:00"
+      },
+      {
+        "id": 563424624810,
+        "title": "Best Hair Mask for Dry Hair: DIY & Natural Options",
+        "handle": "best-hair-mask-for-dry-hair-diy-natural-options",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:04:24-06:00"
+      },
+      {
+        "id": 563424592042,
+        "title": "Organic Coconut Oil: Types, Uses & Benefits for Skin",
+        "handle": "organic-coconut-oil-types-uses-benefits-for-skin",
+        "author": "Sean Fillmore",
+        "tags": "coconut oil, natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:12:51-06:00"
+      },
+      {
+        "id": 563424559274,
+        "title": "Is Coconut Oil Good for Your Hair? Benefits & How to Use It",
+        "handle": "is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
+        "author": "Sean Fillmore",
+        "tags": "coconut oil, natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:01:26-06:00"
+      },
+      {
+        "id": 563424526506,
+        "title": "The Best Homemade Sugar Scrub Recipe (Easy & Natural)",
+        "handle": "the-best-homemade-sugar-scrub-recipe-easy-natural",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:02:57-06:00"
+      },
+      {
+        "id": 563424493738,
+        "title": "Unscented Antibacterial Soap: What to Look For & Why",
+        "handle": "unscented-antibacterial-soap-what-to-look-for-why",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural soap, organic, soap",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:02:59-06:00"
+      },
+      {
+        "id": 563424428202,
+        "title": "Antibacterial Body Soap: What to Look For & Why It Matters",
+        "handle": "antibacterial-body-soap-what-to-look-for-why-it-matters",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural soap, organic, soap",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:03:02-06:00"
+      },
+      {
+        "id": 563424395434,
+        "title": "How Does Soap Work? The Science Behind Clean Skin",
+        "handle": "how-does-soap-work-the-science-behind-clean-skin",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural soap, organic, soap",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:03:04-06:00"
+      },
+      {
+        "id": 563424362666,
+        "title": "Best Soap for Tattoos: What to Use for Safe Healing",
+        "handle": "best-soap-for-tattoos-what-to-use-for-safe-healing",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural soap, organic, soap",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:03:06-06:00"
+      },
+      {
+        "id": 563424329898,
+        "title": "What Is Castile Soap? Uses, Benefits & Ingredients",
+        "handle": "what-is-castile-soap-uses-benefits-ingredients",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, natural soap, organic, soap",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:03:09-06:00"
+      },
+      {
+        "id": 563424297130,
+        "title": "Aluminum Free Antiperspirant: What It Is & Does It Work?",
+        "handle": "aluminum-free-antiperspirant-what-it-is-does-it-work",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-07T20:03:11-06:00"
+      },
+      {
+        "id": 563424264362,
+        "title": "Can You Use Coconut Oil as Toothpaste? What to Know",
+        "handle": "can-you-use-coconut-oil-as-toothpaste-what-to-know",
+        "author": "Sean Fillmore",
+        "tags": "coconut oil, natural skincare, natural toothpaste, organic, toothpaste",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:12:24-06:00"
+      },
+      {
+        "id": 563424231594,
+        "title": "When Was Deodorant Invented? A Complete History",
+        "handle": "when-was-deodorant-invented-a-complete-history",
+        "author": "Sean Fillmore",
+        "tags": "deodorant, natural deodorant, natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:00:12-06:00"
+      },
+      {
+        "id": 563424198826,
+        "title": "Is Deodorant a Liquid for TSA? Full Travel Rules",
+        "handle": "is-deodorant-a-liquid-for-tsa-full-travel-rules",
+        "author": "Sean Fillmore",
+        "tags": "deodorant, natural deodorant, natural skincare, organic",
+        "published_at": "2026-04-08T09:00:02-06:00",
+        "updated_at": "2026-04-08T09:05:30-06:00"
+      },
+      {
+        "id": 563424166058,
+        "title": "How to Remove Sweat Stains: The Complete Guide",
+        "handle": "how-to-remove-sweat-stains-the-complete-guide",
+        "author": "Sean Fillmore",
+        "tags": "natural skincare, organic",
+        "published_at": null,
+        "updated_at": "2026-04-08T09:01:33-06:00"
+      },
+      {
         "id": 563398344874,
         "title": "Best Natural Deodorant for Kids: Safe & Effective Picks",
         "handle": "best-natural-deodorant-for-kids-safe-effective-picks",
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": null,
-        "updated_at": "2026-04-03T02:03:24-06:00"
+        "updated_at": "2026-04-08T09:00:16-06:00"
       },
       {
         "id": 563395887274,
@@ -20,7 +209,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural soap, organic, soap",
         "published_at": null,
-        "updated_at": "2026-04-03T02:06:57-06:00"
+        "updated_at": "2026-04-07T20:05:20-06:00"
       },
       {
         "id": 563380846762,
@@ -29,7 +218,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural soap, organic, soap",
         "published_at": null,
-        "updated_at": "2026-04-03T02:03:29-06:00"
+        "updated_at": "2026-04-07T20:05:22-06:00"
       },
       {
         "id": 563334185130,
@@ -37,8 +226,8 @@
         "handle": "best-natural-bar-soap-for-men-clean-skin-starts-here",
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural soap, organic, soap",
-        "published_at": null,
-        "updated_at": "2026-04-03T02:03:32-06:00"
+        "published_at": "2026-04-07T20:01:23-06:00",
+        "updated_at": "2026-04-08T09:05:35-06:00"
       },
       {
         "id": 563324649642,
@@ -56,7 +245,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": "2026-04-02T09:00:01-06:00",
-        "updated_at": "2026-04-03T02:03:35-06:00"
+        "updated_at": "2026-04-07T20:01:58-06:00"
       },
       {
         "id": 563313508522,
@@ -65,7 +254,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, natural toothpaste, organic, toothpaste",
         "published_at": "2026-03-31T08:00:04-06:00",
-        "updated_at": "2026-04-03T02:00:10-06:00"
+        "updated_at": "2026-04-07T20:02:00-06:00"
       },
       {
         "id": 563310231722,
@@ -83,7 +272,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, organic",
         "published_at": "2026-03-24T08:00:03-06:00",
-        "updated_at": "2026-03-31T02:01:20-06:00"
+        "updated_at": "2026-04-07T20:02:06-06:00"
       },
       {
         "id": 563296305322,
@@ -101,7 +290,7 @@
         "author": "Sean Fillmore",
         "tags": "natural skincare, organic",
         "published_at": "2026-03-17T08:00:04-06:00",
-        "updated_at": "2026-04-03T02:03:46-06:00"
+        "updated_at": "2026-04-07T20:02:12-06:00"
       },
       {
         "id": 563291750570,
@@ -173,7 +362,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-17T08:00:04-06:00",
-        "updated_at": "2026-04-03T02:04:02-06:00"
+        "updated_at": "2026-04-08T09:00:19-06:00"
       },
       {
         "id": 563281559722,
@@ -200,7 +389,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, natural deodorant, natural skincare, organic",
         "published_at": "2026-03-11T18:05:13-06:00",
-        "updated_at": "2026-03-31T02:01:44-06:00"
+        "updated_at": "2026-04-08T09:00:26-06:00"
       },
       {
         "id": 563281395882,
@@ -479,7 +668,7 @@
         "author": "Sean Fillmore",
         "tags": "deodorant, MOF",
         "published_at": "2024-05-24T20:32:15-06:00",
-        "updated_at": "2026-03-22T09:46:12-06:00"
+        "updated_at": "2026-04-08T09:00:31-06:00"
       },
       {
         "id": 561132404906,
@@ -497,7 +686,7 @@
         "author": "Sean Fillmore",
         "tags": "MOF, toothpaste",
         "published_at": "2024-05-17T15:17:00-06:00",
-        "updated_at": "2026-03-22T09:45:53-06:00"
+        "updated_at": "2026-04-08T09:08:35-06:00"
       },
       {
         "id": 561053171882,
@@ -623,7 +812,7 @@
         "author": "Sean Fillmore",
         "tags": "",
         "published_at": "2022-12-12T06:44:41-07:00",
-        "updated_at": "2026-03-22T09:26:04-06:00"
+        "updated_at": "2026-04-08T09:00:38-06:00"
       },
       {
         "id": 559549874346,

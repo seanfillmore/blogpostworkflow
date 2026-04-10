@@ -1,5 +1,5 @@
 # Content Calendar — Real Skin Care
-**Generated:** Apr 8, 2026
+**Generated:** Apr 9, 2026
 **Source of truth:** data/calendar/calendar.json (this file is auto-rendered)
 
 ---
@@ -27,6 +27,9 @@
 |  | Apr 22, 2026 | GSC Demand | non toxic body lotion | Non Toxic Body Lotion |  |  | Blog Post | 🔴 High |
 |  | Apr 22, 2026 | GSC Demand | does coconut oil help with stretch marks | Does Coconut Oil Help With Stretch Marks |  |  | Blog Post | 🔴 High |
 |  | Apr 22, 2026 | GSC Demand | sls free toothpaste list | Sls Free Toothpaste List |  |  | Blog Post | 🔴 High |
+|  | Apr 23, 2026 | GSC Demand | is coconut oil good for stretch marks | Is Coconut Oil Good For Stretch Marks |  |  | Blog Post | 🔴 High |
+|  | Apr 23, 2026 | GSC Demand | benefits of coconut oil on skin everyday | Benefits Of Coconut Oil On Skin Everyday |  |  | Blog Post | 🔴 High |
+|  | Apr 23, 2026 | GSC Demand | coconut oil deodorant | Coconut Oil Deodorant |  |  | Blog Post | 🔴 High |
 | 7 | Apr 23, 2026 | Body Lotion | organic body lotion | Best Organic Body Lotion in 2026 | 4 | 800 | Listicle / Roundup | 🟠 Medium |
 | 8 | Apr 28, 2026 | Body Lotion | all natural lotion | Best All-Natural Body Lotion in 2026 | 4 | 600 | Listicle / Roundup | 🟠 Medium |
 | 8 | Apr 28, 2026 | Coconut Oil | organic coconut oil for skin | Organic Coconut Oil for Skin: Benefits, Uses & What to Buy | 12 | 800 | Educational Guide (TOF/MOF) | 🟠 Medium |

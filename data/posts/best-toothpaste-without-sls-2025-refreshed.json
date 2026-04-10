@@ -13,5 +13,26 @@
   "uploaded_at": "2026-03-12T04:04:00.904Z",
   "published_at": "2026-03-30T15:00:01.589Z",
   "shopify_publish_at": "2026-03-30T15:00:00.000Z",
-  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-toothpaste-without-sls-2025-refreshed_7960e69c-382f-4fb4-9b43-353313cfbf36.webp?v=1773288237"
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-toothpaste-without-sls-2025-refreshed_7960e69c-382f-4fb4-9b43-353313cfbf36.webp?v=1773288237",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:11:53.450Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:13:53.025Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:30:03.025Z",
+      "result": "ok"
+    }
+  ]
 }
