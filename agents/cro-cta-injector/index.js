@@ -11,14 +11,23 @@
  * Usage:
  *   node agents/cro-cta-injector/index.js           # dry run (preview only)
  *   node agents/cro-cta-injector/index.js --apply   # write changes to Shopify
+ *   node agents/cro-cta-injector/index.js --from-ga4          # use GA4 analysis for dynamic targets
+ *   node agents/cro-cta-injector/index.js --from-ga4 --apply  # dynamic targets + apply
  */
 
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 
-const apply  = process.argv.includes('--apply');
-const SITE   = 'https://www.realskincare.com';
-const BLOG   = 'news';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..', '..');
+
+const apply   = process.argv.includes('--apply');
+const fromGa4 = process.argv.includes('--from-ga4');
+const SITE    = 'https://www.realskincare.com';
+const BLOG    = 'news';
 
 // Priority posts identified in CRO brief → matching collection CTA
 const TARGETS = [
@@ -53,6 +62,40 @@ const TARGETS = [
     collection: 'natural-deodorant',
   },
 ];
+
+// Cluster tag → best matching collection handle
+const CLUSTER_COLLECTION_MAP = {
+  'deodorant': 'natural-deodorant',
+  'toothpaste': 'vegan-toothpaste',
+  'lotion': 'coconut-oil-body-lotion',
+  'soap': 'natural-bar-soap',
+  'lip balm': 'coconut-oil-lip-balm',
+  'lip-balm': 'coconut-oil-lip-balm',
+  'coconut oil': 'coconut-oil-body-lotion',
+  'coconut-oil': 'coconut-oil-body-lotion',
+};
+
+function loadGa4Targets() {
+  const feedbackPath = join(ROOT, 'data', 'reports', 'ga4-content-feedback', 'latest.json');
+  if (!existsSync(feedbackPath)) return [];
+  const feedback = JSON.parse(readFileSync(feedbackPath, 'utf8'));
+  const mapPath = join(ROOT, 'data', 'topical-map.json');
+  const topicalMap = existsSync(mapPath) ? JSON.parse(readFileSync(mapPath, 'utf8')) : { clusters: [] };
+
+  return (feedback.cro_candidates || []).map((slug) => {
+    let cluster = null;
+    for (const c of topicalMap.clusters || []) {
+      if (c.articles?.some((a) => a.url.includes(slug))) { cluster = c.tag; break; }
+    }
+    const collection = CLUSTER_COLLECTION_MAP[cluster] || 'all-products';
+    return {
+      handle: slug,
+      headline: 'Shop Our Natural Products',
+      subhead: 'Organic, handmade, and free of harsh chemicals.',
+      collection,
+    };
+  });
+}
 
 function buildCta(config) {
   const url = SITE + '/collections/' + config.collection;
@@ -120,7 +163,15 @@ async function main() {
   let applied = 0;
   let skipped = 0;
 
-  for (const target of TARGETS) {
+  const targets = fromGa4 ? loadGa4Targets() : TARGETS;
+  if (targets.length === 0) {
+    console.log('  No CRO targets found.');
+    return;
+  }
+  console.log('  Targets:', targets.length, fromGa4 ? '(from GA4 analysis)' : '(hardcoded)');
+  console.log();
+
+  for (const target of targets) {
     // Find article by partial handle match
     const article = [...articleMap.entries()]
       .find(([h]) => h.includes(target.handle))?.[1];
