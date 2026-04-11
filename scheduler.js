@@ -160,6 +160,26 @@ try {
   log(`  ✗ collection-linker failed (exit ${e.status})`);
 }
 
+// Step 5b: rank alerter — flag sudden position changes
+const rankAlertCmd = `"${NODE}" agents/rank-alerter/index.js`;
+log(`  ${rankAlertCmd}`);
+try {
+  execSync(rankAlertCmd, { stdio: 'inherit', cwd: __dirname });
+  log('  ✓ rank-alerter complete');
+} catch (e) {
+  log(`  ✗ rank-alerter failed (exit ${e.status})`);
+}
+
+// Step 5c: insight aggregator — refresh writer standing rules
+const insightCmd = `"${NODE}" agents/insight-aggregator/index.js`;
+log(`  ${insightCmd}`);
+try {
+  execSync(insightCmd, { stdio: 'inherit', cwd: __dirname });
+  log('  ✓ insight-aggregator complete');
+} catch (e) {
+  log(`  ✗ insight-aggregator failed (exit ${e.status})`);
+}
+
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
@@ -224,6 +244,36 @@ if (new Date().getDay() === 0) {
     log('    ✓ meta-ab-tracker complete');
   } catch (e) {
     log(`    ✗ meta-ab-tracker failed (exit ${e.status})`);
+  }
+
+  // Step 9c: backlink monitoring
+  const backlinkCmd = `"${NODE}" agents/backlink-monitor/index.js`;
+  log(`    ${backlinkCmd}`);
+  try {
+    execSync(backlinkCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ backlink-monitor complete');
+  } catch (e) {
+    log(`    ✗ backlink-monitor failed (exit ${e.status})`);
+  }
+
+  // Step 9d: backlink opportunity detection
+  const backlinkOppCmd = `"${NODE}" agents/backlink-opportunity/index.js`;
+  log(`    ${backlinkOppCmd}`);
+  try {
+    execSync(backlinkOppCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ backlink-opportunity complete');
+  } catch (e) {
+    log(`    ✗ backlink-opportunity failed (exit ${e.status})`);
+  }
+
+  // Step 9e: blog post verifier — check published posts for broken links/facts
+  const verifyCmd = `"${NODE}" agents/blog-post-verifier/index.js --limit 10`;
+  log(`    ${verifyCmd}`);
+  try {
+    execSync(verifyCmd, { stdio: 'inherit', cwd: __dirname });
+    log('    ✓ blog-post-verifier complete');
+  } catch (e) {
+    log(`    ✗ blog-post-verifier failed (exit ${e.status})`);
   }
 
 } else {
