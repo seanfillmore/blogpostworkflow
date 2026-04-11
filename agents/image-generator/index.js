@@ -308,11 +308,35 @@ HARD RULES:
 
 // ── creative director review ──────────────────────────────────────────────────
 
-async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowProductLabel = false, productContext = null) {
+async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowProductLabel = false, productContext = null, referenceImagePaths = []) {
   // Resize to max 1280px wide as JPEG before sending to Claude (5MB API limit)
   const reviewBuf = await sharp(imagePath).resize(1280, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
   const base64 = reviewBuf.toString('base64');
   mediaType = 'image/jpeg';
+
+  // Build content array: reference images first (if any), then generated image, then prompt
+  const contentParts = [];
+
+  // Add reference images for label comparison
+  if (referenceImagePaths.length > 0) {
+    for (const refPath of referenceImagePaths.slice(0, 2)) {
+      try {
+        const refBuf = await sharp(refPath).resize(800, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+        contentParts.push({
+          type: 'image',
+          source: { type: 'base64', media_type: 'image/jpeg', data: refBuf.toString('base64') },
+        });
+      } catch { /* skip unreadable reference */ }
+    }
+  }
+
+  // Add the generated image being reviewed
+  contentParts.push({
+    type: 'image',
+    source: { type: 'base64', media_type: mediaType, data: base64 },
+  });
+
+  const hasRefs = contentParts.length > 1;
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -320,13 +344,20 @@ async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowP
     messages: [{
       role: 'user',
       content: [
-        {
-          type: 'image',
-          source: { type: 'base64', media_type: mediaType, data: base64 },
-        },
+        ...contentParts,
         {
           type: 'text',
           text: `You are a creative director reviewing a hero image for a natural skincare brand's blog. Your job is to reject images that look obviously AI-generated or physically wrong.
+${hasRefs ? `
+REFERENCE IMAGE COMPARISON:
+The first image(s) above are REFERENCE PHOTOS of the actual product. The LAST image is the generated hero image being reviewed.
+Compare the product label in the generated image against the reference photo(s). Check:
+- Is the brand name text accurate? ("real SKIN CARE" or "Real Skin Care")
+- Is the label layout correct? (text placement, font style, color scheme)
+- Are the label details faithful to the reference? (ingredient callouts, weight/size text, imagery)
+- If the label text is garbled, misspelled, has wrong words, or doesn't match the reference — REJECT.
+AI image generators commonly hallucinate label text. Even small errors (wrong words, scrambled letters, missing text) mean the label is inaccurate and must be rejected.
+` : ''}
 
 IMPORTANT — EDITORIAL CONTEXT:
 These images are hero images for blog posts. They are NOT product ads. The image should match the TOPIC of the blog post, which may include real-world settings like laundry rooms, airports, kitchens, bathrooms, etc. A stained shirt in a laundry room is perfectly appropriate for a "how to remove sweat stains" article. An airport security bin is appropriate for a TSA rules article. Do NOT reject images simply because the scene doesn't look like a typical product photography setup — judge whether the image looks realistic and high quality, not whether it fits a narrow "skincare brand aesthetic."
@@ -354,6 +385,7 @@ SURREAL: yes or no — CHECK CAREFULLY FOR THESE COMMON AI FAILURES:
 LOOKS_AI: yes or no (does this obviously look AI-generated? unnatural textures, distorted objects, weird proportions, inconsistent lighting, surreal background elements?)
 MODESTY: yes or no (is there excessive bare skin — bare backs, bare torsos, bare shoulders, or anything suggestive of nudity? Hands, forearms, and lower legs are fine. This is a family-friendly ecommerce blog — reject if the image is too revealing.)
 WRONG_PRODUCT_FORMAT: yes or no${productContext ? ' (does the product shown match ALL packaging details above — container type, lid/cap type, shape? Mark yes if ANY detail is wrong)' : ' (n/a — write no)'}
+LABEL_INACCURATE: ${hasRefs ? 'yes or no (compare the product label in the generated image against the reference photo — is the text wrong, garbled, misspelled, missing, or different from the reference? Even subtle errors count. If no product label is visible in the generated image, write no.)' : 'no (no reference provided)'}
 SCENE_DESCRIPTION: one sentence describing the surface, props, and lighting (e.g. "White linen flat lay with coconut oil jar, mint sprigs, and soft diffused light")
 REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong (name the specific problem objects or issues). If PASS is yes, write "None."`,
         },
@@ -368,6 +400,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
   const surreal = /SURREAL:\s*yes/i.test(raw);
   const looksAi = /LOOKS_AI:\s*yes/i.test(raw);
   const wrongProductFormat = /WRONG_PRODUCT_FORMAT:\s*yes/i.test(raw);
+  const labelInaccurate = /LABEL_INACCURATE:\s*yes/i.test(raw);
   const modesty = /MODESTY:\s*yes/i.test(raw);
   const sceneMatch = raw.match(/SCENE_DESCRIPTION:\s*(.+)/i);
   const rejectionMatch = raw.match(/REJECTION_REASON:\s*(.+)/i);
@@ -378,6 +411,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
     surreal && 'physically impossible/surreal elements',
     looksAi && 'obviously AI-generated appearance',
     wrongProductFormat && 'wrong product format (e.g. tube instead of bottle)',
+    labelInaccurate && 'product label does not match reference image',
     modesty && 'excessive bare skin/nudity',
   ].filter(Boolean);
 
@@ -858,10 +892,11 @@ async function generateImage(metaPath) {
     lastImagePath = imagePath;
     lastImageMimeType = imageMimeType;
 
-    // Creative director review
+    // Creative director review — pass reference images for label comparison
     process.stdout.write('  Creative director review... ');
     const reviewContext = productContext;
-    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, reviewContext);
+    const refPaths = productRefs.map(r => r.path);
+    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, reviewContext, refPaths);
     if (review.pass) {
       console.log('approved');
     } else {
