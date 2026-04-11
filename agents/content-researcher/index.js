@@ -35,6 +35,8 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
+import { parseCSV, parseSerpCsv, parseKeywordsCsv, parseVolumeHistoryCsv } from '../../lib/csv-parsers.js';
+import { loadKeywordIndex, analyzeGaps } from '../../lib/keyword-index.js';
 
 // GSC is optional — gracefully skip if not configured
 let gsc = null;
@@ -151,96 +153,6 @@ Return only a JSON array of strings, no explanation. Example: ["keyword one", "k
 }
 
 // ── ahrefs csv / json loader ──────────────────────────────────────────────────
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim().toLowerCase());
-  return lines.slice(1).map((line) => {
-    // Handle quoted fields containing commas
-    const fields = [];
-    let inQuote = false;
-    let cur = '';
-    for (const ch of line) {
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { fields.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    fields.push(cur.trim());
-    const row = {};
-    headers.forEach((h, i) => { row[h] = fields[i]?.replace(/^"|"$/g, '') ?? ''; });
-    return row;
-  });
-}
-
-function num(v) { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return isNaN(n) ? null : n; }
-
-// Get a value from a row by trying multiple possible column names (all lowercased)
-function g(row, ...keys) {
-  for (const k of keys) if (k in row && row[k] !== '') return row[k];
-  return null;
-}
-
-function parseSerpCsv(rows) {
-  // The first row with no URL is the keyword-level overview summary
-  const overviewRow = rows.find((r) => !g(r, 'url'));
-  const overview = overviewRow ? {
-    volume: num(g(overviewRow, 'volume')),
-    keyword_difficulty: num(g(overviewRow, 'difficulty')),
-    traffic_potential: num(g(overviewRow, 'traffic potential')),
-    global_volume: num(g(overviewRow, 'global volume')),
-    cpc_cents: num(g(overviewRow, 'cpc')),
-    parent_topic: g(overviewRow, 'parent topic'),
-    search_intent: g(overviewRow, 'intents'),
-  } : {};
-
-  const skip = ['youtube.com', 'reddit.com', 'facebook.com', 'tiktok.com', 'instagram.com', 'amazon.com'];
-  const serp = rows
-    .filter((r) => g(r, 'url') && !skip.some((s) => (g(r, 'url') ?? '').includes(s)))
-    .map((r) => ({
-      position: num(g(r, 'position')),
-      url: g(r, 'url'),
-      title: g(r, 'title'),
-      domain_rating: num(g(r, 'domain rating')),
-      traffic: num(g(r, 'traffic')),
-      keywords: num(g(r, 'keywords')),
-      refdomains: num(g(r, 'referring domains')),
-      type: g(r, 'type'),
-    }))
-    .slice(0, 10);
-
-  return { overview, serp };
-}
-
-function parseKeywordsCsv(rows) {
-  return rows
-    .map((r) => ({
-      keyword: g(r, 'keyword'),
-      volume: num(g(r, 'volume')),
-      difficulty: num(g(r, 'difficulty')),
-      traffic_potential: num(g(r, 'traffic potential')),
-      cpc: num(g(r, 'cpc')),
-    }))
-    .filter((r) => r.keyword);
-}
-
-function parseVolumeHistoryCsv(rows) {
-  const recent = rows.slice(-24);
-  const byMonth = {};
-  for (const r of recent) {
-    const date = g(r, 'date');
-    const vol = num(g(r, 'volume', ' volume'));
-    if (!date || vol === null) continue;
-    const month = new Date(date).getMonth();
-    if (!byMonth[month]) byMonth[month] = [];
-    byMonth[month].push(vol);
-  }
-  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const seasonality = Object.entries(byMonth)
-    .map(([m, vols]) => ({ month: names[+m], avg: Math.round(vols.reduce((a, b) => a + b) / vols.length) }))
-    .sort((a, b) => b.avg - a.avg);
-  return { peak_month: seasonality[0]?.month, low_month: seasonality[seasonality.length - 1]?.month, seasonality };
-}
 
 function loadAhrefsData(keyword) {
   const slug = slugify(keyword);
@@ -636,8 +548,13 @@ async function researchKeyword(keyword, kwData = {}, { allowFallback = false } =
     return;
   }
 
-  // Load manually-provided Ahrefs data if available.
-  // Uses whatever data the user uploaded to data/ahrefs/{slug}/.
+  // Load keyword index for cluster-wide intelligence
+  const index = loadKeywordIndex();
+  const gaps = analyzeGaps(slug, index);
+  const clusterName = index.keywords[slug]?.cluster;
+  const cluster = clusterName ? index.clusters[clusterName] : null;
+
+  // Load keyword-specific Ahrefs data if available
   const ahrefsData = loadAhrefsData(keyword);
   if (ahrefsData) {
     console.log(`\n  Keyword: "${keyword}" (using Ahrefs data from data/ahrefs/${slug}/)`);
@@ -646,30 +563,42 @@ async function researchKeyword(keyword, kwData = {}, { allowFallback = false } =
       keyword_difficulty: kwData.keyword_difficulty ?? ahrefsData.overview.keyword_difficulty,
       traffic_potential: kwData.traffic_potential ?? ahrefsData.overview.traffic_potential,
     });
-  } else {
-    // No Ahrefs data — gate unless fallback is explicitly allowed
-    if (!allowFallback) {
-      const dir = join(ROOT, 'data', 'ahrefs', slug);
-      console.error(`\n  ✗ Missing Ahrefs data for "${keyword}"`);
-      console.error(`\n  Required: place CSV exports in ${dir}/`);
-      console.error('  Exports needed from Ahrefs Keywords Explorer:');
-      console.error(`    1. SERP overview  → search "${keyword}" → SERP Overview tab → Export`);
-      console.error(`    2. Matching terms → Matching Terms tab → Export (vol ≥100, KD ≤40)`);
-      console.error(`    3. Volume history → Overview tab → Volume History chart → Export`);
-      console.error('\n  Run with --allow-fallback to use Claude-generated keywords instead (lower quality).');
-      console.error('  Run with --check to see data status for all queued keywords.\n');
-      process.exit(1);
+  } else if (gaps.sufficient) {
+    console.log(`\n  Keyword: "${keyword}" (using cluster "${clusterName}" data — ${gaps.cluster_terms} terms, ${gaps.niche_terms} niche)`);
+  } else if (!allowFallback) {
+    console.error(`\n  ✗ Insufficient data for "${keyword}"`);
+    if (gaps.has_cluster_data) {
+      console.error(`  Cluster "${clusterName}" has ${gaps.cluster_terms} terms but needs: ${gaps.missing.join(', ')}`);
     }
-    console.log(`\n  Keyword: "${keyword}" (⚠️  no Ahrefs data — using fallbacks)`);
+    console.error(`\n  Upload Ahrefs data to data/ahrefs/${slug}/`);
+    console.error('  Run with --allow-fallback to proceed with available data.\n');
+    process.exit(1);
+  } else {
+    console.log(`\n  Keyword: "${keyword}" (⚠️ limited data — using fallbacks)`);
   }
 
   process.stdout.write('  Fetching SERP overview... ');
   let serpResults = ahrefsData?.serp?.filter((r) => r.url) ?? [];
+  if (serpResults.length === 0 && cluster) {
+    // Use the most detailed SERP from any keyword in the cluster
+    for (const ckSlug of (cluster.keywords || [])) {
+      const ckEntry = index.keywords[ckSlug];
+      if (ckEntry?.serp?.length > serpResults.length) serpResults = ckEntry.serp;
+    }
+  }
   if (serpResults.length === 0) serpResults = await getSerpOverview(keyword);
-  console.log(`${serpResults.length} results`);
+  console.log(`${serpResults.length} results${!ahrefsData && cluster && serpResults.length > 0 ? ' (from cluster)' : ''}`);
 
   process.stdout.write('  Fetching related keywords... ');
   let relatedKeywords = ahrefsData?.matching_terms?.filter((k) => k.keyword) ?? [];
+  if (relatedKeywords.length < 20 && cluster?.all_matching_terms?.length > 0) {
+    const existing = new Set(relatedKeywords.map(k => k.keyword));
+    const clusterTerms = cluster.all_matching_terms.filter(k => !existing.has(k.keyword));
+    relatedKeywords = [...relatedKeywords, ...clusterTerms];
+    if (!ahrefsData && clusterTerms.length > 0) {
+      process.stdout.write(`${relatedKeywords.length} keywords (${clusterTerms.length} from cluster) `);
+    }
+  }
   if (relatedKeywords.length === 0) relatedKeywords = await getRelatedKeywords(keyword);
   if (relatedKeywords.length === 0) {
     process.stdout.write('(using Claude fallback) ');
@@ -715,6 +644,14 @@ async function researchKeyword(keyword, kwData = {}, { allowFallback = false } =
   process.stdout.write('  Generating content brief with Claude... ');
   const brief = await generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, ahrefsData?.volume_history, gscData);
   console.log('done');
+
+  brief.data_sources = {
+    own_ahrefs: !!ahrefsData,
+    cluster: clusterName || null,
+    cluster_terms: cluster?.all_matching_terms?.length || 0,
+    niche_terms: gaps.niche_terms || 0,
+    gaps: gaps.missing || [],
+  };
 
   mkdirSync(BRIEFS_DIR, { recursive: true });
   writeFileSync(outputPath, JSON.stringify(brief, null, 2));
