@@ -178,12 +178,24 @@ function renderTechnicalSeoTab(d) {
   if (audit && audit.categories) {
     var fixCommands = {
       '404_pages': 'create-redirects',
+      'broken_pages_404': 'create-redirects',
       'broken_links': 'fix-links',
+      'pages_linking_to_404s': 'fix-links',
       'missing_meta': 'fix-meta',
-      'missing_alt_text': 'fix-alt-text',
-      'redirect_chains': 'fix-redirects',
-      'missing_alt': 'fix-alt-text',
+      'missing_meta_descriptions': 'fix-meta',
       'meta_description_tag_missing_or_empty': 'fix-meta',
+      'meta_description_length_issues': 'fix-meta',
+      'missing_alt_text': 'fix-alt-text',
+      'missing_alt': 'fix-alt-text',
+      'missing_image_alt_text': 'fix-alt-text',
+      'redirect_chains': 'fix-redirects',
+      'internal_links_to_redirected_urls': 'fix-redirects',
+      'title_tags_too_long': 'fix-titles',
+      'duplicate_tags': 'fix-duplicate-tags',
+      'orphan_pages': 'fix-noindex',
+      'h1_issues': 'fix-noindex',
+      'pages_with_only_1_inbound_internal_link': 'fix-internal-links',
+      'indexable_pages_not_in_sitemap': 'fix-noindex',
     };
 
     var cats = Object.entries(audit.categories);
