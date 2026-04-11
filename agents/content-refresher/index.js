@@ -160,7 +160,7 @@ async function buildArticleIndex() {
 
 // ── claude refresh ────────────────────────────────────────────────────────────
 
-async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null) {
+async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = []) {
   const bodyText = article.body_html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -205,7 +205,14 @@ TARGET KEYWORD: "${keyword}"
 CURRENT POSITION: #${Math.round(position)}
 
 RELATED KEYWORDS ALSO RANKING (add these naturally): ${relatedStr}
+${userConcerns.length > 0 ? `
+USER CONCERNS FROM SEARCH QUERIES (real questions people searched to find this page — address each as an H2 or H3 section):
+${userConcerns.map((q) => `- "${q.keyword}" (${q.impressions} impressions)`).join('\n')}
 
+These are actual search queries from Google Search Console. They reveal specific pain points, objections, or information needs that real users have. Each one should be distilled into a focused subsection (H2 or H3) that directly addresses the concern. Do not use the raw query as a heading — extract the core topic and write a natural heading. For example:
+  Query: "struggling with salty taste of natural toothpaste for kids" → H3: "What If Your Kids Hate the Taste?"
+  Query: "non-foaming texture alternative to colgate" → H3: "Why Natural Toothpaste Doesn't Foam (And Why That's Fine)"
+` : ''}
 CURRENT CONTENT:
 ${bodyText}
 ${internalLinksNote}
@@ -217,10 +224,11 @@ Your task: produce a refreshed version of this HTML that:
 2. **Adds missing semantic keywords** — naturally weave in the related keywords listed above
 3. **Updates any stale information** — replace "2024" or "2025" with "2026" where appropriate; update statistics if they feel outdated
 4. **Improves the introduction** — the first 100 words should hook the reader and clearly include the target keyword
-5. **Expands the FAQ section** (if present) — add 2–3 new Q&A pairs targeting the related keywords
-6. **Improves readability** — rewrite overly clinical or academic sentences to an 8th grade reading level. Use short sentences, plain words, and direct address ("you", "your"). Replace jargon with plain English: "sore mouth" not "oral tissue irritation", "cleans your teeth" not "facilitates plaque removal". Break long paragraphs into 2–4 sentence chunks. The tone should feel like a knowledgeable friend explaining something clearly, not a textbook.
-7. **Keeps the brand voice** — warm, practical, trustworthy; not salesy or over-optimized
-8. **Adds or preserves CTA section blocks** — the post must include exactly three styled CTA sections using the design pattern below
+5. **Addresses user concerns** — if USER CONCERNS FROM SEARCH QUERIES are listed above, add an H2 or H3 section for each one. Distill the raw query into a natural heading and answer the concern directly with practical advice. These are high-value because real people searched for them.
+6. **Expands the FAQ section** (if present) — add 2–3 new Q&A pairs targeting the related keywords and user concerns
+7. **Improves readability** — rewrite overly clinical or academic sentences to an 8th grade reading level. Use short sentences, plain words, and direct address ("you", "your"). Replace jargon with plain English: "sore mouth" not "oral tissue irritation", "cleans your teeth" not "facilitates plaque removal". Break long paragraphs into 2–4 sentence chunks. The tone should feel like a knowledgeable friend explaining something clearly, not a textbook.
+8. **Keeps the brand voice** — warm, practical, trustworthy; not salesy or over-optimized
+9. **Adds or preserves CTA section blocks** — the post must include exactly three styled CTA sections using the design pattern below
 
 CTA DESIGN PATTERN (use this exactly — do not deviate from the inline styles):
 
@@ -316,14 +324,23 @@ async function main() {
       process.exit(1);
     }
     const gscData = await gsc.getPagePerformance(article.canonicalUrl, 90);
-    const pageKws = await gsc.getPageKeywords(article.canonicalUrl, 5, 90);
-    const topKw = pageKws[0];
+    const pageKws = await gsc.getPageKeywords(article.canonicalUrl, 20, 90);
+
+    // Separate normal keywords from long-form queries (likely AI-generated or
+    // conversational searches). Long queries contain real user concerns that
+    // should be addressed as H2/H3 topics, not used as the primary keyword.
+    const MAX_KEYWORD_LEN = 80;
+    const shortKws = pageKws.filter((k) => k.keyword.length <= MAX_KEYWORD_LEN);
+    const longQueries = pageKws.filter((k) => k.keyword.length > MAX_KEYWORD_LEN);
+    const topKw = shortKws[0];
+
     targets = [{
       article,
       keyword: topKw?.keyword || slugArg.replace(/-/g, ' '),
       position: topKw?.position ?? gscData.position ?? 30,
       impressions: gscData.impressions ?? 0,
-      relatedKeywords: pageKws.slice(1),
+      relatedKeywords: shortKws.slice(1),
+      userConcerns: longQueries,
     }];
   } else {
     // Auto-select from GSC — pages 21–50 with meaningful impressions
@@ -340,14 +357,21 @@ async function main() {
       const article = byHandle.get(handle);
       if (!article) continue;
 
-      const relatedKeywords = await gsc.getPageKeywords(candidate.url, 10, 90);
+      const allKws = await gsc.getPageKeywords(candidate.url, 20, 90);
+      const shortKws = allKws.filter((k) => k.keyword.length <= MAX_KEYWORD_LEN);
+      const longQueries = allKws.filter((k) => k.keyword.length > MAX_KEYWORD_LEN);
+      // Use candidate keyword if short, otherwise pick best short keyword
+      const primaryKw = candidate.keyword.length <= MAX_KEYWORD_LEN
+        ? candidate.keyword
+        : (shortKws[0]?.keyword || candidate.url.split('/').pop().replace(/-/g, ' '));
 
       targets.push({
         article,
-        keyword: candidate.keyword,
+        keyword: primaryKw,
         position: candidate.position,
         impressions: candidate.impressions,
-        relatedKeywords: relatedKeywords.filter((k) => k.keyword !== candidate.keyword).slice(0, 5),
+        relatedKeywords: shortKws.filter((k) => k.keyword !== primaryKw).slice(0, 5),
+        userConcerns: longQueries,
       });
     }
   }
@@ -368,7 +392,7 @@ async function main() {
   mkdirSync(POSTS_DIR, { recursive: true });
 
   for (let i = 0; i < targets.length; i++) {
-    const { article, keyword, position, impressions, relatedKeywords } = targets[i];
+    const { article, keyword, position, impressions, relatedKeywords, userConcerns = [] } = targets[i];
     const slug = article.handle;
 
     // Winner protection — legacy posts auto-locked by triage must not be refreshed
@@ -388,7 +412,7 @@ async function main() {
       const fullArticle = await getArticle(article.blogId, article.id);
       const originalHtml = fullArticle.body_html || '';
 
-      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug);
+      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns);
       console.log(`done (${refreshedHtml.split(' ').length} words)`);
 
       process.stdout.write('    Summarizing changes... ');
