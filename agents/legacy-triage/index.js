@@ -82,15 +82,24 @@ async function loadGscPerformance(url) {
   } catch { return null; }
 }
 
-const BROKEN_STATES = new Set(['not_found', 'excluded_noindex', 'excluded_robots', 'excluded_canonical']);
+// States that require manual investigation (true technical misconfigurations).
+// not_found and crawled_not_indexed are handled automatically by indexing-fixer
+// and refresh-runner respectively — they are NOT broken.
+const BROKEN_STATES = new Set(['excluded_noindex', 'excluded_robots', 'excluded_canonical']);
 
 function classify({ meta, indexState, rankEntry, gscMetrics, words }) {
   if (BROKEN_STATES.has(indexState) || meta.indexing_blocked) {
     return { bucket: 'broken', reason: `Indexing state: ${indexState || 'blocked'}. Technical fix required.` };
   }
 
+  // not_found → indexing-fixer handles via sitemap ping / Indexing API submission
+  if (indexState === 'not_found') {
+    return { bucket: 'flop', reason: 'Not yet indexed by Google. Indexing-fixer will auto-submit.' };
+  }
+
+  // crawled_not_indexed → indexing-fixer auto-triggers refresh-runner
   if (indexState === 'crawled_not_indexed') {
-    return { bucket: 'flop', reason: 'Google crawled but chose not to index. Content quality or duplicate issue.' };
+    return { bucket: 'flop', reason: 'Google crawled but chose not to index. Auto-refresh will trigger.' };
   }
 
   const position = rankEntry?.position ?? gscMetrics?.position ?? null;
