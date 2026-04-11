@@ -240,10 +240,11 @@ function renderTechnicalSeoTab(d) {
     html += '</div>';
 
     // Fixed items
-    if (latest.fixed && latest.fixed.length > 0) {
+    var acts = latest.actions || latest.fixed || [];
+    if (acts.length > 0) {
       html += '<div style="font-size:12px;margin-bottom:8px"><strong>Actions taken:</strong></div>';
       html += '<div style="font-size:12px;max-height:200px;overflow-y:auto;background:#f9fafb;border-radius:6px;padding:8px">';
-      latest.fixed.forEach(function(f) {
+      acts.forEach(function(f) {
         var icon = f.status === 'fixed' ? '&#10003;' : '&#128065;';
         html += '<div style="padding:2px 0;border-bottom:1px solid #f3f4f6">' + icon + ' ' + esc(f.action) + '</div>';
       });
@@ -4170,7 +4171,9 @@ function uploadContentGapZip() {
 }
 
 function runTechSeoFix(fixCmd) {
-  runAgent('agents/technical-seo/index.js', [fixCmd], function() {
+  // fixCmd may be "fix-all --dry-run" or just "fix-links"
+  var args = fixCmd.split(/\s+/);
+  runAgent('agents/technical-seo/index.js', args, function() {
     loadData().then(function() {
       if (activeTab === 'tech-seo' && data) renderTechnicalSeoTab(data);
     });
