@@ -1479,6 +1479,89 @@ Usage:
   node agents/technical-seo/index.js fix-all [--dry-run]
 `.trim();
 
+// ── fix results tracking ─────────────────────────────────────────────────────
+
+function captureFixResults(command, dryRun) {
+  // Capture console.log output during the fix to extract results
+  const log = [];
+  const origLog = console.log;
+  console.log = (...args) => {
+    const line = args.join(' ');
+    log.push(line);
+    origLog.apply(console, args);
+  };
+  return {
+    finish() {
+      console.log = origLog;
+
+      const fixed = [];
+      const skipped = [];
+      const errors = [];
+      const manual = [];
+
+      for (const line of log) {
+        if (/^\s*(Fix|✓|Created|→)/.test(line) || line.includes('link(s) fixed') || line.includes('→')) {
+          if (line.includes('[DRY RUN]')) fixed.push({ action: line.trim(), status: 'would-fix' });
+          else fixed.push({ action: line.trim(), status: 'fixed' });
+        }
+        if (/^\s*\[SKIP\]/.test(line)) skipped.push(line.trim());
+        if (/^\s*Error:|^\s*✗/.test(line)) errors.push(line.trim());
+        if (/theme-level|cannot be fixed|manual|requires/i.test(line) && !/^\s*$/.test(line)) manual.push(line.trim());
+      }
+
+      // Extract summary counts from final log lines
+      const summaryMatch = log.join('\n').match(/(?:Fixed|Created|Would fix|Would create):\s*(\d+)/);
+      const totalFixed = summaryMatch ? parseInt(summaryMatch[1], 10) : fixed.length;
+
+      const result = {
+        command,
+        dry_run: dryRun,
+        ran_at: new Date().toISOString(),
+        total_fixed: totalFixed,
+        total_skipped: skipped.length,
+        total_errors: errors.length,
+        total_manual: manual.length,
+        fixed: fixed.slice(0, 20),
+        skipped: skipped.slice(0, 10),
+        errors: errors.slice(0, 10),
+        manual: manual.slice(0, 10),
+      };
+
+      return result;
+    },
+  };
+}
+
+function writeFixResults(results) {
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  const path = join(REPORTS_DIR, 'fix-results.json');
+
+  // Append to existing results (keep last 10 runs)
+  let history = [];
+  try { history = JSON.parse(readFileSync(path, 'utf8')); } catch { /* start fresh */ }
+  if (!Array.isArray(history)) history = [];
+  history.unshift(results);
+  history = history.slice(0, 10);
+
+  writeFileSync(path, JSON.stringify(history, null, 2));
+  console.log(`  Fix results saved to ${path}`);
+}
+
+async function runFixWithTracking(fixFn, commandName) {
+  const tracker = captureFixResults(commandName, dryRun);
+  await fixFn({ dryRun });
+  const results = tracker.finish();
+  writeFixResults(results);
+
+  // Auto-re-run audit after fixes so dashboard counts update
+  if (!dryRun) {
+    console.log('\n  Re-running audit to update issue counts...');
+    await audit();
+  }
+
+  return results;
+}
+
 async function main() {
   console.log(`\nTechnical SEO Agent — ${config.name}`);
 
@@ -1493,26 +1576,34 @@ async function main() {
       break;
     }
     case 'fix-meta':
-      await fixMeta({ dryRun });
+      await runFixWithTracking(fixMeta, 'fix-meta');
       break;
     case 'fix-links':
-      await fixBrokenLinks({ dryRun });
+      await runFixWithTracking(fixBrokenLinks, 'fix-links');
       break;
     case 'fix-redirects':
-      await fixRedirectLinks({ dryRun });
+      await runFixWithTracking(fixRedirectLinks, 'fix-redirects');
       break;
     case 'fix-alt-text':
-      await fixAltText({ dryRun });
+      await runFixWithTracking(fixAltText, 'fix-alt-text');
       break;
     case 'create-redirects':
-      await createRedirects({ dryRun });
+      await runFixWithTracking(createRedirects, 'create-redirects');
       break;
     case 'fix-ai-content':
-      await fixAiContent({ dryRun });
+      await runFixWithTracking(fixAiContent, 'fix-ai-content');
       break;
-    case 'fix-all':
+    case 'fix-all': {
+      const tracker = captureFixResults('fix-all', dryRun);
       await fixAll({ dryRun });
+      const results = tracker.finish();
+      writeFixResults(results);
+      if (!dryRun) {
+        console.log('\n  Re-running audit to update issue counts...');
+        await audit();
+      }
       break;
+    }
     default:
       console.error('\n' + USAGE);
       process.exit(1);

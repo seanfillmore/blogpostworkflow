@@ -213,7 +213,7 @@ function renderTechnicalSeoTab(d) {
         if (cat.count > 5) html += '<div style="padding:4px 0;color:#6b7280">+ ' + (cat.count - 5) + ' more</div>';
 
         if (fixCmd) {
-          html += '<button class="btn-sm" style="margin-top:8px;background:' + severityBg + ';border:1px solid ' + severityBorder + ';color:' + severityColor + '" onclick="runAgent(\'agents/technical-seo/index.js\', [\'' + fixCmd + '\'])">Fix</button>';
+          html += '<button class="btn-sm" style="margin-top:8px;background:' + severityBg + ';border:1px solid ' + severityBorder + ';color:' + severityColor + '" onclick="runTechSeoFix(\'' + fixCmd + '\')">Fix</button>';
         }
         html += '</div></div>';
       }
@@ -221,6 +221,48 @@ function renderTechnicalSeoTab(d) {
       if (i + 1 === cats.length) html += '<div style="flex:1"></div>';
       html += '</div>';
     }
+  }
+
+  // ── Fix Results card (most recent run) ──────────────────────────────────────
+  var fixResults = d.techSeoFixResults;
+  if (fixResults && Array.isArray(fixResults) && fixResults.length > 0) {
+    var latest = fixResults[0];
+    var resultColor = latest.total_errors > 0 ? 'accent-red' : latest.dry_run ? 'accent-amber' : 'accent-green';
+    html += '<div class="card" style="margin-top:16px"><div class="card-header ' + resultColor + '"><h2>' + (latest.dry_run ? '&#128065; Dry Run' : '&#9989; Fix') + ' Results: ' + esc(latest.command) + '</h2>';
+    html += '<span class="card-subtitle">' + esc(new Date(latest.ran_at).toLocaleString()) + '</span></div><div class="card-body">';
+
+    // Summary counts
+    html += '<div style="display:flex;gap:12px;margin-bottom:12px">';
+    html += '<div style="background:#f0fdf4;padding:6px 12px;border-radius:6px"><strong style="color:#166534">' + latest.total_fixed + '</strong> <span style="font-size:12px;color:#166534">' + (latest.dry_run ? 'would fix' : 'fixed') + '</span></div>';
+    html += '<div style="background:#fef3c7;padding:6px 12px;border-radius:6px"><strong style="color:#92400e">' + latest.total_skipped + '</strong> <span style="font-size:12px;color:#92400e">skipped</span></div>';
+    if (latest.total_errors > 0) html += '<div style="background:#fef2f2;padding:6px 12px;border-radius:6px"><strong style="color:#991b1b">' + latest.total_errors + '</strong> <span style="font-size:12px;color:#991b1b">errors</span></div>';
+    if (latest.total_manual > 0) html += '<div style="background:#eff6ff;padding:6px 12px;border-radius:6px"><strong style="color:#1e40af">' + latest.total_manual + '</strong> <span style="font-size:12px;color:#1e40af">need manual fix</span></div>';
+    html += '</div>';
+
+    // Fixed items
+    if (latest.fixed && latest.fixed.length > 0) {
+      html += '<div style="font-size:12px;margin-bottom:8px"><strong>Actions taken:</strong></div>';
+      html += '<div style="font-size:12px;max-height:200px;overflow-y:auto;background:#f9fafb;border-radius:6px;padding:8px">';
+      latest.fixed.forEach(function(f) {
+        var icon = f.status === 'fixed' ? '&#10003;' : '&#128065;';
+        html += '<div style="padding:2px 0;border-bottom:1px solid #f3f4f6">' + icon + ' ' + esc(f.action) + '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Errors
+    if (latest.errors && latest.errors.length > 0) {
+      html += '<div style="font-size:12px;margin:8px 0 4px;color:#991b1b"><strong>Errors:</strong></div>';
+      latest.errors.forEach(function(e) { html += '<div style="font-size:12px;color:#991b1b">&#10007; ' + esc(e) + '</div>'; });
+    }
+
+    // Manual attention needed
+    if (latest.manual && latest.manual.length > 0) {
+      html += '<div style="font-size:12px;margin:8px 0 4px;color:#1e40af"><strong>Needs manual attention:</strong></div>';
+      latest.manual.forEach(function(m) { html += '<div style="font-size:12px;color:#1e40af">&#9888; ' + esc(m) + '</div>'; });
+    }
+
+    html += '</div></div>';
   }
 
   // ── Theme SEO Audit card ───────────────────────────────────────────────────
@@ -4127,6 +4169,14 @@ function uploadContentGapZip() {
   input.click();
 }
 
+function runTechSeoFix(fixCmd) {
+  runAgent('agents/technical-seo/index.js', [fixCmd], function() {
+    loadData().then(function() {
+      if (activeTab === 'tech-seo' && data) renderTechnicalSeoTab(data);
+    });
+  });
+}
+
 function uploadTechSeoZip() {
   var input = document.createElement('input');
   input.type = 'file';
@@ -4143,7 +4193,9 @@ function uploadTechSeoZip() {
       body: file,
     }).then(function(r) { return r.json(); }).then(function(json) {
       if (!json.ok) { alert('Upload failed: ' + json.error); return; }
-      runAgent('agents/technical-seo/index.js', ['audit'], function() { loadData(); });
+      runAgent('agents/technical-seo/index.js', ['audit'], function() {
+        loadData().then(function() { if (activeTab === 'tech-seo' && data) renderTechnicalSeoTab(data); });
+      });
     }).catch(function() { alert('Upload failed'); });
   };
   input.click();

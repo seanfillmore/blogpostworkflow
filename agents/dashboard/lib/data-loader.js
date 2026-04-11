@@ -224,6 +224,7 @@ export function aggregateData() {
     try { return readFileSync(p, 'utf8'); } catch { return null; }
   })();
   const techSeoAudit = parseTechSeoReport(techSeoReportRaw);
+  const techSeoFixResults = readJsonIfExists(join(REPORTS_DIR, 'technical-seo', 'fix-results.json'));
 
   // Theme SEO audit (JSON)
   const themeSeoAudit = readJsonIfExists(join(REPORTS_DIR, 'theme-seo-audit', 'latest.json'));
@@ -333,6 +334,7 @@ export function aggregateData() {
     legacyTriage,
     cannibalization,
     techSeoAudit,
+    techSeoFixResults,
     themeSeoAudit,
     rejectedImages,
   };
