@@ -117,6 +117,26 @@ function loadBlogPosts(keyword) {
   } catch { return []; }
 }
 
+// ── internal-linker context loader ───────────────────────────────────────────
+
+function loadInternalLinksContext() {
+  try {
+    const linkerDir = join(ROOT, 'data', 'reports', 'internal-linker');
+    if (!existsSync(linkerDir)) return '';
+    const files = readdirSync(linkerDir).filter(f => f.endsWith('.md')).sort().slice(-5);
+    const links = [];
+    for (const f of files) {
+      const content = readFileSync(join(linkerDir, f), 'utf8');
+      // Extract injected links from the report (they appear as "[anchor](url)" patterns)
+      const matches = [...content.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)];
+      for (const m of matches) links.push(`${m[1]}: ${m[2]}`);
+    }
+    if (links.length === 0) return '';
+    const unique = [...new Set(links)].slice(0, 20);
+    return `\nEXISTING INTERNAL LINKS (already placed by the internal-linker — reference these, do not duplicate):\n${unique.map(l => `- ${l}`).join('\n')}\n`;
+  } catch { return ''; }
+}
+
 // ── write post ────────────────────────────────────────────────────────────────
 
 const CTA_STYLES = {
@@ -384,7 +404,7 @@ E-E-A-T SIGNALS TO DEMONSTRATE:
 
 WRITER NOTES:
 ${brief.writer_notes || 'Follow brand voice guidelines above.'}
----
+${loadInternalLinksContext()}---
 
 Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Aim for ~${brief.target_word_count} words. Make it genuinely useful and comprehensive.`;
 }

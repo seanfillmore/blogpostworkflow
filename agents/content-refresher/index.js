@@ -26,7 +26,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, readdirSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
@@ -173,6 +173,24 @@ async function refreshContent(article, keyword, position, impressions, relatedKe
     ? relatedKeywords.map((k) => `"${k.keyword}" (pos #${Math.round(k.position)}, ${k.impressions} impr)`).join(', ')
     : 'none available';
 
+  // Load existing internal links context
+  let internalLinksNote = '';
+  try {
+    const linkerDir = join(ROOT, 'data', 'reports', 'internal-linker');
+    if (existsSync(linkerDir)) {
+      const files = readdirSync(linkerDir).filter(f => f.endsWith('.md')).sort().slice(-5);
+      const links = [];
+      for (const f of files) {
+        const content = readFileSync(join(linkerDir, f), 'utf8');
+        const matches = [...content.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)];
+        for (const m of matches) links.push(`${m[1]}: ${m[2]}`);
+      }
+      if (links.length > 0) {
+        internalLinksNote = `\nEXISTING INTERNAL LINKS (already placed — preserve these, do not duplicate):\n${links.slice(0, 20).map(l => `- ${l}`).join('\n')}\n`;
+      }
+    }
+  } catch { /* ignore */ }
+
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 8192,
@@ -190,7 +208,7 @@ RELATED KEYWORDS ALSO RANKING (add these naturally): ${relatedStr}
 
 CURRENT CONTENT:
 ${bodyText}
-
+${internalLinksNote}
 ---
 
 Your task: produce a refreshed version of this HTML that:

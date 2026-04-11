@@ -481,7 +481,95 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
     } catch { /* ignore */ }
   }
 
-  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection;
+  // Backlinks section
+  let backlinksSection = '';
+  const backlinksDir = join(ROOT, 'data', 'reports', 'backlinks');
+  if (existsSync(backlinksDir)) {
+    try {
+      const files = readdirSync(backlinksDir).filter(f => f.endsWith('.json') || f.endsWith('.md')).sort();
+      if (files.length > 0) {
+        const latest = readFileSync(join(backlinksDir, files[files.length - 1]), 'utf8');
+        // Try JSON first
+        try {
+          const data = JSON.parse(latest);
+          const newLinks = data.new_backlinks || data.new || [];
+          const lostLinks = data.lost_backlinks || data.lost || [];
+          if (newLinks.length > 0 || lostLinks.length > 0) {
+            backlinksSection = `<div class="section"><div class="section-title">&#128279; Backlinks</div>`;
+            if (newLinks.length > 0) backlinksSection += `<p style="color:#10b981;font-weight:700">+${newLinks.length} new backlink${newLinks.length > 1 ? 's' : ''}</p>`;
+            if (lostLinks.length > 0) backlinksSection += `<p style="color:#ef4444;font-weight:700">-${lostLinks.length} lost backlink${lostLinks.length > 1 ? 's' : ''}</p>`;
+            backlinksSection += '</div>';
+          }
+        } catch {
+          // Markdown format — just check if it has content
+          if (latest.length > 100) {
+            backlinksSection = `<div class="section"><div class="section-title">&#128279; Backlinks</div><p>New backlink report available. Check dashboard for details.</p></div>`;
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  // A/B Test Results section
+  let abTestSection = '';
+  const metaTestsDir = join(ROOT, 'data', 'meta-tests');
+  const allTests = [];
+
+  // Read new-format tests from data/meta-tests/*.json
+  if (existsSync(metaTestsDir)) {
+    try {
+      const newTests = readdirSync(metaTestsDir)
+        .filter(f => f.endsWith('.json'))
+        .map(f => { try { return JSON.parse(readFileSync(join(metaTestsDir, f), 'utf8')); } catch { return null; } })
+        .filter(Boolean);
+      allTests.push(...newTests);
+    } catch { /* ignore */ }
+  }
+
+  // Read legacy tests from data/reports/meta-ab/meta-ab-tracker.json
+  const legacyTrackerPath = join(ROOT, 'data', 'reports', 'meta-ab', 'meta-ab-tracker.json');
+  if (existsSync(legacyTrackerPath)) {
+    try {
+      const legacyEntries = JSON.parse(readFileSync(legacyTrackerPath, 'utf8'));
+      if (Array.isArray(legacyEntries)) {
+        for (const entry of legacyEntries) {
+          if (!entry.testedAt) continue;
+          // Normalize legacy format to match new-format fields
+          allTests.push({
+            slug: entry.slug || entry.page || '',
+            status: entry.status || 'concluded',
+            concludedDate: entry.concludedDate || entry.testedAt,
+            originalTitle: entry.originalTitle,
+            proposedTitle: entry.proposedTitle,
+            winner: entry.winner || (entry.kept === 'proposed' ? 'B' : 'A'),
+            currentDelta: entry.currentDelta ?? entry.ctrDelta ?? null,
+            _source: 'legacy',
+          });
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  {
+    const active = allTests.filter(t => t.status === 'active');
+    const recentConcluded = allTests.filter(t => t.status === 'concluded' && (t.concludedDate || t.testedAt))
+      .sort((a, b) => ((b.concludedDate || b.testedAt || '').localeCompare(a.concludedDate || a.testedAt || '')))
+      .slice(0, 5);
+    if (active.length > 0 || recentConcluded.length > 0) {
+      abTestSection = `<div class="section"><div class="section-title">&#9878;&#65039; Meta A/B Tests</div>`;
+      if (active.length > 0) {
+        abTestSection += `<p>${active.length} active test${active.length > 1 ? 's' : ''} running</p>`;
+      }
+      for (const t of recentConcluded) {
+        const delta = t.currentDelta != null ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp' : 'n/a';
+        const color = t.winner === 'B' ? '#10b981' : '#ef4444';
+        abTestSection += `<p><strong>${esc(t.slug)}</strong>: Variant ${t.winner} wins (<span style="color:${color}">${delta}</span>)</p>`;
+      }
+      abTestSection += '</div>';
+    }
+  }
+
+  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -500,6 +588,8 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   ${imageSection}
   ${adsSection}
   ${seoSection}
+  ${backlinksSection}
+  ${abTestSection}
   ${otherSection}
   <div class="footer"><a href="${esc(dashboardUrl)}" style="color:#6b7280;">Open Dashboard</a></div>
 </body></html>`;
