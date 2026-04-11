@@ -89,6 +89,7 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | `data/reports/reviews/latest.json` | `review-monitor` | `daily-summary`, `product-optimizer` (sentiment context) | healthy |
 | `data/reports/theme-seo-audit/latest.json` | `theme-seo-auditor` | manual review | healthy |
 | `data/meta-tests/*.json` | `lib/meta-test.js` (via publish flows) | `meta-ab-tracker`, dashboard Optimize tab | healthy |
+| `data/keyword-index.json` | `lib/keyword-index.js` (scheduler daily rebuild) | `content-researcher`, `content-refresher`, dashboard `data-parsers` | healthy |
 | `data/performance-queue/<slug>.json` (trigger: `page-meta-rewrite`) | `product-optimizer --pages-from-gsc` | dashboard, `product-optimizer --publish-approved` | healthy |
 | `data/performance-queue/<slug>.json` (trigger: `faq-expansion`) | `product-optimizer --expand-faq` | dashboard, `product-optimizer --publish-approved` | healthy |
 
