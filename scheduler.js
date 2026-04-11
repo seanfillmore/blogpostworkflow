@@ -33,6 +33,27 @@ function log(msg) {
   } catch { /* ignore */ }
 }
 
+const failures = [];
+
+function runStep(name, cmd, { retries = 0, critical = false, indent = '  ' } = {}) {
+  log(`${indent}${cmd}`);
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      execSync(cmd, { stdio: 'inherit', cwd: __dirname });
+      log(`${indent}✓ ${name} complete`);
+      return true;
+    } catch (e) {
+      if (attempt < retries) {
+        log(`${indent}⚠ ${name} failed (attempt ${attempt + 1}/${retries + 1}), retrying...`);
+      } else {
+        log(`${indent}✗ ${name} failed (exit ${e.status})`);
+        failures.push({ name, critical, error: e.message || `exit ${e.status}` });
+      }
+    }
+  }
+  return false;
+}
+
 const args = process.argv.slice(2);
 const dryFlag = args.includes('--dry-run') ? ' --dry-run' : '';
 
@@ -45,35 +66,14 @@ process.env.NOTIFY_DEFERRED = '1';
 // Step 0: daily review monitor
 const NODE = process.execPath; // full path to the running node binary
 
-const reviewCmd = `"${NODE}" agents/review-monitor/index.js`;
-log(`  ${reviewCmd}`);
-try {
-  execSync(reviewCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ review-monitor complete');
-} catch (e) {
-  log(`  ✗ review-monitor failed (exit ${e.status})`);
-}
+runStep('review-monitor', `"${NODE}" agents/review-monitor/index.js`);
 
 // Step 1: flip any scheduled drafts that are due live (+ post-publish steps)
 
-const publishDueCmd = `"${NODE}" agents/calendar-runner/index.js --publish-due${dryFlag}`;
-log(`  ${publishDueCmd}`);
-try {
-  execSync(publishDueCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ publish-due complete');
-} catch (e) {
-  log(`  ✗ publish-due failed (exit ${e.status})`);
-}
+runStep('publish-due', `"${NODE}" agents/calendar-runner/index.js --publish-due${dryFlag}`, { retries: 1, critical: true });
 
 // Step 2: run the next pending calendar item through the full pipeline
-const runCmd = `"${NODE}" agents/calendar-runner/index.js --run${dryFlag}`;
-log(`  ${runCmd}`);
-try {
-  execSync(runCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ calendar-runner complete');
-} catch (e) {
-  log(`  ✗ calendar-runner failed (exit ${e.status})`);
-}
+runStep('calendar-runner --run', `"${NODE}" agents/calendar-runner/index.js --run${dryFlag}`, { retries: 1, critical: true });
 
 // Step 3: auto-repair broken links in any published/scheduled post
 if (!dryFlag) {
@@ -121,160 +121,55 @@ if (!dryFlag) {
 }
 
 // Step 4a: publish approved product meta rewrites
-const pubProductCmd = `"${NODE}" agents/product-optimizer/index.js --publish-approved`;
-log(`  ${pubProductCmd}`);
-try {
-  execSync(pubProductCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ product meta publish-approved complete');
-} catch (e) {
-  log(`  ✗ product meta publish-approved failed (exit ${e.status})`);
-}
+runStep('product meta publish-approved', `"${NODE}" agents/product-optimizer/index.js --publish-approved`);
 
 // Step 4b: publish approved collection content
-const pubCollectionCmd = `"${NODE}" agents/collection-content-optimizer/index.js --publish-approved`;
-log(`  ${pubCollectionCmd}`);
-try {
-  execSync(pubCollectionCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ collection content publish-approved complete');
-} catch (e) {
-  log(`  ✗ collection content publish-approved failed (exit ${e.status})`);
-}
+runStep('collection content publish-approved', `"${NODE}" agents/collection-content-optimizer/index.js --publish-approved`);
 
 // Step 4c: pages from GSC
-const pagesCmd = `"${NODE}" agents/product-optimizer/index.js --pages-from-gsc${dryFlag}`;
-log(`  ${pagesCmd}`);
-try {
-  execSync(pagesCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ pages-from-gsc complete');
-} catch (e) {
-  log(`  ✗ pages-from-gsc failed (exit ${e.status})`);
-}
+runStep('pages-from-gsc', `"${NODE}" agents/product-optimizer/index.js --pages-from-gsc${dryFlag}`);
 
 // Step 5: run collection linker to inject cross-links from blog posts to collections
-const collLinkCmd = `"${NODE}" agents/collection-linker/index.js --top-targets --apply${dryFlag}`;
-log(`  ${collLinkCmd}`);
-try {
-  execSync(collLinkCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ collection-linker complete');
-} catch (e) {
-  log(`  ✗ collection-linker failed (exit ${e.status})`);
-}
+runStep('collection-linker', `"${NODE}" agents/collection-linker/index.js --top-targets --apply${dryFlag}`);
 
 // Step 5b: rank alerter — flag sudden position changes
-const rankAlertCmd = `"${NODE}" agents/rank-alerter/index.js`;
-log(`  ${rankAlertCmd}`);
-try {
-  execSync(rankAlertCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ rank-alerter complete');
-} catch (e) {
-  log(`  ✗ rank-alerter failed (exit ${e.status})`);
-}
+runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 
 // Step 5c: insight aggregator — refresh writer standing rules
-const insightCmd = `"${NODE}" agents/insight-aggregator/index.js`;
-log(`  ${insightCmd}`);
-try {
-  execSync(insightCmd, { stdio: 'inherit', cwd: __dirname });
-  log('  ✓ insight-aggregator complete');
-} catch (e) {
-  log(`  ✗ insight-aggregator failed (exit ${e.status})`);
-}
+runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
 
   // Step 6: product schema with Judge.me reviews (GSC-filtered)
-  const schemaCmd = `"${NODE}" agents/product-schema/index.js --auto --apply${dryFlag}`;
-  log(`    ${schemaCmd}`);
-  try {
-    execSync(schemaCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ product-schema --auto complete');
-  } catch (e) {
-    log(`    ✗ product-schema --auto failed (exit ${e.status})`);
-  }
+  runStep('product-schema --auto', `"${NODE}" agents/product-schema/index.js --auto --apply${dryFlag}`, { indent: '    ' });
 
   // Step 7a: collection gap detection from GSC opportunities
-  const gapCmd = `"${NODE}" agents/collection-creator/index.js --from-opportunities --queue${dryFlag}`;
-  log(`    ${gapCmd}`);
-  try {
-    execSync(gapCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ collection-creator --from-opportunities complete');
-  } catch (e) {
-    log(`    ✗ collection-creator --from-opportunities failed (exit ${e.status})`);
-  }
+  runStep('collection-creator --from-opportunities', `"${NODE}" agents/collection-creator/index.js --from-opportunities --queue${dryFlag}`, { indent: '    ' });
 
   // Step 7b: publish approved new collections
   if (!dryFlag) {
-    const gapPubCmd = `"${NODE}" agents/collection-creator/index.js --publish-approved`;
-    log(`    ${gapPubCmd}`);
-    try {
-      execSync(gapPubCmd, { stdio: 'inherit', cwd: __dirname });
-      log('    ✓ collection-creator --publish-approved complete');
-    } catch (e) {
-      log(`    ✗ collection-creator --publish-approved failed (exit ${e.status})`);
-    }
+    runStep('collection-creator --publish-approved', `"${NODE}" agents/collection-creator/index.js --publish-approved`, { indent: '    ' });
   }
 
   // Step 8: cannibalization detection + resolution
-  const cannCmd = `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`;
-  log(`    ${cannCmd}`);
-  try {
-    execSync(cannCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ cannibalization-resolver complete');
-  } catch (e) {
-    log(`    ✗ cannibalization-resolver failed (exit ${e.status})`);
-  }
+  runStep('cannibalization-resolver', `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`, { indent: '    ' });
 
   // Step 9: GA4 content analysis
-  const ga4Cmd = `"${NODE}" agents/ga4-content-analyzer/index.js`;
-  log(`    ${ga4Cmd}`);
-  try {
-    execSync(ga4Cmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ ga4-content-analyzer complete');
-  } catch (e) {
-    log(`    ✗ ga4-content-analyzer failed (exit ${e.status})`);
-  }
+  runStep('ga4-content-analyzer', `"${NODE}" agents/ga4-content-analyzer/index.js`, { indent: '    ' });
 
   // Step 9b: meta A/B tracker
-  const metaAbCmd = `"${NODE}" agents/meta-ab-tracker/index.js${dryFlag}`;
-  log(`    ${metaAbCmd}`);
-  try {
-    execSync(metaAbCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ meta-ab-tracker complete');
-  } catch (e) {
-    log(`    ✗ meta-ab-tracker failed (exit ${e.status})`);
-  }
+  runStep('meta-ab-tracker', `"${NODE}" agents/meta-ab-tracker/index.js${dryFlag}`, { indent: '    ' });
 
   // Step 9c: backlink monitoring
-  const backlinkCmd = `"${NODE}" agents/backlink-monitor/index.js`;
-  log(`    ${backlinkCmd}`);
-  try {
-    execSync(backlinkCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ backlink-monitor complete');
-  } catch (e) {
-    log(`    ✗ backlink-monitor failed (exit ${e.status})`);
-  }
+  runStep('backlink-monitor', `"${NODE}" agents/backlink-monitor/index.js`, { indent: '    ' });
 
   // Step 9d: backlink opportunity detection
-  const backlinkOppCmd = `"${NODE}" agents/backlink-opportunity/index.js`;
-  log(`    ${backlinkOppCmd}`);
-  try {
-    execSync(backlinkOppCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ backlink-opportunity complete');
-  } catch (e) {
-    log(`    ✗ backlink-opportunity failed (exit ${e.status})`);
-  }
+  runStep('backlink-opportunity', `"${NODE}" agents/backlink-opportunity/index.js`, { indent: '    ' });
 
   // Step 9e: blog post verifier — check published posts for broken links/facts
-  const verifyCmd = `"${NODE}" agents/blog-post-verifier/index.js --limit 10`;
-  log(`    ${verifyCmd}`);
-  try {
-    execSync(verifyCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ blog-post-verifier complete');
-  } catch (e) {
-    log(`    ✗ blog-post-verifier failed (exit ${e.status})`);
-  }
+  runStep('blog-post-verifier', `"${NODE}" agents/blog-post-verifier/index.js --limit 10`, { indent: '    ' });
 
 } else {
   log('  Weekly jobs: skipped (not Sunday)');
@@ -284,16 +179,29 @@ if (new Date().getDay() === 0) {
 if (new Date().getDate() === 1) {
   log('  Monthly jobs (1st):');
 
-  const themeCmd = `"${NODE}" agents/theme-seo-auditor/index.js`;
-  log(`    ${themeCmd}`);
-  try {
-    execSync(themeCmd, { stdio: 'inherit', cwd: __dirname });
-    log('    ✓ theme-seo-auditor complete');
-  } catch (e) {
-    log(`    ✗ theme-seo-auditor failed (exit ${e.status})`);
-  }
+  runStep('theme-seo-auditor', `"${NODE}" agents/theme-seo-auditor/index.js`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
+}
+
+// ── Failure summary + escalation ─────────────────────────────────────────────
+if (failures.length > 0) {
+  log(`\n  ⚠ ${failures.length} step(s) failed:`);
+  for (const f of failures) {
+    log(`    ${f.critical ? '🔴 CRITICAL' : '🟡'} ${f.name}: ${f.error}`);
+  }
+  const criticalFailures = failures.filter(f => f.critical);
+  if (criticalFailures.length > 0) {
+    // Send immediate alert for critical failures (bypass deferred)
+    const origDeferred = process.env.NOTIFY_DEFERRED;
+    delete process.env.NOTIFY_DEFERRED;
+    await notify({
+      subject: `⚠️ Scheduler: ${criticalFailures.length} critical failure(s)`,
+      body: criticalFailures.map(f => `${f.name}: ${f.error}`).join('\n'),
+      status: 'error',
+    }).catch(() => {});
+    if (origDeferred) process.env.NOTIFY_DEFERRED = origDeferred;
+  }
 }
 
 log('Scheduler done.');
