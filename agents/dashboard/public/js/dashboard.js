@@ -3703,7 +3703,9 @@ function showRunBanner(script, tabName, success, logId) {
   var bannerId = 'run-banner-' + tabName;
   var existing = document.getElementById(bannerId);
   if (existing) existing.remove();
-  var name = script.split('/').pop().replace('.js', '');
+  var parts = script.split('/');
+  var name = parts[parts.length - 1].replace('.js', '');
+  if (name === 'index' && parts.length >= 2) name = parts[parts.length - 2];
   var banner = document.createElement('div');
   banner.id = bannerId;
   banner.className = 'run-banner ' + (success ? 'run-banner-success' : 'run-banner-error');
