@@ -614,20 +614,26 @@ async function researchKeyword(keyword, kwData = {}, { allowFallback = false } =
   const slug = slugify(keyword);
   const outputPath = join(BRIEFS_DIR, `${slug}.json`);
 
+  // Check for existing brief — skip gracefully if already researched
+  if (existsSync(outputPath)) {
+    console.log(`\n  Brief already exists: ${outputPath}`);
+    console.log('  Skipping — delete the brief file to re-research.\n');
+    return;
+  }
+
   // Check for existing post targeting the same keyword
   const duplicate = findDuplicatePost(keyword);
   if (duplicate) {
     const { file, meta } = duplicate;
     const status = meta.shopify_status ?? 'unknown';
     const publishAt = meta.shopify_publish_at ? ` (publishes ${meta.shopify_publish_at.slice(0, 10)})` : '';
-    console.error(`\n  ✗ Duplicate keyword detected: "${keyword}"`);
-    console.error(`  An existing post already targets this keyword:`);
-    console.error(`    File:    data/posts/${file}`);
-    console.error(`    Title:   ${meta.title ?? '(no title)'}`);
-    console.error(`    Status:  ${status}${publishAt}`);
-    if (meta.shopify_url) console.error(`    URL:     ${meta.shopify_url}`);
-    console.error(`\n  No brief generated. Update the existing post instead.\n`);
-    process.exit(1);
+    console.log(`\n  Existing post found for "${keyword}":`);
+    console.log(`    File:    data/posts/${file}`);
+    console.log(`    Title:   ${meta.title ?? '(no title)'}`);
+    console.log(`    Status:  ${status}${publishAt}`);
+    if (meta.shopify_url) console.log(`    URL:     ${meta.shopify_url}`);
+    console.log(`\n  No brief generated. Update the existing post instead.\n`);
+    return;
   }
 
   // Load manually-provided Ahrefs data if available.
