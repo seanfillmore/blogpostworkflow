@@ -14,26 +14,49 @@ export function parseTechSeoReport(markdown) {
   let totalErrors = 0;
   let totalWarnings = 0;
 
-  const sectionRegex = /###\s*(?:🔴|🟡|⚠️?)\s*(.+?)\s*\((\d+)\)/g;
-  let match;
-  while ((match = sectionRegex.exec(markdown)) !== null) {
-    const name = match[1].trim();
-    const count = parseInt(match[2], 10);
+  // Determine which section (error vs warning) each ### heading falls under
+  // by tracking the last ## heading seen
+  let currentSeverity = 'warning';
+  const lines = markdown.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Track ## section headers for severity
+    if (/^##\s.*🔴|^##\s.*Error/i.test(line)) { currentSeverity = 'error'; continue; }
+    if (/^##\s.*🟡|^##\s.*Warning/i.test(line)) { currentSeverity = 'warning'; continue; }
+
+    // Match ### subsection headers — format: "### N. Category Name — N items/pages"
+    const subMatch = line.match(/^###\s*\d+\.\s*(.+?)\s*—\s*(\d+)\s/);
+    if (!subMatch) continue;
+
+    const name = subMatch[1].trim();
+    const count = parseInt(subMatch[2], 10);
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-    const isError = match[0].includes('🔴');
-    const severity = isError ? 'error' : 'warning';
 
-    const afterHeader = markdown.slice(match.index + match[0].length);
-    const nextSection = afterHeader.search(/\n###\s/);
-    const sectionText = nextSection > 0 ? afterHeader.slice(0, nextSection) : afterHeader.slice(0, 2000);
+    // Collect items from the section content (until next ### or ##)
+    const items = [];
+    for (let j = i + 1; j < lines.length && items.length < 10; j++) {
+      if (/^##/.test(lines[j])) break;
 
-    const rows = [...sectionText.matchAll(/^\|(.+)\|$/gm)]
-      .map(m => m[1].split('|').map(c => c.trim()))
-      .filter(cols => cols.length >= 1 && !cols[0].includes('---'));
-    const items = rows.slice(1).map(cols => ({ url: cols[0] || '', detail: cols.slice(1).join(' | ') })).slice(0, 10);
+      // Table rows: | col1 | col2 | ... |
+      const tableMatch = lines[j].match(/^\|\s*(.+)\s*\|$/);
+      if (tableMatch && !lines[j].includes('---') && !lines[j].includes('PR') && !lines[j].includes('URL')) {
+        const cols = tableMatch[1].split('|').map(c => c.trim());
+        // Skip the numeric PR column if present — use second column as URL
+        const url = cols.find(c => c.startsWith('http') || c.startsWith('/')) || cols[0] || '';
+        items.push({ url, detail: cols.filter(c => c !== url).join(' | ') });
+      }
 
-    categories[slug] = { name, count, severity, items };
-    if (severity === 'error') totalErrors += count;
+      // List items: - URL or - [title](URL)
+      const listMatch = lines[j].match(/^-\s+(?:\[.+?\]\()?(https?:\/\/[^\s)]+)/);
+      if (listMatch) {
+        items.push({ url: listMatch[1], detail: '' });
+      }
+    }
+
+    categories[slug] = { name, count, severity: currentSeverity, items };
+    if (currentSeverity === 'error') totalErrors += count;
     else totalWarnings += count;
   }
 
