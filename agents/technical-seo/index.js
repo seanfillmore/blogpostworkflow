@@ -14,6 +14,10 @@
  *   fix-alt-text [--dry-run]  Generate + insert alt text on <img> tags in blog post bodies
  *   create-redirects [--dry-run] Create 301 redirects for known 404 pages
  *   fix-ai-content [--dry-run]  Rewrite high-AI-content pages in data/ai-detection/*.csv
+ *   fix-titles [--dry-run]     Shorten title tags that exceed 60 characters
+ *   fix-noindex [--dry-run]    Add noindex to ads landing pages and orphan pages
+ *   fix-duplicate-tags [--dry-run] Remove duplicate meta/title tags from article body_html
+ *   fix-internal-links [--dry-run] Run internal-linker for blog posts with few inbound links
  *   fix-all [--dry-run]    Run all fixes in order
  *
  * Requires: ANTHROPIC_API_KEY in .env
@@ -38,6 +42,7 @@ import {
   upsertMetafield,
   getProducts, getProduct, updateProduct, updateProductImage,
   getAllFiles, updateFileAlt,
+  getMainThemeId, getThemeAsset, updateThemeAsset,
 } from '../../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -1447,6 +1452,221 @@ ${contentOnly}`,
   console.log(`\n  ${dryRun ? 'Would rewrite' : 'Rewrote'}: ${fixed} pages`);
 }
 
+// ── COMMAND: fix-titles ──────────────────────────────────────────────────────
+
+async function fixTitles({ dryRun = false } = {}) {
+  console.log('\n  Fixing title tags that are too long (>60 chars)...');
+  const rows = loadCSV('Warning-indexable-Title_too_long');
+  if (rows.length === 0) { console.log('  No title length issues found.'); return; }
+
+  const articleIndex = await getArticleIndex();
+  const pageIdx = await getPageIndex();
+  let fixed = 0;
+
+  for (const row of rows) {
+    const url = row.url;
+    if (!url) continue;
+    const type = pageType(url);
+    const path = urlPath(url);
+    const currentTitle = row.title || '';
+
+    if (currentTitle.length <= 60) continue; // already fine
+
+    // Generate a shorter title (truncate smartly at word boundary, add ellipsis or brand)
+    let newTitle = currentTitle.slice(0, 57);
+    const lastSpace = newTitle.lastIndexOf(' ');
+    if (lastSpace > 40) newTitle = newTitle.slice(0, lastSpace);
+    // Don't add ellipsis — just let it be a clean cut with brand
+    if (!newTitle.includes(config.name)) newTitle += ' | ' + config.name;
+    if (newTitle.length > 60) newTitle = newTitle.slice(0, 60);
+
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${path}: "${currentTitle.slice(0, 50)}..." → "${newTitle}"`);
+
+    if (!dryRun) {
+      try {
+        if (type === 'article') {
+          const entry = articleIndex[path];
+          if (entry) {
+            await upsertMetafield('articles', entry.articleId, 'global', 'title_tag', newTitle);
+            fixed++;
+          }
+        } else if (type === 'page') {
+          const entry = pageIdx[path];
+          if (entry) {
+            await upsertMetafield('pages', entry.pageId, 'global', 'title_tag', newTitle);
+            fixed++;
+          }
+        } else if (type === 'product') {
+          const handle = path.split('/').pop();
+          const products = await getProducts({ handle });
+          if (products[0]) {
+            await upsertMetafield('products', products[0].id, 'global', 'title_tag', newTitle);
+            fixed++;
+          }
+        }
+      } catch (e) {
+        console.log(`    Error: ${e.message}`);
+      }
+    } else {
+      fixed++;
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} title tags`);
+}
+
+// ── COMMAND: fix-noindex ─────────────────────────────────────────────────────
+
+async function fixNoindex({ dryRun = false } = {}) {
+  console.log('\n  Checking for pages that should be noindexed...');
+
+  // Load orphan pages — these may include ads landing pages
+  const orphanRows = loadCSV('Error-indexable-Orphan_page_(has_no_incoming_internal_links)');
+  const pageIdx = await getPageIndex();
+  let fixed = 0;
+
+  // Pages with Replo/landing-page templates are likely ads landing pages
+  const allPages = await getPages();
+  const landingPages = allPages.filter(p => {
+    const suffix = p.template_suffix || '';
+    return suffix.includes('replo') || suffix.includes('landing');
+  });
+
+  // Combine orphan pages and landing pages
+  const toNoindex = new Set();
+  for (const row of orphanRows) {
+    const type = pageType(row.url || '');
+    if (type === 'page') toNoindex.add(urlPath(row.url));
+  }
+  for (const p of landingPages) {
+    toNoindex.add(`/pages/${p.handle}`);
+  }
+
+  if (toNoindex.size === 0) { console.log('  No pages need noindexing.'); return; }
+
+  console.log(`  Found ${toNoindex.size} page(s) to noindex:\n`);
+
+  const themeId = await getMainThemeId();
+  if (!themeId) { console.error('  Could not find main theme.'); return; }
+
+  for (const pagePath of toNoindex) {
+    const handle = pagePath.split('/').pop();
+    const page = allPages.find(p => p.handle === handle);
+    if (!page) { console.log(`  [SKIP] Page not found: ${pagePath}`); continue; }
+
+    // Check if already noindexed via metafield
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}Noindex: ${pagePath} (${page.title})`);
+
+    if (!dryRun) {
+      try {
+        // Add noindex via the seo.hidden metafield (Shopify's built-in SEO exclusion)
+        await upsertMetafield('pages', page.id, 'seo', 'hidden', '1', 'number_integer');
+        fixed++;
+      } catch (e) {
+        console.log(`    Error: ${e.message}`);
+      }
+    } else {
+      fixed++;
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would noindex' : 'Noindexed'}: ${fixed} pages`);
+}
+
+// ── COMMAND: fix-duplicate-tags ──────────────────────────────────────────────
+
+async function fixDuplicateTags({ dryRun = false } = {}) {
+  console.log('\n  Fixing duplicate meta/title tags in article HTML...');
+
+  const metaRows = loadCSV('Error-indexable-Multiple_meta_description_tags');
+  const titleRows = loadCSV('Error-indexable-Multiple_title_tags');
+  const allUrls = new Set([
+    ...metaRows.map(r => r.url).filter(Boolean),
+    ...titleRows.map(r => r.url).filter(Boolean),
+  ]);
+
+  if (allUrls.size === 0) { console.log('  No duplicate tag issues found.'); return; }
+
+  const articleIndex = await getArticleIndex();
+  let fixed = 0;
+
+  for (const url of allUrls) {
+    const type = pageType(url);
+    if (type !== 'article') {
+      console.log(`  [SKIP] ${type}: ${url} — theme-level issue, cannot fix via REST API`);
+      continue;
+    }
+
+    const path = urlPath(url);
+    const entry = articleIndex[path];
+    if (!entry) { console.log(`  [SKIP] Article not found: ${path}`); continue; }
+
+    const full = await getArticle(entry.blogId, entry.articleId);
+    let body = full.body_html || '';
+
+    // Remove any <meta> or <title> tags that crept into body_html
+    const origLen = body.length;
+    body = body.replace(/<meta[^>]*name=["']description["'][^>]*>/gi, '');
+    body = body.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+    // Also remove stray <head> blocks
+    body = body.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+
+    if (body.length === origLen) {
+      console.log(`  [OK] ${path} — no duplicate tags in body_html`);
+      continue;
+    }
+
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${path} — removed ${origLen - body.length} chars of duplicate tags`);
+
+    if (!dryRun) {
+      try {
+        await updateArticle(entry.blogId, entry.articleId, { body_html: body });
+        fixed++;
+      } catch (e) {
+        console.log(`    Error: ${e.message}`);
+      }
+    } else {
+      fixed++;
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} pages with duplicate tags`);
+}
+
+// ── COMMAND: fix-internal-links ──────────────────────────────────────────────
+
+async function fixInternalLinks({ dryRun = false } = {}) {
+  console.log('\n  Adding internal links to pages with few inbound links...');
+
+  const orphanRows = loadCSV('Error-indexable-Orphan_page_(has_no_incoming_internal_links)');
+  // Also include pages with only 1 inbound link
+  const lowLinkRows = loadCSV('Warning-Pages_with_only_1_inbound_internal_link') || [];
+
+  const urls = [
+    ...orphanRows.map(r => r.url).filter(Boolean),
+    ...lowLinkRows.map(r => r.url).filter(Boolean),
+  ].filter(url => pageType(url) === 'article'); // only fix blog posts — internal-linker handles articles
+
+  if (urls.length === 0) { console.log('  No blog posts need internal links.'); return; }
+
+  console.log(`  ${urls.length} blog post(s) need more internal links\n`);
+
+  for (const url of urls) {
+    const handle = urlPath(url).split('/').pop();
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}Running internal-linker for: ${handle}`);
+    if (!dryRun) {
+      try {
+        execSync(`node agents/internal-linker/index.js --slug ${handle} --apply`, { cwd: ROOT, stdio: 'pipe' });
+        console.log(`    ✓ Internal links added for ${handle}`);
+      } catch (e) {
+        console.log(`    Error: ${e.message?.split('\n')[0] || e}`);
+      }
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would process' : 'Processed'}: ${urls.length} posts`);
+}
+
 // ── COMMAND: fix-all ──────────────────────────────────────────────────────────
 
 async function fixAll({ dryRun = false } = {}) {
@@ -1455,7 +1675,11 @@ async function fixAll({ dryRun = false } = {}) {
   await fixBrokenLinks({ dryRun });
   await fixRedirectLinks({ dryRun });
   await fixMeta({ dryRun });
+  await fixTitles({ dryRun });
+  await fixDuplicateTags({ dryRun });
   await fixAltText({ dryRun });
+  await fixNoindex({ dryRun });
+  await fixInternalLinks({ dryRun });
   console.log('\n  All fixes complete.');
 }
 
@@ -1476,6 +1700,10 @@ Usage:
   node agents/technical-seo/index.js fix-alt-text [--dry-run]
   node agents/technical-seo/index.js create-redirects [--dry-run]
   node agents/technical-seo/index.js fix-ai-content [--dry-run]
+  node agents/technical-seo/index.js fix-titles [--dry-run]
+  node agents/technical-seo/index.js fix-noindex [--dry-run]
+  node agents/technical-seo/index.js fix-duplicate-tags [--dry-run]
+  node agents/technical-seo/index.js fix-internal-links [--dry-run]
   node agents/technical-seo/index.js fix-all [--dry-run]
 `.trim();
 
@@ -1612,6 +1840,18 @@ async function main() {
       break;
     case 'fix-ai-content':
       await runFixWithTracking(fixAiContent, 'fix-ai-content');
+      break;
+    case 'fix-titles':
+      await runFixWithTracking(fixTitles, 'fix-titles');
+      break;
+    case 'fix-noindex':
+      await runFixWithTracking(fixNoindex, 'fix-noindex');
+      break;
+    case 'fix-duplicate-tags':
+      await runFixWithTracking(fixDuplicateTags, 'fix-duplicate-tags');
+      break;
+    case 'fix-internal-links':
+      await runFixWithTracking(fixInternalLinks, 'fix-internal-links');
       break;
     case 'fix-all': {
       const tracker = captureFixResults('fix-all', dryRun);
