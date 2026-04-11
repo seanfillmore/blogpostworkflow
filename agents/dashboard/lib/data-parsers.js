@@ -249,32 +249,73 @@ export function checkAhrefsData(keyword) {
 export function getPendingAhrefsData(calItems) {
   const pending = [];
   const rejections = loadRejections();
+
+  // Load keyword index for gap-aware checking
+  let index = null;
+  try {
+    const indexPath = join(ROOT, 'data', 'keyword-index.json');
+    if (existsSync(indexPath)) index = JSON.parse(readFileSync(indexPath, 'utf8'));
+  } catch { /* proceed without index */ }
+
   for (const item of calItems) {
     const slug     = item.slug;
     const hasBrief = existsSync(join(BRIEFS_DIR, `${slug}.json`));
     const hasPost  = existsSync(join(POSTS_DIR,  `${slug}.html`));
-    if (hasBrief || hasPost) continue; // already past research stage
-    if (isRejectedKw(item.keyword, rejections)) continue; // rejected by user
+    if (hasBrief || hasPost) continue;
+    if (isRejectedKw(item.keyword, rejections)) continue;
 
-    // Check for Ahrefs data using the slug as directory name.
-    // The user uploads whatever data they choose — we just check if it's there.
     const status = checkAhrefsData(item.keyword);
-    if (!status.ready) {
-      const missing = [];
-      if (!status.hasSerp)     missing.push('SERP Overview (required)');
-      if (!status.hasKeywords) missing.push('Matching Terms (required)');
-      if (!status.hasHistory)  missing.push('Volume History (optional)');
-      pending.push({
-        keyword:     item.keyword,
-        slug,
-        publishDate: item.publishDate.toISOString(),
-        dir:         status.dir,
-        missingFiles: missing,
-        hasSerp:     status.hasSerp,
-        hasKeywords: status.hasKeywords,
-        hasHistory:  status.hasHistory,
-      });
+
+    // If own data is ready, skip
+    if (status.ready) continue;
+
+    // Check if cluster data is sufficient via the index
+    let clusterInfo = null;
+    let clusterSufficient = false;
+    if (index) {
+      const kwSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const kwEntry = index.keywords[kwSlug];
+      const clusterName = kwEntry?.cluster;
+      const cluster = clusterName ? index.clusters[clusterName] : null;
+      if (cluster && cluster.all_matching_terms?.length > 0) {
+        clusterInfo = { name: clusterName, terms: cluster.all_matching_terms.length, serps: (cluster.common_competitors || []).length };
+        // Check niche coverage
+        if (cluster.all_matching_terms.length >= 50 && (cluster.common_competitors || []).length >= 5) {
+          const kw = item.keyword.toLowerCase();
+          const clusterKws = cluster.keywords.map(k => (index.keywords[k]?.keyword || k).replace(/-/g, ' '));
+          const words = kw.split(/\s+/).filter(w => w.length > 3);
+          const threshold = Math.max(1, clusterKws.length * 0.5);
+          const nicheWords = words.filter(w => {
+            const count = clusterKws.filter(ck => ck.includes(w)).length;
+            return count < threshold;
+          });
+          const nicheTermCount = cluster.all_matching_terms.filter(t =>
+            nicheWords.some(nw => t.keyword.toLowerCase().includes(nw))
+          ).length;
+          if (nicheTermCount >= 10) clusterSufficient = true;
+        }
+      }
     }
+
+    // Skip if cluster data is sufficient for this keyword
+    if (clusterSufficient) continue;
+
+    const missing = [];
+    if (!status.hasSerp)     missing.push('SERP Overview (required)');
+    if (!status.hasKeywords) missing.push('Matching Terms (required)');
+    if (!status.hasHistory)  missing.push('Volume History (optional)');
+
+    pending.push({
+      keyword:     item.keyword,
+      slug,
+      publishDate: item.publishDate.toISOString(),
+      dir:         status.dir,
+      missingFiles: missing,
+      hasSerp:     status.hasSerp,
+      hasKeywords: status.hasKeywords,
+      hasHistory:  status.hasHistory,
+      clusterInfo,
+    });
   }
   return pending;
 }

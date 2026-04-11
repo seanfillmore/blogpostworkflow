@@ -1138,8 +1138,15 @@ function renderDataNeeded(d) {
       (f.present ? '✓ ' : '✗ ') + f.label + '</span>'
     ).join('');
 
+    var clusterNote = item.clusterInfo
+      ? '<div style="font-size:0.72rem;color:#059669">\u2713 ' + esc(item.clusterInfo.name) + ' cluster (' + item.clusterInfo.terms + ' terms) \u2014 needs niche data</div>'
+      : '';
+
     return '<div style="border-bottom:1px solid var(--border);padding:8px 2px;display:flex;align-items:center;gap:0.5rem">' +
-        '<div style="flex:1;font-weight:500;font-size:0.85rem">' + esc(item.keyword) + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:500;font-size:0.85rem">' + esc(item.keyword) + '</div>' +
+          clusterNote +
+        '</div>' +
         '<div style="display:flex;gap:3px;margin-right:0.5rem">' + fileTags + '</div>' +
         '<span style="font-size:0.75rem;color:var(--muted);white-space:nowrap">' + fmtDate(item.publishDate) + '</span>' +
         '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload</button>' +
