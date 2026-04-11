@@ -41,6 +41,8 @@ import {
   getRedirects, createRedirect,
   upsertMetafield,
   getProducts, getProduct, updateProduct, updateProductImage,
+  getCustomCollections, getSmartCollections,
+  updateCustomCollection, updateSmartCollection,
   getAllFiles, updateFileAlt,
   getMainThemeId, getThemeAsset, updateThemeAsset,
 } from '../../lib/shopify.js';
@@ -759,7 +761,7 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
   for (const row of rows) {
     const src = row.url;
     const type = pageType(src);
-    if (!['article', 'page'].includes(type)) { console.log(`  [SKIP] ${type}: ${src}`); continue; }
+    if (!['article', 'page', 'collection', 'product'].includes(type)) { console.log(`  [SKIP] ${type}: ${src}`); continue; }
 
     const redirectSet = redirectBySource[src] || new Set();
     if (redirectSet.size === 0) { console.log(`  [SKIP] No redirect details for: ${urlPath(src)}`); continue; }
@@ -767,6 +769,7 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
     let body = '';
     let resourceId = null;
     let blogId = null;
+    let resourceType = null;
 
     if (type === 'article') {
       const path = urlPath(src);
@@ -776,13 +779,31 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
       resourceId = entry.articleId;
       const full = await getArticle(blogId, resourceId);
       body = full.body_html || '';
-    } else {
+    } else if (type === 'page') {
       const path = urlPath(src);
       const entry = pageIdx[path];
       if (!entry) { console.log(`  [SKIP] Page not found: ${path}`); continue; }
       resourceId = entry.pageId;
       const full = await getPage(resourceId);
       body = full.body_html || '';
+    } else if (type === 'collection') {
+      const handle = urlPath(src).split('/').pop();
+      const [custom, smart] = await Promise.all([
+        getCustomCollections({ handle }),
+        getSmartCollections({ handle }),
+      ]);
+      const col = custom[0] || smart[0];
+      if (!col) { console.log(`  [SKIP] Collection not found: ${handle}`); continue; }
+      body = col.body_html || '';
+      resourceId = col.id;
+      resourceType = custom[0] ? 'custom_collection' : 'smart_collection';
+    } else if (type === 'product') {
+      const handle = urlPath(src).split('/').pop();
+      const products = await getProducts({ handle });
+      if (!products[0]) { console.log(`  [SKIP] Product not found: ${handle}`); continue; }
+      body = products[0].body_html || '';
+      resourceId = products[0].id;
+      resourceType = 'product';
     }
 
     const $ = cheerio.load(body);
@@ -814,8 +835,14 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
     if (!dryRun) {
       if (type === 'article') {
         await updateArticle(blogId, resourceId, { body_html: newBody });
-      } else {
+      } else if (type === 'page') {
         await updatePage(resourceId, { body_html: newBody });
+      } else if (resourceType === 'custom_collection') {
+        await updateCustomCollection(resourceId, { body_html: newBody });
+      } else if (resourceType === 'smart_collection') {
+        await updateSmartCollection(resourceId, { body_html: newBody });
+      } else if (type === 'product') {
+        await updateProduct(resourceId, { body_html: newBody });
       }
       fixed++;
     } else { fixed++; }
@@ -1085,7 +1112,52 @@ async function fixAltText({ dryRun = false } = {}) {
     }
   }
 
-  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} images across blog posts, products, and hero files`);
+  // ── Fix Shopify Files alt text (from Ahrefs missing alt CSV) ─────────────
+  console.log('\n  Checking Shopify Files for missing alt text...');
+  const altLinkRows = loadCSV('Warning-Missing_alt_text-links');
+  const missingAltUrls = new Set(altLinkRows
+    .filter(r => (r.alt_attribute || r.alt || '') === '')
+    .map(r => r.target_url || r.url || '')
+    .filter(u => u.includes('cdn.shopify.com') || u.includes('cdn/shop'))
+  );
+
+  if (missingAltUrls.size > 0) {
+    console.log(`  ${missingAltUrls.size} CDN images missing alt text`);
+    const allFiles = await getAllFiles();
+    let fileFixed = 0;
+
+    for (const file of allFiles) {
+      if (file.alt && file.alt.trim()) continue; // already has alt
+      // Check if this file's URL matches any missing-alt URL (strip query params for matching)
+      const fileUrlBase = file.url.split('?')[0];
+      const needsAlt = [...missingAltUrls].some(u => u.split('?')[0] === fileUrlBase);
+      if (!needsAlt) continue;
+
+      // Generate alt text from the filename
+      const filename = fileUrlBase.split('/').pop().replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ');
+      const altText = filename.length > 5 ? filename : 'Product image';
+
+      console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${fileUrlBase.split('/').pop()} → "${altText}"`);
+      if (!dryRun) {
+        try {
+          await updateFileAlt(file.id, altText);
+          fileFixed++;
+        } catch (e) {
+          console.log(`    Error: ${e.message}`);
+        }
+      } else {
+        fileFixed++;
+      }
+
+      if (fileFixed >= 50) { console.log('  Rate limit: stopping at 50 file updates per run'); break; }
+    }
+    console.log(`  ${dryRun ? 'Would fix' : 'Fixed'}: ${fileFixed} Shopify Files alt text`);
+    fixed += fileFixed;
+  } else {
+    console.log('  No CDN images missing alt text found in CSV.');
+  }
+
+  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} images across blog posts, products, hero files, and Shopify Files`);
 }
 
 // ── COMMAND: compare ─────────────────────────────────────────────────────────
