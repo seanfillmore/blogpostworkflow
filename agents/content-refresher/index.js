@@ -33,6 +33,7 @@ import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import { loadKeywordIndex } from '../../lib/keyword-index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -173,6 +174,20 @@ async function refreshContent(article, keyword, position, impressions, relatedKe
     ? relatedKeywords.map((k) => `"${k.keyword}" (pos #${Math.round(k.position)}, ${k.impressions} impr)`).join(', ')
     : 'none available';
 
+  // Load cluster keyword context from the shared index
+  let clusterContext = '';
+  try {
+    const index = loadKeywordIndex();
+    const kwSlug = (slug || '').replace(/-refreshed$/, '');
+    const kwEntry = index.keywords[kwSlug];
+    const clusterName = kwEntry?.cluster;
+    const cluster = clusterName ? index.clusters[clusterName] : null;
+    if (cluster && cluster.all_semantic_keywords?.length > 0) {
+      const topTerms = cluster.all_semantic_keywords.slice(0, 30).join(', ');
+      clusterContext = `\nCLUSTER KEYWORD INTELLIGENCE (from sibling research in the "${clusterName}" cluster):\nTop terms across the cluster: ${topTerms}\n`;
+    }
+  } catch { /* index not available — proceed without */ }
+
   // Load existing internal links context
   let internalLinksNote = '';
   try {
@@ -205,7 +220,7 @@ TARGET KEYWORD: "${keyword}"
 CURRENT POSITION: #${Math.round(position)}
 
 RELATED KEYWORDS ALSO RANKING (add these naturally): ${relatedStr}
-${userConcerns.length > 0 ? `
+${clusterContext}${userConcerns.length > 0 ? `
 USER CONCERNS FROM SEARCH QUERIES (real questions people searched to find this page — address each as an H2 or H3 section):
 ${userConcerns.map((q) => `- "${q.keyword}" (${q.impressions} impressions)`).join('\n')}
 
