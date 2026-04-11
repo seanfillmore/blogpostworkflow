@@ -11,6 +11,7 @@ import {
   parseCalendar, parseEditorReports, parseRankings, parseCROData,
   loadRejections, isRejectedKw, getPostMeta, getItemStatus, getPendingAhrefsData,
 } from './data-parsers.js';
+import { parseTechSeoReport } from './tech-seo-parser.js';
 
 export function aggregateData() {
   const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
@@ -216,6 +217,17 @@ export function aggregateData() {
   const legacyTriage    = readJsonIfExists(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   const cannibalization = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'latest.json'));
 
+  // Technical SEO audit report (markdown → parsed)
+  const techSeoReportRaw = (() => {
+    const p = join(REPORTS_DIR, 'technical-seo', 'technical-seo-audit.md');
+    if (!existsSync(p)) return null;
+    try { return readFileSync(p, 'utf8'); } catch { return null; }
+  })();
+  const techSeoAudit = parseTechSeoReport(techSeoReportRaw);
+
+  // Theme SEO audit (JSON)
+  const themeSeoAudit = readJsonIfExists(join(REPORTS_DIR, 'theme-seo-audit', 'latest.json'));
+
   // Rejected images — posts where CD rejected all image attempts
   const rejectedImagesDir = join(ROOT, 'data', 'images', 'rejected');
   let rejectedImages = [];
@@ -320,6 +332,8 @@ export function aggregateData() {
     performanceQueue,
     legacyTriage,
     cannibalization,
+    techSeoAudit,
+    themeSeoAudit,
     rejectedImages,
   };
 }
