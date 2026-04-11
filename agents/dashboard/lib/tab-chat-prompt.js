@@ -71,6 +71,23 @@ export function buildTabChatSystemPrompt(tab) {
     } else {
       lines.push('No Google Ads data available yet.');
     }
+  } else if (tab === 'tech-seo') {
+    const reportPath = join(ROOT, 'data', 'reports', 'technical-seo', 'technical-seo-audit.md');
+    if (existsSync(reportPath)) {
+      const report = readFileSync(reportPath, 'utf8').slice(0, 3000);
+      lines.push('Current technical SEO audit report (first 3000 chars):');
+      lines.push(report);
+    } else {
+      lines.push('No technical SEO audit report available yet.');
+    }
+    const themeAuditPath = join(ROOT, 'data', 'reports', 'theme-seo-audit', 'latest.json');
+    if (existsSync(themeAuditPath)) {
+      try {
+        const theme = JSON.parse(readFileSync(themeAuditPath, 'utf8'));
+        lines.push('Theme SEO audit results:');
+        lines.push(JSON.stringify(theme, null, 2).slice(0, 2000));
+      } catch { /* skip */ }
+    }
   } else if (tab === 'optimize') {
     if (existsSync(COMP_BRIEFS_DIR)) {
       const briefFiles = readdirSync(COMP_BRIEFS_DIR).filter(f => f.endsWith('.json')).sort().reverse().slice(0, 5);

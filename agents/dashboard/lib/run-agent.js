@@ -34,6 +34,9 @@ export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/indexing-fixer/index.js',
   'agents/performance-engine/index.js',
   'agents/legacy-triage/index.js',
+  'agents/technical-seo/index.js',
+  'agents/theme-seo-auditor/index.js',
+  'agents/image-generator/index.js',
 ]);
 
 /**

@@ -14,7 +14,7 @@ function switchTab(name, btn) {
   // Show/hide CRO date filter
   document.getElementById('cro-filter-bar').style.display = (name === 'cro' || name === 'ads') ? '' : 'none';
   // Show/hide tab action groups
-  ['seo','cro','optimize','ads','creatives'].forEach(function(t) {
+  ['seo','cro','optimize','ads','creatives','tech-seo'].forEach(function(t) {
     const g = document.getElementById('tab-actions-' + t);
     if (g) g.style.display = t === name ? '' : 'none';
   });
@@ -23,6 +23,7 @@ function switchTab(name, btn) {
   if (name === 'optimize' && data) renderOptimizeTab(data);
   if (name === 'ad-intelligence') renderAdIntelligenceTab();
   if (name === 'creatives') renderCreativesTab();
+  if (name === 'tech-seo' && data) renderTechnicalSeoTab(data);
   // Update chat sidebar when tab switches
   if (tabChatOpen) {
     var chatTitle = document.getElementById('tab-chat-title');
@@ -132,6 +133,171 @@ function buildAdsKpis(d) {
     { label: 'CTR',          value: snap?.ctr != null ? (snap.ctr * 100).toFixed(2) + '%' : '—',         color: '#f59e0b' },
     { label: 'ROAS',         value: snap?.roas != null ? snap.roas.toFixed(2) + 'x' : '—',               color: '#10b981' },
   ];
+}
+
+function renderTechnicalSeoTab(d) {
+  var el = document.getElementById('tab-tech-seo');
+  if (!el) return;
+
+  var audit = d.techSeoAudit;
+  var theme = d.themeSeoAudit;
+  var html = '';
+
+  // ── Upload & Summary card ──────────────────────────────────────────────────
+  html += '<div class="card"><div class="card-header accent-indigo"><h2>Technical SEO Audit</h2></div><div class="card-body">';
+  html += '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">';
+
+  // Upload zone
+  html += '<div style="flex:1;border:2px dashed #d1d5db;border-radius:8px;padding:20px;text-align:center;background:#f9fafb;cursor:pointer" onclick="uploadTechSeoZip()">';
+  html += '<div style="font-size:24px;margin-bottom:4px">&#128230;</div>';
+  html += '<div style="font-weight:600;font-size:14px">Upload Ahrefs Site Audit ZIP</div>';
+  html += '<div style="font-size:12px;color:#6b7280;margin-top:4px">Export from Ahrefs &rarr; Site Audit &rarr; All Issues &rarr; Export</div>';
+  html += '<button class="btn-primary" style="margin-top:8px" onclick="event.stopPropagation();uploadTechSeoZip()">&#8593; Upload ZIP</button>';
+  html += '</div>';
+
+  // Summary counts
+  html += '<div style="flex:1">';
+  html += '<div style="font-size:12px;text-transform:uppercase;color:#6b7280;letter-spacing:0.05em;margin-bottom:8px">Issue Summary</div>';
+  if (audit) {
+    var s = audit.summary;
+    var catKeys = Object.keys(audit.categories || {});
+    var fixable = catKeys.reduce(function(n, k) { return n + (audit.categories[k].count || 0); }, 0);
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+    html += '<div style="background:#fef2f2;padding:8px 12px;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#991b1b">' + s.errors + '</div><div style="font-size:11px;color:#991b1b">Errors</div></div>';
+    html += '<div style="background:#fffbeb;padding:8px 12px;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#92400e">' + s.warnings + '</div><div style="font-size:11px;color:#92400e">Warnings</div></div>';
+    html += '<div style="background:#f0fdf4;padding:8px 12px;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#166534">' + fixable + '</div><div style="font-size:11px;color:#166534">Total Issues</div></div>';
+    html += '<div style="background:#eff6ff;padding:8px 12px;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#1e40af">' + catKeys.length + '</div><div style="font-size:11px;color:#1e40af">Categories</div></div>';
+    html += '</div>';
+    if (audit.generated_at) html += '<div style="font-size:11px;color:#9ca3af;margin-top:6px">Last audit: ' + esc(audit.generated_at) + '</div>';
+  } else {
+    html += '<div class="empty-state" style="padding:20px 0">No audit data yet. Upload a site audit ZIP to get started.</div>';
+  }
+  html += '</div></div></div></div>';
+
+  // ── Issue category cards ───────────────────────────────────────────────────
+  if (audit && audit.categories) {
+    var fixCommands = {
+      '404_pages': 'create-redirects',
+      'broken_links': 'fix-links',
+      'missing_meta': 'fix-meta',
+      'missing_alt_text': 'fix-alt-text',
+      'redirect_chains': 'fix-redirects',
+      'missing_alt': 'fix-alt-text',
+      'meta_description_tag_missing_or_empty': 'fix-meta',
+    };
+
+    var cats = Object.entries(audit.categories);
+    // Render in pairs
+    for (var i = 0; i < cats.length; i += 2) {
+      html += '<div style="display:flex;gap:12px;margin-top:12px">';
+      for (var j = i; j < Math.min(i + 2, cats.length); j++) {
+        var slug = cats[j][0];
+        var cat = cats[j][1];
+        var severityColor = cat.severity === 'error' ? '#991b1b' : '#92400e';
+        var severityBg = cat.severity === 'error' ? '#fef2f2' : '#fffbeb';
+        var severityBorder = cat.severity === 'error' ? '#fecaca' : '#fde68a';
+        var icon = cat.severity === 'error' ? '&#128308;' : '&#128993;';
+        var fixCmd = fixCommands[slug];
+
+        html += '<div class="card" style="flex:1"><div class="card-header" style="background:' + severityBg + ';color:' + severityColor + '">';
+        html += '<h2>' + icon + ' ' + esc(cat.name) + ' (' + cat.count + ')</h2></div>';
+        html += '<div class="card-body" style="font-size:12px">';
+
+        // Show top items
+        var items = cat.items || [];
+        for (var k = 0; k < Math.min(5, items.length); k++) {
+          html += '<div style="padding:4px 0;border-bottom:1px solid #f3f4f6">' + esc(items[k].url);
+          if (items[k].detail) html += ' <span style="color:#6b7280">' + esc(items[k].detail) + '</span>';
+          html += '</div>';
+        }
+        if (cat.count > 5) html += '<div style="padding:4px 0;color:#6b7280">+ ' + (cat.count - 5) + ' more</div>';
+
+        if (fixCmd) {
+          html += '<button class="btn-sm" style="margin-top:8px;background:' + severityBg + ';border:1px solid ' + severityBorder + ';color:' + severityColor + '" onclick="runAgent(\'agents/technical-seo/index.js\', [\'' + fixCmd + '\'])">Fix</button>';
+        }
+        html += '</div></div>';
+      }
+      // If odd number, pad with empty div
+      if (i + 1 === cats.length) html += '<div style="flex:1"></div>';
+      html += '</div>';
+    }
+  }
+
+  // ── Theme SEO Audit card ───────────────────────────────────────────────────
+  html += '<div class="card" style="margin-top:16px"><div class="card-header accent-blue"><h2>&#128300; Theme SEO Audit</h2></div><div class="card-body">';
+
+  if (theme && theme.templates) {
+    // Lighthouse scores
+    var templates = theme.templates || {};
+    var templateKeys = Object.keys(templates);
+
+    // Aggregate lighthouse scores from first template that has them
+    var lhScores = null;
+    for (var ti = 0; ti < templateKeys.length; ti++) {
+      var t = templates[templateKeys[ti]];
+      if (t.lighthouse) { lhScores = t.lighthouse; break; }
+    }
+
+    if (lhScores) {
+      html += '<div style="display:flex;gap:12px;margin-bottom:16px">';
+      var scoreItems = [
+        { label: 'Performance', value: lhScores.performance, color: lhScores.performance >= 90 ? '#22c55e' : lhScores.performance >= 50 ? '#f97316' : '#ef4444' },
+        { label: 'SEO', value: lhScores.seo, color: lhScores.seo >= 90 ? '#22c55e' : lhScores.seo >= 50 ? '#f97316' : '#ef4444' },
+        { label: 'Accessibility', value: lhScores.accessibility, color: lhScores.accessibility >= 90 ? '#22c55e' : lhScores.accessibility >= 50 ? '#f97316' : '#ef4444' },
+      ];
+      scoreItems.forEach(function(si) {
+        html += '<div style="text-align:center;flex:1"><div style="width:60px;height:60px;border-radius:50%;border:4px solid ' + si.color + ';display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:18px;font-weight:700;color:' + si.color + '">' + si.value + '</div>';
+        html += '<div style="font-size:11px;color:#6b7280;margin-top:4px">' + si.label + '</div></div>';
+      });
+      if (lhScores.lcp_ms != null || lhScores.cls != null) {
+        html += '<div style="text-align:center;flex:1">';
+        if (lhScores.lcp_ms != null) html += '<div style="font-size:14px;font-weight:600;color:#1e40af">' + (lhScores.lcp_ms / 1000).toFixed(1) + 's</div><div style="font-size:11px;color:#6b7280">LCP</div>';
+        if (lhScores.cls != null) html += '<div style="font-size:14px;font-weight:600;color:#22c55e;margin-top:4px">' + lhScores.cls.toFixed(3) + '</div><div style="font-size:11px;color:#6b7280">CLS</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    // Per-template table
+    html += '<table class="data-table"><thead><tr><th>Template</th><th style="text-align:center">H1</th><th style="text-align:center">Canonical</th><th style="text-align:center">OG Tags</th><th style="text-align:center">Alt %</th><th style="text-align:center">Issues</th></tr></thead><tbody>';
+    templateKeys.forEach(function(key) {
+      var tmpl = templates[key];
+      var dom = tmpl.dom_audit || tmpl.headings || {};
+      var meta = tmpl.meta || {};
+      var imgs = tmpl.images || {};
+      var issues = tmpl.issues || [];
+
+      var h1ok = (dom.h1_count === 1);
+      var canonOk = meta.canonical_present !== false;
+      var ogOk = meta.og_tags ? (meta.og_tags.title && meta.og_tags.description && meta.og_tags.image) : false;
+      var altPct = imgs.alt_coverage != null ? Math.round(imgs.alt_coverage * 100) : '?';
+      var issueCount = issues.length;
+
+      html += '<tr>';
+      html += '<td>' + esc(key.replace(/_/g, ' ')) + '</td>';
+      html += '<td style="text-align:center;color:' + (h1ok ? '#22c55e' : '#dc2626') + '">' + (h1ok ? '&#10003;' : '&#10007;') + '</td>';
+      html += '<td style="text-align:center;color:' + (canonOk ? '#22c55e' : '#dc2626') + '">' + (canonOk ? '&#10003;' : '&#10007;') + '</td>';
+      html += '<td style="text-align:center;color:' + (ogOk ? '#22c55e' : '#f97316') + '">' + (ogOk ? '&#10003;' : '&#9888;') + '</td>';
+      html += '<td style="text-align:center">' + altPct + '%</td>';
+      html += '<td style="text-align:center;color:' + (issueCount > 0 ? '#dc2626' : '#6b7280') + '">' + issueCount + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+
+    if (theme.generated_at) html += '<div style="font-size:11px;color:#9ca3af;margin-top:8px">Last run: ' + esc(theme.generated_at) + '</div>';
+  } else {
+    html += '<div class="empty-state">No theme audit data yet.</div>';
+  }
+
+  html += '<button class="btn-sm" style="margin-top:8px" onclick="runAgent(\'agents/theme-seo-auditor/index.js\')">&#9654; Run Theme Audit</button>';
+  html += '</div></div>';
+
+  // Keep the run log elements
+  var logs = el.querySelectorAll('.run-log');
+  var logHtml = '';
+  logs.forEach(function(log) { logHtml += log.outerHTML; });
+
+  el.innerHTML = html + logHtml;
 }
 
 function renderOptimizeTab(d) {
@@ -3467,7 +3633,7 @@ setInterval(loadData, 3600000);
 var tabChatOpen = false;
 var tabChatMessages = { seo: [], cro: [], ads: [], optimize: [] };
 var tabChatInFlight = false;
-var TAB_CHAT_NAMES = { seo: 'SEO', cro: 'CRO', ads: 'Ads', 'ad-intelligence': 'Ad Intelligence', optimize: 'Optimize', creatives: 'Creatives' };
+var TAB_CHAT_NAMES = { seo: 'SEO', cro: 'CRO', ads: 'Ads', 'ad-intelligence': 'Ad Intelligence', optimize: 'Optimize', creatives: 'Creatives', 'tech-seo': 'Tech SEO' };
 
 function renderTabChatMessages() {
   var msgs = tabChatMessages[activeTab] || [];
@@ -3957,6 +4123,28 @@ function uploadContentGapZip() {
     }).catch(function() {
       if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
     });
+  };
+  input.click();
+}
+
+function uploadTechSeoZip() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.zip';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = function() {
+    document.body.removeChild(input);
+    var file = input.files[0];
+    if (!file) return;
+    fetch('/upload/tech-seo-zip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file,
+    }).then(function(r) { return r.json(); }).then(function(json) {
+      if (!json.ok) { alert('Upload failed: ' + json.error); return; }
+      runAgent('agents/technical-seo/index.js', ['audit'], function() { loadData(); });
+    }).catch(function() { alert('Upload failed'); });
   };
   input.click();
 }
