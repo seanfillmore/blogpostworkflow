@@ -246,29 +246,6 @@ export function checkAhrefsData(keyword) {
   return { ready, slug, dir: `data/ahrefs/${slug}/`, hasSerp, hasKeywords, hasHistory };
 }
 
-/**
- * Derive a shorter root keyword from a long-tail query.
- * "aluminum free antiperspirant what it is does it work" → "aluminum free antiperspirant"
- * Strips trailing filler words and caps at ~4 core words.
- */
-function deriveRootKeyword(keyword) {
-  // Common filler/question words that indicate the tail, not the core topic
-  const stopWords = new Set([
-    'what', 'why', 'how', 'when', 'where', 'who', 'which', 'does', 'do', 'is', 'it',
-    'the', 'a', 'an', 'to', 'for', 'and', 'or', 'of', 'in', 'on', 'at', 'with',
-    'that', 'this', 'work', 'works', 'look', 'know', 'about', 'actually', 'really',
-  ]);
-  const words = keyword.toLowerCase().split(/\s+/);
-  // Take words until we hit a stop word after the first 2-3 content words
-  const core = [];
-  for (const w of words) {
-    if (core.length >= 2 && stopWords.has(w)) break;
-    if (core.length >= 5) break;
-    core.push(w);
-  }
-  return core.join(' ');
-}
-
 export function getPendingAhrefsData(calItems) {
   const pending = [];
   const rejections = loadRejections();
@@ -279,25 +256,9 @@ export function getPendingAhrefsData(calItems) {
     if (hasBrief || hasPost) continue; // already past research stage
     if (isRejectedKw(item.keyword, rejections)) continue; // rejected by user
 
-    // Check exact keyword first
-    let status = checkAhrefsData(item.keyword);
-    let ahrefsKeyword = item.keyword;
-
-    // If exact keyword has no data and it's long-tail, try the root keyword
-    if (!status.ready && item.keyword.split(/\s+/).length > 4) {
-      const root = deriveRootKeyword(item.keyword);
-      if (root !== item.keyword) {
-        const rootStatus = checkAhrefsData(root);
-        if (rootStatus.ready || rootStatus.hasSerp || rootStatus.hasKeywords) {
-          status = rootStatus;
-          ahrefsKeyword = root;
-        } else {
-          // Root data doesn't exist either — suggest searching for root keyword
-          ahrefsKeyword = root;
-        }
-      }
-    }
-
+    // Check for Ahrefs data using the slug as directory name.
+    // The user uploads whatever data they choose — we just check if it's there.
+    const status = checkAhrefsData(item.keyword);
     if (!status.ready) {
       const missing = [];
       if (!status.hasSerp)     missing.push('SERP Overview (required)');
@@ -305,7 +266,6 @@ export function getPendingAhrefsData(calItems) {
       if (!status.hasHistory)  missing.push('Volume History (optional)');
       pending.push({
         keyword:     item.keyword,
-        ahrefsKeyword,
         slug,
         publishDate: item.publishDate.toISOString(),
         dir:         status.dir,

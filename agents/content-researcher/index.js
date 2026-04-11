@@ -637,30 +637,10 @@ async function researchKeyword(keyword, kwData = {}, { allowFallback = false } =
   }
 
   // Load manually-provided Ahrefs data if available.
-  // For long-tail keywords, try the root keyword if exact match has no data.
-  // e.g. "aluminum free antiperspirant what it is does it work" → "aluminum free antiperspirant"
-  let ahrefsData = loadAhrefsData(keyword);
-  let ahrefsSource = keyword;
-  if (!ahrefsData && keyword.split(/\s+/).length > 4) {
-    const rootWords = keyword.split(/\s+/);
-    const stopWords = new Set(['what','why','how','when','where','who','which','does','do','is','it','the','a','an','to','for','and','or','of','in','on','at','with','that','this','work','works','look','know','about','actually','really']);
-    const core = [];
-    for (const w of rootWords) {
-      if (core.length >= 2 && stopWords.has(w.toLowerCase())) break;
-      if (core.length >= 5) break;
-      core.push(w);
-    }
-    const rootKw = core.join(' ');
-    if (rootKw !== keyword) {
-      ahrefsData = loadAhrefsData(rootKw);
-      if (ahrefsData) {
-        ahrefsSource = rootKw;
-        console.log(`  Note: using root keyword "${rootKw}" Ahrefs data for long-tail "${keyword}"`);
-      }
-    }
-  }
+  // Uses whatever data the user uploaded to data/ahrefs/{slug}/.
+  const ahrefsData = loadAhrefsData(keyword);
   if (ahrefsData) {
-    console.log(`\n  Keyword: "${ahrefsSource}" (using Ahrefs data from data/ahrefs/${slugify(ahrefsSource)}/)`);
+    console.log(`\n  Keyword: "${keyword}" (using Ahrefs data from data/ahrefs/${slug}/)`);
     if (ahrefsData.overview) Object.assign(kwData, {
       search_volume: kwData.search_volume ?? ahrefsData.overview.volume,
       keyword_difficulty: kwData.keyword_difficulty ?? ahrefsData.overview.keyword_difficulty,
