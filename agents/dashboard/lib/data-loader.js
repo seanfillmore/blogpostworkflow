@@ -216,6 +216,25 @@ export function aggregateData() {
   const legacyTriage    = readJsonIfExists(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   const cannibalization = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'latest.json'));
 
+  // Rejected images — posts where CD rejected all image attempts
+  const rejectedImagesDir = join(ROOT, 'data', 'images', 'rejected');
+  let rejectedImages = [];
+  if (existsSync(rejectedImagesDir)) {
+    for (const dir of readdirSync(rejectedImagesDir)) {
+      const recPath = join(rejectedImagesDir, dir, 'rejection.json');
+      if (existsSync(recPath)) {
+        try {
+          const rec = JSON.parse(readFileSync(recPath, 'utf8'));
+          // Add image filenames for the card
+          const imageFiles = readdirSync(join(rejectedImagesDir, dir))
+            .filter(f => f.endsWith('.webp') || f.endsWith('.png') || f.endsWith('.jpg'));
+          rec.imageFiles = imageFiles;
+          rejectedImages.push(rec);
+        } catch { /* skip */ }
+      }
+    }
+  }
+
   // Performance engine queue — items awaiting review/approval.
   // Read directly from the queue directory rather than importing the queue
   // module (which would require async import in this sync function).
@@ -301,6 +320,7 @@ export function aggregateData() {
     performanceQueue,
     legacyTriage,
     cannibalization,
+    rejectedImages,
   };
 }
 

@@ -151,6 +151,7 @@ function renderOptimizeTab(d) {
     renderPerformanceQueueCard(d) +
     renderCannibalizationCard(d) +
     renderMetaTestCard(d) +
+    renderRejectedImagesCard(d) +
     renderIndexingCard(d) +
     renderActionRequired(d) +
     renderQuickWinCard(d) +
@@ -301,6 +302,80 @@ function renderMetaTestCard(d) {
 
   html += '</div></div>';
   return html;
+}
+
+function renderRejectedImagesCard(d) {
+  var items = d.rejectedImages || [];
+  if (items.length === 0) return '';
+
+  var html = '<div class="card"><div class="card-header accent-red"><h2>Blocked Images <span class="badge">' + items.length + '</span></h2></div><div class="card-body">';
+  html += '<p style="color:#6b7280;margin-bottom:12px">These posts failed creative director review. Select an image to use or retry generation.</p>';
+
+  items.forEach(function(item) {
+    html += '<div style="border-bottom:1px solid var(--border);padding:12px 0">';
+    html += '<div style="font-weight:600;margin-bottom:8px">' + esc(item.title || item.slug) + '</div>';
+
+    // Show rejected images as thumbnails
+    if (item.imageFiles && item.imageFiles.length > 0) {
+      html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
+      item.imageFiles.forEach(function(filename) {
+        var imgUrl = '/api/rejected-images/' + encodeURIComponent(item.slug) + '/' + encodeURIComponent(filename);
+        html += '<div style="text-align:center">';
+        html += '<img src="' + imgUrl + '" style="width:200px;height:auto;border-radius:6px;border:2px solid #e5e7eb;cursor:pointer" onclick="acceptRejectedImage(\'' + esc(item.slug) + '\',\'' + esc(filename) + '\')">';
+        html += '<div style="font-size:11px;color:var(--muted);margin-top:4px">' + esc(filename.replace('.webp','')) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Show rejection reasons
+    if (item.images && item.images.length > 0) {
+      html += '<div style="font-size:12px;color:#991b1b;margin-bottom:8px">';
+      item.images.forEach(function(img) {
+        if (img.reason) html += '<div>Attempt ' + img.attempt + ': ' + esc(img.reason) + '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Action buttons
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button class="btn-sm" onclick="retryRejectedImage(\'' + esc(item.slug) + '\')">Retry Generation</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  html += '</div></div>';
+  return html;
+}
+
+function acceptRejectedImage(slug, filename) {
+  if (!confirm('Use "' + filename + '" as the image for "' + slug + '"?')) return;
+  fetch('/api/rejected-images/' + encodeURIComponent(slug) + '/accept', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: filename }),
+  }).then(function(r) { return r.json(); }).then(function(json) {
+    if (json.ok) {
+      loadData();
+    } else {
+      alert('Failed: ' + (json.error || 'Unknown error'));
+    }
+  });
+}
+
+function retryRejectedImage(slug) {
+  if (!confirm('Clear rejected images for "' + slug + '" and retry? The next pipeline run will regenerate the image.')) return;
+  fetch('/api/rejected-images/' + encodeURIComponent(slug) + '/retry', {
+    method: 'POST',
+  }).then(function(r) { return r.json(); }).then(function(json) {
+    if (json.ok) {
+      loadData();
+      // Also trigger the image generator immediately
+      runAgent('agents/image-generator/index.js', ['data/posts/' + slug + '.json']);
+    } else {
+      alert('Failed: ' + (json.error || 'Unknown error'));
+    }
+  });
 }
 
 function renderIndexingCard(d) {
