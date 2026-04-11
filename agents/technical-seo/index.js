@@ -1733,8 +1733,8 @@ function captureFixResults(command, dryRun) {
         const trimmed = line.trim();
         if (!trimmed) continue;
 
-        // Summary lines: "Fixed: N pages" / "Created: N redirects, skipped: M"
-        const fixedMatch = trimmed.match(/(?:Fixed|Created|Would fix|Would create):\s*(\d+)/);
+        // Summary lines: "Fixed: N pages" / "Created: N redirects, skipped: M" / "Noindexed: N pages" / "Processed: N posts"
+        const fixedMatch = trimmed.match(/(?:Fixed|Created|Would fix|Would create|Noindexed|Would noindex|Processed|Would process):\s*(\d+)/);
         if (fixedMatch) {
           const n = parseInt(fixedMatch[1], 10);
           totalFixed += n;
@@ -1745,8 +1745,8 @@ function captureFixResults(command, dryRun) {
           continue;
         }
 
-        // Individual fix lines: "Fix: /old → /new" or "path — N link(s) fixed"
-        if (trimmed.includes('link(s) fixed') || /^\s*Fix:/.test(line)) {
+        // Individual fix lines: "Fix: /old → /new" or "path — N link(s) fixed" or "Noindex: /path"
+        if (trimmed.includes('link(s) fixed') || /^\s*Fix:/.test(line) || /^Noindex:/.test(trimmed) || /^Internal links added/.test(trimmed)) {
           actions.push({ action: trimmed, status: dryRun ? 'would-fix' : 'fixed' });
           continue;
         }
