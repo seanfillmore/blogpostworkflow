@@ -37,6 +37,7 @@ export const GA4_SNAPSHOTS_DIR        = join(ROOT, 'data', 'snapshots', 'ga4');
 export const GOOGLE_ADS_SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'google-ads');
 export const CRO_REPORTS_DIR          = join(ROOT, 'data', 'reports', 'cro');
 export const META_TESTS_DIR           = join(ROOT, 'data', 'meta-tests');
+export const REJECTED_IMAGES_DIR     = join(ROOT, 'data', 'images', 'rejected');
 
 export const AHREFS_DIR      = join(ROOT, 'data', 'ahrefs');
 export const CONTENT_GAP_DIR = join(ROOT, 'data', 'content_gap');
