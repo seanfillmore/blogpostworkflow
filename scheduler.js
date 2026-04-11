@@ -192,15 +192,12 @@ if (failures.length > 0) {
   }
   const criticalFailures = failures.filter(f => f.critical);
   if (criticalFailures.length > 0) {
-    // Send immediate alert for critical failures (bypass deferred)
-    const origDeferred = process.env.NOTIFY_DEFERRED;
-    delete process.env.NOTIFY_DEFERRED;
     await notify({
       subject: `⚠️ Scheduler: ${criticalFailures.length} critical failure(s)`,
       body: criticalFailures.map(f => `${f.name}: ${f.error}`).join('\n'),
       status: 'error',
+      immediate: true,
     }).catch(() => {});
-    if (origDeferred) process.env.NOTIFY_DEFERRED = origDeferred;
   }
 }
 
