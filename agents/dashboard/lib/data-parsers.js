@@ -275,7 +275,15 @@ export function getPendingAhrefsData(calItems) {
     if (index) {
       const kwSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
       const kwEntry = index.keywords[kwSlug];
-      const clusterName = kwEntry?.cluster;
+      // If keyword isn't in the index, assign cluster from the keyword text
+      const KNOWN_CATS = ['soap', 'toothpaste', 'lotion', 'deodorant', 'lip balm', 'coconut oil', 'shampoo', 'conditioner', 'sunscreen'];
+      let clusterName = kwEntry?.cluster;
+      if (!clusterName) {
+        const kw = item.keyword.toLowerCase();
+        for (const cat of KNOWN_CATS) {
+          if (kw.includes(cat)) { clusterName = cat; break; }
+        }
+      }
       const cluster = clusterName ? index.clusters[clusterName] : null;
       if (cluster && cluster.all_matching_terms?.length > 0) {
         clusterInfo = { name: clusterName, terms: cluster.all_matching_terms.length, serps: (cluster.common_competitors || []).length };
