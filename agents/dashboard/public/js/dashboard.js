@@ -1129,35 +1129,27 @@ function renderDataNeeded(d) {
 
   body.innerHTML = items.map(item => {
     const fileChecks = [
-      { label: 'SERP Overview',  present: item.hasSerp },
-      { label: 'Matching Terms', present: item.hasKeywords },
-      { label: 'Volume History', present: item.hasHistory },
+      { label: 'SERP',  present: item.hasSerp },
+      { label: 'Terms', present: item.hasKeywords },
+      { label: 'Vol',   present: item.hasHistory },
     ];
     const fileTags = fileChecks.map(f =>
       '<span class="file-tag ' + (f.present ? 'file-tag-present' : 'file-tag-missing') + '">' +
       (f.present ? '✓ ' : '✗ ') + f.label + '</span>'
     ).join('');
 
-    var statusIcon = (item.hasSerp && item.hasKeywords) ? '&#10003;' : '&#8943;';
-    var statusColor = (item.hasSerp && item.hasKeywords) ? 'color:#065f46' : 'color:#7f1d1d';
-    return '<details style="border-bottom:1px solid var(--border);padding:6px 0">' +
-      '<summary style="list-style:none;display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:4px 2px">' +
-        '<span style="' + statusColor + ';font-size:0.8rem;width:1rem;text-align:center">' + statusIcon + '</span>' +
-        '<span style="flex:1;font-weight:500;font-size:0.85rem">' + esc(item.keyword) + '</span>' +
-        '<span style="font-size:0.78rem;color:var(--muted);margin-right:0.5rem">Scheduled ' + fmtDate(item.publishDate) + '</span>' +
-        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="event.preventDefault();uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload Zip</button>' +
-      '</summary>' +
-      '<div style="padding:8px 4px 4px 1.5rem;font-size:0.82rem">' +
-        '<div style="color:var(--muted);margin-bottom:4px">' + esc(item.dir) + '</div>' +
-        '<div style="margin-bottom:6px">' + fileTags + '</div>' +
-        '<div class="data-instructions">' +
-          'In Ahrefs Keywords Explorer → search "<strong>' + esc(item.keyword) + '</strong>" →<br>' +
-          (!item.hasSerp     ? '&nbsp;• <strong>SERP Overview</strong> tab → Export → save to folder above<br>' : '') +
-          (!item.hasKeywords ? '&nbsp;• <strong>Matching Terms</strong> tab → Export (vol ≥100, KD ≤40) → save to folder above<br>' : '') +
-          (!item.hasHistory  ? '&nbsp;• <em>Optional:</em> Overview → Volume History chart → Export → save to folder above<br>' : '') +
+    // Show the Ahrefs search keyword (root keyword if long-tail has no data)
+    var searchKw = item.ahrefsKeyword || item.keyword;
+
+    return '<div style="border-bottom:1px solid var(--border);padding:8px 2px;display:flex;align-items:center;gap:0.5rem">' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:500;font-size:0.85rem">' + esc(item.keyword) + '</div>' +
+          (searchKw !== item.keyword ? '<div style="font-size:0.75rem;color:var(--muted)">Ahrefs: "' + esc(searchKw) + '"</div>' : '') +
         '</div>' +
-      '</div>' +
-    '</details>';
+        '<div style="display:flex;gap:3px;margin-right:0.5rem">' + fileTags + '</div>' +
+        '<span style="font-size:0.75rem;color:var(--muted);white-space:nowrap">' + fmtDate(item.publishDate) + '</span>' +
+        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(searchKw).replace(/"/g, '&quot;') + ')">&#8593; Upload</button>' +
+    '</div>';
   }).join('');
 }
 
