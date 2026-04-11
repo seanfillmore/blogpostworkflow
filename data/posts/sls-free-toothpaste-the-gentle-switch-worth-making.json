@@ -10,5 +10,6 @@
   "shopify_handle": "sls-free-toothpaste-the-gentle-switch-worth-making",
   "shopify_publish_at": "2026-03-19T09:00:00-06:00",
   "legacy_synced_at": "2026-04-09T23:17:12.643Z",
-  "legacy_source": "sync-legacy-posts.js"
+  "legacy_source": "sync-legacy-posts.js",
+  "shopify_status": "published"
 }
