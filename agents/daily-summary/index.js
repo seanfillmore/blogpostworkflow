@@ -481,6 +481,30 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
     } catch { /* ignore */ }
   }
 
+  // Blocked images section — posts where CD rejected all image attempts
+  let blockedImagesSection = '';
+  const rejectedDir = join(ROOT, 'data', 'images', 'rejected');
+  if (existsSync(rejectedDir)) {
+    try {
+      const rejections = [];
+      for (const dir of readdirSync(rejectedDir)) {
+        const recPath = join(rejectedDir, dir, 'rejection.json');
+        if (existsSync(recPath)) {
+          try { rejections.push(JSON.parse(readFileSync(recPath, 'utf8'))); } catch { /* skip */ }
+        }
+      }
+      if (rejections.length > 0) {
+        blockedImagesSection = '<div class="section"><div class="section-title" style="color:#991b1b;border-bottom-color:#fecaca">&#9888;&#65039; Blocked Images &mdash; ' + rejections.length + ' post' + (rejections.length > 1 ? 's' : '') + ' need image approval</div>';
+        for (const r of rejections) {
+          blockedImagesSection += '<div style="padding:6px 0;border-bottom:1px solid #f3f4f6"><strong>' + esc(r.title) + '</strong> &mdash; ' + r.attempts + ' attempt' + (r.attempts > 1 ? 's' : '') + ' rejected';
+          if (r.images?.[0]?.reason) blockedImagesSection += '<br><span style="font-size:12px;color:#6b7280">' + esc(r.images[0].reason) + '</span>';
+          blockedImagesSection += '</div>';
+        }
+        blockedImagesSection += '<p style="font-size:12px;color:#6b7280;margin:8px 0 0">Review on the dashboard — select a rejected image or request more attempts.</p></div>';
+      }
+    } catch { /* ignore */ }
+  }
+
   // Backlinks section
   let backlinksSection = '';
   const backlinksDir = join(ROOT, 'data', 'reports', 'backlinks');
@@ -569,7 +593,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
     }
   }
 
-  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection;
+  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -577,6 +601,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
   ${reviewSection}
+  ${blockedImagesSection}
   ${queueSection}
   ${blockedSection}
   ${flopSection}

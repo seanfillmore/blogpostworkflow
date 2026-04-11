@@ -38,7 +38,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenAI } from '@google/genai';
 import OpenAI from 'openai';
 import sharp from 'sharp';
-import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync, unlinkSync, rmdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getProducts } from '../../lib/shopify.js';
@@ -433,8 +433,10 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
 
 // Hard limit on Gemini regeneration attempts to prevent runaway API costs.
 // Total generations = MAX_RETRIES + 1 (initial attempt + this many retries).
-// After the limit is hit, the last generated image is saved regardless of CD verdict.
-const MAX_RETRIES = 3;
+// If all attempts fail CD review, images are saved to data/images/rejected/{slug}/
+// and the pipeline is blocked until manually resolved.
+const MAX_RETRIES = 2; // 3 total attempts (initial + 2 retries)
+const REJECTED_DIR = join(ROOT, 'data', 'images', 'rejected');
 
 // ── WebP compression ──────────────────────────────────────────────────────────
 //
@@ -787,6 +789,7 @@ async function generateImage(metaPath) {
   let lastRejectionNote = ''; // passed back into the next prompt on retry
   let lastImagePath = '';     // path of the last generated image file
   let lastImageMimeType = 'image/png';
+  const rejectedImages = [];  // track all rejected attempts for manual review
 
   while (attempt <= MAX_RETRIES && !approved) {
     if (attempt > 0) {
@@ -914,6 +917,23 @@ async function generateImage(metaPath) {
       saveSceneLog(sceneLog);
       console.log(`  Scene logged: "${review.scene}"`);
     } else {
+      // Save rejected image for manual review
+      const rejSlugDir = join(REJECTED_DIR, slug);
+      mkdirSync(rejSlugDir, { recursive: true });
+      const rejFilename = `attempt-${attempt + 1}.webp`;
+      const rejPath = join(rejSlugDir, rejFilename);
+      try {
+        await sharp(imagePath).resize(1280, null, { withoutEnlargement: true }).webp({ quality: 80 }).toFile(rejPath);
+        rejectedImages.push({
+          path: rejPath,
+          attempt: attempt + 1,
+          failures: review.failures,
+          reason: review.rejectionReason,
+          scene: review.scene,
+        });
+        console.log(`  Saved rejected image: ${rejPath}`);
+      } catch { /* ignore save failure */ }
+
       // Feed specific rejection reason back into next prompt so Claude can avoid those elements
       lastRejectionNote = review.rejectionReason || review.failures.join('; ');
       usedScenes.push(review.scene);
@@ -923,14 +943,67 @@ async function generateImage(metaPath) {
   }
 
   if (!approved) {
-    console.log(`  Warning: image did not pass creative director review after ${MAX_RETRIES + 1} attempts — saving last attempt to avoid further API costs`);
+    // Hard gate: do NOT save rejected image as the post image. Block the pipeline.
+    console.error(`  ✗ Image failed creative director review after ${MAX_RETRIES + 1} attempts.`);
+    console.error(`  ${rejectedImages.length} rejected image(s) saved to data/images/rejected/${slug}/`);
+    console.error('  Pipeline blocked — resolve via dashboard or re-run image generator.');
+
+    // Write rejection record for dashboard and daily summary
+    const rejectionRecord = {
+      slug,
+      title: meta.title,
+      keyword: meta.target_keyword || slug,
+      attempts: rejectedImages.length,
+      rejected_at: new Date().toISOString(),
+      images: rejectedImages.map((r) => ({
+        path: r.path,
+        attempt: r.attempt,
+        failures: r.failures,
+        reason: r.reason,
+      })),
+    };
+    const rejRecordPath = join(REJECTED_DIR, slug, 'rejection.json');
+    writeFileSync(rejRecordPath, JSON.stringify(rejectionRecord, null, 2));
+
+    // Stamp post metadata so the pipeline knows the image is blocked
+    meta.image_blocked = true;
+    meta.image_blocked_at = new Date().toISOString();
+    meta.image_blocked_reason = `CD rejected ${rejectedImages.length} attempt(s): ${rejectedImages.map(r => r.failures.join(', ')).join('; ')}`;
+    writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
     sceneLog.push({ slug, scene: 'unknown (not approved)', templateKey: finalTemplateKey, prompt: finalPrompt.slice(0, 200) });
     saveSceneLog(sceneLog);
+
+    await notify({
+      subject: `Image blocked: ${meta.title}`,
+      body: `Creative director rejected ${rejectedImages.length} attempt(s) for "${meta.title}".\nReasons: ${rejectedImages.map(r => r.reason || r.failures.join(', ')).join('; ')}\nResolve on the dashboard or re-run: node agents/image-generator/index.js data/posts/${slug}.json`,
+      status: 'error',
+      category: 'pipeline',
+    }).catch(() => {});
+
+    // Return null to signal failure — pipeline should stop
+    return null;
   }
 
   if (!lastImagePath) {
     console.error('  Error: no image was generated.');
     return null;
+  }
+
+  // Clean up rejected images directory on success (approved image wins)
+  const rejSlugDir = join(REJECTED_DIR, slug);
+  if (existsSync(rejSlugDir)) {
+    try {
+      for (const f of readdirSync(rejSlugDir)) unlinkSync(join(rejSlugDir, f));
+      rmdirSync(rejSlugDir);
+    } catch { /* ignore */ }
+  }
+
+  // Clear any previous image_blocked flag
+  if (meta.image_blocked) {
+    delete meta.image_blocked;
+    delete meta.image_blocked_at;
+    delete meta.image_blocked_reason;
   }
 
   // Compress to WebP
