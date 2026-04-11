@@ -344,8 +344,9 @@ function renderIndexingCard(d) {
     '</div>').join('');
   }
 
-  // Actionable critical items (Tier 3 manual fixes)
-  const critical = (idx.results || []).filter((r) => r.verdict && r.verdict.severity === 'critical' && !['resubmit_sitemap', 'submit_indexing_api'].includes(r.verdict.action));
+  // Actionable critical items (Tier 3 manual fixes only — exclude auto-handled actions)
+  const autoHandledActions = ['resubmit_sitemap', 'submit_indexing_api', 'content_quality_review'];
+  const critical = (idx.results || []).filter((r) => r.verdict && r.verdict.severity === 'critical' && !autoHandledActions.includes(r.verdict.action));
   let criticalRows = '';
   if (critical.length > 0) {
     criticalRows = critical.map((r) => '<div class="action-row">' +

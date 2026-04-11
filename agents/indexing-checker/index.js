@@ -80,7 +80,16 @@ function listPublishedPosts() {
   for (const f of readdirSync(POSTS_DIR).filter((x) => x.endsWith('.json'))) {
     try {
       const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-      if (meta.shopify_status !== 'published' || !meta.shopify_url) continue;
+      // Treat as published if: explicit status, OR legacy post with article ID + publish date
+      const isPublished = meta.shopify_status === 'published'
+        || (meta.shopify_article_id && meta.shopify_publish_at && !meta.shopify_status);
+      if (!isPublished) continue;
+      // Build URL from handle if shopify_url is missing (legacy posts)
+      if (!meta.shopify_url && meta.shopify_handle) {
+        const blogHandle = meta.shopify_blog_handle || 'news';
+        meta.shopify_url = `${CANONICAL_ROOT}/blogs/${blogHandle}/${meta.shopify_handle}`;
+      }
+      if (!meta.shopify_url) continue;
       // Fill in missing slug from the filename so log messages and downstream
       // stamping work even on legacy posts that weren't written by the
       // current writer. The canonical source of slug is the filename.
