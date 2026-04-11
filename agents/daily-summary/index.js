@@ -513,29 +513,60 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   // A/B Test Results section
   let abTestSection = '';
   const metaTestsDir = join(ROOT, 'data', 'meta-tests');
+  const allTests = [];
+
+  // Read new-format tests from data/meta-tests/*.json
   if (existsSync(metaTestsDir)) {
     try {
-      const tests = readdirSync(metaTestsDir)
+      const newTests = readdirSync(metaTestsDir)
         .filter(f => f.endsWith('.json'))
         .map(f => { try { return JSON.parse(readFileSync(join(metaTestsDir, f), 'utf8')); } catch { return null; } })
         .filter(Boolean);
-      const active = tests.filter(t => t.status === 'active');
-      const recentConcluded = tests.filter(t => t.status === 'concluded' && t.concludedDate)
-        .sort((a, b) => (b.concludedDate || '').localeCompare(a.concludedDate || ''))
-        .slice(0, 3);
-      if (active.length > 0 || recentConcluded.length > 0) {
-        abTestSection = `<div class="section"><div class="section-title">&#9878;&#65039; Meta A/B Tests</div>`;
-        if (active.length > 0) {
-          abTestSection += `<p>${active.length} active test${active.length > 1 ? 's' : ''} running</p>`;
+      allTests.push(...newTests);
+    } catch { /* ignore */ }
+  }
+
+  // Read legacy tests from data/reports/meta-ab/meta-ab-tracker.json
+  const legacyTrackerPath = join(ROOT, 'data', 'reports', 'meta-ab', 'meta-ab-tracker.json');
+  if (existsSync(legacyTrackerPath)) {
+    try {
+      const legacyEntries = JSON.parse(readFileSync(legacyTrackerPath, 'utf8'));
+      if (Array.isArray(legacyEntries)) {
+        for (const entry of legacyEntries) {
+          if (!entry.testedAt) continue;
+          // Normalize legacy format to match new-format fields
+          allTests.push({
+            slug: entry.slug || entry.page || '',
+            status: entry.status || 'concluded',
+            concludedDate: entry.concludedDate || entry.testedAt,
+            originalTitle: entry.originalTitle,
+            proposedTitle: entry.proposedTitle,
+            winner: entry.winner || (entry.kept === 'proposed' ? 'B' : 'A'),
+            currentDelta: entry.currentDelta ?? entry.ctrDelta ?? null,
+            _source: 'legacy',
+          });
         }
-        for (const t of recentConcluded) {
-          const delta = t.currentDelta != null ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp' : 'n/a';
-          const color = t.winner === 'B' ? '#10b981' : '#ef4444';
-          abTestSection += `<p><strong>${esc(t.slug)}</strong>: Variant ${t.winner} wins (<span style="color:${color}">${delta}</span>)</p>`;
-        }
-        abTestSection += '</div>';
       }
     } catch { /* ignore */ }
+  }
+
+  {
+    const active = allTests.filter(t => t.status === 'active');
+    const recentConcluded = allTests.filter(t => t.status === 'concluded' && (t.concludedDate || t.testedAt))
+      .sort((a, b) => ((b.concludedDate || b.testedAt || '').localeCompare(a.concludedDate || a.testedAt || '')))
+      .slice(0, 5);
+    if (active.length > 0 || recentConcluded.length > 0) {
+      abTestSection = `<div class="section"><div class="section-title">&#9878;&#65039; Meta A/B Tests</div>`;
+      if (active.length > 0) {
+        abTestSection += `<p>${active.length} active test${active.length > 1 ? 's' : ''} running</p>`;
+      }
+      for (const t of recentConcluded) {
+        const delta = t.currentDelta != null ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp' : 'n/a';
+        const color = t.winner === 'B' ? '#10b981' : '#ef4444';
+        abTestSection += `<p><strong>${esc(t.slug)}</strong>: Variant ${t.winner} wins (<span style="color:${color}">${delta}</span>)</p>`;
+      }
+      abTestSection += '</div>';
+    }
   }
 
   const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection;

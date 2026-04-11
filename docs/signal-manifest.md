@@ -111,6 +111,14 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | `data/posts/<slug>.json#legacy_bucket` | `legacy-triage` | `performance-engine`, `content-refresher`, `refresh-runner`, `meta-optimizer` | healthy |
 | `data/posts/<slug>.json#legacy_locked` | `legacy-triage` (auto-lock winners) | `content-refresher`, `refresh-runner`, `meta-optimizer` (skip if locked) | healthy |
 
+### Deprecated / audit-only signals
+
+| Signal | Writer | Consumers | Status |
+|---|---|---|---|
+| `data/reports/gsc-query-miner/*.md` | `gsc-query-miner` | None (superseded by `gsc-opportunity` agent) | deprecated |
+| `data/reports/seo-reporter/*.md` | `seo-reporter` | None (data covered by daily-summary SEO section + rank-alerter) | deprecated |
+| `data/reports/product-schema/*.md` | `product-schema` | human review (debugging) | audit-only |
+
 ---
 
 ## Producer / consumer matrix (SEO + content agents only)
