@@ -70,8 +70,16 @@ const claude = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 // ── CSV parsing ───────────────────────────────────────────────────────────────
 
 function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
+  // Handle UTF-16 LE BOM — strip null bytes and BOM character
+  if (text.charCodeAt(0) === 0xFFFE || text.charCodeAt(0) === 0xFEFF || text.includes('\x00')) {
+    text = text.replace(/\x00/g, '').replace(/^\uFEFF|\uFFFE/g, '');
+  }
+
+  const lines = text.trim().split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
+
+  // Auto-detect delimiter: tab or comma
+  const delimiter = lines[0].includes('\t') ? '\t' : ',';
 
   // Parse header — handle quoted fields
   const parseRow = (line) => {
@@ -80,7 +88,7 @@ function parseCSV(text) {
     let cur = '';
     for (const ch of line) {
       if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { fields.push(cur.trim()); cur = ''; }
+      else if (ch === delimiter && !inQuote) { fields.push(cur.trim()); cur = ''; }
       else { cur += ch; }
     }
     fields.push(cur.trim());
@@ -96,6 +104,20 @@ function parseCSV(text) {
   });
 }
 
+function readCSVFile(filePath) {
+  // Read as buffer first to detect UTF-16 LE encoding
+  const buf = readFileSync(filePath);
+  // UTF-16 LE BOM: FF FE
+  if (buf.length >= 2 && buf[0] === 0xFF && buf[1] === 0xFE) {
+    return buf.toString('utf16le');
+  }
+  // UTF-8 BOM: EF BB BF
+  if (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
+    return buf.toString('utf8').slice(1);
+  }
+  return buf.toString('utf8');
+}
+
 function loadCSV(filename) {
   // Try exact match first (filename without extension), then prefix match excluding -links variants
   const files = readdirSync(CSV_DIR).filter((f) => f.endsWith('.csv'));
@@ -103,7 +125,7 @@ function loadCSV(filename) {
   const match = exact || files.find((f) => f.startsWith(filename) && !f.includes('-links'));
   if (!match) return [];
   try {
-    return parseCSV(readFileSync(join(CSV_DIR, match), 'utf8'));
+    return parseCSV(readCSVFile(join(CSV_DIR, match)));
   } catch { return []; }
 }
 
@@ -112,7 +134,7 @@ function loadAllCSVs() {
   const result = {};
   for (const f of files) {
     const key = f.replace('.csv', '');
-    try { result[key] = parseCSV(readFileSync(join(CSV_DIR, f), 'utf8')); }
+    try { result[key] = parseCSV(readCSVFile(join(CSV_DIR, f))); }
     catch { result[key] = []; }
   }
   return result;
