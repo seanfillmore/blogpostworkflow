@@ -68,8 +68,8 @@
   </div>
   <div class="tab-actions-group" id="tab-actions-tech-seo" style="display:none">
     <button onclick="runAgent('agents/technical-seo/index.js', ['audit'])" data-tip="Parse CSV data and generate audit report">Run Audit</button>
-    <button onclick="runAgent('agents/technical-seo/index.js', ['fix-all', '--dry-run'])" data-tip="Preview all fixes without applying">Fix All (dry run)</button>
-    <button onclick="if(confirm('Apply all fixes to Shopify?')) runAgent('agents/technical-seo/index.js', ['fix-all'])" data-tip="Apply all automated fixes to Shopify">Fix All (apply)</button>
+    <button onclick="runTechSeoFix('fix-all --dry-run')" data-tip="Preview all fixes without applying">Fix All (dry run)</button>
+    <button onclick="if(confirm('Apply all fixes to Shopify?')) runTechSeoFix('fix-all')" data-tip="Apply all automated fixes to Shopify">Fix All (apply)</button>
     <button onclick="runAgent('agents/theme-seo-auditor/index.js')" data-tip="Run Puppeteer + Lighthouse audit on all template types">Run Theme Audit</button>
     <button id="btn-chat-tech-seo" class="btn-open-chat" onclick="toggleTabChat('tech-seo')" data-tip="Ask Claude about Technical SEO data">&#x2736; Chat</button>
   </div>

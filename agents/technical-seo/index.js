@@ -1494,34 +1494,54 @@ function captureFixResults(command, dryRun) {
     finish() {
       console.log = origLog;
 
-      const fixed = [];
+      const actions = [];
       const skipped = [];
       const errors = [];
       const manual = [];
+      let totalFixed = 0;
+      let totalSkipped = 0;
 
       for (const line of log) {
-        if (/^\s*(Fix|✓|Created|→)/.test(line) || line.includes('link(s) fixed') || line.includes('→')) {
-          if (line.includes('[DRY RUN]')) fixed.push({ action: line.trim(), status: 'would-fix' });
-          else fixed.push({ action: line.trim(), status: 'fixed' });
-        }
-        if (/^\s*\[SKIP\]/.test(line)) skipped.push(line.trim());
-        if (/^\s*Error:|^\s*✗/.test(line)) errors.push(line.trim());
-        if (/theme-level|cannot be fixed|manual|requires/i.test(line) && !/^\s*$/.test(line)) manual.push(line.trim());
-      }
+        const trimmed = line.trim();
+        if (!trimmed) continue;
 
-      // Extract summary counts from final log lines
-      const summaryMatch = log.join('\n').match(/(?:Fixed|Created|Would fix|Would create):\s*(\d+)/);
-      const totalFixed = summaryMatch ? parseInt(summaryMatch[1], 10) : fixed.length;
+        // Summary lines: "Fixed: N pages" / "Created: N redirects, skipped: M"
+        const fixedMatch = trimmed.match(/(?:Fixed|Created|Would fix|Would create):\s*(\d+)/);
+        if (fixedMatch) {
+          const n = parseInt(fixedMatch[1], 10);
+          totalFixed += n;
+          actions.push({ action: trimmed, status: dryRun ? 'would-fix' : 'fixed', count: n });
+          // Also extract skipped from "Created: N, skipped: M" pattern
+          const skipMatch = trimmed.match(/skipped:\s*(\d+)/);
+          if (skipMatch) totalSkipped += parseInt(skipMatch[1], 10);
+          continue;
+        }
+
+        // Individual fix lines: "Fix: /old → /new" or "path — N link(s) fixed"
+        if (trimmed.includes('link(s) fixed') || /^\s*Fix:/.test(line)) {
+          actions.push({ action: trimmed, status: dryRun ? 'would-fix' : 'fixed' });
+          continue;
+        }
+
+        // Skip lines
+        if (/^\[SKIP\]/.test(trimmed)) { skipped.push(trimmed); totalSkipped++; continue; }
+
+        // Error lines
+        if (/^Error:|^✗/.test(trimmed)) { errors.push(trimmed); continue; }
+
+        // Manual attention
+        if (/theme-level|cannot be fixed|manual|requires liquid/i.test(trimmed)) { manual.push(trimmed); continue; }
+      }
 
       const result = {
         command,
         dry_run: dryRun,
         ran_at: new Date().toISOString(),
         total_fixed: totalFixed,
-        total_skipped: skipped.length,
+        total_skipped: totalSkipped,
         total_errors: errors.length,
         total_manual: manual.length,
-        fixed: fixed.slice(0, 20),
+        actions: actions.slice(0, 20),
         skipped: skipped.slice(0, 10),
         errors: errors.slice(0, 10),
         manual: manual.slice(0, 10),
