@@ -1,5 +1,5 @@
 // agents/dashboard/routes/performance-queue.js
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
 import { getBlogs, updateArticle, getProducts, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
@@ -78,18 +78,34 @@ async function publishPageMetaRewrite(item) {
   if (meta.seo_description) await upsertMetafield('pages', item.resource_id, 'global', 'description_tag', meta.seo_description);
 }
 
+function findPostMeta(slug, postsDir) {
+  // Try exact slug first
+  const exact = join(postsDir, `${slug}.json`);
+  if (existsSync(exact)) {
+    const meta = JSON.parse(readFileSync(exact, 'utf8'));
+    if (meta.shopify_article_id) return { meta, path: exact };
+  }
+  // Fall back: scan for a JSON file whose slug field matches or whose name is a prefix/suffix variant
+  const files = readdirSync(postsDir).filter((f) => f.endsWith('.json') && (slug.startsWith(f.replace('.json', '')) || f.replace('.json', '').startsWith(slug)));
+  for (const f of files) {
+    try {
+      const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
+      if (meta.shopify_article_id) return { meta, path: join(postsDir, f) };
+    } catch { /* skip */ }
+  }
+  return null;
+}
+
 async function publishBlogRefresh(item, ctx) {
-  const postMetaPath = join(ctx.POSTS_DIR, `${item.slug}.json`);
-  if (!existsSync(postMetaPath)) throw new Error(`No post metadata found for "${item.slug}"`);
-  let postMeta;
-  try { postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8')); }
-  catch (err) { throw new Error(`Invalid post metadata: ${err.message}`); }
-  if (!postMeta.shopify_article_id) throw new Error(`No shopify_article_id for "${item.slug}"`);
+  const found = findPostMeta(item.slug, ctx.POSTS_DIR);
+  if (!found) throw new Error(`No post metadata found for "${item.slug}"`);
+  const { meta: postMeta } = found;
   if (!existsSync(item.refreshed_html_path)) throw new Error(`Refreshed HTML not found at ${item.refreshed_html_path}`);
   const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
   const blogs = await getBlogs();
   await updateArticle(blogs[0].id, postMeta.shopify_article_id, { body_html: refreshedHtml });
-  writeFileSync(join(ctx.POSTS_DIR, `${item.slug}.html`), refreshedHtml);
+  // Update canonical HTML using the post's own slug (may differ from queue item slug)
+  writeFileSync(join(ctx.POSTS_DIR, `${postMeta.slug || item.slug}.html`), refreshedHtml);
 }
 
 export default [
