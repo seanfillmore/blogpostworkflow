@@ -1,7 +1,8 @@
 // agents/dashboard/routes/performance-queue.js
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
+import { getBlogs, updateArticle } from '../../../lib/shopify.js';
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -29,14 +30,47 @@ export default [
   {
     method: 'POST',
     match: (url) => /^\/api\/performance-queue\/[^/]+\/approve$/.test(url),
-    async handler(req, res) {
+    async handler(req, res, ctx) {
       const slug = req.url.split('/')[3];
       const item = findItem(slug);
       if (!item) return notFound(res);
-      item.status = 'approved';
+
+      // Look up Shopify article ID from post metadata
+      const postMetaPath = join(ctx.ROOT, 'data', 'posts', `${slug}.json`);
+      if (!existsSync(postMetaPath)) {
+        return respondJson(res, { ok: false, error: `No post metadata found for "${slug}"` }, 400);
+      }
+      const postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8'));
+      if (!postMeta.shopify_article_id) {
+        return respondJson(res, { ok: false, error: `No shopify_article_id in post metadata for "${slug}"` }, 400);
+      }
+
+      // Read refreshed HTML
+      if (!existsSync(item.refreshed_html_path)) {
+        return respondJson(res, { ok: false, error: `Refreshed HTML not found at ${item.refreshed_html_path}` }, 400);
+      }
+      const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
+
+      // Publish to Shopify
+      try {
+        const blogs = await getBlogs();
+        const blogId = blogs[0].id;
+        await updateArticle(blogId, postMeta.shopify_article_id, { body_html: refreshedHtml });
+      } catch (err) {
+        return respondJson(res, { ok: false, error: `Shopify publish failed: ${err.message}` }, 502);
+      }
+
+      // Copy refreshed HTML over canonical local file
+      const canonicalPath = join(ctx.ROOT, 'data', 'posts', `${slug}.html`);
+      writeFileSync(canonicalPath, refreshedHtml);
+
+      // Stamp item as published
+      item.status = 'published';
       item.approved_at = new Date().toISOString();
+      item.published_at = new Date().toISOString();
       writeItem(item);
-      respondJson(res, { ok: true });
+
+      respondJson(res, { ok: true, published: true });
     },
   },
   {
