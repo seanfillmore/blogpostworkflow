@@ -143,6 +143,54 @@ function renderTechnicalSeoTab(d) {
   var theme = d.themeSeoAudit;
   var html = '';
 
+  // ── Alt text progress bar ──────────────────────────────────────────────────
+  var prog = d.altTextProgress;
+  if (prog && prog.total > 0) {
+    var pct = Math.round((prog.completed / prog.total) * 100);
+    var elapsed = prog.elapsed_ms || 0;
+    var remaining = prog.estimated_remaining_ms || 0;
+
+    function fmtDuration(ms) {
+      if (ms < 60000) return Math.round(ms / 1000) + 's';
+      if (ms < 3600000) return Math.round(ms / 60000) + 'm';
+      return Math.round(ms / 3600000 * 10) / 10 + 'h';
+    }
+
+    var isRunning = prog.status === 'running';
+    var barColor = isRunning ? '#6366f1' : (prog.completed === prog.total ? '#22c55e' : '#f59e0b');
+    var statusText = isRunning
+      ? prog.completed + ' / ' + prog.total + ' images fixed — ' + fmtDuration(elapsed) + ' elapsed, ~' + fmtDuration(remaining) + ' remaining'
+      : prog.completed + ' / ' + prog.total + ' images fixed — completed in ' + fmtDuration(elapsed);
+
+    html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:16px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    html += '<span style="font-weight:600;font-size:13px">' + (isRunning ? '&#9881; Alt Text Fix Running' : '&#9989; Alt Text Fix Complete') + '</span>';
+    html += '<span style="font-size:12px;color:#6b7280">' + pct + '%</span>';
+    html += '</div>';
+    html += '<div style="background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden">';
+    html += '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;transition:width 0.3s;border-radius:4px"></div>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:#6b7280;margin-top:4px">' + statusText + '</div>';
+    if (prog.errors > 0) html += '<div style="font-size:11px;color:#dc2626;margin-top:2px">' + prog.errors + ' errors</div>';
+    html += '</div>';
+
+    // Auto-refresh while running
+    if (isRunning && !window._altTextRefreshTimer) {
+      window._altTextRefreshTimer = setInterval(function() {
+        if (activeTab === 'tech-seo') {
+          loadData().then(function() { if (data) renderTechnicalSeoTab(data); });
+        } else {
+          clearInterval(window._altTextRefreshTimer);
+          window._altTextRefreshTimer = null;
+        }
+      }, 10000); // refresh every 10 seconds
+    }
+    if (!isRunning && window._altTextRefreshTimer) {
+      clearInterval(window._altTextRefreshTimer);
+      window._altTextRefreshTimer = null;
+    }
+  }
+
   // ── Upload & Summary card ──────────────────────────────────────────────────
   html += '<div class="card"><div class="card-header accent-indigo"><h2>Technical SEO Audit</h2></div><div class="card-body">';
   html += '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">';

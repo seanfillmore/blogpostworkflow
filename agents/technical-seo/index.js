@@ -1125,8 +1125,33 @@ async function fixAltText({ dryRun = false } = {}) {
     console.log(`  ${missingAltUrls.size} CDN images flagged by Ahrefs. Checking all Shopify Files...`);
     const allFiles = await getAllFiles();
     const filesWithoutAlt = allFiles.filter(f => !f.alt || !f.alt.trim());
-    console.log(`  ${filesWithoutAlt.length} Shopify Files have no alt text`);
+    const totalToFix = filesWithoutAlt.length;
+    console.log(`  ${totalToFix} Shopify Files have no alt text`);
     let fileFixed = 0;
+    let fileErrors = 0;
+    const startTime = Date.now();
+
+    // Write progress file so the dashboard can show a live progress bar
+    const progressPath = join(REPORTS_DIR, 'alt-text-progress.json');
+    function writeProgress() {
+      const elapsed = Date.now() - startTime;
+      const rate = fileFixed > 0 ? elapsed / fileFixed : 0; // ms per file
+      const remaining = (totalToFix - fileFixed - fileErrors) * rate;
+      try {
+        writeFileSync(progressPath, JSON.stringify({
+          status: 'running',
+          started_at: new Date(startTime).toISOString(),
+          completed: fileFixed,
+          errors: fileErrors,
+          total: totalToFix,
+          elapsed_ms: elapsed,
+          estimated_remaining_ms: Math.round(remaining),
+          updated_at: new Date().toISOString(),
+        }));
+      } catch { /* ignore */ }
+    }
+
+    writeProgress();
 
     for (const file of filesWithoutAlt) {
       const fileUrlBase = file.url.split('?')[0];
@@ -1139,10 +1164,13 @@ async function fixAltText({ dryRun = false } = {}) {
         try {
           await updateFileAlt(file.id, altText);
           fileFixed++;
-          if (fileFixed % 20 === 0) console.log(`  Progress: ${fileFixed} files updated...`);
+          if (fileFixed % 10 === 0) {
+            writeProgress();
+            console.log(`  Progress: ${fileFixed}/${totalToFix} files updated...`);
+          }
         } catch (e) {
+          fileErrors++;
           console.log(`    Error: ${e.message}`);
-          // Rate limit — wait and retry
           if (e.message?.includes('429') || e.message?.includes('Throttled')) {
             console.log('    Rate limited — waiting 5s...');
             await new Promise(r => setTimeout(r, 5000));
@@ -1152,6 +1180,21 @@ async function fixAltText({ dryRun = false } = {}) {
         fileFixed++;
       }
     }
+
+    // Write final progress
+    try {
+      writeFileSync(progressPath, JSON.stringify({
+        status: 'complete',
+        started_at: new Date(startTime).toISOString(),
+        completed: fileFixed,
+        errors: fileErrors,
+        total: totalToFix,
+        elapsed_ms: Date.now() - startTime,
+        estimated_remaining_ms: 0,
+        updated_at: new Date().toISOString(),
+      }));
+    } catch { /* ignore */ }
+
     console.log(`  ${dryRun ? 'Would fix' : 'Fixed'}: ${fileFixed} Shopify Files alt text`);
     fixed += fileFixed;
   }

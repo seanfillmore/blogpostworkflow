@@ -225,6 +225,7 @@ export function aggregateData() {
   })();
   const techSeoAudit = parseTechSeoReport(techSeoReportRaw);
   const techSeoFixResults = readJsonIfExists(join(REPORTS_DIR, 'technical-seo', 'fix-results.json'));
+  const altTextProgress = readJsonIfExists(join(REPORTS_DIR, 'technical-seo', 'alt-text-progress.json'));
 
   // Theme SEO audit (JSON)
   const themeSeoAudit = readJsonIfExists(join(REPORTS_DIR, 'theme-seo-audit', 'latest.json'));
@@ -335,6 +336,7 @@ export function aggregateData() {
     cannibalization,
     techSeoAudit,
     techSeoFixResults,
+    altTextProgress,
     themeSeoAudit,
     rejectedImages,
   };
