@@ -1121,40 +1121,39 @@ async function fixAltText({ dryRun = false } = {}) {
     .filter(u => u.includes('cdn.shopify.com') || u.includes('cdn/shop'))
   );
 
-  if (missingAltUrls.size > 0) {
-    console.log(`  ${missingAltUrls.size} CDN images missing alt text`);
+  {
+    console.log(`  ${missingAltUrls.size} CDN images flagged by Ahrefs. Checking all Shopify Files...`);
     const allFiles = await getAllFiles();
+    const filesWithoutAlt = allFiles.filter(f => !f.alt || !f.alt.trim());
+    console.log(`  ${filesWithoutAlt.length} Shopify Files have no alt text`);
     let fileFixed = 0;
 
-    for (const file of allFiles) {
-      if (file.alt && file.alt.trim()) continue; // already has alt
-      // Check if this file's URL matches any missing-alt URL (strip query params for matching)
+    for (const file of filesWithoutAlt) {
       const fileUrlBase = file.url.split('?')[0];
-      const needsAlt = [...missingAltUrls].some(u => u.split('?')[0] === fileUrlBase);
-      if (!needsAlt) continue;
 
       // Generate alt text from the filename
       const filename = fileUrlBase.split('/').pop().replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ');
       const altText = filename.length > 5 ? filename : 'Product image';
 
-      console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${fileUrlBase.split('/').pop()} → "${altText}"`);
       if (!dryRun) {
         try {
           await updateFileAlt(file.id, altText);
           fileFixed++;
+          if (fileFixed % 20 === 0) console.log(`  Progress: ${fileFixed} files updated...`);
         } catch (e) {
           console.log(`    Error: ${e.message}`);
+          // Rate limit — wait and retry
+          if (e.message?.includes('429') || e.message?.includes('Throttled')) {
+            console.log('    Rate limited — waiting 5s...');
+            await new Promise(r => setTimeout(r, 5000));
+          }
         }
       } else {
         fileFixed++;
       }
-
-      if (fileFixed >= 50) { console.log('  Rate limit: stopping at 50 file updates per run'); break; }
     }
     console.log(`  ${dryRun ? 'Would fix' : 'Fixed'}: ${fileFixed} Shopify Files alt text`);
     fixed += fileFixed;
-  } else {
-    console.log('  No CDN images missing alt text found in CSV.');
   }
 
   console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} images across blog posts, products, hero files, and Shopify Files`);
