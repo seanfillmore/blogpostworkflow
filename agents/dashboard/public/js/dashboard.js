@@ -467,21 +467,30 @@ function renderCannibalizationCard(d) {
     '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + manual.length + ' need review</p>' +
     '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Recommendation</th><th>Action</th></tr></thead><tbody>' +
     manual.slice(0, 20).map(function(conflict) {
-      var winnerUrl = '';
-      var loserUrl = '';
+      // Determine winner: from decision data, or pick by highest impressions
+      var suggestedWinner = null;
       var hasDecision = conflict.winner && conflict.losers;
-      var isBlogVsBlog = conflict.conflict_type === 'blog-vs-blog';
+      if (hasDecision) {
+        suggestedWinner = conflict.urls.find(function(u) { return u.url.includes(conflict.winner); });
+      }
+      if (!suggestedWinner) {
+        // Pick the URL with most impressions as suggested winner
+        suggestedWinner = conflict.urls.reduce(function(best, u) {
+          return u.impressions > best.impressions ? u : best;
+        }, conflict.urls[0]);
+      }
+      var losers = conflict.urls.filter(function(u) { return u !== suggestedWinner; });
+
       var urls = conflict.urls.map(function(u) {
-        var isWinner = hasDecision && u.url.includes(conflict.winner);
-        var label = isWinner ? '<span style="color:#16a34a;font-weight:600">KEEP</span> ' : '';
-        var loser = hasDecision ? (conflict.losers || []).find(function(l) { return u.url.includes(l.path); }) : null;
-        if (loser) {
-          label = '<span style="color:#dc2626;font-weight:600">' + esc(loser.action) + '</span> ';
-          loserUrl = u.url;
-        }
-        if (isWinner) winnerUrl = u.url;
-        return '<div style="font-size:12px">' + label + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a></div>';
+        var isSuggested = u === suggestedWinner;
+        var label = isSuggested
+          ? '<span style="color:#16a34a;font-weight:600">KEEP</span> '
+          : '<span style="color:#9ca3af;font-weight:600">LOSE</span> ';
+        var stats = ' <span style="color:#6b7280;font-size:11px">(' + u.impressions.toLocaleString() + ' impr, pos ' + Math.round(u.position) + ')</span>';
+        return '<div style="font-size:12px">' + label + u.type + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a>' + stats + '</div>';
       }).join('');
+
+      // Build recommendation text
       var rec = '';
       if (conflict.summary) {
         var confidence = conflict.confidence || '';
@@ -489,13 +498,18 @@ function renderCannibalizationCard(d) {
         rec = '<div><span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">' + esc(confidence) + '</span></div>' +
           '<div style="font-size:12px;color:#6b7280;margin-top:4px">' + esc(conflict.summary) + '</div>';
       } else {
-        rec = '<div style="font-size:12px;color:#6b7280">Multiple page types competing for the same query. Improve on-page signals to help Google pick the right page.</div>';
+        var pct = Math.round(suggestedWinner.impressions / conflict.total_impressions * 100);
+        rec = '<div style="font-size:12px;color:#6b7280">Suggested winner has ' + pct + '% of impressions at position ' + Math.round(suggestedWinner.position) + '. ' +
+          'Redirect ' + losers.length + ' competing URL' + (losers.length > 1 ? 's' : '') + ' to consolidate ranking signals.</div>';
       }
+
+      // Build loser URL param — use first non-winner URL for redirect
+      var firstLoser = losers[0] ? losers[0].url : '';
       var actions = '';
-      if (hasDecision && winnerUrl && loserUrl) {
-        actions = '<button class="btn-sm btn-approve" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(winnerUrl) + '\',\'' + esc(loserUrl) + '\',\'REDIRECT\', this)">Redirect</button>';
+      if (firstLoser) {
+        actions = '<button class="btn-sm btn-approve" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(suggestedWinner.url) + '\',\'' + esc(firstLoser) + '\',\'REDIRECT\', this)">Redirect</button>';
       }
-      actions += '<button class="btn-sm" style="margin-top:4px" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(conflict.urls[0].url) + '\',\'' + esc(conflict.urls[0].url) + '\',\'DISMISS\', this)">Dismiss</button>';
+      actions += '<button class="btn-sm" style="margin-top:4px" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(suggestedWinner.url) + '\',\'' + esc(suggestedWinner.url) + '\',\'DISMISS\', this)">Dismiss</button>';
       return '<tr><td><strong>' + esc(conflict.query) + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + rec + '</td><td style="white-space:nowrap">' + actions + '</td></tr>';
     }).join('') +
     '</tbody></table></div></div>';
