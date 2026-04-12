@@ -466,11 +466,12 @@ function renderCannibalizationCard(d) {
     '<div class="card-body">' +
     '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + manual.length + ' need review</p>' +
     '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Recommendation</th><th>Action</th></tr></thead><tbody>' +
-    manual.slice(0, 20).map(function(conflict, idx) {
+    manual.slice(0, 20).map(function(conflict) {
       var winnerUrl = '';
       var loserUrl = '';
       var hasDecision = conflict.winner && conflict.losers;
-      var urls = conflict.urls.map(function(u, ui) {
+      var isBlogVsBlog = conflict.conflict_type === 'blog-vs-blog';
+      var urls = conflict.urls.map(function(u) {
         var isWinner = hasDecision && u.url.includes(conflict.winner);
         var label = isWinner ? '<span style="color:#16a34a;font-weight:600">KEEP</span> ' : '';
         var loser = hasDecision ? (conflict.losers || []).find(function(l) { return u.url.includes(l.path); }) : null;
@@ -479,12 +480,7 @@ function renderCannibalizationCard(d) {
           loserUrl = u.url;
         }
         if (isWinner) winnerUrl = u.url;
-        // For cross-type conflicts without a decision, let user pick winner
-        var pickBtn = '';
-        if (!hasDecision) {
-          pickBtn = ' <button class="btn-sm" style="padding:0 6px;font-size:11px" onclick="pickCannibWinner(\'' + esc(conflict.query) + '\',' + idx + ',\'' + esc(u.url) + '\')">Keep this</button>';
-        }
-        return '<div style="font-size:12px">' + label + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a>' + pickBtn + '</div>';
+        return '<div style="font-size:12px">' + label + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a></div>';
       }).join('');
       var rec = '';
       if (conflict.summary) {
@@ -493,45 +489,16 @@ function renderCannibalizationCard(d) {
         rec = '<div><span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">' + esc(confidence) + '</span></div>' +
           '<div style="font-size:12px;color:#6b7280;margin-top:4px">' + esc(conflict.summary) + '</div>';
       } else {
-        rec = '<div style="font-size:12px;color:#6b7280">Pick a winner — all other URLs will redirect to it</div>';
+        rec = '<div style="font-size:12px;color:#6b7280">Multiple page types competing for the same query. Improve on-page signals to help Google pick the right page.</div>';
       }
       var actions = '';
-      if (winnerUrl && loserUrl) {
-        actions = '<button class="btn-sm btn-approve" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(winnerUrl) + '\',\'' + esc(loserUrl) + '\',\'REDIRECT\', this)">Redirect</button>' +
-          '<button class="btn-sm" style="margin-top:4px" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(winnerUrl) + '\',\'' + esc(loserUrl) + '\',\'DISMISS\', this)">Dismiss</button>';
+      if (hasDecision && winnerUrl && loserUrl) {
+        actions = '<button class="btn-sm btn-approve" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(winnerUrl) + '\',\'' + esc(loserUrl) + '\',\'REDIRECT\', this)">Redirect</button>';
       }
+      actions += '<button class="btn-sm" style="margin-top:4px" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(conflict.urls[0].url) + '\',\'' + esc(conflict.urls[0].url) + '\',\'DISMISS\', this)">Dismiss</button>';
       return '<tr><td><strong>' + esc(conflict.query) + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + rec + '</td><td style="white-space:nowrap">' + actions + '</td></tr>';
     }).join('') +
     '</tbody></table></div></div>';
-}
-
-async function pickCannibWinner(query, conflictIdx, winnerUrl) {
-  var c = data.cannibalization;
-  var manual = c.conflicts.filter(function(x) { return !x.auto_applied && !(x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner); });
-  var conflict = manual[conflictIdx];
-  if (!conflict) return;
-  var losers = conflict.urls.filter(function(u) { return u.url !== winnerUrl; });
-  if (losers.length === 0) return;
-  for (var i = 0; i < losers.length; i++) {
-    try {
-      await resolveCannibalizationAsync(query, winnerUrl, losers[i].url, 'REDIRECT');
-    } catch (err) {
-      alert('Failed to redirect ' + losers[i].url.split('/').pop() + ': ' + err.message);
-      loadData();
-      return;
-    }
-  }
-  loadData();
-}
-
-async function resolveCannibalizationAsync(query, winner, loser, action) {
-  var res = await fetch('/api/cannibalization/resolve', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: query, winner: winner, loser: loser, action: action }),
-  });
-  var data = await res.json();
-  if (!res.ok || !data.ok) throw new Error(data.error || 'Unknown error');
 }
 
 async function resolveCannibalization(query, winner, loser, action, btn) {

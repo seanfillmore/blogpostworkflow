@@ -49,7 +49,12 @@ export default [
           }
 
           if (action === 'REDIRECT') {
-            await createRedirect(toPath(loser), toPath(winner));
+            try {
+              await createRedirect(toPath(loser), toPath(winner));
+            } catch (err) {
+              // 422 = redirect already exists for this path — treat as success
+              if (!err.message.includes('422')) throw err;
+            }
           } else if (action !== 'DISMISS') {
             return respondJson(res, { ok: false, error: `Unknown action: ${action}` }, 400);
           }
