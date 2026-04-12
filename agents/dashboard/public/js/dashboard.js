@@ -881,7 +881,7 @@ function renderLegacyTriageCard(d) {
 
   var topFlops = (t.results||[]).filter(function(r){ return r.bucket === 'flop'; }).slice(0, 5);
   var topRising = (t.results||[]).filter(function(r){ return r.bucket === 'rising'; }).slice(0, 5);
-  var broken = (t.results||[]).filter(function(r){ return r.bucket === 'broken'; });
+  var broken = []; // Broken items are handled by the indexing system — don't duplicate here
 
   var flopRows = topFlops.length === 0 ? '<div class="empty-state">No flops.</div>'
     : '<table class="data-table"><thead><tr><th>Post</th><th>Words</th><th>Reason</th></tr></thead><tbody>' +
