@@ -453,27 +453,49 @@ function renderOptimizeTab(d) {
 function renderCannibalizationCard(d) {
   var c = d.cannibalization;
   if (!c || !c.conflicts || c.conflicts.length === 0) return '';
-  var unresolved = c.conflicts.filter(function(x) { return !x.auto_applied; });
-  if (unresolved.length === 0) return '';
-  return '<div class="card"><div class="card-header accent-red"><h2>Keyword Cannibalization <span class="badge">' + unresolved.length + '</span></h2></div>' +
+
+  // Auto-resolve HIGH confidence blog-vs-blog in background
+  var hasHigh = c.conflicts.some(function(x) {
+    return !x.auto_applied && x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner && x.losers;
+  });
+  if (hasHigh && !window._cannibAutoResolving) {
+    window._cannibAutoResolving = true;
+    fetch('/api/cannibalization/auto-resolve', { method: 'POST' }).then(function() {
+      window._cannibAutoResolving = false;
+      loadData();
+    }).catch(function() { window._cannibAutoResolving = false; });
+  }
+
+  // Only show conflicts that need manual review (not auto-applied, not HIGH blog-vs-blog)
+  var manual = c.conflicts.filter(function(x) {
+    if (x.auto_applied) return false;
+    if (x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner) return false;
+    return true;
+  });
+  if (manual.length === 0) return '';
+  return '<div class="card"><div class="card-header accent-red"><h2>Keyword Cannibalization <span class="badge">' + manual.length + '</span></h2></div>' +
     '<div class="card-body">' +
-    '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + unresolved.length + ' need review</p>' +
+    '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + manual.length + ' need review</p>' +
     '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Recommendation</th><th>Action</th></tr></thead><tbody>' +
-    unresolved.slice(0, 20).map(function(conflict) {
+    manual.slice(0, 20).map(function(conflict, idx) {
       var winnerUrl = '';
       var loserUrl = '';
-      var loserAction = '';
-      var urls = conflict.urls.map(function(u) {
-        var isWinner = conflict.winner && u.url.includes(conflict.winner);
+      var hasDecision = conflict.winner && conflict.losers;
+      var urls = conflict.urls.map(function(u, ui) {
+        var isWinner = hasDecision && u.url.includes(conflict.winner);
         var label = isWinner ? '<span style="color:#16a34a;font-weight:600">KEEP</span> ' : '';
-        var loser = (conflict.losers || []).find(function(l) { return u.url.includes(l.path); });
+        var loser = hasDecision ? (conflict.losers || []).find(function(l) { return u.url.includes(l.path); }) : null;
         if (loser) {
           label = '<span style="color:#dc2626;font-weight:600">' + esc(loser.action) + '</span> ';
           loserUrl = u.url;
-          loserAction = loser.action;
         }
         if (isWinner) winnerUrl = u.url;
-        return '<div style="font-size:12px">' + label + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a></div>';
+        // For cross-type conflicts without a decision, let user pick winner
+        var pickBtn = '';
+        if (!hasDecision) {
+          pickBtn = ' <button class="btn-sm" style="padding:0 6px;font-size:11px" onclick="pickCannibWinner(\'' + esc(conflict.query) + '\',' + idx + ',\'' + esc(u.url) + '\')">Keep this</button>';
+        }
+        return '<div style="font-size:12px">' + label + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a>' + pickBtn + '</div>';
       }).join('');
       var rec = '';
       if (conflict.summary) {
@@ -481,8 +503,8 @@ function renderCannibalizationCard(d) {
         var badgeColor = confidence === 'HIGH' ? '#16a34a' : confidence === 'MEDIUM' ? '#d97706' : '#6b7280';
         rec = '<div><span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">' + esc(confidence) + '</span></div>' +
           '<div style="font-size:12px;color:#6b7280;margin-top:4px">' + esc(conflict.summary) + '</div>';
-      } else if (conflict.conflict_type !== 'blog-vs-blog') {
-        rec = '<div style="font-size:12px;color:#6b7280">Cross-type conflict — manual review</div>';
+      } else {
+        rec = '<div style="font-size:12px;color:#6b7280">Pick a winner — all other URLs will redirect to it</div>';
       }
       var actions = '';
       if (winnerUrl && loserUrl) {
@@ -494,20 +516,39 @@ function renderCannibalizationCard(d) {
     '</tbody></table></div></div>';
 }
 
+async function pickCannibWinner(query, conflictIdx, winnerUrl) {
+  var c = data.cannibalization;
+  var manual = c.conflicts.filter(function(x) { return !x.auto_applied && !(x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner); });
+  var conflict = manual[conflictIdx];
+  if (!conflict) return;
+  var losers = conflict.urls.filter(function(u) { return u.url !== winnerUrl; });
+  if (losers.length === 0) return;
+  for (var i = 0; i < losers.length; i++) {
+    try {
+      await resolveCannibalizationAsync(query, winnerUrl, losers[i].url, 'REDIRECT');
+    } catch (err) {
+      alert('Failed to redirect ' + losers[i].url.split('/').pop() + ': ' + err.message);
+      loadData();
+      return;
+    }
+  }
+  loadData();
+}
+
+async function resolveCannibalizationAsync(query, winner, loser, action) {
+  var res = await fetch('/api/cannibalization/resolve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: query, winner: winner, loser: loser, action: action }),
+  });
+  var data = await res.json();
+  if (!res.ok || !data.ok) throw new Error(data.error || 'Unknown error');
+}
+
 async function resolveCannibalization(query, winner, loser, action, btn) {
   if (btn) { btn.disabled = true; btn.textContent = action === 'REDIRECT' ? 'Redirecting...' : 'Dismissing...'; }
   try {
-    var res = await fetch('/api/cannibalization/resolve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: query, winner: winner, loser: loser, action: action }),
-    });
-    var data = await res.json();
-    if (!res.ok || !data.ok) {
-      alert('Failed: ' + (data.error || 'Unknown error'));
-      if (btn) { btn.disabled = false; btn.textContent = action === 'REDIRECT' ? 'Redirect' : 'Dismiss'; }
-      return;
-    }
+    await resolveCannibalizationAsync(query, winner, loser, action);
     loadData();
   } catch (err) {
     alert('Failed: ' + err.message);
