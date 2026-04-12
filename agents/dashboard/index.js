@@ -41,6 +41,7 @@ import campaignsRoutes from './routes/campaigns.js';
 import indexingRoutes from './routes/indexing.js';
 import performanceQueueRoutes from './routes/performance-queue.js';
 import rejectedImagesRoutes from './routes/rejected-images.js';
+import cannibalizationRoutes from './routes/cannibalization.js';
 
 const {
   ROOT, PUBLIC_DIR,
@@ -101,6 +102,7 @@ const ROUTES = [
   ...indexingRoutes,
   ...performanceQueueRoutes,
   ...rejectedImagesRoutes,
+  ...cannibalizationRoutes,
 ];
 
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key

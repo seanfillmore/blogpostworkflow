@@ -453,30 +453,66 @@ function renderOptimizeTab(d) {
 function renderCannibalizationCard(d) {
   var c = d.cannibalization;
   if (!c || !c.conflicts || c.conflicts.length === 0) return '';
-  return '<div class="card"><div class="card-header accent-red"><h2>Keyword Cannibalization <span class="badge">' + c.conflict_count + '</span></h2></div>' +
+  var unresolved = c.conflicts.filter(function(x) { return !x.auto_applied; });
+  if (unresolved.length === 0) return '';
+  return '<div class="card"><div class="card-header accent-red"><h2>Keyword Cannibalization <span class="badge">' + unresolved.length + '</span></h2></div>' +
     '<div class="card-body">' +
-    '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + c.recommended + ' recommendations</p>' +
-    '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Recommendation</th></tr></thead><tbody>' +
-    c.conflicts.slice(0, 10).map(function(conflict) {
+    '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + unresolved.length + ' need review</p>' +
+    '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Recommendation</th><th>Action</th></tr></thead><tbody>' +
+    unresolved.slice(0, 20).map(function(conflict) {
+      var winnerUrl = '';
+      var loserUrl = '';
+      var loserAction = '';
       var urls = conflict.urls.map(function(u) {
         var isWinner = conflict.winner && u.url.includes(conflict.winner);
         var label = isWinner ? '<span style="color:#16a34a;font-weight:600">KEEP</span> ' : '';
         var loser = (conflict.losers || []).find(function(l) { return u.url.includes(l.path); });
-        if (loser) label = '<span style="color:#dc2626;font-weight:600">' + esc(loser.action) + '</span> ';
+        if (loser) {
+          label = '<span style="color:#dc2626;font-weight:600">' + esc(loser.action) + '</span> ';
+          loserUrl = u.url;
+          loserAction = loser.action;
+        }
+        if (isWinner) winnerUrl = u.url;
         return '<div style="font-size:12px">' + label + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a></div>';
       }).join('');
       var rec = '';
       if (conflict.summary) {
         var confidence = conflict.confidence || '';
         var badgeColor = confidence === 'HIGH' ? '#16a34a' : confidence === 'MEDIUM' ? '#d97706' : '#6b7280';
-        rec = '<div style="margin-top:4px"><span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">' + esc(confidence) + '</span> ' +
-          '<span style="font-size:12px;color:#6b7280">' + esc(conflict.summary) + '</span></div>';
+        rec = '<div><span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">' + esc(confidence) + '</span></div>' +
+          '<div style="font-size:12px;color:#6b7280;margin-top:4px">' + esc(conflict.summary) + '</div>';
       } else if (conflict.conflict_type !== 'blog-vs-blog') {
-        rec = '<div style="margin-top:4px"><span style="font-size:12px;color:#6b7280">Cross-type conflict — manual review needed</span></div>';
+        rec = '<div style="font-size:12px;color:#6b7280">Cross-type conflict — manual review</div>';
       }
-      return '<tr><td><strong>' + esc(conflict.query) + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + rec + '</td></tr>';
+      var actions = '';
+      if (winnerUrl && loserUrl) {
+        actions = '<button class="btn-sm btn-approve" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(winnerUrl) + '\',\'' + esc(loserUrl) + '\',\'REDIRECT\', this)">Redirect</button>' +
+          '<button class="btn-sm" style="margin-top:4px" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(winnerUrl) + '\',\'' + esc(loserUrl) + '\',\'DISMISS\', this)">Dismiss</button>';
+      }
+      return '<tr><td><strong>' + esc(conflict.query) + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + rec + '</td><td style="white-space:nowrap">' + actions + '</td></tr>';
     }).join('') +
     '</tbody></table></div></div>';
+}
+
+async function resolveCannibalization(query, winner, loser, action, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = action === 'REDIRECT' ? 'Redirecting...' : 'Dismissing...'; }
+  try {
+    var res = await fetch('/api/cannibalization/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query, winner: winner, loser: loser, action: action }),
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) {
+      alert('Failed: ' + (data.error || 'Unknown error'));
+      if (btn) { btn.disabled = false; btn.textContent = action === 'REDIRECT' ? 'Redirect' : 'Dismiss'; }
+      return;
+    }
+    loadData();
+  } catch (err) {
+    alert('Failed: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = action === 'REDIRECT' ? 'Redirect' : 'Dismiss'; }
+  }
 }
 
 function renderPerformanceQueueCard(d) {
