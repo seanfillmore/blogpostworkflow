@@ -454,83 +454,28 @@ function renderCannibalizationCard(d) {
   var c = d.cannibalization;
   if (!c || !c.conflicts || c.conflicts.length === 0) return '';
 
-  // Only show conflicts that need manual review
-  var manual = c.conflicts.filter(function(x) {
-    if (x.auto_applied) return false;
-    // HIGH confidence blog-vs-blog with a clear winner — hide, these are actionable by the resolver agent
-    if (x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner && x.losers) return false;
-    return true;
-  });
-  if (manual.length === 0) return '';
-  return '<div class="card"><div class="card-header accent-red"><h2>Keyword Cannibalization <span class="badge">' + manual.length + '</span></h2></div>' +
-    '<div class="card-body">' +
-    '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + manual.length + ' need review</p>' +
-    '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Recommendation</th><th>Action</th></tr></thead><tbody>' +
-    manual.slice(0, 20).map(function(conflict) {
-      // Determine winner: from decision data, or pick by highest impressions
-      var suggestedWinner = null;
-      var hasDecision = conflict.winner && conflict.losers;
-      if (hasDecision) {
-        suggestedWinner = conflict.urls.find(function(u) { return u.url.includes(conflict.winner); });
-      }
-      if (!suggestedWinner) {
-        // Pick the URL with most impressions as suggested winner
-        suggestedWinner = conflict.urls.reduce(function(best, u) {
-          return u.impressions > best.impressions ? u : best;
-        }, conflict.urls[0]);
-      }
-      var losers = conflict.urls.filter(function(u) { return u !== suggestedWinner; });
-
-      var urls = conflict.urls.map(function(u) {
-        var isSuggested = u === suggestedWinner;
-        var label = isSuggested
-          ? '<span style="color:#16a34a;font-weight:600">KEEP</span> '
-          : '<span style="color:#9ca3af;font-weight:600">LOSE</span> ';
-        var stats = ' <span style="color:#6b7280;font-size:11px">(' + u.impressions.toLocaleString() + ' impr, pos ' + Math.round(u.position) + ')</span>';
-        return '<div style="font-size:12px">' + label + u.type + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a>' + stats + '</div>';
-      }).join('');
-
-      // Build recommendation text
-      var rec = '';
-      if (conflict.summary) {
-        var confidence = conflict.confidence || '';
-        var badgeColor = confidence === 'HIGH' ? '#16a34a' : confidence === 'MEDIUM' ? '#d97706' : '#6b7280';
-        rec = '<div><span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">' + esc(confidence) + '</span></div>' +
-          '<div style="font-size:12px;color:#6b7280;margin-top:4px">' + esc(conflict.summary) + '</div>';
-      } else {
-        var pct = Math.round(suggestedWinner.impressions / conflict.total_impressions * 100);
-        rec = '<div style="font-size:12px;color:#6b7280">Suggested winner has ' + pct + '% of impressions at position ' + Math.round(suggestedWinner.position) + '. ' +
-          'Redirect ' + losers.length + ' competing URL' + (losers.length > 1 ? 's' : '') + ' to consolidate ranking signals.</div>';
-      }
-
-      // Build loser URL param — use first non-winner URL for redirect
-      var firstLoser = losers[0] ? losers[0].url : '';
-      var actions = '';
-      if (firstLoser) {
-        actions = '<button class="btn-sm btn-approve" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(suggestedWinner.url) + '\',\'' + esc(firstLoser) + '\',\'REDIRECT\', this)">Redirect</button>';
-      }
-      actions += '<button class="btn-sm" style="margin-top:4px" onclick="resolveCannibalization(\'' + esc(conflict.query) + '\',\'' + esc(suggestedWinner.url) + '\',\'' + esc(suggestedWinner.url) + '\',\'DISMISS\', this)">Dismiss</button>';
-      return '<tr><td><strong>' + esc(conflict.query) + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + rec + '</td><td style="white-space:nowrap">' + actions + '</td></tr>';
-    }).join('') +
-    '</tbody></table></div></div>';
-}
-
-async function resolveCannibalization(query, winner, loser, action, btn) {
-  if (btn) { btn.disabled = true; btn.textContent = action === 'REDIRECT' ? 'Redirecting...' : 'Dismissing...'; }
-  try {
-    var res = await fetch('/api/cannibalization/resolve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: query, winner: winner, loser: loser, action: action }),
-    });
-    var data2 = await res.json();
-    if (!res.ok || !data2.ok) throw new Error(data2.error || 'Unknown error');
-    loadData();
-  } catch (err) {
-    alert('Failed: ' + err.message);
-    if (btn) { btn.disabled = false; btn.textContent = action === 'REDIRECT' ? 'Redirect' : 'Dismiss'; }
+  // Auto-resolve all unresolved conflicts in background on first load
+  var unresolved = c.conflicts.filter(function(x) { return !x.auto_applied; });
+  if (unresolved.length > 0 && !window._cannibAutoResolving) {
+    window._cannibAutoResolving = true;
+    fetch('/api/cannibalization/auto-resolve', { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(data2) {
+        window._cannibAutoResolving = false;
+        if (data2.resolved > 0) loadData();
+      })
+      .catch(function() { window._cannibAutoResolving = false; });
   }
+  if (unresolved.length > 0) {
+    // Still resolving — show progress
+    return '<div class="card"><div class="card-header accent-indigo"><h2>Keyword Cannibalization</h2></div>' +
+      '<div class="card-body"><p style="color:#6b7280">' + c.auto_resolved + ' resolved so far, ' + unresolved.length + ' resolving...</p></div></div>';
+  }
+  // All resolved — show summary
+  return '<div class="card"><div class="card-header accent-green"><h2>Keyword Cannibalization <span class="badge" style="background:#16a34a">\u2713</span></h2></div>' +
+    '<div class="card-body"><p style="color:#6b7280">' + c.auto_resolved + ' conflicts auto-resolved. Losers redirected to winners by impressions and position.</p></div></div>';
 }
+
 
 function renderPerformanceQueueCard(d) {
   const items = d.performanceQueue || [];

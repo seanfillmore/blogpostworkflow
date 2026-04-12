@@ -72,7 +72,7 @@ export default [
       });
     },
   },
-  // Auto-resolve all HIGH confidence blog-vs-blog conflicts
+  // Auto-resolve all unresolved conflicts by redirecting losers to the suggested winner
   {
     method: 'POST',
     match: (url) => /^\/api\/cannibalization\/auto-resolve$/.test(url),
@@ -82,35 +82,31 @@ export default [
         if (!loaded) return respondJson(res, { ok: true, resolved: 0 });
 
         const { path, report } = loaded;
-        const high = report.conflicts.filter((c) =>
-          !c.auto_applied &&
-          c.confidence === 'HIGH' &&
-          c.conflict_type === 'blog-vs-blog' &&
-          c.winner && c.losers?.length > 0
-        );
+        const unresolved = report.conflicts.filter((c) => !c.auto_applied);
 
         let resolved = 0;
         let failed = 0;
-        for (const conflict of high) {
-          for (const loser of conflict.losers) {
-            if (loser.action === 'MONITOR') continue;
+        for (const conflict of unresolved) {
+          // Determine winner: from AI decision, or highest impressions
+          let winnerUrl = null;
+          if (conflict.winner) {
+            winnerUrl = conflict.urls.find((u) => u.url.includes(conflict.winner));
+          }
+          if (!winnerUrl) {
+            winnerUrl = conflict.urls.reduce((best, u) => u.impressions > best.impressions ? u : best, conflict.urls[0]);
+          }
+          const losers = conflict.urls.filter((u) => u !== winnerUrl);
+          if (losers.length === 0) { markResolved(report, conflict.query, 'DISMISS'); resolved++; continue; }
+
+          let allOk = true;
+          for (const loser of losers) {
             try {
-              const winnerPath = toPath(conflict.urls.find((u) => u.url.includes(conflict.winner))?.url || conflict.winner);
-              const loserUrl = conflict.urls.find((u) => u.url.includes(loser.path));
-              if (!loserUrl) continue;
-              await createRedirect(toPath(loserUrl.url), winnerPath);
-              markResolved(report, conflict.query, 'REDIRECT');
-              resolved++;
+              await createRedirect(toPath(loser.url), toPath(winnerUrl.url));
             } catch (err) {
-              // Redirect may already exist — still mark as resolved
-              if (err.message.includes('422') || err.message.includes('already')) {
-                markResolved(report, conflict.query, 'REDIRECT');
-                resolved++;
-              } else {
-                failed++;
-              }
+              if (!err.message.includes('422')) { allOk = false; failed++; }
             }
           }
+          if (allOk) { markResolved(report, conflict.query, 'REDIRECT'); resolved++; }
         }
 
         recountAndSave(path, report);
