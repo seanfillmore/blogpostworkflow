@@ -8,7 +8,7 @@
  * Usage:
  *   node agents/competitor-intelligence/index.js
  *
- * Requires in .env: AHREFS_API_KEY, ANTHROPIC_API_KEY, SHOPIFY_STORE, SHOPIFY_SECRET
+ * Requires in .env: ANTHROPIC_API_KEY, SHOPIFY_STORE, SHOPIFY_SECRET, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -20,6 +20,7 @@ import { getProducts, getCustomCollections, getSmartCollections, getMetafields }
 import { matchCompetitorUrl } from './matcher.js';
 import { extractPageStructure } from './scraper.js';
 import { deduplicateChanges } from './brief-writer.js';
+import { getCompetitors as fetchCompetitors, getTopPages as fetchTopPages } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -39,33 +40,28 @@ function loadEnv() {
 
 const env = loadEnv();
 const STORE          = env.SHOPIFY_STORE || process.env.SHOPIFY_STORE;
-const AHREFS_KEY     = env.AHREFS_API_KEY || process.env.AHREFS_API_KEY;
 const SCREENSHOTS_DIR = join(ROOT, 'data', 'competitor-intelligence', 'screenshots');
 const BRIEFS_DIR      = join(ROOT, 'data', 'competitor-intelligence', 'briefs');
 const SITEMAP_PATH    = join(ROOT, 'data', 'sitemap-index.json');
 
 const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY });
 
-// ── Ahrefs REST API v3 ─────────────────────────────────────────────────────────
-
-async function ahrefsFetch(path) {
-  if (!AHREFS_KEY) throw new Error('AHREFS_API_KEY not set in .env');
-  const res = await fetch(`https://api.ahrefs.com/v3${path}`, {
-    headers: { Authorization: `Bearer ${AHREFS_KEY}`, Accept: 'application/json' },
-  });
-  if (!res.ok) throw new Error(`Ahrefs API ${path} → ${res.status}: ${await res.text()}`);
-  return res.json();
-}
+// ── DataForSEO API ────────────────────────────────────────────────────────────
 
 async function getCompetitors() {
-  const data = await ahrefsFetch('/management/project/competitors');
-  return data.competitors || [];
+  const STORE = env.SHOPIFY_STORE || process.env.SHOPIFY_STORE;
+  const domain = STORE?.replace('.myshopify.com', '.com') || 'realskincare.com';
+  const competitors = await fetchCompetitors(domain, { limit: 20 });
+  return competitors.map(c => ({ domain: c.domain }));
 }
 
 async function getTopPages(domain) {
-  const params = new URLSearchParams({ target: domain, limit: '200', mode: 'domain' });
-  const data = await ahrefsFetch(`/site-explorer/top-pages?${params}`);
-  return data.pages || [];
+  const pages = await fetchTopPages(domain, { limit: 200 });
+  return pages.map(p => ({
+    url: 'https://' + domain + p.url,
+    traffic_value: p.traffic,
+    keywords: p.keywords,
+  }));
 }
 
 // ── Puppeteer screenshot ───────────────────────────────────────────────────────

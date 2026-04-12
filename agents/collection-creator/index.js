@@ -45,6 +45,7 @@ import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/lib/queue.js';
 import { execSync } from 'child_process';
 import { createMetaTest } from '../../lib/meta-test.js';
+import { getSearchVolume, getKeywordIdeas, getSerpResults } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -88,52 +89,32 @@ const fromOpportunities = args.includes('--from-opportunities');
 const doQueue           = args.includes('--queue');
 const publishApproved   = args.includes('--publish-approved');
 
-// ── Ahrefs ────────────────────────────────────────────────────────────────────
-
-async function ahrefsGet(endpoint, params) {
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`https://api.ahrefs.com/v3${endpoint}?${qs}`, {
-    headers: { Authorization: `Bearer ${env.AHREFS_API_KEY}` },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Ahrefs ${endpoint} → ${res.status}: ${text}`);
-  }
-  return res.json();
-}
+// ── DataForSEO keyword & SERP helpers ────────────────────────────────────────
 
 async function getKeywordMetrics(keyword) {
   try {
-    const data = await ahrefsGet('/keywords-explorer/overview', {
-      keywords: keyword,
-      country: 'us',
-      select: 'volume,kd,traffic_potential,cpc',
-    });
-    const kw = data.keywords?.[0];
-    if (!kw) return null;
+    const [vol] = await getSearchVolume([keyword]);
+    const ideas = await getKeywordIdeas([keyword], { limit: 1 });
+    const kd = ideas[0]?.kd ?? 0;
     return {
-      volume: kw.volume ?? 0,
-      kd: kw.kd ?? 0,
-      trafficPotential: kw.traffic_potential ?? 0,
-      cpc: kw.cpc ?? 0,
+      volume: vol?.volume ?? 0,
+      kd,
+      trafficPotential: vol?.volume ?? 0,
+      cpc: vol?.cpc ?? 0,
     };
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 async function getSerpOverview(keyword) {
   try {
-    const data = await ahrefsGet('/serp-overview', {
-      keyword,
-      country: 'us',
-      top_positions: 10,
-      select: 'position,url,title,page_type',
-    });
-    return data.positions ?? [];
-  } catch {
-    return [];
-  }
+    const results = await getSerpResults(keyword, 10);
+    return results.map(r => ({
+      position: r.position,
+      url: r.url,
+      title: r.title,
+      page_type: 'organic',
+    }));
+  } catch { return []; }
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -244,7 +225,7 @@ async function getExistingCollections() {
 
 /**
  * Score an opportunity: higher = more valuable
- * Uses impressions (GSC) as proxy for volume since we may not always have Ahrefs data.
+ * Uses impressions (GSC) as proxy for volume when DataForSEO data is unavailable.
  */
 function scoreOpportunity(item, metrics) {
   const vol = metrics?.volume ?? item.impressions;
@@ -676,14 +657,12 @@ async function main() {
     const candidates = await getBlogRankingCommercialKeywords(gscDays);
     console.log(`  Found ${candidates.length} blog-ranking commercial keywords\n`);
 
-    // 3. Enrich with Ahrefs metrics (best-effort, don't fail if unavailable)
+    // 3. Enrich with DataForSEO metrics (best-effort, don't fail if unavailable)
     const top = candidates.slice(0, 40); // cap API calls
-    console.log(`  Fetching Ahrefs metrics for top ${top.length} candidates...`);
+    console.log(`  Fetching keyword metrics for top ${top.length} candidates...`);
     const enriched = await Promise.all(
       top.map(async (c) => {
-        const metrics = env.AHREFS_API_KEY
-          ? await getKeywordMetrics(c.query).catch(() => null)
-          : null;
+        const metrics = await getKeywordMetrics(c.query).catch(() => null);
         return { ...c, metrics };
       })
     );

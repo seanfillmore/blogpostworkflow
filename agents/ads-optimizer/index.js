@@ -14,6 +14,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getSearchVolume } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -121,15 +122,11 @@ function loadLatestSnapshot(dir) {
   return snaps[0] || null;
 }
 
-async function getAhrefsMetrics(keyword, apiKey) {
-  const qs = new URLSearchParams({ keywords: keyword, country: 'us', select: 'volume,kd' }).toString();
-  const res = await fetch(`https://api.ahrefs.com/v3/keywords-explorer/overview?${qs}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const kw = data.keywords?.[0];
-  return kw ? { volume: kw.volume ?? 0, kd: kw.kd ?? 0 } : null;
+async function getKeywordMetrics(keyword) {
+  try {
+    const [result] = await getSearchVolume([keyword]);
+    return result ? { volume: result.volume, kd: 0, cpc: result.cpc } : null;
+  } catch { return null; }
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
@@ -137,7 +134,6 @@ async function getAhrefsMetrics(keyword, apiKey) {
 async function main() {
   const env = loadEnv();
   const apiKey = process.env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY;
-  const ahrefsKey = process.env.AHREFS_API_KEY || env.AHREFS_API_KEY;
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://localhost:4242';
   if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY');
 
@@ -256,12 +252,10 @@ When Previous Recommendation History is provided:
 
   const result = parseSuggestionsResponse(rawText);
 
-  // Enrich keyword_add suggestions with Ahrefs metrics if available
-  if (ahrefsKey && result.suggestions.length > 0) {
-    for (const s of result.suggestions.filter(s => s.type === 'keyword_add')) {
-      const metrics = await getAhrefsMetrics(s.target, ahrefsKey).catch(() => null);
-      if (metrics) s.ahrefsMetrics = metrics;
-    }
+  // Enrich keyword_add suggestions with search volume metrics
+  for (const s of result.suggestions.filter(s => s.type === 'keyword_add')) {
+    const metrics = await getKeywordMetrics(s.target);
+    if (metrics) s.keywordMetrics = metrics;
   }
 
   // Save suggestion file
