@@ -518,7 +518,13 @@ function renderCannibalizationCard(d) {
 async function resolveCannibalization(query, winner, loser, action, btn) {
   if (btn) { btn.disabled = true; btn.textContent = action === 'REDIRECT' ? 'Redirecting...' : 'Dismissing...'; }
   try {
-    await resolveCannibalizationAsync(query, winner, loser, action);
+    var res = await fetch('/api/cannibalization/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query, winner: winner, loser: loser, action: action }),
+    });
+    var data2 = await res.json();
+    if (!res.ok || !data2.ok) throw new Error(data2.error || 'Unknown error');
     loadData();
   } catch (err) {
     alert('Failed: ' + err.message);
