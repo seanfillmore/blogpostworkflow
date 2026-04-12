@@ -456,12 +456,25 @@ function renderCannibalizationCard(d) {
   return '<div class="card"><div class="card-header accent-red"><h2>Keyword Cannibalization <span class="badge">' + c.conflict_count + '</span></h2></div>' +
     '<div class="card-body">' +
     '<p style="color:#6b7280;margin-bottom:12px">' + c.auto_resolved + ' auto-resolved, ' + c.recommended + ' recommendations</p>' +
-    '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Type</th></tr></thead><tbody>' +
+    '<table class="data-table"><thead><tr><th>Query</th><th>Impressions</th><th>URLs</th><th>Recommendation</th></tr></thead><tbody>' +
     c.conflicts.slice(0, 10).map(function(conflict) {
       var urls = conflict.urls.map(function(u) {
-        return '<div style="font-size:12px">' + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a></div>';
+        var isWinner = conflict.winner && u.url.includes(conflict.winner);
+        var label = isWinner ? '<span style="color:#16a34a;font-weight:600">KEEP</span> ' : '';
+        var loser = (conflict.losers || []).find(function(l) { return u.url.includes(l.path); });
+        if (loser) label = '<span style="color:#dc2626;font-weight:600">' + esc(loser.action) + '</span> ';
+        return '<div style="font-size:12px">' + label + u.type + ' #' + Math.round(u.position) + ' — <a href="' + u.url + '" target="_blank">' + u.url.split('/').pop() + '</a></div>';
       }).join('');
-      return '<tr><td><strong>' + conflict.query + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + conflict.conflict_type + '</td></tr>';
+      var rec = '';
+      if (conflict.summary) {
+        var confidence = conflict.confidence || '';
+        var badgeColor = confidence === 'HIGH' ? '#16a34a' : confidence === 'MEDIUM' ? '#d97706' : '#6b7280';
+        rec = '<div style="margin-top:4px"><span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">' + esc(confidence) + '</span> ' +
+          '<span style="font-size:12px;color:#6b7280">' + esc(conflict.summary) + '</span></div>';
+      } else if (conflict.conflict_type !== 'blog-vs-blog') {
+        rec = '<div style="margin-top:4px"><span style="font-size:12px;color:#6b7280">Cross-type conflict — manual review needed</span></div>';
+      }
+      return '<tr><td><strong>' + esc(conflict.query) + '</strong></td><td>' + conflict.total_impressions + '</td><td>' + urls + '</td><td>' + rec + '</td></tr>';
     }).join('') +
     '</tbody></table></div></div>';
 }

@@ -216,6 +216,20 @@ export function aggregateData() {
   const indexingQueue      = readJsonIfExists(join(ROOT, 'data', 'performance-queue', 'indexing-submissions.json'));
   const legacyTriage    = readJsonIfExists(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   const cannibalization = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'latest.json'));
+  // Enrich cannibalization conflicts with decision details (winner, action, reason)
+  const cannibDecisions = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'cannibalization-decisions.json'));
+  if (cannibalization?.conflicts && cannibDecisions?.decisions) {
+    const decisionMap = new Map(cannibDecisions.decisions.map((d) => [d.query, d]));
+    for (const c of cannibalization.conflicts) {
+      const d = decisionMap.get(c.query);
+      if (d) {
+        c.winner = d.winner;
+        c.losers = d.losers;
+        c.confidence = d.confidence;
+        c.summary = d.summary;
+      }
+    }
+  }
 
   // Technical SEO audit report (markdown → parsed)
   const techSeoReportRaw = (() => {
