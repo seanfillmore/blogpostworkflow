@@ -235,7 +235,7 @@ function renderTechnicalSeoTab(d) {
       'meta_description_length_issues': 'fix-meta',
       'missing_alt_text': 'fix-alt-text',
       'missing_alt': 'fix-alt-text',
-      'missing_image_alt_text': 'fix-alt-text',
+      'missing_image_alt_text': 'fix-theme-alt',
       'redirect_chains': 'fix-redirects',
       'internal_links_to_redirected_urls': 'fix-redirects',
       'title_tags_too_long': 'fix-titles',
