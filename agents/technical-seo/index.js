@@ -12,6 +12,7 @@
  *   fix-links [--dry-run]  Update internal links pointing to 404 pages
  *   fix-redirects [--dry-run] Update internal links pointing to 301 redirected URLs
  *   fix-alt-text [--dry-run]  Generate + insert alt text on <img> tags in blog post bodies
+ *   fix-theme-alt [--dry-run] Add alt text to images in JSON theme templates (sections/templates)
  *   create-redirects [--dry-run] Create 301 redirects for known 404 pages
  *   fix-ai-content [--dry-run]  Rewrite high-AI-content pages in data/ai-detection/*.csv
  *   fix-titles [--dry-run]     Shorten title tags that exceed 60 characters
@@ -44,7 +45,7 @@ import {
   getCustomCollections, getSmartCollections,
   updateCustomCollection, updateSmartCollection,
   getAllFiles, updateFileAlt,
-  getMainThemeId, getThemeAsset, updateThemeAsset,
+  getMainThemeId, getThemeAsset, updateThemeAsset, listThemeAssets,
 } from '../../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -1781,6 +1782,60 @@ async function fixInternalLinks({ dryRun = false } = {}) {
   console.log(`\n  ${dryRun ? 'Would process' : 'Processed'}: ${urls.length} posts`);
 }
 
+// ── COMMAND: fix-theme-alt ────────────────────────────────────────────────────
+
+async function fixThemeAlt({ dryRun = false } = {}) {
+  console.log('\n  Fixing missing alt text in theme JSON templates...');
+
+  const themeId = await getMainThemeId();
+  if (!themeId) { console.error('  Could not find main theme.'); return; }
+
+  const allAssets = await listThemeAssets(themeId);
+  const jsonAssets = allAssets.filter(a =>
+    (a.key.startsWith('templates/') || a.key.startsWith('sections/')) && a.key.endsWith('.json')
+  );
+
+  console.log(`  Checking ${jsonAssets.length} JSON template files...`);
+  let totalFixed = 0;
+
+  for (const asset of jsonAssets) {
+    const rawVal = await getThemeAsset(themeId, asset.key);
+    if (!rawVal || !rawVal.includes('shop_images')) continue;
+
+    let data;
+    try { data = JSON.parse(rawVal); } catch { continue; }
+    let modified = false;
+
+    // Recursively walk all objects looking for settings with image but no alt
+    function addMissingAlt(obj) {
+      if (!obj || typeof obj !== 'object') return;
+      if (typeof obj.image === 'string' && obj.image.includes('shop_images') && !('alt' in obj)) {
+        const filename = obj.image.split('/').pop()
+          .replace(/\.[^.]+$/, '')           // strip extension
+          .replace(/[_-]/g, ' ')             // underscores/hyphens to spaces
+          .replace(/\s+[a-f0-9]{8,}.*$/, '') // strip UUID suffixes
+          .trim();
+        obj.alt = filename || 'Image';
+        modified = true;
+        totalFixed++;
+      }
+      for (const val of Object.values(obj)) {
+        if (typeof val === 'object') addMissingAlt(val);
+      }
+    }
+    addMissingAlt(data);
+
+    if (modified && !dryRun) {
+      console.log(`  Updating: ${asset.key}`);
+      await updateThemeAsset(themeId, asset.key, JSON.stringify(data, null, 2));
+    } else if (modified) {
+      console.log(`  [DRY RUN] Would update: ${asset.key}`);
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${totalFixed} image alt text in theme templates`);
+}
+
 // ── COMMAND: fix-all ──────────────────────────────────────────────────────────
 
 async function fixAll({ dryRun = false } = {}) {
@@ -1792,6 +1847,7 @@ async function fixAll({ dryRun = false } = {}) {
   await fixTitles({ dryRun });
   await fixDuplicateTags({ dryRun });
   await fixAltText({ dryRun });
+  await fixThemeAlt({ dryRun });
   await fixNoindex({ dryRun });
   await fixInternalLinks({ dryRun });
   console.log('\n  All fixes complete.');
@@ -1812,6 +1868,7 @@ Usage:
   node agents/technical-seo/index.js fix-links [--dry-run]
   node agents/technical-seo/index.js fix-redirects [--dry-run]
   node agents/technical-seo/index.js fix-alt-text [--dry-run]
+  node agents/technical-seo/index.js fix-theme-alt [--dry-run]
   node agents/technical-seo/index.js create-redirects [--dry-run]
   node agents/technical-seo/index.js fix-ai-content [--dry-run]
   node agents/technical-seo/index.js fix-titles [--dry-run]
@@ -1948,6 +2005,9 @@ async function main() {
       break;
     case 'fix-alt-text':
       await runFixWithTracking(fixAltText, 'fix-alt-text');
+      break;
+    case 'fix-theme-alt':
+      await runFixWithTracking(fixThemeAlt, 'fix-theme-alt');
       break;
     case 'create-redirects':
       await runFixWithTracking(createRedirects, 'create-redirects');
