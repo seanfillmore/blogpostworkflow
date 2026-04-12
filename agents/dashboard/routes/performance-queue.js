@@ -36,11 +36,13 @@ export default [
       if (!item) return notFound(res);
 
       // Look up Shopify article ID from post metadata
-      const postMetaPath = join(ctx.ROOT, 'data', 'posts', `${slug}.json`);
+      const postMetaPath = join(ctx.POSTS_DIR, `${slug}.json`);
       if (!existsSync(postMetaPath)) {
         return respondJson(res, { ok: false, error: `No post metadata found for "${slug}"` }, 400);
       }
-      const postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8'));
+      let postMeta;
+      try { postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8')); }
+      catch (err) { return respondJson(res, { ok: false, error: `Invalid post metadata: ${err.message}` }, 400); }
       if (!postMeta.shopify_article_id) {
         return respondJson(res, { ok: false, error: `No shopify_article_id in post metadata for "${slug}"` }, 400);
       }
@@ -61,8 +63,7 @@ export default [
       }
 
       // Copy refreshed HTML over canonical local file
-      const canonicalPath = join(ctx.ROOT, 'data', 'posts', `${slug}.html`);
-      writeFileSync(canonicalPath, refreshedHtml);
+      writeFileSync(join(ctx.POSTS_DIR, `${slug}.html`), refreshedHtml);
 
       // Stamp item as published
       item.status = 'published';
