@@ -616,38 +616,47 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
   for (const row of rows) {
     const src = row.url;
     const type = pageType(src);
-    if (!['article', 'page'].includes(type)) {
-      console.log(`  [SKIP] ${type}: ${src}`);
-      continue;
+    if (!['article', 'page', 'product', 'collection'].includes(type)) {
+      continue; // silently skip non-fixable types
     }
 
     const brokenSet = brokenBySource[src] || new Set();
-    if (brokenSet.size === 0) {
-      console.log(`  [SKIP] No broken link details for: ${urlPath(src)}`);
-      continue;
-    }
+    if (brokenSet.size === 0) continue; // no broken link details
 
-    // Load article/page body
+    // Load body from the appropriate resource
     let body = '';
     let resourceId = null;
     let blogId = null;
 
+    const path = urlPath(src);
+    let resourceType = type;
     if (type === 'article') {
-      const path = urlPath(src);
       const entry = articleIndex[path];
-      if (!entry) { console.log(`  [SKIP] Article not found: ${path}`); continue; }
+      if (!entry) continue;
       blogId = entry.blogId;
       resourceId = entry.articleId;
       const full = await getArticle(blogId, resourceId);
       body = full.body_html || '';
-    } else {
-      const path = urlPath(src);
-      const pageIdx = await getPageIndex();
-      const entry = pageIdx[path];
-      if (!entry) { console.log(`  [SKIP] Page not found: ${path}`); continue; }
+    } else if (type === 'page') {
+      const pIdx = await getPageIndex();
+      const entry = pIdx[path];
+      if (!entry) continue;
       resourceId = entry.pageId;
-      const full = await getPage(resourceId);
-      body = full.body_html || '';
+      body = (await getPage(resourceId)).body_html || '';
+    } else if (type === 'product') {
+      const handle = path.split('/').pop();
+      const products = await getProducts({ handle });
+      if (!products[0]) continue;
+      resourceId = products[0].id;
+      body = products[0].body_html || '';
+    } else if (type === 'collection') {
+      const handle = path.split('/').pop();
+      const [custom, smart] = await Promise.all([getCustomCollections({ handle }), getSmartCollections({ handle })]);
+      const col = custom[0] || smart[0];
+      if (!col) continue;
+      resourceId = col.id;
+      resourceType = custom[0] ? 'custom_collection' : 'smart_collection';
+      body = col.body_html || '';
     }
 
     const $ = cheerio.load(body);
@@ -695,12 +704,16 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
     console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${urlPath(src)} — ${changes} link(s) fixed`);
 
     if (!dryRun) {
-      if (type === 'article') {
-        await updateArticle(blogId, resourceId, { body_html: newBody });
-      } else {
-        await updatePage(resourceId, { body_html: newBody });
+      try {
+        if (type === 'article') await updateArticle(blogId, resourceId, { body_html: newBody });
+        else if (type === 'page') await updatePage(resourceId, { body_html: newBody });
+        else if (type === 'product') await updateProduct(resourceId, { body_html: newBody });
+        else if (resourceType === 'custom_collection') await updateCustomCollection(resourceId, { body_html: newBody });
+        else if (resourceType === 'smart_collection') await updateSmartCollection(resourceId, { body_html: newBody });
+        fixed++;
+      } catch (e) {
+        console.log(`    Error: ${e.message}`);
       }
-      fixed++;
     } else {
       fixed++;
     }
@@ -872,7 +885,21 @@ async function fixMeta({ dryRun = false } = {}) {
   const seen = new Set();
   const toFix = [];
   for (const r of all) {
-    if (!seen.has(r.url)) { seen.add(r.url); toFix.push(r); }
+    if (!r.url || seen.has(r.url)) continue;
+    seen.add(r.url);
+
+    const path = urlPath(r.url);
+    // Skip unfixable URLs before processing
+    if (path.includes('/tagged/')) continue;                        // tag listing pages — not editable
+    if (path === '/blogs/news' || path === '/blogs/news/') continue; // blog index
+    if (path === '/' || path === '') continue;                      // homepage
+    if (path === '/collections' || path === '/collections/') continue; // collections index
+    if (path === '/collections/all') continue;                      // all-products page
+
+    const type = pageType(r.url);
+    if (!['article', 'page', 'product', 'collection'].includes(type)) continue;
+
+    toFix.push(r);
   }
 
   const articleIndex = await getArticleIndex();
@@ -880,12 +907,11 @@ async function fixMeta({ dryRun = false } = {}) {
   const productIdx = await getProductIndex();
   const collectionIdx = await getCollectionIndex();
 
-  // Build a lookup: URL path → collection resource type ('custom_collections' or 'smart_collections')
   const env = loadEnv();
   const SHOP = env.SHOPIFY_STORE;
   const TOKEN = env.SHOPIFY_SECRET;
 
-  console.log(`  ${toFix.length} pages with meta description issues\n`);
+  console.log(`  ${toFix.length} fixable pages with meta description issues (${all.length - toFix.length} unfixable filtered)\n`);
   let fixed = 0;
 
   for (const row of toFix) {
@@ -893,11 +919,6 @@ async function fixMeta({ dryRun = false } = {}) {
     const path = urlPath(row.url);
     const pageTitle = row.title?.split('\n')[0] || path;
     const existingMeta = row.meta_description || '';
-
-    if (!['article', 'page', 'product', 'collection'].includes(type)) {
-      console.log(`  [SKIP] unsupported type (${type}): ${path}`);
-      continue;
-    }
 
     process.stdout.write(`  ${path} [${row.issue}] → generating meta... `);
     const newMeta = await generateMetaDescription(pageTitle, row.url, existingMeta);
