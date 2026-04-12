@@ -454,22 +454,11 @@ function renderCannibalizationCard(d) {
   var c = d.cannibalization;
   if (!c || !c.conflicts || c.conflicts.length === 0) return '';
 
-  // Auto-resolve HIGH confidence blog-vs-blog in background
-  var hasHigh = c.conflicts.some(function(x) {
-    return !x.auto_applied && x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner && x.losers;
-  });
-  if (hasHigh && !window._cannibAutoResolving) {
-    window._cannibAutoResolving = true;
-    fetch('/api/cannibalization/auto-resolve', { method: 'POST' }).then(function() {
-      window._cannibAutoResolving = false;
-      loadData();
-    }).catch(function() { window._cannibAutoResolving = false; });
-  }
-
-  // Only show conflicts that need manual review (not auto-applied, not HIGH blog-vs-blog)
+  // Only show conflicts that need manual review
   var manual = c.conflicts.filter(function(x) {
     if (x.auto_applied) return false;
-    if (x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner) return false;
+    // HIGH confidence blog-vs-blog with a clear winner — hide, these are actionable by the resolver agent
+    if (x.confidence === 'HIGH' && x.conflict_type === 'blog-vs-blog' && x.winner && x.losers) return false;
     return true;
   });
   if (manual.length === 0) return '';
