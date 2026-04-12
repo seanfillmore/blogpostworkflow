@@ -726,7 +726,10 @@ function renderIndexingCard(d) {
         '<span class="action-age">' + esc(r.verdict.action) + '</span>' +
       '</div>' +
       '<div class="action-reason">' + esc(r.state) + ' &mdash; ' + esc(r.coverage_state || '') + (r.canonical_mismatch ? ' &middot; Google canonical: <code>' + esc(r.google_canonical || '') + '</code>' : '') + '</div>' +
-      '<div class="action-buttons"><a class="btn-secondary" href="' + esc(r.url) + '" target="_blank">Open post</a></div>' +
+      '<div class="action-buttons">' +
+        '<button class="btn-sm btn-approve" onclick="resubmitForIndexing(\'' + esc(r.url) + '\', this)">Resubmit for Indexing</button>' +
+        '<a class="btn-secondary" href="' + esc(r.url) + '" target="_blank" style="margin-left:6px">Open post</a>' +
+      '</div>' +
     '</div>').join('');
   }
 
@@ -743,6 +746,23 @@ function renderIndexingCard(d) {
       (criticalRows ? '<h3 style="font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin:12px 0 8px">Manual Fixes Needed</h3>' + criticalRows : '') +
       (queueRows || criticalRows ? '' : '<div class="empty-state" style="padding:12px 0">All posts are either indexed or within their patience window.</div>') +
     '</div></div>';
+}
+
+async function resubmitForIndexing(url, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  try {
+    var res = await fetch('/api/indexing/resubmit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url }),
+    });
+    var d = await res.json();
+    if (!res.ok || !d.ok) throw new Error(d.error || 'Unknown error');
+    if (btn) { btn.textContent = 'Submitted'; btn.style.background = '#16a34a'; }
+  } catch (err) {
+    alert('Resubmit failed: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Resubmit for Indexing'; }
+  }
 }
 
 async function approveIndexingSubmit(slug) {

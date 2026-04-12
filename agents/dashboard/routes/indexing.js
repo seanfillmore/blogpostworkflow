@@ -64,4 +64,25 @@ export default [
       }
     },
   },
+  // Resubmit a URL to Google's Indexing API
+  {
+    method: 'POST',
+    match: (url) => /^\/api\/indexing\/resubmit$/.test(url),
+    async handler(req, res, ctx) {
+      let body = '';
+      req.on('data', (d) => { body += d; });
+      req.on('end', async () => {
+        try {
+          const { url: pageUrl } = JSON.parse(body);
+          if (!pageUrl) return respondJson(res, { ok: false, error: 'Missing url' }, 400);
+          const { submitUrlForIndexing } = await import('../../../lib/gsc-indexing.js');
+          const result = await submitUrlForIndexing(pageUrl);
+          ctx.invalidateDataCache?.();
+          respondJson(res, { ok: true, result });
+        } catch (err) {
+          respondJson(res, { ok: false, error: err.message }, 502);
+        }
+      });
+    },
+  },
 ];
