@@ -244,6 +244,8 @@ function renderTechnicalSeoTab(d) {
       'h1_issues': 'fix-noindex',
       'pages_with_only_1_inbound_internal_link': 'fix-internal-links',
       'indexable_pages_not_in_sitemap': 'fix-noindex',
+      'pages_to_submit_to_indexnow': 'fix-submit-indexing',
+      'additional_issues': 'fix-submit-indexing',
     };
 
     var cats = Object.entries(audit.categories);

@@ -19,6 +19,8 @@
  *   fix-noindex [--dry-run]    Add noindex to ads landing pages and orphan pages
  *   fix-duplicate-tags [--dry-run] Remove duplicate meta/title tags from article body_html
  *   fix-internal-links [--dry-run] Run internal-linker for blog posts with few inbound links
+ *   fix-submit-indexing [--dry-run] Submit changed pages to Google Indexing API
+ *   fix-noindex-thin [--dry-run]    Add noindex to tag listing and paginated blog pages
  *   fix-all [--dry-run]    Run all fixes in order
  *
  * Requires: ANTHROPIC_API_KEY in .env
@@ -470,6 +472,34 @@ async function audit() {
   const singleLink = csvs['Notice-indexable-Page_has_only_one_dofollow_incoming_internal_link'] || [];
   sections.push(`### 13. Pages with Only 1 Inbound Internal Link — ${singleLink.length} pages`);
   sections.push('Prioritise higher-PR pages for additional cross-linking via the blog post writer.\n');
+
+  // ── Additional Issues (remaining CSVs not covered above) ──
+  const processedPrefixes = new Set([
+    'Error-404', 'Error-4XX', 'Error-indexable-Page_has_links',
+    'Warning-indexable-Meta_description', 'Warning-indexable-Title',
+    'Warning-indexable-H1', 'Error-indexable-Orphan', 'Error-indexable-Multiple',
+    'Warning-3XX', 'Notice-Redirect', 'Error-Broken_redirect',
+    'Warning-Missing_alt', 'Error-Image_file_size',
+    'Notice-indexable-Page_has_only_one_dofollow',
+    'Notice-indexable-Not_in_sitemap',
+  ]);
+
+  const allCsvFiles = readdirSync(CSV_DIR).filter(f => f.endsWith('.csv'));
+  const unprocessed = allCsvFiles.filter(f => {
+    const base = f.replace('.csv', '');
+    return !processedPrefixes.has(base) && !Array.from(processedPrefixes).some(p => base.startsWith(p));
+  });
+
+  if (unprocessed.length > 0) {
+    sections.push('\n## ℹ️ Additional Issues\n');
+    for (const f of unprocessed) {
+      const rows = loadCSV(f.replace('.csv', ''));
+      const cleanName = f.replace('.csv', '').replace(/^(Error|Warning|Notice)-/i, '').replace(/-/g, ' ').replace(/_/g, ' ');
+      if (rows.length > 0) {
+        sections.push(`### ℹ️ ${cleanName} (${rows.length})\n`);
+      }
+    }
+  }
 
   // ── Summary ──
   sections.push('---');
@@ -1857,6 +1887,146 @@ async function fixThemeAlt({ dryRun = false } = {}) {
   console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${totalFixed} image alt text in theme templates`);
 }
 
+// ── COMMAND: fix-submit-indexing ─────────────────────────────────────────────
+
+async function fixSubmitIndexing({ dryRun = false } = {}) {
+  console.log('\n  Submitting changed pages to Google Indexing API...');
+
+  const rows = loadCSV('Notice-Pages_to_submit_to_IndexNow');
+  if (rows.length === 0) { console.log('  No pages to submit.'); return; }
+
+  // Filter to real content pages only — skip tag pages, pagination, blog index
+  const eligible = rows.filter(r => {
+    const url = r.url || '';
+    if (url.includes('/tagged/')) return false;
+    if (url.includes('?page=')) return false;
+    if (url.endsWith('/blogs/news') || url.endsWith('/blogs/news/')) return false;
+    return url.includes('realskincare.com');
+  });
+
+  console.log(`  ${eligible.length} eligible pages (${rows.length - eligible.length} filtered — tag/pagination/index pages)`);
+
+  const { submitUrlForIndexing, getQuotaStatus } = await import('../../lib/gsc-indexing.js');
+  const quota = getQuotaStatus();
+  console.log(`  Indexing API quota remaining: ${quota.submission.remaining}/${quota.submission.cap}\n`);
+
+  let submitted = 0;
+  for (const row of eligible) {
+    const url = row.url;
+    if (!url) continue;
+
+    if (quota.submission.remaining <= 0) {
+      console.log('  Quota exhausted — stopping.');
+      break;
+    }
+
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}Submit: ${url}`);
+    if (!dryRun) {
+      try {
+        await submitUrlForIndexing(url, 'URL_UPDATED');
+        submitted++;
+      } catch (e) {
+        console.log(`    Error: ${e.message}`);
+      }
+    } else {
+      submitted++;
+    }
+  }
+
+  console.log(`\n  ${dryRun ? 'Would submit' : 'Submitted'}: ${submitted} pages to Indexing API`);
+}
+
+// ── COMMAND: fix-noindex-thin ────────────────────────────────────────────────
+
+async function fixNoindexThin({ dryRun = false } = {}) {
+  console.log('\n  Adding noindex to tag listing pages and paginated blog pages...');
+
+  const themeId = await getMainThemeId();
+  if (!themeId) { console.error('  Could not find main theme.'); return; }
+
+  // Check the blog template's main section for existing noindex logic
+  const blogSectionKey = 'sections/main-blog.liquid';
+  let blogSection = await getThemeAsset(themeId, blogSectionKey);
+
+  if (!blogSection) {
+    // Try alternate names
+    const altKeys = ['sections/blog-posts.liquid', 'sections/main-blog-posts.liquid'];
+    for (const key of altKeys) {
+      blogSection = await getThemeAsset(themeId, key);
+      if (blogSection) break;
+    }
+  }
+
+  if (!blogSection) {
+    console.log('  Could not find blog section template. Checking layout/theme.liquid instead...');
+
+    // Add noindex via the main layout for tagged/paginated
+    const layoutKey = 'layout/theme.liquid';
+    const layout = await getThemeAsset(themeId, layoutKey);
+    if (!layout) { console.error('  Could not find layout/theme.liquid'); return; }
+
+    if (layout.includes('noindex-tag-pagination')) {
+      console.log('  Noindex logic already present in layout.');
+      return;
+    }
+
+    // Add noindex meta tag for tagged and paginated pages
+    const noindexSnippet = `
+  {%- comment -%}noindex-tag-pagination: added by technical-seo agent{%- endcomment -%}
+  {%- if current_tags or current_page > 1 -%}
+    <meta name="robots" content="noindex, follow">
+  {%- endif -%}`;
+
+    // Insert right before </head>
+    const insertPoint = layout.indexOf('</head>');
+    if (insertPoint === -1) { console.error('  Could not find </head> in layout'); return; }
+
+    const newLayout = layout.slice(0, insertPoint) + noindexSnippet + '\n  ' + layout.slice(insertPoint);
+
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}Adding noindex meta tag to layout/theme.liquid for tagged and paginated pages`);
+    if (!dryRun) {
+      await updateThemeAsset(themeId, layoutKey, newLayout);
+      console.log('  ✓ Updated layout/theme.liquid');
+    }
+    return;
+  }
+
+  console.log('  Found blog section, checking for noindex...');
+  // Similar logic but in the section file
+  if (blogSection.includes('noindex-tag-pagination')) {
+    console.log('  Noindex logic already present.');
+    return;
+  }
+
+  console.log(`  ${dryRun ? '[DRY RUN] ' : ''}Noindex logic will be added to layout/theme.liquid`);
+
+  // Fall through to layout approach
+  const layoutKey = 'layout/theme.liquid';
+  const layout = await getThemeAsset(themeId, layoutKey);
+  if (!layout) { console.error('  Could not find layout/theme.liquid'); return; }
+
+  if (layout.includes('noindex-tag-pagination')) {
+    console.log('  Noindex logic already present in layout.');
+    return;
+  }
+
+  const noindexSnippet = `
+  {%- comment -%}noindex-tag-pagination: added by technical-seo agent{%- endcomment -%}
+  {%- if current_tags or current_page > 1 -%}
+    <meta name="robots" content="noindex, follow">
+  {%- endif -%}`;
+
+  const insertPoint = layout.indexOf('</head>');
+  if (insertPoint === -1) { console.error('  Could not find </head> in layout'); return; }
+
+  const newLayout = layout.slice(0, insertPoint) + noindexSnippet + '\n  ' + layout.slice(insertPoint);
+
+  if (!dryRun) {
+    await updateThemeAsset(themeId, layoutKey, newLayout);
+    console.log('  ✓ Updated layout/theme.liquid — tag pages and paginated pages will now have noindex');
+  }
+}
+
 // ── COMMAND: fix-all ──────────────────────────────────────────────────────────
 
 async function fixAll({ dryRun = false } = {}) {
@@ -1870,7 +2040,9 @@ async function fixAll({ dryRun = false } = {}) {
   await fixAltText({ dryRun });
   await fixThemeAlt({ dryRun });
   await fixNoindex({ dryRun });
+  await fixNoindexThin({ dryRun });
   await fixInternalLinks({ dryRun });
+  await fixSubmitIndexing({ dryRun });
   console.log('\n  All fixes complete.');
 }
 
@@ -1896,6 +2068,8 @@ Usage:
   node agents/technical-seo/index.js fix-noindex [--dry-run]
   node agents/technical-seo/index.js fix-duplicate-tags [--dry-run]
   node agents/technical-seo/index.js fix-internal-links [--dry-run]
+  node agents/technical-seo/index.js fix-submit-indexing [--dry-run]
+  node agents/technical-seo/index.js fix-noindex-thin [--dry-run]
   node agents/technical-seo/index.js fix-all [--dry-run]
 `.trim();
 
@@ -2047,6 +2221,12 @@ async function main() {
       break;
     case 'fix-internal-links':
       await runFixWithTracking(fixInternalLinks, 'fix-internal-links');
+      break;
+    case 'fix-submit-indexing':
+      await runFixWithTracking(fixSubmitIndexing, 'fix-submit-indexing');
+      break;
+    case 'fix-noindex-thin':
+      await runFixWithTracking(fixNoindexThin, 'fix-noindex-thin');
       break;
     case 'fix-all': {
       const tracker = captureFixResults('fix-all', dryRun);
