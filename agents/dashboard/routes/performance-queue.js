@@ -2,7 +2,7 @@
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
-import { getBlogs, updateArticle, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
+import { getBlogs, updateArticle, getProducts, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -26,13 +26,45 @@ function respondJson(res, data, status = 200) {
 
 function notFound(res) { respondJson(res, { ok: false, error: 'Not found' }, 404); }
 
+function fixUnclosedHtml(html) {
+  // Close any unclosed block tags left by truncated AI output
+  const openTags = [];
+  const tagRe = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+  const voidTags = new Set(['br', 'hr', 'img', 'input', 'meta', 'link']);
+  let m;
+  while ((m = tagRe.exec(html))) {
+    const tag = m[1].toLowerCase();
+    if (voidTags.has(tag)) continue;
+    if (m[0].startsWith('</')) {
+      const idx = openTags.lastIndexOf(tag);
+      if (idx !== -1) openTags.splice(idx, 1);
+    } else {
+      openTags.push(tag);
+    }
+  }
+  let fixed = html;
+  for (let i = openTags.length - 1; i >= 0; i--) fixed += `</${openTags[i]}>`;
+  return fixed;
+}
+
 async function publishCollectionGap(item) {
   const c = item.proposed_collection;
   if (!c) throw new Error('No proposed_collection data');
+
+  // Find products matching the target keyword
+  const keyword = (item.signal_source?.keyword || c.handle).toLowerCase();
+  const products = await getProducts();
+  const matched = products.filter((p) => {
+    const text = `${p.title} ${p.handle} ${p.tags || ''}`.toLowerCase();
+    return keyword.split(/\s+/).every((w) => text.includes(w));
+  });
+
+  const collects = matched.map((p) => ({ product_id: p.id }));
   const collection = await createCustomCollection({
     title: c.title,
     handle: c.handle,
-    body_html: c.body_html,
+    body_html: fixUnclosedHtml(c.body_html),
+    collects,
   });
   if (c.seo_title) await upsertMetafield('custom_collections', collection.id, 'global', 'title_tag', c.seo_title);
   if (c.seo_description) await upsertMetafield('custom_collections', collection.id, 'global', 'description_tag', c.seo_description);
