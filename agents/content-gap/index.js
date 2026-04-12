@@ -26,6 +26,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
+import { getKeywordIdeas, getCompetitors, getRankedKeywords, getTopPages } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -195,6 +196,99 @@ function loadCompetitorTopPages() {
     })).filter((r) => r.url).slice(0, 50);
   }
   return result;
+}
+
+// ── DataForSEO data fetchers ─────────────────────────────────────────────────
+
+async function fetchKeywordIdeasForCategory(seedKeyword) {
+  try {
+    const ideas = await getKeywordIdeas([seedKeyword], { limit: 200 });
+    return ideas.map((r) => ({
+      keyword: r.keyword,
+      volume: r.volume,
+      difficulty: r.kd,
+      traffic_potential: r.volume,
+      cpc: r.cpc,
+      intents: r.intent || '',
+      parent_keyword: '',
+    }));
+  } catch { return []; }
+}
+
+async function fetchContentGap() {
+  try {
+    const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const competitors = await getCompetitors(domain, { limit: 10 });
+    const compDomains = competitors.map((c) => c.domain);
+
+    // Get our keywords
+    const ourKeywords = await getRankedKeywords(domain, { limit: 500 });
+    const ourSet = new Set(ourKeywords.map((k) => k.keyword.toLowerCase()));
+
+    // Get competitor keywords and find gaps
+    const gaps = [];
+    for (const comp of compDomains.slice(0, 3)) {
+      const compKws = await getRankedKeywords(comp, { limit: 200 });
+      for (const kw of compKws) {
+        if (!ourSet.has(kw.keyword.toLowerCase()) && kw.volume > 50) {
+          gaps.push({
+            keyword: kw.keyword,
+            volume: kw.volume,
+            kd: 0,
+            rsc_position: null,
+            competitor_positions: { [comp]: kw.position },
+          });
+        }
+      }
+    }
+
+    // Dedupe by keyword, keep highest volume
+    const seen = new Map();
+    for (const g of gaps) {
+      const key = g.keyword.toLowerCase();
+      if (!seen.has(key) || seen.get(key).volume < g.volume) seen.set(key, g);
+    }
+
+    return {
+      keywords: Array.from(seen.values()).sort((a, b) => b.volume - a.volume).slice(0, 200),
+      competitors: compDomains,
+    };
+  } catch (err) {
+    console.log(`  ⚠️ DataForSEO content gap fetch failed: ${err.message}`);
+    return { keywords: [], competitors: [] };
+  }
+}
+
+async function fetchOwnKeywords() {
+  try {
+    const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const keywords = await getRankedKeywords(domain, { limit: 500 });
+    return keywords.map((kw) => ({
+      keyword: kw.keyword,
+      position: kw.position,
+      volume: kw.volume,
+      url: kw.url,
+    }));
+  } catch { return []; }
+}
+
+async function fetchCompetitorTopPages() {
+  try {
+    const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const competitors = await getCompetitors(domain, { limit: 5 });
+    const result = {};
+    for (const comp of competitors.slice(0, 3)) {
+      const pages = await getTopPages(comp.domain, { limit: 50 });
+      result[comp.domain] = pages.map((p) => ({
+        url: 'https://' + comp.domain + p.url,
+        traffic: p.traffic,
+        keywords: p.keywords,
+        top_keyword: p.topKeyword || '',
+        top_keyword_volume: 0,
+      }));
+    }
+    return result;
+  } catch { return {}; }
 }
 
 // ── site performance snapshots ────────────────────────────────────────────────
@@ -478,27 +572,41 @@ What content strategies are Tom's, Dr. Bronner's, and OSEA using that RSC is not
 async function main() {
   console.log(`\nContent Gap Agent — ${config.name}\n`);
 
-  if (!existsSync(DATA_DIR)) {
-    console.error(`data/content_gap/ not found. Create it and add Ahrefs CSV exports.`);
-    process.exit(1);
-  }
+  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 
   // Load inventory
   process.stdout.write('  Loading content inventory... ');
   const inventory = loadInventory();
   console.log(`done (${inventory.articles.length} articles, ${inventory.products.length} products, ${inventory.collections.length} collections)`);
 
-  // Load content gap CSV
-  process.stdout.write('  Loading content gap data (top100.csv)... ');
-  const contentGap = loadContentGap();
-  console.log(`done (${contentGap.keywords.length} keywords, competitors: ${contentGap.competitors.join(', ')})`);
+  // Load content gap data — DataForSEO API first, CSV fallback
+  console.log('  Loading content gap data from DataForSEO...');
+  let contentGap = await fetchContentGap();
+  if (contentGap.keywords.length === 0) {
+    process.stdout.write('  Falling back to CSV (top100.csv)... ');
+    contentGap = loadContentGap();
+  }
+  console.log(`  Content gap: ${contentGap.keywords.length} keywords, competitors: ${contentGap.competitors.join(', ')}`);
 
   // Load own keywords
-  process.stdout.write('  Loading RSC organic keywords... ');
-  const ownKeywords = loadOwnKeywords();
-  console.log(`done (${ownKeywords.length} keywords)`);
+  console.log('  Loading own keyword rankings...');
+  let ownKeywords = await fetchOwnKeywords();
+  if (ownKeywords.length === 0) {
+    process.stdout.write('  Falling back to CSV... ');
+    ownKeywords = loadOwnKeywords();
+  }
+  console.log(`  Own keywords: ${ownKeywords.length}`);
 
-  // Load category keywords from Keywords Explorer files
+  // Load category keyword ideas
+  const categories = {
+    deodorant: 'natural deodorant',
+    toothpaste: 'natural toothpaste',
+    body_lotion: 'natural body lotion',
+    lip_balm: 'natural lip balm',
+    bar_soap: 'natural bar soap',
+    hand_soap: 'natural hand soap',
+    coconut_oil: 'coconut oil skincare',
+  };
   const categoryFiles = {
     deodorant: 'natural_deodorant.csv',
     toothpaste: 'natural_toothpaste.csv',
@@ -510,22 +618,23 @@ async function main() {
   };
 
   const categoryKeywords = {};
-  for (const [cat, file] of Object.entries(categoryFiles)) {
-    const kws = loadKeywordsExplorer(file);
+  for (const [cat, seed] of Object.entries(categories)) {
+    let kws = await fetchKeywordIdeasForCategory(seed);
+    if (kws.length === 0) kws = loadKeywordsExplorer(categoryFiles[cat]);
     if (kws.length) {
       categoryKeywords[cat] = kws;
-      console.log(`  Loaded ${cat}: ${kws.length} keywords`);
-    } else {
-      console.log(`  Skipped ${cat}: file not found or empty`);
+      console.log(`  ${cat}: ${kws.length} keywords`);
     }
   }
 
   // Load competitor top pages
-  process.stdout.write('  Loading competitor top pages... ');
-  const competitorTopPages = loadCompetitorTopPages();
+  console.log('  Loading competitor top pages...');
+  let competitorTopPages = await fetchCompetitorTopPages();
+  if (Object.keys(competitorTopPages).length === 0) {
+    competitorTopPages = loadCompetitorTopPages();
+  }
   const compNames = Object.keys(competitorTopPages);
-  console.log(`done (${compNames.join(', ')})`);
-
+  console.log(`  Competitor pages: ${compNames.join(', ')}`);
   // Load site performance from snapshots
   process.stdout.write('  Loading site performance snapshots (GSC, GA4, Shopify)... ');
   const sitePerformance = loadSitePerformance();
@@ -541,7 +650,7 @@ async function main() {
   const header = `# Content Gap Analysis — ${config.name}
 **Generated:** ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
 **Site:** ${config.url}
-**Ahrefs files:** ${readdirSync(DATA_DIR).filter((f) => f.endsWith('.csv')).join(', ')}
+**Data source:** DataForSEO API (CSV fallback: ${readdirSync(DATA_DIR).filter((f) => f.endsWith('.csv')).join(', ') || 'none'})
 **GSC:** ${sitePerformance.gscDateRange || 'n/a'} | **GA4:** ${sitePerformance.ga4DateRange || 'n/a'}
 
 ---

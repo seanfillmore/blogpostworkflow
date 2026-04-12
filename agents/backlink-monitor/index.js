@@ -26,6 +26,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFi
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import { getBacklinksSummary } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -73,6 +74,23 @@ function loadCSV(filepath) {
   if (!existsSync(filepath)) return null;
   const rows = parseCSV(readFileSync(filepath, 'utf8'));
   return rows.map(normalizeDomain).filter((r) => r.domain);
+}
+
+async function fetchLiveBacklinks() {
+  try {
+    const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    console.log(`  Fetching backlink data from DataForSEO for ${domain}...`);
+    const summary = await getBacklinksSummary(domain);
+    if (!summary) {
+      console.log('  ⚠️ Backlinks API not available (requires subscription). Falling back to CSV.');
+      return null;
+    }
+    console.log(`  DataForSEO: ${summary.referringDomains} referring domains, rank ${summary.rank}`);
+    return summary;
+  } catch (err) {
+    console.log(`  ⚠️ DataForSEO backlinks fetch failed: ${err.message}. Falling back to CSV.`);
+    return null;
+  }
 }
 
 // ── snapshot management ───────────────────────────────────────────────────────
@@ -174,20 +192,78 @@ function buildReport(curr, diff, snapshotDate) {
   lines.push('---');
   lines.push('');
   lines.push('## How to Update');
-  lines.push('1. In Ahrefs → Site Explorer → Referring Domains → Export CSV');
-  lines.push(`2. Save to \`data/backlinks/referring-domains.csv\``);
-  lines.push('3. Run: `node agents/backlink-monitor/index.js`');
+  lines.push('Run: `node agents/backlink-monitor/index.js`');
+  lines.push('The agent fetches data from DataForSEO automatically. CSV import is used as fallback if the API is unavailable.');
 
   return lines.join('\n');
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
-function main() {
+async function main() {
   console.log(`\nBacklink Monitor — ${config.name}\n`);
 
   mkdirSync(BACKLINKS_DIR, { recursive: true });
   mkdirSync(REPORTS_DIR, { recursive: true });
+
+  // Try DataForSEO API first
+  const liveSummary = await fetchLiveBacklinks();
+  if (liveSummary) {
+    // Save summary as JSON snapshot for future comparison
+    mkdirSync(SNAPSHOTS_DIR, { recursive: true });
+    const today = new Date().toISOString().slice(0, 10);
+    const snapshotPath = join(SNAPSHOTS_DIR, `${today}.json`);
+
+    // Load previous JSON snapshot for diff
+    const prevFiles = existsSync(SNAPSHOTS_DIR) ? readdirSync(SNAPSHOTS_DIR).filter(f => f.endsWith('.json')).sort().reverse() : [];
+    const prevPath = prevFiles.find(f => f !== `${today}.json`);
+    let prevSummary = null;
+    if (prevPath) {
+      try { prevSummary = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, prevPath), 'utf8')); } catch {}
+    }
+
+    writeFileSync(snapshotPath, JSON.stringify({ ...liveSummary, date: today }, null, 2));
+    console.log(`  Snapshot saved: ${snapshotPath}`);
+
+    // Build simple report
+    mkdirSync(REPORTS_DIR, { recursive: true });
+    const lines = [
+      `# Backlink Monitor Report — ${config.name}`,
+      `**Run date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+      `**Data source:** DataForSEO Backlinks API`,
+      '',
+      '## Domain Summary',
+      `| Metric | Value |`,
+      `|---|---|`,
+      `| Domain Rank | ${liveSummary.rank} |`,
+      `| Total Backlinks | ${liveSummary.backlinks.toLocaleString()} |`,
+      `| Referring Domains | ${liveSummary.referringDomains.toLocaleString()} |`,
+      `| Dofollow | ${liveSummary.dofollow.toLocaleString()} |`,
+      `| Nofollow | ${liveSummary.nofollow.toLocaleString()} |`,
+      `| Broken Backlinks | ${liveSummary.brokenBacklinks.toLocaleString()} |`,
+      `| Referring IPs | ${liveSummary.referringIps.toLocaleString()} |`,
+    ];
+
+    if (prevSummary) {
+      const delta = (curr, prev, label) => {
+        const d = curr - prev;
+        return d === 0 ? '' : ` (${d > 0 ? '+' : ''}${d})`;
+      };
+      lines.push('');
+      lines.push(`## Changes since ${prevSummary.date}`);
+      lines.push(`| Metric | Previous | Current | Change |`);
+      lines.push(`|---|---|---|---|`);
+      lines.push(`| Referring Domains | ${prevSummary.referringDomains} | ${liveSummary.referringDomains} | ${liveSummary.referringDomains - prevSummary.referringDomains} |`);
+      lines.push(`| Total Backlinks | ${prevSummary.backlinks} | ${liveSummary.backlinks} | ${liveSummary.backlinks - prevSummary.backlinks} |`);
+      lines.push(`| Domain Rank | ${prevSummary.rank} | ${liveSummary.rank} | ${liveSummary.rank - prevSummary.rank} |`);
+    }
+
+    lines.push('');
+    const reportPath = join(REPORTS_DIR, 'backlink-monitor-report.md');
+    writeFileSync(reportPath, lines.join('\n'));
+    console.log(`  Report saved: ${reportPath}`);
+    return;
+  }
 
   const inputPath = join(BACKLINKS_DIR, 'referring-domains.csv');
 

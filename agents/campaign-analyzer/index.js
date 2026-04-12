@@ -76,7 +76,7 @@ export function buildAnalyzerPrompt(context) {
     `## Google Search Console\n${gscSnaps.length ? JSON.stringify(gscSnaps, null, 2) : 'No GSC snapshots available.'}`,
     `## Google Analytics 4\n${ga4Snaps.length ? JSON.stringify(ga4Snaps, null, 2) : 'No GA4 snapshots available.'}`,
     `## Shopify\n${shopifySnaps.length ? JSON.stringify(shopifySnaps, null, 2) : 'No Shopify snapshots available.'}`,
-    `## Ahrefs\n${ahrefsPresent ? 'See uploaded CSV data.' : 'No Ahrefs exports found.'}`,
+    `## Keyword Data\nKeyword metrics available via DataForSEO API.`,
     `## Past Campaign Outcomes\n${pastOutcomes.length ? JSON.stringify(pastOutcomes, null, 2) : 'No past campaign data.'}`,
   ];
 
@@ -223,7 +223,7 @@ const ADS_SNAPS_DIR     = join(ROOT, 'data', 'snapshots', 'google-ads');
 const GSC_SNAPS_DIR     = join(ROOT, 'data', 'snapshots', 'gsc');
 const GA4_SNAPS_DIR     = join(ROOT, 'data', 'snapshots', 'ga4');
 const SHOPIFY_SNAPS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
-const AHREFS_DIR        = join(ROOT, 'data', 'ahrefs');
+const AHREFS_DIR        = join(ROOT, 'data', 'ahrefs'); // legacy — kept for backward compat
 
 function loadEnv() {
   try {

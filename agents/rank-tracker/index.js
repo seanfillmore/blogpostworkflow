@@ -30,6 +30,7 @@
 import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync, statSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
+import { getRankedKeywords } from '../../lib/dataforseo.js';
 
 // GSC is optional — gracefully skip if not configured
 let gsc = null;
@@ -169,6 +170,39 @@ function loadKeywordTrackerCsv() {
   }
 
   return { map, filename };
+}
+
+async function fetchLiveKeywordData() {
+  try {
+    const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    console.log(`  Fetching live keyword data from DataForSEO for ${domain}...`);
+    const keywords = await getRankedKeywords(domain, { limit: 1000 });
+    const map = new Map();
+    for (const kw of keywords) {
+      map.set(kw.keyword.toLowerCase().trim(), {
+        position: kw.position,
+        volume: kw.volume,
+        url: kw.url,
+        kd: null,
+        cpc: kw.cpc,
+        traffic: kw.traffic,
+        trafficPrev: null,
+        trafficChange: null,
+        positionPrev: null,
+        positionChange: null,
+        urlPrev: null,
+        serpFeatures: null,
+        country: null,
+        datePrev: null,
+        dateCurr: null,
+        intents: [],
+      });
+    }
+    return { map, filename: 'DataForSEO API' };
+  } catch (err) {
+    console.log(`  ⚠️ DataForSEO fetch failed: ${err.message}`);
+    return { map: new Map(), filename: null };
+  }
 }
 
 // ── local data ────────────────────────────────────────────────────────────────
@@ -368,7 +402,7 @@ function buildReport(entries, today, previousDate) {
 
   if (notRankingPosts.length > 0) {
     lines.push('### ❌ Not Yet Ranking\n');
-    lines.push('These posts have no detected Ahrefs data. May be too new, or the URL could not be matched.\n');
+    lines.push('These posts have no ranking data detected. May be too new or not yet indexed.\n');
     for (const e of notRankingPosts) {
       lines.push(`- **${e.title}** — keyword: "${e.keyword}"`);
       lines.push(`  - URL checked: ${e.url}`);
@@ -464,7 +498,7 @@ async function main() {
 
   await loadGSC();
   if (gsc) {
-    console.log('  GSC connected — will augment Ahrefs data with Google Search Console metrics');
+    console.log('  GSC connected — will augment ranking data with Google Search Console metrics');
   } else {
     console.log('  ℹ️  GSC not configured — run: node scripts/gsc-auth.js to enable');
   }
@@ -480,14 +514,23 @@ async function main() {
   }
   console.log(`  Tracking ${posts.length} published post(s)\n`);
 
-  // Load keyword tracker CSV
-  const { map: trackerMap, filename: trackerFile } = loadKeywordTrackerCsv();
-  if (trackerFile) {
-    console.log(`  Keyword data: data/keyword-tracker/${trackerFile} (${trackerMap.size} keywords)`);
+  // Load keyword data — try DataForSEO API first, fall back to CSV
+  let trackerMap, trackerFile;
+  const liveData = await fetchLiveKeywordData();
+  if (liveData.map.size > 0) {
+    trackerMap = liveData.map;
+    trackerFile = liveData.filename;
+    console.log(`  Keyword data: ${trackerFile} (${trackerMap.size} keywords)`);
   } else {
-    console.log(`  ⚠️  No CSV found in data/keyword-tracker/ — skipping snapshot to avoid overwriting good data.`);
-    console.log(`  Drop an Ahrefs Rank Tracker export (or any CSV with keyword+position columns) there to enable tracking.`);
-    process.exit(0);
+    const csv = loadKeywordTrackerCsv();
+    trackerMap = csv.map;
+    trackerFile = csv.filename;
+    if (trackerFile) {
+      console.log(`  Keyword data: data/keyword-tracker/${trackerFile} (${trackerMap.size} keywords)`);
+    } else {
+      console.log('  ⚠️  No keyword data available — neither DataForSEO API nor CSV.');
+      process.exit(0);
+    }
   }
 
   // Load previous snapshot for delta comparison
@@ -502,11 +545,6 @@ async function main() {
   }
 
   const prevMap = new Map((prevSnapshot?.posts || []).map((p) => [p.slug, p]));
-
-  if (!env.AHREFS_API_KEY) {
-    console.log('\n  ⚠️  AHREFS_API_KEY not set — positions will be recorded as null');
-    console.log('  Add your Ahrefs API key to .env to enable live rank data\n');
-  }
 
   // Fetch current positions
   const entries = [];
