@@ -2,7 +2,7 @@
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
-import { getBlogs, updateArticle } from '../../../lib/shopify.js';
+import { getBlogs, updateArticle, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -26,6 +26,40 @@ function respondJson(res, data, status = 200) {
 
 function notFound(res) { respondJson(res, { ok: false, error: 'Not found' }, 404); }
 
+async function publishCollectionGap(item) {
+  const c = item.proposed_collection;
+  if (!c) throw new Error('No proposed_collection data');
+  const collection = await createCustomCollection({
+    title: c.title,
+    handle: c.handle,
+    body_html: c.body_html,
+  });
+  if (c.seo_title) await upsertMetafield('custom_collections', collection.id, 'global', 'title_tag', c.seo_title);
+  if (c.seo_description) await upsertMetafield('custom_collections', collection.id, 'global', 'description_tag', c.seo_description);
+}
+
+async function publishPageMetaRewrite(item) {
+  const meta = item.proposed_meta;
+  if (!meta) throw new Error('No proposed_meta data');
+  if (!item.resource_id) throw new Error('No resource_id for page');
+  if (meta.seo_title) await upsertMetafield('pages', item.resource_id, 'global', 'title_tag', meta.seo_title);
+  if (meta.seo_description) await upsertMetafield('pages', item.resource_id, 'global', 'description_tag', meta.seo_description);
+}
+
+async function publishBlogRefresh(item, ctx) {
+  const postMetaPath = join(ctx.POSTS_DIR, `${item.slug}.json`);
+  if (!existsSync(postMetaPath)) throw new Error(`No post metadata found for "${item.slug}"`);
+  let postMeta;
+  try { postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8')); }
+  catch (err) { throw new Error(`Invalid post metadata: ${err.message}`); }
+  if (!postMeta.shopify_article_id) throw new Error(`No shopify_article_id for "${item.slug}"`);
+  if (!existsSync(item.refreshed_html_path)) throw new Error(`Refreshed HTML not found at ${item.refreshed_html_path}`);
+  const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
+  const blogs = await getBlogs();
+  await updateArticle(blogs[0].id, postMeta.shopify_article_id, { body_html: refreshedHtml });
+  writeFileSync(join(ctx.POSTS_DIR, `${item.slug}.html`), refreshedHtml);
+}
+
 export default [
   {
     method: 'POST',
@@ -35,37 +69,18 @@ export default [
       const item = findItem(slug);
       if (!item) return notFound(res);
 
-      // Look up Shopify article ID from post metadata
-      const postMetaPath = join(ctx.POSTS_DIR, `${slug}.json`);
-      if (!existsSync(postMetaPath)) {
-        return respondJson(res, { ok: false, error: `No post metadata found for "${slug}"` }, 400);
-      }
-      let postMeta;
-      try { postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8')); }
-      catch (err) { return respondJson(res, { ok: false, error: `Invalid post metadata: ${err.message}` }, 400); }
-      if (!postMeta.shopify_article_id) {
-        return respondJson(res, { ok: false, error: `No shopify_article_id in post metadata for "${slug}"` }, 400);
-      }
-
-      // Read refreshed HTML
-      if (!existsSync(item.refreshed_html_path)) {
-        return respondJson(res, { ok: false, error: `Refreshed HTML not found at ${item.refreshed_html_path}` }, 400);
-      }
-      const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
-
-      // Publish to Shopify
       try {
-        const blogs = await getBlogs();
-        const blogId = blogs[0].id;
-        await updateArticle(blogId, postMeta.shopify_article_id, { body_html: refreshedHtml });
+        if (item.trigger === 'collection-gap') {
+          await publishCollectionGap(item);
+        } else if (item.trigger === 'page-meta-rewrite') {
+          await publishPageMetaRewrite(item);
+        } else {
+          await publishBlogRefresh(item, ctx);
+        }
       } catch (err) {
-        return respondJson(res, { ok: false, error: `Shopify publish failed: ${err.message}` }, 502);
+        return respondJson(res, { ok: false, error: `Publish failed: ${err.message}` }, 502);
       }
 
-      // Copy refreshed HTML over canonical local file
-      writeFileSync(join(ctx.POSTS_DIR, `${slug}.html`), refreshedHtml);
-
-      // Stamp item as published
       item.status = 'published';
       item.approved_at = new Date().toISOString();
       item.published_at = new Date().toISOString();
