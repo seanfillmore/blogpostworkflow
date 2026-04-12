@@ -484,7 +484,7 @@ function renderPerformanceQueueCard(d) {
       '</div>' +
       '<div class="queue-actions">' +
         (i.status === 'pending' || i.status === 'approved'
-          ? '<button class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')"' + (i.status === 'approved' ? ' disabled' : '') + '>' + (i.status === 'approved' ? 'Approved' : 'Approve') + '</button>' +
+          ? '<button id="approve-btn-' + esc(i.slug) + '" class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')">' + 'Approve & Publish' + '</button>' +
             '<button class="btn-sm" onclick="openFeedbackEditor(\'' + esc(i.slug) + '\')">Feedback</button>' +
             '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>'
           : '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>') +
@@ -506,8 +506,21 @@ function renderPerformanceQueueCard(d) {
 }
 
 async function approveQueueItem(slug) {
-  var res = await fetch('/api/performance-queue/' + encodeURIComponent(slug) + '/approve', { method: 'POST' });
-  if (res.ok) loadData();
+  var btn = document.getElementById('approve-btn-' + slug);
+  if (btn) { btn.disabled = true; btn.textContent = 'Publishing...'; }
+  try {
+    var res = await fetch('/api/performance-queue/' + encodeURIComponent(slug) + '/approve', { method: 'POST' });
+    var data = await res.json();
+    if (!res.ok || !data.ok) {
+      alert('Publish failed: ' + (data.error || 'Unknown error'));
+      if (btn) { btn.disabled = false; btn.textContent = 'Approve & Publish'; }
+      return;
+    }
+    loadData();
+  } catch (err) {
+    alert('Publish failed: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Approve & Publish'; }
+  }
 }
 
 function openFeedbackEditor(slug) {
