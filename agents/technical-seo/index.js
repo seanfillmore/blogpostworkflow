@@ -1907,18 +1907,23 @@ async function fixSubmitIndexing({ dryRun = false } = {}) {
   console.log(`  ${eligible.length} eligible pages (${rows.length - eligible.length} filtered — tag/pagination/index pages)`);
 
   const { submitUrlForIndexing, getQuotaStatus } = await import('../../lib/gsc-indexing.js');
-  const quota = getQuotaStatus();
-  console.log(`  Indexing API quota remaining: ${quota.submission.remaining}/${quota.submission.cap}\n`);
+  let quota = getQuotaStatus();
+  const remaining = quota.submission.remaining;
+  console.log(`  Indexing API quota remaining: ${remaining}/${quota.submission.cap}`);
+
+  if (remaining <= 0) {
+    console.log('  Quota exhausted for today — will retry tomorrow.');
+    console.log(`  ${eligible.length} pages pending submission.`);
+    return;
+  }
+
+  const toSubmit = eligible.slice(0, remaining);
+  console.log(`  Submitting ${toSubmit.length} of ${eligible.length} (daily limit: ${quota.submission.cap})\n`);
 
   let submitted = 0;
-  for (const row of eligible) {
+  for (const row of toSubmit) {
     const url = row.url;
     if (!url) continue;
-
-    if (quota.submission.remaining <= 0) {
-      console.log('  Quota exhausted — stopping.');
-      break;
-    }
 
     console.log(`  ${dryRun ? '[DRY RUN] ' : ''}Submit: ${url}`);
     if (!dryRun) {
@@ -1926,6 +1931,10 @@ async function fixSubmitIndexing({ dryRun = false } = {}) {
         await submitUrlForIndexing(url, 'URL_UPDATED');
         submitted++;
       } catch (e) {
+        if (e.message?.includes('quota') || e.message?.includes('self-limit') || e.message?.includes('exhausted')) {
+          console.log(`  Quota hit — stopping. ${submitted} submitted so far.`);
+          break;
+        }
         console.log(`    Error: ${e.message}`);
       }
     } else {
@@ -1933,7 +1942,11 @@ async function fixSubmitIndexing({ dryRun = false } = {}) {
     }
   }
 
+  const pendingRemaining = eligible.length - submitted;
   console.log(`\n  ${dryRun ? 'Would submit' : 'Submitted'}: ${submitted} pages to Indexing API`);
+  if (pendingRemaining > 0) {
+    console.log(`  ${pendingRemaining} pages remaining — will continue in next run (daily quota: ${quota.submission.cap}).`);
+  }
 }
 
 // ── COMMAND: fix-noindex-thin ────────────────────────────────────────────────

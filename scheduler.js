@@ -141,6 +141,9 @@ runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 // Step 5c: insight aggregator — refresh writer standing rules
 runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 
+// Step 5d: submit pending pages to indexing API (daily, up to quota limit)
+runStep('submit-indexing', `"${NODE}" agents/technical-seo/index.js fix-submit-indexing`);
+
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
