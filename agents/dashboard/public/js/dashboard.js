@@ -715,7 +715,7 @@ function renderIndexingCard(d) {
   }
 
   // Actionable critical items (Tier 3 manual fixes only — exclude auto-handled actions)
-  const autoHandledActions = ['resubmit_sitemap', 'submit_indexing_api', 'content_quality_review'];
+  const autoHandledActions = ['resubmit_sitemap', 'submit_indexing_api', 'content_quality_review', 'fix_page_fetch'];
   const critical = (idx.results || []).filter((r) => r.verdict && r.verdict.severity === 'critical' && !autoHandledActions.includes(r.verdict.action));
   let criticalRows = '';
   if (critical.length > 0) {
