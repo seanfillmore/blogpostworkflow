@@ -1,6 +1,7 @@
 // agents/dashboard/routes/ahrefs.js
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { getBacklinksSummary, getRankedKeywords } from '../../../lib/dataforseo.js';
 
 export default [
   // Auto-fetch SEO authority data from DataForSEO
@@ -9,7 +10,6 @@ export default [
     match: '/api/seo-authority/refresh',
     async handler(req, res, ctx) {
       try {
-        const { getBacklinksSummary, getRankedKeywords } = await import('../../../lib/dataforseo.js');
         const config = JSON.parse(readFileSync(join(ctx.ROOT, 'config', 'site.json'), 'utf8'));
         const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
