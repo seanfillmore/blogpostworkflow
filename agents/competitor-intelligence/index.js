@@ -20,7 +20,7 @@ import { getProducts, getCustomCollections, getSmartCollections, getMetafields }
 import { matchCompetitorUrl } from './matcher.js';
 import { extractPageStructure } from './scraper.js';
 import { deduplicateChanges } from './brief-writer.js';
-import { getCompetitors as fetchCompetitors, getTopPages as fetchTopPages } from '../../lib/dataforseo.js';
+import { getCompetitors as fetchCompetitors, getTopPages as fetchTopPages, getSerpResults } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -49,10 +49,49 @@ const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY || process.env.A
 // ── DataForSEO API ────────────────────────────────────────────────────────────
 
 async function getCompetitors() {
-  const STORE = env.SHOPIFY_STORE || process.env.SHOPIFY_STORE;
-  const domain = STORE?.replace('.myshopify.com', '.com') || 'realskincare.com';
-  const competitors = await fetchCompetitors(domain, { limit: 20 });
-  return competitors.map(c => ({ domain: c.domain }));
+  // Discover competitors from SERPs for our product keywords — these are the
+  // domains actually competing for the same commercial queries, not editorial sites.
+  const PRODUCT_KEYWORDS = [
+    'coconut oil deodorant', 'natural deodorant',
+    'coconut oil toothpaste', 'fluoride free toothpaste',
+    'coconut body lotion', 'organic body lotion',
+    'coconut oil lip balm', 'natural lip balm',
+    'natural bar soap', 'coconut oil soap',
+  ];
+
+  const EDITORIAL = new Set([
+    'amazon.com', 'walmart.com', 'target.com', 'ebay.com',
+    'youtube.com', 'reddit.com', 'facebook.com', 'instagram.com', 'tiktok.com',
+    'pinterest.com', 'wikipedia.org', 'twitter.com',
+    'healthline.com', 'byrdie.com', 'allure.com', 'consumerreports.org',
+    'medicalnewstoday.com', 'clevelandclinic.org', 'health.com',
+    'thegoodtrade.com', 'thehormonedietitian.com',
+  ]);
+
+  const OUR_DOMAIN = (env.SHOPIFY_STORE || '').replace('.myshopify.com', '.com') || 'realskincare.com';
+  const domainCounts = new Map();
+
+  console.log('  Discovering competitors from SERPs...');
+  for (const kw of PRODUCT_KEYWORDS) {
+    try {
+      const results = await getSerpResults(kw, 10);
+      for (const r of results) {
+        const d = r.domain.replace(/^www\./, '');
+        if (d === OUR_DOMAIN.replace(/^www\./, '') || EDITORIAL.has(d)) continue;
+        domainCounts.set(d, (domainCounts.get(d) || 0) + 1);
+      }
+    } catch { /* skip failed SERP */ }
+  }
+
+  // Sort by frequency (appears in most SERPs = most relevant competitor)
+  const sorted = Array.from(domainCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15);
+
+  console.log(`  Found ${sorted.length} product competitors:`);
+  for (const [d, count] of sorted.slice(0, 10)) console.log(`    ${d} (${count} keyword overlaps)`);
+
+  return sorted.map(([domain]) => ({ domain }));
 }
 
 async function getTopPages(domain) {
@@ -179,7 +218,7 @@ async function main() {
   console.log(`Loaded sitemap: ${sitemapPages.length} product/collection pages`);
 
   const competitors = await getCompetitors();
-  console.log(`Found ${competitors.length} competitors in Ahrefs project`);
+  console.log(`Found ${competitors.length} product competitors from SERP analysis`);
 
   // Accumulate results per store slug before writing briefs
   const briefMap = new Map(); // slug → { type, competitors[], allChanges[] }
@@ -195,7 +234,7 @@ async function main() {
       try {
         topPages = await getTopPages(domain);
       } catch (err) {
-        console.warn(`  [ahrefs] ${err.message}`);
+        console.warn(`  [dataforseo] ${err.message}`);
         continue;
       }
 

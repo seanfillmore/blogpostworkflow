@@ -26,7 +26,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
-import { getKeywordIdeas, getCompetitors, getRankedKeywords, getTopPages } from '../../lib/dataforseo.js';
+import { getKeywordIdeas, getCompetitors, getRankedKeywords, getTopPages, getSerpResults } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -218,8 +218,26 @@ async function fetchKeywordIdeasForCategory(seedKeyword) {
 async function fetchContentGap() {
   try {
     const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    const competitors = await getCompetitors(domain, { limit: 10 });
-    const compDomains = competitors.map((c) => c.domain);
+
+    // Discover product-level competitors from SERPs instead of domain overlap
+    const SEED_KEYWORDS = ['natural deodorant', 'coconut oil toothpaste', 'coconut body lotion', 'natural lip balm', 'natural bar soap'];
+    const EDITORIAL = new Set(['amazon.com','walmart.com','target.com','ebay.com','youtube.com','reddit.com','facebook.com','instagram.com','tiktok.com','pinterest.com','wikipedia.org','healthline.com','byrdie.com','allure.com','consumerreports.org','medicalnewstoday.com','clevelandclinic.org','health.com','thegoodtrade.com']);
+    const ourDomain = domain.replace(/^www\./, '');
+    const domainCounts = new Map();
+    for (const kw of SEED_KEYWORDS) {
+      try {
+        const results = await getSerpResults(kw, 10);
+        for (const r of results) {
+          const d = r.domain.replace(/^www\./, '');
+          if (d === ourDomain || EDITORIAL.has(d)) continue;
+          domainCounts.set(d, (domainCounts.get(d) || 0) + 1);
+        }
+      } catch { /* skip */ }
+    }
+    const compDomains = Array.from(domainCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([d]) => d);
 
     // Get our keywords
     const ourKeywords = await getRankedKeywords(domain, { limit: 500 });
