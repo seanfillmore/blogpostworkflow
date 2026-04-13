@@ -188,6 +188,9 @@ if (new Date().getDate() === 1) {
   log('  Monthly jobs (1st):');
 
   runStep('theme-seo-auditor', `"${NODE}" agents/theme-seo-auditor/index.js`, { indent: '    ' });
+
+  // Step 11: content gap analysis via DataForSEO
+  runStep('content-gap', `"${NODE}" agents/content-gap/index.js`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
 }
