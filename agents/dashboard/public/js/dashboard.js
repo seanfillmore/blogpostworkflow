@@ -497,8 +497,8 @@ function renderPerformanceQueueCard(d) {
         (i.status === 'pending' || i.status === 'approved'
           ? '<button id="approve-btn-' + esc(i.slug) + '" class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')">' + 'Approve & Publish' + '</button>' +
             '<button class="btn-sm" onclick="openFeedbackEditor(\'' + esc(i.slug) + '\')">Feedback</button>' +
-            '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>'
-          : '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>') +
+            (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '')
+          : (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '')) +
       '</div>' +
       '<div id="feedback-editor-' + esc(i.slug) + '" class="feedback-editor" style="display:none">' +
         '<textarea id="feedback-text-' + esc(i.slug) + '" placeholder="Tell the engine what to change..."></textarea>' +

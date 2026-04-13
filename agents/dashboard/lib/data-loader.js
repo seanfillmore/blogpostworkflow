@@ -275,7 +275,10 @@ export function aggregateData() {
     for (const f of readdirSync(queueDir).filter((n) => n.endsWith('.json') && n !== 'indexing-submissions.json')) {
       try {
         const item = JSON.parse(readFileSync(join(queueDir, f), 'utf8'));
-        if (item.status !== 'dismissed' && item.status !== 'published') performanceQueue.push(item);
+        if (item.status !== 'dismissed' && item.status !== 'published') {
+          item.has_html = !!(item.refreshed_html_path && existsSync(item.refreshed_html_path));
+          performanceQueue.push(item);
+        }
       } catch { /* skip */ }
     }
     performanceQueue.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
