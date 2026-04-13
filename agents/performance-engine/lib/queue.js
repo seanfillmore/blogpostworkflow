@@ -33,7 +33,15 @@ export function writeItem(item) {
 }
 
 export function activeSlugs() {
+  const COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+  const now = Date.now();
   return new Set(listQueueItems()
-    .filter((i) => i.status !== 'published' && i.status !== 'dismissed')
+    .filter((i) => {
+      // Still in the queue (pending/approved/feedback)
+      if (i.status !== 'published' && i.status !== 'dismissed') return true;
+      // Recently published — still in cooldown period
+      if (i.published_at && (now - new Date(i.published_at).getTime()) < COOLDOWN_MS) return true;
+      return false;
+    })
     .map((i) => i.slug));
 }
