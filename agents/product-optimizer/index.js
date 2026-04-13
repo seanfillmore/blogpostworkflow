@@ -537,10 +537,24 @@ async function pagesFromGscMode() {
     if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
   }
 
-  // Filter candidates: >=50 impressions, CTR < 2%, not in active queue
+  // Non-commercial pages that should never be rewritten for SEO
+  const SKIP_HANDLES = new Set([
+    'privacy-policy', 'privacy-policy-1',
+    'terms-of-service', 'terms-of-service-1',
+    'refund-policy', 'refund-policy-1',
+    'shipping-policy', 'shipping-policy-1',
+    'track-order',
+    'contact', 'contact-1', 'contact-us',
+    'about-us', 'about-us-1',
+    'wholesale-inquiry',
+    'veterans',
+  ]);
+
+  // Filter candidates: >=50 impressions, CTR < 2%, not in active queue, not non-commercial
   const active = activeSlugs();
   const candidates = pageEntries
     .map((p) => {
+      if (SKIP_HANDLES.has(p.handle)) return null;
       const gscEntry = gscMap.get(p.url);
       if (!gscEntry) return null;
       if (gscEntry.impressions < 50) return null;
