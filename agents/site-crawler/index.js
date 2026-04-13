@@ -155,7 +155,7 @@ async function main() {
 
   // 2. Poll until finished (skip if already ready)
   const POLL_INTERVAL = 30_000;
-  const TIMEOUT = 30 * 60_000;
+  const TIMEOUT = 60 * 60_000;
   const startTime = Date.now();
 
   while (true) {
