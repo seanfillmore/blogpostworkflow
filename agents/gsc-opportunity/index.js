@@ -28,8 +28,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'gsc-opportunity');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
+
+import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 
 const LOW_CTR_MIN_IMPRESSIONS = 100;
 const LOW_CTR_MAX_CTR = 0.02;
@@ -68,13 +69,11 @@ function loadKeywordIndex() {
       } catch { /* ignore */ }
     }
   }
-  if (existsSync(POSTS_DIR)) {
-    for (const f of readdirSync(POSTS_DIR).filter((x) => x.endsWith('.json'))) {
-      try {
-        const p = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-        if (p.target_keyword) keywords.add(p.target_keyword.toLowerCase());
-      } catch { /* ignore */ }
-    }
+  for (const slug of listAllSlugs()) {
+    try {
+      const p = getPostMeta(slug);
+      if (p?.target_keyword) keywords.add(p.target_keyword.toLowerCase());
+    } catch { /* ignore */ }
   }
   return keywords;
 }

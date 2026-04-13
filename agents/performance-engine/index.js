@@ -30,8 +30,11 @@ import { buildSummaryPrompt } from './prompts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports');
+
+import {
+  listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, getRefreshedPath, POSTS_DIR,
+} from '../../lib/posts.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -65,7 +68,7 @@ function readJsonSafe(path) {
 }
 
 function loadPostHtml(slug) {
-  const p = join(POSTS_DIR, `${slug}.html`);
+  const p = getContentPath(slug);
   return existsSync(p) ? readFileSync(p, 'utf8') : null;
 }
 
@@ -102,14 +105,11 @@ function pickQuickWins(blocked) {
 function pickMetaRewrites(blocked) {
   const gsc = readJsonSafe(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
   if (!gsc || !gsc.low_ctr) return [];
-  const postFiles = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json') && !f.includes('-refreshed'));
-  const posts = postFiles.map(f => {
+  const posts = listAllSlugs().map(slug => {
     try {
-      const m = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-      if (!m.slug) m.slug = f.replace(/\.json$/, '');
-      // Skip -refreshed artifacts — these are temp files from the content-refresher,
-      // not canonical posts. Their slug doesn't match the Shopify article handle.
-      if (m.slug.endsWith('-refreshed')) return null;
+      const m = getPostMetaLib(slug);
+      if (!m) return null;
+      if (!m.slug) m.slug = slug;
       return m;
     } catch { return null; }
   }).filter(Boolean);
@@ -123,7 +123,7 @@ function pickMetaRewrites(blocked) {
     });
     if (!match || blocked.has(match.slug)) continue;
     // Only pick posts that actually have HTML — no point refreshing a stub
-    if (!existsSync(join(POSTS_DIR, `${match.slug}.html`))) continue;
+    if (!existsSync(getContentPath(match.slug))) continue;
     picks.push({
       slug: match.slug,
       title: match.title || match.slug,
@@ -166,7 +166,7 @@ function runRefresh(slug, feedback = null) {
   const cmdArgs = ['agents/content-refresher/index.js', '--slug', slug];
   if (feedback) cmdArgs.push('--feedback', feedback);
   execSync(`node ${cmdArgs.join(' ')}`, { cwd: ROOT, stdio: 'inherit' });
-  const refreshedPath = join(POSTS_DIR, `${slug}-refreshed.html`);
+  const refreshedPath = getRefreshedPath(slug);
   if (!existsSync(refreshedPath)) throw new Error(`content-refresher did not produce ${refreshedPath}`);
   return readFileSync(refreshedPath, 'utf8');
 }

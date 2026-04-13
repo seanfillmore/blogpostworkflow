@@ -15,9 +15,9 @@ import { readFileSync, writeFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, createArticle, STORE } from '../lib/shopify.js';
+import { getContentPath, ROOT } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..');
 
 const args = process.argv.slice(2);
 if (!args[0]) {
@@ -48,7 +48,8 @@ if (scheduleArg) {
 
 const jsonPath = join(ROOT, args[0]);
 const meta = JSON.parse(readFileSync(jsonPath, 'utf8'));
-const htmlPath = jsonPath.replace(/\.json$/, '.html');
+const slug = meta.slug || basename(jsonPath, '.json');
+const htmlPath = getContentPath(slug);
 const bodyHtml = readFileSync(htmlPath, 'utf8');
 
 // Determine status label
@@ -91,11 +92,12 @@ if (meta.meta_description) {
 
 // Attach image if available
 if (meta.image_path) {
+  const imgPath = meta.image_path.match(/^(\/|[A-Z]:)/) ? meta.image_path : join(ROOT, meta.image_path);
   process.stdout.write('  Encoding image... ');
-  const imgBuffer = readFileSync(meta.image_path);
+  const imgBuffer = readFileSync(imgPath);
   fields.image = {
     attachment: imgBuffer.toString('base64'),
-    filename: basename(meta.image_path),
+    filename: basename(imgPath),
     alt: meta.title,
   };
   console.log('done');

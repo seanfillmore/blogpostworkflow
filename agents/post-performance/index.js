@@ -35,10 +35,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
+import { listAllSlugs, getPostMeta, getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
-const POSTS_DIR = join(ROOT, 'data', 'posts');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'post-performance');
 
@@ -67,16 +67,15 @@ function loadBriefTrafficPotential(slug) {
 }
 
 function listPublishedPosts() {
-  if (!existsSync(POSTS_DIR)) return [];
-  const files = readdirSync(POSTS_DIR).filter((f) => f.endsWith('.json'));
   const posts = [];
-  for (const f of files) {
+  for (const slug of listAllSlugs()) {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      const meta = getPostMeta(slug);
+      if (!meta) continue;
       if (meta.shopify_status !== 'published') continue;
       if (!meta.published_at) continue;
       if (!meta.shopify_url) continue;
-      posts.push({ file: join(POSTS_DIR, f), meta });
+      posts.push({ file: getMetaPath(slug), meta });
     } catch { /* skip */ }
   }
   return posts;

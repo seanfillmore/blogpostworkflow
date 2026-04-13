@@ -31,10 +31,9 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readd
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
+import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const REPORTS_DIR = join(ROOT, 'data', 'reports', 'editor');
 
 let config, ingredients;
 try {
@@ -546,7 +545,7 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
   const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   lines.push(`# Editor Report — ${meta?.title ?? slug}`);
-  lines.push(`**Post:** data/posts/${slug}.html`);
+  lines.push(`**Post:** data/posts/${slug}/content.html`);
   lines.push(`**Target keyword:** ${meta?.target_keyword ?? '—'}`);
   lines.push(`**Reviewed:** ${now}\n`);
 
@@ -751,8 +750,9 @@ const args = process.argv.slice(2);
 
 async function runEditor(htmlPath) {
   const html = readFileSync(htmlPath, 'utf8');
-  const slug = basename(htmlPath, '.html');
-  const metaPath = join(ROOT, 'data', 'posts', `${slug}.json`);
+  // New layout: data/posts/{slug}/content.html — extract slug from directory name
+  const slug = basename(dirname(htmlPath));
+  const metaPath = getMetaPath(slug);
   let meta = null;
   if (existsSync(metaPath)) {
     try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); }
@@ -875,8 +875,8 @@ async function runEditor(htmlPath) {
     editorialReview: review, linkedBlogUrls, ctaResult,
   });
 
-  mkdirSync(REPORTS_DIR, { recursive: true });
-  const reportPath = join(REPORTS_DIR, `${slug}-editor-report.md`);
+  ensurePostDir(slug);
+  const reportPath = getEditorReportPath(slug);
   writeFileSync(reportPath, report);
 
   console.log(`\n  Report saved: ${reportPath}`);

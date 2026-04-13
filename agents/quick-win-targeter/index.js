@@ -29,12 +29,12 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
+import { getMetaPath } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'quick-wins');
 
 // ── args ──────────────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ function loadLatestSnapshot() {
 }
 
 function loadPostMeta(slug) {
-  const path = join(POSTS_DIR, `${slug}.json`);
+  const path = getMetaPath(slug);
   if (!existsSync(path)) return null;
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }

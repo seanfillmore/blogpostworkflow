@@ -1,0 +1,47 @@
+{
+  "slug": "toothpaste-without-sodium-lauryl-sulfate",
+  "title": "Toothpaste Without Sodium Lauryl Sulfate: Why It Matters",
+  "meta_description": "Looking for toothpaste without sodium lauryl sulfate? Learn why SLS is problematic, who should avoid it, and discover the best SLS-free natural alternatives.",
+  "target_keyword": "toothpaste without sodium lauryl sulfate",
+  "tags": [
+    "toothpaste",
+    "natural toothpaste",
+    "natural skincare",
+    "organic"
+  ],
+  "word_count": 2594,
+  "generated_at": "2026-03-11T23:27:06.644Z",
+  "brief_path": "/Users/seanfillmore/Code/Claude/data/briefs/toothpaste-without-sodium-lauryl-sulfate.json",
+  "tokens_used": {
+    "input": 8737,
+    "output": 6390
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563296305322,
+  "shopify_handle": "toothpaste-without-sodium-lauryl-sulfate-why-it-matters",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/toothpaste-without-sodium-lauryl-sulfate-why-it-matters",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/toothpaste-without-sodium-lauryl-sulfate_20452fc2-18b7-4e26-83ae-433d67af019e.webp?v=1773288201",
+  "uploaded_at": "2026-03-12T04:03:24.247Z",
+  "published_at": "2026-03-20T08:04:39.193Z",
+  "shopify_publish_at": "2026-03-19T15:00:00.000Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:13:09.311Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:07:26.237Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ]
+}

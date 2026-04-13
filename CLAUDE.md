@@ -83,7 +83,8 @@ These rules are non-negotiable and apply to every change in every conversation:
 
 1. **Always work on a branch** — never commit directly to `main`. Create a feature branch (`feature/<name>`) or fix branch (`fix/<name>`) before writing any code.
 2. **Test locally before pushing to the server** — run the agent or script locally, verify output, and check the local dashboard if UI is involved. Only push to the server after local verification passes.
-3. **These rules apply even for small fixes** — a one-line bug fix still requires a branch and local test.
+3. **Test a fix on one post before bulk-applying** — when a bug affects many posts (HTML issues, metadata fixes, etc.), verify the fix on a single post end-to-end (edit → upload → check live site) before writing batch scripts or applying changes across all posts.
+4. **These rules apply even for small fixes** — a one-line bug fix still requires a branch and local test.
 
 ## Dashboard Code Layout
 

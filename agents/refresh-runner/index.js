@@ -29,15 +29,14 @@
  *   node agents/refresh-runner/index.js --aging-quarterly
  */
 
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
+import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 
 const args = process.argv.slice(2);
 const FLAG_PUBLISH = args.includes('--publish');
@@ -57,10 +56,9 @@ function loadJSON(path, fallback) {
 }
 
 function listPublishedPosts() {
-  if (!existsSync(POSTS_DIR)) return [];
-  return readdirSync(POSTS_DIR).filter((f) => f.endsWith('.json')).map((f) => {
+  return listAllSlugs().map((slug) => {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      const meta = JSON.parse(readFileSync(getMetaPath(slug), 'utf8'));
       return meta.shopify_status === 'published' ? meta : null;
     } catch { return null; }
   }).filter(Boolean);
@@ -113,7 +111,7 @@ function run(cmd, label) {
 }
 
 function refreshOne(slug) {
-  const metaPath = join(POSTS_DIR, `${slug}.json`);
+  const metaPath = getMetaPath(slug);
   if (!existsSync(metaPath)) {
     console.error(`  [skip] ${slug}: no post metadata at ${metaPath}`);
     return { slug, ok: false, reason: 'no metadata' };
@@ -152,12 +150,14 @@ function refreshOne(slug) {
 
   // The content-refresher writes data/posts/<slug>-refreshed.html. Move that
   // back over the canonical HTML so editor + publisher pick it up.
-  const refreshedHtml = join(POSTS_DIR, `${slug}-refreshed.html`);
-  const canonicalHtml = join(POSTS_DIR, `${slug}.html`);
+  const refreshedHtml = getRefreshedPath(slug);
+  const canonicalHtml = getContentPath(slug);
   if (existsSync(refreshedHtml)) {
     // Backup the original alongside the refresh for safety.
     if (existsSync(canonicalHtml)) {
-      const backup = join(POSTS_DIR, `${slug}.backup-${Date.now()}.html`);
+      const backupsDir = getBackupsDir(slug);
+      mkdirSync(backupsDir, { recursive: true });
+      const backup = join(backupsDir, `content.backup-${Date.now()}.html`);
       writeFileSync(backup, readFileSync(canonicalHtml));
     }
     writeFileSync(canonicalHtml, readFileSync(refreshedHtml));

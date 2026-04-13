@@ -22,10 +22,10 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
+import { getContentPath, getMetaPath, POSTS_DIR } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'schema');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
@@ -163,8 +163,8 @@ function injectSchemas(html, schemas) {
 // ── per-slug processing ───────────────────────────────────────────────────────
 
 function processSlug(slug) {
-  const htmlPath = join(POSTS_DIR, `${slug}.html`);
-  const metaPath = join(POSTS_DIR, `${slug}.json`);
+  const htmlPath = getContentPath(slug);
+  const metaPath = getMetaPath(slug);
 
   if (!existsSync(htmlPath)) {
     console.log(`  ⚠️  ${slug} — no HTML file, skipping`);

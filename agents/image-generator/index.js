@@ -39,13 +39,12 @@ import { GoogleGenAI } from '@google/genai';
 import OpenAI from 'openai';
 import sharp from 'sharp';
 import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync, unlinkSync, rmdirSync } from 'fs';
-import { join, dirname, basename } from 'path';
+import { join, dirname, basename, relative } from 'path';
 import { fileURLToPath } from 'url';
 import { getProducts } from '../../lib/shopify.js';
+import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const IMAGES_DIR = join(ROOT, 'data', 'images');
 const SCENE_LOG_PATH = join(IMAGES_DIR, 'scene-log.json');
 const PRODUCT_IMAGES_DIR = join(ROOT, 'data', 'product-images');
@@ -976,7 +975,7 @@ async function generateImage(metaPath) {
 
     await notify({
       subject: `Image blocked: ${meta.title}`,
-      body: `Creative director rejected ${rejectedImages.length} attempt(s) for "${meta.title}".\nReasons: ${rejectedImages.map(r => r.reason || r.failures.join(', ')).join('; ')}\nResolve on the dashboard or re-run: node agents/image-generator/index.js data/posts/${slug}.json`,
+      body: `Creative director rejected ${rejectedImages.length} attempt(s) for "${meta.title}".\nReasons: ${rejectedImages.map(r => r.reason || r.failures.join(', ')).join('; ')}\nResolve on the dashboard or re-run: node agents/image-generator/index.js data/posts/${slug}/meta.json`,
       status: 'error',
       category: 'pipeline',
     }).catch(() => {});
@@ -1008,7 +1007,7 @@ async function generateImage(metaPath) {
 
   // Compress to WebP
   process.stdout.write('  Compressing to WebP... ');
-  const { webpPath, finalKB, quality } = await compressToWebP(lastImagePath);
+  const { webpPath: tempWebpPath, finalKB, quality } = await compressToWebP(lastImagePath);
   console.log(`done (${finalKB} KB, quality ${quality})`);
 
   // Remove the original source image if it isn't already a WebP
@@ -1016,15 +1015,21 @@ async function generateImage(metaPath) {
     try { unlinkSync(lastImagePath); } catch { /* ignore */ }
   }
 
-  // Update post metadata
-  meta.image_path = webpPath;
+  // Move compressed image into the post directory
+  ensurePostDir(slug);
+  const finalImagePath = getImagePath(slug);
+  const { renameSync } = await import('fs');
+  renameSync(tempWebpPath, finalImagePath);
+
+  // Update post metadata — store relative path so it works across machines
+  meta.image_path = relative(ROOT, finalImagePath).replace(/\\/g, '/');
   meta.image_prompt = finalPrompt;
   meta.image_generated_at = new Date().toISOString();
   writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
-  console.log(`  Saved:  ${webpPath}`);
+  console.log(`  Saved:  ${finalImagePath}`);
 
-  return { imagePath: webpPath, slug };
+  return { imagePath: finalImagePath, slug };
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -1065,11 +1070,11 @@ async function main() {
       if (f.endsWith('.png')) unlinkSync(srcPath);
 
       // Update matching post metadata image_path
-      const metaPath = join(POSTS_DIR, `${slug}.json`);
+      const metaPath = getMetaPath(slug);
       if (existsSync(metaPath)) {
         try {
           const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
-          meta.image_path = webpPath;
+          meta.image_path = relative(ROOT, webpPath).replace(/\\/g, '/');
           writeFileSync(metaPath, JSON.stringify(meta, null, 2));
         } catch { /* ignore */ }
       }
@@ -1082,16 +1087,23 @@ async function main() {
       process.exit(1);
     }
 
-    const metaFiles = readdirSync(POSTS_DIR)
-      .filter((f) => f.endsWith('.json'))
-      .map((f) => join(POSTS_DIR, f));
+    const allSlugs = listAllSlugs();
+    const metaFiles = allSlugs.map((s) => getMetaPath(s));
 
     const toGenerate = metaFiles.filter((f) => {
-      const slug = basename(f, '.json');
-      return !existsSync(join(IMAGES_DIR, `${slug}.webp`)) && !existsSync(join(IMAGES_DIR, `${slug}.png`));
+      const slug = basename(dirname(f));
+      if (existsSync(getImagePath(slug))) return false;
+      try {
+        const meta = JSON.parse(readFileSync(f, 'utf8'));
+        // Skip legacy posts (synced from Shopify — already have CDN images)
+        if (meta.legacy_source) return false;
+        // Skip posts that already have their image uploaded to Shopify CDN
+        if (meta.shopify_image_url) return false;
+      } catch { /* include if unreadable */ }
+      return true;
     });
 
-    console.log(`${metaFiles.length} post(s) found, ${toGenerate.length} without images.\n`);
+    console.log(`${metaFiles.length} post(s) found, ${toGenerate.length} need images.\n`);
 
     for (const metaPath of toGenerate) {
       await generateImage(metaPath);

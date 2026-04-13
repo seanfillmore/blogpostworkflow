@@ -1,0 +1,46 @@
+{
+  "slug": "best-natural-deodorant-for-men",
+  "title": "Best Natural Deodorant for Men in 2026 (That Works)",
+  "meta_description": "Discover the best natural deodorant for men in 2026. Aluminum-free, clean ingredients, long-lasting odor protection. Find your perfect match at Real Skin Care.",
+  "target_keyword": "best natural deodorant for men",
+  "tags": [
+    "deodorant",
+    "natural deodorant",
+    "natural skincare",
+    "organic"
+  ],
+  "word_count": 2782,
+  "generated_at": "2026-03-08T04:17:25.667Z",
+  "brief_path": "/Users/seanfillmore/Code/Claude/data/briefs/best-natural-deodorant-for-men.json",
+  "tokens_used": {
+    "input": 6701,
+    "output": 5987
+  },
+  "image_revised_prompt": "Create an image featuring a high-end luxury lifestyle product arranged for a photo shoot in landscape layout. This product is a sleek, unbranded, natural stick deodorant positioned on a pristine white marble surface. It is surrounded by fresh botanical elements that include eucalyptus sprigs, half of a lime, and small clusters of lavender. Warm, soft, natural lighting is streaming in from the left side, resulting in subtly-drawn shadows on the surface. To add dimension and showcase the ingredients, scatter pieces of raw shea butter around along with a minor dish of baking soda. The color palette should revolve around warm white, tender sage green, and muted cream. Keep the composition bright, airy, and minimal with a shallow depth of field, strikingly similar to those aesthetic editorials commonly seen in premium clean beauty brands.",
+  "shopify_blog_id": 48998449187,
+  "shopify_article_id": 563281428650,
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-natural-deodorant-for-men-in-2025-that-works",
+  "uploaded_at": "2026-03-12T00:05:15.539Z",
+  "shopify_handle": "best-natural-deodorant-for-men-in-2025-that-works",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-natural-deodorant-for-men_6b464475-b064-4459-9568-405d5c3e4c68.webp?v=1773273911",
+  "published_at": "2026-03-11T18:05:13-06:00",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:11:15.795Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:06:57.646Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ]
+}

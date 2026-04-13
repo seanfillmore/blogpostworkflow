@@ -1,0 +1,46 @@
+{
+  "slug": "best-natural-roll-on-deodorant",
+  "title": "Best Natural Roll On Deodorant: Clean Picks That Work",
+  "meta_description": "Discover the best natural roll on deodorant options for women and men — aluminum-free, gentle, and effective. Find your clean match at Real Skin Care.",
+  "target_keyword": "best natural roll on deodorant",
+  "tags": [
+    "deodorant",
+    "natural deodorant",
+    "natural skincare",
+    "organic"
+  ],
+  "word_count": 2389,
+  "generated_at": "2026-03-08T04:44:58.170Z",
+  "brief_path": "/Users/seanfillmore/Code/Claude/data/briefs/best-natural-roll-on-deodorant.json",
+  "tokens_used": {
+    "input": 6509,
+    "output": 5572
+  },
+  "image_revised_prompt": "Create a photorealistic image in wide landscape format. Consider capturing the setting of an outdoor wooden garden table illuminated by the warm morning sunlight. On the table, there should be a blank white roll-on deodorant bottle surrounded by freshly cut herbs and botanicals such as rosemary sprigs, small clusters of chamomile flowers, some green tea leaves, and scattered raw coconut flakes. The background should slightly blur a rustic terracotta pot filled with growing mint. The light should filter dappled sunlight through the overhead foliage, creating leaf-shadow patterns on the weathered wood. The atmosphere should be bright, airy, and organic with warm golden tones and soft green accents. The depth of field should be shallow: with the deodorant bottle remaining sharp in the foreground, while the garden vegetation blurs into a luminous, sun-kissed bokeh. Remember: no text, labels, or logos are to be included. The overall wide composition of 1792×1024 should extend entirely to the four edges of the frame without borders or empty space.",
+  "shopify_blog_id": 48998449187,
+  "shopify_article_id": 563281461418,
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-natural-roll-on-deodorant-clean-picks-that-work",
+  "shopify_status": "published",
+  "uploaded_at": "2026-03-08T04:46:48.248Z",
+  "indexing_state": {
+    "state": "unknown",
+    "coverage": "URL is unknown to Google",
+    "last_checked": "2026-04-09T13:11:34.650Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:13:53.025Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:30:03.025Z",
+      "result": "ok"
+    }
+  ]
+}

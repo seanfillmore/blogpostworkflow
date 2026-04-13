@@ -31,6 +31,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { loadCalendar } from '../../lib/calendar-store.js';
+import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -39,8 +40,8 @@ const CALENDAR_PATH    = join(ROOT, 'data', 'reports', 'content-strategist', 'co
 const STATE_DIR        = join(ROOT, 'data', 'reports', 'calendar-runner');
 const STATE_PATH       = join(STATE_DIR, 'calendar-state.json');
 const RANK_REPORT_PATH = join(ROOT, 'data', 'reports', 'rank-tracker', 'rank-tracker-report.md');
+
 const BRIEFS_DIR       = join(ROOT, 'data', 'briefs');
-const POSTS_DIR        = join(ROOT, 'data', 'posts');
 
 // ── args ──────────────────────────────────────────────────────────────────────
 
@@ -103,16 +104,16 @@ function isRejectedKw(keyword, rejections) {
 
 function getPostMeta(slug) {
   // Try exact slug match first, then scan for matching target_keyword
-  const exact = join(POSTS_DIR, `${slug}.json`);
+  const exact = getMetaPath(slug);
   if (existsSync(exact)) {
     try { return JSON.parse(readFileSync(exact, 'utf8')); } catch { return null; }
   }
 
   // Scan all post JSONs for matching keyword
-  if (!existsSync(POSTS_DIR)) return null;
-  for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
+  for (const s of listAllSlugs()) {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      const meta = readPostMeta(s);
+      if (!meta) continue;
       if (meta.target_keyword?.toLowerCase() === slug.replace(/-/g, ' ').toLowerCase()) {
         return meta;
       }
@@ -123,12 +124,12 @@ function getPostMeta(slug) {
 
 function getPostSlugOnDisk(keyword) {
   const targetKw = keyword.toLowerCase();
-  if (!existsSync(POSTS_DIR)) return null;
-  for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
+  for (const slug of listAllSlugs()) {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      const meta = readPostMeta(slug);
+      if (!meta) continue;
       if (meta.target_keyword?.toLowerCase() === targetKw) {
-        return f.replace('.json', '');
+        return slug;
       }
     } catch { /* skip */ }
   }
@@ -137,7 +138,7 @@ function getPostSlugOnDisk(keyword) {
 
 function getItemStatus(item) {
   const briefPath = join(BRIEFS_DIR, `${item.slug}.json`);
-  const htmlPath  = join(POSTS_DIR, `${item.slug}.html`);
+  const htmlPath  = getContentPath(item.slug);
 
   const meta = getPostMeta(item.slug);
   const actualSlug = getPostSlugOnDisk(item.keyword) || item.slug;
@@ -146,7 +147,7 @@ function getItemStatus(item) {
     || existsSync(join(BRIEFS_DIR, `${actualSlug}.json`));
 
   const htmlExists = existsSync(htmlPath)
-    || existsSync(join(POSTS_DIR, `${actualSlug}.html`));
+    || existsSync(getContentPath(actualSlug));
 
   if (!briefExists && !htmlExists && !meta) return 'pending';
   if (meta?.shopify_status === 'published') return 'published';
@@ -242,7 +243,7 @@ function run(cmd, label) {
 }
 
 function checkEditGate(slug) {
-  const reportPath = join(ROOT, 'data', 'reports', 'editor', `${slug}-editor-report.md`);
+  const reportPath = getEditorReportPath(slug);
   if (!existsSync(reportPath)) return { pass: true };
   const report = readFileSync(reportPath, 'utf8');
   if (/VERDICT:\s*Needs Work/i.test(report)) {
@@ -253,7 +254,7 @@ function checkEditGate(slug) {
 }
 
 function checkBrokenLinks(slug) {
-  const reportPath = join(ROOT, 'data', 'reports', 'editor', `${slug}-editor-report.md`);
+  const reportPath = getEditorReportPath(slug);
   if (!existsSync(reportPath)) return { count404: 0 };
   const report = readFileSync(reportPath, 'utf8');
 
@@ -332,7 +333,7 @@ async function runItem(item) {
   }
 
   // Step 4: Edit
-  const editorReport = join(ROOT, 'data', 'reports', 'editor', `${postSlug}-editor-report.md`);
+  const editorReport = getEditorReportPath(postSlug);
   if (!existsSync(editorReport)) {
     const ok = run(
       `node agents/editor/index.js data/posts/${postSlug}.html`,
@@ -490,16 +491,17 @@ async function publishDueArticles() {
   if (!existsSync(POSTS_DIR)) { console.log('No posts directory.'); return; }
 
   const due = [];
-  for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
+  for (const slug of listAllSlugs()) {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      const meta = readPostMeta(slug);
+      if (!meta) continue;
       const isDue = meta.shopify_publish_at &&
         new Date(meta.shopify_publish_at) <= now &&
         meta.shopify_article_id &&
         meta.shopify_blog_id;
       // Catch both 'scheduled' status and 'draft' posts whose publish date has passed (missed publishes)
       if (isDue && (meta.shopify_status === 'scheduled' || meta.shopify_status === 'draft')) {
-        due.push({ meta, path: join(POSTS_DIR, f), missed: meta.shopify_status === 'draft' });
+        due.push({ meta, path: getMetaPath(slug), missed: meta.shopify_status === 'draft' });
       }
     } catch { /* skip */ }
   }
@@ -524,7 +526,7 @@ async function publishDueArticles() {
       console.log(`  ⚠️  "${meta.title}" has editorial issues — attempting auto-repair...`);
       run(`node agents/link-repair/index.js ${slug}`, `link-repair: ${slug}`);
       run(`node agents/schema-injector/index.js --slug ${slug}`, `schema: ${slug}`);
-      run(`node agents/editor/index.js data/posts/${slug}.html`, `edit (re-check): ${slug}`);
+      run(`node agents/editor/index.js data/posts/${slug}/content.html`, `edit (re-check): ${slug}`);
 
       const recheck = checkEditGate(slug);
       if (!recheck.pass) {

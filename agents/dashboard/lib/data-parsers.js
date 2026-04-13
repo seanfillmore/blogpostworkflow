@@ -8,6 +8,10 @@ import {
   AHREFS_DIR,
 } from './paths.js';
 import { kwToSlug } from './fs-helpers.js';
+import {
+  listAllSlugs, getPostMeta as getPostMetaFromLib, getMetaPath, getContentPath,
+  getEditorReportPath,
+} from '../../../lib/posts.js';
 
 export function parseCalendar() {
   // Prefer JSON; fall back to legacy markdown parse via calendar-store
@@ -62,15 +66,13 @@ export function parseCalendar() {
 }
 
 export function getPostMeta(slug) {
-  const exact = join(POSTS_DIR, `${slug}.json`);
-  if (existsSync(exact)) {
-    try { return JSON.parse(readFileSync(exact, 'utf8')); } catch { return null; }
-  }
-  if (!existsSync(POSTS_DIR)) return null;
-  for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
+  const direct = getPostMetaFromLib(slug);
+  if (direct) return direct;
+  // Fallback: scan all posts for a keyword match
+  for (const s of listAllSlugs()) {
     try {
-      const m = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-      if (m.target_keyword?.toLowerCase() === slug.replace(/-/g, ' ')) return m;
+      const m = getPostMetaFromLib(s);
+      if (m?.target_keyword?.toLowerCase() === slug.replace(/-/g, ' ')) return m;
     } catch {}
   }
   return null;
@@ -79,7 +81,7 @@ export function getPostMeta(slug) {
 export function getItemStatus(item) {
   const meta = getPostMeta(item.slug);
   const hasBrief = existsSync(join(BRIEFS_DIR, `${item.slug}.json`));
-  const hasHtml  = existsSync(join(POSTS_DIR, `${item.slug}.html`));
+  const hasHtml  = existsSync(getContentPath(item.slug));
   const publishTs = meta?.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
   const publishInPast = !Number.isNaN(publishTs) && publishTs <= Date.now();
   const publishInFuture = !Number.isNaN(publishTs) && publishTs > Date.now();
@@ -92,18 +94,21 @@ export function getItemStatus(item) {
 }
 
 export function parseEditorReports() {
-  const dir = join(REPORTS_DIR, 'editor');
-  if (!existsSync(dir)) return {};
   const out = {};
-  for (const f of readdirSync(dir).filter(f => f.endsWith('-editor-report.md'))) {
-    const slug = f.replace('-editor-report.md', '');
+  for (const slug of listAllSlugs()) {
+    const reportPath = getEditorReportPath(slug);
+    if (!existsSync(reportPath)) continue;
     try {
-      const txt = readFileSync(join(dir, f), 'utf8');
-      out[slug] = {
+      const txt = readFileSync(reportPath, 'utf8');
+      const entry = {
         verdict:     /VERDICT:\s*Needs Work/i.test(txt) ? 'Needs Work' : 'Approved',
         brokenLinks: (txt.match(/\|\s*https?:\/\/[^|]+\|\s*[^|]*\|\s*404\s*\|/g) || []).length,
-        generatedAt: statSync(join(dir, f)).mtime.toISOString(),
+        generatedAt: statSync(reportPath).mtime.toISOString(),
       };
+      // If both original and refreshed reports exist, prefer the more recent one
+      if (!out[slug] || entry.generatedAt > out[slug].generatedAt) {
+        out[slug] = entry;
+      }
     } catch {}
   }
   return out;
@@ -260,7 +265,7 @@ export function getPendingAhrefsData(calItems) {
   for (const item of calItems) {
     const slug     = item.slug;
     const hasBrief = existsSync(join(BRIEFS_DIR, `${slug}.json`));
-    const hasPost  = existsSync(join(POSTS_DIR,  `${slug}.html`));
+    const hasPost  = existsSync(getContentPath(slug));
     if (hasBrief || hasPost) continue;
     if (isRejectedKw(item.keyword, rejections)) continue;
 

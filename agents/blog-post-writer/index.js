@@ -22,10 +22,9 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
+import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 let config, ingredients;
@@ -419,8 +418,8 @@ async function writePost(briefPath) {
     throw new Error(`Failed to parse brief ${briefPath}: ${e.message}`);
   }
   const slug = brief.slug || basename(briefPath, '.json');
-  const htmlPath = join(POSTS_DIR, `${slug}.html`);
-  const metaPath = join(POSTS_DIR, `${slug}.json`);
+  const htmlPath = getContentPath(slug);
+  const metaPath = getMetaPath(slug);
 
   console.log(`\n  Writing: "${brief.recommended_title || brief.target_keyword}"`);
   console.log(`  Target: ~${brief.target_word_count} words, intent: ${brief.search_intent}`);
@@ -463,6 +462,20 @@ async function writePost(briefPath) {
   // Strip any accidental markdown fences
   html = html.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
 
+  // Shopify strips <a> tags with target="_blank" but no rel="noopener".
+  // Internal links: remove target="_blank" entirely (no reason to open our own site in a new tab).
+  // External links: ensure rel="noopener" is present.
+  html = html.replace(/<a\s([^>]*?)target="_blank"([^>]*?)>/gi, (match, before, after) => {
+    const attrs = before + after;
+    if (attrs.includes('realskincare.com')) {
+      return `<a ${before.trim()} ${after.trim()}>`.replace(/\s{2,}/g, ' ').replace(' >', '>');
+    }
+    if (!/rel="[^"]*noopener/.test(attrs)) {
+      return `<a ${before}target="_blank" rel="noopener"${after}>`;
+    }
+    return match;
+  });
+
   const wordCount = html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 
   // Validate output before saving
@@ -500,7 +513,7 @@ async function writePost(briefPath) {
 
   console.log(` done (${wordCount} words, ${outputTokens} tokens)`);
 
-  mkdirSync(POSTS_DIR, { recursive: true });
+  ensurePostDir(slug);
   writeFileSync(htmlPath, html);
 
   // Save metadata for Shopify upload — preserve any existing Shopify fields from a previous publish
@@ -568,7 +581,7 @@ async function main() {
 
     const toWrite = briefFiles.filter((f) => {
       const slug = basename(f, '.json');
-      return !existsSync(join(POSTS_DIR, `${slug}.html`));
+      return !existsSync(getContentPath(slug));
     });
 
     console.log(`${briefFiles.length} brief(s) found, ${toWrite.length} not yet written.\n`);

@@ -33,7 +33,8 @@ const CONFIG_PATH = join(ROOT, 'config', 'competitors.json');
 const STATE_DIR = join(ROOT, 'data', 'competitor-watcher');
 const STATE_PATH = join(STATE_DIR, 'state.json');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'competitor-watcher');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
+
+import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 
 const KNOWN_CLUSTERS = [
   'deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm',
@@ -114,10 +115,10 @@ function inferClusters(title) {
  */
 function loadOwnClusters() {
   const ours = new Set();
-  if (!existsSync(POSTS_DIR)) return ours;
-  for (const f of readdirSync(POSTS_DIR).filter((x) => x.endsWith('.json'))) {
+  for (const slug of listAllSlugs()) {
     try {
-      const p = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      const p = getPostMeta(slug);
+      if (!p) continue;
       for (const c of inferClusters(p.title || p.slug || '')) ours.add(c);
     } catch { /* ignore */ }
   }

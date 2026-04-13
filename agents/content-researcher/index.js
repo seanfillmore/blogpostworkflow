@@ -37,6 +37,7 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { parseCSV, parseSerpCsv, parseKeywordsCsv, parseVolumeHistoryCsv } from '../../lib/csv-parsers.js';
 import { loadKeywordIndex, analyzeGaps } from '../../lib/keyword-index.js';
+import { listAllSlugs, getPostMeta, getContentPath, POSTS_DIR } from '../../lib/posts.js';
 
 // GSC is optional — gracefully skip if not configured
 let gsc = null;
@@ -278,11 +279,10 @@ function loadRelatedFlops(keyword) {
 
   const flops = [];
   try {
-    const postsDir = join(ROOT, 'data', 'posts');
-    if (!existsSync(postsDir)) return [];
-    for (const f of readdirSync(postsDir).filter((n) => n.endsWith('.json'))) {
+    for (const slug of listAllSlugs()) {
       try {
-        const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
+        const meta = getPostMeta(slug);
+        if (!meta) continue;
         const postKw = (meta.target_keyword || '').toLowerCase();
         if (!postKw.includes(matchedCluster)) continue;
         const review = meta.performance_review || {};
@@ -507,14 +507,12 @@ function checkAhrefsData(keyword) {
 // ── run one keyword ───────────────────────────────────────────────────────────
 
 function findDuplicatePost(keyword) {
-  const postsDir = join(ROOT, 'data', 'posts');
   try {
-    const files = readdirSync(postsDir).filter((f) => f.endsWith('.json'));
-    for (const file of files) {
+    for (const slug of listAllSlugs()) {
       try {
-        const meta = JSON.parse(readFileSync(join(postsDir, file), 'utf8'));
-        if (meta.target_keyword?.toLowerCase() === keyword.toLowerCase()) {
-          return { file, meta };
+        const meta = getPostMeta(slug);
+        if (meta && meta.target_keyword?.toLowerCase() === keyword.toLowerCase()) {
+          return { file: `${slug}/meta.json`, meta };
         }
       } catch { /* skip unreadable files */ }
     }
@@ -668,7 +666,6 @@ function runCheck() {
   // Load brief queue from content calendar
   const calendarPath = join(ROOT, 'data', 'reports', 'content-calendar.md');
   const briefsDir = BRIEFS_DIR;
-  const postsDir = join(ROOT, 'data', 'posts');
 
   // Collect keywords from calendar brief queue (lines starting with "- **Keyword:**")
   let queuedKeywords = [];
@@ -692,7 +689,7 @@ function runCheck() {
   for (const keyword of queuedKeywords) {
     const slug = slugify(keyword);
     const hasBrief = existsSync(join(briefsDir, `${slug}.json`));
-    const hasPost = existsSync(join(postsDir, `${slug}.html`));
+    const hasPost = existsSync(getContentPath(slug));
     const status = checkAhrefsData(keyword);
 
     const statusIcon = hasPost ? '✅' : hasBrief ? '📝' : status.ready ? '✓ ' : '✗ ';

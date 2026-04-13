@@ -124,11 +124,11 @@ function stepCmd(step) {
       return 'node agents/blog-post-writer/index.js --all';
     }
     case 'image': {
-      if (slug) return `node agents/image-generator/index.js data/posts/${slug}.json`;
+      if (slug) return `node agents/image-generator/index.js data/posts/${slug}/meta.json`;
       return 'node agents/image-generator/index.js --all';
     }
     case 'edit': {
-      if (slug) return `node agents/editor/index.js data/posts/${slug}.html`;
+      if (slug) return `node agents/editor/index.js data/posts/${slug}/content.html`;
       return null; // edit requires a slug or iterating posts; handled below
     }
     case 'link-repair': {
@@ -145,7 +145,7 @@ function stepCmd(step) {
     }
     case 'publish': {
       if (!slug) return null; // publish requires --slug or iterating
-      return `node agents/publisher/index.js data/posts/${slug}.json --draft`;
+      return `node agents/publisher/index.js data/posts/${slug}/meta.json --draft`;
     }
     case 'rank-tracker':
       return 'node agents/rank-tracker/index.js';
@@ -170,9 +170,9 @@ function stepOutput(step) {
     case 'gap':        return 'data/reports/content-gap-report.md';
     case 'strategist': return 'data/reports/content-calendar.md';
     case 'research':   return slug ? `data/briefs/${slug}.json` : null;
-    case 'write':      return slug ? `data/posts/${slug}.html` : null;
-    case 'image':      return slug ? `data/images/${slug}.png` : null;
-    case 'edit':       return slug ? `data/reports/${slug}-editor-report.md` : null;
+    case 'write':      return slug ? `data/posts/${slug}/content.html` : null;
+    case 'image':      return slug ? `data/posts/${slug}/image.webp` : null;
+    case 'edit':       return slug ? `data/posts/${slug}/editor-report.md` : null;
     case 'link-repair':    return null; // always re-runs (live link check)
     case 'schema':         return null; // always re-runs (idempotent, fast)
     case 'verify':         return null; // always re-runs (checks live links)
@@ -225,7 +225,7 @@ let publishBlocked = false;
 // Check editor report for "Needs Work" verdict after edit step
 function checkEditorialGate() {
   if (!slug) return false;
-  const reportPath = join(__dirname, 'data', 'reports', 'editor', `${slug}-editor-report.md`);
+  const reportPath = join(__dirname, 'data', 'posts', slug, 'editor-report.md');
   if (!existsSync(reportPath)) return false;
   try {
     const report = readFileSync(reportPath, 'utf8');
@@ -235,7 +235,7 @@ function checkEditorialGate() {
       const reason = match ? match[1].trim() : 'See editor report for details.';
       console.log(`\n  ⛔ Editorial gate: post flagged as "Needs Work"`);
       console.log(`     ${reason}`);
-      console.log(`     Fix issues in data/posts/${slug}.html then re-run edit + publish.\n`);
+      console.log(`     Fix issues in data/posts/${slug}/content.html then re-run edit + publish.\n`);
       return true;
     }
   } catch { /* ignore read errors */ }

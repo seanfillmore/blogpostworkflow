@@ -1,7 +1,8 @@
 // agents/dashboard/routes/rejected-images.js
 import { readFileSync, writeFileSync, existsSync, readdirSync, unlinkSync, rmdirSync, createReadStream, copyFileSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { join, extname, relative } from 'node:path';
 import { execSync } from 'node:child_process';
+import { getMetaPath, getImagePath } from '../../../lib/posts.js';
 
 function respondJson(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -44,15 +45,15 @@ export default [
           const srcPath = join(ctx.REJECTED_IMAGES_DIR, slug, filename);
           if (!existsSync(srcPath)) return respondJson(res, { ok: false, error: 'Image not found' }, 404);
 
-          // Copy to main images directory
-          const destPath = join(ctx.IMAGES_DIR, `${slug}.webp`);
+          // Copy to post directory
+          const destPath = getImagePath(slug);
           copyFileSync(srcPath, destPath);
 
           // Update post metadata
-          const metaPath = join(ctx.POSTS_DIR, `${slug}.json`);
+          const metaPath = getMetaPath(slug);
           if (existsSync(metaPath)) {
             const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
-            meta.image_path = destPath;
+            meta.image_path = relative(ctx.ROOT, destPath).replace(/\\/g, '/');
             meta.image_generated_at = new Date().toISOString();
             delete meta.image_blocked;
             delete meta.image_blocked_at;
@@ -80,7 +81,7 @@ export default [
     match: (url) => /^\/api\/rejected-images\/[^/]+\/retry$/.test(url),
     handler(req, res, ctx) {
       const slug = req.url.split('/')[3];
-      const metaPath = join(ctx.POSTS_DIR, `${slug}.json`);
+      const metaPath = getMetaPath(slug);
       if (!existsSync(metaPath)) return respondJson(res, { ok: false, error: 'Post not found' }, 404);
 
       // Clear the blocked flag so the generator can run
@@ -100,7 +101,7 @@ export default [
       }
 
       // Remove existing image so the generator will run
-      const imgPath = join(ctx.IMAGES_DIR, `${slug}.webp`);
+      const imgPath = getImagePath(slug);
       if (existsSync(imgPath)) try { unlinkSync(imgPath); } catch { /* ignore */ }
 
       ctx.invalidateDataCache();

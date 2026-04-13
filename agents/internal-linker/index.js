@@ -38,11 +38,10 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSy
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
+import { getMetaPath, getInternalLinksPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'internal-linker');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -201,7 +200,7 @@ function urlToSlug(url) {
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function loadTargetPost(slug) {
-  const metaPath = join(POSTS_DIR, `${slug}.json`);
+  const metaPath = getMetaPath(slug);
   if (!existsSync(metaPath)) {
     console.error(`Post metadata not found: ${metaPath}`);
     process.exit(1);
@@ -462,7 +461,7 @@ async function main() {
 
     // Load metadata — prefer local JSON, fall back to live Shopify article
     let targetMeta;
-    const metaPath = join(POSTS_DIR, `${slug}.json`);
+    const metaPath = getMetaPath(slug);
     if (existsSync(metaPath)) {
       targetMeta = loadTargetPost(slug);
     } else {
@@ -532,8 +531,8 @@ async function main() {
       lines.push('');
     }
 
-    mkdirSync(REPORTS_DIR, { recursive: true });
-    const reportPath = join(REPORTS_DIR, `${slug}-internal-links.md`);
+    const reportPath = getInternalLinksPath(slug);
+    mkdirSync(dirname(reportPath), { recursive: true });
     writeFileSync(reportPath, lines.join('\n'));
 
     console.log(`\n  Report saved: ${reportPath}`);
@@ -656,7 +655,7 @@ async function main() {
       };
     } else {
       // Fall back to local metadata if available
-      const metaPath = join(POSTS_DIR, `${handle}.json`);
+      const metaPath = getMetaPath(handle);
       if (!existsSync(metaPath)) {
         console.log(`     ⚠️  Article not found in Shopify or local metadata — skipping`);
         reportLines.push(`## ${t + 1}. "${row.keyword}" — #${row.position}`);

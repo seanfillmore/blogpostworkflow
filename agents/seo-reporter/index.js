@@ -34,6 +34,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'seo-reporter');
 
+import { listAllSlugs, getEditorReportPath } from '../../lib/posts.js';
+
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
 // ── env ───────────────────────────────────────────────────────────────────────
@@ -162,18 +164,16 @@ function loadReportSummary(subdir, filename) {
 }
 
 function loadEditorReports() {
-  const editorDir = join(ROOT, 'data', 'reports', 'editor');
-  if (!existsSync(editorDir)) return [];
-  return readdirSync(editorDir)
-    .filter((f) => f.endsWith('-editor-report.md'))
-    .map((f) => {
-      const content = readFileSync(join(editorDir, f), 'utf8');
+  return listAllSlugs()
+    .map((slug) => {
+      const reportPath = getEditorReportPath(slug);
+      if (!existsSync(reportPath)) return null;
+      const content = readFileSync(reportPath, 'utf8');
       const hasBroken = content.includes('🔴 Broken');
       const hasConcern = content.includes('CONCERNING') || content.includes('NEEDS_REVIEW');
-      const slug = f.replace('-editor-report.md', '');
       return { slug, hasBroken, hasConcern, issues: hasBroken || hasConcern };
     })
-    .filter((r) => r.issues);
+    .filter((r) => r && r.issues);
 }
 
 // ── report generation ─────────────────────────────────────────────────────────

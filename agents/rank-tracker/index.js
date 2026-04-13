@@ -46,8 +46,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'rank-tracker');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
+
+import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
 const TRACKER_DIR = join(ROOT, 'data', 'keyword-tracker');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
@@ -233,15 +234,13 @@ function loadBriefVolume(slug) {
 }
 
 function loadPublishedPosts() {
-  if (!existsSync(POSTS_DIR)) return [];
-  return readdirSync(POSTS_DIR)
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => {
+  return listAllSlugs()
+    .map((slug) => {
       try {
-        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+        const meta = getPostMetaLib(slug);
+        if (!meta) return null;
         // Only track posts that have been published to Shopify
         if (!meta.shopify_article_id) return null;
-        const slug = basename(f, '.json');
         return {
           slug,
           title: meta.title,

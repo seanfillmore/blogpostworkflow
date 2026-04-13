@@ -80,39 +80,38 @@ runStep('calendar-runner --run', `"${NODE}" agents/calendar-runner/index.js --ru
 
 // Step 3: auto-repair broken links in any published/scheduled post
 if (!dryFlag) {
-  const POSTS_DIR   = join(__dirname, 'data', 'posts');
-  const REPORTS_DIR = join(__dirname, 'data', 'reports', 'editor');
-  const brokenSlugs = [];
+  const { listAllSlugs, getEditorReportPath, getPostMeta, getContentPath, getMetaPath } = await import('./lib/posts.js');
+  const brokenItems = []; // { slug }
 
-  if (existsSync(POSTS_DIR) && existsSync(REPORTS_DIR)) {
-    for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
-      try {
-        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-        if (!meta.shopify_article_id) continue; // not on Shopify yet
-        const slug = f.replace('.json', '');
-        const reportPath = join(REPORTS_DIR, `${slug}-editor-report.md`);
-        if (!existsSync(reportPath)) continue;
-        const report = readFileSync(reportPath, 'utf8');
-        const has404 = /\|\s*https?:\/\/[^|]+\|\s*[^|]*\|\s*404\s*\|/m.test(report);
-        if (has404) brokenSlugs.push(slug);
-      } catch { /* skip */ }
-    }
+  for (const slug of listAllSlugs()) {
+    try {
+      const reportPath = getEditorReportPath(slug);
+      if (!existsSync(reportPath)) continue;
+      const report = readFileSync(reportPath, 'utf8');
+      const has404 = /\|\s*https?:\/\/[^|]+\|\s*[^|]*\|\s*404\s*\|/m.test(report);
+      if (!has404) continue;
+
+      const meta = getPostMeta(slug);
+      if (!meta?.shopify_article_id) continue; // not on Shopify yet
+
+      brokenItems.push({ slug });
+    } catch { /* skip */ }
   }
 
-  if (brokenSlugs.length > 0) {
-    log(`  Link repair: ${brokenSlugs.length} post(s) with broken links detected`);
-    for (const slug of brokenSlugs) {
+  if (brokenItems.length > 0) {
+    log(`  Link repair: ${brokenItems.length} post(s) with broken links detected`);
+    for (const { slug } of brokenItems) {
       log(`    Repairing: ${slug}`);
       try {
         execSync(`"${NODE}" agents/link-repair/index.js ${slug}`, { stdio: 'inherit', cwd: __dirname });
         // Re-run editor to update the report (clears broken link count in dashboard)
-        execSync(`"${NODE}" agents/editor/index.js data/posts/${slug}.html`, { stdio: 'inherit', cwd: __dirname });
+        execSync(`"${NODE}" agents/editor/index.js data/posts/${slug}/content.html`, { stdio: 'inherit', cwd: __dirname });
         // Re-upload the fixed body to Shopify (--force skips editor gate since post is already live)
         // Preserve shopify_publish_at if it's in the future (keeps scheduled posts from going live immediately)
-        const meta = JSON.parse(readFileSync(join(POSTS_DIR, `${slug}.json`), 'utf8'));
+        const meta = getPostMeta(slug);
         const futurePublishAt = meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date()
           ? ` --publish-at "${meta.shopify_publish_at}"` : '';
-        execSync(`"${NODE}" agents/publisher/index.js data/posts/${slug}.json --force${futurePublishAt}`, { stdio: 'inherit', cwd: __dirname });
+        execSync(`"${NODE}" agents/publisher/index.js data/posts/${slug}/meta.json --force${futurePublishAt}`, { stdio: 'inherit', cwd: __dirname });
         log(`    ✓ ${slug} repaired and re-uploaded`);
       } catch (e) {
         log(`    ✗ ${slug} repair failed (exit ${e.status})`);

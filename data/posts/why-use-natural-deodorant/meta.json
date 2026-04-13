@@ -1,0 +1,38 @@
+{
+  "slug": "why-use-natural-deodorant",
+  "title": "Why Use Natural Deodorant? Benefits & Reasons to Switch",
+  "meta_description": "Discover why use natural deodorant and how switching from antiperspirant can benefit your health, skin, and the planet. Find your perfect match at Real Skin Care.",
+  "target_keyword": "why use natural deodorant",
+  "tags": [
+    "deodorant",
+    "natural deodorant",
+    "natural skincare",
+    "organic"
+  ],
+  "word_count": 2833,
+  "generated_at": "2026-03-08T05:32:41.108Z",
+  "brief_path": "/Users/seanfillmore/Code/Claude/data/briefs/why-use-natural-deodorant.json",
+  "tokens_used": {
+    "input": 6124,
+    "output": 6055
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_article_id": 559649194154,
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/why-use-natural-deodorants",
+  "shopify_status": "published",
+  "uploaded_at": "2026-03-11T23:30:09.715Z",
+  "shopify_handle": "why-use-natural-deodorants",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/why-use-natural-deodorant.webp?v=1773271806",
+  "indexing_state": {
+    "state": "crawled_not_indexed",
+    "coverage": "Crawled - currently not indexed",
+    "last_checked": "2026-04-09T13:13:15.565Z",
+    "last_crawled": "2026-03-26T20:44:27Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/why-use-natural-deodorants",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "indexing_blocked": true,
+  "indexing_blocked_reason": "Google crawled but chose not to index — signals a content quality or duplicate-content issue. Manual review required.",
+  "indexing_blocked_at": "2026-04-09T13:30:03.087Z"
+}

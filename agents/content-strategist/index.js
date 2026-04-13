@@ -22,7 +22,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-strategist');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
+
+import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -92,13 +93,11 @@ export function loadClusterPerformance() {
 
   // Map slug -> tags from data/posts/*.json
   const tagsBySlug = {};
-  if (existsSync(POSTS_DIR)) {
-    for (const f of readdirSync(POSTS_DIR).filter((x) => x.endsWith('.json'))) {
-      try {
-        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-        if (meta.slug) tagsBySlug[meta.slug] = meta.tags || [];
-      } catch { /* skip */ }
-    }
+  for (const slug of listAllSlugs()) {
+    try {
+      const meta = getPostMetaLib(slug);
+      if (meta?.slug) tagsBySlug[meta.slug] = meta.tags || [];
+    } catch { /* skip */ }
   }
 
   // Outstanding flops by slug from post-performance latest.json
@@ -254,19 +253,14 @@ function loadInventory() {
       .forEach((f) => existing.add(basename(f, '.json')));
   }
 
-  // Published posts (local HTML/JSON files)
-  if (existsSync(POSTS_DIR)) {
-    readdirSync(POSTS_DIR)
-      .filter((f) => f.endsWith('.json'))
-      .forEach((f) => {
-        const slug = basename(f, '.json');
-        existing.add(slug);
-        // Also try to extract target_keyword for broader matching
-        try {
-          const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-          if (meta.target_keyword) existing.add(slugify(meta.target_keyword));
-        } catch {}
-      });
+  // Published posts (local meta.json files)
+  for (const slug of listAllSlugs()) {
+    existing.add(slug);
+    // Also try to extract target_keyword for broader matching
+    try {
+      const meta = getPostMetaLib(slug);
+      if (meta?.target_keyword) existing.add(slugify(meta.target_keyword));
+    } catch {}
   }
 
   // Published registry (written by scheduler after successful pipeline runs)

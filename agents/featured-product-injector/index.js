@@ -14,9 +14,10 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getContentPath, ROOT } from '../../lib/posts.js';
 
+export { ROOT };
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const ROOT = join(__dirname, '..', '..');
 
 // ── Pure helpers (exported for testing) ───────────────────────────────────────
 
@@ -269,7 +270,7 @@ async function main() {
   // ── Pipeline mode: update local HTML file ──────────────────────────────────
   if (handle) {
     console.log(`  Mode: pipeline\n  Handle: ${handle}`);
-    const filePath = join(ROOT, 'data', 'posts', `${handle}.html`);
+    const filePath = getContentPath(handle);
     if (!existsSync(filePath)) {
       throw new Error(`No HTML file found at ${filePath}. Run the blog post writer first.`);
     }

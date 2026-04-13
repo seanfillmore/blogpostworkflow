@@ -32,15 +32,15 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
-import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getArticle, updateArticle } from '../../lib/shopify.js';
 import { checkAnswerFirst, extractFirstBodyParagraph } from '../../lib/answer-first.js';
+import { getContentPath, getPostMeta, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'answer-first');
 const REWRITES_DIR = join(REPORTS_DIR, 'rewrites');
 
@@ -102,14 +102,12 @@ const slugArg = args.find((a, i) => !a.startsWith('--') && !flagValueIdxs.has(i)
 // ── post loading ──────────────────────────────────────────────────────────────
 
 function loadPosts() {
-  if (!existsSync(POSTS_DIR)) return [];
-  const all = readdirSync(POSTS_DIR)
-    .filter((f) => f.endsWith('.json') && !f.includes('.backup-'))
-    .map((f) => {
-      const slug = basename(f, '.json');
+  const all = listAllSlugs()
+    .map((slug) => {
       try {
-        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-        const htmlPath = join(POSTS_DIR, `${slug}.html`);
+        const meta = getPostMeta(slug);
+        if (!meta) return null;
+        const htmlPath = getContentPath(slug);
         if (!existsSync(htmlPath)) return null;
         const html = readFileSync(htmlPath, 'utf8');
         return { slug, meta, html };

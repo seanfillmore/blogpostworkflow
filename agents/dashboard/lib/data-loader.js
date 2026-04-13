@@ -8,6 +8,9 @@ import {
   RANK_ALERTS_DIR, ALERTS_VIEWED, META_TESTS_DIR, COMP_BRIEFS_DIR,
 } from './paths.js';
 import {
+  listAllSlugs, getPostMeta as getPostMetaFromLib, getContentPath, getImagePath,
+} from '../../../lib/posts.js';
+import {
   parseCalendar, parseEditorReports, parseRankings, parseCROData,
   loadRejections, isRejectedKw, getPostMeta, getItemStatus, getPendingAhrefsData,
 } from './data-parsers.js';
@@ -51,13 +54,13 @@ export function aggregateData() {
   }
 
   // Add posts that exist but aren't in the calendar
-  if (existsSync(POSTS_DIR)) {
-    const postFiles = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json')).sort();
-    for (const f of postFiles) {
-      const slug = basename(f, '.json');
+  {
+    const allSlugs = listAllSlugs();
+    for (const slug of allSlugs) {
       if (seen.has(slug)) continue;
       try {
-        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+        const meta = getPostMetaFromLib(slug);
+        if (!meta) continue;
         const kw = (meta.target_keyword || '').toLowerCase();
         if (kw && seenKeywords.has(kw)) continue;
         // If shopify_publish_at exists and is in the past, the post is
@@ -71,7 +74,7 @@ export function aggregateData() {
         const status = meta.shopify_status === 'published' || publishInPast ? 'published'
                      : publishInFuture                     ? 'scheduled'
                      : meta.shopify_article_id             ? 'draft'
-                     : existsSync(join(POSTS_DIR, `${slug}.html`)) ? 'written'
+                     : existsSync(getContentPath(slug)) ? 'written'
                      : existsSync(join(BRIEFS_DIR, `${slug}.json`)) ? 'briefed'
                      : 'pending';
         pipelineItems.push({
@@ -104,11 +107,11 @@ export function aggregateData() {
   }, { pending: 0, briefed: 0, written: 0, draft: 0, scheduled: 0, published: 0 });
 
   const posts = [];
-  if (existsSync(POSTS_DIR)) {
-    for (const f of readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'))) {
+  {
+    for (const slug of listAllSlugs()) {
       try {
-        const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-        const slug = meta.slug || basename(f, '.json');
+        const meta = getPostMetaFromLib(slug);
+        if (!meta) continue;
         const ed   = editorMap[slug];
         posts.push({
           slug,
@@ -121,7 +124,7 @@ export function aggregateData() {
           shopifyImageUrl:meta.shopify_image_url || null,
           editorVerdict:  ed?.verdict  ?? null,
           brokenLinks:    ed?.brokenLinks ?? 0,
-          hasImage:       existsSync(join(IMAGES_DIR, `${slug}.webp`)) || existsSync(join(IMAGES_DIR, `${slug}.png`)),
+          hasImage:       existsSync(getImagePath(slug)),
         });
       } catch {}
     }
@@ -292,8 +295,8 @@ export function aggregateData() {
   const nowMs = Date.now();
   const isOldEnough = (slug) => {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, `${slug}.json`), 'utf8'));
-      const pub = meta.published_at;
+      const meta = getPostMetaFromLib(slug);
+      const pub = meta?.published_at;
       if (!pub) return false;
       const age = Math.floor((nowMs - Date.parse(pub)) / 86400000);
       return age >= QUICK_WIN_MIN_AGE_DAYS;

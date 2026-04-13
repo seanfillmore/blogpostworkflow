@@ -42,9 +42,9 @@ import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { resubmitSitemap, submitUrlForIndexing, getQuotaStatus } from '../../lib/gsc-indexing.js';
 
+import { getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing');
 const QUEUE_DIR = join(ROOT, 'data', 'performance-queue');
 const QUEUE_FILE = join(QUEUE_DIR, 'indexing-submissions.json');
@@ -89,14 +89,14 @@ function upsertQueueItem(item) {
 // ── post metadata ─────────────────────────────────────────────────────────────
 
 function loadPostMeta(slug) {
-  try { return JSON.parse(readFileSync(join(POSTS_DIR, `${slug}.json`), 'utf8')); } catch { return null; }
+  try { return JSON.parse(readFileSync(getMetaPath(slug), 'utf8')); } catch { return null; }
 }
 
 function stampPostMeta(slug, patch) {
   const meta = loadPostMeta(slug);
   if (!meta) return;
   const merged = { ...meta, ...patch };
-  writeFileSync(join(POSTS_DIR, `${slug}.json`), JSON.stringify(merged, null, 2));
+  writeFileSync(getMetaPath(slug), JSON.stringify(merged, null, 2));
 }
 
 function recordSubmission(slug, submission) {

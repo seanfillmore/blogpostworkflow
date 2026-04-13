@@ -50,8 +50,9 @@ import {
   getRedirects, createRedirect,
 } from '../../lib/shopify.js';
 
+import { getContentPath, getMetaPath, ensurePostDir, ROOT } from '../../lib/posts.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'cannibalization');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
@@ -334,11 +335,9 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
           console.log('merged');
 
           // Save to data/posts/ so the editor agent can evaluate it
-          const postsDir = join(ROOT, 'data', 'posts');
-          mkdirSync(postsDir, { recursive: true });
-          const postHtmlPath = join(postsDir, `${winnerHandle}.html`);
-          writeFileSync(postHtmlPath, mergedHtml);
-          writeFileSync(postHtmlPath.replace('.html', '.json'), JSON.stringify({
+          ensurePostDir(winnerHandle);
+          writeFileSync(getContentPath(winnerHandle), mergedHtml);
+          writeFileSync(getMetaPath(winnerHandle), JSON.stringify({
             title: winnerArticle.title,
             target_keyword: decision.query,
           }, null, 2));

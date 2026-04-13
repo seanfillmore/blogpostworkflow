@@ -23,6 +23,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
+import { getContentPath, getMetaPath, getEditorReportPath } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -86,7 +87,7 @@ async function publishApprovedQueueItems() {
   let count = 0;
   for (const { file, item } of approved) {
     try {
-      const postMetaPath = join(ROOT, 'data', 'posts', `${item.slug}.json`);
+      const postMetaPath = getMetaPath(item.slug);
       if (!existsSync(postMetaPath)) { console.warn(`    [skip] ${item.slug}: no post JSON`); continue; }
       const postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8'));
       if (!postMeta.shopify_article_id) { console.warn(`    [skip] ${item.slug}: no shopify_article_id`); continue; }
@@ -96,7 +97,7 @@ async function publishApprovedQueueItems() {
       await updateArticle(blogId, postMeta.shopify_article_id, { body_html: refreshedHtml });
 
       // Copy refreshed HTML over canonical
-      writeFileSync(join(ROOT, 'data', 'posts', `${item.slug}.html`), refreshedHtml);
+      writeFileSync(getContentPath(item.slug), refreshedHtml);
 
       // Stamp the queue item
       item.status = 'published';
@@ -126,7 +127,7 @@ async function main() {
     process.exit(1);
   }
   const slug = meta.slug || basename(metaPath, '.json');
-  const htmlPath = join(ROOT, 'data', 'posts', `${slug}.html`);
+  const htmlPath = getContentPath(slug);
 
   if (!existsSync(htmlPath)) {
     console.error(`HTML file not found: ${htmlPath}`);
@@ -135,10 +136,10 @@ async function main() {
 
   // ── editor gate ─────────────────────────────────────────────────────────────
   if (!forcePublish) {
-    const reportPath = join(ROOT, 'data', 'reports', 'editor', `${slug}-editor-report.md`);
+    const reportPath = getEditorReportPath(slug);
     if (!existsSync(reportPath)) {
       console.error(`  ✗ No editor report found for "${slug}".`);
-      console.error(`  Run: node agents/editor/index.js data/posts/${slug}.html`);
+      console.error(`  Run: node agents/editor/index.js data/posts/${slug}/content.html`);
       console.error(`  Or use --force to bypass this check.`);
       process.exit(1);
     }
@@ -146,7 +147,7 @@ async function main() {
     if (/VERDICT:\s*Needs Work/i.test(report)) {
       console.error(`  ✗ Editor verdict is "Needs Work" for "${slug}".`);
       console.error(`  Fix the issues in the editor report before publishing.`);
-      console.error(`  Report: data/reports/editor/${slug}-editor-report.md`);
+      console.error(`  Report: data/posts/${slug}/editor-report.md`);
       console.error(`  Or use --force to bypass this check.`);
       process.exit(1);
     }
@@ -182,7 +183,8 @@ async function main() {
   // ── upload hero image to Shopify CDN ───────────────────────────────────────
 
   let imageField = null;
-  const imagePath = meta.image_path;
+  const rawImagePath = meta.image_path;
+  const imagePath = rawImagePath ? (rawImagePath.match(/^(\/|[A-Z]:)/) ? rawImagePath : join(ROOT, rawImagePath)) : null;
   if (imagePath && existsSync(imagePath)) {
     process.stdout.write('  Uploading hero image to Shopify CDN... ');
     try {
@@ -291,7 +293,7 @@ async function main() {
     const { spawnSync } = await import('node:child_process');
     const result = spawnSync(
       process.execPath,
-      [join(ROOT, 'agents', 'blog-post-verifier', 'index.js'), `data/posts/${slug}.json`],
+      [join(ROOT, 'agents', 'blog-post-verifier', 'index.js'), `data/posts/${slug}/meta.json`],
       { stdio: 'inherit', cwd: ROOT }
     );
     if (result.status !== 0) {

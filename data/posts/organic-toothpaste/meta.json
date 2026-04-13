@@ -1,0 +1,38 @@
+{
+  "slug": "organic-toothpaste",
+  "title": "Best Organic Toothpaste: What to Look For & Why It Matters",
+  "meta_description": "Discover what makes the best organic toothpaste — key ingredients, what to avoid, and how to choose a truly natural formula for a cleaner, healthier smile.",
+  "target_keyword": "organic toothpaste",
+  "tags": [
+    "toothpaste",
+    "natural toothpaste",
+    "natural skincare",
+    "organic"
+  ],
+  "word_count": 2813,
+  "generated_at": "2026-03-17T07:02:05.071Z",
+  "brief_path": "/root/seo-claude/data/briefs/organic-toothpaste.json",
+  "tokens_used": {
+    "input": 10160,
+    "output": 6548
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563324649642,
+  "shopify_handle": "best-organic-toothpaste-what-to-look-for-why-it-matters",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-organic-toothpaste-what-to-look-for-why-it-matters",
+  "shopify_status": "published",
+  "shopify_publish_at": "2026-04-02T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-toothpaste_9612c3a9-7ec7-4c35-af70-2ec36e54eaee.webp?v=1774339293",
+  "uploaded_at": "2026-03-25T15:00:52.489Z",
+  "published_at": "2026-04-02T15:00:02.322Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:12:50.341Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  }
+}

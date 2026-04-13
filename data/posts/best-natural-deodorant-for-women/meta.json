@@ -1,0 +1,49 @@
+{
+  "slug": "best-natural-deodorant-for-women",
+  "title": "Best Natural Deodorant for Women: Clean Picks That Work",
+  "meta_description": "Discover the best natural deodorant for women — aluminum-free, effective, and gentle on sensitive skin. Find your perfect clean pick at Real Skin Care.",
+  "target_keyword": "best natural deodorant for women",
+  "tags": [
+    "deodorant",
+    "natural deodorant",
+    "natural skincare",
+    "organic"
+  ],
+  "word_count": 2787,
+  "generated_at": "2026-03-08T01:50:16.847Z",
+  "brief_path": "/Users/seanfillmore/Code/Claude/data/briefs/best-natural-deodorant-for-women.json",
+  "tokens_used": {
+    "input": 6225,
+    "output": 6219
+  },
+  "image_revised_prompt": "Generate a photorealistic wide-format lifestyle product image styled in the essence of a premium clean beauty brand. Visualize a sleek minimalist natural deodorant stick with matte white or soft beige finish resting on a smooth white marble surface. The surrounding scenery includes delicate botanical elements such as a sprig of fresh lavender, a slice of lemon, scattered baking soda crystals, and a tiny glass dish of coconut oil. Imagine soft morning sunlight streaming from the left, casting gentle warm shadows across the surface. The overall palette includes creamy white, warm ivory, and muted sage green along with hints of golden light. Pay attention to the composition, making it airy, uncluttered, and providing generous negative space on the right side for editorial balance. Include no text, labels, or logos. The perspective should be from a slightly elevated angle in landscape orientation, capturing the clean, organic aesthetic often associated with high-end natural skincare brands.",
+  "shopify_blog_id": 48998449187,
+  "shopify_article_id": 563281395882,
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-natural-deodorant-for-women-clean-picks-that-work",
+  "uploaded_at": "2026-03-12T00:05:21.379Z",
+  "shopify_handle": "best-natural-deodorant-for-women-clean-picks-that-work",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-natural-deodorant-for-women_b7da5552-d59b-4aed-b90f-f56ceea9c11a.webp?v=1773273917",
+  "published_at": "2026-03-11T18:05:19-06:00",
+  "indexing_state": {
+    "state": "unknown",
+    "coverage": "URL is unknown to Google",
+    "last_checked": "2026-04-09T13:11:28.366Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:13:53.025Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-04-09T13:30:03.025Z",
+      "result": "ok"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "slug": "cinnamon-toothpaste",
+  "title": "Best Cinnamon Toothpaste: Benefits, Brands & What to Know",
+  "meta_description": "Discover the best cinnamon toothpaste options, their real benefits, and what to look for in a natural formula. Find your perfect cinnamon flavored toothpaste today.",
+  "target_keyword": "cinnamon toothpaste",
+  "tags": [
+    "toothpaste",
+    "natural toothpaste",
+    "natural skincare",
+    "organic"
+  ],
+  "word_count": 2496,
+  "generated_at": "2026-03-11T04:41:31.295Z",
+  "brief_path": "/Users/seanfillmore/Code/Claude/data/briefs/cinnamon-toothpaste.json",
+  "tokens_used": {
+    "input": 8839,
+    "output": 6017
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563291750570,
+  "shopify_handle": "best-cinnamon-toothpaste-benefits-brands-what-to-know",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-cinnamon-toothpaste-benefits-brands-what-to-know",
+  "shopify_status": "published",
+  "uploaded_at": "2026-03-12T00:22:48.044Z",
+  "shopify_publish_at": "2026-03-12T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cinnamon-toothpaste.webp?v=1773274964",
+  "published_at": "2026-03-12T18:49:53.777Z",
+  "indexing_state": {
+    "state": "discovered_not_crawled",
+    "coverage": "Discovered - currently not indexed",
+    "last_checked": "2026-04-09T13:11:59.705Z",
+    "last_crawled": null,
+    "google_canonical": null,
+    "canonical_mismatch": false,
+    "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
+  },
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:07:13.055Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ]
+}

@@ -63,9 +63,9 @@ function toCanonicalUrl(meta) {
   return null;
 }
 
+import { listAllSlugs, getPostMeta as loadPostMeta, getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing');
 
 const args = process.argv.slice(2);
@@ -75,11 +75,11 @@ const urlArg = (() => { const i = args.indexOf('--url'); return i !== -1 ? args[
 // ── helpers ────────────────────────────────────────────────────────────────────
 
 function listPublishedPosts() {
-  if (!existsSync(POSTS_DIR)) return [];
   const out = [];
-  for (const f of readdirSync(POSTS_DIR).filter((x) => x.endsWith('.json'))) {
+  for (const slug of listAllSlugs()) {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
+      const meta = loadPostMeta(slug);
+      if (!meta) continue;
       // Treat as published if: explicit status, OR legacy post with article ID + publish date
       const isPublished = meta.shopify_status === 'published'
         || (meta.shopify_article_id && meta.shopify_publish_at && !meta.shopify_status);
@@ -90,10 +90,7 @@ function listPublishedPosts() {
         meta.shopify_url = `${CANONICAL_ROOT}/blogs/${blogHandle}/${meta.shopify_handle}`;
       }
       if (!meta.shopify_url) continue;
-      // Fill in missing slug from the filename so log messages and downstream
-      // stamping work even on legacy posts that weren't written by the
-      // current writer. The canonical source of slug is the filename.
-      if (!meta.slug) meta.slug = f.replace(/\.json$/, '');
+      if (!meta.slug) meta.slug = slug;
       out.push(meta);
     } catch { /* skip */ }
   }
@@ -107,7 +104,7 @@ function ageInDays(iso) {
 }
 
 function stampPostMeta(slug, indexingState) {
-  const path = join(POSTS_DIR, `${slug}.json`);
+  const path = getMetaPath(slug);
   if (!existsSync(path)) return;
   try {
     const meta = JSON.parse(readFileSync(path, 'utf8'));
@@ -196,7 +193,7 @@ async function main() {
 
   let targets = [];
   if (slugArg) {
-    const p = join(POSTS_DIR, `${slugArg}.json`);
+    const p = getMetaPath(slugArg);
     if (!existsSync(p)) { console.error(`  No such post: ${slugArg}`); process.exit(1); }
     const meta = JSON.parse(readFileSync(p, 'utf8'));
     if (!meta.slug) meta.slug = slugArg;
@@ -248,7 +245,7 @@ async function main() {
       if (meta.slug && meta.slug !== 'ad-hoc') {
         // Detect state transition for history
         try {
-          const postMeta = JSON.parse(readFileSync(join(POSTS_DIR, `${meta.slug}.json`), 'utf8'));
+          const postMeta = JSON.parse(readFileSync(getMetaPath(meta.slug), 'utf8'));
           const prevState = postMeta.indexing_state?.state;
           if (prevState && prevState !== inspection.state) {
             stateTransitions.push({

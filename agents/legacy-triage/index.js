@@ -17,9 +17,9 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 
+import { listAllSlugs, getPostMeta as readPostMeta, getMetaPath, getContentPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'legacy-triage');
 
 const args = process.argv.slice(2);
@@ -39,7 +39,7 @@ function isLegacy(meta) {
 }
 
 function wordCount(slug) {
-  const html = join(POSTS_DIR, `${slug}.html`);
+  const html = getContentPath(slug);
   if (!existsSync(html)) return 0;
   return readFileSync(html, 'utf8').replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
 }
@@ -139,10 +139,11 @@ async function main() {
   mkdirSync(REPORTS_DIR, { recursive: true });
 
   const posts = [];
-  for (const f of readdirSync(POSTS_DIR).filter(x => x.endsWith('.json'))) {
+  for (const slug of listAllSlugs()) {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, f), 'utf8'));
-      if (!meta.slug) meta.slug = basename(f, '.json');
+      const meta = readPostMeta(slug);
+      if (!meta) continue;
+      if (!meta.slug) meta.slug = slug;
       // Match the dashboard's classification: posts with a past shopify_publish_at
       // are effectively published even if shopify_status wasn't explicitly stamped.
       const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
@@ -150,7 +151,7 @@ async function main() {
       if (!isPublished) continue;
       if (!isLegacy(meta)) continue;
       if (meta.legacy_bucket && !FORCE) continue;
-      meta._file = join(POSTS_DIR, f);
+      meta._file = getMetaPath(slug);
       posts.push(meta);
     } catch { /* skip */ }
   }

@@ -30,8 +30,11 @@ import { sendHtmlEmail } from '../../lib/notify.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const DAILY_SUMMARY_DIR = join(ROOT, 'data', 'reports', 'daily-summary');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const LOG_DIR = join(ROOT, 'data', 'logs');
+
+import {
+  listAllSlugs, getPostMeta, getEditorReportPath, POSTS_DIR,
+} from '../../lib/posts.js';
 
 // Collector/snapshot agents — suppress their success entries from the digest
 const SILENT_ON_SUCCESS = new Set([
@@ -106,22 +109,18 @@ function isSilentSuccess(entry) {
  * Only includes posts whose HTML exists but have not been published/scheduled.
  */
 function findBlockedPosts() {
-  const editorDir = join(ROOT, 'data', 'reports', 'editor');
-  if (!existsSync(editorDir)) return [];
-
   const blocked = [];
-  const files = readdirSync(editorDir).filter(f => f.endsWith('-editor-report.md'));
 
-  for (const file of files) {
+  for (const slug of listAllSlugs()) {
     try {
-      const report = readFileSync(join(editorDir, file), 'utf8');
+      const reportPath = getEditorReportPath(slug);
+      if (!existsSync(reportPath)) continue;
+
+      const report = readFileSync(reportPath, 'utf8');
       if (!/VERDICT[:*\s]*Needs Work/i.test(report)) continue;
 
-      const slug = file.replace('-editor-report.md', '');
-      const postJson = join(POSTS_DIR, `${slug}.json`);
-      if (!existsSync(postJson)) continue;
-
-      const meta = JSON.parse(readFileSync(postJson, 'utf8'));
+      const meta = getPostMeta(slug);
+      if (!meta) continue;
       // Skip if already published or scheduled — only flag truly stuck posts
       if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') continue;
 
@@ -133,7 +132,7 @@ function findBlockedPosts() {
         title: meta.title || slug,
         slug,
         blockers: blockerText,
-        reportPath: `data/reports/editor/${file}`,
+        reportPath: `data/posts/${slug}/editor-report.md`,
       });
     } catch { /* skip */ }
   }
@@ -146,20 +145,18 @@ function findBlockedPosts() {
  * Scans data/posts/*.json for image_generated_at matching the date.
  */
 function findPipelineImages(targetDate) {
-  if (!existsSync(POSTS_DIR)) return [];
-
   const images = [];
-  const files = readdirSync(POSTS_DIR).filter(f => f.endsWith('.json'));
 
-  for (const file of files) {
+  for (const slug of listAllSlugs()) {
     try {
-      const meta = JSON.parse(readFileSync(join(POSTS_DIR, file), 'utf8'));
+      const meta = getPostMeta(slug);
+      if (!meta) continue;
       const genDate = (meta.image_generated_at || '').slice(0, 10);
       if (genDate !== targetDate) continue;
 
       images.push({
-        title: meta.title || meta.slug || file,
-        slug: meta.slug || file.replace('.json', ''),
+        title: meta.title || meta.slug || slug,
+        slug: meta.slug || slug,
         imageUrl: meta.shopify_image_url || null,
         imagePath: meta.image_path || null,
         status: meta.shopify_status || 'unknown',

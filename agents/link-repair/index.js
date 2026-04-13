@@ -20,9 +20,9 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
+import { getContentPath, getMetaPath, getEditorReportPath, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
 
 // ── env ───────────────────────────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ if (!slug) {
 // ── parse editor report ───────────────────────────────────────────────────────
 
 function parseBrokenLinks(slug) {
-  const reportPath = join(ROOT, 'data', 'reports', 'editor', `${slug}-editor-report.md`);
+  const reportPath = getEditorReportPath(slug);
   if (!existsSync(reportPath)) return [];
 
   const report = readFileSync(reportPath, 'utf8');
@@ -197,7 +197,7 @@ function removeLinkFromHtml(html, brokenUrl) {
 async function main() {
   console.log('\nLink Repair Agent — Real Skin Care\n');
 
-  const htmlPath = join(ROOT, 'data', 'posts', `${slug}.html`);
+  const htmlPath = getContentPath(slug);
   if (!existsSync(htmlPath)) {
     console.error(`  No HTML file found for slug: ${slug}`);
     process.exit(1);
@@ -230,7 +230,7 @@ async function main() {
   let html = readFileSync(htmlPath, 'utf8');
 
   // Read post meta for context
-  const metaPath = join(ROOT, 'data', 'posts', `${slug}.json`);
+  const metaPath = getMetaPath(slug);
   let postContext = slug.replace(/-/g, ' ');
   try {
     const meta = JSON.parse(readFileSync(metaPath, 'utf8'));

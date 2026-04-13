@@ -34,10 +34,9 @@ import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shop
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { loadKeywordIndex } from '../../lib/keyword-index.js';
+import { getMetaPath, getPostMeta, getRefreshedPath, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-refresher');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
@@ -85,7 +84,8 @@ function loadPerformanceVerdict(slug) {
   } catch { /* ignore */ }
   // Also try the per-post review on the post JSON itself.
   try {
-    const meta = JSON.parse(readFileSync(join(ROOT, 'data', 'posts', `${slug}.json`), 'utf8'));
+    const meta = getPostMeta(slug);
+    if (!meta) throw new Error('no meta');
     const review = meta.performance_review || {};
     // Pick the most recent non-ON_TRACK review
     const order = ['90d', '60d', '30d'];
@@ -412,7 +412,7 @@ async function main() {
 
     // Winner protection — legacy posts auto-locked by triage must not be refreshed
     try {
-      const lockMeta = JSON.parse(readFileSync(join(ROOT, 'data', 'posts', `${slug}.json`), 'utf8'));
+      const lockMeta = JSON.parse(readFileSync(getMetaPath(slug), 'utf8'));
       if (lockMeta.legacy_locked) {
         console.log(`    [skip] ${slug}: legacy winner (locked)`);
         continue;
@@ -434,25 +434,37 @@ async function main() {
       const changeSummary = await summarizeChanges(originalHtml, refreshedHtml, keyword);
       console.log('done');
 
-      // Save refreshed HTML + minimal meta for editor
-      const outputPath = join(POSTS_DIR, `${slug}-refreshed.html`);
+      // Save refreshed HTML
+      ensurePostDir(slug);
+      const outputPath = getRefreshedPath(slug);
       writeFileSync(outputPath, refreshedHtml);
-      const metaPath = join(POSTS_DIR, `${slug}-refreshed.json`);
-      writeFileSync(metaPath, JSON.stringify({ title: article.title, target_keyword: keyword }, null, 2));
       console.log(`    Saved: ${outputPath}`);
 
       // Run editor review before pushing to Shopify
       process.stdout.write('    Running editor review... ');
       try {
-        execSync(`node agents/editor/index.js data/posts/${slug}-refreshed.html --auto-fix`, { cwd: ROOT, stdio: 'pipe' });
-        console.log(`done → data/reports/editor/${slug}-refreshed-editor-report.md`);
+        execSync(`node agents/editor/index.js data/posts/${slug}/content-refreshed.html --auto-fix`, { cwd: ROOT, stdio: 'pipe' });
+        console.log(`done → data/posts/${slug}/editor-report.md`);
       } catch (editorErr) {
         const msg = editorErr.stderr?.toString().trim().slice(0, 120) ?? editorErr.message;
         console.log(`editor warning (non-fatal): ${msg}`);
       }
 
       // Re-read from disk in case auto-fix modified the file
-      const finalHtml = readFileSync(outputPath, 'utf8');
+      let finalHtml = readFileSync(outputPath, 'utf8');
+
+      // Shopify strips <a> tags with target="_blank" but no rel="noopener".
+      // Internal links: remove target="_blank". External: add rel="noopener".
+      finalHtml = finalHtml.replace(/<a\s([^>]*?)target="_blank"([^>]*?)>/gi, (match, before, after) => {
+        const attrs = before + after;
+        if (attrs.includes('realskincare.com')) {
+          return `<a ${before.trim()} ${after.trim()}>`.replace(/\s{2,}/g, ' ').replace(' >', '>');
+        }
+        if (!/rel="[^"]*noopener/.test(attrs)) {
+          return `<a ${before}target="_blank" rel="noopener"${after}>`;
+        }
+        return match;
+      });
 
       let applied = false;
       if (apply) {
@@ -509,7 +521,7 @@ async function main() {
     lines.push(r.changeSummary);
     lines.push('');
     if (apply && r.applied) {
-      lines.push(`> Editor report: \`data/reports/editor/${r.slug}-refreshed-editor-report.md\`  `);
+      lines.push(`> Editor report: \`data/posts/${r.slug}/editor-report.md\`  `);
       lines.push('> Review editor report, then publish draft in Shopify when ready.');
     } else if (!apply) {
       lines.push('```bash');

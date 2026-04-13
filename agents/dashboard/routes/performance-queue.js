@@ -1,8 +1,9 @@
 // agents/dashboard/routes/performance-queue.js
-import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
 import { getBlogs, updateArticle, getProducts, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
+import { getPostMeta, getMetaPath, getContentPath, listAllSlugs } from '../../../lib/posts.js';
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -78,19 +79,16 @@ async function publishPageMetaRewrite(item) {
   if (meta.seo_description) await upsertMetafield('pages', item.resource_id, 'global', 'description_tag', meta.seo_description);
 }
 
-function findPostMeta(slug, postsDir) {
+function findPostMeta(slug, _postsDir) {
   // Try exact slug first
-  const exact = join(postsDir, `${slug}.json`);
-  if (existsSync(exact)) {
-    const meta = JSON.parse(readFileSync(exact, 'utf8'));
-    if (meta.shopify_article_id) return { meta, path: exact };
-  }
-  // Fall back: scan for a JSON file whose slug field matches or whose name is a prefix/suffix variant
-  const files = readdirSync(postsDir).filter((f) => f.endsWith('.json') && (slug.startsWith(f.replace('.json', '')) || f.replace('.json', '').startsWith(slug)));
-  for (const f of files) {
+  const meta = getPostMeta(slug);
+  if (meta && meta.shopify_article_id) return { meta, path: getMetaPath(slug) };
+  // Fall back: scan for a slug whose name is a prefix/suffix variant
+  const allSlugs = listAllSlugs().filter((s) => slug.startsWith(s) || s.startsWith(slug));
+  for (const s of allSlugs) {
     try {
-      const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
-      if (meta.shopify_article_id) return { meta, path: join(postsDir, f) };
+      const m = getPostMeta(s);
+      if (m && m.shopify_article_id) return { meta: m, path: getMetaPath(s) };
     } catch { /* skip */ }
   }
   return null;
@@ -105,7 +103,7 @@ async function publishBlogRefresh(item, ctx) {
   const blogs = await getBlogs();
   await updateArticle(blogs[0].id, postMeta.shopify_article_id, { body_html: refreshedHtml });
   // Update canonical HTML using the post's own slug (may differ from queue item slug)
-  writeFileSync(join(ctx.POSTS_DIR, `${postMeta.slug || item.slug}.html`), refreshedHtml);
+  writeFileSync(getContentPath(postMeta.slug || item.slug), refreshedHtml);
 }
 
 export default [
@@ -182,7 +180,7 @@ export default [
         return respondJson(res, { ok: false, error: 'No backup HTML' }, 400);
       }
       const { writeFileSync } = require('node:fs');
-      const postsHtml = join(ctx.POSTS_DIR, `${slug}.html`);
+      const postsHtml = getContentPath(slug);
       writeFileSync(postsHtml, readFileSync(item.backup_html_path, 'utf8'));
       item.status = 'dismissed';
       item.rolled_back_at = new Date().toISOString();
