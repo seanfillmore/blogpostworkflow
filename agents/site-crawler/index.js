@@ -13,7 +13,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { startCrawl, getCrawlSummary, getCrawlPages } from '../../lib/dataforseo.js';
+import { startCrawl, getCrawlSummary, getCrawlPages, getCrawlTasksReady } from '../../lib/dataforseo.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -126,30 +126,47 @@ function normalizePages(pages) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+async function findReadyTask(domain) {
+  try {
+    const tasks = await getCrawlTasksReady();
+    const match = tasks.find((t) => t.target === domain);
+    return match ? match.id : null;
+  } catch { return null; }
+}
+
 async function main() {
   const domain = getDomain();
   console.log(`\nSite Crawler — ${config.name}`);
   console.log(`  Domain: ${domain}\n`);
 
-  // 1. Submit crawl
-  console.log('  Submitting crawl task...');
-  const { taskId, cost } = await startCrawl(domain);
-  console.log(`  Task ID: ${taskId} (cost: $${cost})`);
+  // 1. Check for an already-finished task first
+  let taskId;
+  const readyId = await findReadyTask(domain);
+  if (readyId) {
+    taskId = readyId;
+    console.log(`  Found ready task: ${taskId}`);
+  } else {
+    // Submit new crawl
+    console.log('  Submitting crawl task...');
+    const { taskId: newId, cost } = await startCrawl(domain);
+    taskId = newId;
+    console.log(`  Task ID: ${taskId} (cost: $${cost})`);
+  }
 
-  // 2. Poll until finished
+  // 2. Poll until finished (skip if already ready)
   const POLL_INTERVAL = 30_000;
-  const TIMEOUT = 15 * 60_000;
+  const TIMEOUT = 30 * 60_000;
   const startTime = Date.now();
 
   while (true) {
-    if (Date.now() - startTime > TIMEOUT) {
-      throw new Error('Crawl timed out after 15 minutes');
-    }
-
     const summary = await getCrawlSummary(taskId);
     console.log(`  Progress: ${summary.progress} — ${summary.pagesCrawled} crawled, ${summary.pagesInQueue} in queue`);
 
     if (summary.progress === 'finished') break;
+
+    if (Date.now() - startTime > TIMEOUT) {
+      throw new Error('Crawl timed out after 30 minutes');
+    }
     await sleep(POLL_INTERVAL);
   }
 
