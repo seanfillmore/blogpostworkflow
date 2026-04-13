@@ -143,6 +143,38 @@ runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 // Step 5d: submit pending pages to indexing API (daily, up to quota limit)
 runStep('submit-indexing', `"${NODE}" agents/technical-seo/index.js fix-submit-indexing`);
 
+// Step 5e: auto-refresh posts stuck in "crawled_not_indexed" for 45+ days
+if (!dryFlag) {
+  const { listAllSlugs, getPostMeta } = await import('./lib/posts.js');
+  const reportPath = join(__dirname, 'data', 'reports', 'indexing', 'latest.json');
+  if (existsSync(reportPath)) {
+    try {
+      const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+      const stale = (report.results || []).filter(r => {
+        if (r.state !== 'crawled_not_indexed') return false;
+        const age = r.age_days ?? 0;
+        return age >= 45;
+      });
+      if (stale.length > 0) {
+        log(`  Crawled-not-indexed refresh: ${stale.length} post(s) older than 45 days`);
+        for (const r of stale) {
+          log(`    Refreshing: ${r.slug} (${r.age_days}d old)`);
+          try {
+            execSync(`"${NODE}" agents/content-refresher/index.js --slug "${r.slug}" --apply`, { stdio: 'inherit', cwd: __dirname });
+            log(`    ✓ ${r.slug} refreshed and pushed`);
+          } catch (e) {
+            log(`    ✗ ${r.slug} refresh failed (exit ${e.status})`);
+          }
+        }
+      } else {
+        log('  Crawled-not-indexed refresh: none older than 45 days');
+      }
+    } catch (e) {
+      log(`  Crawled-not-indexed refresh: failed to read report (${e.message})`);
+    }
+  }
+}
+
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
