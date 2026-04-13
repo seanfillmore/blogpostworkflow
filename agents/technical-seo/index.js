@@ -150,6 +150,38 @@ function loadAllCSVs() {
   return result;
 }
 
+function loadCrawlResults() {
+  const crawlPath = join(CSV_DIR, 'crawl-results.json');
+  if (!existsSync(crawlPath)) return null;
+
+  let data;
+  try { data = JSON.parse(readFileSync(crawlPath, 'utf8')); } catch { return null; }
+
+  // Check freshness — skip if older than 14 days
+  const age = Date.now() - new Date(data.crawled_at).getTime();
+  if (age > 14 * 24 * 60 * 60 * 1000) return null;
+
+  const issues = data.issues || {};
+
+  // Map crawl issue categories to Ahrefs CSV key names
+  return {
+    'Error-404_page': issues.error_404 || [],
+    'Warning-indexable-Meta_description_tag_missing_or_empty': issues.meta_missing || [],
+    'Warning-indexable-Meta_description_too_long': issues.meta_too_long || [],
+    'Warning-indexable-Meta_description_too_short': issues.meta_too_short || [],
+    'Warning-indexable-Title_too_long': issues.title_too_long || [],
+    'Warning-indexable-H1_tag_missing_or_empty': issues.h1_missing || [],
+    'Warning-Missing_alt_text': issues.alt_missing || [],
+    'Notice-Redirect_chain': issues.redirect_chain || [],
+    'Error-indexable-Multiple_meta_description_tags': issues.duplicate_meta || [],
+    'Error-indexable-Multiple_title_tags': issues.duplicate_title || [],
+    'Error-indexable-Orphan_page_(has_no_incoming_internal_links)': issues.orphan || [],
+    'Notice-indexable-Page_has_only_one_dofollow_incoming_internal_link': issues.single_link || [],
+    'Error-indexable-Page_has_links_to_broken_page': issues.links_to_404 || [],
+    'Warning-indexable-Page_has_links_to_redirect': issues.links_to_redirect || [],
+  };
+}
+
 // ── URL helpers ───────────────────────────────────────────────────────────────
 
 function urlPath(url) {
@@ -314,8 +346,13 @@ Rules:
 // ── COMMAND: audit ────────────────────────────────────────────────────────────
 
 async function audit() {
-  console.log('\nLoading all Ahrefs CSV files...\n');
-  const csvs = loadAllCSVs();
+  let csvs = loadCrawlResults();
+  if (csvs) {
+    console.log('\nLoading crawl results from DataForSEO...\n');
+  } else {
+    console.log('\nNo recent crawl data found — loading CSV files...\n');
+    csvs = loadAllCSVs();
+  }
 
   const sections = [];
 
