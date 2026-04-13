@@ -3,6 +3,47 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export default [
+  // Auto-fetch SEO authority data from DataForSEO
+  {
+    method: 'POST',
+    match: '/api/seo-authority/refresh',
+    async handler(req, res, ctx) {
+      try {
+        const { getBacklinksSummary, getRankedKeywords } = await import('../../../lib/dataforseo.js');
+        const config = JSON.parse(readFileSync(join(ctx.ROOT, 'config', 'site.json'), 'utf8'));
+        const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+        // Fetch backlinks (may return null if subscription not active)
+        const backlinks = await getBacklinksSummary(domain);
+
+        // Estimate traffic value from ranked keywords
+        const keywords = await getRankedKeywords(domain, { limit: 200 });
+        const trafficValue = Math.round(keywords.reduce((sum, kw) => sum + (kw.traffic * (kw.cpc || 0)), 0) * 100);
+
+        const data = {
+          domainRating: backlinks?.rank ?? '',
+          backlinks: backlinks?.backlinks ?? '',
+          referringDomains: backlinks?.referringDomains ?? '',
+          organicTrafficValue: trafficValue,
+        };
+
+        // Save as CSV in the same format the existing loader reads
+        const csv = 'Domain Rating,Backlinks,Referring Domains,Organic Traffic Value\n' +
+          [data.domainRating, data.backlinks, data.referringDomains, data.organicTrafficValue].join(',') + '\n';
+        const date = new Date().toISOString().slice(0, 10);
+        mkdirSync(ctx.AHREFS_DIR, { recursive: true });
+        writeFileSync(join(ctx.AHREFS_DIR, `overview-${date}.csv`), csv);
+        ctx.invalidateDataCache();
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, data }));
+      } catch (err) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    },
+  },
+  // Legacy manual save (kept for backward compat)
   {
     method: 'POST',
     match: '/api/ahrefs-overview',

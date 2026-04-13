@@ -4163,7 +4163,15 @@ function renderSEOAuthorityPanel(ahrefs) {
   const el = document.getElementById('seo-authority-panel');
   if (!el) return;
   if (!ahrefs) {
-    el.innerHTML = '<div class="data-needed"><strong>&#9888; SEO Authority Data Needed</strong>Click Update to enter your Ahrefs metrics.</div>';
+    // Auto-fetch from DataForSEO
+    if (!window._authorityRefreshing) {
+      window._authorityRefreshing = true;
+      fetch('/api/seo-authority/refresh', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { window._authorityRefreshing = false; if (d.ok) loadData(); })
+        .catch(function() { window._authorityRefreshing = false; });
+    }
+    el.innerHTML = '<div class="data-needed">Loading SEO authority data...</div>';
     return;
   }
   const fmt    = v => (v != null && v !== '' && !isNaN(Number(v))) ? Number(v).toLocaleString() : '\u2014';
