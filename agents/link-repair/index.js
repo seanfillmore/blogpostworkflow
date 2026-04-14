@@ -134,8 +134,59 @@ function findBestInternalMatch(brokenUrl, anchor, articles) {
 
 // ── Claude replacement for external links ─────────────────────────────────────
 
+/**
+ * Fetch a URL and return its status code. Uses HEAD first (cheap), falls
+ * back to GET if HEAD fails — some servers don't support HEAD or block it.
+ * Returns null on network errors so the caller can treat it the same as a
+ * failed check (candidate URL rejected).
+ */
+async function fetchStatusCode(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    let res = await fetch(url, {
+      method: 'HEAD',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LinkRepair/1.0)' },
+    });
+    // Some servers return 405/403 on HEAD but are fine on GET. Retry with GET
+    // when HEAD is ambiguous so we don't wrongly reject a live page.
+    if (res.status === 405 || res.status === 403 || res.status === 501) {
+      res = await fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LinkRepair/1.0)' },
+      });
+    }
+    return res.status;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Ask Claude for a replacement URL, then HTTP-verify it actually resolves
+ * before accepting. If the candidate 404s (or returns any non-2xx/3xx), try
+ * again with a stricter prompt — Claude was previously writing hallucinated
+ * URLs straight to production HTML, causing the editor gate to re-flag the
+ * same post on the next run.
+ *
+ * Budget: up to MAX_ATTEMPTS candidate URLs per broken link. Beyond that we
+ * give up and return null, so the caller removes the link entirely.
+ */
 async function findExternalReplacement(brokenUrl, anchor, postContext) {
-  const prompt = `You are helping fix a broken link in a blog post about natural skincare.
+  const MAX_ATTEMPTS = 3;
+  const tried = [];
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const triedBlock = tried.length
+      ? `\n\nUrls you have already suggested that also 404 — do NOT suggest any of these again:\n${tried.map((u) => '- ' + u).join('\n')}`
+      : '';
+    const prompt = `You are helping fix a broken link in a blog post about natural skincare.
 
 The following external link is returning a 404 error and needs to be replaced:
 - Broken URL: ${brokenUrl}
@@ -150,22 +201,36 @@ Rules:
 - If the domain itself is the problem (e.g. the page moved), suggest the new canonical URL if you know it
 - If you cannot find a reliable replacement, respond with exactly: REMOVE
 - Do NOT suggest competitor brand websites or commercial sources
-- Do NOT fabricate URLs
+- Do NOT fabricate URLs${triedBlock}
 
 Respond with ONLY the replacement URL (starting with https://) or the word REMOVE. No explanation.`;
 
-  let result = '';
-  await withRetry(async () => {
-    const msg = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 200,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    result = msg.content[0].text.trim();
-  }, { label: 'link-repair-claude' });
+    let candidate = '';
+    await withRetry(async () => {
+      const msg = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      candidate = msg.content[0].text.trim();
+    }, { label: 'link-repair-claude' });
 
-  if (result === 'REMOVE' || !result.startsWith('http')) return null;
-  return result;
+    if (candidate === 'REMOVE' || !candidate.startsWith('http')) return null;
+
+    // Treat the same candidate back-to-back as equivalent to REMOVE.
+    if (tried.includes(candidate)) return null;
+    tried.push(candidate);
+
+    const status = await fetchStatusCode(candidate);
+    if (status && status >= 200 && status < 400) {
+      if (attempt > 1) console.log(`       (accepted on attempt ${attempt})`);
+      return candidate;
+    }
+    console.log(`       candidate returned ${status || 'network error'} — retrying (${attempt}/${MAX_ATTEMPTS})`);
+  }
+
+  // Exhausted all attempts without finding a live URL — remove the link.
+  return null;
 }
 
 // ── apply fix to HTML ─────────────────────────────────────────────────────────
