@@ -15,7 +15,7 @@ import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../lib/shopify.js';
-import { getMetaPath, getContentPath, ensurePostDir, POSTS_DIR } from '../lib/posts.js';
+import { getMetaPath, getContentPath, ensurePostDir, classifyPostType, POSTS_DIR } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -62,11 +62,19 @@ async function main() {
         const slugAsKeyword = slug.replace(/-/g, ' ');
         const targetKeyword = titleHead || slugAsKeyword;
 
+        // post_type: 'product' for posts that map to a SKU we sell;
+        // 'topical_authority' for off-product content (DIY tutorials,
+        // ingredient education). The editor uses this to skip its
+        // INGREDIENT ACCURACY check on topical posts (where there's no
+        // canonical product spec to validate against).
+        const postType = classifyPostType(targetKeyword, slug);
+
         const meta = {
           slug,
           title: a.title,
           meta_description: a.summary_html?.replace(/<[^>]+>/g, '').trim() || '',
           target_keyword: targetKeyword,
+          post_type: postType,
           tags: (a.tags || '').split(',').map((t) => t.trim()).filter(Boolean),
           shopify_blog_id: blog.id,
           shopify_blog_handle: blog.handle,

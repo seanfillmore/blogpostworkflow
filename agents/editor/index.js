@@ -31,7 +31,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readd
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, ROOT } from '../../lib/posts.js';
+import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -457,7 +457,7 @@ Review each post on these dimensions:
 
 1. TOPICAL RELEVANCE — Tightly focused on target keyword? Off-topic tangents?
 2. BRAND VOICE & READABILITY — Conversational and warm, ~8th grade level. Flag clinical/jargon phrases without plain-language follow-up. Flag paragraphs over 4 sentences. Good signals: short sentences, "you/your", plain words.
-3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description?
+3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description? IMPORTANT: If PRODUCT INGREDIENTS below says "N/A" (topical-authority post not tied to a specific SKU), output "VERDICT: N/A" and "NOTES: Topical-authority post — no product spec to validate against." Do NOT compare against any other product's ingredient list.
 4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass.
 5. FACTUAL CONCERNS — Exaggerated, unsubstantiated, or potentially inaccurate claims?
 6. CTA QUALITY — Natural, well-placed CTA to Real Skin Care product/collection? Flag if missing.
@@ -737,25 +737,31 @@ async function runEditor(htmlPath) {
   console.log(`\n  Post: "${meta?.title ?? slug}"`);
   console.log(`  Keyword: ${keyword}\n`);
 
-  // Detect product type for ingredient context
-  const kw = keyword.toLowerCase();
-  let productIngredients = null;
+  // Classify the post against products we sell. When the post is topical-
+  // authority content (no product match), we explicitly skip the INGREDIENT
+  // ACCURACY check downstream — comparing a DIY hair-mask post against the
+  // body lotion ingredient spec produces meaningless false-positive blockers.
+  // The post still gets full editorial review on every other dimension.
   function flattenProduct(p) {
     if (!p) return null;
     const base = p.base_ingredients || p.ingredients || [];
     const oils = (p.variations || []).flatMap((v) => v.essential_oils || []);
     return { name: p.name, format: p.format, ingredients: [...new Set([...base, ...oils])] };
   }
-  if (kw.includes('deodorant')) productIngredients = flattenProduct(ingredients.deodorant);
-  else if (kw.includes('toothpaste') || kw.includes('oral')) productIngredients = flattenProduct(ingredients.toothpaste);
-  else if (kw.includes('lotion') || kw.includes('moisturizer')) productIngredients = flattenProduct(ingredients.lotion);
-  else if (kw.includes('cream')) productIngredients = flattenProduct(ingredients.cream);
-  else if (kw.includes('soap')) productIngredients = flattenProduct(ingredients.bar_soap);
-  else if (kw.includes('lip')) productIngredients = flattenProduct(ingredients.lip_balm);
-  else productIngredients = { name: 'our products', ingredients: [...new Set(Object.values(ingredients).flatMap((p) => { const f = flattenProduct(p); return f?.ingredients || []; }))] };
+  const productKey = classifyPostProduct(keyword, slug);
+  const isTopicalAuthority = productKey === null;
+  const productIngredients = productKey ? flattenProduct(ingredients[productKey]) : null;
 
-  const formatNote = productIngredients.format ? ` | Product format: ${productIngredients.format}` : '';
-  const productIngredientsContext = `${productIngredients.name}: ${productIngredients.ingredients.join(', ')}${formatNote}`;
+  const formatNote = productIngredients?.format ? ` | Product format: ${productIngredients.format}` : '';
+  const productIngredientsContext = productIngredients
+    ? `${productIngredients.name}: ${productIngredients.ingredients.join(', ')}${formatNote}`
+    : 'N/A — this post is topical-authority content, not tied to a specific product we sell. Skip the INGREDIENT ACCURACY section entirely (mark it as N/A).';
+
+  if (isTopicalAuthority) {
+    console.log(`  Post type: topical-authority (no product match — INGREDIENT ACCURACY will be skipped)`);
+  } else {
+    console.log(`  Post type: product (${productKey})`);
+  }
 
   // Load context data
   const sitemap = loadSitemap();

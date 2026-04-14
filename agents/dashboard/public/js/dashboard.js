@@ -881,9 +881,18 @@ function renderBlockedPostsCard(d) {
   if (blocked.length === 0) return '';
   const rows = blocked.map(p => {
     const slug = esc(p.slug);
+    // Topical-authority posts get a distinct badge so it's obvious at a
+    // glance that they're not tied to a SKU we sell. The editor's
+    // INGREDIENT ACCURACY check is skipped for these — any blocker showing
+    // here is a real content-quality issue (factual concerns, brand voice,
+    // formatting), not a phantom ingredient mismatch.
+    const typeBadge = p.post_type === 'topical_authority'
+      ? '<span class="verdict-pill" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe">Topical Authority</span>'
+      : '';
     return '<div class="action-row">' +
       '<div class="action-head">' +
         '<span class="verdict-pill verdict-blocked">Needs Work</span>' +
+        typeBadge +
         '<span class="action-title">' + esc(p.title) + '</span>' +
       '</div>' +
       '<pre class="action-reason" style="white-space:pre-wrap;font-family:inherit;margin:8px 0 0;">' + esc(p.blockers || '') + '</pre>' +
