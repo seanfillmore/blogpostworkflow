@@ -982,11 +982,10 @@ async function runEditor(htmlPath) {
       return false;
     });
 
-  // Always auto-fix unpublished-link removals (they're unambiguous).
-  // Other auto-fixes (broken externals, year corrections) still require --auto-fix.
-  if (linksToRemove.length > 0 || args.includes('--auto-fix')) {
-    applyAutoFixes(htmlPath, html, args.includes('--auto-fix') ? brokenLinks : [], { linksToRemove });
-  }
+  // Year corrections + unpublished-link removals are unambiguous — always run.
+  // External broken-link removals still require --auto-fix because they
+  // delete content the user may want to revise instead.
+  applyAutoFixes(htmlPath, html, args.includes('--auto-fix') ? brokenLinks : [], { linksToRemove });
 }
 
 async function main() {
