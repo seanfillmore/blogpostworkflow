@@ -419,6 +419,7 @@ function renderOptimizeTab(d) {
   });
 
   document.getElementById('tab-optimize').innerHTML =
+    renderBlockedPostsCard(d) +
     renderPerformanceQueueCard(d) +
     renderAICitationCard(d) +
     renderCannibalizationCard(d) +
@@ -868,6 +869,75 @@ async function dismissIndexingSubmit(slug) {
   if (!confirm('Dismiss indexing submission for "' + slug + '"?')) return;
   await fetch('/api/indexing-queue/' + encodeURIComponent(slug) + '/dismiss', { method: 'POST' });
   loadData();
+}
+
+// Posts hard-blocked by the editorial gate. These are the same posts the
+// daily recap email calls out as "Action Required — X posts hard-blocked";
+// the dashboard previously had no surface for them, leaving the email as a
+// dead end. Each row shows the post, the blocker bullets parsed out of the
+// editor report, and a button that opens the full markdown report inline.
+function renderBlockedPostsCard(d) {
+  const blocked = (d && d.blockedPosts) || [];
+  if (blocked.length === 0) return '';
+  const rows = blocked.map(p => {
+    const slug = esc(p.slug);
+    return '<div class="action-row">' +
+      '<div class="action-head">' +
+        '<span class="verdict-pill verdict-blocked">Needs Work</span>' +
+        '<span class="action-title">' + esc(p.title) + '</span>' +
+      '</div>' +
+      '<pre class="action-reason" style="white-space:pre-wrap;font-family:inherit;margin:8px 0 0;">' + esc(p.blockers || '') + '</pre>' +
+      '<div class="action-buttons">' +
+        '<button class="btn-secondary" onclick="openEditorReport(\'' + slug + '\')">View full report</button>' +
+        '<button class="btn-primary" onclick="rerunEditor(\'' + slug + '\')">Re-run editor</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  return '<div class="card card-action"><div class="card-header accent-red">' +
+      '<h2>&#9888; Action Required &mdash; ' + blocked.length + ' post' + (blocked.length > 1 ? 's' : '') + ' hard-blocked</h2>' +
+      '<span class="card-subtitle">Failed the editorial gate. Fix the blockers below or re-run the editor.</span>' +
+    '</div><div class="card-body">' + rows + '</div></div>';
+}
+
+// Fetch and show the editor report markdown in a modal-style overlay. Keeps
+// the dashboard as a single source of truth for blocker resolution so the
+// user never has to SSH to read the report.
+function openEditorReport(slug) {
+  fetch('/editor-report/' + encodeURIComponent(slug))
+    .then(r => r.ok ? r.text() : Promise.reject(r.status))
+    .then(md => {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.onclick = () => overlay.remove();
+      overlay.innerHTML = '<div class="modal-body" onclick="event.stopPropagation()" ' +
+        'style="background:white;max-width:900px;max-height:85vh;overflow:auto;border-radius:10px;padding:24px 28px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+          '<h3 style="margin:0;">Editor Report &mdash; ' + esc(slug) + '</h3>' +
+          '<button class="btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">Close</button>' +
+        '</div>' +
+        '<pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:12px;line-height:1.55;margin:0;">' + esc(md) + '</pre>' +
+        '</div>';
+      document.body.appendChild(overlay);
+    })
+    .catch(err => alert('Could not load editor report: ' + err));
+}
+
+// Re-run the editor agent for a single post after the author has fixed the
+// source. POSTs to the existing /run-agent endpoint and reloads dashboard
+// data on completion so the blocked-post card reflects the new verdict.
+function rerunEditor(slug) {
+  if (!confirm('Re-run editor for ' + slug + '?\n\nThis will re-check links, CTA presence, and content rules, and refresh the verdict on the dashboard.')) return;
+  const btn = event && event.target;
+  if (btn) { btn.disabled = true; btn.textContent = 'Running...'; }
+  fetch('/run-agent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ script: 'agents/editor/index.js', args: ['data/posts/' + slug + '/content.html'] }),
+  })
+    .then(r => r.text())
+    .then(() => { loadData(); })
+    .catch(err => alert('Editor re-run failed: ' + err))
+    .finally(() => { if (btn) { btn.disabled = false; btn.textContent = 'Re-run editor'; } });
 }
 
 function renderActionRequired(d) {

@@ -9,12 +9,51 @@ import {
 } from './paths.js';
 import {
   listAllSlugs, getPostMeta as getPostMetaFromLib, getContentPath, getImagePath,
+  getEditorReportPath,
 } from '../../../lib/posts.js';
 import {
   parseCalendar, parseEditorReports, parseRankings, parseCROData,
   loadRejections, isRejectedKw, getPostMeta, getItemStatus, getPendingAhrefsData,
 } from './data-parsers.js';
 import { parseTechSeoReport } from './tech-seo-parser.js';
+
+/**
+ * Find posts hard-blocked by the editorial gate. These are posts that have
+ * been written and passed through the editor agent, received a "Needs Work"
+ * verdict, and haven't been published or scheduled — i.e. truly stuck
+ * waiting on human intervention.
+ *
+ * Mirrors `findBlockedPosts()` in agents/daily-summary/index.js so the
+ * dashboard surfaces the same set of posts the email calls out.
+ */
+function findBlockedPosts() {
+  const blocked = [];
+  for (const slug of listAllSlugs()) {
+    try {
+      const reportPath = getEditorReportPath(slug);
+      if (!existsSync(reportPath)) continue;
+      const report = readFileSync(reportPath, 'utf8');
+      if (!/VERDICT[:*\s]*Needs Work/i.test(report)) continue;
+
+      const meta = getPostMetaFromLib(slug);
+      if (!meta) continue;
+      if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') continue;
+
+      // Pull the blockers section — either an explicit "## X. Blockers" heading
+      // or anything following "BLOCKER" in a heading. 600 chars is enough to
+      // show the bullet list without overwhelming the card.
+      const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+      const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
+
+      blocked.push({
+        title: meta.title || slug,
+        slug,
+        blockers: blockerText,
+      });
+    } catch { /* skip */ }
+  }
+  return blocked;
+}
 
 export function aggregateData() {
   const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
@@ -375,6 +414,7 @@ export function aggregateData() {
     altTextProgress,
     themeSeoAudit,
     rejectedImages,
+    blockedPosts: findBlockedPosts(),
   };
 }
 
