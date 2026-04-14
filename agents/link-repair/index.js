@@ -313,13 +313,25 @@ async function main() {
     process.stdout.write(`       anchor: "${link.anchor}"\n`);
 
     if (isInternal) {
-      // Try blog index lookup
+      // Try blog index lookup, then verify the candidate actually resolves.
+      // The blog index includes draft/scheduled posts whose live URLs 404;
+      // without this check link-repair would re-add links the editor's own
+      // auto-removal already pruned, causing oscillation on the next run.
       const match = findBestInternalMatch(link.url, link.anchor, articles);
+      let accepted = null;
       if (match) {
-        const result = applyLinkFix(html, link.url, match.url);
+        const status = await fetchStatusCode(match.url);
+        if (status && status >= 200 && status < 400) {
+          accepted = match.url;
+        } else {
+          console.log(`       candidate ${match.url.slice(0, 80)} returned ${status || 'network error'} — treating as no match`);
+        }
+      }
+      if (accepted) {
+        const result = applyLinkFix(html, link.url, accepted);
         if (result.changed) {
           html = result.html;
-          console.log(`       ✓ Fixed → ${match.url}`);
+          console.log(`       ✓ Fixed → ${accepted}`);
           fixedCount++;
         } else {
           console.log(`       ⚠️  URL not found in HTML (may already be fixed)`);
@@ -329,7 +341,7 @@ async function main() {
         const result = removeLinkFromHtml(html, link.url);
         if (result.changed) {
           html = result.html;
-          console.log(`       ✗ No match found — link removed, anchor text kept`);
+          console.log(`       ✗ No live match — link removed, anchor text kept`);
           removedCount++;
         } else {
           console.log(`       ⚠️  Could not locate link in HTML`);
