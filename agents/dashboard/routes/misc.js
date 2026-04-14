@@ -1,8 +1,28 @@
 // agents/dashboard/routes/misc.js
 import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { getEditorReportPath } from '../../../lib/posts.js';
 
 export default [
+  {
+    // Serve a post's editor report as plain markdown so the dashboard can
+    // fetch and render it in the Blocked Posts card without exposing the
+    // wider data/posts/ tree. The slug is validated against posts-dir naming.
+    method: 'GET',
+    match: (url) => url.startsWith('/editor-report/'),
+    handler(req, res) {
+      const slug = decodeURIComponent(req.url.slice('/editor-report/'.length).split('?')[0]);
+      if (!/^[a-z0-9-]+$/i.test(slug)) {
+        res.writeHead(400); res.end('Bad slug'); return;
+      }
+      const reportPath = getEditorReportPath(slug);
+      if (!existsSync(reportPath)) {
+        res.writeHead(404); res.end('No editor report for this post'); return;
+      }
+      res.writeHead(200, { 'Content-Type': 'text/markdown; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(readFileSync(reportPath));
+    },
+  },
   {
     method: 'GET',
     match: (url) => url.startsWith('/screenshot?'),
