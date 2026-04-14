@@ -454,29 +454,83 @@ function renderOptimizeTab(d) {
 function renderAICitationCard(d) {
   var c = d.aiCitations;
   if (!c || !c.results) return '';
-  var sources = c.sources || [];
-  var mentionRows = sources.map(function(s) {
-    var menRate = c.summary.mention_rate[s];
-    var citRate = c.summary.citation_rate[s];
-    var menPct = (menRate * 100).toFixed(0) + '%';
-    var citPct = citRate != null ? (citRate * 100).toFixed(0) + '%' : 'n/a';
-    return '<tr><td>' + esc(s) + '</td><td>' + citPct + '</td><td>' + menPct + '</td></tr>';
+
+  // Count citations + unique pages per source
+  var sourceIcons = {
+    google_ai_overview: { label: 'AI Overview', icon: '&#127760;', color: '#4285f4' },
+    chatgpt: { label: 'ChatGPT', icon: '&#129302;', color: '#10a37f' },
+    perplexity: { label: 'Perplexity', icon: '&#128269;', color: '#20808d' },
+    gemini: { label: 'Gemini', icon: '&#10024;', color: '#8e44ad' },
+    claude: { label: 'Claude', icon: '&#9679;', color: '#d97706' },
+  };
+
+  var prev = d.aiCitationsPrev || null;
+
+  var tiles = (c.sources || []).map(function(s) {
+    var citations = 0;
+    var pages = {};
+    for (var i = 0; i < c.results.length; i++) {
+      var resp = c.results[i].responses[s] || {};
+      if (resp.cited || resp.mentioned) citations++;
+      var cits = resp.citations || [];
+      for (var j = 0; j < cits.length; j++) {
+        if (cits[j].indexOf('realskincare') !== -1) pages[cits[j]] = true;
+      }
+    }
+    var pageCount = Object.keys(pages).length;
+
+    // Previous week delta
+    var prevCitations = 0;
+    if (prev && prev.results) {
+      for (var k = 0; k < prev.results.length; k++) {
+        var prevResp = prev.results[k].responses[s] || {};
+        if (prevResp.cited || prevResp.mentioned) prevCitations++;
+      }
+    }
+    var delta = prev ? citations - prevCitations : null;
+
+    var si = sourceIcons[s] || { label: s, icon: '&#9679;', color: '#6b7280' };
+    var deltaHtml = delta !== null
+      ? '<span style="font-size:14px;margin-left:6px;color:' + (delta > 0 ? '#16a34a' : delta < 0 ? '#dc2626' : '#6b7280') + '">' + (delta > 0 ? '+' : '') + delta + '</span>'
+      : '';
+
+    return '<div style="flex:1;min-width:140px;padding:16px;text-align:center">' +
+      '<div style="font-size:13px;color:#6b7280;margin-bottom:8px">' + si.label + '</div>' +
+      '<div style="font-size:14px;margin-bottom:4px">' + si.icon + '</div>' +
+      '<div style="display:flex;align-items:baseline;justify-content:center;gap:4px">' +
+        '<span style="font-size:36px;font-weight:700;color:' + si.color + '">' + citations + '</span>' +
+        deltaHtml +
+      '</div>' +
+      '<div style="font-size:12px;color:#9ca3af;margin-top:4px">Pages ' + pageCount + '</div>' +
+    '</div>';
   }).join('');
 
+  // Top competitors
   var compMentions = Object.entries(c.summary.top_competitor_mentions || {}).sort(function(a, b) { return b[1] - a[1]; });
-  var compCitations = Object.entries(c.summary.top_competitor_citations || {}).sort(function(a, b) { return b[1] - a[1]; });
-  var compRows = compMentions.slice(0, 8).map(function(e) {
-    var citCount = compCitations.find(function(x) { return x[0] === e[0]; });
-    return '<tr><td>' + esc(e[0]) + '</td><td>' + e[1] + '</td><td>' + (citCount ? citCount[1] : '0') + '</td></tr>';
-  }).join('');
+  var compSection = '';
+  if (compMentions.length > 0) {
+    var compBars = compMentions.slice(0, 6).map(function(e) {
+      var maxCount = compMentions[0][1];
+      var pct = Math.round(e[1] / maxCount * 100);
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<span style="font-size:12px;color:#6b7280;width:100px;text-align:right">' + esc(e[0]) + '</span>' +
+        '<div style="flex:1;background:#f3f4f6;border-radius:4px;height:20px">' +
+          '<div style="width:' + pct + '%;background:#8b5cf6;border-radius:4px;height:100%;min-width:24px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px">' +
+            '<span style="font-size:11px;color:#fff;font-weight:600">' + e[1] + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    compSection = '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #f3f4f6">' +
+      '<div style="font-size:11px;text-transform:uppercase;color:#9ca3af;letter-spacing:.04em;margin-bottom:10px">Top Competitor Mentions</div>' +
+      compBars + '</div>';
+  }
 
   return '<div class="card"><div class="card-header accent-purple"><h2>AI Citations</h2>' +
-    '<span class="card-subtitle">' + c.prompts_run + ' prompts &times; ' + sources.length + ' LLMs &mdash; ' + esc(c.date) + '</span></div>' +
+    '<span class="card-subtitle">' + c.prompts_run + ' prompts &mdash; ' + esc(c.date) + '</span></div>' +
     '<div class="card-body">' +
-    '<h3 style="font-size:12px;text-transform:uppercase;color:var(--muted);margin:0 0 8px">Our Visibility</h3>' +
-    '<table class="data-table"><thead><tr><th>Source</th><th>Cited</th><th>Mentioned</th></tr></thead><tbody>' + mentionRows + '</tbody></table>' +
-    (compRows ? '<h3 style="font-size:12px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px">Competitor Visibility</h3>' +
-    '<table class="data-table"><thead><tr><th>Competitor</th><th>Mentions</th><th>Citations</th></tr></thead><tbody>' + compRows + '</tbody></table>' : '') +
+      '<div style="display:flex;flex-wrap:wrap;gap:0;margin:-8px -16px">' + tiles + '</div>' +
+      compSection +
     '</div></div>';
 }
 

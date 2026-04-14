@@ -220,6 +220,17 @@ export function aggregateData() {
   const legacyTriage    = readJsonIfExists(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   const cannibalization = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'latest.json'));
   const aiCitations = readJsonIfExists(join(REPORTS_DIR, 'ai-citations', 'latest.json'));
+  // Load previous AI citation snapshot for week-over-week delta
+  let aiCitationsPrev = null;
+  try {
+    const citDir = join(REPORTS_DIR, 'ai-citations');
+    if (existsSync(citDir)) {
+      const citFiles = readdirSync(citDir).filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+      const today = aiCitations?.date;
+      const prevFile = citFiles.find((f) => f.replace('.json', '') !== today);
+      if (prevFile) aiCitationsPrev = JSON.parse(readFileSync(join(citDir, prevFile), 'utf8'));
+    }
+  } catch { /* skip */ }
   // Enrich cannibalization conflicts with decision details (winner, action, reason)
   const cannibDecisions = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'cannibalization-decisions.json'));
   if (cannibalization?.conflicts && cannibDecisions?.decisions) {
@@ -356,6 +367,7 @@ export function aggregateData() {
     legacyTriage,
     cannibalization,
     aiCitations,
+    aiCitationsPrev,
     techSeoAudit,
     techSeoFixResults,
     altTextProgress,
