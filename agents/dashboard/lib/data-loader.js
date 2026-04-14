@@ -67,6 +67,7 @@ function findBlockedPosts() {
       blocked.push({
         title: meta.title || slug,
         slug,
+        post_type: meta.post_type || null, // 'product' | 'topical_authority' | null (legacy, untagged)
         blockers: blockerText,
       });
     } catch { /* skip */ }
