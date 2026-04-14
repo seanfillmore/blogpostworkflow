@@ -148,3 +148,15 @@ ssh root@137.184.119.230 'pm2 status && pm2 logs seo-dashboard --lines 20 --nost
 3. Verify dashboard is still `online` in PM2 output
 
 **Never commit passwords or credentials to the repo.** SSH key auth is set up — no password required.
+
+### Deploy hygiene — data backfills run AFTER `git pull`, never before
+
+The `data/` tree contains tracked files (e.g. `data/posts/<slug>/meta.json`) that get modified in-place by backfill scripts. If you `git stash push` before pulling, those uncommitted data updates land in stash and get forgotten. Run any data backfill **after** the pull instead — the scripts are idempotent so re-running on top of fresh code is always safe.
+
+If `git pull` fails because of dirty working tree, the safe pattern is:
+
+```bash
+ssh root@137.184.119.230 'cd ~/seo-claude && git stash push -m "pre-deploy <pr-id>" && git pull && git stash pop && pm2 restart seo-dashboard'
+```
+
+The `git stash pop` is non-negotiable — if the merge can't reconcile (rare for data files since main rarely touches them), resolve manually. Never leave a stash dangling: `git stash list` should be empty (or near-empty) after a deploy.
