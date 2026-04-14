@@ -75,6 +75,9 @@ const env = loadEnv();
 const args = process.argv.slice(2);
 const compareIdx = args.indexOf('--compare');
 const compareDate = compareIdx !== -1 ? args[compareIdx + 1] : null;
+const deviceIdx = args.indexOf('--device');
+const deviceArg = deviceIdx !== -1 ? args[deviceIdx + 1] : null; // 'desktop', 'mobile', or null for both
+const DEVICES = deviceArg ? [deviceArg] : ['desktop', 'mobile'];
 
 // ── csv helpers (reused from content-researcher) ──────────────────────────────
 
@@ -173,18 +176,18 @@ function loadKeywordTrackerCsv() {
   return { map, filename };
 }
 
-async function fetchLiveKeywordData() {
+async function fetchLiveKeywordData(device = 'desktop') {
   try {
     const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    console.log(`  Fetching live keyword data from DataForSEO for ${domain}...`);
-    const keywords = await getRankedKeywords(domain, { limit: 1000 });
+    console.log(`  Fetching live ${device} keyword data from DataForSEO for ${domain}...`);
+    const keywords = await getRankedKeywords(domain, { limit: 1000, device });
     const map = new Map();
     for (const kw of keywords) {
       map.set(kw.keyword.toLowerCase().trim(), {
         position: kw.position,
         volume: kw.volume,
         url: kw.url,
-        kd: null,
+        kd: kw.kd,
         cpc: kw.cpc,
         traffic: kw.traffic,
         trafficPrev: null,
@@ -192,16 +195,16 @@ async function fetchLiveKeywordData() {
         positionPrev: null,
         positionChange: null,
         urlPrev: null,
-        serpFeatures: null,
+        serpFeatures: kw.serpFeatures?.length ? kw.serpFeatures.join(',') : null,
         country: null,
         datePrev: null,
         dateCurr: null,
-        intents: [],
+        intents: kw.intent ? [kw.intent] : [],
       });
     }
-    return { map, filename: 'DataForSEO API' };
+    return { map, filename: `DataForSEO API (${device})` };
   } catch (err) {
-    console.log(`  ⚠️ DataForSEO fetch failed: ${err.message}`);
+    console.log(`  ⚠️ DataForSEO ${device} fetch failed: ${err.message}`);
     return { map: new Map(), filename: null };
   }
 }
@@ -274,16 +277,34 @@ function buildCanonicalUrl(post, blogIndex) {
 
 // ── snapshot management ───────────────────────────────────────────────────────
 
-function loadLatestSnapshot(beforeDate) {
-  if (!existsSync(SNAPSHOTS_DIR)) return null;
-  const files = readdirSync(SNAPSHOTS_DIR)
-    .filter((f) => f.endsWith('.json'))
-    .sort(); // YYYY-MM-DD.json sorts chronologically
+/**
+ * Match snapshot filenames for a given device.
+ * Device-suffixed files (YYYY-MM-DD-desktop.json) are always device-specific.
+ * Legacy plain-date files (YYYY-MM-DD.json) are treated as 'desktop' for
+ * backward compatibility — those snapshots were written before Phase 2.
+ */
+function snapshotFilesForDevice(device) {
+  if (!existsSync(SNAPSHOTS_DIR)) return [];
+  const all = readdirSync(SNAPSHOTS_DIR).filter((f) => f.endsWith('.json'));
+  const suffix = `-${device}.json`;
+  const deviceFiles = all.filter((f) => f.endsWith(suffix));
+  const legacyFiles = device === 'desktop'
+    ? all.filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    : [];
+  // Sort ascending by date portion
+  return [...deviceFiles, ...legacyFiles].sort((a, b) => {
+    const dateA = a.slice(0, 10);
+    const dateB = b.slice(0, 10);
+    return dateA.localeCompare(dateB);
+  });
+}
 
+function loadLatestSnapshot(beforeDate, device = 'desktop') {
+  const files = snapshotFilesForDevice(device);
   if (files.length === 0) return null;
 
   if (beforeDate) {
-    const eligible = files.filter((f) => f.replace('.json', '') < beforeDate);
+    const eligible = files.filter((f) => f.slice(0, 10) < beforeDate);
     if (eligible.length === 0) return null;
     return JSON.parse(readFileSync(join(SNAPSHOTS_DIR, eligible[eligible.length - 1]), 'utf8'));
   }
@@ -291,10 +312,15 @@ function loadLatestSnapshot(beforeDate) {
   return JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[files.length - 1]), 'utf8'));
 }
 
-function loadSnapshotByDate(date) {
-  const path = join(SNAPSHOTS_DIR, `${date}.json`);
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, 'utf8'));
+function loadSnapshotByDate(date, device = 'desktop') {
+  const devicePath = join(SNAPSHOTS_DIR, `${date}-${device}.json`);
+  if (existsSync(devicePath)) return JSON.parse(readFileSync(devicePath, 'utf8'));
+  // Fall back to legacy plain-date file (treated as desktop)
+  if (device === 'desktop') {
+    const legacyPath = join(SNAPSHOTS_DIR, `${date}.json`);
+    if (existsSync(legacyPath)) return JSON.parse(readFileSync(legacyPath, 'utf8'));
+  }
+  return null;
 }
 
 // ── classification ────────────────────────────────────────────────────────────
@@ -492,35 +518,24 @@ function buildReport(entries, today, previousDate) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
-async function main() {
-  console.log(`\nRank Tracker — ${config.name}\n`);
+/**
+ * Run the rank-tracking pipeline for a single device (desktop or mobile).
+ * Each device produces its own snapshot file (`YYYY-MM-DD-<device>.json`)
+ * and markdown report. GSC metrics are identical across devices, so the
+ * caller can cache them and pass them in to avoid redundant API calls.
+ */
+async function runForDevice({ device, today, posts, blogIndex, gscCache, isSoleDevice }) {
+  console.log(`\n━━ ${device.toUpperCase()} ━━`);
 
-  await loadGSC();
-  if (gsc) {
-    console.log('  GSC connected — will augment ranking data with Google Search Console metrics');
-  } else {
-    console.log('  ℹ️  GSC not configured — run: node scripts/gsc-auth.js to enable');
-  }
-
-  const today = new Date().toISOString().slice(0, 10);
-
-  // Load published posts and blog index for handle resolution
-  const blogIndex = loadBlogIndex();
-  const posts = loadPublishedPosts();
-  if (posts.length === 0) {
-    console.log('  No published posts found in data/posts/. Run the publisher first.');
-    process.exit(0);
-  }
-  console.log(`  Tracking ${posts.length} published post(s)\n`);
-
-  // Load keyword data — try DataForSEO API first, fall back to CSV
+  // Load keyword data — try DataForSEO API first, fall back to CSV (CSV is
+  // legacy desktop-only data; mobile skips CSV fallback entirely).
   let trackerMap, trackerFile;
-  const liveData = await fetchLiveKeywordData();
+  const liveData = await fetchLiveKeywordData(device);
   if (liveData.map.size > 0) {
     trackerMap = liveData.map;
     trackerFile = liveData.filename;
     console.log(`  Keyword data: ${trackerFile} (${trackerMap.size} keywords)`);
-  } else {
+  } else if (device === 'desktop') {
     const csv = loadKeywordTrackerCsv();
     trackerMap = csv.map;
     trackerFile = csv.filename;
@@ -528,14 +543,17 @@ async function main() {
       console.log(`  Keyword data: data/keyword-tracker/${trackerFile} (${trackerMap.size} keywords)`);
     } else {
       console.log('  ⚠️  No keyword data available — neither DataForSEO API nor CSV.');
-      process.exit(0);
+      return null;
     }
+  } else {
+    console.log(`  ⚠️  No ${device} data available from DataForSEO — skipping.`);
+    return null;
   }
 
-  // Load previous snapshot for delta comparison
+  // Load previous snapshot for delta comparison (device-specific)
   const prevSnapshot = compareDate
-    ? loadSnapshotByDate(compareDate)
-    : loadLatestSnapshot(today);
+    ? loadSnapshotByDate(compareDate, device)
+    : loadLatestSnapshot(today, device);
 
   if (prevSnapshot) {
     console.log(`  Previous snapshot: ${prevSnapshot.date} (${prevSnapshot.posts.length} entries)`);
@@ -555,27 +573,29 @@ async function main() {
     let volume = null;
     let dataSource = 'none';
 
-    // Look up keyword in tracker CSV
     const kw = post.keyword?.toLowerCase().trim();
     const tracked = kw ? trackerMap.get(kw) : null;
     if (tracked !== undefined && tracked !== null) {
       position = tracked.position;
       volume = tracked.volume;
-      dataSource = 'csv';
+      dataSource = trackerFile.startsWith('DataForSEO') ? 'api' : 'csv';
     } else if (trackerFile) {
-      // CSV loaded but keyword not found — not ranking yet; use brief volume
-      dataSource = 'csv (not found)';
+      dataSource = trackerFile.startsWith('DataForSEO') ? 'api (not found)' : 'csv (not found)';
     }
 
-    // Fall back to brief volume when CSV has no data for this keyword
     if (volume === null && post.brief_volume !== null) {
       volume = post.brief_volume;
     }
 
-    // Fetch GSC page performance (impressions, clicks, CTR, avg position)
+    // GSC metrics are device-agnostic — fetch once per URL and cache.
     let gscPerf = null;
-    if (gsc) {
-      try { gscPerf = await gsc.getPagePerformance(url, 90); } catch { /* skip */ }
+    if (gsc && url) {
+      if (gscCache.has(url)) {
+        gscPerf = gscCache.get(url);
+      } else {
+        try { gscPerf = await gsc.getPagePerformance(url, 90); } catch { /* skip */ }
+        gscCache.set(url, gscPerf);
+      }
     }
 
     const prev = prevMap.get(post.slug);
@@ -610,19 +630,18 @@ async function main() {
     };
     entries.push(entry);
 
-    const posStr = position ? `#${position}` : (tracked === null ? 'not in CSV' : 'no data');
+    const posStr = position ? `#${position}` : (tracked === null ? 'not found' : 'no data');
     const delta = prev?.position && position ? ` (was #${prev.position})` : '';
     console.log(`${posStr}${delta}`);
   }
 
-  // Save snapshot
+  // Save snapshot (device-suffixed)
   mkdirSync(SNAPSHOTS_DIR, { recursive: true });
-  const snapshotPath = join(SNAPSHOTS_DIR, `${today}.json`);
-  // Build full keyword list from CSV (all keywords, not just tracked posts)
+  const snapshotPath = join(SNAPSHOTS_DIR, `${today}-${device}.json`);
   const trackedKeywords = new Set(entries.map(e => e.keyword?.toLowerCase().trim()).filter(Boolean));
   const allKeywords = [];
   for (const [kw, data] of trackerMap.entries()) {
-    if (trackedKeywords.has(kw)) continue; // already in posts
+    if (trackedKeywords.has(kw)) continue;
     allKeywords.push({ keyword: kw, ...data });
   }
   allKeywords.sort((a, b) => {
@@ -634,26 +653,64 @@ async function main() {
 
   const snapshot = {
     date: today,
-    posts: entries.map(({ slug, keyword, url, position, volume, traffic, published_at }) => ({
-      slug, keyword, url, position, volume, traffic, published_at,
+    device,
+    posts: entries.map(({ slug, keyword, url, position, volume, traffic, kd, serpFeatures, published_at }) => ({
+      slug, keyword, url, position, volume, traffic, kd, serpFeatures, published_at,
     })),
     allKeywords,
   };
   writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2));
   console.log(`\n  Snapshot saved: ${snapshotPath}`);
 
-  // Build and save report
+  // Write markdown report. When tracking both devices, write device-suffixed
+  // reports; when a single device was requested, preserve the legacy filename
+  // so anything that links to rank-tracker-report.md keeps working.
   mkdirSync(REPORTS_DIR, { recursive: true });
   const report = buildReport(entries, today, prevSnapshot?.date);
-  const reportPath = join(REPORTS_DIR, 'rank-tracker-report.md');
+  const reportName = isSoleDevice ? 'rank-tracker-report.md' : `rank-tracker-report-${device}.md`;
+  const reportPath = join(REPORTS_DIR, reportName);
   writeFileSync(reportPath, report);
+  // When running both devices, also keep the canonical filename pointing at desktop
+  // so downstream consumers that expect it continue to work.
+  if (!isSoleDevice && device === 'desktop') {
+    writeFileSync(join(REPORTS_DIR, 'rank-tracker-report.md'), report);
+  }
   console.log(`  Report saved:   ${reportPath}`);
 
-  // Summary
   const onPage1 = entries.filter((e) => e.position && e.position <= 10).length;
   const quickWins = entries.filter((e) => e.position && e.position > 10 && e.position <= 20).length;
   const notRanking = entries.filter((e) => !e.position).length;
-  console.log(`\n  Page 1: ${onPage1} | Quick wins: ${quickWins} | Not ranking: ${notRanking}`);
+  console.log(`  [${device}] Page 1: ${onPage1} | Quick wins: ${quickWins} | Not ranking: ${notRanking}`);
+
+  return { device, entries };
+}
+
+async function main() {
+  console.log(`\nRank Tracker — ${config.name}\n`);
+
+  await loadGSC();
+  if (gsc) {
+    console.log('  GSC connected — will augment ranking data with Google Search Console metrics');
+  } else {
+    console.log('  ℹ️  GSC not configured — run: node scripts/gsc-auth.js to enable');
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const blogIndex = loadBlogIndex();
+  const posts = loadPublishedPosts();
+  if (posts.length === 0) {
+    console.log('  No published posts found in data/posts/. Run the publisher first.');
+    process.exit(0);
+  }
+  console.log(`  Tracking ${posts.length} published post(s) across: ${DEVICES.join(', ')}`);
+
+  const isSoleDevice = DEVICES.length === 1;
+  const gscCache = new Map();
+
+  for (const device of DEVICES) {
+    await runForDevice({ device, today, posts, blogIndex, gscCache, isSoleDevice });
+  }
 }
 
 main().then(() => {

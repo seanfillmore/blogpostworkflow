@@ -36,6 +36,14 @@ async function main() {
   const snapshot = await fetchGA4Snapshot(date);
   console.log(`done (${snapshot.sessions} sessions, ${snapshot.conversions} conversions, $${snapshot.revenue} revenue)`);
 
+  if (snapshot.devices?.length) {
+    console.log('  Device breakdown:');
+    for (const d of snapshot.devices) {
+      const revShare = snapshot.revenue > 0 ? ` — $${d.revenue.toFixed(2)} (${(100 * d.revenue / snapshot.revenue).toFixed(0)}% of revenue)` : '';
+      console.log(`    ${d.device.padEnd(8)} ${d.sessions} sessions, ${d.conversions} conv${revShare}`);
+    }
+  }
+
   mkdirSync(SNAPSHOTS_DIR, { recursive: true });
   const outPath = join(SNAPSHOTS_DIR, `${date}.json`);
   writeFileSync(outPath, JSON.stringify(snapshot, null, 2));

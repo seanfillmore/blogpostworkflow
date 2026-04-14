@@ -21,7 +21,8 @@ export function aggregateData() {
 
   const calItems    = parseCalendar();
   const editorMap   = parseEditorReports();
-  const rankings    = parseRankings();
+  const rankings    = parseRankings('desktop');
+  const rankingsMobile = parseRankings('mobile');
   const rejections  = loadRejections();
 
   // Build lookup from keyword slug → calendar metadata
@@ -345,6 +346,7 @@ export function aggregateData() {
     config:      { name: config.name, url: config.url || '' },
     pipeline:    { counts: statusCounts, items: pipelineItems },
     rankings,
+    rankingsMobile,
     posts,
     pendingAhrefsData,
     cro,

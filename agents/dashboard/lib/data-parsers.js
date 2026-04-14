@@ -114,13 +114,22 @@ export function parseEditorReports() {
   return out;
 }
 
-export function parseRankings() {
-  const empty = { latestDate: null, previousDate: null, items: [], summary: { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 } };
+export function parseRankings(device = 'desktop') {
+  const empty = { latestDate: null, previousDate: null, device, items: [], summary: { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 } };
   if (!existsSync(SNAPSHOTS_DIR)) return empty;
 
-  const files = readdirSync(SNAPSHOTS_DIR)
-    .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
-    .sort().reverse();
+  // Match device-suffixed snapshot files (YYYY-MM-DD-<device>.json). For
+  // backward compatibility, legacy plain-date files (YYYY-MM-DD.json) are
+  // treated as 'desktop' — that's what the API returned pre-Phase-2.
+  const all = readdirSync(SNAPSHOTS_DIR).filter(f => f.endsWith('.json'));
+  const deviceRe  = new RegExp(`^\\d{4}-\\d{2}-\\d{2}-${device}\\.json$`);
+  const legacyRe  = /^\d{4}-\d{2}-\d{2}\.json$/;
+  const deviceFiles = all.filter(f => deviceRe.test(f));
+  const legacyFiles = device === 'desktop' ? all.filter(f => legacyRe.test(f)) : [];
+  const files = [...deviceFiles, ...legacyFiles].sort((a, b) => {
+    // Sort by date portion descending (most recent first)
+    return b.slice(0, 10).localeCompare(a.slice(0, 10));
+  });
   if (!files.length) return empty;
 
   const latest   = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[0]), 'utf8'));
@@ -157,7 +166,7 @@ export function parseRankings() {
   const summary = items.reduce((acc, x) => { acc[x.tier]++; return acc; },
     { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 });
 
-  return { latestDate: latest.date, previousDate: previous?.date ?? null, items, summary };
+  return { latestDate: latest.date, previousDate: previous?.date ?? null, device, items, summary };
 }
 
 export function parseCROData() {

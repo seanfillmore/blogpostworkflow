@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 
 import { listAllSlugs, getPostMeta as readPostMeta, getMetaPath, getContentPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'legacy-triage');
@@ -64,13 +65,38 @@ function loadIndexingStates() {
 function loadRankData() {
   const dir = join(ROOT, 'data', 'rank-snapshots');
   if (!existsSync(dir)) return {};
-  const files = readdirSync(dir).filter(f => f.endsWith('.json')).sort();
-  if (!files.length) return {};
-  const snap = JSON.parse(readFileSync(join(dir, files[files.length - 1]), 'utf8'));
+  const all = readdirSync(dir).filter(f => f.endsWith('.json'));
+  const pickLatest = (regex) => {
+    const m = all.filter(f => regex.test(f)).sort((a, b) => a.slice(0, 10).localeCompare(b.slice(0, 10)));
+    return m.length ? m[m.length - 1] : null;
+  };
+  const desktopFile = pickLatest(/^\d{4}-\d{2}-\d{2}-desktop\.json$/) || pickLatest(/^\d{4}-\d{2}-\d{2}\.json$/);
+  if (!desktopFile) return {};
+  const snap = JSON.parse(readFileSync(join(dir, desktopFile), 'utf8'));
+
+  const mobileFile = pickLatest(/^\d{4}-\d{2}-\d{2}-mobile\.json$/);
+  const mobileBySlug = {};
+  if (mobileFile) {
+    try {
+      const mob = JSON.parse(readFileSync(join(dir, mobileFile), 'utf8'));
+      for (const p of (mob.posts || [])) {
+        if (p.slug) mobileBySlug[p.slug] = p.position ?? null;
+      }
+    } catch { /* ignore */ }
+  }
+  const weights = loadDeviceWeights();
+
+  // Classification thresholds (winner ≤10, rising 11–30, flop >50) need to
+  // reflect where the site earns revenue — not just desktop. Each entry's
+  // `position` field is replaced with its effective (revenue-weighted)
+  // position; original desktop and mobile numbers are kept for reporting.
   const map = {};
   for (const p of (snap.posts || [])) {
-    if (p.slug) map[p.slug] = p;
-    if (p.url) map[p.url] = p;
+    const mobilePos = p.slug ? mobileBySlug[p.slug] ?? null : null;
+    const eff = effectivePosition({ url: p.url, desktopPos: p.position, mobilePos, weights });
+    const entry = { ...p, desktop_position: p.position, mobile_position: mobilePos, position: eff };
+    if (p.slug) map[p.slug] = entry;
+    if (p.url)  map[p.url]  = entry;
   }
   return map;
 }

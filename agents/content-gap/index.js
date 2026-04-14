@@ -226,7 +226,7 @@ async function fetchContentGap() {
     const domainCounts = new Map();
     for (const kw of SEED_KEYWORDS) {
       try {
-        const results = await getSerpResults(kw, 10);
+        const { organic: results } = await getSerpResults(kw, 10);
         for (const r of results) {
           const d = r.domain.replace(/^www\./, '');
           if (d === ourDomain || EDITORIAL.has(d)) continue;

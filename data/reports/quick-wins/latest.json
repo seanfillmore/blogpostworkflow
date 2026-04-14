@@ -1,4 +1,20 @@
 {
-  "generated_at": "2026-04-09T12:28:10.264Z",
-  "candidates": []
+  "generated_at": "2026-04-14T00:09:26.905Z",
+  "snapshot_file": "2026-03-30.json",
+  "candidate_count": 1,
+  "top": [
+    {
+      "slug": "benefits-of-using-coconut-oil-lotion",
+      "title": "Benefits Of Using Coconut Oil Lotion",
+      "position": 14,
+      "mobile_position": null,
+      "effective_position": 14,
+      "device_gap": null,
+      "impressions": 11593,
+      "ctr": 0.0013,
+      "kd": null,
+      "score": 7185393,
+      "top_query": "coconut lotion benefits"
+    }
+  ]
 }

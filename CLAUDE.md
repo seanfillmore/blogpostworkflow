@@ -82,9 +82,10 @@ This project builds a team of AI agents and skills for auditing, improving, and 
 These rules are non-negotiable and apply to every change in every conversation:
 
 1. **Always work on a branch** — never commit directly to `main`. Create a feature branch (`feature/<name>`) or fix branch (`fix/<name>`) before writing any code.
-2. **Test locally before pushing to the server** — run the agent or script locally, verify output, and check the local dashboard if UI is involved. Only push to the server after local verification passes.
-3. **Test a fix on one post before bulk-applying** — when a bug affects many posts (HTML issues, metadata fixes, etc.), verify the fix on a single post end-to-end (edit → upload → check live site) before writing batch scripts or applying changes across all posts.
-4. **These rules apply even for small fixes** — a one-line bug fix still requires a branch and local test.
+2. **Always merge via pull request — never merge directly to `main`.** Every change, no matter how small, must land on main via an opened PR. Do not fast-forward, squash-merge locally, or push to `main` from the feature branch. Open the PR with `gh pr create` and let it go through the normal review surface.
+3. **Test locally before pushing to the server** — run the agent or script locally, verify output, and check the local dashboard if UI is involved. Only push to the server after local verification passes.
+4. **Test a fix on one post before bulk-applying** — when a bug affects many posts (HTML issues, metadata fixes, etc.), verify the fix on a single post end-to-end (edit → upload → check live site) before writing batch scripts or applying changes across all posts.
+5. **These rules apply even for small fixes** — a one-line bug fix still requires a branch, a PR, and a local test.
 
 ## Dashboard Code Layout
 
