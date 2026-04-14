@@ -78,10 +78,14 @@ runStep('publish-due', `"${NODE}" agents/calendar-runner/index.js --publish-due$
 // Step 2: run the next pending calendar item through the full pipeline
 runStep('calendar-runner --run', `"${NODE}" agents/calendar-runner/index.js --run${dryFlag}`, { retries: 1, critical: true });
 
-// Step 3: auto-repair broken links in any published/scheduled post
+// Step 3: auto-repair broken links in ANY post (published or not).
+// Previously this step was gated on shopify_article_id — which meant posts
+// blocked by the editor gate over 404s would sit stuck forever because the
+// scheduler refused to repair them. The fix: always repair when 404s are
+// detected; only gate the re-upload step on "already on Shopify".
 if (!dryFlag) {
   const { listAllSlugs, getEditorReportPath, getPostMeta, getContentPath, getMetaPath } = await import('./lib/posts.js');
-  const brokenItems = []; // { slug }
+  const brokenItems = []; // { slug, onShopify }
 
   for (const slug of listAllSlugs()) {
     try {
@@ -92,27 +96,36 @@ if (!dryFlag) {
       if (!has404) continue;
 
       const meta = getPostMeta(slug);
-      if (!meta?.shopify_article_id) continue; // not on Shopify yet
-
-      brokenItems.push({ slug });
+      if (!meta) continue;
+      brokenItems.push({ slug, onShopify: !!meta.shopify_article_id });
     } catch { /* skip */ }
   }
 
   if (brokenItems.length > 0) {
-    log(`  Link repair: ${brokenItems.length} post(s) with broken links detected`);
-    for (const { slug } of brokenItems) {
+    const published = brokenItems.filter(i => i.onShopify).length;
+    const unpublished = brokenItems.length - published;
+    log(`  Link repair: ${brokenItems.length} post(s) with broken links (${published} on Shopify, ${unpublished} blocked pre-publish)`);
+    for (const { slug, onShopify } of brokenItems) {
       log(`    Repairing: ${slug}`);
       try {
         execSync(`"${NODE}" agents/link-repair/index.js ${slug}`, { stdio: 'inherit', cwd: __dirname });
-        // Re-run editor to update the report (clears broken link count in dashboard)
+        // Re-run editor to refresh the verdict (clears the blocker on the dashboard/digest).
         execSync(`"${NODE}" agents/editor/index.js data/posts/${slug}/content.html`, { stdio: 'inherit', cwd: __dirname });
-        // Re-upload the fixed body to Shopify (--force skips editor gate since post is already live)
-        // Preserve shopify_publish_at if it's in the future (keeps scheduled posts from going live immediately)
-        const meta = getPostMeta(slug);
-        const futurePublishAt = meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date()
-          ? ` --publish-at "${meta.shopify_publish_at}"` : '';
-        execSync(`"${NODE}" agents/publisher/index.js data/posts/${slug}/meta.json --force${futurePublishAt}`, { stdio: 'inherit', cwd: __dirname });
-        log(`    ✓ ${slug} repaired and re-uploaded`);
+        if (onShopify) {
+          // Already live on Shopify — push the repaired body back up.
+          // --force skips the editor gate since the post is already published.
+          // Preserve a future shopify_publish_at so scheduled posts don't flip
+          // live immediately.
+          const meta = getPostMeta(slug);
+          const futurePublishAt = meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date()
+            ? ` --publish-at "${meta.shopify_publish_at}"` : '';
+          execSync(`"${NODE}" agents/publisher/index.js data/posts/${slug}/meta.json --force${futurePublishAt}`, { stdio: 'inherit', cwd: __dirname });
+          log(`    ✓ ${slug} repaired and re-uploaded`);
+        } else {
+          // Not yet on Shopify — repair complete; the normal publish pipeline
+          // will pick it up on its next run once the editor verdict clears.
+          log(`    ✓ ${slug} repaired (will publish via calendar-runner)`);
+        }
       } catch (e) {
         log(`    ✗ ${slug} repair failed (exit ${e.status})`);
       }
