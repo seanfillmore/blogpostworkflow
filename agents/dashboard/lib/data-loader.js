@@ -23,8 +23,21 @@ import { parseTechSeoReport } from './tech-seo-parser.js';
  * verdict, and haven't been published or scheduled — i.e. truly stuck
  * waiting on human intervention.
  *
+ * Detection rules (in order):
+ *   1. Report must contain at least one "VERDICT: Needs Work" — cheap pre-filter.
+ *   2. If the report has an "## OVERALL QUALITY" section (the editor's
+ *      canonical sign-off per its own system prompt), use that section's
+ *      verdict as the source of truth. Pass / Good / Excellent → not blocked.
+ *   3. Else if the report has a "## BLOCKERS*" section starting with "None"
+ *      → not blocked (sub-section verdicts are informational).
+ *   4. Otherwise treat the post as blocked.
+ *
+ * The two false-positive paths (rules 2 and 3) catch the common case where
+ * a sub-section is flagged Needs Work but the overall verdict is Good — that
+ * was over-reporting to both the dashboard and the daily recap email.
+ *
  * Mirrors `findBlockedPosts()` in agents/daily-summary/index.js so the
- * dashboard surfaces the same set of posts the email calls out.
+ * dashboard and the email surface the same set.
  */
 function findBlockedPosts() {
   const blocked = [];
@@ -39,10 +52,16 @@ function findBlockedPosts() {
       if (!meta) continue;
       if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') continue;
 
-      // Pull the blockers section — either an explicit "## X. Blockers" heading
-      // or anything following "BLOCKER" in a heading. 600 chars is enough to
-      // show the bullet list without overwhelming the card.
+      // Rule 2: explicit overall verdict trumps sub-section verdicts.
+      const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
+      if (overallMatch && !/needs work/i.test(overallMatch[1])) continue;
+
+      // Rule 3: "## BLOCKERS" / "## BLOCKERS SUMMARY" with "None" content.
       const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+      if (blockersMatch && /^\s*None\b/i.test(blockersMatch[1].trim())) continue;
+
+      // Pull the blockers excerpt for the card body. Falls back to a generic
+      // pointer when there's no explicit BLOCKERS section.
       const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
 
       blocked.push({

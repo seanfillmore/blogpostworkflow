@@ -124,8 +124,17 @@ function findBlockedPosts() {
       // Skip if already published or scheduled — only flag truly stuck posts
       if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') continue;
 
-      // Extract the blocker reasons section
+      // Trust the editor's overall verdict over any sub-section verdicts.
+      // A post can have a Needs Work in (say) Source Verification while the
+      // OVERALL QUALITY signs off as Good — that's not a blocker, it's a
+      // note. The dashboard uses the same rule (data-loader.findBlockedPosts).
+      const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
+      if (overallMatch && !/needs work/i.test(overallMatch[1])) continue;
+
+      // Extract the blocker reasons section. If it starts with "None", the
+      // editor has explicitly said there are no blockers — skip the post.
       const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+      if (blockersMatch && /^\s*None\b/i.test(blockersMatch[1].trim())) continue;
       const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
 
       blocked.push({
