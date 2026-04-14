@@ -31,7 +31,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readd
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, ROOT } from '../../lib/posts.js';
+import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -176,41 +176,9 @@ function categoriseLinks(links) {
  *   - Linked post scheduled AFTER parent → auto-remove the link (would 404 at publish)
  *   - Linked post not in the system at all → real 404, flag as blocker
  */
-function loadUnpublishedPostIndex() {
-  const postsDir = join(ROOT, 'data', 'posts');
-  const map = new Map();
-  try {
-    for (const f of readdirSync(postsDir).filter(f => f.endsWith('.json'))) {
-      try {
-        const meta = JSON.parse(readFileSync(join(postsDir, f), 'utf8'));
-        // Only index posts that are NOT currently live (scheduled, draft, or written)
-        const isLive = meta.shopify_status === 'published' ||
-          (meta.shopify_publish_at && new Date(meta.shopify_publish_at) <= new Date());
-        if (isLive) continue;
-        // Needs a shopify_handle or shopify_url to map
-        if (!meta.shopify_handle && !meta.shopify_url) continue;
-
-        const slug = meta.slug || f.replace('.json', '');
-        const entry = {
-          slug,
-          publish_at: meta.shopify_publish_at || null,
-          title: meta.title || slug,
-          status: meta.shopify_status || 'draft',
-        };
-        // Map every URL variant this post could be linked by
-        if (meta.shopify_url) {
-          map.set(meta.shopify_url, entry);
-          const publicUrl = meta.shopify_url.replace(/realskincare-com\.myshopify\.com/, 'www.realskincare.com');
-          if (publicUrl !== meta.shopify_url) map.set(publicUrl, entry);
-        }
-        if (meta.shopify_handle) {
-          map.set(`https://www.realskincare.com/blogs/news/${meta.shopify_handle}`, entry);
-        }
-      } catch {}
-    }
-  } catch {}
-  return map;
-}
+// loadUnpublishedPostIndex now lives in lib/posts.js so link-repair (and any
+// other consumer) can use the same source of truth. See that file for the
+// classification rules.
 
 const unpublishedIndex = loadUnpublishedPostIndex();
 
