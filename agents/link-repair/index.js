@@ -248,8 +248,12 @@ function applyLinkFix(html, oldUrl, newUrl) {
 
 function removeLinkFromHtml(html, brokenUrl) {
   const escaped = brokenUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  // Replace <a href="...broken...">text</a> with just text
-  const re = new RegExp(`<a[^>]+href=["']${escaped}["'][^>]*>([^<]*)</a>`, 'g');
+  // Replace <a href="...broken...">text</a> with just text. Inner content
+  // can contain nested HTML (e.g. <em>, <strong>) — common for source
+  // citations like "<em>Streptococcus mutans</em>" — so the inner pattern
+  // must allow any character including '<'. Non-greedy + dotall keeps it
+  // bounded to the matching </a>.
+  const re = new RegExp(`<a[^>]+href=["']${escaped}["'][^>]*>([\\s\\S]*?)</a>`, 'g');
   if (!re.test(html)) return { html, changed: false };
   return {
     html: html.replace(re, '$1'),
