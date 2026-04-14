@@ -107,7 +107,7 @@ async function getKeywordMetrics(keyword) {
 
 async function getSerpOverview(keyword) {
   try {
-    const results = await getSerpResults(keyword, 10);
+    const { organic: results } = await getSerpResults(keyword, 10);
     return results.map(r => ({
       position: r.position,
       url: r.url,

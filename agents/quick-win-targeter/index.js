@@ -30,6 +30,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { getMetaPath } from '../../lib/posts.js';
+import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -47,12 +48,40 @@ const limitArg = (() => {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * Load the latest rank snapshot for each device. Returns the desktop snapshot
+ * (which drives eligibility and is the primary data source) plus, when
+ * available, a slug→mobile-position map so the scorer can compare the two.
+ *
+ * Google uses mobile-first indexing, so mobile position is the signal it
+ * weighs most. We still use desktop as the "spine" of the snapshot (that's
+ * where the post list lives), but score and filter using the mobile position
+ * when we have one — and flag large desktop/mobile gaps as mobile-UX issues.
+ */
 function loadLatestSnapshot() {
   if (!existsSync(SNAPSHOTS_DIR)) return null;
-  const files = readdirSync(SNAPSHOTS_DIR).filter((f) => f.endsWith('.json')).sort();
-  if (files.length === 0) return null;
-  const latest = files[files.length - 1];
-  return { file: latest, data: JSON.parse(readFileSync(join(SNAPSHOTS_DIR, latest), 'utf8')) };
+  const all = readdirSync(SNAPSHOTS_DIR).filter((f) => f.endsWith('.json'));
+  const pickLatest = (regex) => {
+    const matches = all.filter((f) => regex.test(f))
+      .sort((a, b) => a.slice(0, 10).localeCompare(b.slice(0, 10)));
+    return matches.length ? matches[matches.length - 1] : null;
+  };
+  // Primary (desktop) snapshot — device-suffixed file, or legacy plain-date.
+  const desktopFile = pickLatest(/^\d{4}-\d{2}-\d{2}-desktop\.json$/)
+                   || pickLatest(/^\d{4}-\d{2}-\d{2}\.json$/);
+  if (!desktopFile) return null;
+  const desktop = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, desktopFile), 'utf8'));
+
+  // Mobile snapshot — optional. Indexed by slug for fast lookup.
+  const mobileFile = pickLatest(/^\d{4}-\d{2}-\d{2}-mobile\.json$/);
+  const mobileBySlug = {};
+  if (mobileFile) {
+    const mobile = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, mobileFile), 'utf8'));
+    for (const p of (mobile.posts || [])) {
+      if (p.slug) mobileBySlug[p.slug] = p.position ?? null;
+    }
+  }
+  return { file: desktopFile, data: desktop, mobileBySlug, mobileFile };
 }
 
 function loadPostMeta(slug) {
@@ -64,8 +93,15 @@ function loadPostMeta(slug) {
 /**
  * Compute opportunity score for a post at positions 11-20.
  * Higher impressions + closer to page 1 + worse CTR = higher score.
+ *
+ * Eligibility and proximity are computed from the "effective position" — a
+ * revenue-weighted blend of desktop and mobile positions. See
+ * lib/device-weights.js. This means a keyword at #5 desktop / #25 mobile on
+ * a mobile-converting page scores as ~position 25 (not-a-quick-win), while
+ * #15 desktop / #12 mobile on the same page effectively scores as ~12
+ * (a real page-1 opportunity).
  */
-function scoreOpportunity({ position, impressions = 0, ctr = 0, clusterWeight = 0, competitorBoost = 0 }) {
+function scoreOpportunity({ position, impressions = 0, ctr = 0, clusterWeight = 0, competitorBoost = 0, kd = null }) {
   if (!position || position < 11 || position > 20) return 0;
   const proximityWeight = 21 - position; // 1 (pos 20) to 10 (pos 11)
   const ctrFactor = 1 / (ctr + 0.01);    // lower CTR → higher factor
@@ -75,7 +111,10 @@ function scoreOpportunity({ position, impressions = 0, ctr = 0, clusterWeight = 
   const clusterMultiplier = 1 + (clusterWeight * 0.15);
   // Competitor activity multiplier: +1 per new competitor post in cluster.
   const competitorMultiplier = 1 + (competitorBoost * 0.1);
-  return Math.round(base * clusterMultiplier * competitorMultiplier);
+  // KD multiplier: low-KD keywords are easier to push to page 1.
+  // KD 0 → 1.5x, KD 50 → 0.9x, KD 100 → 0.3x. When KD is unknown, neutral 1.0x.
+  const kdMultiplier = kd != null ? Math.max(0.3, 1.5 - (kd / 100) * 1.2) : 1;
+  return Math.round(base * clusterMultiplier * competitorMultiplier * kdMultiplier);
 }
 
 /**
@@ -128,6 +167,21 @@ async function main() {
 
   console.log(`  Using snapshot: ${snap.file}`);
   console.log(`  Total tracked posts: ${snap.data.posts?.length || 0}`);
+  const mobileAvailable = Object.keys(snap.mobileBySlug || {}).length > 0;
+  if (mobileAvailable) {
+    console.log(`  Mobile snapshot: ${snap.mobileFile} (${Object.keys(snap.mobileBySlug).length} posts)`);
+  }
+
+  // Device weights translate (desktop_pos, mobile_pos) into a single
+  // "effective position" weighted by where the site earns revenue. When the
+  // file isn't present, effectivePosition falls back to desktop-only.
+  const deviceWeights = loadDeviceWeights();
+  if (deviceWeights) {
+    const { desktop, mobile } = deviceWeights.site;
+    console.log(`  Device weights: desktop ${(desktop*100).toFixed(0)}% / mobile ${(mobile*100).toFixed(0)}% (${deviceWeights.basis}, ${Object.keys(deviceWeights.pages).length} per-page overrides)`);
+  } else {
+    console.log('  Device weights: not available — effective position falls back to desktop-only');
+  }
 
   const clusterContext = loadClusterContext();
   const weightedClusters = Object.entries(clusterContext.weights).filter(([, w]) => w !== 0);
@@ -166,9 +220,24 @@ async function main() {
     return Number.isNaN(t) ? null : Math.floor((nowMs - t) / 86400000);
   };
 
-  // Step 1: Filter to positions 11–20, exclude rejected keywords, and
-  // exclude posts younger than MIN_AGE_DAYS.
-  const allCandidates = (snap.data.posts || []).filter((p) => p.position && p.position >= 11 && p.position <= 20);
+  // Step 1: Filter to effective-position 11–20, exclude rejected keywords,
+  // and exclude posts younger than MIN_AGE_DAYS. Effective position blends
+  // desktop and mobile rankings weighted by where the site earns revenue
+  // (per-page when that page has >=3 conversions, site-wide otherwise).
+  const annotated = (snap.data.posts || []).map((p) => {
+    const mobilePosition = snap.mobileBySlug ? (snap.mobileBySlug[p.slug] ?? null) : null;
+    const deviceGap = (mobilePosition != null && p.position != null)
+      ? (mobilePosition - p.position)   // +ve = mobile trails desktop (mobile UX issue)
+      : null;
+    const effectivePos = effectivePosition({
+      url: p.url,
+      desktopPos: p.position,
+      mobilePos: mobilePosition,
+      weights: deviceWeights,
+    });
+    return { ...p, mobilePosition, deviceGap, effectivePos };
+  });
+  const allCandidates = annotated.filter((p) => p.effectivePos && p.effectivePos >= 11 && p.effectivePos <= 20);
   const afterRejection = allCandidates.filter((p) => !isRejected(p.keyword) && !isRejected(p.slug));
   const candidates = afterRejection.filter((p) => {
     const meta = loadPostMeta(p.slug);
@@ -226,7 +295,8 @@ async function main() {
     const cluster = clusterFor(post);
     const clusterWeight = cluster ? (clusterContext.weights[cluster] || 0) : 0;
     const competitorBoost = cluster ? (clusterContext.boosts[cluster] || 0) : 0;
-    const score = scoreOpportunity({ position: post.position, impressions, ctr, clusterWeight, competitorBoost });
+    const kd = post.kd ?? null;
+    const score = scoreOpportunity({ position: post.effectivePos, impressions, ctr, clusterWeight, competitorBoost, kd });
 
     // Prefer the post's actual title from metadata; fall back to slug prettified.
     const title = meta?.title
@@ -237,8 +307,12 @@ async function main() {
       title,
       url: post.url,
       keyword: post.keyword,
-      position: post.position,
+      position: post.position,                   // desktop (kept for reference)
+      mobile_position: post.mobilePosition,
+      effective_position: post.effectivePos,     // revenue-weighted blend, drives score
+      device_gap: post.deviceGap,                // mobile_pos - desktop_pos; +ve = mobile trails
       volume: post.volume,
+      kd,
       published_at: post.published_at || meta?.published_at,
       gsc: {
         impressions,
@@ -269,7 +343,10 @@ async function main() {
 
   console.log(`\n  Top ${top.length} quick-win candidates:`);
   for (const c of top) {
-    console.log(`    [pos ${c.position}] ${c.slug} — ${c.gsc.impressions} impr, ${(c.gsc.ctr * 100).toFixed(1)}% CTR, score ${c.score}`);
+    const kdLabel = c.kd != null ? `, KD ${c.kd}` : '';
+    const effLabel = c.effective_position != null && c.effective_position !== c.position
+      ? ` (eff #${c.effective_position})` : '';
+    console.log(`    [pos ${c.position}${effLabel}] ${c.slug} — ${c.gsc.impressions} impr, ${(c.gsc.ctr * 100).toFixed(1)}% CTR${kdLabel}, score ${c.score}`);
   }
 
   // Step 4: Write report
@@ -288,8 +365,12 @@ async function main() {
       slug: c.slug,
       title: c.title,
       position: c.position,
+      mobile_position: c.mobile_position,
+      effective_position: c.effective_position,
+      device_gap: c.device_gap,
       impressions: c.gsc.impressions,
       ctr: c.gsc.ctr,
+      kd: c.kd,
       score: c.score,
       top_query: c.top_query?.keyword || null,
     })),
@@ -319,11 +400,14 @@ function buildMarkdownReport(snapshotFile, all, top) {
   lines.push('');
   lines.push('## Top Candidates');
   lines.push('');
-  lines.push('| # | Slug | Position | Impressions | CTR | Top Query | Score |');
-  lines.push('|---|------|----------|-------------|-----|-----------|-------|');
+  lines.push('| # | Slug | Desktop | Mobile | Effective | KD | Impressions | CTR | Top Query | Score |');
+  lines.push('|---|------|--------:|-------:|----------:|----|-------------|-----|-----------|-------|');
   top.forEach((c, i) => {
     const topQ = c.top_query ? `${c.top_query.keyword} (pos ${c.top_query.position})` : '—';
-    lines.push(`| ${i + 1} | \`${c.slug}\` | ${c.position} | ${c.gsc.impressions} | ${(c.gsc.ctr * 100).toFixed(1)}% | ${topQ} | ${c.score} |`);
+    const kdStr = c.kd != null ? String(c.kd) : '—';
+    const mob = c.mobile_position != null ? c.mobile_position : '—';
+    const eff = c.effective_position != null ? c.effective_position : '—';
+    lines.push(`| ${i + 1} | \`${c.slug}\` | ${c.position} | ${mob} | ${eff} | ${kdStr} | ${c.gsc.impressions} | ${(c.gsc.ctr * 100).toFixed(1)}% | ${topQ} | ${c.score} |`);
   });
   lines.push('');
   lines.push('## Recommended Actions');
@@ -343,6 +427,25 @@ function buildMarkdownReport(snapshotFile, all, top) {
     lines.push('');
     all.slice(top.length).forEach((c) => {
       lines.push(`- \`${c.slug}\` — position ${c.position}, ${c.gsc.impressions} impressions, ${(c.gsc.ctr * 100).toFixed(1)}% CTR`);
+    });
+    lines.push('');
+  }
+
+  // Mobile-gap diagnostic: posts where mobile trails desktop by 10+ positions.
+  // Different action than content refresh — this is a mobile UX/speed/layout
+  // issue. Surfaced even when the post isn't a top-ranked quick-win because
+  // shrinking the gap directly unlocks mobile traffic to a page that's
+  // already competitive on desktop.
+  const mobileGaps = all.filter((c) => (c.device_gap || 0) >= 10).sort((a, b) => b.device_gap - a.device_gap);
+  if (mobileGaps.length) {
+    lines.push('## Mobile UX Gaps (mobile trails desktop by 10+ positions)');
+    lines.push('');
+    lines.push('These posts rank well enough on desktop but lose significantly on mobile. The action here is *not* a content refresh — investigate mobile layout, page speed, or rendering (e.g., heavy JS, bad viewport, hidden CTAs).');
+    lines.push('');
+    lines.push('| Slug | Desktop | Mobile | Gap | Impressions |');
+    lines.push('|------|---------|--------|-----|-------------|');
+    mobileGaps.forEach((c) => {
+      lines.push(`| \`${c.slug}\` | ${c.position} | ${c.mobile_position} | +${c.device_gap} | ${c.gsc.impressions} |`);
     });
     lines.push('');
   }

@@ -1,0 +1,61 @@
+{
+  "computed_at": "2026-04-14T00:05:26.112Z",
+  "window_days": 90,
+  "snapshot_count": 20,
+  "basis": "revenue",
+  "min_conversions_for_page_override": 3,
+  "site": {
+    "desktop": 0.43422101738159785,
+    "mobile": 0.5657789826184022,
+    "tablet": 0
+  },
+  "site_totals": {
+    "sessions": 887,
+    "conversions": 46,
+    "revenue": 313.55
+  },
+  "pages": {
+    "/": {
+      "desktop": 0,
+      "mobile": 1,
+      "tablet": 0,
+      "conversions": 16,
+      "revenue": 113.4
+    },
+    "/products/coconut-lotion": {
+      "desktop": 0.5,
+      "mobile": 0.5,
+      "tablet": 0,
+      "conversions": 11,
+      "revenue": 84
+    },
+    "/blogs/news/best-non-toxic-body-lotion-2025": {
+      "desktop": 1,
+      "mobile": 0,
+      "tablet": 0,
+      "conversions": 4,
+      "revenue": 50.5
+    },
+    "/collections/coconut-oil-lotion": {
+      "desktop": 0,
+      "mobile": 1,
+      "tablet": 0,
+      "conversions": 4,
+      "revenue": 22
+    },
+    "/blogs/news/best-clean-body-lotion-soft-skin-zero-toxins-real-skin-care": {
+      "desktop": 1,
+      "mobile": 0,
+      "tablet": 0,
+      "conversions": 3,
+      "revenue": 0
+    },
+    "/products/organic-foaming-hand-soap": {
+      "desktop": 1,
+      "mobile": 0,
+      "tablet": 0,
+      "conversions": 5,
+      "revenue": 43.65
+    }
+  }
+}

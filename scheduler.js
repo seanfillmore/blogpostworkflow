@@ -229,6 +229,11 @@ if (new Date().getDate() === 1) {
 
   // Step 11: content gap analysis via DataForSEO
   runStep('content-gap', `"${NODE}" agents/content-gap/index.js`, { indent: '    ' });
+
+  // Step 12: refresh device weights from the last 90 days of GA4 data. Downstream
+  // agents (quick-win-targeter, content-strategist, legacy-triage) read these
+  // weights to blend desktop and mobile rank positions by revenue share.
+  runStep('device-weights', `"${NODE}" agents/device-weights/index.js`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
 }

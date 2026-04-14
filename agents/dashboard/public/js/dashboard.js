@@ -1329,15 +1329,39 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// Device toggle for rankings view ('desktop' | 'mobile')
+var rankDevice = typeof rankDevice === 'undefined' ? 'desktop' : rankDevice;
+
+function setRankDevice(device) {
+  rankDevice = device;
+  rankPage = 0;
+  if (typeof data !== 'undefined' && data) renderRankings(data);
+}
+
 function renderRankings(d) {
-  const r = d.rankings;
-  if (!r.items.length) {
+  // Fall back to desktop if the requested device has no data yet
+  const desktopR = d.rankings;
+  const mobileR  = d.rankingsMobile;
+  const mobileAvailable = !!(mobileR && mobileR.items && mobileR.items.length);
+  const desktopAvailable = !!(desktopR && desktopR.items && desktopR.items.length);
+  if (rankDevice === 'mobile' && !mobileAvailable) rankDevice = 'desktop';
+  const r = rankDevice === 'mobile' ? mobileR : desktopR;
+
+  if (!r || !r.items.length) {
     document.getElementById('rankings-table').innerHTML = '<div class="empty">No rank snapshots yet. Run <code>npm run rank-tracker</code> to generate one.</div>';
     return;
   }
 
+  // Device toggle — shown only when both devices have data
+  const deviceToggle = (desktopAvailable && mobileAvailable)
+    ? '<div style="display:flex;gap:4px;margin-bottom:8px">' +
+        '<button class="filter-btn' + (rankDevice === 'desktop' ? ' active' : '') + '" onclick="setRankDevice(\'desktop\')">Desktop</button>' +
+        '<button class="filter-btn' + (rankDevice === 'mobile'  ? ' active' : '') + '" onclick="setRankDevice(\'mobile\')">Mobile</button>' +
+      '</div>'
+    : '';
+
   const note = r.latestDate ? r.latestDate + (r.previousDate ? ' vs ' + r.previousDate : '') : '';
-  document.getElementById('rank-note').textContent = note;
+  document.getElementById('rank-note').textContent = note + (rankDevice === 'mobile' ? ' (mobile)' : '');
 
   const tierBadge = function(t) {
     if (t === 'page1')     return badge('page1', 'Page 1');
@@ -1475,10 +1499,11 @@ function renderRankings(d) {
     { val: 'quickWins', label: 'Quick Win' }, { val: 'needsWork', label: 'Needs Work' }, { val: 'notRanking', label: 'Not Ranking' },
   ];
 
+  const rankingsRef = rankDevice === 'mobile' ? 'data.rankingsMobile.items' : 'data.rankings.items';
   const rows = pageItems.map(function(x, i) {
     const globalIdx = r.items.indexOf(x);
     const idxRef = globalIdx !== -1 ? globalIdx : rankPage * RANK_PAGE_SIZE + i;
-    return '<tr style="cursor:pointer" onclick="openKeywordCard(data.rankings.items[' + idxRef + '])">' +
+    return '<tr style="cursor:pointer" onclick="openKeywordCard(' + rankingsRef + '[' + idxRef + '])">' +
       '<td>' + esc(x.keyword) + (x.tracked ? ' <span class="muted" style="font-size:10px">&#9679;</span>' : '') + '</td>' +
       '<td class="nowrap"><span class="pos">' + (x.position != null ? '#' + x.position : '&#8212;') + '</span></td>' +
       '<td class="nowrap">' + changeHtml(x) + (x.previousPosition != null ? '<span class="muted" style="font-size:11px;margin-left:4px">was #' + x.previousPosition + '</span>' : '') + '</td>' +
@@ -1495,7 +1520,7 @@ function renderRankings(d) {
     '</div>';
 
   document.getElementById('rankings-table').innerHTML =
-    searchBar + chipsHtml +
+    deviceToggle + searchBar + chipsHtml +
     '<table><thead><tr>' +
     thHtml('Keyword', 'keyword', null, []) +
     thHtml('Position', 'position', 'position', posOpts) +

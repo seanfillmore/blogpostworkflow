@@ -24,6 +24,7 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-strategist');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
+import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -86,10 +87,39 @@ function loadLatestRankReport() {
 export function loadClusterPerformance() {
   const snapshotsDir = join(ROOT, 'data', 'rank-snapshots');
   if (!existsSync(snapshotsDir)) return null;
-  const files = readdirSync(snapshotsDir).filter((f) => f.endsWith('.json')).sort();
-  if (!files.length) return null;
-  const snap = JSON.parse(readFileSync(join(snapshotsDir, files[files.length - 1]), 'utf8'));
-  const posts = snap.posts || [];
+  const all = readdirSync(snapshotsDir).filter((f) => f.endsWith('.json'));
+  const pickLatest = (regex) => {
+    const matches = all.filter((f) => regex.test(f)).sort((a, b) => a.slice(0, 10).localeCompare(b.slice(0, 10)));
+    return matches.length ? matches[matches.length - 1] : null;
+  };
+  // Primary snapshot: latest desktop-suffixed file, or legacy plain-date file.
+  const desktopFile = pickLatest(/^\d{4}-\d{2}-\d{2}-desktop\.json$/)
+                   || pickLatest(/^\d{4}-\d{2}-\d{2}\.json$/);
+  if (!desktopFile) return null;
+  const snap = JSON.parse(readFileSync(join(snapshotsDir, desktopFile), 'utf8'));
+
+  // Mobile snapshot (optional) — indexed by slug so we can compute effective
+  // position per post. Without it, effectivePosition falls back to desktop.
+  const mobileFile = pickLatest(/^\d{4}-\d{2}-\d{2}-mobile\.json$/);
+  const mobileBySlug = {};
+  if (mobileFile) {
+    try {
+      const mob = JSON.parse(readFileSync(join(snapshotsDir, mobileFile), 'utf8'));
+      for (const p of (mob.posts || [])) {
+        if (p.slug) mobileBySlug[p.slug] = p.position ?? null;
+      }
+    } catch { /* ignore */ }
+  }
+  const deviceWeights = loadDeviceWeights();
+
+  // Replace each post's position with its effective (revenue-weighted) position,
+  // so cluster metrics (median, page-1 count, drag count) reflect what Google
+  // shows the device mix that actually earns revenue — not just desktop.
+  const posts = (snap.posts || []).map((p) => {
+    const mobilePos = mobileBySlug[p.slug] ?? null;
+    const eff = effectivePosition({ url: p.url, desktopPos: p.position, mobilePos, weights: deviceWeights });
+    return { ...p, desktop_position: p.position, mobile_position: mobilePos, position: eff };
+  });
 
   // Map slug -> tags from data/posts/*.json
   const tagsBySlug = {};
@@ -200,7 +230,7 @@ export function loadClusterPerformance() {
     };
   }
 
-  return { computed_at: new Date().toISOString(), snapshot_file: files[files.length - 1], clusters };
+  return { computed_at: new Date().toISOString(), snapshot_file: desktopFile, mobile_snapshot_file: mobileFile, clusters };
 }
 
 function buildClusterWeightSection(clusterPerf) {
