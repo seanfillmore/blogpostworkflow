@@ -332,7 +332,13 @@ async function runItem(item) {
     if (!ok) return false;
   }
 
-  // Step 4: Edit
+  // Step 4: Answer-first rewrite (LLM citation optimization)
+  run(
+    `node agents/answer-first-rewriter/index.js ${postSlug} --apply`,
+    `answer-first: ${postSlug}`
+  );
+
+  // Step 5: Edit (final quality check)
   const editorReport = getEditorReportPath(postSlug);
   if (!existsSync(editorReport)) {
     const ok = run(
