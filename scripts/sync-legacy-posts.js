@@ -51,11 +51,22 @@ async function main() {
           continue;
         }
 
+        // Legacy posts don't carry a brief, so we have no canonical target
+        // keyword. Take the first clause of the title (before the first
+        // : – — , or |) — that's the topical phrase by SEO convention. Fall
+        // back to the slug-as-prose if the title has no separator and is too
+        // long, or to the slug verbatim if title is empty. Empty string is
+        // never written: it broke the editor's product-spec classifier
+        // (kw.includes('toothpaste') failed on '' → wrong spec checked).
+        const titleHead = (a.title || '').split(/[:–—,|]/)[0].trim();
+        const slugAsKeyword = slug.replace(/-/g, ' ');
+        const targetKeyword = titleHead || slugAsKeyword;
+
         const meta = {
           slug,
           title: a.title,
           meta_description: a.summary_html?.replace(/<[^>]+>/g, '').trim() || '',
-          target_keyword: '',  // unknown for legacy posts; rewriter will fall back to title
+          target_keyword: targetKeyword,
           tags: (a.tags || '').split(',').map((t) => t.trim()).filter(Boolean),
           shopify_blog_id: blog.id,
           shopify_blog_handle: blog.handle,
