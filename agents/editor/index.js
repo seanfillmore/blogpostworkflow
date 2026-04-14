@@ -712,17 +712,33 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
  *
  * Creates a timestamped backup before writing.
  */
-function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}) {
+/**
+ * Pre-review auto-fixes — run BEFORE the editor's deterministic checks and
+ * editorial review so the LLM sees the corrected state. Handles things that
+ * are unambiguous and safe to apply on every editor pass:
+ *   - Stale year references in body text (narrow context patterns)
+ *   - Stale years inside heading tags
+ *   - Removal of internal links to drafts / future-scheduled posts
+ *
+ * Returns the updated HTML string. If anything changed, the file on disk
+ * is also rewritten (with timestamped backup); callers should re-parse
+ * the returned HTML before continuing.
+ *
+ * Previously these fixes ran AFTER the editorial review, which meant the
+ * report still flagged them as blockers even though the HTML had just
+ * been cleaned — required a second editor pass to clear. Moving them
+ * up-front makes a single pass converge.
+ */
+function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
   const currentYear = new Date().getFullYear();
   let fixed = html;
   const changes = [];
 
-  // 0. Remove internal links to unpublished posts that would 404 at publish time.
-  //    These are links to drafts with no schedule, or links to posts scheduled
-  //    after the parent. The internal-linker will re-add them once both are live.
+  // Remove internal links to unpublished posts that would 404 at publish time.
+  //   These are links to drafts with no schedule, or links to posts scheduled
+  //   after the parent. The internal-linker will re-add them once both are live.
   for (const link of linksToRemove) {
     const escapedHref = link.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Try to remove the entire <li> if inside a list (common in related-articles)
     const liRegex = new RegExp(`\\s*<li[^>]*>\\s*<a[^>]+href=["']${escapedHref}["'][^>]*>[\\s\\S]*?<\\/a>\\s*<\\/li>`, 'gi');
     const before = fixed;
     fixed = fixed.replace(liRegex, '');
@@ -730,7 +746,6 @@ function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}
       changes.push(`Auto-removed link to unpublished post: ${link.href} ("${link.text}")`);
       continue;
     }
-    // Fallback: just strip the <a> wrapper, keep the text
     const aRegex = new RegExp(`<a[^>]+href=["']${escapedHref}["'][^>]*>(.*?)<\\/a>`, 'gis');
     fixed = fixed.replace(aRegex, '$1');
     if (fixed !== before) {
@@ -738,28 +753,8 @@ function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}
     }
   }
 
-  // 1. Remove broken external links
-  const siteHost = new URL(config.url).hostname;
-  for (const link of brokenLinks) {
-    try {
-      const urlHost = new URL(link.href).hostname;
-      const isInternal = urlHost === siteHost || urlHost === `www.${siteHost}`;
-      if (isInternal) continue; // Don't strip internal links — may just be temporarily down
-    } catch { continue; }
-
-    // Escape for regex
-    const escapedHref = link.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const linkRegex = new RegExp(`<a[^>]+href=["']${escapedHref}["'][^>]*>(.*?)<\\/a>`, 'gis');
-    const before = fixed;
-    fixed = fixed.replace(linkRegex, '$1');
-    if (fixed !== before) {
-      changes.push(`Removed broken link: ${link.href} (kept text: "${link.text}")`);
-    }
-  }
-
-  // 2a. Fix stale years in body text using narrow context patterns. The
-  // prefix list keeps us safe from URLs, IDs, and historical quotations
-  // ("the 2008 study" stays as written).
+  // Stale years in body text — narrow context patterns keep us safe from
+  // URLs, IDs, and historical quotations ("the 2008 study" stays as written).
   for (let year = 2020; year < currentYear; year++) {
     const yearRegex = new RegExp(`\\b(in |updated |\\()${year}\\b`, 'gi');
     const before = fixed;
@@ -769,12 +764,8 @@ function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}
     }
   }
 
-  // 2b. Fix stale years inside heading tags. These are almost always
-  // "current year" markers like "Best X 2025" — bumping them to the
-  // current year is the right call. Previously the editor only flagged
-  // these as YEAR ACCURACY blockers (manual review), but per user
-  // direction this should be auto-resolved during edit, the same way
-  // body-text years are.
+  // Stale years inside heading tags. Almost always "current year" markers
+  // like "Best X 2025" — safe to bump.
   fixed = fixed.replace(/<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi, (match, level, attrs, inner) => {
     const updated = inner.replace(/\b(20\d{2})\b/g, (yearMatch, yr) => {
       const n = parseInt(yr, 10);
@@ -787,11 +778,48 @@ function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}
   });
 
   if (changes.length === 0) {
-    console.log('  Auto-fix: no changes needed.');
+    return html;
+  }
+
+  const backupPath = htmlPath.replace('.html', `.backup-${Date.now()}.html`);
+  copyFileSync(htmlPath, backupPath);
+  writeFileSync(htmlPath, fixed, 'utf8');
+  console.log(`\n  Pre-review auto-fix applied ${changes.length} change(s) (backup: ${basename(backupPath)}):`);
+  changes.forEach((c) => console.log(`    • ${c}`));
+  return fixed;
+}
+
+/**
+ * Post-review auto-fixes — opt-in via --auto-fix. Removes broken external
+ * links because deletion can change the post's meaning; the user opts in
+ * to that. Internal links are never auto-removed (they may just be
+ * temporarily down).
+ */
+function applyPostReviewAutoFixes(htmlPath, html, brokenLinks) {
+  let fixed = html;
+  const changes = [];
+  const siteHost = new URL(config.url).hostname;
+  for (const link of brokenLinks) {
+    try {
+      const urlHost = new URL(link.href).hostname;
+      const isInternal = urlHost === siteHost || urlHost === `www.${siteHost}`;
+      if (isInternal) continue;
+    } catch { continue; }
+
+    const escapedHref = link.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const linkRegex = new RegExp(`<a[^>]+href=["']${escapedHref}["'][^>]*>(.*?)<\\/a>`, 'gis');
+    const before = fixed;
+    fixed = fixed.replace(linkRegex, '$1');
+    if (fixed !== before) {
+      changes.push(`Removed broken link: ${link.href} (kept text: "${link.text}")`);
+    }
+  }
+
+  if (changes.length === 0) {
+    console.log('  Post-review auto-fix: no changes needed.');
     return;
   }
 
-  // Backup original
   const backupPath = htmlPath.replace('.html', `.backup-${Date.now()}.html`);
   copyFileSync(htmlPath, backupPath);
   writeFileSync(htmlPath, fixed, 'utf8');
@@ -857,25 +885,58 @@ async function runEditor(htmlPath) {
   const topicalMap = loadTopicalMap();
 
   // Parse HTML
-  const $ = cheerio.load(html);
-  const allLinks = extractLinks($);
-  const categorised = categoriseLinks(allLinks);
+  let $ = cheerio.load(html);
+  let workingHtml = html;
+  let allLinks = extractLinks($);
+  let categorised = categoriseLinks(allLinks);
 
   // Build post URL (approximate — for topical map matching)
   const postUrl = `${config.url}/blogs/news/${slug}`;
-  const linkedBlogUrls = new Set(categorised.internal.blog.map((l) => l.href));
+  let linkedBlogUrls = new Set(categorised.internal.blog.map((l) => l.href));
 
   // 1. HTTP check all links
   process.stdout.write('  Checking all links... ');
-  const allLinksFlat = [
+  let allLinksFlat = [
     ...categorised.internal.products,
     ...categorised.internal.collections,
     ...categorised.internal.blog,
     ...categorised.external.sources,
     ...categorised.external.other,
   ];
-  const linkResults = await checkAllLinks(allLinksFlat);
+  let linkResults = await checkAllLinks(allLinksFlat);
   console.log(`${linkResults.length} checked (${linkResults.filter((r) => !r.check.ok).length} broken)`);
+
+  // 1b. Pre-review auto-fix: years + unpublished-link removal. Runs BEFORE
+  // the deterministic checks and editorial review so the editor sees the
+  // already-corrected state — a single editor pass converges instead of
+  // requiring two (the report used to flag the very issues the auto-fix
+  // had just cleaned, because it ran afterwards).
+  const parentPublishDateForFix = meta?.shopify_publish_at ? new Date(meta.shopify_publish_at) : null;
+  const linksToRemove = linkResults
+    .filter(r => r.check.ok && r.check.unpublished)
+    .filter(r => {
+      if (!r.check.linked_publish_at) return true;
+      if (parentPublishDateForFix && new Date(r.check.linked_publish_at) > parentPublishDateForFix) return true;
+      return false;
+    });
+  const fixedHtml = applyPreReviewAutoFixes(htmlPath, workingHtml, { linksToRemove });
+  if (fixedHtml !== workingHtml) {
+    // Re-parse with corrected HTML so all downstream checks see clean state
+    workingHtml = fixedHtml;
+    $ = cheerio.load(workingHtml);
+    allLinks = extractLinks($);
+    categorised = categoriseLinks(allLinks);
+    linkedBlogUrls = new Set(categorised.internal.blog.map((l) => l.href));
+    // Re-flatten and re-check links since we may have removed some
+    allLinksFlat = [
+      ...categorised.internal.products,
+      ...categorised.internal.collections,
+      ...categorised.internal.blog,
+      ...categorised.external.sources,
+      ...categorised.external.other,
+    ];
+    linkResults = await checkAllLinks(allLinksFlat);
+  }
 
   // 2. Internal validation
   process.stdout.write('  Validating internal links... ');
@@ -971,21 +1032,13 @@ async function runEditor(htmlPath) {
   console.log(`    Sources to review:  ${needsReview}`);
   console.log(`    Topical suggestions:${topicalSuggestions.length}`);
 
-  // Determine which unpublished-post links need auto-removal
-  const parentPublishDate = meta?.shopify_publish_at ? new Date(meta.shopify_publish_at) : null;
-  const linksToRemove = linkResults
-    .filter(r => r.check.ok && r.check.unpublished)
-    .filter(r => {
-      // Remove if: no publish date at all, or scheduled after the parent
-      if (!r.check.linked_publish_at) return true;
-      if (parentPublishDate && new Date(r.check.linked_publish_at) > parentPublishDate) return true;
-      return false;
-    });
-
-  // Year corrections + unpublished-link removals are unambiguous — always run.
-  // External broken-link removals still require --auto-fix because they
-  // delete content the user may want to revise instead.
-  applyAutoFixes(htmlPath, html, args.includes('--auto-fix') ? brokenLinks : [], { linksToRemove });
+  // Pre-review auto-fixes (years + unpublished-link removal) already ran
+  // before the editor verdict. Post-review fix handles broken external
+  // link removal, which is opt-in via --auto-fix because deleting <a>
+  // tags can change content the user might want to revise instead.
+  if (args.includes('--auto-fix')) {
+    applyPostReviewAutoFixes(htmlPath, workingHtml, brokenLinks);
+  }
 }
 
 async function main() {
