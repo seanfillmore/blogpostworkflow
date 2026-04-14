@@ -726,7 +726,13 @@ async function runEditor(htmlPath) {
     try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); }
     catch (e) { console.warn(`  Warning: could not parse metadata ${metaPath}: ${e.message}`); }
   }
-  const keyword = meta?.target_keyword ?? slug.replace(/-/g, ' ');
+  // `??` only falls through on null/undefined — empty-string target_keyword
+  // would silently leak through and break product classification (the
+  // `kw.includes('toothpaste')` branch never matches `""`, falling through
+  // to the union-of-all-products catch-all and reporting the wrong spec).
+  // ~63% of legacy synced posts have an empty target_keyword, so this was
+  // mis-classifying most of the catalog.
+  const keyword = (meta?.target_keyword || '').trim() || slug.replace(/-/g, ' ');
 
   console.log(`\n  Post: "${meta?.title ?? slug}"`);
   console.log(`  Keyword: ${keyword}\n`);
