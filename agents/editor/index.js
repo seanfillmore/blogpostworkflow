@@ -428,6 +428,77 @@ function extractFaqQAs($) {
   return qas;
 }
 
+/**
+ * Load competitor brand aliases from config/ai-citation-prompts.json.
+ * Combined and lowercased for case-insensitive substring matching.
+ */
+function loadCompetitorAliases() {
+  try {
+    const cfg = JSON.parse(readFileSync(join(ROOT, 'config', 'ai-citation-prompts.json'), 'utf8'));
+    const aliases = [];
+    for (const c of (cfg.competitors || [])) {
+      if (c.name) aliases.push(c.name.toLowerCase());
+      for (const a of (c.aliases || [])) aliases.push(a.toLowerCase());
+    }
+    return [...new Set(aliases)].filter(Boolean);
+  } catch { return []; }
+}
+
+/**
+ * Deterministic check: scan FAQ Q&As for competitor brand names. Returns a
+ * formatted markdown section ready to splice into the editor report — either
+ * "VERDICT: Pass" with a one-line note, or "VERDICT: BLOCKER" with the
+ * specific Q&As and brands found.
+ *
+ * Replaces the previous LLM-judged version, which over-flagged competitor
+ * mentions in body content (comparison tables, listicle items) where they're
+ * legitimate. The rule has always been FAQ-specific; the code now enforces
+ * exactly that, no broader.
+ */
+function buildFaqCompetitorVerdict(faqQAs, competitorAliases) {
+  if (!faqQAs.length) {
+    return `## 8. COMPETITOR NAMES IN FAQ
+**VERDICT:** Pass
+**NOTES:** No FAQ Q&As detected (no FAQPage JSON-LD schema in post). Rule does not apply.
+
+---
+`;
+  }
+  const violations = [];
+  for (let i = 0; i < faqQAs.length; i++) {
+    const qa = faqQAs[i];
+    const text = `${qa.q}\n${qa.a}`.toLowerCase();
+    const found = competitorAliases.filter(a => {
+      // Word-bounded match avoids "hello" matching "hello" inside e.g. "hellosomething"
+      const re = new RegExp(`\\b${a.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}\\b`, 'i');
+      return re.test(text);
+    });
+    if (found.length) {
+      violations.push({ qIndex: i + 1, q: qa.q.slice(0, 80), brands: [...new Set(found)] });
+    }
+  }
+  if (!violations.length) {
+    return `## 8. COMPETITOR NAMES IN FAQ
+**VERDICT:** Pass
+**NOTES:** Scanned ${faqQAs.length} FAQ Q&A${faqQAs.length > 1 ? 's' : ''} against ${competitorAliases.length} competitor aliases. None found.
+
+---
+`;
+  }
+  const lines = violations.map(v =>
+    `- Q${v.qIndex} ("${v.q}${v.q.length >= 80 ? '…' : ''}") mentions: ${v.brands.join(', ')}`
+  ).join('\n');
+  return `## 8. COMPETITOR NAMES IN FAQ
+**VERDICT:** BLOCKER
+**NOTES:** Competitor brand names found in ${violations.length} FAQ Q&A${violations.length > 1 ? 's' : ''}:
+${lines}
+
+Rewrite or remove the affected Q&As. (Body content mentions are not a violation — this rule applies only to the FAQ section.)
+
+---
+`;
+}
+
 // ── claude editorial review ───────────────────────────────────────────────────
 
 async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary) {
@@ -686,10 +757,10 @@ function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}
     }
   }
 
-  // 2. Fix stale years in visible text (not inside href/src attributes)
-  // Replace year strings like "in 2023" or "2024" in text nodes only
+  // 2a. Fix stale years in body text using narrow context patterns. The
+  // prefix list keeps us safe from URLs, IDs, and historical quotations
+  // ("the 2008 study" stays as written).
   for (let year = 2020; year < currentYear; year++) {
-    // Match year in text context: preceded/followed by space, punctuation, or common words
     const yearRegex = new RegExp(`\\b(in |updated |\\()${year}\\b`, 'gi');
     const before = fixed;
     fixed = fixed.replace(yearRegex, (match, prefix) => `${prefix}${currentYear}`);
@@ -697,6 +768,23 @@ function applyAutoFixes(htmlPath, html, brokenLinks, { linksToRemove = [] } = {}
       changes.push(`Corrected year: ${year} → ${currentYear}`);
     }
   }
+
+  // 2b. Fix stale years inside heading tags. These are almost always
+  // "current year" markers like "Best X 2025" — bumping them to the
+  // current year is the right call. Previously the editor only flagged
+  // these as YEAR ACCURACY blockers (manual review), but per user
+  // direction this should be auto-resolved during edit, the same way
+  // body-text years are.
+  fixed = fixed.replace(/<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi, (match, level, attrs, inner) => {
+    const updated = inner.replace(/\b(20\d{2})\b/g, (yearMatch, yr) => {
+      const n = parseInt(yr, 10);
+      return n < currentYear ? String(currentYear) : yearMatch;
+    });
+    if (updated !== inner) {
+      changes.push(`Corrected year in <h${level}>: "${inner.replace(/<[^>]+>/g, '').trim().slice(0, 60)}"`);
+    }
+    return `<h${level}${attrs}>${updated}</h${level}>`;
+  });
 
   if (changes.length === 0) {
     console.log('  Auto-fix: no changes needed.');
@@ -845,8 +933,19 @@ async function runEditor(htmlPath) {
     okLinks: linkResults.filter((r) => r.check.ok).length,
     brokenLinks: linkResults.filter((r) => !r.check.ok).map((r) => ({ href: r.href, status: r.check.status })),
   };
-  const review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary);
+  let review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary);
   console.log('done');
+
+  // Override the LLM's COMPETITOR NAMES IN FAQ section with a deterministic
+  // verdict. The LLM was over-flagging body-content competitor mentions
+  // (comparison tables, listicle items) as if they violated this rule —
+  // they don't. The rule is FAQ-specific. Code now enforces exactly that.
+  const competitorAliases = loadCompetitorAliases();
+  const faqVerdict = buildFaqCompetitorVerdict(faqQAs, competitorAliases);
+  review = review.replace(
+    /##\s*\d?\.?\s*COMPETITOR NAMES IN FAQ[\s\S]*?(?=\n##\s|\n---|$)/i,
+    faqVerdict.trim() + '\n'
+  );
 
   // Build and save report
   const report = buildReport({
