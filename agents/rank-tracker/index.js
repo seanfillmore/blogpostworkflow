@@ -180,7 +180,11 @@ async function fetchLiveKeywordData(device = 'desktop') {
   try {
     const domain = config.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
     console.log(`  Fetching live ${device} keyword data from DataForSEO for ${domain}...`);
-    const keywords = await getRankedKeywords(domain, { limit: 1000, device });
+    // 5000 is well above this domain's current organic footprint (~1k) and
+    // leaves headroom as the site grows. getRankedKeywords paginates internally
+    // (DataForSEO's per-request max is 1000), so this is still a single logical
+    // call from our side — it just spans multiple API pages when needed.
+    const keywords = await getRankedKeywords(domain, { limit: 5000, device });
     const map = new Map();
     for (const kw of keywords) {
       map.set(kw.keyword.toLowerCase().trim(), {
@@ -343,7 +347,7 @@ function formatDelta(current, previous) {
 
 // ── report builder ────────────────────────────────────────────────────────────
 
-function buildReport(entries, today, previousDate) {
+function buildReport(entries, today, previousDate, discovery = null) {
   const lines = [];
 
   const onPage1 = entries.filter((e) => e.position && e.position <= 10).length;
@@ -509,11 +513,103 @@ function buildReport(entries, today, previousDate) {
   }
 
   lines.push('');
+  // Keyword discovery — new rankings since previous snapshot. Big leading
+  // signal for whether recent content/linking work is earning Google's trust.
+  if (discovery && (discovery.newKeywords.length || discovery.lostKeywords.length)) {
+    lines.push('---');
+    lines.push('');
+    lines.push('## Keyword Discovery');
+    lines.push('');
+    lines.push(`Compared with the ${previousDate} snapshot.`);
+    lines.push('');
+    if (discovery.newKeywords.length) {
+      lines.push(`### 🆕 New rankings (${discovery.newKeywords.length})`);
+      lines.push('');
+      lines.push('Keywords Google is now ranking us for that weren\'t in the previous snapshot.');
+      lines.push('');
+      lines.push('| Keyword | Position | Volume | URL |');
+      lines.push('|---------|---------:|-------:|-----|');
+      for (const k of discovery.newKeywords.slice(0, 25)) {
+        const url = k.url ? `\`${k.url}\`` : '—';
+        lines.push(`| ${k.keyword} | #${k.position} | ${k.volume?.toLocaleString() ?? '—'} | ${url} |`);
+      }
+      if (discovery.newKeywords.length > 25) {
+        lines.push('');
+        lines.push(`_…and ${discovery.newKeywords.length - 25} more. See \`data/reports/rank-tracker/new-rankings-<device>.json\` for the full list._`);
+      }
+      lines.push('');
+    }
+    if (discovery.lostKeywords.length) {
+      lines.push(`### 📉 Lost rankings (${discovery.lostKeywords.length})`);
+      lines.push('');
+      lines.push('Keywords we ranked for last snapshot that have disappeared. Some noise is normal (DataForSEO refresh cycles, positions falling past their tracked cutoff); a sudden bulk disappearance usually means a real penalty.');
+      lines.push('');
+      lines.push('| Keyword | Prev Position | Volume | URL |');
+      lines.push('|---------|--------------:|-------:|-----|');
+      for (const k of discovery.lostKeywords.slice(0, 25)) {
+        const url = k.url ? `\`${k.url}\`` : '—';
+        lines.push(`| ${k.keyword} | #${k.position} | ${k.volume?.toLocaleString() ?? '—'} | ${url} |`);
+      }
+      if (discovery.lostKeywords.length > 25) {
+        lines.push('');
+        lines.push(`_…and ${discovery.lostKeywords.length - 25} more._`);
+      }
+      lines.push('');
+    }
+  }
+
   lines.push('---');
   lines.push('');
   lines.push(`*Next run: \`node agents/rank-tracker/index.js\`*`);
 
   return lines.join('\n');
+}
+
+// ── keyword-discovery diff ───────────────────────────────────────────────────
+
+/**
+ * Compare the ranking-keyword set in two snapshots and produce a discovery
+ * report: keywords that newly appeared (Google started ranking the domain for
+ * them) and keywords that disappeared (ranked last time, don't any more).
+ *
+ * Caveats:
+ *   - "new" is the strong signal — something we didn't rank for now ranks.
+ *   - "lost" is noisier: the keyword could have fallen past DataForSEO's
+ *     tracked position, or the DB refresh cycle may have dropped it briefly.
+ *     Still surfaced — a sudden bulk disappearance usually means a real
+ *     penalty, and false positives are easy to triage by spot-checking.
+ */
+function diffRankingKeywords(current, previous) {
+  const keysOf = (snap) => {
+    const combined = [...(snap.posts || []), ...(snap.allKeywords || [])];
+    const byKw = new Map();
+    for (const k of combined) {
+      if (!k.position) continue;
+      const kw = (k.keyword || '').toLowerCase().trim();
+      if (!kw) continue;
+      // When a keyword appears in both posts and allKeywords (shouldn't, but
+      // defensive), prefer the first occurrence.
+      if (!byKw.has(kw)) byKw.set(kw, k);
+    }
+    return byKw;
+  };
+
+  const curMap = keysOf(current);
+  const prevMap = keysOf(previous);
+
+  const newKeywords = [];
+  for (const [kw, entry] of curMap) {
+    if (!prevMap.has(kw)) newKeywords.push(entry);
+  }
+  const lostKeywords = [];
+  for (const [kw, entry] of prevMap) {
+    if (!curMap.has(kw)) lostKeywords.push(entry);
+  }
+  // Sort by volume desc — highest-traffic discoveries first.
+  const byVolume = (a, b) => (b.volume || 0) - (a.volume || 0);
+  newKeywords.sort(byVolume);
+  lostKeywords.sort(byVolume);
+  return { newKeywords, lostKeywords };
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -662,11 +758,37 @@ async function runForDevice({ device, today, posts, blogIndex, gscCache, isSoleD
   writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2));
   console.log(`\n  Snapshot saved: ${snapshotPath}`);
 
+  // Keyword-discovery diff: compare current snapshot's ranking keywords to
+  // the previous snapshot for this device. "New" keywords are a leading
+  // signal that Google has started ranking the domain for fresh queries
+  // (usually within a cluster where we've added content or earned links).
+  let discovery = null;
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  if (prevSnapshot && prevSnapshot.date !== today) {
+    discovery = diffRankingKeywords(snapshot, prevSnapshot);
+    const discoveryPath = join(REPORTS_DIR, `new-rankings-${device}.json`);
+    const discoveryReport = {
+      generated_at: new Date().toISOString(),
+      device,
+      current_date: today,
+      previous_date: prevSnapshot.date,
+      new_count: discovery.newKeywords.length,
+      lost_count: discovery.lostKeywords.length,
+      new_keywords: discovery.newKeywords.map(k => ({
+        keyword: k.keyword, position: k.position, volume: k.volume, url: k.url,
+      })),
+      lost_keywords: discovery.lostKeywords.map(k => ({
+        keyword: k.keyword, position: k.position, volume: k.volume, url: k.url,
+      })),
+    };
+    writeFileSync(discoveryPath, JSON.stringify(discoveryReport, null, 2));
+    console.log(`  Discovery diff: ${discovery.newKeywords.length} new, ${discovery.lostKeywords.length} lost vs ${prevSnapshot.date} → ${discoveryPath}`);
+  }
+
   // Write markdown report. When tracking both devices, write device-suffixed
   // reports; when a single device was requested, preserve the legacy filename
   // so anything that links to rank-tracker-report.md keeps working.
-  mkdirSync(REPORTS_DIR, { recursive: true });
-  const report = buildReport(entries, today, prevSnapshot?.date);
+  const report = buildReport(entries, today, prevSnapshot?.date, discovery);
   const reportName = isSoleDevice ? 'rank-tracker-report.md' : `rank-tracker-report-${device}.md`;
   const reportPath = join(REPORTS_DIR, reportName);
   writeFileSync(reportPath, report);
