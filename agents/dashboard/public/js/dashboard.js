@@ -902,20 +902,25 @@ function renderBlockedPostsCard(d) {
 // Fetch and show the editor report markdown in a modal-style overlay. Keeps
 // the dashboard as a single source of truth for blocker resolution so the
 // user never has to SSH to read the report.
+//
+// Styles are inlined (not a CSS class) to match the pattern of the other
+// modals in this file — the dashboard doesn't have a generic .modal-overlay
+// rule, each modal brings its own layer.
 function openEditorReport(slug) {
   fetch('/editor-report/' + encodeURIComponent(slug))
     .then(r => r.ok ? r.text() : Promise.reject(r.status))
     .then(md => {
       const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay';
-      overlay.onclick = () => overlay.remove();
-      overlay.innerHTML = '<div class="modal-body" onclick="event.stopPropagation()" ' +
-        'style="background:white;max-width:900px;max-height:85vh;overflow:auto;border-radius:10px;padding:24px 28px;">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
-          '<h3 style="margin:0;">Editor Report &mdash; ' + esc(slug) + '</h3>' +
-          '<button class="btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">Close</button>' +
-        '</div>' +
-        '<pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:12px;line-height:1.55;margin:0;">' + esc(md) + '</pre>' +
+      overlay.id = 'editor-report-modal-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:40px 20px;';
+      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+      overlay.innerHTML =
+        '<div style="background:white;max-width:900px;width:100%;max-height:85vh;overflow:auto;border-radius:10px;padding:24px 28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;">' +
+            '<h3 style="margin:0;font-size:16px;">Editor Report &mdash; ' + esc(slug) + '</h3>' +
+            '<button class="btn-secondary" onclick="document.getElementById(\'editor-report-modal-overlay\').remove()">Close</button>' +
+          '</div>' +
+          '<pre style="white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;margin:0;color:#1f2937;">' + esc(md) + '</pre>' +
         '</div>';
       document.body.appendChild(overlay);
     })
