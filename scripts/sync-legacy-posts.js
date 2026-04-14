@@ -15,10 +15,9 @@ import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../lib/shopify.js';
+import { getMetaPath, getContentPath, ensurePostDir, POSTS_DIR } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..');
-const POSTS_DIR = join(ROOT, 'data', 'posts');
 
 const force = process.argv.includes('--force');
 
@@ -44,8 +43,8 @@ async function main() {
       for (const a of articles) {
         total++;
         const slug = a.handle || slugify(a.title);
-        const jsonPath = join(POSTS_DIR, `${slug}.json`);
-        const htmlPath = join(POSTS_DIR, `${slug}.html`);
+        const jsonPath = getMetaPath(slug);
+        const htmlPath = getContentPath(slug);
 
         if (!force && existsSync(jsonPath) && existsSync(htmlPath)) {
           skipped++;
@@ -67,6 +66,7 @@ async function main() {
           legacy_source: 'sync-legacy-posts.js',
         };
 
+        ensurePostDir(slug);
         writeFileSync(jsonPath, JSON.stringify(meta, null, 2));
         writeFileSync(htmlPath, a.body_html || '');
         written++;
