@@ -196,6 +196,9 @@ if (new Date().getDay() === 0) {
   // Step 8: cannibalization detection + resolution
   runStep('cannibalization-resolver', `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`, { indent: '    ' });
 
+  // Step 8b: AI citation tracking across LLMs
+  runStep('ai-citation-tracker', `"${NODE}" agents/ai-citation-tracker/index.js`, { indent: '    ' });
+
   // Step 9: GA4 content analysis
   runStep('ga4-content-analyzer', `"${NODE}" agents/ga4-content-analyzer/index.js`, { indent: '    ' });
 

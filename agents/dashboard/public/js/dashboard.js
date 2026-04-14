@@ -420,6 +420,7 @@ function renderOptimizeTab(d) {
 
   document.getElementById('tab-optimize').innerHTML =
     renderPerformanceQueueCard(d) +
+    renderAICitationCard(d) +
     renderCannibalizationCard(d) +
     renderMetaTestCard(d) +
     renderRejectedImagesCard(d) +
@@ -449,6 +450,35 @@ function renderOptimizeTab(d) {
 }
 
 // ── Performance-driven SEO engine cards ───────────────────────────────────────
+
+function renderAICitationCard(d) {
+  var c = d.aiCitations;
+  if (!c || !c.results) return '';
+  var sources = c.sources || [];
+  var mentionRows = sources.map(function(s) {
+    var menRate = c.summary.mention_rate[s];
+    var citRate = c.summary.citation_rate[s];
+    var menPct = (menRate * 100).toFixed(0) + '%';
+    var citPct = citRate != null ? (citRate * 100).toFixed(0) + '%' : 'n/a';
+    return '<tr><td>' + esc(s) + '</td><td>' + citPct + '</td><td>' + menPct + '</td></tr>';
+  }).join('');
+
+  var compMentions = Object.entries(c.summary.top_competitor_mentions || {}).sort(function(a, b) { return b[1] - a[1]; });
+  var compCitations = Object.entries(c.summary.top_competitor_citations || {}).sort(function(a, b) { return b[1] - a[1]; });
+  var compRows = compMentions.slice(0, 8).map(function(e) {
+    var citCount = compCitations.find(function(x) { return x[0] === e[0]; });
+    return '<tr><td>' + esc(e[0]) + '</td><td>' + e[1] + '</td><td>' + (citCount ? citCount[1] : '0') + '</td></tr>';
+  }).join('');
+
+  return '<div class="card"><div class="card-header accent-purple"><h2>AI Citations</h2>' +
+    '<span class="card-subtitle">' + c.prompts_run + ' prompts &times; ' + sources.length + ' LLMs &mdash; ' + esc(c.date) + '</span></div>' +
+    '<div class="card-body">' +
+    '<h3 style="font-size:12px;text-transform:uppercase;color:var(--muted);margin:0 0 8px">Our Visibility</h3>' +
+    '<table class="data-table"><thead><tr><th>Source</th><th>Cited</th><th>Mentioned</th></tr></thead><tbody>' + mentionRows + '</tbody></table>' +
+    (compRows ? '<h3 style="font-size:12px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px">Competitor Visibility</h3>' +
+    '<table class="data-table"><thead><tr><th>Competitor</th><th>Mentions</th><th>Citations</th></tr></thead><tbody>' + compRows + '</tbody></table>' : '') +
+    '</div></div>';
+}
 
 function renderCannibalizationCard(d) {
   var c = d.cannibalization;

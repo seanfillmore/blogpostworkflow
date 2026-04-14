@@ -219,6 +219,7 @@ export function aggregateData() {
   const indexingQueue      = readJsonIfExists(join(ROOT, 'data', 'performance-queue', 'indexing-submissions.json'));
   const legacyTriage    = readJsonIfExists(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   const cannibalization = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'latest.json'));
+  const aiCitations = readJsonIfExists(join(REPORTS_DIR, 'ai-citations', 'latest.json'));
   // Enrich cannibalization conflicts with decision details (winner, action, reason)
   const cannibDecisions = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'cannibalization-decisions.json'));
   if (cannibalization?.conflicts && cannibDecisions?.decisions) {
@@ -354,6 +355,7 @@ export function aggregateData() {
     performanceQueue,
     legacyTriage,
     cannibalization,
+    aiCitations,
     techSeoAudit,
     techSeoFixResults,
     altTextProgress,

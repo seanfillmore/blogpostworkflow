@@ -329,6 +329,25 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   const otherSection = groups.other.length > 0
     ? `<div class="section"><div class="section-title">Other</div>${renderEntries(groups.other)}</div>` : '';
 
+  // AI Citation summary (weekly — show if report exists and < 8 days old)
+  let aiCitationSection = '';
+  try {
+    const citPath = join(ROOT, 'data', 'reports', 'ai-citations', 'latest.json');
+    if (existsSync(citPath)) {
+      const cit = JSON.parse(readFileSync(citPath, 'utf8'));
+      const age = (Date.now() - new Date(cit.date).getTime()) / (1000 * 60 * 60 * 24);
+      if (age < 8) {
+        const totalResponses = cit.prompts_run * cit.sources.length;
+        const mentioned = cit.results.filter(r => Object.values(r.responses).some(resp => resp.cited || resp.mentioned)).length;
+        const topComp = Object.entries(cit.summary.top_competitor_mentions || {}).sort((a, b) => b[1] - a[1])[0];
+        aiCitationSection = `<div class="section"><div class="section-title">&#129302; AI Citations</div>` +
+          `<p>Mentioned in <strong>${mentioned}</strong> of ${totalResponses} LLM responses across ${cit.sources.length} sources.</p>` +
+          (topComp ? `<p>Top competitor: <strong>${topComp[0]}</strong> (${topComp[1]} mentions)</p>` : '') +
+          `</div>`;
+      }
+    }
+  } catch { /* skip */ }
+
   // Blocked posts (hard-blocked in editorial gate — surfaced at the top as Action Required)
   let blockedSection = '';
   if (blockedPosts && blockedPosts.length > 0) {
@@ -612,6 +631,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   ${seoSection}
   ${backlinksSection}
   ${abTestSection}
+  ${aiCitationSection}
   ${otherSection}
   <div class="footer"><a href="${esc(dashboardUrl)}" style="color:#6b7280;">Open Dashboard</a></div>
 </body></html>`;
