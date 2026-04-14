@@ -20,7 +20,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { getContentPath, getMetaPath, getEditorReportPath, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getEditorReportPath, loadUnpublishedPostIndex, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -294,13 +294,22 @@ async function main() {
   const siteBase = config.url;
   let html = readFileSync(htmlPath, 'utf8');
 
-  // Read post meta for context
+  // Read post meta for context + parent publish date (used to decide whether
+  // a cross-link to a not-yet-published post will be live in time).
   const metaPath = getMetaPath(slug);
   let postContext = slug.replace(/-/g, ' ');
+  let parentPublishAt = null;
   try {
     const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
     postContext = meta.target_keyword || postContext;
+    if (meta.shopify_publish_at) parentPublishAt = new Date(meta.shopify_publish_at);
   } catch {}
+
+  // Index of unpublished/scheduled posts so we can mirror the editor's
+  // smart cross-link logic: a target scheduled to publish on or before this
+  // post is live by the time this post goes live, so the link is safe even
+  // if it 404s right now.
+  const unpubIndex = loadUnpublishedPostIndex();
 
   let fixedCount = 0;
   let removedCount = 0;
@@ -313,18 +322,36 @@ async function main() {
     process.stdout.write(`       anchor: "${link.anchor}"\n`);
 
     if (isInternal) {
-      // Try blog index lookup, then verify the candidate actually resolves.
-      // The blog index includes draft/scheduled posts whose live URLs 404;
-      // without this check link-repair would re-add links the editor's own
-      // auto-removal already pruned, causing oscillation on the next run.
+      // Try blog index lookup, then accept based on three rules — mirrors
+      // the smart logic the editor uses when classifying cross-links:
+      //   1. Target is unpublished but scheduled on/before this post's
+      //      publish date → ACCEPT (will be live in time, no HTTP check).
+      //   2. Target is unpublished AND scheduled after (or has no schedule)
+      //      → REJECT (would 404 at publish; remove the link).
+      //   3. Target is not in the unpublished index → presumably live;
+      //      HTTP-verify and accept on 2xx/3xx.
       const match = findBestInternalMatch(link.url, link.anchor, articles);
       let accepted = null;
       if (match) {
-        const status = await fetchStatusCode(match.url);
-        if (status && status >= 200 && status < 400) {
-          accepted = match.url;
+        const unpub = unpubIndex.get(match.url);
+        if (unpub) {
+          if (unpub.publish_at && parentPublishAt && new Date(unpub.publish_at) <= parentPublishAt) {
+            accepted = match.url;
+            console.log(`       ✓ Will be live by publish (target scheduled ${new Date(unpub.publish_at).toISOString().slice(0, 10)})`);
+          } else {
+            const reason = !unpub.publish_at ? 'target is a draft (no schedule)'
+              : !parentPublishAt ? 'this post has no schedule yet'
+              : `target scheduled after this post (${new Date(unpub.publish_at).toISOString().slice(0, 10)})`;
+            console.log(`       candidate ${match.url.slice(0, 80)} skipped — ${reason}`);
+          }
         } else {
-          console.log(`       candidate ${match.url.slice(0, 80)} returned ${status || 'network error'} — treating as no match`);
+          // Not in unpublished index — presumed live; HTTP-verify.
+          const status = await fetchStatusCode(match.url);
+          if (status && status >= 200 && status < 400) {
+            accepted = match.url;
+          } else {
+            console.log(`       candidate ${match.url.slice(0, 80)} returned ${status || 'network error'} — treating as no match`);
+          }
         }
       }
       if (accepted) {
