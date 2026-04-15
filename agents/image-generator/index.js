@@ -282,6 +282,9 @@ Write the prompt using this structure:
 5. State the lighting (natural for real-world scenes, or from the template)
 6. End with: "photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders."
 
+BANNER COMPOSITION RULES:
+- Compose the scene for a wide landscape banner format (approximately 3:1 width-to-height ratio). Place the key subject(s) in the center of the frame with space on the left and right. The image will be displayed at roughly 500px tall spanning a full-width website header — avoid placing subjects at the very top or bottom edge of the frame.
+
 HARD RULES:
 - The image must visually match the blog post topic — a reader should understand the article subject from the image alone
 - The setting should be WHERE a reader would encounter this topic in real life

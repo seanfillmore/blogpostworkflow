@@ -48,6 +48,9 @@ data/reports/editor/
 data/snapshots/
 data/clarity/
 
+# Theme file backups (downloaded by apply-blog-sidebar.js)
+backup/
+
 # Misc
 Ingredients/
 *.DS_Store
