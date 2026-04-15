@@ -215,6 +215,15 @@ if (new Date().getDay() === 0) {
   // Step 8c: AI citation tracking across LLMs
   runStep('ai-citation-tracker', `"${NODE}" agents/ai-citation-tracker/index.js`, { indent: '    ' });
 
+  // Step 8d: rebuild legacy posts (missing FAQ schema) — max 3 per week
+  runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 3 --apply${dryFlag}`, { indent: '    ' });
+
+  // Step 8e: generate llms.txt for LLM crawlers
+  runStep('llms-txt-generator', `"${NODE}" agents/llms-txt-generator/index.js`, { indent: '    ' });
+
+  // Step 8f: specificity audit — queue product description rewrites
+  runStep('specificity-audit', `"${NODE}" agents/specificity-audit/index.js`, { indent: '    ' });
+
   // Step 9: GA4 content analysis
   runStep('ga4-content-analyzer', `"${NODE}" agents/ga4-content-analyzer/index.js`, { indent: '    ' });
 
