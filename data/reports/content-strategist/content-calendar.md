@@ -1,5 +1,5 @@
 # Content Calendar — Real Skin Care
-**Generated:** Apr 10, 2026
+**Generated:** Apr 15, 2026
 **Source of truth:** data/calendar/calendar.json (this file is auto-rendered)
 
 ---
@@ -36,6 +36,7 @@
 | 8 | Apr 30, 2026 | Lip Balm | natural lip balm recipe | How to Make Natural Lip Balm at Home (Easy DIY Recipe) | 5 | 100 | DIY / How-To (TOF) | 🟠 Medium |
 |  | May 1, 2026 | Pipeline | aluminum free antiperspirant what it is does it work | Aluminum Free Antiperspirant: What It Is & Does It Work? |  |  | Blog Post | Medium |
 |  | May 4, 2026 | Pipeline | antibacterial body soap what to look for why it matters | Antibacterial Body Soap: What to Look For & Why It Matters |  |  | Blog Post | Medium |
+| 10 | May 5, 2026 | Oral Care | can coconut oil replace toothpaste | Can Coconut Oil Replace Toothpaste? Discover the Benefits of This Natural Alternative | 8 | 1,200 | Educational Guide | Medium |
 |  | May 6, 2026 | Pipeline | best hair mask for dry hair diy natural options | Best Hair Mask for Dry Hair: DIY & Natural Options |  |  | Blog Post | Medium |
 |  | May 8, 2026 | Pipeline | best natural bar soap for women clean picks that work | Best Natural Bar Soap for Women: Clean Picks That Work |  |  | Blog Post | Medium |
 |  | May 11, 2026 | Pipeline | best soap for tattoos what to use for safe healing | Best Soap for Tattoos: What to Use for Safe Healing |  |  | Blog Post | Medium |

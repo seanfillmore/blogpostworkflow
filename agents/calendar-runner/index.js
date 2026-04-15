@@ -74,7 +74,8 @@ function parseCalendar() {
     contentType: i.content_type || '',
     priority: i.priority || '',
     slug: i.slug,
-  })).filter((i) => i.publishDate);
+    status: i.status || null,
+  })).filter((i) => i.publishDate && i.status !== 'review');
 
   return items.sort((a, b) => a.publishDate - b.publishDate);
 }

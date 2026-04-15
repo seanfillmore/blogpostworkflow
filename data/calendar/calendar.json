@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-04-08T03:46:47.858Z",
-  "regenerated_at": "2026-04-10T16:59:43.937Z",
+  "regenerated_at": "2026-04-15T20:02:17.149Z",
   "items": [
     {
       "slug": "fluoride-free-toothpaste",
@@ -18,8 +18,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "cinnamon-toothpaste",
@@ -37,8 +38,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-lip-balm",
@@ -56,8 +58,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "toothpaste-without-sodium-lauryl-sulfate",
@@ -75,8 +78,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "organic-lip-balm",
@@ -94,8 +98,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "sls-toothpaste",
@@ -113,8 +118,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "toothpaste-without-sls",
@@ -132,8 +138,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "no-fluoride-toothpaste",
@@ -151,8 +158,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "organic-toothpaste",
@@ -170,8 +178,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-bar-soap-for-men",
@@ -189,8 +198,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-bar-soap-for-woman",
@@ -208,8 +218,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-soap-bar",
@@ -227,8 +238,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-deodorant-for-kids",
@@ -246,8 +258,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-lotion",
@@ -265,8 +278,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "organic-body-lotion",
@@ -284,8 +298,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "all-natural-lotion",
@@ -303,8 +318,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "organic-coconut-oil-for-skin",
@@ -322,8 +338,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-lip-balm-recipe",
@@ -341,8 +358,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-08T03:46:47.858Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "coconut-oil-for-stretch-marks",
@@ -360,8 +378,9 @@
       "topical_hub": null,
       "priority_score": 83,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T04:11:01.883Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "coconut-oil-toothpaste",
@@ -379,8 +398,9 @@
       "topical_hub": null,
       "priority_score": 72,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T04:11:01.883Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "non-toxic-body-lotion",
@@ -398,8 +418,9 @@
       "topical_hub": null,
       "priority_score": 38,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T04:11:01.883Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "does-coconut-oil-help-with-stretch-marks",
@@ -417,8 +438,9 @@
       "topical_hub": null,
       "priority_score": 35,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T04:11:01.883Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "sls-free-toothpaste-list",
@@ -436,8 +458,9 @@
       "topical_hub": null,
       "priority_score": 32,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T04:11:01.883Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "is-coconut-oil-good-for-stretch-marks",
@@ -455,8 +478,9 @@
       "topical_hub": null,
       "priority_score": 30,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T13:45:02.165Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "benefits-of-coconut-oil-on-skin-everyday",
@@ -474,8 +498,9 @@
       "topical_hub": null,
       "priority_score": 26,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T13:45:02.165Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "coconut-oil-deodorant",
@@ -493,8 +518,9 @@
       "topical_hub": null,
       "priority_score": 17,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-09T13:45:02.165Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "aluminum-free-antiperspirant-what-it-is-does-it-work",
@@ -512,8 +538,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "antibacterial-body-soap-what-to-look-for-why-it-matters",
@@ -531,8 +558,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "best-hair-mask-for-dry-hair-diy-natural-options",
@@ -550,8 +578,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "best-natural-bar-soap-for-women-clean-picks-that-work",
@@ -569,8 +598,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "best-soap-for-tattoos-what-to-use-for-safe-healing",
@@ -588,8 +618,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "can-coconut-oil-replace-toothpaste-discover-the-benefits-of-this-natural-alternative",
@@ -607,8 +638,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "can-you-use-coconut-oil-as-toothpaste-what-to-know",
@@ -626,8 +658,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "charcoal-toothpaste-does-it-work-is-it-safe",
@@ -645,8 +678,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "dry-brushing-skin-benefits-technique-what-to-expect",
@@ -664,8 +698,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "how-does-soap-work-the-science-behind-clean-skin",
@@ -683,8 +718,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "how-to-dry-brush-your-body-step-by-step-guide",
@@ -702,8 +738,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "how-to-make-a-natural-moisturizer-at-home-easy-recipes",
@@ -721,8 +758,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "how-to-remove-sweat-stains-the-complete-guide",
@@ -740,8 +778,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
@@ -759,8 +798,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-lotion-what-it-is-how-to-choose-the-best",
@@ -778,8 +818,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "natural-soap-bar-the-clean-skin-guide-you-need",
@@ -797,8 +838,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "organic-coconut-oil-types-uses-benefits-for-skin",
@@ -816,8 +858,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "the-best-homemade-sugar-scrub-recipe-easy-natural",
@@ -835,8 +878,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "unscented-antibacterial-soap-what-to-look-for-why",
@@ -854,8 +898,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "unscented-deodorant-what-it-is-why-it-works",
@@ -873,8 +918,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "what-is-castile-soap-uses-benefits-ingredients",
@@ -892,8 +938,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "when-was-deodorant-invented-a-complete-history",
@@ -911,8 +958,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "charcoal-toothpaste",
@@ -930,8 +978,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "clean-body-lotion",
@@ -949,8 +998,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "dry-brushing-skin",
@@ -968,8 +1018,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "hair-mask-for-dry-hair",
@@ -987,8 +1038,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "itchy-armpits",
@@ -1006,8 +1058,9 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
     },
     {
       "slug": "organic-coconut-oil",
@@ -1025,8 +1078,29 @@
       "topical_hub": null,
       "priority_score": null,
       "status_override": null,
+      "status": null,
       "added_at": "2026-04-10T16:59:43.681Z",
-      "last_updated": "2026-04-10T16:59:43.937Z"
+      "last_updated": "2026-04-15T20:02:17.149Z"
+    },
+    {
+      "slug": "can-coconut-oil-replace-toothpaste",
+      "keyword": "can coconut oil replace toothpaste",
+      "title": "Can Coconut Oil Replace Toothpaste? Discover the Benefits of This Natural Alternative",
+      "category": "Oral Care",
+      "content_type": "Educational Guide",
+      "priority": "Medium",
+      "week": 10,
+      "publish_date": "2026-05-05T15:00:00.000Z",
+      "original_publish_date": "2026-05-05T15:00:00.000Z",
+      "kd": 8,
+      "volume": 1200,
+      "source": "gap_report",
+      "topical_hub": null,
+      "priority_score": null,
+      "status_override": null,
+      "status": "review",
+      "added_at": "2026-04-15T20:02:17.149Z",
+      "last_updated": "2026-04-15T20:02:17.149Z"
     }
   ]
 }
