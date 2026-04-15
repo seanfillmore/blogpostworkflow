@@ -199,6 +199,15 @@ function refreshOne(slug) {
     }
   }
 
+  // Inject review-forward product card — replaces the mid-article dashed CTA
+  // with a live block sourced from Shopify + Judge.me. Non-fatal: posts without
+  // product links or missing credentials are skipped gracefully by the agent.
+  try {
+    run(`node agents/featured-product-injector/index.js --handle "${slug}"`, 'featured-product-injector');
+  } catch (e) {
+    console.log(`  featured-product-injector warning (non-fatal): ${e.message}`);
+  }
+
   // Stamp last_refreshed_at on the metadata
   try {
     const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
