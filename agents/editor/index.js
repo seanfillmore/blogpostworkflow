@@ -1039,6 +1039,33 @@ async function runEditor(htmlPath) {
   if (args.includes('--auto-fix')) {
     applyPostReviewAutoFixes(htmlPath, workingHtml, brokenLinks);
   }
+
+  // Tag the post for pipeline rebuild when blocker-level issues exist and
+  // we're not already inside a rebuild pass. The legacy-rebuilder picks
+  // tagged posts up on the weekly run, reruns the full pipeline, and
+  // clears the tag after a successful publish.
+  const inPipeline = args.includes('--in-pipeline');
+  if (!inPipeline && meta) {
+    const reasons = [];
+    if (brokenLinks.length > 0) reasons.push(`${brokenLinks.length} broken external link(s)`);
+    if (internalIssues.length > 0) reasons.push(`${internalIssues.length} internal link issue(s)`);
+    if (deterministicIssues.length > 0) reasons.push(`${deterministicIssues.length} deterministic issue(s)`);
+    if (ctaResult.issues.length > 0) reasons.push(`${ctaResult.issues.length} CTA/format issue(s)`);
+    if (needsReview > 0) reasons.push(`${needsReview} source claim(s) to review`);
+
+    if (reasons.length > 0) {
+      const updatedMeta = {
+        ...meta,
+        needs_rebuild: { flagged_at: new Date().toISOString(), reasons },
+      };
+      writeFileSync(metaPath, JSON.stringify(updatedMeta, null, 2));
+      console.log(`\n  Tagged for pipeline rebuild: ${reasons.join(', ')}`);
+    } else if (meta.needs_rebuild) {
+      const { needs_rebuild: _drop, ...rest } = meta;
+      writeFileSync(metaPath, JSON.stringify(rest, null, 2));
+      console.log('\n  Cleared stale needs_rebuild tag (post is clean).');
+    }
+  }
 }
 
 async function main() {

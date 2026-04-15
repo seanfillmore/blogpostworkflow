@@ -38,10 +38,12 @@ function isLegacy(slug) {
 }
 
 function findLegacyPosts() {
+  // Two signals: missing FAQ schema (old posts built before the pipeline), or
+  // editor-tagged needs_rebuild (posts that failed the editor this week).
   return listAllSlugs()
-    .filter((slug) => isLegacy(slug))
     .map((slug) => ({ slug, meta: getPostMeta(slug) }))
-    .filter((p) => p.meta && p.meta.shopify_article_id);
+    .filter((p) => p.meta && p.meta.shopify_article_id)
+    .filter((p) => isLegacy(p.slug) || p.meta.needs_rebuild);
 }
 
 function run(cmd, label) {
@@ -89,7 +91,7 @@ async function rebuildPost(slug) {
   run(`node agents/featured-product-injector/index.js --handle ${slug}`, `featured-product: ${slug}`);
   run(`node agents/schema-injector/index.js --slug ${slug} --apply`, `schema: ${slug}`);
 
-  if (!run(`node agents/editor/index.js ${getContentPath(slug)}`, `editor: ${slug}`)) {
+  if (!run(`node agents/editor/index.js ${getContentPath(slug)} --in-pipeline`, `editor: ${slug}`)) {
     console.error(`  ⛔ Editor failed — aborting rebuild, original post untouched on Shopify`);
     return false;
   }
@@ -99,8 +101,9 @@ async function rebuildPost(slug) {
   await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: rebuiltHtml });
   console.log(`  ✓ Published to Shopify (article_id: ${meta.shopify_article_id})`);
 
-  // Stamp metadata
-  const updatedMeta = { ...getPostMeta(slug), rebuilt_at: new Date().toISOString() };
+  // Stamp metadata, clear rebuild tag
+  const { needs_rebuild: _drop, ...rest } = getPostMeta(slug) || {};
+  const updatedMeta = { ...rest, rebuilt_at: new Date().toISOString() };
   writeFileSync(getMetaPath(slug), JSON.stringify(updatedMeta, null, 2));
 
   return true;
