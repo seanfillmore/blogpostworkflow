@@ -435,18 +435,51 @@ async function main() {
       const changeSummary = await summarizeChanges(originalHtml, refreshedHtml, keyword);
       console.log('done');
 
-      // Answer-first check — same gate as blog-post-writer
-      const afCheck = checkAnswerFirst(refreshedHtml, { keyword });
+      // Answer-first check — if the intro fails, repair it in one targeted call
+      // before falling through to save. Only throw if the repair also fails.
+      let finalHtmlForCheck = refreshedHtml;
+      const afCheck = checkAnswerFirst(finalHtmlForCheck, { keyword });
       if (!afCheck.passes) {
-        throw new Error(
-          `Answer-first check failed: ${afCheck.reasons.join('; ')}. The refreshed intro must lead with a direct factual answer within 60 words.`
-        );
+        process.stdout.write(`    Intro failed answer-first (${afCheck.reasons.join('; ')}) — repairing... `);
+        try {
+          const repairMsg = await client.messages.create({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 300,
+            messages: [{
+              role: 'user',
+              content: `Rewrite ONLY the opening paragraph of this skincare blog post so that:
+1. The first sentence directly answers the question implied by the title with a concrete factual statement
+2. The target keyword "${keyword}" appears within the first 60 words
+3. No rhetorical questions, no "You finally...", no anecdotal openers
+4. Keep it to 2–3 sentences max
+
+Return ONLY the replacement <p>...</p> tag — nothing else.
+
+Current intro paragraph:
+${afCheck.intro?.html || ''}`,
+            }],
+          });
+          const repairedP = repairMsg.content[0].text.trim();
+          if (repairedP.startsWith('<p') && repairedP.includes('</p>')) {
+            finalHtmlForCheck = finalHtmlForCheck.replace(afCheck.intro.html, repairedP);
+            const recheck = checkAnswerFirst(finalHtmlForCheck, { keyword });
+            if (!recheck.passes) {
+              throw new Error(`Intro repair still failed: ${recheck.reasons.join('; ')}`);
+            }
+            console.log('repaired');
+          } else {
+            throw new Error('Repair response was not a valid <p> tag');
+          }
+        } catch (repairErr) {
+          throw new Error(`Answer-first check failed and repair failed: ${repairErr.message}`);
+        }
       }
+      const refreshedHtmlFinal = finalHtmlForCheck;
 
       // Save refreshed HTML
       ensurePostDir(slug);
       const outputPath = getRefreshedPath(slug);
-      writeFileSync(outputPath, refreshedHtml);
+      writeFileSync(outputPath, refreshedHtmlFinal);
       console.log(`    Saved: ${outputPath}`);
 
       // Run editor review before pushing to Shopify
