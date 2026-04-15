@@ -218,6 +218,9 @@ if (new Date().getDay() === 0) {
   // Step 8d: rebuild legacy posts (missing FAQ schema) — max 3 per week
   runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 3 --apply${dryFlag}`, { indent: '    ' });
 
+  // Step 8e: generate llms.txt for LLM crawlers
+  runStep('llms-txt-generator', `"${NODE}" agents/llms-txt-generator/index.js`, { indent: '    ' });
+
   // Step 9: GA4 content analysis
   runStep('ga4-content-analyzer', `"${NODE}" agents/ga4-content-analyzer/index.js`, { indent: '    ' });
 
