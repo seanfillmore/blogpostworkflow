@@ -79,6 +79,12 @@ async function publishPageMetaRewrite(item) {
   if (meta.seo_description) await upsertMetafield('pages', item.resource_id, 'global', 'description_tag', meta.seo_description);
 }
 
+async function publishProductDescriptionRewrite(item) {
+  if (!item.resource_id) throw new Error('No resource_id for product');
+  if (!item.proposed_body_html) throw new Error('No proposed_body_html');
+  await updateProduct(item.resource_id, { body_html: item.proposed_body_html });
+}
+
 function findPostMeta(slug, _postsDir) {
   // Try exact slug first
   const meta = getPostMeta(slug);
@@ -120,6 +126,8 @@ export default [
           await publishCollectionGap(item);
         } else if (item.trigger === 'page-meta-rewrite') {
           await publishPageMetaRewrite(item);
+        } else if (item.trigger === 'product-description-rewrite') {
+          await publishProductDescriptionRewrite(item);
         } else {
           await publishBlogRefresh(item, ctx);
         }
