@@ -70,12 +70,22 @@ async function fetchReviews(handle) {
   }
 }
 
+function extractSchemaBlock(html) {
+  if (!html) return { schemaBlock: '', body: '' };
+  const re = /\s*<!--\s*schema-injector\s*-->[\s\S]*?<!--\s*schema-injector\s*-->\s*/i;
+  const match = html.match(re);
+  if (!match) return { schemaBlock: '', body: html };
+  return { schemaBlock: match[0], body: html.replace(re, '') };
+}
+
 async function rewriteDescription(product, flaggedPhrases, reviews) {
+  const { schemaBlock, body } = extractSchemaBlock(product.body_html);
+
   const prompt = `You are rewriting a product description for ${config.name}, a natural skincare brand.
 
 CURRENT PRODUCT: ${product.title}
 CURRENT DESCRIPTION (HTML):
-${product.body_html}
+${body}
 
 FLAGGED VAGUE PHRASES TO REPLACE:
 ${flaggedPhrases.join(', ')}
@@ -99,7 +109,8 @@ Output ONLY the rewritten HTML body. No explanation, no code fence, no preamble.
     messages: [{ role: 'user', content: prompt }],
   });
   if (res.stop_reason === 'max_tokens') throw new Error('Rewrite truncated at max_tokens');
-  return (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  const rewritten = (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  return schemaBlock ? `${schemaBlock.trim()}\n${rewritten}` : rewritten;
 }
 
 async function main() {
