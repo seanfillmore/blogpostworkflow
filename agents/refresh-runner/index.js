@@ -18,9 +18,8 @@
  *                                                  with traffic; skip if refreshed
  *                                                  in the last 90 days)
  *
- * Skips publishing automatically — refreshed posts go through the editor and
- * are presented for human review before re-publish. Pass --publish to push
- * the update to Shopify in the same run.
+ * Publishes automatically after the editor passes. Pass --no-publish to skip
+ * the Shopify update (useful for local testing or dry runs).
  *
  * Usage:
  *   node agents/refresh-runner/index.js best-natural-deodorant-for-women
@@ -39,7 +38,7 @@ import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, listAllSl
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv.slice(2);
-const FLAG_PUBLISH = args.includes('--publish');
+const FLAG_PUBLISH = !args.includes('--no-publish');
 const FLAG_PP = args.includes('--from-post-performance');
 const FLAG_QW = args.includes('--from-quick-wins');
 const FLAG_AGING = args.includes('--aging-quarterly');
@@ -183,8 +182,7 @@ function refreshOne(slug) {
       return { slug, ok: false, reason: `publisher failed: ${e.message}` };
     }
   } else {
-    console.log(`\n  Refreshed HTML ready for review: ${canonicalHtml}`);
-    console.log(`  To publish: node agents/publisher/index.js ${metaPath}`);
+    console.log(`\n  Refreshed HTML ready (--no-publish mode): ${canonicalHtml}`);
   }
 
   return { slug, ok: true };
