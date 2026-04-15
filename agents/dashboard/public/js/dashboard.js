@@ -3973,70 +3973,92 @@ setInterval(loadData, 3600000);
 
 // ── Ideas tab ─────────────────────────────────────────────────────────────────
 
+var IDEA_SOURCE_COLORS = {
+  gap_report:       'var(--indigo)',
+  gsc_opportunity:  'var(--sky)',
+  competitor:       'var(--orange)',
+  quick_win:        'var(--green)',
+  reddit_research:  'var(--purple)',
+  manual:           'var(--muted)',
+};
+
+function ideaSourceLabel(source) {
+  var labels = {
+    gap_report:      'Content Gap',
+    gsc_opportunity: 'GSC Signal',
+    competitor:      'Competitor',
+    quick_win:       'Quick Win',
+    reddit_research: 'Reddit',
+    manual:          'Manual',
+  };
+  return labels[source] || source;
+}
+
 async function renderIdeasTab() {
   var panel = document.getElementById('ideas-panel');
   panel.innerHTML = '<div class="empty-state">Loading ideas...</div>';
+
+  // Inject styles once
+  if (!document.getElementById('ideas-styles')) {
+    var style = document.createElement('style');
+    style.id = 'ideas-styles';
+    style.textContent = [
+      '.idea-row{padding:16px 0;border-bottom:1px solid var(--border)}',
+      '.idea-row:last-child{border-bottom:none}',
+      '.idea-row-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px}',
+      '.idea-source-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:4px;color:#fff}',
+      '.idea-stats{font-size:12px;color:var(--muted)}',
+      '.idea-label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}',
+      '.idea-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box;margin-bottom:10px}',
+      '.idea-input:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px rgba(99,102,241,.1)}',
+      '.idea-row-actions{display:flex;gap:8px;margin-top:4px}',
+      '.btn-idea-reject{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}',
+      '.btn-idea-reject:hover{border-color:var(--red);color:var(--red)}',
+    ].join('');
+    document.head.appendChild(style);
+  }
 
   var res = await fetch('/api/ideas');
   var d = await res.json();
   var items = d.items || [];
 
   if (!items.length) {
-    panel.innerHTML = '<div class="empty-state">No ideas awaiting review. New ideas will appear here when signal agents surface them.</div>';
+    panel.innerHTML = '<div class="card"><div class="card-header accent-indigo"><span class="card-title">Ideas Inbox</span></div>' +
+      '<div class="card-body"><div class="empty-state" style="padding:24px 0">No ideas awaiting review. Signal agents will populate this inbox automatically.</div></div></div>';
     return;
   }
 
-  var html = '<div class="card"><div class="card-header"><span class="card-title">Ideas Inbox</span>' +
-    '<span class="card-subtitle">' + items.length + ' idea' + (items.length !== 1 ? 's' : '') + ' awaiting review</span></div>' +
-    '<div class="card-body">';
+  var html = '<div class="card"><div class="card-header accent-indigo">' +
+    '<span class="card-title">Ideas Inbox</span>' +
+    '<span class="card-subtitle">' + items.length + ' idea' + (items.length !== 1 ? 's' : '') + ' awaiting review</span>' +
+    '</div><div class="card-body">';
 
   items.forEach(function(item) {
-    var kd = item.kd != null ? item.kd : '—';
-    var vol = item.volume ? item.volume.toLocaleString() : '—';
-    var source = item.source || 'unknown';
+    var source = item.source || 'manual';
+    var color = IDEA_SOURCE_COLORS[source] || 'var(--muted)';
+    var label = ideaSourceLabel(source);
+    var stats = [];
+    if (item.kd != null) stats.push('KD ' + item.kd);
+    if (item.volume) stats.push(item.volume.toLocaleString() + '/mo');
+    if (item.impressions) stats.push(item.impressions.toLocaleString() + ' impressions');
 
     html += '<div class="idea-row" id="idea-row-' + esc(item.slug) + '">' +
-      '<div class="idea-meta">' +
-        '<span class="idea-source">' + esc(source) + '</span>' +
-        '<span class="idea-stats">KD ' + kd + ' &middot; ' + vol + '/mo</span>' +
+      '<div class="idea-row-meta">' +
+        '<span class="idea-source-badge" style="background:' + color + '">' + esc(label) + '</span>' +
+        (stats.length ? '<span class="idea-stats">' + stats.join(' &middot; ') + '</span>' : '') +
       '</div>' +
-      '<div class="idea-fields">' +
-        '<label class="idea-label">Keyword</label>' +
-        '<input class="idea-input" id="kw-' + esc(item.slug) + '" value="' + esc(item.keyword || '') + '" placeholder="target keyword">' +
-        '<label class="idea-label">Title</label>' +
-        '<input class="idea-input idea-title-input" id="title-' + esc(item.slug) + '" value="' + esc(item.title || '') + '" placeholder="post title">' +
-      '</div>' +
-      '<div class="idea-actions">' +
+      '<label class="idea-label">Keyword</label>' +
+      '<input class="idea-input" id="kw-' + esc(item.slug) + '" value="' + esc(item.keyword || '') + '" placeholder="target keyword">' +
+      '<label class="idea-label">Title</label>' +
+      '<input class="idea-input" id="title-' + esc(item.slug) + '" value="' + esc(item.title || '') + '" placeholder="suggested post title">' +
+      '<div class="idea-row-actions">' +
         '<button class="btn-approve" onclick="approveIdea(\'' + esc(item.slug) + '\')">Approve</button>' +
-        '<button class="btn-sm btn-reject" onclick="rejectIdea(\'' + esc(item.slug) + '\')">Reject</button>' +
+        '<button class="btn-idea-reject" onclick="rejectIdea(\'' + esc(item.slug) + '\')">Reject</button>' +
       '</div>' +
     '</div>';
   });
 
   html += '</div></div>';
-
-  // Inject minimal scoped styles if not already present
-  if (!document.getElementById('ideas-styles')) {
-    var style = document.createElement('style');
-    style.id = 'ideas-styles';
-    style.textContent = [
-      '.idea-row{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid #1e293b}',
-      '.idea-row:last-child{border-bottom:none}',
-      '.idea-meta{display:flex;flex-direction:column;gap:4px;padding-top:2px}',
-      '.idea-source{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#818cf8}',
-      '.idea-stats{font-size:11px;color:#6b7280}',
-      '.idea-fields{display:flex;flex-direction:column;gap:6px}',
-      '.idea-label{font-size:11px;color:#6b7280;margin-bottom:1px}',
-      '.idea-input{background:#0f172a;border:1px solid #334155;border-radius:5px;color:#f1f5f9;padding:6px 9px;font-size:13px;width:100%;box-sizing:border-box}',
-      '.idea-title-input{font-size:12px;color:#94a3b8}',
-      '.idea-input:focus{outline:none;border-color:#818cf8}',
-      '.idea-actions{display:flex;flex-direction:column;gap:6px;padding-top:2px}',
-      '.btn-reject{background:#1e293b;color:#f87171;border:1px solid #f8717155;border-radius:5px;padding:5px 10px;cursor:pointer;font-size:12px}',
-      '.btn-reject:hover{background:#2d1515}',
-    ].join('');
-    document.head.appendChild(style);
-  }
-
   panel.innerHTML = html;
 }
 

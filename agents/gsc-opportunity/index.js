@@ -23,6 +23,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { getLowCTRKeywords, getPage2Keywords } from '../../lib/gsc.js';
+import { upsertItem, loadCalendar } from '../../lib/calendar-store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -177,6 +178,28 @@ async function main() {
     page_2: page2.slice(0, 20),
     unmapped,
   }, null, 2));
+
+  // ── Push unmapped queries to ideas inbox ────────────────────────────────────
+  const existingSlugs = new Set(loadCalendar().items.map((i) => i.slug));
+  let inboxAdded = 0;
+  for (const r of unmapped.slice(0, 15)) {
+    const slug = r.keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (existingSlugs.has(slug)) continue;
+    upsertItem({
+      slug,
+      keyword: r.keyword,
+      title: '',
+      source: 'gsc_opportunity',
+      status: 'review',
+      volume: null,
+      kd: null,
+      impressions: r.impressions,
+      publish_date: null,
+      added_at: new Date().toISOString(),
+    });
+    inboxAdded++;
+  }
+  if (inboxAdded > 0) console.log(`  ${inboxAdded} unmapped queries added to ideas inbox`);
 
   await notify({
     subject: `GSC Opportunities: ${lowCTR.length} low-CTR, ${page2.length} page-2, ${unmapped.length} unmapped`,
