@@ -109,6 +109,14 @@ function run(cmd, label) {
   execSync(cmd, { cwd: ROOT, stdio: 'inherit' });
 }
 
+/** Returns true if the editor report at `reportPath` has an overall "Needs Work" verdict. */
+function editorNeedsWork(reportPath) {
+  if (!existsSync(reportPath)) return false;
+  const report = readFileSync(reportPath, 'utf8');
+  const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
+  return overallMatch ? /needs work/i.test(overallMatch[1]) : /VERDICT[:*\s]*Needs Work/i.test(report);
+}
+
 function refreshOne(slug) {
   const metaPath = getMetaPath(slug);
   if (!existsSync(metaPath)) {
@@ -169,21 +177,25 @@ function refreshOne(slug) {
   }
 
   // Gate on editor verdict — the editor exits 0 even on "Needs Work", so we
-  // must read the report ourselves. If the overall verdict is Needs Work, do
-  // not publish: leave the previous Shopify content untouched and let the
-  // blocked-posts card surface the issue for human review.
-  {
-    const reportPath = getEditorReportPath(slug);
-    if (existsSync(reportPath)) {
-      const report = readFileSync(reportPath, 'utf8');
-      const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
-      const overallNeedsWork = overallMatch
-        ? /needs work/i.test(overallMatch[1])
-        : /VERDICT[:*\s]*Needs Work/i.test(report);
-      if (overallNeedsWork) {
-        console.log('\n  Editor verdict: Needs Work — skipping publish. Fix blockers and re-run.');
-        return { slug, ok: false, reason: 'editor verdict: Needs Work — not published' };
-      }
+  // must read the report ourselves. If the overall verdict is Needs Work,
+  // run the link-repair agent automatically (it fixes broken links and
+  // removes unfixable ones) then re-run the editor. Only fail if it still
+  // reports Needs Work after repair.
+  if (editorNeedsWork(getEditorReportPath(slug))) {
+    console.log('\n  Editor verdict: Needs Work — running link-repair automatically...');
+    try {
+      run(`node agents/link-repair/index.js "${slug}"`, 'link-repair');
+    } catch (e) {
+      return { slug, ok: false, reason: `link-repair failed: ${e.message}` };
+    }
+    try {
+      run(`node agents/editor/index.js "${canonicalHtml}"`, 'editor (post-repair)');
+    } catch (e) {
+      return { slug, ok: false, reason: `editor (post-repair) failed: ${e.message}` };
+    }
+    if (editorNeedsWork(getEditorReportPath(slug))) {
+      console.log('\n  Editor still reports Needs Work after link repair — not publishing.');
+      return { slug, ok: false, reason: 'editor: Needs Work after link repair — not published' };
     }
   }
 
