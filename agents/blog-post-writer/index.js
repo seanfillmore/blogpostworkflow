@@ -197,7 +197,9 @@ function detectPostType(brief) {
   return 'product';
 }
 
-function buildSystemPrompt(productIngredients, postType) {
+function buildSystemPrompt(productIngredients, postType, contentDepth) {
+  // Resolve depth — fall back to word-count heuristic for briefs without content_depth
+  const depth = contentDepth || 'standard';
   const feedback = loadAgentFeedback('blog-post-writer');
   const ingredientList = productIngredients.ingredients.join(', ');
   const formatNote = productIngredients.format
@@ -272,6 +274,35 @@ CRITICAL CTA RULES for this post type:
 POST STRUCTURE (follow exactly in this order):
 ═══════════════════════════════════
 ${postType === 'product' ? `
+${depth === 'quick' ? `
+This is a SHORT product post (~800 words). Use ONE CTA only — the mid-article review placeholder.
+No above-the-fold CTA. No conversion CTA. The reader needs the content first.
+
+POST STRUCTURE:
+1. INTRO — 1-2 engaging paragraphs. First sentence must directly answer the question. No selling here.
+
+2. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>.
+   - List items: <li><strong>Term:</strong> Explanation</li>
+   - Never start a section with the H2 tag immediately; always follow with a <p>.
+
+3. MID-ARTICLE CTA (place after the main content, before the FAQ — this slot will be replaced by a live review card at publish time, always include it):
+<section style="${CTA_STYLES.midArticle}">
+  <h3 style="${CTA_STYLES.h3}">[Question or desire statement]</h3>
+  <p style="${CTA_STYLES.p}">[Brief product mention with link]</p>
+  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Add to Cart</a>
+</section>
+
+4. FAQ SECTION: <h2>Frequently Asked Questions</h2> followed by Q&A paragraphs.
+
+5. RELATED POSTS (always include):
+<h3>Related Articles</h3>
+<ul>
+  <li><a href="[INTERNAL_URL]">[Post Title]</a></li>
+</ul>
+` : depth === 'standard' ? `
+This is a STANDARD product post (~1200–1600 words). Use TWO CTAs: above-the-fold + mid-article review placeholder. No conversion CTA.
+
+POST STRUCTURE:
 1. ABOVE-THE-FOLD CTA (first, before intro):
 <section style="${CTA_STYLES.aboveTheFold}">
   <h2 style="${CTA_STYLES.h2}">[Short benefit headline — 5-8 words]</h2>
@@ -279,17 +310,50 @@ ${postType === 'product' ? `
   <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">[Shop CTA text]</a>
 </section>
 
-2. INTRO — 1-2 engaging paragraphs. **The first sentence MUST directly answer the question implied by the title with a concrete factual statement** — no anecdotes, no "You finally..." openers, no rhetorical questions, no "If you've ever..." hooks. Include the target keyword (or its key nouns) within the first 60 words. After the answer-first opening sentence, the rest of the intro can frame the problem and tease what's coming. This is non-negotiable: LLM search engines (ChatGPT, Perplexity, AI Overviews) cite the first clear factual answer on the page.
+2. INTRO — 1-2 engaging paragraphs. **The first sentence MUST directly answer the question implied by the title with a concrete factual statement** — no anecdotes, no "You finally..." openers, no rhetorical questions, no "If you've ever..." hooks. Include the target keyword (or its key nouns) within the first 60 words. This is non-negotiable: LLM search engines cite the first clear factual answer on the page.
 
 3. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>.
    - List items: <li><strong>Term:</strong> Explanation</li>
    - Never start a section with the H2 tag immediately; always follow with a <p>.
 
-4. MID-ARTICLE CTA (place roughly halfway through, after 2-3 H2 sections):
+4. MID-ARTICLE CTA (place roughly halfway through, after 2-3 H2 sections — this slot will be replaced by a live review card at publish time, always include it):
 <section style="${CTA_STYLES.midArticle}">
   <h3 style="${CTA_STYLES.h3}">[Question or desire statement]</h3>
   <p style="${CTA_STYLES.p}">[Brief product mention with link]</p>
-  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Shop Now</a>
+  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Add to Cart</a>
+</section>
+
+5. COMPARISON TABLE (for roundup/review posts only): use standard <table> with inline border styles.
+
+6. FAQ SECTION: <h2>Frequently Asked Questions</h2> followed by Q&A paragraphs.
+
+7. RELATED POSTS (always include):
+<h3>Related Articles</h3>
+<ul>
+  <li><a href="[INTERNAL_URL]">[Post Title]</a></li>
+</ul>
+` : `
+This is a COMPREHENSIVE product post (~2000–2400 words). Use THREE CTAs: above-the-fold, mid-article review placeholder, and conversion.
+
+POST STRUCTURE:
+1. ABOVE-THE-FOLD CTA (first, before intro):
+<section style="${CTA_STYLES.aboveTheFold}">
+  <h2 style="${CTA_STYLES.h2}">[Short benefit headline — 5-8 words]</h2>
+  <p style="${CTA_STYLES.p}">[One sentence pitch with linked product name]</p>
+  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">[Shop CTA text]</a>
+</section>
+
+2. INTRO — 1-2 engaging paragraphs. **The first sentence MUST directly answer the question implied by the title with a concrete factual statement** — no anecdotes, no "You finally..." openers, no rhetorical questions, no "If you've ever..." hooks. Include the target keyword (or its key nouns) within the first 60 words. This is non-negotiable: LLM search engines cite the first clear factual answer on the page.
+
+3. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>.
+   - List items: <li><strong>Term:</strong> Explanation</li>
+   - Never start a section with the H2 tag immediately; always follow with a <p>.
+
+4. MID-ARTICLE CTA (place roughly halfway through, after 2-3 H2 sections — this slot will be replaced by a live review card at publish time, always include it):
+<section style="${CTA_STYLES.midArticle}">
+  <h3 style="${CTA_STYLES.h3}">[Question or desire statement]</h3>
+  <p style="${CTA_STYLES.p}">[Brief product mention with link]</p>
+  <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Add to Cart</a>
 </section>
 
 5. COMPARISON TABLE (for roundup/review posts only): use standard <table> with inline border styles.
@@ -302,7 +366,7 @@ ${postType === 'product' ? `
   <p style="${CTA_STYLES.p}">[Final pitch sentence with product link]</p>
   <a href="[PRODUCT_URL]" style="${CTA_STYLES.button}">Shop Now</a>
 </section>
-` : `
+`}` : `
 1. INTRO — 1-2 engaging paragraphs. **The first sentence MUST directly answer the question implied by the title with a concrete factual statement** — no anecdotes, no "You finally..." openers, no rhetorical questions. Include the target keyword (or its key nouns) within the first 60 words. After the answer-first opening sentence, you may frame the problem and tease the rest. DO NOT pitch any product here. This is non-negotiable: LLM search engines cite the first clear factual answer on the page.
 
 2. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>. Deliver the full value of the guide. List items use <li><strong>Term:</strong> Explanation</li>. Never start a section with an H2 tag immediately — always follow with a <p>.
@@ -375,7 +439,7 @@ TARGET KEYWORD: "${brief.target_keyword}"
 TITLE: ${brief.recommended_title}
 META DESCRIPTION (for your reference only, do not include in HTML): ${brief.meta_description}
 SEARCH INTENT: ${brief.search_intent}
-TARGET WORD COUNT: ~${brief.target_word_count} words
+TARGET WORD COUNT: ${brief.target_word_count} words (hard ceiling — do not exceed)
 
 CONTENT ANGLE:
 ${brief.content_angle}
@@ -405,7 +469,7 @@ WRITER NOTES:
 ${brief.writer_notes || 'Follow brand voice guidelines above.'}
 ${loadInternalLinksContext()}---
 
-Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Aim for ~${brief.target_word_count} words. Make it genuinely useful and comprehensive.`;
+Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Write no more than ${brief.target_word_count} words. When you approach this limit, wrap up the current section and move to the conclusion — do not keep adding content. A focused post that fully answers the question at ${brief.target_word_count} words is better than a padded post that runs long. Stop when you have said everything useful, not when you have filled a quota.`;
 }
 
 // ── stream the post ───────────────────────────────────────────────────────────
@@ -439,7 +503,7 @@ async function writePost(briefPath) {
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,
-      system: buildSystemPrompt(productIngredients, detectPostType(brief)),
+      system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null),
       messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
     });
 
@@ -486,6 +550,10 @@ async function writePost(briefPath) {
   const unclosedHref = /href="[^"]*$/.test(html);
   if (wordCount < 300) {
     throw new Error(`Stream produced too little content: ${wordCount} words (minimum 300). Re-run or check brief.`);
+  }
+  const targetWordCount = brief.target_word_count || 0;
+  if (targetWordCount > 0 && wordCount > targetWordCount * 1.15) {
+    console.warn(`\n  Warning: post is ${wordCount} words — ${Math.round((wordCount / targetWordCount - 1) * 100)}% over the ${targetWordCount}-word target. Consider tightening the brief outline or section word_count_targets.`);
   }
   if (!hasH2) {
     throw new Error('Stream produced HTML with no H2 headings — likely truncated or malformed. Re-run.');
