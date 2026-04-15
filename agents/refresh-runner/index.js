@@ -33,7 +33,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
-import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -166,6 +166,25 @@ function refreshOne(slug) {
     run(`node agents/editor/index.js "${canonicalHtml}"`, 'editor');
   } catch (e) {
     return { slug, ok: false, reason: `editor failed: ${e.message}` };
+  }
+
+  // Gate on editor verdict — the editor exits 0 even on "Needs Work", so we
+  // must read the report ourselves. If the overall verdict is Needs Work, do
+  // not publish: leave the previous Shopify content untouched and let the
+  // blocked-posts card surface the issue for human review.
+  {
+    const reportPath = getEditorReportPath(slug);
+    if (existsSync(reportPath)) {
+      const report = readFileSync(reportPath, 'utf8');
+      const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
+      const overallNeedsWork = overallMatch
+        ? /needs work/i.test(overallMatch[1])
+        : /VERDICT[:*\s]*Needs Work/i.test(report);
+      if (overallNeedsWork) {
+        console.log('\n  Editor verdict: Needs Work — skipping publish. Fix blockers and re-run.');
+        return { slug, ok: false, reason: 'editor verdict: Needs Work — not published' };
+      }
+    }
   }
 
   // Stamp last_refreshed_at on the metadata
