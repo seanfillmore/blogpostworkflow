@@ -156,6 +156,9 @@ runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 // Step 5d: submit pending pages to indexing API (daily, up to quota limit)
 runStep('submit-indexing', `"${NODE}" agents/technical-seo/index.js fix-submit-indexing`);
 
+// Step 5f: rebuild legacy / editor-tagged posts — max 5 per day, daily until backlog clears
+runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 5 --apply${dryFlag}`);
+
 // Step 5e: auto-refresh posts stuck in "crawled_not_indexed" for 45+ days
 if (!dryFlag) {
   const { listAllSlugs, getPostMeta } = await import('./lib/posts.js');
@@ -214,9 +217,6 @@ if (new Date().getDay() === 0) {
 
   // Step 8c: AI citation tracking across LLMs
   runStep('ai-citation-tracker', `"${NODE}" agents/ai-citation-tracker/index.js`, { indent: '    ' });
-
-  // Step 8d: rebuild legacy posts (missing FAQ schema) — max 3 per week
-  runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 3 --apply${dryFlag}`, { indent: '    ' });
 
   // Step 8e: generate llms.txt for LLM crawlers
   runStep('llms-txt-generator', `"${NODE}" agents/llms-txt-generator/index.js`, { indent: '    ' });
