@@ -35,6 +35,7 @@ import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { loadKeywordIndex } from '../../lib/keyword-index.js';
 import { getMetaPath, getPostMeta, getRefreshedPath, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { checkAnswerFirst } from '../../lib/answer-first.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-refresher');
@@ -238,7 +239,7 @@ Your task: produce a refreshed version of this HTML that:
 1. **Strengthens weak sections** — identify H2 sections with thin content (<100 words) and expand them with specific, useful information
 2. **Adds missing semantic keywords** — naturally weave in the related keywords listed above
 3. **Updates any stale information** — replace "2024" or "2025" with "2026" where appropriate; update statistics if they feel outdated
-4. **Improves the introduction** — the first 100 words should hook the reader and clearly include the target keyword
+4. **Improves the introduction** — the **first sentence MUST directly answer the question implied by the title with a concrete factual statement**. No anecdotes, no "You finally..." openers, no rhetorical questions. Include the target keyword within the first 60 words. LLM search engines (ChatGPT, Perplexity, AI Overviews) cite the first clear factual answer on the page — this is non-negotiable.
 5. **Addresses user concerns** — if USER CONCERNS FROM SEARCH QUERIES are listed above, add an H2 or H3 section for each one. Distill the raw query into a natural heading and answer the concern directly with practical advice. These are high-value because real people searched for them.
 6. **Expands the FAQ section** (if present) — add 2–3 new Q&A pairs targeting the related keywords and user concerns
 7. **Improves readability** — rewrite overly clinical or academic sentences to an 8th grade reading level. Use short sentences, plain words, and direct address ("you", "your"). Replace jargon with plain English: "sore mouth" not "oral tissue irritation", "cleans your teeth" not "facilitates plaque removal". Break long paragraphs into 2–4 sentence chunks. The tone should feel like a knowledgeable friend explaining something clearly, not a textbook.
@@ -433,6 +434,14 @@ async function main() {
       process.stdout.write('    Summarizing changes... ');
       const changeSummary = await summarizeChanges(originalHtml, refreshedHtml, keyword);
       console.log('done');
+
+      // Answer-first check — same gate as blog-post-writer
+      const afCheck = checkAnswerFirst(refreshedHtml, { keyword });
+      if (!afCheck.passes) {
+        throw new Error(
+          `Answer-first check failed: ${afCheck.reasons.join('; ')}. The refreshed intro must lead with a direct factual answer within 60 words.`
+        );
+      }
 
       // Save refreshed HTML
       ensurePostDir(slug);
