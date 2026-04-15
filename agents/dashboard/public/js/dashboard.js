@@ -24,6 +24,7 @@ function switchTab(name, btn) {
   if (name === 'ad-intelligence') renderAdIntelligenceTab();
   if (name === 'creatives') renderCreativesTab();
   if (name === 'tech-seo' && data) renderTechnicalSeoTab(data);
+  if (name === 'ideas') renderIdeasTab();
   // Update chat sidebar when tab switches
   if (tabChatOpen) {
     var chatTitle = document.getElementById('tab-chat-title');
@@ -3969,6 +3970,110 @@ async function loadData() {
 
 loadData();
 setInterval(loadData, 3600000);
+
+// ── Ideas tab ─────────────────────────────────────────────────────────────────
+
+async function renderIdeasTab() {
+  var panel = document.getElementById('ideas-panel');
+  panel.innerHTML = '<div class="empty-state">Loading ideas...</div>';
+
+  var res = await fetch('/api/ideas');
+  var d = await res.json();
+  var items = d.items || [];
+
+  if (!items.length) {
+    panel.innerHTML = '<div class="empty-state">No ideas awaiting review. New ideas will appear here when signal agents surface them.</div>';
+    return;
+  }
+
+  var html = '<div class="card"><div class="card-header"><span class="card-title">Ideas Inbox</span>' +
+    '<span class="card-subtitle">' + items.length + ' idea' + (items.length !== 1 ? 's' : '') + ' awaiting review</span></div>' +
+    '<div class="card-body">';
+
+  items.forEach(function(item) {
+    var kd = item.kd != null ? item.kd : '—';
+    var vol = item.volume ? item.volume.toLocaleString() : '—';
+    var source = item.source || 'unknown';
+
+    html += '<div class="idea-row" id="idea-row-' + esc(item.slug) + '">' +
+      '<div class="idea-meta">' +
+        '<span class="idea-source">' + esc(source) + '</span>' +
+        '<span class="idea-stats">KD ' + kd + ' &middot; ' + vol + '/mo</span>' +
+      '</div>' +
+      '<div class="idea-fields">' +
+        '<label class="idea-label">Keyword</label>' +
+        '<input class="idea-input" id="kw-' + esc(item.slug) + '" value="' + esc(item.keyword || '') + '" placeholder="target keyword">' +
+        '<label class="idea-label">Title</label>' +
+        '<input class="idea-input idea-title-input" id="title-' + esc(item.slug) + '" value="' + esc(item.title || '') + '" placeholder="post title">' +
+      '</div>' +
+      '<div class="idea-actions">' +
+        '<button class="btn-approve" onclick="approveIdea(\'' + esc(item.slug) + '\')">Approve</button>' +
+        '<button class="btn-sm btn-reject" onclick="rejectIdea(\'' + esc(item.slug) + '\')">Reject</button>' +
+      '</div>' +
+    '</div>';
+  });
+
+  html += '</div></div>';
+
+  // Inject minimal scoped styles if not already present
+  if (!document.getElementById('ideas-styles')) {
+    var style = document.createElement('style');
+    style.id = 'ideas-styles';
+    style.textContent = [
+      '.idea-row{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid #1e293b}',
+      '.idea-row:last-child{border-bottom:none}',
+      '.idea-meta{display:flex;flex-direction:column;gap:4px;padding-top:2px}',
+      '.idea-source{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#818cf8}',
+      '.idea-stats{font-size:11px;color:#6b7280}',
+      '.idea-fields{display:flex;flex-direction:column;gap:6px}',
+      '.idea-label{font-size:11px;color:#6b7280;margin-bottom:1px}',
+      '.idea-input{background:#0f172a;border:1px solid #334155;border-radius:5px;color:#f1f5f9;padding:6px 9px;font-size:13px;width:100%;box-sizing:border-box}',
+      '.idea-title-input{font-size:12px;color:#94a3b8}',
+      '.idea-input:focus{outline:none;border-color:#818cf8}',
+      '.idea-actions{display:flex;flex-direction:column;gap:6px;padding-top:2px}',
+      '.btn-reject{background:#1e293b;color:#f87171;border:1px solid #f8717155;border-radius:5px;padding:5px 10px;cursor:pointer;font-size:12px}',
+      '.btn-reject:hover{background:#2d1515}',
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  panel.innerHTML = html;
+}
+
+async function approveIdea(slug) {
+  var kw = document.getElementById('kw-' + slug);
+  var title = document.getElementById('title-' + slug);
+
+  // Save any edits first
+  if (kw || title) {
+    await fetch('/api/ideas/' + encodeURIComponent(slug), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: kw ? kw.value : undefined, title: title ? title.value : undefined }),
+    });
+  }
+
+  var res = await fetch('/api/ideas/' + encodeURIComponent(slug) + '/approve', { method: 'POST' });
+  var d = await res.json();
+  if (d.ok) {
+    var row = document.getElementById('idea-row-' + slug);
+    if (row) { row.style.opacity = '0.4'; row.style.pointerEvents = 'none'; }
+    setTimeout(renderIdeasTab, 400);
+  } else {
+    alert('Error: ' + (d.error || 'unknown'));
+  }
+}
+
+async function rejectIdea(slug) {
+  var res = await fetch('/api/ideas/' + encodeURIComponent(slug) + '/reject', { method: 'POST' });
+  var d = await res.json();
+  if (d.ok) {
+    var row = document.getElementById('idea-row-' + slug);
+    if (row) row.remove();
+  } else {
+    alert('Error: ' + (d.error || 'unknown'));
+  }
+}
 
 // ── tab chat ─────────────────────────────────────────────────────────────────
 
