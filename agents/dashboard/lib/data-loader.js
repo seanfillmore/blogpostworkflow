@@ -25,12 +25,15 @@ import { parseTechSeoReport } from './tech-seo-parser.js';
  *
  * Detection rules (in order):
  *   1. Report must contain at least one "VERDICT: Needs Work" — cheap pre-filter.
- *   2. If the report has an "## OVERALL QUALITY" section (the editor's
+ *   2. Skip posts that are already live: shopify_status is published/scheduled,
+ *      OR shopify_publish_at is in the past (handles legacy-synced posts that
+ *      never had shopify_status written to meta.json).
+ *   3. If the report has an "## OVERALL QUALITY" section (the editor's
  *      canonical sign-off per its own system prompt), use that section's
  *      verdict as the source of truth. Pass / Good / Excellent → not blocked.
- *   3. Else if the report has a "## BLOCKERS*" section starting with "None"
+ *   4. Else if the report has a "## BLOCKERS*" section starting with "None"
  *      → not blocked (sub-section verdicts are informational).
- *   4. Otherwise treat the post as blocked.
+ *   5. Otherwise treat the post as blocked.
  *
  * The two false-positive paths (rules 2 and 3) catch the common case where
  * a sub-section is flagged Needs Work but the overall verdict is Good — that
@@ -50,7 +53,10 @@ function findBlockedPosts() {
 
       const meta = getPostMetaFromLib(slug);
       if (!meta) continue;
-      if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') continue;
+      const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
+      const isLive = meta.shopify_status === 'published' || meta.shopify_status === 'scheduled'
+        || (!Number.isNaN(publishTs) && publishTs <= Date.now());
+      if (isLive) continue;
 
       // Rule 2: explicit overall verdict trumps sub-section verdicts.
       const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
