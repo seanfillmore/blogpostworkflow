@@ -2,7 +2,7 @@
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
-import { getBlogs, updateArticle, getProducts, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
+import { getBlogs, updateArticle, getProducts, updateProduct, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
 import { getPostMeta, getMetaPath, getContentPath, listAllSlugs } from '../../../lib/posts.js';
 
 function readJsonBody(req) {
