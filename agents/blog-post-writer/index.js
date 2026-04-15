@@ -497,15 +497,44 @@ async function writePost(briefPath) {
   // to the question implied by the title. LLM search engines (ChatGPT,
   // Perplexity, AI Overviews, claude.ai) cite the first clear factual
   // statement they find on a page.
-  const { checkAnswerFirst } = await import('../../lib/answer-first.js');
-  const afCheck = checkAnswerFirst(html, {
-    title: brief.recommended_title || brief.title || '',
-    keyword: brief.target_keyword || '',
-  });
+  const { checkAnswerFirst, extractFirstBodyParagraph } = await import('../../lib/answer-first.js');
+  const keyword = brief.target_keyword || '';
+  const title = brief.recommended_title || brief.title || '';
+  let afCheck = checkAnswerFirst(html, { title, keyword });
   if (!afCheck.passes) {
-    throw new Error(
-      `Answer-first check failed: ${afCheck.reasons.join('; ')}. The intro must lead with a direct factual answer to the title within 60 words. Re-run with adjusted brief or writer notes.`
-    );
+    process.stdout.write(`\n  Intro failed answer-first (${afCheck.reasons.join('; ')}) — repairing... `);
+    try {
+      const badIntro = extractFirstBodyParagraph(html);
+      const repairMsg = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: `Rewrite ONLY this opening paragraph so that:
+1. The first sentence directly answers the question implied by the title "${title}" with a concrete factual statement
+2. The target keyword "${keyword}" appears within the first 60 words
+3. No rhetorical questions, no "You finally...", no anecdotal openers
+4. Keep it to 2–3 sentences max
+
+Return ONLY the replacement <p>...</p> tag — nothing else.
+
+Current paragraph:
+${badIntro?.html || ''}`,
+        }],
+      });
+      const repairedP = repairMsg.content[0].text.trim();
+      if (!repairedP.startsWith('<p') || !repairedP.includes('</p>')) {
+        throw new Error('repair response was not a valid <p> tag');
+      }
+      html = html.replace(badIntro.html, repairedP);
+      afCheck = checkAnswerFirst(html, { title, keyword });
+      if (!afCheck.passes) {
+        throw new Error(`still failing after repair: ${afCheck.reasons.join('; ')}`);
+      }
+      console.log('repaired');
+    } catch (repairErr) {
+      throw new Error(`Answer-first check failed and repair failed: ${repairErr.message}`);
+    }
   }
   if (!hasCTA) {
     console.warn('  Warning: No CTA section blocks detected. Editor will flag this.');
