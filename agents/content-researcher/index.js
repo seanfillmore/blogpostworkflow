@@ -305,9 +305,10 @@ Produce a JSON content brief with exactly this structure:
   "target_keyword": string,
   "slug": string (URL-safe, hyphenated),
   "search_intent": "informational" | "commercial" | "transactional" | "navigational",
+  "content_depth": "quick" | "standard" | "comprehensive",
   "recommended_title": string (60-65 chars, includes keyword, compelling),
   "meta_description": string (150-160 chars, includes keyword, strong CTA),
-  "target_word_count": number (based on competitor benchmarks, typically 1500-2500),
+  "target_word_count": number (derived from content_depth — see rules below),
   "content_angle": string (1-2 sentences: what makes this post uniquely authoritative and better than competitors),
   "key_differentiators": string[] (3-5 specific things this post must do better than current top results),
   "outline": [
@@ -327,6 +328,22 @@ Produce a JSON content brief with exactly this structure:
   "schema_type": "Article" | "HowTo" | "FAQPage" | "Review",
   "writer_notes": string (anything else the writer needs to know: tone, style, brand voice, what to avoid)
 }
+
+CONTENT DEPTH RULES — pick one tier, set target_word_count accordingly:
+- "quick"         700–900 words   — Use when: the keyword is a simple question or definition ("what is glycerin"),
+                                    navigational intent, queries whose SERPs are dominated by featured snippets
+                                    or short answers, or topics that can be fully answered in a few paragraphs.
+                                    Do NOT pad to fill space. Section word_count_targets should be small.
+- "standard"    1200–1600 words   — Default for most informational and product-focused posts: how-tos with a
+                                    few clear steps, ingredient explainers, single-product benefit posts, FAQs
+                                    with moderate depth. Use when competitor pages average 1000–1800 words.
+- "comprehensive" 2000–2400 words — Use only when: the keyword is highly competitive and top-ranking SERPs
+                                    average 2000+ words, the post is a roundup ("best X for Y") or detailed
+                                    comparison, or the topic genuinely requires covering multiple sub-topics
+                                    (e.g. a complete guide). If in doubt, choose "standard" not "comprehensive".
+
+target_word_count must fall within the range for the chosen content_depth. Do not exceed the upper bound.
+Section word_count_targets in the outline must sum to no more than target_word_count.
 
 BRAND POLICY — apply to every brief:
 - Do NOT include competitor brand names (Crest, Colgate, Tom's of Maine, Dr. Bronner's, Boka, Marvis, Sensodyne, Dr. Sheffield's, Himalaya, Jason, Wellnesse, etc.) anywhere in semantic_keywords, keywords_to_include, or outline guidance.

@@ -375,7 +375,7 @@ TARGET KEYWORD: "${brief.target_keyword}"
 TITLE: ${brief.recommended_title}
 META DESCRIPTION (for your reference only, do not include in HTML): ${brief.meta_description}
 SEARCH INTENT: ${brief.search_intent}
-TARGET WORD COUNT: ~${brief.target_word_count} words
+TARGET WORD COUNT: ${brief.target_word_count} words (hard ceiling — do not exceed)
 
 CONTENT ANGLE:
 ${brief.content_angle}
@@ -405,7 +405,7 @@ WRITER NOTES:
 ${brief.writer_notes || 'Follow brand voice guidelines above.'}
 ${loadInternalLinksContext()}---
 
-Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Aim for ~${brief.target_word_count} words. Make it genuinely useful and comprehensive.`;
+Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Write no more than ${brief.target_word_count} words. When you approach this limit, wrap up the current section and move to the conclusion — do not keep adding content. A focused post that fully answers the question at ${brief.target_word_count} words is better than a padded post that runs long. Stop when you have said everything useful, not when you have filled a quota.`;
 }
 
 // ── stream the post ───────────────────────────────────────────────────────────
@@ -486,6 +486,10 @@ async function writePost(briefPath) {
   const unclosedHref = /href="[^"]*$/.test(html);
   if (wordCount < 300) {
     throw new Error(`Stream produced too little content: ${wordCount} words (minimum 300). Re-run or check brief.`);
+  }
+  const targetWordCount = brief.target_word_count || 0;
+  if (targetWordCount > 0 && wordCount > targetWordCount * 1.15) {
+    console.warn(`\n  Warning: post is ${wordCount} words — ${Math.round((wordCount / targetWordCount - 1) * 100)}% over the ${targetWordCount}-word target. Consider tightening the brief outline or section word_count_targets.`);
   }
   if (!hasH2) {
     throw new Error('Stream produced HTML with no H2 headings — likely truncated or malformed. Re-run.');
