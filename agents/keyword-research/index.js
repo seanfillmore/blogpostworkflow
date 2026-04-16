@@ -1,14 +1,14 @@
 /**
  * Keyword Research Agent
  *
- * Uses the Ahrefs API to:
+ * Uses DataForSEO to:
  *   1. Audit current rankings and map them against internal pillar pages
  *   2. Find keyword opportunities in the site's core topics
  *   3. Identify competitor keyword gaps
  *   4. Generate a prioritised list of future blog post ideas
  *
  * Requires: data/link-audit.json (run internal-link-auditor first)
- *           AHREFS_API_KEY in .env
+ *           DATAFORSEO_PASSWORD in .env
  * Output:   data/keyword-research.json + data/keyword-research-report.md
  * Usage:    node agents/keyword-research/index.js
  */
@@ -16,6 +16,12 @@
 import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import {
+  getTopPages as dfsTopPages,
+  getRankedKeywords,
+  getCompetitors as dfsCompetitors,
+  getKeywordIdeas,
+} from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -38,37 +44,9 @@ function loadEnv() {
 }
 
 const env = loadEnv();
-const AHREFS_KEY = env.AHREFS_API_KEY;
-if (!AHREFS_KEY) {
-  console.error('Missing AHREFS_API_KEY in .env');
+if (!env.DATAFORSEO_PASSWORD) {
+  console.error('Missing DATAFORSEO_PASSWORD in .env');
   process.exit(1);
-}
-
-// ── ahrefs client ─────────────────────────────────────────────────────────────
-
-const AHREFS_BASE = 'https://api.ahrefs.com/v3';
-
-async function ahrefs(endpoint, params) {
-  const qs = new URLSearchParams(params).toString();
-  const url = `${AHREFS_BASE}${endpoint}?${qs}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${AHREFS_KEY}` },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Ahrefs ${endpoint} → HTTP ${res.status}: ${text}`);
-  }
-  return res.json();
-}
-
-// Convenience: site-explorer endpoint
-function siteExplorer(report, params) {
-  return ahrefs(`/site-explorer/${report}`, params);
-}
-
-// Convenience: keywords-explorer endpoint
-function keywordsExplorer(report, params) {
-  return ahrefs(`/keywords-explorer/${report}`, params);
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -83,64 +61,57 @@ function loadAudit() {
 }
 
 const DOMAIN = new URL(config.url).hostname.replace(/^www\./, '');
-const TODAY = new Date().toISOString().split('T')[0];
 
-// ── core queries ──────────────────────────────────────────────────────────────
+// ── core queries (DataForSEO-backed, reshaped to match downstream consumers) ──
 
 async function getTopPages() {
-  const data = await siteExplorer('pages-by-traffic', {
-    target: DOMAIN,
-    mode: 'subdomains',
-    date: TODAY,
-    country: 'us',
-    limit: 30,
-    select: 'url,sum_traffic,top_keyword,top_keyword_volume,top_keyword_best_position,keywords',
-    order_by: 'sum_traffic:desc',
-  });
-  return data.pages || [];
+  const pages = await dfsTopPages(DOMAIN, { limit: 30 });
+  return pages.map((p) => ({
+    url: p.url,
+    sum_traffic: p.traffic ?? 0,
+    keywords: p.keywords ?? 0,
+    top_keyword: p.topKeyword ?? null,
+  }));
 }
 
 async function getOrganicKeywords() {
-  const data = await siteExplorer('organic-keywords', {
-    target: DOMAIN,
-    mode: 'subdomains',
-    date: TODAY,
-    country: 'us',
-    limit: 100,
-    select: 'keyword,best_position,volume,keyword_difficulty,sum_traffic,best_position_url',
-    order_by: 'sum_traffic:desc',
-  });
-  return data.keywords || [];
+  const kws = await getRankedKeywords(DOMAIN, { limit: 100 });
+  return kws.map((k) => ({
+    keyword: k.keyword,
+    best_position: k.position,
+    volume: k.volume ?? 0,
+    keyword_difficulty: k.kd ?? null,
+    sum_traffic: k.traffic ?? 0,
+    best_position_url: k.url?.startsWith('http')
+      ? k.url
+      : `${config.url.replace(/\/$/, '')}${k.url ?? ''}`,
+  }));
 }
 
 async function getCompetitors() {
-  const data = await siteExplorer('organic-competitors', {
-    target: DOMAIN,
-    mode: 'subdomains',
-    date: TODAY,
-    country: 'us',
-    limit: 10,
-    select: 'competitor_domain,keywords_common,keywords_competitor,traffic,value',
-    order_by: 'keywords_common:desc',
-  });
-  return data.competitors || [];
+  const comps = await dfsCompetitors(DOMAIN, { limit: 10 });
+  return comps.map((c) => ({
+    competitor_domain: c.domain,
+    keywords_common: c.commonKeywords ?? 0,
+    keywords_competitor: c.organicKeywords ?? 0,
+    traffic: c.organicTraffic ?? 0,
+  }));
 }
 
 async function getKeywordOpportunities(seeds) {
-  const data = await keywordsExplorer('matching-terms', {
-    country: 'us',
-    keywords: seeds.join(','),
-    select: 'keyword,volume,difficulty,traffic_potential,cpc',
-    limit: 50,
-    order_by: 'volume:desc',
-    where: JSON.stringify({
-      and: [
-        { field: 'volume', is: ['gte', 300] },
-        { field: 'difficulty', is: ['lte', 35] },
-      ],
-    }),
-  });
-  return data.keywords || [];
+  if (!seeds || seeds.length === 0) return [];
+  const ideas = await getKeywordIdeas(seeds, { limit: 50 });
+  return ideas
+    .filter((k) => (k.volume ?? 0) >= 300)
+    .filter((k) => (k.kd ?? 0) <= 35)
+    .map((k) => ({
+      keyword: k.keyword,
+      volume: k.volume ?? 0,
+      difficulty: k.kd ?? 0,
+      traffic_potential: k.trafficPotential ?? 0,
+      cpc: k.cpc ?? 0,
+    }))
+    .sort((a, b) => b.volume - a.volume);
 }
 
 // ── pillar audit ──────────────────────────────────────────────────────────────
@@ -179,7 +150,6 @@ function auditPillars(pillarPages, topPages, organicKeywords) {
 function generateBlogIdeas(opportunities, existingKeywords) {
   const existingKwSet = new Set(existingKeywords.map((k) => k.keyword.toLowerCase()));
 
-  // Filter to only keywords the site doesn't already rank for
   const gaps = opportunities.filter((k) => !existingKwSet.has(k.keyword.toLowerCase()));
 
   // Score: volume * (1 / (difficulty + 1)) * log(traffic_potential + 1)
@@ -206,13 +176,9 @@ function generateBlogIdeas(opportunities, existingKeywords) {
 
 function suggestTitle(keyword) {
   const kw = keyword.trim();
-  // "best X" → "Best X: [Year] Guide"
   if (/^best /i.test(kw)) return `${kw.replace(/\b\w/g, (c) => c.toUpperCase())}: Complete [Year] Guide`;
-  // "how to" → keep as question
   if (/^how to/i.test(kw)) return `${kw.replace(/\b\w/g, (c) => c.toUpperCase())} (Step-by-Step)`;
-  // "is X" / "does X" → question format
   if (/^(is |does |can |should )/i.test(kw)) return kw.replace(/\b\w/g, (c) => c.toUpperCase()) + '?';
-  // default → "X: What You Need to Know"
   return `${kw.replace(/\b\w/g, (c) => c.toUpperCase())}: Everything You Need to Know`;
 }
 
@@ -223,7 +189,6 @@ function generateReport(data) {
   lines.push(`# Keyword Research Report — ${config.name}`);
   lines.push(`Generated: ${new Date().toLocaleString()}\n`);
 
-  // Pillar audit
   lines.push('## Pillar Page Audit');
   lines.push('Are the most internally-linked pages capturing meaningful search traffic?\n');
   lines.push('| Pillar Page | Internal Links | Monthly Traffic | Top Keyword | Vol | Pos | Aligned? |');
@@ -234,7 +199,6 @@ function generateReport(data) {
   }
   lines.push('');
 
-  // Top competitors
   lines.push('## Top Competitors');
   lines.push('| Competitor | Common Keywords | Their Keywords | Monthly Traffic |');
   lines.push('|------------|----------------|----------------|-----------------|');
@@ -243,7 +207,6 @@ function generateReport(data) {
   }
   lines.push('');
 
-  // Blog post ideas
   lines.push('## Blog Post Opportunities');
   lines.push('Keywords competitors rank for that this site does not yet target, ranked by opportunity score.\n');
   lines.push('| # | Suggested Title | Target Keyword | Volume | KD | Traffic Potential | Score |');
@@ -258,7 +221,6 @@ function generateReport(data) {
 
 // ── run ───────────────────────────────────────────────────────────────────────
 
-// Core seed topics — loaded from config/site.json so they're configurable per site
 const SEED_TOPICS = config.seed_topics || [];
 
 async function run() {
@@ -266,7 +228,7 @@ async function run() {
 
   const audit = loadAudit();
 
-  console.log('Fetching Ahrefs data (4 queries)...');
+  console.log('Fetching DataForSEO data (4 queries)...');
   const [topPages, organicKeywords, competitors, opportunities] = await Promise.all([
     getTopPages(),
     getOrganicKeywords(),
@@ -286,6 +248,7 @@ async function run() {
     meta: {
       site: config.name,
       generated_at: new Date().toISOString(),
+      provider: 'dataforseo',
       total_ranking_keywords: organicKeywords.length,
       total_blog_ideas: blogIdeas.length,
     },
