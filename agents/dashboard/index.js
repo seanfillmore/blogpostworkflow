@@ -31,7 +31,7 @@ import dataRoutes from './routes/data.js';
 import agentsRoutes from './routes/agents.js';
 import miscRoutes from './routes/misc.js';
 import uploadsRoutes from './routes/uploads.js';
-import ahrefsRoutes from './routes/ahrefs.js';
+import dataforseoRoutes from './routes/dataforseo.js';
 import chatRoutes from './routes/chat.js';
 import googleRoutes from './routes/google.js';
 import metaAdsRoutes from './routes/meta-ads.js';
@@ -93,7 +93,7 @@ const ROUTES = [
   ...agentsRoutes,
   ...miscRoutes,
   ...uploadsRoutes,
-  ...ahrefsRoutes,
+  ...dataforseoRoutes,
   ...chatRoutes,
   ...googleRoutes,
   ...metaAdsRoutes,

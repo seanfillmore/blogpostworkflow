@@ -1,4 +1,9 @@
-// agents/dashboard/routes/ahrefs.js
+// agents/dashboard/routes/dataforseo.js
+//
+// Dashboard routes backed by DataForSEO. For historical compatibility the
+// /api/seo-authority/refresh and /api/ahrefs-overview endpoints still write
+// CSVs into AHREFS_DIR — the dashboard data-loader still reads from that path.
+// Dropping the CSV cache entirely is tracked as a follow-up.
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getBacklinksSummary, getRankedKeywords } from '../../../lib/dataforseo.js';
