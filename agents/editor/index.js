@@ -463,6 +463,54 @@ function loadCompetitorAliases() {
  * legitimate. The rule has always been FAQ-specific; the code now enforces
  * exactly that, no broader.
  */
+/**
+ * Deterministic year-accuracy check. Scans the editorialContent (post body
+ * after tag stripping) for stale year references. Because this operates on
+ * the same text the LLM sees, it's authoritative — the LLM hallucinates
+ * stale years that don't exist in body (confusing slug/id attrs with
+ * visible text), so we override the LLM's verdict with this.
+ *
+ * "Stale" means a year in [2020, currentYear). Current year and future
+ * years are fine. Pre-2020 years are treated as historical references
+ * and not flagged.
+ */
+function buildYearAccuracyVerdict(editorialContent) {
+  const currentYear = new Date().getFullYear();
+  const stale = new Set();
+  const staleContexts = [];
+  const re = /\b(20\d{2})\b/g;
+  let m;
+  while ((m = re.exec(editorialContent)) !== null) {
+    const yr = parseInt(m[1], 10);
+    if (yr < 2020 || yr >= currentYear) continue;
+    stale.add(yr);
+    // Capture surrounding context for the report
+    const start = Math.max(0, m.index - 40);
+    const end = Math.min(editorialContent.length, m.index + 50);
+    const snippet = editorialContent.slice(start, end).replace(/\s+/g, ' ').trim();
+    staleContexts.push(`"…${snippet}…"`);
+    if (staleContexts.length >= 5) break;
+  }
+
+  if (stale.size === 0) {
+    return `## 4. YEAR ACCURACY
+**VERDICT:** Pass
+**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale year references detected. Any YYYY patterns in href slugs, id attributes, or other HTML attributes are ignored by design (immutable technical identifiers).
+
+---
+`;
+  }
+  return `## 4. YEAR ACCURACY
+**VERDICT:** BLOCKER
+**NOTES:** Found ${staleContexts.length} stale year reference(s) in visible body text: ${[...stale].sort().join(', ')}. Contexts:
+${staleContexts.map((c, i) => `  ${i + 1}. ${c}`).join('\n')}
+
+Run pre-review auto-fix patterns or rewrite the surrounding text to use ${currentYear}.
+
+---
+`;
+}
+
 function buildFaqCompetitorVerdict(faqQAs, competitorAliases) {
   if (!faqQAs.length) {
     return `## 8. COMPETITOR NAMES IN FAQ
@@ -1114,6 +1162,16 @@ async function runEditor(htmlPath) {
   review = review.replace(
     /##\s*\d?\.?\s*COMPETITOR NAMES IN FAQ[\s\S]*?(?=\n##\s|\n---|$)/i,
     faqVerdict.trim() + '\n'
+  );
+
+  // Same treatment for YEAR ACCURACY. The LLM keeps confusing slug/id
+  // attribute year references with visible body text, flagging stale
+  // years the reader never sees. Deterministic scan over the same text
+  // the LLM gets is authoritative.
+  const yearVerdict = buildYearAccuracyVerdict(editorialContent);
+  review = review.replace(
+    /##\s*\d?\.?\s*YEAR ACCURACY[\s\S]*?(?=\n##\s|\n---|$)/i,
+    yearVerdict.trim() + '\n'
   );
 
   // Build and save report
