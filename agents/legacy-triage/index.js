@@ -175,7 +175,9 @@ async function main() {
       const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
       const isPublished = meta.shopify_status === 'published' || (!Number.isNaN(publishTs) && publishTs <= Date.now());
       if (!isPublished) continue;
-      if (!isLegacy(meta)) continue;
+      // Classify every published post — buckets drive the rebuilder's
+      // routing, so every post needs one. The legacy prefix on the field
+      // names is historical; this now runs as a general triage pass.
       if (meta.legacy_bucket && !FORCE) continue;
       meta._file = getMetaPath(slug);
       posts.push(meta);
