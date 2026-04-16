@@ -82,7 +82,7 @@ function categorize(entry) {
       || s.includes('ads—') || s.includes('ads —') || s.includes('weekly')) return 'ads';
 
   // SEO
-  if (s.includes('rank') || s.includes('ahrefs')) return 'seo';
+  if (s.includes('rank') || s.includes('dataforseo') || s.includes('seo report')) return 'seo';
 
   // Collectors
   if (s.includes('collector') || s.includes('clarity') || s.includes('shopify')
