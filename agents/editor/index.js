@@ -535,7 +535,7 @@ Review each post on these dimensions:
 1. TOPICAL RELEVANCE — Tightly focused on target keyword? Off-topic tangents?
 2. BRAND VOICE & READABILITY — Conversational and warm, ~8th grade level. Flag clinical/jargon phrases without plain-language follow-up. Flag paragraphs over 4 sentences. Good signals: short sentences, "you/your", plain words.
 3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description? IMPORTANT: If PRODUCT INGREDIENTS below says "N/A" (topical-authority post not tied to a specific SKU), output "VERDICT: N/A" and "NOTES: Topical-authority post — no product spec to validate against." Do NOT compare against any other product's ingredient list.
-4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass. IMPORTANT: URL slug paths (e.g., "/blogs/news/best-x-2025") are PERMANENT once indexed — do NOT flag year references inside href attribute values or URL paths. Only flag visible, human-readable year text in body, headings, and link anchor text.
+4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass. IMPORTANT: The following technical identifiers are PERMANENT and MUST NOT be flagged as year issues: (a) URL slug paths like "/blogs/news/best-x-2025", (b) href attribute values, (c) id attribute values on headings like <h2 id="best-x-2024">, (d) any year inside an HTML attribute. Only flag visible, human-readable year text that a reader would see — body text, heading text, and link anchor text.
 5. FACTUAL CONCERNS — Exaggerated, unsubstantiated, or potentially inaccurate claims?
 6. CTA QUALITY — Natural, well-placed CTA to Real Skin Care product/collection? Flag if missing.
 7. FORMATTING — Heading hierarchy clean (H2+, no H1 in body)? Orphaned sections? H1 presence pre-checked by code.
@@ -763,8 +763,9 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
   // and historical quotations ("the 2008 study" stays as written). Patterns
   // cover the common "current-year marker" prepositions/markers.
   const bodyYearPatterns = [
-    'in', 'updated', 'for', 'of', 'as of', 'during', 'throughout',
+    'in', 'into', 'updated', 'for', 'of', 'as of', 'during', 'throughout',
     'by', 'edition', 'works in', 'guide for', 'guide to', 'review of',
+    'head into', 'heading into', 'move into', 'entering', 'through',
   ];
   for (let year = 2020; year < currentYear; year++) {
     for (const prefix of bodyYearPatterns) {
