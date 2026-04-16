@@ -212,6 +212,43 @@ async function runRefreshStaleYears({ apply }) {
     }
   }
 
+  // Second pass: refresh stale years in LOCAL meta.json fields that aren't
+  // backed by Shopify (target_keyword, title when it diverges from Shopify,
+  // meta_description). These are editor-visible fields the LLM uses to
+  // evaluate the post — stale years here trigger false-positive blockers.
+  const { listAllSlugs } = await import('../../lib/posts.js');
+  const localFieldsToRefresh = ['title', 'target_keyword', 'meta_description'];
+  let localMetaChanges = 0;
+  for (const slug of listAllSlugs()) {
+    try {
+      const meta = getPostMeta(slug);
+      if (!meta) continue;
+      let changed = false;
+      const before = {};
+      for (const field of localFieldsToRefresh) {
+        if (typeof meta[field] !== 'string') continue;
+        const { text, changed: fieldChanged } = refreshStaleYears(meta[field]);
+        if (fieldChanged) {
+          before[field] = meta[field];
+          meta[field] = text;
+          changed = true;
+        }
+      }
+      if (!changed) continue;
+      localMetaChanges++;
+      console.log(`  [local meta] ${slug}`);
+      for (const field of Object.keys(before)) {
+        console.log(`    ${field}: "${before[field]}" → "${meta[field]}"`);
+      }
+      if (apply) {
+        writeFileSync(getMetaPath(slug), JSON.stringify(meta, null, 2));
+      }
+    } catch { /* skip */ }
+  }
+  if (localMetaChanges > 0) {
+    console.log(`\n  Local meta: ${localMetaChanges} post(s) had stale years in local fields${apply ? ' — updated' : ' (dry run)'}`);
+  }
+
   // Write report
   mkdirSync(REPORTS_DIR, { recursive: true });
   const reportPath = join(REPORTS_DIR, 'stale-years-report.md');
