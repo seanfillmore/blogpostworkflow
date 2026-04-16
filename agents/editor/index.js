@@ -36,7 +36,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readd
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, ROOT } from '../../lib/posts.js';
+import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, getPostMeta, ROOT } from '../../lib/posts.js';
 import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
@@ -294,13 +294,20 @@ Format: VERDICT: <word>\nNOTE: <explanation>`,
 
 // ── topical map alignment ─────────────────────────────────────────────────────
 
-function findRelevantClusters(postUrl, keyword, topicalMap) {
+function findRelevantClusters(postUrl, keyword, postTags, topicalMap) {
   if (!topicalMap) return [];
-  const kw = keyword.toLowerCase();
+  const kw = (keyword || '').toLowerCase();
+  const tagSet = new Set((postTags || []).map((t) => t.toLowerCase()));
   return topicalMap.clusters.filter((c) => {
-    const tagMatch = kw.includes(c.tag.replace('_', ' ')) || c.tag.replace('_', ' ').includes(kw.split(' ')[0]);
-    const articleMatch = c.articles.some((a) => a.url === postUrl);
-    return tagMatch || articleMatch;
+    const clusterTag = c.tag.replace('_', ' ').toLowerCase();
+    // 1. Post's Shopify tags include this cluster's tag (most reliable — uses
+    //    the same signal the topical-mapper uses to build clusters).
+    if (tagSet.has(c.tag.toLowerCase()) || tagSet.has(clusterTag)) return true;
+    // 2. Keyword substring matches the cluster tag either direction.
+    if (kw && (kw.includes(clusterTag) || clusterTag.includes(kw.split(' ')[0]))) return true;
+    // 3. Post URL is already tracked in the cluster's article list.
+    if (c.articles.some((a) => a.url === postUrl)) return true;
+    return false;
   });
 }
 
@@ -1003,6 +1010,7 @@ async function runEditor(htmlPath) {
   const sitemap = loadSitemap();
   const blogArticles = loadBlogIndex();
   const topicalMap = loadTopicalMap();
+  const postMeta = getPostMeta(slug);
 
   // Parse HTML
   let $ = cheerio.load(html);
@@ -1010,8 +1018,11 @@ async function runEditor(htmlPath) {
   let allLinks = extractLinks($);
   let categorised = categoriseLinks(allLinks);
 
-  // Build post URL (approximate — for topical map matching)
-  const postUrl = `${config.url}/blogs/news/${slug}`;
+  // Build post URL — prefer shopify_handle since that's what the published
+  // URL actually uses. Fall back to slug for unpublished drafts.
+  const postHandle = postMeta?.shopify_handle || slug;
+  const postUrl = `${config.url}/blogs/news/${postHandle}`;
+  const postTags = postMeta?.tags || [];
   let linkedBlogUrls = new Set(categorised.internal.blog.map((l) => l.href));
 
   // 1. HTTP check all links
@@ -1111,7 +1122,7 @@ async function runEditor(htmlPath) {
 
   // 4. Topical map alignment
   process.stdout.write('  Checking topical map alignment... ');
-  const relevantClusters = findRelevantClusters(postUrl, keyword, topicalMap);
+  const relevantClusters = findRelevantClusters(postUrl, keyword, postTags, topicalMap);
   const topicalSuggestions = getPillarSuggestions(relevantClusters, linkedBlogUrls, postUrl);
   console.log(`${relevantClusters.length} cluster(s), ${topicalSuggestions.length} link suggestion(s)`);
 
