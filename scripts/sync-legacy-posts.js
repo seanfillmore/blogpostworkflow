@@ -11,7 +11,7 @@
  *   node scripts/sync-legacy-posts.js
  *   node scripts/sync-legacy-posts.js --force   # overwrite local files too
  */
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../lib/shopify.js';
@@ -28,12 +28,34 @@ function slugify(s) {
     .replace(/^-+|-+$/g, '');
 }
 
+// Walk data/posts/ once up-front and build { shopify_article_id -> slug }.
+// sync-legacy-posts previously only checked for a file named after the Shopify
+// handle. That missed every post that the writer had saved under its
+// target-keyword slug, producing 40 duplicate records. Keyed on the Shopify
+// article ID is the only reliable identity check.
+function buildExistingIndex() {
+  const index = new Map();
+  if (!existsSync(POSTS_DIR)) return index;
+  for (const slug of readdirSync(POSTS_DIR)) {
+    const metaPath = join(POSTS_DIR, slug, 'meta.json');
+    if (!existsSync(metaPath)) continue;
+    try {
+      const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+      if (meta.shopify_article_id) index.set(meta.shopify_article_id, slug);
+    } catch { /* skip unreadable */ }
+  }
+  return index;
+}
+
 async function main() {
   mkdirSync(POSTS_DIR, { recursive: true });
   const blogs = await getBlogs();
   console.log(`Found ${blogs.length} blog(s).`);
 
-  let total = 0, written = 0, skipped = 0;
+  const existingByArticleId = buildExistingIndex();
+  console.log(`Existing local records: ${existingByArticleId.size}`);
+
+  let total = 0, written = 0, skipped = 0, skippedAlias = 0;
   for (const blog of blogs) {
     // Paginate via since_id
     let sinceId = 0;
@@ -49,6 +71,17 @@ async function main() {
         if (!force && existsSync(jsonPath) && existsSync(htmlPath)) {
           skipped++;
           continue;
+        }
+
+        // If another directory already has a meta.json for this Shopify article,
+        // skip to avoid creating a duplicate local record.
+        if (!force && existingByArticleId.has(a.id)) {
+          const existingSlug = existingByArticleId.get(a.id);
+          if (existingSlug !== slug) {
+            console.log(`  skip ${slug}: already have local record at data/posts/${existingSlug}/ (shopify_article_id ${a.id})`);
+            skippedAlias++;
+            continue;
+          }
         }
 
         // Legacy posts don't carry a brief, so we have no canonical target
@@ -88,6 +121,7 @@ async function main() {
         ensurePostDir(slug);
         writeFileSync(jsonPath, JSON.stringify(meta, null, 2));
         writeFileSync(htmlPath, a.body_html || '');
+        existingByArticleId.set(a.id, slug);
         written++;
       }
       sinceId = articles[articles.length - 1].id;
@@ -95,8 +129,9 @@ async function main() {
     }
   }
   console.log(`\nTotal articles in Shopify: ${total}`);
-  console.log(`Written:  ${written}`);
-  console.log(`Skipped:  ${skipped} (already have local files)`);
+  console.log(`Written:          ${written}`);
+  console.log(`Skipped (local):  ${skipped}`);
+  console.log(`Skipped (alias):  ${skippedAlias} (already synced under a different slug)`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

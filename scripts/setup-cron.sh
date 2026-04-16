@@ -34,7 +34,7 @@ DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/re
 DAILY_BLOG_INDEX="0 6 * * * cd \"$PROJECT_DIR\" && $NODE agents/blog-content/index.js list >> data/reports/scheduler/blog-index.log 2>&1"
 WEEKLY_RANK_TRACKER="0 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/rank-tracker/index.js >> data/reports/scheduler/rank-tracker.log 2>&1"
 WEEKLY_INSIGHTS="30 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/insight-aggregator/index.js >> data/reports/scheduler/insights.log 2>&1"
-WEEKLY_TOPICAL_MAP="0 6 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/topical-mapper/index.js >> data/reports/scheduler/topical-map.log 2>&1"
+DAILY_TOPICAL_MAP="0 6 * * * cd \"$PROJECT_DIR\" && $NODE agents/topical-mapper/index.js >> data/reports/scheduler/topical-map.log 2>&1"
 DAILY_CLARITY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/clarity-collector/index.js >> data/reports/scheduler/clarity-collector.log 2>&1"
 DAILY_SHOPIFY="5 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/shopify-collector/index.js >> data/reports/scheduler/shopify-collector.log 2>&1"
 DAILY_GSC="15 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-collector/index.js >> data/reports/scheduler/gsc-collector.log 2>&1"
@@ -67,7 +67,7 @@ $DAILY_SCHEDULER
 $DAILY_BLOG_INDEX
 $WEEKLY_RANK_TRACKER
 $WEEKLY_INSIGHTS
-$WEEKLY_TOPICAL_MAP
+$DAILY_TOPICAL_MAP
 $DAILY_CLARITY
 $DAILY_SHOPIFY
 $DAILY_GSC
