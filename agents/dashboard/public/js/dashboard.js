@@ -192,26 +192,15 @@ function renderTechnicalSeoTab(d) {
     }
   }
 
-  // ── Upload & Summary card ──────────────────────────────────────────────────
-  html += '<div class="card"><div class="card-header accent-indigo"><h2>Technical SEO Audit</h2></div><div class="card-body">';
-  html += '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">';
+  // ── Summary card ────────────────────────────────────────────────────────────
+  html += '<div class="card"><div class="card-header accent-indigo"><h2>Technical SEO Audit</h2><button class="upload-btn" onclick="runAgent(\'agents/site-crawler/index.js\')" data-tip="Run DataForSEO site crawl, then re-run Audit">Refresh Crawl</button></div><div class="card-body">';
 
-  // Upload zone
-  html += '<div style="flex:1;border:2px dashed #d1d5db;border-radius:8px;padding:20px;text-align:center;background:#f9fafb;cursor:pointer" onclick="uploadTechSeoZip()">';
-  html += '<div style="font-size:24px;margin-bottom:4px">&#128230;</div>';
-  html += '<div style="font-weight:600;font-size:14px">Upload Site Audit ZIP</div>';
-  html += '<div style="font-size:12px;color:#6b7280;margin-top:4px">Site-audit CSV export (issues + affected URLs)</div>';
-  html += '<button class="btn-primary" style="margin-top:8px" onclick="event.stopPropagation();uploadTechSeoZip()">&#8593; Upload ZIP</button>';
-  html += '</div>';
-
-  // Summary counts
-  html += '<div style="flex:1">';
   html += '<div style="font-size:12px;text-transform:uppercase;color:#6b7280;letter-spacing:0.05em;margin-bottom:8px">Issue Summary</div>';
   if (audit) {
     var s = audit.summary;
     var catKeys = Object.keys(audit.categories || {});
     var fixable = catKeys.reduce(function(n, k) { return n + (audit.categories[k].count || 0); }, 0);
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:600px">';
     html += '<div style="background:#fef2f2;padding:8px 12px;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#991b1b">' + s.errors + '</div><div style="font-size:11px;color:#991b1b">Errors</div></div>';
     html += '<div style="background:#fffbeb;padding:8px 12px;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#92400e">' + s.warnings + '</div><div style="font-size:11px;color:#92400e">Warnings</div></div>';
     html += '<div style="background:#f0fdf4;padding:8px 12px;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#166534">' + fixable + '</div><div style="font-size:11px;color:#166534">Total Issues</div></div>';
@@ -219,9 +208,9 @@ function renderTechnicalSeoTab(d) {
     html += '</div>';
     if (audit.generated_at) html += '<div style="font-size:11px;color:#9ca3af;margin-top:6px">Last audit: ' + esc(audit.generated_at) + '</div>';
   } else {
-    html += '<div class="empty-state" style="padding:20px 0">No audit data yet. Upload a site audit ZIP to get started.</div>';
+    html += '<div class="empty-state" style="padding:20px 0">No audit data yet. Run the site-crawler then the Audit command to get started.</div>';
   }
-  html += '</div></div></div></div>';
+  html += '</div></div>';
 
   // ── Issue category cards ───────────────────────────────────────────────────
   if (audit && audit.categories) {
@@ -4472,30 +4461,6 @@ function runTechSeoFix(fixCmd) {
       if (activeTab === 'tech-seo' && data) renderTechnicalSeoTab(data);
     });
   });
-}
-
-function uploadTechSeoZip() {
-  var input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.zip';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  input.onchange = function() {
-    document.body.removeChild(input);
-    var file = input.files[0];
-    if (!file) return;
-    fetch('/upload/tech-seo-zip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/octet-stream' },
-      body: file,
-    }).then(function(r) { return r.json(); }).then(function(json) {
-      if (!json.ok) { alert('Upload failed: ' + json.error); return; }
-      runAgent('agents/technical-seo/index.js', ['audit'], function() {
-        loadData().then(function() { if (activeTab === 'tech-seo' && data) renderTechnicalSeoTab(data); });
-      });
-    }).catch(function() { alert('Upload failed'); });
-  };
-  input.click();
 }
 
 function runGapAnalysis() {

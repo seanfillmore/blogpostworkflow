@@ -1,13 +1,11 @@
 /**
  * Technical SEO Agent
  *
- * Reads Ahrefs site audit CSV exports and resolves fixable issues via the Shopify API.
+ * Reads the DataForSEO on-page crawl results (site-crawler output) and
+ * resolves fixable issues via the Shopify API.
  *
  * Commands:
- *   audit                  Parse all CSVs, produce a prioritised audit report
- *   compare [--apply] [--fix]  Diff latest ZIP against current CSVs; write delta report
- *                          --apply: replace current CSVs with the new ZIP after comparing
- *                          --fix:   run repairs for all new issues after applying (requires --apply)
+ *   audit                  Produce a prioritised audit report from the latest crawl
  *   fix-meta [--dry-run]   Generate + push missing/bad meta descriptions (blog posts & pages)
  *   fix-links [--dry-run]  Update internal links pointing to 404 pages
  *   fix-redirects [--dry-run] Update internal links pointing to 301 redirected URLs
@@ -24,18 +22,16 @@
  *   fix-all [--dry-run]    Run all fixes in order
  *
  * Requires: ANTHROPIC_API_KEY in .env
- *           data/technical_seo/*.csv  (Ahrefs site audit export)
+ *           data/technical_seo/crawl-results.json (site-crawler output, ≤14 days old)
  *
  * Output:  data/reports/technical-seo-audit.md
- *          data/reports/technical-seo/technical-seo-delta-report.md  (compare)
  *
  * Shopify token scope: read_products, write_products, read_content, write_content
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, statSync, rmSync, renameSync, copyFileSync } from 'fs';
-import { execSync } from 'child_process';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, statSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -77,21 +73,15 @@ if (!env.ANTHROPIC_API_KEY) { console.error('Missing ANTHROPIC_API_KEY in .env')
 
 const claude = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
-// ── CSV parsing ───────────────────────────────────────────────────────────────
+// ── CSV utility (used only by fix-ai-content for third-party AI detection exports) ──
 
 function parseCSV(text) {
-  // Handle UTF-16 LE BOM — strip null bytes and BOM character
   if (text.charCodeAt(0) === 0xFFFE || text.charCodeAt(0) === 0xFEFF || text.includes('\x00')) {
     text = text.replace(/\x00/g, '').replace(/^\uFEFF|\uFFFE/g, '');
   }
-
   const lines = text.trim().split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
-
-  // Auto-detect delimiter: tab or comma
   const delimiter = lines[0].includes('\t') ? '\t' : ',';
-
-  // Parse header — handle quoted fields
   const parseRow = (line) => {
     const fields = [];
     let inQuote = false;
@@ -104,7 +94,6 @@ function parseCSV(text) {
     fields.push(cur.trim());
     return fields;
   };
-
   const headers = parseRow(lines[0]).map((h) => h.replace(/^"|"$/g, '').trim().toLowerCase().replace(/\s+/g, '_'));
   return lines.slice(1).map((line) => {
     const values = parseRow(line);
@@ -114,41 +103,7 @@ function parseCSV(text) {
   });
 }
 
-function readCSVFile(filePath) {
-  // Read as buffer first to detect UTF-16 LE encoding
-  const buf = readFileSync(filePath);
-  // UTF-16 LE BOM: FF FE
-  if (buf.length >= 2 && buf[0] === 0xFF && buf[1] === 0xFE) {
-    return buf.toString('utf16le');
-  }
-  // UTF-8 BOM: EF BB BF
-  if (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
-    return buf.toString('utf8').slice(1);
-  }
-  return buf.toString('utf8');
-}
-
-function loadCSV(filename) {
-  // Try exact match first (filename without extension), then prefix match excluding -links variants
-  const files = readdirSync(CSV_DIR).filter((f) => f.endsWith('.csv'));
-  const exact = files.find((f) => f === `${filename}.csv`);
-  const match = exact || files.find((f) => f.startsWith(filename) && !f.includes('-links'));
-  if (!match) return [];
-  try {
-    return parseCSV(readCSVFile(join(CSV_DIR, match)));
-  } catch { return []; }
-}
-
-function loadAllCSVs() {
-  const files = readdirSync(CSV_DIR).filter((f) => f.endsWith('.csv'));
-  const result = {};
-  for (const f of files) {
-    const key = f.replace('.csv', '');
-    try { result[key] = parseCSV(readCSVFile(join(CSV_DIR, f))); }
-    catch { result[key] = []; }
-  }
-  return result;
-}
+// ── crawl data ────────────────────────────────────────────────────────────────
 
 function loadCrawlResults() {
   const crawlPath = join(CSV_DIR, 'crawl-results.json');
@@ -180,6 +135,23 @@ function loadCrawlResults() {
     'Error-indexable-Page_has_links_to_broken_page': issues.links_to_404 || [],
     'Warning-indexable-Page_has_links_to_redirect': issues.links_to_redirect || [],
   };
+}
+
+// Memoised access to the crawl snapshot. Every fix command runs in its own
+// process, so a single load per command is fine.
+let _crawlCache;
+function getCrawl() {
+  if (_crawlCache === undefined) _crawlCache = loadCrawlResults();
+  if (!_crawlCache) {
+    console.error('\n  No fresh crawl data found at data/technical_seo/crawl-results.json.');
+    console.error('  Run: node agents/site-crawler/index.js');
+    process.exit(1);
+  }
+  return _crawlCache;
+}
+
+function loadIssue(key) {
+  return getCrawl()[key] || [];
 }
 
 // ── URL helpers ───────────────────────────────────────────────────────────────
@@ -346,13 +318,8 @@ Rules:
 // ── COMMAND: audit ────────────────────────────────────────────────────────────
 
 async function audit() {
-  let csvs = loadCrawlResults();
-  if (csvs) {
-    console.log('\nLoading crawl results from DataForSEO...\n');
-  } else {
-    console.log('\nNo recent crawl data found — loading CSV files...\n');
-    csvs = loadAllCSVs();
-  }
+  console.log('\nLoading crawl results from DataForSEO...\n');
+  const csvs = getCrawl();
 
   const sections = [];
 
@@ -530,7 +497,7 @@ async function audit() {
   if (unprocessed.length > 0) {
     sections.push('\n## ℹ️ Additional Issues\n');
     for (const f of unprocessed) {
-      const rows = loadCSV(f.replace('.csv', ''));
+      const rows = loadIssue(f.replace('.csv', ''));
       const cleanName = f.replace('.csv', '').replace(/^(Error|Warning|Notice)-/i, '').replace(/-/g, ' ').replace(/_/g, ' ');
       if (rows.length > 0) {
         sections.push(`### ℹ️ ${cleanName} (${rows.length})\n`);
@@ -573,7 +540,7 @@ async function audit() {
 
 async function createRedirects({ dryRun = false } = {}) {
   console.log('\n  Loading 404 pages...');
-  const p404 = loadCSV('Error-404_page');
+  const p404 = loadIssue('Error-404_page');
   const pagesWithLinks = p404.filter((r) => {
     const inlinks = parseInt(r['no._of_all_inlinks'] || '0');
     return inlinks > 0;
@@ -642,10 +609,10 @@ async function createRedirects({ dryRun = false } = {}) {
 
 async function fixBrokenLinks({ dryRun = false } = {}) {
   console.log('\n  Loading pages with links to 404s...');
-  const rows = loadCSV('Error-indexable-Page_has_links_to_broken_page');
+  const rows = loadIssue('Error-indexable-Page_has_links_to_broken_page');
 
   // Also load link details
-  const linkRows = loadCSV('Error-indexable-Page_has_links_to_broken_page-links');
+  const linkRows = loadIssue('Error-indexable-Page_has_links_to_broken_page-links');
   // Build: sourceUrl → Set of broken hrefs
   // Skip cdn-cgi/l/email-protection — Cloudflare obfuscates footer email addresses into this URL.
   // Ahrefs flags it as a 404 on every page with the footer email. It lives in the theme template,
@@ -793,10 +760,10 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
 
 async function fixRedirectLinks({ dryRun = false } = {}) {
   console.log('\n  Loading pages with links to redirected URLs...');
-  const rows = loadCSV('Warning-indexable-Page_has_links_to_redirect');
+  const rows = loadIssue('Warning-indexable-Page_has_links_to_redirect');
 
   // Build source → broken redirect hrefs map from the -links file
-  const linkRows = loadCSV('Warning-indexable-Page_has_links_to_redirect-links');
+  const linkRows = loadIssue('Warning-indexable-Page_has_links_to_redirect-links');
   const redirectBySource = {};
   for (const r of linkRows) {
     const src = r.source_url || r.source || r.url || '';
@@ -937,9 +904,9 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
 async function fixMeta({ dryRun = false } = {}) {
   console.log('\n  Collecting meta description issues...');
 
-  const missing = loadCSV('Warning-indexable-Meta_description_tag_missing_or_empty');
-  const tooLong = loadCSV('Warning-indexable-Meta_description_too_long');
-  const tooShort = loadCSV('Warning-indexable-Meta_description_too_short');
+  const missing = loadIssue('Warning-indexable-Meta_description_tag_missing_or_empty');
+  const tooLong = loadIssue('Warning-indexable-Meta_description_too_long');
+  const tooShort = loadIssue('Warning-indexable-Meta_description_too_short');
 
   // Combine all: missing + bad length
   const all = [
@@ -1028,7 +995,7 @@ async function fixMeta({ dryRun = false } = {}) {
 
   // ── Title tags too long ──────────────────────────────────────────────────
   console.log('\n  Collecting title tag issues...');
-  const titleTooLong = loadCSV('Warning-indexable-Title_too_long');
+  const titleTooLong = loadIssue('Warning-indexable-Title_too_long');
   const titleToFix = titleTooLong.filter((r) => ['product', 'collection'].includes(pageType(r.url)));
   console.log(`  ${titleToFix.length} products/collections with title tags too long\n`);
   let titleFixed = 0;
@@ -1071,7 +1038,7 @@ async function fixMeta({ dryRun = false } = {}) {
 
 async function fixAltText({ dryRun = false } = {}) {
   console.log('\n  Loading pages with missing alt text...');
-  const rows = loadCSV('Warning-Missing_alt_text');
+  const rows = loadIssue('Warning-Missing_alt_text');
 
   const articleRows = rows.filter((r) => pageType(r.url) === 'article');
   const productRows = rows.filter((r) => pageType(r.url) === 'product');
@@ -1203,7 +1170,7 @@ async function fixAltText({ dryRun = false } = {}) {
 
   // ── Fix Shopify Files alt text (from Ahrefs missing alt CSV) ─────────────
   console.log('\n  Checking Shopify Files for missing alt text...');
-  const altLinkRows = loadCSV('Warning-Missing_alt_text-links');
+  const altLinkRows = loadIssue('Warning-Missing_alt_text-links');
   const missingAltUrls = new Set(altLinkRows
     .filter(r => (r.alt_attribute || r.alt || '') === '')
     .map(r => r.target_url || r.url || '')
@@ -1289,232 +1256,6 @@ async function fixAltText({ dryRun = false } = {}) {
   }
 
   console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} images across blog posts, products, hero files, and Shopify Files`);
-}
-
-// ── COMMAND: compare ─────────────────────────────────────────────────────────
-
-// Issue categories with their CSV filenames and severity
-const ISSUE_CATEGORIES = [
-  { key: 'p404',            file: 'Error-404_page',                                                   label: 'Broken Pages (404)',                    severity: '🔴' },
-  { key: 'linksTo404',      file: 'Error-indexable-Page_has_links_to_broken_page',                    label: 'Pages Linking to 404s',                 severity: '🔴' },
-  { key: 'metaMissing',     file: 'Warning-indexable-Meta_description_tag_missing_or_empty',           label: 'Missing Meta Descriptions',             severity: '🔴' },
-  { key: 'multiMeta',       file: 'Error-indexable-Multiple_meta_description_tags',                   label: 'Duplicate Meta Description Tags',        severity: '🔴' },
-  { key: 'multiTitle',      file: 'Error-indexable-Multiple_title_tags',                              label: 'Duplicate Title Tags',                   severity: '🔴' },
-  { key: 'orphans',         file: 'Error-indexable-Orphan_page_(has_no_incoming_internal_links)',      label: 'Orphan Pages',                           severity: '🔴' },
-  { key: 'metaTooLong',     file: 'Warning-indexable-Meta_description_too_long',                      label: 'Meta Descriptions Too Long',             severity: '🟡' },
-  { key: 'metaTooShort',    file: 'Warning-indexable-Meta_description_too_short',                     label: 'Meta Descriptions Too Short',            severity: '🟡' },
-  { key: 'titleTooLong',    file: 'Warning-indexable-Title_too_long',                                 label: 'Title Tags Too Long',                    severity: '🟡' },
-  { key: 'h1Missing',       file: 'Warning-indexable-H1_tag_missing_or_empty',                        label: 'H1 Missing/Empty',                       severity: '🟡' },
-  { key: 'multiH1',         file: 'Notice-indexable-Multiple_H1_tags',                                label: 'Multiple H1 Tags',                       severity: '🟡' },
-  { key: 'linksToRedirect', file: 'Warning-indexable-Page_has_links_to_redirect',                     label: 'Internal Links to Redirected URLs',      severity: '🟡' },
-  { key: 'missingAlt',      file: 'Warning-Missing_alt_text',                                         label: 'Missing Image Alt Text',                 severity: '🟡' },
-  { key: 'redirectChain',   file: 'Notice-Redirect_chain',                                            label: 'Redirect Chains',                        severity: '🔵' },
-  { key: 'notInSitemap',    file: 'Notice-Indexable_page_not_in_sitemap',                             label: 'Indexable Pages Not in Sitemap',         severity: '🔵' },
-  { key: 'singleInlink',    file: 'Notice-indexable-Page_has_only_one_dofollow_incoming_internal_link', label: 'Pages with Only 1 Inbound Link',       severity: '🔵' },
-];
-
-function loadCSVsFromDir(dir) {
-  const files = readdirSync(dir).filter((f) => f.endsWith('.csv'));
-  const result = {};
-  for (const f of files) {
-    const key = f.replace('.csv', '');
-    try { result[key] = parseCSV(readFileSync(join(dir, f), 'utf8')); }
-    catch { result[key] = []; }
-  }
-  return result;
-}
-
-function getUrlSet(csvs, filename) {
-  // Try exact match first, then prefix match excluding -links variants
-  const files = Object.keys(csvs);
-  const exact = files.find((f) => f === filename);
-  const match = exact || files.find((f) => f.startsWith(filename) && !f.includes('-links'));
-  if (!match) return new Set();
-  return new Set((csvs[match] || []).map((r) => r.url).filter(Boolean));
-}
-
-async function compare({ apply = false, fix = false } = {}) {
-  // ── Find the newest unextracted ZIP ─────────────────────────────────────────
-  const zips = readdirSync(CSV_DIR)
-    .filter((f) => f.endsWith('.zip'))
-    .map((f) => ({ name: f, mtime: statSync(join(CSV_DIR, f)).mtimeMs }))
-    .sort((a, b) => b.mtime - a.mtime); // newest first
-
-  if (zips.length === 0) {
-    console.error('  No ZIP files found in', CSV_DIR);
-    process.exit(1);
-  }
-
-  const newestZip = zips[0];
-  console.log(`\n  New data: ${newestZip.name}`);
-
-  // ── Load the existing (old) CSVs ─────────────────────────────────────────────
-  console.log('  Loading existing CSV data (baseline)...');
-  const oldCsvs = loadCSVsFromDir(CSV_DIR);
-  const oldCsvCount = Object.values(oldCsvs).reduce((s, rows) => s + rows.length, 0);
-  console.log(`  Old baseline: ${Object.keys(oldCsvs).filter((k) => !k.endsWith('-links')).length} issue files`);
-
-  // ── Extract new ZIP to staging dir ──────────────────────────────────────────
-  const STAGING_DIR = join(CSV_DIR, '_staging');
-  if (existsSync(STAGING_DIR)) rmSync(STAGING_DIR, { recursive: true });
-  mkdirSync(STAGING_DIR, { recursive: true });
-
-  console.log(`  Extracting ${newestZip.name}...`);
-  try {
-    execSync(`unzip -q "${join(CSV_DIR, newestZip.name)}" -d "${STAGING_DIR}"`);
-  } catch (e) {
-    console.error('  Failed to extract ZIP:', e.message);
-    process.exit(1);
-  }
-
-  // ── Load new CSVs ──────────────────────────────────────────────────────────
-  console.log('  Loading new CSV data...');
-  const newCsvs = loadCSVsFromDir(STAGING_DIR);
-  console.log(`  New snapshot: ${Object.keys(newCsvs).filter((k) => !k.endsWith('-links')).length} issue files`);
-
-  // ── Diff each category ────────────────────────────────────────────────────
-  console.log('\n  Computing diffs...\n');
-
-  const diffResults = [];
-  let totalResolved = 0;
-  let totalNew = 0;
-
-  for (const cat of ISSUE_CATEGORIES) {
-    const oldUrls = getUrlSet(oldCsvs, cat.file);
-    const newUrls = getUrlSet(newCsvs, cat.file);
-
-    const resolved = [...oldUrls].filter((u) => !newUrls.has(u));
-    const added    = [...newUrls].filter((u) => !oldUrls.has(u));
-    const unchanged = oldUrls.size + newUrls.size > 0 ? [...oldUrls].filter((u) => newUrls.has(u)).length : 0;
-
-    totalResolved += resolved.length;
-    totalNew += added.length;
-
-    diffResults.push({
-      ...cat,
-      oldCount: oldUrls.size,
-      newCount: newUrls.size,
-      resolved,
-      added,
-      unchanged,
-    });
-  }
-
-  // ── Write delta report ────────────────────────────────────────────────────
-  const lines = [];
-  const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  lines.push(`# Technical SEO Delta Report — ${config.name}`);
-  lines.push(`**Compared:** Previous audit → ${newestZip.name.replace(/\.zip$/, '')}`);
-  lines.push(`**Generated:** ${date}`);
-  lines.push('');
-
-  // Summary table
-  lines.push('## Summary\n');
-  lines.push('| Severity | Issue | Before | After | Resolved | New Issues |');
-  lines.push('|----------|-------|--------|-------|----------|------------|');
-  for (const d of diffResults) {
-    if (d.oldCount === 0 && d.newCount === 0) continue;
-    const resolvedCell = d.resolved.length > 0 ? `✅ ${d.resolved.length}` : '—';
-    const addedCell    = d.added.length > 0    ? `🚨 ${d.added.length}`    : '—';
-    lines.push(`| ${d.severity} | ${d.label} | ${d.oldCount} | ${d.newCount} | ${resolvedCell} | ${addedCell} |`);
-  }
-  lines.push('');
-  lines.push(`**Net change:** ${totalResolved} issues resolved, ${totalNew} new issues introduced`);
-  lines.push('');
-
-  // Detail sections
-  const withChanges = diffResults.filter((d) => d.resolved.length > 0 || d.added.length > 0);
-
-  if (withChanges.length === 0) {
-    lines.push('> No changes detected between the two audits.');
-  } else {
-    lines.push('---');
-    lines.push('');
-
-    for (const d of withChanges) {
-      lines.push(`## ${d.severity} ${d.label}`);
-      lines.push(`Before: **${d.oldCount}** → After: **${d.newCount}** (${d.unchanged} unchanged)\n`);
-
-      if (d.resolved.length > 0) {
-        lines.push(`### ✅ Resolved (${d.resolved.length})`);
-        for (const url of d.resolved) lines.push(`- ${url}`);
-        lines.push('');
-      }
-
-      if (d.added.length > 0) {
-        lines.push(`### 🚨 New Issues (${d.added.length})`);
-        for (const url of d.added) lines.push(`- ${url}`);
-        lines.push('');
-      }
-    }
-  }
-
-  mkdirSync(REPORTS_DIR, { recursive: true });
-  const reportPath = join(REPORTS_DIR, 'technical-seo-delta-report.md');
-  writeFileSync(reportPath, lines.join('\n'), 'utf8');
-
-  console.log(`  Delta report saved: ${reportPath}`);
-  console.log(`\n  ${totalResolved} issues resolved, ${totalNew} new issues introduced\n`);
-
-  // ── Apply: replace old CSVs with new ones ─────────────────────────────────
-  if (apply) {
-    console.log('  Applying new CSVs (replacing old data)...');
-    // Remove old CSVs
-    for (const f of readdirSync(CSV_DIR).filter((f) => f.endsWith('.csv'))) {
-      rmSync(join(CSV_DIR, f));
-    }
-    // Copy new CSVs from staging
-    for (const f of readdirSync(STAGING_DIR).filter((f) => f.endsWith('.csv'))) {
-      copyFileSync(join(STAGING_DIR, f), join(CSV_DIR, f));
-    }
-    console.log(`  Replaced ${Object.keys(newCsvs).length} CSV files.\n`);
-  }
-
-  // Cleanup staging
-  rmSync(STAGING_DIR, { recursive: true });
-
-  // ── Fix: run repairs against the new data ─────────────────────────────────
-  if (fix) {
-    if (!apply) {
-      console.warn('  Warning: --fix requires --apply. Skipping fixes (no new CSVs were loaded).');
-      return;
-    }
-
-    // Determine which fix commands are needed based on what changed
-    const hasNew404s         = diffResults.find((d) => d.key === 'p404')?.added.length > 0;
-    const hasNewLinksTo404s  = diffResults.find((d) => d.key === 'linksTo404')?.added.length > 0;
-    const hasNewMetaIssues   = ['metaMissing', 'metaTooLong', 'metaTooShort'].some(
-      (k) => diffResults.find((d) => d.key === k)?.added.length > 0
-    );
-    const hasNewRedirectLinks = diffResults.find((d) => d.key === 'linksToRedirect')?.added.length > 0;
-    const hasNewAltIssues    = diffResults.find((d) => d.key === 'missingAlt')?.added.length > 0;
-
-    const planned = [];
-    if (hasNew404s)          planned.push('create-redirects');
-    if (hasNewLinksTo404s)   planned.push('fix-links');
-    if (hasNewRedirectLinks) planned.push('fix-redirects');
-    if (hasNewMetaIssues)    planned.push('fix-meta');
-    if (hasNewAltIssues)     planned.push('fix-alt-text');
-
-    if (planned.length === 0) {
-      console.log('  No new fixable issues — no repairs needed.');
-      return;
-    }
-
-    console.log(`\n══════════════════════════════════════════════`);
-    console.log('  Running repairs for new issues');
-    console.log(`  Steps: ${planned.join(' → ')}`);
-    console.log(`══════════════════════════════════════════════\n`);
-
-    if (hasNew404s)          await createRedirects();
-    if (hasNewLinksTo404s)   await fixBrokenLinks();
-    if (hasNewRedirectLinks) await fixRedirectLinks();
-    if (hasNewMetaIssues)    await fixMeta();
-    if (hasNewAltIssues)     await fixAltText();
-
-    console.log('\n  All repairs complete.');
-  }
 }
 
 // ── COMMAND: fix-ai-content ───────────────────────────────────────────────────
@@ -1659,7 +1400,7 @@ ${contentOnly}`,
 
 async function fixTitles({ dryRun = false } = {}) {
   console.log('\n  Fixing title tags that are too long (>60 chars)...');
-  const rows = loadCSV('Warning-indexable-Title_too_long');
+  const rows = loadIssue('Warning-indexable-Title_too_long');
   if (rows.length === 0) { console.log('  No title length issues found.'); return; }
 
   const articleIndex = await getArticleIndex();
@@ -1724,7 +1465,7 @@ async function fixNoindex({ dryRun = false } = {}) {
   console.log('\n  Checking for pages that should be noindexed...');
 
   // Load orphan pages — these may include ads landing pages
-  const orphanRows = loadCSV('Error-indexable-Orphan_page_(has_no_incoming_internal_links)');
+  const orphanRows = loadIssue('Error-indexable-Orphan_page_(has_no_incoming_internal_links)');
   const pageIdx = await getPageIndex();
   let fixed = 0;
 
@@ -1781,8 +1522,8 @@ async function fixNoindex({ dryRun = false } = {}) {
 async function fixDuplicateTags({ dryRun = false } = {}) {
   console.log('\n  Fixing duplicate meta/title tags in article HTML...');
 
-  const metaRows = loadCSV('Error-indexable-Multiple_meta_description_tags');
-  const titleRows = loadCSV('Error-indexable-Multiple_title_tags');
+  const metaRows = loadIssue('Error-indexable-Multiple_meta_description_tags');
+  const titleRows = loadIssue('Error-indexable-Multiple_title_tags');
   const allUrls = new Set([
     ...metaRows.map(r => r.url).filter(Boolean),
     ...titleRows.map(r => r.url).filter(Boolean),
@@ -1841,9 +1582,9 @@ async function fixDuplicateTags({ dryRun = false } = {}) {
 async function fixInternalLinks({ dryRun = false } = {}) {
   console.log('\n  Adding internal links to pages with few inbound links...');
 
-  const orphanRows = loadCSV('Error-indexable-Orphan_page_(has_no_incoming_internal_links)');
+  const orphanRows = loadIssue('Error-indexable-Orphan_page_(has_no_incoming_internal_links)');
   // Also include pages with only 1 inbound link
-  const lowLinkRows = loadCSV('Warning-Pages_with_only_1_inbound_internal_link') || [];
+  const lowLinkRows = loadIssue('Warning-Pages_with_only_1_inbound_internal_link') || [];
 
   const urls = [
     ...orphanRows.map(r => r.url).filter(Boolean),
@@ -1929,7 +1670,7 @@ async function fixThemeAlt({ dryRun = false } = {}) {
 async function fixSubmitIndexing({ dryRun = false } = {}) {
   console.log('\n  Submitting changed pages to Google Indexing API...');
 
-  const rows = loadCSV('Notice-Pages_to_submit_to_IndexNow');
+  const rows = loadIssue('Notice-Pages_to_submit_to_IndexNow');
   if (rows.length === 0) { console.log('  No pages to submit.'); return; }
 
   // Filter to real content pages only — skip tag pages, pagination, blog index
@@ -2106,7 +1847,6 @@ Technical SEO Agent — ${config.name}
 
 Usage:
   node agents/technical-seo/index.js audit
-  node agents/technical-seo/index.js compare [--apply] [--fix]
   node agents/technical-seo/index.js fix-meta [--dry-run]
   node agents/technical-seo/index.js fix-links [--dry-run]
   node agents/technical-seo/index.js fix-redirects [--dry-run]
@@ -2233,12 +1973,6 @@ async function main() {
     case 'audit':
       await audit();
       break;
-    case 'compare': {
-      const apply = args.includes('--apply');
-      const fix   = args.includes('--fix');
-      await compare({ apply, fix });
-      break;
-    }
     case 'fix-meta':
       await runFixWithTracking(fixMeta, 'fix-meta');
       break;

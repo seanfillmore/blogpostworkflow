@@ -24,8 +24,6 @@
     "collection-link": "node agents/collection-linker/index.js",
     "top-collections": "node agents/collection-linker/index.js --top-targets",
     "technical-seo": "node agents/technical-seo/index.js",
-    "technical-seo-compare": "node agents/technical-seo/index.js compare",
-    "technical-seo-update": "node agents/technical-seo/index.js compare --apply --fix",
     "rank-tracker": "node agents/rank-tracker/index.js",
     "verify": "node agents/blog-post-verifier/index.js",
     "seo-report": "node agents/seo-reporter/index.js",
