@@ -2,19 +2,8 @@
  * Content Gap Agent
  *
  * Identifies content gaps by comparing the site's existing content inventory
- * against Ahrefs CSV exports placed in data/content_gap/.
- *
- * Expected files in data/content_gap/:
- *   top100.csv                      — Ahrefs Content Gap export (competitors vs RSC)
- *   realskincare_organic_keywords.csv — Site's current organic keyword rankings
- *   natural_deodorant.csv           — Keywords Explorer: natural deodorant
- *   natural_toothpaste.csv          — Keywords Explorer: natural toothpaste
- *   natural_body_lotion.csv         — Keywords Explorer: natural body lotion
- *   natural_lip_balm.csv            — Keywords Explorer: natural lip balm
- *   natural_bar_soap.csv            — Keywords Explorer: natural bar soap
- *   natural_hand_soap.csv           — Keywords Explorer: natural hand soap
- *   natural_coconut_oil.csv         — Keywords Explorer: natural coconut oil
- *   top_pages_*.csv                 — Competitor top pages (one file per competitor)
+ * against live DataForSEO data (competitor rankings, ranked keywords, SERP,
+ * and keyword ideas per product category).
  *
  * Output: data/reports/content-gap-report.md
  *
@@ -24,13 +13,12 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
-import { join, dirname, basename } from 'path';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getKeywordIdeas, getCompetitors, getRankedKeywords, getTopPages, getSerpResults } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
-const DATA_DIR = join(ROOT, 'data', 'content_gap');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -53,150 +41,6 @@ const env = loadEnv();
 if (!env.ANTHROPIC_API_KEY) { console.error('Missing ANTHROPIC_API_KEY in .env'); process.exit(1); }
 
 const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-
-// ── CSV parser ────────────────────────────────────────────────────────────────
-
-function parseCSV(text) {
-  const lines = text.split('\n');
-  const rows = [];
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const fields = [];
-    let cur = '';
-    let inQuote = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
-        else inQuote = !inQuote;
-      } else if (ch === ',' && !inQuote) {
-        fields.push(cur.trim());
-        cur = '';
-      } else {
-        cur += ch;
-      }
-    }
-    fields.push(cur.trim());
-    rows.push(fields);
-  }
-  return rows;
-}
-
-function csvToObjects(text, skipFirstIfNumber = false) {
-  const rows = parseCSV(text);
-  if (rows.length < 2) return [];
-
-  // Find header row (skip leading # rows if present)
-  let headerIdx = 0;
-  if (skipFirstIfNumber && rows[0][0] === '#') headerIdx = 0;
-
-  const headers = rows[headerIdx].map((h) => h.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/__+/g, '_'));
-  const objects = [];
-
-  for (let i = headerIdx + 1; i < rows.length; i++) {
-    if (!rows[i].some((v) => v)) continue;
-    const obj = {};
-    headers.forEach((h, j) => { obj[h] = rows[i][j] || ''; });
-    objects.push(obj);
-  }
-  return objects;
-}
-
-// ── load CSV files ────────────────────────────────────────────────────────────
-
-function loadFile(filename) {
-  const path = join(DATA_DIR, filename);
-  if (!existsSync(path)) return null;
-  return readFileSync(path, 'utf8');
-}
-
-function loadKeywordsExplorer(filename) {
-  const text = loadFile(filename);
-  if (!text) return [];
-  const rows = csvToObjects(text, true);
-  return rows.map((r) => ({
-    keyword: r.keyword || r['#keyword'] || '',
-    volume: parseInt(r.volume) || 0,
-    difficulty: parseInt(r.difficulty) || 0,
-    traffic_potential: parseInt(r.traffic_potential) || 0,
-    cpc: parseFloat(r.cpc) || 0,
-    intents: r.intents || '',
-    parent_keyword: r.parent_keyword || '',
-  })).filter((r) => r.keyword);
-}
-
-function loadContentGap() {
-  const text = loadFile('top100.csv');
-  if (!text) return { keywords: [], competitors: [] };
-
-  const rows = csvToObjects(text);
-  if (!rows.length) return { keywords: [], competitors: [] };
-
-  // Detect competitor columns (any column ending in ": organic position" or ": url")
-  const sampleKeys = Object.keys(rows[0]);
-  const competitors = [];
-  for (const k of sampleKeys) {
-    const m = k.match(/^(.+?)_+organic_position$/i) || k.match(/^(.+?)_+url$/i);
-    if (m && !m[1].includes('realskincare')) {
-      const name = m[1].replace(/_+/g, '.').replace(/\.$/, '');
-      if (!competitors.includes(name)) competitors.push(name);
-    }
-  }
-
-  const keywords = rows.map((r) => {
-    // Find RSC position key
-    const rscPosKey = sampleKeys.find((k) => k.includes('realskincare') && k.includes('organic_position'));
-    const rscPos = rscPosKey ? parseInt(r[rscPosKey]) || null : null;
-
-    // Find competitor positions
-    const compPositions = {};
-    for (const comp of competitors) {
-      const posKey = sampleKeys.find((k) => k.includes(comp.replace(/\./g, '_')) && k.includes('organic_position'));
-      if (posKey) compPositions[comp] = parseInt(r[posKey]) || null;
-    }
-
-    return {
-      keyword: r.keyword || '',
-      volume: parseInt(r.volume) || 0,
-      kd: parseInt(r.kd) || 0,
-      rsc_position: rscPos,
-      competitor_positions: compPositions,
-    };
-  }).filter((r) => r.keyword);
-
-  return { keywords, competitors };
-}
-
-function loadOwnKeywords() {
-  const text = loadFile('realskincare_organic_keywords.csv');
-  if (!text) return [];
-  const rows = csvToObjects(text);
-  return rows.map((r) => ({
-    keyword: r.keyword || '',
-    position: parseInt(r.current_position) || parseInt(r.position) || 0,
-    volume: parseInt(r.volume) || 0,
-    url: r.current_url || r.url || '',
-  })).filter((r) => r.keyword);
-}
-
-function loadCompetitorTopPages() {
-  const files = readdirSync(DATA_DIR).filter((f) => f.startsWith('top_pages_') && f.endsWith('.csv'));
-  const result = {};
-  for (const f of files) {
-    const competitorName = basename(f, '.csv').replace('top_pages_', '');
-    const text = loadFile(f);
-    if (!text) continue;
-    const rows = csvToObjects(text);
-    result[competitorName] = rows.map((r) => ({
-      url: r.url || '',
-      traffic: parseInt(r.traffic) || 0,
-      keywords: parseInt(r.keywords) || 0,
-      top_keyword: r.top_keyword || '',
-      top_keyword_volume: parseInt(r['top_keyword__volume'] || r.top_keyword_volume) || 0,
-    })).filter((r) => r.url).slice(0, 50);
-  }
-  return result;
-}
 
 // ── DataForSEO data fetchers ─────────────────────────────────────────────────
 
@@ -590,32 +434,22 @@ What content strategies are Tom's, Dr. Bronner's, and OSEA using that RSC is not
 async function main() {
   console.log(`\nContent Gap Agent — ${config.name}\n`);
 
-  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-
   // Load inventory
   process.stdout.write('  Loading content inventory... ');
   const inventory = loadInventory();
   console.log(`done (${inventory.articles.length} articles, ${inventory.products.length} products, ${inventory.collections.length} collections)`);
 
-  // Load content gap data — DataForSEO API first, CSV fallback
+  // Content gap data — live from DataForSEO
   console.log('  Loading content gap data from DataForSEO...');
-  let contentGap = await fetchContentGap();
-  if (contentGap.keywords.length === 0) {
-    process.stdout.write('  Falling back to CSV (top100.csv)... ');
-    contentGap = loadContentGap();
-  }
+  const contentGap = await fetchContentGap();
   console.log(`  Content gap: ${contentGap.keywords.length} keywords, competitors: ${contentGap.competitors.join(', ')}`);
 
-  // Load own keywords
+  // Own keyword rankings — live from DataForSEO
   console.log('  Loading own keyword rankings...');
-  let ownKeywords = await fetchOwnKeywords();
-  if (ownKeywords.length === 0) {
-    process.stdout.write('  Falling back to CSV... ');
-    ownKeywords = loadOwnKeywords();
-  }
+  const ownKeywords = await fetchOwnKeywords();
   console.log(`  Own keywords: ${ownKeywords.length}`);
 
-  // Load category keyword ideas
+  // Category keyword ideas — live from DataForSEO
   const categories = {
     deodorant: 'natural deodorant',
     toothpaste: 'natural toothpaste',
@@ -625,32 +459,19 @@ async function main() {
     hand_soap: 'natural hand soap',
     coconut_oil: 'coconut oil skincare',
   };
-  const categoryFiles = {
-    deodorant: 'natural_deodorant.csv',
-    toothpaste: 'natural_toothpaste.csv',
-    body_lotion: 'natural_body_lotion.csv',
-    lip_balm: 'natural_lip_balm.csv',
-    bar_soap: 'natural_bar_soap.csv',
-    hand_soap: 'natural_hand_soap.csv',
-    coconut_oil: 'natural_coconut_oil.csv',
-  };
 
   const categoryKeywords = {};
   for (const [cat, seed] of Object.entries(categories)) {
-    let kws = await fetchKeywordIdeasForCategory(seed);
-    if (kws.length === 0) kws = loadKeywordsExplorer(categoryFiles[cat]);
+    const kws = await fetchKeywordIdeasForCategory(seed);
     if (kws.length) {
       categoryKeywords[cat] = kws;
       console.log(`  ${cat}: ${kws.length} keywords`);
     }
   }
 
-  // Load competitor top pages
+  // Competitor top pages — live from DataForSEO
   console.log('  Loading competitor top pages...');
-  let competitorTopPages = await fetchCompetitorTopPages();
-  if (Object.keys(competitorTopPages).length === 0) {
-    competitorTopPages = loadCompetitorTopPages();
-  }
+  const competitorTopPages = await fetchCompetitorTopPages();
   const compNames = Object.keys(competitorTopPages);
   console.log(`  Competitor pages: ${compNames.join(', ')}`);
   // Load site performance from snapshots
@@ -668,7 +489,7 @@ async function main() {
   const header = `# Content Gap Analysis — ${config.name}
 **Generated:** ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
 **Site:** ${config.url}
-**Data source:** DataForSEO API (CSV fallback: ${readdirSync(DATA_DIR).filter((f) => f.endsWith('.csv')).join(', ') || 'none'})
+**Data source:** DataForSEO API
 **GSC:** ${sitePerformance.gscDateRange || 'n/a'} | **GA4:** ${sitePerformance.ga4DateRange || 'n/a'}
 
 ---
