@@ -4410,14 +4410,19 @@ function runAgent(script, args, onDone) {
         logEl.scrollTop = logEl.scrollHeight;
         read();
       }).catch(function() {
+        // Stream dropped (proxy timeout, sleep/resume, network blip). The
+        // server-side child process may still finish. Advance the chain so
+        // the caller's onDone fires and the button/UI aren't stuck spinning.
         logEl.style.display = 'none';
         showRunBanner(script, capturedTab, false, logId);
+        if (onDone) onDone(); else loadData();
       });
     }
     read();
   }).catch(function() {
     logEl.style.display = 'none';
     showRunBanner(script, capturedTab, false, logId);
+    if (onDone) onDone(); else loadData();
   });
 }
 
