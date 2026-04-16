@@ -829,6 +829,14 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
     }
   }
 
+  // Remove any H1 tags in body. Shopify adds the H1 from the article title
+  // automatically, so any H1 in body_html duplicates it and breaks heading
+  // hierarchy. Auto-demote to H2 to preserve the visible text and outline.
+  fixed = fixed.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/gi, (match, attrs, inner) => {
+    changes.push(`Auto-demoted H1 in body to H2: "${inner.replace(/<[^>]+>/g, '').trim().slice(0, 60)}"`);
+    return `<h2${attrs}>${inner}</h2>`;
+  });
+
   // Stale years in body text — context patterns keep us safe from URLs, IDs,
   // and historical quotations ("the 2008 study" stays as written). Patterns
   // cover the common "current-year marker" prepositions/markers.
