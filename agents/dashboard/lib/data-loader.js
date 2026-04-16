@@ -1,10 +1,9 @@
 // agents/dashboard/lib/data-loader.js
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, basename } from 'node:path';
-import { loadLatestAhrefsOverview } from '../../../lib/ahrefs-parser.js';
 import {
   ROOT, POSTS_DIR, BRIEFS_DIR, IMAGES_DIR, REPORTS_DIR, SNAPSHOTS_DIR,
-  ADS_OPTIMIZER_DIR, AHREFS_DIR, CONTENT_GAP_DIR,
+  ADS_OPTIMIZER_DIR, SEO_AUTHORITY_DIR, CONTENT_GAP_DIR,
   RANK_ALERTS_DIR, ALERTS_VIEWED, META_TESTS_DIR, COMP_BRIEFS_DIR,
 } from './paths.js';
 import {
@@ -13,7 +12,7 @@ import {
 } from '../../../lib/posts.js';
 import {
   parseCalendar, parseEditorReports, parseRankings, parseCROData,
-  loadRejections, isRejectedKw, getPostMeta, getItemStatus, getPendingAhrefsData,
+  loadRejections, isRejectedKw, getPostMeta, getItemStatus,
 } from './data-parsers.js';
 import { parseTechSeoReport } from './tech-seo-parser.js';
 
@@ -196,8 +195,6 @@ export function aggregateData() {
     return new Date(b.uploadedAt) - new Date(a.uploadedAt);
   });
 
-  const pendingAhrefsData = getPendingAhrefsData(calItems);
-
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   const adsOptPath = join(ADS_OPTIMIZER_DIR, `${today}.json`);
   const adsOptimizationRaw = existsSync(adsOptPath)
@@ -205,19 +202,11 @@ export function aggregateData() {
     : null;
   const adsOptimization = adsOptimizationRaw ? { ...adsOptimizationRaw, date: today } : null;
 
-  // Ahrefs authority
-  const ahrefsData = loadLatestAhrefsOverview(AHREFS_DIR);
-
-  // Latest Ahrefs file
-  let ahrefsFile = null;
-  if (existsSync(AHREFS_DIR)) {
-    const aFiles = readdirSync(AHREFS_DIR).filter(f => f.endsWith('.csv') || f.endsWith('.zip'));
-    if (aFiles.length) {
-      ahrefsFile = aFiles
-        .map(f => ({ name: f, mtime: statSync(join(AHREFS_DIR, f)).mtimeMs }))
-        .sort((a, b) => b.mtime - a.mtime)[0];
-    }
-  }
+  // SEO authority (DataForSEO-backed, refreshed on demand via /api/seo-authority/refresh)
+  const authorityPath = join(SEO_AUTHORITY_DIR, 'latest.json');
+  const seoAuthority = existsSync(authorityPath)
+    ? (() => { try { return JSON.parse(readFileSync(authorityPath, 'utf8')); } catch { return null; } })()
+    : null;
 
   // Rank alerts
   let rankAlert = null;
@@ -407,12 +396,10 @@ export function aggregateData() {
     rankings,
     rankingsMobile,
     posts,
-    pendingAhrefsData,
     cro,
     googleAdsAll: cro.googleAdsAll,
     adsOptimization,
-    ahrefsData,
-    ahrefsFile,
+    seoAuthority,
     rankAlert,
     metaTests,
     briefs,

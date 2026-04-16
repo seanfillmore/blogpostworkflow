@@ -39,7 +39,7 @@ export const CRO_REPORTS_DIR          = join(ROOT, 'data', 'reports', 'cro');
 export const META_TESTS_DIR           = join(ROOT, 'data', 'meta-tests');
 export const REJECTED_IMAGES_DIR     = join(ROOT, 'data', 'images', 'rejected');
 
-export const AHREFS_DIR      = join(ROOT, 'data', 'ahrefs');
+export const SEO_AUTHORITY_DIR = join(ROOT, 'data', 'reports', 'seo-authority');
 export const CONTENT_GAP_DIR = join(ROOT, 'data', 'content_gap');
 export const RANK_ALERTS_DIR = join(ROOT, 'data', 'reports', 'rank-alerts');
 export const ALERTS_VIEWED   = join(RANK_ALERTS_DIR, '.last-viewed');
