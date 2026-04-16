@@ -17,11 +17,12 @@
  *   node agents/draft-refresher/index.js --apply <slug>      # refresh one post
  */
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getPostMeta, getContentPath, ROOT } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT } from '../../lib/posts.js';
+import { updateArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -57,6 +58,28 @@ function run(cmd, label) {
   }
 }
 
+/**
+ * Returns true if the editor report for this slug has an OVERALL QUALITY
+ * verdict that is NOT "Needs Work" — i.e. the post passed the editorial
+ * gate. Mirrors the dashboard's findBlockedPosts logic.
+ */
+function editorPassed(slug) {
+  const reportPath = getEditorReportPath(slug);
+  if (!existsSync(reportPath)) return false;
+  const report = readFileSync(reportPath, 'utf8');
+  const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
+  if (!overallMatch) return false;
+  return !/needs work/i.test(overallMatch[1]);
+}
+
+async function publishDraft(slug, meta) {
+  await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { published: true });
+  const updated = { ...meta, shopify_status: 'published', published_at: new Date().toISOString() };
+  delete updated.shopify_publish_at;
+  writeFileSync(getMetaPath(slug), JSON.stringify(updated, null, 2));
+  console.log(`    ✓ Published to Shopify`);
+}
+
 async function refreshDraft(slug) {
   console.log(`\n  Refreshing: ${slug}`);
   const contentPath = getContentPath(slug);
@@ -71,9 +94,24 @@ async function refreshDraft(slug) {
   // rewrite, link-text bumps) back to Shopify body_html.
   if (!run(`node agents/editor/index.js ${contentPath} --in-pipeline --push-shopify`, `editor+push: ${slug}`)) {
     console.error(`    ⛔ Editor failed — draft left as-is on Shopify`);
-    return false;
+    return { refreshed: true, published: false };
   }
-  return true;
+
+  // Auto-publish if the editor's OVERALL QUALITY verdict passed. If it
+  // returned Needs Work, leave as draft — the daily legacy-rebuilder will
+  // pick it up and route to tier-appropriate action. No half-finished flows.
+  if (!editorPassed(slug)) {
+    console.log(`    Editor did not pass — left as draft for next rebuilder cycle`);
+    return { refreshed: true, published: false };
+  }
+  try {
+    const meta = getPostMeta(slug);
+    await publishDraft(slug, meta);
+    return { refreshed: true, published: true };
+  } catch (e) {
+    console.error(`    ✗ Publish failed: ${e.message}`);
+    return { refreshed: true, published: false };
+  }
 }
 
 async function main() {
@@ -97,12 +135,15 @@ async function main() {
 
   console.log(`\nRefreshing ${toRefresh.length} draft(s)...`);
 
-  let succeeded = 0;
+  let refreshed = 0;
+  let published = 0;
   let failed = 0;
   for (const d of toRefresh) {
     try {
-      if (await refreshDraft(d.slug)) succeeded++;
-      else failed++;
+      const result = await refreshDraft(d.slug);
+      if (result.refreshed) refreshed++;
+      if (result.published) published++;
+      if (!result.refreshed) failed++;
     } catch (err) {
       console.error(`  ✗ ${d.slug}: ${err.message}`);
       failed++;
@@ -110,12 +151,12 @@ async function main() {
   }
 
   await notify({
-    subject: `Draft Refresher: ${succeeded} refreshed, ${failed} failed`,
-    body: `Refreshed ${succeeded} draft(s); ${failed} failed. ${drafts.length - succeeded} drafts remain.`,
+    subject: `Draft Refresher: ${published} published, ${refreshed - published} kept as draft, ${failed} failed`,
+    body: `Refreshed ${refreshed} draft(s); ${published} passed the editor and were auto-published, ${refreshed - published} kept as draft, ${failed} failed.`,
     status: failed > 0 ? 'warning' : 'success',
   });
 
-  console.log(`\nDone. ${succeeded} succeeded, ${failed} failed.`);
+  console.log(`\nDone. ${refreshed} refreshed, ${published} auto-published, ${failed} failed.`);
 }
 
 main().catch((err) => {
