@@ -22,7 +22,7 @@ import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT } from '../../lib/posts.js';
-import { updateArticle } from '../../lib/shopify.js';
+import { upsertItem, loadCalendar } from '../../lib/calendar-store.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -72,12 +72,72 @@ function editorPassed(slug) {
   return !/needs work/i.test(overallMatch[1]);
 }
 
-async function publishDraft(slug, meta) {
-  await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { published: true });
-  const updated = { ...meta, shopify_status: 'published', published_at: new Date().toISOString() };
-  delete updated.shopify_publish_at;
+/**
+ * Compute the next available publish slot, staggered at MAX_PER_DAY posts
+ * per day starting tomorrow at 08:00 Pacific. Scans both the calendar and
+ * local meta.shopify_publish_at so we never collide with existing
+ * schedules. Enforces phased publishing — no batch of cluster posts going
+ * live on the same day.
+ */
+function computeNextPublishDate() {
+  const MAX_PER_DAY = 1;
+  const HOUR = 8;
+  const TZ = '-07:00';
+
+  const counts = new Map();
+  try {
+    const cal = loadCalendar();
+    for (const item of (cal.items || [])) {
+      if (!item.publish_date) continue;
+      const d = new Date(item.publish_date).toISOString().slice(0, 10);
+      counts.set(d, (counts.get(d) || 0) + 1);
+    }
+  } catch { /* ignore */ }
+  for (const slug of listAllSlugs()) {
+    const m = getPostMeta(slug);
+    if (!m?.shopify_publish_at) continue;
+    const d = new Date(m.shopify_publish_at).toISOString().slice(0, 10);
+    counts.set(d, (counts.get(d) || 0) + 1);
+  }
+
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  for (let offset = 1; offset <= 365; offset++) {
+    const candidate = new Date(today);
+    candidate.setUTCDate(candidate.getUTCDate() + offset);
+    const dayKey = candidate.toISOString().slice(0, 10);
+    if ((counts.get(dayKey) || 0) < MAX_PER_DAY) {
+      return `${dayKey}T${String(HOUR).padStart(2, '0')}:00:00${TZ}`;
+    }
+  }
+  throw new Error('Could not find an available publish slot within 365 days');
+}
+
+/**
+ * Enqueue a refreshed draft for scheduled publishing. Writes
+ * shopify_publish_at + shopify_status='scheduled' into local meta and
+ * upserts a calendar item. Does NOT call Shopify's published flag —
+ * calendar-runner's publishDueArticles() handles that when the date
+ * arrives. Prevents link-dump patterns by phasing publishes across days.
+ */
+function scheduleDraft(slug, meta, publishAt) {
+  const updated = { ...meta, shopify_status: 'scheduled', shopify_publish_at: publishAt };
   writeFileSync(getMetaPath(slug), JSON.stringify(updated, null, 2));
-  console.log(`    ✓ Published to Shopify`);
+  try {
+    upsertItem({
+      slug,
+      keyword: meta.target_keyword || meta.title || slug,
+      title: meta.title || slug,
+      category: (meta.tags || [])[0] || 'General',
+      content_type: 'Blog Post',
+      priority: 'Medium',
+      publish_date: publishAt,
+      source: 'draft_refresher',
+    });
+  } catch (e) {
+    console.warn(`    Warning: could not upsert calendar item for ${slug}: ${e.message}`);
+  }
+  console.log(`    ✓ Scheduled for ${new Date(publishAt).toISOString().slice(0, 10)}`);
 }
 
 async function refreshDraft(slug) {
@@ -94,23 +154,26 @@ async function refreshDraft(slug) {
   // rewrite, link-text bumps) back to Shopify body_html.
   if (!run(`node agents/editor/index.js ${contentPath} --in-pipeline --push-shopify`, `editor+push: ${slug}`)) {
     console.error(`    ⛔ Editor failed — draft left as-is on Shopify`);
-    return { refreshed: true, published: false };
+    return { refreshed: true, scheduled: false };
   }
 
-  // Auto-publish if the editor's OVERALL QUALITY verdict passed. If it
-  // returned Needs Work, leave as draft — the daily legacy-rebuilder will
-  // pick it up and route to tier-appropriate action. No half-finished flows.
+  // If the editor passed, enqueue for scheduled publishing via the calendar
+  // (staggered — never batch-publish on the same day). The calendar-runner's
+  // publishDueArticles() flips the draft to published when the date arrives.
+  // If the editor returned Needs Work, leave as draft — the daily
+  // legacy-rebuilder picks it up for tier-appropriate handling.
   if (!editorPassed(slug)) {
     console.log(`    Editor did not pass — left as draft for next rebuilder cycle`);
-    return { refreshed: true, published: false };
+    return { refreshed: true, scheduled: false };
   }
   try {
     const meta = getPostMeta(slug);
-    await publishDraft(slug, meta);
-    return { refreshed: true, published: true };
+    const publishAt = computeNextPublishDate();
+    scheduleDraft(slug, meta, publishAt);
+    return { refreshed: true, scheduled: true };
   } catch (e) {
-    console.error(`    ✗ Publish failed: ${e.message}`);
-    return { refreshed: true, published: false };
+    console.error(`    ✗ Schedule failed: ${e.message}`);
+    return { refreshed: true, scheduled: false };
   }
 }
 
@@ -136,13 +199,13 @@ async function main() {
   console.log(`\nRefreshing ${toRefresh.length} draft(s)...`);
 
   let refreshed = 0;
-  let published = 0;
+  let scheduled = 0;
   let failed = 0;
   for (const d of toRefresh) {
     try {
       const result = await refreshDraft(d.slug);
       if (result.refreshed) refreshed++;
-      if (result.published) published++;
+      if (result.scheduled) scheduled++;
       if (!result.refreshed) failed++;
     } catch (err) {
       console.error(`  ✗ ${d.slug}: ${err.message}`);
@@ -151,12 +214,15 @@ async function main() {
   }
 
   await notify({
-    subject: `Draft Refresher: ${published} published, ${refreshed - published} kept as draft, ${failed} failed`,
-    body: `Refreshed ${refreshed} draft(s); ${published} passed the editor and were auto-published, ${refreshed - published} kept as draft, ${failed} failed.`,
+    subject: `Draft Refresher: ${scheduled} scheduled, ${refreshed - scheduled} kept as draft, ${failed} failed`,
+    body: `Refreshed ${refreshed} draft(s); ${scheduled} passed the editor and were scheduled (1/day via calendar), ${refreshed - scheduled} kept as draft, ${failed} failed.`,
     status: failed > 0 ? 'warning' : 'success',
   });
 
-  console.log(`\nDone. ${refreshed} refreshed, ${published} auto-published, ${failed} failed.`);
+  console.log(`\nDone. ${refreshed} refreshed, ${scheduled} scheduled (1/day via calendar), ${failed} failed.`);
+  if (scheduled > 0) {
+    console.log('Scheduled posts will auto-publish via the calendar-runner on their assigned dates.');
+  }
 }
 
 main().catch((err) => {
