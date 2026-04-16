@@ -38,6 +38,7 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, ROOT } from '../../lib/posts.js';
 import { updateArticle } from '../../lib/shopify.js';
+import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -507,7 +508,7 @@ Rewrite or remove the affected Q&As. (Body content mentions are not a violation 
 
 // ── claude editorial review ───────────────────────────────────────────────────
 
-async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary) {
+async function editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary, verifiedProducts = []) {
   const ctaContext = ctaResult.issues.length > 0
     ? `CTA ISSUES: ${ctaResult.issues.map((i) => i.message).join('; ')}`
     : `CTA links found: ${ctaResult.ctaLinks.map((l) => l.href).join(', ')}`;
@@ -526,6 +527,14 @@ async function editorialReview(editorialContent, faqQAs, deterministicIssues, me
     ? `FAQ Q&As (for competitor check):\n${faqQAs.map((qa, i) => `Q${i + 1}: ${qa.q}\nA${i + 1}: ${qa.a}`).join('\n\n')}`
     : 'No FAQ content detected.';
 
+  const verifiedProductsNote = verifiedProducts.length > 0
+    ? `VERIFIED PRODUCTS PRE-CHECK: SERP verification ran for every competitor brand mentioned. Treat these results as authoritative — do NOT claim any verified product "does not exist" or "is not a real product" in your FACTUAL CONCERNS section.\n${verifiedProducts.map((v) => {
+        const mark = v.exists === true ? '✓ EXISTS' : v.exists === false ? '✗ NOT FOUND' : '? UNKNOWN';
+        const url = v.canonical_url ? ` — ${v.canonical_url}` : '';
+        return `  ${mark} [${v.confidence}] ${v.brand || v.query} (${v.query})${url}`;
+      }).join('\n')}`
+    : 'No competitor brand mentions detected in post body.';
+
   const fb = loadAgentFeedback('editor');
 
   const systemPrompt = `You are an editor reviewing blog posts for ${config.name}, a natural skincare brand.
@@ -536,7 +545,7 @@ Review each post on these dimensions:
 2. BRAND VOICE & READABILITY — Conversational and warm, ~8th grade level. Flag clinical/jargon phrases without plain-language follow-up. Flag paragraphs over 4 sentences. Good signals: short sentences, "you/your", plain words.
 3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description? IMPORTANT: If PRODUCT INGREDIENTS below says "N/A" (topical-authority post not tied to a specific SKU), output "VERDICT: N/A" and "NOTES: Topical-authority post — no product spec to validate against." Do NOT compare against any other product's ingredient list.
 4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass. IMPORTANT: The following technical identifiers are PERMANENT and MUST NOT be flagged as year issues: (a) URL slug paths like "/blogs/news/best-x-2025", (b) href attribute values, (c) id attribute values on headings like <h2 id="best-x-2024">, (d) any year inside an HTML attribute. Only flag visible, human-readable year text that a reader would see — body text, heading text, and link anchor text.
-5. FACTUAL CONCERNS — Exaggerated, unsubstantiated, or potentially inaccurate claims?
+5. FACTUAL CONCERNS — Exaggerated, unsubstantiated, or potentially inaccurate claims? IMPORTANT: Do NOT claim any brand/product "does not exist" unless the VERIFIED PRODUCTS PRE-CHECK below has marked it as ✗ NOT FOUND. Entries marked ✓ EXISTS are SERP-verified and should be treated as real products. This prevents false-positive blockers where the LLM hallucinates non-existence of legitimate products like Dr. Bronner's toothpaste, Tom's of Maine, Hello toothpaste, etc.
 6. CTA QUALITY — Natural, well-placed CTA to Real Skin Care product/collection? Flag if missing.
 7. FORMATTING — Heading hierarchy clean (H2+, no H1 in body)? Orphaned sections? H1 presence pre-checked by code.
 8. COMPETITOR NAMES IN FAQ — Using the FAQ Q&As provided, flag any brand names other than Real Skin Care. BLOCKER if found.
@@ -570,6 +579,8 @@ ${linkHealthContext}
 ${deterministicNote}
 
 ${faqNote}
+
+${verifiedProductsNote}
 
 POST CONTENT:
 ${editorialContent}`,
@@ -1029,6 +1040,30 @@ async function runEditor(htmlPath) {
   // 7. Build compressed editorial content (strips HTML tags)
   const editorialContent = buildEditorialContent(html);
 
+  // 7b. Verify that competitor products mentioned in the post actually
+  // exist. The LLM factual-concerns check has a habit of claiming things
+  // like "Dr. Bronner's doesn't make toothpaste" — this grounds it with
+  // SERP-verified reality. Results are passed into the prompt so the LLM
+  // cannot invent non-existence.
+  const brandMentions = extractBrandMentions(html);
+  let verifiedProducts = [];
+  if (brandMentions.length > 0) {
+    const keywordLower = (meta?.target_keyword || meta?.title || '').toLowerCase();
+    let category = 'product';
+    for (const c of ['toothpaste', 'deodorant', 'lotion', 'soap', 'lip balm', 'cream']) {
+      if (keywordLower.includes(c)) { category = c; break; }
+    }
+    process.stdout.write(`  Verifying ${brandMentions.length} competitor brand(s)... `);
+    for (const brand of brandMentions) {
+      try {
+        const v = await verifyProduct(brand, category);
+        verifiedProducts.push(v);
+      } catch { /* skip on error */ }
+    }
+    const existing = verifiedProducts.filter((v) => v.exists === true);
+    console.log(`${existing.length}/${verifiedProducts.length} verified as existing`);
+  }
+
   // 8. Editorial review
   process.stdout.write('  Running editorial review... ');
   const linkHealthSummary = {
@@ -1036,7 +1071,7 @@ async function runEditor(htmlPath) {
     okLinks: linkResults.filter((r) => r.check.ok).length,
     brokenLinks: linkResults.filter((r) => !r.check.ok).map((r) => ({ href: r.href, status: r.check.status })),
   };
-  let review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary);
+  let review = await editorialReview(editorialContent, faqQAs, deterministicIssues, meta, productIngredientsContext, ctaResult, linkHealthSummary, verifiedProducts);
   console.log('done');
 
   // Override the LLM's COMPETITOR NAMES IN FAQ section with a deterministic
