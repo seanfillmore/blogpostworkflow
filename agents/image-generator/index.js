@@ -1045,6 +1045,51 @@ async function main() {
   } else if (args[0] === '--describe-products') {
     await describeProducts();
     return;
+  } else if (args[0] === '--evaluate-existing') {
+    // Review existing hero images with Claude Vision. Outputs keep or
+    // regenerate verdict per post. Does not mutate — operator decides
+    // whether to re-run generator on rejected images.
+    const scope = args[1] || '--all';
+    const slugsToCheck = scope === '--all'
+      ? listAllSlugs().filter((s) => existsSync(getImagePath(s)))
+      : [scope];
+
+    console.log(`Evaluating ${slugsToCheck.length} existing image(s)...\n`);
+    const results = { keep: [], regenerate: [], missing: [] };
+
+    for (const slug of slugsToCheck) {
+      const imagePath = getImagePath(slug);
+      if (!existsSync(imagePath)) {
+        results.missing.push(slug);
+        console.log(`  [missing]   ${slug}`);
+        continue;
+      }
+      try {
+        const mediaType = imagePath.endsWith('.webp') ? 'image/webp' : 'image/png';
+        const review = await creativeDirectorReview(imagePath, mediaType, false, null, []);
+        if (review.pass) {
+          results.keep.push(slug);
+          console.log(`  [keep]      ${slug}`);
+        } else {
+          results.regenerate.push({ slug, reason: review.rejectionReason || 'rejected by creative director' });
+          console.log(`  [regen]     ${slug} — ${review.rejectionReason || 'rejected'}`);
+        }
+      } catch (e) {
+        console.log(`  [error]     ${slug} — ${e.message}`);
+      }
+    }
+
+    mkdirSync(join(ROOT, 'data', 'reports', 'image-eval'), { recursive: true });
+    const reportPath = join(ROOT, 'data', 'reports', 'image-eval', 'latest.json');
+    writeFileSync(reportPath, JSON.stringify({
+      evaluated_at: new Date().toISOString(),
+      counts: { keep: results.keep.length, regenerate: results.regenerate.length, missing: results.missing.length },
+      results,
+    }, null, 2));
+
+    console.log(`\nSummary: ${results.keep.length} keep, ${results.regenerate.length} regenerate, ${results.missing.length} missing`);
+    console.log(`Report: ${reportPath}`);
+    return;
   } else if (args[0] === '--compress-existing') {
     // Convert PNGs to WebP, and re-compress any WebPs that are still over 150KB
     if (!existsSync(IMAGES_DIR)) { console.error('No images directory found.'); process.exit(1); }
