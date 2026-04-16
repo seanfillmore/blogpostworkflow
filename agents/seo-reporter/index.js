@@ -1,12 +1,12 @@
 /**
  * SEO Reporter Agent
  *
- * Aggregates data from available local sources and Ahrefs to produce a
+ * Aggregates data from available local sources and DataForSEO to produce a
  * periodic SEO performance report covering:
  *   - Content inventory summary (posts published, briefs queued, gaps remaining)
- *   - Keyword ranking snapshot (from Ahrefs organic keywords CSV or API)
+ *   - Keyword ranking snapshot
  *   - Top performing pages by estimated traffic
- *   - Backlink snapshot (domain rating, referring domains, new/lost)
+ *   - Backlink snapshot (referring domains, total backlinks)
  *   - Issue status (open technical SEO issues, editor reports with problems)
  *   - Priority actions for next period
  *
@@ -15,7 +15,7 @@
  *   2. data/briefs/*.json       — queued briefs
  *   3. data/reports/*.md        — existing audit/gap/calendar reports (for summaries)
  *   4. data/blog-index.json     — live Shopify articles
- *   5. Ahrefs API               — domain metrics, organic keywords, top pages
+ *   5. DataForSEO               — domain metrics, organic keywords, top pages, backlinks
  *
  * Output: data/reports/seo-report-<YYYY-MM>.md
  *
@@ -29,6 +29,12 @@ import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import {
+  getDomainMetrics as dfsDomainMetrics,
+  getTopPages as dfsTopPages,
+  getRankedKeywords,
+  getBacklinksSummary,
+} from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -64,59 +70,65 @@ const args = process.argv.slice(2);
 const periodIdx = args.indexOf('--period');
 const period = periodIdx !== -1 ? args[periodIdx + 1] : new Date().toISOString().slice(0, 7); // YYYY-MM
 
-// ── ahrefs ────────────────────────────────────────────────────────────────────
+// ── dataforseo ────────────────────────────────────────────────────────────────
+// All external metrics come from lib/dataforseo.js. Each helper returns null on
+// failure so the report still renders with local data if the API is unavailable.
 
-async function ahrefsGet(endpoint, params) {
-  if (!env.AHREFS_API_KEY) return null;
-  const qs = new URLSearchParams(params).toString();
+const DOMAIN = new URL(config.url).hostname.replace(/^www\./, '');
+
+async function getDomainMetrics() {
   try {
-    const res = await fetch(`https://api.ahrefs.com/v3${endpoint}?${qs}`, {
-      headers: { Authorization: `Bearer ${env.AHREFS_API_KEY}` },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) return null;
-    return res.json();
+    const [domain, backlinks] = await Promise.all([
+      dfsDomainMetrics(DOMAIN),
+      getBacklinksSummary(DOMAIN),
+    ]);
+    if (!domain && !backlinks) return null;
+    return {
+      org_keywords: domain?.organicKeywords ?? 0,
+      org_traffic: domain?.organicTraffic ?? 0,
+      refdomains: backlinks?.referringDomains ?? 0,
+      backlinks: backlinks?.backlinks ?? 0,
+      dataforseo_rank: backlinks?.rank ?? null,
+    };
   } catch { return null; }
 }
 
-async function getDomainMetrics() {
-  const data = await ahrefsGet('/site-explorer/metrics', {
-    target: config.url,
-    mode: 'domain',
-    select: 'domain_rating,ahrefs_rank,org_keywords,org_traffic,refdomains,backlinks',
-  });
-  return data?.metrics || null;
-}
-
 async function getTopPages() {
-  const data = await ahrefsGet('/site-explorer/top-pages', {
-    target: config.url,
-    mode: 'domain',
-    country: 'us',
-    limit: 20,
-    select: 'url,title,traffic,keywords,top_keyword,top_keyword_volume',
-  });
-  return data?.pages || [];
+  try {
+    const pages = await dfsTopPages(DOMAIN, { limit: 20 });
+    return pages.map((p) => ({
+      url: p.url,
+      traffic: p.traffic ?? 0,
+      keywords: p.keywords ?? 0,
+      top_keyword: p.topKeyword ?? null,
+    }));
+  } catch { return []; }
 }
 
 async function getOrganicKeywords() {
-  const data = await ahrefsGet('/site-explorer/organic-keywords', {
-    target: config.url,
-    mode: 'domain',
-    country: 'us',
-    limit: 50,
-    order_by: 'traffic:desc',
-    select: 'keyword,position,volume,traffic,url',
-  });
-  return data?.keywords || [];
+  try {
+    const kws = await getRankedKeywords(DOMAIN, { limit: 50 });
+    return kws.map((k) => ({
+      keyword: k.keyword,
+      position: k.position,
+      volume: k.volume ?? 0,
+      traffic: k.traffic ?? 0,
+      url: k.url,
+    }));
+  } catch { return []; }
 }
 
 async function getBacklinkStats() {
-  const data = await ahrefsGet('/site-explorer/backlinks-stats', {
-    target: config.url,
-    mode: 'domain',
-  });
-  return data?.stats || null;
+  try {
+    const b = await getBacklinksSummary(DOMAIN);
+    if (!b) return null;
+    return {
+      referring_domains: b.referringDomains,
+      total_backlinks: b.backlinks,
+      dofollow: b.dofollow,
+      broken: b.brokenBacklinks,
+    };
+  } catch { return null; }
 }
 
 // ── local data loaders ────────────────────────────────────────────────────────
@@ -204,24 +216,23 @@ ${posts.slice(0, 5).map((p) => `- "${p.title}" (${p.shopify_status || 'local'}) 
 ### Scheduled Posts
 ${scheduledPosts.length > 0 ? scheduledPosts.map((p) => `- "${p.title}" → ${p.shopify_publish_at || 'TBD'}`).join('\n') : 'None'}
 
-### Ahrefs Domain Metrics
+### Domain Metrics (DataForSEO)
 ${metrics ? `
-- Domain Rating: ${metrics.domain_rating}
-- Ahrefs Rank: #${metrics.ahrefs_rank}
 - Organic Keywords: ${metrics.org_keywords?.toLocaleString()}
 - Organic Traffic (est.): ${metrics.org_traffic?.toLocaleString()}/mo
 - Referring Domains: ${metrics.refdomains?.toLocaleString()}
 - Total Backlinks: ${metrics.backlinks?.toLocaleString()}
-` : 'Ahrefs API not available — metrics omitted'}
+${metrics.dataforseo_rank != null ? `- DataForSEO Rank: ${metrics.dataforseo_rank}` : ''}
+` : 'DataForSEO unavailable — metrics omitted'}
 
-### Top Pages by Traffic (Ahrefs)
-${topPages.length > 0 ? topPages.slice(0, 10).map((p) => `- ${p.title || p.url} — ${p.traffic}/mo (top keyword: "${p.top_keyword}", pos. TBD)`).join('\n') : 'No data'}
+### Top Pages by Traffic
+${topPages.length > 0 ? topPages.slice(0, 10).map((p) => `- ${p.url} — ${p.traffic}/mo (top keyword: "${p.top_keyword}", ${p.keywords} ranking keywords)`).join('\n') : 'No data'}
 
 ### Top Ranking Keywords
 ${organicKeywords.length > 0 ? organicKeywords.slice(0, 15).map((k) => `- "${k.keyword}" — pos. ${k.position}, ${k.volume}/mo vol, ${k.traffic}/mo traffic`).join('\n') : 'No data'}
 
 ### Backlink Stats
-${backlinkStats ? `New refdomains (30d): ${backlinkStats.refdomains_new_30d || 'N/A'} | Lost: ${backlinkStats.refdomains_lost_30d || 'N/A'}` : 'Not available'}
+${backlinkStats ? `Referring domains: ${backlinkStats.referring_domains?.toLocaleString() || '?'} | Total backlinks: ${backlinkStats.total_backlinks?.toLocaleString() || '?'} | Dofollow: ${backlinkStats.dofollow?.toLocaleString() || '?'}${backlinkStats.broken ? ` | Broken: ${backlinkStats.broken}` : ''}` : 'Not available'}
 
 ### Open Editor Issues (posts with unresolved problems)
 ${editorIssues.length > 0 ? editorIssues.map((e) => `- ${e.slug}${e.hasBroken ? ' 🔴 broken links' : ''}${e.hasConcern ? ' 🟡 claims to review' : ''}`).join('\n') : 'None'}
@@ -273,12 +284,8 @@ async function main() {
   const calendarSummary = loadReportSummary('content-strategist', 'content-calendar.md');
   console.log(`done (${posts.length} posts, ${briefs.length} briefs, ${liveArticles.length} live articles)`);
 
-  // Fetch Ahrefs data
-  if (env.AHREFS_API_KEY) {
-    process.stdout.write('  Fetching Ahrefs metrics... ');
-  } else {
-    console.log('  Ahrefs API key not set — skipping API metrics');
-  }
+  // Fetch DataForSEO data
+  process.stdout.write('  Fetching DataForSEO metrics... ');
 
   const [metrics, topPages, organicKeywords, backlinkStats] = await Promise.all([
     getDomainMetrics(),
@@ -287,9 +294,7 @@ async function main() {
     getBacklinkStats(),
   ]);
 
-  if (env.AHREFS_API_KEY) {
-    console.log(metrics ? 'done' : 'unavailable (check plan/key)');
-  }
+  console.log(metrics ? 'done' : 'unavailable (check credentials)');
 
   // Generate report
   process.stdout.write('\n  Generating report... ');
