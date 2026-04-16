@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import {
   ROOT, POSTS_DIR, BRIEFS_DIR, IMAGES_DIR, REPORTS_DIR, SNAPSHOTS_DIR,
-  ADS_OPTIMIZER_DIR, SEO_AUTHORITY_DIR, CONTENT_GAP_DIR,
+  ADS_OPTIMIZER_DIR, SEO_AUTHORITY_DIR,
   RANK_ALERTS_DIR, ALERTS_VIEWED, META_TESTS_DIR, COMP_BRIEFS_DIR,
 } from './paths.js';
 import {
@@ -244,13 +244,11 @@ export function aggregateData() {
 
   const cro = parseCROData();
 
-  const contentGapFiles = existsSync(CONTENT_GAP_DIR)
-    ? readdirSync(CONTENT_GAP_DIR)
-        .filter(f => f.endsWith('.csv'))
-        .map(f => { try { return { name: f, mtime: statSync(join(CONTENT_GAP_DIR, f)).mtimeMs }; } catch { return null; } })
-        .filter(Boolean)
-        .sort((a, b) => a.name.localeCompare(b.name))
-    : [];
+  // Latest content-gap report timestamp (if any)
+  const contentGapReportPath = join(REPORTS_DIR, 'content-gap', 'content-gap-report.md');
+  const contentGapLastReport = existsSync(contentGapReportPath)
+    ? new Date(statSync(contentGapReportPath).mtimeMs).toLocaleString()
+    : null;
 
   // ── Performance-driven SEO engine signals ──────────────────────────────────
   // Each of these files is written by a scheduled agent; read the latest if present.
@@ -403,7 +401,7 @@ export function aggregateData() {
     rankAlert,
     metaTests,
     briefs,
-    contentGapFiles,
+    contentGapLastReport,
     quickWins,
     postPerformance,
     gscOpportunity,

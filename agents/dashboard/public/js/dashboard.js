@@ -4464,33 +4464,6 @@ function renderSEOAuthorityPanel(authority) {
     '</div>';
 }
 
-function uploadContentGapZip() {
-  var input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.zip';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  input.onchange = function() {
-    document.body.removeChild(input);
-    var file = input.files[0];
-    if (!file) return;
-    var btn = document.getElementById('content-gap-upload-btn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
-    fetch('/upload/content-gap-zip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/octet-stream' },
-      body: file
-    }).then(function(r) { return r.json(); }).then(function(json) {
-      if (!json.ok) { if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; } alert('Upload failed: ' + json.error); return; }
-      if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Uploaded'; }
-      loadData();
-    }).catch(function() {
-      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
-    });
-  };
-  input.click();
-}
-
 function runTechSeoFix(fixCmd) {
   // fixCmd may be "fix-all --dry-run" or just "fix-links"
   var args = fixCmd.split(/\s+/);
@@ -4539,68 +4512,14 @@ function runGapAnalysis() {
 }
 
 function renderContentGapCard(d) {
-  var uploaded = d.contentGapFiles || [];
   var el = document.getElementById('content-gap-files');
-  var runBtn = document.getElementById('content-gap-run-btn');
   if (!el) return;
-
-  var names = uploaded.map(function(f) { return f.name; });
-  var mtimeOf = {};
-  uploaded.forEach(function(f) { mtimeOf[f.name] = f.mtime; });
-
-  var EXPECTED = [
-    { file: 'top100.csv',                       label: 'Content gap (top 100)' },
-    { file: 'realskincare_organic_keywords.csv', label: 'RSC organic keywords' },
-    { file: 'natural_deodorant.csv',             label: 'Natural deodorant' },
-    { file: 'natural_toothpaste.csv',            label: 'Natural toothpaste' },
-    { file: 'natural_body_lotion.csv',           label: 'Natural body lotion' },
-    { file: 'natural_lip_balm.csv',              label: 'Natural lip balm' },
-    { file: 'natural_bar_soap.csv',              label: 'Natural bar soap' },
-    { file: 'natural_hand_soap.csv',             label: 'Natural hand soap' },
-    { file: 'natural_coconut_oil.csv',           label: 'Natural coconut oil' },
-    { file: 'top_pages_*',                       label: 'Competitor top pages' },
-  ];
-
-  function isPresent(spec) {
-    if (spec.file === 'top_pages_*') return names.some(function(n) { return n.startsWith('top_pages_') && n.endsWith('.csv'); });
-    return names.indexOf(spec.file) !== -1;
-  }
-
-  function dateStr(spec) {
-    if (spec.file === 'top_pages_*') {
-      var match = uploaded.filter(function(f) { return f.name.startsWith('top_pages_') && f.name.endsWith('.csv'); });
-      if (!match.length) return '';
-      var latest = match.reduce(function(a, b) { return a.mtime > b.mtime ? a : b; });
-      return new Date(latest.mtime).toLocaleDateString();
-    }
-    return mtimeOf[spec.file] ? new Date(mtimeOf[spec.file]).toLocaleDateString() : '';
-  }
-
-  function extraNames(spec) {
-    if (spec.file !== 'top_pages_*') return '';
-    var matches = names.filter(function(n) { return n.startsWith('top_pages_') && n.endsWith('.csv'); });
-    return matches.length ? matches.map(function(n) { return n.replace('top_pages_', '').replace('.csv', ''); }).join(', ') : '';
-  }
-
-  el.innerHTML = EXPECTED.map(function(spec) {
-    var present = isPresent(spec);
-    var extra = extraNames(spec);
-    var right = present
-      ? ('&#10003; ' + dateStr(spec))
-      : '&#8943; awaiting upload';
-    return '<div class="gap-file-row ' + (present ? 'present' : 'missing') + '">' +
-      '<span><span class="gap-file-row-label">' + esc(spec.label) + '</span>' +
-      (extra ? '<span class="gap-file-row-name">(' + esc(extra) + ')</span>' : (spec.file !== 'top_pages_*' ? '<span class="gap-file-row-name">' + esc(spec.file) + '</span>' : '')) +
-      '</span>' +
-      '<span class="gap-file-row-status">' + right + '</span>' +
-      '</div>';
-  }).join('');
-
-  var hasRequired = isPresent({ file: 'top100.csv' }) && isPresent({ file: 'realskincare_organic_keywords.csv' });
-  if (runBtn) {
-    runBtn.disabled = !hasRequired;
-    runBtn.title = hasRequired ? '' : 'top100.csv and realskincare_organic_keywords.csv required';
-  }
+  var lastReport = d.contentGapLastReport;
+  el.innerHTML = '<div class="empty-state" style="padding:12px 0">Content-gap analysis pulls keyword and competitor data live from DataForSEO \u2014 no upload required.'
+    + (lastReport ? '<br><span style="color:#6b7280">Last report: ' + esc(lastReport) + '</span>' : '')
+    + '</div>';
+  var runBtn = document.getElementById('content-gap-run-btn');
+  if (runBtn) { runBtn.disabled = false; runBtn.title = ''; }
 }
 
 function uploadRankSnapshot() {

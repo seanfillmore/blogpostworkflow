@@ -22,33 +22,6 @@ export default [
   },
   {
     method: 'POST',
-    match: '/upload/content-gap-zip',
-    handler(req, res, ctx) {
-      const chunks = [];
-      req.on('data', d => chunks.push(d));
-      req.on('end', async () => {
-        const tmpZip = join(ctx.CONTENT_GAP_DIR, '.upload.zip');
-        try {
-          mkdirSync(ctx.CONTENT_GAP_DIR, { recursive: true });
-          writeFileSync(tmpZip, Buffer.concat(chunks));
-          const extract = (await import('extract-zip')).default;
-          await extract(tmpZip, { dir: ctx.CONTENT_GAP_DIR });
-          const { unlinkSync } = await import('node:fs');
-          unlinkSync(tmpZip);
-          const files = readdirSync(ctx.CONTENT_GAP_DIR).filter(f => f.endsWith('.csv'));
-          ctx.invalidateDataCache();
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true, files }));
-        } catch (err) {
-          try { const { unlinkSync } = await import('node:fs'); unlinkSync(tmpZip); } catch {}
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: false, error: err.message }));
-        }
-      });
-    },
-  },
-  {
-    method: 'POST',
     match: '/upload/tech-seo-zip',
     handler(req, res, ctx) {
       const CSV_DIR = join(ctx.ROOT, 'data', 'technical_seo');
