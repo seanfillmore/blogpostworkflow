@@ -56,7 +56,7 @@ export function extractKnownPages(gscSnaps) {
 }
 
 export function buildAnalyzerPrompt(context) {
-  const { activeSlugs, adsSnaps, gscSnaps, ga4Snaps, shopifySnaps, ahrefsPresent, pastOutcomes } = context;
+  const { activeSlugs, adsSnaps, gscSnaps, ga4Snaps, shopifySnaps, pastOutcomes } = context;
 
   const aov = computeAov(shopifySnaps);
   const aovLabel = shopifySnaps.reduce((s, d) => s + (d.orders?.count || 0), 0) > 0
@@ -223,7 +223,6 @@ const ADS_SNAPS_DIR     = join(ROOT, 'data', 'snapshots', 'google-ads');
 const GSC_SNAPS_DIR     = join(ROOT, 'data', 'snapshots', 'gsc');
 const GA4_SNAPS_DIR     = join(ROOT, 'data', 'snapshots', 'ga4');
 const SHOPIFY_SNAPS_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
-const AHREFS_DIR        = join(ROOT, 'data', 'ahrefs'); // legacy — kept for backward compat
 
 function loadEnv() {
   try {
@@ -391,11 +390,10 @@ async function main() {
     gscSnaps: loadSnaps(GSC_SNAPS_DIR),
     ga4Snaps: loadSnaps(GA4_SNAPS_DIR),
     shopifySnaps: loadSnaps(SHOPIFY_SNAPS_DIR, 90),
-    ahrefsPresent: existsSync(AHREFS_DIR) && readdirSync(AHREFS_DIR).some(f => f.endsWith('.csv')),
     pastOutcomes,
   };
 
-  console.log(`  Data loaded: ads=${context.adsSnaps.length} gsc=${context.gscSnaps.length} ga4=${context.ga4Snaps.length} shopify=${context.shopifySnaps.length} ahrefs=${context.ahrefsPresent}`);
+  console.log(`  Data loaded: ads=${context.adsSnaps.length} gsc=${context.gscSnaps.length} ga4=${context.ga4Snaps.length} shopify=${context.shopifySnaps.length}`);
 
   const userPrompt = buildAnalyzerPrompt(context);
   const { default: Anthropic } = await import('@anthropic-ai/sdk');

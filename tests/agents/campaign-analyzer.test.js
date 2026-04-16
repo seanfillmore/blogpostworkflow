@@ -19,14 +19,13 @@ const context = {
   gscSnaps: [{ date: '2026-03-19', clicks: 100 }],
   ga4Snaps: [],
   shopifySnaps: [],
-  ahrefsPresent: false,
   pastOutcomes: [],
 };
 const prompt = buildAnalyzerPrompt(context);
 assert.ok(prompt.includes('2026-03-19-lotion-search'), 'must list active slugs');
 assert.ok(prompt.includes('Google Ads'), 'must include ads section');
 assert.ok(prompt.includes('Google Search Console'), 'must include GSC section');
-assert.ok(prompt.includes('No Ahrefs'), 'must note missing Ahrefs');
+assert.ok(prompt.includes('DataForSEO'), 'must reference DataForSEO as the keyword data source');
 
 // parseAnalyzerResponse — valid JSON with proposals array
 const rawProposal = JSON.stringify({
