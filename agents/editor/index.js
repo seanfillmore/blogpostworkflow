@@ -19,6 +19,11 @@
  * Usage:
  *   node agents/editor/index.js data/posts/best-natural-deodorant-for-women.html
  *   node agents/editor/index.js data/posts/best-natural-deodorant-for-women.html --auto-fix
+ *   node agents/editor/index.js data/posts/best-natural-deodorant-for-women.html --push-shopify
+ *
+ * --push-shopify pushes the post-auto-fix body_html back to Shopify using the
+ * article IDs stored in meta.json. Use for refreshing already-published posts
+ * without a full publisher cycle.
  *
  * --auto-fix applies unambiguous corrections directly to the HTML file:
  *   - Removes broken external links (replaces <a> with its text content)
@@ -32,6 +37,7 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, ROOT } from '../../lib/posts.js';
+import { updateArticle } from '../../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -529,7 +535,7 @@ Review each post on these dimensions:
 1. TOPICAL RELEVANCE — Tightly focused on target keyword? Off-topic tangents?
 2. BRAND VOICE & READABILITY — Conversational and warm, ~8th grade level. Flag clinical/jargon phrases without plain-language follow-up. Flag paragraphs over 4 sentences. Good signals: short sentences, "you/your", plain words.
 3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description? IMPORTANT: If PRODUCT INGREDIENTS below says "N/A" (topical-authority post not tied to a specific SKU), output "VERDICT: N/A" and "NOTES: Topical-authority post — no product spec to validate against." Do NOT compare against any other product's ingredient list.
-4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass.
+4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass. IMPORTANT: URL slug paths (e.g., "/blogs/news/best-x-2025") are PERMANENT once indexed — do NOT flag year references inside href attribute values or URL paths. Only flag visible, human-readable year text in body, headings, and link anchor text.
 5. FACTUAL CONCERNS — Exaggerated, unsubstantiated, or potentially inaccurate claims?
 6. CTA QUALITY — Natural, well-placed CTA to Real Skin Care product/collection? Flag if missing.
 7. FORMATTING — Heading hierarchy clean (H2+, no H1 in body)? Orphaned sections? H1 presence pre-checked by code.
@@ -753,14 +759,28 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
     }
   }
 
-  // Stale years in body text — narrow context patterns keep us safe from
-  // URLs, IDs, and historical quotations ("the 2008 study" stays as written).
+  // Stale years in body text — context patterns keep us safe from URLs, IDs,
+  // and historical quotations ("the 2008 study" stays as written). Patterns
+  // cover the common "current-year marker" prepositions/markers.
+  const bodyYearPatterns = [
+    'in', 'updated', 'for', 'of', 'as of', 'during', 'throughout',
+    'by', 'edition', 'works in', 'guide for', 'guide to', 'review of',
+  ];
   for (let year = 2020; year < currentYear; year++) {
-    const yearRegex = new RegExp(`\\b(in |updated |\\()${year}\\b`, 'gi');
-    const before = fixed;
-    fixed = fixed.replace(yearRegex, (match, prefix) => `${prefix}${currentYear}`);
-    if (fixed !== before) {
-      changes.push(`Corrected year: ${year} → ${currentYear}`);
+    for (const prefix of bodyYearPatterns) {
+      const yearRegex = new RegExp(`\\b(${prefix} )${year}\\b`, 'gi');
+      const before = fixed;
+      fixed = fixed.replace(yearRegex, (m, p) => `${p}${currentYear}`);
+      if (fixed !== before) {
+        changes.push(`Corrected year: "${prefix} ${year}" → "${prefix} ${currentYear}"`);
+      }
+    }
+    // Parenthesized year: "(2025)"
+    const parenRegex = new RegExp(`\\((${year})\\)`, 'g');
+    const beforeParen = fixed;
+    fixed = fixed.replace(parenRegex, `(${currentYear})`);
+    if (fixed !== beforeParen) {
+      changes.push(`Corrected year: (${year}) → (${currentYear})`);
     }
   }
 
@@ -769,12 +789,33 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
   fixed = fixed.replace(/<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi, (match, level, attrs, inner) => {
     const updated = inner.replace(/\b(20\d{2})\b/g, (yearMatch, yr) => {
       const n = parseInt(yr, 10);
-      return n < currentYear ? String(currentYear) : yearMatch;
+      return n >= 2020 && n < currentYear ? String(currentYear) : yearMatch;
     });
     if (updated !== inner) {
       changes.push(`Corrected year in <h${level}>: "${inner.replace(/<[^>]+>/g, '').trim().slice(0, 60)}"`);
     }
     return `<h${level}${attrs}>${updated}</h${level}>`;
+  });
+
+  // Stale years inside <a> link text and title="" attributes. The href slug
+  // stays untouched (slug is immutable for indexed posts), but visible labels
+  // and title attributes should match the refreshed destination titles.
+  fixed = fixed.replace(/<a([^>]*)>([\s\S]*?)<\/a>/gi, (match, attrs, inner) => {
+    const bumpYear = (str) => str.replace(/\b(20\d{2})\b/g, (ym, yr) => {
+      const n = parseInt(yr, 10);
+      return n >= 2020 && n < currentYear ? String(currentYear) : ym;
+    });
+    // Bump the inner anchor text
+    const updatedInner = bumpYear(inner);
+    // Bump title="..." attribute (but NEVER href — slugs are immutable)
+    const updatedAttrs = attrs.replace(/(\btitle=["'])([^"']*)(["'])/gi, (m, pre, val, post) => pre + bumpYear(val) + post);
+    if (updatedInner !== inner) {
+      changes.push(`Corrected year in link text: "${inner.replace(/<[^>]+>/g, '').trim().slice(0, 60)}"`);
+    }
+    if (updatedAttrs !== attrs) {
+      changes.push(`Corrected year in link title attr`);
+    }
+    return `<a${updatedAttrs}>${updatedInner}</a>`;
   });
 
   if (changes.length === 0) {
@@ -1040,6 +1081,25 @@ async function runEditor(htmlPath) {
     applyPostReviewAutoFixes(htmlPath, workingHtml, brokenLinks);
   }
 
+  // Optional: push the (possibly auto-fixed) body_html back to Shopify so the
+  // live article matches the local file. Use this when running the editor on
+  // an already-published post to sync pre-review auto-fix changes (year
+  // refreshes, link-text updates) back to the live site without a full
+  // publisher run.
+  if (args.includes('--push-shopify') && meta?.shopify_blog_id && meta?.shopify_article_id) {
+    const currentHtml = readFileSync(htmlPath, 'utf8');
+    if (currentHtml !== html) {
+      try {
+        await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: currentHtml });
+        console.log(`\n  ✓ Pushed body_html to Shopify (article_id: ${meta.shopify_article_id})`);
+      } catch (e) {
+        console.error(`\n  ✗ Shopify push failed: ${e.message}`);
+      }
+    } else {
+      console.log('\n  No body_html changes to push.');
+    }
+  }
+
   // Tag the post for pipeline rebuild when blocker-level issues exist and
   // we're not already inside a rebuild pass. The legacy-rebuilder picks
   // tagged posts up on the weekly run, reruns the full pipeline, and
@@ -1072,7 +1132,7 @@ async function main() {
   console.log(`\nEditor Agent — ${config.name}\n`);
 
   if (!args[0] || args[0].startsWith('--')) {
-    console.error('Usage: node agents/editor/index.js data/posts/<slug>.html [--auto-fix]');
+    console.error('Usage: node agents/editor/index.js data/posts/<slug>.html [--auto-fix] [--push-shopify]');
     process.exit(1);
   }
 
