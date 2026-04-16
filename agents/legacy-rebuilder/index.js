@@ -57,16 +57,81 @@ function run(cmd, label) {
   }
 }
 
+/**
+ * Light refresh for rising-tier posts (ranking but needs polish).
+ * Never rewrites body content — just runs the surgical fix agents:
+ * answer-first intro, featured-product CTA, schema injector. Then pushes
+ * the (auto-fixed) body_html to Shopify via the editor's --push-shopify
+ * flag so live site reflects local changes.
+ */
+async function lightRefresh(slug) {
+  const { getContentPath: getContent } = await import('../../lib/posts.js');
+  console.log(`\nLight refresh: ${slug}`);
+  console.log(`  Bucket: rising — surgical fixes only, body content untouched`);
+
+  run(`node agents/answer-first-rewriter/index.js ${slug} --apply`, `answer-first: ${slug}`);
+  run(`node agents/featured-product-injector/index.js --handle ${slug}`, `featured-product: ${slug}`);
+  run(`node agents/schema-injector/index.js --slug ${slug} --apply`, `schema: ${slug}`);
+
+  // Editor runs with --in-pipeline (no re-tagging) + --push-shopify (sync
+  // any pre-review auto-fixes back to Shopify's body_html).
+  if (!run(`node agents/editor/index.js ${getContent(slug)} --in-pipeline --push-shopify`, `editor+push: ${slug}`)) {
+    console.error(`  ⛔ Editor failed — light refresh aborted`);
+    return false;
+  }
+
+  // Clear the needs_rebuild tag on success
+  const { needs_rebuild: _drop, ...rest } = getPostMeta(slug) || {};
+  const updated = { ...rest, refreshed_at: new Date().toISOString() };
+  writeFileSync(getMetaPath(slug), JSON.stringify(updated, null, 2));
+
+  console.log(`  ✓ Light refresh complete`);
+  return true;
+}
+
 async function rebuildPost(slug) {
   const meta = getPostMeta(slug);
   if (!meta) throw new Error(`No metadata for ${slug}`);
   if (!meta.shopify_article_id || !meta.shopify_blog_id) {
     throw new Error(`Missing shopify_article_id or shopify_blog_id for ${slug}`);
   }
+
+  // Tier-aware routing. legacy-triage stamps meta.legacy_bucket:
+  //   winner  → never rebuild (preserve working post; clear any stale tag)
+  //   rising  → light refresh only (schema + CTAs + answer-first), never
+  //             rewrite body content
+  //   flop    → full pipeline rebuild (current behavior)
+  //   broken  → technical issue, manual fix required, skip
+  //   (unset) → treat as flop to preserve current behavior for untriaged
+  //             posts. run `node agents/legacy-triage/index.js` first to
+  //             classify properly.
+  const bucket = meta.legacy_bucket || null;
+  if (bucket === 'winner') {
+    console.log(`\nSkipping: ${slug}`);
+    console.log(`  Bucket: winner — preserving post that is already ranking`);
+    // Clear any stale needs_rebuild tag so the post doesn't keep surfacing
+    if (meta.needs_rebuild) {
+      const { needs_rebuild: _drop, ...rest } = meta;
+      writeFileSync(getMetaPath(slug), JSON.stringify(rest, null, 2));
+      console.log('  Cleared stale needs_rebuild tag');
+    }
+    return true;
+  }
+  if (bucket === 'broken') {
+    console.log(`\nSkipping: ${slug}`);
+    console.log(`  Bucket: broken — ${meta.legacy_triage_reason || 'technical fix required'}`);
+    return true;
+  }
+  if (bucket === 'rising') {
+    return await lightRefresh(slug);
+  }
+
+  // Full rebuild (flop or unset)
   const keyword = meta.target_keyword || meta.title;
   if (!keyword) throw new Error(`No target_keyword for ${slug}`);
 
   console.log(`\nRebuilding: ${slug}`);
+  console.log(`  Bucket: ${bucket || 'untriaged (default: flop)'}`);
   console.log(`  Keyword: ${keyword}`);
   console.log(`  Article ID: ${meta.shopify_article_id}`);
 
@@ -113,12 +178,30 @@ async function main() {
   console.log('\nLegacy Post Rebuilder\n');
 
   const legacy = findLegacyPosts();
-  console.log(`Found ${legacy.length} legacy post(s) missing FAQ schema.`);
+
+  // Tier breakdown — shows what action each post would receive.
+  const byBucket = { winner: [], rising: [], flop: [], broken: [], untriaged: [] };
+  for (const p of legacy) {
+    const b = p.meta.legacy_bucket || 'untriaged';
+    if (byBucket[b]) byBucket[b].push(p);
+    else byBucket.untriaged.push(p);
+  }
+
+  console.log(`Found ${legacy.length} legacy post(s). Tier breakdown:`);
+  console.log(`  winner    (skip):          ${byBucket.winner.length}`);
+  console.log(`  rising    (light refresh): ${byBucket.rising.length}`);
+  console.log(`  flop      (full rebuild):  ${byBucket.flop.length}`);
+  console.log(`  broken    (skip manual):   ${byBucket.broken.length}`);
+  console.log(`  untriaged (default rebuild): ${byBucket.untriaged.length}`);
+  if (byBucket.untriaged.length > 0) {
+    console.log('  Tip: run `node agents/legacy-triage/index.js --force` to classify untriaged posts first.');
+  }
 
   if (!apply) {
-    console.log('\nDry run — no changes. Pass --apply to rebuild.');
+    console.log('\nDry run — no changes. Pass --apply to run tier-appropriate actions.');
     for (const p of legacy.slice(0, 20)) {
-      console.log(`  - ${p.slug} (${p.meta.target_keyword || p.meta.title})`);
+      const b = p.meta.legacy_bucket || 'untriaged';
+      console.log(`  [${b}] ${p.slug}`);
     }
     if (legacy.length > 20) console.log(`  ... and ${legacy.length - 20} more`);
     return;
