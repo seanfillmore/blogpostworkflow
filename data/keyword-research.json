@@ -1,0 +1,706 @@
+{
+  "meta": {
+    "site": "Real Skin Care",
+    "generated_at": "2026-04-16T17:15:54.265Z",
+    "provider": "dataforseo",
+    "total_ranking_keywords": 100,
+    "total_blog_ideas": 20
+  },
+  "pillar_audit": [
+    {
+      "url": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+      "slug": "toxic-chemicals-in-soap-to-keep-an-eye-on",
+      "inbound_links": 16,
+      "monthly_traffic": 0,
+      "top_keyword": null,
+      "top_keyword_volume": 0,
+      "top_keyword_position": null,
+      "keyword_count": 0,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test",
+      "slug": "how-to-do-a-skin-care-patch-test",
+      "inbound_links": 13,
+      "monthly_traffic": 0,
+      "top_keyword": null,
+      "top_keyword_volume": 0,
+      "top_keyword_position": null,
+      "keyword_count": 0,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start",
+      "slug": "what-is-natural-skincare-benefits-myths-how-to-start",
+      "inbound_links": 10,
+      "monthly_traffic": 0,
+      "top_keyword": null,
+      "top_keyword_volume": 0,
+      "top_keyword_position": null,
+      "keyword_count": 0,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+      "slug": "best-fluoride-free-toothpaste-2025",
+      "inbound_links": 9,
+      "monthly_traffic": 0,
+      "top_keyword": "non fluoridated toothpaste",
+      "top_keyword_volume": 8100,
+      "top_keyword_position": 31,
+      "keyword_count": 2,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion",
+      "slug": "benefits-of-using-coconut-oil-lotion",
+      "inbound_links": 8,
+      "monthly_traffic": 0,
+      "top_keyword": "coconut oil as a moisturiser",
+      "top_keyword_volume": 8100,
+      "top_keyword_position": 33,
+      "keyword_count": 3,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+      "slug": "best-fragrance-free-body-lotion-2025",
+      "inbound_links": 7,
+      "monthly_traffic": 0,
+      "top_keyword": null,
+      "top_keyword_volume": 0,
+      "top_keyword_position": null,
+      "keyword_count": 0,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+      "slug": "bar-soap-vs-liquid-hand-soap-which-is-better",
+      "inbound_links": 6,
+      "monthly_traffic": 0,
+      "top_keyword": null,
+      "top_keyword_volume": 0,
+      "top_keyword_position": null,
+      "keyword_count": 0,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025",
+      "slug": "best-body-lotion-for-sensitive-skin-2025",
+      "inbound_links": 6,
+      "monthly_traffic": 0,
+      "top_keyword": null,
+      "top_keyword_volume": 0,
+      "top_keyword_position": null,
+      "keyword_count": 0,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025",
+      "slug": "best-natural-toothpaste-2025",
+      "inbound_links": 6,
+      "monthly_traffic": 0,
+      "top_keyword": "natural toothpaste",
+      "top_keyword_volume": 27100,
+      "top_keyword_position": 58,
+      "keyword_count": 1,
+      "seo_aligned": false
+    },
+    {
+      "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025",
+      "slug": "best-sls-free-toothpaste-2025",
+      "inbound_links": 5,
+      "monthly_traffic": 0,
+      "top_keyword": null,
+      "top_keyword_volume": 0,
+      "top_keyword_position": null,
+      "keyword_count": 0,
+      "seo_aligned": false
+    }
+  ],
+  "top_pages": [
+    {
+      "url": "/collections/aluminum-free-deodorant",
+      "sum_traffic": 346.5,
+      "keywords": 1,
+      "top_keyword": "deodorants that are aluminum-free"
+    },
+    {
+      "url": "/collections/sls-free-toothpaste",
+      "sum_traffic": 342.7899932861328,
+      "keywords": 3,
+      "top_keyword": "toothpaste free from sodium lauryl sulphate"
+    },
+    {
+      "url": "/collections/vegan-lip-balm",
+      "sum_traffic": 207.89999389648438,
+      "keywords": 2,
+      "top_keyword": "vegan balms"
+    },
+    {
+      "url": "/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "sum_traffic": 207.2699966430664,
+      "keywords": 5,
+      "top_keyword": "coconut cooking oil for skin"
+    },
+    {
+      "url": "/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+      "sum_traffic": 203.27999877929688,
+      "keywords": 8,
+      "top_keyword": "benefits of tea tree oil"
+    },
+    {
+      "url": "/blogs/news/best-toothpaste-without-sls-2025",
+      "sum_traffic": 200.4600067138672,
+      "keywords": 4,
+      "top_keyword": "sls free toothpaste"
+    },
+    {
+      "url": "/collections/fluoride-free-toothpaste",
+      "sum_traffic": 155.39999389648438,
+      "keywords": 1,
+      "top_keyword": "fluoride-free toothpaste"
+    },
+    {
+      "url": "/collections/moisturizing-body-cream",
+      "sum_traffic": 93.23999786376953,
+      "keywords": 2,
+      "top_keyword": "moisturizing body cream"
+    },
+    {
+      "url": "/blogs/news/best-natural-toothpaste-2025",
+      "sum_traffic": 56.90999984741211,
+      "keywords": 1,
+      "top_keyword": "natural toothpaste"
+    },
+    {
+      "url": "/collections/coconut-oil-products",
+      "sum_traffic": 46.619998931884766,
+      "keywords": 1,
+      "top_keyword": "coconut skin oil"
+    },
+    {
+      "url": "/collections/vegan-soap",
+      "sum_traffic": 38.0099983215332,
+      "keywords": 1,
+      "top_keyword": "plant-based soap"
+    },
+    {
+      "url": "/collections/natural-lip-balm",
+      "sum_traffic": 31.079999923706055,
+      "keywords": 1,
+      "top_keyword": "natural lip balm"
+    }
+  ],
+  "competitors": [
+    {
+      "competitor_domain": "realskincare.com",
+      "keywords_common": 2518,
+      "keywords_competitor": 2518,
+      "traffic": 7132.5899975299835
+    },
+    {
+      "competitor_domain": "healthline.com",
+      "keywords_common": 1146,
+      "keywords_competitor": 7314834,
+      "traffic": 202586837.3191597
+    },
+    {
+      "competitor_domain": "allure.com",
+      "keywords_common": 984,
+      "keywords_competitor": 880136,
+      "traffic": 38411999.136801675
+    },
+    {
+      "competitor_domain": "byrdie.com",
+      "keywords_common": 811,
+      "keywords_competitor": 1095655,
+      "traffic": 23180241.903443523
+    },
+    {
+      "competitor_domain": "thegoodtrade.com",
+      "keywords_common": 727,
+      "keywords_competitor": 236553,
+      "traffic": 3708050.8043631557
+    },
+    {
+      "competitor_domain": "medicalnewstoday.com",
+      "keywords_common": 696,
+      "keywords_competitor": 4886616,
+      "traffic": 64758077.76728386
+    },
+    {
+      "competitor_domain": "desertessence.com",
+      "keywords_common": 666,
+      "keywords_competitor": 13448,
+      "traffic": 398685.94802787155
+    },
+    {
+      "competitor_domain": "clevelandclinic.org",
+      "keywords_common": 608,
+      "keywords_competitor": 6096637,
+      "traffic": 584168370.8911484
+    },
+    {
+      "competitor_domain": "health.com",
+      "keywords_common": 574,
+      "keywords_competitor": 1755974,
+      "traffic": 20972583.335845836
+    },
+    {
+      "competitor_domain": "gosupps.com",
+      "keywords_common": 557,
+      "keywords_competitor": 1259298,
+      "traffic": 1470356.0743461363
+    }
+  ],
+  "keyword_opportunities": [
+    {
+      "keyword": "toothpaste",
+      "volume": 90500,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.43
+    },
+    {
+      "keyword": "hydroxyapatite toothpaste",
+      "volume": 90500,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.56
+    },
+    {
+      "keyword": "toothpaste with fluoride-free",
+      "volume": 74000,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.2
+    },
+    {
+      "keyword": "fluoride toothpaste",
+      "volume": 60500,
+      "difficulty": 23,
+      "traffic_potential": 0,
+      "cpc": 1.86
+    },
+    {
+      "keyword": "sensodyne toothpaste",
+      "volume": 60500,
+      "difficulty": 25,
+      "traffic_potential": 0,
+      "cpc": 2.61
+    },
+    {
+      "keyword": "flouride toothpaste",
+      "volume": 60500,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 2.16
+    },
+    {
+      "keyword": "nano hydroxyapatite toothpaste",
+      "volume": 49500,
+      "difficulty": 5,
+      "traffic_potential": 0,
+      "cpc": 1.54
+    },
+    {
+      "keyword": "colgate toothpaste",
+      "volume": 40500,
+      "difficulty": 11,
+      "traffic_potential": 0,
+      "cpc": 3.14
+    },
+    {
+      "keyword": "fluoride toothpaste for cavities",
+      "volume": 33100,
+      "difficulty": 16,
+      "traffic_potential": 0,
+      "cpc": 1.37
+    },
+    {
+      "keyword": "colgate total toothpaste",
+      "volume": 22200,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 2.41
+    },
+    {
+      "keyword": "crest pro health toothpaste",
+      "volume": 22200,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.83
+    },
+    {
+      "keyword": "toothpaste with fluoride",
+      "volume": 18100,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 2.43
+    },
+    {
+      "keyword": "euthymol toothpaste",
+      "volume": 18100,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 0.75
+    },
+    {
+      "keyword": "arm and hammer toothpaste",
+      "volume": 18100,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 0.95
+    },
+    {
+      "keyword": "toothpaste without fluoride",
+      "volume": 9900,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.42
+    },
+    {
+      "keyword": "stannous fluoride toothpaste",
+      "volume": 9900,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.48
+    },
+    {
+      "keyword": "charcoal toothpaste",
+      "volume": 9900,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 0.76
+    },
+    {
+      "keyword": "pronamel toothpaste",
+      "volume": 9900,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 4.67
+    },
+    {
+      "keyword": "toothpaste brands",
+      "volume": 8100,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.34
+    },
+    {
+      "keyword": "non fluoride toothpaste",
+      "volume": 8100,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.38
+    },
+    {
+      "keyword": "busaurus toothpaste",
+      "volume": 8100,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 0.52
+    },
+    {
+      "keyword": "baking soda toothpaste",
+      "volume": 8100,
+      "difficulty": 9,
+      "traffic_potential": 0,
+      "cpc": 0.94
+    },
+    {
+      "keyword": "elephant toothpaste experiment",
+      "volume": 6600,
+      "difficulty": 12,
+      "traffic_potential": 0,
+      "cpc": 1.97
+    },
+    {
+      "keyword": "sls toothpaste",
+      "volume": 5400,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.93
+    },
+    {
+      "keyword": "sodium fluoride toothpaste",
+      "volume": 4400,
+      "difficulty": 5,
+      "traffic_potential": 0,
+      "cpc": 1.64
+    },
+    {
+      "keyword": "bite toothpaste",
+      "volume": 4400,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.25
+    },
+    {
+      "keyword": "high fluoride toothpaste",
+      "volume": 3600,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.27
+    },
+    {
+      "keyword": "toothpaste for sensitive teeth with fluoride",
+      "volume": 3600,
+      "difficulty": 7,
+      "traffic_potential": 0,
+      "cpc": 1.95
+    },
+    {
+      "keyword": "best fluoride toothpaste",
+      "volume": 2900,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.95
+    },
+    {
+      "keyword": "organic toothpaste",
+      "volume": 2900,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.48
+    },
+    {
+      "keyword": "best natural toothpaste",
+      "volume": 2900,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.21
+    },
+    {
+      "keyword": "best fluoride free toothpaste",
+      "volume": 2400,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 0.99
+    },
+    {
+      "keyword": "sls free toothpaste with fluoride",
+      "volume": 1000,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 2.35
+    },
+    {
+      "keyword": "natural fluoride-free toothpaste",
+      "volume": 1000,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 2.08
+    },
+    {
+      "keyword": "toothpaste fluoride free",
+      "volume": 390,
+      "difficulty": 0,
+      "traffic_potential": 0,
+      "cpc": 1.17
+    }
+  ],
+  "blog_ideas": [
+    {
+      "suggested_title": "Toothpaste: Everything You Need to Know",
+      "target_keyword": "toothpaste",
+      "search_volume": 90500,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 27243,
+      "cpc_cents": 1.43,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Hydroxyapatite Toothpaste: Everything You Need to Know",
+      "target_keyword": "hydroxyapatite toothpaste",
+      "search_volume": 90500,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 27243,
+      "cpc_cents": 1.56,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Toothpaste With Fluoride-Free: Everything You Need to Know",
+      "target_keyword": "toothpaste with fluoride-free",
+      "search_volume": 74000,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 22276,
+      "cpc_cents": 1.2,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Flouride Toothpaste: Everything You Need to Know",
+      "target_keyword": "flouride toothpaste",
+      "search_volume": 60500,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 18212,
+      "cpc_cents": 2.16,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Colgate Total Toothpaste: Everything You Need to Know",
+      "target_keyword": "colgate total toothpaste",
+      "search_volume": 22200,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 6683,
+      "cpc_cents": 2.41,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Crest Pro Health Toothpaste: Everything You Need to Know",
+      "target_keyword": "crest pro health toothpaste",
+      "search_volume": 22200,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 6683,
+      "cpc_cents": 1.83,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Toothpaste With Fluoride: Everything You Need to Know",
+      "target_keyword": "toothpaste with fluoride",
+      "search_volume": 18100,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 5449,
+      "cpc_cents": 2.43,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Euthymol Toothpaste: Everything You Need to Know",
+      "target_keyword": "euthymol toothpaste",
+      "search_volume": 18100,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 5449,
+      "cpc_cents": 0.75,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Arm And Hammer Toothpaste: Everything You Need to Know",
+      "target_keyword": "arm and hammer toothpaste",
+      "search_volume": 18100,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 5449,
+      "cpc_cents": 0.95,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Toothpaste Without Fluoride: Everything You Need to Know",
+      "target_keyword": "toothpaste without fluoride",
+      "search_volume": 9900,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 2980,
+      "cpc_cents": 1.42,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Stannous Fluoride Toothpaste: Everything You Need to Know",
+      "target_keyword": "stannous fluoride toothpaste",
+      "search_volume": 9900,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 2980,
+      "cpc_cents": 1.48,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Charcoal Toothpaste: Everything You Need to Know",
+      "target_keyword": "charcoal toothpaste",
+      "search_volume": 9900,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 2980,
+      "cpc_cents": 0.76,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Pronamel Toothpaste: Everything You Need to Know",
+      "target_keyword": "pronamel toothpaste",
+      "search_volume": 9900,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 2980,
+      "cpc_cents": 4.67,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Nano Hydroxyapatite Toothpaste: Everything You Need to Know",
+      "target_keyword": "nano hydroxyapatite toothpaste",
+      "search_volume": 49500,
+      "keyword_difficulty": 5,
+      "traffic_potential": 0,
+      "opportunity_score": 2483,
+      "cpc_cents": 1.54,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Toothpaste Brands: Everything You Need to Know",
+      "target_keyword": "toothpaste brands",
+      "search_volume": 8100,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 2438,
+      "cpc_cents": 1.34,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Busaurus Toothpaste: Everything You Need to Know",
+      "target_keyword": "busaurus toothpaste",
+      "search_volume": 8100,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 2438,
+      "cpc_cents": 0.52,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Bite Toothpaste: Everything You Need to Know",
+      "target_keyword": "bite toothpaste",
+      "search_volume": 4400,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 1325,
+      "cpc_cents": 1.25,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "High Fluoride Toothpaste: Everything You Need to Know",
+      "target_keyword": "high fluoride toothpaste",
+      "search_volume": 3600,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 1084,
+      "cpc_cents": 1.27,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Colgate Toothpaste: Everything You Need to Know",
+      "target_keyword": "colgate toothpaste",
+      "search_volume": 40500,
+      "keyword_difficulty": 11,
+      "traffic_potential": 0,
+      "opportunity_score": 1016,
+      "cpc_cents": 3.14,
+      "page_type": "blog_roundup"
+    },
+    {
+      "suggested_title": "Best Fluoride Toothpaste: Complete [Year] Guide",
+      "target_keyword": "best fluoride toothpaste",
+      "search_volume": 2900,
+      "keyword_difficulty": 0,
+      "traffic_potential": 0,
+      "opportunity_score": 873,
+      "cpc_cents": 1.95,
+      "page_type": "blog_roundup"
+    }
+  ]
+}

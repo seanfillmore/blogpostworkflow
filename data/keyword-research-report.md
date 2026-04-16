@@ -1,134 +1,58 @@
 # Keyword Research Report — Real Skin Care
-Generated: March 7, 2026 (live Ahrefs data)
-
----
-
-## Executive Summary
-
-The site has low overall organic traffic (~200 visits/month across all pages) but is ranking for several
-high-potential keywords in the 4–12 position range. The core problem: **internal linking treats
-informational posts as pillars, but the real SEO opportunities are in commercial/comparison content**.
-The biggest untapped opportunity is **natural deodorant** — a 20K+/month keyword cluster the site sells
-into but barely targets in content.
-
----
+Generated: 4/16/2026, 10:15:54 AM
 
 ## Pillar Page Audit
+Are the most internally-linked pages capturing meaningful search traffic?
 
-The most internally-linked blog posts are not well-aligned with high-value search keywords.
+| Pillar Page | Internal Links | Monthly Traffic | Top Keyword | Vol | Pos | Aligned? |
+|-------------|---------------|-----------------|-------------|-----|-----|----------|
+| [toxic-chemicals-in-soap-to-keep-an-eye-on](https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on) | 16 | 0 | — | — | — | ✗ needs work |
+| [how-to-do-a-skin-care-patch-test](https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test) | 13 | 0 | — | — | — | ✗ needs work |
+| [what-is-natural-skincare-benefits-myths-how-to-start](https://www.realskincare.com/blogs/news/what-is-natural-skincare-benefits-myths-how-to-start) | 10 | 0 | — | — | — | ✗ needs work |
+| [best-fluoride-free-toothpaste-2025](https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025) | 9 | 0 | non fluoridated toothpaste | 8100 | 31 | ✗ needs work |
+| [benefits-of-using-coconut-oil-lotion](https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion) | 8 | 0 | coconut oil as a moisturiser | 8100 | 33 | ✗ needs work |
+| [best-fragrance-free-body-lotion-2025](https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025) | 7 | 0 | — | — | — | ✗ needs work |
+| [bar-soap-vs-liquid-hand-soap-which-is-better](https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better) | 6 | 0 | — | — | — | ✗ needs work |
+| [best-body-lotion-for-sensitive-skin-2025](https://www.realskincare.com/blogs/news/best-body-lotion-for-sensitive-skin-2025) | 6 | 0 | — | — | — | ✗ needs work |
+| [best-natural-toothpaste-2025](https://www.realskincare.com/blogs/news/best-natural-toothpaste-2025) | 6 | 0 | natural toothpaste | 27100 | 58 | ✗ needs work |
+| [best-sls-free-toothpaste-2025](https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-2025) | 5 | 0 | — | — | — | ✗ needs work |
 
-| Pillar Page | Internal Links | Monthly Traffic | Top Keyword | Vol | Pos | Assessment |
-|-------------|---------------|-----------------|-------------|-----|-----|------------|
-| toxic-chemicals-in-soap | 16 | ~0 | — | — | — | ✗ No SEO value |
-| how-to-do-a-skin-care-patch-test | 13 | ~0 | — | — | — | ✗ Informational, low intent |
-| what-is-natural-skincare | 10 | ~0 | — | — | — | ✗ Low commercial intent |
-| best-fluoride-free-toothpaste-2025 | 9 | ~17 | sls free toothpaste list | 400 | 9 | ✓ Good alignment |
-| benefits-of-using-coconut-oil-lotion | 8 | ~0 | — | — | — | ✗ Needs keyword focus |
-| best-fragrance-free-body-lotion-2025 | 7 | ~0 | — | — | — | ✗ Needs refresh |
-| best-natural-toothpaste-2025 | 6 | ~0 | — | — | — | ✗ Low traffic despite links |
-| best-sls-free-toothpaste-2025 | 5 | ~17 | sls free toothpaste list | 400 | 9 | ✓ Good alignment |
-
-**Recommendation:** Redirect internal linking energy toward the content clusters below that actually
-capture traffic.
-
----
-
-## Current Top Performing Pages
-
-| Page | Monthly Traffic | Top Keyword | Vol | Pos |
-|------|----------------|-------------|-----|-----|
-| can-you-use-coconut-oil-as-toothpaste | 42 | coconut oil toothpaste | 700 | 8 |
-| homepage | 40 | real skin care (branded) | 70 | 1 |
-| coconut-oil-deodorant | 18 | coconut oil as deodorant | 600 | 1 |
-| best-sls-free-toothpaste-2025 | 17 | sls free toothpaste list | 400 | 9 |
-| collections/non-toxic-body-lotion | 17 | best body lotion without chemicals | 450 | 18 |
-| collections/best-non-toxic-body-lotion | 15 | best non toxic body lotion | 350 | 11 |
-| best-toothpaste-without-sls-2025 | 11 | non sls toothpaste | 500 | 11 |
-| is-coconut-oil-good-for-stretch-marks | 8 | is coconut oil good for stretch marks | 150 | 9 |
-
-**Key insight:** The coconut oil deodorant *product page* ranks #1 for "coconut oil as deodorant" (600 vol)
-but there is no supporting blog content targeting the broader "natural deodorant" cluster (20K+ vol).
-
----
-
-## Competitors
-
-| Competitor | Common Keywords | Their Total Keywords | Monthly Traffic |
-|------------|----------------|---------------------|-----------------|
-| allure.com | 99 | 300,205 | 2,985,647 |
-| thegoodtrade.com | 85 | 71,545 | 730,746 |
-| drbronner.com | 81 | 6,460 | 133,072 |
-| desertessence.com | 74 | 4,409 | 49,767 |
-| health.com | 74 | 452,489 | 2,189,487 |
-| ewg.org | 72 | 157,963 | 905,594 |
-| orbasics.com | 66 | 5,332 | 14,994 |
-| thedaleydose.com | 43 | 4,491 | 52,902 |
-| 100percentpure.com | 42 | 14,155 | 69,661 |
-| boka.com | 42 | 2,968 | 91,338 |
-
-**Most relevant benchmarks:** orbasics.com (similar product range, 14K traffic — ~70x this site),
-thedaleydose.com (4.4K keywords, 52K traffic — a reachable medium-term target).
-
----
+## Top Competitors
+| Competitor | Common Keywords | Their Keywords | Monthly Traffic |
+|------------|----------------|----------------|-----------------|
+| realskincare.com | 2518 | 2,518 | 7,132.59 |
+| healthline.com | 1146 | 7,314,834 | 202,586,837.319 |
+| allure.com | 984 | 880,136 | 38,411,999.137 |
+| byrdie.com | 811 | 1,095,655 | 23,180,241.903 |
+| thegoodtrade.com | 727 | 236,553 | 3,708,050.804 |
+| medicalnewstoday.com | 696 | 4,886,616 | 64,758,077.767 |
+| desertessence.com | 666 | 13,448 | 398,685.948 |
+| clevelandclinic.org | 608 | 6,096,637 | 584,168,370.891 |
+| health.com | 574 | 1,755,974 | 20,972,583.336 |
+| gosupps.com | 557 | 1,259,298 | 1,470,356.074 |
 
 ## Blog Post Opportunities
+Keywords competitors rank for that this site does not yet target, ranked by opportunity score.
 
-Ranked by opportunity score = `volume / (difficulty + 1) × log₁₀(traffic_potential)`.
-All keywords have KD ≤ 30 and monthly volume ≥ 300.
-
-### Tier 1 — Immediate Priority
-
-| # | Suggested Title | Target Keyword | Vol | KD | Traffic Potential |
-|---|----------------|----------------|-----|----|-------------------|
-| 1 | **Best Natural Deodorant for Women: Complete 2026 Guide** | best natural deodorant for women | 2,900 | 0 | 60 |
-| 2 | **Best Natural Deodorant for Men: Complete 2026 Guide** | best natural deodorant for men | 2,700 | 2 | 48,000 |
-| 3 | **Best Natural Face Moisturizer: Complete 2026 Guide** | best natural face moisturizer | 1,200 | 0 | 5,700 |
-| 4 | **Fluoride Free Toothpaste: Everything You Need to Know** | fluoride free toothpaste | 18,000 | 0 | 1,400 |
-| 5 | **Natural Deodorant for Women: Everything You Need to Know** | natural deodorant for women | 4,500 | 2 | 31,000 |
-
-**Notes:**
-- #2 "best natural deodorant for men" has a traffic_potential of 48,000 — the #1 ranking page captures
-  enormous long-tail traffic. KD is just 2. High priority.
-- #4 "fluoride free toothpaste" has 18K monthly searches at KD 0 — extremely accessible. The site
-  already has SLS-free toothpaste content; a fluoride-free pillar is the natural companion.
-- #5 "natural deodorant for women" (4.5K vol, KD 2) shares a cluster with #1 — one strong post can
-  target both.
-
-### Tier 2 — Build Out Clusters
-
-| # | Suggested Title | Target Keyword | Vol | KD | Traffic Potential |
-|---|----------------|----------------|-----|----|-------------------|
-| 6 | **Natural Deodorant for Men: Everything You Need to Know** | natural deodorant for men | 3,100 | 3 | 450 |
-| 7 | **All Natural Deodorant That Actually Works** | all natural deodorant | 2,600 | 17 | 25,000 |
-| 8 | **Natural Toothpaste: The Complete Guide to Ingredients** | natural toothpaste | 4,000 | 15 | 9,600 |
-| 9 | **Non-Toxic Body Lotion: What to Look For + Top Picks** | non toxic body lotion | 1,400 | 1 | 3,800 |
-| 10 | **Natural Moisturizer: Everything You Need to Know** | natural moisturizer | 5,900 | 7 | 450 |
-| 11 | **Natural Face Moisturizer: Everything You Need to Know** | natural face moisturizer | 3,600 | 2 | 4,100 |
-| 12 | **Best Coconut Oil for Skin: How to Choose and Use It** | best coconut oil for skin | 1,600 | 0 | 40 |
-| 13 | **Fluoride Free Toothpaste for Kids: Safe Options** | fluoride free toothpaste for kids | 1,200 | 1 | 500 |
-| 14 | **Best Natural Toothpaste: Complete 2026 Guide** | best natural toothpaste | 2,100 | 3 | 700 |
-| 15 | **Is Fluoride Free Toothpaste Good? What the Research Says** | is fluoride free toothpaste good | 700 | 5 | 2,400 |
-
----
-
-## Content Strategy Recommendations
-
-### 1. Build a Natural Deodorant Content Hub
-The site sells a coconut oil deodorant (#1 for "coconut oil as deodorant") but has no content
-targeting "natural deodorant" (20K/mo, KD 13), "best natural deodorant" (8.3K, KD 1), or any of its
-subtopics. Write posts #1, #2, #5, #6, and #7 above and link them all to the product page. This is
-the single highest-ROI content investment available.
-
-### 2. Expand the Toothpaste Cluster
-The site already ranks for SLS-free toothpaste terms. Add a "fluoride free toothpaste" pillar (18K vol,
-KD 0) and a "natural toothpaste guide" to form a complete toothpaste content cluster. Link all posts
-to the toothpaste product page.
-
-### 3. Fix Pillar Page Alignment
-The most internally-linked posts ("toxic-chemicals-in-soap", "how-to-do-a-skin-care-patch-test") drive
-zero traffic. Migrate internal link weight toward the SLS-free toothpaste posts and any new deodorant
-content.
-
-### 4. Face Moisturizer Is Underserved
-The site sells body lotion but the natural face moisturizer opportunity (KD 0–2, traffic_potential 4–5K)
-is untapped. Posts #3 and #11 would open this category.
+| # | Suggested Title | Target Keyword | Volume | KD | Traffic Potential | Score |
+|---|----------------|----------------|--------|-----|-------------------|-------|
+| 1 | Toothpaste: Everything You Need to Know | toothpaste | 90,500 | 0 | 0 | 27243 |
+| 2 | Hydroxyapatite Toothpaste: Everything You Need to Know | hydroxyapatite toothpaste | 90,500 | 0 | 0 | 27243 |
+| 3 | Toothpaste With Fluoride-Free: Everything You Need to Know | toothpaste with fluoride-free | 74,000 | 0 | 0 | 22276 |
+| 4 | Flouride Toothpaste: Everything You Need to Know | flouride toothpaste | 60,500 | 0 | 0 | 18212 |
+| 5 | Colgate Total Toothpaste: Everything You Need to Know | colgate total toothpaste | 22,200 | 0 | 0 | 6683 |
+| 6 | Crest Pro Health Toothpaste: Everything You Need to Know | crest pro health toothpaste | 22,200 | 0 | 0 | 6683 |
+| 7 | Toothpaste With Fluoride: Everything You Need to Know | toothpaste with fluoride | 18,100 | 0 | 0 | 5449 |
+| 8 | Euthymol Toothpaste: Everything You Need to Know | euthymol toothpaste | 18,100 | 0 | 0 | 5449 |
+| 9 | Arm And Hammer Toothpaste: Everything You Need to Know | arm and hammer toothpaste | 18,100 | 0 | 0 | 5449 |
+| 10 | Toothpaste Without Fluoride: Everything You Need to Know | toothpaste without fluoride | 9,900 | 0 | 0 | 2980 |
+| 11 | Stannous Fluoride Toothpaste: Everything You Need to Know | stannous fluoride toothpaste | 9,900 | 0 | 0 | 2980 |
+| 12 | Charcoal Toothpaste: Everything You Need to Know | charcoal toothpaste | 9,900 | 0 | 0 | 2980 |
+| 13 | Pronamel Toothpaste: Everything You Need to Know | pronamel toothpaste | 9,900 | 0 | 0 | 2980 |
+| 14 | Nano Hydroxyapatite Toothpaste: Everything You Need to Know | nano hydroxyapatite toothpaste | 49,500 | 5 | 0 | 2483 |
+| 15 | Toothpaste Brands: Everything You Need to Know | toothpaste brands | 8,100 | 0 | 0 | 2438 |
+| 16 | Busaurus Toothpaste: Everything You Need to Know | busaurus toothpaste | 8,100 | 0 | 0 | 2438 |
+| 17 | Bite Toothpaste: Everything You Need to Know | bite toothpaste | 4,400 | 0 | 0 | 1325 |
+| 18 | High Fluoride Toothpaste: Everything You Need to Know | high fluoride toothpaste | 3,600 | 0 | 0 | 1084 |
+| 19 | Colgate Toothpaste: Everything You Need to Know | colgate toothpaste | 40,500 | 11 | 0 | 1016 |
+| 20 | Best Fluoride Toothpaste: Complete [Year] Guide | best fluoride toothpaste | 2,900 | 0 | 0 | 873 |
