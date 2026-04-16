@@ -28,7 +28,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
-import { getPostMeta, getMetaPath, listAllSlugs } from '../../lib/posts.js';
+import { getPostMeta, getMetaPath } from '../../lib/posts.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { refreshStaleYears } from './lib/refresh-stale-years.js';
@@ -197,10 +197,12 @@ async function runRefreshStaleYears({ apply }) {
           await updateArticle(blog.id, article.id, fields);
           record.applied = true;
 
-          // Sync local meta.json so the editor agent sees the refreshed state
-          syncLocalMeta(article.handle, { title: record.titleAfter });
+          let localMetaWritten = false;
+          if (titleResult.changed) {
+            localMetaWritten = syncLocalMeta(article.handle, { title: record.titleAfter });
+          }
 
-          console.log(`    ✓ Updated on Shopify${titleResult.changed ? ' (+ local meta)' : ''}`);
+          console.log(`    ✓ Updated on Shopify${localMetaWritten ? ' (+ local meta)' : ''}`);
         } catch (e) {
           console.error(`    ✗ Shopify update failed: ${e.message}`);
         }
@@ -257,13 +259,15 @@ async function runRefreshStaleYears({ apply }) {
 function syncLocalMeta(handle, updates) {
   try {
     const metaPath = getMetaPath(handle);
-    if (!existsSync(metaPath)) return;
+    if (!existsSync(metaPath)) return false;
     const meta = getPostMeta(handle);
-    if (!meta) return;
+    if (!meta) return false;
     const updated = { ...meta, ...updates };
     writeFileSync(metaPath, JSON.stringify(updated, null, 2));
+    return true;
   } catch (e) {
     console.warn(`    Warning: could not sync local meta for ${handle}: ${e.message}`);
+    return false;
   }
 }
 
