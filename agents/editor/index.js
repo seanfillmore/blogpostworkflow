@@ -39,6 +39,7 @@ import { withRetry } from '../../lib/retry.js';
 import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, ROOT } from '../../lib/posts.js';
 import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
+import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -557,6 +558,16 @@ URL VERIFICATION POLICY (critical, overrides any standing feedback):
 - The ONLY URL-related blockers you may raise are ones listed in the LINK HEALTH PRE-CHECK's broken link list.
 - Verifying the presence of an href attribute in the HTML is not your job — trust the pre-check.
 
+FAQ COMPETITOR CHECK POLICY (critical, overrides any standing feedback):
+- The COMPETITOR NAMES IN FAQ section (#8) verdict is generated deterministically by code that scans the actual post content. You MUST NOT add your own competitor-name blockers in any OTHER section based on what you think might be in the FAQ.
+- If a pre-review auto-fix ran and rewrote Q&As to remove competitor names, the post content you see above IS the rewritten version. The competitor names are gone. Do NOT cite them as still present.
+- Do NOT claim "Dr. Squatch", "Dr. Bronner's", or any other brand "appears in the FAQ" unless you can see it in the POST CONTENT below. Pattern-matching on post topic is not evidence.
+
+YEAR ACCURACY — STRICT SCOPE:
+- Only flag stale years you can SEE in the visible POST CONTENT below (body text, headings, link anchor text).
+- Do NOT flag years from JSON-LD schemas, href paths, id attributes, or any other technical identifier — those are permanent.
+- If a date like "2025" appears ONLY in a slug path, ignore it.
+
 Format each section as:
 ## [Dimension]
 VERDICT: [word/phrase]
@@ -972,7 +983,27 @@ async function runEditor(htmlPath) {
       if (parentPublishDateForFix && new Date(r.check.linked_publish_at) > parentPublishDateForFix) return true;
       return false;
     });
-  const fixedHtml = applyPreReviewAutoFixes(htmlPath, workingHtml, { linksToRemove });
+  let fixedHtml = applyPreReviewAutoFixes(htmlPath, workingHtml, { linksToRemove });
+
+  // 1c. Pre-review FAQ competitor-name auto-fix. Delegate to faq-rewriter,
+  // which rewrites offending Q&As with Claude before the editor's review
+  // sees them. Matches the year-refresh pattern — the editor's downstream
+  // FAQ competitor check should now find nothing to flag.
+  const faqFixResult = await fixCompetitorsInFaqs(fixedHtml, meta?.target_keyword || meta?.title || '');
+  if (faqFixResult.html !== fixedHtml) {
+    const rewrittenCount = faqFixResult.changes.filter((c) => c.status === 'rewritten').length;
+    if (rewrittenCount > 0) {
+      // Back up once, then overwrite with FAQ-fixed HTML. applyPreReviewAutoFixes
+      // already did its own backup above if it changed anything.
+      writeFileSync(htmlPath, faqFixResult.html, 'utf8');
+      console.log(`\n  FAQ auto-fix rewrote ${rewrittenCount} Q&A(s) (removed competitor names):`);
+      for (const c of faqFixResult.changes.filter((c) => c.status === 'rewritten')) {
+        console.log(`    • ${c.q.slice(0, 70)}${c.q.length > 70 ? '…' : ''} (removed: ${c.removed.join(', ')})`);
+      }
+      fixedHtml = faqFixResult.html;
+    }
+  }
+
   if (fixedHtml !== workingHtml) {
     // Re-parse with corrected HTML so all downstream checks see clean state
     workingHtml = fixedHtml;
