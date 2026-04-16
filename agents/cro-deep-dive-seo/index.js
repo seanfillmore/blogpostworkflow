@@ -15,6 +15,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
+import { getSearchVolume, getSerpResults } from '../../lib/dataforseo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -47,25 +48,8 @@ function loadEnv() {
 const env = loadEnv();
 const apiKey = process.env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY;
 if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY in .env');
-const ahrefsKey = env.AHREFS_API_KEY;
 
 const client = new Anthropic({ apiKey });
-
-// ── Ahrefs REST API ───────────────────────────────────────────────────────────
-const AHREFS_BASE = 'https://api.ahrefs.com/v3';
-
-async function ahrefs(endpoint, params) {
-  if (!ahrefsKey) return null;
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${AHREFS_BASE}${endpoint}?${qs}`, {
-    headers: { Authorization: `Bearer ${ahrefsKey}` },
-  });
-  if (!res.ok) {
-    console.warn(`  Ahrefs ${endpoint} → HTTP ${res.status} (skipping)`);
-    return null;
-  }
-  return res.json();
-}
 
 // ── Shopify fetch ─────────────────────────────────────────────────────────────
 async function fetchArticle(handle) {
@@ -137,24 +121,23 @@ async function main() {
     console.warn('  GSC unavailable:', e.message);
   }
 
-  // Ahrefs keyword overview + SERP for top query
-  let kwOverview = null;
-  let serpData   = null;
+  // DataForSEO keyword volume + SERP for top query
+  let kwVolume = null;
+  let serpData = null;
   const topQuery = gscKeywords[0]?.keyword;
-  if (topQuery && ahrefsKey) {
-    console.log(`  Fetching Ahrefs data for top query: "${topQuery}"...`);
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const todayStr = new Date().toISOString().split('T')[0];
-    kwOverview = await ahrefs('/keywords-explorer/overview', {
-      keywords: topQuery,
-      country: 'us',
-      date_from: thirtyDaysAgo,
-      date_to: todayStr,
-    });
-    serpData = await ahrefs('/serp-overview', {
-      keyword: topQuery,
-      country: 'us',
-    });
+  if (topQuery) {
+    console.log(`  Fetching DataForSEO data for top query: "${topQuery}"...`);
+    try {
+      const [vol] = await getSearchVolume([topQuery]);
+      if (vol) kwVolume = { volume: vol.volume, cpc: vol.cpc, competition: vol.competition };
+    } catch (e) {
+      console.warn(`  DataForSEO volume lookup failed: ${e.message}`);
+    }
+    try {
+      serpData = await getSerpResults(topQuery, 10);
+    } catch (e) {
+      console.warn(`  DataForSEO SERP lookup failed: ${e.message}`);
+    }
   }
 
   // Build findings summary
@@ -180,19 +163,18 @@ async function main() {
     });
   }
 
-  lines.push('', '--- Ahrefs Keyword Data ---');
+  lines.push('', '--- DataForSEO Keyword Data ---');
   if (!topQuery) {
-    lines.push('No top query found — no Ahrefs data.');
-  } else if (kwOverview) {
-    const kd  = kwOverview.keywords?.[0]?.difficulty ?? 'N/A';
-    const vol = kwOverview.keywords?.[0]?.volume ?? 'N/A';
-    lines.push(`Top query: "${topQuery}" — KD ${kd}, ${vol} monthly searches`);
+    lines.push('No top query found — no keyword data.');
+  } else if (kwVolume) {
+    const cpc = kwVolume.cpc != null ? `, $${kwVolume.cpc.toFixed(2)} CPC` : '';
+    lines.push(`Top query: "${topQuery}" — ${kwVolume.volume ?? 'N/A'} monthly searches${cpc}`);
   } else {
-    lines.push(`Ahrefs unavailable or no data for "${topQuery}"`);
+    lines.push(`DataForSEO unavailable or no data for "${topQuery}"`);
   }
 
-  if (serpData?.positions) {
-    const top5 = serpData.positions.slice(0, 5);
+  if (serpData?.organic?.length) {
+    const top5 = serpData.organic.slice(0, 5);
     lines.push(`SERP top 5 for "${topQuery}":`);
     top5.forEach((p, i) => {
       const isSite = p.url?.includes('realskincare.com');
