@@ -159,6 +159,9 @@ runStep('submit-indexing', `"${NODE}" agents/technical-seo/index.js fix-submit-i
 // Step 5f: rebuild legacy / editor-tagged posts — max 5 per day, daily until backlog clears
 runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 5 --apply${dryFlag}`);
 
+// Step 5g: refresh stale year references in titles + meta descriptions (idempotent)
+runStep('meta-optimizer --refresh-stale-years', `"${NODE}" agents/meta-optimizer/index.js --refresh-stale-years${dryFlag ? '' : ' --apply'}`);
+
 // Step 5e: auto-refresh posts stuck in "crawled_not_indexed" for 45+ days
 if (!dryFlag) {
   const { listAllSlugs, getPostMeta } = await import('./lib/posts.js');
