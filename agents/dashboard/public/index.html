@@ -42,11 +42,11 @@
 
 <div class="tab-actions-bar">
   <div class="tab-actions-group" id="tab-actions-seo">
-    <button onclick="runAgent('agents/rank-tracker/index.js')" data-tip="Pull latest keyword positions from Ahrefs and update rankings">Run Rank Tracker</button>
+    <button onclick="runAgent('agents/rank-tracker/index.js')" data-tip="Pull latest keyword positions from DataForSEO and update rankings">Run Rank Tracker</button>
     <button onclick="runAgent('agents/content-gap/index.js')" data-tip="Find topics competitors rank for that this site doesn't cover">Run Content Gap</button>
     <button onclick="runAgent('agents/gsc-query-miner/index.js')" data-tip="Surface high-impression GSC queries with low CTR to optimise">Run GSC Query Miner</button>
     <button onclick="runAgent('agents/sitemap-indexer/index.js')" data-tip="Re-index the sitemap so all agents have the latest page list">Refresh Sitemap</button>
-    <button onclick="runAgent('agents/insight-aggregator/index.js')" data-tip="Aggregate Ahrefs + GSC signals into a prioritised insight report">Run Insight Aggregator</button>
+    <button onclick="runAgent('agents/insight-aggregator/index.js')" data-tip="Aggregate DataForSEO + GSC signals into a prioritised insight report">Run Insight Aggregator</button>
     <button id="btn-chat-seo" class="btn-open-chat" onclick="toggleTabChat('seo')" data-tip="Ask Claude about the SEO data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-cro" style="display:none">
@@ -57,7 +57,7 @@
     <button id="btn-chat-cro" class="btn-open-chat" onclick="toggleTabChat('cro')" data-tip="Ask Claude about the CRO data on this tab">&#x2736; Chat</button>
   </div>
   <div class="tab-actions-group" id="tab-actions-ads" style="display:none">
-    <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + Ahrefs and generate optimization suggestions">Run Ads Optimizer</button>
+    <button onclick="runAgent('agents/ads-optimizer/index.js')" data-tip="Analyze Ads + GSC + GA4 + DataForSEO and generate optimization suggestions">Run Ads Optimizer</button>
     <button onclick="applyAdsChanges()" data-tip="Execute all approved suggestions via the Google Ads Mutate API">Apply Approved</button>
     <button onclick="runAgent('agents/campaign-monitor/index.js', [], loadCampaignCards)" data-tip="Fetch latest Google Ads performance data and update active campaign metrics">Run Campaign Monitor</button>
     <button onclick="runAgent('scripts/ads-weekly-recap.js')" data-tip="Send the weekly recap email now (normally runs automatically Sunday morning)">Send Weekly Recap</button>
@@ -78,15 +78,6 @@
 
 <main style="display:flex;align-items:start">
 <div id="tab-seo" class="tab-panel active">
-  <!-- Data Needed alert (hidden when empty) -->
-  <div class="card alert-card" id="data-needed-card" style="display:none">
-    <div class="card-header">
-      <h2>⚠ Ahrefs Data Needed <span class="alert-badge" id="data-needed-count">0</span></h2>
-      <span class="section-note">Upload these CSV exports before the research agent can run</span>
-    </div>
-    <div class="card-body" id="data-needed-body" style="max-height:320px;overflow-y:auto"></div>
-  </div>
-
   <!-- Rank alert banner -->
   <div id="rank-alert-banner" style="display:none"></div>
 
@@ -99,7 +90,7 @@
 
   <!-- Rankings -->
   <div class="card">
-    <div class="card-header"><h2>Keyword Rankings</h2><div class="card-header-right"><span class="section-note" id="rank-note"></span><button id="rank-upload-btn" class="upload-btn" onclick="uploadRankSnapshot()" data-tip="Upload an Ahrefs keyword tracker CSV export">&#8593; Upload CSV</button></div></div>
+    <div class="card-header"><h2>Keyword Rankings</h2><div class="card-header-right"><span class="section-note" id="rank-note"></span><button id="rank-upload-btn" class="upload-btn" onclick="uploadRankSnapshot()" data-tip="Upload a keyword tracker CSV to refresh positions">&#8593; Upload CSV</button></div></div>
     <div class="card-body table-wrap"><div id="rankings-table"></div></div>
   </div>
 
@@ -116,7 +107,7 @@
 
   <!-- Content Gap Data -->
   <div class="card" id="content-gap-card">
-    <div class="card-header accent-indigo"><h2>Content Gap Data</h2><div class="card-header-right"><span class="section-note">Ahrefs content gap CSV export</span><button id="content-gap-upload-btn" class="upload-btn" onclick="uploadContentGapZip()">&#8593; Upload Zip</button><button id="content-gap-run-btn" class="upload-btn" onclick="runGapAnalysis()">Run Gap Analysis</button></div></div>
+    <div class="card-header accent-indigo"><h2>Content Gap Data</h2><div class="card-header-right"><span class="section-note">Ranked-keyword gap analysis</span><button id="content-gap-run-btn" class="upload-btn" onclick="runGapAnalysis()">Run Gap Analysis</button></div></div>
     <div class="card-body" id="content-gap-files"><p class="empty-state">Loading...</p></div>
   </div>
 
@@ -356,23 +347,6 @@
 </main>
 
 <script src="/js/dashboard.js"></script>
-<!-- Ahrefs overview modal -->
-<div id="ahrefs-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center" onclick="closeAhrefsModal(event)">
-  <div style="background:#fff;border-radius:12px;width:340px;position:relative;padding:28px 28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
-    <button onclick="closeAhrefsModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#9ca3af;padding:4px 8px">&times;</button>
-    <div style="font-size:13px;font-weight:700;color:#312e81;margin-bottom:18px">Update SEO Authority</div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <label style="font-size:12px;color:#374151;font-weight:500">Domain Rating<input id="ahrefs-dr" type="number" placeholder="e.g. 19" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
-      <label style="font-size:12px;color:#374151;font-weight:500">Backlinks<input id="ahrefs-backlinks" type="number" placeholder="e.g. 329" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
-      <label style="font-size:12px;color:#374151;font-weight:500">Referring Domains<input id="ahrefs-refdomains" type="number" placeholder="e.g. 251" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
-      <label style="font-size:12px;color:#374151;font-weight:500">Organic Traffic Value (USD)<input id="ahrefs-value" type="number" placeholder="e.g. 89" style="display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit"></label>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
-      <button onclick="closeAhrefsModal()" style="padding:7px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Cancel</button>
-      <button id="ahrefs-save-btn" onclick="saveAhrefsOverview()" style="padding:7px 16px;border:none;border-radius:6px;background:#6366f1;color:white;cursor:pointer;font-size:13px;font-weight:600">Save</button>
-    </div>
-  </div>
-</div>
 
 <!-- keyword detail modal -->
 <div id="kw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center">

@@ -199,8 +199,8 @@ function renderTechnicalSeoTab(d) {
   // Upload zone
   html += '<div style="flex:1;border:2px dashed #d1d5db;border-radius:8px;padding:20px;text-align:center;background:#f9fafb;cursor:pointer" onclick="uploadTechSeoZip()">';
   html += '<div style="font-size:24px;margin-bottom:4px">&#128230;</div>';
-  html += '<div style="font-weight:600;font-size:14px">Upload Ahrefs Site Audit ZIP</div>';
-  html += '<div style="font-size:12px;color:#6b7280;margin-top:4px">Export from Ahrefs &rarr; Site Audit &rarr; All Issues &rarr; Export</div>';
+  html += '<div style="font-weight:600;font-size:14px">Upload Site Audit ZIP</div>';
+  html += '<div style="font-size:12px;color:#6b7280;margin-top:4px">Site-audit CSV export (issues + affected URLs)</div>';
   html += '<button class="btn-primary" style="margin-top:8px" onclick="event.stopPropagation();uploadTechSeoZip()">&#8593; Upload ZIP</button>';
   html += '</div>';
 
@@ -1695,47 +1695,6 @@ function renderPosts(d) {
     '<table><thead><tr>' +
     '<th>Title</th><th>Keyword</th><th>Status</th><th>Date</th><th>Editor</th><th>Links</th><th>Image</th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table>' + pagination;
-}
-
-function renderDataNeeded(d) {
-  const items = d.pendingAhrefsData || [];
-  const card  = document.getElementById('data-needed-card');
-  const body  = document.getElementById('data-needed-body');
-  const count = document.getElementById('data-needed-count');
-
-  if (!items.length) {
-    card.style.display = 'none';
-    return;
-  }
-
-  card.style.display = '';
-  count.textContent = items.length;
-
-  body.innerHTML = items.map(item => {
-    const fileChecks = [
-      { label: 'SERP',  present: item.hasSerp },
-      { label: 'Terms', present: item.hasKeywords },
-      { label: 'Vol',   present: item.hasHistory },
-    ];
-    const fileTags = fileChecks.map(f =>
-      '<span class="file-tag ' + (f.present ? 'file-tag-present' : 'file-tag-missing') + '">' +
-      (f.present ? '✓ ' : '✗ ') + f.label + '</span>'
-    ).join('');
-
-    var clusterNote = item.clusterInfo
-      ? '<div style="font-size:0.72rem;color:#059669">\u2713 ' + esc(item.clusterInfo.name) + ' cluster (' + item.clusterInfo.terms + ' terms) \u2014 needs niche data</div>'
-      : '';
-
-    return '<div style="border-bottom:1px solid var(--border);padding:8px 2px;display:flex;align-items:center;gap:0.5rem">' +
-        '<div style="flex:1">' +
-          '<div style="font-weight:500;font-size:0.85rem">' + esc(item.keyword) + '</div>' +
-          clusterNote +
-        '</div>' +
-        '<div style="display:flex;gap:3px;margin-right:0.5rem">' + fileTags + '</div>' +
-        '<span style="font-size:0.75rem;color:var(--muted);white-space:nowrap">' + fmtDate(item.publishDate) + '</span>' +
-        '<button id="kw-zip-btn-' + esc(item.slug) + '" class="upload-btn" onclick="uploadKeywordZip(' + JSON.stringify(item.slug).replace(/"/g, '&quot;') + ',' + JSON.stringify(item.keyword).replace(/"/g, '&quot;') + ')">&#8593; Upload</button>' +
-    '</div>';
-  }).join('');
 }
 
 let croFilter = 'today';
@@ -3946,7 +3905,6 @@ async function loadData() {
     // Render hero KPIs
     renderHeroKpis(data);
     document.getElementById('updated-at').textContent = new Date(data.generatedAt).toLocaleTimeString();
-    renderDataNeeded(data);
     renderKanban(data);
     renderRankings(data);
     renderPosts(data);
@@ -3956,7 +3914,7 @@ async function loadData() {
     renderAdsTab(data);
     loadCampaignCards();
     renderActiveTests(data);
-    renderSEOAuthorityPanel(data.ahrefsData);
+    renderSEOAuthorityPanel(data.seoAuthority);
     renderRankAlertBanner(data.rankAlert);
     if (activeTab === 'optimize') renderOptimizeTab(data);
   } catch(e) {
@@ -4479,10 +4437,10 @@ function promptAndRun(script, argLabel) {
   if (val) runAgent(script, [val]);
 }
 
-function renderSEOAuthorityPanel(ahrefs) {
+function renderSEOAuthorityPanel(authority) {
   const el = document.getElementById('seo-authority-panel');
   if (!el) return;
-  if (!ahrefs) {
+  if (!authority) {
     // Auto-fetch from DataForSEO
     if (!window._authorityRefreshing) {
       window._authorityRefreshing = true;
@@ -4491,7 +4449,7 @@ function renderSEOAuthorityPanel(ahrefs) {
         .then(function(d) { window._authorityRefreshing = false; if (d.ok) loadData(); })
         .catch(function() { window._authorityRefreshing = false; });
     }
-    el.innerHTML = '<div class="data-needed">Loading SEO authority data...</div>';
+    el.innerHTML = '<div class="empty-state">Loading SEO authority data...</div>';
     return;
   }
   const fmt    = v => (v != null && v !== '' && !isNaN(Number(v))) ? Number(v).toLocaleString() : '\u2014';
@@ -4499,82 +4457,11 @@ function renderSEOAuthorityPanel(ahrefs) {
   const fmtVal = v => (v != null && v !== '' && !isNaN(Number(v))) ? '$' + (Number(v) / 100).toLocaleString() : '\u2014';
   el.innerHTML =
     '<div class="authority-row">' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmtDr(ahrefs.domainRating) + '</div><div class="authority-stat-label">Domain Rating</div></div>' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.backlinks) + '</div><div class="authority-stat-label">Backlinks</div></div>' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(ahrefs.referringDomains) + '</div><div class="authority-stat-label">Referring Domains</div></div>' +
-    '<div class="authority-stat"><div class="authority-stat-value">' + fmtVal(ahrefs.organicTrafficValue) + '</div><div class="authority-stat-label">Organic Traffic Value</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmtDr(authority.domainRating) + '</div><div class="authority-stat-label">Domain Rating</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(authority.backlinks) + '</div><div class="authority-stat-label">Backlinks</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmt(authority.referringDomains) + '</div><div class="authority-stat-label">Referring Domains</div></div>' +
+    '<div class="authority-stat"><div class="authority-stat-value">' + fmtVal(authority.organicTrafficValue) + '</div><div class="authority-stat-label">Organic Traffic Value</div></div>' +
     '</div>';
-}
-
-function openAhrefsModal() {
-  const ov = document.getElementById('ahrefs-modal-overlay');
-  if (!ov) return;
-  ov.style.display = 'flex';
-  try { document.getElementById('ahrefs-dr').focus(); } catch(e) {}
-}
-
-function closeAhrefsModal(e) {
-  if (e && e.target !== document.getElementById('ahrefs-modal-overlay')) return;
-  document.getElementById('ahrefs-modal-overlay').style.display = 'none';
-}
-
-async function saveAhrefsOverview() {
-  const btn = document.getElementById('ahrefs-save-btn');
-  const dr = document.getElementById('ahrefs-dr').value.trim();
-  const backlinks = document.getElementById('ahrefs-backlinks').value.trim();
-  const refdomains = document.getElementById('ahrefs-refdomains').value.trim();
-  const value = document.getElementById('ahrefs-value').value.trim();
-  if (!dr && !backlinks && !refdomains && !value) return;
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
-  try {
-    const res = await fetch('/api/ahrefs-overview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domainRating: dr, backlinks, referringDomains: refdomains, trafficValue: value }),
-    });
-    const json = await res.json();
-    if (json.ok) {
-      document.getElementById('ahrefs-modal-overlay').style.display = 'none';
-      loadData();
-    }
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
-  }
-}
-
-function uploadKeywordZip(slug, keyword) {
-  var input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.zip';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  input.onchange = function() {
-    document.body.removeChild(input);
-    var file = input.files[0];
-    if (!file) return;
-    var btn = document.getElementById('kw-zip-btn-' + slug);
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
-    fetch('/upload/ahrefs-keyword-zip', {
-      method: 'POST',
-      headers: { 'X-Slug': slug, 'Content-Type': 'application/octet-stream' },
-      body: file
-    }).then(function(r) { return r.json(); }).then(function(json) {
-      if (!json.ok) {
-        if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
-        alert('Upload failed: ' + json.error);
-        return;
-      }
-      loadData(); // remove row from data-needed immediately
-      if (btn) btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>';
-      runAgent('agents/content-researcher/index.js', [keyword], function() {
-        if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Brief created'; }
-        loadData();
-      });
-    }).catch(function() {
-      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload Zip'; }
-    });
-  };
-  input.click();
 }
 
 function uploadContentGapZip() {

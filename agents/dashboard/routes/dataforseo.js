@@ -1,15 +1,14 @@
 // agents/dashboard/routes/dataforseo.js
 //
-// Dashboard routes backed by DataForSEO. For historical compatibility the
-// /api/seo-authority/refresh and /api/ahrefs-overview endpoints still write
-// CSVs into AHREFS_DIR — the dashboard data-loader still reads from that path.
-// Dropping the CSV cache entirely is tracked as a follow-up.
+// DataForSEO-backed routes for the dashboard. The authority panel is
+// refreshed on demand via /api/seo-authority/refresh and cached as JSON
+// at data/reports/seo-authority/latest.json.
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getBacklinksSummary, getRankedKeywords } from '../../../lib/dataforseo.js';
 
 export default [
-  // Auto-fetch SEO authority data from DataForSEO
+  // Fetch SEO authority data from DataForSEO and cache as JSON.
   {
     method: 'POST',
     match: '/api/seo-authority/refresh',
@@ -21,23 +20,22 @@ export default [
         // Fetch backlinks (may return null if subscription not active)
         const backlinks = await getBacklinksSummary(domain);
 
-        // Estimate traffic value from ranked keywords
+        // Estimate traffic value (USD cents) from ranked keywords
         const keywords = await getRankedKeywords(domain, { limit: 200 });
-        const trafficValue = Math.round(keywords.reduce((sum, kw) => sum + (kw.traffic * (kw.cpc || 0)), 0) * 100);
+        const trafficValueCents = Math.round(
+          keywords.reduce((sum, kw) => sum + (kw.traffic * (kw.cpc || 0)), 0) * 100
+        );
 
         const data = {
-          domainRating: backlinks?.rank ?? '',
-          backlinks: backlinks?.backlinks ?? '',
-          referringDomains: backlinks?.referringDomains ?? '',
-          organicTrafficValue: trafficValue,
+          domainRating: backlinks?.rank ?? null,
+          backlinks: backlinks?.backlinks ?? null,
+          referringDomains: backlinks?.referringDomains ?? null,
+          organicTrafficValue: trafficValueCents,
+          refreshedAt: new Date().toISOString(),
         };
 
-        // Save as CSV in the same format the existing loader reads
-        const csv = 'Domain Rating,Backlinks,Referring Domains,Organic Traffic Value\n' +
-          [data.domainRating, data.backlinks, data.referringDomains, data.organicTrafficValue].join(',') + '\n';
-        const date = new Date().toISOString().slice(0, 10);
-        mkdirSync(ctx.AHREFS_DIR, { recursive: true });
-        writeFileSync(join(ctx.AHREFS_DIR, `overview-${date}.csv`), csv);
+        mkdirSync(ctx.SEO_AUTHORITY_DIR, { recursive: true });
+        writeFileSync(join(ctx.SEO_AUTHORITY_DIR, 'latest.json'), JSON.stringify(data, null, 2));
         ctx.invalidateDataCache();
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -46,33 +44,6 @@ export default [
         res.writeHead(502, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: false, error: err.message }));
       }
-    },
-  },
-  // Legacy manual save (kept for backward compat)
-  {
-    method: 'POST',
-    match: '/api/ahrefs-overview',
-    handler(req, res, ctx) {
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let payload;
-        try { payload = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
-          return;
-        }
-        const { domainRating, backlinks, referringDomains, trafficValue } = payload;
-        const csv = 'Domain Rating,Backlinks,Referring Domains,Organic Traffic Value\n' +
-          [domainRating || '', backlinks || '', referringDomains || '', trafficValue || ''].join(',') + '\n';
-        const date = new Date().toISOString().slice(0, 10);
-        const filename = `overview-${date}.csv`;
-        mkdirSync(ctx.AHREFS_DIR, { recursive: true });
-        writeFileSync(join(ctx.AHREFS_DIR, filename), csv);
-        ctx.invalidateDataCache();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, filename }));
-      });
     },
   },
   {
