@@ -1114,6 +1114,34 @@ async function runEditor(htmlPath) {
     if (ctaResult.issues.length > 0) reasons.push(`${ctaResult.issues.length} CTA/format issue(s)`);
     if (needsReview > 0) reasons.push(`${needsReview} source claim(s) to review`);
 
+    // Parse the LLM editorial review for content blockers that the
+    // deterministic signals don't capture (factual concerns, competitor
+    // names in FAQ, ingredient accuracy gaps, etc.).
+    const overallBlocker = /##\s*\d?\.?\s*OVERALL QUALITY[\s\S]*?VERDICT[:*\s]+([^\n]+)/i.exec(review);
+    const overallNeedsWork = overallBlocker && /needs work/i.test(overallBlocker[1]);
+    if (overallNeedsWork) {
+      const contentSections = [
+        { name: 'factual concerns', pattern: /##\s*\d?\.?\s*FACTUAL CONCERNS[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
+        { name: 'ingredient accuracy', pattern: /##\s*\d?\.?\s*INGREDIENT ACCURACY[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
+        { name: 'competitor names in FAQ', pattern: /##\s*\d?\.?\s*COMPETITOR NAMES IN FAQ[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
+        { name: 'topical relevance', pattern: /##\s*\d?\.?\s*TOPICAL RELEVANCE[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
+        { name: 'brand voice', pattern: /##\s*\d?\.?\s*BRAND VOICE[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
+      ];
+      const llmBlockers = [];
+      for (const s of contentSections) {
+        const m = s.pattern.exec(review);
+        if (m && /(blocker|needs work|fail)/i.test(m[1])) {
+          llmBlockers.push(s.name);
+        }
+      }
+      if (llmBlockers.length > 0) {
+        reasons.push(`content blockers: ${llmBlockers.join(', ')}`);
+      } else if (reasons.length === 0) {
+        // Overall verdict is Needs Work but no specific section flagged — still a signal
+        reasons.push('overall quality: needs work');
+      }
+    }
+
     if (reasons.length > 0) {
       const updatedMeta = {
         ...meta,
