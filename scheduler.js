@@ -63,10 +63,7 @@ log('Content Scheduler starting');
 // Defer all notifications from this process and any child processes to the daily summary
 process.env.NOTIFY_DEFERRED = '1';
 
-// Step -1: rebuild keyword index (used by researcher and other agents)
 const NODE = process.execPath; // full path to the running node binary
-
-runStep('keyword-index', `"${NODE}" lib/keyword-index.js --rebuild`);
 
 // Step 0: daily review monitor
 runStep('review-monitor', `"${NODE}" agents/review-monitor/index.js`);
