@@ -26,7 +26,6 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { loadKeywordIndex, analyzeGaps } from '../../lib/keyword-index.js';
 import { listAllSlugs, getPostMeta, getContentPath, POSTS_DIR } from '../../lib/posts.js';
 import {
   fetchSerpData,
@@ -452,25 +451,14 @@ async function researchKeyword(keyword, kwData = {}) {
 
   console.log(`\n  Keyword: "${keyword}"`);
 
-  // Load keyword index for cluster-wide intelligence (supplementary context)
-  const index = loadKeywordIndex();
-  const gaps = analyzeGaps(slug, index);
-  const clusterName = index.keywords[slug]?.cluster;
-  const cluster = clusterName ? index.clusters[clusterName] : null;
-
   // Fetch SERP live from DataForSEO
   process.stdout.write('  Fetching SERP from DataForSEO... ');
   const serpResults = await fetchSerpData(keyword, { limit: 10 });
   console.log(`${serpResults.length} results`);
 
-  // Fetch related keywords live, fall back to cluster data then Claude if empty
+  // Fetch related keywords live, fall back to Claude if empty
   process.stdout.write('  Fetching related keywords from DataForSEO... ');
   let relatedKeywords = await fetchRelatedKeywords(keyword);
-  if (relatedKeywords.length < 20 && cluster?.all_matching_terms?.length > 0) {
-    const existing = new Set(relatedKeywords.map((k) => k.keyword));
-    const extras = cluster.all_matching_terms.filter((k) => !existing.has(k.keyword));
-    relatedKeywords = [...relatedKeywords, ...extras];
-  }
   if (relatedKeywords.length === 0) {
     process.stdout.write('(using Claude fallback) ');
     relatedKeywords = await getRelatedKeywordsFallback(keyword);
@@ -521,13 +509,7 @@ async function researchKeyword(keyword, kwData = {}) {
   const brief = await generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, volumeHistory, gscData);
   console.log('done');
 
-  brief.data_sources = {
-    provider: 'dataforseo',
-    cluster: clusterName || null,
-    cluster_terms: cluster?.all_matching_terms?.length || 0,
-    niche_terms: gaps.niche_terms || 0,
-    gaps: gaps.missing || [],
-  };
+  brief.data_sources = { provider: 'dataforseo' };
 
   mkdirSync(BRIEFS_DIR, { recursive: true });
   writeFileSync(outputPath, JSON.stringify(brief, null, 2));

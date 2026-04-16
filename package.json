@@ -54,7 +54,6 @@
     "theme-audit": "node agents/theme-seo-auditor/index.js",
     "pages-gsc": "node agents/product-optimizer/index.js --pages-from-gsc",
     "expand-faq": "node agents/product-optimizer/index.js --expand-faq",
-    "keyword-index": "node lib/keyword-index.js --rebuild",
     "author-page": "node scripts/create-author-page.js",
     "shopify-auth": "node scripts/shopify-auth.js",
     "gsc-auth": "node scripts/gsc-auth.js",
