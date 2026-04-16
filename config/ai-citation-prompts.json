@@ -19,7 +19,13 @@
     { "name": "Little Seed Farm", "domain": "littleseedfarm.com", "aliases": ["little seed farm"] },
     { "name": "Dr. Ginger's", "domain": "drgingers.com", "aliases": ["dr. ginger's", "dr gingers"] },
     { "name": "Dr. Bronner's", "domain": "drbronner.com", "aliases": ["dr. bronner", "dr bronner"] },
-    { "name": "Ethique", "domain": "ethique.com", "aliases": ["ethique"] }
+    { "name": "Ethique", "domain": "ethique.com", "aliases": ["ethique"] },
+    { "name": "Dr. Squatch", "domain": "drsquatch.com", "aliases": ["dr. squatch", "dr squatch", "drsquatch"] },
+    { "name": "Duke Cannon", "domain": "dukecannon.com", "aliases": ["duke cannon"] },
+    { "name": "Old Spice", "domain": "oldspice.com", "aliases": ["old spice"] },
+    { "name": "Redmond", "domain": "redmond.life", "aliases": ["redmond earthpaste", "redmond"] },
+    { "name": "Risewell", "domain": "risewell.com", "aliases": ["risewell"] },
+    { "name": "Jack N' Jill", "domain": "jackandjillkids.com", "aliases": ["jack n' jill", "jack and jill"] }
   ],
   "prompts": [
     "best natural deodorant",
