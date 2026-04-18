@@ -359,11 +359,12 @@ async function runItem(item) {
   // Resolve actual slug on disk after writing (writer may use brief's slug)
   const postSlug = getPostSlugOnDisk(item.keyword) || item.slug;
 
-  // Step 3: Image
-  if (!existsSync(join(ROOT, 'data', 'images', `${postSlug}.webp`)) &&
+  // Step 3: Image — check both legacy (data/images/) and current (data/posts/<slug>/) paths
+  if (!existsSync(join(ROOT, 'data', 'posts', postSlug, 'image.webp')) &&
+      !existsSync(join(ROOT, 'data', 'images', `${postSlug}.webp`)) &&
       !existsSync(join(ROOT, 'data', 'images', `${postSlug}.png`))) {
     const ok = run(
-      `node agents/image-generator/index.js data/posts/${postSlug}.json`,
+      `node agents/image-generator/index.js data/posts/${postSlug}/meta.json`,
       `image: ${postSlug}`
     );
     if (!ok) return false;
@@ -379,7 +380,7 @@ async function runItem(item) {
   const editorReport = getEditorReportPath(postSlug);
   if (!existsSync(editorReport)) {
     const ok = run(
-      `node agents/editor/index.js data/posts/${postSlug}.html`,
+      `node agents/editor/index.js data/posts/${postSlug}/content.html`,
       `edit: ${postSlug}`
     );
     if (!ok) return false;
@@ -411,7 +412,7 @@ async function runItem(item) {
 
     // Re-run editor after repair to refresh the report
     run(
-      `node agents/editor/index.js data/posts/${postSlug}.html`,
+      `node agents/editor/index.js data/posts/${postSlug}/content.html`,
       `edit (re-check): ${postSlug}`
     );
 
@@ -438,7 +439,7 @@ async function runItem(item) {
 
   // Step 7: Publish + schedule
   const ok = run(
-    `node agents/publisher/index.js data/posts/${postSlug}.json --publish-at "${publishAt}"`,
+    `node agents/publisher/index.js data/posts/${postSlug}/meta.json --publish-at "${publishAt}"`,
     `publish: ${postSlug} → ${publishAt}`
   );
   if (!ok) return false;
