@@ -1052,6 +1052,38 @@ async function runEditor(htmlPath) {
     });
   let fixedHtml = applyPreReviewAutoFixes(htmlPath, workingHtml, { linksToRemove });
 
+  // 1b½. Fix stale year in article title + meta description. These live in
+  // meta.json (and Shopify), not body_html — the body-text auto-fix above
+  // doesn't reach them. Push the corrected title to Shopify so the live page
+  // and the editor's review both see the current year.
+  if (meta) {
+    const currentYear = new Date().getFullYear();
+    const bumpYear = (str) => (str || '').replace(/\b(20\d{2})\b/g, (m, yr) => {
+      const n = parseInt(yr, 10);
+      return n >= 2020 && n < currentYear ? String(currentYear) : m;
+    });
+    const newTitle = bumpYear(meta.title);
+    const newMetaDesc = bumpYear(meta.meta_description);
+    const titleChanged = newTitle !== (meta.title || '');
+    const metaChanged = newMetaDesc !== (meta.meta_description || '');
+    if (titleChanged || metaChanged) {
+      if (titleChanged) { meta.title = newTitle; console.log(`  Auto-fixed title year → "${newTitle}"`); }
+      if (metaChanged) { meta.meta_description = newMetaDesc; console.log(`  Auto-fixed meta description year`); }
+      writeFileSync(getMetaPath(slug), JSON.stringify(meta, null, 2));
+      if (meta.shopify_blog_id && meta.shopify_article_id) {
+        const update = {};
+        if (titleChanged) update.title = newTitle;
+        if (metaChanged) update.summary_html = `<p>${newMetaDesc}</p>`;
+        try {
+          await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, update);
+          console.log(`  Pushed corrected title/meta to Shopify`);
+        } catch (e) {
+          console.warn(`  ⚠ Failed to push title to Shopify: ${e.message}`);
+        }
+      }
+    }
+  }
+
   // 1c. Pre-review FAQ competitor-name auto-fix. Delegate to faq-rewriter,
   // which rewrites offending Q&As with Claude before the editor's review
   // sees them. Matches the year-refresh pattern — the editor's downstream
