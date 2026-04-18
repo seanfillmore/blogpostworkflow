@@ -254,6 +254,42 @@ function checkEditGate(slug) {
   return { pass: true };
 }
 
+function attemptRepair(slug, reason) {
+  const lower = (reason || '').toLowerCase();
+  const repairs = [];
+
+  if (lower.includes('competitor') || lower.includes('brand name') || lower.includes('brand guideline')) {
+    repairs.push({ label: 'faq-rewriter', cmd: `node agents/faq-rewriter/index.js --slug ${slug}` });
+  }
+  if (lower.includes('internal link') || lower.includes('orphan') || lower.includes('cross-link')) {
+    repairs.push({ label: 'internal-linker', cmd: `node agents/internal-linker/index.js --slug ${slug}` });
+  }
+  if (lower.includes('unsourced') || lower.includes('citation') || lower.includes('claim')) {
+    repairs.push({ label: 'content-refresher', cmd: `node agents/content-refresher/index.js --slug ${slug}` });
+  }
+  if (lower.includes('answer') || lower.includes('answer-first')) {
+    repairs.push({ label: 'answer-first-rewriter', cmd: `node agents/answer-first-rewriter/index.js ${slug}` });
+  }
+  if (lower.includes('broken link') || lower.includes('404')) {
+    repairs.push({ label: 'link-repair', cmd: `node agents/link-repair/index.js ${slug}` });
+  }
+  if (lower.includes('schema') || lower.includes('structured data')) {
+    repairs.push({ label: 'schema-injector', cmd: `node agents/schema-injector/index.js --slug ${slug}` });
+  }
+
+  if (repairs.length === 0) {
+    repairs.push({ label: 'link-repair', cmd: `node agents/link-repair/index.js ${slug}` });
+    repairs.push({ label: 'schema-injector', cmd: `node agents/schema-injector/index.js --slug ${slug}` });
+  }
+
+  console.log(`  🔧 Attempting ${repairs.length} repair(s): ${repairs.map((r) => r.label).join(', ')}`);
+  for (const { label, cmd } of repairs) {
+    run(cmd, `repair (${label}): ${slug}`);
+  }
+
+  run(`node agents/editor/index.js data/posts/${slug}/content.html`, `edit (re-check): ${slug}`);
+}
+
 function checkBrokenLinks(slug) {
   const reportPath = getEditorReportPath(slug);
   if (!existsSync(reportPath)) return { count404: 0 };
@@ -349,13 +385,19 @@ async function runItem(item) {
     if (!ok) return false;
   }
 
-  // Editorial gate
-  const gate = checkEditGate(postSlug);
+  // Editorial gate — attempt auto-repair if blocked
+  let gate = checkEditGate(postSlug);
   if (!gate.pass) {
-    console.log(`  ⛔ Editorial gate blocked publish: ${gate.reason}`);
-    console.log(`     Fix issues in data/posts/${postSlug}.html then re-run.`);
-    updateItemState(item.keyword, { blockedAt: new Date().toISOString(), blockReason: gate.reason });
-    return false;
+    console.log(`  ⚠️ Editorial gate blocked: ${gate.reason}`);
+    attemptRepair(postSlug, gate.reason);
+    gate = checkEditGate(postSlug);
+    if (!gate.pass) {
+      console.log(`  ⛔ Still blocked after repair: ${gate.reason}`);
+      console.log(`     Review data/posts/${postSlug}/editor-report.md and fix manually.`);
+      updateItemState(item.keyword, { blockedAt: new Date().toISOString(), blockReason: gate.reason });
+      return false;
+    }
+    console.log(`  ✓ Repair succeeded — editorial gate now passes.`);
   }
 
   // Broken-link gate — check for 404s in editor report; repair them if found
@@ -531,9 +573,7 @@ async function publishDueArticles() {
     const gate = checkEditGate(slug);
     if (!gate.pass) {
       console.log(`  ⚠️  "${meta.title}" has editorial issues — attempting auto-repair...`);
-      run(`node agents/link-repair/index.js ${slug}`, `link-repair: ${slug}`);
-      run(`node agents/schema-injector/index.js --slug ${slug}`, `schema: ${slug}`);
-      run(`node agents/editor/index.js data/posts/${slug}/content.html`, `edit (re-check): ${slug}`);
+      attemptRepair(slug, gate.reason);
 
       const recheck = checkEditGate(slug);
       if (!recheck.pass) {
