@@ -1167,15 +1167,16 @@ async function runEditor(htmlPath) {
   // 6. Extract FAQ Q&As for competitor check
   const faqQAs = extractFaqQAs($);
 
-  // 7. Build compressed editorial content (strips HTML tags)
-  const editorialContent = buildEditorialContent(html);
+  // 7. Build compressed editorial content from the auto-fixed HTML so the
+  // review + year-accuracy check see the corrected state, not the original.
+  const editorialContent = buildEditorialContent(workingHtml);
 
   // 7b. Verify that competitor products mentioned in the post actually
   // exist. The LLM factual-concerns check has a habit of claiming things
   // like "Dr. Bronner's doesn't make toothpaste" — this grounds it with
   // SERP-verified reality. Results are passed into the prompt so the LLM
   // cannot invent non-existence.
-  const brandMentions = extractBrandMentions(html);
+  const brandMentions = extractBrandMentions(workingHtml);
   let verifiedProducts = [];
   if (brandMentions.length > 0) {
     const keywordLower = (meta?.target_keyword || meta?.title || '').toLowerCase();
