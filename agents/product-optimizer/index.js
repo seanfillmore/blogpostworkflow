@@ -23,7 +23,9 @@
  *   node agents/product-optimizer/index.js --limit 10        # max pages to rewrite
  *   node agents/product-optimizer/index.js --from-gsc        # queue product meta rewrites from GSC signals
  *   node agents/product-optimizer/index.js --from-gsc --dry-run  # show candidates without queuing
- *   node agents/product-optimizer/index.js --publish-approved    # push approved meta to Shopify
+ *   node agents/product-optimizer/index.js --optimize-titles        # queue product title rewrites from GSC signals
+ *   node agents/product-optimizer/index.js --optimize-titles --dry-run  # show title candidates without queuing
+ *   node agents/product-optimizer/index.js --publish-approved    # push approved meta + titles to Shopify
  *   node agents/product-optimizer/index.js --pages-from-gsc     # queue static page meta rewrites from GSC signals
  *   node agents/product-optimizer/index.js --pages-from-gsc --dry-run  # show page candidates without queuing
  *   node agents/product-optimizer/index.js --expand-faq         # expand FAQ page with GSC question queries
@@ -91,6 +93,7 @@ const limit = parseInt(getArg('--limit') ?? '20', 10);
 const fromGsc = args.includes('--from-gsc');
 const pagesFromGsc = args.includes('--pages-from-gsc');
 const expandFaq = args.includes('--expand-faq');
+const optimizeTitles = args.includes('--optimize-titles');
 const publishApproved = args.includes('--publish-approved');
 const dryRun = args.includes('--dry-run');
 
@@ -364,6 +367,175 @@ No explanation, no markdown fences.`,
   const raw = message.content[0].text.trim()
     .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
   return JSON.parse(raw);
+}
+
+// ── product title rewriter (GSC-driven keyword enrichment) ──────────────────
+
+async function rewriteProductTitle(product, topQueries, gscData) {
+  const queriesFormatted = topQueries.slice(0, 8)
+    .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}`)
+    .join('\n');
+
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 512,
+    messages: [{
+      role: 'user',
+      content: `You are a product naming specialist for ${config.name} (${config.url}), a natural skincare and personal care brand.
+
+CURRENT PRODUCT TITLE: "${product.title}"
+PRODUCT HANDLE (URL slug — do NOT change): ${product.handle}
+
+GSC DATA (last 90 days for this product page):
+  Impressions: ${gscData.impressions}
+  Avg position: #${Math.round(gscData.position)}
+  CTR: ${(gscData.ctr * 100).toFixed(2)}%
+
+TOP SEARCH QUERIES (what people search to find this product):
+${queriesFormatted}
+
+Write an improved product title that:
+1. Includes the highest-volume relevant keyword naturally
+2. Stays concise — 50–70 characters max
+3. Reads as a real product name, not a keyword-stuffed SEO title
+4. Keeps the core product identity recognizable (don't rename it completely)
+5. Follows the pattern: [Descriptor] [Product Type] [Key Benefit or Variant]
+   Example: "Organic Coconut Body Lotion — Deep Moisture for Dry Skin"
+
+DO NOT:
+- Add the brand name (Shopify adds it in the <title> tag automatically)
+- Add pricing or promotional language
+- Make it longer than 70 characters
+
+Return ONLY a JSON object:
+{
+  "new_title": "...",
+  "what_changed": "1-sentence summary of what you changed",
+  "why": "1-sentence explanation of why this change should improve discoverability"
+}
+No explanation, no markdown fences.`,
+    }],
+  });
+
+  const raw = message.content[0].text.trim()
+    .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+  return JSON.parse(raw);
+}
+
+function selectTitleCandidates(products, gscMap, activeQueueSlugs) {
+  return products
+    .map((p) => {
+      const gscEntry = gscMap.get(p.url);
+      if (!gscEntry) return null;
+      if (gscEntry.impressions < 50) return null;
+      if (activeQueueSlugs.has(p.handle)) return null;
+      // Check if the top GSC keyword is already in the product title
+      const titleLower = p.title.toLowerCase();
+      const topKw = (gscEntry.keyword || '').toLowerCase();
+      const kwWords = topKw.split(/\s+/).filter((w) => w.length > 3);
+      const overlap = kwWords.filter((w) => titleLower.includes(w)).length;
+      // If most keyword words are already in the title, skip
+      if (kwWords.length > 0 && overlap >= kwWords.length * 0.7) return null;
+      return { ...p, gsc: gscEntry };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.gsc.impressions - a.gsc.impressions);
+}
+
+// ── optimize-titles mode ────────────────────────────────────────────────────
+
+async function optimizeTitlesMode() {
+  console.log(`\nProduct Optimizer — GSC-driven product title optimization`);
+  console.log(`Mode: ${dryRun ? 'DRY RUN (showing candidates only)' : 'QUEUE (writing to performance-queue)'}`);
+  console.log(`Limit: ${limit}\n`);
+
+  process.stdout.write('  Fetching products... ');
+  const products = await getProducts();
+  const productPages = products.map((p) => ({
+    type: 'product',
+    id: p.id,
+    title: p.title,
+    handle: p.handle,
+    url: `${config.url}/products/${p.handle}`,
+    raw: p,
+  }));
+  console.log(`${products.length} products`);
+
+  process.stdout.write('  Fetching GSC page performance... ');
+  const gscPages = await gsc.getQuickWinPages(500, 90);
+  const topPages = await gsc.getTopPages(500, 90);
+  console.log('done');
+
+  const gscMap = new Map();
+  for (const p of gscPages) {
+    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
+  }
+  for (const p of topPages) {
+    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
+  }
+
+  const active = activeSlugs();
+  const filtered = productPages.filter((p) => !EXCLUDED_HANDLES.has(p.handle));
+  const candidates = selectTitleCandidates(filtered, gscMap, active).slice(0, limit);
+
+  if (candidates.length === 0) {
+    console.log('\n  No title optimization candidates found (top keywords already in titles).');
+    return;
+  }
+
+  console.log(`\n  Found ${candidates.length} candidate(s):\n`);
+  for (const c of candidates) {
+    console.log(`  "${c.title}" — top query: "${c.gsc.keyword}" (${c.gsc.impressions} impr)`);
+  }
+
+  if (dryRun) {
+    console.log('\n  Dry run — no queue items written. Remove --dry-run to queue title rewrites.');
+    return;
+  }
+
+  console.log('');
+
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    process.stdout.write(`  [${i + 1}/${candidates.length}] "${c.title}"... `);
+
+    try {
+      const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
+      const proposed = await rewriteProductTitle(c, topQueries, c.gsc);
+
+      const item = {
+        slug: c.handle,
+        title: `${c.title} → ${proposed.new_title}`,
+        trigger: 'product-title-rewrite',
+        signal_source: {
+          type: 'gsc-product-title',
+          impressions: c.gsc.impressions,
+          position: c.gsc.position,
+          ctr: c.gsc.ctr,
+          top_queries: topQueries.map((q) => q.keyword),
+        },
+        proposed_title: {
+          new_title: proposed.new_title,
+          original_title: c.title,
+          handle: c.handle,
+        },
+        resource_type: 'product',
+        resource_id: c.id,
+        summary: {
+          what_changed: proposed.what_changed,
+          why: proposed.why,
+        },
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+      writeItem(item);
+      console.log(`queued → "${proposed.new_title}"`);
+    } catch (e) {
+      console.error(`failed: ${e.message}`);
+    }
+  }
+
+  console.log(`\n  Done — ${candidates.length} title rewrite(s) written to data/performance-queue/`);
 }
 
 // ── candidate selection (shared with tests) ──────────────────────────────────
@@ -906,6 +1078,38 @@ async function publishApprovedProducts() {
     }
     console.log(`\n  Done — ${faqPublished}/${faqItems.length} FAQ expansion(s) pushed to Shopify.`);
   }
+
+  // Handle product-title-rewrite items
+  const titleItems = listQueueItems().filter(
+    (i) => i.trigger === 'product-title-rewrite' && i.status === 'approved',
+  );
+
+  if (titleItems.length > 0) {
+    console.log(`\n  Found ${titleItems.length} approved product-title-rewrite item(s):\n`);
+    let titlePublished = 0;
+    for (const item of titleItems) {
+      process.stdout.write(`  "${item.proposed_title?.original_title}" → "${item.proposed_title?.new_title}"... `);
+      if (!item.resource_id || !item.proposed_title?.new_title || !item.proposed_title?.handle) {
+        console.error('skipped: missing resource_id, new_title, or handle');
+        continue;
+      }
+      try {
+        await updateProduct(item.resource_id, {
+          title: item.proposed_title.new_title,
+          handle: item.proposed_title.handle,
+        });
+
+        item.status = 'published';
+        item.published_at = new Date().toISOString();
+        writeItem(item);
+        console.log('published');
+        titlePublished++;
+      } catch (e) {
+        console.error(`failed: ${e.message}`);
+      }
+    }
+    console.log(`\n  Done — ${titlePublished}/${titleItems.length} product title rewrite(s) pushed to Shopify.`);
+  }
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -1114,6 +1318,7 @@ async function main() {
 
 const run = pagesFromGsc ? pagesFromGscMode
   : expandFaq ? expandFaqMode
+  : optimizeTitles ? optimizeTitlesMode
   : fromGsc ? fromGscMode
   : publishApproved ? publishApprovedProducts
   : main;
