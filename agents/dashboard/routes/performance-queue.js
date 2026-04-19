@@ -85,6 +85,25 @@ async function publishProductDescriptionRewrite(item) {
   await updateProduct(item.resource_id, { body_html: item.proposed_body_html });
 }
 
+async function publishProductMetaRewrite(item) {
+  const meta = item.proposed_meta;
+  if (!meta) throw new Error('No proposed_meta data');
+  if (!item.resource_id) throw new Error('No resource_id for product');
+  if (meta.seo_title) await upsertMetafield('products', item.resource_id, 'global', 'title_tag', meta.seo_title);
+  if (meta.seo_description) await upsertMetafield('products', item.resource_id, 'global', 'description_tag', meta.seo_description);
+}
+
+async function publishProductTitleRewrite(item) {
+  const proposed = item.proposed_title;
+  if (!proposed?.new_title) throw new Error('No proposed_title.new_title');
+  if (!proposed?.handle) throw new Error('No proposed_title.handle (needed to preserve URL)');
+  if (!item.resource_id) throw new Error('No resource_id for product');
+  await updateProduct(item.resource_id, {
+    title: proposed.new_title,
+    handle: proposed.handle,
+  });
+}
+
 function findPostMeta(slug, _postsDir) {
   // Try exact slug first
   const meta = getPostMeta(slug);
@@ -128,6 +147,10 @@ export default [
           await publishPageMetaRewrite(item);
         } else if (item.trigger === 'product-description-rewrite') {
           await publishProductDescriptionRewrite(item);
+        } else if (item.trigger === 'product-meta-rewrite') {
+          await publishProductMetaRewrite(item);
+        } else if (item.trigger === 'product-title-rewrite') {
+          await publishProductTitleRewrite(item);
         } else {
           await publishBlogRefresh(item, ctx);
         }
