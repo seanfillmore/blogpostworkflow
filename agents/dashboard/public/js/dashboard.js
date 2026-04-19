@@ -685,13 +685,13 @@ function renderRejectedImagesCard(d) {
     html += '<div style="border-bottom:1px solid var(--border);padding:12px 0">';
     html += '<div style="font-weight:600;margin-bottom:8px">' + esc(item.title || item.slug) + '</div>';
 
-    // Show rejected images as thumbnails
+    // Show rejected images as thumbnails — click to inspect in lightbox
     if (item.imageFiles && item.imageFiles.length > 0) {
       html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
       item.imageFiles.forEach(function(filename) {
         var imgUrl = '/api/rejected-images/' + encodeURIComponent(item.slug) + '/' + encodeURIComponent(filename);
         html += '<div style="text-align:center">';
-        html += '<img src="' + imgUrl + '" style="width:200px;height:auto;border-radius:6px;border:2px solid #e5e7eb;cursor:pointer" onclick="acceptRejectedImage(\'' + esc(item.slug) + '\',\'' + esc(filename) + '\')">';
+        html += '<img src="' + imgUrl + '" style="width:200px;height:auto;border-radius:6px;border:2px solid #e5e7eb;cursor:pointer" onclick="openImageLightbox(\'' + esc(imgUrl.replace(/'/g, "\\'")) + '\',\'' + esc(item.slug) + '\',\'' + esc(filename) + '\')">';
         html += '<div style="font-size:11px;color:var(--muted);margin-top:4px">' + esc(filename.replace('.webp','')) + '</div>';
         html += '</div>';
       });
@@ -2917,10 +2917,25 @@ async function editSessionName() {
   }
 }
 
-function openImageLightbox(src) {
+function openImageLightbox(src, slug, filename) {
   var modal = document.getElementById('image-lightbox');
   var img = document.getElementById('lightbox-img');
-  if (modal && img) { img.src = src; modal.style.display = 'flex'; }
+  if (!modal || !img) return;
+  img.src = src;
+  modal.style.display = 'flex';
+
+  var bar = document.getElementById('lightbox-action-bar');
+  if (bar) {
+    if (slug && filename) {
+      bar.innerHTML =
+        '<span style="color:#d1d5db;font-size:13px;margin-right:12px">' + esc(filename) + '</span>' +
+        '<button onclick="closeImageLightbox();acceptRejectedImage(\'' + esc(slug) + '\',\'' + esc(filename) + '\')" style="padding:8px 20px;border:none;border-radius:6px;background:#059669;color:white;cursor:pointer;font-size:13px;font-weight:600">Use This Image</button>' +
+        '<button onclick="closeImageLightbox()" style="padding:8px 16px;border:1px solid #6b7280;border-radius:6px;background:transparent;color:#d1d5db;cursor:pointer;font-size:13px;margin-left:8px">Close</button>';
+      bar.style.display = 'flex';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
 }
 
 function closeImageLightbox() {
