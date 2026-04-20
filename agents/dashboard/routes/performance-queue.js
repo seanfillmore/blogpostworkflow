@@ -121,8 +121,9 @@ function findPostMeta(slug, _postsDir) {
 
 async function publishBlogRefresh(item, ctx) {
   const found = findPostMeta(item.slug, ctx.POSTS_DIR);
-  if (!found) throw new Error(`No post metadata found for "${item.slug}"`);
+  if (!found) throw new Error(`No post metadata found for "${item.slug}". The post may not have been published to Shopify yet — run it through the calendar pipeline first.`);
   const { meta: postMeta } = found;
+  if (!postMeta.shopify_article_id) throw new Error(`Post "${item.slug}" has no shopify_article_id — it hasn't been published to Shopify yet. Run it through the calendar pipeline first.`);
   if (!existsSync(item.refreshed_html_path)) throw new Error(`Refreshed HTML not found at ${item.refreshed_html_path}`);
   const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
   const blogs = await getBlogs();
