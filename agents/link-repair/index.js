@@ -68,11 +68,15 @@ function parseBrokenLinks(slug) {
   const broken = [];
 
   // Match table rows in the Link Health section: | url | anchor | status | error |
-  const rowRegex = /^\|\s*(https?:\/\/[^|]+?)\s*\|\s*([^|]*?)\s*\|\s*(\d+)\s*\|\s*([^|]*?)\s*\|/gm;
+  // Status may be a numeric code (404, 500) or a word (timeout, error).
+  const rowRegex = /^\|\s*(https?:\/\/[^|]+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|/gm;
   for (const m of report.matchAll(rowRegex)) {
-    const [, url, anchor, statusCode] = m;
-    const code = parseInt(statusCode, 10);
-    broken.push({ url: url.trim(), anchor: anchor.trim(), statusCode: code });
+    const [, url, anchor, rawStatus] = m;
+    const status = rawStatus.trim();
+    const code = /^\d+$/.test(status) ? parseInt(status, 10) : 0;
+    const isBroken = code >= 400 || code === 0;
+    if (!isBroken) continue;
+    broken.push({ url: url.trim(), anchor: anchor.trim(), statusCode: code, statusLabel: status });
   }
 
   return broken;
