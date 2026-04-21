@@ -178,7 +178,8 @@ function processSlug(slug) {
 
   const html = readFileSync(htmlPath, 'utf8');
   const title = meta.title || meta.recommended_title || slug.replace(/-/g, ' ');
-  const url = `${config.url}/blogs/news/${slug}`;
+  const handle = meta.shopify_handle || slug;
+  const url = `${config.url}/blogs/news/${handle}`;
 
   const schemas = [];
   const schemaTypes = [];
