@@ -354,9 +354,19 @@ async function main() {
     console.log(`${blogArticles.length} articles`);
   }
 
-  // Filter by slug if provided
+  // Filter by slug if provided — fall back to shopify_handle from meta if slug doesn't match
   if (slugArg) {
     articles = articles.filter((a) => a.handle === slugArg || a.handle.includes(slugArg));
+    if (articles.length === 0) {
+      try {
+        const { getPostMeta } = await import('../../lib/posts.js');
+        const meta = getPostMeta(slugArg);
+        if (meta?.shopify_handle) {
+          articles = (await Promise.all(blogs.map((b) => getArticles(b.id)))).flat();
+          articles = articles.filter((a) => a.handle === meta.shopify_handle);
+        }
+      } catch { /* proceed to error */ }
+    }
     if (articles.length === 0) {
       console.error(`No article found matching slug: ${slugArg}`);
       process.exit(1);

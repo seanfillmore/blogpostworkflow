@@ -38,7 +38,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSy
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
-import { getMetaPath, getInternalLinksPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getMetaPath, getPostMeta, getInternalLinksPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'internal-linker');
@@ -465,7 +465,9 @@ async function main() {
     if (existsSync(metaPath)) {
       targetMeta = loadTargetPost(slug);
     } else {
-      const shopifyArticle = allArticles.find((a) => a.handle === slug);
+      const meta = getPostMeta(slug);
+      const handleToFind = meta?.shopify_handle || slug;
+      const shopifyArticle = allArticles.find((a) => a.handle === handleToFind || a.handle === slug);
       if (!shopifyArticle) {
         console.error(`Post not found locally or in Shopify: ${slug}`);
         process.exit(1);
