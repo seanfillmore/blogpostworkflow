@@ -50,6 +50,13 @@ DAILY_INDEXING_FIXER="30 11 * * * cd \"$PROJECT_DIR\" && $NODE agents/indexing-f
 DAILY_ADS_OPTIMIZER="45 6 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/ads-optimizer/index.js >> data/reports/ads-optimizer.log 2>&1"
 DAILY_CAMPAIGN_MONITOR="30 7 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-monitor/index.js >> data/reports/campaign-monitor.log 2>&1"
 
+# Campaign status + ad fixer (high frequency)
+HOURLY_CAMPAIGN_STATUS="0 * * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-status-checker/index.js --scheduled >> data/logs/campaign-status-checker.log 2>&1"
+FREQUENT_CAMPAIGN_AD_FIXER="5 * * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-ad-fixer/index.js --scheduled >> data/logs/campaign-ad-fixer.log 2>&1"
+
+# Performance engine (daily)
+DAILY_PERFORMANCE_ENGINE="30 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/performance-engine/index.js >> data/logs/performance-engine.log 2>&1"
+
 # Daily digest (runs last — collects everything from the day)
 DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1"
 
@@ -59,6 +66,8 @@ WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyze
 WEEKLY_META_AB_TRACKER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-tracker/index.js >> data/reports/scheduler/meta-ab-tracker.log 2>&1"
 WEEKLY_QUICK_WIN="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/quick-win-targeter/index.js >> data/reports/scheduler/quick-win-targeter.log 2>&1"
 WEEKLY_KEYWORD_RESEARCH="0 8 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/keyword-research/index.js >> data/reports/scheduler/keyword-research.log 2>&1"
+WEEKLY_META_ADS_COLLECTOR="0 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-collector/index.js >> data/logs/meta-ads-collector.log 2>&1"
+WEEKLY_META_ADS_ANALYZER="10 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-analyzer/index.js >> data/logs/meta-ads-analyzer.log 2>&1"
 
 # Weekly (Sunday)
 WEEKLY_ADS_RECAP="0 7 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/ads-weekly-recap.js >> data/reports/ads-weekly-recap.log 2>&1"
@@ -97,9 +106,13 @@ $DAILY_CALENDAR_RUNNER
 # ── Indexing (daily) ──
 $DAILY_INDEXING_CHECKER
 $DAILY_INDEXING_FIXER
-# ── Ads (daily) ──
+# ── Ads + campaigns (daily / high-frequency) ──
 $DAILY_ADS_OPTIMIZER
 $DAILY_CAMPAIGN_MONITOR
+$HOURLY_CAMPAIGN_STATUS
+$FREQUENT_CAMPAIGN_AD_FIXER
+# ── Performance engine (daily) ──
+$DAILY_PERFORMANCE_ENGINE
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
@@ -108,6 +121,8 @@ $WEEKLY_CRO_ANALYZER
 $WEEKLY_META_AB_TRACKER
 $WEEKLY_QUICK_WIN
 $WEEKLY_KEYWORD_RESEARCH
+$WEEKLY_META_ADS_COLLECTOR
+$WEEKLY_META_ADS_ANALYZER
 # ── Weekly (Sunday) ──
 $WEEKLY_ADS_RECAP
 $WEEKLY_CAMPAIGN_ANALYZER
@@ -123,12 +138,17 @@ echo "$NEW_CRONTAB" | crontab -
 echo ""
 echo "Installed:"
 echo ""
+echo "  HIGH FREQUENCY"
+echo "  Hourly   — campaign-status-checker"
+echo "  Hourly   — campaign-ad-fixer"
+echo ""
 echo "  DAILY"
 echo "  06:00 UTC — blog-index refresh"
 echo "  06:05 UTC — topical-map refresh"
 echo "  06:45 PT  — ads-optimizer"
 echo "  07:00 UTC — rank-tracker (DataForSEO)"
 echo "  07:30 PT  — campaign-monitor"
+echo "  07:30 UTC — performance-engine"
 echo "  10:00 UTC — calendar-runner (--run --all)"
 echo "  11:00 UTC — indexing-checker"
 echo "  11:30 UTC — indexing-fixer"
@@ -141,6 +161,8 @@ echo ""
 echo "  WEEKLY (Monday)"
 echo "  07:30 UTC — insight-aggregator"
 echo "  08:00 UTC — keyword-research (DataForSEO)"
+echo "  10:00 UTC — meta-ads-collector"
+echo "  10:10 UTC — meta-ads-analyzer"
 echo "  14:45 UTC — cro-analyzer"
 echo "  15:00 UTC — meta-ab-tracker + quick-win-targeter"
 echo ""
