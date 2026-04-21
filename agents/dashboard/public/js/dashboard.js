@@ -1645,8 +1645,10 @@ function renderPosts(d) {
       : esc(p.title || p.slug);
     const editorHtml = p.editorVerdict === 'Approved'
       ? badge('approved', 'Approved')
-      : p.editorVerdict === 'Needs Work'
+      : p.editorVerdict === 'Needs Work' && p.status !== 'published'
       ? badge('needswork', '&#9888; Needs Work')
+      : p.editorVerdict === 'Needs Work' && p.status === 'published'
+      ? '<span class="badge badge-review" title="Refresh attempt flagged issues; live content unchanged">Review</span>'
       : '<span class="muted">&#8212;</span>';
     const linksHtml = p.brokenLinks > 0
       ? '<span style="color:var(--red);font-weight:600">' + p.brokenLinks + ' broken</span>'

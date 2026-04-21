@@ -219,6 +219,7 @@
   /* ── badge aliases (removed in later task) ── */
   .badge-approved  { background: #dcfce7; color: var(--green); }
   .badge-needswork { background: #fee2e2; color: var(--red); }
+  .badge-review    { background: #fef3c7; color: var(--amber); }
 
   /* ── utility classes ── */
   .pos { font-weight: 600; font-size: 15px; }
