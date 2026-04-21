@@ -318,8 +318,14 @@ async function main() {
   let targets = [];
 
   if (slugArg) {
-    // Single-post mode
-    const article = byHandle.get(slugArg);
+    // Single-post mode — try slug directly, then fall back to shopify_handle from meta
+    let article = byHandle.get(slugArg);
+    if (!article) {
+      const meta = getPostMeta(slugArg);
+      if (meta?.shopify_handle && meta.shopify_handle !== slugArg) {
+        article = byHandle.get(meta.shopify_handle);
+      }
+    }
     if (!article) {
       console.error(`Article not found in Shopify: ${slugArg}`);
       process.exit(1);
