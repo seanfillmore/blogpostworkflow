@@ -183,7 +183,7 @@ export function aggregateData() {
           shopifyImageUrl:meta.shopify_image_url || null,
           editorVerdict:  ed?.verdict  ?? null,
           brokenLinks:    ed?.brokenLinks ?? 0,
-          hasImage:       existsSync(getImagePath(slug)),
+          hasImage:       existsSync(getImagePath(slug)) || !!meta.shopify_image_url,
         });
       } catch {}
     }
