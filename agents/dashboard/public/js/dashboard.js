@@ -2321,6 +2321,13 @@ async function renderMyMetaAdsTab() {
         var spent = a.amount_spent ? ' · ' + (a.currency || '') + ' ' + (parseInt(a.amount_spent, 10) / 100).toFixed(2) + ' lifetime' : '';
         return '<option value="' + esc(a.account_id) + '">' + esc(a.name) + spent + '</option>';
       }).join('') +
+      '</select>' +
+      '<label style="font-weight:600;margin:0 0.5rem 0 1.5rem">Date range:</label>' +
+      '<select id="meta-ads-date-select" onchange="loadMetaAdsInsights()" style="padding:0.5rem;border:1px solid #cbd5e1;border-radius:5px">' +
+      '<option value="maximum" selected>Lifetime</option>' +
+      '<option value="last_90d">Last 90 days</option>' +
+      '<option value="last_30d">Last 30 days</option>' +
+      '<option value="last_7d">Last 7 days</option>' +
       '</select></div>' +
       '<div id="meta-ads-insights-panel"><p class="muted">Loading insights…</p></div>' +
       '</div>';
@@ -2331,14 +2338,24 @@ async function renderMyMetaAdsTab() {
   }
 }
 
+var META_ADS_DATE_LABELS = {
+  maximum: 'Lifetime',
+  last_90d: 'Last 90 days',
+  last_30d: 'Last 30 days',
+  last_7d: 'Last 7 days'
+};
+
 async function loadMetaAdsInsights() {
   var sel = document.getElementById('meta-ads-account-select');
+  var dateSel = document.getElementById('meta-ads-date-select');
   var panel = document.getElementById('meta-ads-insights-panel');
   if (!sel || !panel) return;
   var accountId = sel.value;
+  var datePreset = dateSel ? dateSel.value : 'maximum';
+  var dateLabel = META_ADS_DATE_LABELS[datePreset] || datePreset;
   panel.innerHTML = '<p class="muted">Loading insights…</p>';
   try {
-    var res = await fetch('/api/meta-ads/account-insights?account_id=' + encodeURIComponent(accountId), { credentials: 'same-origin' });
+    var res = await fetch('/api/meta-ads/account-insights?account_id=' + encodeURIComponent(accountId) + '&date_preset=' + encodeURIComponent(datePreset), { credentials: 'same-origin' });
     var body = await res.json();
     if (body.error) {
       panel.innerHTML = '<p class="muted">API error: ' + esc(body.error) + '</p>';
@@ -2347,12 +2364,12 @@ async function loadMetaAdsInsights() {
     var rows = body.data || [];
     if (rows.length === 0) {
       panel.innerHTML = '<div style="padding:1.5rem;border:1px dashed #cbd5e1;border-radius:7px;background:#f8fafc">' +
-        '<p class="muted" style="margin:0"><strong>No activity in the last 30 days.</strong> This account has no campaigns running, so there is no insights data to display. The API call succeeded — data will appear here once ads are active.</p></div>';
+        '<p class="muted" style="margin:0"><strong>No activity for ' + esc(dateLabel) + '.</strong> This account has no ads matching the selected date range. The API call succeeded — try a wider range.</p></div>';
       return;
     }
     var r = rows[0];
     panel.innerHTML =
-      '<h3 style="margin:0 0 1rem">Last 30 days</h3>' +
+      '<h3 style="margin:0 0 1rem">' + esc(dateLabel) + '</h3>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">' +
       kpiCard('Spend', r.spend != null ? '$' + Number(r.spend).toFixed(2) : '—') +
       kpiCard('Impressions', r.impressions != null ? Number(r.impressions).toLocaleString() : '—') +
