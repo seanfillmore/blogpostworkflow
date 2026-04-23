@@ -145,6 +145,16 @@ const BOT_LANDING_HTML = `<!doctype html>
 const server = http.createServer((req, res) => {
   const urlPath = (req.url || '/').split('?')[0];
   const ua = req.headers['user-agent'] || '';
+
+  // robots.txt must be world-readable — scrapers fetch it before the real
+  // URL and bail on auth errors (Meta treats a 401/403 here as "robots
+  // blocked" even if the actual URL is fine).
+  if (urlPath === '/robots.txt') {
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('User-agent: *\nAllow: /\n');
+    return;
+  }
+
   if (urlPath === '/' && BOT_UA.test(ua)) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(BOT_LANDING_HTML);
