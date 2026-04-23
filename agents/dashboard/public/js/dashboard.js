@@ -22,6 +22,7 @@ function switchTab(name, btn) {
   if (data) renderHeroKpis(data);
   if (name === 'optimize' && data) renderOptimizeTab(data);
   if (name === 'ad-intelligence') renderAdIntelligenceTab();
+  if (name === 'my-meta-ads') renderMyMetaAdsTab();
   if (name === 'creatives') renderCreativesTab();
   if (name === 'tech-seo' && data) renderTechnicalSeoTab(data);
   if (name === 'ideas') renderIdeasTab();
@@ -2276,6 +2277,116 @@ async function renderAdIntelligenceTab() {
   } catch (e) {
     el.innerHTML = '<p class="muted" style="padding:2rem">Error loading data: ' + esc(e.message) + '</p>';
   }
+}
+
+// ── My Meta Ads tab (ads_read via OAuth) ────────────────────────────────────
+async function renderMyMetaAdsTab() {
+  var el = document.getElementById('my-meta-ads-content');
+  el.innerHTML = '<p class="muted" style="padding:2rem">Loading…</p>';
+  try {
+    var statusRes = await fetch('/api/meta-ads/status', { credentials: 'same-origin' });
+    var status = await statusRes.json();
+    if (!status.connected) {
+      el.innerHTML =
+        '<div style="padding:2rem;max-width:640px">' +
+        '<h2 style="margin:0 0 0.5rem">Connect your Meta Ads account</h2>' +
+        '<p class="muted" style="margin:0 0 1.5rem">Grant <code>ads_read</code> so this dashboard can pull campaign performance and insights from your ad accounts into the SEO workspace for analysis.</p>' +
+        '<a href="/api/meta-ads/auth" style="display:inline-block;padding:0.75rem 1.5rem;background:#1877f2;color:white;border-radius:7px;text-decoration:none;font-weight:600">Connect with Facebook</a>' +
+        '</div>';
+      return;
+    }
+    var acctRes = await fetch('/api/meta-ads/accounts', { credentials: 'same-origin' });
+    var acctBody = await acctRes.json();
+    if (acctBody.error) {
+      el.innerHTML = '<p class="muted" style="padding:2rem">API error: ' + esc(acctBody.error) + '</p>';
+      return;
+    }
+    var accounts = acctBody.data || [];
+    var userName = status.user && status.user.name ? status.user.name : '';
+    var html = '<div style="padding:1.5rem">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">' +
+      '<div><h2 style="margin:0 0 0.25rem">My Meta Ads</h2>' +
+      '<p class="muted" style="margin:0">Connected as ' + esc(userName) + ' · ' + accounts.length + ' ad accounts</p></div>' +
+      '<button onclick="disconnectMetaAds()" style="padding:0.5rem 1rem;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer">Disconnect</button>' +
+      '</div>';
+    if (accounts.length === 0) {
+      html += '<p class="muted">No ad accounts available on this token.</p></div>';
+      el.innerHTML = html;
+      return;
+    }
+    html += '<div style="margin-bottom:1rem">' +
+      '<label style="font-weight:600;margin-right:0.5rem">Ad account:</label>' +
+      '<select id="meta-ads-account-select" onchange="loadMetaAdsInsights()" style="padding:0.5rem;border:1px solid #cbd5e1;border-radius:5px">' +
+      accounts.map(function(a) {
+        var spent = a.amount_spent ? ' · ' + (a.currency || '') + ' ' + (parseInt(a.amount_spent, 10) / 100).toFixed(2) + ' lifetime' : '';
+        return '<option value="' + esc(a.account_id) + '">' + esc(a.name) + spent + '</option>';
+      }).join('') +
+      '</select>' +
+      '<label style="font-weight:600;margin:0 0.5rem 0 1.5rem">Date range:</label>' +
+      '<select id="meta-ads-date-select" onchange="loadMetaAdsInsights()" style="padding:0.5rem;border:1px solid #cbd5e1;border-radius:5px">' +
+      '<option value="maximum" selected>Lifetime</option>' +
+      '<option value="last_90d">Last 90 days</option>' +
+      '<option value="last_30d">Last 30 days</option>' +
+      '<option value="last_7d">Last 7 days</option>' +
+      '</select></div>' +
+      '<div id="meta-ads-insights-panel"><p class="muted">Loading insights…</p></div>' +
+      '</div>';
+    el.innerHTML = html;
+    loadMetaAdsInsights();
+  } catch (e) {
+    el.innerHTML = '<p class="muted" style="padding:2rem">Error: ' + esc(e.message) + '</p>';
+  }
+}
+
+var META_ADS_DATE_LABELS = {
+  maximum: 'Lifetime',
+  last_90d: 'Last 90 days',
+  last_30d: 'Last 30 days',
+  last_7d: 'Last 7 days'
+};
+
+async function loadMetaAdsInsights() {
+  var sel = document.getElementById('meta-ads-account-select');
+  var dateSel = document.getElementById('meta-ads-date-select');
+  var panel = document.getElementById('meta-ads-insights-panel');
+  if (!sel || !panel) return;
+  var accountId = sel.value;
+  var datePreset = dateSel ? dateSel.value : 'maximum';
+  var dateLabel = META_ADS_DATE_LABELS[datePreset] || datePreset;
+  panel.innerHTML = '<p class="muted">Loading insights…</p>';
+  try {
+    var res = await fetch('/api/meta-ads/account-insights?account_id=' + encodeURIComponent(accountId) + '&date_preset=' + encodeURIComponent(datePreset), { credentials: 'same-origin' });
+    var body = await res.json();
+    if (body.error) {
+      panel.innerHTML = '<p class="muted">API error: ' + esc(body.error) + '</p>';
+      return;
+    }
+    var rows = body.data || [];
+    if (rows.length === 0) {
+      panel.innerHTML = '<div style="padding:1.5rem;border:1px dashed #cbd5e1;border-radius:7px;background:#f8fafc">' +
+        '<p class="muted" style="margin:0"><strong>No activity for ' + esc(dateLabel) + '.</strong> This account has no ads matching the selected date range. The API call succeeded — try a wider range.</p></div>';
+      return;
+    }
+    var r = rows[0];
+    panel.innerHTML =
+      '<h3 style="margin:0 0 1rem">' + esc(dateLabel) + '</h3>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">' +
+      kpiCard('Spend', r.spend != null ? '$' + Number(r.spend).toFixed(2) : '—') +
+      kpiCard('Impressions', r.impressions != null ? Number(r.impressions).toLocaleString() : '—') +
+      kpiCard('Clicks', r.clicks != null ? Number(r.clicks).toLocaleString() : '—') +
+      kpiCard('CTR', r.ctr != null ? Number(r.ctr).toFixed(2) + '%' : '—') +
+      kpiCard('CPM', r.cpm != null ? '$' + Number(r.cpm).toFixed(2) : '—') +
+      kpiCard('Reach', r.reach != null ? Number(r.reach).toLocaleString() : '—') +
+      '</div>';
+  } catch (e) {
+    panel.innerHTML = '<p class="muted">Error: ' + esc(e.message) + '</p>';
+  }
+}
+
+async function disconnectMetaAds() {
+  if (!confirm('Disconnect Meta Ads account?')) return;
+  await fetch('/api/meta-ads/disconnect', { method: 'POST', credentials: 'same-origin' });
+  renderMyMetaAdsTab();
 }
 
 // ── Creatives tab state ─────────────────────────────────────────────────────
