@@ -126,7 +126,7 @@ const ctx = Object.freeze({
 // Minimal public landing page served to Meta/Facebook/Twitter scrapers on "/"
 // so OAuth-related domain-ownership checks can read og tags without hitting
 // the basic-auth wall.
-const BOT_UA = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot/i;
+const BOT_UA = /facebookexternalhit|Facebot|facebookcatalog|meta-externalagent|meta-externalfetcher|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp/i;
 const BOT_LANDING_HTML = `<!doctype html>
 <html lang="en">
 <head>
