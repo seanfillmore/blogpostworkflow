@@ -123,7 +123,34 @@ const ctx = Object.freeze({
 
 // ── HTTP server ────────────────────────────────────────────────────────────────
 
+// Minimal public landing page served to Meta/Facebook/Twitter scrapers on "/"
+// so OAuth-related domain-ownership checks can read og tags without hitting
+// the basic-auth wall.
+const BOT_UA = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot/i;
+const BOT_LANDING_HTML = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Real Skin Care SEO Tools</title>
+<meta name="description" content="Internal SEO and marketing analytics workspace for Real Skin Care.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Real Skin Care SEO Tools">
+<meta property="og:description" content="Internal SEO and marketing analytics workspace for Real Skin Care.">
+<meta property="og:site_name" content="Real Skin Care SEO Tools">
+</head>
+<body><h1>Real Skin Care SEO Tools</h1><p>Internal analytics workspace.</p></body>
+</html>
+`;
+
 const server = http.createServer((req, res) => {
+  const urlPath = (req.url || '/').split('?')[0];
+  const ua = req.headers['user-agent'] || '';
+  if (urlPath === '/' && BOT_UA.test(ua)) {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(BOT_LANDING_HTML);
+    return;
+  }
+
   if (!checkAuth(req, res)) return;
   if (dispatch(ROUTES, req, res, ctx)) return;
   if (serveStatic(req, res, PUBLIC_DIR)) return;
