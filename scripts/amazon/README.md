@@ -34,6 +34,8 @@ Sandbox (mock data):
 | `explore-finance.mjs` | Financial events (shipments, refunds, fees) last 30 days. |
 | `explore-brand-analytics.mjs` | Brand Analytics search terms report (last complete week). |
 | `explore-sales-traffic.mjs` | Sales & Traffic by ASIN (last 30 days). |
+| `explore-search-query-performance-rsc.mjs` | Search Query Performance for RSC + sub-brand ASINs (per-ASIN impressions / clicks / cart adds / purchases by query). |
+| `explore-search-query-performance-culina.mjs` | Same, scoped to Culina ASINs. Returns 0 rows until Brand Registry is approved for Culina. |
 
 ## Output
 
@@ -47,3 +49,4 @@ Each run writes JSON to `data/amazon-explore/YYYY-MM-DD-<script>-<env>.json`. Th
 - Orders data is returned unredacted only when the Orders (PII) role is active.
 - Reports (Brand Analytics, Sales & Traffic) are async — scripts poll up to 10 minutes before timing out.
 - Ads API data (sponsored products/brands performance) is a separate API, not covered here — see Phase 1b spec when planned.
+- Search Query Performance (`explore-search-query-performance-*.mjs`) requires Brand Registry. Without it, the report returns 0 rows. The Culina variant is currently in this state pending Brand Registry approval.
