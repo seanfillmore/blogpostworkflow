@@ -6,13 +6,14 @@
  *   node scripts/amazon/explore-brand-analytics.mjs
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { createReadStream, mkdirSync, statSync } from 'node:fs';
+import { createInterface } from 'node:readline';
 import {
   getClient,
   getMarketplaceId,
   requestReport,
   pollReport,
-  downloadReport,
+  streamReportToFile,
 } from '../../lib/amazon/sp-api-client.js';
 
 const client = getClient();
@@ -45,21 +46,39 @@ console.log(`Report ID: ${reportId}`);
 const reportDocumentId = await pollReport(client, reportId);
 console.log(`Report document ID: ${reportDocumentId}`);
 
-const rows = await downloadReport(client, reportDocumentId);
-
-const rowArray = Array.isArray(rows) ? rows : rows?.dataByDepartmentAndSearchTerm ?? [];
-console.log(`\nRows: ${rowArray.length}`);
-if (rowArray.length > 0) {
-  console.log('First 5 rows:');
-  console.log(JSON.stringify(rowArray.slice(0, 5), null, 2));
-}
-
 const outDir = 'data/amazon-explore';
 mkdirSync(outDir, { recursive: true });
 const today = new Date().toISOString().slice(0, 10);
-const outPath = `${outDir}/${today}-brand-analytics-${client.env}.json`;
-writeFileSync(
-  outPath,
-  JSON.stringify({ dataStartTime, dataEndTime, reportId, rows }, null, 2),
-);
-console.log(`\nDump: ${outPath}`);
+const outPath = `${outDir}/${today}-brand-analytics-${client.env}.tsv`;
+
+console.log(`Streaming to ${outPath}...`);
+const { byteCount, contentType } = await streamReportToFile(client, reportDocumentId, outPath);
+const mb = (byteCount / 1024 / 1024).toFixed(1);
+console.log(`Wrote ${byteCount} bytes (${mb} MB), content-type: ${contentType}`);
+
+// Read first 50 lines as a sample.
+const sample = [];
+const stream = createReadStream(outPath, { encoding: 'utf-8' });
+const rl = createInterface({ input: stream, crlfDelay: Infinity });
+for await (const line of rl) {
+  sample.push(line);
+  if (sample.length >= 51) break; // headers + 50 data rows
+}
+rl.close();
+stream.close();
+
+if (sample.length === 0) {
+  console.log('\nFile is empty.');
+} else {
+  const headers = sample[0].split('\t');
+  console.log(`\nColumns (${headers.length}): ${headers.join(' | ')}`);
+  console.log(`\nFirst 5 data rows:`);
+  for (const line of sample.slice(1, 6)) {
+    const fields = line.split('\t');
+    const row = Object.fromEntries(headers.map((h, i) => [h, fields[i]]));
+    console.log(JSON.stringify(row, null, 2));
+  }
+  console.log(`\n(Showing first 5 of ${sample.length - 1} sampled rows; full file at ${outPath})`);
+}
+
+console.log(`\nFile size: ${statSync(outPath).size} bytes`);
