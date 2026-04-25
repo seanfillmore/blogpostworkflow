@@ -11,9 +11,11 @@
  * Resolution actions (applied automatically for HIGH confidence):
  *   REDIRECT    — loser 301-redirected to winner immediately. Use when content is
  *                 near-duplicate and the loser adds no unique value.
- *   CONSOLIDATE — Claude fetches both articles, merges the best content into winner
- *                 (saved as draft for review), then creates the redirect. Use when
- *                 loser has sections worth preserving.
+ *   CONSOLIDATE — Claude fetches both articles, merges the best content into winner.
+ *                 If the editor agent passes the merged article cleanly, it is
+ *                 auto-published to Shopify. If the editor flags blockers, the
+ *                 merged article is saved as a draft for human review. Redirect
+ *                 is created immediately either way so link equity is preserved.
  *   MONITOR     — No action. Logged for next review cycle. Use when pages serve
  *                 genuinely different sub-intents.
  *
@@ -21,9 +23,12 @@
  *   - Dry run by default. No changes without --apply.
  *   - Only acts on HIGH-confidence decisions.
  *   - Only touches /blogs/news/ URLs — never products, collections, or pages.
- *   - Consolidated posts saved as Shopify drafts (not auto-published).
+ *   - Auto-publish only when the editor agent reports no blockers (no
+ *     `meta.needs_rebuild` set on the merged post). Otherwise the merged article
+ *     stays as a Shopify draft and is surfaced in the report's "Drafts needing
+ *     review" section.
  *   - Redirect is created immediately on consolidation so link equity is preserved
- *     even before the merged draft is reviewed and published.
+ *     even before any draft is reviewed and published.
  *   - All decisions persisted to cannibalization-decisions.json for audit trail.
  *
  * Usage:
@@ -342,24 +347,50 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
             target_keyword: decision.query,
           }, null, 2));
 
-          // Run editor review — checks link health, topical map alignment, editorial quality
+          // Run editor review — checks link health, topical map alignment, editorial quality.
+          // Use process.execPath so this works in cron/sh environments where `node` may not be on PATH.
           process.stdout.write(`    Running editor review... `);
+          let editorRan = false;
+          let editorError = null;
           try {
-            execSync(`node agents/editor/index.js data/posts/${winnerHandle}.html`, { cwd: ROOT, stdio: 'pipe' });
+            execSync(`"${process.execPath}" agents/editor/index.js data/posts/${winnerHandle}.html`, { cwd: ROOT, stdio: 'pipe' });
+            editorRan = true;
             console.log(`done → data/reports/editor/${winnerHandle}-editor-report.md`);
           } catch (editorErr) {
-            const msg = editorErr.stderr?.toString().trim().slice(0, 120) ?? editorErr.message;
-            console.log(`editor warning (non-fatal): ${msg}`);
+            editorError = editorErr.stderr?.toString().trim().slice(0, 120) ?? editorErr.message;
+            console.log(`editor warning (non-fatal): ${editorError}`);
           }
 
-          // Save to Shopify as draft for review before publishing
-          process.stdout.write(`    Saving Shopify draft... `);
+          // Editor pass/fail signal: editor sets meta.needs_rebuild on the post's
+          // meta.json when it finds blockers (broken links, factual concerns, etc.).
+          // No needs_rebuild => clean, safe to auto-publish.
+          let needsRebuild = null;
+          if (editorRan) {
+            try {
+              const meta = JSON.parse(readFileSync(getMetaPath(winnerHandle), 'utf8'));
+              needsRebuild = meta.needs_rebuild ?? null;
+            } catch { /* missing/unreadable meta — treat as ambiguous, fall back to draft */ }
+          }
+          const editorClean = editorRan && !needsRebuild;
+
+          // Auto-publish if the editor passed cleanly. Otherwise save as draft for human review.
+          const willPublish = editorClean;
+          process.stdout.write(`    ${willPublish ? 'Publishing merged article' : 'Saving Shopify draft'}... `);
           await updateArticle(winnerArticle.blogId, winnerArticle.articleId, {
             body_html: mergedHtml,
-            published: false,
+            published: willPublish,
           });
-          console.log('saved');
-          results.push({ query: decision.query, loserPath, winnerPath, action: 'CONSOLIDATE', status: 'draft_saved' });
+          console.log(willPublish ? 'published' : 'saved (needs review)');
+          results.push({
+            query: decision.query,
+            loserPath,
+            winnerPath,
+            action: 'CONSOLIDATE',
+            status: willPublish ? 'published' : 'draft_needs_review',
+            editorRan,
+            editorError,
+            needsRebuildReasons: needsRebuild?.reasons ?? null,
+          });
         } catch (e) {
           console.log(`error: ${e.message}`);
           results.push({ query: decision.query, loserPath, winnerPath, action: 'CONSOLIDATE', status: 'error', error: e.message });
@@ -396,8 +427,12 @@ function buildReport(groups, decisions, results) {
   const low = decisions.filter((d) => d.confidence === 'LOW');
 
   const redirectsCreated = results.filter((r) => r.status === 'redirect_created').length;
-  const draftsaved = results.filter((r) => r.status === 'draft_saved').length;
-  const manualNeeded = decisions.filter((d) => d.confidence !== 'HIGH').length +
+  const published = results.filter((r) => r.status === 'published').length;
+  const draftNeedsReview = results.filter((r) => r.status === 'draft_needs_review').length;
+  // Backwards compatibility — older runs used 'draft_saved' before auto-publish was added.
+  const legacyDraftSaved = results.filter((r) => r.status === 'draft_saved').length;
+  const reviewQueueCount = med.length + low.length + draftNeedsReview;
+  const monitorCount = decisions.filter((d) => d.confidence !== 'HIGH').length +
     decisions.filter((d) => d.confidence === 'HIGH' && d.losers.some((l) => l.action === 'MONITOR')).length;
 
   const lines = [
@@ -407,19 +442,26 @@ function buildReport(groups, decisions, results) {
     `**Mode:** ${apply ? 'APPLIED' : 'DRY RUN'}  `,
     `**Blog-vs-blog groups found:** ${groups.length}  `,
     '',
-    '## Summary',
-    '',
-    `| | Count |`,
-    `|---|---|`,
-    `| 🟢 HIGH confidence decisions | ${high.length} |`,
-    `| 🟡 MEDIUM confidence (manual review) | ${med.length} |`,
-    `| 🔴 LOW confidence (manual review) | ${low.length} |`,
   ];
+
+  if (reviewQueueCount > 0) {
+    lines.push(`> 🔍 **${reviewQueueCount} item(s) need your review** — see "Needs review" section below.`);
+    lines.push('');
+  }
+
+  lines.push('## Summary');
+  lines.push('');
+  lines.push(`| | Count |`);
+  lines.push(`|---|---|`);
+  lines.push(`| 🟢 HIGH confidence decisions | ${high.length} |`);
+  lines.push(`| 🟡 MEDIUM confidence (manual review) | ${med.length} |`);
+  lines.push(`| 🔴 LOW confidence (manual review) | ${low.length} |`);
 
   if (apply) {
     lines.push(`| ↩️ Redirects created | ${redirectsCreated} |`);
-    lines.push(`| 🔀 Consolidated drafts saved | ${draftsaved} |`);
-    lines.push(`| 👁️ Monitor / skip | ${manualNeeded} |`);
+    lines.push(`| ✅ Auto-published merges (editor passed) | ${published} |`);
+    lines.push(`| 📝 Drafts needing review (editor flagged) | ${draftNeedsReview + legacyDraftSaved} |`);
+    lines.push(`| 👁️ Monitor / skip | ${monitorCount} |`);
   }
 
   lines.push('');
@@ -431,19 +473,61 @@ function buildReport(groups, decisions, results) {
     lines.push('|---|---|---|---|---|');
     for (const r of results) {
       const icon = {
-        redirect_created: '✅↩️', draft_saved: '✅🔀', redirect_exists: '⏭️',
-        skipped_not_blog: '⏭️', winner_not_found: '⚠️', error: '❌', redirect_error: '❌',
+        redirect_created: '✅↩️',
+        published: '✅📤',
+        draft_needs_review: '📝',
+        draft_saved: '📝',
+        redirect_exists: '⏭️',
+        skipped_not_blog: '⏭️',
+        winner_not_found: '⚠️',
+        error: '❌',
+        redirect_error: '❌',
       }[r.status] || '•';
       lines.push(`| ${r.query} | ${r.loserPath} | ${r.winnerPath || '—'} | ${r.action} | ${icon} ${r.status} |`);
     }
     lines.push('');
-    if (draftsaved > 0) {
-      lines.push(`> **⚠️ ${draftsaved} consolidated post(s) saved as drafts.** Review editor reports in \`data/reports/editor/<slug>-editor-report.md\`, then publish in Shopify admin → Blog Posts → Drafts.`);
+
+    // Surface drafts that the editor flagged so the user can prioritise them.
+    const flagged = results.filter((r) => r.status === 'draft_needs_review' || r.status === 'draft_saved');
+    if (flagged.length > 0) {
+      lines.push('### 📝 Drafts needing review (editor flagged blockers or could not run)');
+      lines.push('');
+      for (const r of flagged) {
+        const reasons = (r.needsRebuildReasons && r.needsRebuildReasons.length > 0)
+          ? r.needsRebuildReasons.join('; ')
+          : (r.editorError ? `editor failed: ${r.editorError}` : 'editor did not run cleanly');
+        lines.push(`- \`${r.winnerPath}\` (merged \`${r.loserPath}\`) — ${reasons}`);
+      }
+      lines.push('');
+      lines.push(`Review editor reports in \`data/reports/editor/<slug>-editor-report.md\`, fix issues in \`data/posts/<slug>.html\`, then publish in Shopify admin → Blog Posts → Drafts.`);
       lines.push('');
     }
   }
 
-  lines.push('## Resolution Decisions');
+  // Dedicated review queue for ambiguous cases. HIGH-confidence cases were
+  // already auto-applied (or auto-published / saved-as-draft); the user only
+  // needs to weigh in on MEDIUM and LOW decisions plus any editor-flagged drafts.
+  const needsReview = [...med, ...low];
+  if (needsReview.length > 0) {
+    lines.push('## 🔍 Needs review');
+    lines.push('');
+    lines.push(`${needsReview.length} ambiguous decision(s) require your call. The agent did not apply changes for these — pick a winner per query and re-run with \`--apply\` (or accept the recommendation and apply by hand).`);
+    lines.push('');
+    for (const d of needsReview) {
+      const icon = { MEDIUM: '🟡', LOW: '🔴' }[d.confidence];
+      lines.push(`### ${icon} "${d.query}"`);
+      lines.push(`Recommended winner: \`${d.winner}\`  `);
+      lines.push(`Why ambiguous: ${d.summary}`);
+      lines.push('');
+      for (const l of d.losers) {
+        const aIcon = { REDIRECT: '↩️', CONSOLIDATE: '🔀', MONITOR: '👁️' }[l.action] || '•';
+        lines.push(`- ${aIcon} **${l.action}** \`${l.path}\` — ${l.reason}`);
+      }
+      lines.push('');
+    }
+  }
+
+  lines.push('## Resolution Decisions (full audit trail)');
   lines.push('');
 
   for (const d of decisions) {
