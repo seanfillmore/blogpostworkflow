@@ -6,7 +6,6 @@ One-off probes for evaluating which Amazon Seller Central data is useful for bus
 
 `.env` must contain the production credentials registered in Solution Provider Portal:
 
-- `AMAZON_SPAPI_PRODUCTION_APP_ID`
 - `AMAZON_SPAPI_PRODUCTION_LWA_CLIENT_ID`
 - `AMAZON_SPAPI_PRODUCTION_LWA_CLIENT_SECRET`
 - `AMAZON_SPAPI_PRODUCTION_REFRESH_TOKEN`
@@ -43,6 +42,8 @@ Each run writes JSON to `data/amazon-explore/YYYY-MM-DD-<script>-<env>.json`. Th
 ## Known limitations
 
 - Brand Analytics requires Brand Registry + Amazon Business Analytics role. If `explore-brand-analytics.mjs` returns 403 or FATAL, that's why.
+- Brand Analytics search-terms reports are several GB unzipped. The script streams the file to disk (using `streamReportToFile` from the client lib) and prints `jq` commands to sample the data — it does NOT print rows inline like the other scripts. Use the printed `jq` examples to inspect the JSON without loading it into memory.
+- The `Finance and Accounting` role may not be approved by default. If `explore-finance.mjs` returns 403, request the role in Solution Provider Portal and re-run.
 - Orders data is returned unredacted only when the Orders (PII) role is active.
 - Reports (Brand Analytics, Sales & Traffic) are async — scripts poll up to 10 minutes before timing out.
 - Ads API data (sponsored products/brands performance) is a separate API, not covered here — see Phase 1b spec when planned.
