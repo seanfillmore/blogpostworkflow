@@ -37,6 +37,8 @@
  *   node agents/cannibalization-resolver/index.js --days 28    # shorter GSC window
  *   node agents/cannibalization-resolver/index.js --min-impr 30
  *   node agents/cannibalization-resolver/index.js --report-json  # write latest.json with all conflicts
+ *   node agents/cannibalization-resolver/index.js --publish-pending-drafts          # dry run cleanup
+ *   node agents/cannibalization-resolver/index.js --publish-pending-drafts --apply  # publish backlog drafts
  *
  * Output:
  *   data/reports/cannibalization-report.md
@@ -95,6 +97,7 @@ const apply = args.includes('--apply');
 const days = parseInt(getArg('--days') || '90', 10);
 const minImpr = parseInt(getArg('--min-impr') || '50', 10);
 const reportJson = args.includes('--report-json');
+const publishPending = args.includes('--publish-pending-drafts');
 
 // ── URL helpers ───────────────────────────────────────────────────────────────
 
@@ -353,7 +356,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
           let editorRan = false;
           let editorError = null;
           try {
-            execSync(`"${process.execPath}" agents/editor/index.js data/posts/${winnerHandle}.html`, { cwd: ROOT, stdio: 'pipe' });
+            execSync(`"${process.execPath}" agents/editor/index.js data/posts/${winnerHandle}/content.html`, { cwd: ROOT, stdio: 'pipe' });
             editorRan = true;
             console.log(`done → data/reports/editor/${winnerHandle}-editor-report.md`);
           } catch (editorErr) {
@@ -558,9 +561,180 @@ function buildReport(groups, decisions, results) {
   return lines.join('\n');
 }
 
+// ── publish pending drafts ────────────────────────────────────────────────────
+
+/**
+ * Publish merged-blog drafts that the agent saved on a previous run but never
+ * auto-published. Reads the latest cannibalization-decisions.json, looks at
+ * results with status "draft_saved" or "draft_needs_review", fetches the
+ * current Shopify draft for each unique winner, runs the editor on it, and
+ * publishes the ones that come back clean. Drafts the editor flags stay as
+ * drafts and are listed in the summary so they can be addressed manually.
+ */
+async function publishPendingDrafts() {
+  console.log(`\nCannibalization Resolver — publish pending drafts`);
+  console.log(`Mode: ${apply ? 'APPLY' : 'DRY RUN'}\n`);
+
+  const decisionsPath = join(REPORTS_DIR, 'cannibalization-decisions.json');
+  let decisionsFile;
+  try {
+    decisionsFile = JSON.parse(readFileSync(decisionsPath, 'utf8'));
+  } catch (e) {
+    console.error(`  Could not read ${decisionsPath}: ${e.message}`);
+    process.exit(1);
+  }
+
+  const draftStatuses = new Set(['draft_saved', 'draft_needs_review']);
+  const draftResults = (decisionsFile.results || []).filter((r) => draftStatuses.has(r.status));
+  if (draftResults.length === 0) {
+    console.log('  No pending drafts in latest decisions file.');
+    return;
+  }
+
+  // Dedupe by winner path — multiple queries can map to the same winner article.
+  const uniqueWinners = [...new Set(draftResults.map((r) => r.winnerPath))];
+  // Map each winner to a representative target query (first one in the decisions list).
+  const targetQueryByWinner = new Map();
+  for (const r of draftResults) {
+    if (!targetQueryByWinner.has(r.winnerPath)) targetQueryByWinner.set(r.winnerPath, r.query);
+  }
+  console.log(`  Pending draft winners: ${uniqueWinners.length}`);
+  for (const w of uniqueWinners) console.log(`    ${w}`);
+
+  process.stdout.write('\n  Loading Shopify articles... ');
+  const articleIndex = await buildArticleIndex();
+  console.log(`${articleIndex.size} articles`);
+
+  const summary = [];
+  for (const winnerPath of uniqueWinners) {
+    const handle = slugFromPath(winnerPath);
+    const article = articleIndex.get(handle);
+    if (!article) {
+      console.log(`\n  ⚠ ${winnerPath} — article not found on Shopify (skipping)`);
+      summary.push({ winnerPath, status: 'article_not_found' });
+      continue;
+    }
+    if (article.published_at) {
+      console.log(`\n  ✓ ${winnerPath} — already published (${article.published_at})`);
+      summary.push({ winnerPath, status: 'already_published' });
+      continue;
+    }
+
+    console.log(`\n  ${winnerPath}`);
+    if (!apply) {
+      console.log('    [dry-run] would fetch current body_html, run editor, and publish if clean');
+      summary.push({ winnerPath, status: 'would_process' });
+      continue;
+    }
+
+    // Refresh local files from current Shopify draft so the editor evaluates the
+    // actual content the user would see (the local data/posts/<slug>.html may be
+    // stale from an earlier server run).
+    try {
+      ensurePostDir(handle);
+      writeFileSync(getContentPath(handle), article.body_html || '');
+
+      // Preserve any existing meta.json fields (e.g. shopify_article_id) and
+      // ensure target_keyword + title are present so the editor can run.
+      let existingMeta = {};
+      try { existingMeta = JSON.parse(readFileSync(getMetaPath(handle), 'utf8')); } catch { /* ok */ }
+      // Drop any stale needs_rebuild flag from a previous run so the editor's
+      // current verdict is the source of truth.
+      const { needs_rebuild: _drop, ...metaRest } = existingMeta;
+      writeFileSync(getMetaPath(handle), JSON.stringify({
+        ...metaRest,
+        title: article.title,
+        target_keyword: targetQueryByWinner.get(winnerPath) || metaRest.target_keyword || article.title,
+      }, null, 2));
+    } catch (e) {
+      console.log(`    error preparing local files: ${e.message}`);
+      summary.push({ winnerPath, status: 'prep_error', error: e.message });
+      continue;
+    }
+
+    // Run editor on the freshly-pulled content.
+    process.stdout.write('    Running editor review... ');
+    let editorRan = false;
+    let editorError = null;
+    try {
+      execSync(`"${process.execPath}" agents/editor/index.js data/posts/${handle}/content.html`, { cwd: ROOT, stdio: 'pipe' });
+      editorRan = true;
+      console.log('done');
+    } catch (editorErr) {
+      editorError = editorErr.stderr?.toString().trim().slice(0, 160) ?? editorErr.message;
+      console.log(`failed (non-fatal): ${editorError}`);
+    }
+
+    let needsRebuild = null;
+    if (editorRan) {
+      try {
+        const meta = JSON.parse(readFileSync(getMetaPath(handle), 'utf8'));
+        needsRebuild = meta.needs_rebuild ?? null;
+      } catch { /* ignore */ }
+    }
+    const editorClean = editorRan && !needsRebuild;
+
+    if (!editorClean) {
+      const reasons = needsRebuild?.reasons?.join('; ') || (editorError ? `editor failed: ${editorError}` : 'editor did not run cleanly');
+      console.log(`    📝 still needs review — ${reasons}`);
+      summary.push({ winnerPath, status: 'still_needs_review', reasons });
+      continue;
+    }
+
+    process.stdout.write('    Publishing... ');
+    try {
+      await updateArticle(article.blogId, article.articleId, { published: true });
+      console.log('published ✅');
+      summary.push({ winnerPath, status: 'published' });
+    } catch (e) {
+      console.log(`failed: ${e.message}`);
+      summary.push({ winnerPath, status: 'publish_error', error: e.message });
+    }
+  }
+
+  // Summary
+  console.log('\n  ── Summary ──');
+  const counts = summary.reduce((acc, s) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; }, {});
+  for (const [status, count] of Object.entries(counts)) {
+    console.log(`    ${status}: ${count}`);
+  }
+
+  // Write a small report so the run is auditable in the digest.
+  const reportPath = join(REPORTS_DIR, 'publish-pending-drafts-report.md');
+  const lines = [
+    `# Cannibalization Pending Drafts — Publish Run`,
+    `**Run date:** ${new Date().toISOString()}  `,
+    `**Mode:** ${apply ? 'APPLY' : 'DRY RUN'}  `,
+    `**Source:** \`${decisionsPath}\`  `,
+    '',
+    '## Summary',
+    '',
+    '| Status | Count |',
+    '|---|---|',
+    ...Object.entries(counts).map(([k, v]) => `| ${k} | ${v} |`),
+    '',
+    '## Per-draft outcome',
+    '',
+    '| Winner | Status | Detail |',
+    '|---|---|---|',
+    ...summary.map((s) => {
+      const detail = s.reasons || s.error || '—';
+      return `| \`${s.winnerPath}\` | ${s.status} | ${detail} |`;
+    }),
+  ];
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  writeFileSync(reportPath, lines.join('\n'));
+  console.log(`\n  Report: ${reportPath}`);
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
+  if (publishPending) {
+    await publishPendingDrafts();
+    return;
+  }
+
   console.log(`\nCannibalization Resolver — ${config.name}`);
   console.log(`Mode: ${apply ? 'APPLY' : 'DRY RUN'} | Window: ${days}d | Min impressions: ${minImpr}\n`);
 
