@@ -2,12 +2,16 @@
  * Fetch Brand Analytics search terms report (weekly).
  * Requires Brand Registry + Amazon Business Analytics role.
  *
+ * The full US weekly search-terms report is several GB of JSON
+ * (every department × every search term). It's too large to load
+ * into memory or parse inline. This script streams the file to disk
+ * and prints jq commands the user can run to inspect samples.
+ *
  * Usage:
  *   node scripts/amazon/explore-brand-analytics.mjs
  */
 
-import { createReadStream, mkdirSync, statSync } from 'node:fs';
-import { createInterface } from 'node:readline';
+import { mkdirSync, statSync } from 'node:fs';
 import {
   getClient,
   getMarketplaceId,
@@ -49,36 +53,26 @@ console.log(`Report document ID: ${reportDocumentId}`);
 const outDir = 'data/amazon-explore';
 mkdirSync(outDir, { recursive: true });
 const today = new Date().toISOString().slice(0, 10);
-const outPath = `${outDir}/${today}-brand-analytics-${client.env}.tsv`;
+const outPath = `${outDir}/${today}-brand-analytics-${client.env}.json`;
 
-console.log(`Streaming to ${outPath}...`);
-const { byteCount, contentType } = await streamReportToFile(client, reportDocumentId, outPath);
+console.log(`\nStreaming to ${outPath}...`);
+const { byteCount } = await streamReportToFile(client, reportDocumentId, outPath);
 const mb = (byteCount / 1024 / 1024).toFixed(1);
-console.log(`Wrote ${byteCount} bytes (${mb} MB), content-type: ${contentType}`);
+const gb = (byteCount / 1024 / 1024 / 1024).toFixed(2);
+console.log(`Wrote ${byteCount.toLocaleString()} bytes (${mb} MB / ${gb} GB)`);
+console.log(`File size on disk: ${statSync(outPath).size.toLocaleString()} bytes`);
 
-// Read first 50 lines as a sample.
-const sample = [];
-const stream = createReadStream(outPath, { encoding: 'utf-8' });
-const rl = createInterface({ input: stream, crlfDelay: Infinity });
-for await (const line of rl) {
-  sample.push(line);
-  if (sample.length >= 51) break; // headers + 50 data rows
-}
-rl.close();
-stream.close();
-
-if (sample.length === 0) {
-  console.log('\nFile is empty.');
-} else {
-  const headers = sample[0].split('\t');
-  console.log(`\nColumns (${headers.length}): ${headers.join(' | ')}`);
-  console.log(`\nFirst 5 data rows:`);
-  for (const line of sample.slice(1, 6)) {
-    const fields = line.split('\t');
-    const row = Object.fromEntries(headers.map((h, i) => [h, fields[i]]));
-    console.log(JSON.stringify(row, null, 2));
-  }
-  console.log(`\n(Showing first 5 of ${sample.length - 1} sampled rows; full file at ${outPath})`);
-}
-
-console.log(`\nFile size: ${statSync(outPath).size} bytes`);
+console.log(`\n--- Inspecting the data ---`);
+console.log(`The file is JSON with shape: { "dataByDepartmentAndSearchTerm": [ {...}, {...}, ... ] }`);
+console.log(`Each row has fields like: searchTerm, searchFrequencyRank, clickedAsin, clickShareRank, etc.`);
+console.log(`\nSample commands (run from the project root):`);
+console.log(`  # Peek at the structure (first 500 chars)`);
+console.log(`  head -c 500 ${outPath}`);
+console.log(`  # Count total rows`);
+console.log(`  jq '.dataByDepartmentAndSearchTerm | length' ${outPath}`);
+console.log(`  # First 5 rows`);
+console.log(`  jq '.dataByDepartmentAndSearchTerm[:5]' ${outPath}`);
+console.log(`  # Top 20 highest-frequency search terms (by rank)`);
+console.log(`  jq '.dataByDepartmentAndSearchTerm | sort_by(.searchFrequencyRank // 999999) | .[:20] | .[] | {searchTerm, searchFrequencyRank}' ${outPath}`);
+console.log(`  # Filter to your brand's clicked ASINs only (replace with your ASINs)`);
+console.log(`  jq '.dataByDepartmentAndSearchTerm | map(select(.clickedAsin == "B0B686R9FZ"))' ${outPath}`);
