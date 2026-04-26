@@ -115,10 +115,12 @@ test('proposeChange returns apply+window_in_forming_period if active window is s
 });
 
 test('logChangeEvent creates an immutable event file under data/changes/events/YYYY-MM/', () => {
-  // Existing window from prior test should hold this event
+  // The prior test called logChangeEvent once for forming-test (title), then proposeChange
+  // for meta_description. proposeChange does not write an event — agents call logChangeEvent
+  // separately after applying the change. So the window has exactly 1 logged event.
   const w = getActiveWindow('forming-test');
   assert.ok(w);
-  assert.equal(w.changes.length, 2); // 2 events from the two logChangeEvent calls above
+  assert.equal(w.changes.length, 1);
 });
 
 test('queueChange writes a queue item under data/changes/queue/<slug>/', async () => {
