@@ -55,3 +55,8 @@ Ingredients/
 .superpowers/
 docs/google-ads-api-design-doc.html
 amazon_product_photos/
+
+# Change-log transient queue (contents ignored, .gitkeep tracked)
+data/changes/queue/*.json
+data/changes/queue/**/*.json
+!data/changes/queue/.gitkeep
