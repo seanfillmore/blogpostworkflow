@@ -1,8 +1,8 @@
 // tests/agents/dashboard-meta-ads.test.js
 import { strict as assert } from 'node:assert';
-import { readFileSync } from 'node:fs';
+import { readAllDashboardSource } from '../helpers/dashboard-source.js';
 
-const src = readFileSync('agents/dashboard/index.js', 'utf8');
+const src = readAllDashboardSource();
 
 // New constants
 assert.ok(src.includes('META_ADS_INSIGHTS_DIR'), 'must define insights dir constant');
@@ -19,9 +19,11 @@ assert.ok(src.includes('/api/creative-packages/'), 'must have creative-packages 
 assert.ok(src.includes('download'), 'must have download endpoint');
 assert.ok(src.includes('application/zip'), 'must serve ZIP files');
 
-// Tab
-assert.ok(src.includes("switchTab('ad-intelligence'"), 'must have ad-intelligence tab button');
-assert.ok(src.includes('tab-ad-intelligence'), 'must have tab panel');
-assert.ok(src.includes('renderAdIntelligenceTab'), 'must have renderAdIntelligenceTab function');
+// Tab — the live tab is "My Meta Ads"; "Ad Intelligence" is a disabled
+// placeholder pill kept for future use.
+assert.ok(src.includes("switchTab('my-meta-ads'"), 'must have my-meta-ads tab button');
+assert.ok(src.includes('tab-my-meta-ads'), 'must have my-meta-ads tab panel');
+assert.ok(src.includes('renderMyMetaAdsTab'), 'must have renderMyMetaAdsTab function');
+assert.ok(src.includes('tab-ad-intelligence'), 'must keep Ad Intelligence placeholder panel');
 
 console.log('✓ dashboard meta-ads tests pass');

@@ -448,7 +448,7 @@ async function runItem(item) {
   return true;
 }
 
-export function formatPublishAt(date) {
+export function formatPublishAt(date, now = new Date()) {
   const PUBLISH_DAYS = new Set([1, 3, 5]); // Mon, Wed, Fri
   const d = new Date(date);
   // Snap forward to next publish day
@@ -456,7 +456,6 @@ export function formatPublishAt(date) {
     d.setDate(d.getDate() + 1);
   }
   // If that date is in the past, advance by 1 week until it is future
-  const now = new Date();
   while (d < now) {
     d.setDate(d.getDate() + 7);
   }

@@ -1,7 +1,7 @@
-import { strict as assert } from 'assert';
-import { readFileSync } from 'fs';
+import { strict as assert } from 'node:assert';
+import { readAllDashboardSource } from '../helpers/dashboard-source.js';
 
-const src = readFileSync('agents/dashboard/index.js', 'utf8');
+const src = readAllDashboardSource();
 
 assert.ok(src.includes('GOOGLE_ADS_SNAPSHOTS_DIR'), 'must define snapshot dir constant');
 assert.ok(src.includes("switchTab('ads'"), 'must have ads tab button');
