@@ -68,6 +68,9 @@ const NODE = process.execPath; // full path to the running node binary
 // Step 0: daily review monitor
 runStep('review-monitor', `"${NODE}" agents/review-monitor/index.js`);
 
+// Step 0a: catch any manual Shopify edits before agents start their daily work
+runStep('change-diff-detector', `"${NODE}" agents/change-diff-detector/index.js${dryFlag}`);
+
 // Step 1: flip any scheduled drafts that are due live (+ post-publish steps)
 
 runStep('publish-due', `"${NODE}" agents/calendar-runner/index.js --publish-due${dryFlag}`, { retries: 1, critical: true });
@@ -190,6 +193,10 @@ if (!dryFlag) {
     }
   }
 }
+
+// Step 5z: change-log verdict + queue release (run daily, after all agent runs)
+runStep('change-verdict', `"${NODE}" agents/change-verdict/index.js${dryFlag}`);
+runStep('change-queue-processor', `"${NODE}" agents/change-queue-processor/index.js${dryFlag}`);
 
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {

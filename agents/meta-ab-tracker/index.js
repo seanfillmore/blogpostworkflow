@@ -5,6 +5,14 @@
  * from GSC snapshots (pre-test baseline mean vs test-period mean).
  * After 28 days, concludes the test: reverts Shopify metafield if Variant B lost.
  *
+ * Note (2026-04-25): the unified change-log system in lib/change-log.js
+ * now handles meta tag verdicts as part of generic change-event tracking.
+ * This agent skips any test whose slug has an active change-log window
+ * and processes only its legacy `data/meta-tests/` definitions. New meta
+ * changes should be made via lib/change-log.js (proposeChange + logChangeEvent).
+ * After the existing legacy tests complete (~60 days), this agent can be
+ * removed.
+ *
  * Usage:
  *   node agents/meta-ab-tracker/index.js
  *   node agents/meta-ab-tracker/index.js --dry-run
@@ -15,6 +23,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { upsertMetafield } from '../../lib/shopify.js';
+import { findActiveWindow } from '../../lib/change-log.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -113,6 +122,15 @@ async function main() {
   if (!activeTests.length) { console.log('No active tests.'); return; }
 
   for (const { f, t } of activeTests) {
+    // If the new change-log system has an active window for this slug,
+    // delegate to that system and skip the legacy path.
+    if (t.slug) {
+      const window = findActiveWindow(t.slug);
+      if (window) {
+        console.log(`\n${t.slug}: delegated to change-log (window ${window.id})`);
+        continue;
+      }
+    }
     console.log(`\nProcessing: ${t.slug}`);
     const today    = new Date().toISOString().slice(0, 10);
     const start    = new Date(t.startDate + 'T12:00:00Z');
