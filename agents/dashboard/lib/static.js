@@ -57,6 +57,6 @@ export function serveStatic(req, res, publicDir) {
     'Cache-Control': 'public, max-age=60',
   });
   if (req.method === 'HEAD') { res.end(); return true; }
-  createReadStream(filePath).pipe(res);
+  createReadStream(filePath).on('error', () => { res.end(); }).pipe(res);
   return true;
 }
