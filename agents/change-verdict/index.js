@@ -49,6 +49,34 @@ function listAllWindows() {
   return out;
 }
 
+export function summarizeHealthState(windows, nowIso = new Date().toISOString()) {
+  const eventsDir = join(CHANGES_ROOT, 'events');
+  let totalEvents = 0;
+  if (existsSync(eventsDir)) {
+    for (const ym of readdirSync(eventsDir)) {
+      const ymDir = join(eventsDir, ym);
+      try {
+        if (!statSync(ymDir).isDirectory()) continue;
+        totalEvents += readdirSync(ymDir).filter((f) => f.endsWith('.json')).length;
+      } catch {}
+    }
+  }
+  const windowsByStatus = { forming: 0, measuring: 0, verdict_pending: 0, verdict_landed: 0 };
+  for (const w of windows) {
+    const s = computeWindowStatus(w, nowIso);
+    if (s in windowsByStatus) windowsByStatus[s]++;
+  }
+  // .gitkeep mtime ≈ first deploy on this machine — if zero events 7+ days after, the wiring is broken.
+  let daysSinceDeploy = null;
+  try {
+    const kp = join(eventsDir, '.gitkeep');
+    if (existsSync(kp)) {
+      daysSinceDeploy = (Date.now() - statSync(kp).mtimeMs) / 86400000;
+    }
+  } catch {}
+  return { totalEvents, windowsByStatus, daysSinceDeploy };
+}
+
 function loadEventsForWindow(window) {
   const events = [];
   for (const eid of window.changes) {
@@ -129,14 +157,8 @@ async function main() {
   const due = windows.filter((w) => !w.verdict && nowIso >= w.verdict_at);
   console.log(`  ${windows.length} total windows, ${due.length} due for verdict`);
 
-  if (due.length === 0) {
-    return;
-  }
-
-  const needsArticleIndex = !dryRun;
-  const articleIndex = needsArticleIndex ? await buildArticleIndex() : new Map();
-
   const summary = { improved: 0, no_change: 0, regressed: 0, inconclusive: 0, reverted: 0, surfaced: 0, kept: 0 };
+  const articleIndex = !dryRun && due.length > 0 ? await buildArticleIndex() : new Map();
 
   for (const window of due) {
     console.log(`\n  ${window.url} (window ${window.id})`);
@@ -196,15 +218,33 @@ async function main() {
     }
   }
 
-  // Notify
-  const lines = [
-    `Change-verdict run: ${due.length} windows processed`,
-    `  Improved: ${summary.improved} (kept)`,
-    `  No change: ${summary.no_change} (kept)`,
-    `  Inconclusive: ${summary.inconclusive} (kept)`,
-    `  Regressed: ${summary.regressed} (reverted: ${summary.reverted}, surfaced: ${summary.surfaced})`,
-  ];
-  await notify({ subject: 'Change Verdict ran', body: lines.join('\n') });
+  // Daily heartbeat — always emit, even when no verdicts due, so the digest carries health stats.
+  const health = summarizeHealthState(windows, nowIso);
+  const lines = [`Change-verdict run: ${due.length} verdicts processed`];
+  if (due.length > 0) {
+    lines.push(
+      `  Improved: ${summary.improved} (kept)`,
+      `  No change: ${summary.no_change} (kept)`,
+      `  Inconclusive: ${summary.inconclusive} (kept)`,
+      `  Regressed: ${summary.regressed} (reverted: ${summary.reverted}, surfaced: ${summary.surfaced})`,
+    );
+  }
+  lines.push(
+    `Health:`,
+    `  Events logged total: ${health.totalEvents}`,
+    `  Windows: ${health.windowsByStatus.forming} forming, ${health.windowsByStatus.measuring} measuring, ${health.windowsByStatus.verdict_pending} pending, ${health.windowsByStatus.verdict_landed} verdict_landed`,
+  );
+  let status = 'info';
+  if (health.daysSinceDeploy != null && health.daysSinceDeploy >= 7 && health.totalEvents === 0) {
+    status = 'error';
+    lines.push(
+      '',
+      `⚠ HEALTH ALERT: 0 events logged ${Math.floor(health.daysSinceDeploy)}d after deploy. Check that agents call logChangeEvent and that change-diff-detector is actually running.`,
+    );
+  }
+  if (!dryRun) {
+    await notify({ subject: 'Change Verdict ran', body: lines.join('\n'), status });
+  }
   console.log('\n' + lines.join('\n'));
 }
 
