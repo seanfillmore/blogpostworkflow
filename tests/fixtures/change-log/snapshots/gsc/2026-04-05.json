@@ -1,0 +1,22 @@
+{
+  "date": "2026-04-05",
+  "topPages": [
+    {
+      "page": "https://www.realskincare.com/products/coconut-lotion",
+      "impressions": 115,
+      "clicks": 9,
+      "ctr": 0.0783,
+      "position": 6.0
+    }
+  ],
+  "queries": [
+    {
+      "query": "coconut lotion",
+      "page": "https://www.realskincare.com/products/coconut-lotion",
+      "impressions": 92,
+      "clicks": 7,
+      "ctr": 0.0783,
+      "position": 6.0
+    }
+  ]
+}
