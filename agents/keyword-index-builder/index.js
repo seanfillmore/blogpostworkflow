@@ -21,7 +21,7 @@ import { aggregateGscWindow } from '../../lib/keyword-index/gsc-aggregator.js';
 import { aggregateGa4Window } from '../../lib/keyword-index/ga4-aggregator.js';
 import { parseSqpReport, mergeSqpReports, fetchSqpReportForAsin } from '../../lib/keyword-index/amazon-sqp.js';
 import { parseBaReportStream, fetchBaReport } from '../../lib/keyword-index/amazon-ba.js';
-import { isRsc } from '../../lib/keyword-index/asin-classifier.js';
+import { findLatestListingsDump, listRscAsinsFromDump } from '../../lib/keyword-index/rsc-asins.js';
 import { mergeSources, loadClustersFromPriorIndex } from '../../lib/keyword-index/merge.js';
 import { rollUpCompetitorsByCluster } from '../../lib/keyword-index/competitors.js';
 import { enrichWithMarketData } from '../../lib/keyword-index/dataforseo-enricher.js';
@@ -71,24 +71,17 @@ function atomicWriteJson(path, data) {
   renameSync(tmp, path);
 }
 
-async function listRscAsins(client) {
-  // Pull catalog listings, classify, return RSC ASINs only.
-  // Uses the same listings endpoint the explore-listings.mjs script uses.
-  // For now, bootstrap from a cached file if present (cache-or-fetch pattern);
-  // a full implementation may iterate listings pagination.
-  const cachePath = join(ROOT, 'data', '.rsc-asins.json');
-  if (existsSync(cachePath)) {
-    try {
-      const cached = JSON.parse(readFileSync(cachePath, 'utf8'));
-      return cached.asins.filter((p) => isRsc(p)).map((p) => p.asin);
-    } catch {}
+function listRscAsins() {
+  // Read the latest dump from `scripts/amazon/explore-listings.mjs`
+  // (writes data/amazon-explore/<date>-listings-<env>.json) and return
+  // the RSC-classified ASINs only. Culina is filtered out at this layer
+  // so subsequent SQP/BA stages never see it.
+  const dumpPath = findLatestListingsDump(ROOT);
+  if (!dumpPath) {
+    console.warn('  No listings dump under data/amazon-explore/. Run `node scripts/amazon/explore-listings.mjs` to seed it.');
+    return [];
   }
-  // Fallback: fetch full listings via spApiRequest and filter.
-  // (Implementer note: see scripts/amazon/explore-listings.mjs for the
-  // exact endpoint shape. Cache the full classified product list to
-  // data/.rsc-asins.json so subsequent runs are fast.)
-  console.warn('  No cached RSC ASIN list at data/.rsc-asins.json. Run scripts/amazon/explore-listings.mjs first to seed it.');
-  return [];
+  return listRscAsinsFromDump(dumpPath);
 }
 
 async function runStage(name, fn, stageReport) {
@@ -129,7 +122,7 @@ async function main() {
   let baCompetitors = {};
   await runStage('amazon', async () => {
     const client = getClient();
-    const rscAsins = await listRscAsins(client);
+    const rscAsins = listRscAsins();
     if (rscAsins.length === 0) {
       throw new Error('No RSC ASINs available — Amazon ingest skipped');
     }
