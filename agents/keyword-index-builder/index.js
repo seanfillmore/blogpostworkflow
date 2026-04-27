@@ -19,14 +19,13 @@ import { fileURLToPath } from 'node:url';
 
 import { aggregateGscWindow } from '../../lib/keyword-index/gsc-aggregator.js';
 import { aggregateGa4Window } from '../../lib/keyword-index/ga4-aggregator.js';
-import { parseSqpReport, mergeSqpReports, fetchSqpReportForAsin } from '../../lib/keyword-index/amazon-sqp.js';
-import { parseBaReportStream, fetchBaReport } from '../../lib/keyword-index/amazon-ba.js';
+import { parseBaReportStream } from '../../lib/keyword-index/amazon-ba.js';
 import { findLatestListingsDump, listRscAsinsFromDump } from '../../lib/keyword-index/rsc-asins.js';
+import { findLatestSqpDump, findLatestBaDump, parseSqpDump } from '../../lib/keyword-index/dump-readers.js';
 import { mergeSources, loadClustersFromPriorIndex } from '../../lib/keyword-index/merge.js';
 import { rollUpCompetitorsByCluster } from '../../lib/keyword-index/competitors.js';
 import { enrichWithMarketData } from '../../lib/keyword-index/dataforseo-enricher.js';
 
-import { getClient, getMarketplaceId, requestReport, pollReport, downloadReport, streamReportToFile, request as spApiRequest } from '../../lib/amazon/sp-api-client.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -37,8 +36,6 @@ const SNAPSHOTS_GA4 = join(ROOT, 'data', 'snapshots', 'ga4');
 const INDEX_PATH = join(ROOT, 'data', 'keyword-index.json');
 const COMPETITORS_PATH = join(ROOT, 'data', 'category-competitors.json');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'keyword-index');
-const BA_TMP_DIR = join(ROOT, 'data', '.keyword-index-tmp');
-
 const REBUILD_DAYS = 14;
 const WINDOW_DAYS = 56;
 
@@ -106,7 +103,6 @@ async function main() {
   }
 
   mkdirSync(REPORTS_DIR, { recursive: true });
-  mkdirSync(BA_TMP_DIR, { recursive: true });
 
   const fromDate = isoDate(new Date(Date.now() - WINDOW_DAYS * 86400000));
   const toDate = isoDate(new Date(Date.now() - 3 * 86400000)); // 3-day GA4 lag buffer
@@ -117,41 +113,33 @@ async function main() {
 
   const stageReport = {};
 
-  // Stage 1: Amazon ingest
+  // Stage 1: Amazon ingest from explore-script dumps.
+  // The orchestrator does NOT call SP-API live — that's the explore scripts'
+  // job (scripts/amazon/explore-search-query-performance-rsc.mjs and
+  // explore-brand-analytics.mjs run on weekly cron). Reading dumps avoids
+  // the per-ASIN rate-limit problem entirely.
   let amazonMap = {};
   let baCompetitors = {};
   await runStage('amazon', async () => {
-    const client = getClient();
-    const rscAsins = listRscAsins();
-    if (rscAsins.length === 0) {
-      throw new Error('No RSC ASINs available — Amazon ingest skipped');
+    const sqpDumpPath = findLatestSqpDump(ROOT);
+    if (!sqpDumpPath) {
+      throw new Error('No SQP dump under data/amazon-explore/. Run scripts/amazon/explore-search-query-performance-rsc.mjs first.');
     }
+    const sqpDump = JSON.parse(readFileSync(sqpDumpPath, 'utf8'));
+    amazonMap = parseSqpDump(sqpDump);
+    console.log(`    SQP dump: ${sqpDumpPath} → ${Object.keys(amazonMap).length} queries`);
 
-    // SQP — one report per RSC ASIN
-    const sqpMaps = [];
-    for (const asin of rscAsins) {
+    const baDumpPath = findLatestBaDump(ROOT);
+    if (baDumpPath) {
+      const rscAsins = new Set(listRscAsins());
       try {
-        const raw = await fetchSqpReportForAsin({
-          client, asin, fromDate, toDate,
-          getMarketplaceId, requestReport, pollReport, downloadReport,
-        });
-        sqpMaps.push(parseSqpReport(raw));
+        baCompetitors = await parseBaReportStream({ filePath: baDumpPath, rscAsins });
+        console.log(`    BA dump: ${baDumpPath} → ${Object.keys(baCompetitors).length} queries with competitor data`);
       } catch (err) {
-        console.warn(`    SQP for ${asin} failed: ${err.message}`);
+        console.warn(`    BA parse failed: ${err.message}`);
       }
-    }
-    amazonMap = mergeSqpReports(sqpMaps);
-
-    // BA — single weekly report streamed to disk then parsed
-    const baOutPath = join(BA_TMP_DIR, `ba-${nowIso.slice(0, 10)}.jsonl`);
-    try {
-      await fetchBaReport({
-        client, fromDate, toDate, outPath: baOutPath,
-        getMarketplaceId, requestReport, pollReport, streamReportToFile,
-      });
-      baCompetitors = await parseBaReportStream({ filePath: baOutPath, rscAsins: new Set(rscAsins) });
-    } catch (err) {
-      console.warn(`    BA fetch/parse failed: ${err.message}`);
+    } else {
+      console.warn('    No BA dump under data/amazon-explore/. Competitor data unavailable. Run explore-brand-analytics.mjs to seed.');
     }
 
     // Merge BA's competitor list into amazonMap entries by query
