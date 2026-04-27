@@ -244,3 +244,40 @@ test('unmappedIndexEntries respects limit', () => {
   const out = unmappedIndexEntries(unmappedFixture, new Set(), { limit: 2 });
   assert.equal(out.length, 2);
 });
+
+import { topAmazonValidatedForAds } from '../../../lib/keyword-index/consumer.js';
+
+const adsFixture = {
+  keywords: {
+    'a': { keyword: 'a', amazon: { purchases: 100, conversion_share: 0.10 } },         // score 10.0
+    'b': { keyword: 'b', amazon: { purchases: 200, conversion_share: 0.05 } },         // score 10.0 (tie)
+    'c': { keyword: 'c', amazon: { purchases: 50,  conversion_share: 0.20 } },         // score 10.0 (tie)
+    'd': { keyword: 'd', amazon: { purchases: 500, conversion_share: 0.01 } },         // score 5.0
+    'e': { keyword: 'e', amazon: { purchases: 0,   conversion_share: 0.50 } },         // excluded (0 purchases)
+    'f': { keyword: 'f', amazon: { purchases: 100, conversion_share: 0 } },            // excluded (0 share)
+    'g': { keyword: 'g' },                                                              // excluded (no amazon)
+  },
+};
+
+test('topAmazonValidatedForAds excludes entries with 0 purchases or 0 conversion_share', () => {
+  const out = topAmazonValidatedForAds(adsFixture);
+  const keys = out.map((e) => e.keyword);
+  assert.ok(!keys.includes('e'));
+  assert.ok(!keys.includes('f'));
+  assert.ok(!keys.includes('g'));
+});
+
+test('topAmazonValidatedForAds sorts by purchases × conversion_share desc', () => {
+  const out = topAmazonValidatedForAds(adsFixture);
+  // a/b/c all tie at score 10.0; d is 5.0
+  assert.equal(out[out.length - 1].keyword, 'd');
+});
+
+test('topAmazonValidatedForAds respects limit', () => {
+  const out = topAmazonValidatedForAds(adsFixture, { limit: 2 });
+  assert.equal(out.length, 2);
+});
+
+test('topAmazonValidatedForAds returns [] for null index', () => {
+  assert.deepEqual(topAmazonValidatedForAds(null), []);
+});

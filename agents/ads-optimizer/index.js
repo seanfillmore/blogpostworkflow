@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getSearchVolume } from '../../lib/dataforseo.js';
+import { loadIndex, lookupByKeyword, topAmazonValidatedForAds } from '../../lib/keyword-index/consumer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -63,6 +64,36 @@ export function parseSuggestionsResponse(raw) {
     parsed.suggestions = parsed.suggestions.map(s => ({ ...s, status: s.status || 'pending' }));
   }
   return parsed;
+}
+
+export function buildIndexDemandSection(entries) {
+  if (!entries || entries.length === 0) return '';
+  const lines = [
+    '### Keyword Index — Amazon-Validated Demand',
+    'The following queries have measured Amazon purchases (this brand\'s product sold via this exact query) AND a non-zero conversion share. Use these as the strongest evidence for `keyword_add` suggestions — they have validated commercial intent that would not be visible from GSC alone.',
+    '',
+    '| Query | Amazon Purchases | Conversion Share |',
+    '|-------|------------------|------------------|',
+  ];
+  for (const e of entries) {
+    const purchases = e.amazon?.purchases ?? 0;
+    const cs = e.amazon?.conversion_share != null ? `${(e.amazon.conversion_share * 100).toFixed(1)}%` : '—';
+    lines.push(`| ${e.keyword} | ${purchases} | ${cs} |`);
+  }
+  return lines.join('\n');
+}
+
+export function tagSuggestionsWithIndex(suggestions, index) {
+  return (suggestions || []).map((s) => {
+    if (!s?.target) return s;
+    const entry = lookupByKeyword(index, s.target);
+    if (!entry) return s;
+    return {
+      ...s,
+      validation_source: entry.validation_source ?? null,
+      amazon_conversion_share: entry.amazon?.conversion_share ?? null,
+    };
+  });
 }
 
 export function loadRecentHistory(dir, days = 30) {
@@ -225,10 +256,18 @@ When Previous Recommendation History is provided:
     console.log(`  History: ${history.length} prior decisions loaded`);
   }
 
+  const idx = loadIndex(ROOT);
+  const adsValidatedDemand = topAmazonValidatedForAds(idx, { limit: 20 });
+  const indexSection = buildIndexDemandSection(adsValidatedDemand);
+  if (idx) {
+    console.log(`  Keyword-index: ${adsValidatedDemand.length} Amazon-validated keywords surfaced`);
+  }
+
   const parts = [
     `Analyze the following Google Ads account data and return optimization suggestions as JSON.`,
     campaignContext,
     historySection,
+    indexSection,
     `### Google Ads Snapshot (${adsSnap.date})\n${JSON.stringify(adsSnap, null, 2)}`,
     gscSnaps.length ? `### GSC Data (${gscSnaps.length} days, most recent first)\n${JSON.stringify(gscSnaps, null, 2)}` : '',
     ga4Snaps.length ? `### GA4 Data (${ga4Snaps.length} days, most recent first)\n${JSON.stringify(ga4Snaps, null, 2)}` : '',
@@ -257,6 +296,9 @@ When Previous Recommendation History is provided:
     const metrics = await getKeywordMetrics(s.target);
     if (metrics) s.keywordMetrics = metrics;
   }
+
+  // Tag every suggestion with keyword-index validation_source where applicable.
+  result.suggestions = tagSuggestionsWithIndex(result.suggestions, idx);
 
   // Save suggestion file
   const outDir = join(ROOT, 'data', 'ads-optimizer');

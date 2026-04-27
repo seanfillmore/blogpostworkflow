@@ -120,3 +120,33 @@ assert.ok(section.includes('2026-03-28'), 'must include date');
 rmSync(tmpDir, { recursive: true });
 
 console.log('✓ loadRecentHistory and buildHistorySection tests pass');
+
+import { tagSuggestionsWithIndex, buildIndexDemandSection } from '../../agents/ads-optimizer/index.js';
+
+// tagSuggestionsWithIndex — stamps validation_source when target matches
+{
+  const adsIdx = {
+    keywords: {
+      'natural-deodorant': { slug: 'natural-deodorant', keyword: 'natural deodorant', validation_source: 'amazon', amazon: { conversion_share: 0.12 } },
+    },
+  };
+  const out = tagSuggestionsWithIndex([
+    { id: '1', type: 'keyword_add', target: 'natural deodorant' },
+    { id: '2', type: 'keyword_add', target: 'unknown query' },
+  ], adsIdx);
+  assert.equal(out[0].validation_source, 'amazon');
+  assert.equal(out[0].amazon_conversion_share, 0.12);
+  assert.equal(out[1].validation_source, undefined);
+}
+
+// buildIndexDemandSection — empty for no entries
+assert.equal(buildIndexDemandSection([]), '');
+
+// buildIndexDemandSection — renders markdown table
+{
+  const out = buildIndexDemandSection([
+    { keyword: 'natural deodorant', amazon: { purchases: 280, conversion_share: 0.124 } },
+  ]);
+  assert.ok(out.includes('Amazon-Validated Demand'));
+  assert.ok(out.includes('| natural deodorant | 280 | 12.4% |'));
+}
