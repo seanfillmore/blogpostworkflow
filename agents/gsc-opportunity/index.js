@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { getLowCTRKeywords, getPage2Keywords } from '../../lib/gsc.js';
 import { upsertItem, loadCalendar } from '../../lib/calendar-store.js';
+import { loadIndex, lookupByKeyword, validationTag } from '../../lib/keyword-index/consumer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -59,7 +60,7 @@ function isRejected(keyword, rejections) {
   });
 }
 
-function loadKeywordIndex() {
+function loadCoveredKeywords() {
   // Build a set of keywords already targeted by an existing brief or post.
   const keywords = new Set();
   if (existsSync(BRIEFS_DIR)) {
@@ -79,14 +80,36 @@ function loadKeywordIndex() {
   return keywords;
 }
 
-function isMapped(keyword, index) {
+function isMapped(keyword, covered) {
   const kw = keyword.toLowerCase().trim();
-  if (index.has(kw)) return true;
-  // Soft mapping: any indexed keyword that contains the query, or vice versa
-  for (const target of index) {
+  if (covered.has(kw)) return true;
+  // Soft mapping: any covered keyword that contains the query, or vice versa
+  for (const target of covered) {
     if (target.includes(kw) || kw.includes(target)) return true;
   }
   return false;
+}
+
+function sourceSymbol(tag) {
+  if (tag === 'amazon') return '★';
+  if (tag === 'gsc_ga4') return '✓';
+  return '—';
+}
+
+export function annotateRows(rows, index) {
+  return rows.map((r) => ({
+    ...r,
+    validation_source: validationTag(lookupByKeyword(index, r.keyword)),
+  }));
+}
+
+export function sortUnmapped(rows) {
+  const band = (r) => (r.validation_source === 'amazon' ? 0 : 1);
+  return [...rows].sort((a, b) => {
+    const db = band(a) - band(b);
+    if (db !== 0) return db;
+    return b.impressions - a.impressions;
+  });
 }
 
 async function main() {
@@ -108,14 +131,26 @@ async function main() {
   console.log(`    ${page2.length} page-2 queries (positions 11-20)${page2Raw.length !== page2.length ? ` — ${page2Raw.length - page2.length} filtered` : ''}`);
 
   console.log('  Computing unmapped opportunities...');
-  const index = loadKeywordIndex();
+  const covered = loadCoveredKeywords();
   // Unmapped = any low-CTR query above the impression floor that no
   // existing brief/post targets. These are net-new topic candidates.
   const unmapped = lowCTR
-    .filter((r) => r.impressions >= UNMAPPED_MIN_IMPRESSIONS && !isMapped(r.keyword, index))
+    .filter((r) => r.impressions >= UNMAPPED_MIN_IMPRESSIONS && !isMapped(r.keyword, covered))
     .sort((a, b) => b.impressions - a.impressions)
     .slice(0, 25);
   console.log(`    ${unmapped.length} unmapped high-impression queries`);
+
+  const idx = loadIndex(ROOT);
+  const lowCTRTagged = annotateRows(lowCTR, idx);
+  const page2Tagged = annotateRows(page2, idx);
+  const unmappedTagged = annotateRows(unmapped, idx);
+  const unmappedSorted = sortUnmapped(unmappedTagged);
+  if (idx) {
+    const amazonCount = unmappedSorted.filter((r) => r.validation_source === 'amazon').length;
+    console.log(`    ${amazonCount} of those are Amazon-validated`);
+  } else {
+    console.log('    keyword-index.json missing — Source column will be blank');
+  }
 
   const dateStr = new Date().toISOString().slice(0, 10);
 
@@ -129,13 +164,13 @@ async function main() {
   lines.push(`## Low-CTR Queries (rewrite title/meta)`);
   lines.push(`Queries getting ≥${LOW_CTR_MIN_IMPRESSIONS} impressions but CTR ≤${LOW_CTR_MAX_CTR * 100}%.`);
   lines.push('');
-  if (lowCTR.length === 0) {
+  if (lowCTRTagged.length === 0) {
     lines.push('_No low-CTR queries above threshold._');
   } else {
-    lines.push('| Query | Impressions | Clicks | CTR | Position |');
-    lines.push('|-------|-------------|--------|-----|----------|');
-    for (const r of lowCTR.slice(0, 20)) {
-      lines.push(`| ${r.keyword} | ${r.impressions} | ${r.clicks} | ${(r.ctr * 100).toFixed(1)}% | ${r.position.toFixed(1)} |`);
+    lines.push('| Query | Impressions | Clicks | CTR | Position | Source |');
+    lines.push('|-------|-------------|--------|-----|----------|--------|');
+    for (const r of lowCTRTagged.slice(0, 20)) {
+      lines.push(`| ${r.keyword} | ${r.impressions} | ${r.clicks} | ${(r.ctr * 100).toFixed(1)}% | ${r.position.toFixed(1)} | ${sourceSymbol(r.validation_source)} |`);
     }
   }
   lines.push('');
@@ -143,27 +178,27 @@ async function main() {
   lines.push(`## Page-2 Queries (quick-win candidates)`);
   lines.push(`Positions 11–20. Feed these into the quick-win-targeter for rewrite + internal-link pushes.`);
   lines.push('');
-  if (page2.length === 0) {
+  if (page2Tagged.length === 0) {
     lines.push('_No page-2 queries above threshold._');
   } else {
-    lines.push('| Query | Impressions | Clicks | CTR | Position |');
-    lines.push('|-------|-------------|--------|-----|----------|');
-    for (const r of page2.slice(0, 20)) {
-      lines.push(`| ${r.keyword} | ${r.impressions} | ${r.clicks} | ${(r.ctr * 100).toFixed(1)}% | ${r.position.toFixed(1)} |`);
+    lines.push('| Query | Impressions | Clicks | CTR | Position | Source |');
+    lines.push('|-------|-------------|--------|-----|----------|--------|');
+    for (const r of page2Tagged.slice(0, 20)) {
+      lines.push(`| ${r.keyword} | ${r.impressions} | ${r.clicks} | ${(r.ctr * 100).toFixed(1)}% | ${r.position.toFixed(1)} | ${sourceSymbol(r.validation_source)} |`);
     }
   }
   lines.push('');
 
   lines.push(`## Unmapped Queries (new-topic candidates)`);
-  lines.push(`Queries with ≥${UNMAPPED_MIN_IMPRESSIONS} impressions where no existing brief/post targets the keyword. Strategist input.`);
+  lines.push(`Queries with ≥${UNMAPPED_MIN_IMPRESSIONS} impressions where no existing brief/post targets the keyword. ★ rows are Amazon-validated and sorted to the top. Strategist input.`);
   lines.push('');
-  if (unmapped.length === 0) {
+  if (unmappedSorted.length === 0) {
     lines.push('_All high-impression queries are already targeted._');
   } else {
-    lines.push('| Query | Impressions | Position |');
-    lines.push('|-------|-------------|----------|');
-    for (const r of unmapped) {
-      lines.push(`| ${r.keyword} | ${r.impressions} | ${r.position.toFixed(1)} |`);
+    lines.push('| Query | Impressions | Position | Source |');
+    lines.push('|-------|-------------|----------|--------|');
+    for (const r of unmappedSorted) {
+      lines.push(`| ${r.keyword} | ${r.impressions} | ${r.position.toFixed(1)} | ${sourceSymbol(r.validation_source)} |`);
     }
   }
   lines.push('');
@@ -174,15 +209,17 @@ async function main() {
   // ── Machine-readable latest ─────────────────────────────────────────────────
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify({
     generated_at: new Date().toISOString(),
-    low_ctr: lowCTR.slice(0, 20),
-    page_2: page2.slice(0, 20),
-    unmapped,
+    low_ctr: lowCTRTagged.slice(0, 20),
+    page_2: page2Tagged.slice(0, 20),
+    unmapped: unmappedSorted,
   }, null, 2));
 
   // ── Push unmapped queries to ideas inbox ────────────────────────────────────
+  // unmappedSorted has ★ Amazon-validated rows first, so the top-15 slice
+  // naturally biases the strategist's queue toward validated demand.
   const existingSlugs = new Set(loadCalendar().items.map((i) => i.slug));
   let inboxAdded = 0;
-  for (const r of unmapped.slice(0, 15)) {
+  for (const r of unmappedSorted.slice(0, 15)) {
     const slug = r.keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     if (existingSlugs.has(slug)) continue;
     upsertItem({
@@ -196,14 +233,15 @@ async function main() {
       impressions: r.impressions,
       publish_date: null,
       added_at: new Date().toISOString(),
+      validation_source: r.validation_source,
     });
     inboxAdded++;
   }
   if (inboxAdded > 0) console.log(`  ${inboxAdded} unmapped queries added to ideas inbox`);
 
   await notify({
-    subject: `GSC Opportunities: ${lowCTR.length} low-CTR, ${page2.length} page-2, ${unmapped.length} unmapped`,
-    body: `Top low-CTR queries:\n${lowCTR.slice(0, 5).map((r) => `  ${r.keyword} — ${r.impressions} impr, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n\nTop unmapped queries:\n${unmapped.slice(0, 5).map((r) => `  ${r.keyword} — ${r.impressions} impr`).join('\n')}`,
+    subject: `GSC Opportunities: ${lowCTRTagged.length} low-CTR, ${page2Tagged.length} page-2, ${unmappedSorted.length} unmapped`,
+    body: `Top low-CTR queries:\n${lowCTRTagged.slice(0, 5).map((r) => `  ${sourceSymbol(r.validation_source)} ${r.keyword} — ${r.impressions} impr, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n\nTop unmapped queries:\n${unmappedSorted.slice(0, 5).map((r) => `  ${sourceSymbol(r.validation_source)} ${r.keyword} — ${r.impressions} impr`).join('\n')}`,
     status: 'info',
     category: 'seo',
   }).catch(() => {});
@@ -211,7 +249,9 @@ async function main() {
   console.log('\nGSC opportunity report complete.');
 }
 
-main().catch((err) => {
-  console.error('GSC opportunity agent failed:', err);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error('GSC opportunity agent failed:', err);
+    process.exit(1);
+  });
+}
