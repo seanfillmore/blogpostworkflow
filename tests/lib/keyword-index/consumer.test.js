@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadIndex, lookupByKeyword, _resetCacheForTests } from '../../../lib/keyword-index/consumer.js';
+import { loadIndex, lookupByKeyword, lookupByUrl, _resetCacheForTests } from '../../../lib/keyword-index/consumer.js';
 
 test('loadIndex returns null when file missing', () => {
   _resetCacheForTests();
@@ -59,4 +59,34 @@ test('lookupByKeyword miss returns null', () => {
 
 test('lookupByKeyword null index returns null', () => {
   assert.equal(lookupByKeyword(null, 'foo'), null);
+});
+
+const urlFixture = {
+  keywords: {
+    'natural-deodorant': {
+      slug: 'natural-deodorant',
+      gsc: { top_page: 'https://www.realskincare.com/blogs/news/best-natural-deodorant', position: 8 },
+    },
+    'orphan-no-gsc': {
+      slug: 'orphan-no-gsc',
+      gsc: null,
+    },
+  },
+};
+
+test('lookupByUrl matches gsc.top_page exactly', () => {
+  const e = lookupByUrl(urlFixture, 'https://www.realskincare.com/blogs/news/best-natural-deodorant');
+  assert.equal(e?.slug, 'natural-deodorant');
+});
+
+test('lookupByUrl miss returns null', () => {
+  assert.equal(lookupByUrl(urlFixture, 'https://example.com/other'), null);
+});
+
+test('lookupByUrl skips entries with null gsc', () => {
+  assert.equal(lookupByUrl(urlFixture, ''), null);
+});
+
+test('lookupByUrl null index returns null', () => {
+  assert.equal(lookupByUrl(null, 'https://x'), null);
 });
