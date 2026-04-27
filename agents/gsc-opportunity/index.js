@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { getLowCTRKeywords, getPage2Keywords } from '../../lib/gsc.js';
 import { upsertItem, loadCalendar } from '../../lib/calendar-store.js';
+import { lookupByKeyword, validationTag } from '../../lib/keyword-index/consumer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -87,6 +88,22 @@ function isMapped(keyword, covered) {
     if (target.includes(kw) || kw.includes(target)) return true;
   }
   return false;
+}
+
+export function annotateRows(rows, index) {
+  return rows.map((r) => ({
+    ...r,
+    validation_source: validationTag(lookupByKeyword(index, r.keyword)),
+  }));
+}
+
+export function sortUnmapped(rows) {
+  const band = (r) => (r.validation_source === 'amazon' ? 0 : 1);
+  return [...rows].sort((a, b) => {
+    const db = band(a) - band(b);
+    if (db !== 0) return db;
+    return b.impressions - a.impressions;
+  });
 }
 
 async function main() {
@@ -211,7 +228,9 @@ async function main() {
   console.log('\nGSC opportunity report complete.');
 }
 
-main().catch((err) => {
-  console.error('GSC opportunity agent failed:', err);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error('GSC opportunity agent failed:', err);
+    process.exit(1);
+  });
+}
