@@ -1,0 +1,68 @@
+{
+  "asin": "B0FAKERSC",
+  "reportSpecification": {
+    "reportType": "GET_BRAND_ANALYTICS_SEARCH_QUERY_PERFORMANCE_ASIN_REPORT",
+    "dataStartTime": "2026-02-29",
+    "dataEndTime": "2026-04-25"
+  },
+  "dataByAsin": [
+    {
+      "asin": "B0FAKERSC",
+      "searchQueryData": {
+        "searchQuery": "natural deodorant for women",
+        "searchQueryScore": 12.4,
+        "searchQueryVolume": 8200
+      },
+      "impressionData": {
+        "totalQueryImpressionCount": 8200,
+        "asinImpressionCount": 1240,
+        "asinImpressionShare": 0.151
+      },
+      "clickData": {
+        "totalClickCount": 480,
+        "totalClickRate": 0.0585,
+        "asinClickCount": 96,
+        "asinClickShare": 0.20
+      },
+      "cartAddData": {
+        "totalCartAddCount": 240,
+        "asinCartAddCount": 56,
+        "asinCartAddShare": 0.233
+      },
+      "purchaseData": {
+        "totalPurchaseCount": 142,
+        "asinPurchaseCount": 38,
+        "asinPurchaseShare": 0.268
+      }
+    },
+    {
+      "asin": "B0FAKERSC",
+      "searchQueryData": {
+        "searchQuery": "coconut lotion",
+        "searchQueryScore": 9.1,
+        "searchQueryVolume": 4400
+      },
+      "impressionData": {
+        "totalQueryImpressionCount": 4400,
+        "asinImpressionCount": 1100,
+        "asinImpressionShare": 0.25
+      },
+      "clickData": {
+        "totalClickCount": 220,
+        "totalClickRate": 0.05,
+        "asinClickCount": 60,
+        "asinClickShare": 0.273
+      },
+      "cartAddData": {
+        "totalCartAddCount": 110,
+        "asinCartAddCount": 30,
+        "asinCartAddShare": 0.273
+      },
+      "purchaseData": {
+        "totalPurchaseCount": 70,
+        "asinPurchaseCount": 22,
+        "asinPurchaseShare": 0.314
+      }
+    }
+  ]
+}
