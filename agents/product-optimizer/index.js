@@ -50,6 +50,14 @@ import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/lib/queue.js';
 import { createMetaTest } from '../../lib/meta-test.js';
+import {
+  loadIndex,
+  lookupByUrl,
+  entriesForCluster,
+  buildPromptGrounding,
+} from '../../lib/keyword-index/consumer.js';
+import { clusterForCollection } from '../collection-content-optimizer/lib/cluster-mapper.js';
+import { sortProductCandidates } from './lib/sort.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -264,10 +272,29 @@ No explanation, no markdown fences.`,
 
 // ── meta-only rewriter (GSC mode) ────────────────────────────────────────────
 
-async function rewriteProductMeta(product, topQueries, gscData) {
+function formatGroundingBlock(ground) {
+  if (!ground) return '';
+  const lines = [];
+  if (ground.validationTag === 'amazon') {
+    const conv = ground.conversionShare != null
+      ? ` (Amazon conversion share: ${(ground.conversionShare * 100).toFixed(1)}%)`
+      : '';
+    lines.push(`★ This page is Amazon-validated — verified commercial demand${conv}.`);
+  } else if (ground.validationTag === 'gsc_ga4') {
+    lines.push(`✓ This page has GSC + GA4 conversion signal — proven to convert on this site.`);
+  }
+  if (ground.clusterMateKeywords?.length) {
+    lines.push(`Cluster-mate queries this page should also surface for: ${ground.clusterMateKeywords.join(', ')}.`);
+  }
+  return lines.length ? `\n${lines.join('\n')}\n` : '';
+}
+
+async function rewriteProductMeta(product, topQueries, gscData, ground) {
   const queriesFormatted = topQueries.slice(0, 5)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}, ${(q.ctr * 100).toFixed(1)}%`)
     .join('\n');
+
+  const groundingBlock = formatGroundingBlock(ground);
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -287,7 +314,7 @@ GSC DATA (last 90 days):
 
 TOP QUERIES:
 ${queriesFormatted}
-
+${groundingBlock}
 Write improved meta tags only (no body content):
 - SEO title (50–60 chars, includes top keyword naturally)
 - Meta description (140–155 chars, benefit-driven, includes keyword, ends with call-to-action or value prop)
@@ -371,10 +398,12 @@ No explanation, no markdown fences.`,
 
 // ── product title rewriter (GSC-driven keyword enrichment) ──────────────────
 
-async function rewriteProductTitle(product, topQueries, gscData) {
+async function rewriteProductTitle(product, topQueries, gscData, ground) {
   const queriesFormatted = topQueries.slice(0, 8)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}`)
     .join('\n');
+
+  const groundingBlock = formatGroundingBlock(ground);
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -393,6 +422,7 @@ GSC DATA (last 90 days for this product page):
 
 TOP SEARCH QUERIES (what people search to find this product):
 ${queriesFormatted}
+${groundingBlock}
 
 Write an improved product title that:
 1. Includes the highest-volume relevant keyword naturally
@@ -476,16 +506,25 @@ async function optimizeTitlesMode() {
 
   const active = activeSlugs();
   const filtered = productPages.filter((p) => !EXCLUDED_HANDLES.has(p.handle));
-  const candidates = selectTitleCandidates(filtered, gscMap, active).slice(0, limit);
+  const idx = loadIndex(ROOT);
+  const rawCandidates = selectTitleCandidates(filtered, gscMap, active);
+  const enriched = rawCandidates.map((c) => ({ ...c, idx: productIndexContext(c, idx) }));
+  const candidates = sortProductCandidates(enriched).slice(0, limit);
 
   if (candidates.length === 0) {
     console.log('\n  No title optimization candidates found (top keywords already in titles).');
     return;
   }
 
+  if (idx) {
+    const validated = candidates.filter((c) => c.idx.validationTag === 'amazon').length;
+    console.log(`  ${validated} of ${candidates.length} candidates are Amazon-validated`);
+  }
+
   console.log(`\n  Found ${candidates.length} candidate(s):\n`);
   for (const c of candidates) {
-    console.log(`  "${c.title}" — top query: "${c.gsc.keyword}" (${c.gsc.impressions} impr)`);
+    const tag = c.idx.validationTag === 'amazon' ? '★ ' : c.idx.validationTag === 'gsc_ga4' ? '✓ ' : '';
+    console.log(`  ${tag}"${c.title}" — top query: "${c.gsc.keyword}" (${c.gsc.impressions} impr)`);
   }
 
   if (dryRun) {
@@ -501,7 +540,8 @@ async function optimizeTitlesMode() {
 
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
-      const proposed = await rewriteProductTitle(c, topQueries, c.gsc);
+      const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
+      const proposed = await rewriteProductTitle(c, topQueries, c.gsc, ground);
 
       const item = {
         slug: c.handle,
@@ -525,6 +565,9 @@ async function optimizeTitlesMode() {
           what_changed: proposed.what_changed,
           why: proposed.why,
         },
+        cluster: c.idx.cluster,
+        validation_source: c.idx.validationTag,
+        amazon_conversion_share: c.idx.conversionShare,
         status: 'pending',
         created_at: new Date().toISOString(),
       };
@@ -539,6 +582,27 @@ async function optimizeTitlesMode() {
 }
 
 // ── candidate selection (shared with tests) ──────────────────────────────────
+
+/**
+ * Build the per-product keyword-index signal bundle. Returns an object
+ * always (never null) so downstream code can read fields without guards.
+ */
+function productIndexContext(product, idx) {
+  if (!idx) return { entry: null, cluster: null, clusterEntries: [], validationTag: null, amazonPurchases: 0, conversionShare: null };
+  const entry = lookupByUrl(idx, product.url) || null;
+  const cluster = entry?.cluster && entry.cluster !== 'unclustered'
+    ? entry.cluster
+    : clusterForCollection({ handle: product.handle, title: product.title }, idx);
+  const clusterEntries = cluster ? entriesForCluster(idx, cluster, { limit: 8 }) : [];
+  return {
+    entry,
+    cluster,
+    clusterEntries,
+    validationTag: entry?.validation_source ?? (clusterEntries.some((e) => e.validation_source === 'amazon') ? 'amazon' : null),
+    amazonPurchases: entry?.amazon?.purchases ?? 0,
+    conversionShare: entry?.amazon?.conversion_share ?? null,
+  };
+}
 
 function selectProductMetaCandidates(products, gscMap, activeQueueSlugs) {
   return products
@@ -630,16 +694,25 @@ async function fromGscMode() {
     return true;
   });
 
-  const candidates = selectProductMetaCandidates(filtered, gscMap, active).slice(0, limit);
+  const idx = loadIndex(ROOT);
+  const rawCandidates = selectProductMetaCandidates(filtered, gscMap, active);
+  const enriched = rawCandidates.map((c) => ({ ...c, idx: productIndexContext(c, idx) }));
+  const candidates = sortProductCandidates(enriched).slice(0, limit);
 
   if (candidates.length === 0) {
     console.log('\n  No GSC-driven meta rewrite candidates found.');
     return;
   }
 
+  if (idx) {
+    const validated = candidates.filter((c) => c.idx.validationTag === 'amazon').length;
+    console.log(`  ${validated} of ${candidates.length} candidates are Amazon-validated`);
+  }
+
   console.log(`\n  Found ${candidates.length} candidate(s):\n`);
   for (const c of candidates) {
-    console.log(`  "${c.title}" — ${c.gsc.impressions} impr, pos #${Math.round(c.gsc.position)}, ${(c.gsc.ctr * 100).toFixed(2)}% CTR`);
+    const tag = c.idx.validationTag === 'amazon' ? '★ ' : c.idx.validationTag === 'gsc_ga4' ? '✓ ' : '';
+    console.log(`  ${tag}"${c.title}" — ${c.gsc.impressions} impr, pos #${Math.round(c.gsc.position)}, ${(c.gsc.ctr * 100).toFixed(2)}% CTR`);
   }
 
   if (dryRun) {
@@ -656,13 +729,18 @@ async function fromGscMode() {
 
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
+      const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
       const proposed = await rewriteProductMeta(
         { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
         topQueries,
         c.gsc,
+        ground,
       );
 
       const item = buildProductMetaQueueItem(c, c.gsc, topQueries, proposed);
+      item.cluster = c.idx.cluster;
+      item.validation_source = c.idx.validationTag;
+      item.amazon_conversion_share = c.idx.conversionShare;
       writeItem(item);
       console.log('queued');
     } catch (e) {
@@ -1323,10 +1401,12 @@ const run = pagesFromGsc ? pagesFromGscMode
   : publishApproved ? publishApprovedProducts
   : main;
 
-run()
-  .then(() => notifyLatestReport('Product Optimizer completed', join(ROOT, 'data', 'reports', 'product-optimizer')))
-  .catch((err) => {
-    notify({ subject: 'Product Optimizer failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  run()
+    .then(() => notifyLatestReport('Product Optimizer completed', join(ROOT, 'data', 'reports', 'product-optimizer')))
+    .catch((err) => {
+      notify({ subject: 'Product Optimizer failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

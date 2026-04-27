@@ -197,3 +197,16 @@ test('loadCategoryCompetitors returns parsed object', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+import { buildPromptGrounding } from '../../../lib/keyword-index/consumer.js';
+
+test('buildPromptGrounding (consumer.js): returns null for null entry', () => {
+  assert.equal(buildPromptGrounding(null, []), null);
+});
+
+test('buildPromptGrounding (consumer.js): extracts amazon validation + conversion share', () => {
+  const g = buildPromptGrounding({ validation_source: 'amazon', amazon: { conversion_share: 0.08 } }, [{ keyword: 'a' }, { keyword: 'b' }]);
+  assert.equal(g.validationTag, 'amazon');
+  assert.equal(g.conversionShare, 0.08);
+  assert.deepEqual(g.clusterMateKeywords, ['a', 'b']);
+});
