@@ -231,6 +231,11 @@ if (new Date().getDay() === 0) {
   // Step 8: cannibalization detection + resolution
   runStep('cannibalization-resolver', `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`, { indent: '    ' });
 
+  // Step 8a: refresh content calendar + briefs from the keyword-index.
+  // Surfaces Amazon-validated unmapped queries (PR #165) so the calendar-runner
+  // has fresh new-topic candidates to publish through the next week.
+  runStep('content-strategist --generate-briefs', `"${NODE}" agents/content-strategist/index.js --generate-briefs`, { indent: '    ' });
+
   // Step 8b: answer-first rewrite audit (fix intros for LLM citation)
   runStep('answer-first-rewriter', `"${NODE}" agents/answer-first-rewriter/index.js --apply`, { indent: '    ' });
 
