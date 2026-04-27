@@ -1,0 +1,269 @@
+/**
+ * Keyword Index Builder
+ *
+ * Biweekly rebuild of data/keyword-index.json + data/category-competitors.json
+ * by joining Amazon BA/SQP, GSC, GA4 (and DataForSEO market enrichment).
+ *
+ * Self-paces: scheduler.js calls this daily; the agent skips early
+ * if the existing index is < 14 days old. --force bypasses.
+ *
+ * Usage:
+ *   node agents/keyword-index-builder/index.js
+ *   node agents/keyword-index-builder/index.js --dry-run
+ *   node agents/keyword-index-builder/index.js --force
+ */
+
+import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync, readdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { aggregateGscWindow } from '../../lib/keyword-index/gsc-aggregator.js';
+import { aggregateGa4Window } from '../../lib/keyword-index/ga4-aggregator.js';
+import { parseSqpReport, mergeSqpReports, fetchSqpReportForAsin } from '../../lib/keyword-index/amazon-sqp.js';
+import { parseBaReportStream, fetchBaReport } from '../../lib/keyword-index/amazon-ba.js';
+import { isRsc } from '../../lib/keyword-index/asin-classifier.js';
+import { mergeSources, loadClustersFromPriorIndex } from '../../lib/keyword-index/merge.js';
+import { rollUpCompetitorsByCluster } from '../../lib/keyword-index/competitors.js';
+import { enrichWithMarketData } from '../../lib/keyword-index/dataforseo-enricher.js';
+
+import { getClient, getMarketplaceId, requestReport, pollReport, downloadReport, streamReportToFile, request as spApiRequest } from '../../lib/amazon/sp-api-client.js';
+import { notify } from '../../lib/notify.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..', '..');
+
+const SNAPSHOTS_GSC = join(ROOT, 'data', 'snapshots', 'gsc');
+const SNAPSHOTS_GA4 = join(ROOT, 'data', 'snapshots', 'ga4');
+const INDEX_PATH = join(ROOT, 'data', 'keyword-index.json');
+const COMPETITORS_PATH = join(ROOT, 'data', 'category-competitors.json');
+const REPORTS_DIR = join(ROOT, 'data', 'reports', 'keyword-index');
+const BA_TMP_DIR = join(ROOT, 'data', '.keyword-index-tmp');
+
+const REBUILD_DAYS = 14;
+const WINDOW_DAYS = 56;
+
+const args = process.argv.slice(2);
+const dryRun = args.includes('--dry-run');
+const force = args.includes('--force');
+
+function isoDate(d) { return d.toISOString().slice(0, 10); }
+
+function shouldSkip(now = new Date()) {
+  if (force) return false;
+  if (!existsSync(INDEX_PATH)) return false;
+  try {
+    const prior = JSON.parse(readFileSync(INDEX_PATH, 'utf8'));
+    if (!prior.built_at) return false;
+    const ageDays = (now.getTime() - new Date(prior.built_at).getTime()) / 86400000;
+    return ageDays < REBUILD_DAYS;
+  } catch { return false; }
+}
+
+function loadPriorIndex() {
+  if (!existsSync(INDEX_PATH)) return null;
+  try { return JSON.parse(readFileSync(INDEX_PATH, 'utf8')); } catch { return null; }
+}
+
+function atomicWriteJson(path, data) {
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.tmp-${process.pid}-${Date.now()}`;
+  writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n');
+  renameSync(tmp, path);
+}
+
+async function listRscAsins(client) {
+  // Pull catalog listings, classify, return RSC ASINs only.
+  // Uses the same listings endpoint the explore-listings.mjs script uses.
+  // For now, bootstrap from a cached file if present (cache-or-fetch pattern);
+  // a full implementation may iterate listings pagination.
+  const cachePath = join(ROOT, 'data', '.rsc-asins.json');
+  if (existsSync(cachePath)) {
+    try {
+      const cached = JSON.parse(readFileSync(cachePath, 'utf8'));
+      return cached.asins.filter((p) => isRsc(p)).map((p) => p.asin);
+    } catch {}
+  }
+  // Fallback: fetch full listings via spApiRequest and filter.
+  // (Implementer note: see scripts/amazon/explore-listings.mjs for the
+  // exact endpoint shape. Cache the full classified product list to
+  // data/.rsc-asins.json so subsequent runs are fast.)
+  console.warn('  No cached RSC ASIN list at data/.rsc-asins.json. Run scripts/amazon/explore-listings.mjs first to seed it.');
+  return [];
+}
+
+async function runStage(name, fn, stageReport) {
+  const start = Date.now();
+  try {
+    const result = await fn();
+    stageReport[name] = { ok: true, ms: Date.now() - start };
+    return result;
+  } catch (err) {
+    stageReport[name] = { ok: false, ms: Date.now() - start, error: err.message };
+    return null;
+  }
+}
+
+async function main() {
+  const nowIso = new Date().toISOString();
+  console.log(`\nKeyword Index Builder — mode: ${dryRun ? 'DRY RUN' : 'APPLY'}${force ? ' (--force)' : ''}`);
+
+  if (shouldSkip()) {
+    console.log(`  Skipping — last build < ${REBUILD_DAYS} days ago. Use --force to override.`);
+    return;
+  }
+
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  mkdirSync(BA_TMP_DIR, { recursive: true });
+
+  const fromDate = isoDate(new Date(Date.now() - WINDOW_DAYS * 86400000));
+  const toDate = isoDate(new Date(Date.now() - 3 * 86400000)); // 3-day GA4 lag buffer
+  console.log(`  Window: ${fromDate} → ${toDate} (${WINDOW_DAYS} days)`);
+
+  const priorIndex = loadPriorIndex();
+  const clusters = loadClustersFromPriorIndex(priorIndex);
+
+  const stageReport = {};
+
+  // Stage 1: Amazon ingest
+  let amazonMap = {};
+  let baCompetitors = {};
+  await runStage('amazon', async () => {
+    const client = getClient();
+    const rscAsins = await listRscAsins(client);
+    if (rscAsins.length === 0) {
+      throw new Error('No RSC ASINs available — Amazon ingest skipped');
+    }
+
+    // SQP — one report per RSC ASIN
+    const sqpMaps = [];
+    for (const asin of rscAsins) {
+      try {
+        const raw = await fetchSqpReportForAsin({
+          client, asin, fromDate, toDate,
+          getMarketplaceId, requestReport, pollReport, downloadReport,
+        });
+        sqpMaps.push(parseSqpReport(raw));
+      } catch (err) {
+        console.warn(`    SQP for ${asin} failed: ${err.message}`);
+      }
+    }
+    amazonMap = mergeSqpReports(sqpMaps);
+
+    // BA — single weekly report streamed to disk then parsed
+    const baOutPath = join(BA_TMP_DIR, `ba-${nowIso.slice(0, 10)}.jsonl`);
+    try {
+      await fetchBaReport({
+        client, fromDate, toDate, outPath: baOutPath,
+        getMarketplaceId, requestReport, pollReport, streamReportToFile,
+      });
+      baCompetitors = await parseBaReportStream({ filePath: baOutPath, rscAsins: new Set(rscAsins) });
+    } catch (err) {
+      console.warn(`    BA fetch/parse failed: ${err.message}`);
+    }
+
+    // Merge BA's competitor list into amazonMap entries by query
+    for (const [key, ba] of Object.entries(baCompetitors)) {
+      if (amazonMap[key]) {
+        amazonMap[key].search_frequency_rank = ba.search_frequency_rank;
+        amazonMap[key].competitors = ba.competitors;
+      }
+    }
+  }, stageReport);
+
+  // Stage 2: GSC ingest
+  const gscMap = await runStage('gsc',
+    () => aggregateGscWindow({ snapshotsDir: SNAPSHOTS_GSC, fromDate, toDate }),
+    stageReport,
+  ) || {};
+
+  if (!stageReport.gsc?.ok) {
+    console.error('  GSC ingest failed — aborting build (no fallback for missing GSC).');
+    if (!dryRun) await notify({ subject: 'Keyword Index Builder failed', body: `GSC stage failed: ${stageReport.gsc?.error}`, status: 'error' });
+    process.exit(1);
+  }
+
+  // Stage 3: GA4 join
+  const ga4Map = await runStage('ga4',
+    () => aggregateGa4Window({ snapshotsDir: SNAPSHOTS_GA4, fromDate, toDate }),
+    stageReport,
+  ) || {};
+
+  // Stage 4: Merge
+  const entries = mergeSources({ amazon: amazonMap, gsc: gscMap, ga4Map, clusters });
+  console.log(`  Merge: ${Object.keys(entries).length} entries qualified`);
+
+  // Stage 5: DataForSEO enrich
+  await runStage('dataforseo',
+    () => enrichWithMarketData({ entries }),
+    stageReport,
+  );
+
+  // Stage 6: Competitor roll-up
+  const clusterCompetitors = rollUpCompetitorsByCluster(entries);
+
+  // Final assembly
+  const bySource = { amazon: 0, gsc_ga4: 0 };
+  for (const e of Object.values(entries)) bySource[e.validation_source] = (bySource[e.validation_source] || 0) + 1;
+
+  const output = {
+    built_at: nowIso,
+    window_days: WINDOW_DAYS,
+    total_keywords: Object.keys(entries).length,
+    by_validation_source: bySource,
+    cluster_count: new Set(Object.values(entries).map((e) => e.cluster)).size,
+    keywords: entries,
+  };
+  const competitorsOutput = {
+    built_at: nowIso,
+    window_days: WINDOW_DAYS,
+    clusters: clusterCompetitors,
+  };
+
+  // Build report
+  const reportPath = join(REPORTS_DIR, `${nowIso.slice(0, 10)}.md`);
+  const reportLines = [
+    `# Keyword Index Build — ${nowIso.slice(0, 10)}`,
+    ``,
+    `**Window:** ${fromDate} → ${toDate} (${WINDOW_DAYS} days)`,
+    `**Mode:** ${dryRun ? 'DRY RUN' : 'APPLY'}`,
+    ``,
+    `## Stage outcomes`,
+    ``,
+    ...Object.entries(stageReport).map(([s, r]) =>
+      `- **${s}**: ${r.ok ? '✅' : '❌'} (${r.ms} ms)${r.error ? ` — ${r.error}` : ''}`),
+    ``,
+    `## Counts`,
+    ``,
+    `- Total keywords: ${output.total_keywords}`,
+    `- Amazon-validated: ${bySource.amazon}`,
+    `- GSC+GA4-validated: ${bySource.gsc_ga4}`,
+    `- Clusters: ${output.cluster_count}`,
+  ];
+  const degraded = !stageReport.amazon?.ok;
+  if (degraded) reportLines.unshift('> ⚠ DEGRADED: Amazon stage failed; build is GSC-only.', '');
+
+  if (dryRun) {
+    console.log('\n  Dry-run: not writing outputs.');
+    console.log(reportLines.join('\n'));
+    return;
+  }
+
+  atomicWriteJson(INDEX_PATH, output);
+  atomicWriteJson(COMPETITORS_PATH, competitorsOutput);
+  writeFileSync(reportPath, reportLines.join('\n') + '\n');
+
+  // Notify
+  const notifyStatus = degraded ? 'error' : 'info';
+  await notify({
+    subject: degraded ? 'Keyword Index Builder ran (degraded)' : 'Keyword Index Builder ran',
+    body: `Built keyword-index with ${output.total_keywords} keywords (${bySource.amazon} amazon, ${bySource.gsc_ga4} gsc_ga4). See ${reportPath}.`,
+    status: notifyStatus,
+  });
+  console.log(`\n  Wrote ${INDEX_PATH}, ${COMPETITORS_PATH}, ${reportPath}`);
+}
+
+main().catch(async (err) => {
+  console.error('Error:', err.message);
+  await notify({ subject: 'Keyword Index Builder crashed', body: err.message || String(err), status: 'error' });
+  process.exit(1);
+});
