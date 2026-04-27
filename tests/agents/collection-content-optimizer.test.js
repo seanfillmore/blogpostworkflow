@@ -106,3 +106,40 @@ test('findRelevantIngredients matches by handle terms', () => {
   assert.equal(results.length, 1);
   assert.equal(results[0].product, 'Body Lotion');
 });
+
+import { clusterForCollection } from '../../agents/collection-content-optimizer/lib/cluster-mapper.js';
+
+const idx = {
+  keywords: {
+    'natural-deodorant':       { keyword: 'natural deodorant',       slug: 'natural-deodorant',       cluster: 'deodorant' },
+    'aluminum-free-deodorant': { keyword: 'aluminum free deodorant', slug: 'aluminum-free-deodorant', cluster: 'deodorant' },
+    'roll-on-deodorant':       { keyword: 'roll on deodorant',       slug: 'roll-on-deodorant',       cluster: 'deodorant' },
+    'natural-bar-soap':        { keyword: 'natural bar soap',        slug: 'natural-bar-soap',        cluster: 'soap' },
+    'orphan-thing':            { keyword: 'orphan thing',             slug: 'orphan-thing',            cluster: 'unclustered' },
+  },
+};
+
+test('clusterForCollection picks cluster with most token matches', () => {
+  const c = { handle: 'natural-deodorant', title: 'Natural Deodorants' };
+  assert.equal(clusterForCollection(c, idx), 'deodorant');
+});
+
+test('clusterForCollection requires at least 2 token hits', () => {
+  const c = { handle: 'soap-dish', title: 'Soap Dish' };
+  assert.equal(clusterForCollection(c, idx), null);
+});
+
+test('clusterForCollection ignores unclustered entries', () => {
+  const c = { handle: 'orphan-thing', title: 'Orphan thing' };
+  assert.equal(clusterForCollection(c, idx), null);
+});
+
+test('clusterForCollection returns null when index is null', () => {
+  const c = { handle: 'natural-deodorant', title: 'Natural Deodorants' };
+  assert.equal(clusterForCollection(c, null), null);
+});
+
+test('clusterForCollection returns null when no cluster has 2+ hits', () => {
+  const c = { handle: 'random-stuff', title: 'Random Stuff' };
+  assert.equal(clusterForCollection(c, idx), null);
+});
