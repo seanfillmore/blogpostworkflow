@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadIndex, lookupByKeyword, lookupByUrl, _resetCacheForTests } from '../../../lib/keyword-index/consumer.js';
+import { loadIndex, lookupByKeyword, lookupByUrl, validationTag, _resetCacheForTests } from '../../../lib/keyword-index/consumer.js';
 
 test('loadIndex returns null when file missing', () => {
   _resetCacheForTests();
@@ -89,4 +89,20 @@ test('lookupByUrl skips entries with null gsc', () => {
 
 test('lookupByUrl null index returns null', () => {
   assert.equal(lookupByUrl(null, 'https://x'), null);
+});
+
+test('validationTag returns amazon for amazon-validated entry', () => {
+  assert.equal(validationTag({ validation_source: 'amazon' }), 'amazon');
+});
+
+test('validationTag returns gsc_ga4 for gsc_ga4-validated entry', () => {
+  assert.equal(validationTag({ validation_source: 'gsc_ga4' }), 'gsc_ga4');
+});
+
+test('validationTag returns null for null entry', () => {
+  assert.equal(validationTag(null), null);
+});
+
+test('validationTag returns null for entry with no validation_source', () => {
+  assert.equal(validationTag({ slug: 'x' }), null);
 });
