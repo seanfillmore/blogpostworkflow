@@ -14,7 +14,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { getKeywordsForDate, getPagesForDate } from '../../lib/gsc.js';
+import { getKeywordsForDate, getPagesForDate, getQueriesByPageForDate } from '../../lib/gsc.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -41,14 +41,18 @@ async function main() {
   console.log(`  Date: ${date}`);
 
   process.stdout.write('  Fetching top queries... ');
-  const topQueries = await getKeywordsForDate(date, 10);
+  const topQueries = await getKeywordsForDate(date, 1000);
   console.log(`done (${topQueries.length} queries)`);
 
   process.stdout.write('  Fetching top pages... ');
-  const topPages = await getPagesForDate(date, 10);
+  const topPages = await getPagesForDate(date, 1000);
   console.log(`done (${topPages.length} pages)`);
 
-  if (!topQueries.length && !topPages.length) {
+  process.stdout.write('  Fetching query×page rows... ');
+  const queriesByPage = await getQueriesByPageForDate(date, 5000);
+  console.log(`done (${queriesByPage.length} rows)`);
+
+  if (!topQueries.length && !topPages.length && !queriesByPage.length) {
     console.log('  No GSC data for this date (may still be within lag window) — skipping snapshot.');
     return false;
   }
@@ -71,6 +75,7 @@ async function main() {
     },
     topQueries,
     topPages,
+    queriesByPage,
   };
 
   mkdirSync(SNAPSHOTS_DIR, { recursive: true });
