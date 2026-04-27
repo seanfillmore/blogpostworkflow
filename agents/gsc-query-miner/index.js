@@ -32,13 +32,15 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { writeFileSync, readFileSync, mkdirSync } from 'fs';
+import { loadIndex } from '../../lib/keyword-index/consumer.js';
+import { tagQueries, buildUntappedCandidates } from './lib/index-tagger.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
-import { notify, notifyLatestReport } from '../../lib/notify.js';
   getTopKeywords,
   getAllQueryPageRows,
 } from '../../lib/gsc.js';
+import { notify, notifyLatestReport } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -148,20 +150,21 @@ function buildTopicClusters(queries) {
 
 function pct(ctr) { return `${(ctr * 100).toFixed(1)}%`; }
 function pos(p) { return `#${Math.round(p * 10) / 10}`; }
+function srcSym(t) { return t === 'amazon' ? '★' : t === 'gsc_ga4' ? '✓' : '—'; }
 
 function formatLeaks(leaks) {
   if (!leaks.length) return 'None found above threshold.';
-  return ['| Query | Impressions | Avg Position |',
-    '|---|---|---|',
-    ...leaks.slice(0, 30).map((q) => `| ${q.keyword} | ${q.impressions} | ${pos(q.position)} |`)
+  return ['| Query | Impressions | Avg Position | Source |',
+    '|---|---|---|---|',
+    ...leaks.slice(0, 30).map((q) => `| ${q.keyword} | ${q.impressions} | ${pos(q.position)} | ${srcSym(q.validation_source)} |`)
   ].join('\n');
 }
 
 function formatNearMisses(nearMisses) {
   if (!nearMisses.length) return 'None found above threshold.';
-  return ['| Query | Impressions | Position | Clicks | CTR |',
-    '|---|---|---|---|---|',
-    ...nearMisses.map((q) => `| ${q.keyword} | ${q.impressions} | ${pos(q.position)} | ${q.clicks} | ${pct(q.ctr)} |`)
+  return ['| Query | Impressions | Position | Clicks | CTR | Source |',
+    '|---|---|---|---|---|---|',
+    ...nearMisses.map((q) => `| ${q.keyword} | ${q.impressions} | ${pos(q.position)} | ${q.clicks} | ${pct(q.ctr)} | ${srcSym(q.validation_source)} |`)
   ].join('\n');
 }
 
@@ -184,7 +187,13 @@ function formatClusters(clusters) {
 // ── claude analysis ───────────────────────────────────────────────────────────
 
 async function generateAnalysis(leaks, nearMisses, cannibalization, clusters, totalQueries) {
-  const prompt = `You are the SEO lead for ${config.name} (${config.url}), a ${config.brand_description}.
+  const amzCount = (rows) => (rows || []).filter((r) => r.validation_source === 'amazon').length;
+  const totalAmz = amzCount(leaks) + amzCount(nearMisses) + clusters.reduce((s, c) => s + amzCount(c.keywords), 0);
+  const validationLine = totalAmz > 0
+    ? `\n${totalAmz} of these queries are Amazon-validated (marked ★). Prioritize ★ queries first when recommending actions — Amazon validation is the strongest commercial signal we have.\n`
+    : '';
+
+  const prompt = `You are the SEO lead for ${config.name} (${config.url}), a ${config.brand_description}.${validationLine}
 
 Below is GSC data (last ${days} days) surfacing four categories of opportunity. Write a focused SEO action plan.
 
@@ -265,11 +274,35 @@ async function main() {
 
   // Run analyses
   process.stdout.write('  Analysing... ');
-  const leaks = findImpressionLeaks(allQueries);
-  const nearMisses = findNearMisses(allQueries);
+  const rawLeaks = findImpressionLeaks(allQueries);
+  const rawNearMisses = findNearMisses(allQueries);
   const cannibalization = findCannibalization(queryPageRows);
-  const clusters = buildTopicClusters(allQueries);
-  console.log(`${leaks.length} leaks, ${nearMisses.length} near-misses, ${cannibalization.length} cannibalization groups, ${clusters.length} clusters`);
+  const rawClusters = buildTopicClusters(allQueries);
+  console.log(`${rawLeaks.length} leaks, ${rawNearMisses.length} near-misses, ${cannibalization.length} cannibalization groups, ${rawClusters.length} clusters`);
+
+  // Annotate with keyword-index validation tags.
+  const idx = loadIndex(ROOT);
+  const leaks = tagQueries(rawLeaks, idx);
+  const nearMisses = tagQueries(rawNearMisses, idx);
+  const clusters = rawClusters.map((c) => ({ ...c, keywords: tagQueries(c.keywords, idx) }));
+
+  if (idx) {
+    const amzLeaks = leaks.filter((q) => q.validation_source === 'amazon').length;
+    const amzNm = nearMisses.filter((q) => q.validation_source === 'amazon').length;
+    console.log(`  Amazon-validated: ${amzLeaks} leaks, ${amzNm} near-misses`);
+
+    // Write untapped candidates for the next index build to ingest.
+    const untapped = buildUntappedCandidates(leaks, clusters, idx, { minImpr });
+    if (untapped.length > 0) {
+      const untappedPath = join(REPORTS_DIR, 'untapped-candidates.json');
+      writeFileSync(untappedPath, JSON.stringify({
+        generated_at: new Date().toISOString(),
+        source: 'gsc-query-miner',
+        candidates: untapped,
+      }, null, 2));
+      console.log(`  Untapped candidates: ${untapped.length} written to ${untappedPath}`);
+    }
+  }
 
   // Claude analysis
   process.stdout.write('\n  Generating analysis with Claude... ');
@@ -319,10 +352,12 @@ async function main() {
   console.log(`    Topic clusters:          ${clusters.length} groups`);
 }
 
-main()
-  .then(() => notifyLatestReport('GSC Query Miner completed', join(ROOT, 'data', 'reports', 'gsc-query-miner')))
-  .catch((err) => {
-    notify({ subject: 'GSC Query Miner failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main()
+    .then(() => notifyLatestReport('GSC Query Miner completed', join(ROOT, 'data', 'reports', 'gsc-query-miner')))
+    .catch((err) => {
+      notify({ subject: 'GSC Query Miner failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}
