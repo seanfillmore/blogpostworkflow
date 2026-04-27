@@ -33,6 +33,8 @@ import {
   fetchKeywordOverview,
   computeVolumeHistory,
 } from './keyword-data.js';
+import { loadIndex } from '../../lib/keyword-index/consumer.js';
+import { mergeRelatedKeywords, buildResearchIndexContext } from './lib/index-context.js';
 
 // GSC is optional — gracefully skip if not configured
 let gsc = null;
@@ -228,7 +230,7 @@ function loadRelatedFlops(keyword) {
   return flops;
 }
 
-async function generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, volumeHistory, gscData = null) {
+async function generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, volumeHistory, gscData = null, indexContext = null) {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
   const competitorSummary = competitorContent
@@ -259,6 +261,20 @@ async function generateBrief(keyword, kwData, serpResults, relatedKeywords, comp
   const gscNote = gscData && gscData.impressions > 0
     ? `The site already appears in Google for this keyword: avg position #${Math.round(gscData.position)}, ${gscData.impressions.toLocaleString()} impressions, ${gscData.clicks} clicks, ${(gscData.ctr * 100).toFixed(1)}% CTR over 90 days. The new post should target outranking existing results and improving CTR.`
     : 'The site has no current GSC impressions for this keyword — this is a fresh ranking opportunity.';
+
+  const indexValidationLines = [];
+  if (indexContext?.validation_source === 'amazon') {
+    const cs = indexContext.conversion_share != null
+      ? ` (${(indexContext.conversion_share * 100).toFixed(1)}% conversion share on Amazon)`
+      : '';
+    indexValidationLines.push(`★ This keyword is Amazon-validated — verified commercial demand${cs}.`);
+  } else if (indexContext?.validation_source === 'gsc_ga4') {
+    indexValidationLines.push(`✓ This keyword has GSC + GA4 conversion signal — proven to convert on this site.`);
+  }
+  if (indexContext?.competitors?.length) {
+    indexValidationLines.push(`Competitors dominating this category:\n${indexContext.competitors.slice(0, 3).map((c) => `  - ${c.domain}${c.avg_position != null ? ` (avg position ${c.avg_position})` : ''}`).join('\n')}`);
+  }
+  const indexNote = indexValidationLines.length ? `\nKEYWORD-INDEX SIGNAL:\n${indexValidationLines.join('\n')}\n` : '';
 
   // Historical flops in the same cluster — teach the writer what not to repeat.
   const flops = loadRelatedFlops(keyword);
@@ -294,7 +310,7 @@ ${internalSummary || 'None identified'}
 
 SITE'S CURRENT GOOGLE SEARCH CONSOLE PERFORMANCE FOR THIS KEYWORD:
 ${gscNote}
-
+${indexNote}
 HISTORICAL FLOPS IN THIS CLUSTER (lessons from posts that underperformed — do not repeat these patterns):
 ${flopNote}
 
@@ -393,6 +409,15 @@ Return only the JSON object. No markdown fences, no explanation.${(() => {
     description: r.description,
   }));
 
+  if (indexContext) {
+    brief.index_validation = {
+      validation_source: indexContext.validation_source,
+      cluster: indexContext.cluster,
+      amazon_purchases: indexContext.amazon_purchases,
+      conversion_share: indexContext.conversion_share,
+    };
+  }
+
   return brief;
 }
 
@@ -482,6 +507,26 @@ async function researchKeyword(keyword, kwData = {}) {
   }
   console.log(`${relatedKeywords.length} keywords`);
 
+  // Look up keyword-index signals; merge cluster-mate keywords into related list.
+  const idx = loadIndex(ROOT);
+  const indexContext = buildResearchIndexContext(idx, keyword, ROOT);
+  if (indexContext) {
+    const before = relatedKeywords.length;
+    const merged = mergeRelatedKeywords(relatedKeywords, indexContext.cluster_mates, 50);
+    // mergeRelatedKeywords flattens to strings; rehydrate to keep volume/difficulty
+    // for items that were in the live list, append cluster-mate strings as bare entries.
+    const liveByKw = new Map(relatedKeywords.map((k) => [String(k.keyword ?? k).toLowerCase(), k]));
+    relatedKeywords = merged.map((s) => liveByKw.get(String(s).toLowerCase()) || { keyword: s });
+    if (relatedKeywords.length > before) {
+      console.log(`  Keyword-index added ${relatedKeywords.length - before} cluster-mate keyword(s)`);
+    }
+    if (indexContext.validation_source === 'amazon') {
+      console.log(`  Keyword-index: ★ Amazon-validated (cluster: ${indexContext.cluster})`);
+    } else if (indexContext.validation_source === 'gsc_ga4') {
+      console.log(`  Keyword-index: ✓ GSC+GA4-validated (cluster: ${indexContext.cluster})`);
+    }
+  }
+
   // Fetch overview + volume history if the caller didn't pre-supply numbers
   if (kwData.search_volume == null) {
     process.stdout.write('  Fetching keyword overview... ');
@@ -523,7 +568,7 @@ async function researchKeyword(keyword, kwData = {}) {
   }
 
   process.stdout.write('  Generating content brief with Claude... ');
-  const brief = await generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, volumeHistory, gscData);
+  const brief = await generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, volumeHistory, gscData, indexContext);
   console.log('done');
 
   brief.data_sources = { provider: 'dataforseo' };
