@@ -69,3 +69,33 @@ test('aggregateGscWindow normalizes keys via normalize()', () => {
   // "coconut lotion" and "Coconut Lotion" should collapse to same key
   assert.equal(Object.keys(result).filter((k) => k === 'coconut lotion').length, 1);
 });
+
+test('aggregateGscWindow reads from queriesByPage when present (real GSC shape)', async () => {
+  // Real production snapshots use `queriesByPage` (output of getQueriesByPageForDate).
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(join(__dirname, '..', '..', '..', '.test-gsc-'));
+  try {
+    const snapDir = join(dir, 'gsc');
+    mkdirSync(snapDir, { recursive: true });
+    writeFileSync(join(snapDir, '2026-04-01.json'), JSON.stringify({
+      date: '2026-04-01',
+      summary: { clicks: 5, impressions: 100, ctr: 0.05, position: 7.5 },
+      topQueries: [{ query: 'coconut lotion', clicks: 5, impressions: 100, ctr: 0.05, position: 7.5 }],
+      topPages: [{ page: 'https://www.realskincare.com/products/coconut-lotion', clicks: 5, impressions: 100, ctr: 0.05, position: 7.5 }],
+      queriesByPage: [
+        { query: 'coconut lotion', page: 'https://www.realskincare.com/products/coconut-lotion', clicks: 5, impressions: 100, ctr: 0.05, position: 7.5 },
+      ],
+    }));
+    const result = aggregateGscWindow({
+      snapshotsDir: snapDir,
+      fromDate: '2026-04-01',
+      toDate: '2026-04-01',
+    });
+    assert.ok(result['coconut lotion']);
+    assert.equal(result['coconut lotion'].clicks, 5);
+    assert.equal(result['coconut lotion'].top_page, 'https://www.realskincare.com/products/coconut-lotion');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
