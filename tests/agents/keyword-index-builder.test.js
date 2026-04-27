@@ -67,7 +67,7 @@ test('integration: full build from fixtures produces well-formed outputs', async
 
   // Stage 2: Amazon BA
   const baCompetitors = await parseBaReportStream({
-    filePath: join(FIXTURES, 'ba', 'sample-search-terms.jsonl'),
+    filePath: join(FIXTURES, 'ba', 'sample-search-terms.json'),
     rscAsins: new Set(['B0FAKERSC']),
   });
 

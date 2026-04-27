@@ -1,0 +1,20 @@
+{
+  "reportSpecification": {
+    "reportType": "GET_BRAND_ANALYTICS_SEARCH_TERMS_REPORT",
+    "reportOptions": { "reportPeriod": "WEEK" },
+    "dataStartTime": "2026-04-19",
+    "dataEndTime": "2026-04-25",
+    "marketplaceIds": ["ATVPDKIKX0DER"]
+  },
+  "dataByDepartmentAndSearchTerm": [
+    { "departmentName": "Amazon.com", "searchTerm": "natural deodorant for women", "searchFrequencyRank": 12345, "clickedAsin": "B0FAKERSC", "clickedItemName": "REAL Natural Deodorant", "clickShareRank": 1, "clickShare": 0.20, "conversionShare": 0.27 },
+    { "departmentName": "Amazon.com", "searchTerm": "natural deodorant for women", "searchFrequencyRank": 12345, "clickedAsin": "B0NATIVE",   "clickedItemName": "Native Deodorant",      "clickShareRank": 2, "clickShare": 0.18, "conversionShare": 0.21 },
+    { "departmentName": "Amazon.com", "searchTerm": "natural deodorant for women", "searchFrequencyRank": 12345, "clickedAsin": "B0DOVE",     "clickedItemName": "Dove Deodorant",        "clickShareRank": 3, "clickShare": 0.10, "conversionShare": 0.08 },
+    { "departmentName": "Amazon.com", "searchTerm": "car battery",                  "searchFrequencyRank": 54321, "clickedAsin": "B0CAR1",     "clickedItemName": "Optima Battery",        "clickShareRank": 1, "clickShare": 0.30, "conversionShare": 0.25 },
+    { "departmentName": "Amazon.com", "searchTerm": "car battery",                  "searchFrequencyRank": 54321, "clickedAsin": "B0CAR2",     "clickedItemName": "DieHard Battery",       "clickShareRank": 2, "clickShare": 0.22, "conversionShare": 0.18 },
+    { "departmentName": "Amazon.com", "searchTerm": "car battery",                  "searchFrequencyRank": 54321, "clickedAsin": "B0CAR3",     "clickedItemName": "AC Delco Battery",      "clickShareRank": 3, "clickShare": 0.10, "conversionShare": 0.05 },
+    { "departmentName": "Amazon.com", "searchTerm": "coconut lotion",               "searchFrequencyRank": 34567, "clickedAsin": "B0FAKERSC", "clickedItemName": "REAL Coconut Lotion",   "clickShareRank": 1, "clickShare": 0.27, "conversionShare": 0.31 },
+    { "departmentName": "Amazon.com", "searchTerm": "coconut lotion",               "searchFrequencyRank": 34567, "clickedAsin": "B0COCO1",   "clickedItemName": "Sky Organics Coconut",  "clickShareRank": 2, "clickShare": 0.18, "conversionShare": 0.15 },
+    { "departmentName": "Amazon.com", "searchTerm": "coconut lotion",               "searchFrequencyRank": 34567, "clickedAsin": "B0COCO2",   "clickedItemName": "Cocokind Coconut",      "clickShareRank": 3, "clickShare": 0.09, "conversionShare": 0.07 }
+  ]
+}
