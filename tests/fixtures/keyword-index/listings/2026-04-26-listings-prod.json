@@ -1,0 +1,32 @@
+{
+  "sellerId": "ATEST",
+  "marketplaceId": "ATVPDKIKX0DER",
+  "items": [
+    {
+      "sku": "RSC-DEO-W",
+      "summaries": [
+        { "asin": "B0RSCDEOW", "itemName": "REAL Natural Deodorant for Women", "productType": "DEODORANT" }
+      ]
+    },
+    {
+      "sku": "RSC-LOTION",
+      "summaries": [
+        { "asin": "B0RSCLOTION", "itemName": "REAL Coconut Lotion", "productType": "BODY_LOTION" }
+      ]
+    },
+    {
+      "sku": "CULINA-SOAP",
+      "summaries": [
+        { "asin": "B0CULINASOAP", "itemName": "Culina Cast Iron Cleaning Soap", "productType": "SOAP" }
+      ]
+    },
+    {
+      "sku": "EMPTY-SUMMARIES",
+      "summaries": []
+    },
+    {
+      "sku": "NO-ASIN",
+      "summaries": [{ "itemName": "REAL Sample" }]
+    }
+  ]
+}

@@ -66,5 +66,4 @@ data/changes/queue/**/*.json
 !data/changes/queue/.gitkeep
 
 # Keyword-index transient state
-data/.rsc-asins.json
 data/.keyword-index-tmp/
