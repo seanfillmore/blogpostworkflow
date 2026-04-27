@@ -16,6 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { updateProduct, updateCustomCollection, upsertMetafield } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
+import { loadIndex, lookupByKeyword, lookupByUrl } from '../../lib/keyword-index/consumer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -43,6 +44,43 @@ const API_VER = '2025-01';
 
 export function filterApprovedChanges(brief) {
   return (brief.proposed_changes || []).filter(c => c.status === 'approved');
+}
+
+/**
+ * Resolve an index entry for a brief. Tries URL lookup first (precise),
+ * falls back to brief.target_keyword. Returns the entry or null.
+ */
+export function resolveIndexEntry(brief, idx, siteUrl) {
+  if (!idx) return null;
+  if (brief?.handle && brief?.page_type && siteUrl) {
+    const pathSeg = brief.page_type === 'product' ? 'products' : 'collections';
+    const url = `${siteUrl}/${pathSeg}/${brief.handle}`;
+    const byUrl = lookupByUrl(idx, url);
+    if (byUrl) return byUrl;
+  }
+  if (brief?.target_keyword) {
+    return lookupByKeyword(idx, brief.target_keyword);
+  }
+  return null;
+}
+
+/**
+ * Stamp validation metadata on each applied change and the brief root.
+ * Pure — mutates the supplied objects and returns the brief.
+ */
+export function applyValidationMetadata(brief, indexEntry, nowIso = new Date().toISOString()) {
+  const validationTag = indexEntry?.validation_source ?? null;
+  const indexKeyword = indexEntry?.keyword ?? null;
+  for (const change of brief.proposed_changes || []) {
+    if (change.status !== 'applied') continue;
+    if (validationTag) change.validation_source = validationTag;
+    if (indexKeyword) change.index_keyword = indexKeyword;
+    if (!change.applied_at) change.applied_at = nowIso;
+  }
+  if (validationTag) brief.validation_source = validationTag;
+  if (indexKeyword) brief.index_keyword = indexKeyword;
+  if (!brief.applied_at) brief.applied_at = nowIso;
+  return brief;
 }
 
 export function parseDoneLine(line) {
@@ -114,7 +152,22 @@ async function main() {
     return;
   }
 
+  // Look up keyword-index validation tag for the affected page (URL-first,
+  // then keyword fallback). Used to stamp every applied change so the
+  // change-log + outcome-attribution stack can group lift by validation tier.
+  const idx = loadIndex(ROOT);
+  let siteUrl = null;
+  try {
+    const cfgPath = join(ROOT, 'config', 'site.json');
+    if (existsSync(cfgPath)) siteUrl = JSON.parse(readFileSync(cfgPath, 'utf8'))?.url ?? null;
+  } catch { /* best-effort */ }
+  const indexEntry = resolveIndexEntry(brief, idx, siteUrl);
+  const validationTag = indexEntry?.validation_source ?? null;
+
   console.log(`Applying ${approved.length} approved changes for: ${slug}`);
+  if (validationTag === 'amazon') console.log('  ★ Amazon-validated page');
+  else if (validationTag === 'gsc_ga4') console.log('  ✓ GSC+GA4-validated page');
+
   let applied = 0, failed = 0;
 
   for (const change of approved) {
@@ -131,11 +184,13 @@ async function main() {
   }
 
   if (!brief.proposed_changes.some(c => c.status === 'approved')) brief.status = 'applied';
+  applyValidationMetadata(brief, indexEntry);
   writeFileSync(briefPath, JSON.stringify(brief, null, 2));
 
+  const tagPrefix = validationTag === 'amazon' ? '★ ' : validationTag === 'gsc_ga4' ? '✓ ' : '';
   await notify({
-    subject: `Optimization applied: ${slug} — ${applied} applied, ${failed} failed`,
-    body: `Slug: ${slug}\nApplied: ${applied}\nFailed: ${failed}`,
+    subject: `Optimization applied: ${tagPrefix}${slug} — ${applied} applied, ${failed} failed`,
+    body: `Slug: ${slug}\nApplied: ${applied}\nFailed: ${failed}${validationTag ? `\nValidation: ${validationTag}` : ''}`,
     status: failed > 0 ? 'error' : 'success',
   });
 
