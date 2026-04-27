@@ -32,6 +32,9 @@ import { getPostMeta, getMetaPath } from '../../lib/posts.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { refreshStaleYears } from './lib/refresh-stale-years.js';
+import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-index/consumer.js';
+import { sortByValidation } from './lib/sort.js';
+import { buildPromptGrounding } from './lib/grounding.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -96,9 +99,23 @@ async function buildArticleMap() {
 
 // ── claude rewriter ───────────────────────────────────────────────────────────
 
-async function rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr) {
+async function rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground) {
   const ctrPct = (ctr * 100).toFixed(1);
   const avgPos = Math.round(position);
+
+  const groundingLines = [];
+  if (ground?.validationTag === 'amazon') {
+    const conv = ground.conversionShare != null
+      ? ` (Amazon conversion share: ${(ground.conversionShare * 100).toFixed(1)}%)`
+      : '';
+    groundingLines.push(`This query is Amazon-validated — verified commercial demand${conv}.`);
+  } else if (ground?.validationTag === 'gsc_ga4') {
+    groundingLines.push(`This query has GSC + GA4 conversion signal — proven to convert on this site.`);
+  }
+  if (ground?.clusterMateKeywords?.length) {
+    groundingLines.push(`Cluster-mate queries this page should also surface for: ${ground.clusterMateKeywords.join(', ')}.`);
+  }
+  const groundingBlock = groundingLines.length ? `\n${groundingLines.join('\n')}\n` : '';
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -116,7 +133,7 @@ TARGET KEYWORD: "${keyword}"
 AVG POSITION: #${avgPos}
 IMPRESSIONS (90 days): ${impressions.toLocaleString()}
 CURRENT CTR: ${ctrPct}%
-
+${groundingBlock}
 Write an improved title and meta description that:
 - Includes the target keyword naturally near the start
 - Is specific, benefit-driven, and creates curiosity or urgency
@@ -345,6 +362,13 @@ async function main() {
     process.exit(0);
   }
 
+  const sortedCandidates = sortByValidation(lowCtrPages);
+  const idx = loadIndex(ROOT);
+  if (idx) {
+    const amazonCount = sortedCandidates.filter((r) => r.validation_source === 'amazon').length;
+    console.log(`  ${amazonCount} of ${sortedCandidates.length} candidates are Amazon-validated`);
+  }
+
   // Build article map for Shopify lookup
   process.stdout.write('  Fetching Shopify articles... ');
   const articleMap = await buildArticleMap();
@@ -365,7 +389,7 @@ async function main() {
   const results = [];
   let processed = 0;
 
-  for (const item of lowCtrPages) {
+  for (const item of sortedCandidates) {
     if (processed >= limitArg) break;
 
     const { keyword, impressions, ctr, position } = item;
@@ -390,10 +414,14 @@ async function main() {
     const currentTitle = article.title || '';
     const currentMeta = article.summary_html?.replace(/<[^>]+>/g, '').trim() || '';
 
-    process.stdout.write(`  [${processed + 1}] "${keyword}" (#${Math.round(position)}, ${(ctr * 100).toFixed(1)}% CTR)... `);
+    const indexEntry = lookupByKeyword(idx, keyword);
+    const ground = buildPromptGrounding(indexEntry, clusterMatesFor(idx, indexEntry, { limit: 6 }));
+
+    const tagPrefix = ground?.validationTag === 'amazon' ? '★ ' : ground?.validationTag === 'gsc_ga4' ? '✓ ' : '';
+    process.stdout.write(`  [${processed + 1}] ${tagPrefix}"${keyword}" (#${Math.round(position)}, ${(ctr * 100).toFixed(1)}% CTR)... `);
 
     try {
-      const proposed = await rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr);
+      const proposed = await rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground);
       console.log('done');
 
       const result = {
@@ -408,6 +436,7 @@ async function main() {
         proposedTitle: proposed.title,
         proposedMeta: proposed.meta_description,
         applied: false,
+        validation_source: ground?.validationTag ?? null,
       };
 
       // Apply to Shopify if requested
@@ -453,6 +482,7 @@ async function main() {
         baselineCtr: r.ctr,
         baselineImpressions: r.impressions,
         baselinePosition: r.position,
+        validation_source: r.validation_source ?? null,
         testedAt,
       });
     }
@@ -513,10 +543,12 @@ async function main() {
   }
 }
 
-main()
-  .then(() => notifyLatestReport('Meta Optimizer completed', join(ROOT, 'data', 'reports', 'meta-optimizer')))
-  .catch((err) => {
-    notify({ subject: 'Meta Optimizer failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main()
+    .then(() => notifyLatestReport('Meta Optimizer completed', join(ROOT, 'data', 'reports', 'meta-optimizer')))
+    .catch((err) => {
+      notify({ subject: 'Meta Optimizer failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

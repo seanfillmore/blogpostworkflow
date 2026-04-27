@@ -106,3 +106,47 @@ test('validationTag returns null for null entry', () => {
 test('validationTag returns null for entry with no validation_source', () => {
   assert.equal(validationTag({ slug: 'x' }), null);
 });
+
+import { clusterMatesFor } from '../../../lib/keyword-index/consumer.js';
+
+const clusterFixture = {
+  keywords: {
+    'natural-deodorant':       { slug: 'natural-deodorant',       cluster: 'deodorant', amazon: { purchases: 100 }, gsc: { impressions: 500 } },
+    'aluminum-free-deodorant': { slug: 'aluminum-free-deodorant', cluster: 'deodorant', amazon: { purchases: 200 }, gsc: { impressions: 300 } },
+    'roll-on-deodorant':       { slug: 'roll-on-deodorant',       cluster: 'deodorant', amazon: null,                gsc: { impressions: 800 } },
+    'natural-soap':            { slug: 'natural-soap',            cluster: 'soap',      amazon: { purchases: 50 },   gsc: { impressions: 200 } },
+    'orphan':                  { slug: 'orphan',                  cluster: 'unclustered' },
+  },
+};
+
+test('clusterMatesFor returns [] for null index', () => {
+  assert.deepEqual(clusterMatesFor(null, { cluster: 'deodorant' }), []);
+});
+
+test('clusterMatesFor returns [] for null entry', () => {
+  assert.deepEqual(clusterMatesFor(clusterFixture, null), []);
+});
+
+test('clusterMatesFor returns [] for unclustered entry', () => {
+  assert.deepEqual(clusterMatesFor(clusterFixture, clusterFixture.keywords.orphan), []);
+});
+
+test('clusterMatesFor excludes self by default', () => {
+  const mates = clusterMatesFor(clusterFixture, clusterFixture.keywords['natural-deodorant']);
+  assert.ok(!mates.some((m) => m.slug === 'natural-deodorant'));
+});
+
+test('clusterMatesFor includes self when excludeSelf=false', () => {
+  const mates = clusterMatesFor(clusterFixture, clusterFixture.keywords['natural-deodorant'], { excludeSelf: false });
+  assert.ok(mates.some((m) => m.slug === 'natural-deodorant'));
+});
+
+test('clusterMatesFor sorts by amazon.purchases desc, then gsc.impressions desc', () => {
+  const mates = clusterMatesFor(clusterFixture, clusterFixture.keywords['natural-deodorant']);
+  assert.deepEqual(mates.map((m) => m.slug), ['aluminum-free-deodorant', 'roll-on-deodorant']);
+});
+
+test('clusterMatesFor respects limit', () => {
+  const mates = clusterMatesFor(clusterFixture, clusterFixture.keywords['natural-deodorant'], { limit: 1 });
+  assert.equal(mates.length, 1);
+});
