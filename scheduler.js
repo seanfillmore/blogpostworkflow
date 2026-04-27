@@ -205,6 +205,15 @@ runStep('keyword-index-builder', `"${NODE}" agents/keyword-index-builder/index.j
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
 
+  // Amazon explore scripts — feed the keyword-index-builder's Stage 1.
+  // These run weekly because BA is multi-GB and SQP is rate-limited.
+  // The keyword-index-builder reads the latest dump from data/amazon-explore/.
+  if (!dryFlag) {
+    runStep('amazon-explore-listings',     `"${NODE}" scripts/amazon/explore-listings.mjs`,                       { indent: '    ' });
+    runStep('amazon-explore-sqp',          `"${NODE}" scripts/amazon/explore-search-query-performance-rsc.mjs`,    { indent: '    ', retries: 1 });
+    runStep('amazon-explore-ba',           `"${NODE}" scripts/amazon/explore-brand-analytics.mjs`,                 { indent: '    ', retries: 1 });
+  }
+
   // Step 6: product schema with Judge.me reviews (GSC-filtered)
   runStep('product-schema --auto', `"${NODE}" agents/product-schema/index.js --auto --apply${dryFlag}`, { indent: '    ' });
 

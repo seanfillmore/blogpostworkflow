@@ -64,6 +64,3 @@ data/amazon-explore/
 data/changes/queue/*.json
 data/changes/queue/**/*.json
 !data/changes/queue/.gitkeep
-
-# Keyword-index transient state
-data/.keyword-index-tmp/

@@ -20,15 +20,24 @@ test('keyword-index-builder agent exists', () => {
 
 test('agent imports the expected lib modules', () => {
   const src = readFileSync('agents/keyword-index-builder/index.js', 'utf8');
-  assert.ok(src.includes("lib/keyword-index/normalize.js") || src.includes("./lib/keyword-index"), 'imports keyword-index lib');
-  assert.ok(src.includes("lib/keyword-index/amazon-sqp"), 'imports SQP module');
-  assert.ok(src.includes("lib/keyword-index/amazon-ba"), 'imports BA module');
+  assert.ok(src.includes("lib/keyword-index/dump-readers"), 'imports dump-readers (Stage 1 source)');
+  assert.ok(src.includes("lib/keyword-index/amazon-ba"), 'imports BA module (parseBaReportStream)');
+  assert.ok(src.includes("lib/keyword-index/rsc-asins"), 'imports RSC ASIN extractor');
   assert.ok(src.includes("lib/keyword-index/gsc-aggregator"), 'imports GSC aggregator');
   assert.ok(src.includes("lib/keyword-index/ga4-aggregator"), 'imports GA4 aggregator');
   assert.ok(src.includes("lib/keyword-index/merge"), 'imports merger');
   assert.ok(src.includes("lib/keyword-index/competitors"), 'imports competitors');
   assert.ok(src.includes("lib/keyword-index/dataforseo-enricher"), 'imports enricher');
   assert.ok(src.includes("lib/notify.js"), 'imports notify');
+});
+
+test('agent does NOT call SP-API live (Stage 1 reads dumps only)', () => {
+  const src = readFileSync('agents/keyword-index-builder/index.js', 'utf8');
+  // The orchestrator must NOT import the live SP-API client — that's the
+  // explore scripts' responsibility (run on weekly cron).
+  assert.ok(!src.includes("lib/amazon/sp-api-client"), 'orchestrator must not import the SP-API client');
+  assert.ok(!src.includes('fetchSqpReportForAsin'), 'orchestrator must not call live SQP fetcher');
+  assert.ok(!src.includes('fetchBaReport'), 'orchestrator must not call live BA fetcher');
 });
 
 test('agent supports --dry-run and --force flags', () => {
