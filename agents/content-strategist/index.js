@@ -356,6 +356,48 @@ function extractNonScheduleSections(markdown) {
 }
 
 /**
+ * Convert Claude's structured brief queue (which is JSON, not markdown) into
+ * calendar items with sequential weeks and 2-posts-per-week pacing
+ * (Mon + Thu, 8 AM PT). This is more reliable than regex-parsing the
+ * Publishing Schedule table out of Claude's prose, since Claude varies the
+ * column layout from run to run.
+ *
+ * Validation_source is stamped via the keyword-index lookup.
+ */
+export function briefQueueToCalendarItems(briefQueue, index, today = new Date()) {
+  const start = new Date(today);
+  const daysUntilMon = ((1 + 7 - start.getUTCDay()) % 7) || 7;
+  start.setUTCDate(start.getUTCDate() + daysUntilMon);
+  start.setUTCHours(15, 0, 0, 0); // 8 AM PT (PDT). Close enough across DST.
+
+  const nowIso = new Date().toISOString();
+  return briefQueue.map((item, i) => {
+    const week = Math.floor(i / 2) + 1;
+    const dayInWeek = i % 2; // 0 = Mon, 1 = Thu
+    const publish = new Date(start);
+    publish.setUTCDate(start.getUTCDate() + (week - 1) * 7 + (dayInWeek === 0 ? 0 : 3));
+
+    const slug = item.slug || slugify(item.keyword);
+    const tag = validationTag(lookupByKeyword(index, item.keyword));
+    return {
+      slug,
+      keyword: item.keyword,
+      title: item.title || '',
+      category: item.category || '',
+      content_type: item.content_type || 'guide',
+      priority: item.priority || (tag === 'amazon' ? 'high' : 'normal'),
+      week,
+      publish_date: publish.toISOString(),
+      kd: item.kd ?? null,
+      volume: item.volume ?? null,
+      source: 'content_strategist',
+      validation_source: tag,
+      added_at: nowIso,
+    };
+  });
+}
+
+/**
  * Tag each calendar item with the keyword-index validation_source for the
  * matching keyword (or null when no match). Pure — exported for tests.
  */
@@ -569,15 +611,20 @@ ${calendarMd}`;
   }
   console.log(`done (${briefQueue.length} items)`);
 
-  // ── Step 3: Extract structured items from Claude's markdown and save as JSON ──
+  // ── Step 3: Build calendar items + save as JSON ──
+  // Prefer the structured briefQueue (Claude's JSON extract) over regex-parsing
+  // the Publishing Schedule table, which is brittle when Claude varies the
+  // column layout. Fall back to the markdown table only if briefQueue is empty.
 
-  const rawExtracted = extractScheduleItems(calendarMd);
-  const extractedItems = tagCalendarItems(rawExtracted, idx);
-  if (idx) {
+  let extractedItems;
+  if (briefQueue.length > 0) {
+    extractedItems = briefQueueToCalendarItems(briefQueue, idx, new Date());
     const tagged = extractedItems.filter((i) => i.validation_source).length;
-    console.log(`  Extracted ${extractedItems.length} calendar items (${tagged} tagged with validation_source)`);
+    console.log(`  Built ${extractedItems.length} calendar items from brief queue (${tagged} validation-tagged)`);
   } else {
-    console.log(`  Extracted ${extractedItems.length} calendar items from markdown`);
+    const rawExtracted = extractScheduleItems(calendarMd);
+    extractedItems = tagCalendarItems(rawExtracted, idx);
+    console.log(`  Extracted ${extractedItems.length} calendar items from markdown table (fallback)`);
   }
 
   // Preserve any existing supporting sections (clusters, brief queue) in the markdown view
@@ -624,7 +671,7 @@ ${calendarMd}`;
   // ── Summary ───────────────────────────────────────────────────────────────────
 
   console.log('\n── Summary ──────────────────────────────────────────────────────────────────');
-  console.log(`  Calendar:  ${calendarPath}`);
+  console.log(`  Calendar:  data/calendar/calendar.json (${extractedItems.length} items)`);
   if (briefQueue.length > 0) {
     console.log(`\n  Brief Queue (top ${Math.min(briefQueue.length, 10)}):`);
     briefQueue.slice(0, 10).forEach((item, i) => {
