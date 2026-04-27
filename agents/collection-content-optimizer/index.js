@@ -36,6 +36,8 @@ import * as gsc from '../../lib/gsc.js';
 import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/lib/queue.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { createMetaTest } from '../../lib/meta-test.js';
+import { loadIndex, entriesForCluster, loadCategoryCompetitors } from '../../lib/keyword-index/consumer.js';
+import { clusterForCollection } from './lib/cluster-mapper.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -182,7 +184,7 @@ function selectCollectionCandidates(collections, gscResults, activeQueueSlugs, c
 
 // -- claude content generator -------------------------------------------------
 
-async function generateCollectionContent(collection, topQueries, gscData, relatedPosts, ingredients) {
+async function generateCollectionContent(collection, topQueries, gscData, relatedPosts, ingredients, indexGround) {
   const currentDesc = stripHtml(collection.body_html).slice(0, 2000);
   const currentWords = wordCount(collection.body_html);
 
@@ -197,6 +199,14 @@ async function generateCollectionContent(collection, topQueries, gscData, relate
   const ingredientsFormatted = ingredients.length > 0
     ? ingredients.map((i) => `- ${i.product}: ${i.base_ingredients.join(', ')}`).join('\n')
     : '(none matched)';
+
+  const clusterMatesBlock = indexGround?.clusterMates?.length
+    ? `\nCLUSTER-MATE QUERIES (other terms this collection should surface for):\n${indexGround.clusterMates.map((m) => `- ${m.keyword}`).join('\n')}\n`
+    : '';
+
+  const competitorsBlock = indexGround?.competitors?.length
+    ? `\nCOMPETITORS DOMINATING THIS CLUSTER:\n${indexGround.competitors.map((c) => `- ${c.domain}${c.avg_position != null ? ` (avg position ${c.avg_position})` : ''}`).join('\n')}\n`
+    : '';
 
   const gscNote = gscData?.impressions > 0
     ? `This collection page currently ranks around position #${Math.round(gscData.position)} for its top queries with ${gscData.impressions} impressions/90 days and ${(gscData.ctr * 100).toFixed(2)}% CTR.`
@@ -222,7 +232,7 @@ ${relatedPostsFormatted}
 
 RELEVANT INGREDIENTS:
 ${ingredientsFormatted}
-
+${clusterMatesBlock}${competitorsBlock}
 Write a comprehensive collection page description that:
 1. Opens with a compelling first paragraph that naturally includes the top search queries
 2. Explains what this collection offers and who it's for
@@ -411,7 +421,28 @@ async function main() {
 
   // Select candidates
   const active = activeSlugs();
-  const candidates = selectCollectionCandidates(filtered, gscMap, active, limit);
+  const rawCandidates = selectCollectionCandidates(filtered, gscMap, active, limit * 3);
+
+  const idx = loadIndex(ROOT);
+  const competitors = loadCategoryCompetitors(ROOT);
+
+  const ranked = rawCandidates.map((c) => {
+    const cluster = clusterForCollection(c, idx);
+    const clusterEntries = cluster ? entriesForCluster(idx, cluster, { limit: 8 }) : [];
+    const isAmazonValidated = clusterEntries.some((e) => e.validation_source === 'amazon');
+    return { ...c, cluster, clusterEntries, isAmazonValidated };
+  }).sort((a, b) => {
+    const av = a.isAmazonValidated ? 0 : 1;
+    const bv = b.isAmazonValidated ? 0 : 1;
+    if (av !== bv) return av - bv;
+    return b.gsc.impressions - a.gsc.impressions;
+  });
+
+  const candidates = ranked.slice(0, limit);
+  if (idx) {
+    const validated = candidates.filter((c) => c.isAmazonValidated).length;
+    console.log(`  ${validated} of ${candidates.length} candidates map to an Amazon-validated cluster`);
+  }
 
   if (candidates.length === 0) {
     console.log('\n  No collection content optimization candidates found.');
@@ -453,7 +484,11 @@ async function main() {
       const ingredients = findRelevantIngredients(ingredientsConfig, c.handle);
 
       // Generate content via Claude
-      const proposed = await generateCollectionContent(c, topQueries, c.gsc, relatedPosts, ingredients);
+      const indexGround = c.cluster ? {
+        clusterMates: c.clusterEntries.filter((e) => e.keyword),
+        competitors: (competitors[c.cluster] || []).slice(0, 3),
+      } : null;
+      const proposed = await generateCollectionContent(c, topQueries, c.gsc, relatedPosts, ingredients, indexGround);
       const wc = wordCount(proposed.body_html);
       console.log(`done (${wc} words)`);
 
@@ -489,6 +524,8 @@ async function main() {
           why: proposed.why,
           projected_impact: proposed.projected_impact,
         },
+        cluster: c.cluster ?? null,
+        validation_source: c.isAmazonValidated ? 'amazon' : null,
         status: 'pending',
         created_at: new Date().toISOString(),
       };
@@ -507,10 +544,12 @@ async function main() {
 
 const run = publishApproved ? publishApprovedCollections : main;
 
-run()
-  .then(() => notifyLatestReport('Collection Content Optimizer completed', REPORTS_DIR))
-  .catch((err) => {
-    notify({ subject: 'Collection Content Optimizer failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  run()
+    .then(() => notifyLatestReport('Collection Content Optimizer completed', REPORTS_DIR))
+    .catch((err) => {
+      notify({ subject: 'Collection Content Optimizer failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}
