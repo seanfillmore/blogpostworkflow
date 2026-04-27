@@ -39,3 +39,28 @@ test('aggregateGa4Window returns empty when no snapshots in range', () => {
   });
   assert.deepEqual(result, {});
 });
+
+test('aggregateGa4Window reads from topLandingPages with `revenue` (real ga4-collector shape)', async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const tmp = mkdtempSync(join(tmpdir(), 'ga4-real-'));
+  try {
+    const snapDir = join(tmp, 'ga4');
+    mkdirSync(snapDir, { recursive: true });
+    writeFileSync(join(snapDir, '2026-04-15.json'), JSON.stringify({
+      date: '2026-04-15',
+      sessions: 200, conversions: 5, revenue: 250,
+      topLandingPages: [
+        { page: '/products/coconut-lotion', sessions: 50, conversions: 3, revenue: 120.00 },
+        { page: '/blogs/news/x',             sessions: 30, conversions: 1, revenue: 40.00 },
+      ],
+    }));
+    const result = aggregateGa4Window({ snapshotsDir: snapDir, fromDate: '2026-04-15', toDate: '2026-04-15' });
+    assert.equal(result['/products/coconut-lotion'].sessions, 50);
+    assert.equal(result['/products/coconut-lotion'].conversions, 3);
+    assert.equal(result['/products/coconut-lotion'].page_revenue, 120.00);
+    assert.equal(result['/blogs/news/x'].page_revenue, 40.00);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
