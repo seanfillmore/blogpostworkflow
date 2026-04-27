@@ -59,7 +59,7 @@ function isRejected(keyword, rejections) {
   });
 }
 
-function loadKeywordIndex() {
+function loadCoveredKeywords() {
   // Build a set of keywords already targeted by an existing brief or post.
   const keywords = new Set();
   if (existsSync(BRIEFS_DIR)) {
@@ -79,11 +79,11 @@ function loadKeywordIndex() {
   return keywords;
 }
 
-function isMapped(keyword, index) {
+function isMapped(keyword, covered) {
   const kw = keyword.toLowerCase().trim();
-  if (index.has(kw)) return true;
-  // Soft mapping: any indexed keyword that contains the query, or vice versa
-  for (const target of index) {
+  if (covered.has(kw)) return true;
+  // Soft mapping: any covered keyword that contains the query, or vice versa
+  for (const target of covered) {
     if (target.includes(kw) || kw.includes(target)) return true;
   }
   return false;
@@ -108,11 +108,11 @@ async function main() {
   console.log(`    ${page2.length} page-2 queries (positions 11-20)${page2Raw.length !== page2.length ? ` — ${page2Raw.length - page2.length} filtered` : ''}`);
 
   console.log('  Computing unmapped opportunities...');
-  const index = loadKeywordIndex();
+  const covered = loadCoveredKeywords();
   // Unmapped = any low-CTR query above the impression floor that no
   // existing brief/post targets. These are net-new topic candidates.
   const unmapped = lowCTR
-    .filter((r) => r.impressions >= UNMAPPED_MIN_IMPRESSIONS && !isMapped(r.keyword, index))
+    .filter((r) => r.impressions >= UNMAPPED_MIN_IMPRESSIONS && !isMapped(r.keyword, covered))
     .sort((a, b) => b.impressions - a.impressions)
     .slice(0, 25);
   console.log(`    ${unmapped.length} unmapped high-impression queries`);
