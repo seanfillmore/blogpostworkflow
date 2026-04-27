@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadIndex, _resetCacheForTests } from '../../../lib/keyword-index/consumer.js';
+import { loadIndex, lookupByKeyword, _resetCacheForTests } from '../../../lib/keyword-index/consumer.js';
 
 test('loadIndex returns null when file missing', () => {
   _resetCacheForTests();
@@ -29,4 +29,34 @@ test('loadIndex parses a valid keyword-index.json', () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+const lookupFixture = {
+  keywords: {
+    'natural-deodorant':     { keyword: 'natural deodorant',     slug: 'natural-deodorant',     validation_source: 'amazon' },
+    'best-soap-for-tattoos': { keyword: 'best soap for tattoos', slug: 'best-soap-for-tattoos', validation_source: 'gsc_ga4' },
+  },
+};
+
+test('lookupByKeyword exact slug match', () => {
+  const e = lookupByKeyword(lookupFixture, 'natural-deodorant');
+  assert.equal(e?.slug, 'natural-deodorant');
+});
+
+test('lookupByKeyword normalized-slug match from raw keyword', () => {
+  const e = lookupByKeyword(lookupFixture, 'Natural Deodorant');
+  assert.equal(e?.slug, 'natural-deodorant');
+});
+
+test('lookupByKeyword case-insensitive fallback', () => {
+  const e = lookupByKeyword(lookupFixture, 'BEST SOAP FOR TATTOOS!');
+  assert.equal(e?.slug, 'best-soap-for-tattoos');
+});
+
+test('lookupByKeyword miss returns null', () => {
+  assert.equal(lookupByKeyword(lookupFixture, 'something we never see'), null);
+});
+
+test('lookupByKeyword null index returns null', () => {
+  assert.equal(lookupByKeyword(null, 'foo'), null);
 });
