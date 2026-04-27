@@ -25,6 +25,7 @@ const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
+import { loadIndex, lookupByKeyword, validationTag, unmappedIndexEntries } from '../../lib/keyword-index/consumer.js';
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -354,6 +355,52 @@ function extractNonScheduleSections(markdown) {
   return kept.map((p, i) => (i === 0 ? p : '## ' + p)).join('').trim();
 }
 
+/**
+ * Tag each calendar item with the keyword-index validation_source for the
+ * matching keyword (or null when no match). Pure — exported for tests.
+ */
+export function tagCalendarItems(items, index) {
+  return items.map((item) => ({
+    ...item,
+    validation_source: validationTag(lookupByKeyword(index, item.keyword)),
+  }));
+}
+
+/**
+ * Build the prompt section listing Amazon- and GSC/GA4-validated index
+ * entries that have no existing content. Returns '' when there's nothing
+ * to surface.
+ */
+export function buildValidatedDemandSection(unmapped) {
+  if (!unmapped || unmapped.length === 0) return '';
+  const amazon = unmapped.filter((e) => e.validation_source === 'amazon');
+  const ga4 = unmapped.filter((e) => e.validation_source === 'gsc_ga4');
+  const lines = [
+    '## Validated Demand from Keyword Index',
+    'The following queries are validated by Amazon (commercial demand) or GSC+GA4 (this site already converts on them) AND we currently have no content for them. Treat these as **highest-priority new-topic candidates** — they should land in the next 2 weeks of the schedule.',
+    '',
+  ];
+  if (amazon.length) {
+    lines.push('Amazon-validated:');
+    for (const e of amazon.slice(0, 15)) {
+      const p = e.amazon?.purchases ?? 0;
+      const cs = e.amazon?.conversion_share != null ? ` (${(e.amazon.conversion_share * 100).toFixed(1)}% conv share)` : '';
+      lines.push(`- "${e.keyword}" — ${p} amazon purchases${cs}`);
+    }
+    lines.push('');
+  }
+  if (ga4.length) {
+    lines.push('GSC+GA4-validated:');
+    for (const e of ga4.slice(0, 10)) {
+      const c = e.ga4?.conversions ?? 0;
+      const r = e.ga4?.revenue != null ? ` / $${Number(e.ga4.revenue).toFixed(0)} revenue` : '';
+      lines.push(`- "${e.keyword}" — ${c} GA4 conversions${r}`);
+    }
+    lines.push('');
+  }
+  return `\n${lines.join('\n')}`;
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -369,6 +416,12 @@ async function main() {
 
   const gapReport = readFileSync(gapReportPath, 'utf8');
   const inventory = loadInventory();
+  const idx = loadIndex(ROOT);
+  const unmappedFromIndex = unmappedIndexEntries(idx, inventory, { limit: 25 });
+  if (idx) {
+    const amzCount = unmappedFromIndex.filter((e) => e.validation_source === 'amazon').length;
+    console.log(`  Keyword-index: ${unmappedFromIndex.length} unmapped (${amzCount} Amazon-validated)`);
+  }
   const rankReport = loadLatestRankReport();
   const clusterPerf = loadClusterPerformance();
 
@@ -429,6 +482,7 @@ ${[...inventory].sort().join('\n')}
 ${buildClusterWeightSection(clusterPerf)}
 ${competitorSignals && Object.keys(competitorSignals.cluster_boosts || {}).length ? `\n## Competitor Activity Signals\nCompetitors have recently published in the following clusters. Treat these as a +1 priority boost — keep our cluster fresh and reinforce authority before the competitor post gains traction.\n${Object.entries(competitorSignals.cluster_boosts).map(([cl, n]) => `- **${cl}** — ${n} new competitor post${n > 1 ? 's' : ''}`).join('\n')}\n` : ''}
 ${gscOpps && (gscOpps.unmapped?.length || gscOpps.low_ctr?.length) ? `\n## GSC Opportunity Signals\nUse these to inform new-topic and rewrite priorities.\n\n**Unmapped high-impression queries (no current page targets these — strong new-topic candidates):**\n${(gscOpps.unmapped || []).slice(0, 15).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, position ${r.position.toFixed(1)}`).join('\n')}\n\n**Low-CTR queries (existing pages need title/meta rewrites — do not schedule as new posts):**\n${(gscOpps.low_ctr || []).slice(0, 10).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n` : ''}
+${buildValidatedDemandSection(unmappedFromIndex)}
 ${rankReport ? `RANK PERFORMANCE DATA (from latest rank tracker snapshot):
 Use this to inform cluster prioritization — double down on clusters with page-1 posts, prioritize quick wins for internal link boosts, and deprioritize clusters with no rankings yet unless high strategic value.
 ${rankReport}
@@ -517,8 +571,14 @@ ${calendarMd}`;
 
   // ── Step 3: Extract structured items from Claude's markdown and save as JSON ──
 
-  const extractedItems = extractScheduleItems(calendarMd);
-  console.log(`  Extracted ${extractedItems.length} calendar items from markdown`);
+  const rawExtracted = extractScheduleItems(calendarMd);
+  const extractedItems = tagCalendarItems(rawExtracted, idx);
+  if (idx) {
+    const tagged = extractedItems.filter((i) => i.validation_source).length;
+    console.log(`  Extracted ${extractedItems.length} calendar items (${tagged} tagged with validation_source)`);
+  } else {
+    console.log(`  Extracted ${extractedItems.length} calendar items from markdown`);
+  }
 
   // Preserve any existing supporting sections (clusters, brief queue) in the markdown view
   const markdownExtras = extractNonScheduleSections(calendarMd);
