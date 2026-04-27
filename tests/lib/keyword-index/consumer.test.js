@@ -210,3 +210,37 @@ test('buildPromptGrounding (consumer.js): extracts amazon validation + conversio
   assert.equal(g.conversionShare, 0.08);
   assert.deepEqual(g.clusterMateKeywords, ['a', 'b']);
 });
+
+import { unmappedIndexEntries } from '../../../lib/keyword-index/consumer.js';
+
+const unmappedFixture = {
+  keywords: {
+    'natural-deodorant':       { slug: 'natural-deodorant',       keyword: 'natural deodorant',     validation_source: 'amazon',  amazon: { purchases: 100 } },
+    'aluminum-free-deodorant': { slug: 'aluminum-free-deodorant', keyword: 'aluminum free deodorant', validation_source: 'amazon',  amazon: { purchases: 200 } },
+    'best-soap-for-tattoos':   { slug: 'best-soap-for-tattoos',   keyword: 'best soap for tattoos',  validation_source: 'gsc_ga4', ga4: { conversions: 18 } },
+    'natural-bar-soap':        { slug: 'natural-bar-soap',        keyword: 'natural bar soap',       validation_source: 'gsc_ga4', ga4: { conversions: 5 } },
+  },
+};
+
+test('unmappedIndexEntries returns [] for null index', () => {
+  assert.deepEqual(unmappedIndexEntries(null, new Set()), []);
+});
+
+test('unmappedIndexEntries excludes slugs already in inventory', () => {
+  const inv = new Set(['natural-deodorant']);
+  const out = unmappedIndexEntries(unmappedFixture, inv);
+  assert.ok(!out.some((e) => e.slug === 'natural-deodorant'));
+});
+
+test('unmappedIndexEntries sorts amazon first (by purchases desc), then gsc_ga4 (by conversions desc)', () => {
+  const out = unmappedIndexEntries(unmappedFixture, new Set());
+  assert.deepEqual(out.map((e) => e.slug), [
+    'aluminum-free-deodorant', 'natural-deodorant',
+    'best-soap-for-tattoos', 'natural-bar-soap',
+  ]);
+});
+
+test('unmappedIndexEntries respects limit', () => {
+  const out = unmappedIndexEntries(unmappedFixture, new Set(), { limit: 2 });
+  assert.equal(out.length, 2);
+});
