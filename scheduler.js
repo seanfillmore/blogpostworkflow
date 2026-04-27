@@ -198,6 +198,9 @@ if (!dryFlag) {
 runStep('change-verdict', `"${NODE}" agents/change-verdict/index.js${dryFlag}`);
 runStep('change-queue-processor', `"${NODE}" agents/change-queue-processor/index.js${dryFlag}`);
 
+// Keyword-index foundation — runs daily but self-paces to biweekly via built_at.
+runStep('keyword-index-builder', `"${NODE}" agents/keyword-index-builder/index.js${dryFlag}`);
+
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
