@@ -150,3 +150,50 @@ test('clusterMatesFor respects limit', () => {
   const mates = clusterMatesFor(clusterFixture, clusterFixture.keywords['natural-deodorant'], { limit: 1 });
   assert.equal(mates.length, 1);
 });
+
+import { entriesForCluster, loadCategoryCompetitors } from '../../../lib/keyword-index/consumer.js';
+
+test('entriesForCluster returns matching cluster entries sorted by amazon.purchases then impressions', () => {
+  const idx = {
+    keywords: {
+      a: { slug: 'a', cluster: 'deodorant', amazon: { purchases: 10 }, gsc: { impressions: 100 } },
+      b: { slug: 'b', cluster: 'deodorant', amazon: { purchases: 20 }, gsc: { impressions: 50 } },
+      c: { slug: 'c', cluster: 'deodorant', amazon: null, gsc: { impressions: 500 } },
+      d: { slug: 'd', cluster: 'soap',      amazon: { purchases: 30 } },
+    },
+  };
+  const out = entriesForCluster(idx, 'deodorant');
+  assert.deepEqual(out.map((e) => e.slug), ['b', 'a', 'c']);
+});
+
+test('entriesForCluster respects limit', () => {
+  const idx = { keywords: { a: { slug: 'a', cluster: 'x' }, b: { slug: 'b', cluster: 'x' } } };
+  assert.equal(entriesForCluster(idx, 'x', { limit: 1 }).length, 1);
+});
+
+test('entriesForCluster returns [] for null index or missing cluster', () => {
+  assert.deepEqual(entriesForCluster(null, 'x'), []);
+  assert.deepEqual(entriesForCluster({ keywords: {} }, 'x'), []);
+});
+
+test('loadCategoryCompetitors returns {} when file missing', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kwi-'));
+  try {
+    assert.deepEqual(loadCategoryCompetitors(dir), {});
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('loadCategoryCompetitors returns parsed object', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kwi-'));
+  try {
+    mkdirSync(join(dir, 'data'), { recursive: true });
+    writeFileSync(join(dir, 'data', 'category-competitors.json'),
+      JSON.stringify({ deodorant: [{ domain: 'native.com', avg_position: 4 }] }));
+    const out = loadCategoryCompetitors(dir);
+    assert.equal(out.deodorant[0].domain, 'native.com');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
