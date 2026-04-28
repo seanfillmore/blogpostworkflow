@@ -106,14 +106,22 @@ function writeJobStatus(jobPath, updates) {
   writeFileSync(jobPath, JSON.stringify({ ...current, ...updates }, null, 2));
 }
 
-async function generateImage(gemini, prompt, productImagePaths) {
+async function generateImage(gemini, prompt, productImagePaths, referenceImages = []) {
   const contents = [];
 
-  // Add product reference images
+  // Add product reference images (the actual product to feature).
   for (const imgPath of productImagePaths) {
     const imageData = readFileSync(imgPath).toString('base64');
     const ext = imgPath.endsWith('.png') ? 'image/png' : 'image/webp';
     contents.push({ inlineData: { data: imageData, mimeType: ext } });
+  }
+  // Add web-grounded reference images (real-world category photography).
+  // These steer Gemini toward authentic product-ad aesthetics rather than
+  // generic AI compositions.
+  for (const ref of referenceImages) {
+    contents.push({
+      inlineData: { data: ref.buffer.toString('base64'), mimeType: ref.mimeType },
+    });
   }
   contents.push({ text: prompt });
 
@@ -126,6 +134,19 @@ async function generateImage(gemini, prompt, productImagePaths) {
   const imgPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
   if (!imgPart) throw new Error('Gemini returned no image');
   return Buffer.from(imgPart.inlineData.data, 'base64');
+}
+
+/**
+ * Build the Tavily query used to fetch reference photography for this ad.
+ * Pure — exported for tests. Pulls from the job spec when available, falls
+ * back to deriving from the ad's pageSlug + messaging angle.
+ */
+export function buildReferenceQuery(ad, job = {}) {
+  if (job.referenceQuery) return String(job.referenceQuery);
+  const slug = (ad.pageSlug || '').replace(/-/g, ' ').trim();
+  const angle = ad.analysis?.messagingAngle ? ` ${ad.analysis.messagingAngle}` : '';
+  const base = slug ? `${slug}${angle}` : 'natural skincare';
+  return `${base} lifestyle product photography ad`;
 }
 
 async function createZip(zipPath, files) {
@@ -161,6 +182,7 @@ async function main() {
   const env = loadEnv();
   const apiKey = env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  const tavilyKey = env.TAVILY_API_KEY || process.env.TAVILY_API_KEY;
   if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY');
   if (!geminiKey) throw new Error('Missing GEMINI_API_KEY');
 
@@ -188,6 +210,23 @@ async function main() {
   const stylePrompt = styleResponse.content[0].text.trim();
   console.log('done');
 
+  // Step 1b: Pull web-grounded reference photography via Tavily (best-effort).
+  // These extra images steer Gemini toward real-world product-ad aesthetics
+  // and away from the generic AI look. When Tavily is unconfigured or errors,
+  // we proceed with just the product images (byte-identical prior behavior).
+  let referenceImages = [];
+  if (tavilyKey) {
+    process.stdout.write('  Searching reference photography... ');
+    const { searchImages, downloadImage } = await import('../../lib/tavily.js');
+    const refQuery = buildReferenceQuery(ad, job);
+    const hits = await searchImages(tavilyKey, refQuery, { maxResults: 5 });
+    for (const hit of hits.slice(0, 4)) {
+      const dl = await downloadImage(hit.url);
+      if (dl) referenceImages.push(dl);
+    }
+    console.log(`${referenceImages.length} reference image(s) (query: "${refQuery}")`);
+  }
+
   // Step 2: Generate images per placement size
   const sizes = placementSizes(ad.publisherPlatforms || ['instagram', 'facebook']);
   const PRODUCT_IMAGES_DIR = join(ROOT, 'data', 'product-images');
@@ -201,7 +240,7 @@ async function main() {
     let imgBuffer = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const raw = await generateImage(gemini, `${stylePrompt}\n\nGenerate as ${size.width}x${size.height} pixel image. No text, logos, or labels.`, productImagePaths);
+        const raw = await generateImage(gemini, `${stylePrompt}\n\nGenerate as ${size.width}x${size.height} pixel image. No text, logos, or labels.`, productImagePaths, referenceImages);
         imgBuffer = await sharp(raw).resize(size.width, size.height, { fit: 'cover' }).webp({ quality: 85 }).toBuffer();
         break;
       } catch (e) {
