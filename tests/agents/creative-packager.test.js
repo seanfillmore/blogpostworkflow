@@ -5,6 +5,7 @@ import {
   formatCopyFile,
   formatSpecsFile,
   buildStylePrompt,
+  buildReferenceQuery,
 } from '../../agents/creative-packager/index.js';
 
 // placementSizes — instagram only
@@ -81,6 +82,26 @@ import {
   assert.ok(prompt.includes('Stay fresh all day'));
   assert.ok(prompt.includes('Gemini'));
   assert.ok(prompt.includes('mood') || prompt.includes('color') || prompt.includes('style'));
+}
+
+// buildReferenceQuery — uses job override when provided
+{
+  const ad = { pageSlug: 'natural-deodorant', analysis: { messagingAngle: 'Stay fresh' } };
+  assert.equal(buildReferenceQuery(ad, { referenceQuery: 'custom query' }), 'custom query');
+}
+
+// buildReferenceQuery — derives from pageSlug + messaging angle
+{
+  const ad = { pageSlug: 'natural-deodorant', analysis: { messagingAngle: 'Stay fresh' } };
+  const q = buildReferenceQuery(ad);
+  assert.ok(q.includes('natural deodorant'));
+  assert.ok(q.includes('Stay fresh'));
+  assert.ok(q.includes('photography'));
+}
+
+// buildReferenceQuery — falls back when pageSlug + analysis are missing
+{
+  assert.ok(buildReferenceQuery({}).includes('natural skincare'));
 }
 
 console.log('✓ creative-packager unit tests pass');
