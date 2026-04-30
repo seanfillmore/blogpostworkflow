@@ -124,6 +124,9 @@ function pickMetaRewrites(blocked) {
     if (!match || blocked.has(match.slug)) continue;
     // Only pick posts that actually have HTML — no point refreshing a stub
     if (!existsSync(getContentPath(match.slug))) continue;
+    // Skip posts that aren't on Shopify yet — the publish step would fail
+    // because findPostMeta requires shopify_article_id to update the article.
+    if (!match.shopify_article_id) continue;
     picks.push({
       slug: match.slug,
       title: match.title || match.slug,
