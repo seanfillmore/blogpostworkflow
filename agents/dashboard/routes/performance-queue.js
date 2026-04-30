@@ -156,7 +156,11 @@ export default [
           await publishBlogRefresh(item, ctx);
         }
       } catch (err) {
-        return respondJson(res, { ok: false, error: `Publish failed: ${err.message}` }, 502);
+        // 422 (not 502) — these are user-state errors (post not on Shopify yet,
+        // refreshed HTML missing, etc.). Cloudflare/proxies in front of the
+        // tunnel intercept 5xx responses and serve their own HTML error page,
+        // which the dashboard then fails to JSON.parse. 4xx passes through.
+        return respondJson(res, { ok: false, error: `Publish failed: ${err.message}` }, 422);
       }
 
       item.status = 'published';
