@@ -13,7 +13,7 @@ export function refreshStaleYears(input) {
   const currentYear = new Date().getFullYear();
   const minYear = 2020;
   let changed = false;
-  const text = input.replace(/\b(20\d{2})\b/g, (match, yearStr) => {
+  let text = input.replace(/\b(20\d{2})\b/g, (match, yearStr) => {
     const year = parseInt(yearStr, 10);
     if (year >= minYear && year < currentYear) {
       changed = true;
@@ -21,5 +21,14 @@ export function refreshStaleYears(input) {
     }
     return match;
   });
+  // Collapse adjacent duplicate years separated by whitespace, e.g. "2026 2026"
+  // becomes "2026". Defends against historical corruption from producers that
+  // appended the year to fields that already contained one. Doesn't touch
+  // ranges like "2024–2026" or differently-spaced "2025/2026".
+  const dedupRegex = /\b(20\d{2})\s+\1\b/g;
+  if (dedupRegex.test(text)) {
+    text = text.replace(/\b(20\d{2})\s+\1\b/g, '$1');
+    changed = true;
+  }
   return { text, changed };
 }

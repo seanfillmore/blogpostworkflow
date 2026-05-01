@@ -80,4 +80,25 @@ console.log('refreshStaleYears()\n');
   assert(changed === false, 'changed is false for pre-2020 years');
 }
 
+// Adjacent duplicate years are collapsed (corruption defense)
+{
+  const { text, changed } = refreshStaleYears(`best fluoride-free toothpaste ${currentYear} ${currentYear}`);
+  assert(text === `best fluoride-free toothpaste ${currentYear}`, 'collapses adjacent duplicate years');
+  assert(changed === true, 'changed when collapse happens');
+}
+
+// Stale years that would substitute to the same current year are collapsed
+{
+  const { text, changed } = refreshStaleYears(`Picks for ${twoYearsAgo} ${lastYear} buyers`);
+  assert(text === `Picks for ${currentYear} buyers`, 'substitutes then collapses adjacent same-year tokens');
+  assert(changed === true, 'changed when collapse happens after substitution');
+}
+
+// Year ranges with non-space separators are NOT collapsed
+{
+  const { text, changed } = refreshStaleYears(`Trends ${lastYear}-${currentYear}`);
+  assert(text === `Trends ${currentYear}-${currentYear}`, 'leaves hyphen-separated adjacent years alone');
+  assert(changed === true, 'changed only because of substitution, not collapse');
+}
+
 console.log('\nDone.');
