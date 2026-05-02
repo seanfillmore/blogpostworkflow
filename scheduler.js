@@ -201,6 +201,15 @@ runStep('change-queue-processor', `"${NODE}" agents/change-queue-processor/index
 // Keyword-index foundation — runs daily but self-paces to biweekly via built_at.
 runStep('keyword-index-builder', `"${NODE}" agents/keyword-index-builder/index.js${dryFlag}`);
 
+// ── Calendar / brief refresh (Mon/Wed/Fri/Sun) ───────────────────────────────
+// Used to live inside the Sunday-only block below; the pipeline ran dry by
+// midweek as the calendar emptied out. Four times a week keeps a steady drip
+// of new topics flowing into the writer without burning Anthropic spend daily.
+const _dow = new Date().getDay();
+if (_dow === 0 || _dow === 1 || _dow === 3 || _dow === 5) {
+  runStep('content-strategist --generate-briefs', `"${NODE}" agents/content-strategist/index.js --generate-briefs`);
+}
+
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
@@ -231,10 +240,8 @@ if (new Date().getDay() === 0) {
   // Step 8: cannibalization detection + resolution
   runStep('cannibalization-resolver', `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`, { indent: '    ' });
 
-  // Step 8a: refresh content calendar + briefs from the keyword-index.
-  // Surfaces Amazon-validated unmapped queries (PR #165) so the calendar-runner
-  // has fresh new-topic candidates to publish through the next week.
-  runStep('content-strategist --generate-briefs', `"${NODE}" agents/content-strategist/index.js --generate-briefs`, { indent: '    ' });
+  // Step 8a (content-strategist) lives above the Sunday block now — runs
+  // Mon/Wed/Fri/Sun so the calendar doesn't empty out by midweek.
 
   // Step 8b: answer-first rewrite audit (fix intros for LLM citation)
   runStep('answer-first-rewriter', `"${NODE}" agents/answer-first-rewriter/index.js --apply`, { indent: '    ' });
