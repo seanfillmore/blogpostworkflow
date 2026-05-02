@@ -235,18 +235,26 @@ async function pickBestKeyword(url, fallbackTitle) {
   if (seed && seed.length >= 3) {
     try {
       const ideas = await getKeywordIdeas([seed], { limit: 30 });
+      // Require keyword overlap with the seed so DataForSEO doesn't drag the
+      // selector off-topic ("foam soap bundle" → "purina pro plan", etc.).
+      // Stem the seed by dropping common stop words and short tokens.
+      const seedWords = seed.split(/\s+/)
+        .map((w) => w.replace(/[^a-z0-9]/g, ''))
+        .filter((w) => w.length >= 4 && !['with', 'from', 'best', 'this', 'that'].includes(w));
       const filteredIdeas = (ideas || []).filter((i) => {
         if (!passesAllFilters(i.keyword)) return false;
-        if ((i.search_volume || 0) === 0) return false;
+        if ((i.volume || 0) === 0) return false;
+        const kw = i.keyword.toLowerCase();
+        if (seedWords.length && !seedWords.some((w) => kw.includes(w))) return false;
         return true;
       });
       if (filteredIdeas.length > 0) {
-        filteredIdeas.sort((a, b) => (b.search_volume || 0) - (a.search_volume || 0));
+        filteredIdeas.sort((a, b) => (b.volume || 0) - (a.volume || 0));
         const best = filteredIdeas[0];
         return {
           keyword: best.keyword,
           gscData: null,
-          source: `dataforseo-volume (${best.search_volume}/mo)`,
+          source: `dataforseo-volume (${best.volume}/mo)`,
         };
       }
     } catch {
