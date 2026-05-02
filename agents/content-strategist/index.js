@@ -154,10 +154,14 @@ export function loadClusterPerformance() {
   }
 
   // Known product clusters — checked against tags AND slug as a fallback so
-  // posts without proper tags still group correctly.
+  // posts without proper tags still group correctly. `hair care` and `skincare`
+  // are taxonomy buckets for legacy topical-authority content (hair masks,
+  // skincare guides, dry brushing, sugar scrubs) that don't map to a single
+  // SKU but inform strategy weight.
   const KNOWN_CLUSTERS = [
     'deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm', 'lip-balm',
     'coconut oil', 'coconut-oil', 'shampoo', 'conditioner', 'sunscreen',
+    'hair care', 'skincare',
   ];
   function clusterFor(post) {
     const tags = (tagsBySlug[post.slug] || []).map((t) => t.toLowerCase());
@@ -172,14 +176,30 @@ export function loadClusterPerformance() {
     return slug.split('-')[0];
   }
 
+  // Iterate every published post so post_count reflects the full inventory in
+  // each cluster, not just the subset that the rank tracker picked up. Rank
+  // metrics (median position, page-1 count, drag count) layer on top — they
+  // only consider posts that actually have a position recorded in the snapshot.
+  const snapshotBySlug = new Map();
+  for (const p of posts) {
+    if (p.slug) snapshotBySlug.set(p.slug, p);
+  }
   const groups = {};
   const now = Date.now();
-  for (const p of posts) {
-    if (!p.position) continue;
-    const cluster = clusterFor(p);
+  for (const slug of listAllSlugs()) {
+    let meta;
+    try { meta = getPostMetaLib(slug); } catch { continue; }
+    if (!meta || !meta.shopify_article_id) continue;
+
+    const cluster = clusterFor({ slug });
     if (!cluster) continue;
-    const ageDays = p.published_at ? Math.floor((now - new Date(p.published_at).getTime()) / 86400000) : null;
-    (groups[cluster] = groups[cluster] || []).push({ ...p, age_days: ageDays });
+
+    const snap = snapshotBySlug.get(slug);
+    const position = snap?.position ?? null;
+    const publishedAt = snap?.published_at || meta.shopify_publish_at || meta.published_at || null;
+    const ageDays = publishedAt ? Math.floor((now - new Date(publishedAt).getTime()) / 86400000) : null;
+
+    (groups[cluster] = groups[cluster] || []).push({ slug, position, age_days: ageDays });
   }
 
   const median = (arr) => {
@@ -190,12 +210,16 @@ export function loadClusterPerformance() {
 
   const clusters = {};
   for (const [name, items] of Object.entries(groups)) {
-    const positions = items.map((i) => i.position);
-    const ages = items.map((i) => i.age_days).filter((a) => a != null);
+    // Position-based metrics only consider posts with a position in the
+    // snapshot. items contains every post in the cluster (including
+    // un-ranked ones), so post_count is the full inventory.
+    const ranked = items.filter((i) => i.position != null);
+    const positions = ranked.map((i) => i.position);
+    const ages = ranked.map((i) => i.age_days).filter((a) => a != null);
     const medianPos = median(positions);
     const medianAge = median(ages);
-    const page1Count = items.filter((i) => i.position <= 10).length;
-    const dragCount = items.filter((i) => i.position > 30 && (i.age_days || 0) > 30).length;
+    const page1Count = ranked.filter((i) => i.position <= 10).length;
+    const dragCount = ranked.filter((i) => i.position > 30 && (i.age_days || 0) > 30).length;
     const hasFlop = items.some((i) => flopSlugs.has(i.slug));
 
     let weight = 0;
@@ -221,6 +245,7 @@ export function loadClusterPerformance() {
 
     clusters[name] = {
       post_count: items.length,
+      ranked_count: ranked.length,
       median_position: medianPos,
       median_age_days: medianAge,
       page_1_count: page1Count,
