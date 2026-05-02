@@ -60,26 +60,35 @@ const MANUAL_OVERRIDES = {
   'why-use-unscented-skincare-products': 'skincare',
 };
 
+// Cluster priority — must match the iteration order of KNOWN_CLUSTERS in
+// agents/content-strategist/index.js#clusterFor so the tag a post receives
+// matches the cluster the strategist will count it under. Order matters:
+// a post about "coconut oil body lotion" hits 'lotion' before 'coconut oil'.
+const PRIORITY = [
+  'deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm',
+  'coconut oil', 'shampoo', 'conditioner', 'sunscreen',
+  'hair care', 'skincare',
+];
+
 function determineCluster(slug, meta) {
   if (MANUAL_OVERRIDES[slug]) return MANUAL_OVERRIDES[slug];
 
-  const haystack = [
-    slug,
-    ...(meta.tags || []),
-    meta.title || '',
-    meta.target_keyword || '',
-  ].join(' ').toLowerCase();
+  const tags = (meta.tags || []).map((t) => t.toLowerCase());
+  const surface = [slug, meta.title || '', meta.target_keyword || ''].join(' ').toLowerCase();
 
-  // Multi-word clusters first so "lip balm" wins over "lip" + "balm".
-  if (/\blip[\s-]balm\b/.test(haystack)) return 'lip balm';
-  if (/\bcoconut[\s-]oil\b/.test(haystack)) return 'coconut oil';
-  if (/\b(hair[\s-](care|mask)|shampoo|conditioner)\b/.test(haystack)) return 'hair care';
-
-  for (const c of ['deodorant', 'toothpaste', 'lotion', 'soap', 'sunscreen']) {
-    if (haystack.includes(c)) return c;
+  // Tag-based match (highest signal — explicit categorization).
+  for (const c of PRIORITY) {
+    if (tags.some((t) => t.includes(c))) return c;
   }
 
-  // Default for general topical-authority posts (skincare guides, scrubs, dry brushing)
+  // Surface-based match for slug/title/keyword. Hair-mask / shampoo / conditioner
+  // all roll up into 'hair care' since RSC treats them as one product line.
+  if (/\b(hair[\s-]mask|shampoo|conditioner)\b/.test(surface)) return 'hair care';
+  for (const c of PRIORITY) {
+    if (surface.includes(c) || surface.includes(c.replace(' ', '-'))) return c;
+  }
+
+  // Default for general topical-authority posts (skincare guides, scrubs, dry brushing).
   return 'skincare';
 }
 
