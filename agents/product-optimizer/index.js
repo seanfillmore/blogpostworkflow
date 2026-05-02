@@ -49,6 +49,7 @@ import {
   upsertMetafield,
 } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
+import { getKeywordIdeas } from '../../lib/dataforseo.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/lib/queue.js';
 import { createMetaTest } from '../../lib/meta-test.js';
@@ -196,34 +197,65 @@ const COMPETITOR_TERMS = (() => {
 // Returns { keyword, gscData, source }. `gscData` keeps the impressions /
 // position / ctr context the rewrite prompt uses; `source` lets callers log
 // where the keyword came from.
+function passesAllFilters(kw) {
+  const lower = (kw || '').toLowerCase();
+  if (!lower) return false;
+  if (BRAND_TERMS.some((t) => lower.includes(t))) return false;
+  if (COMPETITOR_TERMS.some((t) => lower.includes(t))) return false;
+  if (GENERIC_BLOCKLIST.includes(lower)) return false;
+  return true;
+}
+
 async function pickBestKeyword(url, fallbackTitle) {
   let queries = [];
   try {
     queries = await gsc.getPageKeywords(url, 20, 90);
   } catch {
-    // GSC unavailable — fall through to title fallback.
+    // GSC unavailable — fall through to next layer.
   }
-  const filtered = queries.filter((q) => {
-    const kw = (q.keyword || '').toLowerCase();
-    if (!kw) return false;
-    if (BRAND_TERMS.some((t) => kw.includes(t))) return false;
-    if (COMPETITOR_TERMS.some((t) => kw.includes(t))) return false;
-    if (GENERIC_BLOCKLIST.includes(kw)) return false;
-    return true;
-  });
-  if (filtered.length === 0) {
-    return { keyword: (fallbackTitle || '').toLowerCase(), gscData: null, source: 'title-fallback' };
+  const filtered = queries.filter((q) => passesAllFilters(q.keyword));
+  if (filtered.length > 0) {
+    filtered.sort((a, b) => {
+      const score = (q) => (q.impressions || 0) * Math.max(1, 100 - (q.position || 100));
+      return score(b) - score(a);
+    });
+    const best = filtered[0];
+    return {
+      keyword: best.keyword,
+      gscData: { url, keyword: best.keyword, impressions: best.impressions, position: best.position, ctr: best.ctr },
+      source: 'gsc-filtered',
+    };
   }
-  filtered.sort((a, b) => {
-    const score = (q) => (q.impressions || 0) * Math.max(1, 100 - (q.position || 100));
-    return score(b) - score(a);
-  });
-  const best = filtered[0];
-  return {
-    keyword: best.keyword,
-    gscData: { url, keyword: best.keyword, impressions: best.impressions, position: best.position, ctr: best.ctr },
-    source: 'gsc-filtered',
-  };
+
+  // Layer 2 fallback: DataForSEO keyword ideas seeded by the product title.
+  // Used when GSC has no impressions for this URL or every query was filtered.
+  // Picks the highest-volume idea that passes the same filter taxonomy and has
+  // verified search volume (>0 reported by DataForSEO).
+  const seed = (fallbackTitle || '').toLowerCase().split(/[|–—:]/)[0].trim();
+  if (seed && seed.length >= 3) {
+    try {
+      const ideas = await getKeywordIdeas([seed], { limit: 30 });
+      const filteredIdeas = (ideas || []).filter((i) => {
+        if (!passesAllFilters(i.keyword)) return false;
+        if ((i.search_volume || 0) === 0) return false;
+        return true;
+      });
+      if (filteredIdeas.length > 0) {
+        filteredIdeas.sort((a, b) => (b.search_volume || 0) - (a.search_volume || 0));
+        const best = filteredIdeas[0];
+        return {
+          keyword: best.keyword,
+          gscData: null,
+          source: `dataforseo-volume (${best.search_volume}/mo)`,
+        };
+      }
+    } catch {
+      // DataForSEO unavailable — fall through to title fallback.
+    }
+  }
+
+  // Layer 3 fallback: just use the title.
+  return { keyword: (fallbackTitle || '').toLowerCase(), gscData: null, source: 'title-fallback' };
 }
 
 // ── claude rewriter ───────────────────────────────────────────────────────────
@@ -1385,8 +1417,10 @@ async function main() {
       console.log(`    (keyword overridden: "${overrideKeyword}")`);
     } else if (keywordSource === 'gsc-filtered') {
       console.log(`    (keyword from filtered GSC long tail: "${keyword}")`);
+    } else if (keywordSource.startsWith('dataforseo-volume')) {
+      console.log(`    (keyword from DataForSEO ${keywordSource.replace('dataforseo-volume ', '')}: "${keyword}")`);
     } else if (keywordSource === 'title-fallback') {
-      console.log(`    (no usable GSC query; fell back to title: "${keyword}")`);
+      console.log(`    (no GSC or DataForSEO match; fell back to title: "${keyword}")`);
     }
 
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${candidate.title}"... `);
