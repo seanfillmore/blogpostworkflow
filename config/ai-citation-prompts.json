@@ -25,7 +25,8 @@
     { "name": "Old Spice", "domain": "oldspice.com", "aliases": ["old spice"] },
     { "name": "Redmond", "domain": "redmond.life", "aliases": ["redmond earthpaste", "redmond"] },
     { "name": "Risewell", "domain": "risewell.com", "aliases": ["risewell"] },
-    { "name": "Jack N' Jill", "domain": "jackandjillkids.com", "aliases": ["jack n' jill", "jack and jill"] }
+    { "name": "Jack N' Jill", "domain": "jackandjillkids.com", "aliases": ["jack n' jill", "jack and jill"] },
+    { "name": "Raw Sugar Living", "domain": "rawsugarliving.com", "aliases": ["raw sugar", "raw sugar living"] }
   ],
   "prompts": [
     "best natural deodorant",

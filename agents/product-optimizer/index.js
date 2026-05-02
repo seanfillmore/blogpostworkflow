@@ -167,6 +167,23 @@ function stripHtml(html) {
 
 const BRAND_TERMS = (config.brand_terms || []).map((t) => t.toLowerCase());
 const GENERIC_BLOCKLIST = (config.generic_keyword_blocklist || []).map((t) => t.toLowerCase());
+// Competitor brand terms — anchoring product copy on a competitor's name is
+// always wrong (the SERP listing reads as a redirect to them). Pull the list
+// from the AI-citation prompts config since it's already maintained for
+// citation tracking and includes name + every common alias.
+const COMPETITOR_TERMS = (() => {
+  try {
+    const aiCfg = JSON.parse(readFileSync(join(ROOT, 'config', 'ai-citation-prompts.json'), 'utf8'));
+    const terms = new Set();
+    for (const c of (aiCfg.competitors || [])) {
+      if (c.name) terms.add(c.name.toLowerCase());
+      for (const a of (c.aliases || [])) terms.add(a.toLowerCase());
+    }
+    return [...terms];
+  } catch {
+    return [];
+  }
+})();
 
 // Pick the best keyword to anchor a rewrite on. The default mode used to take
 // each URL's #1 GSC query — but #1 is often noise (branded hashtags like
@@ -190,6 +207,7 @@ async function pickBestKeyword(url, fallbackTitle) {
     const kw = (q.keyword || '').toLowerCase();
     if (!kw) return false;
     if (BRAND_TERMS.some((t) => kw.includes(t))) return false;
+    if (COMPETITOR_TERMS.some((t) => kw.includes(t))) return false;
     if (GENERIC_BLOCKLIST.includes(kw)) return false;
     return true;
   });
