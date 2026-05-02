@@ -3,6 +3,7 @@ import { buildProductSystemPrompt } from './prompt-builder.js';
 import {
   validateLengths,
   validateBrandTermExclusion,
+  validateNoFabricatedIngredients,
 } from './validators.js';
 import { CLAUDE_MODEL, gitSha, parseClaudeJson } from './util.js';
 
@@ -58,6 +59,16 @@ export async function assembleProduct({ foundation, clusterName, product, claude
   ]) {
     const e = validateBrandTermExclusion({ text, field });
     if (!e.valid) errors.push(...e.errors);
+  }
+
+  // Ingredient-fabrication scan over body_html prose
+  if (proposed.bodyHtml) {
+    const fab = validateNoFabricatedIngredients({ text: proposed.bodyHtml });
+    if (!fab.valid) {
+      for (const f of fab.flagged) {
+        errors.push(`bodyHtml: contains avoided ingredient "${f.term}" — context: "${f.context}"`);
+      }
+    }
   }
 
   return {

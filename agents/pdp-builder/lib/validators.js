@@ -115,6 +115,79 @@ export function validateLengths(content) {
 }
 
 /**
+ * Scans product-mode marketing prose (body_html) for ingredient mentions
+ * we never use. Cluster mode validates structured ingredientCards[].name
+ * directly; this is the equivalent gate for prose where ingredient mentions
+ * are unstructured.
+ *
+ * Distinguishes positive claims ("contains fluoride") from brand-positioning
+ * negations ("fluoride-free", "no fluoride", "without fluoride") via a small
+ * window check around each match. Negated mentions are allowed.
+ *
+ * Returns { valid, flagged: [{ term, context }] }.
+ */
+export function validateNoFabricatedIngredients({ text }) {
+  const NEGATION_MARKERS = [
+    'no ', 'without ', 'free of ', 'free from ', '-free', ' not ', 'does not', "doesn't",
+  ];
+  const FABRICATION_BLOCKLIST = [
+    'fluoride',
+    'sodium fluoride',
+    'stannous fluoride',
+    'hydroxyapatite',
+    'nano-hydroxyapatite',
+    'sodium lauryl sulfate',
+    'sls',
+    'sodium laureth sulfate',
+    'sles',
+    'hydrated silica',
+    'sodium saccharin',
+    'aspartame',
+    'sucralose',
+    'glycerin',
+    'sorbitol',
+    'propylene glycol',
+    'cetylpyridinium chloride',
+    'triclosan',
+    'parabens',
+    'methylparaben',
+    'propylparaben',
+    'phthalates',
+    'peg-',
+    'mineral oil',
+    'petroleum',
+    'petrolatum',
+    'aluminum',
+    'aluminum chlorohydrate',
+  ];
+
+  const stripped = (text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const lower = stripped.toLowerCase();
+
+  const flagged = [];
+  for (const term of FABRICATION_BLOCKLIST) {
+    let idx = 0;
+    while ((idx = lower.indexOf(term, idx)) !== -1) {
+      // Check surrounding window for negation markers
+      const winStart = Math.max(0, idx - 40);
+      const winEnd = Math.min(lower.length, idx + term.length + 20);
+      const window = lower.slice(winStart, winEnd);
+      const negated = NEGATION_MARKERS.some((m) => window.includes(m));
+      if (!negated) {
+        // Capture readable context for the report
+        const ctxStart = Math.max(0, idx - 30);
+        const ctxEnd = Math.min(stripped.length, idx + term.length + 30);
+        flagged.push({ term, context: stripped.slice(ctxStart, ctxEnd) });
+        break; // one flag per term is enough
+      }
+      idx += term.length;
+    }
+  }
+
+  return { valid: flagged.length === 0, flagged };
+}
+
+/**
  * Checks generated text for competitor and generic-blocklist terms.
  * Brand terms (Real Skin Care, etc.) are intentionally NOT blocked here —
  * those are our own brand and SHOULD appear in our copy.

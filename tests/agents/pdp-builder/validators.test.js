@@ -5,6 +5,7 @@ import {
   validateIngredients,
   validateLengths,
   validateBrandTermExclusion,
+  validateNoFabricatedIngredients,
 } from '../../../agents/pdp-builder/lib/validators.js';
 
 // Mock cluster ingredient list (mirrors what load-foundation produces from config/ingredients.json)
@@ -157,4 +158,84 @@ test('validateBrandTermExclusion: allows brand_terms in seoTitle (it IS our bran
     field: 'seoTitle',
   });
   assert.equal(result.valid, true);
+});
+
+// ── validateNoFabricatedIngredients (product-mode prose scan) ─────────
+
+test('validateNoFabricatedIngredients: passes for clean prose', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Made with organic virgin coconut oil and baking soda.</p>',
+  });
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.flagged, []);
+});
+
+test('validateNoFabricatedIngredients: flags fluoride mentioned as a positive claim', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Strengthens enamel with fluoride for cavity protection.</p>',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.flagged.some((f) => f.term === 'fluoride'));
+});
+
+test('validateNoFabricatedIngredients: allows fluoride-free as a brand claim', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Our fluoride-free formula is gentle on sensitive teeth.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: allows "no fluoride" as a brand claim', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Made with no fluoride and no synthetic sweeteners.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: allows "without fluoride" as a brand claim', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Cleans deeply without fluoride or harsh abrasives.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: flags hydroxyapatite (premium fabrication risk)', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Contains hydroxyapatite to remineralize enamel naturally.</p>',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.flagged.some((f) => f.term === 'hydroxyapatite'));
+});
+
+test('validateNoFabricatedIngredients: flags PEG-40 (catches peg- prefix)', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Emulsified with PEG-40 hydrogenated castor oil.</p>',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.flagged.some((f) => f.term === 'peg-'));
+});
+
+test('validateNoFabricatedIngredients: strips HTML before scanning', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Pure formula with <strong>no parabens</strong> ever.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: case-insensitive', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Contains FLUORIDE for protection.</p>',
+  });
+  assert.equal(result.valid, false);
+});
+
+test('validateNoFabricatedIngredients: returns flagged array with term, sentence-context info', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Contains hydroxyapatite to remineralize enamel.</p>',
+  });
+  assert.equal(result.valid, false);
+  assert.equal(result.flagged.length, 1);
+  assert.equal(result.flagged[0].term, 'hydroxyapatite');
+  assert.ok(typeof result.flagged[0].context === 'string');
+  assert.ok(result.flagged[0].context.length > 0);
 });

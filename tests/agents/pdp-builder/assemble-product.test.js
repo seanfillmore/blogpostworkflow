@@ -64,3 +64,23 @@ test('assembleProduct: rejects competitor name in body_html', async () => {
   });
   assert.equal(result.status, 'needs_rework');
 });
+
+test('assembleProduct: rejects fabricated ingredient (hydroxyapatite) in body_html', async () => {
+  const fabricatedOutput = {
+    seoTitle: 'Coconut Oil Toothpaste | Fluoride-Free | Real Skin Care',
+    metaDescription: 'A'.repeat(150),
+    bodyHtml: '<p>Contains hydroxyapatite to remineralize enamel naturally. ' + Array(140).fill('word').join(' ') + '</p>',
+    metafieldOverrides: {},
+  };
+  const mockClient = {
+    messages: { create: async () => fakeClaudeResponse(fabricatedOutput) },
+  };
+  const result = await assembleProduct({
+    foundation,
+    clusterName: 'toothpaste',
+    product: { handle: 'coconut-oil-toothpaste', title: 'Coconut Oil Toothpaste' },
+    claudeClient: mockClient,
+  });
+  assert.equal(result.status, 'needs_rework');
+  assert.match(JSON.stringify(result.validation.errors), /hydroxyapatite/i);
+});
