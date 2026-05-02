@@ -158,6 +158,7 @@ export function validateNoFabricatedIngredients({ text }) {
     'methylparaben',
     'propylparaben',
     'phthalates',
+    'titanium dioxide',
     'peg-',
     'mineral oil',
     'petroleum',

@@ -272,3 +272,20 @@ test('validateNoFabricatedIngredients: returns flagged array with term, sentence
   assert.ok(typeof result.flagged[0].context === 'string');
   assert.ok(result.flagged[0].context.length > 0);
 });
+
+test('validateNoFabricatedIngredients: flags titanium dioxide as a positive claim', () => {
+  // Customer-volunteered differentiator from Amazon review #6 — many "natural"
+  // toothpastes still include it; we don't. Per Plan 2 comparison framework.
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Contains titanium dioxide for a brighter white paste.</p>',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.flagged.some((f) => f.term === 'titanium dioxide'));
+});
+
+test('validateNoFabricatedIngredients: allows "no titanium dioxide" as a brand claim', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>No titanium dioxide here — the paste is the color of its actual ingredients.</p>',
+  });
+  assert.equal(result.valid, true);
+});
