@@ -5,7 +5,7 @@ import {
   validateLengths,
   validateBrandTermExclusion,
 } from './validators.js';
-import { CLAUDE_MODEL, gitSha, parseClaudeJson } from './util.js';
+import { CLAUDE_MODEL, gitSha, parseClaudeJson, MAX_PARSE_RETRIES } from './util.js';
 
 /**
  * Cluster mode: generates the content for a cluster template.
@@ -19,27 +19,38 @@ import { CLAUDE_MODEL, gitSha, parseClaudeJson } from './util.js';
 export async function assembleCluster({ foundation, clusterName, claudeClient }) {
   const systemPrompt = buildClusterSystemPrompt({ foundation, clusterName });
 
-  const response = await claudeClient.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 4096,
-    system: systemPrompt,
-    messages: [
-      { role: 'user', content: `Generate the cluster content for ${clusterName}. Output JSON only.` },
-    ],
-  });
-
-  let proposed;
-  try { proposed = parseClaudeJson(response); }
-  catch (e) {
-    return {
-      type: 'pdp-cluster',
-      slug: clusterName,
-      status: 'needs_rework',
-      generated_at: new Date().toISOString(),
-      foundation_version: gitSha(),
-      proposed: null,
-      validation: { passed: false, errors: [`Claude response not valid JSON: ${e.message}`], warnings: [] },
-    };
+  let proposed = null;
+  let lastRawText = '';
+  let lastError = null;
+  const totalAttempts = MAX_PARSE_RETRIES + 1;
+  for (let attempt = 1; attempt <= totalAttempts; attempt++) {
+    const response = await claudeClient.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: `Generate the cluster content for ${clusterName}. Output JSON only.` },
+      ],
+    });
+    lastRawText = response?.content?.find((b) => b.type === 'text')?.text || '';
+    try {
+      proposed = parseClaudeJson(response);
+      break; // success
+    } catch (e) {
+      lastError = e;
+      if (attempt === totalAttempts) {
+        return {
+          type: 'pdp-cluster',
+          slug: clusterName,
+          status: 'needs_rework',
+          generated_at: new Date().toISOString(),
+          foundation_version: gitSha(),
+          proposed: null,
+          raw_response: lastRawText,
+          validation: { passed: false, errors: [`Claude response not valid JSON after ${totalAttempts} attempts: ${e.message}`], warnings: [] },
+        };
+      }
+    }
   }
 
   // ── Validate ──────────────────────────────────────────────────────

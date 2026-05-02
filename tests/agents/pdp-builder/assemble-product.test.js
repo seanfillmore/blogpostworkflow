@@ -84,3 +84,47 @@ test('assembleProduct: rejects fabricated ingredient (hydroxyapatite) in body_ht
   assert.equal(result.status, 'needs_rework');
   assert.match(JSON.stringify(result.validation.errors), /hydroxyapatite/i);
 });
+
+test('assembleProduct: retries once when first Claude response is malformed JSON', async () => {
+  let callCount = 0;
+  const mockClient = {
+    messages: {
+      create: async () => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: malformed (unescaped quote breaks JSON mid-string)
+          return { content: [{ type: 'text', text: '{ "seoTitle": "broken "quote" here" }' }], stop_reason: 'end_turn' };
+        }
+        // Second call: clean
+        return fakeClaudeResponse(VALID_PRODUCT_OUTPUT);
+      },
+    },
+  };
+  const result = await assembleProduct({
+    foundation,
+    clusterName: 'toothpaste',
+    product: { handle: 'coconut-oil-toothpaste', title: 'Coconut Oil Toothpaste' },
+    claudeClient: mockClient,
+  });
+  assert.equal(callCount, 2, 'agent should retry exactly once');
+  assert.equal(result.status, 'pending', 'second attempt succeeded so result is pending');
+});
+
+test('assembleProduct: returns needs_rework with raw_response when both attempts fail', async () => {
+  const malformed = '{"seoTitle": "broken "quote" here"}';
+  const mockClient = {
+    messages: {
+      create: async () => ({ content: [{ type: 'text', text: malformed }], stop_reason: 'end_turn' }),
+    },
+  };
+  const result = await assembleProduct({
+    foundation,
+    clusterName: 'toothpaste',
+    product: { handle: 'coconut-oil-toothpaste', title: 'Coconut Oil Toothpaste' },
+    claudeClient: mockClient,
+  });
+  assert.equal(result.status, 'needs_rework');
+  assert.equal(result.proposed, null);
+  assert.equal(result.raw_response, malformed, 'raw response saved for human debug');
+  assert.match(result.validation.errors.join(' '), /not valid JSON.*2 attempts|after 2 attempts/i);
+});

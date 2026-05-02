@@ -96,3 +96,37 @@ test('assembleCluster: returns needs_rework when length out of bounds', async ()
   });
   assert.equal(result.status, 'needs_rework');
 });
+
+test('assembleCluster: retries once when first Claude response is malformed JSON', async () => {
+  let callCount = 0;
+  const mockClient = {
+    messages: {
+      create: async () => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: malformed (unescaped quote breaks JSON mid-string)
+          return { content: [{ type: 'text', text: '{ "hookLine": "broken "quote" here" }' }], stop_reason: 'end_turn' };
+        }
+        // Second call: clean
+        return fakeClaudeResponse(VALID_CLUSTER_OUTPUT);
+      },
+    },
+  };
+  const result = await assembleCluster({ foundation, clusterName: 'toothpaste', claudeClient: mockClient });
+  assert.equal(callCount, 2, 'agent should retry exactly once');
+  assert.equal(result.status, 'pending', 'second attempt succeeded so result is pending');
+});
+
+test('assembleCluster: returns needs_rework with raw_response when both attempts fail', async () => {
+  const malformed = '{"hookLine": "broken "quote" here"}';
+  const mockClient = {
+    messages: {
+      create: async () => ({ content: [{ type: 'text', text: malformed }], stop_reason: 'end_turn' }),
+    },
+  };
+  const result = await assembleCluster({ foundation, clusterName: 'toothpaste', claudeClient: mockClient });
+  assert.equal(result.status, 'needs_rework');
+  assert.equal(result.proposed, null);
+  assert.equal(result.raw_response, malformed, 'raw response saved for human debug');
+  assert.match(result.validation.errors.join(' '), /not valid JSON.*2 attempts|after 2 attempts/i);
+});
