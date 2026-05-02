@@ -656,6 +656,8 @@ function deriveTags(brief) {
   if (kw.includes('coconut')) tags.push('coconut oil');
   if (kw.includes('soap')) tags.push('soap', 'natural soap');
   if (kw.includes('face')) tags.push('face care');
+  if (kw.includes('hair') || kw.includes('shampoo') || kw.includes('conditioner')) tags.push('hair care');
+  if (kw.includes('lip')) tags.push('lip balm');
   tags.push('natural skincare', 'organic');
   return [...new Set(tags)];
 }
