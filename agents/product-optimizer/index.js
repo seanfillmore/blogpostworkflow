@@ -243,7 +243,13 @@ async function pickBestKeyword(url, fallbackTitle) {
         .filter((w) => w.length >= 4 && !['with', 'from', 'best', 'this', 'that'].includes(w));
       const filteredIdeas = (ideas || []).filter((i) => {
         if (!passesAllFilters(i.keyword)) return false;
-        if ((i.volume || 0) === 0) return false;
+        // Volume floor — anything under 100/mo is a long-tail variant DFS
+        // barely tracks; not worth anchoring product copy on.
+        if ((i.volume || 0) < 100) return false;
+        // Commercial intent only — filters out informational queries like
+        // "cut scrape meaning" and ambiguous brand-name spam like "soap 2 day"
+        // (the streaming-piracy site, not a hand soap).
+        if (i.intent && !['commercial', 'transactional'].includes(i.intent)) return false;
         const kw = i.keyword.toLowerCase();
         if (seedWords.length && !seedWords.some((w) => kw.includes(w))) return false;
         return true;
