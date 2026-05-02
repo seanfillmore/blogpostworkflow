@@ -1,0 +1,47 @@
+{
+  "organic_virgin_coconut_oil": {
+    "name": "Organic Virgin Coconut Oil",
+    "role": "antimicrobial base",
+    "mechanism": "Cold-pressed virgin coconut oil retains its full lauric acid content (around 50% of the fatty acid profile). Lauric acid disrupts the lipid membrane of odor- and decay-causing bacteria.",
+    "sourcing": "Cold-pressed and unrefined from organic coconuts. Never deodorized.",
+    "why_we_chose_it": "Refined coconut oil is cheaper to formulate with — it's neutral, shelf-stable, and won't shift consistency at room temp. We pay more for cold-pressed virgin because the lauric acid is what does the work.",
+    "what_cheap_alternatives_look_like": "Refined or fractionated coconut oil. Lab-deodorized. Lauric acid largely stripped. Listed as 'coconut oil' on the back panel — looks identical to a customer reading the label.",
+    "citations": []
+  },
+  "baking_soda": {
+    "name": "Baking Soda",
+    "role": "pH balancer / gentle abrasive",
+    "mechanism": "Sodium bicarbonate neutralizes oral acid and provides extremely fine micro-abrasion that lifts stains without scratching enamel.",
+    "sourcing": "Food-grade aluminum-free baking soda.",
+    "why_we_chose_it": "Hydrated silica is the cheap, common abrasive in mass-market toothpaste — it's harder than enamel and over time can wear down sensitive teeth. Baking soda is gentler and adds the pH benefit.",
+    "what_cheap_alternatives_look_like": "Hydrated silica, calcium carbonate, dicalcium phosphate dihydrate. Cheaper to source, harder on enamel.",
+    "citations": []
+  },
+  "wildcrafted_myrrh": {
+    "name": "Wildcrafted Myrrh",
+    "role": "anti-inflammatory",
+    "mechanism": "Myrrh resin contains sesquiterpenes with documented anti-inflammatory and antimicrobial activity. Used in oral care for thousands of years.",
+    "sourcing": "Wildcrafted (sustainably foraged from naturally occurring trees, not factory-farmed).",
+    "why_we_chose_it": "Most natural toothpastes skip myrrh entirely because it's expensive and adds complexity. We use it because it's traditional oral medicine that actually works for irritated gums.",
+    "what_cheap_alternatives_look_like": "No myrrh; replaced with synthetic anti-microbial like cetylpyridinium chloride or stannous fluoride.",
+    "citations": []
+  },
+  "xanthan_gum": {
+    "name": "Xanthan Gum",
+    "role": "natural thickener",
+    "mechanism": "Polysaccharide produced by fermentation. Provides paste consistency without coating teeth.",
+    "sourcing": "Non-GMO fermentation byproduct.",
+    "why_we_chose_it": "Glycerin and sorbitol are the cheap thickeners — they coat teeth and may interfere with remineralization. Xanthan gum gives paste structure without the coating.",
+    "what_cheap_alternatives_look_like": "Glycerin, sorbitol, propylene glycol. Sweet, cheap, and effective at thickening — but they coat enamel.",
+    "citations": []
+  },
+  "stevia": {
+    "name": "Stevia",
+    "role": "natural sweetener",
+    "mechanism": "Plant-derived sweetness without sugar or sugar alcohols. Non-cariogenic.",
+    "sourcing": "Organic stevia leaf extract.",
+    "why_we_chose_it": "Sodium saccharin and aspartame are dirt-cheap and shelf-stable but artificial. Xylitol is excellent but most natural toothpastes use it as a sole sweetener — we prefer stevia for taste.",
+    "what_cheap_alternatives_look_like": "Sodium saccharin, sucralose, aspartame. Cheap, shelf-stable, artificial.",
+    "citations": []
+  }
+}
