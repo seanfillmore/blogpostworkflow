@@ -64,3 +64,4 @@ data/amazon-explore/
 data/changes/queue/*.json
 data/changes/queue/**/*.json
 !data/changes/queue/.gitkeep
+data/brand/_research/

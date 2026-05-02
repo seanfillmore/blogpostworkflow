@@ -193,6 +193,26 @@ test('validateBrandTermExclusion: allows brand_terms in seoTitle (it IS our bran
   assert.equal(result.valid, true);
 });
 
+test('validateBrandTermExclusion: word boundary — "alternative" does not false-match competitor "native"', () => {
+  // The P&G brand "Native" is a competitor term. The word "alternative" contains
+  // "native" as a substring. Word-boundary matching prevents the false positive.
+  const result = validateBrandTermExclusion({
+    text: 'Hydrated silica is the cheap conventional alternative; we use baking soda instead.',
+    field: 'ingredientCards[1].story',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateBrandTermExclusion: word boundary — "Native" alone still flagged as competitor', () => {
+  // Sanity: the fix preserves real matches. "Native" as a standalone word still flags.
+  const result = validateBrandTermExclusion({
+    text: 'Better than Native deodorant in every way.',
+    field: 'bodyHtml',
+  });
+  assert.equal(result.valid, false);
+  assert.match(result.errors.join(' '), /native/i);
+});
+
 // ── validateNoFabricatedIngredients (product-mode prose scan) ─────────
 
 test('validateNoFabricatedIngredients: passes for clean prose', () => {
@@ -271,4 +291,61 @@ test('validateNoFabricatedIngredients: returns flagged array with term, sentence
   assert.equal(result.flagged[0].term, 'hydroxyapatite');
   assert.ok(typeof result.flagged[0].context === 'string');
   assert.ok(result.flagged[0].context.length > 0);
+});
+
+test('validateNoFabricatedIngredients: flags titanium dioxide as a positive claim', () => {
+  // Customer-volunteered differentiator from Amazon review #6 — many "natural"
+  // toothpastes still include it; we don't. Per Plan 2 comparison framework.
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Contains titanium dioxide for a brighter white paste.</p>',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.flagged.some((f) => f.term === 'titanium dioxide'));
+});
+
+test('validateNoFabricatedIngredients: allows "no titanium dioxide" as a brand claim', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>No titanium dioxide here — the paste is the color of its actual ingredients.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: word boundary — "fluoridate" does not false-match "fluoride"', () => {
+  // Single-word fabrication terms use word-boundary matching to avoid embedding
+  // false positives. "fluoridate" (the verb) shouldn't trigger "fluoride".
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Some communities choose to fluoridate their water supply; we make a different product.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: hyphenated terms still substring-match (peg- prefix)', () => {
+  // peg- has a hyphen → uses substring matching → still catches peg-40, peg-100, etc.
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Emulsified with PEG-40 hydrogenated castor oil.</p>',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.flagged.some((f) => f.term === 'peg-'));
+});
+
+test('validateNoFabricatedIngredients: comparison negation "unlike X" treats X as not used', () => {
+  // Frames hydrated silica as the contrast — we don't use it, we use baking soda.
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Baking soda is softer than enamel, unlike the hydrated silica in conventional paste.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: comparison negation "instead of X" treats X as not used', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>We use xanthan gum instead of glycerin or sorbitol.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test("validateNoFabricatedIngredients: contraction \"don't use X\" treats X as not used", () => {
+  const result = validateNoFabricatedIngredients({
+    text: "<p>We don't use parabens or phthalates in any of our formulas.</p>",
+  });
+  assert.equal(result.valid, true);
 });

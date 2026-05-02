@@ -43,6 +43,35 @@ function stripHtml(s) {
 }
 
 /**
+ * Build a regex that matches `term` as a complete token (not embedded in
+ * another word) for single-word terms, and as a literal substring for
+ * multi-word / hyphenated / apostrophe-containing terms.
+ *
+ * Why: short single-word competitor names like "native" (P&G deodorant brand)
+ * substring-matched into common English words like "alternative" — false
+ * positive. Word boundaries fix this for short tokens. Multi-word terms
+ * ("tom's of maine") and hyphenated prefix patterns ("peg-") are left as
+ * substring matches because they don't embed inside other words naturally
+ * and we want them to match flexibly.
+ *
+ * Returns a RegExp with the global flag — caller can use .exec() in a loop
+ * or .test() for a one-shot check.
+ */
+function buildTermRegex(term) {
+  const escaped = term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  if (/[\s\-']/.test(term)) {
+    // Multi-word, hyphenated, or apostrophe-containing — substring match
+    return new RegExp(escaped, 'g');
+  }
+  // Single-word — use word boundary to avoid false positives
+  return new RegExp(`\\b${escaped}\\b`, 'g');
+}
+
+function containsTermAsWord(text, term) {
+  return buildTermRegex(term).test(text);
+}
+
+/**
  * Verifies every claimed ingredient is present in `config/ingredients.json`
  * for the named cluster. Returns { valid, fabricated: string[] }.
  *
@@ -133,7 +162,10 @@ export function validateLengths(content) {
  */
 export function validateNoFabricatedIngredients({ text }) {
   const NEGATION_MARKERS = [
-    'no ', 'without ', 'free of ', 'free from ', '-free', ' not ', 'does not', "doesn't",
+    'no ', 'without ', 'free of ', 'free from ', '-free', ' not ', 'does not', "doesn't", "don't",
+    // Comparison-style negations: "softer than enamel, unlike the hydrated silica..." frames
+    // an ingredient we explicitly don't use. Same for "instead of" and "rather than" substitution patterns.
+    'unlike ', 'instead of ', 'rather than ',
   ];
   const FABRICATION_BLOCKLIST = [
     'fluoride',
@@ -158,6 +190,7 @@ export function validateNoFabricatedIngredients({ text }) {
     'methylparaben',
     'propylparaben',
     'phthalates',
+    'titanium dioxide',
     'peg-',
     'mineral oil',
     'petroleum',
@@ -171,13 +204,15 @@ export function validateNoFabricatedIngredients({ text }) {
 
   const flagged = [];
   for (const term of FABRICATION_BLOCKLIST) {
-    let idx = 0;
-    while ((idx = lower.indexOf(term, idx)) !== -1) {
+    const re = buildTermRegex(term);
+    let m;
+    while ((m = re.exec(lower)) !== null) {
+      const idx = m.index;
       // Check surrounding window for negation markers
       const winStart = Math.max(0, idx - 40);
       const winEnd = Math.min(lower.length, idx + term.length + 20);
       const window = lower.slice(winStart, winEnd);
-      const negated = NEGATION_MARKERS.some((m) => window.includes(m));
+      const negated = NEGATION_MARKERS.some((mk) => window.includes(mk));
       if (!negated) {
         // Capture readable context for the report
         const ctxStart = Math.max(0, idx - 30);
@@ -185,7 +220,6 @@ export function validateNoFabricatedIngredients({ text }) {
         flagged.push({ term, context: stripped.slice(ctxStart, ctxEnd) });
         break; // one flag per term is enough
       }
-      idx += term.length;
     }
   }
 
@@ -201,10 +235,10 @@ export function validateBrandTermExclusion({ text, field }) {
   const lower = (text || '').toLowerCase();
   const errors = [];
   for (const term of COMPETITOR_TERMS) {
-    if (lower.includes(term)) errors.push(`${field}: contains competitor term "${term}"`);
+    if (containsTermAsWord(lower, term)) errors.push(`${field}: contains competitor term "${term}"`);
   }
   for (const term of GENERIC_BLOCKLIST) {
-    if (lower.includes(term)) errors.push(`${field}: contains generic-blocklist term "${term}"`);
+    if (containsTermAsWord(lower, term)) errors.push(`${field}: contains generic-blocklist term "${term}"`);
   }
   return { valid: errors.length === 0, errors };
 }
