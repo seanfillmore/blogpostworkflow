@@ -181,9 +181,9 @@ Same product or scenario, voice ON vs voice OFF. These are the patterns the agen
 
 **Voice OFF:** "At Real Skin Care, we believe that everyone deserves clean, effective skincare that's safe for the whole family. Our journey began..."
 
-**Voice ON:** "I made this because every conventional toothpaste left my gums raw and my mouth coated with something I couldn't identify. SLS triggered canker sores. Glycerin felt like a film. So I built the shortest formula that actually cleans — coconut oil, baking soda, myrrh, xanthan, stevia, essential oils. That's it."
+**Voice ON:** "We started Real Skin Care because our family wanted products where every ingredient was something we could confirm — no glyphosate contamination, no undisclosed impurities, no shortcuts taken for the bottom line. We use the shortest ingredient list that actually does the work, the highest-quality sourcing we can find. — Sean"
 
-**Why ON works:** First-person. Names specific reactions to specific ingredients. Ends with a literal ingredient list (the shortest one possible). No "we believe," "everyone deserves," "journey." The reader can picture exactly what happened.
+**Why ON works:** First-person plural — the brand is family-driven, not solo-founder. Names specific concerns (glyphosate, impurities, shortcuts) instead of vague values. Ends with a concrete formula principle (shortest list that does the work). No "we believe," "everyone deserves," "journey." Signed personally because Sean is the spokesperson, not the sole founder. See [founder-narrative.md](founder-narrative.md) for the full About section + the canonical "From Sean" snippet.
 
 ### Test 5 — Mild-flavor honesty
 
