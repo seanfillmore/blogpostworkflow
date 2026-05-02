@@ -22,6 +22,7 @@
  *   node agents/product-optimizer/index.js --min-words 150   # stricter thin content threshold
  *   node agents/product-optimizer/index.js --limit 10        # max pages to rewrite
  *   node agents/product-optimizer/index.js --skip handle-a,handle-b  # exclude specific handles from this run
+ *   node agents/product-optimizer/index.js --keyword-override "handle-a=keyword a,handle-b=keyword b"  # override the GSC top query with a chosen keyword (use when GSC top is branded/generic and a stronger long-tail exists)
  *   node agents/product-optimizer/index.js --from-gsc        # queue product meta rewrites from GSC signals
  *   node agents/product-optimizer/index.js --from-gsc --dry-run  # show candidates without queuing
  *   node agents/product-optimizer/index.js --optimize-titles        # queue product title rewrites from GSC signals
@@ -106,6 +107,20 @@ const optimizeTitles = args.includes('--optimize-titles');
 const publishApproved = args.includes('--publish-approved');
 const dryRun = args.includes('--dry-run');
 const skipHandles = new Set((getArg('--skip') || '').split(',').map((s) => s.trim()).filter(Boolean));
+// Parse --keyword-override "handle-a=keyword a,handle-b=keyword b" → Map(handle → keyword).
+// Use when GSC top query is unusable (branded, generic) but a stronger long-tail
+// exists in GSC's lower ranks or an external source (DataForSEO, Amazon).
+const keywordOverrides = new Map(
+  (getArg('--keyword-override') || '')
+    .split(',')
+    .map((pair) => pair.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const eq = pair.indexOf('=');
+      return eq === -1 ? null : [pair.slice(0, eq).trim(), pair.slice(eq + 1).trim()];
+    })
+    .filter(Boolean),
+);
 
 // Handles of internal/system collections that should never be optimized
 const EXCLUDED_HANDLES = new Set([
@@ -1291,8 +1306,12 @@ async function main() {
 
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i];
-    const keyword = candidate.gscEntry?.keyword || candidate.title.toLowerCase();
+    const overrideKeyword = keywordOverrides.get(candidate.handle);
+    const keyword = overrideKeyword || candidate.gscEntry?.keyword || candidate.title.toLowerCase();
     const gscData = candidate.gscEntry || null;
+    if (overrideKeyword) {
+      console.log(`    (keyword overridden: "${overrideKeyword}")`);
+    }
 
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${candidate.title}"... `);
 
