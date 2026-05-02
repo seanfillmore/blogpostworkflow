@@ -21,6 +21,7 @@
  *   node agents/product-optimizer/index.js --type collections # collections only
  *   node agents/product-optimizer/index.js --min-words 150   # stricter thin content threshold
  *   node agents/product-optimizer/index.js --limit 10        # max pages to rewrite
+ *   node agents/product-optimizer/index.js --skip handle-a,handle-b  # exclude specific handles from this run
  *   node agents/product-optimizer/index.js --from-gsc        # queue product meta rewrites from GSC signals
  *   node agents/product-optimizer/index.js --from-gsc --dry-run  # show candidates without queuing
  *   node agents/product-optimizer/index.js --optimize-titles        # queue product title rewrites from GSC signals
@@ -104,6 +105,7 @@ const expandFaq = args.includes('--expand-faq');
 const optimizeTitles = args.includes('--optimize-titles');
 const publishApproved = args.includes('--publish-approved');
 const dryRun = args.includes('--dry-run');
+const skipHandles = new Set((getArg('--skip') || '').split(',').map((s) => s.trim()).filter(Boolean));
 
 // Handles of internal/system collections that should never be optimized
 const EXCLUDED_HANDLES = new Set([
@@ -1248,6 +1250,7 @@ async function main() {
   const candidates = pages
     .filter((page) => {
       if (EXCLUDED_HANDLES.has(page.handle)) return false;
+      if (skipHandles.has(page.handle)) return false;
       const titleLower = page.title.toLowerCase();
       if (EXCLUDED_TITLE_PATTERNS.some((p) => titleLower.includes(p))) return false;
       return true;
