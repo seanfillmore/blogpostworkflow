@@ -530,11 +530,14 @@ async function main() {
   const todayStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   const rejections = loadRejections();
+  const brandTerms = (config.brand_terms || []).map((t) => t.toLowerCase());
 
   const calendarPrompt = `You are a senior SEO content strategist for Real Skin Care (realskincare.com), a clean beauty ecommerce brand selling natural skincare products on Shopify.
 
 TODAY'S DATE: ${todayStr}
 SITE: ${config.url || 'https://www.realskincare.com'}
+
+DO NOT PROPOSE BRANDED KEYWORDS. Skip any topic whose target keyword contains one of our own brand terms (${brandTerms.map((t) => `"${t}"`).join(', ')}). Branded queries are already covered by product/collection/homepage SEO — writing blog posts targeting them cannibalizes our own product pages and acquires no new customers.
 
 You have been given a content gap analysis report. Your job is to produce a detailed, prioritized content calendar that:
 1. Targets the highest-impact gaps first (volume × low KD × category importance)
@@ -626,6 +629,12 @@ ${calendarMd}`;
     briefQueue = briefQueue.filter(item => {
       if (isRejected(item.keyword, rejections)) {
         console.log(`  [SKIP] Rejected keyword: "${item.keyword}"`);
+        return false;
+      }
+      const kwLower = (item.keyword || '').toLowerCase();
+      const brandHit = brandTerms.find((t) => kwLower.includes(t));
+      if (brandHit) {
+        console.log(`  [SKIP] Branded keyword (contains "${brandHit}"): "${item.keyword}"`);
         return false;
       }
       return true;
