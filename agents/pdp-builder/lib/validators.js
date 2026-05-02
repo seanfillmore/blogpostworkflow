@@ -52,15 +52,20 @@ export function validateIngredients({ cluster, claimedIngredients, ingredientsBy
   const spec = ingredientsByCluster[cluster];
   if (!spec) throw new Error(`validateIngredients: cluster "${cluster}" not found in ingredientsByCluster`);
 
-  const allowed = new Set();
-  for (const ing of (spec.base_ingredients || [])) allowed.add(ing.toLowerCase());
+  const allowed = [];
+  for (const ing of (spec.base_ingredients || [])) allowed.push(ing.toLowerCase());
   for (const variation of (spec.variations || [])) {
-    for (const oil of (variation.essential_oils || [])) allowed.add(oil.toLowerCase());
+    for (const oil of (variation.essential_oils || [])) allowed.push(oil.toLowerCase());
   }
 
+  // Bidirectional substring match — same matcher as prompt-builder.js's
+  // relevantIngredientStories. Handles drift like "Wildcrafted Myrrh" (foundation)
+  // ↔ "wildcrafted myrrh powder" (config) without requiring exact alignment.
   const fabricated = [];
   for (const claimed of (claimedIngredients || [])) {
-    if (!allowed.has(claimed.toLowerCase())) fabricated.push(claimed);
+    const c = claimed.toLowerCase();
+    const matched = allowed.some((a) => a === c || a.includes(c) || c.includes(a));
+    if (!matched) fabricated.push(claimed);
   }
 
   return { valid: fabricated.length === 0, fabricated };
