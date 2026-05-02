@@ -327,3 +327,25 @@ test('validateNoFabricatedIngredients: hyphenated terms still substring-match (p
   assert.equal(result.valid, false);
   assert.ok(result.flagged.some((f) => f.term === 'peg-'));
 });
+
+test('validateNoFabricatedIngredients: comparison negation "unlike X" treats X as not used', () => {
+  // Frames hydrated silica as the contrast — we don't use it, we use baking soda.
+  const result = validateNoFabricatedIngredients({
+    text: '<p>Baking soda is softer than enamel, unlike the hydrated silica in conventional paste.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateNoFabricatedIngredients: comparison negation "instead of X" treats X as not used', () => {
+  const result = validateNoFabricatedIngredients({
+    text: '<p>We use xanthan gum instead of glycerin or sorbitol.</p>',
+  });
+  assert.equal(result.valid, true);
+});
+
+test("validateNoFabricatedIngredients: contraction \"don't use X\" treats X as not used", () => {
+  const result = validateNoFabricatedIngredients({
+    text: "<p>We don't use parabens or phthalates in any of our formulas.</p>",
+  });
+  assert.equal(result.valid, true);
+});

@@ -162,7 +162,10 @@ export function validateLengths(content) {
  */
 export function validateNoFabricatedIngredients({ text }) {
   const NEGATION_MARKERS = [
-    'no ', 'without ', 'free of ', 'free from ', '-free', ' not ', 'does not', "doesn't",
+    'no ', 'without ', 'free of ', 'free from ', '-free', ' not ', 'does not', "doesn't", "don't",
+    // Comparison-style negations: "softer than enamel, unlike the hydrated silica..." frames
+    // an ingredient we explicitly don't use. Same for "instead of" and "rather than" substitution patterns.
+    'unlike ', 'instead of ', 'rather than ',
   ];
   const FABRICATION_BLOCKLIST = [
     'fluoride',
