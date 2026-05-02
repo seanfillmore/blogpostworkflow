@@ -1,7 +1,7 @@
 // tests/agents/pdp-builder/util.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CLAUDE_MODEL, gitSha, parseClaudeJson } from '../../../agents/pdp-builder/lib/util.js';
+import { CLAUDE_MODEL, gitSha, parseClaudeJson, MAX_PARSE_RETRIES } from '../../../agents/pdp-builder/lib/util.js';
 
 test('CLAUDE_MODEL: pinned to claude-opus-4-7', () => {
   assert.equal(CLAUDE_MODEL, 'claude-opus-4-7');
@@ -51,4 +51,10 @@ test('parseClaudeJson: throws when no text block present', () => {
 test('parseClaudeJson: throws SyntaxError-style on invalid JSON', () => {
   const response = { content: [{ type: 'text', text: 'not json at all' }] };
   assert.throws(() => parseClaudeJson(response));
+});
+
+test('MAX_PARSE_RETRIES: exported as a non-negative integer', () => {
+  assert.equal(typeof MAX_PARSE_RETRIES, 'number');
+  assert.ok(Number.isInteger(MAX_PARSE_RETRIES));
+  assert.ok(MAX_PARSE_RETRIES >= 0);
 });

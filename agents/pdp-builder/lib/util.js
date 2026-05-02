@@ -6,6 +6,11 @@ import { execSync } from 'node:child_process';
 // pilot output quality (see docs/superpowers/specs/2026-05-02-pdp-builder-design.md).
 export const CLAUDE_MODEL = 'claude-opus-4-7';
 
+// How many times to call Claude when parsing fails. Total attempts = 1 + retries
+// on parse failure only. Validation failures are real signals; only JSON parse
+// failures (transient model output quirks) trigger retry.
+export const MAX_PARSE_RETRIES = 1;
+
 export function gitSha() {
   try { return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); }
   catch { return 'unknown'; }

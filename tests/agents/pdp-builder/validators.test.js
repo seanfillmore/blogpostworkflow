@@ -76,6 +76,39 @@ test('validateIngredients: throws when cluster missing from ingredientsByCluster
   );
 });
 
+test('validateIngredients: passes when claimed name is a substring of a config entry (or vice versa)', () => {
+  // Real-world drift: foundation says "Wildcrafted Myrrh" (story name); config says "wildcrafted myrrh powder" (base ingredient).
+  // The substring relationship in either direction means it's the same ingredient — the validator must accept it.
+  const result = validateIngredients({
+    cluster: 'toothpaste',
+    claimedIngredients: ['Wildcrafted Myrrh'],  // shorter than the config entry
+    ingredientsByCluster: TOOTHPASTE_INGREDIENTS,
+  });
+  assert.equal(result.valid, true, 'short-form name should match the longer config entry');
+});
+
+test('validateIngredients: passes when config entry is a substring of the claimed name', () => {
+  // Inverse drift: the config could have "baking soda" while the claimed name is "Aluminum-free baking soda".
+  // Bidirectional match handles either side gaining qualifying words.
+  const result = validateIngredients({
+    cluster: 'toothpaste',
+    claimedIngredients: ['Aluminum-free baking soda'],
+    ingredientsByCluster: TOOTHPASTE_INGREDIENTS,
+  });
+  assert.equal(result.valid, true, 'longer-form name should match the shorter config entry');
+});
+
+test('validateIngredients: still rejects truly unrelated ingredients', () => {
+  // Sanity: bidirectional substring should NOT make everything pass.
+  const result = validateIngredients({
+    cluster: 'toothpaste',
+    claimedIngredients: ['hydroxyapatite', 'fluoride'],
+    ingredientsByCluster: TOOTHPASTE_INGREDIENTS,
+  });
+  assert.equal(result.valid, false);
+  assert.deepEqual(result.fabricated.sort(), ['fluoride', 'hydroxyapatite']);
+});
+
 // ── validateLengths ──────────────────────────────────────────────────
 
 test('validateLengths: SEO title 55-70 chars passes', () => {
