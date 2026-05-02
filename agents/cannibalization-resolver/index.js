@@ -342,10 +342,18 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
           const mergedHtml = await consolidateContent(winnerArticle, loserArticle, decision.query, articleIndex);
           console.log('merged');
 
-          // Save to data/posts/ so the editor agent can evaluate it
+          // Save to data/posts/ so the editor agent can evaluate it.
+          // Preserve any existing meta fields (shopify_article_id,
+          // shopify_publish_at, legacy_*) — overwriting wholesale strips the
+          // legacy/Shopify state and the dashboard then reads the post as
+          // "Written" or "Draft" instead of "Published".
           ensurePostDir(winnerHandle);
           writeFileSync(getContentPath(winnerHandle), mergedHtml);
+          let existingWinnerMeta = {};
+          try { existingWinnerMeta = JSON.parse(readFileSync(getMetaPath(winnerHandle), 'utf8')); } catch { /* ok */ }
+          const { needs_rebuild: _dropWinner, ...winnerMetaRest } = existingWinnerMeta;
           writeFileSync(getMetaPath(winnerHandle), JSON.stringify({
+            ...winnerMetaRest,
             title: winnerArticle.title,
             target_keyword: decision.query,
           }, null, 2));
