@@ -619,7 +619,7 @@ ${badIntro?.html || ''}`,
     try { existingMeta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch {}
   }
   const shopifyFields = {};
-  for (const key of ['shopify_blog_id', 'shopify_blog_handle', 'shopify_article_id', 'shopify_handle', 'shopify_url', 'shopify_status', 'uploaded_at']) {
+  for (const key of ['shopify_blog_id', 'shopify_blog_handle', 'shopify_article_id', 'shopify_handle', 'shopify_url', 'shopify_status', 'shopify_publish_at', 'uploaded_at', 'legacy_synced_at', 'legacy_source', 'last_refreshed_at']) {
     if (existingMeta[key] !== undefined) shopifyFields[key] = existingMeta[key];
   }
 
