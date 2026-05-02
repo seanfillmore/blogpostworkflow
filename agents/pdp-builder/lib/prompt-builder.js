@@ -18,14 +18,20 @@ function extractClusterPOV(clusterPOVsMarkdown, clusterName) {
  */
 function relevantIngredientStories(ingredientStories, clusterSpec) {
   if (!clusterSpec) return {};
-  const allowed = new Set();
-  for (const ing of (clusterSpec.base_ingredients || [])) allowed.add(ing.toLowerCase());
+  const allowed = [];
+  for (const ing of (clusterSpec.base_ingredients || [])) allowed.push(ing.toLowerCase());
   for (const v of (clusterSpec.variations || [])) {
-    for (const oil of (v.essential_oils || [])) allowed.add(oil.toLowerCase());
+    for (const oil of (v.essential_oils || [])) allowed.push(oil.toLowerCase());
   }
   const out = {};
   for (const [key, story] of Object.entries(ingredientStories)) {
-    if (story?.name && allowed.has(story.name.toLowerCase())) out[key] = story;
+    if (!story?.name) continue;
+    const name = story.name.toLowerCase();
+    // Match if the story name and any config entry share a substring relationship
+    // in either direction. Handles drift like "Wildcrafted Myrrh" (story) ↔
+    // "wildcrafted myrrh powder" (config) without requiring exact alignment.
+    const matched = allowed.some((a) => a === name || a.includes(name) || name.includes(a));
+    if (matched) out[key] = story;
   }
   return out;
 }

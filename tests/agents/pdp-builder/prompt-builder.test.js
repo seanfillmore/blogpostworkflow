@@ -19,10 +19,23 @@ test('buildClusterSystemPrompt: includes the cluster POV', () => {
   assert.match(prompt, /## toothpaste/);
 });
 
-test('buildClusterSystemPrompt: includes ingredient stories for the cluster', () => {
+test('buildClusterSystemPrompt: includes ingredient stories for the cluster (in the Hero ingredient stories block)', () => {
   const prompt = buildClusterSystemPrompt({ foundation, clusterName: 'toothpaste' });
-  assert.match(prompt, /organic virgin coconut oil/i);
-  assert.match(prompt, /wildcrafted myrrh/i);
+  // Extract the section between "# Hero ingredient stories" and the next "# " heading
+  const m = prompt.match(/# Hero ingredient stories[^\n]*\n([\s\S]*?)\n# /);
+  assert.ok(m, 'prompt has a "# Hero ingredient stories" section');
+  const heroBlock = m[1];
+  // The block should be JSON; parse it and verify both ingredients are present
+  const parsed = JSON.parse(heroBlock.trim());
+  const keys = Object.keys(parsed);
+  assert.ok(
+    keys.includes('organic_virgin_coconut_oil'),
+    `expected organic_virgin_coconut_oil in hero block, got keys: ${keys.join(', ')}`
+  );
+  assert.ok(
+    keys.includes('wildcrafted_myrrh'),
+    `expected wildcrafted_myrrh in hero block, got keys: ${keys.join(', ')}`
+  );
 });
 
 test('buildClusterSystemPrompt: includes comparison framework', () => {
