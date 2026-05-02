@@ -165,6 +165,49 @@ function stripHtml(html) {
     .trim();
 }
 
+const BRAND_TERMS = (config.brand_terms || []).map((t) => t.toLowerCase());
+const GENERIC_BLOCKLIST = (config.generic_keyword_blocklist || []).map((t) => t.toLowerCase());
+
+// Pick the best keyword to anchor a rewrite on. The default mode used to take
+// each URL's #1 GSC query — but #1 is often noise (branded hashtags like
+// "#realskincare", umbrella terms like "authentic skincare") that pull
+// impressions without commercial intent. This walks the URL's full GSC query
+// list, drops queries that hit brand_terms or generic_keyword_blocklist, and
+// scores the rest by impressions × position-room (impressions × max(1, 100 -
+// position)) so queries that get traffic AND have room to climb win.
+//
+// Returns { keyword, gscData, source }. `gscData` keeps the impressions /
+// position / ctr context the rewrite prompt uses; `source` lets callers log
+// where the keyword came from.
+async function pickBestKeyword(url, fallbackTitle) {
+  let queries = [];
+  try {
+    queries = await gsc.getPageKeywords(url, 20, 90);
+  } catch {
+    // GSC unavailable — fall through to title fallback.
+  }
+  const filtered = queries.filter((q) => {
+    const kw = (q.keyword || '').toLowerCase();
+    if (!kw) return false;
+    if (BRAND_TERMS.some((t) => kw.includes(t))) return false;
+    if (GENERIC_BLOCKLIST.includes(kw)) return false;
+    return true;
+  });
+  if (filtered.length === 0) {
+    return { keyword: (fallbackTitle || '').toLowerCase(), gscData: null, source: 'title-fallback' };
+  }
+  filtered.sort((a, b) => {
+    const score = (q) => (q.impressions || 0) * Math.max(1, 100 - (q.position || 100));
+    return score(b) - score(a);
+  });
+  const best = filtered[0];
+  return {
+    keyword: best.keyword,
+    gscData: { url, keyword: best.keyword, impressions: best.impressions, position: best.position, ctr: best.ctr },
+    source: 'gsc-filtered',
+  };
+}
+
 // ── claude rewriter ───────────────────────────────────────────────────────────
 
 async function rewriteProduct(product, keyword, gscData) {
@@ -1307,10 +1350,25 @@ async function main() {
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i];
     const overrideKeyword = keywordOverrides.get(candidate.handle);
-    const keyword = overrideKeyword || candidate.gscEntry?.keyword || candidate.title.toLowerCase();
-    const gscData = candidate.gscEntry || null;
+    let keyword;
+    let gscData;
+    let keywordSource = 'gsc-top';
+    if (overrideKeyword) {
+      keyword = overrideKeyword;
+      gscData = candidate.gscEntry || null;
+      keywordSource = 'override';
+    } else {
+      const picked = await pickBestKeyword(candidate.url, candidate.title);
+      keyword = picked.keyword;
+      gscData = picked.gscData || candidate.gscEntry || null;
+      keywordSource = picked.source;
+    }
     if (overrideKeyword) {
       console.log(`    (keyword overridden: "${overrideKeyword}")`);
+    } else if (keywordSource === 'gsc-filtered') {
+      console.log(`    (keyword from filtered GSC long tail: "${keyword}")`);
+    } else if (keywordSource === 'title-fallback') {
+      console.log(`    (no usable GSC query; fell back to title: "${keyword}")`);
     }
 
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${candidate.title}"... `);
