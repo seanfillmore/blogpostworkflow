@@ -1,23 +1,10 @@
 // agents/pdp-builder/lib/assemble-product.js
-import { execSync } from 'node:child_process';
 import { buildProductSystemPrompt } from './prompt-builder.js';
 import {
   validateLengths,
   validateBrandTermExclusion,
 } from './validators.js';
-
-const CLAUDE_MODEL = 'claude-opus-4-7';
-
-function gitSha() {
-  try { return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); }
-  catch { return 'unknown'; }
-}
-
-function parseClaudeJson(response) {
-  const text = response?.content?.find((b) => b.type === 'text')?.text || '';
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
-  return JSON.parse(cleaned);
-}
+import { CLAUDE_MODEL, gitSha, parseClaudeJson } from './util.js';
 
 /**
  * Product mode: generates per-SKU SEO title, meta description, body_html,

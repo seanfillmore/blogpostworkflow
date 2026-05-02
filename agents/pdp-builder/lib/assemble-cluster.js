@@ -1,25 +1,11 @@
 // agents/pdp-builder/lib/assemble-cluster.js
-import { execSync } from 'node:child_process';
 import { buildClusterSystemPrompt } from './prompt-builder.js';
 import {
   validateIngredients,
   validateLengths,
   validateBrandTermExclusion,
 } from './validators.js';
-
-const CLAUDE_MODEL = 'claude-opus-4-7';
-
-function gitSha() {
-  try { return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); }
-  catch { return 'unknown'; }
-}
-
-function parseClaudeJson(response) {
-  const text = response?.content?.find((b) => b.type === 'text')?.text || '';
-  // Strip code fences if Claude wrapped the JSON.
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
-  return JSON.parse(cleaned);
-}
+import { CLAUDE_MODEL, gitSha, parseClaudeJson } from './util.js';
 
 /**
  * Cluster mode: generates the content for a cluster template.
