@@ -24,4 +24,4 @@ You deserve something real.
 
 During my own healthy-ingredients journey, I flipped over the box of my toothpaste and saw the warning: *do not swallow.* Why was I putting something in my mouth that wasn't safe to swallow? From that moment, our family set out to make an effective toothpaste without fluoride — or anything else that would be harmful to swallow. Every ingredient in this tube is food-grade or food-derived. That's not marketing copy. That's the line we drew, and we won't cross it for profit.
 
-— Sean
+— Sean Fillmore
