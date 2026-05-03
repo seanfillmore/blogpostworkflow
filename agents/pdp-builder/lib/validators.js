@@ -15,12 +15,21 @@ const AI_CITATIONS = JSON.parse(readFileSync(join(ROOT, 'config', 'ai-citation-p
 
 const GENERIC_BLOCKLIST = (SITE_CONFIG.generic_keyword_blocklist || []).map((t) => t.toLowerCase());
 const COMPETITOR_TERMS = (() => {
-  const out = new Set();
+  const collected = new Set();
   for (const c of (AI_CITATIONS.competitors || [])) {
-    if (c.name) out.add(c.name.toLowerCase());
-    for (const a of (c.aliases || [])) out.add(a.toLowerCase());
+    if (c.name) collected.add(c.name.toLowerCase());
+    for (const a of (c.aliases || [])) collected.add(a.toLowerCase());
   }
-  return [...out];
+  // Drop any term whose lowercased form is contained in another term in this list.
+  // Example: Native = name "Native" + aliases ["native deodorant", "native"] →
+  // collected = {"native", "native deodorant"}. The bare "native" gets dropped because
+  // "native deodorant" contains it. Net effect: "in their native habitat" (legitimate
+  // English usage) no longer false-flags as a competitor mention, but "Better than
+  // Native deodorant" still flags via the longer, brand-specific term. This rule
+  // only applies to COMPETITOR_TERMS — GENERIC_BLOCKLIST intentionally keeps both
+  // bare ("skincare") and qualified ("natural skincare") forms.
+  const all = [...collected];
+  return all.filter((term) => !all.some((other) => other !== term && other.includes(term)));
 })();
 
 // ── Length bounds — these are tuned from the competitor research in the spec.

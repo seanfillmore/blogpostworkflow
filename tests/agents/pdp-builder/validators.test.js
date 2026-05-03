@@ -204,13 +204,37 @@ test('validateBrandTermExclusion: word boundary — "alternative" does not false
 });
 
 test('validateBrandTermExclusion: word boundary — "Native" alone still flagged as competitor', () => {
-  // Sanity: the fix preserves real matches. "Native" as a standalone word still flags.
+  // Sanity: the fix preserves real matches. "Native" as a standalone word still flags
+  // — via the "native deodorant" alias (the bare "native" alias is dropped per the
+  // substring-containment rule, but the longer alias still catches "Native deodorant").
   const result = validateBrandTermExclusion({
     text: 'Better than Native deodorant in every way.',
     field: 'bodyHtml',
   });
   assert.equal(result.valid, false);
   assert.match(result.errors.join(' '), /native/i);
+});
+
+test('validateBrandTermExclusion: substring-contained competitor alias dropped — "native habitat" passes', () => {
+  // Native's competitor entry has aliases ["native deodorant", "native"]. The bare
+  // "native" is contained in "native deodorant", so per the substring-drop rule it's
+  // removed from the matched terms. Common English uses like "in their native habitat"
+  // (myrrh's natural geography) no longer false-flag.
+  const result = validateBrandTermExclusion({
+    text: 'Wildcrafted from Commiphora trees in their native habitat.',
+    field: 'ingredientCards[2].story',
+  });
+  assert.equal(result.valid, true);
+});
+
+test('validateBrandTermExclusion: generic blocklist NOT subject to substring-drop rule', () => {
+  // Generics intentionally keep both bare ("skincare") and qualified ("natural skincare")
+  // forms — the rule only applies to competitor terms, not generics.
+  const result = validateBrandTermExclusion({
+    text: 'Best natural skincare products on the market.',
+    field: 'seoTitle',
+  });
+  assert.equal(result.valid, false);
 });
 
 // ── validateNoFabricatedIngredients (product-mode prose scan) ─────────
