@@ -43,5 +43,68 @@
     "why_we_chose_it": "Sodium saccharin and aspartame are dirt-cheap, shelf-stable, and intensely sweet — the default sweetener choice for commercial toothpaste. Xylitol is excellent for oral care because it actively inhibits cariogenic bacteria, but has its own taste profile and a higher per-unit cost than stevia. We chose stevia for taste, plant-derived sourcing, and ingredient-list legibility.",
     "what_cheap_alternatives_look_like": "Sodium saccharin, sucralose, aspartame. Synthetic, shelf-stable for years, intensely sweet at trace amounts. Cheap to formulate with. Often the unspoken reason mass-market toothpaste tastes 'punch in the face' sweet — synthetic intensity, not flavor depth.",
     "citations": []
+  },
+  "organic_jojoba": {
+    "name": "Organic Jojoba",
+    "role": "skin-mirroring carrier oil",
+    "mechanism": "Jojoba is technically a wax ester, not an oil — its molecular structure mirrors human sebum closely enough that skin recognizes and absorbs it without forming an occlusive film. This makes it a fast-absorbing carrier that doesn't sit on top of skin the way mineral oil and petrolatum do. The same property keeps deodorant glide-on and lotion non-greasy.",
+    "sourcing": "Cold-pressed from organic jojoba seeds (Simmondsia chinensis), grown primarily in the American Southwest and Mexico. Unrefined to retain the full wax-ester profile.",
+    "why_we_chose_it": "Mineral oil and petrolatum are dramatically cheaper and form a more uniform film. They also block skin's own moisture exchange and can clog pores. Jojoba is the closest plant analog to sebum we know of, and the absorption behavior is the whole point of using it.",
+    "what_cheap_alternatives_look_like": "Mineral oil, petrolatum, dimethicone, or fractionated coconut oil. All cheaper, all form an occlusive film, all good at making a product feel like it's doing something while doing less than they appear to.",
+    "citations": []
+  },
+  "plant_emulsifying_wax": {
+    "name": "Plant-Based Emulsifying Wax",
+    "role": "emulsifier (water + oil binder)",
+    "mechanism": "Emulsifying wax holds water and oil phases together in a stable lotion or cream — without it, water and oil separate within hours. We use plant-derived emulsifying wax (typically from cetyl alcohol and vegetable-derived stearate). The wax forms micelles that suspend oil droplets in water and prevent phase separation through the product's shelf life.",
+    "sourcing": "Plant-derived (vs. petroleum-derived). Vegetable cetearyl alcohol plus vegetable-derived polysorbate, blended for the emulsifier function. Non-GMO.",
+    "why_we_chose_it": "PEG-based emulsifiers (polyethylene glycol esters) are the industrial standard — cheaper, more shelf-stable, and easier to formulate with. They're also synthetic and have known purity concerns (1,4-dioxane contamination). We pay more for a plant-derived emulsifier because it does the same job without the contamination question.",
+    "what_cheap_alternatives_look_like": "PEG-100 stearate, PEG-40 hydrogenated castor oil, ceteareth-20. All petroleum-derived, all do the emulsifier job, all carry the 1,4-dioxane contamination concern that requires the manufacturer to test for trace levels — something the consumer can't verify.",
+    "citations": []
+  },
+  "grapefruit_seed_extract": {
+    "name": "Organic Grapefruit Seed Extract",
+    "role": "natural preservative",
+    "mechanism": "Plant-derived antimicrobial extract that inhibits bacterial and fungal growth in water-containing formulas. Acts as a broad-spectrum natural preservative, extending shelf life of lotion, cream, and deodorant without parabens or phenoxyethanol. The active polyphenol fraction (naringenin and related flavonoids) does the antimicrobial work.",
+    "sourcing": "Cold-pressed and concentrated from organic grapefruit seeds. Standardized for active polyphenol content.",
+    "why_we_chose_it": "Parabens and phenoxyethanol are the cheap, shelf-stable preservatives that show up in nearly every commercial cosmetic. They work — and they're also the most-asked-about ingredients by customers reading labels. Grapefruit seed extract works as well in our formulas at the concentrations we use, and it's something a customer can pronounce.",
+    "what_cheap_alternatives_look_like": "Methylparaben, propylparaben, butylparaben, phenoxyethanol, methylisothiazolinone. All effective preservatives. Several of them are also documented endocrine disruptors or skin sensitizers, which is why label-reading customers avoid them.",
+    "citations": []
+  },
+  "organic_beeswax": {
+    "name": "Organic Beeswax",
+    "role": "moisture-lock barrier",
+    "mechanism": "Beeswax forms a breathable barrier on skin that locks moisture in without occluding pores the way petrolatum does. Its long-chain fatty acids and esters create a flexible film that holds skin's own water content while still allowing gas exchange. In lip balm it's the structural ingredient that lets the balm hold a stick shape and stay on the lips through wear.",
+    "sourcing": "Organic beeswax from hives certified for organic apiculture practices — bees not exposed to synthetic pesticides or fed sugar syrup. Filtered but not bleached or deodorized.",
+    "why_we_chose_it": "Petrolatum and microcrystalline wax are dirt-cheap and shelf-stable forever. They also fully occlude — they trap moisture but block skin's exchange, and microcrystalline wax is a petroleum byproduct. Beeswax does the moisture-lock job while remaining breathable, and customers can verify what it is.",
+    "what_cheap_alternatives_look_like": "Petrolatum (Vaseline), paraffin, microcrystalline wax, ozokerite. All petroleum-derived, all cheap, all create a more occlusive film than beeswax. The trade-off is the kind that's not visible until you spend years using them.",
+    "citations": []
+  },
+  "palm_stearic": {
+    "name": "Palm Stearic",
+    "role": "natural cream thickener",
+    "mechanism": "Palm stearic acid is a saturated fatty acid that gives the body cream its rich, semi-solid texture without synthetic thickeners. It melts at body temperature and emulsifies with water-phase ingredients, allowing the cream to feel firm in the jar but spread and absorb on skin. The same fatty acid is what gives shea butter and cocoa butter their structural firmness.",
+    "sourcing": "Sustainably sourced palm stearic from RSPO-certified or equivalent supply chains. Plant-derived (vs. tallow-derived).",
+    "why_we_chose_it": "Stearyl alcohol or PEG-derived thickeners are cheaper to source consistently and easier to formulate with. We use palm stearic because it's recognizable as a plant fatty acid and delivers the texture we want for the cream — closer to a balm than a lotion. The trade-off is a less uniform melt point batch-to-batch.",
+    "what_cheap_alternatives_look_like": "Stearyl alcohol (often petroleum-derived unless specified), PEG-100 stearate, polyacrylate-13, or carbomers. Cheaper, more shelf-stable, deliver the same thickness but with synthetic chemistry.",
+    "citations": []
+  },
+  "organic_red_palm_oil": {
+    "name": "Organic Red Palm Oil",
+    "role": "vitamin E and beta-carotene source",
+    "mechanism": "Unrefined red palm oil retains its naturally high tocotrienol (a form of vitamin E) and beta-carotene content, both of which contribute antioxidant activity to the formula. Beta-carotene gives the oil its red-orange color — refined palm oil is bleached white and the carotenes are stripped out. The same antioxidant profile is what makes unrefined red palm oil a traditional cooking and skincare oil across West Africa.",
+    "sourcing": "Sustainably sourced organic red palm oil — RSPO-certified or equivalent. Cold-pressed and unrefined to retain the carotenoid and tocotrienol content. Color in the finished product reflects the unrefined oil, not added pigment.",
+    "why_we_chose_it": "Refined palm oil is dramatically cheaper, color-neutral, and shelf-stable. Refining strips out the carotenoids and tocotrienols. We use unrefined red palm oil because the antioxidants are why we're using palm oil at all.",
+    "what_cheap_alternatives_look_like": "Refined, bleached, deodorized (RBD) palm oil. Identical fatty acid profile, none of the antioxidant content. Often appears simply as 'palm oil' on the back panel — different molecule, different work.",
+    "citations": []
+  },
+  "saponified_coconut_oil": {
+    "name": "Saponified Organic Virgin Coconut Oil",
+    "role": "single-ingredient soap base",
+    "mechanism": "Saponification is the chemical reaction between an oil and a strong alkali (sodium hydroxide for bar soap, potassium hydroxide for liquid soap) that produces soap molecules and glycerin as byproducts. With coconut oil as the only fat, the resulting soap is high in lauric and capric acid soap chains — naturally lathering, naturally antimicrobial, recognizable as a true single-ingredient soap.",
+    "sourcing": "Organic virgin coconut oil (cold-pressed, unrefined) saponified in small batches with food-grade lye. The lye fully reacts during saponification — no free alkali remains in the finished bar.",
+    "why_we_chose_it": "Tallow (rendered beef fat) is the cheapest soap base by a wide margin and is the dominant fat in mass-market bar soap. We use coconut oil for the lather quality, the absence of animal fat, the lauric-acid antimicrobial property, and the single-ingredient simplicity. The customer who reads our label sees one fat name; the same customer reads commercial soap and sees a list.",
+    "what_cheap_alternatives_look_like": "Sodium tallowate (animal fat), sodium palmate (palm oil — often unsustainably sourced), or synthetic detergent bars (sodium lauryl sulfoacetate, sodium isethionate). All cheaper, all create a different kind of bar — animal-fat bars feel different on skin and the synthetic bars are technically not soap at all (they're solidified detergent).",
+    "citations": []
   }
 }
