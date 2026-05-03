@@ -20,8 +20,8 @@ You deserve something real.
 
 ## From Sean
 
-> The 60-80 word snippet the agent uses as exemplar for the per-product founder block. Same voice as the About section above; tighter.
+> The ~80-120 word snippet the agent uses as exemplar for the per-product founder block. Lead with a specific origin moment — not values restated. Sean's actual story below.
 
-We started Real Skin Care because our family wanted products where every ingredient was something we could confirm — no glyphosate contamination, no undisclosed impurities, no shortcuts taken for the bottom line. We use the shortest ingredient list that actually does the work, the highest-quality sourcing we can find, and we'll never compromise either for profit. The customer we built for is anyone who wants to know what they're putting on their skin and in their mouth.
+During my own healthy-ingredients journey, I flipped over the box of my toothpaste and saw the warning: *do not swallow.* Why was I putting something in my mouth that wasn't safe to swallow? From that moment, our family set out to make an effective toothpaste without fluoride — or anything else that would be harmful to swallow. Every ingredient in this tube is food-grade or food-derived. That's not marketing copy. That's the line we drew, and we won't cross it for profit.
 
 — Sean
