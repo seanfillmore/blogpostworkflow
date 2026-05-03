@@ -18,24 +18,60 @@ The trade-off is honest. The texture is more gel than paste — closer to a thic
 
 ## deodorant
 
-> TBD — Plan 6 (after toothpaste pilot succeeds and the foundation pattern is validated end-to-end).
+We built this for the customer who has tried five or six "natural" deodorants and watched each one fail by 2pm — the person whose underarms react to baking soda at the concentrations most "natural" brands use, who broke out from aluminum chlorohydrate in conventional sticks, who's tired of reapplying a "clean" deodorant that smelled fine in the morning and doesn't by lunch. They've usually learned to read the back of the tube before the front, and they've learned that "aluminum-free" alone doesn't mean the rest of the formula is built for skin like theirs.
+
+The mechanism story is short. Cold-pressed virgin coconut oil delivers lauric acid — the same fatty acid that does the antimicrobial work in our toothpaste — disrupting the lipid membranes of the bacteria that turn sweat into odor. Organic jojoba is structurally close to the skin's own sebum, so it absorbs without leaving a film that traps bacteria against the skin. A measured amount of aluminum-free baking soda neutralizes the acidic environment odor-causing bacteria need to thrive. Grapefruit seed extract rounds out the antimicrobial role and acts as the natural preservative. Essential oils — cedarwood, geranium, lavender, frankincense, depending on variation — handle scent without synthetic fragrance.
+
+What's NOT in the bottle matters as much as what is. No aluminum (chlorohydrate or zirconium), the antiperspirant compound that plugs sweat ducts. No propylene glycol, the cheap glide agent in most stick deodorants. No parabens. No synthetic fragrance — the most common irritant in conventional deodorant. No talc, no triclosan, no PEGs.
+
+The trade-off is honest. This is a roll-on, so it goes on wetter than a stick — give it a moment to absorb before dressing. It does not antiperspire; sweat is a body function, not a defect, and we're working on odor, not perspiration. The coconut-oil base firms below 76°F, so the application feel shifts a little with the season — a roll in your hand for ten seconds restores it. And because some customers are reactive to baking soda even at the moderate level we use, we recommend a patch test on the inner arm before daily use. The customers who switch to this and stay tend to be the ones who've already learned that their skin is the variable, not the brand.
 
 ## lotion
 
-> TBD — Plan 6.
+We built this for the customer who reads lotion labels and finds petroleum derivatives, mineral oil, "fragrance" listed as one word covering hundreds of undisclosed compounds, parabens, phenoxyethanol. For the eczema-prone customer whose skin reacts to lotions marketed as "calming." For the customer whose hands stay dry no matter what bottle they pump from — because most commercial lotions are mostly water, mineral oil, and a thickener, and the moisturizing claim is doing more work than the formula.
+
+The mechanism story is short. Cold-pressed virgin coconut oil delivers medium-chain fatty acids that absorb readily into the skin barrier instead of sitting on top of it. Organic jojoba is structurally close to the skin's own sebum, so it absorbs at a rate the skin recognizes — rapid, without the greasy film a heavier oil leaves. Organic red palm oil contributes naturally occurring vitamin E and beta-carotene, both of which support the skin barrier the lotion is meant to protect. Plant-based emulsifying wax holds the water and oil phases together without the silicone-based emulsifiers most commercial lotions rely on. Organic grapefruit seed extract is the natural preservative.
+
+What's NOT in the bottle matters as much as what is. No mineral oil, the petroleum byproduct that sits on the skin and gives the false sensation of moisturization. No petrolatum. No propylene glycol. No synthetic fragrance — the leading cause of contact dermatitis in personal-care products. No parabens. No phenoxyethanol. No dimethicone, the silicone that gives commercial lotion its slip and seals everything else underneath it.
+
+The trade-off is honest. The texture varies because cold-pressed virgin coconut oil firms below 76°F — in a cool bathroom the lotion thickens, in a warm one it loosens, and that shift between bottles is the oil itself behaving like an unrefined ingredient. Give the bottle a shake before the first pump if it's been stored cool. The unscented variation has a faint coconut and jojoba scent — that's the actual ingredients, not added fragrance, and it fades within minutes. Refined oils are uniform precisely because the lab strips that variation out, along with most of what makes the oil work.
 
 ## cream
 
-> TBD — Plan 6.
+We built this for the customer whose skin needs more occlusion than a lotion provides — extreme dryness, eczema-prone patches, the post-shower routine, the hands-and-feet routine that has to last overnight. Often the same customer who's tried thick body butters and found that the film they leave isn't actually locking moisture in — it's sitting on top of the skin, sealing it without nourishing it, and washing off with the next handwash. The cream is for the customer who needs the barrier layer and refuses to get it from petrolatum.
+
+The mechanism story is short. Organic beeswax is a true skin barrier — it locks moisture in without sealing the pores closed the way petrolatum does, because the wax structure breathes at the molecular level while still occluding water loss. Palm stearic gives the cream its rich body without the synthetic thickeners that conventional creams use. Cold-pressed virgin coconut oil delivers medium-chain fatty acids that absorb into the skin barrier; organic red palm oil contributes vitamin E and beta-carotene; and the beeswax holds them in place long enough to do the work. Grapefruit seed extract is the natural preservative.
+
+What's NOT in the jar matters as much as what is. No petrolatum, the petroleum-derived occlusive that seals skin without feeding it. No mineral oil. No dimethicone, the silicone that mimics softness without delivering it. No lanolin, a common allergen for sensitive skin. No synthetic fragrance. No parabens. No phenoxyethanol.
+
+The trade-off is honest. This is thicker than the lotion — closer to a balm than a pump cream. It firms in cold weather because beeswax does that; warming a small amount between your fingers softens it for application. It is not a fast-absorbing daytime moisturizer; it's an overnight barrier, a post-bath occlusive layer, a hands-and-feet rescue. The unscented variation has the faint scent of beeswax and coconut — that's the ingredients, not added fragrance.
 
 ## bar_soap
 
-> TBD — Plan 6.
+We built this for the customer who reads bar-soap labels and finds sodium tallowate (rendered animal fat), synthetic detergents, EDTA, "fragrance," dyes, and a list of stabilizers longer than the active ingredient list. For the customer whose skin reacts to most commercial bars but does fine with a castile-style coconut soap. For the customer who wants a bar that lasts in a wet shower without parabens, sulfates, or animal fat in the base.
+
+The mechanism story is short. Saponification turns coconut oil into a true soap — the cold-pressed virgin oil reacts with lye and produces soap molecules and naturally occurring glycerin, a byproduct most commercial bars strip out and sell separately. The single-ingredient base means the lather, the cleansing action, and the residual moisturizing all come from the same source: a coconut-oil soap molecule that lifts oil and dirt without needing an added surfactant. Coconut soap is naturally rich in lather; we don't add foam boosters because the oil already does it. Essential oils — lavender, tea tree, lemongrass, depending on variation — handle scent without synthetic fragrance.
+
+What's NOT in the bar matters as much as what is. No sodium tallowate (rendered animal fat, the base of most commercial bars). No SLS or SLES, the sulfate detergents that produce the squeaky-clean feel by stripping the skin barrier. No EDTA. No synthetic fragrance. No parabens. No triclosan. No dyes — the bars are the color of saponified coconut oil and the essential oils we add to it.
+
+The trade-off is honest. A single-ingredient coconut bar is harder than tallow-based commercial bars and lasts longer in a wet shower if drained between uses — give it a dry surface and it will outlast bars at twice the price. The lather is generous but different from sulfate-foam — fluffier, less aggressive, and the skin afterward feels conditioned rather than squeaky. The unscented bar has the natural light scent of saponified coconut oil; that's the soap itself, not a fragrance choice.
 
 ## liquid_soap
 
-> TBD — Plan 6.
+We built this for the customer who's tried foaming hand soaps and found surfactant cocktails — sodium lauryl sulfate, cocamidopropyl betaine, propylene glycol, parabens, dyes — under a "natural" front label. For the parent who wants kids using a soap they can read the label on. For the customer with reactive hands from frequent washing, who has noticed that the harder a soap squeaks, the more it strips.
+
+The mechanism story is short. This is the same coconut-oil saponification as the bar — cold-pressed virgin coconut oil reacted with lye to produce a true soap and naturally occurring glycerin — diluted to foaming-pump consistency and designed for the foaming dispenser rather than a standard pump. The dispenser aerates a small amount into a generous lather, which means less product per wash than conventional pump soap. The cleansing comes from soap molecules lifting oil and dirt, not from sulfate detergents stripping the skin's lipid layer. Essential oils — orange and bergamot, lavender, depending on variation — handle scent.
+
+What's NOT in the bottle matters as much as what is. No SLS or SLES. No cocamidopropyl betaine, the secondary surfactant in nearly every commercial pump soap. No propylene glycol. No parabens. No triclosan. No synthetic fragrance. No EDTA. No dyes.
+
+The trade-off is honest. This is thinner than commercial pump soap and must be used in a foaming dispenser, not a standard pump — a regular pump will dispense it as a runny liquid and waste most of it. The 32oz refill is concentrated; check the dilution instructions before refilling so the foam pump works as designed. The unscented variation has a light coconut scent — that's the soap itself, not added fragrance — and fades on the rinse.
 
 ## lip_balm
 
-> TBD — Plan 6.
+We built this for the customer whose lips stay dry no matter what balm they use. For the customer who tracked a chronic chapping issue back to the lanolin or the synthetic flavoring in a previous balm. For the customer who flipped over a tube and found petrolatum, paraffin, microcrystalline wax, parabens, "natural flavor" listed as one word — the same labeling sleight-of-hand the rest of the personal-care aisle has trained them to suspect. Three ingredients, three jobs, no occlusive that traps without feeding.
+
+The mechanism story is short. Organic beeswax forms the protective barrier that locks moisture against the lips — the same true-barrier role beeswax plays in our cream, scaled to a lip-tube format. Cold-pressed virgin coconut oil delivers medium-chain fatty acids that nourish the thin skin on the lips, absorbing where petrolatum would only sit. Organic red palm oil adds naturally occurring vitamin E and tocotrienols, both supporting the lip barrier the balm is meant to protect. Three ingredients. The variations add essential oils — vanilla, tangerine, coconut — for scent and a light flavor without synthetic flavoring agents.
+
+What's NOT in the tube matters as much as what is. No petrolatum, the petroleum-derived occlusive that traps moisture without feeding the skin underneath it. No paraffin or microcrystalline wax. No mineral oil. No lanolin, a common allergen and a frequent driver of the chronic-chap problem this balm is meant to solve. No synthetic flavoring. No parabens. No phenol. No menthol — the ingredient that produces the cooling sensation in commercial balms by mildly irritating the lips so they feel "treated."
+
+The trade-off is honest. This is firmer than a petrolatum-based balm because beeswax sets harder than petroleum wax — apply with light pressure rather than a smear, and let the warmth of the lips soften the layer into place. The unscented balm has the natural scent of beeswax and coconut, not an absence of scent. The light color tints in the variations come from red palm oil and the essential oils, not added pigments. A tube lasts longer than a conventional balm because you use less per application.
