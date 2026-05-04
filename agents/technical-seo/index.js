@@ -538,75 +538,196 @@ async function audit() {
 
 // ── COMMAND: create-redirects ─────────────────────────────────────────────────
 
+// Stopwords specific to RSC blog naming pattern. Removing these from slug
+// tokens lets us detect topic overlap rather than structural overlap (a slug
+// pair like "best-X-for-women-clean-picks-that-work" would otherwise get a
+// 5-token "match" purely from boilerplate).
+const REDIRECT_STOPWORDS = new Set([
+  'best','the','for','a','an','of','in','to','on','at','with','is','are','was','were',
+  'what','look','you','your','my','and','or','but','use','using','discover','how','why',
+  'when','where','now','all','some','many','much','just','also','very','more','most','less','least',
+  'have','has','had','do','does','did','be','been','being','this','that','these','those','it','its',
+  'make','makes','making','find','know','want','work','works','working','made','tried',
+  'real','true','honest','actually','really','even','still','yet','again','always','never','often',
+  'so','if','then','than','as','from','by','into','out','up','down','over','under','off',
+  'because','unless','via','picks','top','quick','ultimate','guide','tips','complete','full',
+  'everything','options','review','reviews','here','can','should','would','could',
+  '2024','2025','2026','get','getting','take','takes','go','goes','big','small','new','old','easy','hard',
+]);
+
+// Topical-map cluster tags that are too broad to disambiguate (everything
+// matches "natural skincare" — that's not a useful signal). Keep tags that
+// reference a product category (toothpaste/soap/lotion/deodorant/lip balm/etc).
+const NON_PRODUCT_CLUSTER_TAGS = new Set(['mof','tof','general','natural skincare','organic','coconut oil']);
+
+function tokenize(slug) {
+  if (!slug) return [];
+  return slug.replace(/^\/+|\/+$/g, '').split(/[/\-_]/)
+    .map((t) => t.toLowerCase())
+    .filter((t) => t.length > 1 && !REDIRECT_STOPWORDS.has(t));
+}
+
+function loadProductClusters() {
+  const path = join(ROOT, 'data', 'topical-map.json');
+  if (!existsSync(path)) return [];
+  const map = JSON.parse(readFileSync(path, 'utf8'));
+  return (map.clusters || [])
+    .filter((c) => !NON_PRODUCT_CLUSTER_TAGS.has(c.tag))
+    .map((c) => ({ tag: c.tag, tagTokens: c.tag.split(/[\s\-_]+/).map((t) => t.toLowerCase()).filter(Boolean) }));
+}
+
+// A slug "belongs to" a cluster if every token of the cluster's tag appears
+// in the slug. So "natural soap" requires both "natural" and "soap" present,
+// while "soap" requires just "soap".
+function identifyClusters(slug, clusters) {
+  const tokens = new Set(tokenize(slug));
+  const matched = [];
+  for (const c of clusters) {
+    if (c.tagTokens.every((t) => tokens.has(t))) matched.push(c.tag);
+  }
+  return new Set(matched);
+}
+
+function scoreCandidates(brokenUrl, indexes, clusters) {
+  const path = urlPath(brokenUrl);
+  const type = pageType(brokenUrl);
+  const slug = path.split('/').pop();
+  const brokenTokens = tokenize(slug);
+  const sourceClusters = identifyClusters(slug, clusters);
+
+  // Pool selection by type — prefer same-type targets, but for products fall
+  // back to collections and vice versa (a discontinued product often maps
+  // best to its parent collection).
+  const pool = [];
+  const push = (idx) => { for (const p of Object.keys(idx)) pool.push({ target: p, slug: p.split('/').pop() }); };
+  if (type === 'article') push(indexes.articleIdx);
+  else if (type === 'product') { push(indexes.productIdx); push(indexes.collectionIdx); }
+  else if (type === 'collection') { push(indexes.collectionIdx); push(indexes.productIdx); }
+  else if (type === 'page') push(indexes.pageIdx);
+  else push(indexes.articleIdx); // unknown types: fallback to articles
+
+  return pool
+    .filter((c) => c.target !== path)
+    .map((c) => {
+      const ct = tokenize(c.slug);
+      const overlap = brokenTokens.filter((t) => ct.includes(t)).length;
+      const ratio = brokenTokens.length === 0 ? 0 : overlap / Math.max(brokenTokens.length, ct.length);
+      const candClusters = identifyClusters(c.slug, clusters);
+      const clusterMatch = sourceClusters.size > 0 && candClusters.size > 0 && [...sourceClusters].some((sc) => candClusters.has(sc));
+      const clusterMismatch = sourceClusters.size > 0 && candClusters.size > 0 && ![...sourceClusters].some((sc) => candClusters.has(sc));
+      // +1 bonus for cluster match, -2 penalty for mismatch. A pure structural
+      // slug-pattern collision (best-X-for-women-clean-picks-...) lands at
+      // overlap=3 cluster-mismatch=true → score=1, dropping it from HIGH.
+      const score = overlap + (clusterMatch ? 1 : 0) - (clusterMismatch ? 2 : 0);
+      return { target: c.target, slug: c.slug, baseOverlap: overlap, ratio, score, clusterMatch, clusterMismatch };
+    })
+    .filter((c) => c.score > 0)
+    .sort((a, b) => b.score - a.score || b.ratio - a.ratio);
+}
+
+function classifyConfidence(scored) {
+  if (scored.length === 0) return { level: 'low', reason: 'no candidates' };
+  const top = scored[0];
+  // Tie-detection: if the next candidate has equal score AND ratio within 0.05,
+  // we're guessing — drop confidence.
+  const tied = scored.filter((c) => c.score === top.score && Math.abs(c.ratio - top.ratio) < 0.05).length;
+  if (top.clusterMismatch) return { level: 'low', reason: 'cluster mismatch' };
+  if ((top.score >= 4 || (top.score >= 3 && top.ratio >= 0.6)) && tied <= 1) return { level: 'high', reason: 'unique strong match' };
+  if (top.score >= 2 && top.ratio >= 0.4) return { level: 'medium', reason: 'plausible but ambiguous' };
+  return { level: 'low', reason: 'weak match' };
+}
+
+const REDIRECT_UA = 'Mozilla/5.0 (compatible; SEO-Claude-Bot/1.0; redirect-verify)';
+
+async function headVerify(targetPath) {
+  const url = config.url.replace(/\/$/, '') + targetPath;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(url, { method: 'HEAD', redirect: 'follow', headers: { 'User-Agent': REDIRECT_UA } });
+      if (r.status === 429 || r.status >= 500) {
+        await new Promise((res) => setTimeout(res, 1000 * (attempt + 1)));
+        continue;
+      }
+      return r.status;
+    } catch { return null; }
+  }
+  return null;
+}
+
 async function createRedirects({ dryRun = false } = {}) {
   console.log('\n  Loading 404 pages...');
   const p404 = loadIssue('Error-404_page');
   const pagesWithLinks = p404.filter((r) => {
     const inlinks = parseInt(r['no._of_all_inlinks'] || '0');
     if (inlinks === 0) return false;
-    // Cloudflare email-obfuscation URL: lives in the theme footer, served by
-    // a CF worker, returns 4xx to crawlers but isn't a real broken page.
     if (r.url?.includes('cdn-cgi/l/email-protection')) return false;
     return true;
   });
+  console.log(`  ${pagesWithLinks.length} broken pages with inbound links`);
 
-  console.log(`  ${pagesWithLinks.length} broken pages with inbound links\n`);
-
-  // Load existing redirects to avoid duplicates
+  console.log('\n  Loading Shopify state + product clusters...');
   const existing = await getRedirects();
   const existingPaths = new Set(existing.map((r) => r.path));
+  const articleIdx = await getArticleIndex();
+  const productIdx = await getProductIndex();
+  const collectionIdx = await getCollectionIndex();
+  const pageIdx = await getPageIndex();
+  const clusters = loadProductClusters();
+  const indexes = { articleIdx, productIdx, collectionIdx, pageIdx };
 
-  // Load blog index to find best redirect targets
-  const articleIndex = await getArticleIndex();
-  const validPaths = new Set(Object.keys(articleIndex));
-
-  let created = 0;
-  let skipped = 0;
+  const auto = [];        // HIGH — auto-create
+  const queued = [];      // MEDIUM/LOW — saved for review
+  let skippedExisting = 0;
 
   for (const row of pagesWithLinks) {
     const fromPath = urlPath(row.url);
-    if (existingPaths.has(fromPath)) {
-      console.log(`  [SKIP] Redirect already exists: ${fromPath}`);
-      skipped++;
-      continue;
-    }
+    if (existingPaths.has(fromPath)) { skippedExisting++; continue; }
 
-    const type = pageType(row.url);
+    const scored = scoreCandidates(row.url, indexes, clusters);
+    const conf = classifyConfidence(scored);
+    const top = scored[0];
 
-    // Determine best redirect target based on slug similarity
-    let target = null;
-    if (type === 'article') {
-      // Try to find a matching article by slug words
-      const slugWords = fromPath.split('/').pop().split('-').filter((w) => w.length > 3);
-      let bestMatch = null;
-      let bestScore = 0;
-      for (const [path] of Object.entries(articleIndex)) {
-        if (path === fromPath) continue; // exclude self
-        const score = slugWords.filter((w) => path.includes(w)).length;
-        if (score > bestScore) { bestScore = score; bestMatch = path; }
+    if (conf.level === 'high' && top) {
+      // HEAD-verify the proposed target. The articleIndex is built fresh from
+      // Shopify so most candidates will be live, but the lesson from the
+      // 2026-05-04 orphan repair: a target can be deleted between matcher
+      // runs. Cheap to verify; expensive to fix afterwards.
+      const status = await headVerify(top.target);
+      if (status !== 200) {
+        queued.push({ from: fromPath, inlinks: row['no._of_all_inlinks'], proposed: top.target, score: top.score, ratio: top.ratio, level: 'medium', reason: `HEAD ${status} on top candidate — needs review`, alternates: scored.slice(1, 4).map((s) => s.target) });
+        continue;
       }
-      if (bestScore >= 2) target = bestMatch;
-      else target = '/blogs/news'; // fallback to blog index
-    } else if (type === 'product') {
-      target = '/collections/all';
+      auto.push({ from: fromPath, target: top.target, score: top.score, ratio: top.ratio });
     } else {
-      target = '/';
-    }
-
-    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${fromPath} → ${target}`);
-    if (!dryRun) {
-      try {
-        await createRedirect(fromPath, target);
-        created++;
-      } catch (e) {
-        console.log(`    Error: ${e.message}`);
-      }
-    } else {
-      created++;
+      queued.push({ from: fromPath, inlinks: row['no._of_all_inlinks'], proposed: top?.target || null, score: top?.score || 0, ratio: top?.ratio || 0, level: conf.level, reason: conf.reason, alternates: scored.slice(1, 4).map((s) => s.target) });
     }
   }
 
-  console.log(`\n  ${dryRun ? 'Would create' : 'Created'}: ${created} redirects, skipped: ${skipped}`);
+  // Apply HIGH
+  let created = 0;
+  let createErrors = 0;
+  for (const a of auto) {
+    console.log(`  ${dryRun ? '[DRY RUN] HIGH' : '[CREATE]'} ${a.from} → ${a.target} (score=${a.score}, ratio=${a.ratio.toFixed(2)})`);
+    if (!dryRun) {
+      try { await createRedirect(a.from, a.target); created++; }
+      catch (e) { console.log(`    ERROR: ${e.message}`); createErrors++; }
+    } else { created++; }
+  }
+  for (const q of queued) {
+    console.log(`  [PROPOSED ${q.level.toUpperCase()}] ${q.from} → ${q.proposed || '(no candidate)'}  — ${q.reason}`);
+  }
+
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  writeFileSync(join(REPORTS_DIR, 'redirect-proposals.json'), JSON.stringify({
+    generated_at: new Date().toISOString(),
+    dry_run: dryRun,
+    counts: { auto_created: created, errors: createErrors, skipped_existing: skippedExisting, queued_for_review: queued.length },
+    auto_applied: auto,
+    queued,
+  }, null, 2));
+
+  console.log(`\n  ${dryRun ? 'Would create' : 'Created'}: ${created} HIGH-confidence redirects, errors: ${createErrors}, skipped: ${skippedExisting}, queued for review: ${queued.length}`);
+  console.log(`  Proposals report: ${join(REPORTS_DIR, 'redirect-proposals.json')}`);
 }
 
 // ── COMMAND: prune-zombies ────────────────────────────────────────────────────
@@ -780,6 +901,80 @@ async function pruneZombies({ dryRun = false } = {}) {
     drifted, broken, errored,
   }, null, 2));
   console.log(`\n  Report saved: ${reportPath}`);
+}
+
+// ── COMMAND: flatten-chains ───────────────────────────────────────────────────
+//
+// Walks the redirect table for chain hops: A → B where B is itself the source
+// of another redirect (B → C). Each hop costs PageRank — the spec says each
+// 301 leaks ~10-15% of link equity. Flattening A → C in one hop preserves it.
+//
+// We follow chains breadth-first, capping at 5 hops to avoid infinite loops
+// caused by accidentally circular redirect tables (Shopify allows them).
+
+async function flattenChains({ dryRun = false } = {}) {
+  console.log('\n  Loading redirect table...');
+  const all = await getRedirects();
+  const byPath = new Map(all.map((r) => [r.path, r]));
+  console.log(`    ${all.length} redirects loaded`);
+
+  function resolveChain(startPath) {
+    const visited = [startPath];
+    let current = startPath;
+    for (let hop = 0; hop < 5; hop++) {
+      const next = byPath.get(current);
+      if (!next) return { final: current, hops: visited.length - 1, looped: false };
+      if (visited.includes(next.target)) return { final: current, hops: visited.length - 1, looped: true };
+      visited.push(next.target);
+      current = next.target;
+    }
+    return { final: current, hops: visited.length - 1, looped: false };
+  }
+
+  const flattenable = [];
+  const looped = [];
+  for (const r of all) {
+    const chain = resolveChain(r.target);
+    if (chain.looped) { looped.push({ ...r, terminal: chain.final }); continue; }
+    if (chain.hops > 0 && chain.final !== r.target) {
+      flattenable.push({ id: r.id, path: r.path, oldTarget: r.target, newTarget: chain.final, hops: chain.hops + 1 });
+    }
+  }
+
+  console.log(`\n  Found:`);
+  console.log(`    Chains to flatten: ${flattenable.length}`);
+  console.log(`    Loops detected (require manual fix): ${looped.length}`);
+
+  if (looped.length > 0) {
+    console.log(`\n  Loops:`);
+    for (const l of looped) console.log(`    ${l.path} → ${l.target} → ... → loop at ${l.terminal}`);
+  }
+
+  let updated = 0;
+  let errors = 0;
+  for (const f of flattenable) {
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${f.path}: ${f.oldTarget}  →  ${f.newTarget}  (was ${f.hops} hops)`);
+    if (!dryRun) {
+      // Shopify update redirects via DELETE + CREATE since the lib doesn't
+      // expose PUT and POST won't update an existing entry.
+      try {
+        await deleteRedirect(f.id);
+        await createRedirect(f.path, f.newTarget);
+        updated++;
+      } catch (e) { console.log(`    ERROR: ${e.message}`); errors++; }
+    } else { updated++; }
+  }
+
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  writeFileSync(join(REPORTS_DIR, 'redirect-chains.json'), JSON.stringify({
+    generated_at: new Date().toISOString(),
+    dry_run: dryRun,
+    counts: { flattened: updated, errors, loops: looped.length },
+    flattened: flattenable,
+    loops: looped,
+  }, null, 2));
+
+  console.log(`\n  ${dryRun ? 'Would flatten' : 'Flattened'}: ${updated}, errors: ${errors}, loops surfaced: ${looped.length}`);
 }
 
 // ── COMMAND: fix-links ────────────────────────────────────────────────────────
@@ -2031,6 +2226,7 @@ Usage:
   node agents/technical-seo/index.js fix-theme-alt [--dry-run]
   node agents/technical-seo/index.js create-redirects [--dry-run]
   node agents/technical-seo/index.js prune-zombies [--apply] [--only=path1,path2] [--include-suspicious]
+  node agents/technical-seo/index.js flatten-chains [--dry-run]
   node agents/technical-seo/index.js fix-ai-content [--dry-run]
   node agents/technical-seo/index.js fix-titles [--dry-run]
   node agents/technical-seo/index.js fix-noindex [--dry-run]
@@ -2173,6 +2369,9 @@ async function main() {
       // prune-zombies uses --apply (action verb) instead of --dry-run because
       // deleting redirects is destructive and the safe default must be no-op.
       await runFixWithTracking((opts) => pruneZombies({ dryRun: !args.includes('--apply') }), 'prune-zombies');
+      break;
+    case 'flatten-chains':
+      await runFixWithTracking(flattenChains, 'flatten-chains');
       break;
     case 'fix-ai-content':
       await runFixWithTracking(fixAiContent, 'fix-ai-content');

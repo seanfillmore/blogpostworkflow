@@ -156,6 +156,13 @@ runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 // Step 5d: submit pending pages to indexing API (daily, up to quota limit)
 runStep('submit-indexing', `"${NODE}" agents/technical-seo/index.js fix-submit-indexing`);
 
+// Step 5d.1: redirect-table maintenance — daily, audit-only ops (no crawl needed).
+//   - prune-zombies deletes redirect entries whose source returns 200 (live page wins).
+//   - flatten-chains collapses A→B→C into A→C to preserve PageRank across hops.
+// Both are safe to run daily and idempotent. Auto-apply unless dry-run.
+runStep('prune-zombies', `"${NODE}" agents/technical-seo/index.js prune-zombies${dryFlag ? '' : ' --apply'}`);
+runStep('flatten-chains', `"${NODE}" agents/technical-seo/index.js flatten-chains${dryFlag}`);
+
 // Step 5f: rebuild legacy / editor-tagged posts — max 5 per day, daily until backlog clears
 runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 5 --apply${dryFlag}`);
 
@@ -236,6 +243,16 @@ if (new Date().getDay() === 0) {
 
   // Step 7c: site crawl via DataForSEO On-Page API
   runStep('site-crawler', `"${NODE}" agents/site-crawler/index.js`, { indent: '    ' });
+
+  // Step 7c.1: redirect creation + link fixes against fresh broken-link data.
+  //   - create-redirects: scoring + cluster disambiguation; HIGH-confidence
+  //     auto-apply, MEDIUM/LOW queued to redirect-proposals.json for review.
+  //   - fix-links: rewrites internal links pointing to 404 pages
+  //   - fix-redirects: rewrites internal links pointing to redirected URLs
+  // These need fresh crawl data so they only run after site-crawler.
+  runStep('create-redirects', `"${NODE}" agents/technical-seo/index.js create-redirects${dryFlag}`, { indent: '    ' });
+  runStep('fix-links', `"${NODE}" agents/technical-seo/index.js fix-links${dryFlag}`, { indent: '    ' });
+  runStep('fix-redirects', `"${NODE}" agents/technical-seo/index.js fix-redirects${dryFlag}`, { indent: '    ' });
 
   // Step 8: cannibalization detection + resolution
   runStep('cannibalization-resolver', `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`, { indent: '    ' });
