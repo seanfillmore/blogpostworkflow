@@ -37,7 +37,7 @@ import { fileURLToPath } from 'url';
 import {
   getBlogs, getArticles, getArticle, updateArticle,
   getPages, getPage, updatePage,
-  getRedirects, createRedirect,
+  getRedirects, createRedirect, deleteRedirect,
   upsertMetafield,
   getProducts, getProduct, updateProduct, updateProductImage,
   getCustomCollections, getSmartCollections,
@@ -607,6 +607,179 @@ async function createRedirects({ dryRun = false } = {}) {
   }
 
   console.log(`\n  ${dryRun ? 'Would create' : 'Created'}: ${created} redirects, skipped: ${skipped}`);
+}
+
+// ── COMMAND: prune-zombies ────────────────────────────────────────────────────
+//
+// A "zombie" redirect is one whose source path returns 200 directly — Shopify's
+// redirect table entry never fires because the live page (product/collection/
+// article reborn at the same handle) takes precedence. These zombies do nothing
+// in the browser but block any new redirect from targeting them ("can't
+// redirect to another redirect" 422 from Shopify's POST /redirects.json).
+//
+// Categorisation by what HEAD returns at the source path (with manual redirect):
+//   200      → ZOMBIE (auto-delete: live page wins, redirect is dead weight)
+//   3xx→target → ACTIVE (redirect firing as configured)
+//   3xx→other  → DRIFT  (target changed elsewhere — surface, do not delete)
+//   4xx/5xx  → BROKEN_REDIRECT (source dead AND redirect not catching — surface)
+
+// Pulls every <loc> URL from the live sitemap index + child sitemaps and
+// returns a Set of pathnames. The live sitemap is authoritative — derived
+// data/sitemap-index.json drifts (typically days to weeks stale) so we don't
+// trust it for destructive operations.
+async function loadCanonicalSitemapPaths() {
+  const base = config.url.replace(/\/$/, '');
+  async function fetchXml(url) {
+    const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SEO-Claude-Bot/1.0)' } });
+    if (!r.ok) throw new Error(`sitemap ${url} → ${r.status}`);
+    return r.text();
+  }
+  const indexXml = await fetchXml(`${base}/sitemap.xml`);
+  const childUrls = [...indexXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+  const paths = new Set();
+  for (const child of childUrls) {
+    try {
+      const xml = await fetchXml(child);
+      for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+        const u = m[1].replace(/&amp;/g, '&');
+        try { paths.add(new URL(u).pathname.replace(/\/$/, '') || '/'); }
+        catch { /* skip malformed */ }
+      }
+    } catch (e) { console.log(`    [warn] sitemap fetch failed: ${child} — ${e.message}`); }
+  }
+  return paths;
+}
+
+async function pruneZombies({ dryRun = false } = {}) {
+  const onlyArg = args.find((a) => a.startsWith('--only='));
+  const onlyPaths = onlyArg ? new Set(onlyArg.slice('--only='.length).split(',').map((s) => s.trim())) : null;
+  const includeSuspicious = args.includes('--include-suspicious');
+
+  console.log('\n  Fetching live sitemap for canonical-URL verification...');
+  let canonicalPaths;
+  try {
+    canonicalPaths = await loadCanonicalSitemapPaths();
+    console.log(`    ${canonicalPaths.size} URLs in live sitemap`);
+  } catch (e) {
+    console.error(`    Sitemap fetch FAILED: ${e.message}`);
+    console.error('    Refusing to proceed without canonical verification.');
+    process.exit(1);
+  }
+
+  console.log('\n  Loading redirect table from Shopify...');
+  let redirects = await getRedirects();
+  if (onlyPaths) {
+    redirects = redirects.filter((r) => onlyPaths.has(r.path));
+    console.log(`    Filtered to ${redirects.length} of ${onlyPaths.size} requested paths`);
+  } else {
+    console.log(`    ${redirects.length} redirects to audit`);
+  }
+
+  const UA = 'Mozilla/5.0 (compatible; SEO-Claude-Bot/1.0; redirect-audit)';
+  const base = config.url.replace(/\/$/, '');
+
+  async function probe(path, attempt = 0) {
+    const url = base + path;
+    try {
+      const r = await fetch(url, { method: 'HEAD', redirect: 'manual', headers: { 'User-Agent': UA } });
+      // Retry rate-limit AND 5xx — Shopify often 503s under load and these
+      // are not "broken redirects," they're transient. Without retry we'd
+      // delete or surface live redirects as if they were dead.
+      if ((r.status === 429 || r.status >= 500) && attempt < 3) {
+        await new Promise((res) => setTimeout(res, 1500 * (attempt + 1)));
+        return probe(path, attempt + 1);
+      }
+      return { status: r.status, location: r.headers.get('location') || '' };
+    } catch (e) { return { status: null, error: e.message }; }
+  }
+
+  const zombies = [];           // 200 + in sitemap → CONFIRMED, auto-delete
+  const suspicious = [];        // 200 + NOT in sitemap → MEDIUM, surface for review
+  const drifted = [];
+  const broken = [];
+  const active = [];
+  const errored = [];
+
+  let idx = 0;
+  async function worker() {
+    while (idx < redirects.length) {
+      const r = redirects[idx++];
+      const probed = await probe(r.path);
+      if (probed.status == null) { errored.push({ ...r, error: probed.error }); }
+      else if (probed.status === 200) {
+        const norm = r.path.replace(/\/$/, '') || '/';
+        const inSitemap = canonicalPaths.has(norm);
+        if (inSitemap) zombies.push({ ...r, observed: 200, in_sitemap: true });
+        else suspicious.push({ ...r, observed: 200, in_sitemap: false });
+      }
+      else if (probed.status >= 300 && probed.status < 400) {
+        const loc = probed.location || '';
+        // Compare normalising trailing slash and protocol/host
+        const target = r.target.replace(/\/$/, '');
+        const locPath = loc.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, '');
+        if (locPath === target || loc.endsWith(target)) active.push(r);
+        else drifted.push({ ...r, observed_location: loc });
+      } else if (probed.status >= 400) {
+        broken.push({ ...r, observed: probed.status });
+      } else {
+        errored.push({ ...r, observed: probed.status });
+      }
+      await new Promise((res) => setTimeout(res, 200));
+    }
+  }
+  console.log('\n  Probing each source path (concurrency=4, 200ms gap)...');
+  await Promise.all(Array(4).fill(0).map(worker));
+
+  console.log(`\n  Results:`);
+  console.log(`    ZOMBIE (in sitemap)     ${zombies.length}  ← auto-delete candidates`);
+  console.log(`    SUSPICIOUS (200, no sitemap) ${suspicious.length}  ← review (use --include-suspicious to delete)`);
+  console.log(`    ACTIVE                  ${active.length}`);
+  console.log(`    DRIFT                   ${drifted.length}  (target changed — review)`);
+  console.log(`    BROKEN_REDIRECT         ${broken.length}  (source dead, redirect not firing — review)`);
+  console.log(`    ERROR                   ${errored.length}`);
+
+  const toDelete = includeSuspicious ? [...zombies, ...suspicious] : zombies;
+  if (toDelete.length > 0) {
+    console.log(`\n  ${dryRun ? 'Would delete' : 'Deleting'} (${toDelete.length})${includeSuspicious ? ' — including suspicious' : ''}:`);
+    let deleted = 0;
+    for (const z of toDelete) {
+      console.log(`    ${dryRun ? '[DRY RUN] ' : ''}${z.path}  →  ${z.target}  ${z.in_sitemap ? '[in sitemap]' : '[NOT in sitemap]'}`);
+      if (!dryRun) {
+        try { await deleteRedirect(z.id); deleted++; }
+        catch (e) { console.log(`      ERROR deleting: ${e.message}`); }
+      } else { deleted++; }
+    }
+    console.log(`\n  ${dryRun ? 'Would delete' : 'Deleted'}: ${deleted} redirects`);
+  }
+
+  if (suspicious.length > 0 && !includeSuspicious) {
+    console.log(`\n  Suspicious (200 but NOT in live sitemap — review):`);
+    for (const s of suspicious) console.log(`    ${s.path}  →  ${s.target}`);
+  }
+
+  if (drifted.length > 0) {
+    console.log(`\n  Drifted (target changed since redirect was created — manual review):`);
+    for (const d of drifted) console.log(`    ${d.path}  →  configured: ${d.target}  |  observed: ${d.observed_location}`);
+  }
+  if (broken.length > 0) {
+    console.log(`\n  Broken redirects (source ${broken[0].observed}, but Shopify isn't firing the redirect):`);
+    for (const b of broken) console.log(`    ${b.path}  →  ${b.target}  (source returns ${b.observed})`);
+  }
+
+  // Persist a report so the daily digest / reviewer can pick it up
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  const reportPath = join(REPORTS_DIR, 'redirect-audit.json');
+  writeFileSync(reportPath, JSON.stringify({
+    audited_at: new Date().toISOString(),
+    dry_run: dryRun,
+    sitemap_size: canonicalPaths.size,
+    total_audited: redirects.length,
+    counts: { zombies: zombies.length, suspicious: suspicious.length, active: active.length, drifted: drifted.length, broken: broken.length, errored: errored.length },
+    zombies: zombies.map((z) => ({ id: z.id, path: z.path, target: z.target })),
+    suspicious: suspicious.map((s) => ({ id: s.id, path: s.path, target: s.target })),
+    drifted, broken, errored,
+  }, null, 2));
+  console.log(`\n  Report saved: ${reportPath}`);
 }
 
 // ── COMMAND: fix-links ────────────────────────────────────────────────────────
@@ -1857,6 +2030,7 @@ Usage:
   node agents/technical-seo/index.js fix-alt-text [--dry-run]
   node agents/technical-seo/index.js fix-theme-alt [--dry-run]
   node agents/technical-seo/index.js create-redirects [--dry-run]
+  node agents/technical-seo/index.js prune-zombies [--apply] [--only=path1,path2] [--include-suspicious]
   node agents/technical-seo/index.js fix-ai-content [--dry-run]
   node agents/technical-seo/index.js fix-titles [--dry-run]
   node agents/technical-seo/index.js fix-noindex [--dry-run]
@@ -1994,6 +2168,11 @@ async function main() {
       break;
     case 'create-redirects':
       await runFixWithTracking(createRedirects, 'create-redirects');
+      break;
+    case 'prune-zombies':
+      // prune-zombies uses --apply (action verb) instead of --dry-run because
+      // deleting redirects is destructive and the safe default must be no-op.
+      await runFixWithTracking((opts) => pruneZombies({ dryRun: !args.includes('--apply') }), 'prune-zombies');
       break;
     case 'fix-ai-content':
       await runFixWithTracking(fixAiContent, 'fix-ai-content');
