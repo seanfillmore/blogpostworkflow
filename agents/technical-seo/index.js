@@ -543,7 +543,11 @@ async function createRedirects({ dryRun = false } = {}) {
   const p404 = loadIssue('Error-404_page');
   const pagesWithLinks = p404.filter((r) => {
     const inlinks = parseInt(r['no._of_all_inlinks'] || '0');
-    return inlinks > 0;
+    if (inlinks === 0) return false;
+    // Cloudflare email-obfuscation URL: lives in the theme footer, served by
+    // a CF worker, returns 4xx to crawlers but isn't a real broken page.
+    if (r.url?.includes('cdn-cgi/l/email-protection')) return false;
+    return true;
   });
 
   console.log(`  ${pagesWithLinks.length} broken pages with inbound links\n`);
