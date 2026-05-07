@@ -1,0 +1,114 @@
+{
+  "hero-desktop.webp": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/hero-desktop.webp?v=1778128486",
+    "alt": "Pure Unscented Body Lotion bottle and Pure Unscented Body Cream jar on a sage-green surface in soft daylight",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "hero",
+      "settingKey": "bg_image_desktop"
+    }
+  },
+  "hero-mobile.webp": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/hero-mobile.webp?v=1778128490",
+    "alt": "Pure Unscented Body Lotion and Body Cream on a sage-green surface, soft daylight",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "hero",
+      "settingKey": "bg_image_mobile"
+    }
+  },
+  "why-1-lotion.webp": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/why-1-lotion.webp?v=1778128494",
+    "alt": "Pure Unscented Body Lotion bottle",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "why-it-works",
+      "settingKey": "image_1"
+    }
+  },
+  "why-2-cream.webp": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/why-2-cream.webp?v=1778128498",
+    "alt": "Pure Unscented Body Cream jar",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "why-it-works",
+      "settingKey": "image_2"
+    }
+  },
+  "why-3-set.webp": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/why-3-set.webp?v=1778128501",
+    "alt": "Sensitive Skin Set components together",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "why-it-works",
+      "settingKey": "image_3"
+    }
+  },
+  "stats-hand-applying.webp": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/stats-hand-applying.webp?v=1778128505",
+    "alt": "Hand applying Pure Unscented Body Lotion to a forearm in soft daylight",
+    "target": {
+      "kind": "inlineImg",
+      "sectionKey": "stats-hero",
+      "settingKey": "custom_liquid"
+    }
+  },
+  "ugc-1-bathroom-counter.jpg": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/ugc-1-bathroom-counter.jpg?v=1778128509",
+    "alt": "Customer photo of Pure Unscented Body Lotion on a bathroom counter",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "ugc-photos",
+      "blockKey": "ugc-1",
+      "settingKey": "image"
+    }
+  },
+  "ugc-2-cream-in-hand.jpg": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/ugc-2-cream-in-hand.jpg?v=1778128513",
+    "alt": "Customer photo of Pure Unscented Body Cream jar in hand",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "ugc-photos",
+      "blockKey": "ugc-2",
+      "settingKey": "image"
+    }
+  },
+  "ugc-3-nightstand-tray.jpg": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/ugc-3-nightstand-tray.jpg?v=1778128516",
+    "alt": "Customer photo of Pure Unscented Body Lotion and Cream on a wooden tray",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "ugc-photos",
+      "blockKey": "ugc-3",
+      "settingKey": "image"
+    }
+  },
+  "ugc-4-unboxing.jpg": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/ugc-4-unboxing.jpg?v=1778128520",
+    "alt": "Customer photo of the Sensitive Skin Set with free Pure Unscented Lip Balm and Bar Soap",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "ugc-photos",
+      "blockKey": "ugc-4",
+      "settingKey": "image"
+    }
+  },
+  "compare-thumb.png": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/compare-thumb.png?v=1778128524",
+    "alt": "Sensitive Skin Set",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "compare-table",
+      "settingKey": "us_image"
+    }
+  },
+  "dont-fumble-shelf.webp": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/dont-fumble-shelf.webp?v=1778128528",
+    "alt": "A bathroom shelf cleared of half-empty lotion bottles, with the Sensitive Skin Set in their place",
+    "target": {
+      "kind": "jsonSet",
+      "sectionKey": "dont-fumble-cta",
+      "settingKey": "image"
+    }
+  }
+}
