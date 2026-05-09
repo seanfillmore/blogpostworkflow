@@ -25,7 +25,7 @@ function arg(name, fallback) {
   return i >= 0 ? process.argv[i + 1] : fallback;
 }
 
-const day = arg('day', String(Math.ceil((Date.now() - new Date('2026-05-09').getTime()) / 86400000)));
+const day = arg('day', String(Math.floor((Date.now() - new Date('2026-05-09T00:00:00Z').getTime()) / 86400000)));
 
 async function loadClarity() {
   try {
@@ -124,6 +124,7 @@ function buildReport({ day, clarity, ads }) {
     );
   }
   lines.push(
+    // TODO(day-7): extend lib/ga4.js with a paid-funnel helper for ATC/checkout rates
     `## GA4 — paid funnel (deferred)`,
     ``,
     `_GA4 paid-funnel breakdown (ATC rate, begin_checkout rate) will be added when we extend lib/ga4.js with a paid-funnel helper. For now, conversion counts come from Google Ads above (purchases). Add this hook before the day-7 audit at the latest._`,
