@@ -159,10 +159,10 @@ A single `<span id="founder" style="display:block;height:0;"></span>` so the the
 ### 9. Email capture (`apps` section, Klaviyo block)
 
 - **Block type:** `shopify://apps/klaviyo-email-marketing-sms/blocks/form-embed-block/2632fe16-c075-4321-a88b-50b567f42507`
-- **formId:** `WzAQZX` (same form ID used in `templates/index.gem-1716757211-template.json` and elsewhere in the theme — Sean's existing Klaviyo form)
+- **formId:** `Xr4S7X` (matches the form used in `sections/main-article.liquid`'s blog newsletter — confirmed live and rendering. Initial attempt with `WzAQZX` from `index.gem-1716757211-template.json` rendered empty, that ID was stale.)
 - **Padding:** 56/56
 
-The Klaviyo form has its own copy and design configured in the Klaviyo dashboard. Sean's plan headline ("Get 15% off your first order") and subhead are assumed to live there. If they don't, Sean updates the form in Klaviyo, not in the theme.
+The Klaviyo form's copy and design are configured in the Klaviyo dashboard. Sean confirmed the actual welcome offer is **30% off** for first-time subscribers (the initial spec's "15% off" was outdated). The percentage and headline live in Klaviyo, not the theme — the theme just embeds the form.
 
 ## Photography walk-through plan
 
