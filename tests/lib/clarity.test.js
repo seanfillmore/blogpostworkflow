@@ -1,3 +1,5 @@
+process.env.MICROSOFT_CLARITY_TOKEN ??= 'test';
+
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { buildClarityUrl } from '../../lib/clarity.js';
