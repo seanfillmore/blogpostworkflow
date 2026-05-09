@@ -45,29 +45,28 @@ export function buildBudgetOperation(dailyBudgetUSD, customerResourceName, name)
   };
 }
 
-export function buildCampaignOperation(name, budgetResourceName, mobileAdjustment, customerResourceName) {
-  return {
-    campaignOperation: {
-      create: {
-        resourceName: `${customerResourceName}/campaigns/-2`,
-        name,
-        status: 'PAUSED',
-        advertisingChannelType: 'SEARCH',
-        campaignBudget: budgetResourceName,
-        manualCpc: { enhancedCpcEnabled: false },
-        networkSettings: {
-          targetGoogleSearch: true,
-          targetSearchNetwork: true,
-          targetContentNetwork: false,
-        },
-        geoTargetTypeSetting: {
-          positiveGeoTargetType: 'PRESENCE_OR_INTEREST',
-        },
-        biddingStrategyType: 'MANUAL_CPC',
-        containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
-      },
+export function buildCampaignOperation(name, budgetResourceName, mobileAdjustment, customerResourceName, options = {}) {
+  const { trackingUrlTemplate = null, targetSearchNetwork = true } = options;
+  const create = {
+    resourceName: `${customerResourceName}/campaigns/-2`,
+    name,
+    status: 'PAUSED',
+    advertisingChannelType: 'SEARCH',
+    campaignBudget: budgetResourceName,
+    manualCpc: { enhancedCpcEnabled: false },
+    networkSettings: {
+      targetGoogleSearch: true,
+      targetSearchNetwork,
+      targetContentNetwork: false,
     },
+    geoTargetTypeSetting: {
+      positiveGeoTargetType: 'PRESENCE_OR_INTEREST',
+    },
+    biddingStrategyType: 'MANUAL_CPC',
+    containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
   };
+  if (trackingUrlTemplate) create.trackingUrlTemplate = trackingUrlTemplate;
+  return { campaignOperation: { create } };
 }
 
 export function buildAdGroupOperation(name, campaignResourceName, customerResourceName, maxCpcUSD) {
@@ -214,7 +213,16 @@ async function main() {
     console.log('none');
     const budgetName = `${proposal.campaignName} — ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
     const budgetOp = buildBudgetOperation(budget, customerResourceName, budgetName);
-    const campaignOp = buildCampaignOperation(proposal.campaignName, `${customerResourceName}/campaignBudgets/-1`, mobileAdj, customerResourceName);
+    const campaignOp = buildCampaignOperation(
+      proposal.campaignName,
+      `${customerResourceName}/campaignBudgets/-1`,
+      mobileAdj,
+      customerResourceName,
+      {
+        trackingUrlTemplate: proposal.trackingUrlTemplate ?? null,
+        targetSearchNetwork: proposal.targetSearchNetwork ?? true,
+      }
+    );
 
     process.stdout.write('  Creating budget + campaign... ');
     const res1 = await mutate([budgetOp, campaignOp]);

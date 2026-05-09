@@ -54,6 +54,29 @@ const campaignOp = buildCampaignOperation('RSC | Test | Search', 'customers/123/
 assert.ok(campaignOp.campaignOperation.create.name === 'RSC | Test | Search');
 assert.ok(campaignOp.campaignOperation.create.manualCpc !== undefined);
 
+// buildCampaignOperation — emits trackingUrlTemplate when option is provided
+const campaignOpWithTemplate = buildCampaignOperation(
+  'RSC | Test | Search', 'customers/123/campaignBudgets/456', 1.3, 'customers/123',
+  { trackingUrlTemplate: '{lpurl}?utm_source=google&utm_medium=cpc' }
+);
+assert.equal(
+  campaignOpWithTemplate.campaignOperation.create.trackingUrlTemplate,
+  '{lpurl}?utm_source=google&utm_medium=cpc'
+);
+
+// buildCampaignOperation — omits trackingUrlTemplate when not provided (backward compat)
+assert.equal(campaignOp.campaignOperation.create.trackingUrlTemplate, undefined);
+
+// buildCampaignOperation — defaults targetSearchNetwork to true (backward compat)
+assert.equal(campaignOp.campaignOperation.create.networkSettings.targetSearchNetwork, true);
+
+// buildCampaignOperation — targetSearchNetwork can be overridden to false
+const campaignOpNoPartners = buildCampaignOperation(
+  'RSC | Test | Search', 'customers/123/campaignBudgets/456', 1.3, 'customers/123',
+  { targetSearchNetwork: false }
+);
+assert.equal(campaignOpNoPartners.campaignOperation.create.networkSettings.targetSearchNetwork, false);
+
 // buildAdGroupOperation — returns operation with ad group name
 const adGroupOp = buildAdGroupOperation('Natural Toothpaste', 'customers/123/campaigns/789', 'customers/123');
 assert.equal(adGroupOp.adGroupOperation.create.name, 'Natural Toothpaste');
