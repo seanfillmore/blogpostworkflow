@@ -1,6 +1,6 @@
 {
   "title": "SLS Free Toothpaste: The Gentle Switch Worth Making",
-  "target_keyword": "best toothpaste without sls",
+  "target_keyword": "sls free toothpaste",
   "shopify_blog_id": 48998449187,
   "shopify_blog_handle": "news",
   "shopify_article_id": 563289653418,
@@ -28,5 +28,11 @@
       "notification_time": null,
       "result": "ok"
     }
-  ]
+  ],
+  "needs_rebuild": {
+    "flagged_at": "2026-04-25T23:43:56.991Z",
+    "reasons": [
+      "overall quality: needs work"
+    ]
+  }
 }
