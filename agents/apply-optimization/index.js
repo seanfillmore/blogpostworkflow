@@ -35,9 +35,10 @@ function loadEnv() {
   } catch { return {}; }
 }
 
+import { getAccessToken } from '../../lib/shopify.js';
+
 const env = loadEnv();
 const STORE   = env.SHOPIFY_STORE  || process.env.SHOPIFY_STORE;
-const SECRET  = env.SHOPIFY_SECRET || process.env.SHOPIFY_SECRET;
 const API_VER = '2025-01';
 
 // ── Exported pure functions (tested) ──────────────────────────────────────────
@@ -93,7 +94,7 @@ export function parseDoneLine(line) {
 async function shopifyRaw(method, path, body = null) {
   const res = await fetch(`https://${STORE}/admin/api/${API_VER}${path}`, {
     method,
-    headers: { 'X-Shopify-Access-Token': SECRET, 'Content-Type': 'application/json' },
+    headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`Shopify ${method} ${path} → ${res.status}: ${await res.text()}`);
