@@ -44,6 +44,21 @@ data/reports/daily-summary/
 data/reports/cro/
 data/reports/editor/
 
+# Generated agent reports (regenerable; not tracked)
+data/reports/ai-citations/
+data/reports/legacy-triage/
+data/reports/llms-txt/
+data/reports/plan6-cutover/
+data/reports/product-verifier/
+data/reports/seo-authority/
+data/reports/sensitive-skin-set-validation/day-*.md
+data/reports/cannibalization/publish-pending-drafts-report.md
+data/reports/meta-optimizer/stale-years-report.md
+data/reports/technical-seo/fix-results.json
+data/reports/technical-seo/redirect-audit.json
+data/reports/technical-seo/redirect-chains.json
+data/reports/technical-seo/redirect-proposals.json
+
 # Collector snapshots and raw data
 data/snapshots/
 data/clarity/
