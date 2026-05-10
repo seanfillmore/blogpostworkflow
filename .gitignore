@@ -86,3 +86,9 @@ data/brand/_research/
 data/performance-queue/*.json
 data/performance-queue/_archived-*/
 !data/performance-queue/.gitkeep
+
+# Generated keyword index (rebuilt by lib/keyword-index/ — large, regenerable)
+data/keyword-index.json
+
+# Per-slug agent analysis output (regenerable)
+data/analysis/
