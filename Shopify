@@ -1,2 +1,9 @@
-Client ID: 8dfbeaa44198cc384a0660cd7ec08a3a
-secret: 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
+Product	Alt-tag suffixes (one per variant)
+toothpaste	#flavor_fresh-mint · #flavor_all-natural · #flavor_cinnamon-spice
+deodorant	#scent_geranium-flower · #scent_calming-lavender · #scent_mountain-cedarwood · #scent_wildcrafted-frankincence (note Shopify spelling — "frankincence" not "frankincense")
+lotion	#scent_pure-unscented · #scent_coconut-breeze · #scent_rose-petal · #scent_lavender-and-rose · #scent_calming-lavender
+cream	#scent_coconut-breeze · #scent_lavender-and-rose · #scent_calming-lavender · #scent_rose-petal · #scent_pure-unscented
+bar-soap	#scent_calming-lavender · #scent_nourishing-tea-tree · #scent_refreshing-lemongrass · #scent_pure-unscented
+liquid-soap (8oz)	#scent_orange-zest · #scent_coconut-breeze · #scent_calming-lavender · #scent_pure-unscented
+liquid-soap (refill)	#scent_pure-unscented · #scent_coconut-breeze · #scent_calming-lavender · #scent_orange-zest
+lip-balm	#flavor_vanilla-dream · #flavor_sweet-tangerine · #flavor_coconut-breeze · #flavor_pure-unscented · #flavor_variety-pack
