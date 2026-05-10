@@ -317,6 +317,11 @@ async function main() {
   // Select targets
   let targets = [];
 
+  // Separate normal keywords from long-form queries (likely AI-generated or
+  // conversational searches). Long queries contain real user concerns that
+  // should be addressed as H2/H3 topics, not used as the primary keyword.
+  const MAX_KEYWORD_LEN = 80;
+
   if (slugArg) {
     // Single-post mode — try slug directly, then fall back to shopify_handle from meta
     let article = byHandle.get(slugArg);
@@ -333,10 +338,6 @@ async function main() {
     const gscData = await gsc.getPagePerformance(article.canonicalUrl, 90);
     const pageKws = await gsc.getPageKeywords(article.canonicalUrl, 20, 90);
 
-    // Separate normal keywords from long-form queries (likely AI-generated or
-    // conversational searches). Long queries contain real user concerns that
-    // should be addressed as H2/H3 topics, not used as the primary keyword.
-    const MAX_KEYWORD_LEN = 80;
     const shortKws = pageKws.filter((k) => k.keyword.length <= MAX_KEYWORD_LEN);
     const longQueries = pageKws.filter((k) => k.keyword.length > MAX_KEYWORD_LEN);
     const topKw = shortKws[0];
