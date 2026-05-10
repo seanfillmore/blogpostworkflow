@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 /**
- * Google OAuth re-authorization — adds analytics.readonly scope
+ * Google OAuth re-authorization — mints a new refresh token with all scopes
+ * needed by SEO Claude agents.
  *
- * Run this once to add GA4 access to the existing Google refresh token.
- * Updates GOOGLE_REFRESH_TOKEN in .env with a token that grants both:
- *   - webmasters.readonly  (Google Search Console)
- *   - analytics.readonly   (Google Analytics 4)
+ * Updates GOOGLE_REFRESH_TOKEN in .env with a token that grants:
+ *   - webmasters             (GSC sitemaps API — write — needed for sitemap pings)
+ *   - webmasters.readonly    (GSC URL Inspection API — read)
+ *   - indexing               (Google Indexing API — needed for URL submission)
+ *   - analytics.readonly     (GA4 reporting API)
+ *   - adwords                (Google Ads API)
  *
  * Prerequisites: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET must be in .env
  *
@@ -26,9 +29,11 @@ const ENV_PATH = join(ROOT, '.env');
 const PORT = 3458;
 const REDIRECT_URI = `http://localhost:${PORT}/callback`;
 const SCOPES = [
-  'https://www.googleapis.com/auth/webmasters.readonly',
-  'https://www.googleapis.com/auth/analytics.readonly',
-  'https://www.googleapis.com/auth/adwords',
+  'https://www.googleapis.com/auth/webmasters',           // GSC sitemaps (write)
+  'https://www.googleapis.com/auth/webmasters.readonly',  // GSC URL Inspection
+  'https://www.googleapis.com/auth/indexing',             // Indexing API (write)
+  'https://www.googleapis.com/auth/analytics.readonly',   // GA4 reporting
+  'https://www.googleapis.com/auth/adwords',              // Google Ads API
 ].join(' ');
 
 function loadEnv() {

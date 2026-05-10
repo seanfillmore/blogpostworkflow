@@ -196,6 +196,8 @@ async function processNormalRun() {
   }
 
   // ── Tier 2: auto-submit to Indexing API ───────────────────────────────────
+  const tierTwoSucceeded = [];
+  const tierTwoFailed = [];
   for (const r of tierTwo) {
     const priorSitemap = countPriorSubmissions(r.slug, 'sitemap_resubmit');
     const priorIndexing = countPriorSubmissions(r.slug, 'indexing_api');
@@ -243,6 +245,7 @@ async function processNormalRun() {
           submitted_at: result.submitted_at,
           updated_at: new Date().toISOString(),
         });
+        tierTwoSucceeded.push(r);
       } catch (err) {
         console.error(`    ✗ submission failed: ${err.message}`);
         recordSubmission(r.slug, {
@@ -251,6 +254,7 @@ async function processNormalRun() {
           result: 'error',
           error: err.message,
         });
+        tierTwoFailed.push({ slug: r.slug, error: err.message });
       }
     }
   }
@@ -298,7 +302,12 @@ async function processNormalRun() {
   // ── Daily digest notification ────────────────────────────────────────────
   const summary = [];
   if (tierOne.length) summary.push(`Sitemap pinged (${tierOne.length} URLs)`);
-  if (tierTwo.length) summary.push(`${tierTwo.length} submitted to Indexing API`);
+  if (tierTwoSucceeded.length || tierTwoFailed.length) {
+    const parts = [];
+    if (tierTwoSucceeded.length) parts.push(`${tierTwoSucceeded.length} submitted to Indexing API`);
+    if (tierTwoFailed.length) parts.push(`${tierTwoFailed.length} Indexing API submissions FAILED`);
+    summary.push(parts.join(', '));
+  }
   if (contentQuality.length) summary.push(`${contentQuality.length} content-quality refresh triggered`);
   if (critical.length) summary.push(`${critical.length} flagged for manual fix`);
 
@@ -307,11 +316,12 @@ async function processNormalRun() {
       subject: `Indexing Fixer: ${summary.join(', ')}`,
       body: [
         ...tierOne.map((r) => `[tier1] ${r.slug}: sitemap pinged (${r.age_days}d old, ${r.state})`),
-        ...tierTwo.map((r) => `[tier2] ${r.slug}: submitted to Indexing API (${r.age_days}d old)`),
+        ...tierTwoSucceeded.map((r) => `[tier2] ${r.slug}: submitted to Indexing API (${r.age_days}d old)`),
+        ...tierTwoFailed.map((r) => `[tier2-FAIL] ${r.slug}: ${r.error.slice(0, 120)}`),
         ...contentQuality.map((r) => `[refresh] ${r.slug}: refresh-runner triggered (crawled_not_indexed)`),
         ...critical.map((r) => `[critical] ${r.slug}: ${r.verdict.action}`),
       ].join('\n'),
-      status: critical.length > 0 ? 'error' : 'info',
+      status: (critical.length > 0 || tierTwoFailed.length > 0) ? 'error' : 'info',
       category: 'seo',
     }).catch(() => {});
   }
