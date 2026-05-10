@@ -80,3 +80,9 @@ data/changes/queue/*.json
 data/changes/queue/**/*.json
 !data/changes/queue/.gitkeep
 data/brand/_research/
+
+# Performance queue — agent-generated PDP/cluster proposals + archived items
+# Contents ignored; .gitkeep tracked
+data/performance-queue/*.json
+data/performance-queue/_archived-*/
+!data/performance-queue/.gitkeep
