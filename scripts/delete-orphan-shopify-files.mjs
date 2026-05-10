@@ -24,13 +24,14 @@ function loadEnv() {
   }
   return env;
 }
+import { getAccessToken } from '../lib/shopify.js';
+
 const env = loadEnv();
 
 const STORE   = env.SHOPIFY_STORE;
-const SECRET  = env.SHOPIFY_SECRET;
 const API_VER = '2025-01';
-if (!STORE || !SECRET) {
-  console.error('Missing SHOPIFY_STORE or SHOPIFY_SECRET in .env');
+if (!STORE) {
+  console.error('Missing SHOPIFY_STORE in .env');
   process.exit(1);
 }
 
@@ -47,7 +48,7 @@ const GQL_URL = `https://${STORE}/admin/api/${API_VER}/graphql.json`;
 async function gql(query, variables = {}) {
   const res = await fetch(GQL_URL, {
     method: 'POST',
-    headers: { 'X-Shopify-Access-Token': SECRET, 'Content-Type': 'application/json' },
+    headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);

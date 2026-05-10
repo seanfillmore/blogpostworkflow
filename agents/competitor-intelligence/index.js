@@ -8,7 +8,7 @@
  * Usage:
  *   node agents/competitor-intelligence/index.js
  *
- * Requires in .env: ANTHROPIC_API_KEY, SHOPIFY_STORE, SHOPIFY_SECRET, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
+ * Requires in .env: ANTHROPIC_API_KEY, SHOPIFY_STORE, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';

@@ -33,15 +33,17 @@ function loadEnv() {
   return env;
 }
 
+import { getAccessToken } from '../lib/shopify.js';
+
 const env = loadEnv();
-const { SHOPIFY_STORE, SHOPIFY_SECRET } = env;
-if (!SHOPIFY_STORE || !SHOPIFY_SECRET) throw new Error('Missing SHOPIFY_STORE or SHOPIFY_SECRET in .env');
+const { SHOPIFY_STORE } = env;
+if (!SHOPIFY_STORE) throw new Error('Missing SHOPIFY_STORE in .env');
 
 const API_BASE = `https://${SHOPIFY_STORE}/admin/api/2025-01`;
 
 async function shopifyGet(path) {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'X-Shopify-Access-Token': SHOPIFY_SECRET, 'Content-Type': 'application/json' },
+    headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
   });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}: ${await res.text()}`);
   return res.json();
@@ -50,7 +52,7 @@ async function shopifyGet(path) {
 async function shopifyPut(path, body) {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'PUT',
-    headers: { 'X-Shopify-Access-Token': SHOPIFY_SECRET, 'Content-Type': 'application/json' },
+    headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`PUT ${path} → ${res.status}: ${await res.text()}`);

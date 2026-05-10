@@ -24,10 +24,11 @@ const env = Object.fromEntries(
     .filter((l) => l && !l.startsWith('#') && l.includes('='))
     .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])
 );
+import { getAccessToken } from '../lib/shopify.js';
+
 const STORE = env.SHOPIFY_STORE;
-const TOKEN = env.SHOPIFY_SECRET;
 const API = `https://${STORE}/admin/api/2025-01`;
-const HEADERS = { 'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json' };
+const HEADERS = async () => ({ 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' });
 
 const ROBOTS_LIQUID = `# robots.txt — managed by scripts/update-robots-txt.js
 # Renders Shopify's default rules, then appends explicit blocks for AI
@@ -69,14 +70,14 @@ Disallow: /
 `;
 
 async function getMainTheme() {
-  const r = await fetch(`${API}/themes.json`, { headers: HEADERS });
+  const r = await fetch(`${API}/themes.json`, { headers: await HEADERS() });
   const j = await r.json();
   return j.themes.find((t) => t.role === 'main');
 }
 
 async function getAsset(themeId, key) {
   const url = `${API}/themes/${themeId}/assets.json?asset%5Bkey%5D=${encodeURIComponent(key)}`;
-  const r = await fetch(url, { headers: HEADERS });
+  const r = await fetch(url, { headers: await HEADERS() });
   if (r.status === 404) return null;
   if (!r.ok) throw new Error(`getAsset ${r.status}: ${await r.text()}`);
   const j = await r.json();
@@ -86,7 +87,7 @@ async function getAsset(themeId, key) {
 async function putAsset(themeId, key, value) {
   const r = await fetch(`${API}/themes/${themeId}/assets.json`, {
     method: 'PUT',
-    headers: HEADERS,
+    headers: await HEADERS(),
     body: JSON.stringify({ asset: { key, value } }),
   });
   if (!r.ok) throw new Error(`putAsset ${r.status}: ${await r.text()}`);

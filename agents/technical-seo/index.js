@@ -44,6 +44,7 @@ import {
   updateCustomCollection, updateSmartCollection,
   getAllFiles, updateFileAlt,
   getMainThemeId, getThemeAsset, updateThemeAsset, listThemeAssets,
+  getAccessToken,
 } from '../../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -226,11 +227,10 @@ async function getCollectionIndex() {
   console.log('  Loading collection index from Shopify...');
   const env = loadEnv();
   const SHOP = env.SHOPIFY_STORE;
-  const TOKEN = env.SHOPIFY_SECRET;
   const index = {};
   for (const type of ['custom_collections', 'smart_collections']) {
     const res = await fetch(`https://${SHOP}/admin/api/2025-01/${type}.json?limit=250`, {
-      headers: { 'X-Shopify-Access-Token': TOKEN },
+      headers: { 'X-Shopify-Access-Token': await getAccessToken() },
     });
     if (!res.ok) continue;
     const data = await res.json();
@@ -1315,7 +1315,6 @@ async function fixMeta({ dryRun = false } = {}) {
 
   const env = loadEnv();
   const SHOP = env.SHOPIFY_STORE;
-  const TOKEN = env.SHOPIFY_SECRET;
 
   console.log(`  ${toFix.length} fixable pages with meta description issues (${all.length - toFix.length} unfixable filtered)\n`);
   let fixed = 0;
@@ -1659,7 +1658,6 @@ async function fixAiContent({ dryRun = false } = {}) {
   const pageIdx = await getPageIndex();
   const env = loadEnv();
   const SHOP = env.SHOPIFY_STORE;
-  const TOKEN = env.SHOPIFY_SECRET;
 
   let fixed = 0;
 
@@ -1677,7 +1675,7 @@ async function fixAiContent({ dryRun = false } = {}) {
       // Try both collection types
       for (const ct of ['custom_collections', 'smart_collections']) {
         const res = await fetch(`https://${SHOP}/admin/api/2025-01/${ct}.json?handle=${handle}`, {
-          headers: { 'X-Shopify-Access-Token': TOKEN },
+          headers: { 'X-Shopify-Access-Token': await getAccessToken() },
         });
         const data = await res.json();
         const col = (data[ct] || [])[0];
@@ -1687,7 +1685,7 @@ async function fixAiContent({ dryRun = false } = {}) {
       const entry = pageIdx[path];
       if (!entry) { console.log(`  [SKIP] Page not found: ${path}`); continue; }
       const res = await fetch(`https://${SHOP}/admin/api/2025-01/pages/${entry.pageId}.json`, {
-        headers: { 'X-Shopify-Access-Token': TOKEN },
+        headers: { 'X-Shopify-Access-Token': await getAccessToken() },
       });
       const data = await res.json();
       body = data.page?.body_html || '';
@@ -1748,13 +1746,13 @@ ${contentOnly}`,
         const colType = resourceType === 'custom_collections' ? 'custom_collections' : 'smart_collections';
         await fetch(`https://${SHOP}/admin/api/2025-01/${colType}/${resourceId}.json`, {
           method: 'PUT',
-          headers: { 'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json' },
+          headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ [colType.slice(0, -1)]: { id: resourceId, body_html: newBody } }),
         });
       } else {
         await fetch(`https://${SHOP}/admin/api/2025-01/pages/${resourceId}.json`, {
           method: 'PUT',
-          headers: { 'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json' },
+          headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ page: { id: resourceId, body_html: newBody } }),
         });
       }
