@@ -191,7 +191,13 @@ async function getArticleIndex() {
     const articles = await getArticles(blog.id);
     for (const a of articles) {
       const path = `/blogs/${blog.handle}/${a.handle}`;
-      index[path] = { blogId: blog.id, articleId: a.id, title: a.title, summary_html: a.summary_html };
+      index[path] = {
+        blogId: blog.id,
+        articleId: a.id,
+        title: a.title,
+        summary_html: a.summary_html,
+        published: !!a.published_at,
+      };
     }
   }
   _articleIndex = index;
@@ -1081,11 +1087,16 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
 
       if (!isBroken) return;
 
-      // Try to find a matching live article
+      // Try to find a matching live article. Skip drafts — they 404 publicly
+      // and pointing internal links to them just reproduces the bug. Skip
+      // self-matches for the same reason (the broken URL would "match itself"
+      // if its own draft article is still in the index).
       const slugWords = hrefPath.split('/').pop().split('-').filter((w) => w.length > 3);
       let bestMatch = null;
       let bestScore = 0;
-      for (const [path] of Object.entries(articleIndex)) {
+      for (const [path, entry] of Object.entries(articleIndex)) {
+        if (!entry.published) continue;
+        if (path === hrefPath) continue;
         const score = slugWords.filter((w) => path.includes(w)).length;
         if (score > bestScore) { bestScore = score; bestMatch = `${config.url}${path}`; }
       }
