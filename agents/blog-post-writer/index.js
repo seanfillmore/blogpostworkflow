@@ -665,7 +665,10 @@ function deriveTags(brief) {
 
   // Buyer-intent modifier tags — high-value segments matched by published/planned content.
   // 'aluminum'/'fluoride' in brand context always mean 'free of' — substring is safe.
-  if (hasWord('sensitive')) tags.push('sensitive skin');
+  if (hasWord('sensitive')) {
+    // Distinct buyer segments — 'sensitive teeth' for toothpaste, 'sensitive skin' otherwise.
+    tags.push(kw.includes('tooth') ? 'sensitive teeth' : 'sensitive skin');
+  }
   if (kw.includes('aluminum')) tags.push('aluminum free');
   if (kw.includes('fluoride')) tags.push('fluoride free');
   if (hasWord('women')) tags.push('for women');
