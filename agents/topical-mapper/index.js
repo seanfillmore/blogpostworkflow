@@ -31,12 +31,21 @@ function loadAudit() {
   }
 }
 
+// Funnel-stage tags label where an article sits in the funnel — not a topic.
+// Excluded from clusters so they don't pollute the topical map / link matcher.
+const FUNNEL_TAGS = new Set([
+  'tof', 'mof', 'bof',
+  'top of funnel', 'middle of funnel', 'bottom of funnel',
+  'general',
+]);
+
 function parseTags(tagsString) {
   if (!tagsString) return [];
-  return tagsString
+  const normalized = tagsString
     .split(',')
-    .map((t) => t.trim().toLowerCase())
-    .filter(Boolean);
+    .map((t) => t.trim().toLowerCase().replace(/_/g, ' ').replace(/\s+/g, ' '))
+    .filter((t) => t && !FUNNEL_TAGS.has(t));
+  return [...new Set(normalized)];
 }
 
 // Map: sourceUrl -> Set<targetUrl> for blog_post links only
