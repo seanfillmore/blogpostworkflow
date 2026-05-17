@@ -31,6 +31,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
+import { notify } from '../../lib/notify.js';
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, statSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
@@ -1188,6 +1189,159 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
   console.log(`\n  ${dryRun ? 'Would action' : 'Actioned'}: ${fixed} pages — ${substituted} substituted, ${removed} removed, ${manualReview} queued for review`);
 }
 
+// ── COMMAND: check-link-decay ─────────────────────────────────────────────────
+//
+// Walks every published blog article on Shopify and live-HEAD-verifies every
+// internal link in its body_html. When the final URL (after following Shopify
+// 301 chains) returns 4xx, the link is "decayed" — repaired the same way as
+// fix-links (cluster-aware matcher with HIGH/MEDIUM/LOW confidence rules).
+//
+// Differs from fix-links: works from live Shopify state + live HEAD probes
+// instead of the DataForSEO crawl JSON. Catches decay that the crawl missed
+// (e.g., a target article was unpublished after the last crawl, or the link
+// passes through a 301 chain the crawl reported as the FINAL URL rather than
+// the ORIGINAL href in body_html).
+//
+// Intended as a weekly cron — prevents post-publish link drift from
+// accumulating until someone notices it in Ahrefs.
+
+async function checkLinkDecay({ dryRun = false } = {}) {
+  console.log('\n  Loading published article index...');
+  const articleIndex = await getArticleIndex();
+  const productIdx = await getProductIndex();
+  const collectionIdx = await getCollectionIndex();
+  const pageIdx = await getPageIndex();
+  const clusters = loadProductClusters();
+  const publishedArticleIdx = Object.fromEntries(
+    Object.entries(articleIndex).filter(([_, e]) => e.published)
+  );
+  const indexes = { articleIdx: publishedArticleIdx, productIdx, collectionIdx, pageIdx };
+
+  const publishedArticles = Object.entries(publishedArticleIdx);
+  console.log(`  ${publishedArticles.length} published articles to walk`);
+
+  const SITE_HOST = new URL(config.url).host;
+  const isInternal = (href) => {
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
+    if (href.startsWith('/')) return true;
+    try { return new URL(href).host === SITE_HOST; } catch { return false; }
+  };
+
+  // Live HEAD cache — same broken link shows up in many articles
+  const headCache = new Map();
+  // Use browser UA so Shopify's bot-blocking doesn't false-positive
+  const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
+  async function probeFinalStatus(href) {
+    if (headCache.has(href)) return headCache.get(href);
+    const url = href.startsWith('http') ? href : `${config.url.replace(/\/$/, '')}${href}`;
+    try {
+      const res = await fetch(url, {
+        method: 'HEAD', redirect: 'follow',
+        headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(8000),
+      });
+      headCache.set(href, res.status);
+      return res.status;
+    } catch {
+      headCache.set(href, 0); // network error — treat as unknown, not broken
+      return 0;
+    }
+  }
+
+  let articlesScanned = 0, articlesChanged = 0;
+  let substituted = 0, removed = 0, manualReview = 0;
+  const reviewQueue = [];
+
+  for (const [path, entry] of publishedArticles) {
+    articlesScanned++;
+    if (articlesScanned % 25 === 0) console.log(`  …${articlesScanned}/${publishedArticles.length}`);
+
+    let full;
+    try { full = await getArticle(entry.blogId, entry.articleId); }
+    catch (e) { console.log(`  [SKIP] ${path}: ${e.message.slice(0, 80)}`); continue; }
+    const body = full.body_html || '';
+    if (!body) continue;
+    const $ = cheerio.load(body);
+
+    // Collect internal-href anchors first; matching is async
+    const targets = [];
+    $('a[href]').each((_, el) => {
+      const href = $(el).attr('href');
+      if (isInternal(href)) targets.push({ el, href });
+    });
+    if (targets.length === 0) continue;
+
+    // Probe + classify each unique decayed href
+    let articleChanges = 0;
+    for (const { el, href } of targets) {
+      const status = await probeFinalStatus(href);
+      if (status === 0 || status < 400) continue; // healthy or unknown — leave alone
+
+      // Decayed (4xx). Find a replacement via the cluster-aware matcher.
+      const scored = scoreCandidates(href, indexes, clusters);
+      const conf = classifyConfidence(scored);
+      const top = scored[0];
+
+      if (conf.level === 'high' && top) {
+        const okStatus = await probeFinalStatus(`${config.url.replace(/\/$/, '')}${top.target}`);
+        if (okStatus >= 200 && okStatus < 400) {
+          const newHref = config.url.replace(/\/$/, '') + top.target;
+          console.log(`    Substitute (${path}): ${href} → ${newHref}`);
+          $(el).attr('href', newHref);
+          substituted++; articleChanges++;
+        } else {
+          console.log(`    Remove (${path}): ${href}  (top candidate HEAD ${okStatus} — demoted)`);
+          $(el).replaceWith($(el).text());
+          removed++; articleChanges++;
+        }
+      } else if (conf.level === 'medium' && top) {
+        reviewQueue.push({ source: path, broken: href, broken_status: status, proposed: top.target, score: top.score, ratio: top.ratio, alternates: scored.slice(1, 4).map((s) => s.target) });
+        manualReview++;
+      } else {
+        console.log(`    Remove (${path}): ${href}  (${conf.reason})`);
+        $(el).replaceWith($(el).text());
+        removed++; articleChanges++;
+      }
+    }
+
+    if (articleChanges === 0) continue;
+
+    const newBody = $('body').html() || body;
+    if (newBody === body) continue;
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${path} — ${articleChanges} link(s) actioned`);
+    if (!dryRun) {
+      try {
+        await updateArticle(entry.blogId, entry.articleId, { body_html: newBody });
+        articlesChanged++;
+      } catch (e) { console.log(`    Error: ${e.message}`); }
+    } else { articlesChanged++; }
+  }
+
+  // Persist outputs
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  const reportPath = join(REPORTS_DIR, 'link-decay-report.json');
+  writeFileSync(reportPath, JSON.stringify({
+    generated_at: new Date().toISOString(),
+    dry_run: dryRun,
+    articles_scanned: articlesScanned,
+    articles_changed: articlesChanged,
+    substituted, removed, manual_review: manualReview,
+    review_queue: reviewQueue,
+  }, null, 2));
+
+  console.log(`\n  ${dryRun ? 'Would action' : 'Actioned'}: ${articlesChanged} articles — ${substituted} substituted, ${removed} removed, ${manualReview} queued for review`);
+  console.log(`  Report: ${reportPath}`);
+
+  // Daily-summary notification
+  const status = (substituted + removed + manualReview) > 0 ? 'info' : 'success';
+  const subject = `Link Decay Check: ${articlesChanged}/${articlesScanned} articles actioned (${substituted}↻ ${removed}✗ ${manualReview}?)`;
+  await notify({
+    subject,
+    body: `Walked ${articlesScanned} published articles, found ${substituted + removed + manualReview} decayed link(s).\n- Substituted (HIGH-confidence in-cluster repair): ${substituted}\n- Removed (no good live target): ${removed}\n- Queued for manual review (MEDIUM): ${manualReview}\nReport: data/reports/technical-seo/link-decay-report.json`,
+    status,
+    category: 'seo',
+  }).catch(() => {});
+}
+
 // ── COMMAND: fix-redirects ────────────────────────────────────────────────────
 
 async function fixRedirectLinks({ dryRun = false } = {}) {
@@ -2279,6 +2433,7 @@ Usage:
   node agents/technical-seo/index.js audit
   node agents/technical-seo/index.js fix-meta [--dry-run]
   node agents/technical-seo/index.js fix-links [--dry-run]
+  node agents/technical-seo/index.js check-link-decay [--dry-run]
   node agents/technical-seo/index.js fix-redirects [--dry-run]
   node agents/technical-seo/index.js fix-alt-text [--dry-run]
   node agents/technical-seo/index.js fix-theme-alt [--dry-run]
@@ -2410,6 +2565,12 @@ async function main() {
       break;
     case 'fix-links':
       await runFixWithTracking(fixBrokenLinks, 'fix-links');
+      break;
+    case 'check-link-decay':
+      // Walks live Shopify articles + live HEAD-verify; doesn't depend on the
+      // crawl JSON and doesn't need a post-run audit refresh, so it doesn't
+      // use runFixWithTracking.
+      await checkLinkDecay({ dryRun });
       break;
     case 'fix-redirects':
       await runFixWithTracking(fixRedirectLinks, 'fix-redirects');
