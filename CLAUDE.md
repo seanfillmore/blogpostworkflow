@@ -1,6 +1,6 @@
 # SEO Claude Team
 
-A fleet of AI agents that grow the SEO performance of two brands sold under one Shopify storefront (`realskincare.com`) and one Amazon seller account: **Real Skin Care** (natural deodorants, body care, oral care, lip balm) and **Culina** (cast iron / Blackstone griddle care). The Shopify website is the primary revenue channel. Amazon is complementary and validates commercial intent for keyword/SEO decisions.
+A fleet of AI agents that grow the SEO performance of **Real Skin Care** (natural deodorants, body care, oral care, lip balm) on its Shopify storefront `realskincare.com`. RSC also sells on Amazon, where it shares a seller account with a sister brand, **Culina** (cast iron / Blackstone griddle care). Culina is on a separate website with its own SEO automation; this codebase's Shopify/content/SEO pipelines are RSC-only. The Shopify website is the primary revenue channel. Amazon is complementary and validates commercial intent for keyword/SEO decisions.
 
 ## Brand Context
 
