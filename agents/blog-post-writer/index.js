@@ -650,14 +650,30 @@ ${badIntro?.html || ''}`,
 function deriveTags(brief) {
   const tags = [];
   const kw = brief.target_keyword.toLowerCase();
-  if (kw.includes('deodorant')) tags.push('deodorant', 'natural deodorant');
-  if (kw.includes('toothpaste')) tags.push('toothpaste', 'natural toothpaste');
-  if (kw.includes('lotion') || kw.includes('moisturizer')) tags.push('body lotion', 'moisturizer');
-  if (kw.includes('coconut')) tags.push('coconut oil');
-  if (kw.includes('soap')) tags.push('soap', 'natural soap');
-  if (kw.includes('face')) tags.push('face care');
-  if (kw.includes('hair') || kw.includes('shampoo') || kw.includes('conditioner')) tags.push('hair care');
-  if (kw.includes('lip')) tags.push('lip balm');
+  // Word-boundary check so 'men' doesn't match 'women', 'kids' doesn't match 'kidney', etc.
+  const hasWord = (w) => new RegExp(`\\b${w}\\b`).test(kw);
+
+  // Product category tags
+  if (hasWord('deodorant')) tags.push('deodorant', 'natural deodorant');
+  if (hasWord('toothpaste')) tags.push('toothpaste', 'natural toothpaste');
+  if (hasWord('lotion') || hasWord('moisturizer')) tags.push('body lotion', 'moisturizer');
+  if (hasWord('coconut')) tags.push('coconut oil');
+  if (hasWord('soap')) tags.push('soap', 'natural soap');
+  if (hasWord('face')) tags.push('face care');
+  if (hasWord('hair') || hasWord('shampoo') || hasWord('conditioner')) tags.push('hair care');
+  if (hasWord('lip')) tags.push('lip balm');
+
+  // Buyer-intent modifier tags — high-value segments matched by published/planned content.
+  // 'aluminum'/'fluoride' in brand context always mean 'free of' — substring is safe.
+  if (hasWord('sensitive')) tags.push('sensitive skin');
+  if (kw.includes('aluminum')) tags.push('aluminum free');
+  if (kw.includes('fluoride')) tags.push('fluoride free');
+  if (hasWord('women')) tags.push('for women');
+  if (hasWord('men')) tags.push('for men');
+  if (hasWord('kids') || hasWord('children')) tags.push('for kids');
+  if (hasWord('pregnancy') || hasWord('pregnant')) tags.push('pregnancy safe');
+  if (hasWord('travel')) tags.push('travel size');
+
   tags.push('natural skincare', 'organic');
   return [...new Set(tags)];
 }
