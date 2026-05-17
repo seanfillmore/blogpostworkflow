@@ -1017,13 +1017,27 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
     }
   }
 
+  // Load all indexes + clusters up-front so scoreCandidates can reach across
+  // article/page/product/collection pools the same way createRedirects does.
+  // Drafts are filtered inside the candidate pool below (entry.published gate).
   const articleIndex = await getArticleIndex();
+  const productIdx = await getProductIndex();
+  const collectionIdx = await getCollectionIndex();
+  const pageIdx = await getPageIndex();
+  const clusters = loadProductClusters();
+  const publishedArticleIdx = Object.fromEntries(
+    Object.entries(articleIndex).filter(([_, e]) => e.published)
+  );
+  const indexes = { articleIdx: publishedArticleIdx, productIdx, collectionIdx, pageIdx };
   const blogs = await getBlogs();
   const blogByHandle = {};
   for (const blog of blogs) blogByHandle[blog.handle] = blog.id;
 
   console.log(`  ${rows.length} pages to process\n`);
   let fixed = 0;
+  // Per-action breakdown for the daily-summary digest
+  let substituted = 0, removed = 0, manualReview = 0;
+  const reviewQueue = [];
 
   for (const row of rows) {
     const src = row.url;
@@ -1050,8 +1064,7 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
       const full = await getArticle(blogId, resourceId);
       body = full.body_html || '';
     } else if (type === 'page') {
-      const pIdx = await getPageIndex();
-      const entry = pIdx[path];
+      const entry = pageIdx[path];
       if (!entry) continue;
       resourceId = entry.pageId;
       body = (await getPage(resourceId)).body_html || '';
@@ -1074,43 +1087,63 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
     const $ = cheerio.load(body);
     let changes = 0;
 
+    // Collect <a> elements with broken hrefs first; matcher + HEAD verify are
+    // async, so we can't use cheerio's sync .each().
+    const targets = [];
     $('a[href]').each((_, el) => {
       const href = $(el).attr('href');
       if (!href) return;
-
-      // Match both absolute and relative versions
       const hrefPath = href.startsWith('http') ? urlPath(href) : href.replace(/\/$/, '');
       const isBroken = [...brokenSet].some((b) => {
         const bp = b.startsWith('http') ? urlPath(b) : b.replace(/\/$/, '');
         return bp === hrefPath;
       });
+      if (isBroken) targets.push({ el, href, hrefPath });
+    });
 
-      if (!isBroken) return;
+    for (const { el, href, hrefPath } of targets) {
+      // Use the same cluster-aware matcher createRedirects uses. Replaces the
+      // old naive slug-word overlap that proposed cross-cluster substitutions
+      // (e.g. charcoal-toothpaste → coconut-oil-deodorant) because it scored
+      // on shared filler words like "does"/"work".
+      const scored = scoreCandidates(href, indexes, clusters);
+      const conf = classifyConfidence(scored);
+      const top = scored[0];
 
-      // Try to find a matching live article. Skip drafts — they 404 publicly
-      // and pointing internal links to them just reproduces the bug. Skip
-      // self-matches for the same reason (the broken URL would "match itself"
-      // if its own draft article is still in the index).
-      const slugWords = hrefPath.split('/').pop().split('-').filter((w) => w.length > 3);
-      let bestMatch = null;
-      let bestScore = 0;
-      for (const [path, entry] of Object.entries(articleIndex)) {
-        if (!entry.published) continue;
-        if (path === hrefPath) continue;
-        const score = slugWords.filter((w) => path.includes(w)).length;
-        if (score > bestScore) { bestScore = score; bestMatch = `${config.url}${path}`; }
-      }
-
-      if (bestScore >= 2 && bestMatch) {
-        console.log(`    Fix: ${href} → ${bestMatch}`);
-        $(el).attr('href', bestMatch);
+      if (conf.level === 'high' && top) {
+        // HEAD-verify — index can be stale relative to live (drafts unpublished,
+        // articles deleted) and we don't want to substitute one broken URL for
+        // another.
+        const status = await headVerify(top.target);
+        if (status === 200) {
+          const newHref = config.url.replace(/\/$/, '') + top.target;
+          console.log(`    Substitute: ${href} → ${newHref}  (score=${top.score}, ratio=${top.ratio.toFixed(2)})`);
+          $(el).attr('href', newHref);
+          substituted++;
+        } else {
+          // HIGH-confidence target HEAD-failed → demote to remove (don't replace
+          // one broken link with another).
+          console.log(`    Remove: ${href}  (top candidate HEAD ${status} — demoted)`);
+          $(el).replaceWith($(el).text());
+          removed++;
+        }
+      } else if (conf.level === 'medium' && top) {
+        // Medium-confidence: don't substitute (risk wrong topic) and don't
+        // remove silently — queue for human review so the broken link stays
+        // visible until decided. The single broken link is bad SEO, but a
+        // confidently-wrong substitution is worse.
+        console.log(`    Review: ${href}  (medium confidence — proposed ${top.target}, score=${top.score})`);
+        reviewQueue.push({ source: path, broken: href, proposed: top.target, score: top.score, ratio: top.ratio, alternates: scored.slice(1, 4).map((s) => s.target) });
+        manualReview++;
       } else {
-        // Remove the link, keep anchor text
+        // Low confidence / no candidates: remove the link, keep anchor text.
+        // Removing a broken link can't be wrong; substituting can.
+        console.log(`    Remove: ${href}  (${conf.reason})`);
         $(el).replaceWith($(el).text());
-        console.log(`    Remove: ${href} (no match found)`);
+        removed++;
       }
       changes++;
-    });
+    }
 
     if (changes === 0) {
       console.log(`  [OK]  ${urlPath(src)} — no broken links found in body`);
@@ -1118,9 +1151,12 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
     }
 
     const newBody = $('body').html() || body;
-    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${urlPath(src)} — ${changes} link(s) fixed`);
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${urlPath(src)} — ${changes} link(s) actioned`);
 
-    if (!dryRun) {
+    // Skip Shopify write when only MEDIUM-confidence links were touched —
+    // those are queued, not substituted/removed, so body_html is unchanged.
+    const bodyChanged = newBody !== body;
+    if (!dryRun && bodyChanged) {
       try {
         if (type === 'article') await updateArticle(blogId, resourceId, { body_html: newBody });
         else if (type === 'page') await updatePage(resourceId, { body_html: newBody });
@@ -1131,12 +1167,25 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
       } catch (e) {
         console.log(`    Error: ${e.message}`);
       }
-    } else {
+    } else if (dryRun && bodyChanged) {
       fixed++;
     }
   }
 
-  console.log(`\n  ${dryRun ? 'Would fix' : 'Fixed'}: ${fixed} pages`);
+  // Surface medium-confidence links for human review
+  if (reviewQueue.length > 0) {
+    mkdirSync(REPORTS_DIR, { recursive: true });
+    const reviewPath = join(REPORTS_DIR, 'fix-links-review-queue.json');
+    writeFileSync(reviewPath, JSON.stringify({
+      generated_at: new Date().toISOString(),
+      dry_run: dryRun,
+      count: reviewQueue.length,
+      items: reviewQueue,
+    }, null, 2));
+    console.log(`  Medium-confidence items for review: ${reviewPath}`);
+  }
+
+  console.log(`\n  ${dryRun ? 'Would action' : 'Actioned'}: ${fixed} pages — ${substituted} substituted, ${removed} removed, ${manualReview} queued for review`);
 }
 
 // ── COMMAND: fix-redirects ────────────────────────────────────────────────────
