@@ -711,6 +711,7 @@ function renderRejectedImagesCard(d) {
     // Action buttons
     html += '<div style="display:flex;gap:8px">';
     html += '<button class="btn-sm" onclick="retryRejectedImage(\'' + esc(item.slug) + '\')">Retry Generation</button>';
+    html += '<button class="btn-sm btn-danger" onclick="killArticle(\'' + esc(item.slug) + '\',\'image gen blocked\')">Kill article</button>';
     html += '</div>';
     html += '</div>';
   });
@@ -731,6 +732,46 @@ function acceptRejectedImage(slug, filename) {
     } else {
       alert('Failed: ' + (json.error || 'Unknown error'));
     }
+  });
+}
+
+// Kill an article end-to-end (delete from Shopify if uploaded, delete local
+// files, reject the keyword so it never gets re-proposed). Used by the
+// Blocked Posts card, Blocked Images card, and the Posts table.
+function killArticle(slug, reason) {
+  var msg = 'Kill "' + slug + '" permanently?\n\n' +
+    'This will:\n' +
+    '  - Delete the article from Shopify if it was uploaded\n' +
+    '  - Reject the target keyword (will never be re-proposed)\n' +
+    '  - Delete the local post directory + brief + rejected images\n' +
+    '  - Remove from the calendar\n\n' +
+    'This cannot be undone.';
+  if (!confirm(msg)) return;
+  var reasonInput = prompt('Optional: reason for killing (kept in rejected-keywords.json)', reason || 'killed via dashboard');
+  if (reasonInput === null) return;
+  fetch('/api/posts/' + encodeURIComponent(slug) + '/kill', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason: reasonInput || reason || 'killed via dashboard' }),
+  }).then(function(r) { return r.json(); }).then(function(json) {
+    if (json.ok) {
+      var lines = ['Killed "' + slug + '":'];
+      if (json.shopify_deleted) lines.push('  ✓ deleted from Shopify');
+      if (json.post_dir_deleted) lines.push('  ✓ deleted local post directory');
+      if (json.brief_deleted) lines.push('  ✓ deleted brief');
+      if (json.rejected_keyword_added) lines.push('  ✓ added to rejected-keywords.json');
+      if (json.calendar_item_removed) lines.push('  ✓ removed from calendar');
+      if (json.warnings && json.warnings.length) {
+        lines.push('Warnings:');
+        json.warnings.forEach(function(w) { lines.push('  ⚠ ' + w); });
+      }
+      alert(lines.join('\n'));
+      loadData();
+    } else {
+      alert('Failed to kill article: ' + (json.error || 'Unknown error'));
+    }
+  }).catch(function(err) {
+    alert('Failed to kill article: ' + err.message);
   });
 }
 
@@ -890,6 +931,7 @@ function renderBlockedPostsCard(d) {
       '<div class="action-buttons">' +
         '<button class="btn-secondary" onclick="openEditorReport(\'' + slug + '\')">View full report</button>' +
         '<button class="btn-primary" onclick="rerunEditor(\'' + slug + '\')">Re-run editor</button>' +
+        '<button class="btn-danger" onclick="killArticle(\'' + slug + '\',\'editor blocked\')">Kill article</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -1665,6 +1707,7 @@ function renderPosts(d) {
       ? fmtDate(p.publishAt)
       : fmtDate(p.uploadedAt);
 
+    const killBtn = '<button class="btn-sm btn-danger" title="Kill article" onclick="killArticle(\'' + esc(p.slug) + '\',\'killed from Posts table\')">&#9879;</button>';
     return '<tr>' +
       '<td>' + titleHtml + '</td>' +
       '<td class="muted">' + (p.keyword ? esc(p.keyword) : '&#8212;') + '</td>' +
@@ -1673,6 +1716,7 @@ function renderPosts(d) {
       '<td>' + editorHtml + '</td>' +
       '<td class="nowrap">' + linksHtml + '</td>' +
       '<td style="text-align:center">' + imgHtml + '</td>' +
+      '<td style="text-align:center">' + killBtn + '</td>' +
       '</tr>';
   }).join('');
 
@@ -1685,7 +1729,7 @@ function renderPosts(d) {
 
   document.getElementById('posts-table').innerHTML =
     '<table><thead><tr>' +
-    '<th>Title</th><th>Keyword</th><th>Status</th><th>Date</th><th>Editor</th><th>Links</th><th>Image</th>' +
+    '<th>Title</th><th>Keyword</th><th>Status</th><th>Date</th><th>Editor</th><th>Links</th><th>Image</th><th>&nbsp;</th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table>' + pagination;
 }
 

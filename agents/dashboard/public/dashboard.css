@@ -750,6 +750,20 @@
   color: var(--text);
 }
 .btn-sm:hover { background: var(--indigo); color: white; border-color: var(--indigo); }
+.btn-danger {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #fecaca;
+  color: var(--red, #b91c1c);
+  transition: all 0.15s;
+}
+.btn-danger:hover { background: var(--red, #b91c1c); color: #fff; border-color: var(--red, #b91c1c); }
+.btn-sm.btn-danger { padding: 4px 10px; font-size: 11px; }
 
 .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .data-table th {
