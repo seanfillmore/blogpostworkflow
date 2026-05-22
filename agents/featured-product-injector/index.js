@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getContentPath, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, ROOT } from '../../lib/posts.js';
 
 export { ROOT };
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -284,10 +284,33 @@ async function main() {
       console.log(`  Injected featured product: "${result.productTitle}" → ${filePath}`);
     }
 
+    // If the writer chose no /products/ link in the body, we have no product
+    // to feature — which almost always means the article is off product scope
+    // (e.g. body wash when we only sell soap). Flag the post so the publisher
+    // refuses to upload until a human investigates. The strategist's
+    // product-scope filter is the primary guard; this is the last-mile catch.
+    if (result.skipped && result.reason === 'no /products/ links found') {
+      const metaPath = getMetaPath(handle);
+      if (existsSync(metaPath)) {
+        try {
+          const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+          meta.publisher_block = {
+            flagged_at: new Date().toISOString(),
+            flagged_by: 'featured-product-injector',
+            reason: 'no /products/ links in body — likely off product scope',
+          };
+          writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+          console.log('  ⚠ publisher_block set — no product mapping');
+        } catch (e) {
+          console.log(`  ⚠ Could not set publisher_block: ${e.message}`);
+        }
+      }
+    }
+
     await notify({
       subject: `Featured Product Injector: ${handle}`,
       body: result.skipped ? `Skipped — ${result.reason}` : `Injected "${result.productTitle}" into ${handle}`,
-      status: 'success',
+      status: result.skipped && result.reason === 'no /products/ links found' ? 'error' : 'success',
     }).catch(() => {});
     return;
   }
