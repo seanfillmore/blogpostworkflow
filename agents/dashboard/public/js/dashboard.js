@@ -1747,7 +1747,7 @@ function aggregateShopify(snaps) {
   };
 }
 
-function aggregateGSC(snaps) {
+function aggregateGSC(snaps, limit = 10) {
   if (!snaps || !snaps.length) return null;
   if (snaps.length === 1) return snaps[0];
   const totalClicks      = snaps.reduce((s, x) => s + (x.summary?.clicks || 0), 0);
@@ -1760,7 +1760,7 @@ function aggregateGSC(snaps) {
     queryMap[q.query].posWt       += (q.position || 0) * (q.impressions || 0);
   }));
   const topQueries = Object.entries(queryMap)
-    .sort((a, b) => b[1].clicks - a[1].clicks).slice(0, 10)
+    .sort((a, b) => b[1].clicks - a[1].clicks).slice(0, limit)
     .map(([query, v]) => ({
       query, clicks: v.clicks, impressions: v.impressions,
       ctr:      v.impressions > 0 ? Math.round(v.clicks / v.impressions * 10000) / 10000 : 0,
@@ -1778,7 +1778,7 @@ function aggregateGSC(snaps) {
     pageMap[p.page].posWt       += (p.position || 0) * (p.impressions || 0);
   }));
   const topPages = Object.entries(pageMap)
-    .sort((a, b) => b[1].clicks - a[1].clicks).slice(0, 10)
+    .sort((a, b) => b[1].clicks - a[1].clicks).slice(0, limit)
     .map(([page, v]) => ({
       page, clicks: v.clicks, impressions: v.impressions,
       ctr:      v.impressions > 0 ? Math.round(v.clicks / v.impressions * 10000) / 10000 : 0,
@@ -1834,10 +1834,41 @@ function aggregateGA4(snaps) {
   };
 }
 
+let gscSeoFilter = 'today';
+const GSC_TABLE_ROW_LIMIT = 100;
+
+function setGscSeoFilter(name, btn) {
+  gscSeoFilter = name;
+  document.querySelectorAll('#gsc-seo-card .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (data) renderGSCSEOPanel(data);
+}
+
 function renderGSCSEOPanel(data) {
   const gscAll = data.cro?.gscAll || [];
-  const gsc  = gscAll[0] || null;
-  const pgsc = gscAll[1] || null;
+
+  let gsc, pgsc, dateLabel;
+  if (gscSeoFilter === '7days') {
+    gsc  = aggregateGSC(gscAll.slice(0, 7),   GSC_TABLE_ROW_LIMIT);
+    pgsc = aggregateGSC(gscAll.slice(7, 14),  GSC_TABLE_ROW_LIMIT);
+    dateLabel = 'Last 7 days';
+  } else if (gscSeoFilter === '30days') {
+    gsc  = aggregateGSC(gscAll.slice(0, 30),  GSC_TABLE_ROW_LIMIT);
+    pgsc = aggregateGSC(gscAll.slice(30, 60), GSC_TABLE_ROW_LIMIT);
+    dateLabel = 'Last 30 days';
+  } else if (gscSeoFilter === '60days') {
+    gsc  = aggregateGSC(gscAll.slice(0, 60),  GSC_TABLE_ROW_LIMIT);
+    pgsc = aggregateGSC(gscAll.slice(60, 120), GSC_TABLE_ROW_LIMIT);
+    dateLabel = 'Last 60 days';
+  } else if (gscSeoFilter === '90days') {
+    gsc  = aggregateGSC(gscAll.slice(0, 90),  GSC_TABLE_ROW_LIMIT);
+    pgsc = null; // No 90→180 comparison — snapshot cap is 90 days
+    dateLabel = 'Last 90 days';
+  } else {
+    gsc  = gscAll[0] || null;
+    pgsc = gscAll[1] || null;
+    dateLabel = gsc?.date || 'Today';
+  }
 
   const fmtPos = v => v != null ? v.toFixed(1) : '—';
   const fmtPct = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
@@ -1854,47 +1885,60 @@ function renderGSCSEOPanel(data) {
 
   const noteEl = document.getElementById('gsc-seo-note');
   const bodyEl = document.getElementById('gsc-seo-body');
-  if (noteEl) noteEl.textContent = gsc ? esc(gsc.date) : '';
+  if (noteEl) noteEl.textContent = esc(dateLabel);
 
-  if (!gsc) {
-    bodyEl.innerHTML = '<p class="empty-state">No GSC data yet — run gsc-collector to get started.</p>';
+  const filterBar =
+    '<div class="filter-bar" style="margin-bottom:14px">' +
+    '<button class="filter-btn' + (gscSeoFilter === 'today'  ? ' active' : '') + '" onclick="setGscSeoFilter(\'today\',this)">Today</button>' +
+    '<button class="filter-btn' + (gscSeoFilter === '7days'  ? ' active' : '') + '" onclick="setGscSeoFilter(\'7days\',this)">7 Days</button>' +
+    '<button class="filter-btn' + (gscSeoFilter === '30days' ? ' active' : '') + '" onclick="setGscSeoFilter(\'30days\',this)">30 Days</button>' +
+    '<button class="filter-btn' + (gscSeoFilter === '60days' ? ' active' : '') + '" onclick="setGscSeoFilter(\'60days\',this)">60 Days</button>' +
+    '<button class="filter-btn' + (gscSeoFilter === '90days' ? ' active' : '') + '" onclick="setGscSeoFilter(\'90days\',this)">90 Days</button>' +
+    '</div>';
+
+  if (!gsc || !gsc.summary) {
+    bodyEl.innerHTML = filterBar +
+      '<p class="empty-state">No GSC data for this range — run gsc-collector to get started.</p>';
     return;
   }
 
   const s = gsc.summary;
-  if (!s) {
-    bodyEl.innerHTML = '<p class="empty-state">GSC data is incomplete.</p>';
-    return;
-  }
   const ps = pgsc?.summary;
 
-  let html = '<div class="gsc-summary">' +
+  let html = filterBar + '<div class="gsc-summary">' +
     '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtNum(s.clicks) + deltaStr(s.clicks, ps?.clicks, true) + '</span><span class="gsc-stat-label">Clicks</span></div>' +
     '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtNum(s.impressions) + deltaStr(s.impressions, ps?.impressions, true) + '</span><span class="gsc-stat-label">Impressions</span></div>' +
     '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtPct(s.ctr) + deltaStr(s.ctr, ps?.ctr, true) + '</span><span class="gsc-stat-label">CTR</span></div>' +
     '<div class="gsc-stat"><span class="gsc-stat-value">' + fmtPos(s.position) + deltaStr(s.position != null ? -s.position : null, ps?.position != null ? -ps.position : null, true) + '</span><span class="gsc-stat-label">Avg Position</span></div>' +
     '</div>';
 
+  // For "today" mode, the raw snapshot's topQueries/topPages can be very long (1000+);
+  // slice to the same limit used by aggregate modes so the scroll container is consistent.
+  const queries = (gsc.topQueries || []).slice(0, GSC_TABLE_ROW_LIMIT);
+  const pages   = (gsc.topPages   || []).slice(0, GSC_TABLE_ROW_LIMIT);
+
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">';
 
-  html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Queries</div>' +
+  html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Queries <span style="color:var(--muted);font-weight:400">(' + queries.length + ')</span></div>' +
+    '<div class="gsc-table-scroll">' +
     '<table class="gsc-table"><thead><tr><th>Query</th><th>Clicks</th><th>Impr</th><th>CTR</th><th>Pos</th></tr></thead><tbody>' +
-    (gsc.topQueries || []).map(q =>
+    queries.map(q =>
       '<tr><td>' + esc((q.query || '').length > 40 ? (q.query || '').slice(0,40) + '...' : (q.query || '')) + '</td>' +
       '<td>' + esc(String(q.clicks)) + '</td><td>' + esc(String(q.impressions)) + '</td>' +
       '<td>' + fmtPct(q.ctr) + '</td><td>' + fmtPos(q.position) + '</td></tr>'
     ).join('') +
-    '</tbody></table></div>';
+    '</tbody></table></div></div>';
 
-  html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Pages</div>' +
+  html += '<div><div style="font-size:11px;font-weight:600;margin-bottom:8px">Top Pages <span style="color:var(--muted);font-weight:400">(' + pages.length + ')</span></div>' +
+    '<div class="gsc-table-scroll">' +
     '<table class="gsc-table"><thead><tr><th>Page</th><th>Clicks</th><th>Impr</th><th>CTR</th><th>Pos</th></tr></thead><tbody>' +
-    (gsc.topPages || []).map(p => {
+    pages.map(p => {
       const slug = p.page.replace(/^https?:\/\/[^/]+/, '').slice(0, 35) || '/';
       return '<tr><td title="' + esc(p.page) + '">' + esc(slug) + '</td>' +
         '<td>' + esc(String(p.clicks)) + '</td><td>' + esc(String(p.impressions)) + '</td>' +
         '<td>' + fmtPct(p.ctr) + '</td><td>' + fmtPos(p.position) + '</td></tr>';
     }).join('') +
-    '</tbody></table></div>';
+    '</tbody></table></div></div>';
 
   html += '</div>';
   bodyEl.innerHTML = html;

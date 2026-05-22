@@ -199,11 +199,11 @@ export function parseCROData() {
     }
   }
 
-  // Load up to 60 GSC snapshots
+  // Load up to 90 GSC snapshots (supports 90-day filter + 90→180 comparison)
   let gscAll = [];
   if (existsSync(GSC_SNAPSHOTS_DIR)) {
     const files = readdirSync(GSC_SNAPSHOTS_DIR)
-      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 90);
     gscAll = files.map(f => JSON.parse(readFileSync(join(GSC_SNAPSHOTS_DIR, f), 'utf8')));
   }
 
