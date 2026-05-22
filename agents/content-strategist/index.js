@@ -275,6 +275,37 @@ export function loadRejections() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return []; }
 }
 
+// Product-scope guard: a keyword is in scope only if it mentions one of the
+// product categories we actually sell. Keeps Claude from extrapolating to
+// adjacent-but-unstocked products (e.g. "body wash" when we only sell soap).
+// Mirrors the writer's detectProductIngredients keyword tests in
+// agents/blog-post-writer/index.js — keep these in sync.
+const PRODUCT_SCOPE_TERMS = [
+  'deodorant', 'antiperspirant',
+  'toothpaste', 'tooth paste', 'oral',
+  'lotion', 'moisturizer', 'moisturiser',
+  'cream', 'body butter',
+  'soap',
+  'lip balm', 'lip',
+  'coconut oil',
+];
+export function isInProductScope(keyword) {
+  const kw = (keyword || '').toLowerCase();
+  return PRODUCT_SCOPE_TERMS.some((t) => kw.includes(t));
+}
+
+// Persist an auto-rejection so future strategist runs skip the same off-scope
+// keyword without us needing to remember it. matchType is "contains" by default
+// (see isRejected) — a substring like "body wash" will block any expansion of
+// that phrase.
+function appendRejection(keyword, reason) {
+  const path = join(ROOT, 'data', 'rejected-keywords.json');
+  const list = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : [];
+  if (list.find((r) => (r.keyword || '').toLowerCase() === keyword.toLowerCase())) return;
+  list.push({ keyword, reason, rejected_at: new Date().toISOString(), source: 'content-strategist:product-scope' });
+  writeFileSync(path, JSON.stringify(list, null, 2));
+}
+
 export function isRejected(keyword, rejections) {
   const kw = keyword.toLowerCase().trim();
   return rejections.some(r => {
@@ -539,6 +570,8 @@ SITE: ${config.url || 'https://www.realskincare.com'}
 
 DO NOT PROPOSE BRANDED KEYWORDS. Skip any topic whose target keyword contains one of our own brand terms (${brandTerms.map((t) => `"${t}"`).join(', ')}). Branded queries are already covered by product/collection/homepage SEO — writing blog posts targeting them cannibalizes our own product pages and acquires no new customers.
 
+STAY IN PRODUCT SCOPE. Real Skin Care only sells products in these categories: deodorant, toothpaste, body lotion, body cream, soap (bar + liquid), lip balm, and coconut oil. Every target keyword you propose MUST mention one of these categories or a clear synonym (e.g. "antiperspirant" → deodorant). DO NOT propose articles about adjacent-but-unstocked products — no body wash, no shampoo / conditioner / hair products, no face serum, no shaving cream, no candles, no supplements, etc. If a high-volume keyword is off scope, ignore it — we cannot sell from it, so it is wasted content effort.
+
 You have been given a content gap analysis report. Your job is to produce a detailed, prioritized content calendar that:
 1. Targets the highest-impact gaps first (volume × low KD × category importance)
 2. Groups related content into topical clusters to build category authority
@@ -635,6 +668,11 @@ ${calendarMd}`;
       const brandHit = brandTerms.find((t) => kwLower.includes(t));
       if (brandHit) {
         console.log(`  [SKIP] Branded keyword (contains "${brandHit}"): "${item.keyword}"`);
+        return false;
+      }
+      if (!isInProductScope(item.keyword)) {
+        console.log(`  [SKIP] Off product scope (no product mapping): "${item.keyword}"`);
+        appendRejection(item.keyword, 'no product mapping');
         return false;
       }
       return true;

@@ -134,6 +134,21 @@ async function main() {
     process.exit(1);
   }
 
+  // ── pipeline gate (publisher_block) ─────────────────────────────────────────
+  // Upstream agents (featured-product-injector, and potentially others) can
+  // refuse to publish a post by stamping meta.publisher_block. Most common
+  // case: no /products/ links found, which signals the article is off
+  // product scope. Hard-fail unless --force.
+  if (!forcePublish && meta.publisher_block) {
+    const b = meta.publisher_block;
+    console.error(`  ✗ Publisher block set on "${slug}".`);
+    console.error(`  Blocked by: ${b.flagged_by || 'unknown'}`);
+    console.error(`  Reason: ${b.reason || '(no reason given)'}`);
+    console.error(`  Flagged at: ${b.flagged_at || 'unknown'}`);
+    console.error(`  Resolve via the dashboard (Kill or re-scope the post) or use --force to bypass.`);
+    process.exit(1);
+  }
+
   // ── editor gate ─────────────────────────────────────────────────────────────
   if (!forcePublish) {
     const reportPath = getEditorReportPath(slug);
