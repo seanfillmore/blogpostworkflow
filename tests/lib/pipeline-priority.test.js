@@ -132,3 +132,128 @@ test('refreshCooldownOk: refreshed within cooldown → not ok', () => {
 test('refreshCooldownOk: never refreshed → ok', () => {
   assert.equal(refreshCooldownOk('brand-new-post', {}, '2026-06-15', GCFG), true);
 });
+
+import { computePlan } from '../../lib/pipeline-priority.js';
+
+const FULL = {
+  ...GCFG,
+  base: CFG.base,
+  buffer: { target: 2, days: 7 },
+  maxPromotionsPerRun: 1,
+  backlogLowWater: 5,
+};
+const NOW2 = new Date('2026-06-15T12:00:00-07:00'); // Monday
+const TODAY2 = '2026-06-15';
+
+function baseInputs(over = {}) {
+  return {
+    backlog: [
+      { slug: 'a-post', keyword: 'a post', cluster: 'toothpaste', volume: 1000, kd: 2, search_intent: 'commercial', task_type: 'new', source: 'gap_report', status_override: null },
+      { slug: 'b-post', keyword: 'b post', cluster: 'deodorant', volume: 500, kd: 10, search_intent: 'informational', task_type: 'new', source: 'gap_report', status_override: null },
+    ],
+    signals: [],
+    bufferReady: 0,
+    takenSlots: new Set(),
+    clusterRecent: {},
+    refreshRecent: {},
+    coveredIndex: new Set(['a-post', 'b-post']),
+    rejections: [],
+    today: TODAY2,
+    now: NOW2,
+    cfg: FULL,
+    ...over,
+  };
+}
+
+test('computePlan: scores backlog with base + matching signal, provenance attached', () => {
+  const plan = computePlan(baseInputs({
+    signals: [{ type: 'revenue_cluster', key: 'toothpaste', cluster: 'toothpaste', taskType: 'new', strength: 111.8, label: 'revenue +$112' }],
+  }));
+  const a = plan.scored.find((i) => i.slug === 'a-post');
+  // base: 1000/100=10 *1.2 +10 kd =22 ; +revenue 22 => 44
+  assert.equal(a.priority_score, 44);
+  assert.match(a.priority_provenance, /revenue/);
+});
+
+test('computePlan: fills buffer up to target but capped by maxPromotionsPerRun', () => {
+  const plan = computePlan(baseInputs({ bufferReady: 0 })); // target 2, cap 1
+  assert.equal(plan.promotions.length, 1);                  // only 1 this run
+  assert.ok(plan.promotions[0].publish_date);
+});
+
+test('computePlan: no promotion when buffer already full', () => {
+  const plan = computePlan(baseInputs({ bufferReady: 2 }));
+  assert.equal(plan.promotions.length, 0);
+});
+
+test('computePlan: highest score promoted first', () => {
+  const plan = computePlan(baseInputs({
+    signals: [{ type: 'rank_drop', key: 'b post', cluster: 'deodorant', taskType: 'new', strength: 10, label: 'drop' }],
+  }));
+  assert.equal(plan.promotions[0].slug, 'b-post'); // boosted above a-post
+});
+
+test('computePlan: paused item is never promoted', () => {
+  const inputs = baseInputs();
+  inputs.backlog[0].status_override = 'paused';
+  inputs.backlog[1].status_override = 'paused';
+  const plan = computePlan(inputs);
+  assert.equal(plan.promotions.length, 0);
+});
+
+test('computePlan: rush item is promoted ahead of higher-scored ones', () => {
+  const inputs = baseInputs();
+  inputs.backlog[1].status_override = 'rush'; // b-post (lower base) pinned
+  const plan = computePlan(inputs);
+  assert.equal(plan.promotions[0].slug, 'b-post');
+});
+
+test('computePlan: injects a new idea from an unmapped signal not yet covered', () => {
+  const plan = computePlan(baseInputs({
+    signals: [{ type: 'unmapped', key: 'coconut oil for stretch marks', taskType: 'new', cluster: null, strength: 5000, label: 'unmapped 5000' }],
+    coveredIndex: new Set(['a-post', 'b-post']),
+  }));
+  const inj = plan.injections.find((i) => i.keyword === 'coconut oil for stretch marks');
+  assert.ok(inj);
+  assert.equal(inj.publish_date, null);          // backlog: no date until promoted
+  assert.equal(inj.source, 'gsc_unmapped');
+});
+
+test('computePlan: does NOT inject an unmapped idea already covered', () => {
+  const plan = computePlan(baseInputs({
+    signals: [{ type: 'unmapped', key: 'a post', taskType: 'new', cluster: null, strength: 5000, label: 'u' }],
+  }));
+  assert.equal(plan.injections.length, 0);
+});
+
+test('computePlan: cluster spacing blocks promotion (defers, not drops)', () => {
+  const plan = computePlan(baseInputs({
+    bufferReady: 0,
+    clusterRecent: { toothpaste: ['2026-06-12', '2026-06-05'] }, // 2 in window → a-post blocked
+  }));
+  // a-post (toothpaste) blocked → b-post promoted instead
+  assert.equal(plan.promotions[0].slug, 'b-post');
+});
+
+test('computePlan: refresh cooldown blocks a refresh-type promotion', () => {
+  const inputs = baseInputs({
+    backlog: [{ slug: 'old-post', keyword: 'old post', cluster: 'soap', volume: 3000, kd: 1, search_intent: 'commercial', task_type: 'refresh', source: 'refresh', status_override: null }],
+    refreshRecent: { 'old-post': '2026-06-01' }, // 14d ago < 45
+    coveredIndex: new Set(['old-post']),
+  });
+  const plan = computePlan(inputs);
+  assert.equal(plan.promotions.length, 0);
+});
+
+test('computePlan: backlog below low-water emits an alert', () => {
+  const plan = computePlan(baseInputs()); // 2 ideas < lowWater 5
+  assert.ok(plan.alerts.some((a) => /backlog/i.test(a)));
+});
+
+test('computePlan: never assigns two promotions to the same slot', () => {
+  // force 2 promotions by raising the per-run cap
+  const cfg = { ...FULL, maxPromotionsPerRun: 2 };
+  const plan = computePlan(baseInputs({ cfg, bufferReady: 0 }));
+  const dates = plan.promotions.map((p) => p.publish_date.slice(0, 10));
+  assert.equal(new Set(dates).size, dates.length);
+});
