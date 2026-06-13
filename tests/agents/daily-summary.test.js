@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { previewBody } from '../../agents/daily-summary/index.js';
+import { previewBody, formatBodyHtml } from '../../agents/daily-summary/index.js';
 
 test('previewBody: empty or missing body returns empty string', () => {
   assert.equal(previewBody(''), '');
@@ -16,6 +16,44 @@ test('previewBody: short body is returned intact (trimmed)', () => {
 test('previewBody: collapses runs of blank lines', () => {
   const body = 'line one\n\n\n\nline two';
   assert.equal(previewBody(body), 'line one\n\nline two');
+});
+
+test('previewBody: drops markdown horizontal-rule lines', () => {
+  assert.equal(previewBody('above\n---\nbelow'), 'above\nbelow');
+  assert.equal(previewBody('above\n***\nbelow'), 'above\nbelow');
+});
+
+// ── formatBodyHtml: markdown noise → clean inline HTML ─────────────────────────
+
+test('formatBodyHtml: converts **bold** to <strong>', () => {
+  assert.equal(formatBodyHtml('**Run date:** June 12'), '<strong>Run date:</strong> June 12');
+});
+
+test('formatBodyHtml: turns markdown headings into bold, dropping the # markers', () => {
+  assert.equal(formatBodyHtml('# Content Refresh Report'), '<strong>Content Refresh Report</strong>');
+  assert.equal(formatBodyHtml('## 💡 Saved locally — "X"'), '<strong>💡 Saved locally — "X"</strong>');
+});
+
+test('formatBodyHtml: converts list markers to bullets', () => {
+  assert.equal(formatBodyHtml('- first\n- second'), '• first\n• second');
+});
+
+test('formatBodyHtml: escapes HTML in the body (no injection)', () => {
+  assert.equal(formatBodyHtml('a <script>alert(1)</script> b'), 'a &lt;script&gt;alert(1)&lt;/script&gt; b');
+});
+
+test('formatBodyHtml: strips a stray unmatched ** rather than leaving it raw', () => {
+  assert.equal(formatBodyHtml('**oops unmatched'), 'oops unmatched');
+});
+
+test('formatBodyHtml: preserves line breaks (caller renders with pre-wrap)', () => {
+  const out = formatBodyHtml('# Title\n**Mode:** Dry run');
+  assert.equal(out, '<strong>Title</strong>\n<strong>Mode:</strong> Dry run');
+});
+
+test('formatBodyHtml: empty input returns empty string', () => {
+  assert.equal(formatBodyHtml(''), '');
+  assert.equal(formatBodyHtml(null), '');
 });
 
 test('previewBody: truncates to whole lines and appends an ellipsis', () => {

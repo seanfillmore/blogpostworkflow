@@ -237,7 +237,13 @@ function loadPerformanceQueue() {
  */
 export function previewBody(body, { maxLines = 8, maxChars = 600 } = {}) {
   if (!body) return '';
-  const collapsed = String(body).replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  const collapsed = String(body)
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .filter((l) => !/^\s*([-*_])\1{2,}\s*$/.test(l)) // drop markdown horizontal rules (---, ***, ___)
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   const lines = collapsed.split('\n');
   let text = lines.slice(0, maxLines).join('\n');
   let truncated = lines.length > maxLines;
@@ -247,6 +253,34 @@ export function previewBody(body, { maxLines = 8, maxChars = 600 } = {}) {
   }
   if (truncated) text = text.replace(/\s+$/, '') + ' …';
   return text;
+}
+
+/**
+ * Convert the light markdown agents emit into clean inline HTML for the digest.
+ * Escapes first (these bodies are agent-generated but we never trust raw HTML),
+ * then renders headings/bold as <strong>, list markers as bullets. Returns text
+ * with newlines preserved — the caller renders inside white-space:pre-wrap, so
+ * line breaks need no <br>. Block markdown (code fences, tables) is left as-is.
+ */
+export function formatBodyHtml(text) {
+  if (!text) return '';
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(text).split('\n').map((raw) => {
+    let line = raw;
+    const heading = line.match(/^\s{0,3}#{1,6}\s+(.*)$/);
+    if (heading) line = heading[1];
+    let bullet = false;
+    if (!heading) {
+      const b = line.match(/^\s*[-*+]\s+(.*)$/);
+      if (b) { line = b[1]; bullet = true; }
+    }
+    let out = esc(line)
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') // **bold** → <strong>
+      .replace(/\*\*/g, '');                               // drop any stray unmatched **
+    if (heading) out = `<strong>${out}</strong>`;
+    if (bullet) out = `• ${out}`;
+    return out;
+  }).join('\n');
 }
 
 export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = []) {
@@ -316,7 +350,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     if (!items.length) return '<p class="empty">Nothing to report.</p>';
     return items.map(e => {
       const icon = e.status === 'success' ? '&#9989;' : e.status === 'error' ? '&#10060;' : '&#8505;&#65039;';
-      const bodyPreview = e.body ? `<div class="entry-body">${esc(previewBody(e.body))}</div>` : '';
+      const bodyPreview = e.body ? `<div class="entry-body">${formatBodyHtml(previewBody(e.body))}</div>` : '';
       return `<div class="entry">
         <div><span>${icon}</span> <span class="entry-subject">${esc(e.subject)}</span> <span class="entry-time">${formatTime(e.ts)}</span></div>
         ${bodyPreview}
