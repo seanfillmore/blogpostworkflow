@@ -188,6 +188,12 @@ function loadQuickWinTargets() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
+function loadSeoImpact() {
+  const path = join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json');
+  if (!existsSync(path)) return null;
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+
 /**
  * Load the latest post-performance review output (produced by post-performance agent).
  * Returns { reviews_today, action_required } or null if unavailable.
@@ -283,7 +289,7 @@ export function formatBodyHtml(text) {
   }).join('\n');
 }
 
-export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = []) {
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = [], seoImpact = null) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -447,6 +453,33 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
         <div class="section-title">&#128640; Quick-Win Targets (${quickWins.candidate_count} at page 2)</div>
         <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">These posts are ranking at positions 11&ndash;20 &mdash; the cheapest traffic gains available. A rewrite + internal links can push them to page 1.</p>
         ${rows}
+      </div>`;
+  }
+
+  // SEO Impact — "what's working": organic revenue by page/cluster (the feedback loop)
+  let seoImpactSection = '';
+  if (seoImpact && seoImpact.totals) {
+    const t = seoImpact.totals;
+    const win = seoImpact.window || {};
+    const windowDays = (win.start && win.end)
+      ? Math.round((Date.parse(win.end) - Date.parse(win.start)) / 86400000) + 1 : 28;
+    const money = (n) => `$${(Math.round((Number(n) || 0) * 100) / 100).toFixed(2)}`;
+    const d = t.organic_revenue_delta || 0;
+    const deltaStr = `${d >= 0 ? '+' : '−'}${money(Math.abs(d))}`;
+    const deltaColor = d >= 0 ? '#166534' : '#991b1b';
+    const topPages = (seoImpact.top_revenue || []).slice(0, 5).map((r) =>
+      `<div class="quick-win-row"><div class="qw-body"><div class="qw-title">${money(r.revenue)} &mdash; ${esc(r.path)}</div><div class="qw-meta">${r.conversions} conversions &middot; ${r.sessions} organic sessions${r.action ? ` &middot; ${esc(r.action.type)} ${esc(r.action.date)}` : ''}</div></div></div>`).join('');
+    const topClusters = (seoImpact.clusters || []).slice(0, 4)
+      .map((c) => `${esc(c.cluster)} ${money(c.revenue)}`).join(' &middot; ');
+    const notConv = (seoImpact.not_converting || []).slice(0, 3)
+      .map((r) => `${esc(r.path)} (${r.sessions}s)`).join(', ');
+    seoImpactSection = `
+      <div class="section quick-wins">
+        <div class="section-title">&#128200; What's Working &mdash; Organic Revenue (last ${windowDays} days)</div>
+        <p style="font-size:13px;margin:0 0 12px 0;"><strong>${money(t.organic_revenue)}</strong> organic revenue &middot; <span style="color:${deltaColor};font-weight:600;">${deltaStr}</span> vs prior period &middot; ${t.organic_conversions} conversion events</p>
+        ${topPages}
+        ${topClusters ? `<div class="qw-meta" style="margin-top:10px;"><strong>By cluster:</strong> ${topClusters}</div>` : ''}
+        ${notConv ? `<div class="qw-meta" style="margin-top:6px;color:#92400e;"><strong>Traffic, no sales:</strong> ${notConv} &mdash; conversion opportunities</div>` : ''}
       </div>`;
   }
 
@@ -685,7 +718,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     healthSection = `<div class="action-required"><div class="section-title">&#9888;&#65039; System Health — ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}</div>${rows}</div>`;
   }
 
-  const nothingToReport = !healthSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
+  const nothingToReport = !healthSection && !seoImpactSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -693,6 +726,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
   ${healthSection}
+  ${seoImpactSection}
   ${reviewSection}
   ${blockedImagesSection}
   ${queueSection}
@@ -761,6 +795,7 @@ function checkSystemHealth() {
   const reports = [
     { name: 'gsc-opportunity report', path: join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json'), maxAgeDays: 2 },
     { name: 'quick-wins report',      path: join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json'),      maxAgeDays: 9 },
+    { name: 'seo-impact report',      path: join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'),      maxAgeDays: 9 },
   ];
   const reportResults = checkFreshness(
     reports.map(r => ({ name: r.name, newestDate: newestReportDate(r.path), maxAgeDays: r.maxAgeDays })),
@@ -820,6 +855,7 @@ async function main() {
 
   // Load latest quick-win targets from data/reports/quick-wins/latest.json
   const quickWins = loadQuickWinTargets();
+  const seoImpact = loadSeoImpact();
 
   // Load latest post-performance review output
   const postPerformance = loadPostPerformance();
@@ -851,7 +887,7 @@ async function main() {
     }).catch(() => {});
   }
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues, seoImpact);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;

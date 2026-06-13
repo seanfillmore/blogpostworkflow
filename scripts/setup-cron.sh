@@ -76,6 +76,9 @@ WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyze
 WEEKLY_META_AB_TRACKER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-tracker/index.js >> data/reports/scheduler/meta-ab-tracker.log 2>&1"
 WEEKLY_QUICK_WIN="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/quick-win-targeter/index.js >> data/reports/scheduler/quick-win-targeter.log 2>&1"
 WEEKLY_KEYWORD_RESEARCH="0 8 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/keyword-research/index.js >> data/reports/scheduler/keyword-research.log 2>&1"
+# SEO impact / "what's working" — weekly Mon 14:30 UTC (after GA4/GSC/Shopify
+# collectors at 13:xx). Organic revenue by page/cluster; the feedback loop.
+WEEKLY_SEO_IMPACT="30 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/seo-impact/index.js >> data/reports/scheduler/seo-impact.log 2>&1"
 WEEKLY_META_ADS_COLLECTOR="0 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-collector/index.js >> data/logs/meta-ads-collector.log 2>&1"
 WEEKLY_META_ADS_ANALYZER="10 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-analyzer/index.js >> data/logs/meta-ads-analyzer.log 2>&1"
 
@@ -136,6 +139,7 @@ $WEEKLY_KEYWORD_RESEARCH
 $WEEKLY_META_ADS_COLLECTOR
 $WEEKLY_META_ADS_ANALYZER
 $WEEKLY_UNMAPPED_PROMOTER
+$WEEKLY_SEO_IMPACT
 # ── Weekly (Sunday) ──
 $WEEKLY_ADS_RECAP
 $WEEKLY_CAMPAIGN_ANALYZER
@@ -179,6 +183,7 @@ echo "  10:00 UTC — meta-ads-collector"
 echo "  10:10 UTC — meta-ads-analyzer"
 echo "  14:45 UTC — cro-analyzer"
 echo "  13:40 UTC — unmapped-query-promoter"
+echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
 echo "  15:00 UTC — meta-ab-tracker + quick-win-targeter"
 echo ""
 echo "  WEEKLY (Sunday)"
