@@ -8,6 +8,7 @@
  *
  * Inputs:
  *   - Latest rank snapshot (data/rank-snapshots/*.json)
+ *   - Full rank-snapshot history → per-post trajectory (lib/rank-trends.js)
  *   - GSC per-page metrics (via lib/gsc.js getPagePerformance + getPageKeywords)
  *   - data/posts/<slug>.json for post metadata
  *
@@ -17,8 +18,13 @@
  *
  * Scoring (higher = better opportunity):
  *   score = impressions × (21 - position) × (1 / (ctr + 0.01))
+ *           × clusterMult × competitorMult × kdMult × trendMult
  *   This prioritizes: high impressions (already being served), close to page 1
  *   (smaller nudge needed), and underperforming CTR (most upside from rewrite).
+ *   The trend multiplier (lib/rank-trends) uses the position history to favour
+ *   keywords that are FALLING (1.4×, urgent) or STUCK (1.2×, need a push) and to
+ *   deprioritize ones already CLIMBING (0.8×) — so the list reflects trajectory,
+ *   not just a single-day snapshot.
  *
  * Usage:
  *   node agents/quick-win-targeter/index.js            # generate report
@@ -31,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { getMetaPath } from '../../lib/posts.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
+import { loadPositionHistory, computeTrajectory, trendMultiplier } from '../../lib/rank-trends.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -101,7 +108,7 @@ function loadPostMeta(slug) {
  * #15 desktop / #12 mobile on the same page effectively scores as ~12
  * (a real page-1 opportunity).
  */
-function scoreOpportunity({ position, impressions = 0, ctr = 0, clusterWeight = 0, competitorBoost = 0, kd = null }) {
+function scoreOpportunity({ position, impressions = 0, ctr = 0, clusterWeight = 0, competitorBoost = 0, kd = null, trendMult = 1 }) {
   if (!position || position < 11 || position > 20) return 0;
   const proximityWeight = 21 - position; // 1 (pos 20) to 10 (pos 11)
   const ctrFactor = 1 / (ctr + 0.01);    // lower CTR → higher factor
@@ -114,7 +121,9 @@ function scoreOpportunity({ position, impressions = 0, ctr = 0, clusterWeight = 
   // KD multiplier: low-KD keywords are easier to push to page 1.
   // KD 0 → 1.5x, KD 50 → 0.9x, KD 100 → 0.3x. When KD is unknown, neutral 1.0x.
   const kdMultiplier = kd != null ? Math.max(0.3, 1.5 - (kd / 100) * 1.2) : 1;
-  return Math.round(base * clusterMultiplier * competitorMultiplier * kdMultiplier);
+  // Trajectory multiplier (lib/rank-trends): falling 1.4x (urgent), stuck 1.2x
+  // (needs a push), climbing 0.8x (already trending up on its own), neutral 1.0x.
+  return Math.round(base * clusterMultiplier * competitorMultiplier * kdMultiplier * trendMult);
 }
 
 /**
@@ -182,6 +191,30 @@ async function main() {
   } else {
     console.log('  Device weights: not available — effective position falls back to desktop-only');
   }
+
+  // Position history → trajectory. We blend desktop+mobile into an effective
+  // position per snapshot date (using current device weights — they drift slowly,
+  // so applying today's weights to history is a sound approximation) so the trend
+  // tracks the same number the score is built on. computeTrajectory then tells us
+  // whether each candidate is climbing, stuck, falling, or volatile.
+  const desktopHistory = loadPositionHistory(SNAPSHOTS_DIR, { device: 'desktop' });
+  const mobileHistory = loadPositionHistory(SNAPSHOTS_DIR, { device: 'mobile' });
+  const effectiveSeriesFor = (slug, url) => {
+    const desk = new Map((desktopHistory.get(slug) || []).map((p) => [p.date, p.position]));
+    const mob = new Map((mobileHistory.get(slug) || []).map((p) => [p.date, p.position]));
+    const dates = [...new Set([...desk.keys(), ...mob.keys()])].sort();
+    return dates.map((date) => ({
+      date,
+      position: effectivePosition({
+        url,
+        desktopPos: desk.get(date) ?? null,
+        mobilePos: mob.get(date) ?? null,
+        weights: deviceWeights,
+      }),
+    }));
+  };
+  const trackedHistoryDays = new Set([...desktopHistory.values()].flat().map((p) => p.date)).size;
+  console.log(`  Position history: ${trackedHistoryDays} snapshot day(s) loaded for trajectory analysis`);
 
   const clusterContext = loadClusterContext();
   const weightedClusters = Object.entries(clusterContext.weights).filter(([, w]) => w !== 0);
@@ -296,7 +329,9 @@ async function main() {
     const clusterWeight = cluster ? (clusterContext.weights[cluster] || 0) : 0;
     const competitorBoost = cluster ? (clusterContext.boosts[cluster] || 0) : 0;
     const kd = post.kd ?? null;
-    const score = scoreOpportunity({ position: post.effectivePos, impressions, ctr, clusterWeight, competitorBoost, kd });
+    const trajectory = computeTrajectory(effectiveSeriesFor(post.slug, post.url));
+    const trendMult = trendMultiplier(trajectory.classification);
+    const score = scoreOpportunity({ position: post.effectivePos, impressions, ctr, clusterWeight, competitorBoost, kd, trendMult });
 
     // Prefer the post's actual title from metadata; fall back to slug prettified.
     const title = meta?.title
@@ -328,6 +363,14 @@ async function main() {
             position: topQuery.position != null ? Number(topQuery.position.toFixed(1)) : null,
           }
         : null,
+      trend: {
+        classification: trajectory.classification, // climbing | stuck | falling | volatile | new | unknown
+        velocity_per_week: trajectory.velocityPerWeek,
+        delta_30d: trajectory.delta30,
+        samples: trajectory.samples,
+        span_days: trajectory.spanDays,
+        multiplier: trendMult,
+      },
       score,
     });
   }
@@ -341,12 +384,15 @@ async function main() {
   qualified.sort((a, b) => b.score - a.score);
   const top = qualified.slice(0, limitArg);
 
+  const trendIcon = { climbing: '📈', falling: '📉', stuck: '➖', volatile: '🔀', new: '🆕', unknown: '·' };
   console.log(`\n  Top ${top.length} quick-win candidates:`);
   for (const c of top) {
     const kdLabel = c.kd != null ? `, KD ${c.kd}` : '';
     const effLabel = c.effective_position != null && c.effective_position !== c.position
       ? ` (eff #${c.effective_position})` : '';
-    console.log(`    [pos ${c.position}${effLabel}] ${c.slug} — ${c.gsc.impressions} impr, ${(c.gsc.ctr * 100).toFixed(1)}% CTR${kdLabel}, score ${c.score}`);
+    const tr = c.trend || {};
+    const trLabel = `${trendIcon[tr.classification] || ''}${tr.classification || 'unknown'}${tr.delta_30d != null ? ` ${tr.delta_30d > 0 ? '+' : ''}${tr.delta_30d}/30d` : ''}`;
+    console.log(`    [pos ${c.position}${effLabel}] ${c.slug} — ${c.gsc.impressions} impr, ${(c.gsc.ctr * 100).toFixed(1)}% CTR${kdLabel}, ${trLabel}, score ${c.score}`);
   }
 
   // Step 4: Write report
@@ -371,6 +417,7 @@ async function main() {
       impressions: c.gsc.impressions,
       ctr: c.gsc.ctr,
       kd: c.kd,
+      trend: c.trend,
       score: c.score,
       top_query: c.top_query?.keyword || null,
     })),
@@ -400,26 +447,46 @@ function buildMarkdownReport(snapshotFile, all, top) {
   lines.push('');
   lines.push('## Top Candidates');
   lines.push('');
-  lines.push('| # | Slug | Desktop | Mobile | Effective | KD | Impressions | CTR | Top Query | Score |');
-  lines.push('|---|------|--------:|-------:|----------:|----|-------------|-----|-----------|-------|');
+  const fmtTrend = (t) => {
+    if (!t || !t.classification || t.classification === 'unknown') return '—';
+    const d = t.delta_30d != null ? ` (${t.delta_30d > 0 ? '+' : ''}${t.delta_30d}/30d)` : '';
+    return `${t.classification}${d}`;
+  };
+  lines.push('| # | Slug | Desktop | Mobile | Effective | Trend | KD | Impressions | CTR | Top Query | Score |');
+  lines.push('|---|------|--------:|-------:|----------:|-------|----|-------------|-----|-----------|-------|');
   top.forEach((c, i) => {
     const topQ = c.top_query ? `${c.top_query.keyword} (pos ${c.top_query.position})` : '—';
     const kdStr = c.kd != null ? String(c.kd) : '—';
     const mob = c.mobile_position != null ? c.mobile_position : '—';
     const eff = c.effective_position != null ? c.effective_position : '—';
-    lines.push(`| ${i + 1} | \`${c.slug}\` | ${c.position} | ${mob} | ${eff} | ${kdStr} | ${c.gsc.impressions} | ${(c.gsc.ctr * 100).toFixed(1)}% | ${topQ} | ${c.score} |`);
+    lines.push(`| ${i + 1} | \`${c.slug}\` | ${c.position} | ${mob} | ${eff} | ${fmtTrend(c.trend)} | ${kdStr} | ${c.gsc.impressions} | ${(c.gsc.ctr * 100).toFixed(1)}% | ${topQ} | ${c.score} |`);
   });
   lines.push('');
   lines.push('## Recommended Actions');
   lines.push('');
+  // Trajectory changes what you should *do*, not just the priority order.
+  const trendActions = {
+    falling: 'Falling — losing ground you already earned. Act first: refresh content now, audit for a recent competitor overtake or lost internal links before the position drops off page 2.',
+    stuck: 'Stuck — flat for weeks, it will not move on its own. Push it: refresh content, add internal links from related posts, sharpen title/meta on the top query.',
+    climbing: 'Climbing on its own — lowest urgency. Avoid disruptive rewrites; a light internal-link nudge is enough. Re-check next week.',
+    volatile: 'Volatile — bouncing around. Stabilize before investing: check for indexing/cannibalization issues, then revisit once the position settles.',
+    new: 'New — not enough history to judge trajectory yet. Treat on snapshot signal alone and re-evaluate as history accrues.',
+    unknown: 'No trajectory data. Treat on snapshot signal alone.',
+  };
   top.forEach((c, i) => {
+    const t = c.trend || {};
     lines.push(`### ${i + 1}. ${c.title}`);
     lines.push(`- **URL:** ${c.url}`);
     lines.push(`- **Current:** Position ${c.position}, ${c.gsc.impressions} impressions over last 90 days, ${(c.gsc.ctr * 100).toFixed(1)}% CTR`);
+    if (t.classification && t.classification !== 'unknown') {
+      const vel = t.velocity_per_week != null ? `${t.velocity_per_week > 0 ? '+' : ''}${t.velocity_per_week}/wk` : 'n/a';
+      const d30 = t.delta_30d != null ? `${t.delta_30d > 0 ? '+' : ''}${t.delta_30d} over 30d` : 'n/a';
+      lines.push(`- **Trajectory:** ${t.classification} (${vel}, ${d30}; ${t.samples} samples over ${t.span_days}d)`);
+    }
     if (c.top_query) {
       lines.push(`- **Top query:** "${c.top_query.keyword}" (${c.top_query.impressions} impressions at position ${c.top_query.position})`);
     }
-    lines.push(`- **Action:** Refresh content, add internal links from related published posts, verify title/meta target the top query exactly.`);
+    lines.push(`- **Action:** ${trendActions[t.classification] || trendActions.unknown}`);
     lines.push('');
   });
   if (all.length > top.length) {
