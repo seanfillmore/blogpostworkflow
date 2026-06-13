@@ -47,6 +47,18 @@ test('checkFreshness: exactly at the threshold is ok, one day past is stale', ()
   assert.equal(past.status, 'stale');
 });
 
+test('checkFreshness: a lagged feed (GSC, dated 3 days back) is ok at its calibrated threshold but a real outage still trips it', () => {
+  // GSC names its snapshot by the data date, which lags the run date ~3 days,
+  // so a healthy GSC feed's newest file is always ~3 days old. Its threshold is
+  // calibrated to 5 (3 lag + 2 grace) — normal lag is ok, a real outage is not.
+  const healthy = checkFreshness([{ name: 'gsc', newestDate: '2026-06-10', maxAgeDays: 5 }], { today: TODAY })[0];
+  assert.equal(healthy.ageDays, 3);
+  assert.equal(healthy.status, 'ok');
+  const outage = checkFreshness([{ name: 'gsc', newestDate: '2026-06-06', maxAgeDays: 5 }], { today: TODAY })[0];
+  assert.equal(outage.ageDays, 7);
+  assert.equal(outage.status, 'stale');
+});
+
 test('checkFreshness: a future date (clock skew) is treated as ok, not stale', () => {
   const [r] = checkFreshness([{ name: 'x', newestDate: '2026-06-15' }], { today: TODAY });
   assert.equal(r.status, 'ok');
