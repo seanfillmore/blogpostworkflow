@@ -1,0 +1,24 @@
+{
+  "buffer": { "target": 2, "days": 7 },
+  "maxPromotionsPerRun": 1,
+  "clusterSpacingDays": 14,
+  "clusterSpacingMax": 2,
+  "refreshCooldownDays": 45,
+  "hysteresisRuns": 2,
+  "backlogLowWater": 5,
+  "strongThreshold": 30,
+  "base": {
+    "intentMult": { "transactional": 1.4, "commercial": 1.2, "informational": 1.0 },
+    "volumeDivisor": 100,
+    "volumeCap": 50,
+    "kdEasyThreshold": 5,
+    "kdEasyBonus": 10
+  },
+  "signals": {
+    "unmapped":        { "minImpressions": 500, "strongImpressions": 3000, "perImpression": 0.01, "cap": 40 },
+    "rank_drop":       { "strongPositions": 5, "perPosition": 3, "cap": 40, "trafficStrongPct": 20 },
+    "revenue_cluster": { "minDelta": 25, "strongDelta": 100, "perDollar": 0.2, "cap": 30 },
+    "competitor_gap":  { "boost": 15, "cap": 30 },
+    "ai_gap":          { "boost": 12, "cap": 24 }
+  }
+}
