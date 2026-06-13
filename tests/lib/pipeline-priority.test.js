@@ -74,3 +74,33 @@ test('classify: score crossing strongThreshold forces strong', () => {
   const r = classify({ type: 'rank_drop', strength: 11 }, SCFG); // 33 >= 30
   assert.equal(r.strong, true);
 });
+
+import { applyHysteresis } from '../../lib/pipeline-priority.js';
+
+const HCFG = { ...SCFG, hysteresisRuns: 2 };
+
+test('hysteresis: weak signal first seen today is held back', () => {
+  const sig = { type: 'unmapped', key: 'x', strength: 1000 }; // weak (score 10)
+  const { active, state } = applyHysteresis([sig], {}, '2026-06-15', HCFG);
+  assert.equal(active.length, 0);                 // needs 2 runs
+  assert.equal(state['unmapped:x'].runs, 1);
+});
+
+test('hysteresis: weak signal persisting a 2nd run becomes active', () => {
+  const sig = { type: 'unmapped', key: 'x', strength: 1000 };
+  const prior = { 'unmapped:x': { firstSeen: '2026-06-14', lastSeen: '2026-06-14', runs: 1 } };
+  const { active } = applyHysteresis([sig], prior, '2026-06-15', HCFG);
+  assert.equal(active.length, 1);
+});
+
+test('hysteresis: strong signal is active immediately', () => {
+  const sig = { type: 'rank_drop', key: 'y', strength: 8 }; // strong
+  const { active } = applyHysteresis([sig], {}, '2026-06-15', HCFG);
+  assert.equal(active.length, 1);
+});
+
+test('hysteresis: a signal absent this run resets (not carried forward)', () => {
+  const prior = { 'unmapped:x': { firstSeen: '2026-06-13', lastSeen: '2026-06-14', runs: 5 } };
+  const { state } = applyHysteresis([], prior, '2026-06-15', HCFG);
+  assert.equal(state['unmapped:x'], undefined); // dropped — must re-accumulate
+});
