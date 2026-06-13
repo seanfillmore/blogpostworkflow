@@ -37,6 +37,9 @@ import { formatPublishAt } from '../../lib/publish-schedule.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 
+const PRIORITY_CFG = (() => { try { return JSON.parse(readFileSync(join(ROOT, 'config', 'pipeline-priority.json'), 'utf8')); } catch { return { buffer: { days: 7 } }; } })();
+const BUFFER_DAYS = PRIORITY_CFG.buffer?.days ?? 7;
+
 const CALENDAR_PATH    = join(ROOT, 'data', 'reports', 'content-strategist', 'content-calendar.md');
 const STATE_DIR        = join(ROOT, 'data', 'reports', 'calendar-runner');
 const STATE_PATH       = join(STATE_DIR, 'calendar-state.json');
@@ -625,8 +628,14 @@ async function main() {
     return;
   }
 
-  // Filter to pending items (not yet published or scheduled)
-  let workItems = items.filter(i => !['published', 'scheduled'].includes(getItemStatus(i)));
+  // Lead-window guard (JIT): only draft items whose publish date is within
+  // BUFFER_DAYS. Promoted ideas get a near-term slot from the prioritizer; ideas
+  // dated further out (or undated backlog) wait. Keyword-targeted runs bypass this.
+  const leadCutoff = new Date(Date.now() + BUFFER_DAYS * 86400000);
+  let workItems = items.filter(i =>
+    !['published', 'scheduled'].includes(getItemStatus(i)) &&
+    (kwArg || (i.adjustedDate || i.publishDate) <= leadCutoff)
+  );
 
   if (kwArg) {
     workItems = workItems.filter(i => i.keyword.toLowerCase() === kwArg.toLowerCase());
