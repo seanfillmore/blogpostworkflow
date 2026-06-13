@@ -668,20 +668,25 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
 function checkSystemHealth() {
   const today = new Date().toISOString().slice(0, 10);
 
-  // Every feed here is written daily; default 2-day threshold tolerates the
-  // intraday window where today's file isn't written yet, while still catching
-  // a real multi-day outage.
+  // Each feed is written daily, but several name their file by the DATA date,
+  // which lags the run date — so a healthy feed's newest file is structurally a
+  // few days old. maxAgeDays = expected data lag + ~2 days grace, so we tolerate
+  // normal lag/transient API delay but still catch a collector that has stopped
+  // (its age then climbs past the threshold within a couple of days).
+  //   gsc: dated 3 days back (GSC reporting lag)         → 5
+  //   google-ads / shopify: dated yesterday              → 4 / 3
+  //   ga4 / clarity / rank-snapshots: ~same-day          → 3 / 3 / 2
   const sources = [
-    { name: 'rank-snapshots', dir: join(ROOT, 'data', 'rank-snapshots') },
-    { name: 'gsc',     dir: join(ROOT, 'data', 'snapshots', 'gsc') },
-    { name: 'ga4',     dir: join(ROOT, 'data', 'snapshots', 'ga4') },
-    { name: 'clarity', dir: join(ROOT, 'data', 'snapshots', 'clarity') },
-    { name: 'shopify', dir: join(ROOT, 'data', 'snapshots', 'shopify') },
-    { name: 'google-ads', dir: join(ROOT, 'data', 'snapshots', 'google-ads') },
+    { name: 'rank-snapshots', dir: join(ROOT, 'data', 'rank-snapshots'), maxAgeDays: 2 },
+    { name: 'gsc',        dir: join(ROOT, 'data', 'snapshots', 'gsc'),        maxAgeDays: 5 },
+    { name: 'ga4',        dir: join(ROOT, 'data', 'snapshots', 'ga4'),        maxAgeDays: 3 },
+    { name: 'clarity',    dir: join(ROOT, 'data', 'snapshots', 'clarity'),    maxAgeDays: 3 },
+    { name: 'shopify',    dir: join(ROOT, 'data', 'snapshots', 'shopify'),    maxAgeDays: 3 },
+    { name: 'google-ads', dir: join(ROOT, 'data', 'snapshots', 'google-ads'), maxAgeDays: 4 },
   ];
 
   const results = checkFreshness(
-    sources.map(s => ({ name: s.name, newestDate: newestSnapshotDate(s.dir) })),
+    sources.map(s => ({ name: s.name, newestDate: newestSnapshotDate(s.dir), maxAgeDays: s.maxAgeDays })),
     { today },
   );
 
