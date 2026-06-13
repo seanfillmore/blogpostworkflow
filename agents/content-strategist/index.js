@@ -26,6 +26,9 @@ const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 import { loadIndex, lookupByKeyword, validationTag, unmappedIndexEntries } from '../../lib/keyword-index/consumer.js';
+import { isInProductScope, PRODUCT_SCOPE_TERMS } from '../../lib/product-scope.js';
+// Re-export so existing importers of these from content-strategist keep working.
+export { isInProductScope, PRODUCT_SCOPE_TERMS };
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -275,24 +278,9 @@ export function loadRejections() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return []; }
 }
 
-// Product-scope guard: a keyword is in scope only if it mentions one of the
-// product categories we actually sell. Keeps Claude from extrapolating to
-// adjacent-but-unstocked products (e.g. "body wash" when we only sell soap).
-// Mirrors the writer's detectProductIngredients keyword tests in
-// agents/blog-post-writer/index.js — keep these in sync.
-const PRODUCT_SCOPE_TERMS = [
-  'deodorant', 'antiperspirant',
-  'toothpaste', 'tooth paste', 'oral',
-  'lotion', 'moisturizer', 'moisturiser',
-  'cream', 'body butter',
-  'soap',
-  'lip balm', 'lip',
-  'coconut oil',
-];
-export function isInProductScope(keyword) {
-  const kw = (keyword || '').toLowerCase();
-  return PRODUCT_SCOPE_TERMS.some((t) => kw.includes(t));
-}
+// Product-scope guard: isInProductScope / PRODUCT_SCOPE_TERMS now live in
+// lib/product-scope.js (imported + re-exported at the top of this file) so
+// other agents can reuse them without importing this agent module.
 
 // Persist an auto-rejection so future strategist runs skip the same off-scope
 // keyword without us needing to remember it. matchType is "contains" by default
