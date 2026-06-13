@@ -194,6 +194,12 @@ function loadSeoImpact() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
+function loadPrioritizer() {
+  const path = join(ROOT, 'data', 'reports', 'pipeline-prioritizer', 'latest.json');
+  if (!existsSync(path)) return null;
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+
 /**
  * Load the latest post-performance review output (produced by post-performance agent).
  * Returns { reviews_today, action_required } or null if unavailable.
@@ -289,7 +295,7 @@ export function formatBodyHtml(text) {
   }).join('\n');
 }
 
-export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = [], seoImpact = null) {
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -481,6 +487,39 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
         ${topClusters ? `<div class="qw-meta" style="margin-top:10px;"><strong>By cluster:</strong> ${topClusters}</div>` : ''}
         ${notConv ? `<div class="qw-meta" style="margin-top:6px;color:#92400e;"><strong>Traffic, no sales:</strong> ${notConv} &mdash; conversion opportunities</div>` : ''}
       </div>`;
+  }
+
+  // Pipeline Priority — backlog depth, buffer, promotions, injections, suggestions, alerts
+  let prioritizerSection = '';
+  if (prioritizer) {
+    const pp = prioritizer;
+    let phtml = `<div class="section quick-wins"><div class="section-title">&#128203; Pipeline Priority</div>`;
+    phtml += `<p style="font-size:13px;margin:0 0 12px 0;">Backlog <strong>${pp.backlog_depth}</strong> ideas &middot; buffer <strong>${pp.buffer_ready}/${pp.buffer_target}</strong></p>`;
+    if (pp.promotions && pp.promotions.length) {
+      phtml += `<p style="font-size:12px;font-weight:600;color:#1f2937;margin:0 0 4px 0;">Fast-tracked / written next:</p>`;
+      for (const x of pp.promotions) {
+        phtml += `<div class="quick-win-row"><div class="qw-body"><div class="qw-title">${esc(x.slug)}</div><div class="qw-meta">${esc(x.publish_date ? x.publish_date.slice(0, 10) : '')} &middot; ${esc(x.reason)}</div></div></div>`;
+      }
+    }
+    if (pp.injections && pp.injections.length) {
+      phtml += `<p style="font-size:12px;font-weight:600;color:#1f2937;margin:12px 0 4px 0;">New ideas queued:</p>`;
+      for (const x of pp.injections) {
+        phtml += `<div class="quick-win-row"><div class="qw-body"><div class="qw-title">${esc(x.keyword)}</div><div class="qw-meta">${esc(x.why)}</div></div></div>`;
+      }
+    }
+    if (pp.suggestions && pp.suggestions.length) {
+      phtml += `<p style="font-size:12px;font-weight:600;color:#1f2937;margin:12px 0 4px 0;">Suggested (confirm):</p>`;
+      for (const x of pp.suggestions.slice(0, 5)) {
+        phtml += `<div class="quick-win-row"><div class="qw-body"><div class="qw-title">${esc(x.key)}</div><div class="qw-meta">${esc(x.reason)}</div></div></div>`;
+      }
+    }
+    if (pp.alerts && pp.alerts.length) {
+      phtml += `<p style="font-size:12px;font-weight:700;color:#92400e;margin:12px 0 4px 0;">&#9888;&#65039; Alerts:</p><ul style="font-size:12px;color:#92400e;margin:0;padding-left:18px;">`;
+      for (const a of pp.alerts) phtml += `<li>${esc(a)}</li>`;
+      phtml += '</ul>';
+    }
+    phtml += '</div>';
+    prioritizerSection = phtml;
   }
 
   // Post performance flops — surfaced as Action Required (below blockers, above quick-wins)
@@ -718,7 +757,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     healthSection = `<div class="action-required"><div class="section-title">&#9888;&#65039; System Health — ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}</div>${rows}</div>`;
   }
 
-  const nothingToReport = !healthSection && !seoImpactSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
+  const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
@@ -727,6 +766,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
   ${healthSection}
   ${seoImpactSection}
+  ${prioritizerSection}
   ${reviewSection}
   ${blockedImagesSection}
   ${queueSection}
@@ -793,10 +833,11 @@ function checkSystemHealth() {
   //   gsc-opportunity: daily      → 2
   //   quick-wins:      weekly Mon → 9
   const reports = [
-    { name: 'gsc-opportunity report', path: join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json'), maxAgeDays: 2 },
-    { name: 'quick-wins report',      path: join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json'),      maxAgeDays: 9 },
-    { name: 'seo-impact report',      path: join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'),      maxAgeDays: 9 },
-    { name: 'publish-drift report',   path: join(ROOT, 'data', 'reports', 'publish-drift', 'latest.json'),   maxAgeDays: 2 },
+    { name: 'gsc-opportunity report',      path: join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json'),      maxAgeDays: 2 },
+    { name: 'quick-wins report',            path: join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json'),            maxAgeDays: 9 },
+    { name: 'seo-impact report',            path: join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'),            maxAgeDays: 9 },
+    { name: 'publish-drift report',         path: join(ROOT, 'data', 'reports', 'publish-drift', 'latest.json'),         maxAgeDays: 2 },
+    { name: 'pipeline-prioritizer report',  path: join(ROOT, 'data', 'reports', 'pipeline-prioritizer', 'latest.json'), maxAgeDays: 2 },
   ];
   const reportResults = checkFreshness(
     reports.map(r => ({ name: r.name, newestDate: newestReportDate(r.path), maxAgeDays: r.maxAgeDays })),
@@ -857,6 +898,7 @@ async function main() {
   // Load latest quick-win targets from data/reports/quick-wins/latest.json
   const quickWins = loadQuickWinTargets();
   const seoImpact = loadSeoImpact();
+  const prioritizer = loadPrioritizer();
 
   // Load latest post-performance review output
   const postPerformance = loadPostPerformance();
@@ -888,7 +930,7 @@ async function main() {
     }).catch(() => {});
   }
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues, seoImpact);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues, seoImpact, prioritizer);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
