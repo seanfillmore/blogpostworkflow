@@ -64,6 +64,11 @@ DAILY_CAMPAIGN_MONITOR="30 7 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" &&
 HOURLY_CAMPAIGN_STATUS="0 * * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-status-checker/index.js --scheduled >> data/logs/campaign-status-checker.log 2>&1"
 FREQUENT_CAMPAIGN_AD_FIXER="5 * * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-ad-fixer/index.js --scheduled >> data/logs/campaign-ad-fixer.log 2>&1"
 
+# Publish-drift detector (daily) — alerts when a post we consider published has
+# reverted to a Shopify draft (or vanished). Detect+alert only; remediate with
+# --fix manually so it never fights an intentional unpublish.
+DAILY_PUBLISH_DRIFT="45 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/publish-drift/index.js >> data/reports/scheduler/publish-drift.log 2>&1"
+
 # Performance engine (daily)
 DAILY_PERFORMANCE_ENGINE="30 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/performance-engine/index.js >> data/logs/performance-engine.log 2>&1"
 
@@ -126,6 +131,8 @@ $DAILY_ADS_OPTIMIZER
 $DAILY_CAMPAIGN_MONITOR
 $HOURLY_CAMPAIGN_STATUS
 $FREQUENT_CAMPAIGN_AD_FIXER
+# ── Publish-drift detector (daily) ──
+$DAILY_PUBLISH_DRIFT
 # ── Performance engine (daily) ──
 $DAILY_PERFORMANCE_ENGINE
 # ── Daily digest ──
@@ -173,6 +180,7 @@ echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"
 echo "  13:30 UTC — rank-alerter"
+echo "  13:45 UTC — publish-drift detector"
 echo "  15:00 UTC — scheduler (publish-due + pipeline)"
 echo "  16:00 UTC — pipeline-scheduler (brief drip)"
 echo ""
