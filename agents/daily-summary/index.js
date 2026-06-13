@@ -796,6 +796,7 @@ function checkSystemHealth() {
     { name: 'gsc-opportunity report', path: join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json'), maxAgeDays: 2 },
     { name: 'quick-wins report',      path: join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json'),      maxAgeDays: 9 },
     { name: 'seo-impact report',      path: join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'),      maxAgeDays: 9 },
+    { name: 'publish-drift report',   path: join(ROOT, 'data', 'reports', 'publish-drift', 'latest.json'),   maxAgeDays: 2 },
   ];
   const reportResults = checkFreshness(
     reports.map(r => ({ name: r.name, newestDate: newestReportDate(r.path), maxAgeDays: r.maxAgeDays })),

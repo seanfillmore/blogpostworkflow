@@ -337,11 +337,32 @@ async function audit() {
   // ── ERRORS ──
   sections.push('## 🔴 Errors (Fix Immediately)\n');
 
-  // 404 pages
-  const p404 = csvs['Error-404_page'] || csvs['Error-4XX_page'] || [];
+  // 404 pages. Two corrections vs the raw crawl:
+  //   1. Drop cdn-cgi/l/email-protection — Cloudflare footer-email obfuscation that
+  //      Ahrefs/DataForSEO flag as 404s; false positives, not fixable via content.
+  //   2. HEAD-verify each still-404 live before listing. The crawl is a point-in-time
+  //      snapshot (≤14d old) — pages republished/fixed since then return 200 now and
+  //      should not be reported (this is what made 5/13 of the last run stale).
+  const p404raw = (csvs['Error-404_page'] || csvs['Error-4XX_page'] || [])
+    .filter((r) => !(r.url || '').includes('cdn-cgi/l/email-protection'));
+  const cdn404Count = (csvs['Error-404_page'] || csvs['Error-4XX_page'] || []).length - p404raw.length;
+  const pathFromUrl = (u) => { try { return new URL(u).pathname; } catch { return u; } };
+  const stillBroken = [];
+  let healed404 = 0;
+  for (const r of p404raw) {
+    const status = await headVerify(pathFromUrl(r.url));
+    if (status === 200) { healed404++; continue; } // fixed since the crawl
+    stillBroken.push(r);
+  }
+  const p404 = stillBroken;
   const blogsWithLinks404 = p404.filter((r) => parseInt(r['no._of_all_inlinks'] || '0') > 0);
   sections.push(`### 1. Broken Pages (404) — ${p404.length} pages`);
-  sections.push(`${blogsWithLinks404.length} have inbound internal links (create redirects). ${p404.length - blogsWithLinks404.length} are orphans.\n`);
+  sections.push(`${blogsWithLinks404.length} have inbound internal links (create redirects). ${p404.length - blogsWithLinks404.length} are orphans.`);
+  const note404 = [];
+  if (cdn404Count > 0) note404.push(`${cdn404Count} cdn-cgi/email-protection false positive(s) filtered`);
+  if (healed404 > 0) note404.push(`${healed404} already fixed since the crawl (now 200, HEAD-verified)`);
+  if (note404.length) sections.push(`> ℹ️ ${note404.join('; ')}.`);
+  sections.push('');
   sections.push('**Fixable with:** `fix-links` + `create-redirects`');
   sections.push('| PR | URL | Inlinks |');
   sections.push('|----|-----|---------|');
