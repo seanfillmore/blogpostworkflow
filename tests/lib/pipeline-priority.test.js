@@ -25,3 +25,52 @@ test('scoreBase: low-KD bonus added', () => {
 test('scoreBase: missing fields default safely', () => {
   assert.equal(scoreBase({}, CFG), 0);
 });
+
+import { classify } from '../../lib/pipeline-priority.js';
+
+const SCFG = {
+  strongThreshold: 30,
+  signals: {
+    unmapped:        { minImpressions: 500, strongImpressions: 3000, perImpression: 0.01, cap: 40 },
+    rank_drop:       { strongPositions: 5, perPosition: 3, cap: 40, trafficStrongPct: 20 },
+    revenue_cluster: { minDelta: 25, strongDelta: 100, perDollar: 0.2, cap: 30 },
+    competitor_gap:  { boost: 15, cap: 30 },
+    ai_gap:          { boost: 12, cap: 24 },
+  },
+};
+
+test('classify unmapped: score from impressions, strong over cap', () => {
+  const r = classify({ type: 'unmapped', strength: 2000, label: 'unmapped 2000 impr' }, SCFG);
+  assert.equal(r.score, 20);          // 2000 * 0.01
+  assert.equal(r.strong, false);      // < 3000 and < strongThreshold
+  assert.match(r.provenance, /\+20/);
+});
+
+test('classify unmapped: strong when impressions exceed strongImpressions', () => {
+  const r = classify({ type: 'unmapped', strength: 5000 }, SCFG);
+  assert.equal(r.score, 40);          // capped
+  assert.equal(r.strong, true);
+});
+
+test('classify rank_drop: strong at >=5 positions', () => {
+  const r = classify({ type: 'rank_drop', strength: 8 }, SCFG);
+  assert.equal(r.score, 24);          // 8 * 3
+  assert.equal(r.strong, true);       // >= strongPositions
+});
+
+test('classify revenue_cluster: scaled by dollars, strong over strongDelta', () => {
+  const r = classify({ type: 'revenue_cluster', strength: 111.8 }, SCFG);
+  assert.equal(r.score, 22);          // round(111.8 * 0.2)
+  assert.equal(r.strong, true);       // >= 100
+});
+
+test('classify competitor_gap: fixed boost, never strong on its own', () => {
+  const r = classify({ type: 'competitor_gap', strength: 1 }, SCFG);
+  assert.equal(r.score, 15);
+  assert.equal(r.strong, false);
+});
+
+test('classify: score crossing strongThreshold forces strong', () => {
+  const r = classify({ type: 'rank_drop', strength: 11 }, SCFG); // 33 >= 30
+  assert.equal(r.strong, true);
+});
