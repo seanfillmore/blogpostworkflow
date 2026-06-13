@@ -113,8 +113,59 @@ export function parseEditorReports() {
   return out;
 }
 
+// Resolve which snapshots to use as comparison baselines for the rankings
+// change column. Snapshots are taken irregularly (not daily), so fixed windows
+// (30d/90d) resolve to the nearest available snapshot and may collapse onto the
+// same file as Previous or Max — those duplicates are dropped. `files` is the
+// list of snapshot filenames sorted most-recent-first; `latestDate` is files[0]'s
+// date. Returns baselines ordered by recency (Previous → 30d → 90d → Max).
+function resolveRankBaselines(files, latestDate) {
+  if (files.length < 2) return [];
+  const dayMs = 86400000;
+  const dateOf = f => f.slice(0, 10);
+  const msOf   = d => new Date(d + 'T00:00:00Z').getTime();
+  const latestMs = msOf(latestDate);
+  const daysBetween = d => Math.round((latestMs - msOf(d)) / dayMs);
+
+  // Older snapshots only (everything after files[0]).
+  const older = files.slice(1);
+
+  // Snapshot whose date is closest to (latestDate - targetDays), among older snapshots.
+  const closestTo = (targetDays) => {
+    const targetMs = latestMs - targetDays * dayMs;
+    let best = null, bestDiff = Infinity;
+    for (const f of older) {
+      const diff = Math.abs(msOf(dateOf(f)) - targetMs);
+      if (diff < bestDiff) { bestDiff = diff; best = f; }
+    }
+    return best;
+  };
+
+  // Candidates, in dedup-priority order: Max and Previous always survive; the
+  // fixed windows yield only when they resolve to a distinct snapshot.
+  const candidates = [
+    { key: 'max',      label: 'Max',      file: older[older.length - 1] },
+    { key: 'previous', label: 'Previous', file: older[0] },
+    { key: 'd30',      label: '30d',      file: closestTo(30) },
+    { key: 'd90',      label: '90d',      file: closestTo(90) },
+  ];
+
+  const usedDates = new Set();
+  const kept = [];
+  for (const c of candidates) {
+    if (!c.file) continue;
+    const date = dateOf(c.file);
+    if (usedDates.has(date)) continue;
+    usedDates.add(date);
+    kept.push({ ...c, date, days: daysBetween(date) });
+  }
+
+  // Display order: most recent baseline first (fewest days back).
+  return kept.sort((a, b) => a.days - b.days);
+}
+
 export function parseRankings(device = 'desktop') {
-  const empty = { latestDate: null, previousDate: null, device, items: [], summary: { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 } };
+  const empty = { latestDate: null, previousDate: null, device, items: [], baselines: [], defaultBaseline: null, summary: { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 } };
   if (!existsSync(SNAPSHOTS_DIR)) return empty;
 
   // Match device-suffixed snapshot files (YYYY-MM-DD-<device>.json). For
@@ -131,29 +182,46 @@ export function parseRankings(device = 'desktop') {
   });
   if (!files.length) return empty;
 
-  const latest   = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[0]), 'utf8'));
-  const previous = files[1] ? JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[1]), 'utf8')) : null;
+  const latest = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[0]), 'utf8'));
 
-  const prevPostMap = {};
-  for (const p of previous?.posts ?? []) prevPostMap[p.slug] = p.position;
-  const prevKwMap = {};
-  for (const p of previous?.allKeywords ?? []) prevKwMap[p.keyword] = p.position;
+  // Resolve comparison baselines and load each baseline's position maps once.
+  const baselineDefs = resolveRankBaselines(files, latest.date);
+  // Default to the oldest baseline (Max) so the change column shows growth over
+  // the full extent of data; fall back to whatever exists for tiny histories.
+  const defaultBaseline = baselineDefs.some(b => b.key === 'max')
+    ? 'max'
+    : (baselineDefs[baselineDefs.length - 1]?.key ?? null);
 
-  const toItem = (p, prev, tracked) => {
-    const change = (p.position != null && prev != null) ? prev - p.position : null;
-    const tier   = !p.position       ? 'notRanking'
-                 : p.position <= 10  ? 'page1'
-                 : p.position <= 20  ? 'quickWins'
-                 : 'needsWork';
-    return { ...p, previousPosition: prev, change, tier, tracked };
+  const baselineMaps = {}; // key -> { posts: {slug:pos}, kws: {kw:pos} }
+  for (const b of baselineDefs) {
+    const snap = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, b.file), 'utf8'));
+    const postMap = {}, kwMap = {};
+    for (const p of snap.posts ?? []) postMap[p.slug] = p.position;
+    for (const p of snap.allKeywords ?? []) kwMap[p.keyword] = p.position;
+    baselineMaps[b.key] = { posts: postMap, kws: kwMap };
+  }
+
+  const changeFrom = (prev, pos) => (pos != null && prev != null) ? prev - pos : null;
+
+  // Build an item from a latest-snapshot row. `mapKey` selects which baseline map
+  // ('posts' or 'kws') to read, `idKey` the field that keys it ('slug' or 'keyword').
+  const toItem = (p, mapKey, idKey, tracked) => {
+    const id = p[idKey];
+    const changes = {}; // per-baseline change; the selector picks which to show
+    for (const b of baselineDefs) {
+      changes[b.key] = changeFrom(baselineMaps[b.key][mapKey][id] ?? null, p.position);
+    }
+    const defPrev = defaultBaseline ? (baselineMaps[defaultBaseline][mapKey][id] ?? null) : null;
+    const tier = !p.position       ? 'notRanking'
+               : p.position <= 10  ? 'page1'
+               : p.position <= 20  ? 'quickWins'
+               : 'needsWork';
+    // change/previousPosition keep the default baseline's values for backward compat.
+    return { ...p, changes, previousPosition: defPrev, change: changes[defaultBaseline] ?? null, tier, tracked };
   };
 
-  const trackedItems = (latest.posts ?? []).map(p =>
-    toItem(p, prevPostMap[p.slug] ?? null, true)
-  );
-  const allKwItems = (latest.allKeywords ?? []).map(p =>
-    toItem(p, prevKwMap[p.keyword] ?? null, false)
-  );
+  const trackedItems = (latest.posts ?? []).map(p => toItem(p, 'posts', 'slug', true));
+  const allKwItems   = (latest.allKeywords ?? []).map(p => toItem(p, 'kws', 'keyword', false));
 
   const items = [...trackedItems, ...allKwItems].sort((a, b) => {
     if (a.position == null && b.position == null) return 0;
@@ -165,7 +233,16 @@ export function parseRankings(device = 'desktop') {
   const summary = items.reduce((acc, x) => { acc[x.tier]++; return acc; },
     { page1: 0, quickWins: 0, needsWork: 0, notRanking: 0 });
 
-  return { latestDate: latest.date, previousDate: previous?.date ?? null, device, items, summary };
+  const previousBaseline = baselineDefs.find(b => b.key === 'previous');
+  return {
+    latestDate: latest.date,
+    previousDate: previousBaseline?.date ?? null,
+    device,
+    items,
+    baselines: baselineDefs.map(({ key, label, date, days }) => ({ key, label, date, days })),
+    defaultBaseline,
+    summary,
+  };
 }
 
 export function parseCROData() {

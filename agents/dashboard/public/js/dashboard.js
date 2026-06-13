@@ -1455,6 +1455,17 @@ function setRankDevice(device) {
   if (typeof data !== 'undefined' && data) renderRankings(data);
 }
 
+// Comparison baseline for the change column ('previous' | 'd30' | 'd90' | 'max').
+// null = use the dataset's default (Max). Resolved against the available
+// baselines each render so it never points at a window the data doesn't have.
+var rankBaseline = typeof rankBaseline === 'undefined' ? null : rankBaseline;
+
+function setRankBaseline(key) {
+  rankBaseline = key;
+  rankPage = 0;
+  if (typeof data !== 'undefined' && data) renderRankings(data);
+}
+
 function renderRankings(d) {
   // Fall back to desktop if the requested device has no data yet
   const desktopR = d.rankings;
@@ -1477,7 +1488,27 @@ function renderRankings(d) {
       '</div>'
     : '';
 
-  const note = r.latestDate ? r.latestDate + (r.previousDate ? ' vs ' + r.previousDate : '') : '';
+  // Comparison baseline selector — drives the change column. Resolve the active
+  // baseline against what this dataset actually has so a stale selection (or a
+  // device with a shorter history) gracefully falls back to the default (Max).
+  const baselines = r.baselines || [];
+  let activeBaseline = (rankBaseline && baselines.some(function(b) { return b.key === rankBaseline; }))
+    ? rankBaseline
+    : (r.defaultBaseline || (baselines.length ? baselines[baselines.length - 1].key : null));
+  const baselineToggle = (baselines.length > 1)
+    ? '<div style="display:flex;gap:4px;margin-bottom:8px;align-items:center">' +
+        '<span style="font-size:12px;color:#6b7280;margin-right:2px">Compare vs:</span>' +
+        baselines.map(function(b) {
+          const lbl = b.label + (b.days != null ? ' (' + b.days + 'd)' : '');
+          return '<button class="filter-btn' + (b.key === activeBaseline ? ' active' : '') + '" onclick="setRankBaseline(\'' + b.key + '\')">' + esc(lbl) + '</button>';
+        }).join('') +
+      '</div>'
+    : '';
+
+  const activeBaselineDef = baselines.find(function(b) { return b.key === activeBaseline; });
+  const baselineDate = activeBaselineDef ? activeBaselineDef.date : r.previousDate;
+  const baselineDays = activeBaselineDef && activeBaselineDef.days != null ? ' (' + activeBaselineDef.days + ' days)' : '';
+  const note = r.latestDate ? r.latestDate + (baselineDate ? ' vs ' + baselineDate + baselineDays : '') : '';
   document.getElementById('rank-note').textContent = note + (rankDevice === 'mobile' ? ' (mobile)' : '');
 
   const tierBadge = function(t) {
@@ -1497,6 +1528,14 @@ function renderRankings(d) {
   // ── apply search ──
   const q = rankSearch.toLowerCase();
   let items = q ? r.items.filter(function(x) { return x.keyword.toLowerCase().indexOf(q) !== -1; }) : r.items.slice();
+
+  // Resolve each item's change to the selected baseline (clone so the shared
+  // data object keeps its default-baseline values). Downstream filter/sort/render
+  // all read x.change, so they pick up the selection automatically.
+  items = items.map(function(x) {
+    const c = (x.changes && activeBaseline != null && (activeBaseline in x.changes)) ? x.changes[activeBaseline] : x.change;
+    return Object.assign({}, x, { change: c });
+  });
 
   // ── apply filters ──
   if (rankFilters.position !== 'all') {
@@ -1637,7 +1676,7 @@ function renderRankings(d) {
     '</div>';
 
   document.getElementById('rankings-table').innerHTML =
-    deviceToggle + searchBar + chipsHtml +
+    deviceToggle + baselineToggle + searchBar + chipsHtml +
     '<table><thead><tr>' +
     thHtml('Keyword', 'keyword', null, []) +
     thHtml('Position', 'position', 'position', posOpts) +
