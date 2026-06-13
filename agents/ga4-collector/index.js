@@ -21,7 +21,16 @@ const SNAPSHOTS_DIR = join(ROOT, 'data', 'snapshots', 'ga4');
 
 const dateArg = process.argv.find(a => a.startsWith('--date='))?.split('=')[1]
   ?? (process.argv.includes('--date') ? process.argv[process.argv.indexOf('--date') + 1] : null);
-const date = dateArg || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+// Default to 2 days ago (PT), NOT today. GA4 purchase/ecommerce revenue takes
+// ~24-48h to finalize, so snapshotting "today" captured ~$0 revenue every day
+// (the daily snapshots all showed $0 even though GA4 had the sales). Two days
+// back guarantees finalized monetization data in the snapshot.
+function defaultDate() {
+  const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  ptNow.setDate(ptNow.getDate() - 2);
+  return ptNow.toLocaleDateString('en-CA');
+}
+const date = dateArg || defaultDate();
 
 if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
   console.error('Invalid date format. Expected YYYY-MM-DD.');
