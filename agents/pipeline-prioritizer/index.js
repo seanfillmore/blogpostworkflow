@@ -62,6 +62,15 @@ function slugForKeyword(keyword) {
   return null;
 }
 
+// Re-pull current volume for a keyword at promotion time. Returns the live
+// monthly volume (number) or null if unavailable. Single keyword → one cheap call.
+async function currentVolume(keyword) {
+  try {
+    const [row] = await getSearchVolume([keyword]);
+    return row?.volume ?? null;
+  } catch { return null; }
+}
+
 // ── adapters: on-disk report → normalized signals ───────────────────────────
 function collectSignals(today) {
   const out = [];
@@ -247,9 +256,21 @@ async function main() {
     });
   }
 
-  // 3) promote: assign publish_date to the chosen ideas
+  // 3) promote: re-validate demand, then assign publish_date
+  const MIN_VOL = cfg.signals.unmapped.minImpressions; // reuse demand floor
   for (const p of plan.promotions) {
-    upsertItem({ slug: p.slug, publish_date: p.publish_date, original_publish_date: p.publish_date });
+    const item = calendar.items.find((i) => i.slug === p.slug);
+    const kw = item?.keyword || plan.scored.find((i) => i.slug === p.slug)?.keyword;
+    const vol = kw ? await currentVolume(kw) : null;
+    if (vol != null && vol < MIN_VOL) {
+      console.log(`  skip promote ${p.slug}: demand cratered (vol ${vol} < ${MIN_VOL})`);
+      payload.promotions = payload.promotions.filter((x) => x.slug !== p.slug);
+      continue;
+    }
+    upsertItem({
+      slug: p.slug, publish_date: p.publish_date, original_publish_date: p.publish_date,
+      ...(vol != null ? { volume: vol } : {}),
+    });
   }
 
   // 4) persist signal state + report
