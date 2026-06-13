@@ -104,3 +104,31 @@ test('hysteresis: a signal absent this run resets (not carried forward)', () => 
   const { state } = applyHysteresis([], prior, '2026-06-15', HCFG);
   assert.equal(state['unmapped:x'], undefined); // dropped — must re-accumulate
 });
+
+import { clusterSpacingOk, refreshCooldownOk } from '../../lib/pipeline-priority.js';
+
+const GCFG = { ...HCFG, clusterSpacingDays: 14, clusterSpacingMax: 2, refreshCooldownDays: 45 };
+
+test('clusterSpacingOk: under the cap within the window → ok', () => {
+  const recent = { toothpaste: ['2026-06-10', '2026-06-02'] }; // 2 in last 14d? 06-02 is 13 days before 06-15
+  // window from 2026-06-15 back 14 days = >= 2026-06-01; both count = 2 >= max → NOT ok
+  assert.equal(clusterSpacingOk('toothpaste', recent, '2026-06-15', GCFG), false);
+});
+
+test('clusterSpacingOk: old posts outside window do not count', () => {
+  const recent = { toothpaste: ['2026-05-01', '2026-05-10'] }; // both > 14 days ago
+  assert.equal(clusterSpacingOk('toothpaste', recent, '2026-06-15', GCFG), true);
+});
+
+test('clusterSpacingOk: unknown cluster is always ok', () => {
+  assert.equal(clusterSpacingOk('newcluster', {}, '2026-06-15', GCFG), true);
+});
+
+test('refreshCooldownOk: refreshed within cooldown → not ok', () => {
+  const last = { 'natural-deodorant-for-men': '2026-06-01' }; // 14 days ago < 45
+  assert.equal(refreshCooldownOk('natural-deodorant-for-men', last, '2026-06-15', GCFG), false);
+});
+
+test('refreshCooldownOk: never refreshed → ok', () => {
+  assert.equal(refreshCooldownOk('brand-new-post', {}, '2026-06-15', GCFG), true);
+});
