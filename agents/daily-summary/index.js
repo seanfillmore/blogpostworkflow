@@ -25,7 +25,9 @@
 import { readFileSync, readdirSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sendHtmlEmail } from '../../lib/notify.js';
+import { sendHtmlEmail, notify } from '../../lib/notify.js';
+import { execSync } from 'node:child_process';
+import { checkFreshness, problems, newestSnapshotDate } from '../../lib/snapshot-health.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -226,7 +228,7 @@ function loadPerformanceQueue() {
 /**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl) {
+function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = []) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -618,13 +620,24 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
     }
   }
 
-  const nothingToReport = !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
+  // System-health section — only shown when something is wrong (mirrors the
+  // "silent on success" convention). Surfaces stale/missing snapshot feeds and
+  // leftover git stashes so a silent data outage can't hide behind a normal-
+  // looking digest.
+  let healthSection = '';
+  if (healthIssues.length) {
+    const rows = healthIssues.map(i => `<div class="blocked-post"><div class="title">${esc(i.title)}</div><div class="blockers">${esc(i.detail)}</div></div>`).join('');
+    healthSection = `<div class="action-required"><div class="section-title">&#9888;&#65039; System Health — ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}</div>${rows}</div>`;
+  }
+
+  const nothingToReport = !healthSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
   <h1>Daily Recap</h1>
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
+  ${healthSection}
   ${reviewSection}
   ${blockedImagesSection}
   ${queueSection}
@@ -644,6 +657,56 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
   ${otherSection}
   <div class="footer"><a href="${esc(dashboardUrl)}" style="color:#6b7280;">Open Dashboard</a></div>
 </body></html>`;
+}
+
+/**
+ * Check that every data feed is still updating and that no git stashes were
+ * left behind by a deploy. Returns a list of {title, detail} issues for the
+ * digest. Catches the *silent* failure mode error-driven alerts miss — a cron
+ * that stops firing produces no error, just quietly stale data.
+ */
+function checkSystemHealth() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Every feed here is written daily; default 2-day threshold tolerates the
+  // intraday window where today's file isn't written yet, while still catching
+  // a real multi-day outage.
+  const sources = [
+    { name: 'rank-snapshots', dir: join(ROOT, 'data', 'rank-snapshots') },
+    { name: 'gsc',     dir: join(ROOT, 'data', 'snapshots', 'gsc') },
+    { name: 'ga4',     dir: join(ROOT, 'data', 'snapshots', 'ga4') },
+    { name: 'clarity', dir: join(ROOT, 'data', 'snapshots', 'clarity') },
+    { name: 'shopify', dir: join(ROOT, 'data', 'snapshots', 'shopify') },
+    { name: 'google-ads', dir: join(ROOT, 'data', 'snapshots', 'google-ads') },
+  ];
+
+  const results = checkFreshness(
+    sources.map(s => ({ name: s.name, newestDate: newestSnapshotDate(s.dir) })),
+    { today },
+  );
+
+  const issues = problems(results).map(r => ({
+    title: `Data feed "${r.name}" is ${r.status}`,
+    detail: r.status === 'missing'
+      ? `No snapshots found in data/snapshots for "${r.name}". Its collector may have never run.`
+      : `Latest snapshot is ${r.ageDays} days old (${r.newestDate}); expected within ${r.maxAgeDays} days. The collector likely stopped running.`,
+  }));
+
+  // Leftover git stashes — per the deploy hygiene rule the list should be empty
+  // outside an active deploy. A non-empty list means a past `git stash pop` was
+  // skipped and data updates are stranded.
+  try {
+    const stashList = execSync('git stash list', { cwd: ROOT, encoding: 'utf8' }).trim();
+    const stashCount = stashList ? stashList.split('\n').length : 0;
+    if (stashCount > 0) {
+      issues.push({
+        title: `${stashCount} leftover git stash${stashCount > 1 ? 'es' : ''} on the server`,
+        detail: `\`git stash list\` should be empty outside a deploy. Run \`git stash list\` and reconcile — a skipped \`git stash pop\` strands data updates.`,
+      });
+    }
+  } catch { /* not a git checkout / git unavailable — skip silently */ }
+
+  return issues;
 }
 
 async function main() {
@@ -691,7 +754,21 @@ async function main() {
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl);
+  // System-health check — stale/missing data feeds and leftover stashes. Fire an
+  // immediate error alert (errors bypass digest deferral) so a silent outage is
+  // noticed within a day, then also surface it in the digest itself.
+  const healthIssues = checkSystemHealth();
+  if (healthIssues.length) {
+    log(`System health: ${healthIssues.length} issue(s) — ${healthIssues.map(i => i.title).join('; ')}`);
+    await notify({
+      subject: `⚠️ System health: ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}`,
+      body: healthIssues.map(i => `- ${i.title}\n  ${i.detail}`).join('\n\n'),
+      status: 'error',
+      category: 'ops',
+    }).catch(() => {});
+  }
+
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
