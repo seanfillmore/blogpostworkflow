@@ -228,7 +228,28 @@ function loadPerformanceQueue() {
 /**
  * Build the HTML email body.
  */
-function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = []) {
+/**
+ * Build a clean, bounded preview of a notification body for the email digest.
+ * Collapses runs of blank lines, then truncates to whole lines (and a char cap),
+ * appending an ellipsis when cut. Truncating server-side to complete lines is
+ * what prevents mobile clients from rendering a half-cut line — the old approach
+ * relied on a fixed-pixel CSS max-height, which clipped mid-line on small screens.
+ */
+export function previewBody(body, { maxLines = 8, maxChars = 600 } = {}) {
+  if (!body) return '';
+  const collapsed = String(body).replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  const lines = collapsed.split('\n');
+  let text = lines.slice(0, maxLines).join('\n');
+  let truncated = lines.length > maxLines;
+  if (text.length > maxChars) {
+    text = text.slice(0, maxChars);
+    truncated = true;
+  }
+  if (truncated) text = text.replace(/\s+$/, '') + ' …';
+  return text;
+}
+
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = []) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -257,7 +278,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
     .entry { margin-bottom: 10px; font-size: 13px; }
     .entry-subject { font-weight: 500; }
     .entry-time { color: #9ca3af; font-size: 12px; }
-    .entry-body { color: #6b7280; font-size: 12px; white-space: pre-wrap; margin-top: 2px; max-height: 120px; overflow: hidden; }
+    .entry-body { color: #6b7280; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word; margin-top: 2px; }
     .image-grid { display: flex; flex-wrap: wrap; gap: 12px; }
     .image-card { text-align: center; width: 140px; }
     .image-card img { width: 140px; height: 79px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; }
@@ -295,7 +316,7 @@ function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quic
     if (!items.length) return '<p class="empty">Nothing to report.</p>';
     return items.map(e => {
       const icon = e.status === 'success' ? '&#9989;' : e.status === 'error' ? '&#10060;' : '&#8505;&#65039;';
-      const bodyPreview = e.body ? `<div class="entry-body">${esc(e.body.slice(0, 500))}</div>` : '';
+      const bodyPreview = e.body ? `<div class="entry-body">${esc(previewBody(e.body))}</div>` : '';
       return `<div class="entry">
         <div><span>${icon}</span> <span class="entry-subject">${esc(e.subject)}</span> <span class="entry-time">${formatTime(e.ts)}</span></div>
         ${bodyPreview}
@@ -793,7 +814,11 @@ async function main() {
   log('Daily summary sent.');
 }
 
-main().catch(err => {
-  log(`Fatal: ${err.message}`);
-  process.exit(1);
-});
+// Only run when invoked directly (so tests can import previewBody/buildDigestHtml
+// without sending an email).
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch(err => {
+    log(`Fatal: ${err.message}`);
+    process.exit(1);
+  });
+}
