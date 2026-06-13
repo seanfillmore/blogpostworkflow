@@ -27,7 +27,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
-import { checkFreshness, problems, newestSnapshotDate } from '../../lib/snapshot-health.js';
+import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -751,6 +751,29 @@ function checkSystemHealth() {
       ? `No snapshots found in data/snapshots for "${r.name}". Its collector may have never run.`
       : `Latest snapshot is ${r.ageDays} days old (${r.newestDate}); expected within ${r.maxAgeDays} days. The collector likely stopped running.`,
   }));
+
+  // Derived analysis reports (latest.json) — these drive decisions (the email
+  // sections, performance-engine, the strategist), so a stale report silently
+  // feeds old data into live actions. Freshness comes from each file's
+  // generated_at. Thresholds match each producer's cadence + grace:
+  //   gsc-opportunity: daily      → 2
+  //   quick-wins:      weekly Mon → 9
+  const reports = [
+    { name: 'gsc-opportunity report', path: join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json'), maxAgeDays: 2 },
+    { name: 'quick-wins report',      path: join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json'),      maxAgeDays: 9 },
+  ];
+  const reportResults = checkFreshness(
+    reports.map(r => ({ name: r.name, newestDate: newestReportDate(r.path), maxAgeDays: r.maxAgeDays })),
+    { today },
+  );
+  for (const r of problems(reportResults)) {
+    issues.push({
+      title: `Analysis report "${r.name}" is ${r.status}`,
+      detail: r.status === 'missing'
+        ? `${r.name} has never been generated (no latest.json). Its producer agent isn't running.`
+        : `${r.name} is ${r.ageDays} days old (generated ${r.newestDate}); expected within ${r.maxAgeDays} days. Downstream decisions are running on stale data.`,
+    });
+  }
 
   // Leftover git stashes — per the deploy hygiene rule the list should be empty
   // outside an active deploy. A non-empty list means a past `git stash pop` was

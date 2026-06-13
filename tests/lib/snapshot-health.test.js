@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { checkFreshness, problems, newestSnapshotDate, DEFAULT_MAX_AGE_DAYS } from '../../lib/snapshot-health.js';
+import { checkFreshness, problems, newestSnapshotDate, newestReportDate, DEFAULT_MAX_AGE_DAYS } from '../../lib/snapshot-health.js';
 
 const TODAY = '2026-06-13';
 
@@ -83,6 +83,21 @@ test('newestSnapshotDate: returns null for an empty or missing directory', () =>
   const dir = mkdtempSync(join(tmpdir(), 'snaps-empty-'));
   assert.equal(newestSnapshotDate(dir), null);
   assert.equal(newestSnapshotDate(join(dir, 'does-not-exist')), null);
+});
+
+test('newestReportDate: reads the generated_at date from a latest.json report', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'report-'));
+  const p = join(dir, 'latest.json');
+  writeFileSync(p, JSON.stringify({ generated_at: '2026-06-10T14:24:00.000Z', top: [] }));
+  assert.equal(newestReportDate(p), '2026-06-10');
+});
+
+test('newestReportDate: returns null for a missing file or one without generated_at', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'report-empty-'));
+  assert.equal(newestReportDate(join(dir, 'nope.json')), null);
+  const p = join(dir, 'latest.json');
+  writeFileSync(p, JSON.stringify({ top: [] }));
+  assert.equal(newestReportDate(p), null);
 });
 
 test('problems: returns only stale and missing entries', () => {

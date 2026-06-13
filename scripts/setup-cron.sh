@@ -37,6 +37,16 @@ DAILY_TOPICAL_MAP="5 6 * * * cd \"$PROJECT_DIR\" && $NODE agents/topical-mapper/
 DAILY_RANK_TRACKER="0 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/rank-tracker/index.js >> data/reports/scheduler/rank-tracker.log 2>&1"
 DAILY_RANK_ALERTER="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/rank-alerter/index.js >> data/reports/scheduler/rank-alerter.log 2>&1"
 
+# GSC opportunity report (daily — runs after gsc-collector at 13:15, before next
+# day's performance-engine reads its latest.json). Re-lights the GSC half of the
+# optimization loop: feeds the digest, performance-engine, and the ideas inbox.
+DAILY_GSC_OPPORTUNITY="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-opportunity/index.js >> data/reports/scheduler/gsc-opportunity.log 2>&1"
+
+# Unmapped-query promoter (weekly Mon — runs after the day's gsc-opportunity).
+# Promotes up to 5 high-impression (>=500) unmapped queries into the calendar as
+# pending content. Weekly + capped so it never outpaces the 1-post/day pipeline.
+WEEKLY_UNMAPPED_PROMOTER="40 13 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/unmapped-query-promoter/index.js >> data/reports/scheduler/unmapped-query-promoter.log 2>&1"
+
 # Content pipeline (daily)
 DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
 DAILY_PIPELINE_SCHEDULER="0 16 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-scheduler/index.js >> data/reports/scheduler/pipeline-scheduler.log 2>&1"
@@ -99,6 +109,8 @@ $DAILY_TOPICAL_MAP
 # ── Rank tracking (daily) ──
 $DAILY_RANK_TRACKER
 $DAILY_RANK_ALERTER
+# ── GSC opportunity (daily) ──
+$DAILY_GSC_OPPORTUNITY
 # ── Content pipeline (daily) ──
 $DAILY_SCHEDULER
 $DAILY_PIPELINE_SCHEDULER
@@ -123,6 +135,7 @@ $WEEKLY_QUICK_WIN
 $WEEKLY_KEYWORD_RESEARCH
 $WEEKLY_META_ADS_COLLECTOR
 $WEEKLY_META_ADS_ANALYZER
+$WEEKLY_UNMAPPED_PROMOTER
 # ── Weekly (Sunday) ──
 $WEEKLY_ADS_RECAP
 $WEEKLY_CAMPAIGN_ANALYZER
@@ -154,6 +167,7 @@ echo "  11:00 UTC — indexing-checker"
 echo "  11:30 UTC — indexing-fixer"
 echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
+echo "  13:30 UTC — gsc-opportunity report"
 echo "  13:30 UTC — rank-alerter"
 echo "  15:00 UTC — scheduler (publish-due + pipeline)"
 echo "  16:00 UTC — pipeline-scheduler (brief drip)"
@@ -164,6 +178,7 @@ echo "  08:00 UTC — keyword-research (DataForSEO)"
 echo "  10:00 UTC — meta-ads-collector"
 echo "  10:10 UTC — meta-ads-analyzer"
 echo "  14:45 UTC — cro-analyzer"
+echo "  13:40 UTC — unmapped-query-promoter"
 echo "  15:00 UTC — meta-ab-tracker + quick-win-targeter"
 echo ""
 echo "  WEEKLY (Sunday)"
