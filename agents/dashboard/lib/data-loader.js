@@ -264,6 +264,7 @@ export function aggregateData() {
   };
 
   const quickWinsRaw       = readJsonIfExists(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
+  const seoImpact          = readJsonIfExists(join(REPORTS_DIR, 'seo-impact', 'latest.json'));
   const postPerformance    = readJsonIfExists(join(REPORTS_DIR, 'post-performance', 'latest.json'));
   const gscOpportunityRaw  = readJsonIfExists(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
   const clusterWeights     = readJsonIfExists(join(REPORTS_DIR, 'content-strategist', 'cluster-weights.json'));
@@ -409,6 +410,7 @@ export function aggregateData() {
     briefs,
     contentGapLastReport,
     quickWins,
+    seoImpact,
     postPerformance,
     gscOpportunity,
     clusterWeights,
