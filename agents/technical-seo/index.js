@@ -347,10 +347,19 @@ async function audit() {
     .filter((r) => !(r.url || '').includes('cdn-cgi/l/email-protection'));
   const cdn404Count = (csvs['Error-404_page'] || csvs['Error-4XX_page'] || []).length - p404raw.length;
   const pathFromUrl = (u) => { try { return new URL(u).pathname; } catch { return u; } };
+  // Shared HEAD-status cache (full URL → status) so section 2 can reuse section 1's
+  // live checks without re-fetching the same target.
+  const headCache = new Map();
+  const verifyUrl = async (u) => {
+    if (headCache.has(u)) return headCache.get(u);
+    const st = await headVerify(pathFromUrl(u));
+    headCache.set(u, st);
+    return st;
+  };
   const stillBroken = [];
   let healed404 = 0;
   for (const r of p404raw) {
-    const status = await headVerify(pathFromUrl(r.url));
+    const status = await verifyUrl(r.url);
     if (status === 200) { healed404++; continue; } // fixed since the crawl
     stillBroken.push(r);
   }
@@ -378,16 +387,31 @@ async function audit() {
   // URL, which Ahrefs flags as a 404. These are false positives in the site template, not fixable
   // by editing article body_html, and grow linearly with every new page published.
   const allLinksTo404 = csvs['Error-indexable-Page_has_links_to_broken_page'] || [];
-  const linksTo404 = allLinksTo404.filter((r) => {
+  const afterCdnFilter = allLinksTo404.filter((r) => {
     // internal_outlinks_to_4xx contains the broken URL(s); internal_outlinks_codes_(4xx) contains the HTTP code
     const brokenUrl = r.internal_outlinks_to_4xx || r['internal_outlinks_codes_(4xx)'] || '';
     return !brokenUrl.includes('cdn-cgi/l/email-protection');
   });
-  const cdnCgiCount = allLinksTo404.length - linksTo404.length;
+  const cdnCgiCount = allLinksTo404.length - afterCdnFilter.length;
+  // Live-verify (same reasoning as section 1): keep a page only if it still links to
+  // a real 404. Targets that now return 200 were fixed since the crawl. Reuses the
+  // section-1 HEAD cache, so already-checked targets cost nothing.
+  const linksTo404 = [];
+  let healedLinks = 0;
+  for (const r of afterCdnFilter) {
+    const field = `${r.internal_outlinks_to_4xx || ''}\n${r['internal_outlinks_codes_(4xx)'] || ''}`;
+    const targets = [...field.matchAll(/https?:\/\/[^\s,]+/g)].map((m) => m[0]);
+    let stillBad = targets.length === 0; // unparseable → keep (conservative)
+    for (const t of targets) { if ((await verifyUrl(t)) !== 200) { stillBad = true; break; } }
+    if (stillBad) linksTo404.push(r); else healedLinks++;
+  }
   sections.push(`### 2. Pages Linking to 404s — ${linksTo404.length} pages`);
   sections.push('**Fixable with:** `fix-links`\n');
-  if (cdnCgiCount > 0) {
-    sections.push(`> ℹ️ ${cdnCgiCount} pages filtered out — they only link to \`cdn-cgi/l/email-protection\` (Cloudflare email obfuscation in site footer, not fixable via article content)\n`);
+  const note2 = [];
+  if (cdnCgiCount > 0) note2.push(`${cdnCgiCount} filtered (only link to \`cdn-cgi/l/email-protection\` — Cloudflare footer obfuscation, not fixable via content)`);
+  if (healedLinks > 0) note2.push(`${healedLinks} already fixed since the crawl (target now 200, HEAD-verified)`);
+  if (note2.length) {
+    sections.push(`> ℹ️ ${note2.join('; ')}\n`);
   }
   for (const r of linksTo404.slice(0, 15)) {
     const broken = r['internal_outlinks_codes_(4xx)'] || r.internal_outlinks_to_4xx || '';
