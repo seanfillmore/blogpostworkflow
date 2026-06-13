@@ -118,6 +118,18 @@ async function main() {
   writeFileSync(reportPath, lines.join('\n'));
   console.log(`Report saved: ${reportPath}`);
 
+  // Machine-readable mirror for downstream consumers (pipeline-prioritizer) and
+  // snapshot-health freshness monitoring.
+  const latestPath = join(ROOT, 'data', 'reports', 'rank-alerter', 'latest.json');
+  mkdirSync(dirname(latestPath), { recursive: true });
+  writeFileSync(latestPath, JSON.stringify({
+    generated_at: new Date().toISOString(),
+    drops,            // [{ query, from, to, delta }]
+    gains,            // [{ query, from, to, delta }]
+    traffic_drops: trafficDrops, // [{ page, from, to, pctDrop }]
+  }, null, 2));
+  console.log(`Latest JSON saved: ${latestPath}`);
+
   const isNeg = drops.length > gains.length;
   await notify({
     subject: `Rank Alert ${targetDate}: ${drops.length} drops, ${gains.length} gains`,
