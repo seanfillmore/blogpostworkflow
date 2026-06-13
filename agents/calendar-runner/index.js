@@ -32,6 +32,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { loadCalendar } from '../../lib/calendar-store.js';
 import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
+import { formatPublishAt } from '../../lib/publish-schedule.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -446,23 +447,6 @@ async function runItem(item) {
 
   updateItemState(item.keyword, { publishedAt: new Date().toISOString(), scheduledFor: publishAt });
   return true;
-}
-
-export function formatPublishAt(date, now = new Date()) {
-  const PUBLISH_DAYS = new Set([1, 3, 5]); // Mon, Wed, Fri
-  const d = new Date(date);
-  // Snap forward to next publish day
-  while (!PUBLISH_DAYS.has(d.getDay())) {
-    d.setDate(d.getDate() + 1);
-  }
-  // If that date is in the past, advance by 1 week until it is future
-  while (d < now) {
-    d.setDate(d.getDate() + 7);
-  }
-  const y  = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, '0');
-  const dy = String(d.getDate()).padStart(2, '0');
-  return `${y}-${mo}-${dy}T08:00:00-07:00`;
 }
 
 // ── display ───────────────────────────────────────────────────────────────────
