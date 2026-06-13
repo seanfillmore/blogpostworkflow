@@ -29,7 +29,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
-import { fetchLandingPagesByChannel } from '../../lib/ga4.js';
+import { fetchLandingPagesByChannel, fetchOrganicRevenueByDate } from '../../lib/ga4.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import {
   pathOf, organicByPage, buildPageImpacts, clusterRollup, actionWins, rankBy,
@@ -150,6 +150,21 @@ async function main() {
     impacts.filter(i => i.sessions >= 30 && i.revenue === 0), 'sessions', 10,
   );
 
+  // Weekly organic-revenue trend (last 12 weeks) for the dashboard chart.
+  let revenueTrend = [];
+  try {
+    const trendStart = ymd(Date.parse(w.current.end) - (12 * 7 - 1) * DAY);
+    const daily = await fetchOrganicRevenueByDate(trendStart, w.current.end);
+    const buckets = new Map();
+    for (const d of daily) {
+      const wk = ymd(Date.parse(trendStart) + Math.floor((Date.parse(d.date) - Date.parse(trendStart)) / DAY / 7) * 7 * DAY);
+      buckets.set(wk, round2((buckets.get(wk) || 0) + d.revenue));
+    }
+    revenueTrend = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([week, revenue]) => ({ week, revenue }));
+  } catch (err) {
+    console.error('  Trend fetch failed (non-fatal):', err.message);
+  }
+
   console.log(`\n  Organic revenue: $${organicRevenue} (prior $${organicRevenuePrev}, ${organicRevenue >= organicRevenuePrev ? '+' : ''}$${round2(organicRevenue - organicRevenuePrev)})`);
   console.log('  Top organic-revenue pages:');
   for (const p of topRevenue.slice(0, 6)) {
@@ -178,6 +193,7 @@ async function main() {
     clusters,
     action_wins: wins,
     not_converting: notConverting,
+    revenue_trend: revenueTrend,
   };
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify(payload, null, 2));
   writeFileSync(join(REPORTS_DIR, `${ymd(Date.now())}.md`), buildReport(payload));

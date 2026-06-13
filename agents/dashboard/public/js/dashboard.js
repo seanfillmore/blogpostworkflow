@@ -1466,6 +1466,82 @@ function setRankBaseline(key) {
   if (typeof data !== 'undefined' && data) renderRankings(data);
 }
 
+function renderSeoImpact(d) {
+  var card = document.getElementById('seo-impact-card');
+  var s = d && d.seoImpact;
+  if (!card) return;
+  if (!s || !s.totals) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  var money = function(n) { return '$' + (Math.round((Number(n) || 0) * 100) / 100).toFixed(2); };
+  var t = s.totals;
+  var win = s.window || {};
+  var days = (win.start && win.end) ? Math.round((Date.parse(win.end) - Date.parse(win.start)) / 86400000) + 1 : 28;
+  var dlt = t.organic_revenue_delta || 0;
+  var dColor = dlt >= 0 ? '#166534' : '#b91c1c';
+  var dStr = (dlt >= 0 ? '+' : '−') + money(Math.abs(dlt));
+
+  document.getElementById('seo-impact-note').textContent =
+    (win.start || '') + ' → ' + (win.end || '') + ' (' + days + 'd, organic search)';
+
+  // ── weekly revenue trend: inline SVG bars ──
+  var trend = (s.revenue_trend || []);
+  var chart = '';
+  if (trend.length) {
+    var maxRev = Math.max.apply(null, trend.map(function(x) { return x.revenue; }).concat([1]));
+    var W = 520, H = 90, pad = 4, n = trend.length;
+    var bw = (W - pad * 2) / n;
+    var bars = trend.map(function(x, i) {
+      var h = Math.max(1, Math.round((x.revenue / maxRev) * (H - 24)));
+      var bx = pad + i * bw;
+      var by = H - 16 - h;
+      var last = i === n - 1;
+      return '<rect x="' + (bx + 1).toFixed(1) + '" y="' + by + '" width="' + Math.max(1, bw - 2).toFixed(1) + '" height="' + h + '" rx="2" fill="' + (last ? '#2563eb' : '#93c5fd') + '"><title>' + x.week + ': ' + money(x.revenue) + '</title></rect>';
+    }).join('');
+    var labels = '<text x="' + pad + '" y="' + (H - 2) + '" font-size="9" fill="#9ca3af">' + esc(trend[0].week) + '</text>' +
+      '<text x="' + (W - pad) + '" y="' + (H - 2) + '" font-size="9" fill="#9ca3af" text-anchor="end">' + esc(trend[n - 1].week) + '</text>';
+    chart = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:90px;margin:4px 0 10px">' + bars + labels + '</svg>';
+  }
+
+  // ── top revenue pages ──
+  var rows = (s.top_revenue || []).slice(0, 8).map(function(r) {
+    var cd = r.clicksDelta != null ? ((r.clicksDelta >= 0 ? '+' : '') + r.clicksDelta) : '—';
+    var act = r.action ? esc(r.action.type) : '—';
+    return '<tr>' +
+      '<td style="padding:4px 8px 4px 0"><a class="link" href="https://www.realskincare.com' + esc(r.path) + '" target="_blank">' + esc(r.path) + '</a></td>' +
+      '<td style="text-align:right;font-weight:600">' + money(r.revenue) + '</td>' +
+      '<td style="text-align:right;color:' + ((r.revenueDelta || 0) >= 0 ? '#166534' : '#b91c1c') + '">' + ((r.revenueDelta || 0) >= 0 ? '+' : '−') + money(Math.abs(r.revenueDelta || 0)) + '</td>' +
+      '<td style="text-align:right">' + (r.sessions || 0) + '</td>' +
+      '<td style="text-align:right">' + cd + '</td>' +
+      '<td style="color:#6b7280;font-size:12px">' + act + '</td>' +
+      '</tr>';
+  }).join('');
+  var table = '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+    '<thead><tr style="color:#6b7280;font-size:11px;text-transform:uppercase">' +
+    '<th style="text-align:left">Page</th><th style="text-align:right">Revenue</th><th style="text-align:right">Δ prior</th><th style="text-align:right">Sessions</th><th style="text-align:right">Clicks Δ</th><th style="text-align:left;padding-left:8px">Action</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+  // ── clusters ──
+  var clusters = (s.clusters || []).slice(0, 6).map(function(c) {
+    return '<span style="display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px">' +
+      esc(c.cluster) + ' <strong>' + money(c.revenue) + '</strong></span>';
+  }).join('');
+
+  // ── not converting ──
+  var nc = (s.not_converting || []).slice(0, 5).map(function(r) {
+    return '<li><a class="link" href="https://www.realskincare.com' + esc(r.path) + '" target="_blank">' + esc(r.path) + '</a> &mdash; ' + (r.sessions || 0) + ' sessions, $0</li>';
+  }).join('');
+
+  document.getElementById('seo-impact-body').innerHTML =
+    '<div style="font-size:22px;font-weight:700;margin-bottom:2px">' + money(t.organic_revenue) +
+      ' <span style="font-size:14px;font-weight:600;color:' + dColor + '">' + dStr + ' vs prior</span></div>' +
+    '<div style="color:#6b7280;font-size:12px;margin-bottom:8px">' + (t.organic_conversions || 0) + ' conversion events (GA4 key events, not purchases)</div>' +
+    chart +
+    table +
+    (clusters ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">Revenue by cluster &mdash; where to push harder</div>' + clusters + '</div>' : '') +
+    (nc ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#92400e;margin-bottom:4px">High traffic, no sales &mdash; conversion opportunities</div><ul style="margin:0;padding-left:18px;font-size:13px;color:#374151">' + nc + '</ul></div>' : '');
+}
+
 function renderRankings(d) {
   // Fall back to desktop if the requested device has no data yet
   const desktopR = d.rankings;
@@ -4150,6 +4226,7 @@ async function loadData() {
     renderHeroKpis(data);
     document.getElementById('updated-at').textContent = new Date(data.generatedAt).toLocaleTimeString();
     renderKanban(data);
+    renderSeoImpact(data);
     renderRankings(data);
     renderPosts(data);
     renderGSCSEOPanel(data);
