@@ -199,6 +199,7 @@ async function main() {
         slug: it.slug, keyword: it.keyword,
         cluster: (it.category || it.topical_hub || '').toLowerCase() || null,
         volume: it.volume, kd: it.kd, search_intent: it.search_intent || 'commercial',
+        impressions: it.impressions ?? null,
         task_type: it.source === 'refresh' ? 'refresh' : 'new',
         source: it.source, status_override: it.status_override || null,
       });
@@ -253,7 +254,8 @@ async function main() {
       slug: idea.slug, keyword: idea.keyword, title: null,
       category: idea.cluster || 'GSC Demand', content_type: 'Blog Post',
       priority: 'High', week: null, publish_date: null,
-      kd: null, volume: null, source: idea.source, topical_hub: idea.cluster || null,
+      kd: null, volume: null, impressions: idea.impressions ?? null,
+      source: idea.source, topical_hub: idea.cluster || null,
       priority_score: idea.priority_score, status_override: null,
     });
   }

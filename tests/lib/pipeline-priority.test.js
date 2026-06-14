@@ -4,7 +4,8 @@ import { scoreBase } from '../../lib/pipeline-priority.js';
 
 const CFG = {
   base: { intentMult: { transactional: 1.4, commercial: 1.2, informational: 1.0 },
-          volumeDivisor: 100, volumeCap: 50, kdEasyThreshold: 5, kdEasyBonus: 10 },
+          volumeDivisor: 100, volumeCap: 50, kdEasyThreshold: 5, kdEasyBonus: 10,
+          impressionsDivisor: 50 },
 };
 
 test('scoreBase: volume normalized, capped, times intent', () => {
@@ -24,6 +25,21 @@ test('scoreBase: low-KD bonus added', () => {
 
 test('scoreBase: missing fields default safely', () => {
   assert.equal(scoreBase({}, CFG), 0);
+});
+
+test('scoreBase: falls back to GSC impressions as a demand proxy when volume is absent', () => {
+  // An injected unmapped-query idea has no search volume but real GSC demand.
+  // impressions 500 / 50 = 10; commercial 1.2 = 12 (was 0 before the fallback).
+  assert.equal(scoreBase({ impressions: 500, search_intent: 'commercial' }, CFG), 12);
+});
+
+test('scoreBase: real volume takes precedence over impressions when both present', () => {
+  // volume 2000 -> 20 * 1.2 = 24; impressions ignored.
+  assert.equal(scoreBase({ volume: 2000, impressions: 999999, search_intent: 'commercial', kd: 40 }, CFG), 24);
+});
+
+test('scoreBase: impressions fallback respects the volume cap', () => {
+  assert.equal(scoreBase({ impressions: 999999, search_intent: 'informational' }, CFG), 50);
 });
 
 import { classify } from '../../lib/pipeline-priority.js';
