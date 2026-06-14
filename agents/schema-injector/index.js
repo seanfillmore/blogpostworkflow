@@ -23,7 +23,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, POSTS_DIR } from '../../lib/posts.js';
-import { buildArticleSchema, buildBreadcrumb } from '../../lib/schema-builders.js';
+import { buildArticleSchema, buildBreadcrumb, buildFaqSchema } from '../../lib/schema-builders.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -52,18 +52,6 @@ if (!slugArg && !all) {
 }
 
 // ── schema builders ───────────────────────────────────────────────────────────
-
-function buildFAQSchema(faqs) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    'mainEntity': faqs.map(({ q, a }) => ({
-      '@type': 'Question',
-      'name': q,
-      'acceptedAnswer': { '@type': 'Answer', 'text': a },
-    })),
-  };
-}
 
 function buildHowToSchema(title, steps) {
   return {
@@ -171,7 +159,7 @@ function processSlug(slug) {
   // FAQPage — if question headings with answers detected
   const faqs = extractFAQs(html);
   if (faqs.length >= 2) {
-    schemas.push(buildFAQSchema(faqs));
+    schemas.push(buildFaqSchema(faqs));
     schemaTypes.push(`FAQPage(${faqs.length})`);
   }
 
