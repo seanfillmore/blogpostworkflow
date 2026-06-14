@@ -42,10 +42,11 @@ DAILY_RANK_ALERTER="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/rank-alerter
 # optimization loop: feeds the digest, performance-engine, and the ideas inbox.
 DAILY_GSC_OPPORTUNITY="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-opportunity/index.js >> data/reports/scheduler/gsc-opportunity.log 2>&1"
 
-# Unmapped-query promoter (weekly Mon — runs after the day's gsc-opportunity).
-# Promotes up to 5 high-impression (>=500) unmapped queries into the calendar as
-# pending content. Weekly + capped so it never outpaces the 1-post/day pipeline.
-WEEKLY_UNMAPPED_PROMOTER="40 13 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/unmapped-query-promoter/index.js >> data/reports/scheduler/unmapped-query-promoter.log 2>&1"
+# Pipeline prioritizer (daily — runs after signal agents at 13:30–13:45 UTC and
+# before calendar-runner at 10:00 UTC the next morning). Injects unmapped queries
+# as just-in-time backlog ideas and ranks them against all other signals.
+# Supersedes unmapped-query-promoter (retired 2026-06).
+DAILY_PIPELINE_PRIORITIZER="0 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-prioritizer/index.js >> data/reports/scheduler/pipeline-prioritizer.log 2>&1"
 
 # Content pipeline (daily)
 DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
@@ -119,6 +120,8 @@ $DAILY_RANK_TRACKER
 $DAILY_RANK_ALERTER
 # ── GSC opportunity (daily) ──
 $DAILY_GSC_OPPORTUNITY
+# ── Pipeline prioritizer (daily — after signals, before calendar-runner) ──
+$DAILY_PIPELINE_PRIORITIZER
 # ── Content pipeline (daily) ──
 $DAILY_SCHEDULER
 $DAILY_PIPELINE_SCHEDULER
@@ -145,7 +148,6 @@ $WEEKLY_QUICK_WIN
 $WEEKLY_KEYWORD_RESEARCH
 $WEEKLY_META_ADS_COLLECTOR
 $WEEKLY_META_ADS_ANALYZER
-$WEEKLY_UNMAPPED_PROMOTER
 $WEEKLY_SEO_IMPACT
 # ── Weekly (Sunday) ──
 $WEEKLY_ADS_RECAP
@@ -181,6 +183,7 @@ echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"
 echo "  13:30 UTC — rank-alerter"
 echo "  13:45 UTC — publish-drift detector"
+echo "  14:00 UTC — pipeline-prioritizer (rank backlog, inject unmapped queries)"
 echo "  15:00 UTC — scheduler (publish-due + pipeline)"
 echo "  16:00 UTC — pipeline-scheduler (brief drip)"
 echo ""
@@ -190,7 +193,6 @@ echo "  08:00 UTC — keyword-research (DataForSEO)"
 echo "  10:00 UTC — meta-ads-collector"
 echo "  10:10 UTC — meta-ads-analyzer"
 echo "  14:45 UTC — cro-analyzer"
-echo "  13:40 UTC — unmapped-query-promoter"
 echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
 echo "  15:00 UTC — meta-ab-tracker + quick-win-targeter"
 echo ""

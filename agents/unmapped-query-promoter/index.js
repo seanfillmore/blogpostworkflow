@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+// DEPRECATED (2026-06): superseded by agents/pipeline-prioritizer, which injects
+// unmapped queries as just-in-time backlog ideas (no fixed +14d date) and ranks
+// them against all other signals. Left in place for manual/historical use; no
+// longer scheduled. See docs/superpowers/specs/2026-06-13-pipeline-prioritizer-design.md
 /**
  * Unmapped Query Promoter
  *

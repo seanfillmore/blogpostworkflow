@@ -90,6 +90,21 @@ async function main() {
 
   const { drops, gains, trafficDrops } = diffSnapshots(curr, prev);
 
+  // Daily heartbeat: write the machine-readable mirror on EVERY run where a
+  // comparison actually happened — including no-change days (empty arrays).
+  // Downstream consumers (pipeline-prioritizer) and snapshot-health freshness
+  // monitoring rely on generated_at being fresh, so this must run before the
+  // "no significant changes" early-return below.
+  const latestPath = join(ROOT, 'data', 'reports', 'rank-alerter', 'latest.json');
+  mkdirSync(dirname(latestPath), { recursive: true });
+  writeFileSync(latestPath, JSON.stringify({
+    generated_at: new Date().toISOString(),
+    drops,            // [{ query, from, to, delta }]
+    gains,            // [{ query, from, to, delta }]
+    traffic_drops: trafficDrops, // [{ page, from, to, pctDrop }]
+  }, null, 2));
+  console.log(`Latest JSON saved: ${latestPath}`);
+
   if (!drops.length && !gains.length && !trafficDrops.length) {
     console.log('No significant changes detected.');
     return;
