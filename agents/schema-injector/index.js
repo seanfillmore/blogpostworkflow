@@ -23,6 +23,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, POSTS_DIR } from '../../lib/posts.js';
+import { buildArticleSchema, buildBreadcrumb } from '../../lib/schema-builders.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -51,35 +52,6 @@ if (!slugArg && !all) {
 }
 
 // ── schema builders ───────────────────────────────────────────────────────────
-
-function buildArticleSchema(meta, url) {
-  const author = config.author;
-  const authorName = typeof author === 'object' ? author.name : author;
-  const authorUrl = typeof author === 'object'
-    ? `${config.url}/pages/${author.slug}`
-    : config.url;
-
-  const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    'headline': (meta.title || meta.recommended_title || '').slice(0, 110),
-    'description': (meta.meta_description || meta.summary || '').slice(0, 300),
-    'author': {
-      '@type': 'Person',
-      'name': authorName,
-      'url': authorUrl,
-    },
-    'publisher': {
-      '@type': 'Organization',
-      'name': config.name,
-      'url': config.url,
-    },
-    'url': url,
-    'mainEntityOfPage': url,
-  };
-  if (meta.image_url) schema.image = [meta.image_url];
-  return schema;
-}
 
 function buildFAQSchema(faqs) {
   return {
@@ -185,8 +157,16 @@ function processSlug(slug) {
   const schemaTypes = [];
 
   // Article — always
-  schemas.push(buildArticleSchema(meta, url));
+  schemas.push(buildArticleSchema(meta, url, config));
   schemaTypes.push('Article');
+
+  // BreadcrumbList — always
+  schemas.push(buildBreadcrumb([
+    { name: 'Home', url: config.url },
+    { name: 'News', url: `${config.url}/blogs/news` },
+    { name: (meta.title || '').slice(0, 110), url },
+  ]));
+  schemaTypes.push('BreadcrumbList');
 
   // FAQPage — if question headings with answers detected
   const faqs = extractFAQs(html);
