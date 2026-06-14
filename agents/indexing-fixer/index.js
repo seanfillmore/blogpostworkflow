@@ -41,6 +41,7 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { resubmitSitemap, submitUrlForIndexing, getQuotaStatus } from '../../lib/gsc-indexing.js';
+import { isInfraError, countDeliveredSubmissions } from '../../lib/indexing-escalation.js';
 
 import { getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
@@ -105,12 +106,6 @@ function recordSubmission(slug, submission) {
   const history = meta.indexing_submissions || [];
   history.push(submission);
   stampPostMeta(slug, { indexing_submissions: history });
-}
-
-function countPriorSubmissions(slug, method) {
-  const meta = loadPostMeta(slug);
-  if (!meta || !meta.indexing_submissions) return 0;
-  return meta.indexing_submissions.filter((s) => s.method === method).length;
 }
 
 function ageInDays(iso) {
@@ -198,12 +193,21 @@ async function processNormalRun() {
   // ── Tier 2: auto-submit to Indexing API ───────────────────────────────────
   const tierTwoSucceeded = [];
   const tierTwoFailed = [];
+  let infraFailure = null; // set if an account-wide auth/quota/network error hits
   for (const r of tierTwo) {
-    const priorSitemap = countPriorSubmissions(r.slug, 'sitemap_resubmit');
-    const priorIndexing = countPriorSubmissions(r.slug, 'indexing_api');
+    // An account-wide infra failure (auth/scope/quota/network) means every
+    // remaining submission will fail the same way. Stop the loop rather than
+    // recording per-post "failures" that would poison each post's give-up budget.
+    if (infraFailure) break;
 
-    // Escalation to Tier 3: if already submitted twice via Indexing API and
-    // still not indexed, flag for manual investigation.
+    const meta = loadPostMeta(r.slug);
+    const subs = meta?.indexing_submissions || [];
+    const priorSitemap = countDeliveredSubmissions(subs, 'sitemap_resubmit');
+    const priorIndexing = countDeliveredSubmissions(subs, 'indexing_api');
+
+    // Escalation to Tier 3: only submissions actually DELIVERED to Google count.
+    // Errored submissions (e.g. an auth outage) never reached the index pipeline,
+    // so they must not push a post toward a permanent block.
     if (priorIndexing >= 2) {
       console.log(`  Tier 3 flag: ${r.slug} — ${priorIndexing} prior Indexing API submissions, still not indexed`);
       if (!DRY_RUN) {
@@ -235,6 +239,15 @@ async function processNormalRun() {
           notification_time: result.notification_time,
           result: 'ok',
         });
+        // We're actively retrying this post — clear any stale block left over
+        // from a prior infra outage so it isn't treated as broken elsewhere.
+        if (meta?.indexing_blocked) {
+          stampPostMeta(r.slug, {
+            indexing_blocked: false,
+            indexing_blocked_reason: null,
+            indexing_unblocked_at: new Date().toISOString(),
+          });
+        }
         upsertQueueItem({
           slug: r.slug,
           title: r.title,
@@ -255,6 +268,13 @@ async function processNormalRun() {
           error: err.message,
         });
         tierTwoFailed.push({ slug: r.slug, error: err.message });
+        // Account-wide failure (auth/scope/quota/network): abort the rest of the
+        // run so we don't record a cascade of per-post failures. The next run
+        // retries cleanly once the underlying issue (e.g. re-auth) is resolved.
+        if (isInfraError(err.message)) {
+          infraFailure = err.message;
+          console.error(`    ⚠ infrastructure failure detected — aborting Tier 2 for this run`);
+        }
       }
     }
   }
@@ -301,6 +321,7 @@ async function processNormalRun() {
 
   // ── Daily digest notification ────────────────────────────────────────────
   const summary = [];
+  if (infraFailure) summary.push(`⚠ Indexing API infra failure — submissions aborted (re-auth/quota check needed)`);
   if (tierOne.length) summary.push(`Sitemap pinged (${tierOne.length} URLs)`);
   if (tierTwoSucceeded.length || tierTwoFailed.length) {
     const parts = [];
@@ -315,6 +336,7 @@ async function processNormalRun() {
     await notify({
       subject: `Indexing Fixer: ${summary.join(', ')}`,
       body: [
+        ...(infraFailure ? [`[INFRA] Indexing API failure: ${String(infraFailure).slice(0, 160)} — Tier 2 aborted; remaining posts will retry next run.`] : []),
         ...tierOne.map((r) => `[tier1] ${r.slug}: sitemap pinged (${r.age_days}d old, ${r.state})`),
         ...tierTwoSucceeded.map((r) => `[tier2] ${r.slug}: submitted to Indexing API (${r.age_days}d old)`),
         ...tierTwoFailed.map((r) => `[tier2-FAIL] ${r.slug}: ${r.error.slice(0, 120)}`),
