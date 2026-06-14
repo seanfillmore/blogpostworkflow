@@ -1,10 +1,14 @@
 import { strict as assert } from 'assert';
+import { test } from 'node:test';
 import {
   findPrimaryProduct,
   renderStars,
   removeMidArticleCta,
   findInsertionPoint,
   buildFeaturedProductHtml,
+  rankLinkedProducts,
+  buildCtaCopy,
+  linkedProductCounts,
 } from '../../agents/featured-product-injector/index.js';
 
 // findPrimaryProduct: returns the most-linked /products/<handle>
@@ -82,3 +86,38 @@ assert.ok(!minHtml.includes('<img'), 'no img when imageUrl is null');
 assert.ok(!minHtml.includes('reviews'), 'no review count when null');
 
 console.log('✓ featured-product-injector pure function tests pass');
+
+// ── New tests: linkedProductCounts, rankLinkedProducts, buildCtaCopy ──────────
+
+const PRODUCTS = [
+  { handle: 'coconut-deodorant', title: 'Coconut Oil Deodorant', tags: ['deodorant', 'aluminum free'], product_type: 'Deodorant' },
+  { handle: 'body-lotion', title: 'Non-Toxic Body Lotion', tags: ['lotion'], product_type: 'Lotion' },
+];
+
+test('linkedProductCounts: counts product links descending', () => {
+  const out = linkedProductCounts('<a href="/products/body-lotion"></a><a href="/products/coconut-deodorant"></a><a href="/products/coconut-deodorant"></a>');
+  assert.equal(out[0].handle, 'coconut-deodorant');
+  assert.equal(out[0].count, 2);
+});
+
+test('rankLinkedProducts: picks product most relevant to the keyword, not most-linked', () => {
+  const linked = [{ handle: 'body-lotion', count: 3 }, { handle: 'coconut-deodorant', count: 1 }];
+  const ranked = rankLinkedProducts(linked, PRODUCTS, { keyword: 'best natural deodorant', title: 'Best Natural Deodorant for Men' });
+  assert.equal(ranked[0].handle, 'coconut-deodorant');
+});
+
+test('rankLinkedProducts: tie on relevance falls back to link count', () => {
+  const linked = [{ handle: 'body-lotion', count: 1 }, { handle: 'coconut-deodorant', count: 5 }];
+  const ranked = rankLinkedProducts(linked, PRODUCTS, { keyword: 'skincare', title: 'Skincare' });
+  assert.equal(ranked[0].handle, 'coconut-deodorant');
+});
+
+test('rankLinkedProducts: empty linked → []', () => {
+  assert.deepEqual(rankLinkedProducts([], PRODUCTS, { keyword: 'x', title: 'y' }), []);
+});
+
+test('buildCtaCopy: benefit headline + product-specific button text', () => {
+  const c = buildCtaCopy({ product: { title: 'Coconut Oil Deodorant' }, keyword: 'natural deodorant' });
+  assert.ok(c.headline.length > 0);
+  assert.match(c.buttonText, /shop/i);
+});
