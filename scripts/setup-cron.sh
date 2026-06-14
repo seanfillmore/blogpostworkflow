@@ -98,6 +98,11 @@ BIWEEKLY_STRATEGIST="0 12 * * 0 [ \$(( \$(date +%W) % 2 )) -eq 0 ] && cd \"$PROJ
 # Monthly (1st of each month — content gap analysis)
 MONTHLY_CONTENT_GAP="0 8 1 * * cd \"$PROJECT_DIR\" && $NODE agents/content-gap/index.js >> data/reports/scheduler/content-gap.log 2>&1"
 
+# Monthly (1st of each month — closed-loop weight tuner; runs after daily signal
+# agents at 13:xx, after pipeline-prioritizer at 14:00, and after seo-impact
+# which runs weekly but is guaranteed available by the 1st).
+MONTHLY_PRIORITY_TUNER="0 16 1 * * cd \"$PROJECT_DIR\" && $NODE agents/priority-tuner/index.js >> data/reports/scheduler/priority-tuner.log 2>&1"
+
 # ── Install ──────────────────────────────────────────────────────────────────
 # Strip ALL previous seo-claude entries (covers ~/seo-claude, /root/seo-claude,
 # and any other path variant) to prevent duplicates from accumulating.
@@ -156,6 +161,7 @@ $WEEKLY_CAMPAIGN_ANALYZER
 $BIWEEKLY_STRATEGIST
 # ── Monthly ──
 $MONTHLY_CONTENT_GAP
+$MONTHLY_PRIORITY_TUNER
 "
 
 echo "Installing cron jobs..."
@@ -205,6 +211,7 @@ echo "  12:00 UTC — content-strategist calendar refresh"
 echo ""
 echo "  MONTHLY (1st of each month)"
 echo "  08:00 UTC — content-gap analysis (DataForSEO)"
+echo "  16:00 UTC — priority-tuner (closed-loop weight tuner)"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"
