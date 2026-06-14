@@ -44,6 +44,7 @@ import { fileURLToPath } from 'url';
 import { getProducts } from '../../lib/shopify.js';
 import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { buildImageAlt } from '../../lib/image-alt.js';
+import { SHOT_TYPES, shotTypePool } from '../../lib/image-variety.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IMAGES_DIR = join(ROOT, 'data', 'images');
@@ -208,10 +209,16 @@ const SCENE_TEMPLATES = [
   },
 ];
 
-async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejectionNote = '', hasProductRef = false, productIngredients = [], productDescription = null, variantTitles = []) {
+async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejectionNote = '', hasProductRef = false, productIngredients = [], productDescription = null, variantTitles = [], usedShotTypes = []) {
   // Hard-exclude templates used in recent posts, then fall back to full set if too few remain
   const available = SCENE_TEMPLATES.filter((t) => !usedTemplateKeys.includes(t.key));
   const pool = available.length >= 3 ? available : SCENE_TEMPLATES.filter((t) => !usedTemplateKeys.slice(0, 3).includes(t.key));
+
+  // Shot-type variety: offer a shortlist that excludes recently-used genres AND
+  // forbids two surface (tabletop) shots in a row, so consecutive heroes don't
+  // all look like "an object on a tabletop".
+  const shotPool = shotTypePool(usedShotTypes);
+  const shotTypeList = shotPool.map((s) => `[${s.key}] ${s.guidance}`).join('\n');
 
   const usedSummary = usedScenes.length > 0
     ? `\nALREADY USED SCENES (do NOT reuse these):\n${usedScenes.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`
@@ -243,7 +250,16 @@ Blog post:
 - Keyword: ${meta.target_keyword}
 - Tags: ${(meta.tags || []).join(', ')}
 ${usedSummary}${rejectionNote}${ingredientNote}
-AVAILABLE SCENE TEMPLATES (choose one that fits the post topic best):
+SHOT TYPE (pick ONE that best fits this topic — this is how we keep consecutive
+hero images from all looking alike, so favour variety):
+${shotTypeList}
+
+The recent posts have already used these shot types, so prefer a DIFFERENT one
+unless it genuinely doesn't fit: ${usedShotTypes.length ? usedShotTypes.join(', ') : '(none yet)'}
+
+AVAILABLE SCENE TEMPLATES (ONLY for the surface shot types 'flat-lay' /
+'styled-angle'; for every other shot type use SELECTED_TEMPLATE: NONE and
+compose per the shot-type guidance above):
 ${templateList}
 
 ${hasProductRef
@@ -271,12 +287,13 @@ First decide: does this blog topic happen in a specific real-world location? Thi
 
 If the topic has a natural real-world setting, use SELECTED_TEMPLATE: NONE and describe that real-world environment instead of picking from the template list. Only use a template when the topic is product-focused or doesn't have a strong location association.
 
-Respond in this EXACT format — first line is the template key (or NONE), second line onwards is the prompt:
-SELECTED_TEMPLATE: [key or NONE]
+Respond in this EXACT format — first two lines are the selections, then the prompt:
+SELECTED_SHOT_TYPE: [shot-type key from the shortlist above]
+SELECTED_TEMPLATE: [scene-template key, or NONE for non-surface shot types]
 [Photography type], ...
 
 Write the prompt using this structure:
-1. Start with the appropriate photography type: "Product photography, " for product-focused posts, "Lifestyle photography, " for scene-based images, "Editorial photography, " for concept/story posts
+1. Open with the framing implied by the chosen SHOT TYPE (e.g. "Overhead flat-lay product photography, ", "Candid lifestyle photography of someone …, ", "Extreme macro close-up of …, ", "Wide environmental photograph of …, ", "Editorial conceptual photograph, ") — match the shot-type guidance, don't default to a flat product shot
 2. Describe the primary subject — this is the TOPIC of the article. For product-focused posts, the product is the hero. For problem/process/concept posts, show the real-world setting where this topic matters (e.g. airport security bin for TSA rules, laundry area for stain removal, bathroom vanity for skincare routine). The product should appear naturally within that setting as a secondary element.
 3. Include 1-3 natural props that reinforce the topic AND the real-world setting
 4. If using a template, describe the surface and background from it. If using NONE, describe the real-world environment in detail — the location, surfaces, objects, and atmosphere that make it immediately recognizable.
@@ -287,6 +304,7 @@ BANNER COMPOSITION RULES:
 - Compose the scene for a wide landscape banner format (approximately 3:1 width-to-height ratio). Place the key subject(s) in the center of the frame with space on the left and right. The image will be displayed at roughly 500px tall spanning a full-width website header — avoid placing subjects at the very top or bottom edge of the frame.
 
 HARD RULES:
+- SHOT-TYPE ADHERENCE (critical — this is how we fight repetitive images): the composition MUST match the chosen SHOT TYPE. If the shot type is NOT 'flat-lay' or 'styled-angle', you may NOT arrange products/bottles/objects in a row or flat-lay on a tabletop — that "line-up of containers on a surface" is the exact look we are eliminating. Specifically: 'in-use' = a person actively using it in a real moment (hands/shoulders-down); 'macro-detail' = one extreme close-up of texture/material filling the frame (no full containers); 'environmental' = a wide real room/place with the subject living inside it; 'editorial-concept' = a single strong conceptual or storytelling image (an ingredient story, a contrast, a metaphor) — NOT a collection of bottles. If you find yourself describing several containers sitting on a surface, you have defaulted to flat-lay — stop and recompose to the chosen shot type.
 - The image must visually match the blog post topic — a reader should understand the article subject from the image alone
 - The setting should be WHERE a reader would encounter this topic in real life
 - Props must make real-world sense in the chosen setting — no random unrelated objects
@@ -305,13 +323,22 @@ HARD RULES:
   const raw = message.content[0].text.trim();
   const keyMatch = raw.match(/^SELECTED_TEMPLATE:\s*(\S+)/m);
   const selectedKey = keyMatch?.[1] === 'NONE' ? null : (keyMatch?.[1] ?? null);
-  const prompt = raw.replace(/^SELECTED_TEMPLATE:\s*\S+\n?/, '').trim();
-  return { prompt, selectedKey };
+  const shotMatch = raw.match(/^SELECTED_SHOT_TYPE:\s*(\S+)/m);
+  const selectedShotType = shotMatch?.[1] && shotMatch[1] !== 'NONE' ? shotMatch[1] : null;
+  const prompt = raw
+    .replace(/^SELECTED_SHOT_TYPE:\s*\S+\n?/m, '')
+    .replace(/^SELECTED_TEMPLATE:\s*\S+\n?/m, '')
+    .trim();
+  return { prompt, selectedKey, selectedShotType };
 }
 
 // ── creative director review ──────────────────────────────────────────────────
 
-async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowProductLabel = false, productContext = null, referenceImagePaths = []) {
+async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowProductLabel = false, productContext = null, referenceImagePaths = [], shotType = null) {
+  const shotDef = SHOT_TYPES.find((s) => s.key === shotType) || null;
+  // Only enforce composition adherence for the non-surface genres — those are
+  // the ones the model keeps collapsing back into a product flat-lay.
+  const enforceShot = shotDef && shotDef.surface === false;
   // Resize to max 1280px wide as JPEG before sending to Claude (5MB API limit)
   const reviewBuf = await sharp(imagePath).resize(1280, null, { withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
   const base64 = reviewBuf.toString('base64');
@@ -374,9 +401,10 @@ TEXT RULES:
 - ACCEPT: product labels that match the brand if product references were provided
 - The key question is: "Is the text an AI artifact/error, or a natural part of the scene?"
 ${productContext ? `\nPRODUCT ACCURACY — check ALL of the following details carefully:\n${productContext}\nThis includes the cap/lid type, container shape, and any other packaging details mentioned. A pump dispenser is NOT the same as a flip-top cap. A tube is NOT the same as a bottle. Flag any mismatch — even subtle ones like the wrong lid type.` : ''}
+${enforceShot ? `\nSHOT-TYPE ADHERENCE (this hero was supposed to be a "${shotType}" composition):\n${shotDef.guidance}\nThis image must NOT be a flat-lay or a line-up/collection of products, bottles, jars, or containers arranged on a surface — that repetitive "objects on a tabletop" look is exactly what this shot type is meant to avoid. If the image is a product/objects still-life on a surface instead of a genuine "${shotType}" composition, mark SHOT_TYPE_MISMATCH: yes.\n` : ''}
 Review this image and respond in this EXACT format (no extra lines):
 
-PASS: yes or no
+PASS: yes or no${enforceShot ? '\nSHOT_TYPE_MISMATCH: yes or no (is this a product/objects flat-lay on a surface instead of the intended ' + shotType + ' composition?)' : ''}
 TEXT_VISIBLE: yes or no (is there problematic AI-generated fake text, gibberish, or wrong brand names? Incidental environmental signage in real-world scenes does NOT count.)
 BLACK_BARS: yes or no (solid-colour bars/borders on any edge — letterboxing or pillarboxing?)
 SURREAL: yes or no — CHECK CAREFULLY FOR THESE COMMON AI FAILURES:
@@ -405,6 +433,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
   const wrongProductFormat = /WRONG_PRODUCT_FORMAT:\s*yes/i.test(raw);
   const labelInaccurate = /LABEL_INACCURATE:\s*yes/i.test(raw);
   const modesty = /MODESTY:\s*yes/i.test(raw);
+  const shotTypeMismatch = enforceShot && /SHOT_TYPE_MISMATCH:\s*yes/i.test(raw);
   const sceneMatch = raw.match(/SCENE_DESCRIPTION:\s*(.+)/i);
   const rejectionMatch = raw.match(/REJECTION_REASON:\s*(.+)/i);
 
@@ -416,6 +445,7 @@ REJECTION_REASON: if PASS is no, one specific sentence describing what is wrong 
     wrongProductFormat && 'wrong product format (e.g. tube instead of bottle)',
     labelInaccurate && 'product label does not match reference image',
     modesty && 'excessive bare skin/nudity',
+    shotTypeMismatch && `composition is a product flat-lay but the shot type should be "${shotType}" — recompose as ${shotType}`,
   ].filter(Boolean);
 
   const rejectionReason = rejectionMatch?.[1]?.trim() ?? '';
@@ -638,6 +668,16 @@ function findProductImagesForPost(meta) {
     }
   }
 
+  // No product category detected → this post isn't about something we sell.
+  // Don't force one of our products into the image just because a stray word
+  // overlaps (e.g. a post about a competitor or a topic we have no product for).
+  // The hero will be a generic/topical scene instead. (Loose keyword matching
+  // with no category was how off-topic posts got an adapted product image.)
+  if (!postCategory) {
+    console.log('  No product category matches this topic — generating a product-free topical image.');
+    return [];
+  }
+
   // Find which manifest handle maps to which category
   const categoryHandles = {};
   for (const [cat, cfg] of Object.entries(ingredientsConfig)) {
@@ -784,12 +824,15 @@ async function generateImage(metaPath) {
   const usedScenes = sceneLog.map((e) => e.scene);
   // Hard-exclude template keys used in the last 8 posts to force surface variety
   const usedTemplateKeys = sceneLog.slice(-8).map((e) => e.templateKey).filter(Boolean);
+  // Rotate shot TYPES (composition genre) across the last 4 posts for real variety
+  const usedShotTypes = sceneLog.slice(-4).map((e) => e.shotType).filter(Boolean);
 
   let attempt = 0;
   let approved = false;
   let finalPrompt = '';
   let finalTemplateKey = null;
   let finalScene = '';
+  let lastShotType = null;    // composition genre chosen for the current attempt
   let lastRejectionNote = ''; // passed back into the next prompt on retry
   let lastImagePath = '';     // path of the last generated image file
   let lastImageMimeType = 'image/png';
@@ -802,10 +845,12 @@ async function generateImage(metaPath) {
 
     process.stdout.write('  Generating image prompt with Claude... ');
     const allUsedScenes = [...usedScenes, ...sceneLog.filter((_, i) => i >= usedScenes.length).map((e) => e.scene)];
-    const { prompt, selectedKey } = await buildImagePrompt(meta, allUsedScenes, usedTemplateKeys, lastRejectionNote, useProductRef, productIngredients, manifestDescription, uniqueVariantTitles);
+    const { prompt, selectedKey, selectedShotType } = await buildImagePrompt(meta, allUsedScenes, usedTemplateKeys, lastRejectionNote, useProductRef, productIngredients, manifestDescription, uniqueVariantTitles, usedShotTypes);
     console.log('done');
+    if (selectedShotType) console.log(`  Shot type: ${selectedShotType}`);
     if (selectedKey) console.log(`  Template: ${selectedKey}`);
     console.log(`  Prompt: ${prompt.slice(0, 150)}...`);
+    lastShotType = selectedShotType;
 
     mkdirSync(IMAGES_DIR, { recursive: true });
 
@@ -903,7 +948,7 @@ async function generateImage(metaPath) {
     process.stdout.write('  Creative director review... ');
     const reviewContext = productContext;
     const refPaths = productRefs.map(r => r.path);
-    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, reviewContext, refPaths);
+    const review = await creativeDirectorReview(imagePath, imageMimeType, useProductRef, reviewContext, refPaths, selectedShotType);
     if (review.pass) {
       console.log('approved');
     } else {
@@ -918,7 +963,7 @@ async function generateImage(metaPath) {
     if (review.pass) {
       approved = true;
       finalScene = review.scene;
-      sceneLog.push({ slug, scene: review.scene, templateKey: selectedKey, prompt: prompt.slice(0, 200) });
+      sceneLog.push({ slug, scene: review.scene, templateKey: selectedKey, shotType: selectedShotType, prompt: prompt.slice(0, 200) });
       saveSceneLog(sceneLog);
       console.log(`  Scene logged: "${review.scene}"`);
     } else {
@@ -976,7 +1021,7 @@ async function generateImage(metaPath) {
     meta.image_blocked_reason = `CD rejected ${rejectedImages.length} attempt(s): ${rejectedImages.map(r => r.failures.join(', ')).join('; ')}`;
     writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
-    sceneLog.push({ slug, scene: 'unknown (not approved)', templateKey: finalTemplateKey, prompt: finalPrompt.slice(0, 200) });
+    sceneLog.push({ slug, scene: 'unknown (not approved)', templateKey: finalTemplateKey, shotType: lastShotType, prompt: finalPrompt.slice(0, 200) });
     saveSceneLog(sceneLog);
 
     await notify({
