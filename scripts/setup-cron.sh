@@ -82,7 +82,14 @@ DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/inde
 # Weekly (Monday)
 WEEKLY_INSIGHTS="30 7 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/insight-aggregator/index.js >> data/reports/scheduler/insights.log 2>&1"
 WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyzer/index.js >> data/reports/scheduler/cro-analyzer.log 2>&1"
-WEEKLY_META_AB_TRACKER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-tracker/index.js >> data/reports/scheduler/meta-ab-tracker.log 2>&1"
+# Meta A/B loop (Mondays, after gsc-opportunity 13:30 + cro-analyzer 14:45):
+#   1. meta-ab-checker concludes due tests and auto-reverts measured losers;
+#   2. meta-optimizer rewrites low-CTR titles/metas, starting fresh A/B tests.
+# (Supersedes the legacy meta-ab-tracker, which read an empty data/meta-tests/.)
+WEEKLY_META_AB_CHECKER="50 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-checker/index.js >> data/reports/scheduler/meta-ab-checker.log 2>&1"
+# --limit 5: cap to 5 fresh meta tests/week — bounded live edits + cleaner A/B
+# attribution (fewer simultaneous changes) than the default limit of 25.
+WEEKLY_META_OPTIMIZER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-optimizer/index.js --apply --limit 5 >> data/reports/scheduler/meta-optimizer.log 2>&1"
 WEEKLY_QUICK_WIN="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/quick-win-targeter/index.js >> data/reports/scheduler/quick-win-targeter.log 2>&1"
 WEEKLY_KEYWORD_RESEARCH="0 8 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/keyword-research/index.js >> data/reports/scheduler/keyword-research.log 2>&1"
 # SEO impact / "what's working" — weekly Mon 14:30 UTC (after GA4/GSC/Shopify
@@ -151,7 +158,8 @@ $DAILY_SUMMARY
 # ── Weekly (Monday) ──
 $WEEKLY_INSIGHTS
 $WEEKLY_CRO_ANALYZER
-$WEEKLY_META_AB_TRACKER
+$WEEKLY_META_AB_CHECKER
+$WEEKLY_META_OPTIMIZER
 $WEEKLY_QUICK_WIN
 $WEEKLY_KEYWORD_RESEARCH
 $WEEKLY_META_ADS_COLLECTOR
@@ -203,7 +211,8 @@ echo "  10:00 UTC — meta-ads-collector"
 echo "  10:10 UTC — meta-ads-analyzer"
 echo "  14:45 UTC — cro-analyzer"
 echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
-echo "  15:00 UTC — meta-ab-tracker + quick-win-targeter"
+echo "  14:50 UTC — meta-ab-checker (conclude tests, auto-revert losers)"
+echo "  15:00 UTC — meta-optimizer (rewrite low-CTR metas) + quick-win-targeter"
 echo ""
 echo "  WEEKLY (Sunday)"
 echo "  06:00 PT  — campaign-analyzer"
