@@ -432,6 +432,15 @@ function buildUserPrompt(brief, sitemapCtx, blogPosts) {
     ...sitemapCtx.collections.slice(0, 3),
   ].join('\n');
 
+  const cb = brief.competitor_benchmark;
+  const benchmarkLine = cb
+    ? `\nCOMPETITOR DEPTH TARGET (data-driven): top results run a median of ~${cb.medianWordCount} words with ~${cb.avgH2} H2 sections. Aim for roughly ${cb.targetWordCount} words and a comparable number of H2 sections — cover the subtopics they cover, then add a unique angle. Do not pad; depth means covering more relevant subtopics, not more words per point.`
+    : '';
+
+  const citationLine = brief.citation_guidance
+    ? `\nCITATIONS (required for trust/E-E-A-T): ${brief.citation_guidance}\nSupport every statistic, study reference, and health/efficacy claim with a credible OUTBOUND link (e.g. .gov, .edu, medical orgs, peer-reviewed). Do not make unsupported absolute claims. If you cannot cite a claim, soften it or omit it.`
+    : `\nCITATIONS: Support any statistic or health/efficacy claim with a credible outbound link (.gov/.edu/medical/peer-reviewed). Avoid unsupported absolute claims.`;
+
   return `Write a complete, high-quality blog post using the content brief below.
 
 ---
@@ -466,7 +475,7 @@ E-E-A-T SIGNALS TO DEMONSTRATE:
 - ${eeatText}
 
 WRITER NOTES:
-${brief.writer_notes || 'Follow brand voice guidelines above.'}
+${brief.writer_notes || 'Follow brand voice guidelines above.'}${benchmarkLine}${citationLine}
 ${loadInternalLinksContext()}---
 
 Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Write no more than ${brief.target_word_count} words. When you approach this limit, wrap up the current section and move to the conclusion — do not keep adding content. A focused post that fully answers the question at ${brief.target_word_count} words is better than a padded post that runs long. Stop when you have said everything useful, not when you have filled a quota.`;
