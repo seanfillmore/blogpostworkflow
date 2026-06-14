@@ -1184,11 +1184,17 @@ async function runEditor(htmlPath) {
     console.log(`  Deterministic issues: ${deterministicIssues.join('; ')}`);
   }
 
-  // 5b. Uncited-claim check (deterministic, no tokens)
+  // 5b. Uncited-claim check (deterministic, no tokens). At/above threshold it
+  // joins deterministicIssues so it flows through the proven gate path: fed to the
+  // editorial review → forces OVERALL QUALITY "Needs Work" → report VERDICT →
+  // calendar-runner blocks publish and routes the citation fix to content-refresher.
   const siteHost = new URL(config.url).host;
   const uncited = findUncitedClaims(workingHtml, { siteHost });
   if (uncited.length > 0) {
     console.log(`  Uncited claims found: ${uncited.length}`);
+  }
+  if (uncited.length >= UNCITED_CLAIM_THRESHOLD) {
+    deterministicIssues.push(`${uncited.length} statistical/health claim(s) lack a credible outbound citation (fact-check gate): ${uncited.slice(0, 3).map((u) => `"${u.text.slice(0, 80)}"`).join('; ')}`);
   }
 
   // 6. Extract FAQ Q&As for competitor check
