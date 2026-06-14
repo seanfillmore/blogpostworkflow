@@ -24,6 +24,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /**
  * Find the most-linked /products/<handle> in the HTML.
  * Returns the handle string or null if none found.
+ * Kept for back-compat — new code uses linkedProductCounts + rankLinkedProducts.
  */
 export function findPrimaryProduct(html) {
   const counts = {};
@@ -37,6 +38,53 @@ export function findPrimaryProduct(html) {
   if (entries.length === 0) return null;
   entries.sort((a, b) => b[1] - a[1]);
   return entries[0][0];
+}
+
+/**
+ * Return all linked product handles with link counts, sorted descending.
+ * Each entry: { handle, count }
+ */
+export function linkedProductCounts(html) {
+  const counts = {};
+  const re = /href="(?:https?:\/\/[^"]*)?\/products\/([^"/?#]+)"/g;
+  let m;
+  while ((m = re.exec(html)) !== null) counts[m[1]] = (counts[m[1]] || 0) + 1;
+  return Object.entries(counts).map(([handle, count]) => ({ handle, count })).sort((a, b) => b.count - a.count);
+}
+
+function _tokens(s) { return new Set(String(s || '').toLowerCase().match(/[a-z0-9]+/g) || []); }
+
+/**
+ * Rank linked products by relevance to the post's keyword+title, tie-broken by link count.
+ * linked: Array<{ handle, count }>
+ * products: Array<Shopify product objects> (may have title, handle, tags, product_type)
+ * Returns the same entries enriched with { product, relevance }, most relevant first.
+ * Note: Shopify REST returns tags as a comma-separated string; split before passing,
+ * or pass the raw string — _tokens handles both.
+ */
+export function rankLinkedProducts(linked, products, { keyword, title }) {
+  const want = new Set([..._tokens(keyword), ..._tokens(title)]);
+  const byHandle = new Map((products || []).map((p) => [p.handle, p]));
+  const scored = (linked || []).map((l) => {
+    const p = byHandle.get(l.handle) || {};
+    const tagsStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
+    const hay = _tokens(`${p.title || ''} ${p.handle || l.handle} ${tagsStr} ${p.product_type || ''}`);
+    let overlap = 0;
+    for (const t of want) if (hay.has(t)) overlap++;
+    return { ...l, product: p, relevance: overlap };
+  });
+  scored.sort((a, b) => (b.relevance - a.relevance) || (b.count - a.count));
+  return scored;
+}
+
+/**
+ * Build conversion-oriented CTA copy for the featured product card.
+ * Returns { headline, buttonText }.
+ */
+export function buildCtaCopy({ product, keyword }) {
+  const name = (product && product.title) || 'this pick';
+  const kw = keyword || 'what you need';
+  return { headline: `Our pick for ${kw}: ${name}`, buttonText: `Shop ${name}`.slice(0, 60) };
 }
 
 /**
@@ -81,8 +129,10 @@ export function findInsertionPoint(html, targetWords) {
 /**
  * Build the rsc-featured-product HTML block.
  * All fields are optional except title and handle — missing fields are omitted gracefully.
+ * ctaHeadline — conversion-oriented benefit headline above the card (from buildCtaCopy)
+ * ctaButtonText — CTA button label (from buildCtaCopy); defaults to "Add to Cart"
  */
-export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote, verified, stars, reviewCount }) {
+export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote, verified, stars, reviewCount, ctaHeadline, ctaButtonText }) {
   const imgHtml = imageUrl
     ? `<div style="flex-shrink:0;align-self:stretch;padding:5px;display:flex;align-items:center"><img src="${escHtml(imageUrl)}" style="width:130px;height:100%;object-fit:contain;border-radius:10px;display:block" alt="${escHtml(title)}"></div>`
     : '';
@@ -99,6 +149,12 @@ export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote
     ? `<span style="font-size:18px;font-weight:800;color:#111">$${escHtml(String(price))}</span>`
     : '';
 
+  const headlineHtml = ctaHeadline
+    ? `<div style="font-size:11px;color:#4b5563;font-family:sans-serif;font-style:italic;margin-bottom:6px">${escHtml(ctaHeadline)}</div>`
+    : '';
+
+  const buttonLabel = ctaButtonText || 'Add to Cart';
+
   return (
     '<style>.rsc-featured-product{max-width:80%}@media(max-width:768px){.rsc-featured-product{max-width:100%}}</style>' +
     '<div class="rsc-featured-product" style="border:2px solid #e5e7eb;border-radius:14px;overflow:hidden;margin:28px 0;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06)">' +
@@ -107,11 +163,12 @@ export function buildFeaturedProductHtml({ title, handle, imageUrl, price, quote
     '<div style="padding:16px 18px;flex:1">' +
     '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;font-family:sans-serif;margin-bottom:4px">Featured Pick</div>' +
     `<div style="font-size:15px;font-weight:800;color:#111;font-family:sans-serif;margin-bottom:6px;line-height:1.3">${escHtml(title)}</div>` +
+    headlineHtml +
     quoteHtml +
     reviewLineHtml +
     '<div style="display:flex;align-items:center;gap:10px;font-family:sans-serif">' +
     priceHtml +
-    `<a href="https://www.realskincare.com/products/${handle}" style="background:#1e1b4b;color:#fff;padding:8px 18px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700">Add to Cart &#x2192;</a>` +
+    `<a href="https://www.realskincare.com/products/${handle}" style="background:#1e1b4b;color:#fff;padding:8px 18px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700">${escHtml(buttonLabel)} &#x2192;</a>` +
     '</div>' +
     '</div>' +
     '</div>' +
@@ -177,7 +234,14 @@ function wordCount(text) {
 
 // ── per-article injection ─────────────────────────────────────────────────────
 
-async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShopDomain) {
+/**
+ * @param {string} rawHtml
+ * @param {number} avgScrollDepth
+ * @param {string|null} judgemeToken
+ * @param {string|null} judgemeShopDomain
+ * @param {{ target_keyword?: string, title?: string }} [postMeta] — from meta.json; used for relevance ranking
+ */
+async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShopDomain, postMeta = {}) {
   const html = extractArticleContent(rawHtml);
 
   // Idempotency check — must be first
@@ -185,17 +249,39 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
     return { html: rawHtml, skipped: true, reason: 'already has rsc-featured-product' };
   }
 
-  const productHandle = findPrimaryProduct(html);
-  if (!productHandle) {
+  // Find all linked products (handle + link count), sorted by count descending
+  const linked = linkedProductCounts(html);
+  if (linked.length === 0) {
     return { html: rawHtml, skipped: true, reason: 'no /products/ links found' };
   }
 
-  // Fetch product from Shopify
+  // Fetch Shopify product data for each linked handle (≤ ~3 usually)
   const { getProducts } = await import('../../lib/shopify.js');
-  const products = await getProducts({ handle: productHandle });
-  const product = products?.[0];
+  const fetchedProducts = (
+    await Promise.all(
+      linked.map(({ handle }) =>
+        getProducts({ handle }).then((res) => res?.[0] ?? null).catch(() => null)
+      )
+    )
+  ).filter(Boolean);
+
+  // Rank by relevance to post keyword + title; tie-break by link count
+  const keyword = postMeta.target_keyword || '';
+  const postTitle = postMeta.title || '';
+  const ranked = rankLinkedProducts(linked, fetchedProducts, { keyword, title: postTitle });
+
+  // Pick the top-ranked product; fall back through the list if fetch failed
+  let product = null;
+  let productHandle = null;
+  for (const entry of ranked) {
+    if (entry.product && entry.product.title) {
+      product = entry.product;
+      productHandle = entry.handle;
+      break;
+    }
+  }
   if (!product) {
-    return { html: rawHtml, skipped: true, reason: `product not found: ${productHandle}` };
+    return { html: rawHtml, skipped: true, reason: 'no linked product data found in Shopify' };
   }
 
   const imageUrl = product.images?.[0]?.src ?? null;
@@ -211,6 +297,9 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
   const stars = statsData ? renderStars(statsData.rating) : null;
   const reviewCount = statsData?.reviewCount ?? null;
 
+  // Build CTA copy from relevance context
+  const ctaCopy = buildCtaCopy({ product, keyword: keyword || null });
+
   // Build featured product block
   const block = buildFeaturedProductHtml({
     title: product.title,
@@ -221,6 +310,8 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
     verified: reviewData?.verified ?? false,
     stars,
     reviewCount,
+    ctaHeadline: ctaCopy.headline,
+    ctaButtonText: ctaCopy.buttonText,
   });
 
   // Remove mid-article dashed CTA, then insert block at scroll-depth position
@@ -275,7 +366,13 @@ async function main() {
       throw new Error(`No HTML file found at ${filePath}. Run the blog post writer first.`);
     }
     const rawHtml = readFileSync(filePath, 'utf8');
-    const result = await injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShopDomain);
+    // Load meta for relevance ranking (target_keyword + title)
+    const metaPath = getMetaPath(handle);
+    let pipelineMeta = {};
+    if (existsSync(metaPath)) {
+      try { pipelineMeta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch { /* ignore */ }
+    }
+    const result = await injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShopDomain, pipelineMeta);
 
     if (result.skipped) {
       console.log(`  Skipped: ${result.reason}`);
@@ -350,7 +447,15 @@ async function main() {
     }
 
     console.log(`  Processing: ${pageHandle}`);
-    const result = await injectIntoHtml(article.body_html || '', avgScrollDepth, judgemeToken, judgemeShopDomain);
+    // Load local meta for relevance ranking if available; fall back to article title as keyword proxy
+    const retroMetaPath = getMetaPath(pageHandle);
+    let retroMeta = {};
+    if (existsSync(retroMetaPath)) {
+      try { retroMeta = JSON.parse(readFileSync(retroMetaPath, 'utf8')); } catch { /* ignore */ }
+    }
+    if (!retroMeta.target_keyword) retroMeta.target_keyword = (article.title || pageHandle).toLowerCase();
+    if (!retroMeta.title) retroMeta.title = article.title || pageHandle;
+    const result = await injectIntoHtml(article.body_html || '', avgScrollDepth, judgemeToken, judgemeShopDomain, retroMeta);
 
     if (result.skipped) {
       console.log(`    Skipped: ${result.reason}`);

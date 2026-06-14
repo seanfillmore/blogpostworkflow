@@ -43,6 +43,7 @@ import { join, dirname, basename, relative } from 'path';
 import { fileURLToPath } from 'url';
 import { getProducts } from '../../lib/shopify.js';
 import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { buildImageAlt } from '../../lib/image-alt.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IMAGES_DIR = join(ROOT, 'data', 'images');
@@ -788,6 +789,7 @@ async function generateImage(metaPath) {
   let approved = false;
   let finalPrompt = '';
   let finalTemplateKey = null;
+  let finalScene = '';
   let lastRejectionNote = ''; // passed back into the next prompt on retry
   let lastImagePath = '';     // path of the last generated image file
   let lastImageMimeType = 'image/png';
@@ -915,6 +917,7 @@ async function generateImage(metaPath) {
 
     if (review.pass) {
       approved = true;
+      finalScene = review.scene;
       sceneLog.push({ slug, scene: review.scene, templateKey: selectedKey, prompt: prompt.slice(0, 200) });
       saveSceneLog(sceneLog);
       console.log(`  Scene logged: "${review.scene}"`);
@@ -1027,6 +1030,7 @@ async function generateImage(metaPath) {
   // Update post metadata — store relative path so it works across machines
   meta.image_path = relative(ROOT, finalImagePath).replace(/\\/g, '/');
   meta.image_prompt = finalPrompt;
+  meta.image_alt = buildImageAlt({ keyword: meta.target_keyword, title: meta.title, scene: finalScene || undefined });
   meta.image_generated_at = new Date().toISOString();
   writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
@@ -1123,6 +1127,9 @@ async function main() {
         try {
           const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
           meta.image_path = relative(ROOT, webpPath).replace(/\\/g, '/');
+          if (!meta.image_alt) {
+            meta.image_alt = buildImageAlt({ keyword: meta.target_keyword, title: meta.title });
+          }
           writeFileSync(metaPath, JSON.stringify(meta, null, 2));
         } catch { /* ignore */ }
       }
