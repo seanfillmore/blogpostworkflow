@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   expectedCtr,
   classifyAction,
+  classifyPageType,
   clusterByPage,
   analyzeOpportunities,
 } from '../../lib/seo-opportunities.js';
@@ -27,6 +28,14 @@ test('classifyAction: page 2 → rank_push', () => {
 });
 test('classifyAction: deep (21-50) → refresh', () => {
   assert.equal(classifyAction({ position: 35, ctr: 0.001 }), 'refresh');
+});
+
+// ── classifyPageType ────────────────────────────────────────────────────────
+test('classifyPageType identifies collection / product / content', () => {
+  assert.equal(classifyPageType('https://www.realskincare.com/collections/sls-free-toothpaste'), 'collection');
+  assert.equal(classifyPageType('https://www.realskincare.com/products/coconut-oil-toothpaste'), 'product');
+  assert.equal(classifyPageType('https://www.realskincare.com/blogs/news/best-natural-toothpaste'), 'content');
+  assert.equal(classifyPageType('https://www.realskincare.com/'), 'content');
 });
 
 // ── clusterByPage ───────────────────────────────────────────────────────────
@@ -82,4 +91,31 @@ test('analyzeOpportunities: product match boosts score above an equivalent non-c
   const prod = opps.find((o) => o.page.includes('sellable'));
   const info = opps.find((o) => o.page.includes('info'));
   assert.ok(prod.score > info.score);
+});
+
+test('analyzeOpportunities: collections are commercial WITHOUT needing a product-handle match', () => {
+  // collection handles are NOT in the product handle list (which is products-only),
+  // yet collections drive the majority of SEO revenue — they must still score as commercial.
+  const rows = [
+    { keyword: 'sls free toothpaste', page: '/collections/sls-free-toothpaste', impressions: 1000, clicks: 2, ctr: 0.002, position: 14, volume: 1000 },
+  ];
+  const opps = analyzeOpportunities(rows, { productHandles: ['coconut-oil-toothpaste'] });
+  const coll = opps.find((o) => o.page.includes('collections'));
+  assert.equal(coll.commercial, true);
+  assert.equal(coll.page_type, 'collection');
+});
+
+test('analyzeOpportunities: collection outscores an equivalent product (collections drive ~80% of SEO revenue)', () => {
+  const base = { impressions: 1000, clicks: 2, ctr: 0.002, position: 14, volume: 1000 };
+  const rows = [
+    { ...base, keyword: 'a', page: '/collections/sellable-things' },
+    { ...base, keyword: 'b', page: '/products/sellable' },
+    { ...base, keyword: 'c', page: '/blogs/news/info' },
+  ];
+  const opps = analyzeOpportunities(rows, { productHandles: ['sellable'] });
+  const coll = opps.find((o) => o.page_type === 'collection');
+  const prod = opps.find((o) => o.page_type === 'product');
+  const info = opps.find((o) => o.page_type === 'content');
+  assert.ok(coll.score >= prod.score, 'collection should score >= product');
+  assert.ok(prod.score > info.score, 'product should score > non-commercial content');
 });

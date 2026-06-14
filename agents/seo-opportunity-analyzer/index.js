@@ -75,6 +75,18 @@ function slugFromPage(page) {
   return m ? m[1] : page.replace(/[^a-z0-9]+/gi, '-');
 }
 
+// Route an opportunity to the executor agent best suited to act on it, so a human
+// approving the queue item knows exactly which agent runs it. Collections are the
+// priority commercial asset and have dedicated executors.
+function recommendedAgent(o) {
+  if (o.page_type === 'collection') {
+    // deep refresh → rewrite the on-page content; page-2 push → internal links.
+    return o.action === 'refresh' ? 'collection-content-optimizer' : 'collection-linker';
+  }
+  if (o.page_type === 'product') return 'collection-linker'; // links blog content into product pages
+  return o.action === 'rank_push' ? 'collection-linker' : 'refresh-runner';
+}
+
 // Google Ads (DataForSEO) rejects keywords with punctuation/symbols (e.g.
 // question-form queries ending in "?"). One bad keyword fails the whole batch,
 // so only send clean ones; mark the rest volume 0 (questions have ~0 volume
@@ -158,6 +170,7 @@ async function main() {
         signal_source: {
           type: 'gsc-opportunity-analyzer',
           page: o.page,
+          page_type: o.page_type,
           cluster_volume: o.clusterVolume,
           impressions: o.impressions,
           position: o.position,
@@ -165,13 +178,14 @@ async function main() {
         },
         summary: {
           what_changed: `${o.keywordCount} query/queries (~${o.clusterVolume.toLocaleString()}/mo) hit ${o.page.replace(host, '')} at avg position ${o.position}.`,
-          why: `Recommended: ${o.action.replace('_', ' ')} — est. +${o.est_monthly_clicks} clicks/mo${o.commercial ? ' (commercial — maps to a product/collection)' : ''}.`,
+          why: `Recommended: ${o.action.replace('_', ' ')} — est. +${o.est_monthly_clicks} clicks/mo${o.commercial ? ` (commercial ${o.page_type})` : ''}.`,
           projected_impact: o.action === 'rank_push'
-            ? 'Refresh + internal links to push from page 2 onto page 1.'
-            : 'Deeper content rebuild to become competitive.',
+            ? `Run ${recommendedAgent(o)}: internal links + on-page to push from page 2 onto page 1.`
+            : `Run ${recommendedAgent(o)}: deeper content rebuild to become competitive.`,
         },
-        resource_type: 'seo-opportunity',
+        resource_type: o.page_type === 'collection' ? 'collection' : 'seo-opportunity',
         recommended_action: o.action,
+        recommended_agent: recommendedAgent(o),
         status: 'pending',
         created_at: new Date().toISOString(),
       });
@@ -180,17 +194,23 @@ async function main() {
   }
 
   // ── digest ────────────────────────────────────────────────────────────────
-  const fmt = (o, i) => `${i + 1}. [${o.action}] ${o.topKeyword} — ~${o.clusterVolume.toLocaleString()}/mo, ${o.impressions} impr, pos ${o.position}, +${o.est_monthly_clicks} clk/mo${o.commercial ? ' 🛒' : ''}\n   ${o.page.replace(host, '')}`;
+  const typeMark = (o) => (o.page_type === 'collection' ? '📂' : o.page_type === 'product' ? '🛍️' : '');
+  const fmt = (o, i) => `${i + 1}. [${o.action}] ${o.topKeyword} — ~${o.clusterVolume.toLocaleString()}/mo, ${o.impressions} impr, pos ${o.position}, +${o.est_monthly_clicks} clk/mo ${typeMark(o)}\n   ${o.page.replace(host, '')}`;
   const autoMeta = opps.filter((o) => o.action === 'meta_rewrite').slice(0, 8);
+  // Collections are the priority commercial asset (~80% of ecommerce SEO revenue) — call them out first.
+  const collOpps = opps.filter((o) => o.page_type === 'collection').slice(0, 5);
   const body = [
     `Top opportunities (winnable — pages we already rank for):`,
     ...opps.slice(0, 8).map(fmt),
+    '',
+    `📂 Collection opportunities (highest revenue leverage): ${opps.filter((o) => o.page_type === 'collection').length}`,
+    ...collOpps.map((o) => `  • ${o.topKeyword} (pos ${o.position}, ~${o.clusterVolume.toLocaleString()}/mo) → ${recommendedAgent(o)}\n    ${o.page.replace(host, '')}`),
     '',
     `Auto-handled by meta-optimizer this week (CTR rewrites): ${autoMeta.length}`,
     ...autoMeta.map((o) => `  • ${o.topKeyword} (pos ${o.position}, ${(o.ctr * 100).toFixed(1)}% CTR) ${o.page.replace(host, '')}`),
     '',
     `Staged for approval (bigger moves): ${staged.length}`,
-    ...staged.map((o) => `  • ${o.topKeyword} → ${o.action} — review on dashboard`),
+    ...staged.map((o) => `  • ${o.topKeyword} → ${o.action} via ${recommendedAgent(o)} — review on dashboard`),
   ].join('\n');
 
   console.log(`\n${body}\n`);
