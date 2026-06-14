@@ -571,11 +571,12 @@ function renderPerformanceQueueCard(d) {
       '</div>' +
       '<div class="queue-actions">' +
         (i.status === 'pending' || i.status === 'approved'
-          ? '<button id="approve-btn-' + esc(i.slug) + '" class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')">' + 'Approve & Publish' + '</button>' +
+          ? '<button id="approve-btn-' + esc(i.slug) + '" class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')">' + (i.trigger === 'seo-opportunity' ? 'Approve &amp; Run' : 'Approve &amp; Publish') + '</button>' +
             '<button class="btn-sm" onclick="openFeedbackEditor(\'' + esc(i.slug) + '\')">Feedback</button>' +
             (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '') +
             '<button class="btn-sm" onclick="dismissQueueItem(\'' + esc(i.slug) + '\')">Dismiss</button>'
-          : (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '')) +
+          : (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '') +
+            '<button class="btn-sm" onclick="dismissQueueItem(\'' + esc(i.slug) + '\')">Dismiss</button>') +
       '</div>' +
       '<div id="feedback-editor-' + esc(i.slug) + '" class="feedback-editor" style="display:none">' +
         '<textarea id="feedback-text-' + esc(i.slug) + '" placeholder="Tell the engine what to change..."></textarea>' +
@@ -595,19 +596,22 @@ function renderPerformanceQueueCard(d) {
 
 async function approveQueueItem(slug) {
   var btn = document.getElementById('approve-btn-' + slug);
-  if (btn) { btn.disabled = true; btn.textContent = 'Publishing...'; }
+  var label = btn ? btn.textContent : 'Approve';
+  if (btn) { btn.disabled = true; btn.textContent = 'Working...'; }
   try {
     var res = await fetch('/api/performance-queue/' + encodeURIComponent(slug) + '/approve', { method: 'POST' });
     var data = await res.json();
     if (!res.ok || !data.ok) {
-      alert('Publish failed: ' + (data.error || 'Unknown error'));
-      if (btn) { btn.disabled = false; btn.textContent = 'Approve & Publish'; }
+      alert('Action failed: ' + (data.error || 'Unknown error'));
+      if (btn) { btn.disabled = false; btn.textContent = label; }
       return;
     }
+    if (data.triggered) alert('Started ' + data.triggered + '. The work runs in the background; new changes will appear in the queue shortly.');
+    else if (data.publishing) alert('Publishing in the background. The item will show as published shortly.');
     loadData();
   } catch (err) {
-    alert('Publish failed: ' + err.message);
-    if (btn) { btn.disabled = false; btn.textContent = 'Approve & Publish'; }
+    alert('Action failed: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = label; }
   }
 }
 

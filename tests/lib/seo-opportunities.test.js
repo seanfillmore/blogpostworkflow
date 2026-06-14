@@ -4,6 +4,7 @@ import {
   expectedCtr,
   classifyAction,
   classifyPageType,
+  recommendedAgentFor,
   clusterByPage,
   analyzeOpportunities,
 } from '../../lib/seo-opportunities.js';
@@ -36,6 +37,19 @@ test('classifyPageType identifies collection / product / content', () => {
   assert.equal(classifyPageType('https://www.realskincare.com/products/coconut-oil-toothpaste'), 'product');
   assert.equal(classifyPageType('https://www.realskincare.com/blogs/news/best-natural-toothpaste'), 'content');
   assert.equal(classifyPageType('https://www.realskincare.com/'), 'content');
+});
+
+// ── recommendedAgentFor ─────────────────────────────────────────────────────
+test('recommendedAgentFor routes by page type and action', () => {
+  // collection: deep refresh rewrites on-page content; page-2 push adds internal links
+  assert.equal(recommendedAgentFor({ pageType: 'collection', action: 'refresh' }), 'collection-content-optimizer');
+  assert.equal(recommendedAgentFor({ pageType: 'collection', action: 'rank_push' }), 'collection-linker');
+  // products: link blog content into the product page
+  assert.equal(recommendedAgentFor({ pageType: 'product', action: 'rank_push' }), 'collection-linker');
+  assert.equal(recommendedAgentFor({ pageType: 'product', action: 'refresh' }), 'collection-linker');
+  // content (blog/info): always a content refresh — collection-linker can't push a blog post
+  assert.equal(recommendedAgentFor({ pageType: 'content', action: 'rank_push' }), 'refresh-runner');
+  assert.equal(recommendedAgentFor({ pageType: 'content', action: 'refresh' }), 'refresh-runner');
 });
 
 // ── clusterByPage ───────────────────────────────────────────────────────────
