@@ -125,3 +125,25 @@ test('proposeWeightChanges: clamps to param max', () => {
   // would go above max → clamped to 0.05 → from===to → omitted
   assert.ok(!up || up.to <= 0.05);
 });
+
+import { applyWeightChanges } from '../../lib/priority-tuning.js';
+
+test('applyWeightChanges: returns a new cfg with changed knobs, others untouched', () => {
+  const cfg = JSON.parse(JSON.stringify(CFG));
+  const changes = [
+    { signal_type: 'unmapped', param: 'unmapped.perImpression', from: 0.01, to: 0.011, reason: 'x' },
+    { signal_type: 'rank_drop', param: 'rank_drop.perPosition', from: 3, to: 2.7, reason: 'y' },
+  ];
+  const out = applyWeightChanges(cfg, changes);
+  assert.equal(out.signals.unmapped.perImpression, 0.011);
+  assert.equal(out.signals.rank_drop.perPosition, 2.7);
+  assert.equal(out.signals.revenue_cluster.perDollar, 0.2); // untouched
+  // original not mutated
+  assert.equal(cfg.signals.unmapped.perImpression, 0.01);
+});
+
+test('applyWeightChanges: empty changes returns an equivalent cfg', () => {
+  const cfg = JSON.parse(JSON.stringify(CFG));
+  const out = applyWeightChanges(cfg, []);
+  assert.deepEqual(out.signals, cfg.signals);
+});
