@@ -6,15 +6,18 @@
  * title/meta description improved click-through rate.
  *
  * Only evaluates entries that are at least 28 days old (one full GSC cycle).
- * Entries showing improvement are archived; entries that didn't improve are
- * flagged for another optimization pass.
+ * Each evaluated test is concluded in place (status='concluded' + winner/delta
+ * written back to the tracker so it isn't re-evaluated and the digest can show a
+ * real result). Clear losers (CTR regressed beyond the dead-band) are
+ * auto-reverted to the original title/meta on Shopify.
  *
  * Usage:
- *   node agents/meta-ab-checker/index.js                # check all entries ≥28 days old
- *   node agents/meta-ab-checker/index.js --min-days 14  # check entries ≥14 days old
- *   node agents/meta-ab-checker/index.js --all          # check all entries regardless of age
+ *   node agents/meta-ab-checker/index.js                # ≥28-day tests; auto-revert losers
+ *   node agents/meta-ab-checker/index.js --min-days 14  # ≥14-day tests
+ *   node agents/meta-ab-checker/index.js --all          # all entries regardless of age
+ *   node agents/meta-ab-checker/index.js --no-apply     # measure + report only, no reverts
  *
- * Output: data/reports/meta-ab-report.md
+ * Output: data/reports/meta-ab/meta-ab-report.md
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
@@ -22,6 +25,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
+import { decideOutcome } from '../../lib/meta-ab-decision.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -40,6 +45,26 @@ function getArg(flag) {
 
 const minDays = parseInt(getArg('--min-days') ?? '28', 10);
 const checkAll = args.includes('--all');
+// Auto-revert measured losers by default; --no-apply measures + reports only.
+const apply = !args.includes('--no-apply');
+
+// Resolve a tested page URL back to its Shopify article so a losing variant can
+// be reverted to the original title/meta. Matches by article handle (last path
+// segment), which is robust to www-vs-myshopify host differences.
+async function buildArticleIndex() {
+  const byHandle = new Map();
+  const blogs = await getBlogs();
+  for (const blog of blogs || []) {
+    const articles = await getArticles(blog.id);
+    for (const a of articles || []) byHandle.set(a.handle, { ...a, blogId: blog.id });
+  }
+  return byHandle;
+}
+
+function handleFromUrl(url) {
+  const m = String(url || '').match(/\/blogs\/[^/]+\/([^/?#]+)/);
+  return m ? m[1] : null;
+}
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
@@ -70,12 +95,14 @@ async function main() {
 
   const today = new Date();
   const due = tracker.filter((entry) => {
+    if (entry.status === 'concluded') return false; // already decided
     if (checkAll) return true;
     const tested = new Date(entry.testedAt);
     const ageInDays = (today - tested) / 86400000;
     return ageInDays >= minDays;
   });
 
+  console.log(`  Mode: ${apply ? 'APPLY (auto-revert losers)' : 'REPORT ONLY (--no-apply)'}`);
   console.log(`  Tracker entries: ${tracker.length} total, ${due.length} ready to evaluate`);
 
   if (due.length === 0) {
@@ -85,7 +112,11 @@ async function main() {
 
   console.log('');
 
+  // Build the article index once (only needed if we may revert).
+  const articleIndex = apply ? await buildArticleIndex() : new Map();
+
   const results = [];
+  const concludedAt = new Date().toISOString().slice(0, 10);
 
   for (const entry of due) {
     process.stdout.write(`  Checking "${entry.keyword}" (${entry.testedAt})... `);
@@ -98,15 +129,48 @@ async function main() {
       const currentImpressions = perf.impressions ?? 0;
       const currentPosition = perf.position ?? entry.baselinePosition;
 
-      const ctrDelta = currentCtr - entry.baselineCtr;
+      const decision = decideOutcome({ baselineCtr: entry.baselineCtr, currentCtr });
+      const ctrDelta = decision.delta;
       const ctrDeltaPct = entry.baselineCtr > 0
         ? ((ctrDelta / entry.baselineCtr) * 100).toFixed(1)
         : 'N/A';
+      const improved = decision.outcome === 'improved';
+      const flag = improved ? '✅' : (decision.outcome === 'regressed' ? '⚠️ Regressed' : '→ Flat');
 
-      const improved = ctrDelta > 0;
-      const flag = improved ? '✅' : (ctrDelta < -0.005 ? '⚠️ Regressed' : '→ Flat');
+      // Auto-revert a clear loser to the original title/meta.
+      let reverted = false, revertError = null;
+      if (decision.shouldRevert && apply) {
+        const handle = handleFromUrl(entry.pageUrl);
+        const art = handle ? articleIndex.get(handle) : null;
+        if (!art) {
+          revertError = `could not resolve article for ${entry.pageUrl}`;
+        } else {
+          try {
+            const fields = { title: entry.originalTitle };
+            if (entry.originalMeta != null) fields.summary_html = entry.originalMeta;
+            await updateArticle(art.blogId, art.id, fields);
+            reverted = true;
+          } catch (e) {
+            revertError = e.message;
+          }
+        }
+      }
 
-      console.log(`${improved ? '✅ +' : (ctrDelta >= 0 ? '→ +' : '❌ ')}${(ctrDelta * 100).toFixed(2)}% CTR`);
+      console.log(
+        `${improved ? '✅ +' : (ctrDelta >= 0 ? '→ +' : '❌ ')}${(ctrDelta * 100).toFixed(2)}% CTR`
+        + (reverted ? ' — reverted to original' : (revertError ? ` — revert FAILED: ${revertError}` : ''))
+      );
+
+      // Write the outcome back onto the tracker entry so it's concluded (won't
+      // be re-evaluated) and the digest can show a real winner/delta.
+      entry.status = 'concluded';
+      entry.concludedDate = concludedAt;
+      entry.winner = decision.winner;
+      entry.currentCtr = currentCtr;
+      entry.currentDelta = ctrDelta;
+      entry.outcome = decision.outcome;
+      entry.reverted = reverted;
+      if (revertError) entry.revertError = revertError;
 
       results.push({
         ...entry,
@@ -117,10 +181,17 @@ async function main() {
         ctrDeltaPct,
         improved,
         flag,
+        reverted,
+        revertError,
       });
     } catch (e) {
       console.error(`failed: ${e.message}`);
     }
+  }
+
+  // Persist concluded outcomes (and any reverts) back to the tracker.
+  if (apply && results.length > 0) {
+    writeFileSync(trackerPath, JSON.stringify(tracker, null, 2));
   }
 
   if (results.length === 0) {
@@ -169,9 +240,12 @@ async function main() {
     lines.push(`| **Title** | ${r.originalTitle} | ${r.proposedTitle} |`);
     lines.push(`| **Meta** | ${r.originalMeta || '*(none)*'} | ${r.proposedMeta} |`);
     lines.push('');
-    if (!r.improved) {
-      lines.push(`> **Action:** Re-run meta-optimizer for this page to try a different variant.`);
-      lines.push(`> \`node agents/meta-optimizer/index.js --apply\` (it will re-optimize low-CTR pages)`);
+    if (r.reverted) {
+      lines.push(`> **Action taken:** Reverted to the original title/meta (variant B lost). meta-optimizer can try a fresh variant on the next run.`);
+    } else if (r.revertError) {
+      lines.push(`> **Revert FAILED:** ${r.revertError} — restore manually.`);
+    } else if (!r.improved) {
+      lines.push(`> **Action:** Variant kept (within dead-band). No revert needed.`);
     }
     lines.push('---');
     lines.push('');
@@ -181,8 +255,9 @@ async function main() {
   const reportPath = join(REPORTS_DIR, 'meta-ab-report.md');
   writeFileSync(reportPath, lines.join('\n'));
 
+  const revertedCount = results.filter((r) => r.reverted).length;
   console.log(`\n  Report: ${reportPath}`);
-  console.log(`  ✅ Improved: ${improved.length}  → Flat: ${flat.length}  ⚠️ Regressed: ${regressed.length}`);
+  console.log(`  ✅ Improved: ${improved.length}  → Flat: ${flat.length}  ⚠️ Regressed: ${regressed.length}  ↩ Reverted: ${revertedCount}`);
 }
 
 main()
