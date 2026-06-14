@@ -35,6 +35,7 @@ import {
 } from './keyword-data.js';
 import { loadIndex } from '../../lib/keyword-index/consumer.js';
 import { mergeRelatedKeywords, buildResearchIndexContext } from './lib/index-context.js';
+import { computeCompetitorBenchmark } from '../../lib/content-benchmark.js';
 
 // GSC is optional — gracefully skip if not configured
 let gsc = null;
@@ -233,6 +234,8 @@ function loadRelatedFlops(keyword) {
 async function generateBrief(keyword, kwData, serpResults, relatedKeywords, competitorContent, internalLinks, volumeHistory, gscData = null, indexContext = null) {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
+  const benchmark = computeCompetitorBenchmark(competitorContent.filter(Boolean));
+
   const competitorSummary = competitorContent
     .filter(Boolean)
     .map((c, i) => `--- Competitor ${i + 1}: ${c.url} (~${c.word_count} words) ---\nTitle: ${c.title}\nHeadings:\n${c.headings.map((h) => `  ${h.tag.toUpperCase()}: ${h.text}`).join('\n')}`)
@@ -305,6 +308,9 @@ ${relatedSummary || 'Not available'}
 COMPETITOR CONTENT ANALYSIS (what the top-ranking pages currently cover):
 ${competitorSummary || 'Not available'}
 
+COMPETITOR BENCHMARK (data-driven — prefer this over the tier guess):
+${benchmark ? `Top results median ~${benchmark.medianWordCount} words, avg ${benchmark.avgH2} H2 sections. Set target_word_count ≈ ${benchmark.targetWordCount} and plan a comparable number of H2 sections (cover the subtopics they cover, then add a unique angle).` : 'Not available — use the content-depth tier rules.'}
+
 INTERNAL LINK CANDIDATES (existing site pages to link to where relevant):
 ${internalSummary || 'None identified'}
 
@@ -342,6 +348,7 @@ Produce a JSON content brief with exactly this structure:
   ],
   "e_e_a_t_signals": string[] (specific ways to demonstrate expertise and trustworthiness),
   "schema_type": "Article" | "HowTo" | "FAQPage" | "Review",
+  "citation_guidance": string (instructions for the writer: which claims need credible outbound citations — statistics, health/safety/efficacy claims must link to authoritative sources like .gov/.edu/medical orgs/peer-reviewed; avoid unsupported absolute claims),
   "writer_notes": string (anything else the writer needs to know: tone, style, brand voice, what to avoid)
 }
 
@@ -367,6 +374,9 @@ BRAND POLICY — apply to every brief:
 - Do NOT create sections targeting competitor brand queries (e.g. "What happened to Crest cinnamon toothpaste?").
 - The post should position Real Skin Care as the authoritative choice — not as one option among many in a comparison chart.
 - Competitor content analysis is provided for structural research only; do not carry competitor brand names into the brief output.
+
+CITATION GUIDANCE RULE:
+Populate citation_guidance: identify the factual/health claims this topic will require and instruct the writer to cite credible sources for them. Statistics, health/safety/efficacy claims must link to authoritative sources (.gov, .edu, medical organisations, peer-reviewed journals). Flag any absolute claims that cannot be supported and advise the writer to soften or remove them.
 IGNORE THIS CLOSING BRACE — the actual JSON structure ends above
 }
 
@@ -416,6 +426,10 @@ Return only the JSON object. No markdown fences, no explanation.${(() => {
       amazon_purchases: indexContext.amazon_purchases,
       conversion_share: indexContext.conversion_share,
     };
+  }
+
+  if (benchmark) {
+    brief.competitor_benchmark = benchmark;
   }
 
   return brief;

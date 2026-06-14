@@ -40,8 +40,13 @@ import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpubl
 import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
+import { findUncitedClaims } from '../../lib/citation-check.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Threshold: 2+ uncited statistical/health claims triggers needs_rebuild.
+// A single borderline claim is flagged in the report but not a blocker.
+const UNCITED_CLAIM_THRESHOLD = 2;
 
 let config, ingredients;
 try {
@@ -661,7 +666,7 @@ ${editorialContent}`,
 // ── report builder ────────────────────────────────────────────────────────────
 
 function buildReport({ slug, meta, linkResults, internalIssues, sourceVerifications,
-  topicalSuggestions, editorialReview, linkedBlogUrls, ctaResult }) {
+  topicalSuggestions, editorialReview, linkedBlogUrls, ctaResult, uncited = [] }) {
 
   const lines = [];
   const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -747,6 +752,21 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
     lines.push('**Issues detected:**\n');
     for (const issue of ctaResult?.issues ?? []) {
       lines.push(`- ⚠️ ${issue.message}`);
+    }
+    lines.push('');
+  }
+
+  // ── 2c. Uncited claims ────────────────────────────────────────────────────
+  lines.push('---\n## 2c. Uncited Claims\n');
+  if (uncited.length === 0) {
+    lines.push('✅ No uncited statistical/health claims.\n');
+  } else {
+    const blocker = uncited.length >= UNCITED_CLAIM_THRESHOLD;
+    lines.push(blocker
+      ? `**BLOCKER** — ${uncited.length} claim(s) lack a credible outbound citation (threshold: ${UNCITED_CLAIM_THRESHOLD}). Add external sources or soften language before publishing.\n`
+      : `**Warning** — ${uncited.length} claim(s) lack a credible outbound citation (below blocker threshold of ${UNCITED_CLAIM_THRESHOLD}). Consider adding sources.\n`);
+    for (const c of uncited) {
+      lines.push(`- "${c.text}" — needs a credible outbound citation (stat/health claim)`);
     }
     lines.push('');
   }
@@ -1164,6 +1184,19 @@ async function runEditor(htmlPath) {
     console.log(`  Deterministic issues: ${deterministicIssues.join('; ')}`);
   }
 
+  // 5b. Uncited-claim check (deterministic, no tokens). At/above threshold it
+  // joins deterministicIssues so it flows through the proven gate path: fed to the
+  // editorial review → forces OVERALL QUALITY "Needs Work" → report VERDICT →
+  // calendar-runner blocks publish and routes the citation fix to content-refresher.
+  const siteHost = new URL(config.url).host;
+  const uncited = findUncitedClaims(workingHtml, { siteHost });
+  if (uncited.length > 0) {
+    console.log(`  Uncited claims found: ${uncited.length}`);
+  }
+  if (uncited.length >= UNCITED_CLAIM_THRESHOLD) {
+    deterministicIssues.push(`${uncited.length} statistical/health claim(s) lack a credible outbound citation (fact-check gate): ${uncited.slice(0, 3).map((u) => `"${u.text.slice(0, 80)}"`).join('; ')}`);
+  }
+
   // 6. Extract FAQ Q&As for competitor check
   const faqQAs = extractFaqQAs($);
 
@@ -1230,7 +1263,7 @@ async function runEditor(htmlPath) {
   const report = buildReport({
     slug, meta, linkResults, internalIssues,
     sourceVerifications, topicalSuggestions,
-    editorialReview: review, linkedBlogUrls, ctaResult,
+    editorialReview: review, linkedBlogUrls, ctaResult, uncited,
   });
 
   ensurePostDir(slug);
@@ -1247,6 +1280,7 @@ async function runEditor(htmlPath) {
   console.log(`    Internal issues:    ${internalIssues.length}`);
   console.log(`    CTA/format issues:  ${ctaResult.issues.length}`);
   console.log(`    Deterministic:      ${deterministicIssues.length} issue(s)`);
+  console.log(`    Uncited claims:     ${uncited.length}`);
   console.log(`    Sources to review:  ${needsReview}`);
   console.log(`    Topical suggestions:${topicalSuggestions.length}`);
 
@@ -1289,6 +1323,7 @@ async function runEditor(htmlPath) {
     if (deterministicIssues.length > 0) reasons.push(`${deterministicIssues.length} deterministic issue(s)`);
     if (ctaResult.issues.length > 0) reasons.push(`${ctaResult.issues.length} CTA/format issue(s)`);
     if (needsReview > 0) reasons.push(`${needsReview} source claim(s) to review`);
+    if (uncited.length >= UNCITED_CLAIM_THRESHOLD) reasons.push(`${uncited.length} uncited statistical/health claim(s) (fact-check gate)`);
 
     // Parse the LLM editorial review for content blockers that the
     // deterministic signals don't capture (factual concerns, competitor
