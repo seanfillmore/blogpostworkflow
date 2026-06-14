@@ -11,6 +11,7 @@
     "intentMult": { "transactional": 1.4, "commercial": 1.2, "informational": 1.0 },
     "volumeDivisor": 100,
     "volumeCap": 50,
+    "impressionsDivisor": 50,
     "kdEasyThreshold": 5,
     "kdEasyBonus": 10
   },
