@@ -27,6 +27,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { listAllSlugs, getPostMeta, getContentPath, POSTS_DIR } from '../../lib/posts.js';
+import { findSemanticDuplicate } from '../../lib/cannibalization-guard.js';
 import {
   fetchSerpData,
   fetchRelatedKeywords,
@@ -503,6 +504,38 @@ async function researchKeyword(keyword, kwData = {}) {
     if (meta.shopify_url) console.log(`    URL:     ${meta.shopify_url}`);
     console.log(`\n  No brief generated. Update the existing post instead.\n`);
     return;
+  }
+
+  // Semantic cannibalization guard — skip keywords that are near-duplicates of
+  // an existing post or brief (catches "sls free toothpaste" vs "toothpaste without sls").
+  {
+    const existingKeywords = [];
+    // Collect target_keywords from all published/drafted posts
+    try {
+      for (const s of listAllSlugs()) {
+        try {
+          const m = getPostMeta(s);
+          if (m && m.target_keyword) existingKeywords.push(m.target_keyword);
+        } catch { /* skip unreadable */ }
+      }
+    } catch { /* postsDir missing */ }
+    // Also collect target_keywords from all existing briefs
+    try {
+      const briefFiles = (await import('fs')).readdirSync(BRIEFS_DIR)
+        .filter((f) => f.endsWith('.json'));
+      for (const f of briefFiles) {
+        try {
+          const b = JSON.parse((await import('fs')).readFileSync(join(BRIEFS_DIR, f), 'utf8'));
+          if (b.target_keyword) existingKeywords.push(b.target_keyword);
+        } catch { /* skip */ }
+      }
+    } catch { /* briefs dir missing */ }
+
+    const semDup = findSemanticDuplicate(keyword, existingKeywords, { threshold: 0.6 });
+    if (semDup && semDup.toLowerCase() !== keyword.toLowerCase()) {
+      console.log(`\n  [SKIP] semantic cannibalization: "${keyword}" ~ existing "${semDup}" — consider consolidating instead of a new post.\n`);
+      return;
+    }
   }
 
   console.log(`\n  Keyword: "${keyword}"`);
