@@ -712,9 +712,16 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
       if (Array.isArray(legacyEntries)) {
         for (const entry of legacyEntries) {
           if (!entry.testedAt) continue;
-          // Normalize legacy format to match new-format fields
+          // Skip tests with no measured outcome — without a decided winner or a
+          // delta they'd render a misleading "Variant A wins (n/a)" (the default
+          // winner is A), implying a result that was never actually measured.
+          const hasOutcome = entry.winner != null || entry.kept != null
+            || entry.currentDelta != null || entry.ctrDelta != null;
+          if (!hasOutcome) continue;
+          // Normalize legacy format to match new-format fields. Legacy entries
+          // identify the test by `keyword`/`pageUrl`, not slug/page.
           allTests.push({
-            slug: entry.slug || entry.page || '',
+            slug: entry.slug || entry.page || entry.keyword || entry.pageUrl || '',
             status: entry.status || 'concluded',
             concludedDate: entry.concludedDate || entry.testedAt,
             originalTitle: entry.originalTitle,
