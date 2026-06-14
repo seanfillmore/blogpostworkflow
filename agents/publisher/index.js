@@ -204,7 +204,7 @@ async function main() {
     process.stdout.write('  Uploading hero image to Shopify CDN... ');
     try {
       const cdnUrl = await uploadImageToShopifyCDN(imagePath, meta.title);
-      imageField = { src: cdnUrl, alt: meta.title };
+      imageField = { src: cdnUrl, alt: meta.image_alt || meta.title };
       console.log(`done\n  CDN:     ${cdnUrl}`);
     } catch (err) {
       // Fall back to base64 attachment if CDN upload fails
@@ -213,7 +213,7 @@ async function main() {
       imageField = {
         attachment: imageBuffer.toString('base64'),
         filename: basename(imagePath),
-        alt: meta.title,
+        alt: meta.image_alt || meta.title,
       };
     }
   } else {
