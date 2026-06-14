@@ -39,6 +39,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import { getMetaPath, getPostMeta, getInternalLinksPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { identifyPillar } from '../../lib/cluster-architecture.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'internal-linker');
@@ -232,6 +233,60 @@ function isTopicallyRelevant(article, targetKeyword) {
 function alreadyLinksTo(bodyHtml, targetUrl) {
   const slug = targetUrl.split('/').pop();
   return bodyHtml.includes(targetUrl) || bodyHtml.includes(slug);
+}
+
+// ── cluster pillar helper ─────────────────────────────────────────────────────
+
+/**
+ * Identify the cluster pillar for a given post's slug. Builds the cluster by
+ * finding all local posts that share a primary tag with the target, then calls
+ * identifyPillar() to pick the broadest/highest-authority page.
+ *
+ * Returns { pillarSlug, pillarKeyword, pillarUrl } or null if the cluster
+ * cannot be determined or the current post IS the pillar.
+ */
+function findClusterPillar(slug, targetMeta) {
+  try {
+    // Determine the primary tag from target meta (first tag, lowercased)
+    const tagsRaw = targetMeta.shopify_tags || targetMeta.tags || '';
+    const primaryTag = tagsRaw.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)[0];
+    if (!primaryTag) return null;
+
+    // Scan all local posts for same-tag members, collecting pillar-scoring fields
+    const clusterPosts = [];
+    try {
+      const slugs = readdirSync(POSTS_DIR)
+        .filter((d) => existsSync(join(POSTS_DIR, d, 'meta.json')));
+      for (const s of slugs) {
+        try {
+          const m = JSON.parse(readFileSync(join(POSTS_DIR, s, 'meta.json'), 'utf8'));
+          const mTags = (m.shopify_tags || m.tags || '').split(',').map((t) => t.trim().toLowerCase());
+          if (!mTags.includes(primaryTag)) continue;
+          clusterPosts.push({
+            slug: s,
+            keyword: m.target_keyword || s.replace(/-/g, ' '),
+            impressions: m.gsc_impressions ?? null,
+            position: m.gsc_position ?? null,
+            shopify_handle: m.shopify_handle || s,
+            shopify_blog_handle: m.shopify_blog_handle || 'news',
+          });
+        } catch { /* skip unreadable */ }
+      }
+    } catch { /* posts dir missing */ }
+
+    if (clusterPosts.length < 2) return null;  // need at least 2 posts to have spoke→pillar
+
+    const pillar = identifyPillar(clusterPosts);
+    if (!pillar) return null;
+
+    // If current post IS the pillar, no spoke→pillar link needed
+    if (pillar.slug === slug) return null;
+
+    const pillarUrl = `${config.url}/blogs/${pillar.shopify_blog_handle || 'news'}/${pillar.shopify_handle || pillar.slug}`;
+    return { pillarSlug: pillar.slug, pillarKeyword: pillar.keyword, pillarUrl };
+  } catch {
+    return null;  // graceful no-op if anything fails
+  }
 }
 
 // ── claude link finder ────────────────────────────────────────────────────────
@@ -494,6 +549,62 @@ async function main() {
     const withOpportunities = results.filter((r) => r.suggestions.length > 0);
     const withNone = results.filter((r) => r.suggestions.length === 0);
 
+    // ── Cluster pillar preference ─────────────────────────────────────────────
+    // If this post is a spoke (not the cluster pillar), find link opportunities
+    // from this post's own body to the pillar — so spoke→pillar link equity flows
+    // up to the hub. This is additive: existing inbound-link analysis is unchanged.
+    let pillarLinkSection = null;
+    const pillarInfo = findClusterPillar(slug, targetMeta);
+    if (pillarInfo) {
+      const { pillarSlug, pillarKeyword, pillarUrl } = pillarInfo;
+      console.log(`\n  Cluster pillar: "${pillarKeyword}" (${pillarSlug})`);
+      console.log(`  Checking if this post can link to its cluster pillar...`);
+
+      // Find the current post's own Shopify article body
+      const ownHandle = targetMeta.shopify_handle || slug;
+      const ownArticle = allArticles.find((a) => a.handle === ownHandle);
+
+      if (ownArticle && !alreadyLinksTo(ownArticle.body_html || '', pillarUrl)) {
+        // Synthesise a minimal meta object for the pillar target
+        const pillarMeta = {
+          title: pillarKeyword.replace(/\b\w/g, (c) => c.toUpperCase()),
+          target_keyword: pillarKeyword,
+          meta_description: '',
+        };
+        const pillarSuggestions = await findLinkOpportunities(ownArticle, pillarMeta, pillarUrl);
+
+        if (pillarSuggestions.length > 0) {
+          let pillarLinksAdded = 0;
+          let updatedHtml = ownArticle.body_html;
+
+          if (apply) {
+            for (const s of pillarSuggestions) {
+              const { html: newHtml, applied } = injectLink(updatedHtml, s.anchor_text, pillarUrl, pillarMeta.title);
+              if (applied) { updatedHtml = newHtml; pillarLinksAdded++; s.applied = true; }
+              else { s.applied = false; }
+            }
+            if (pillarLinksAdded > 0) {
+              try {
+                await updateArticle(ownArticle.blogId, ownArticle.id, { body_html: updatedHtml });
+                console.log(`  Pillar link: +${pillarLinksAdded} applied from this post to pillar`);
+              } catch (e) {
+                console.log(`  Pillar link: ERROR applying — ${e.message}`);
+                pillarLinksAdded = 0;
+              }
+            }
+          } else {
+            console.log(`  Pillar link: ${pillarSuggestions.length} opportunity(ies) found`);
+          }
+
+          pillarLinkSection = { pillarSlug, pillarKeyword, pillarUrl, suggestions: pillarSuggestions, linksAdded: apply ? pillarLinksAdded : 0 };
+        } else {
+          console.log(`  Pillar link: no natural anchor text found in this post's body`);
+        }
+      } else if (ownArticle) {
+        console.log(`  Pillar link: already links to pillar — skipping`);
+      }
+    }
+
     const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const lines = [];
     lines.push(`# Internal Linker Report — "${targetMeta.title}"`);
@@ -525,6 +636,20 @@ async function main() {
       lines.push('```bash');
       lines.push(`node agents/internal-linker/index.js --slug ${slug} --apply`);
       lines.push('```\n');
+    }
+
+    // Pillar link recommendation section
+    if (pillarLinkSection) {
+      lines.push('---\n');
+      lines.push(`## Cluster Pillar Link Recommendation\n`);
+      lines.push(`This post is a spoke in its cluster. Linking to the pillar builds hub authority.\n`);
+      lines.push(`**Pillar:** [${pillarLinkSection.pillarKeyword}](${pillarLinkSection.pillarUrl})\n`);
+      for (const s of pillarLinkSection.suggestions) {
+        const icon = apply ? (s.applied ? '✅' : '⚠️ not inserted') : '💡';
+        lines.push(`- ${icon} **"${s.anchor_text}"** (score: ${s.score}/10)`);
+        lines.push(`  - ${s.reason}`);
+      }
+      lines.push('');
     }
 
     if (withNone.length > 0) {
