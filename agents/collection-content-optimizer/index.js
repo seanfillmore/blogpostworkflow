@@ -38,6 +38,8 @@ import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { createMetaTest } from '../../lib/meta-test.js';
 import { loadIndex, entriesForCluster, loadCategoryCompetitors } from '../../lib/keyword-index/consumer.js';
 import { clusterForCollection } from './lib/cluster-mapper.js';
+import { validateCollectionSpec } from '../../lib/collection-validation.js';
+import { buildCollectionPageSchema, buildBreadcrumb, buildFaqSchema } from '../../lib/schema-builders.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -234,23 +236,23 @@ RELEVANT INGREDIENTS:
 ${ingredientsFormatted}
 ${clusterMatesBlock}${competitorsBlock}
 Write a comprehensive collection page description that:
-1. Opens with a compelling first paragraph that naturally includes the top search queries
-2. Explains what this collection offers and who it's for
-3. Highlights key differentiators of ${config.name}'s products in this category (natural ingredients, handmade, etc.)
+1. Opens with a compelling first paragraph that directly answers what users searching the top query are looking for — lead with a specific concrete detail, NOT a generic brand statement
+2. Includes a short BUYING GUIDE section (h2: "How to Choose…" or "What to Look For") — 2-3 brief paragraphs covering decision factors: skin type, key ingredient tradeoffs, format (stick/roll-on/cream/etc.), when to use
+3. Highlights key differentiators of ${config.name}'s products in this collection (natural ingredients, handmade in small batches, specific hero ingredients like organic virgin coconut oil, specific scents)
 4. Includes 2-3 internal links to the related blog posts listed above (use exact URLs)
 5. Mentions specific ingredients when relevant to build topical authority
-6. Ends with reassurance about product quality and natural ingredients
-7. Is between 300-500 words total
+6. Ends with a 4-6 question FAQ section formatted as pairs of <h2>Question?</h2><p>Answer.</p> — questions should reflect real queries shoppers type (e.g. "Does natural deodorant really work?", "How long does it take to work?", "Is it safe for sensitive skin?") — answers 2-4 sentences, conversational, ingredient-specific
+7. Is between 450-650 words total
 8. Uses clean semantic HTML: <p>, <h2>, <h3>, <ul>/<li> tags
 9. Matches ${config.name}'s voice: clean, expert, trustworthy, ingredient-focused
 10. Passes AI detection — avoid patterns that trigger AI content flags:
     - Vary sentence length aggressively: mix short punchy sentences with longer ones
-    - Lead with a specific concrete detail, NOT a generic opening statement
     - Cut all filler phrases: "designed with care", "made with intention", "more than just",
       "you deserve", "no compromise", "real results", "peace of mind", "feel confident"
     - Use brand-specific details: organic virgin coconut oil, handmade in small batches, specific scents
     - Avoid uniform sentence patterns like "Whether you..." or "If you're looking for..."
     - No exclamation marks in body copy
+    - Cluster-mate queries to surface for: ${clusterMatesBlock ? 'see CLUSTER-MATE QUERIES above' : 'n/a — weave in natural variants of the top query'}
 
 Also write:
 - seo_title (50-60 chars, includes top keyword, format: "[Category] | ${config.name}")
@@ -287,6 +289,40 @@ No explanation, no markdown fences.`,
   return parsed;
 }
 
+// -- schema helpers -----------------------------------------------------------
+
+function extractFaqPairs(html) {
+  const out = [];
+  const re = /<h[23][^>]*>([^<]*\?[^<]*)<\/h[23]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let m;
+  while ((m = re.exec(html || '')) !== null) {
+    const q = m[1].replace(/<[^>]+>/g, '').trim();
+    const a = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600);
+    if (q && a) out.push({ q, a });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+function stripExistingSchemas(html) {
+  return (html || '').replace(/<script\s+type="application\/ld\+json"[\s\S]*?<\/script>/gi, '').trimStart();
+}
+
+function buildSchemaBlock(collection, gen, bodyHtml) {
+  const collUrl = `${config.url}/collections/${collection.handle}`;
+  const schemas = [
+    buildCollectionPageSchema({ name: collection.title, description: gen.seo_description, url: collUrl }),
+    buildBreadcrumb([
+      { name: 'Home', url: config.url },
+      { name: 'Collections', url: `${config.url}/collections` },
+      { name: collection.title, url: collUrl },
+    ]),
+  ];
+  const faqs = extractFaqPairs(bodyHtml);
+  if (faqs.length >= 2) schemas.push(buildFaqSchema(faqs));
+  return schemas.map((s) => `<script type="application/ld+json">\n${JSON.stringify(s)}\n</script>`).join('\n');
+}
+
 // -- publish approved ---------------------------------------------------------
 
 async function publishApprovedCollections() {
@@ -319,8 +355,19 @@ async function publishApprovedCollections() {
     }
 
     try {
-      const html = readFileSync(item.proposed_html_path, 'utf8');
+      const rawHtml = readFileSync(item.proposed_html_path, 'utf8');
       const resourceType = item.collection_type === 'custom' ? 'custom_collections' : 'smart_collections';
+
+      // Strip any previously-embedded schema blocks to avoid duplication on re-runs,
+      // then prepend fresh schema (CollectionPage + BreadcrumbList + FAQPage if ≥2 Q&A pairs).
+      const strippedHtml = stripExistingSchemas(rawHtml);
+      const collectionForSchema = {
+        title: item.proposed_meta?.original_title || item.title,
+        handle: item.slug,
+      };
+      const genForSchema = { seo_description: item.proposed_meta?.seo_description || '' };
+      const schemaBlock = buildSchemaBlock(collectionForSchema, genForSchema, strippedHtml);
+      const html = schemaBlock + '\n' + strippedHtml;
 
       if (item.collection_type === 'custom') {
         await updateCustomCollection(item.resource_id, { body_html: html });
@@ -491,6 +538,20 @@ async function main() {
       const proposed = await generateCollectionContent(c, topQueries, c.gsc, relatedPosts, ingredients, indexGround);
       const wc = wordCount(proposed.body_html);
       console.log(`done (${wc} words)`);
+
+      // Validate generated content — hard block on thin/invalid output
+      const vSpec = {
+        title: c.title,
+        handle: c.handle,
+        seo_title: proposed.seo_title,
+        meta_description: proposed.seo_description,
+        body_html: proposed.body_html,
+      };
+      const v = validateCollectionSpec(vSpec, { existingHandles: new Set() });
+      if (!v.ok) {
+        console.warn(`  [SKIP] invalid content for "${c.title}": ${v.errors.join('; ')}`);
+        continue;
+      }
 
       // Save HTML to data/collection-content/
       const htmlPath = join(CONTENT_DIR, `${c.handle}.html`);

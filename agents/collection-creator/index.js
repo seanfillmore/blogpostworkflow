@@ -46,6 +46,12 @@ import { writeItem, activeSlugs, listQueueItems } from '../performance-engine/li
 import { execSync } from 'child_process';
 import { createMetaTest } from '../../lib/meta-test.js';
 import { getSearchVolume, getKeywordIdeas, getSerpResults } from '../../lib/dataforseo.js';
+import { validateCollectionSpec } from '../../lib/collection-validation.js';
+import {
+  buildCollectionPageSchema,
+  buildBreadcrumb,
+  buildFaqSchema,
+} from '../../lib/schema-builders.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -174,6 +180,48 @@ function isCollection(path) {
   return path.startsWith('/collections/');
 }
 
+/**
+ * Extract question/answer pairs from body_html for FAQ schema.
+ * Matches <h2> or <h3> tags whose text ends with "?" followed by a <p>.
+ */
+function extractFaqPairs(html) {
+  const out = [];
+  const re = /<h[23][^>]*>([^<]*\?[^<]*)<\/h[23]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let m;
+  while ((m = re.exec(html || '')) !== null) {
+    const q = m[1].replace(/<[^>]+>/g, '').trim();
+    const a = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600);
+    if (q && a) out.push({ q, a });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+/**
+ * Build JSON-LD schema block and prepend it to body_html.
+ */
+function buildBodyWithSchema(spec) {
+  const collUrl = `${config.url}/collections/${slugify(spec.handle)}`;
+  const schemas = [
+    buildCollectionPageSchema({
+      name: spec.title,
+      description: spec.meta_description,
+      url: collUrl,
+    }),
+    buildBreadcrumb([
+      { name: 'Home', url: config.url },
+      { name: 'Collections', url: `${config.url}/collections` },
+      { name: spec.title, url: collUrl },
+    ]),
+  ];
+  const faqs = extractFaqPairs(spec.body_html);
+  if (faqs.length >= 2) schemas.push(buildFaqSchema(faqs));
+  const schemaBlock = schemas
+    .map((s) => `<script type="application/ld+json">\n${JSON.stringify(s)}\n</script>`)
+    .join('\n');
+  return schemaBlock + '\n' + (spec.body_html || '');
+}
+
 // ── opportunity discovery ─────────────────────────────────────────────────────
 
 /**
@@ -267,9 +315,20 @@ ${opportunities.map((o, i) => `${i + 1}. "${o.query}" — position ${o.position.
   "handle": "...",             // URL slug (e.g. "natural-deodorant") — must not match existing handles
   "seo_title": "...",          // <60 chars, includes keyword
   "meta_description": "...",   // 120–160 chars, compelling, includes keyword
-  "body_html": "..."           // 150–300 words of SEO-optimized collection description in clean HTML
-                               // Use <p>, <h2>, <ul> tags. Include the keyword naturally 2–3 times.
-                               // Write for the shopper, not search engines. No fluff.
+  "body_html": "..."           // 400–600 words of SEO-optimized collection description in clean HTML.
+                               // Structure as a short buying guide PLUS a FAQ section:
+                               //
+                               // STRUCTURE (in this order):
+                               // 1. Opening paragraph (2–3 sentences, lead with a specific concrete detail)
+                               // 2. <h2>What to Look For</h2> or <h2>How to Choose</h2> buying guide section
+                               //    with <p> paragraphs or <ul> bullets covering 3–4 key selection criteria
+                               // 3. A 4–6 question FAQ section. Format EACH Q&A as:
+                               //    <h2>Question text ending with a question mark?</h2>
+                               //    <p>Answer text here (2–4 sentences).</p>
+                               //    Questions must end with "?" so FAQ schema can extract them.
+                               //
+                               // Use <p>, <h2>, <ul> tags only. Include the keyword naturally 2–3 times total.
+                               // Write for the shopper, not search engines.
                                //
                                // ANTI-AI-DETECTION RULES (mandatory — AI-flagged content hurts SEO):
                                // - Vary sentence length aggressively: mix short punchy sentences with longer ones
@@ -307,9 +366,11 @@ No markdown fences, no explanation outside the JSON.`;
 async function createCollection(spec, collections, dryRun = true) {
   const handle = spec.handle || slugify(spec.title);
 
-  // Safety: check for duplicate handle
-  if (collections.byHandle.has(handle)) {
-    console.log(`  ⚠️  Handle "${handle}" already exists — skipping`);
+  // Validate spec against the full validator (catches DISQUALIFIED, thin body, etc.)
+  const existingHandles = collections.byHandle;
+  const v = validateCollectionSpec(spec, { existingHandles });
+  if (!v.ok) {
+    console.warn(`  [SKIP] invalid collection spec for "${spec.keyword || spec.title}": ${v.errors.join('; ')}`);
     return null;
   }
 
@@ -318,16 +379,20 @@ async function createCollection(spec, collections, dryRun = true) {
     return { id: null, title: spec.title, handle, dryRun: true };
   }
 
+  // Build body_html with schema block prepended
+  const bodyWithSchema = buildBodyWithSchema(spec);
+
   console.log(`  Creating collection: "${spec.title}" (/${handle})...`);
   const collection = await withRetry(
     () => createCustomCollection({
       title: spec.title,
       handle,
-      body_html: spec.body_html,
-      published: true,
+      body_html: bodyWithSchema,
+      published: false,
     }),
     { label: `create collection ${handle}` }
   );
+  console.log('  Created as DRAFT — assign products in Shopify, then publish.');
 
   // Set SEO metafields
   if (spec.seo_title) {
@@ -403,9 +468,12 @@ function buildReport(opportunities, approved, created, runDate) {
     lines.push(
       '## Next Steps',
       '',
-      '1. Run `collection-linker` to add blog → collection links for each new collection',
-      '2. Add products to new collections in Shopify admin',
-      '3. Verify collection pages render correctly on the storefront',
+      '> **Note:** New collections are created as **DRAFTS**. They will not appear on the storefront until products are assigned and the collection is published in Shopify admin.',
+      '',
+      '1. **Assign products** to each new collection in Shopify admin',
+      '2. **Publish** each collection once products are assigned (Collections → [name] → Save → Published)',
+      '3. Run `collection-linker` to add blog → collection links for each new collection',
+      '4. Verify collection pages render correctly on the storefront',
       '',
     );
   }
@@ -569,27 +637,50 @@ async function publishApprovedCollections() {
 
   let successCount = 0;
 
+  // Fetch existing handles for validator de-dup check
+  const existingCollectionsForValidation = await getExistingCollections();
+  const existingHandlesForValidation = existingCollectionsForValidation.byHandle;
+
   for (const item of items) {
     const pc = item.proposed_collection;
-    if (!pc || !pc.title || !pc.handle || !pc.body_html) {
-      console.error(`  Skipping "${item.slug}" — missing required proposed_collection fields`);
+
+    // Validate the spec with the full validator (replaces the weak field-presence check)
+    const specToValidate = {
+      title: pc?.title,
+      handle: pc?.handle,
+      seo_title: pc?.seo_title,
+      meta_description: pc?.seo_description || pc?.meta_description,
+      body_html: pc?.body_html,
+    };
+    const v = validateCollectionSpec(specToValidate, { existingHandles: existingHandlesForValidation });
+    if (!v.ok) {
+      console.warn(`  [SKIP] invalid collection spec for "${item.slug}": ${v.errors.join('; ')}`);
       continue;
     }
 
     try {
-      // 2. Create the collection in Shopify
+      // 2. Build body_html with schema block prepended
+      const bodyWithSchema = buildBodyWithSchema({
+        title: pc.title,
+        handle: pc.handle,
+        meta_description: pc.seo_description || pc.meta_description || '',
+        body_html: pc.body_html,
+      });
+
+      // 3. Create the collection in Shopify as a draft
       console.log(`  Creating collection: "${pc.title}" (/collections/${pc.handle})...`);
       const newCollection = await withRetry(
         () => createCustomCollection({
           title: pc.title,
           handle: pc.handle,
-          body_html: pc.body_html,
-          published: true,
+          body_html: bodyWithSchema,
+          published: false,
         }),
         { label: `create collection ${pc.handle}` }
       );
+      console.log('  Created as DRAFT — assign products in Shopify, then publish.');
 
-      // 3. Set SEO metafields
+      // 4. Set SEO metafields
       if (pc.seo_title) {
         await upsertMetafield('custom_collections', newCollection.id, 'global', 'title_tag', pc.seo_title);
       }
@@ -599,7 +690,7 @@ async function publishApprovedCollections() {
 
       console.log(`  Created: ${config.url}/collections/${pc.handle} (id: ${newCollection.id})`);
 
-      // 4. Run collection-linker for the new collection
+      // 5. Run collection-linker for the new collection
       const keyword = item.signal_source?.keyword || pc.title;
       try {
         execSync(
@@ -610,7 +701,7 @@ async function publishApprovedCollections() {
         console.error(`  Warning: collection-linker failed for ${pc.handle}:`, linkErr.message);
       }
 
-      // 5. Update queue item status
+      // 6. Update queue item status
       item.status = 'published';
       item.published_at = new Date().toISOString();
       writeItem(item);
