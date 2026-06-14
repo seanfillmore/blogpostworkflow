@@ -33,6 +33,9 @@ import { fileURLToPath } from 'url';
 import { loadCalendar } from '../../lib/calendar-store.js';
 import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { formatPublishAt } from '../../lib/publish-schedule.js';
+// Re-export for back-compat: formatPublishAt used to be defined in this file; tests
+// and callers that import it from calendar-runner keep working post-extraction.
+export { formatPublishAt } from '../../lib/publish-schedule.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
