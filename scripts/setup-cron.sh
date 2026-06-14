@@ -66,9 +66,12 @@ HOURLY_CAMPAIGN_STATUS="0 * * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-s
 FREQUENT_CAMPAIGN_AD_FIXER="5 * * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-ad-fixer/index.js --scheduled >> data/logs/campaign-ad-fixer.log 2>&1"
 
 # Publish-drift detector (daily) — alerts when a post we consider published has
-# reverted to a Shopify draft (or vanished). Detect+alert only; remediate with
-# --fix manually so it never fights an intentional unpublish.
-DAILY_PUBLISH_DRIFT="45 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/publish-drift/index.js >> data/reports/scheduler/publish-drift.log 2>&1"
+# reverted to a Shopify draft (or vanished). Auto-heals with --fix: republishes
+# drafts (the safe root-cause fix — they were published before). Intentional
+# unpublishes (cannibalization/kill) are excluded by the agent, and 'missing'/
+# deleted posts are reported only, never auto-recreated — so it can't fight an
+# intentional unpublish.
+DAILY_PUBLISH_DRIFT="45 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/publish-drift/index.js --fix >> data/reports/scheduler/publish-drift.log 2>&1"
 
 # Performance engine (daily)
 DAILY_PERFORMANCE_ENGINE="30 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/performance-engine/index.js >> data/logs/performance-engine.log 2>&1"
