@@ -20,5 +20,18 @@
     "revenue_cluster": { "minDelta": 25, "strongDelta": 100, "perDollar": 0.2, "cap": 30 },
     "competitor_gap":  { "boost": 15, "cap": 30 },
     "ai_gap":          { "boost": 12, "cap": 24 }
+  },
+  "tuning": {
+    "minSamplesPerSignal": 3,
+    "totalFloor": 8,
+    "maxStepPct": 0.10,
+    "measureLagDays": 28,
+    "paramBounds": {
+      "unmapped.perImpression":    { "min": 0.002, "max": 0.05 },
+      "rank_drop.perPosition":     { "min": 1,     "max": 8 },
+      "revenue_cluster.perDollar": { "min": 0.05,  "max": 0.6 },
+      "competitor_gap.boost":      { "min": 5,     "max": 30 },
+      "ai_gap.boost":              { "min": 4,     "max": 24 }
+    }
   }
 }

@@ -257,3 +257,30 @@ test('computePlan: never assigns two promotions to the same slot', () => {
   const dates = plan.promotions.map((p) => p.publish_date.slice(0, 10));
   assert.equal(new Set(dates).size, dates.length);
 });
+
+test('computePlan: scored items carry a structured contributing[] of matched signals', () => {
+  const plan = computePlan(baseInputs({
+    signals: [{ type: 'revenue_cluster', key: 'toothpaste', cluster: 'toothpaste', taskType: 'new', strength: 111.8, label: 'revenue +$112' }],
+  }));
+  const a = plan.scored.find((i) => i.slug === 'a-post');
+  assert.ok(Array.isArray(a.contributing));
+  assert.equal(a.contributing.length, 1);
+  assert.equal(a.contributing[0].type, 'revenue_cluster');
+  assert.equal(a.contributing[0].score, 22);
+  assert.equal(a.contributing[0].strength, 111.8);
+});
+
+test('computePlan: an idea with no matching signal has empty contributing[]', () => {
+  const plan = computePlan(baseInputs()); // no signals
+  const a = plan.scored.find((i) => i.slug === 'a-post');
+  assert.deepEqual(a.contributing, []);
+});
+
+test('computePlan: injected idea carries contributing[] of its injecting signal', () => {
+  const plan = computePlan(baseInputs({
+    signals: [{ type: 'unmapped', key: 'coconut oil for stretch marks', taskType: 'new', cluster: null, strength: 5000, label: 'u' }],
+  }));
+  const inj = plan.injections.find((i) => i.keyword === 'coconut oil for stretch marks');
+  assert.equal(inj.contributing[0].type, 'unmapped');
+  assert.equal(inj.contributing[0].score, 40);
+});

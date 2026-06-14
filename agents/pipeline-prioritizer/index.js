@@ -30,11 +30,13 @@ import { slugify } from '../../lib/keyword-dedup.js';
 import { isInProductScope } from '../../lib/product-scope.js';
 import { getSearchVolume } from '../../lib/dataforseo.js';
 import { notify } from '../../lib/notify.js';
+import { appendAttribution } from '../../lib/attribution-log.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'pipeline-prioritizer');
 const SIGNAL_STATE_PATH = join(REPORTS_DIR, 'signal-state.json');
+const ATTRIBUTION_PATH = join(REPORTS_DIR, 'attribution.jsonl');
 const DRY_RUN = process.argv.includes('--dry-run');
 
 const cfg = JSON.parse(readFileSync(join(ROOT, 'config', 'pipeline-priority.json'), 'utf8'));
@@ -272,6 +274,27 @@ async function main() {
       ...(vol != null ? { volume: vol } : {}),
     });
   }
+
+  // 3b) attribution ledger — durable signal→post link for the weight tuner.
+  // Reuses `scoredBySlug` from apply step 1 (values are plan.scored items, which
+  // carry `contributing`). Live-only: this code runs after the DRY_RUN return.
+  const nowIso = new Date().toISOString();
+  const attribution = [];
+  for (const idea of plan.injections) {
+    const c = (idea.contributing && idea.contributing[0]) || null;
+    if (!c) continue;
+    attribution.push({ ts: nowIso, date: today, slug: idea.slug, keyword: idea.keyword,
+      signal_type: c.type, strength: c.strength, score: c.score, action: 'inject', cluster: idea.cluster || null });
+  }
+  for (const p of payload.promotions) { // payload.promotions excludes cratered-demand skips
+    const item = scoredBySlug.get(p.slug);
+    for (const c of (item?.contributing || [])) {
+      attribution.push({ ts: nowIso, date: today, slug: p.slug, keyword: item.keyword,
+        signal_type: c.type, strength: c.strength, score: c.score, action: 'promote', cluster: item.cluster || null });
+    }
+  }
+  appendAttribution(attribution, { path: ATTRIBUTION_PATH });
+  if (attribution.length) console.log(`  Attribution: logged ${attribution.length} signal→post record(s).`);
 
   // 4) persist signal state + report
   mkdirSync(REPORTS_DIR, { recursive: true });
