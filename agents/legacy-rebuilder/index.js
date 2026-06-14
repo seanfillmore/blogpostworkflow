@@ -2,9 +2,10 @@
  * Legacy Post Rebuilder
  *
  * Identifies blog posts that lack FAQ schema (a proxy for "built before the
- * current pipeline existed") and reruns them through the full content
- * pipeline: research → write → image → answer-first → featured-product →
- * schema → editor → publish as article update.
+ * current pipeline existed") and rebuilds them tier-appropriately:
+ *   winner → skip · rising → light surgical refresh · flop/untriaged → full
+ *   refresh via refresh-runner (content-refresher → editor → publisher, in
+ *   place on the existing post) · broken → skip for manual fix.
  *
  * Usage:
  *   node agents/legacy-rebuilder/index.js                    # list legacy posts (dry run)
@@ -17,7 +18,7 @@ import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../lib/posts.js';
-import { getArticle, updateArticle, getBlogs } from '../../lib/shopify.js';
+import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,7 +53,9 @@ function run(cmd, label) {
     execSync(cmd, { stdio: 'inherit', cwd: ROOT });
     return true;
   } catch (err) {
-    console.error(`  ✗ ${label} failed`);
+    // Surface the real failure — a bare "failed" was undiagnosable.
+    const detail = (err.message || String(err)).split('\n')[0];
+    console.error(`  ✗ ${label} failed: ${detail}`);
     return false;
   }
 }
@@ -126,16 +129,23 @@ async function rebuildPost(slug) {
     return await lightRefresh(slug);
   }
 
-  // Full rebuild (flop or unset)
-  const keyword = meta.target_keyword || meta.title;
-  if (!keyword) throw new Error(`No target_keyword for ${slug}`);
-
-  console.log(`\nRebuilding: ${slug}`);
+  // Full rebuild (flop or unset) — route through the canonical refresh pipeline.
+  //
+  // The previous implementation re-ran research → write → image from scratch,
+  // which is structurally broken for an EXISTING post: content-researcher
+  // refuses to brief a keyword that already has a post (anti-cannibalization),
+  // so no brief was ever written and the `write` step failed every run. Even if
+  // it had succeeded, blog-post-writer keys its output directory off the brief's
+  // (keyword-derived) slug, so it could fork a duplicate post.
+  //
+  // refresh-runner rewrites weak sections IN PLACE on the existing post
+  // (content-refresher → editor gate → publisher updates the same article),
+  // which is exactly what rebuilding a flop needs.
+  console.log(`\nRebuilding (full refresh): ${slug}`);
   console.log(`  Bucket: ${bucket || 'untriaged (default: flop)'}`);
-  console.log(`  Keyword: ${keyword}`);
   console.log(`  Article ID: ${meta.shopify_article_id}`);
 
-  // Backup original body_html from Shopify (live version, not local)
+  // Backup original body_html from Shopify (live version) before refreshing.
   mkdirSync(BACKUPS_DIR, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const liveArticle = await getArticle(meta.shopify_blog_id, meta.shopify_article_id);
@@ -143,30 +153,13 @@ async function rebuildPost(slug) {
   writeFileSync(backupPath, liveArticle.body_html || '');
   console.log(`  Backup saved: ${backupPath}`);
 
-  // Pipeline steps
-  if (!run(`node agents/content-researcher/index.js "${keyword}"`, `research: ${keyword}`)) return false;
-  if (!run(`node agents/blog-post-writer/index.js data/briefs/${slug}.json`, `write: ${slug}`)) return false;
-
-  const imagePath = join(ROOT, 'data', 'images', `${slug}.webp`);
-  if (!existsSync(imagePath) && !existsSync(imagePath.replace('.webp', '.png'))) {
-    if (!run(`node agents/image-generator/index.js data/posts/${slug}.json`, `image: ${slug}`)) return false;
-  }
-
-  run(`node agents/answer-first-rewriter/index.js ${slug} --apply`, `answer-first: ${slug}`);
-  run(`node agents/featured-product-injector/index.js --handle ${slug}`, `featured-product: ${slug}`);
-  run(`node agents/schema-injector/index.js --slug ${slug} --apply`, `schema: ${slug}`);
-
-  if (!run(`node agents/editor/index.js ${getContentPath(slug)} --in-pipeline`, `editor: ${slug}`)) {
-    console.error(`  ⛔ Editor failed — aborting rebuild, original post untouched on Shopify`);
+  if (!run(`node agents/refresh-runner/index.js ${slug}`, `refresh: ${slug}`)) {
+    console.error(`  ⛔ Refresh failed — original post untouched on Shopify`);
     return false;
   }
 
-  // Push to Shopify as an update (same article_id)
-  const rebuiltHtml = readFileSync(getContentPath(slug), 'utf8');
-  await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: rebuiltHtml });
-  console.log(`  ✓ Published to Shopify (article_id: ${meta.shopify_article_id})`);
-
-  // Stamp metadata, clear rebuild tag
+  // Stamp metadata, clear rebuild tag (refresh-runner stamps refreshed_at; we
+  // add rebuilt_at + drop needs_rebuild so the post stops surfacing as legacy).
   const { needs_rebuild: _drop, ...rest } = getPostMeta(slug) || {};
   const updatedMeta = { ...rest, rebuilt_at: new Date().toISOString() };
   writeFileSync(getMetaPath(slug), JSON.stringify(updatedMeta, null, 2));
