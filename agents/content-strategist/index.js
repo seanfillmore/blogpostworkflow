@@ -24,6 +24,9 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-strategist');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
+import { findSemanticDuplicate } from '../../lib/cannibalization-guard.js';
+import { clusterPenalties } from '../../lib/cluster-performance.js';
+import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 import { loadIndex, lookupByKeyword, validationTag, unmappedIndexEntries } from '../../lib/keyword-index/consumer.js';
 import { isInProductScope, PRODUCT_SCOPE_TERMS } from '../../lib/product-scope.js';
@@ -246,6 +249,20 @@ export function loadClusterPerformance() {
       reasons.push('CRO flag: high traffic but low conversion (GA4)');
     }
 
+    // Identify pillar post for this cluster — the broadest/highest-authority page
+    // that supporting articles should link to. Pass impressions from the rank
+    // snapshot when available.
+    const clusterPostsForPillar = items.map((i) => {
+      const meta = (() => { try { return getPostMetaLib(i.slug); } catch { return null; } })();
+      return {
+        slug: i.slug,
+        keyword: meta?.target_keyword || null,
+        position: i.position,
+        impressions: snapshotBySlug.get(i.slug)?.impressions || 0,
+      };
+    });
+    const pillar = identifyPillar(clusterPostsForPillar);
+
     clusters[name] = {
       post_count: items.length,
       ranked_count: ranked.length,
@@ -256,7 +273,39 @@ export function loadClusterPerformance() {
       has_outstanding_flop: hasFlop,
       weight,
       reasons,
+      flop_penalty: 0,
+      pillar: pillar?.slug || null,
     };
+  }
+
+  // ── Flop-rate cluster penalties (from legacy-triage) ─────────────────────────
+  // Load legacy-triage output: results[] is an array of { slug, bucket }.
+  // Map each slug to its cluster (using clusterFor), then compute per-cluster
+  // flop-rate penalties and subtract from the cluster's weight.
+  const legacyTriagePath = join(ROOT, 'data', 'reports', 'legacy-triage', 'latest.json');
+  if (existsSync(legacyTriagePath)) {
+    try {
+      const triage = JSON.parse(readFileSync(legacyTriagePath, 'utf8'));
+      const triageEntries = (triage.results || [])
+        .map((r) => {
+          const cluster = clusterFor({ slug: r.slug || '' });
+          return cluster ? { cluster, bucket: r.bucket } : null;
+        })
+        .filter(Boolean);
+
+      const penalties = clusterPenalties(triageEntries, { minPosts: 3, flopRateForMaxPenalty: 0.5, maxPenalty: 4 });
+
+      for (const [cluster, pen] of Object.entries(penalties)) {
+        if (clusters[cluster] && pen.penalty > 0) {
+          clusters[cluster].weight -= pen.penalty;
+          clusters[cluster].flop_penalty = pen.penalty;
+          clusters[cluster].reasons.push(`−${pen.penalty} flop-rate penalty (${Math.round(pen.flopRate * 100)}% flop rate, ${pen.total} posts in legacy triage)`);
+          console.log(`  [cluster-penalty] ${cluster}: −${pen.penalty} (flopRate=${pen.flopRate}, ${pen.total} posts)`);
+        }
+      }
+    } catch (e) {
+      console.warn(`  [cluster-penalty] Could not load legacy-triage: ${e.message}`);
+    }
   }
 
   return { computed_at: new Date().toISOString(), snapshot_file: desktopFile, mobile_snapshot_file: mobileFile, clusters };
@@ -268,7 +317,11 @@ function buildClusterWeightSection(clusterPerf) {
     .filter(([, c]) => c.weight !== 0)
     .sort((a, b) => b[1].weight - a[1].weight);
   if (!entries.length) return '';
-  const lines = entries.map(([name, c]) => `- **${name}** (weight ${c.weight > 0 ? '+' : ''}${c.weight}): ${c.reasons.join('; ')}`);
+  const lines = entries.map(([name, c]) => {
+    const pillarNote = c.pillar ? ` [pillar: ${c.pillar}]` : '';
+    const flopNote = c.flop_penalty ? ` [flop-rate penalty: −${c.flop_penalty}]` : '';
+    return `- **${name}** (weight ${c.weight > 0 ? '+' : ''}${c.weight})${pillarNote}${flopNote}: ${c.reasons.join('; ')}`;
+  });
   return `\n## Cluster Authority Weights\nApply these to your prioritization. Add the weight to the base priority score for any topic in that cluster:\n${lines.join('\n')}\n\nScoring rules:\n- Topics in **page-1 clusters** (+2): prefer these — reinforcing existing winners is higher ROI than breaking into new ones.\n- Topics in **drag clusters** (−3): deprioritize new topics here unless strategically essential. The cluster has not earned authority despite age.\n`;
 }
 
@@ -642,6 +695,32 @@ ${calendarMd}`;
     messages: [{ role: 'user', content: extractPrompt }],
   });
 
+  // Build the set of existing keywords for semantic cannibalization detection.
+  // Collect target_keyword from all published posts, existing briefs, and any
+  // calendar items already loaded. The inventory Set has slugified forms; we
+  // de-slugify them loosely (replace hyphens with spaces) for similarity matching.
+  const existingKeywords = [];
+  for (const slug of listAllSlugs()) {
+    try {
+      const meta = getPostMetaLib(slug);
+      if (meta?.target_keyword) existingKeywords.push(meta.target_keyword);
+    } catch { /* skip */ }
+  }
+  if (existsSync(join(ROOT, 'data', 'published.json'))) {
+    try {
+      const pub = JSON.parse(readFileSync(join(ROOT, 'data', 'published.json'), 'utf8'));
+      for (const e of pub) { if (e.keyword) existingKeywords.push(e.keyword); }
+    } catch { /* ignore */ }
+  }
+  // Also collect from the calendar JSON if it exists (queued items not yet published)
+  const calendarJsonPath = join(ROOT, 'data', 'calendar', 'calendar.json');
+  if (existsSync(calendarJsonPath)) {
+    try {
+      const cal = JSON.parse(readFileSync(calendarJsonPath, 'utf8'));
+      for (const item of (cal.items || [])) { if (item.keyword) existingKeywords.push(item.keyword); }
+    } catch { /* ignore */ }
+  }
+
   let briefQueue = [];
   try {
     const raw = extractResponse.content[0].text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
@@ -661,6 +740,13 @@ ${calendarMd}`;
       if (!isInProductScope(item.keyword)) {
         console.log(`  [SKIP] Off product scope (no product mapping): "${item.keyword}"`);
         appendRejection(item.keyword, 'no product mapping');
+        return false;
+      }
+      // Semantic cannibalization check: skip if a near-duplicate keyword is
+      // already covered (threshold 0.6 Jaccard on core tokens).
+      const dup = findSemanticDuplicate(item.keyword, existingKeywords, { threshold: 0.6 });
+      if (dup && dup.toLowerCase() !== item.keyword.toLowerCase()) {
+        console.log(`  [SKIP] semantic cannibalization: "${item.keyword}" ~ existing "${dup}"`);
         return false;
       }
       return true;
