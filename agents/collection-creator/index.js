@@ -571,7 +571,25 @@ async function fromOpportunitiesMode() {
 
   // 10. Write queue items for each approved spec
   let queued = 0;
+  let skipped = 0;
   for (const spec of specs) {
+    // Validate before queuing — the model sometimes "declines" by returning a
+    // spec with every field set to a sentinel like "DISQUALIFIED". Without this
+    // guard those land in the review queue as junk items (the "New Collection:
+    // DISQUALIFIED" bug). Mirror the validation the publish path already does.
+    const v = validateCollectionSpec({
+      title: spec.title,
+      handle: spec.handle,
+      seo_title: spec.seo_title,
+      meta_description: spec.seo_description || spec.meta_description,
+      body_html: spec.body_html,
+    }, { existingHandles: collections.byHandle });
+    if (!v.ok) {
+      console.warn(`  [SKIP] invalid collection spec for "${spec.keyword || spec.title}": ${v.errors.join('; ')}`);
+      skipped++;
+      continue;
+    }
+
     // Find the matching original opportunity
     const opportunity = candidates.find(
       (c) => c.keyword === spec.keyword || slugify(c.keyword) === spec.handle
@@ -610,7 +628,7 @@ async function fromOpportunitiesMode() {
     queued++;
   }
 
-  console.log(`\n  ${queued} collection(s) queued for approval in data/performance-queue/`);
+  console.log(`\n  ${queued} collection(s) queued for approval in data/performance-queue/${skipped ? ` (${skipped} skipped as invalid)` : ''}`);
 }
 
 // ── publish-approved mode ────────────────────────────────────────────────────

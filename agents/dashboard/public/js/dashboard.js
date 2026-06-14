@@ -573,7 +573,8 @@ function renderPerformanceQueueCard(d) {
         (i.status === 'pending' || i.status === 'approved'
           ? '<button id="approve-btn-' + esc(i.slug) + '" class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')">' + 'Approve & Publish' + '</button>' +
             '<button class="btn-sm" onclick="openFeedbackEditor(\'' + esc(i.slug) + '\')">Feedback</button>' +
-            (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '')
+            (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '') +
+            '<button class="btn-sm" onclick="dismissQueueItem(\'' + esc(i.slug) + '\')">Dismiss</button>'
           : (i.has_html ? '<button class="btn-sm" onclick="previewQueueItem(\'' + esc(i.slug) + '\')">Preview</button>' : '')) +
       '</div>' +
       '<div id="feedback-editor-' + esc(i.slug) + '" class="feedback-editor" style="display:none">' +
@@ -634,6 +635,19 @@ async function submitFeedback(slug) {
 
 function previewQueueItem(slug) {
   window.open('/api/performance-queue/' + encodeURIComponent(slug) + '/html', '_blank');
+}
+
+// Remove a queue item entirely (e.g. a junk/DISQUALIFIED proposal). Unlike
+// Feedback (which re-queues the item as pending for another pass), Dismiss
+// marks it dismissed so it leaves the review queue for good.
+async function dismissQueueItem(slug) {
+  if (!confirm('Dismiss this item? It will be removed from the review queue.')) return;
+  var res = await fetch('/api/performance-queue/' + encodeURIComponent(slug) + '/dismiss', { method: 'POST' });
+  if (res.ok) {
+    loadData();
+  } else {
+    alert('Dismiss failed.');
+  }
 }
 
 function renderMetaTestCard(d) {
