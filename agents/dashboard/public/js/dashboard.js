@@ -1542,6 +1542,67 @@ function renderSeoImpact(d) {
     (nc ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#92400e;margin-bottom:4px">High traffic, no sales &mdash; conversion opportunities</div><ul style="margin:0;padding-left:18px;font-size:13px;color:#374151">' + nc + '</ul></div>' : '');
 }
 
+function renderPipelinePriority(d) {
+  var card = document.getElementById('pipeline-priority-card');
+  var p = d && d.pipelinePrioritizer;
+  if (!card) return;
+  if (!p) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  document.getElementById('pipeline-priority-note').textContent =
+    'backlog ' + (p.backlog_depth || 0) + ' · buffer ' + (p.buffer_ready || 0) + '/' + (p.buffer_target || 0);
+
+  var html = '';
+
+  var promos = p.promotions || [];
+  if (promos.length) {
+    html += '<h3 style="font-size:13px;margin:6px 0">Fast-tracked / written next</h3>';
+    html += '<ul style="margin:0 0 10px;padding-left:18px;font-size:13px">' +
+      promos.map(function(x) {
+        return '<li><strong>' + esc(x.slug) + '</strong> → ' + esc(String(x.publish_date || '').slice(0, 10)) +
+          ' <span style="color:#6b7280">(' + esc(x.reason || '') + ')</span></li>';
+      }).join('') + '</ul>';
+  }
+
+  var inj = p.injections || [];
+  if (inj.length) {
+    html += '<h3 style="font-size:13px;margin:6px 0">New ideas queued</h3>';
+    html += '<ul style="margin:0 0 10px;padding-left:18px;font-size:13px">' +
+      inj.map(function(x) { return '<li>' + esc(x.keyword) + ' <span style="color:#6b7280">(' + esc(x.why || '') + ')</span></li>'; }).join('') + '</ul>';
+  }
+
+  var top = p.top_backlog || [];
+  if (top.length) {
+    html += '<h3 style="font-size:13px;margin:6px 0">Top backlog</h3>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px"><tbody>' +
+      top.slice(0, 8).map(function(x) {
+        return '<tr><td style="padding:3px 0">' + esc(x.keyword) + '</td>' +
+          '<td style="text-align:right;font-weight:600">' + (x.priority_score || 0) + '</td>' +
+          '<td style="color:#6b7280;font-size:12px;padding-left:8px">' + esc(x.why || '') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  if ((p.suggestions || []).length) {
+    html += '<h3 style="font-size:13px;margin:10px 0 6px">Suggested (confirm)</h3>';
+    html += '<ul style="margin:0 0 10px;padding-left:18px;font-size:13px;color:#6b7280">' +
+      p.suggestions.slice(0, 5).map(function(x) { return '<li>' + esc(x.key) + ' (' + esc(x.reason || '') + ')</li>'; }).join('') + '</ul>';
+  }
+
+  if ((p.alerts || []).length) {
+    html += '<div style="margin-top:8px;color:#b91c1c;font-size:13px">' +
+      p.alerts.map(function(a) { return '⚠️ ' + esc(a); }).join('<br>') + '</div>';
+  }
+
+  var tn = d && d.priorityTuner;
+  if (tn && (tn.changes || []).length) {
+    html += '<h3 style="font-size:13px;margin:12px 0 6px">Weight tuner — last changes</h3>';
+    html += '<ul style="margin:0;padding-left:18px;font-size:12px;color:#6b7280">' +
+      tn.changes.map(function(c) { return '<li>' + esc(c.param) + ': ' + c.from + ' → ' + c.to + ' (' + esc(c.reason || '') + ')</li>'; }).join('') + '</ul>';
+  }
+
+  document.getElementById('pipeline-priority-body').innerHTML = html || '<p style="color:#6b7280">No pending actions.</p>';
+}
+
 function renderRankings(d) {
   // Fall back to desktop if the requested device has no data yet
   const desktopR = d.rankings;
@@ -4227,6 +4288,7 @@ async function loadData() {
     document.getElementById('updated-at').textContent = new Date(data.generatedAt).toLocaleTimeString();
     renderKanban(data);
     renderSeoImpact(data);
+    renderPipelinePriority(data);
     renderRankings(data);
     renderPosts(data);
     renderGSCSEOPanel(data);
