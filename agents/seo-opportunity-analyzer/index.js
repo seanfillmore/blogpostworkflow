@@ -29,7 +29,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
 import { getSearchVolume } from '../../lib/dataforseo.js';
-import { analyzeOpportunities } from '../../lib/seo-opportunities.js';
+import { analyzeOpportunities, recommendedAgentFor } from '../../lib/seo-opportunities.js';
 import { writeItem, activeSlugs } from '../performance-engine/lib/queue.js';
 import { notify } from '../../lib/notify.js';
 
@@ -76,16 +76,9 @@ function slugFromPage(page) {
 }
 
 // Route an opportunity to the executor agent best suited to act on it, so a human
-// approving the queue item knows exactly which agent runs it. Collections are the
-// priority commercial asset and have dedicated executors.
-function recommendedAgent(o) {
-  if (o.page_type === 'collection') {
-    // deep refresh → rewrite the on-page content; page-2 push → internal links.
-    return o.action === 'refresh' ? 'collection-content-optimizer' : 'collection-linker';
-  }
-  if (o.page_type === 'product') return 'collection-linker'; // links blog content into product pages
-  return o.action === 'rank_push' ? 'collection-linker' : 'refresh-runner';
-}
+// approving the queue item knows exactly which agent runs it. Shared with the
+// dashboard trigger via lib/seo-opportunities.js so routing stays consistent.
+const recommendedAgent = (o) => recommendedAgentFor({ pageType: o.page_type, action: o.action });
 
 // Google Ads (DataForSEO) rejects keywords with punctuation/symbols (e.g.
 // question-form queries ending in "?"). One bad keyword fails the whole batch,
@@ -186,6 +179,7 @@ async function main() {
         resource_type: o.page_type === 'collection' ? 'collection' : 'seo-opportunity',
         recommended_action: o.action,
         recommended_agent: recommendedAgent(o),
+        target_keyword: o.topKeyword,
         status: 'pending',
         created_at: new Date().toISOString(),
       });

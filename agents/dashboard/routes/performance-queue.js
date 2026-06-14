@@ -1,9 +1,11 @@
 // agents/dashboard/routes/performance-queue.js
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { spawn } from 'node:child_process';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
 import { getBlogs, updateArticle, getProducts, updateProduct, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
 import { getPostMeta, getMetaPath, getContentPath, listAllSlugs } from '../../../lib/posts.js';
+import { buildTriggerCommand } from '../lib/opportunity-trigger.js';
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -119,6 +121,52 @@ function findPostMeta(slug, _postsDir) {
   return null;
 }
 
+// A seo-opportunity item is a recommendation, not finished content. Approving it
+// kicks off the executor agent that does the work (which then surfaces concrete,
+// reviewable changes / queue items). Spawns detached so the request returns fast.
+function triggerOpportunity(item, ctx, res) {
+  let cmd;
+  try {
+    cmd = buildTriggerCommand(item);
+  } catch (err) {
+    return respondJson(res, { ok: false, error: `Cannot run opportunity: ${err.message}` }, 422);
+  }
+  try {
+    spawn('node', [join(ctx.ROOT, cmd.script), ...cmd.args], {
+      cwd: ctx.ROOT,
+      detached: true,
+      stdio: 'ignore',
+    }).unref();
+  } catch (err) {
+    return respondJson(res, { ok: false, error: `Failed to start ${cmd.agent}: ${err.message}` }, 500);
+  }
+  item.status = 'in_progress';
+  item.triggered_agent = cmd.agent;
+  item.triggered_at = new Date().toISOString();
+  writeItem(item);
+  return respondJson(res, { ok: true, triggered: cmd.agent });
+}
+
+// collection-content items carry generated body_html + schema + meta and are
+// published by the collection-content-optimizer's own --publish-approved path
+// (which builds schema, updates the collection, and opens a meta A/B test).
+// Reuse it rather than duplicate that logic: mark approved, then spawn it.
+function publishCollectionContent(item, ctx, res) {
+  item.status = 'approved';
+  item.approved_at = new Date().toISOString();
+  writeItem(item);
+  try {
+    spawn('node', [join(ctx.ROOT, 'agents/collection-content-optimizer/index.js'), '--publish-approved'], {
+      cwd: ctx.ROOT,
+      detached: true,
+      stdio: 'ignore',
+    }).unref();
+  } catch (err) {
+    return respondJson(res, { ok: false, error: `Failed to start publish: ${err.message}` }, 500);
+  }
+  return respondJson(res, { ok: true, publishing: true });
+}
+
 async function publishBlogRefresh(item, ctx) {
   const found = findPostMeta(item.slug, ctx.POSTS_DIR);
   if (!found) throw new Error(`No post metadata found for "${item.slug}". The post may not have been published to Shopify yet — run it through the calendar pipeline first.`);
@@ -140,6 +188,11 @@ export default [
       const slug = req.url.split('/')[3];
       const item = findItem(slug);
       if (!item) return notFound(res);
+
+      // These item types aren't "publish pre-made content to Shopify" — they
+      // delegate to the responsible agent, which responds for itself and returns.
+      if (item.trigger === 'seo-opportunity') return triggerOpportunity(item, ctx, res);
+      if (item.trigger === 'collection-content') return publishCollectionContent(item, ctx, res);
 
       try {
         if (item.trigger === 'collection-gap') {
