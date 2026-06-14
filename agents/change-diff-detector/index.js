@@ -1,183 +1,114 @@
 /**
  * Change Diff Detector
  *
- * Daily cron. Reads the two most recent shopify-collector snapshots, diffs
- * them per article/product/page, and creates synthetic change events for
- * any field change that doesn't already have an agent-logged event in the
- * last 48 hours.
+ * Daily cron. Fetches the live Shopify content (articles, products, pages),
+ * reduces it to a compact content-state (title + meta raw, body_html hashed),
+ * and diffs against the previous run's saved state. Any tracked-field change
+ * becomes a synthetic change event feeding the outcome-attribution loop.
+ *
+ * Self-contained by design: it reads live content directly rather than relying
+ * on the shopify-collector snapshot (which only carries commerce metrics —
+ * orders/checkouts, never article/product/page content). The previous broken
+ * dependency on those snapshots meant the detector saw `curr.articles ===
+ * undefined` and logged ZERO events for months.
  *
  * Tracked fields per resource:
- *   article: title, summary_html (= meta_description), body_html
- *   product: title, body_html (= description), seo metafields when present
- *   page:    title, body_html
+ *   article: title, summary_html (= meta_description), body_html (hashed)
+ *   product: title, body_html (hashed)
+ *   page:    title, body_html (hashed)
  *
  * Synthetic events get source: "manual_diff", target_query: null,
- * category: "experimental".
+ * category: "experimental". The state file persists at
+ * data/snapshots/shopify-content/latest.json.
  *
- * NOTE (v1): does not currently de-duplicate against agent-logged events
- * in the last 48 hours. The assumption is agents call logChangeEvent
- * themselves; if a diff is detected for a change an agent already logged,
- * the verdict computation absorbs the duplicate without misclassifying.
+ * NOTE: does not de-duplicate against agent-logged events; if a diff is detected
+ * for a change an agent already logged, the verdict computation absorbs the
+ * duplicate without misclassifying.
  *
  * Usage:
  *   node agents/change-diff-detector/index.js
  *   node agents/change-diff-detector/index.js --dry-run
  */
 
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logChangeEvent } from '../../lib/change-log.js';
-import { eventPath } from '../../lib/change-log/store.js';
 import { notify } from '../../lib/notify.js';
+import { getBlogs, getArticles, getProducts, getPages } from '../../lib/shopify.js';
+import { buildContentState, diffContentStates } from '../../lib/content-snapshot.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
-const SHOPIFY_DIR = join(ROOT, 'data', 'snapshots', 'shopify');
+const CONTENT_DIR = join(ROOT, 'data', 'snapshots', 'shopify-content');
+const STATE_FILE = join(CONTENT_DIR, 'latest.json');
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 
-const TRACKED_ARTICLE_FIELDS = ['title', 'summary_html', 'body_html'];
-const TRACKED_PRODUCT_FIELDS = ['title', 'body_html'];
-const TRACKED_PAGE_FIELDS    = ['title', 'body_html'];
-
-const FIELD_TO_CHANGE_TYPE = {
-  title: 'title',
-  summary_html: 'meta_description',
-  body_html: 'content_body',
-};
-
-function listSnapshots() {
-  if (!existsSync(SHOPIFY_DIR)) return [];
-  return readdirSync(SHOPIFY_DIR).filter((f) => f.endsWith('.json')).sort();
-}
-
-function indexById(items, idKey = 'id') {
-  const m = new Map();
-  for (const it of items || []) m.set(it[idKey], it);
-  return m;
-}
-
-function diffFields(prev, curr, fields) {
-  const diffs = [];
-  for (const f of fields) {
-    if ((prev?.[f] ?? '') !== (curr?.[f] ?? '')) {
-      diffs.push({ field: f, before: prev?.[f] ?? '', after: curr?.[f] ?? '' });
-    }
+// Fetch all live content. Shopify fetchers default to limit=250; RSC has ~215
+// articles so a single page covers it. If the blog ever exceeds 250 posts this
+// will need cursor pagination.
+async function fetchLiveContent() {
+  const blogs = await getBlogs();
+  const articles = [];
+  for (const blog of blogs || []) {
+    const items = await getArticles(blog.id);
+    for (const a of items || []) articles.push(a);
   }
-  return diffs;
+  const [products, pages] = await Promise.all([getProducts(), getPages()]);
+  return { articles, products, pages };
 }
 
-function urlFor(resourceType, item) {
-  if (resourceType === 'article') return `/blogs/news/${item.handle}`;
-  if (resourceType === 'product') return `/products/${item.handle}`;
-  if (resourceType === 'page') return `/pages/${item.handle}`;
-  return null;
+function loadPrevState() {
+  if (!existsSync(STATE_FILE)) return null;
+  try { return JSON.parse(readFileSync(STATE_FILE, 'utf8')); } catch { return null; }
+}
+
+function saveState(state) {
+  mkdirSync(CONTENT_DIR, { recursive: true });
+  writeFileSync(STATE_FILE, JSON.stringify({ ...state, captured_at: new Date().toISOString() }, null, 2));
 }
 
 async function main() {
   console.log(`\nChange Diff Detector — mode: ${dryRun ? 'DRY RUN' : 'APPLY'}`);
-  const snapshots = listSnapshots();
-  if (snapshots.length < 2) {
-    console.log('  Not enough shopify snapshots yet (need at least 2). Skipping.');
+
+  const live = await fetchLiveContent();
+  const currState = buildContentState(live);
+  console.log(`  Live content: ${currState.articles.length} articles, ${currState.products.length} products, ${currState.pages.length} pages`);
+
+  const prevState = loadPrevState();
+  if (!prevState) {
+    console.log('  No previous content state — capturing baseline, no diffs this run.');
+    if (!dryRun) saveState(currState);
     return;
   }
-  const today = snapshots[snapshots.length - 1];
-  const yesterday = snapshots[snapshots.length - 2];
-  console.log(`  Comparing ${yesterday} → ${today}`);
 
-  const prev = JSON.parse(readFileSync(join(SHOPIFY_DIR, yesterday), 'utf8'));
-  const curr = JSON.parse(readFileSync(join(SHOPIFY_DIR, today), 'utf8'));
+  const diffs = diffContentStates(prevState, currState);
+  const stats = { detected: diffs.length, logged: 0 };
 
-  const stats = { detected: 0, logged: 0, already_logged: 0 };
-
-  // Articles
-  const prevArticles = indexById(prev.articles);
-  for (const a of curr.articles || []) {
-    const prevA = prevArticles.get(a.id);
-    if (!prevA) continue; // new article isn't a "change"
-    const diffs = diffFields(prevA, a, TRACKED_ARTICLE_FIELDS);
-    for (const d of diffs) {
-      stats.detected++;
-      const url = urlFor('article', a);
-      const slug = a.handle;
-      const changeType = FIELD_TO_CHANGE_TYPE[d.field];
-      if (dryRun) {
-        console.log(`    [diff] ${url} ${changeType}: <${d.before.length} chars> → <${d.after.length} chars>`);
-        continue;
-      }
-      const eid = await logChangeEvent({
-        url, slug,
-        changeType,
-        category: 'experimental',
-        before: d.before, after: d.after,
-        source: 'manual_diff',
-        targetQuery: null,
-        intent: null,
-      });
-      stats.logged++;
-      console.log(`    [logged] ${eid} ${url} ${changeType}`);
+  for (const d of diffs) {
+    if (dryRun) {
+      console.log(`    [diff] ${d.url} ${d.changeType}`);
+      continue;
     }
+    const eid = await logChangeEvent({
+      url: d.url,
+      slug: d.slug,
+      changeType: d.changeType,
+      category: 'experimental',
+      before: d.before,
+      after: d.after,
+      source: 'manual_diff',
+      targetQuery: null,
+      intent: null,
+    });
+    stats.logged++;
+    console.log(`    [logged] ${eid} ${d.url} ${d.changeType}`);
   }
 
-  // Products
-  const prevProducts = indexById(prev.products);
-  for (const p of curr.products || []) {
-    const prevP = prevProducts.get(p.id);
-    if (!prevP) continue;
-    const diffs = diffFields(prevP, p, TRACKED_PRODUCT_FIELDS);
-    for (const d of diffs) {
-      stats.detected++;
-      const url = urlFor('product', p);
-      const slug = p.handle;
-      const changeType = FIELD_TO_CHANGE_TYPE[d.field];
-      if (dryRun) {
-        console.log(`    [diff] ${url} ${changeType}`);
-        continue;
-      }
-      const eid = await logChangeEvent({
-        url, slug,
-        changeType,
-        category: 'experimental',
-        before: d.before, after: d.after,
-        source: 'manual_diff',
-        targetQuery: null,
-        intent: null,
-      });
-      stats.logged++;
-      console.log(`    [logged] ${eid} ${url} ${changeType}`);
-    }
-  }
-
-  // Pages
-  const prevPages = indexById(prev.pages);
-  for (const p of curr.pages || []) {
-    const prevP = prevPages.get(p.id);
-    if (!prevP) continue;
-    const diffs = diffFields(prevP, p, TRACKED_PAGE_FIELDS);
-    for (const d of diffs) {
-      stats.detected++;
-      const url = urlFor('page', p);
-      const slug = p.handle;
-      const changeType = FIELD_TO_CHANGE_TYPE[d.field];
-      if (dryRun) {
-        console.log(`    [diff] ${url} ${changeType}`);
-        continue;
-      }
-      const eid = await logChangeEvent({
-        url, slug,
-        changeType,
-        category: 'experimental',
-        before: d.before, after: d.after,
-        source: 'manual_diff',
-        targetQuery: null,
-        intent: null,
-      });
-      stats.logged++;
-      console.log(`    [logged] ${eid} ${url} ${changeType}`);
-    }
-  }
+  // Persist the new state so the next run diffs against it (only on a real run).
+  if (!dryRun) saveState(currState);
 
   console.log(`\n  Detected ${stats.detected} field diffs, logged ${stats.logged}.`);
   if (!dryRun) {
