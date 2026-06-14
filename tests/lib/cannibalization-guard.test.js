@@ -38,3 +38,25 @@ test('empty inputs are safe', () => {
   assert.equal(findSemanticDuplicate('', ['x'], {}), null);
   assert.equal(findSemanticDuplicate('x', [], {}), null);
 });
+
+import { differentSegments } from '../../lib/cannibalization-guard.js';
+
+test('segment-aware: "natural deodorant" vs "...for women" are NOT duplicates (distinct audience)', () => {
+  assert.equal(findSemanticDuplicate('natural deodorant for women', ['natural deodorant'], { threshold: 0.6 }), null);
+  assert.equal(findSemanticDuplicate('natural deodorant', ['natural deodorant for women'], { threshold: 0.6 }), null);
+});
+
+test('segment-aware: for-women vs for-men are NOT duplicates', () => {
+  assert.equal(findSemanticDuplicate('natural deodorant for women', ['natural deodorant for men'], { threshold: 0.6 }), null);
+});
+
+test('segment-aware: same segment near-dups still caught', () => {
+  assert.equal(findSemanticDuplicate('deodorant for women without aluminum', ['aluminum free deodorant for women'], { threshold: 0.5 }), 'aluminum free deodorant for women');
+});
+
+test('differentSegments: detects mismatch and match', () => {
+  assert.equal(differentSegments('x for women', 'x for men'), true);
+  assert.equal(differentSegments('x for women', 'x'), true);
+  assert.equal(differentSegments('x', 'y'), false);
+  assert.equal(differentSegments('x for sensitive skin', 'y for sensitive skin'), false);
+});
