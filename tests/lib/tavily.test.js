@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { searchImages, downloadImage } from '../../lib/tavily.js';
+import { searchImages, downloadImage, searchWeb } from '../../lib/tavily.js';
 
 function mockFetch(responses) {
   let idx = 0;
@@ -61,6 +61,28 @@ test('searchImages returns [] when fetch throws', async () => {
 test('searchImages returns [] for missing key or query', async () => {
   assert.deepEqual(await searchImages('', 'q'), []);
   assert.deepEqual(await searchImages('key', ''), []);
+});
+
+test('searchWeb returns mapped {url,title,content} results', async () => {
+  const fetchImpl = mockFetch([jsonResponse({
+    results: [
+      { url: 'https://pubmed.ncbi.nlm.nih.gov/123', title: 'SLS study', content: 'SLS degrades the mucin layer...' },
+      { url: 'https://example.com/x', title: 'X', content: 'snippet' },
+    ],
+  })]);
+  const out = await searchWeb('key', 'sls oral mucosa', { fetchImpl });
+  assert.deepEqual(out, [
+    { url: 'https://pubmed.ncbi.nlm.nih.gov/123', title: 'SLS study', content: 'SLS degrades the mucin layer...' },
+    { url: 'https://example.com/x', title: 'X', content: 'snippet' },
+  ]);
+});
+
+test('searchWeb respects maxResults and degrades to [] on error/missing args', async () => {
+  const fetchImpl = mockFetch([jsonResponse({ results: [{ url: 'a' }, { url: 'b' }, { url: 'c' }] })]);
+  assert.equal((await searchWeb('key', 'q', { maxResults: 2, fetchImpl })).length, 2);
+  assert.deepEqual(await searchWeb('key', 'q', { fetchImpl: async () => { throw new Error('x'); } }), []);
+  assert.deepEqual(await searchWeb('', 'q'), []);
+  assert.deepEqual(await searchWeb('key', ''), []);
 });
 
 test('downloadImage returns buffer + mime for valid image response', async () => {
