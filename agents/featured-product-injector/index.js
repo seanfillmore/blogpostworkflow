@@ -77,6 +77,59 @@ export function rankLinkedProducts(linked, products, { keyword, title }) {
   return scored;
 }
 
+// Tokens that carry NO discriminating signal for matching a post to a product.
+// Two groups: (1) generic English/marketing filler, and (2) brand-ubiquitous
+// terms — every RSC product is "coconut oil"/"natural"/"organic", so those words
+// match everything and must be ignored, leaving only the CATEGORY tokens
+// (deodorant, toothpaste, lotion, soap, lip balm…) to discriminate.
+const RELEVANCE_STOPWORDS = new Set([
+  // generic / marketing
+  'best', 'top', 'good', 'great', 'the', 'a', 'an', 'and', 'or', 'for', 'to', 'of', 'with', 'in', 'on',
+  'is', 'are', 'how', 'what', 'why', 'vs', 'your', 'you', 'my', 'our', 'that', 'this', 'use', 'using',
+  'guide', 'review', 'reviews', 'benefits', 'formula', 'all', 'new', '2024', '2025', '2026',
+  'oz', '1oz', '2oz', '3oz', '4oz', 'ounce', 'ounces',
+  // brand-ubiquitous (present across the whole catalog → non-discriminating)
+  'real', 'skin', 'skincare', 'care', 'natural', 'organic', 'clean', 'coconut', 'oil', 'pure', 'based',
+]);
+
+function _contentTokens(s) {
+  const out = new Set();
+  for (const t of _tokens(s)) if (!RELEVANCE_STOPWORDS.has(t)) out.add(t);
+  return out;
+}
+
+/**
+ * Rank the WHOLE catalog by relevance to the post's keyword+title. Scores only on
+ * DISCRIMINATING tokens (stopwords + brand-ubiquitous terms removed) so a post
+ * matches on its product CATEGORY, not on filler like "best"/"coconut oil" that
+ * every product shares. Used to choose a buy-box product when the writer linked
+ * none, so an off-scope-leaning article still carries a relevant product instead
+ * of dead-ending at the publisher gate.
+ * Returns [{ product, relevance }], most relevant first (relevance-0 retained).
+ */
+export function rankProductsByRelevance(products, { keyword, title }) {
+  const want = _contentTokens(`${keyword || ''} ${title || ''}`);
+  const scored = (products || []).map((p) => {
+    const tagsStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
+    const hay = _contentTokens(`${p.title || ''} ${p.handle || ''} ${tagsStr} ${p.product_type || ''}`);
+    let overlap = 0;
+    for (const t of want) if (hay.has(t)) overlap++;
+    return { product: p, relevance: overlap };
+  });
+  scored.sort((a, b) => b.relevance - a.relevance);
+  return scored;
+}
+
+/**
+ * Pick the single best buy-box product for a post that linked none. Returns the
+ * product object, or null when nothing is genuinely relevant (relevance 0) —
+ * the caller then HOLDS the post for review rather than forcing a random product.
+ */
+export function pickRelevantProduct(products, { keyword, title }) {
+  const best = rankProductsByRelevance(products, { keyword, title })[0];
+  return best && best.relevance > 0 && best.product && best.product.title ? best.product : null;
+}
+
 /**
  * Build conversion-oriented CTA copy for the featured product card.
  * Returns { headline, buttonText }.
@@ -249,39 +302,53 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
     return { html: rawHtml, skipped: true, reason: 'already has rsc-featured-product' };
   }
 
-  // Find all linked products (handle + link count), sorted by count descending
-  const linked = linkedProductCounts(html);
-  if (linked.length === 0) {
-    return { html: rawHtml, skipped: true, reason: 'no /products/ links found' };
-  }
-
-  // Fetch Shopify product data for each linked handle (≤ ~3 usually)
-  const { getProducts } = await import('../../lib/shopify.js');
-  const fetchedProducts = (
-    await Promise.all(
-      linked.map(({ handle }) =>
-        getProducts({ handle }).then((res) => res?.[0] ?? null).catch(() => null)
-      )
-    )
-  ).filter(Boolean);
-
-  // Rank by relevance to post keyword + title; tie-break by link count
   const keyword = postMeta.target_keyword || '';
   const postTitle = postMeta.title || '';
-  const ranked = rankLinkedProducts(linked, fetchedProducts, { keyword, title: postTitle });
+  const { getProducts } = await import('../../lib/shopify.js');
 
-  // Pick the top-ranked product; fall back through the list if fetch failed
+  // Find all linked products (handle + link count), sorted by count descending
+  const linked = linkedProductCounts(html);
+
   let product = null;
   let productHandle = null;
-  for (const entry of ranked) {
-    if (entry.product && entry.product.title) {
-      product = entry.product;
-      productHandle = entry.handle;
-      break;
+  let fallbackInjected = false;
+
+  if (linked.length === 0) {
+    // The writer linked no product. Rather than dead-ending the post at the
+    // publisher gate (the old "no /products/ links found" block → Kill/re-scope),
+    // pick the most relevant product from the catalog and embed a buy box for it.
+    // Only HOLD the post for review if nothing in the catalog is relevant.
+    const all = await getProducts().catch(() => []);
+    product = pickRelevantProduct(all, { keyword, title: postTitle });
+    if (!product) {
+      return { html: rawHtml, skipped: true, reason: 'no relevant product' };
     }
-  }
-  if (!product) {
-    return { html: rawHtml, skipped: true, reason: 'no linked product data found in Shopify' };
+    productHandle = product.handle;
+    fallbackInjected = true;
+  } else {
+    // Fetch Shopify product data for each linked handle (≤ ~3 usually)
+    const fetchedProducts = (
+      await Promise.all(
+        linked.map(({ handle }) =>
+          getProducts({ handle }).then((res) => res?.[0] ?? null).catch(() => null)
+        )
+      )
+    ).filter(Boolean);
+
+    // Rank by relevance to post keyword + title; tie-break by link count
+    const ranked = rankLinkedProducts(linked, fetchedProducts, { keyword, title: postTitle });
+
+    // Pick the top-ranked product; fall back through the list if fetch failed
+    for (const entry of ranked) {
+      if (entry.product && entry.product.title) {
+        product = entry.product;
+        productHandle = entry.handle;
+        break;
+      }
+    }
+    if (!product) {
+      return { html: rawHtml, skipped: true, reason: 'no linked product data found in Shopify' };
+    }
   }
 
   const imageUrl = product.images?.[0]?.src ?? null;
@@ -327,7 +394,7 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
 
   const result = processed.slice(0, absoluteIdx) + block + processed.slice(absoluteIdx);
 
-  return { html: result, skipped: false, productHandle, productTitle: product.title };
+  return { html: result, skipped: false, productHandle, productTitle: product.title, fallbackInjected };
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -378,15 +445,17 @@ async function main() {
       console.log(`  Skipped: ${result.reason}`);
     } else {
       writeFileSync(filePath, result.html);
-      console.log(`  Injected featured product: "${result.productTitle}" → ${filePath}`);
+      const how = result.fallbackInjected ? ' (auto-selected — writer linked none)' : '';
+      console.log(`  Injected featured product: "${result.productTitle}"${how} → ${filePath}`);
     }
 
-    // If the writer chose no /products/ link in the body, we have no product
-    // to feature — which almost always means the article is off product scope
-    // (e.g. body wash when we only sell soap). Flag the post so the publisher
-    // refuses to upload until a human investigates. The strategist's
-    // product-scope filter is the primary guard; this is the last-mile catch.
-    if (result.skipped && result.reason === 'no /products/ links found') {
+    // Auto-remediation: when the writer linked no product we now pick the most
+    // relevant one and embed a buy box (above), so a near-on-scope article still
+    // ships with a commercial CTA instead of dead-ending. We only block — and
+    // only to HOLD for review, never to auto-kill — when nothing in the catalog
+    // is relevant at all (genuinely off scope, e.g. headphones). The strategist's
+    // product-scope filter remains the primary guard; this is the last-mile catch.
+    if (result.skipped && result.reason === 'no relevant product') {
       const metaPath = getMetaPath(handle);
       if (existsSync(metaPath)) {
         try {
@@ -394,10 +463,10 @@ async function main() {
           meta.publisher_block = {
             flagged_at: new Date().toISOString(),
             flagged_by: 'featured-product-injector',
-            reason: 'no /products/ links in body — likely off product scope',
+            reason: 'no relevant product to feature — off product scope; holding for review',
           };
           writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-          console.log('  ⚠ publisher_block set — no product mapping');
+          console.log('  ⚠ publisher_block set — no relevant product (held for review)');
         } catch (e) {
           console.log(`  ⚠ Could not set publisher_block: ${e.message}`);
         }
@@ -406,8 +475,10 @@ async function main() {
 
     await notify({
       subject: `Featured Product Injector: ${handle}`,
-      body: result.skipped ? `Skipped — ${result.reason}` : `Injected "${result.productTitle}" into ${handle}`,
-      status: result.skipped && result.reason === 'no /products/ links found' ? 'error' : 'success',
+      body: result.skipped
+        ? `Skipped — ${result.reason}`
+        : `Injected "${result.productTitle}"${result.fallbackInjected ? ' (auto-selected)' : ''} into ${handle}`,
+      status: result.skipped && result.reason === 'no relevant product' ? 'error' : 'success',
     }).catch(() => {});
     return;
   }

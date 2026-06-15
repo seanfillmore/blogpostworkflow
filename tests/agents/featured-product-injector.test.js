@@ -7,9 +7,37 @@ import {
   findInsertionPoint,
   buildFeaturedProductHtml,
   rankLinkedProducts,
+  rankProductsByRelevance,
+  pickRelevantProduct,
   buildCtaCopy,
   linkedProductCounts,
 } from '../../agents/featured-product-injector/index.js';
+
+// ── rankProductsByRelevance: score the whole catalog vs the post ──────────────
+const CATALOG = [
+  { handle: 'coconut-oil-deodorant', title: 'Coconut Oil Deodorant', tags: 'deodorant,aluminum free', product_type: 'Deodorant' },
+  { handle: 'coconut-lotion', title: 'Coconut Body Lotion', tags: 'lotion,body,moisturizer', product_type: 'Lotion' },
+  { handle: 'coconut-oil-toothpaste', title: 'Coconut Oil Toothpaste', tags: 'toothpaste,fluoride free', product_type: 'Toothpaste' },
+];
+
+test('rankProductsByRelevance ranks the most topically relevant product first', () => {
+  const ranked = rankProductsByRelevance(CATALOG, { keyword: 'natural body lotion', title: 'Best Natural Body Lotion for Dry Skin' });
+  assert.equal(ranked[0].product.handle, 'coconut-lotion');
+  assert.ok(ranked[0].relevance > 0);
+  // every product is scored (relevance-0 entries are retained, just last)
+  assert.equal(ranked.length, 3);
+});
+
+test('pickRelevantProduct returns the best match when something is relevant', () => {
+  const p = pickRelevantProduct(CATALOG, { keyword: 'aluminum free deodorant', title: 'Switching to Natural Deodorant' });
+  assert.equal(p.handle, 'coconut-oil-deodorant');
+});
+
+test('pickRelevantProduct returns null when nothing in the catalog is relevant', () => {
+  // off-scope topic with zero token overlap → hold for review, do not force a random product
+  assert.equal(pickRelevantProduct(CATALOG, { keyword: 'best wireless headphones', title: 'Top Bluetooth Earbuds 2026' }), null);
+  assert.equal(pickRelevantProduct([], { keyword: 'anything', title: 'anything' }), null);
+});
 
 // findPrimaryProduct: returns the most-linked /products/<handle>
 assert.equal(
