@@ -606,8 +606,6 @@ async function approveQueueItem(slug) {
       if (btn) { btn.disabled = false; btn.textContent = label; }
       return;
     }
-    if (data.triggered) alert('Started ' + data.triggered + '. The work runs in the background; new changes will appear in the queue shortly.');
-    else if (data.publishing) alert('Publishing in the background. The item will show as published shortly.');
     loadData();
   } catch (err) {
     alert('Action failed: ' + err.message);
