@@ -80,8 +80,12 @@ writeFileSync(join(tmpDir, `${oldDate}.json`), JSON.stringify({
   suggestions: [{ id: 's4', type: 'keyword_pause', target: 'old keyword', status: 'rejected', rationale: 'Old.' }],
 }));
 
-// Write a corrupted file — should be silently skipped
-writeFileSync(join(tmpDir, `${today.slice(0, 7)}-15.json`), 'not valid json');
+// Write a corrupted file — should be silently skipped. Use a distinct in-window
+// date (5 days ago) so it never collides with `${today}.json`: the old
+// `${today.slice(0,7)}-15.json` clobbered today's fixture on the 15th of a month.
+const corruptD = new Date();
+corruptD.setDate(corruptD.getDate() - 5);
+writeFileSync(join(tmpDir, `${corruptD.toISOString().slice(0, 10)}.json`), 'not valid json');
 
 const history = loadRecentHistory(tmpDir, 30);
 
