@@ -24,6 +24,7 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, getEditorReportPath } from '../../lib/posts.js';
+import { isPassing } from '../../lib/editor-remediation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -159,7 +160,7 @@ async function main() {
       process.exit(1);
     }
     const report = readFileSync(reportPath, 'utf8');
-    if (/VERDICT:\s*Needs Work/i.test(report)) {
+    if (!isPassing(report)) {
       console.error(`  ✗ Editor verdict is "Needs Work" for "${slug}".`);
       console.error(`  Fix the issues in the editor report before publishing.`);
       console.error(`  Report: data/posts/${slug}/editor-report.md`);
