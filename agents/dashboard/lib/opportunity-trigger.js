@@ -7,6 +7,7 @@
 // that does the work, not pushing pre-made content to Shopify.
 
 import { classifyPageType, recommendedAgentFor } from '../../../lib/seo-opportunities.js';
+import { resolvePostSlug } from '../../../lib/posts.js';
 
 // Agent key → runnable script path (this map is also the allowlist of what the
 // dashboard is permitted to spawn for an opportunity).
@@ -68,7 +69,10 @@ export function buildTriggerCommand(item) {
     if (!keyword) throw new Error('No target keyword for collection-linker');
     return { agent, script, args: ['--url', url, '--keyword', keyword, '--apply'] };
   }
-  // refresh-runner
-  if (!handle) throw new Error('Cannot derive post slug from page URL');
-  return { agent, script, args: [handle] };
+  // refresh-runner — resolve the live URL to the post's ACTUAL local slug, which
+  // may differ from the URL's last segment (posts can be stored under a
+  // shortened slug). Passing the raw handle makes refresh-runner silently no-op.
+  const postSlug = resolvePostSlug(url) || resolvePostSlug(handle);
+  if (!postSlug) throw new Error(`No local post found for URL "${url}" — cannot refresh`);
+  return { agent, script, args: [postSlug] };
 }
