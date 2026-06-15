@@ -123,7 +123,14 @@ function findPostMeta(slug, _postsDir) {
 
 // A seo-opportunity item is a recommendation, not finished content. Approving it
 // kicks off the executor agent that does the work (which then surfaces concrete,
-// reviewable changes / queue items). Spawns detached so the request returns fast.
+// reviewable changes / queue items). Spawns detached so the request returns fast,
+// then RECONCILES the item to a terminal status when the executor exits.
+//
+// Without that reconciliation, `in_progress` is a write-only dead-end: nothing
+// else in the codebase ever advances it, so an approved opportunity shows
+// IN_PROGRESS forever — even when the executor silently failed (e.g. a slug that
+// doesn't match a post dir). The exit handler runs after this synchronous block
+// (Node defers 'exit'/'error' callbacks), so it always sees the in_progress write.
 function triggerOpportunity(item, ctx, res) {
   let cmd;
   try {
@@ -131,15 +138,39 @@ function triggerOpportunity(item, ctx, res) {
   } catch (err) {
     return respondJson(res, { ok: false, error: `Cannot run opportunity: ${err.message}` }, 422);
   }
+  let child;
   try {
-    spawn('node', [join(ctx.ROOT, cmd.script), ...cmd.args], {
+    child = spawn('node', [join(ctx.ROOT, cmd.script), ...cmd.args], {
       cwd: ctx.ROOT,
       detached: true,
-      stdio: 'ignore',
-    }).unref();
+      stdio: ['ignore', 'ignore', 'pipe'], // capture stderr so a failure is diagnosable
+    });
   } catch (err) {
     return respondJson(res, { ok: false, error: `Failed to start ${cmd.agent}: ${err.message}` }, 500);
   }
+
+  let stderr = '';
+  if (child.stderr) child.stderr.on('data', (d) => { stderr = (stderr + d.toString()).slice(-2000); });
+
+  const reconcile = (ok, detail) => {
+    const fresh = findItem(item.slug) || item;
+    // Don't clobber a human action that landed mid-run (dismiss/feedback).
+    if (fresh.status !== 'in_progress') return;
+    if (ok) {
+      fresh.status = 'completed';
+      fresh.completed_at = new Date().toISOString();
+      delete fresh.error;
+    } else {
+      fresh.status = 'failed';
+      fresh.failed_at = new Date().toISOString();
+      fresh.error = String(detail || '').trim().split('\n').slice(-3).join(' ').slice(0, 500) || 'executor failed';
+    }
+    writeItem(fresh);
+  };
+  child.on('exit', (code) => reconcile(code === 0, `exit ${code}: ${stderr}`));
+  child.on('error', (err) => reconcile(false, err.message));
+  child.unref();
+
   item.status = 'in_progress';
   item.triggered_agent = cmd.agent;
   item.triggered_at = new Date().toISOString();
