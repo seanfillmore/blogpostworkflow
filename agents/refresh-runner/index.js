@@ -248,6 +248,12 @@ async function main() {
   console.log(`\n  Refresh complete: ${ok} succeeded, ${failed.length} failed`);
   for (const f of failed) console.log(`    [fail] ${f.slug}: ${f.reason}`);
 
+  // A run that refreshed nothing (e.g. the slug didn't resolve to a post) is a
+  // failure, not a success — exit non-zero so callers that observe the exit code
+  // (the dashboard's seo-opportunity reconciler) can mark it failed rather than
+  // completed. Partial success in a batch run still exits 0.
+  if (failed.length && ok === 0) process.exitCode = 1;
+
   await notify({
     subject: `Refresh Runner: ${ok} succeeded${failed.length ? `, ${failed.length} failed` : ''}`,
     body: results.map((r) => `${r.ok ? '[ok]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
