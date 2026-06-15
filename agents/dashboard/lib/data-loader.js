@@ -343,7 +343,11 @@ export function aggregateData() {
     for (const f of readdirSync(queueDir).filter((n) => n.endsWith('.json') && n !== 'indexing-submissions.json')) {
       try {
         const item = JSON.parse(readFileSync(join(queueDir, f), 'utf8'));
-        if (item.status !== 'dismissed' && item.status !== 'published') {
+        // Terminal states leave the active queue. `completed` = an approved
+        // seo-opportunity whose executor finished successfully (its real output
+        // is the executor's own artifact / downstream review item). `failed`
+        // stays VISIBLE so a silently-failed executor surfaces for action.
+        if (!['dismissed', 'published', 'completed'].includes(item.status)) {
           item.has_html = !!(item.refreshed_html_path && existsSync(item.refreshed_html_path));
           performanceQueue.push(item);
         }

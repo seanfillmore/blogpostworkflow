@@ -37,11 +37,20 @@ export function activeSlugs() {
   const now = Date.now();
   return new Set(listQueueItems()
     .filter((i) => {
-      // Still in the queue (pending/approved/feedback)
-      if (i.status !== 'published' && i.status !== 'dismissed') return true;
+      // Terminal-but-actioned states: dismissed (rejected) and failed (executor
+      // errored) are NOT active — the analyzer may re-surface them.
+      if (i.status === 'dismissed' || i.status === 'failed') return false;
       // Recently published — still in cooldown period
-      if (i.published_at && (now - new Date(i.published_at).getTime()) < COOLDOWN_MS) return true;
-      return false;
+      if (i.status === 'published') {
+        return !i.published_at || (now - new Date(i.published_at).getTime()) < COOLDOWN_MS;
+      }
+      // A completed seo-opportunity stays in cooldown off completed_at, so the
+      // same work isn't re-recommended for 30 days.
+      if (i.status === 'completed') {
+        return !i.completed_at || (now - new Date(i.completed_at).getTime()) < COOLDOWN_MS;
+      }
+      // Still in the queue (pending/approved/in_progress/feedback)
+      return true;
     })
     .map((i) => i.slug));
 }
