@@ -271,8 +271,12 @@ function attemptRepair(slug, reason) {
   if (lower.includes('internal link') || lower.includes('orphan') || lower.includes('cross-link')) {
     repairs.push({ label: 'internal-linker', cmd: `node agents/internal-linker/index.js --slug ${slug}` });
   }
-  if (lower.includes('unsourced') || lower.includes('citation') || lower.includes('claim')) {
-    repairs.push({ label: 'content-refresher', cmd: `node agents/content-refresher/index.js --slug ${slug}` });
+  // Uncited health/statistical claims (the YMYL credibility gate) — find and add
+  // verified authoritative citations. content-remediator below then softens any
+  // residual claims citation-finder couldn't source.
+  if (lower.includes('unsourced') || lower.includes('uncited') || lower.includes('citation')
+      || lower.includes('credibility') || (lower.includes('lack') && lower.includes('source')) || lower.includes('claim')) {
+    repairs.push({ label: 'citation-finder', cmd: `node agents/citation-finder/index.js --slug ${slug}` });
   }
   if (lower.includes('answer') || lower.includes('answer-first')) {
     repairs.push({ label: 'answer-first-rewriter', cmd: `node agents/answer-first-rewriter/index.js ${slug}` });
