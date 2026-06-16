@@ -26,7 +26,7 @@ import {
   getContentPath, getEditorReportPath, getBackupsDir, ensurePostDir, ROOT,
 } from '../../lib/posts.js';
 import { parseEditorBlockers, contentBlockers, formatBlockersForPrompt } from '../../lib/editor-remediation.js';
-import { assertHtmlComplete } from '../../lib/html-output-guards.js';
+import { assertHtmlComplete, externalLinksAdded, futureDatesAdded } from '../../lib/html-output-guards.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -123,6 +123,19 @@ ${original}`;
   }
   if (countLinks(revised) < countLinks(original)) {
     throw new Error(`Revision dropped links (${countLinks(revised)} < ${countLinks(original)}) — refusing to save.`);
+  }
+  // The reviser must not fabricate citations or dates — that's citation-finder's
+  // job (it verifies sources). Adding an external link or a future-dated "fact"
+  // means it invented a source; refuse so the post stays blocked for the proper
+  // tool / a human instead of going live with a 404 link or a bogus date.
+  const addedLinks = externalLinksAdded(original, revised);
+  if (addedLinks.length) {
+    throw new Error(`Revision added ${addedLinks.length} unverified external link(s) — citations are citation-finder's job. Refusing to save: ${addedLinks.slice(0, 3).join(', ')}`);
+  }
+  const now = new Date();
+  const futureDates = futureDatesAdded(original, revised, { year: now.getFullYear(), month: now.getMonth() + 1 });
+  if (futureDates.length) {
+    throw new Error(`Revision introduced future-dated "fact(s)" not in the original (${futureDates.slice(0, 3).join(', ')}) — likely a fabricated citation date. Refusing to save.`);
   }
 
   // Back up the original, then write the revision.
