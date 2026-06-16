@@ -37,6 +37,8 @@ export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/technical-seo/index.js',
   'agents/theme-seo-auditor/index.js',
   'agents/image-generator/index.js',
+  'agents/editor/index.js',      // "Re-run editor" on the hard-block card
+  'scripts/remediate-post.js',   // "Fix blockers" on the hard-block card
 ]);
 
 /**

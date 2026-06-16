@@ -33,7 +33,7 @@ import { fileURLToPath } from 'url';
 import { loadCalendar } from '../../lib/calendar-store.js';
 import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { formatPublishAt } from '../../lib/publish-schedule.js';
-import { isPassing, firstBlockerReason } from '../../lib/editor-remediation.js';
+import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 // Re-export for back-compat: formatPublishAt used to be defined in this file; tests
 // and callers that import it from calendar-runner keep working post-extraction.
 export { formatPublishAt } from '../../lib/publish-schedule.js';
@@ -251,79 +251,9 @@ function run(cmd, label) {
   }
 }
 
-function checkEditGate(slug) {
-  const reportPath = getEditorReportPath(slug);
-  if (!existsSync(reportPath)) return { pass: true };
-  const report = readFileSync(reportPath, 'utf8');
-  if (!isPassing(report)) {
-    return { pass: false, reason: firstBlockerReason(report) };
-  }
-  return { pass: true };
-}
-
-function attemptRepair(slug, reason) {
-  const lower = (reason || '').toLowerCase();
-  const repairs = [];
-
-  if (lower.includes('competitor') || lower.includes('brand name') || lower.includes('brand guideline')) {
-    repairs.push({ label: 'faq-rewriter', cmd: `node agents/faq-rewriter/index.js --slug ${slug}` });
-  }
-  if (lower.includes('internal link') || lower.includes('orphan') || lower.includes('cross-link')) {
-    repairs.push({ label: 'internal-linker', cmd: `node agents/internal-linker/index.js --slug ${slug}` });
-  }
-  // Uncited health/statistical claims (the YMYL credibility gate) — find and add
-  // verified authoritative citations. content-remediator below then softens any
-  // residual claims citation-finder couldn't source.
-  if (lower.includes('unsourced') || lower.includes('uncited') || lower.includes('citation')
-      || lower.includes('credibility') || (lower.includes('lack') && lower.includes('source')) || lower.includes('claim')) {
-    repairs.push({ label: 'citation-finder', cmd: `node agents/citation-finder/index.js --slug ${slug}` });
-  }
-  if (lower.includes('answer') || lower.includes('answer-first')) {
-    repairs.push({ label: 'answer-first-rewriter', cmd: `node agents/answer-first-rewriter/index.js ${slug}` });
-  }
-  if (lower.includes('broken link') || lower.includes('404')) {
-    repairs.push({ label: 'link-repair', cmd: `node agents/link-repair/index.js ${slug}` });
-  }
-  if (lower.includes('schema') || lower.includes('structured data')) {
-    repairs.push({ label: 'schema-injector', cmd: `node agents/schema-injector/index.js --slug ${slug}` });
-  }
-  // Content-substance blockers (ingredient accuracy, brand voice, topical
-  // relevance, factual concerns, generic "needs work") — the mechanical repairs
-  // above can't fix prose, so revise the content to address what the editor flagged.
-  if (lower.includes('ingredient') || lower.includes('voice') || lower.includes('topical')
-      || lower.includes('factual') || lower.includes('accuracy') || lower.includes('overstated')
-      || lower.includes('tone') || lower.includes('readability')) {
-    repairs.push({ label: 'content-remediator', cmd: `node agents/content-remediator/index.js --slug ${slug}` });
-  }
-
-  // Fallback: if no specific repair matched the reason, revise the content
-  // (the old fallback was link-repair + schema, which can't fix a content issue).
-  if (repairs.length === 0) {
-    repairs.push({ label: 'content-remediator', cmd: `node agents/content-remediator/index.js --slug ${slug}` });
-  }
-
-  console.log(`  🔧 Attempting ${repairs.length} repair(s): ${repairs.map((r) => r.label).join(', ')}`);
-  for (const { label, cmd } of repairs) {
-    run(cmd, `repair (${label}): ${slug}`);
-  }
-
-  run(`node agents/editor/index.js data/posts/${slug}/content.html`, `edit (re-check): ${slug}`);
-}
-
-// Run the editorial gate, auto-repairing up to maxAttempts times before giving
-// up. Each attempt revises the post (links, content, etc.) and re-runs the
-// editor; we only escalate to a human after repeated failure — never auto-kill.
-function runEditGateWithRepair(slug, { maxAttempts = 3 } = {}) {
-  let gate = checkEditGate(slug);
-  let attempts = 0;
-  while (!gate.pass && attempts < maxAttempts) {
-    attempts += 1;
-    console.log(`  🔧 Editorial repair attempt ${attempts}/${maxAttempts}: ${gate.reason}`);
-    attemptRepair(slug, gate.reason);
-    gate = checkEditGate(slug);
-  }
-  return { gate, attempts };
-}
+// checkEditGate / attemptRepair / runEditGateWithRepair now live in
+// lib/edit-gate-repair.js so the dashboard's "Fix blockers" action runs the
+// exact same loop. Pass this file's dry-run-aware `run` so repairs honor --dry-run.
 
 function checkBrokenLinks(slug) {
   const reportPath = getEditorReportPath(slug);
@@ -425,7 +355,7 @@ async function runItem(item) {
   {
     const initial = checkEditGate(postSlug);
     if (!initial.pass) console.log(`  ⚠️ Editorial gate blocked: ${initial.reason}`);
-    const { gate } = runEditGateWithRepair(postSlug);
+    const { gate } = runEditGateWithRepair(postSlug, { run });
     if (!gate.pass) {
       console.log(`  ⛔ Still blocked after repair attempts: ${gate.reason}`);
       console.log(`     Review data/posts/${postSlug}/editor-report.md and fix manually.`);
@@ -590,7 +520,7 @@ async function publishDueArticles() {
     const gate = checkEditGate(slug);
     if (!gate.pass) {
       console.log(`  ⚠️  "${meta.title}" has editorial issues — attempting auto-repair...`);
-      const { gate: recheck } = runEditGateWithRepair(slug);
+      const { gate: recheck } = runEditGateWithRepair(slug, { run });
       if (!recheck.pass) {
         console.error(`  ✗  "${meta.title}" still Needs Work after repair — blocked from publishing.`);
         console.error(`     Reason: ${recheck.reason}`);

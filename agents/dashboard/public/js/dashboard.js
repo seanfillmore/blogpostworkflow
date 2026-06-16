@@ -945,15 +945,16 @@ function renderBlockedPostsCard(d) {
       '</div>' +
       '<pre class="action-reason" style="white-space:pre-wrap;font-family:inherit;margin:8px 0 0;">' + esc(p.blockers || '') + '</pre>' +
       '<div class="action-buttons">' +
+        '<button class="btn-primary" onclick="fixBlockers(\'' + slug + '\')">Fix blockers</button>' +
         '<button class="btn-secondary" onclick="openEditorReport(\'' + slug + '\')">View full report</button>' +
-        '<button class="btn-primary" onclick="rerunEditor(\'' + slug + '\')">Re-run editor</button>' +
+        '<button class="btn-secondary" onclick="rerunEditor(\'' + slug + '\')">Re-run editor</button>' +
         '<button class="btn-danger" onclick="killArticle(\'' + slug + '\',\'editor blocked\')">Kill article</button>' +
       '</div>' +
     '</div>';
   }).join('');
   return '<div class="card card-action"><div class="card-header accent-red">' +
       '<h2>&#9888; Action Required &mdash; ' + blocked.length + ' post' + (blocked.length > 1 ? 's' : '') + ' hard-blocked</h2>' +
-      '<span class="card-subtitle">Failed the editorial gate. Fix the blockers below or re-run the editor.</span>' +
+      '<span class="card-subtitle">Failed the editorial gate. Click <strong>Fix blockers</strong> to auto-remediate (citations, content, links), or view the report.</span>' +
     '</div><div class="card-body">' + rows + '</div></div>';
 }
 
@@ -988,6 +989,72 @@ function openEditorReport(slug) {
 // Re-run the editor agent for a single post after the author has fixed the
 // source. POSTs to the existing /run-agent endpoint and reloads dashboard
 // data on completion so the blocked-post card reflects the new verdict.
+// Auto-remediate a hard-blocked post: runs the same repair loop the daily
+// pipeline uses (citation-finder for uncited claims, content-remediator for
+// prose/factual issues, link-repair for broken links), re-running the editor up
+// to 3x. Streams progress live; reloads the dashboard when done so the card
+// reflects the new verdict (the post drops off this list if it now passes).
+function fixBlockers(slug) {
+  if (!confirm('Auto-fix blockers for ' + slug + '?\n\nThis runs the remediation agents (citations, content revision, link repair) and re-checks the editor — up to 3 passes. It may take a minute or two.')) return;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'fix-blockers-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:40px 20px;';
+  overlay.innerHTML =
+    '<div style="background:white;max-width:820px;width:100%;max-height:85vh;overflow:auto;border-radius:10px;padding:24px 28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;">' +
+        '<h3 style="margin:0;font-size:16px;">Fixing blockers &mdash; ' + esc(slug) + '</h3>' +
+        '<button id="fix-blockers-close" class="btn-secondary" disabled title="Wait for remediation to finish">Close</button>' +
+      '</div>' +
+      '<pre id="fix-blockers-log" class="run-log" style="white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;margin:0;max-height:60vh;overflow:auto;background:#0b1020;color:#d6e2ff;padding:14px;border-radius:8px;">Starting remediation...\n</pre>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  var logEl = document.getElementById('fix-blockers-log');
+  var closeBtn = document.getElementById('fix-blockers-close');
+  var enableClose = function (label) {
+    closeBtn.disabled = false;
+    closeBtn.title = '';
+    closeBtn.textContent = label || 'Close';
+    closeBtn.onclick = function () { overlay.remove(); loadData(); };
+  };
+
+  fetch('/run-agent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ script: 'scripts/remediate-post.js', args: [slug] }),
+  }).then(function (res) {
+    if (!res.ok) { logEl.textContent += '\n[error] server rejected the run (' + res.status + ')\n'; enableClose('Close'); return; }
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    function read() {
+      reader.read().then(function (r) {
+        if (r.done) { enableClose('Done — close & refresh'); return; }
+        decoder.decode(r.value).split('\n').forEach(function (line) {
+          if (!line.startsWith('data: ')) return;
+          var payload = line.slice(6);
+          if (payload.indexOf('__exit__:') === 0) {
+            var code = 1;
+            try { code = JSON.parse(payload.slice(9)).code; } catch (e) {}
+            logEl.textContent += (code === 0
+              ? '\n✓ Remediation succeeded — the post now passes the editorial gate.\n'
+              : '\n✗ Some blockers remain after 3 attempts — open the editor report for what needs a human edit.\n');
+            logEl.scrollTop = logEl.scrollHeight;
+            enableClose(code === 0 ? 'Done — close & refresh' : 'Close & refresh');
+            return;
+          }
+          logEl.textContent += payload + '\n';
+          logEl.scrollTop = logEl.scrollHeight;
+        });
+        read();
+      });
+    }
+    read();
+  }).catch(function (err) {
+    logEl.textContent += '\n[error] ' + err + '\n';
+    enableClose('Close');
+  });
+}
+
 function rerunEditor(slug) {
   if (!confirm('Re-run editor for ' + slug + '?\n\nThis will re-check links, CTA presence, and content rules, and refresh the verdict on the dashboard.')) return;
   const btn = event && event.target;
