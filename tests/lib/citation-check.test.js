@@ -39,3 +39,17 @@ test('empty/no-claims html → []', () => {
   assert.deepEqual(findUncitedClaims('<p>Hello world.</p>'), []);
   assert.deepEqual(findUncitedClaims(''), []);
 });
+
+// Bare trigger words inside ordinary prose are NOT citation-worthy claims — the
+// old patterns flagged these and caused spurious YMYL gate blocks.
+test('does NOT flag bare "research"/"clinical"/"%" used non-claim-ily', () => {
+  assert.deepEqual(findUncitedClaims('<p>If you would rather skip the research, browse our picks.</p>'), []);
+  assert.deepEqual(findUncitedClaims('<p>Eucerin focuses on clinical hydration but relies on mineral oil.</p>'), []);
+  assert.deepEqual(findUncitedClaims('<p>Dermatologist picks often focus on clinical efficacy for conditions.</p>'), []);
+  assert.deepEqual(findUncitedClaims('<p>Pat skin 80% dry, then apply lotion to damp skin.</p>'), []);
+});
+test('still flags real study/clinical claims', () => {
+  assert.equal(findUncitedClaims('<p>Research suggests coconut oil reduces water loss.</p>').length, 1);
+  assert.equal(findUncitedClaims('<p>According to a 2024 study, the effect lasts hours.</p>').length, 1);
+  assert.equal(findUncitedClaims('<p>A clinical trial found measurable improvement.</p>').length, 1);
+});
