@@ -53,3 +53,9 @@ test('still flags real study/clinical claims', () => {
   assert.equal(findUncitedClaims('<p>According to a 2024 study, the effect lasts hours.</p>').length, 1);
   assert.equal(findUncitedClaims('<p>A clinical trial found measurable improvement.</p>').length, 1);
 });
+test('does NOT flag recipe/spec percentages or bare "proven"', () => {
+  assert.deepEqual(findUncitedClaims('<p>Mix hydrogen peroxide (3% concentration), baking soda, and dish soap.</p>'), []);
+  assert.deepEqual(findUncitedClaims('<p>At 3% concentration, this is safe for most cotton.</p>'), []);
+  assert.deepEqual(findUncitedClaims('<p>Use a paste of hydrogen peroxide (3%) and baking soda.</p>'), []);
+  assert.deepEqual(findUncitedClaims('<p>Here are the most effective strategies — practical and proven.</p>'), []);
+});
