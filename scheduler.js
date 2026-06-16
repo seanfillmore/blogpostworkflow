@@ -263,6 +263,16 @@ if (new Date().getDay() === 0) {
   // Step 8b: answer-first rewrite audit (fix intros for LLM citation)
   runStep('answer-first-rewriter', `"${NODE}" agents/answer-first-rewriter/index.js --apply`, { indent: '    ' });
 
+  // Step 8b.1: re-gate flagged posts against LIVE Shopify so the dashboard's
+  // editor verdict / broken-link counts reflect reality, not stale local
+  // reports (posts fixed/refreshed live otherwise keep showing old failures).
+  // Runs last in the content block, after the steps above may have changed live
+  // content. Flagged-only by default — cheap; no live mutations, just refreshes
+  // the local reports the dashboard reads.
+  if (!dryFlag) {
+    runStep('regate-live-posts', `"${NODE}" scripts/regate-live-posts.js`, { indent: '    ' });
+  }
+
   // Step 8c: AI citation tracking across LLMs
   runStep('ai-citation-tracker', `"${NODE}" agents/ai-citation-tracker/index.js`, { indent: '    ' });
 
