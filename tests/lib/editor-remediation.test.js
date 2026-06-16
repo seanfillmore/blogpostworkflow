@@ -50,6 +50,12 @@ test('isPassing tolerates non-bold and extra whitespace', () => {
   assert.equal(isPassing('VERDICT: Needs   Work'), false);
   assert.equal(isPassing('**VERDICT:**  Needs Work — minor'), false);
 });
+test('isPassing catches the VALUE-bolded "VERDICT: **Needs Work**" format (gate-bypass bug)', () => {
+  // The editor emits both styles. The old regex required ** right after the
+  // colon, so this value-bolded form slipped through and the gate passed it.
+  assert.equal(isPassing('VERDICT: **Needs Work**'), false);
+  assert.equal(isPassing('## 2c. Uncited Claims\nVERDICT: **BLOCKER**\n## Overall\nVERDICT: **Needs Work**'), false);
+});
 test('isPassing on empty/missing report is passing (no report = no blocker)', () => {
   assert.equal(isPassing(''), true);
   assert.equal(isPassing(null), true);
