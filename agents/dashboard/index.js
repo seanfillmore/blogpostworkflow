@@ -40,6 +40,7 @@ import creativesRoutes from './routes/creatives.js';
 import campaignsRoutes from './routes/campaigns.js';
 import indexingRoutes from './routes/indexing.js';
 import performanceQueueRoutes from './routes/performance-queue.js';
+import { reconcileStaleInProgress } from '../performance-engine/lib/queue.js';
 import rejectedImagesRoutes from './routes/rejected-images.js';
 import postsKillRoutes from './routes/posts-kill.js';
 import cannibalizationRoutes from './routes/cannibalization.js';
@@ -176,6 +177,13 @@ server.listen(PORT, BIND, () => {
   console.log(`\nSEO Dashboard — ${config.name}`);
   console.log(`  ${url}`);
   console.log('  Auto-refreshes every 60m. Ctrl+C to stop.\n');
+
+  // A restart kills the exit handlers that advance approved opportunities out of
+  // `in_progress`; reconcile any orphaned ones so they don't hang forever.
+  try {
+    const reconciled = reconcileStaleInProgress();
+    if (reconciled.length) console.log(`  Reconciled ${reconciled.length} orphaned in_progress item(s): ${reconciled.join(', ')}`);
+  } catch (e) { console.error('  stale-in_progress sweep failed:', e.message); }
 
   if (doOpen) {
     import('node:child_process').then(({ execSync }) => {

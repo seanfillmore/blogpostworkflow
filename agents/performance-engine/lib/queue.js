@@ -32,6 +32,36 @@ export function writeItem(item) {
   writeFileSync(join(QUEUE_DIR, `${item.slug}.json`), JSON.stringify(item, null, 2));
 }
 
+/**
+ * Reconcile orphaned `in_progress` items. When the dashboard approves a
+ * seo-opportunity it spawns a detached executor and sets the item to
+ * `in_progress`; an exit handler (in triggerOpportunity) then advances it. But
+ * if the dashboard process dies before the child exits — every deploy restarts
+ * it — that handler is lost and the item is stuck on IN_PROGRESS forever.
+ *
+ * Run this on dashboard startup: any item still `in_progress` past a generous
+ * timeout was set by a now-dead process (no executor runs that long), so its
+ * handler is gone. We can't know whether the orphaned executor finished, so mark
+ * it `failed` (honest + re-approvable) rather than falsely claim success.
+ *
+ * @param {{maxAgeMs?: number, now?: number}} [opts]
+ * @returns {string[]} slugs reconciled
+ */
+export function reconcileStaleInProgress({ maxAgeMs = 15 * 60 * 1000, now = Date.now() } = {}) {
+  const reconciled = [];
+  for (const item of listQueueItems()) {
+    if (item.status !== 'in_progress') continue;
+    const started = Date.parse(item.triggered_at || item.updated_at || '');
+    if (Number.isFinite(started) && (now - started) < maxAgeMs) continue; // maybe still mid-run
+    item.status = 'failed';
+    item.failed_at = new Date(now).toISOString();
+    item.error = 'execution status unknown — the dashboard restarted during the run; re-approve to retry';
+    writeItem(item);
+    reconciled.push(item.slug);
+  }
+  return reconciled;
+}
+
 export function activeSlugs() {
   const COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
   const now = Date.now();
