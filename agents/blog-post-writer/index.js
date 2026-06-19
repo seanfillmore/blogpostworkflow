@@ -197,9 +197,12 @@ function detectPostType(brief) {
   return 'product';
 }
 
-function buildSystemPrompt(productIngredients, postType, contentDepth) {
+function buildSystemPrompt(productIngredients, postType, contentDepth, format) {
   // Resolve depth — fall back to word-count heuristic for briefs without content_depth
   const depth = contentDepth || 'standard';
+  // Format axis (independent of depth/postType): 'listicle' renders a scannable
+  // numbered-item body instead of the default long-form-essay structure.
+  const isListicle = format === 'listicle';
   const feedback = loadAgentFeedback('blog-post-writer');
   const ingredientList = productIngredients.ingredients.join(', ');
   const formatNote = productIngredients.format
@@ -398,7 +401,17 @@ CTA BUTTON COPY RULES:
 <ul>
   <li><a href="[INTERNAL_URL]">[Post Title]</a></li>
 </ul>
-
+${isListicle ? `
+═══════════════════════════════════
+LISTICLE FORMAT — this OVERRIDES the shape of the "CONTENT SECTIONS" above:
+═══════════════════════════════════
+The SERP for this query rewards a scannable numbered list, not a long essay. This changes ONLY the shape of the main CONTENT SECTIONS — keep everything else from the structure above exactly as specified:
+- INTRO: unchanged — follow the answer-first intro rule above EXACTLY (first sentence is a direct factual answer with the target keyword in the first 60 words). Just keep it to 2–3 sentences, then go straight into the list. No long preamble.
+- BODY: instead of expository sections, render a numbered list of distinct items. Each item is an <h2> headed with its number and name (e.g. "<h2>1. [Item]</h2>"), followed by ONE tight paragraph (~40–110 words): the key point, why it matters, one concrete detail. Optionally a short <ul> of 2–3 specifics. Do NOT write a multi-paragraph mini-essay per item.
+- Deliver exactly the count the title/brief implies ("7 ingredients" = 7 items). If no count is implied, use 5–9 items.
+- A listicle's value is scannability, not length — stay at or under the target word count; do not pad items to fill space.
+- Keep the CTA rules for this post type and the FAQ + Sources + Related sections above. Skip the comparison table — the numbered items already serve that purpose.
+` : ''}
 ═══════════════════════════════════
 PRODUCT IMAGES — when featuring the Real Skin Care product:
 <a href="[PRODUCT_URL]"><img src="[IMG_URL]" alt="[descriptive alt text]" style="max-width:600px;height:auto;display:block;margin:16px auto;"></a>
@@ -512,7 +525,7 @@ async function writePost(briefPath) {
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,
-      system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null),
+      system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type === 'listicle' ? 'listicle' : 'guide'),
       messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
     });
 

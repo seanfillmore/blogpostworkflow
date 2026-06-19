@@ -328,6 +328,7 @@ Produce a JSON content brief with exactly this structure:
   "target_keyword": string,
   "slug": string (URL-safe, hyphenated),
   "search_intent": "informational" | "commercial" | "transactional" | "navigational",
+  "content_type": "guide" | "listicle" (match the SERP — see SERP FORMAT RULE below),
   "content_depth": "quick" | "standard" | "comprehensive",
   "recommended_title": string (60-65 chars, includes keyword, compelling),
   "meta_description": string (150-160 chars, includes keyword, strong CTA),
@@ -353,7 +354,15 @@ Produce a JSON content brief with exactly this structure:
   "writer_notes": string (anything else the writer needs to know: tone, style, brand voice, what to avoid)
 }
 
+SERP FORMAT RULE — match what's actually ranking, don't default to one shape:
+Look at the SERP overview (titles + descriptions of the top results). Set content_type to mirror the dominant format:
+- "listicle" — when the top results are mostly numbered roundups or list posts: titles like "7 Best…", "10 Ways to…", "5 Ingredients to Avoid…", or anything signalling a scannable numbered list. Commercial "best X for Y" queries are usually listicles.
+- "guide" — when the top results are mostly single-topic explainers, how-tos, or definitional articles (the default prose article).
+When in doubt and the intent is commercial/comparative, prefer "listicle"; for a single concept or definition, prefer "guide".
+When content_type is "listicle", the outline MUST be: a short intro, then ONE "h2" section PER LIST ITEM — each h2 named for that specific item (e.g. "H2: 1. Sodium Lauryl Sulfate (SLS)", "H2: 2. Artificial Sweeteners", … one per item), then a brief FAQ + conclusion. Do NOT collapse the items into a single "8 Ingredients to Avoid" section — enumerate each item as its own h2. If the keyword implies a count (e.g. "7 ingredients"), produce exactly that many item h2s; otherwise 5–9. Give each item h2 a small word_count_target (~80–140) so the post stays tight.
+
 CONTENT DEPTH RULES — pick one tier, set target_word_count accordingly:
+LENGTH DISCIPLINE — match the SERP, do not default to long. Most posts should be "quick" or "standard"; "comprehensive" is the exception, not the norm. If a competitor benchmark word count is provided above, anchor target_word_count to it (±15%) rather than maxing out a tier. A focused post that fully answers the query beats a padded one — never pad to reach a tier's upper bound.
 - "quick"         700–900 words   — Use when: the keyword is a simple question or definition ("what is glycerin"),
                                     navigational intent, queries whose SERPs are dominated by featured snippets
                                     or short answers, or topics that can be fully answered in a few paragraphs.
