@@ -170,6 +170,12 @@ async function refreshContent(article, keyword, position, impressions, relatedKe
     .trim()
     .slice(0, 12000);
 
+  // Length anchor — repeated refreshes ratchet posts longer over time. Give the
+  // model the current count and a target that holds or REDUCES length so a
+  // refresh sharpens the post instead of bloating it.
+  const currentWords = (article.body_html || '').replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+  const lengthTarget = currentWords > 2000 ? '1,400–1,800 words' : 'the same length or shorter';
+
   const relatedStr = relatedKeywords.length > 0
     ? relatedKeywords.map((k) => `"${k.keyword}" (pos #${Math.round(k.position)}, ${k.impressions} impr)`).join(', ')
     : 'none available';
@@ -219,14 +225,16 @@ ${bodyText}
 ${internalLinksNote}
 ---
 
+LENGTH DISCIPLINE (read first): this post is currently ${currentWords} words. Repeated refreshes tend to bloat posts — this refresh must NOT grow it. Target ${lengthTarget}. Improve quality, accuracy, and scannability, not word count; the refreshed version should be the same length or SHORTER than the original unless the topic genuinely needs more coverage to match what's ranking. Never pad to fill space.
+
 Your task: produce a refreshed version of this HTML that:
 
-1. **Strengthens weak sections** — identify H2 sections with thin content (<100 words) and expand them with specific, useful information
+1. **Right-sizes every section** — TIGHTEN first. Cut filler, redundancy, and padded explanation; merge overlapping sections. Only EXPAND a section if it is genuinely missing coverage the query needs (not just "short"). The goal is a sharper, more scannable post — not a longer one.
 2. **Adds missing semantic keywords** — naturally weave in the related keywords listed above
 3. **Updates any stale information** — replace "2024" or "2025" with "2026" where appropriate; update statistics if they feel outdated
 4. **Improves the introduction** — the **first sentence MUST directly answer the question implied by the title with a concrete factual statement**. No anecdotes, no "You finally..." openers, no rhetorical questions. Include the target keyword within the first 60 words. LLM search engines (ChatGPT, Perplexity, AI Overviews) cite the first clear factual answer on the page — this is non-negotiable.
 5. **Addresses user concerns** — if USER CONCERNS FROM SEARCH QUERIES are listed above, add an H2 or H3 section for each one. Distill the raw query into a natural heading and answer the concern directly with practical advice. These are high-value because real people searched for them.
-6. **Expands the FAQ section** (if present) — add 2–3 new Q&A pairs targeting the related keywords and user concerns
+6. **Keeps the FAQ focused** (if present) — only add a Q&A pair if it answers a real related query above; cut redundant or filler Q&As. Do not pad the FAQ to add length.
 7. **Improves readability** — rewrite overly clinical or academic sentences to an 8th grade reading level. Use short sentences, plain words, and direct address ("you", "your"). Replace jargon with plain English: "sore mouth" not "oral tissue irritation", "cleans your teeth" not "facilitates plaque removal". Break long paragraphs into 2–4 sentence chunks. The tone should feel like a knowledgeable friend explaining something clearly, not a textbook.
 8. **Keeps the brand voice** — warm, practical, trustworthy; not salesy or over-optimized
 9. **Adds or preserves CTA section blocks** — the post must include exactly three styled CTA sections using the design pattern below
