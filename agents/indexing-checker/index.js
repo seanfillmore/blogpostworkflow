@@ -35,7 +35,7 @@
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { inspectUrl, getQuotaStatus } from '../../lib/gsc-indexing.js';
 
@@ -137,11 +137,35 @@ function appendHistory(entries) {
 }
 
 /**
+ * Fetch the live HTTP status of a URL without following redirects, with a short
+ * timeout. Used to reconcile a GSC `not_found` verdict against reality: Google's
+ * crawl can be weeks stale, so a page it reports as 404 may already be live (200)
+ * again after a publish-drift heal, or intentionally redirected (3xx) after a
+ * consolidation. Returns the numeric status, or 0 on network error/timeout.
+ */
+async function liveHttpStatus(url, { timeoutMs = 8000 } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { method: 'GET', redirect: 'manual', signal: controller.signal });
+    return res.status;
+  } catch {
+    return 0;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Given a state and post age, return a verdict that downstream agents can
  * act on. This is where we encode "is this normal for a new post or is it
  * a real problem?" — avoids flagging 3-day-old posts as broken.
+ *
+ * `liveStatus` (when provided) is the live HTTP status of the page, used only to
+ * reconcile a stale `not_found` crawl: 200 → recovered, just nudge a re-crawl;
+ * 3xx → intentional redirect, nothing to fix; else → genuinely gone.
  */
-function computeVerdict(state, ageDays) {
+export function computeVerdict(state, ageDays, liveStatus = null) {
   // Missing published_at is common on legacy posts; treat as "unknown age"
   // and default to the conservative patience window (as if age = 0).
   // Better to under-flag than flood the queue with false criticals.
@@ -154,7 +178,22 @@ function computeVerdict(state, ageDays) {
   if (state === 'excluded_noindex') return { severity: 'critical', action: 'fix_noindex_tag' };
   if (state === 'excluded_robots')  return { severity: 'critical', action: 'fix_robots_txt' };
   if (state === 'excluded_canonical') return { severity: 'critical', action: 'fix_canonical_mismatch' };
-  if (state === 'not_found')        return { severity: 'critical', action: 'fix_page_fetch' };
+  if (state === 'not_found') {
+    // GSC's "Not found (404)" reflects its LAST crawl, which can be weeks old.
+    // Reconcile against the live page before escalating to a manual fix.
+    if (liveStatus === 200) {
+      // Page is live again (e.g. publish-drift healed). Google just hasn't
+      // re-crawled — auto-nudge via the Indexing API instead of manual triage.
+      return { severity: 'warning', action: 'submit_indexing_api' };
+    }
+    if (liveStatus >= 300 && liveStatus < 400) {
+      // Intentionally redirected (consolidated/canonicalized). The 404 will
+      // resolve on re-crawl; nothing to fix.
+      return { severity: 'ok', action: null };
+    }
+    // liveStatus 404/5xx/0(unreachable) — genuinely missing. Real critical.
+    return { severity: 'critical', action: 'fix_page_fetch' };
+  }
 
   // Not-yet-indexed states — patience window depends on age.
   if (state === 'discovered_not_crawled') {
@@ -221,7 +260,10 @@ async function main() {
     process.stdout.write(`  [${i + 1}/${targets.length}] ${meta.slug} ... `);
     try {
       const inspection = await inspectUrl(url);
-      const verdict = computeVerdict(inspection.state, age);
+      // Reconcile a stale `not_found` crawl against the live page (only when
+      // needed — avoids an extra request per post on the healthy path).
+      const liveStatus = inspection.state === 'not_found' ? await liveHttpStatus(url) : null;
+      const verdict = computeVerdict(inspection.state, age, liveStatus);
 
       const entry = {
         slug: meta.slug,
@@ -229,6 +271,7 @@ async function main() {
         url,
         age_days: age,
         state: inspection.state,
+        live_status: liveStatus,
         verdict,
         coverage_state: inspection.coverage_state,
         indexing_state: inspection.indexing_state,
@@ -263,7 +306,8 @@ async function main() {
                 : verdict.severity === 'critical' ? 'CRITICAL'
                 : verdict.severity === 'warning'  ? 'WARN'
                 : 'ok';
-      console.log(`${tag} (${inspection.state})`);
+      const liveNote = liveStatus != null ? `, live ${liveStatus}` : '';
+      console.log(`${tag} (${inspection.state}${liveNote})`);
     } catch (err) {
       console.log(`ERROR: ${err.message}`);
       results.push({
@@ -326,7 +370,11 @@ async function main() {
   console.log('\nIndexing check complete.');
 }
 
-main().catch((err) => {
-  console.error('Indexing checker failed:', err);
-  process.exit(1);
-});
+// Only run when invoked directly — importing for unit tests must not trigger a
+// live GSC run.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error('Indexing checker failed:', err);
+    process.exit(1);
+  });
+}
