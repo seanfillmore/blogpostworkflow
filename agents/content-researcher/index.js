@@ -328,7 +328,7 @@ Produce a JSON content brief with exactly this structure:
   "target_keyword": string,
   "slug": string (URL-safe, hyphenated),
   "search_intent": "informational" | "commercial" | "transactional" | "navigational",
-  "content_type": "guide" | "listicle" (match the SERP — see SERP FORMAT RULE below),
+  "content_type": "guide" | "listicle" | "how_to" | "comparison" | "answer" (match the SERP — see SERP FORMAT RULE below),
   "content_depth": "quick" | "standard" | "comprehensive",
   "recommended_title": string (60-65 chars, includes keyword, compelling),
   "meta_description": string (150-160 chars, includes keyword, strong CTA),
@@ -354,12 +354,19 @@ Produce a JSON content brief with exactly this structure:
   "writer_notes": string (anything else the writer needs to know: tone, style, brand voice, what to avoid)
 }
 
-SERP FORMAT RULE — match what's actually ranking, don't default to one shape:
-Look at the SERP overview (titles + descriptions of the top results). Set content_type to mirror the dominant format:
-- "listicle" — when the top results are mostly numbered roundups or list posts: titles like "7 Best…", "10 Ways to…", "5 Ingredients to Avoid…", or anything signalling a scannable numbered list. Commercial "best X for Y" queries are usually listicles.
-- "guide" — when the top results are mostly single-topic explainers, how-tos, or definitional articles (the default prose article).
-When in doubt and the intent is commercial/comparative, prefer "listicle"; for a single concept or definition, prefer "guide".
-When content_type is "listicle", the outline MUST be: a short intro, then ONE "h2" section PER LIST ITEM — each h2 named for that specific item (e.g. "H2: 1. Sodium Lauryl Sulfate (SLS)", "H2: 2. Artificial Sweeteners", … one per item), then a brief FAQ + conclusion. Do NOT collapse the items into a single "8 Ingredients to Avoid" section — enumerate each item as its own h2. If the keyword implies a count (e.g. "7 ingredients"), produce exactly that many item h2s; otherwise 5–9. Give each item h2 a small word_count_target (~80–140) so the post stays tight.
+SERP FORMAT RULE — match what's actually ranking; the post format must mirror the top results to be competitive. Read the SERP overview (titles + descriptions of the top results) and set content_type to the dominant format:
+- "listicle" — top results are numbered roundups/list posts: "7 Best…", "10 Ways to…", "5 Ingredients to Avoid…". Commercial "best X for Y" queries are usually listicles.
+- "how_to" — top results are tutorials / step-by-step: "How to…", "How do you…", "Steps to…", procedural intent. Set schema_type to "HowTo".
+- "comparison" — top results compare two options or approaches: "X vs Y", "X or Y", "Difference between X and Y", "Is X better than Y". IMPORTANT: only compare product TYPES, categories, or approaches (e.g. "bar vs liquid soap", "natural vs conventional") — NEVER competitor brands (brand policy below).
+- "answer" — the query is a single question or definition ("what is glycerin", "is fluoride safe") and the SERP is dominated by short featured-snippet answers. Pair with content_depth "quick".
+- "guide" — default: top results are single-topic prose explainers that don't fit the above.
+When unsure: question/definition → "answer"; "how to" → "how_to"; "X vs Y" → "comparison"; "best/top N" or commercial → "listicle"; otherwise "guide". Set schema_type to match (how_to → "HowTo", answer/definition → "FAQPage" or "Article", else "Article"/"Review").
+
+PER-FORMAT OUTLINE SHAPE (the outline drives the writer's structure — get it right):
+- listicle: short intro, then ONE "h2" PER LIST ITEM, each named for that item ("H2: 1. Sodium Lauryl Sulfate", "H2: 2. Artificial Sweeteners", …). Do NOT collapse items into a single "8 Ingredients" section. Honor any implied count exactly (else 5–9 items). Small per-item word_count_target (~80–140).
+- how_to: short intro, then ONE "h2" PER STEP in order ("H2: Step 1 — …", "H2: Step 2 — …"), each a concrete action; optional "Tips" + FAQ. Steps drive the structure — enumerate them, don't lump them.
+- comparison: short intro that states the verdict up front, then an h2 per option being compared ("H2: [Option A] — best for…", "H2: [Option B] — best for…") OR per decision criterion, then an "H2: How to choose" + FAQ. A small comparison table of the TYPES is welcome; competitor-brand tables are forbidden.
+- answer: keep it tight (quick depth) — a short intro that directly answers, then 2–4 brief supporting "h2" sections + a short FAQ. Do not pad.
 
 CONTENT DEPTH RULES — pick one tier, set target_word_count accordingly:
 LENGTH DISCIPLINE — match the SERP, do not default to long. Most posts should be "quick" or "standard"; "comprehensive" is the exception, not the norm. If a competitor benchmark word count is provided above, anchor target_word_count to it (±15%) rather than maxing out a tier. A focused post that fully answers the query beats a padded one — never pad to reach a tier's upper bound.
