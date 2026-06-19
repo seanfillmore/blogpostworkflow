@@ -34,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -176,26 +177,23 @@ function refreshOne(slug) {
     return { slug, ok: false, reason: `editor failed: ${e.message}` };
   }
 
-  // Gate on editor verdict — the editor exits 0 even on "Needs Work", so we
-  // must read the report ourselves. If the overall verdict is Needs Work,
-  // run the link-repair agent automatically (it fixes broken links and
-  // removes unfixable ones) then re-run the editor. Only fail if it still
-  // reports Needs Work after repair.
+  // Gate on editor verdict — the editor exits 0 even on "Needs Work", so the
+  // gate (inside runEditGateWithRepair) reads the report itself. On a Needs Work
+  // verdict, run the FULL editorial repair loop: route each blocker to the agent
+  // that can fix it (citation-finder softens uncited claims, content-remediator
+  // fixes prose/ingredient/factual issues, link-repair fixes links), re-running
+  // the editor up to 3x. Only fail if it's still blocked after the loop.
+  //
+  // Previously this ran link-repair ONLY, so any refresh whose draft had a
+  // non-link blocker (uncited claims, ingredient accuracy, factual concerns)
+  // dead-ended on "Needs Work after link repair — not published". That was the
+  // recurring refresh-runner failure across the deodorant/lotion/toothpaste posts.
   if (editorNeedsWork(getEditorReportPath(slug))) {
-    console.log('\n  Editor verdict: Needs Work — running link-repair automatically...');
-    try {
-      run(`node agents/link-repair/index.js "${slug}"`, 'link-repair');
-    } catch (e) {
-      return { slug, ok: false, reason: `link-repair failed: ${e.message}` };
-    }
-    try {
-      run(`node agents/editor/index.js "${canonicalHtml}"`, 'editor (post-repair)');
-    } catch (e) {
-      return { slug, ok: false, reason: `editor (post-repair) failed: ${e.message}` };
-    }
-    if (editorNeedsWork(getEditorReportPath(slug))) {
-      console.log('\n  Editor still reports Needs Work after link repair — not publishing.');
-      return { slug, ok: false, reason: 'editor: Needs Work after link repair — not published' };
+    console.log('\n  Editor verdict: Needs Work — running the editorial repair loop (citations, content, links)...');
+    const { gate, attempts } = runEditGateWithRepair(slug, { maxAttempts: 3 });
+    if (!gate.pass) {
+      console.log(`\n  Editor still reports Needs Work after ${attempts} repair attempt(s) — not publishing.`);
+      return { slug, ok: false, reason: `editor: ${gate.reason || 'Needs Work'} — not published after repair loop` };
     }
   }
 
