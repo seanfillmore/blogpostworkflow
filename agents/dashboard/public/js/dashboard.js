@@ -937,15 +937,27 @@ function renderBlockedPostsCard(d) {
     const typeBadge = p.post_type === 'topical_authority'
       ? '<span class="verdict-pill" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe">Topical Authority</span>'
       : '';
+    // A live post whose REFRESH was blocked keeps serving its previous content;
+    // the refreshed/remediated version is held by the gate. Flag it so it's clear
+    // the live site isn't broken — and that "Fix" will publish the update.
+    const liveBadge = p.live
+      ? '<span class="verdict-pill" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa" title="The live post still serves its previous content. The refreshed version is held by the editorial gate. Fix &amp; republish will remediate and publish it.">Live &middot; refresh held</span>'
+      : '';
+    // Live posts get "Fix & republish" (pull live → repair → push to Shopify);
+    // pre-publish posts get the local "Fix blockers" loop.
+    const fixBtn = p.live
+      ? '<button class="btn-primary" onclick="fixBlockers(\'' + slug + '\', true)">Fix &amp; republish</button>'
+      : '<button class="btn-primary" onclick="fixBlockers(\'' + slug + '\', false)">Fix blockers</button>';
     return '<div class="action-row">' +
       '<div class="action-head">' +
         '<span class="verdict-pill verdict-blocked">Needs Work</span>' +
         typeBadge +
+        liveBadge +
         '<span class="action-title">' + esc(p.title) + '</span>' +
       '</div>' +
       '<pre class="action-reason" style="white-space:pre-wrap;font-family:inherit;margin:8px 0 0;">' + esc(p.blockers || '') + '</pre>' +
       '<div class="action-buttons">' +
-        '<button class="btn-primary" onclick="fixBlockers(\'' + slug + '\')">Fix blockers</button>' +
+        fixBtn +
         '<button class="btn-secondary" onclick="openEditorReport(\'' + slug + '\')">View full report</button>' +
         '<button class="btn-secondary" onclick="rerunEditor(\'' + slug + '\')">Re-run editor</button>' +
         '<button class="btn-danger" onclick="killArticle(\'' + slug + '\',\'editor blocked\')">Kill article</button>' +
@@ -994,8 +1006,19 @@ function openEditorReport(slug) {
 // prose/factual issues, link-repair for broken links), re-running the editor up
 // to 3x. Streams progress live; reloads the dashboard when done so the card
 // reflects the new verdict (the post drops off this list if it now passes).
-function fixBlockers(slug) {
-  if (!confirm('Auto-fix blockers for ' + slug + '?\n\nThis runs the remediation agents (citations, content revision, link repair) and re-checks the editor — up to 3 passes. It may take a minute or two.')) return;
+function fixBlockers(slug, live) {
+  // Live posts: pull the live Shopify body, repair, and PUSH the fix back
+  // (remediate-live-post.js --push). Pre-publish posts: local gate+repair loop
+  // (remediate-post.js); the user publishes separately once it passes.
+  var confirmMsg = live
+    ? 'Fix & republish ' + slug + '?\n\nThis pulls the LIVE Shopify content, runs the remediation agents (citations, content revision, link repair) and re-checks the editor — up to 3 passes — then PUBLISHES the fixed version to the live post. It may take a minute or two.'
+    : 'Auto-fix blockers for ' + slug + '?\n\nThis runs the remediation agents (citations, content revision, link repair) and re-checks the editor — up to 3 passes. It may take a minute or two.';
+  if (!confirm(confirmMsg)) return;
+  var runScript = live ? 'scripts/remediate-live-post.js' : 'scripts/remediate-post.js';
+  var runArgs = live ? [slug, '--push'] : [slug];
+  var okMsg = live
+    ? '\n✓ Remediation succeeded — the fixed content was published to the live post.\n'
+    : '\n✓ Remediation succeeded — the post now passes the editorial gate.\n';
 
   var overlay = document.createElement('div');
   overlay.id = 'fix-blockers-overlay';
@@ -1021,7 +1044,7 @@ function fixBlockers(slug) {
   fetch('/run-agent', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ script: 'scripts/remediate-post.js', args: [slug] }),
+    body: JSON.stringify({ script: runScript, args: runArgs }),
   }).then(function (res) {
     if (!res.ok) { logEl.textContent += '\n[error] server rejected the run (' + res.status + ')\n'; enableClose('Close'); return; }
     var reader = res.body.getReader();
@@ -1036,7 +1059,7 @@ function fixBlockers(slug) {
             var code = 1;
             try { code = JSON.parse(payload.slice(9)).code; } catch (e) {}
             logEl.textContent += (code === 0
-              ? '\n✓ Remediation succeeded — the post now passes the editorial gate.\n'
+              ? okMsg
               : '\n✗ Some blockers remain after 3 attempts — open the editor report for what needs a human edit.\n');
             logEl.scrollTop = logEl.scrollHeight;
             enableClose(code === 0 ? 'Done — close & refresh' : 'Close & refresh');

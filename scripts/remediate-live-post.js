@@ -88,3 +88,8 @@ if (g.pass && changed && doPush) {
 } else {
   console.log(`  ⛔ Still failing — leaving live unchanged; needs manual review.`);
 }
+
+// Exit non-zero when the post is still blocked so callers (the dashboard's
+// "Fix blockers" SSE, CI) can tell pass from fail. A passing post — whether we
+// pushed, would-push, or it already passed — is exit 0.
+process.exitCode = g.pass ? 0 : 1;

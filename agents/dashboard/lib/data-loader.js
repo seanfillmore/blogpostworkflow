@@ -16,30 +16,58 @@ import {
 } from './data-parsers.js';
 import { parseTechSeoReport } from './tech-seo-parser.js';
 
+// How recent a live post's editor report must be to count as a freshly-blocked
+// refresh (vs an ancient stale report on a healthy legacy post). Days.
+const LIVE_BLOCK_FRESHNESS_DAYS = 30;
+
 /**
- * Find posts hard-blocked by the editorial gate. These are posts that have
- * been written and passed through the editor agent, received a "Needs Work"
- * verdict, and haven't been published or scheduled — i.e. truly stuck
- * waiting on human intervention.
+ * Pure decision: given a post's editor report + meta (+ report age), should it
+ * surface as hard-blocked, and is it a live post whose refresh is blocked?
+ * Extracted so the rules are unit-tested and can't silently regress (the
+ * `shopify_publish_at`-in-the-past over-filter once hid every refresh-blocked
+ * live post — the gap behind "blocked posts aren't surfaced anywhere").
  *
- * Detection rules (in order):
- *   1. Report must contain at least one "VERDICT: Needs Work" — cheap pre-filter.
- *   2. Skip posts that are already live: shopify_status is published/scheduled,
- *      OR shopify_publish_at is in the past (handles legacy-synced posts that
- *      never had shopify_status written to meta.json).
- *   3. If the report has an "## OVERALL QUALITY" section (the editor's
- *      canonical sign-off per its own system prompt), use that section's
- *      verdict as the source of truth. Pass / Good / Excellent → not blocked.
- *   4. Else if the report has a "## BLOCKERS*" section starting with "None"
- *      → not blocked (sub-section verdicts are informational).
- *   5. Otherwise treat the post as blocked.
+ * Rules (in order):
+ *   1. Report must contain a "VERDICT: Needs Work" — cheap pre-filter.
+ *   2. Skip only posts Shopify EXPLICITLY marks live (status published/scheduled).
+ *      An UNSET status does NOT mean "fine": a refresh of an already-live post
+ *      that fails the gate leaves the live post on old content with a fresh
+ *      Needs Work report — exactly what must surface.
+ *   3. "## OVERALL QUALITY" verdict (the editor's canonical sign-off) trumps
+ *      sub-section verdicts: Pass / Good / Excellent → not blocked.
+ *   4. "## BLOCKERS*" section starting with "None" → not blocked.
+ *   5. For an already-live post (publish date in the past), require a RECENT
+ *      report so an ancient stale report on a healthy legacy post doesn't flood
+ *      the card. New (not-yet-live) posts surface regardless of age.
  *
- * The two false-positive paths (rules 2 and 3) catch the common case where
- * a sub-section is flagged Needs Work but the overall verdict is Good — that
- * was over-reporting to both the dashboard and the daily recap email.
+ * @returns {{live:boolean, blockerText:string}|null} null = not blocked
+ */
+export function classifyBlockedReport({ report, meta, reportAgeDays = Infinity, now = Date.now() }) {
+  if (!report || !meta) return null;
+  if (!/VERDICT[:*\s]*Needs Work/i.test(report)) return null;                              // rule 1
+  if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') return null; // rule 2
+
+  const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
+  if (overallMatch && !/needs work/i.test(overallMatch[1])) return null;                   // rule 3
+
+  const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+  if (blockersMatch && /^\s*None\b/i.test(blockersMatch[1].trim())) return null;           // rule 4
+
+  const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
+  const live = !Number.isNaN(publishTs) && publishTs <= now;
+  if (live && reportAgeDays > LIVE_BLOCK_FRESHNESS_DAYS) return null;                       // rule 5
+
+  const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
+  return { live, blockerText };
+}
+
+/**
+ * Find posts hard-blocked by the editorial gate — pre-publish posts stuck before
+ * going live, AND already-live posts whose refresh just failed the gate (the
+ * live post serves old content while the refreshed version is held).
  *
- * Mirrors `findBlockedPosts()` in agents/daily-summary/index.js so the
- * dashboard and the email surface the same set.
+ * Mirrors `findBlockedPosts()` in agents/daily-summary/index.js so the dashboard
+ * and the email surface the same set.
  */
 function findBlockedPosts() {
   const blocked = [];
@@ -48,32 +76,20 @@ function findBlockedPosts() {
       const reportPath = getEditorReportPath(slug);
       if (!existsSync(reportPath)) continue;
       const report = readFileSync(reportPath, 'utf8');
-      if (!/VERDICT[:*\s]*Needs Work/i.test(report)) continue;
-
       const meta = getPostMetaFromLib(slug);
       if (!meta) continue;
-      const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
-      const isLive = meta.shopify_status === 'published' || meta.shopify_status === 'scheduled'
-        || (!Number.isNaN(publishTs) && publishTs <= Date.now());
-      if (isLive) continue;
+      let reportAgeDays = Infinity;
+      try { reportAgeDays = (Date.now() - statSync(reportPath).mtimeMs) / 86400000; } catch { /* keep Infinity → skip stale live */ }
 
-      // Rule 2: explicit overall verdict trumps sub-section verdicts.
-      const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
-      if (overallMatch && !/needs work/i.test(overallMatch[1])) continue;
-
-      // Rule 3: "## BLOCKERS" / "## BLOCKERS SUMMARY" with "None" content.
-      const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
-      if (blockersMatch && /^\s*None\b/i.test(blockersMatch[1].trim())) continue;
-
-      // Pull the blockers excerpt for the card body. Falls back to a generic
-      // pointer when there's no explicit BLOCKERS section.
-      const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
+      const verdict = classifyBlockedReport({ report, meta, reportAgeDays });
+      if (!verdict) continue;
 
       blocked.push({
         title: meta.title || slug,
         slug,
         post_type: meta.post_type || null, // 'product' | 'topical_authority' | null (legacy, untagged)
-        blockers: blockerText,
+        live: verdict.live,                // live post whose refresh is blocked vs new post stuck pre-publish
+        blockers: verdict.blockerText,
       });
     } catch { /* skip */ }
   }
