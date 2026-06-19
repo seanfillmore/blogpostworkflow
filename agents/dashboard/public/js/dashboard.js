@@ -1041,37 +1041,52 @@ function fixBlockers(slug, live) {
     closeBtn.onclick = function () { overlay.remove(); loadData(); };
   };
 
-  fetch('/run-agent', {
+  // Run as a BACKGROUND job and poll for output. The remediation (editor +
+  // repair loop + several Claude calls) routinely runs longer than the proxy's
+  // ~100s request cap, so a held-open SSE stream got killed with a 524. Here the
+  // start request returns a jobId immediately and each poll is sub-second.
+  var finish = function (code) {
+    logEl.textContent += (code === 0
+      ? okMsg
+      : '\n✗ Some blockers remain after 3 attempts — open the editor report for what needs a human edit.\n');
+    logEl.scrollTop = logEl.scrollHeight;
+    enableClose(code === 0 ? 'Done — close & refresh' : 'Close & refresh');
+  };
+
+  fetch('/run-agent-bg', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ script: runScript, args: runArgs }),
   }).then(function (res) {
-    if (!res.ok) { logEl.textContent += '\n[error] server rejected the run (' + res.status + ')\n'; enableClose('Close'); return; }
-    var reader = res.body.getReader();
-    var decoder = new TextDecoder();
-    function read() {
-      reader.read().then(function (r) {
-        if (r.done) { enableClose('Done — close & refresh'); return; }
-        decoder.decode(r.value).split('\n').forEach(function (line) {
-          if (!line.startsWith('data: ')) return;
-          var payload = line.slice(6);
-          if (payload.indexOf('__exit__:') === 0) {
-            var code = 1;
-            try { code = JSON.parse(payload.slice(9)).code; } catch (e) {}
-            logEl.textContent += (code === 0
-              ? okMsg
-              : '\n✗ Some blockers remain after 3 attempts — open the editor report for what needs a human edit.\n');
-            logEl.scrollTop = logEl.scrollHeight;
-            enableClose(code === 0 ? 'Done — close & refresh' : 'Close & refresh');
-            return;
+    return res.ok ? res.json() : { ok: false, error: 'server rejected the run (' + res.status + ')' };
+  }).then(function (j) {
+    if (!j || !j.ok) { logEl.textContent += '\n[error] ' + ((j && j.error) || 'could not start the job') + '\n'; enableClose('Close'); return; }
+    var jobId = j.jobId;
+    var offset = 0;
+    var misses = 0;
+    (function pollLoop() {
+      fetch('/run-job?id=' + encodeURIComponent(jobId) + '&offset=' + offset)
+        .then(function (r) { return r.ok ? r.json() : { ok: false }; })
+        .then(function (p) {
+          if (!p || !p.ok) {
+            // Tolerate a few transient proxy hiccups before giving up.
+            if (++misses > 5) { logEl.textContent += '\n[error] lost contact with the job\n'; enableClose('Close'); return; }
+            setTimeout(pollLoop, 3000); return;
           }
-          logEl.textContent += payload + '\n';
-          logEl.scrollTop = logEl.scrollHeight;
+          misses = 0;
+          if (p.lines && p.lines.length) {
+            for (var i = 0; i < p.lines.length; i++) logEl.textContent += p.lines[i] + '\n';
+            offset = p.nextOffset;
+            logEl.scrollTop = logEl.scrollHeight;
+          }
+          if (p.done) { finish(p.code); return; }
+          setTimeout(pollLoop, 2000);
+        })
+        .catch(function () {
+          if (++misses > 5) { logEl.textContent += '\n[error] lost contact with the job\n'; enableClose('Close'); return; }
+          setTimeout(pollLoop, 3000);
         });
-        read();
-      });
-    }
-    read();
+    })();
   }).catch(function (err) {
     logEl.textContent += '\n[error] ' + err + '\n';
     enableClose('Close');

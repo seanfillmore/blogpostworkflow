@@ -92,3 +92,6 @@ data/keyword-index.json
 
 # Per-slug agent analysis output (regenerable)
 data/analysis/
+
+# Dashboard background-run job logs (ephemeral)
+data/reports/run-jobs/
