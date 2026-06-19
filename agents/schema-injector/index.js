@@ -103,6 +103,21 @@ function extractHowToSteps(html) {
       break; // use the first qualifying OL
     }
   }
+  // Fallback: heading-based steps ("<h2>Step 1 — …</h2>" + following text), the
+  // shape the how_to writer format produces. Use the heading + its first
+  // paragraph as the step text.
+  if (steps.length === 0) {
+    const headingPattern = /<h2[^>]*>\s*(step\s*\d+[^<]*)<\/h2>([\s\S]*?)(?=<h2|$)/gi;
+    let hMatch;
+    const batch = [];
+    while ((hMatch = headingPattern.exec(html)) !== null) {
+      const name = hMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const body = (hMatch[2].match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1] || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const text = body ? `${name}: ${body}` : name;
+      if (text.length > 15) batch.push(text.slice(0, 200));
+    }
+    if (batch.length >= 3) steps.push(...batch);
+  }
   return steps;
 }
 

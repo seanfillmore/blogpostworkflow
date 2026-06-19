@@ -200,9 +200,34 @@ function detectPostType(brief) {
 function buildSystemPrompt(productIngredients, postType, contentDepth, format) {
   // Resolve depth — fall back to word-count heuristic for briefs without content_depth
   const depth = contentDepth || 'standard';
-  // Format axis (independent of depth/postType): 'listicle' renders a scannable
-  // numbered-item body instead of the default long-form-essay structure.
-  const isListicle = format === 'listicle';
+  // Format axis (independent of depth/postType): the brief's content_type maps
+  // the post's shape to the dominant format in the SERP, so we're competitive
+  // with what's actually ranking. Each directive OVERRIDES only the body shape;
+  // the answer-first intro and the CTA/FAQ/Sources/Related sections are unchanged.
+  const FORMAT_DIRECTIVES = {
+    listicle: `The SERP rewards a scannable numbered list, not an essay.
+- BODY: render a numbered list of distinct items. Each item is an <h2> headed with its number and name ("<h2>1. [Item]</h2>"), followed by ONE tight paragraph (~40–110 words): the key point, why it matters, one concrete detail. Optionally a short <ul> of 2–3 specifics. No multi-paragraph mini-essay per item.
+- Deliver exactly the count the title/brief implies ("7 ingredients" = 7 items); otherwise 5–9 items.
+- Stay at or under the target word count; do not pad. Skip the comparison table — the items serve that purpose.`,
+    how_to: `The SERP rewards a step-by-step tutorial.
+- BODY: render the main content as ordered STEPS. Each step is an <h2> headed "Step N — [imperative action]" (e.g. "<h2>Step 1 — Pretreat the stain</h2>"), followed by ONE short paragraph of exactly what to do and why; optionally a short <ul> of specifics. One action per step, in logical order.
+- After the steps, an optional "<h2>Tips</h2>" and then the FAQ.
+- Keep it practical and tight — do not pad steps to fill space.`,
+    comparison: `The SERP rewards a head-to-head comparison of TYPES or approaches — NEVER competitor brands (compare e.g. "bar vs liquid", "natural vs conventional", not brand A vs brand B).
+- INTRO: state the verdict up front (which option suits whom), still following the answer-first rule.
+- BODY: one <h2> per option being compared ("<h2>[Option A]: best for…</h2>", "<h2>[Option B]: best for…</h2>") covering pros, cons, and who it's for — OR one <h2> per decision criterion. A simple <table> comparing the two TYPES is welcome (types/categories only; no competitor-brand tables).
+- End with an "<h2>How to choose</h2>" giving a clear recommendation, then the FAQ.`,
+    answer: `The SERP rewards a concise, direct answer (featured-snippet style).
+- Keep the WHOLE post short and front-loaded: the intro answers the question in the first 1–2 sentences.
+- BODY: just 2–4 brief <h2> sections adding the essential context (why / how / caveats) — short paragraphs, no filler sections, no padding.
+- A short FAQ is welcome. Do NOT expand into a long guide; brevity is the point.`,
+  };
+  const fmtBody = FORMAT_DIRECTIVES[format] || '';
+  const formatBlock = fmtBody ? `
+═══════════════════════════════════
+FORMAT OVERRIDE (${format}) — this changes the shape of the "CONTENT SECTIONS" above. Keep the answer-first INTRO and the CTA / FAQ / Sources / Related sections exactly as specified; change ONLY the body:
+═══════════════════════════════════
+${fmtBody}` : '';
   const feedback = loadAgentFeedback('blog-post-writer');
   const ingredientList = productIngredients.ingredients.join(', ');
   const formatNote = productIngredients.format
@@ -401,17 +426,7 @@ CTA BUTTON COPY RULES:
 <ul>
   <li><a href="[INTERNAL_URL]">[Post Title]</a></li>
 </ul>
-${isListicle ? `
-═══════════════════════════════════
-LISTICLE FORMAT — this OVERRIDES the shape of the "CONTENT SECTIONS" above:
-═══════════════════════════════════
-The SERP for this query rewards a scannable numbered list, not a long essay. This changes ONLY the shape of the main CONTENT SECTIONS — keep everything else from the structure above exactly as specified:
-- INTRO: unchanged — follow the answer-first intro rule above EXACTLY (first sentence is a direct factual answer with the target keyword in the first 60 words). Just keep it to 2–3 sentences, then go straight into the list. No long preamble.
-- BODY: instead of expository sections, render a numbered list of distinct items. Each item is an <h2> headed with its number and name (e.g. "<h2>1. [Item]</h2>"), followed by ONE tight paragraph (~40–110 words): the key point, why it matters, one concrete detail. Optionally a short <ul> of 2–3 specifics. Do NOT write a multi-paragraph mini-essay per item.
-- Deliver exactly the count the title/brief implies ("7 ingredients" = 7 items). If no count is implied, use 5–9 items.
-- A listicle's value is scannability, not length — stay at or under the target word count; do not pad items to fill space.
-- Keep the CTA rules for this post type and the FAQ + Sources + Related sections above. Skip the comparison table — the numbered items already serve that purpose.
-` : ''}
+${formatBlock}
 ═══════════════════════════════════
 PRODUCT IMAGES — when featuring the Real Skin Care product:
 <a href="[PRODUCT_URL]"><img src="[IMG_URL]" alt="[descriptive alt text]" style="max-width:600px;height:auto;display:block;margin:16px auto;"></a>
@@ -525,7 +540,7 @@ async function writePost(briefPath) {
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,
-      system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type === 'listicle' ? 'listicle' : 'guide'),
+      system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide'),
       messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
     });
 
