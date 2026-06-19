@@ -23,7 +23,7 @@ import { loadEnvAuth, hydrateProcessEnv } from './lib/env.js';
 import { createAuthCheck } from './lib/auth.js';
 import { ensureDir } from './lib/fs-helpers.js';
 import { loadData, invalidateDataCache } from './lib/data-loader.js';
-import { createRunAgentHandler } from './lib/run-agent.js';
+import { createRunAgentHandler, createBackgroundRunHandlers } from './lib/run-agent.js';
 import { dispatch } from './lib/router.js';
 import * as paths from './lib/paths.js';
 
@@ -60,6 +60,7 @@ hydrateProcessEnv(_authEnv);
 const checkAuth = createAuthCheck(_authEnv);
 const anthropic = new Anthropic();
 const runAgent = createRunAgentHandler(ROOT);
+const bgRun = createBackgroundRunHandlers(ROOT);
 const geminiClient = process.env.GEMINI_API_KEY
   ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   : null;
@@ -119,6 +120,8 @@ const ctx = Object.freeze({
   loadData,
   invalidateDataCache,
   runAgent,
+  bgRunStart: bgRun.start,
+  bgRunPoll: bgRun.poll,
   geminiClient,
   upload,
   ensureDir,

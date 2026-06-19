@@ -12,6 +12,22 @@ export default [
     },
   },
   {
+    // Start a long-running agent decoupled from the request (returns a jobId);
+    // poll /run-job for output. Avoids the proxy's ~100s 524 on SSE runs.
+    method: 'POST',
+    match: '/run-agent-bg',
+    handler(req, res, ctx) {
+      ctx.bgRunStart(req, res);
+    },
+  },
+  {
+    method: 'GET',
+    match: (url) => url.startsWith('/run-job'),
+    handler(req, res, ctx) {
+      ctx.bgRunPoll(req, res);
+    },
+  },
+  {
     method: 'POST',
     match: (url) => url.startsWith('/brief/'),
     handler(req, res, ctx) {
