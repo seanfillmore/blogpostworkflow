@@ -2,7 +2,7 @@
 /**
  * Google Ads Optimizer Agent
  *
- * Loads Google Ads snapshot + GSC + GA4 + Shopify + Ahrefs data, runs
+ * Loads Google Ads snapshot + GSC + GA4 + Shopify data, runs
  * Claude analysis, saves suggestions to data/ads-optimizer/YYYY-MM-DD.json,
  * and sends an alert email if suggestions exist.
  *

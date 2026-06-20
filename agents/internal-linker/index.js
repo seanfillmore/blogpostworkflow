@@ -26,7 +26,7 @@
  *
  * Options:
  *   --slug <slug>    Target post to build inbound links TO
- *   --top-targets    Analyze top N quick-win targets from keyword CSV
+ *   --top-targets    Analyze top N quick-win targets from Google Search Console
  *   --count <n>      Number of targets for --top-targets (default: 10)
  *   --apply          Write changes to Shopify (default: dry-run only)
  *   --limit <n>      Max articles to scan per target (default: 20)
@@ -34,7 +34,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
@@ -89,60 +89,6 @@ if (!slugArg && !topTargets) {
   process.exit(1);
 }
 
-// ── csv helpers ───────────────────────────────────────────────────────────────
-
-const TRACKER_DIR = join(ROOT, 'data', 'keyword-tracker');
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim().toLowerCase());
-  return lines.slice(1).map((line) => {
-    const fields = [];
-    let inQuote = false, cur = '';
-    for (const ch of line) {
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { fields.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    fields.push(cur.trim());
-    const row = {};
-    headers.forEach((h, i) => { row[h] = fields[i]?.replace(/^"|"$/g, '') ?? ''; });
-    return row;
-  });
-}
-
-function num(v) {
-  const n = parseFloat(String(v ?? '').replace(/,/g, ''));
-  return isNaN(n) ? null : n;
-}
-
-function gCol(row, ...keys) {
-  for (const k of keys) if (k in row && row[k] !== '') return row[k];
-  return null;
-}
-
-/**
- * Load the latest keyword CSV and return an array of
- * { keyword, position, volume, url } rows with numeric fields.
- */
-function loadKeywordCsv() {
-  if (!existsSync(TRACKER_DIR)) return { rows: [], filename: null };
-  const files = readdirSync(TRACKER_DIR)
-    .filter((f) => f.endsWith('.csv') || f.endsWith('.tsv'))
-    .sort((a, b) => statSync(join(TRACKER_DIR, b)).mtimeMs - statSync(join(TRACKER_DIR, a)).mtimeMs);
-  if (files.length === 0) return { rows: [], filename: null };
-  const filename = files[0];
-  const rows = parseCSV(readFileSync(join(TRACKER_DIR, filename), 'utf8'))
-    .map((row) => ({
-      keyword: gCol(row, 'keyword', 'keywords', 'query', 'term') || '',
-      position: num(gCol(row, 'current position', 'position', 'rank', 'pos')),
-      volume: num(gCol(row, 'volume', 'search volume', 'vol', 'monthly volume')) ?? 0,
-      url: gCol(row, 'current url', 'url', 'landing page', 'page') || '',
-    }))
-    .filter((r) => r.keyword && r.url);
-  return { rows, filename };
-}
 
 /**
  * Pick the top N pages to boost via internal links.
@@ -671,7 +617,7 @@ async function main() {
     return;
   }
 
-  // ── Mode B: top targets from GSC (or CSV fallback) ───────────────────────
+  // ── Mode B: top targets from Google Search Console ───────────────────────
 
   const quickWinSlugs = loadQuickWinSlugs();
   if (quickWinSlugs.size > 0) {
@@ -679,34 +625,21 @@ async function main() {
   }
 
   let targets = [];
-  let dataSource = 'csv';
+  const dataSource = 'gsc';
 
-  // Try GSC first (live data, no manual exports needed)
-  let gsc = null;
+  // GSC is the live data source (no manual exports needed).
   try {
-    gsc = await import('../../lib/gsc.js');
+    const gsc = await import('../../lib/gsc.js');
     process.stdout.write('\n  Fetching quick-win pages from Google Search Console... ');
     const gscPages = await gsc.getQuickWinPages(targetCount * 3, 90);
     const blogPages = gscPages
       .filter((p) => p.url.includes('/blogs/'))
       .map((p) => ({ keyword: p.keyword, position: p.position, volume: p.impressions, url: p.url }));
     targets = pickTopTargets(blogPages, targetCount, quickWinSlugs);
-    dataSource = 'gsc';
     console.log(`${gscPages.length} pages found, ${targets.length} blog targets selected`);
   } catch {
-    console.log('\n  GSC unavailable — falling back to keyword CSV');
-  }
-
-  // CSV fallback
-  if (targets.length === 0) {
-    const { rows: csvRows, filename: csvFile } = loadKeywordCsv();
-    if (csvRows.length === 0) {
-      console.error('No data source available. Configure GSC (npm run gsc-auth) or drop an Ahrefs CSV in data/keyword-tracker/.');
-      process.exit(1);
-    }
-    console.log(`\n  Keyword CSV: ${csvFile} (${csvRows.length} rows)`);
-    targets = pickTopTargets(csvRows, targetCount, quickWinSlugs);
-    dataSource = csvFile;
+    console.error('\n  GSC unavailable — no data source. Configure GSC with `npm run gsc-auth`.');
+    process.exit(1);
   }
 
   if (targets.length === 0) {

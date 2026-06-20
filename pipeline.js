@@ -42,7 +42,7 @@
  *   (publish step always uploads as draft for manual review before going live)
  *   --force                     Re-run steps even if output already exists
  *   --dry-run                   Print what would run without executing
- *   --allow-fallback            Allow research step to run without Ahrefs CSV data (lower quality)
+ *   --allow-fallback            Allow research step to run without full keyword data (lower quality)
  */
 
 import { execSync } from 'child_process';

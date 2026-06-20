@@ -1,33 +1,25 @@
 /**
  * Rank Tracker Agent
  *
- * Snapshots Ahrefs keyword positions for every published post, compares with
+ * Snapshots live keyword positions for every published post, compares with
  * the previous snapshot to surface position changes, and flags posts for:
  *   - 🚀 Quick win  — positions 11–20, within reach of page 1 with small effort
  *   - 🔄 Refresh    — positions 21–50, stagnant; content update likely needed
- *   - ❌ Not ranking — no Ahrefs data for this post/keyword
+ *   - ❌ Not ranking — no ranking data for this post/keyword
  *   - ✅ Page 1      — positions 1–10, monitor and protect
  *
  * Snapshots saved to: data/rank-snapshots/YYYY-MM-DD.json
  * Report saved to:    data/reports/rank-tracker-report.md
  *
- * Keyword data:
- *   Drop a CSV into data/keyword-tracker/ with at least these columns:
- *     keyword   — the search term
- *     position  — current rank (number)
- *     volume    — monthly search volume (optional)
- *     url       — ranking URL (optional)
- *
- *   Compatible with Ahrefs Rank Tracker exports, Keywords Explorer exports,
- *   or any spreadsheet exported as CSV.
- *   The most recently modified CSV in the folder is used automatically.
+ * Keyword data: pulled live from DataForSEO (ranked keywords for the domain)
+ * via lib/dataforseo.js. No manual exports needed.
  *
  * Usage:
  *   node agents/rank-tracker/index.js
  *   node agents/rank-tracker/index.js --compare 2026-02-01   # diff against specific date
  */
 
-import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync, statSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getRankedKeywords } from '../../lib/dataforseo.js';
@@ -49,7 +41,6 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'rank-tracker');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
-const TRACKER_DIR = join(ROOT, 'data', 'keyword-tracker');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -79,102 +70,6 @@ const deviceIdx = args.indexOf('--device');
 const deviceArg = deviceIdx !== -1 ? args[deviceIdx + 1] : null; // 'desktop', 'mobile', or null for both
 const DEVICES = deviceArg ? [deviceArg] : ['desktop', 'mobile'];
 
-// ── csv helpers (reused from content-researcher) ──────────────────────────────
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim().toLowerCase());
-  return lines.slice(1).map((line) => {
-    const fields = [];
-    let inQuote = false, cur = '';
-    for (const ch of line) {
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { fields.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    fields.push(cur.trim());
-    const row = {};
-    headers.forEach((h, i) => { row[h] = fields[i]?.replace(/^"|"$/g, '') ?? ''; });
-    return row;
-  });
-}
-
-function num(v) {
-  const n = parseFloat(String(v ?? '').replace(/,/g, ''));
-  return isNaN(n) ? null : n;
-}
-
-function g(row, ...keys) {
-  for (const k of keys) if (k in row && row[k] !== '') return row[k];
-  return null;
-}
-
-/**
- * Load the keyword tracker CSV from data/keyword-tracker/.
- * Returns a Map of keyword (lowercase) → { position, volume, url }.
- *
- * Expected CSV columns (case-insensitive):
- *   keyword   — the search term
- *   position  — current rank (number)
- *   volume    — monthly search volume (optional)
- *   url       — ranking URL (optional)
- *
- * Compatible with Ahrefs Rank Tracker exports and manual spreadsheets.
- */
-function loadKeywordTrackerCsv() {
-  if (!existsSync(TRACKER_DIR)) return { map: new Map(), filename: null };
-
-  const files = readdirSync(TRACKER_DIR)
-    .filter((f) => f.endsWith('.csv') || f.endsWith('.tsv'))
-    .sort((a, b) => {
-      // Prefer most recently modified
-      const sa = statSync(join(TRACKER_DIR, a)).mtimeMs;
-      const sb = statSync(join(TRACKER_DIR, b)).mtimeMs;
-      return sb - sa;
-    });
-
-  if (files.length === 0) return { map: new Map(), filename: null };
-
-  const filename = files[0];
-  const content = readFileSync(join(TRACKER_DIR, filename), 'utf8');
-  const rows = parseCSV(content);
-  const map = new Map();
-
-  for (const row of rows) {
-    const keyword = g(row, 'keyword', 'keywords', 'query', 'term');
-    if (!keyword) continue;
-    const position     = num(g(row, 'current position', 'position', 'rank', 'pos'));
-    const volume       = num(g(row, 'volume', 'search volume', 'vol', 'monthly volume'));
-    const url          = g(row, 'current url', 'url', 'landing page', 'page') || null;
-    const kd           = num(g(row, 'kd', 'keyword difficulty', 'difficulty'));
-    const cpc          = num(g(row, 'cpc', 'cost per click'));
-    const traffic      = num(g(row, 'current organic traffic', 'organic traffic', 'traffic'));
-    const trafficPrev  = num(g(row, 'previous organic traffic'));
-    const trafficChange= num(g(row, 'organic traffic change', 'traffic change'));
-    const positionPrev = num(g(row, 'previous position'));
-    const positionChange=num(g(row, 'position change'));
-    const urlPrev      = g(row, 'previous url') || null;
-    const serpFeatures = g(row, 'serp features', 'serp feature') || null;
-    const country      = g(row, 'country') || null;
-    const datePrev     = g(row, 'previous date') || null;
-    const dateCurr     = g(row, 'current date') || null;
-    const intents      = [];
-    if (g(row, 'informational')  === 'true') intents.push('Informational');
-    if (g(row, 'commercial')     === 'true') intents.push('Commercial');
-    if (g(row, 'transactional')  === 'true') intents.push('Transactional');
-    if (g(row, 'navigational')   === 'true') intents.push('Navigational');
-    if (g(row, 'branded')        === 'true') intents.push('Branded');
-    if (g(row, 'local')          === 'true') intents.push('Local');
-    map.set(keyword.toLowerCase().trim(), {
-      position, volume, url, kd, cpc, traffic, trafficPrev, trafficChange,
-      positionPrev, positionChange, urlPrev, serpFeatures, country,
-      datePrev, dateCurr, intents,
-    });
-  }
-
-  return { map, filename };
-}
 
 async function fetchLiveKeywordData(device = 'desktop') {
   try {
@@ -359,10 +254,7 @@ function buildReport(entries, today, previousDate, discovery = null) {
   lines.push(`**Snapshot date:** ${today}`);
   if (previousDate) lines.push(`**Compared with:** ${previousDate}`);
   lines.push(`**Posts tracked:** ${entries.length}`);
-  const csvEntries = entries.filter((e) => e.dataSource === 'csv');
-  if (csvEntries.length > 0) {
-    lines.push(`**Data source:** Keyword tracker CSV — update \`data/keyword-tracker/\` with a fresh export to refresh positions`);
-  }
+  lines.push(`**Data source:** DataForSEO (live ranked keywords)`);
   lines.push('');
   lines.push(`| ✅ Page 1 | 🚀 Quick wins | 🔄 Needs work | ❌ Not ranking |`);
   lines.push(`|----------|--------------|--------------|---------------|`);
@@ -623,28 +515,15 @@ function diffRankingKeywords(current, previous) {
 async function runForDevice({ device, today, posts, blogIndex, gscCache, isSoleDevice }) {
   console.log(`\n━━ ${device.toUpperCase()} ━━`);
 
-  // Load keyword data — try DataForSEO API first, fall back to CSV (CSV is
-  // legacy desktop-only data; mobile skips CSV fallback entirely).
-  let trackerMap, trackerFile;
+  // Load keyword data live from DataForSEO.
   const liveData = await fetchLiveKeywordData(device);
-  if (liveData.map.size > 0) {
-    trackerMap = liveData.map;
-    trackerFile = liveData.filename;
-    console.log(`  Keyword data: ${trackerFile} (${trackerMap.size} keywords)`);
-  } else if (device === 'desktop') {
-    const csv = loadKeywordTrackerCsv();
-    trackerMap = csv.map;
-    trackerFile = csv.filename;
-    if (trackerFile) {
-      console.log(`  Keyword data: data/keyword-tracker/${trackerFile} (${trackerMap.size} keywords)`);
-    } else {
-      console.log('  ⚠️  No keyword data available — neither DataForSEO API nor CSV.');
-      return null;
-    }
-  } else {
+  if (liveData.map.size === 0) {
     console.log(`  ⚠️  No ${device} data available from DataForSEO — skipping.`);
     return null;
   }
+  const trackerMap = liveData.map;
+  const trackerFile = liveData.filename;
+  console.log(`  Keyword data: ${trackerFile} (${trackerMap.size} keywords)`);
 
   // Load previous snapshot for delta comparison (device-specific)
   const prevSnapshot = compareDate
@@ -674,9 +553,9 @@ async function runForDevice({ device, today, posts, blogIndex, gscCache, isSoleD
     if (tracked !== undefined && tracked !== null) {
       position = tracked.position;
       volume = tracked.volume;
-      dataSource = trackerFile.startsWith('DataForSEO') ? 'api' : 'csv';
+      dataSource = 'api';
     } else if (trackerFile) {
-      dataSource = trackerFile.startsWith('DataForSEO') ? 'api (not found)' : 'csv (not found)';
+      dataSource = 'api (not found)';
     }
 
     if (volume === null && post.brief_volume !== null) {

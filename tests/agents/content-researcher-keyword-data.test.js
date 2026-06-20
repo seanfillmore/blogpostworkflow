@@ -96,7 +96,7 @@ test('mapSerpResults handles empty/missing input', () => {
 
 // ── mapKeywordIdeas ───────────────────────────────────────────────────────────
 // Input: getKeywordIdeas() return from lib/dataforseo.js — [{ keyword, volume, kd, cpc, ... }]
-// Output: [{ keyword, volume, difficulty, traffic_potential }] — matches the Ahrefs-shaped
+// Output: [{ keyword, volume, difficulty, traffic_potential }] — matches the
 // interface that generateBrief already consumes (see "TP: ${k.traffic_potential}" in prompt).
 
 test('mapKeywordIdeas maps kd -> difficulty and preserves volume/traffic_potential', () => {

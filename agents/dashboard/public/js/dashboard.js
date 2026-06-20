@@ -5044,41 +5044,6 @@ function renderContentGapCard(d) {
   if (runBtn) { runBtn.disabled = false; runBtn.title = ''; }
 }
 
-function uploadRankSnapshot() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.csv,.tsv';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  input.onchange = async () => {
-    document.body.removeChild(input);
-    const file = input.files[0];
-    if (!file) return;
-    const btn = document.getElementById('rank-upload-btn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>'; }
-    try {
-      const res = await fetch('/upload/rank-snapshot', {
-        method: 'POST',
-        headers: { 'X-Filename': file.name, 'Content-Type': 'application/octet-stream' },
-        body: file,
-      });
-      const json = await res.json();
-      if (!json.ok) {
-        if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload CSV'; }
-        return;
-      }
-      // CSV saved — now run rank tracker to process it, then reload
-      runAgent('agents/rank-tracker/index.js', [], function() {
-        if (btn) { btn.disabled = false; btn.innerHTML = '&#10003; Updated'; }
-        loadData();
-      });
-    } catch (e) {
-      if (btn) { btn.disabled = false; btn.innerHTML = '&#8593; Upload CSV'; }
-    }
-  };
-  input.click();
-}
-
 async function loadCampaignCards() {
   try {
     const res = await fetch('/api/campaigns', { credentials: 'same-origin' });

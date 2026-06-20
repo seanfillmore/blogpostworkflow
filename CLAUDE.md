@@ -63,7 +63,7 @@ Both must be fatal — truncated HTML on Shopify creates broken links that take 
 
 ## Code Review Checklist — Technical SEO Agent (`agents/technical-seo/index.js`)
 
-**Cloudflare `cdn-cgi/l/email-protection` false positives.** Ahrefs flags `https://www.realskincare.com/cdn-cgi/l/email-protection` as a 404 on every page that has the site footer email. This is Cloudflare's email obfuscation — Ahrefs crawls the raw HTML and sees a 404. **It is not a real broken link.**
+**Cloudflare `cdn-cgi/l/email-protection` false positives.** The crawler flags `https://www.realskincare.com/cdn-cgi/l/email-protection` as a 404 on every page that has the site footer email. This is Cloudflare's email obfuscation — a raw-HTML crawl sees a 404. **It is not a real broken link.**
 
 Rules:
 - Filter `cdn-cgi/l/email-protection` from broken-link counts and listings.
@@ -75,7 +75,7 @@ Rules:
 
 - All agents operate on a single configured Shopify site (config in `config/site.json`).
 - When writing content, incorporate internal links informed by `data/sitemap-index.json`, `data/blog-index.json`, and `data/topical-map.json`.
-- Ahrefs monetary values come back in USD cents — divide by 100 before displaying.
+- Keyword/SERP/metrics/backlink data comes live from DataForSEO via `lib/dataforseo.js` (CPC and other monetary values are in USD dollars).
 - Amazon: separate apps in Solution Provider Portal for RSC sandbox, RSC production, Culina pending. SP-API requires Brand Registry for SQP/BA reports.
 - Agents are composable — outputs of upstream agents (sitemap-index, blog-index, topical-map, keyword-index) are inputs to downstream agents.
 
