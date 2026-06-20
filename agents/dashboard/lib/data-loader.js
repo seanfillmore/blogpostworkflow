@@ -290,6 +290,7 @@ export function aggregateData() {
   const legacyTriage    = readJsonIfExists(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   const cannibalization = readJsonIfExists(join(REPORTS_DIR, 'cannibalization', 'latest.json'));
   const aiCitations = readJsonIfExists(join(REPORTS_DIR, 'ai-citations', 'latest.json'));
+  const prTargets = readJsonIfExists(join(REPORTS_DIR, 'pr-targets', 'latest.json'));
   const pipelinePrioritizer = readJsonIfExists(join(REPORTS_DIR, 'pipeline-prioritizer', 'latest.json'));
   const priorityTuner       = readJsonIfExists(join(REPORTS_DIR, 'priority-tuner', 'latest.json'));
   // Load previous AI citation snapshot for week-over-week delta
@@ -446,6 +447,7 @@ export function aggregateData() {
     cannibalization,
     aiCitations,
     aiCitationsPrev,
+    prTargets,
     techSeoAudit,
     techSeoFixResults,
     altTextProgress,

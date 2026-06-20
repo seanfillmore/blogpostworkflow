@@ -412,6 +412,7 @@ function renderOptimizeTab(d) {
   document.getElementById('tab-optimize').innerHTML =
     renderBlockedPostsCard(d) +
     renderPerformanceQueueCard(d) +
+    renderPrTargetsCard(d) +
     renderAICitationCard(d) +
     renderCannibalizationCard(d) +
     renderMetaTestCard(d) +
@@ -442,6 +443,42 @@ function renderOptimizeTab(d) {
 }
 
 // ── Performance-driven SEO engine cards ───────────────────────────────────────
+
+// Where to focus PR to get cited by LLMs — the specific third-party pages
+// driving competitor citations, with author + publication + a drafted angle.
+function renderPrTargetsCard(d) {
+  var p = d.prTargets;
+  if (!p || !(p.pitch_targets || []).length) return '';
+  var pitch = p.pitch_targets.slice(0, 12);
+  var rows = pitch.map(function(t) {
+    var who = t.author ? esc(t.author) + ' · ' : '';
+    var pub = esc(t.publication || t.domain);
+    var article = t.pitch_url ? ' <a href="' + esc(t.pitch_url) + '" target="_blank" rel="noopener">article &#8599;</a>' : '';
+    var prompts = (t.prompts || []).slice(0, 3).map(esc).join(', ');
+    var comps = (t.competitors || []).slice(0, 4).map(esc).join(', ');
+    return '<div class="action-row">' +
+      '<div class="action-head">' +
+        '<span class="verdict-pill" style="background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe">score ' + (t.score || 0) + '</span>' +
+        '<span class="action-title">' + who + '<strong>' + pub + '</strong></span>' +
+      '</div>' +
+      '<div class="action-reason" style="margin-top:6px;">' +
+        '<div><strong>Why:</strong> cited by ' + esc((t.engines || []).join(', ')) + ' for ' + prompts + article + '</div>' +
+        '<div><strong>Surfaces:</strong> ' + (comps || '&mdash;') + '</div>' +
+        '<div style="margin-top:4px;"><strong>Angle:</strong> ' + esc(t.angle || '') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  var community = (p.community_targets || []).slice(0, 6).map(function(t) {
+    var link = t.thread_url ? '<a href="' + esc(t.thread_url) + '" target="_blank" rel="noopener">' + esc(t.thread_url) + '</a>' : esc(t.domain);
+    return '<li>' + link + ' &mdash; <span style="color:#6b7280">' + esc(t.note || '') + '</span></li>';
+  }).join('');
+  return '<div class="card"><div class="card-header">' +
+      '<h2>&#128226; PR Targets &mdash; where to focus</h2>' +
+      '<span class="card-subtitle">The publications LLMs cite for our money prompts (but not us). Pitch the author/editor to get added &middot; ' + p.summary.pitch + ' pitch &middot; ' + p.summary.engage + ' community.</span>' +
+    '</div><div class="card-body">' + rows +
+    (community ? '<h3 style="margin:16px 0 8px;">Community (engage, don\'t pitch)</h3><ul style="margin:0;padding-left:18px;line-height:1.6;">' + community + '</ul>' : '') +
+    '</div></div>';
+}
 
 function renderAICitationCard(d) {
   var c = d.aiCitations;

@@ -112,6 +112,10 @@ async function main() {
         cited: citations.length > 0 ? detectBrandCited(citations) : null,
         mentioned: detectBrandMentioned(text),
         citations: citationDomains,
+        // Full URLs preserved alongside the domains so downstream agents
+        // (pr-target-finder) can fetch the actual article for its author byline
+        // and pinpoint specific Reddit threads — not just the homepage.
+        citation_urls: citations,
         competitor_mentions: detectCompetitorMentions(text),
         competitor_citations: detectCompetitorCitations(citations),
       };

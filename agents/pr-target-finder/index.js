@@ -24,7 +24,20 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rankTargets } from '../../lib/pr-targets.js';
 import { extractByline, pageMentionsBrand, looksLikeStore } from '../../lib/html-byline.js';
+import { fetchAllReviewStats } from '../../lib/judgeme.js';
 import { notify } from '../../lib/notify.js';
+
+function loadEnv() {
+  try {
+    const out = {};
+    for (const l of readFileSync(join(ROOT, '.env'), 'utf8').split('\n')) {
+      const t = l.trim(); if (!t || t.startsWith('#')) continue;
+      const i = t.indexOf('='); if (i === -1) continue;
+      out[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    }
+    return out;
+  } catch { return {}; }
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -63,11 +76,11 @@ function categoryFromPrompts(prompts) {
   return 'clean personal-care product';
 }
 
-async function fetchPage(domain, timeoutMs = 8000) {
+async function fetchPage(url, timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`https://${domain}/`, {
+    const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; RSC-PR-Research/1.0)' },
       redirect: 'follow', signal: controller.signal,
     });
@@ -77,18 +90,56 @@ async function fetchPage(domain, timeoutMs = 8000) {
   finally { clearTimeout(timer); }
 }
 
-function buildAngle(row) {
+// Per-category review proof from Judge.me (real counts + ratings), keyed by the
+// same category labels categoryFromPrompts emits. Best-effort: missing creds or
+// API failures fall back to a generic proof line, never blocking a run.
+const CATEGORY_KEYWORDS = {
+  deodorant: ['deodorant'], toothpaste: ['toothpaste'], 'lip balm': ['lip balm', 'lip'],
+  'body lotion': ['lotion'], lotion: ['lotion'], soap: ['soap', 'bar'],
+  'body cream': ['body cream', 'body butter', 'butter'], 'coconut oil product': ['coconut'],
+};
+async function loadReviewProof() {
+  const env = loadEnv();
+  const token = process.env.JUDGEME_API_TOKEN || env.JUDGEME_API_TOKEN;
+  const shop = process.env.SHOPIFY_STORE || env.SHOPIFY_STORE;
+  const proof = {};
+  if (!token || !shop) return proof;
+  let stats;
+  try { stats = await fetchAllReviewStats(shop, token); } catch { return proof; }
+  if (!stats.total) return proof;
+  // Tally accurate per-category counts from every product's reviews.
+  for (const [cat, kws] of Object.entries(CATEGORY_KEYWORDS)) {
+    let count = 0; let ratingSum = 0;
+    for (const [handle, e] of stats.byHandle) {
+      const hay = `${e.title} ${handle}`.toLowerCase();
+      if (kws.some((k) => hay.includes(k))) { count += e.count; ratingSum += e.ratingSum; }
+    }
+    if (count) proof[cat] = { reviewCount: count, rating: ratingSum / count };
+  }
+  proof.__shop = { reviewCount: stats.total, rating: stats.avgRating };
+  return proof;
+}
+
+function buildAngle(row, reviewProof = {}) {
   const category = categoryFromPrompts(row.prompts);
   const competitor = row.competitors[0] || 'the incumbents';
   const prompt = row.prompts[0];
-  const proof = 'backed by hundreds of verified 4–5★ Judge.me reviews';
+  // Prefer category-specific proof; fall back to the shop-wide aggregate.
+  const stat = reviewProof[category] || reviewProof.__shop;
+  const proof = stat
+    ? `backed by ${stat.reviewCount}+ verified Judge.me reviews averaging ${stat.rating.toFixed(1)}★`
+    : 'backed by our verified Judge.me reviews';
   return `Pitch to be added to their "${prompt}" coverage alongside ${competitor}. Hook: Real Skin Care's coconut-oil ${category} is a clean, aluminum-free alternative — ${proof}.`;
 }
 
-async function enrichPitchTargets(rows) {
+async function enrichPitchTargets(rows, reviewProof = {}) {
   const top = rows.slice(0, ENRICH);
   for (const row of top) {
-    const html = await fetchPage(row.domain);
+    // Fetch the actual cited ARTICLE when we have its URL (newer snapshots) —
+    // that's where the real byline lives. Fall back to the homepage.
+    const fetchTarget = row.top_url || `https://${row.domain}/`;
+    row.pitch_url = row.top_url || null;
+    const html = await fetchPage(fetchTarget);
     const { author, publication } = extractByline(html, { domain: row.domain });
     row.author = author;
     row.publication = publication || row.domain;
@@ -100,7 +151,7 @@ async function enrichPitchTargets(rows) {
     row.llm_names_us_here = row.brand_mentioned;
     row.homepage_mentions_us = html != null ? pageMentionsBrand(html, STRICT_BRAND_ALIASES) : null;
     delete row.brand_mentioned;
-    row.angle = buildAngle(row);
+    row.angle = buildAngle(row, reviewProof);
     // A single-brand ecommerce store cited for "best X" prompts is a competitor
     // we don't track, not a pitch target. Flag it so it drops out of the list.
     row.likely_store = looksLikeStore(html);
@@ -108,7 +159,7 @@ async function enrichPitchTargets(rows) {
   // attach a templated angle to the un-enriched remainder too
   for (const row of rows.slice(ENRICH)) {
     row.publication = row.domain;
-    row.angle = buildAngle(row);
+    row.angle = buildAngle(row, reviewProof);
   }
   return rows;
 }
@@ -132,18 +183,22 @@ async function main() {
   excluded += noiseCut;
   console.log(`  Candidate sources → pitch: ${pitch.length} (cut ${noiseCut} single-citation), engage: ${engage.length}, excluded: ${ranked.excluded}`);
 
+  const reviewProof = await loadReviewProof();
+  if (Object.keys(reviewProof).length) console.log(`  Judge.me proof loaded for: ${Object.keys(reviewProof).join(', ')}`);
+
   let finalPitch = pitch;
   if (ENRICH > 0 && pitch.length) {
     console.log(`  Enriching top ${Math.min(ENRICH, pitch.length)} pitch targets (author + publication)...`);
-    await enrichPitchTargets(pitch);
+    await enrichPitchTargets(pitch, reviewProof);
     const stores = pitch.filter((t) => t.likely_store);
     if (stores.length) console.log(`  Dropped ${stores.length} ecommerce/brand site(s): ${stores.map((s) => s.domain).join(', ')}`);
     finalPitch = pitch.filter((t) => !t.likely_store);
   } else {
-    for (const row of pitch) { row.publication = row.domain; row.angle = buildAngle(row); }
+    for (const row of pitch) { row.publication = row.domain; row.angle = buildAngle(row, reviewProof); }
   }
   for (const row of engage) {
-    row.note = `LLMs lean on this for "${row.prompts[0]}" (lists ${row.competitors.slice(0, 2).join(', ')}). Engage organically — answer the question, mention RSC where genuinely relevant.`;
+    row.thread_url = row.top_url || null;
+    row.note = `LLMs lean on this for "${row.prompts[0]}" (surfaces ${row.competitors.slice(0, 2).join(', ')}). Engage organically — answer the question, mention RSC where genuinely relevant.`;
   }
 
   mkdirSync(OUT_DIR, { recursive: true });
@@ -172,6 +227,7 @@ function renderMarkdown(r) {
   for (const t of r.pitch_targets.slice(0, 25)) {
     lines.push(`### ${t.publication || t.domain}  ·  score ${t.score}`);
     lines.push(`- **Author:** ${t.author || '_(no byline found — pitch the editor)_'}`);
+    if (t.pitch_url) lines.push(`- **Article:** ${t.pitch_url}`);
     lines.push(`- **Why:** cited by ${t.engines.join(', ')} for ${t.prompts.map((p) => `_${p}_`).join(', ')}`);
     lines.push(`- **Competitors it surfaces:** ${t.competitors.join(', ') || '—'}${t.homepage_mentions_us ? ' · note: homepage references RSC — verify' : ''}${t.llm_names_us_here ? ' · (we already win some of these prompts)' : ''}`);
     lines.push(`- **Angle:** ${t.angle}`);
@@ -179,7 +235,7 @@ function renderMarkdown(r) {
   }
   lines.push(`## Community targets (Reddit/forums — engage)`, '');
   for (const t of r.community_targets.slice(0, 15)) {
-    lines.push(`- **${t.domain}** — ${t.note}`);
+    lines.push(`- **${t.thread_url || t.domain}** — ${t.note}`);
   }
   return lines.join('\n') + '\n';
 }
