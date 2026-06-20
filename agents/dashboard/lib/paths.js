@@ -11,7 +11,6 @@ export const BRIEFS_DIR    = join(ROOT, 'data', 'briefs');
 export const IMAGES_DIR    = join(ROOT, 'data', 'images');
 export const REPORTS_DIR   = join(ROOT, 'data', 'reports');
 export const SNAPSHOTS_DIR = join(ROOT, 'data', 'rank-snapshots');
-export const KEYWORD_TRACKER_DIR = join(ROOT, 'data', 'keyword-tracker');
 export const ADS_OPTIMIZER_DIR = join(ROOT, 'data', 'ads-optimizer');
 export const CALENDAR_PATH = join(REPORTS_DIR, 'content-strategist', 'content-calendar.md');
 

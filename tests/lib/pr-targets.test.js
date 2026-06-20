@@ -20,6 +20,10 @@ test('classifySource buckets correctly', () => {
   assert.equal(classifySource('primallypure.com', opts), 'exclude'); // competitor-owned
   assert.equal(classifySource('realskincare.com', opts), 'exclude'); // our own
   assert.equal(classifySource('thegoodtrade.com', opts), 'pitch');   // editorial
+  assert.equal(classifySource('bit.ly', opts), 'exclude');           // link shortener
+  assert.equal(classifySource('swellrewards.com', opts), 'exclude'); // loyalty/rewards
+  assert.equal(classifySource('couponwallet.org', opts), 'exclude'); // coupon (pattern)
+  assert.equal(classifySource('clientsbee.com', opts), 'exclude');   // directory aggregator
 });
 
 const snapshots = [{

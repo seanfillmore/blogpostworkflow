@@ -1,47 +1,45 @@
 /**
  * Backlink Opportunity Agent
  *
- * Identifies link-building opportunities by finding high-DR domains that link
- * to competitors but not to this site (link gap analysis).
+ * Identifies link-building opportunities by finding high-authority domains that
+ * link to competitors but not to this site (link-gap analysis).
  *
  * Strategy:
- *   1. Read competitor referring-domain CSV exports from data/backlinks/competitors/
- *   2. Diff against our current referring domain snapshot
- *   3. Score by DR, dofollow status, and how many competitors share the domain
+ *   1. Pull each competitor's referring domains live from DataForSEO
+ *   2. Pull our own referring domains and diff against them
+ *   3. Score by domain rank, dofollow status, and how many competitors share it
  *   4. Claude categorizes opportunities and suggests outreach angles
  *
- * Setup:
- *   1. In Ahrefs → Site Explorer → <competitor domain> → Referring Domains
- *   2. Export as CSV → save to data/backlinks/competitors/<competitor>.csv
- *      (e.g. data/backlinks/competitors/nativecos.csv)
- *   3. Repeat for each competitor, then run this agent
- *   4. Ensure data/backlinks/snapshots/ has at least one snapshot (run backlink-monitor first)
+ * Competitors come from config/competitors.json. Requires the DataForSEO
+ * Backlinks API subscription; when it's inactive the agent degrades gracefully
+ * (reports "subscription required" and exits 0) rather than failing.
+ *
+ * Per-competitor referring-domain pulls are cached daily under
+ * data/backlinks/cache/ so re-runs on the same day don't re-bill the API.
  *
  * Usage:
  *   node agents/backlink-opportunity/index.js
- *   node agents/backlink-opportunity/index.js --min-dr 20   # filter by DR (default: 20)
- *   node agents/backlink-opportunity/index.js --limit 50    # top N results (default: 50)
+ *   node agents/backlink-opportunity/index.js --min-rank 100  # min DataForSEO domain rank (0–1000, default 50)
+ *   node agents/backlink-opportunity/index.js --limit 50      # top N results (default 50)
  *
  * Output:
- *   data/reports/backlink-opportunities-report.md
+ *   data/reports/backlinks/backlink-opportunities-report.md
  *   data/backlinks/opportunities.json
- *
- * CSV format expected (Ahrefs default Referring Domains export):
- *   Domain, Domain Rating, First seen, Last seen, Dofollow, Links to target
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
-import { join, dirname, basename } from 'path';
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import { getReferringDomains } from '../../lib/dataforseo.js';
+import { classifySource } from '../../lib/pr-targets.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const BACKLINKS_DIR = join(ROOT, 'data', 'backlinks');
-const COMPETITORS_DIR = join(BACKLINKS_DIR, 'competitors');
+const CACHE_DIR = join(BACKLINKS_DIR, 'cache');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'backlinks');
-const SNAPSHOTS_DIR = join(BACKLINKS_DIR, 'snapshots');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -74,95 +72,60 @@ function getArg(flag) {
   return i !== -1 ? args[i + 1] : null;
 }
 
-const minDr = parseInt(getArg('--min-dr') || '20', 10);
+const minRank = parseInt(getArg('--min-rank') || '50', 10); // DataForSEO domain rank, 0–1000
 const limit = parseInt(getArg('--limit') || '50', 10);
+const PER_DOMAIN_LIMIT = 1000; // cap referring domains pulled per target (API is per-row priced)
 
-// ── CSV parsing ───────────────────────────────────────────────────────────────
+// ── referring-domain fetch (cached daily) ──────────────────────────────────────
 
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const raw = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim().toLowerCase());
-  return lines.slice(1).map((line) => {
-    const cols = [];
-    let cur = '';
-    let inQuote = false;
-    for (const ch of line) {
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { cols.push(cur); cur = ''; }
-      else { cur += ch; }
-    }
-    cols.push(cur);
-    const obj = {};
-    raw.forEach((h, i) => { obj[h] = (cols[i] || '').replace(/^"|"$/g, '').trim(); });
-    return obj;
-  });
-}
+const cleanDomain = (d) => (d || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').toLowerCase();
 
-function normalizeRow(row) {
-  const domain = (row['referring domain'] || row['domain'] || '').toLowerCase();
-  const dr = parseFloat(row['domain rating'] || row['dr'] || '0') || 0;
-  const dofollow = (row['dofollow'] || '').toLowerCase() === 'true' || row['dofollow'] === '1';
-  return { domain, dr, dofollow };
-}
-
-function loadCSV(filepath) {
-  const rows = parseCSV(readFileSync(filepath, 'utf8'));
-  return rows.map(normalizeRow).filter((r) => r.domain);
-}
-
-// ── our backlink snapshot ──────────────────────────────────────────────────────
-
-function loadLatestSnapshot() {
-  if (!existsSync(SNAPSHOTS_DIR)) return { domains: new Set(), date: null };
-  const files = readdirSync(SNAPSHOTS_DIR).filter((f) => f.endsWith('.csv')).sort().reverse();
-  if (files.length === 0) return { domains: new Set(), date: null };
-
-  const snapshotPath = join(SNAPSHOTS_DIR, files[0]);
-  const snapshotDate = files[0].replace('.csv', '');
-  const rows = loadCSV(snapshotPath);
-  return { domains: new Set(rows.map((r) => r.domain)), date: snapshotDate };
-}
-
-// ── competitor CSVs ───────────────────────────────────────────────────────────
-
-function loadCompetitorCSVs() {
-  if (!existsSync(COMPETITORS_DIR)) return new Map();
-
-  const files = readdirSync(COMPETITORS_DIR).filter((f) => f.endsWith('.csv'));
-  const map = new Map();
-
-  for (const file of files) {
-    const name = basename(file, '.csv'); // e.g. "nativecos" from "nativecos.csv"
-    const rows = loadCSV(join(COMPETITORS_DIR, file));
-    map.set(name, rows);
+/**
+ * Fetch a target's referring domains, caching the result for the current day.
+ * Returns an array of rows, or null if the Backlinks subscription is inactive.
+ */
+async function fetchReferringDomains(target, today) {
+  mkdirSync(CACHE_DIR, { recursive: true });
+  const cachePath = join(CACHE_DIR, `${cleanDomain(target)}-${today}.json`);
+  if (existsSync(cachePath)) {
+    try { return JSON.parse(readFileSync(cachePath, 'utf8')); } catch { /* re-fetch */ }
   }
-
-  return map;
+  const rows = await getReferringDomains(cleanDomain(target), { limit: PER_DOMAIN_LIMIT });
+  if (rows === null) return null; // subscription inactive — signal up
+  writeFileSync(cachePath, JSON.stringify(rows, null, 2));
+  return rows;
 }
 
 // ── opportunity scoring ───────────────────────────────────────────────────────
 
-function buildOpportunities(competitorMap, ourDomains) {
+function buildOpportunities(competitorMap, ourDomains, competitorDomains) {
   const map = new Map();
 
   for (const [competitor, refdomains] of competitorMap.entries()) {
     for (const rd of refdomains) {
       if (ourDomains.has(rd.domain)) continue;
+      // Keep only editorial domains we could actually pitch — drop shorteners,
+      // coupon/reward/directory junk, platforms, retailers, and competitors.
+      if (classifySource(rd.domain, { competitorDomains }) !== 'pitch') continue;
       if (!map.has(rd.domain)) {
-        map.set(rd.domain, { domain: rd.domain, dr: rd.dr, dofollow: rd.dofollow, competitors: [] });
+        map.set(rd.domain, { domain: rd.domain, rank: rd.rank, dofollow: rd.dofollow, competitors: [] });
       }
-      map.get(rd.domain).competitors.push(competitor);
+      const entry = map.get(rd.domain);
+      entry.competitors.push(competitor);
+      // Keep the strongest signal seen for rank/dofollow across competitors.
+      if (rd.rank > entry.rank) entry.rank = rd.rank;
+      if (rd.dofollow) entry.dofollow = true;
     }
   }
 
   return [...map.values()]
     .map((opp) => {
       const competitorCount = opp.competitors.length;
-      const score = opp.dr + (opp.dofollow ? 10 : 0) + (competitorCount - 1) * 15;
+      // Multi-competitor overlap is the strongest signal, then authority.
+      const score = (competitorCount - 1) * 300 + opp.rank + (opp.dofollow ? 50 : 0);
       return { ...opp, competitorCount, score };
     })
-    .filter((opp) => opp.dr >= minDr)
+    .filter((opp) => opp.rank >= minRank)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }
@@ -171,7 +134,7 @@ function buildOpportunities(competitorMap, ourDomains) {
 
 async function categorizeOpportunities(opportunities, competitors) {
   const topList = opportunities.slice(0, 40).map((o, i) =>
-    `${i + 1}. ${o.domain} (DR ${o.dr}, ${o.dofollow ? 'dofollow' : 'nofollow'}, links to ${o.competitorCount} competitor${o.competitorCount > 1 ? 's' : ''}: ${o.competitors.slice(0, 3).join(', ')})`
+    `${i + 1}. ${o.domain} (rank ${o.rank}, ${o.dofollow ? 'dofollow' : 'nofollow'}, links to ${o.competitorCount} competitor${o.competitorCount > 1 ? 's' : ''}: ${o.competitors.slice(0, 3).join(', ')})`
   ).join('\n');
 
   const prompt = `You are an SEO link-building strategist for ${config.name} (${config.url}), a ${config.brand_description}.
@@ -207,28 +170,29 @@ Format as Markdown. Be specific and direct — skip generic advice.`;
 
 // ── report ────────────────────────────────────────────────────────────────────
 
-function buildReport(opportunities, competitors, categorization, ourDomainCount, snapshotDate) {
+function buildReport(opportunities, competitors, categorization, ourDomainCount) {
   const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const multiCompetitor = opportunities.filter((o) => o.competitorCount > 1);
 
   const lines = [
     `# Backlink Opportunity Report — ${config.name}`,
     `**Run date:** ${now}`,
-    `**Our backlink snapshot:** ${snapshotDate} (${ourDomainCount} referring domains)`,
+    `**Data source:** DataForSEO Backlinks API (live referring domains)`,
+    `**Our referring domains:** ${ourDomainCount}`,
     `**Competitors analyzed:** ${competitors.join(', ')}`,
-    `**Opportunities found:** ${opportunities.length} (DR ≥ ${minDr}, top ${limit})`,
+    `**Opportunities found:** ${opportunities.length} (rank ≥ ${minRank}, top ${limit})`,
     `**Linking to 2+ competitors:** ${multiCompetitor.length}`,
     '',
     '---',
     '',
     '## Priority Opportunities',
     '',
-    '> Sorted by score (DR + dofollow bonus + competitor overlap). Domains linking to multiple competitors are the strongest signals.',
+    '> Sorted by score (competitor overlap + domain rank + dofollow bonus). Domains linking to multiple competitors are the strongest signals.',
     '',
-    '| # | Domain | DR | Dofollow | Competitors | Score |',
+    '| # | Domain | Rank | Dofollow | Competitors | Score |',
     '|---|---|---|---|---|---|',
     ...opportunities.slice(0, 30).map((o, i) =>
-      `| ${i + 1} | ${o.domain} | ${o.dr} | ${o.dofollow ? '✅' : '—'} | ${o.competitorCount} (${o.competitors.slice(0, 2).join(', ')}${o.competitors.length > 2 ? '…' : ''}) | ${o.score} |`
+      `| ${i + 1} | ${o.domain} | ${o.rank} | ${o.dofollow ? '✅' : '—'} | ${o.competitorCount} (${o.competitors.slice(0, 2).join(', ')}${o.competitors.length > 2 ? '…' : ''}) | ${o.score} |`
     ),
     '',
     '---',
@@ -246,9 +210,7 @@ function buildReport(opportunities, competitors, categorization, ourDomainCount,
     '4. Track outreach manually in `data/backlinks/outreach.json`',
     '',
     '## How to Refresh',
-    '1. In Ahrefs → Site Explorer → <competitor> → Referring Domains → Export CSV',
-    `2. Save to \`data/backlinks/competitors/<competitor>.csv\``,
-    '3. Run: `node agents/backlink-opportunity/index.js`',
+    'Run: `node agents/backlink-opportunity/index.js` — it pulls competitor referring domains live from DataForSEO (cached daily). Edit `config/competitors.json` to change the competitor set.',
   ];
 
   return lines.join('\n');
@@ -258,74 +220,79 @@ function buildReport(opportunities, competitors, categorization, ourDomainCount,
 
 async function main() {
   console.log(`\nBacklink Opportunity Agent — ${config.name}`);
-  console.log(`Settings: DR ≥ ${minDr}, top ${limit} results\n`);
+  console.log(`Settings: rank ≥ ${minRank}, top ${limit} results\n`);
 
   mkdirSync(REPORTS_DIR, { recursive: true });
-  mkdirSync(COMPETITORS_DIR, { recursive: true });
 
-  // Load our snapshot
-  process.stdout.write('  Loading our backlink snapshot... ');
-  const { domains: ourDomains, date: snapshotDate } = loadLatestSnapshot();
-  if (ourDomains.size === 0) {
-    console.log('\n  ⚠️  No backlink snapshot found. Run this first:');
-    console.log('  npm run backlinks');
-    process.exit(1);
+  const today = new Date().toISOString().slice(0, 10);
+  const competitorConfig = JSON.parse(readFileSync(join(ROOT, 'config', 'competitors.json'), 'utf8'));
+  const ourDomain = cleanDomain(config.url);
+
+  // Our referring domains first — also tells us if the subscription is active.
+  process.stdout.write('  Fetching our referring domains from DataForSEO... ');
+  const ourRows = await fetchReferringDomains(ourDomain, today);
+  if (ourRows === null) {
+    console.log('\n  ⚠️ DataForSEO Backlinks API subscription is inactive — cannot run link-gap analysis.');
+    console.log('  Activate it at https://app.dataforseo.com/backlinks-subscription to enable this agent.');
+    notify({
+      subject: 'Backlink Opportunity skipped — Backlinks subscription inactive',
+      body: 'getReferringDomains returned no data (DataForSEO Backlinks API subscription required). Activate the subscription to enable competitor link-gap analysis.',
+      status: 'info',
+    });
+    return;
   }
-  console.log(`${ourDomains.size} domains (snapshot: ${snapshotDate})`);
+  const ourDomains = new Set(ourRows.map((r) => r.domain));
+  console.log(`${ourDomains.size} referring domains`);
 
-  // Load competitor CSVs
-  process.stdout.write('  Loading competitor CSVs... ');
-  const competitorMap = loadCompetitorCSVs();
-
-  if (competitorMap.size === 0) {
-    console.log('\n  ⚠️  No competitor CSV files found.');
-    console.log(`  Add files to: data/backlinks/competitors/`);
-    console.log('  Steps:');
-    console.log('    1. Ahrefs → Site Explorer → <competitor domain> → Referring Domains');
-    console.log('    2. Export CSV → save as data/backlinks/competitors/<name>.csv');
-    console.log('    3. Repeat for each competitor, then re-run');
-    process.exit(1);
+  // Competitor referring domains.
+  const competitorMap = new Map();
+  for (const c of competitorConfig) {
+    process.stdout.write(`  ${c.name} (${c.domain})... `);
+    const rows = await fetchReferringDomains(c.domain, today);
+    if (rows === null) {
+      console.log('subscription inactive — aborting');
+      return;
+    }
+    competitorMap.set(c.name, rows);
+    console.log(`${rows.length} referring domains`);
   }
 
   const competitors = [...competitorMap.keys()];
-  const totalRefdomains = [...competitorMap.values()].reduce((sum, r) => sum + r.length, 0);
-  console.log(`${competitorMap.size} competitors, ${totalRefdomains.toLocaleString()} total referring domains`);
-  competitors.forEach((c) => {
-    console.log(`    ${c}: ${competitorMap.get(c).length} domains`);
-  });
+  const competitorDomains = competitorConfig.map((c) => c.domain);
 
-  // Find opportunities
+  // Find opportunities.
   process.stdout.write('\n  Computing link gap... ');
-  const opportunities = buildOpportunities(competitorMap, ourDomains);
-  console.log(`${opportunities.length} opportunities (DR ≥ ${minDr})`);
+  const opportunities = buildOpportunities(competitorMap, ourDomains, competitorDomains);
+  console.log(`${opportunities.length} opportunities (rank ≥ ${minRank})`);
 
   if (opportunities.length === 0) {
-    console.log('  No opportunities found. Try lowering --min-dr or add more competitor CSVs.');
-    process.exit(0);
+    console.log('  No opportunities found. Try lowering --min-rank or adding competitors to config/competitors.json.');
+    const report = buildReport([], competitors, '_No opportunities found at the current rank threshold._', ourDomains.size);
+    writeFileSync(join(REPORTS_DIR, 'backlink-opportunities-report.md'), report);
+    return;
   }
 
   const multiCount = opportunities.filter((o) => o.competitorCount > 1).length;
   console.log(`  Linking to 2+ competitors: ${multiCount}`);
 
-  // Claude categorization
+  // Claude categorization.
   process.stdout.write('\n  Categorizing with Claude... ');
   const categorization = await categorizeOpportunities(opportunities, competitors);
   console.log('done');
 
-  // Save JSON
+  // Save JSON.
   const opportunitiesPath = join(BACKLINKS_DIR, 'opportunities.json');
   writeFileSync(opportunitiesPath, JSON.stringify({
     generatedAt: new Date().toISOString(),
-    snapshotDate,
     competitors,
-    minDr,
-    opportunities: opportunities.map(({ domain, dr, dofollow, competitors: comps, competitorCount, score }) => ({
-      domain, dr, dofollow, competitors: comps, competitorCount, score,
+    minRank,
+    opportunities: opportunities.map(({ domain, rank, dofollow, competitors: comps, competitorCount, score }) => ({
+      domain, rank, dofollow, competitors: comps, competitorCount, score,
     })),
   }, null, 2));
 
-  // Write report
-  const report = buildReport(opportunities, competitors, categorization, ourDomains.size, snapshotDate);
+  // Write report.
+  const report = buildReport(opportunities, competitors, categorization, ourDomains.size);
   const reportPath = join(REPORTS_DIR, 'backlink-opportunities-report.md');
   writeFileSync(reportPath, report);
 
@@ -333,7 +300,7 @@ async function main() {
   console.log(`  Report saved:        ${reportPath}`);
   console.log(`\n  Top 5 opportunities:`);
   opportunities.slice(0, 5).forEach((o, i) => {
-    console.log(`    ${i + 1}. ${o.domain} (DR ${o.dr}, ${o.competitorCount} competitor${o.competitorCount > 1 ? 's' : ''})`);
+    console.log(`    ${i + 1}. ${o.domain} (rank ${o.rank}, ${o.competitorCount} competitor${o.competitorCount > 1 ? 's' : ''})`);
   });
 }
 

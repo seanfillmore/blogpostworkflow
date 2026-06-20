@@ -2,7 +2,7 @@
  * Keyword data helpers for content-researcher.
  *
  * Pure transformations from DataForSEO response shapes into the shapes the
- * brief generator already consumes (originally designed around Ahrefs CSV data).
+ * brief generator already consumes.
  * Network calls live in lib/dataforseo.js; this module stays sync + testable.
  */
 

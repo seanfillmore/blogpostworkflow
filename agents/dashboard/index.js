@@ -30,7 +30,6 @@ import * as paths from './lib/paths.js';
 import dataRoutes from './routes/data.js';
 import agentsRoutes from './routes/agents.js';
 import miscRoutes from './routes/misc.js';
-import uploadsRoutes from './routes/uploads.js';
 import dataforseoRoutes from './routes/dataforseo.js';
 import chatRoutes from './routes/chat.js';
 import googleRoutes from './routes/google.js';
@@ -95,7 +94,6 @@ const ROUTES = [
   ...dataRoutes,
   ...agentsRoutes,
   ...miscRoutes,
-  ...uploadsRoutes,
   ...dataforseoRoutes,
   ...chatRoutes,
   ...googleRoutes,

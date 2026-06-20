@@ -2,7 +2,7 @@
 /**
  * Competitor Intelligence Agent
  *
- * Pulls top competitor pages from Ahrefs REST API, scrapes structure,
+ * Pulls top competitor pages from DataForSEO, scrapes structure,
  * takes screenshots, runs Claude vision analysis, writes optimization briefs.
  *
  * Usage:

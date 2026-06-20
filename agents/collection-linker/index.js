@@ -31,7 +31,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
@@ -39,7 +39,6 @@ import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'collection-linker');
-const TRACKER_DIR = join(ROOT, 'data', 'keyword-tracker');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -90,55 +89,6 @@ if (!topTargets && !urlArg) {
 if (urlArg && !keywordArg) {
   console.error('--url requires --keyword');
   process.exit(1);
-}
-
-// ── csv helpers ───────────────────────────────────────────────────────────────
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim().toLowerCase());
-  return lines.slice(1).map((line) => {
-    const fields = [];
-    let inQuote = false, cur = '';
-    for (const ch of line) {
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { fields.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    fields.push(cur.trim());
-    const row = {};
-    headers.forEach((h, i) => { row[h] = fields[i]?.replace(/^"|"$/g, '') ?? ''; });
-    return row;
-  });
-}
-
-function num(v) {
-  const n = parseFloat(String(v ?? '').replace(/,/g, ''));
-  return isNaN(n) ? null : n;
-}
-
-function gCol(row, ...keys) {
-  for (const k of keys) if (k in row && row[k] !== '') return row[k];
-  return null;
-}
-
-function loadKeywordCsv() {
-  if (!existsSync(TRACKER_DIR)) return { rows: [], filename: null };
-  const files = readdirSync(TRACKER_DIR)
-    .filter((f) => f.endsWith('.csv') || f.endsWith('.tsv'))
-    .sort((a, b) => statSync(join(TRACKER_DIR, b)).mtimeMs - statSync(join(TRACKER_DIR, a)).mtimeMs);
-  if (files.length === 0) return { rows: [], filename: null };
-  const filename = files[0];
-  const rows = parseCSV(readFileSync(join(TRACKER_DIR, filename), 'utf8'))
-    .map((row) => ({
-      keyword: gCol(row, 'keyword', 'keywords', 'query', 'term') || '',
-      position: num(gCol(row, 'current position', 'position', 'rank', 'pos')),
-      volume: num(gCol(row, 'volume', 'search volume', 'vol', 'monthly volume')) ?? 0,
-      url: gCol(row, 'current url', 'url', 'landing page', 'page') || '',
-    }))
-    .filter((r) => r.keyword && r.url && (r.url.includes('/collections/') || r.url.includes('/products/')));
-  return { rows, filename };
 }
 
 /**
@@ -456,37 +406,24 @@ async function main() {
     return;
   }
 
-  // ── Mode B: top targets from GSC (or CSV fallback) ───────────────────────
+  // ── Mode B: top targets from Google Search Console ───────────────────────
 
   let targets = [];
-  let dataSource = 'csv';
+  const dataSource = 'gsc';
 
-  // Try GSC first (live data, no manual exports needed)
-  let gsc = null;
+  // GSC is the live data source (no manual exports needed).
   try {
-    gsc = await import('../../lib/gsc.js');
+    const gsc = await import('../../lib/gsc.js');
     process.stdout.write('\n  Fetching collection/product quick-wins from Google Search Console... ');
     const gscPages = await gsc.getQuickWinPages(targetCount * 3, 90);
     const collectionPages = gscPages
       .filter((p) => p.url.includes('/collections/') || p.url.includes('/products/'))
       .map((p) => ({ keyword: p.keyword, position: p.position, volume: p.impressions, url: p.url }));
     targets = pickTopTargets(collectionPages, targetCount);
-    dataSource = 'gsc';
     console.log(`${gscPages.length} pages found, ${targets.length} collection/product targets selected`);
   } catch {
-    console.log('\n  GSC unavailable — falling back to keyword CSV');
-  }
-
-  // CSV fallback
-  if (targets.length === 0) {
-    const { rows: csvRows, filename: csvFile } = loadKeywordCsv();
-    if (csvRows.length === 0) {
-      console.error('No data source available. Configure GSC (npm run gsc-auth) or drop an Ahrefs CSV in data/keyword-tracker/.');
-      process.exit(1);
-    }
-    console.log(`  Keyword CSV: ${csvFile} (${csvRows.length} collection/product rows)`);
-    targets = pickTopTargets(csvRows, targetCount);
-    dataSource = csvFile;
+    console.error('\n  GSC unavailable — no data source. Configure GSC with `npm run gsc-auth`.');
+    process.exit(1);
   }
 
   if (targets.length === 0) {

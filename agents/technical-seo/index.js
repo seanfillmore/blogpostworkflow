@@ -120,7 +120,7 @@ function loadCrawlResults() {
 
   const issues = data.issues || {};
 
-  // Map crawl issue categories to Ahrefs CSV key names
+  // Map crawl issue categories to the key names used throughout this agent
   return {
     'Error-404_page': issues.error_404 || [],
     'Warning-indexable-Meta_description_tag_missing_or_empty': issues.meta_missing || [],
@@ -339,7 +339,7 @@ async function audit() {
 
   // 404 pages. Two corrections vs the raw crawl:
   //   1. Drop cdn-cgi/l/email-protection — Cloudflare footer-email obfuscation that
-  //      Ahrefs/DataForSEO flag as 404s; false positives, not fixable via content.
+  //      the crawler flags as 404s; false positives, not fixable via content.
   //   2. HEAD-verify each still-404 live before listing. The crawl is a point-in-time
   //      snapshot (≤14d old) — pages republished/fixed since then return 200 now and
   //      should not be reported (this is what made 5/13 of the last run stale).
@@ -384,7 +384,7 @@ async function audit() {
 
   // Pages with links to broken pages
   // Filter out cdn-cgi/l/email-protection — Cloudflare obfuscates footer email addresses into this
-  // URL, which Ahrefs flags as a 404. These are false positives in the site template, not fixable
+  // URL, which the crawler flags as a 404. These are false positives in the site template, not fixable
   // by editing article body_html, and grow linearly with every new page published.
   const allLinksTo404 = csvs['Error-indexable-Page_has_links_to_broken_page'] || [];
   const afterCdnFilter = allLinksTo404.filter((r) => {
@@ -1039,7 +1039,7 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
   const linkRows = loadIssue('Error-indexable-Page_has_links_to_broken_page-links');
   // Build: sourceUrl → Set of broken hrefs
   // Skip cdn-cgi/l/email-protection — Cloudflare obfuscates footer email addresses into this URL.
-  // Ahrefs flags it as a 404 on every page with the footer email. It lives in the theme template,
+  // The crawler flags it as a 404 on every page with the footer email. It lives in the theme template,
   // not in article body_html, so it cannot be fixed by editing article content.
   const brokenBySource = {};
   for (const r of linkRows) {
@@ -1248,7 +1248,7 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
 // the ORIGINAL href in body_html).
 //
 // Intended as a weekly cron — prevents post-publish link drift from
-// accumulating until someone notices it in Ahrefs.
+// accumulating until someone notices it in a crawl report.
 
 async function checkLinkDecay({ dryRun = false } = {}) {
   console.log('\n  Loading published article index...');
@@ -1798,7 +1798,7 @@ async function fixAltText({ dryRun = false } = {}) {
     }
   }
 
-  // ── Fix Shopify Files alt text (from Ahrefs missing alt CSV) ─────────────
+  // ── Fix Shopify Files alt text (from the crawl's missing-alt list) ─────────────
   console.log('\n  Checking Shopify Files for missing alt text...');
   const altLinkRows = loadIssue('Warning-Missing_alt_text-links');
   const missingAltUrls = new Set(altLinkRows
@@ -1808,7 +1808,7 @@ async function fixAltText({ dryRun = false } = {}) {
   );
 
   {
-    console.log(`  ${missingAltUrls.size} CDN images flagged by Ahrefs. Checking all Shopify Files...`);
+    console.log(`  ${missingAltUrls.size} CDN images flagged by the crawl. Checking all Shopify Files...`);
     const allFiles = await getAllFiles();
     const filesWithoutAlt = allFiles.filter(f => !f.alt || !f.alt.trim());
     const totalToFix = filesWithoutAlt.length;
