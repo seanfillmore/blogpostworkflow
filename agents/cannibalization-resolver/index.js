@@ -318,6 +318,10 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
 
       const loserPath = loser.path;
       const winnerPath = decision.winner;
+      // When a CONSOLIDATE merge fails the editor gate we HOLD it: the live
+      // winner is left untouched and the loser is NOT redirected, so both posts
+      // stay live and no content is lost while the merge awaits manual review.
+      let consolidateHeld = false;
 
       // Only act on blog posts
       if (!isBlogPost(loserPath) || !isBlogPost(winnerPath)) {
@@ -384,20 +388,28 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
           }
           const editorClean = editorRan && !needsRebuild;
 
-          // Auto-publish if the editor passed cleanly. Otherwise save as draft for human review.
-          const willPublish = editorClean;
-          process.stdout.write(`    ${willPublish ? 'Publishing merged article' : 'Saving Shopify draft'}... `);
-          await updateArticle(winnerArticle.blogId, winnerArticle.articleId, {
-            body_html: mergedHtml,
-            published: willPublish,
-          });
-          console.log(willPublish ? 'published' : 'saved (needs review)');
+          // Push the merged content live ONLY if the editor passed cleanly.
+          // If it flagged blockers, NEVER unpublish or overwrite the live winner
+          // — it's a proven ranking page. The merged draft is already saved to
+          // data/posts/<winner>/content.html for human review; we leave Shopify
+          // untouched and (below) skip the loser redirect so both posts stay live.
+          if (editorClean) {
+            process.stdout.write(`    Publishing merged article... `);
+            await updateArticle(winnerArticle.blogId, winnerArticle.articleId, {
+              body_html: mergedHtml,
+              published: true,
+            });
+            console.log('published');
+          } else {
+            consolidateHeld = true;
+            console.log('    Held — editor flagged blockers; live winner untouched, merged draft saved for review.');
+          }
           results.push({
             query: decision.query,
             loserPath,
             winnerPath,
             action: 'CONSOLIDATE',
-            status: willPublish ? 'published' : 'draft_needs_review',
+            status: editorClean ? 'published' : 'draft_needs_review',
             editorRan,
             editorError,
             needsRebuildReasons: needsRebuild?.reasons ?? null,
@@ -408,8 +420,11 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
         }
       }
 
-      // Create redirect (for both REDIRECT and CONSOLIDATE)
-      if (loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') {
+      // Create redirect (for both REDIRECT and CONSOLIDATE). Skip it when a
+      // CONSOLIDATE merge was held for review — redirecting the loser into a
+      // winner that still shows its OLD content would lose the loser's unique
+      // content until someone publishes the merged draft.
+      if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && !consolidateHeld) {
         if (existingPaths.has(loserPath)) {
           results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_exists' });
         } else {
@@ -813,8 +828,12 @@ async function main() {
       console.log('\n  Applying resolutions...');
       results = await applyResolutions(decisions, articleIndex, existingRedirects);
       const redirectsCreated = results.filter((r) => r.status === 'redirect_created').length;
-      const drafts = results.filter((r) => r.status === 'draft_saved').length;
-      console.log(`\n  Done: ${redirectsCreated} redirects created, ${drafts} drafts saved`);
+      const published = results.filter((r) => r.status === 'published').length;
+      // CONSOLIDATE pushes 'draft_needs_review'; 'draft_saved' is the legacy name.
+      const drafts = results.filter((r) => r.status === 'draft_needs_review' || r.status === 'draft_saved').length;
+      const held = results.filter((r) => r.status === 'draft_needs_review').length;
+      console.log(`\n  Done: ${published} merged+published, ${drafts} held for review (live winners untouched), ${redirectsCreated} redirects created`);
+      if (held) console.log(`  ${held} merge(s) held — review data/posts/<winner>/content.html, then publish.`);
     }
   }
 
