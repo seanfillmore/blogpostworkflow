@@ -20,6 +20,7 @@ import {
   pollReport,
   downloadReport,
 } from '../../lib/amazon/sp-api-client.js';
+import { settledWeekWindow } from '../../lib/amazon/report-window.js';
 
 const DUMP_DIR = 'data/amazon-explore';
 const today = new Date().toISOString().slice(0, 10);
@@ -57,15 +58,12 @@ for (const item of listings.items) {
 const rscList = [...rscAsins];
 console.log(`RSC ASINs: ${rscList.length} (Culina: ${culinaAsins.size} excluded)`);
 
-// Last complete Sunday-Saturday week (matching the BA search terms run)
-const now = new Date();
-const day = now.getUTCDay();
-const lastSaturday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day - 1));
-const lastSunday = new Date(lastSaturday);
-lastSunday.setUTCDate(lastSaturday.getUTCDate() - 6);
-const dataStartTime = lastSunday.toISOString().slice(0, 10);
-const dataEndTime = lastSaturday.toISOString().slice(0, 10);
-console.log(`Window: ${dataStartTime} to ${dataEndTime} (WEEK granularity)`);
+// Most recent Sun–Saturday week that ended at least ~7 days ago. Brand Analytics
+// weekly data isn't finalized the instant a week ends, so requesting the
+// just-ended week (the old behavior) FATAL'd / sat IN_QUEUE on every Sunday run.
+const SETTLE_LAG_DAYS = Number(process.env.SQP_SETTLE_LAG_DAYS || 7);
+const { dataStartTime, dataEndTime } = settledWeekWindow(new Date(), SETTLE_LAG_DAYS);
+console.log(`Window: ${dataStartTime} to ${dataEndTime} (WEEK granularity, ${SETTLE_LAG_DAYS}d settle lag)`);
 
 // Chunk ASINs into space-separated batches respecting 200-char limit
 function chunkAsins(asins, maxLen = 200) {
@@ -101,29 +99,42 @@ for (let bi = 0; bi < batches.length; bi++) {
   console.log(`=== Batch ${bi + 1}/${batches.length} (${batch.length} ASINs) ===`);
   console.log(`  ASINs: ${batch.join(' ')}`);
 
-  try {
-    const reportId = await requestReport(
-      client,
-      'GET_BRAND_ANALYTICS_SEARCH_QUERY_PERFORMANCE_REPORT',
-      [getMarketplaceId()],
-      dataStartTime,
-      dataEndTime,
-      { reportPeriod: 'WEEK', asin: batch.join(' ') },
-    );
-    console.log(`  Report ID: ${reportId}`);
+  // Amazon FATALs/queues Brand Analytics reports transiently even for settled
+  // data; one retry clears most of it.
+  const MAX_ATTEMPTS = 2;
+  let lastErr = null;
+  let done = false;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS && !done; attempt++) {
+    try {
+      const reportId = await requestReport(
+        client,
+        'GET_BRAND_ANALYTICS_SEARCH_QUERY_PERFORMANCE_REPORT',
+        [getMarketplaceId()],
+        dataStartTime,
+        dataEndTime,
+        { reportPeriod: 'WEEK', asin: batch.join(' ') },
+      );
+      console.log(`  Report ID: ${reportId}${attempt > 1 ? ` (attempt ${attempt})` : ''}`);
 
-    const reportDocumentId = await pollReport(client, reportId);
-    console.log(`  Document ID: ${reportDocumentId}`);
+      const reportDocumentId = await pollReport(client, reportId);
+      console.log(`  Document ID: ${reportDocumentId}`);
 
-    const data = await downloadReport(client, reportDocumentId);
-    const rows = Array.isArray(data) ? data : data?.dataByAsin ?? [];
-    console.log(`  Rows: ${rows.length}\n`);
+      const data = await downloadReport(client, reportDocumentId);
+      const rows = Array.isArray(data) ? data : data?.dataByAsin ?? [];
+      console.log(`  Rows: ${rows.length}\n`);
 
-    allRows.push(...rows);
-    batchResults.push({ batch: bi + 1, asins: batch, reportId, rowCount: rows.length });
-  } catch (err) {
-    console.error(`  ERROR on batch ${bi + 1}: ${err.message}\n`);
-    batchResults.push({ batch: bi + 1, asins: batch, error: err.message });
+      allRows.push(...rows);
+      batchResults.push({ batch: bi + 1, asins: batch, reportId, rowCount: rows.length });
+      done = true;
+    } catch (err) {
+      lastErr = err;
+      console.error(`  ERROR on batch ${bi + 1} (attempt ${attempt}/${MAX_ATTEMPTS}): ${err.message}`);
+      if (attempt < MAX_ATTEMPTS) await new Promise((r) => setTimeout(r, 30000));
+    }
+  }
+  if (!done) {
+    console.error('');
+    batchResults.push({ batch: bi + 1, asins: batch, error: lastErr?.message });
   }
 }
 

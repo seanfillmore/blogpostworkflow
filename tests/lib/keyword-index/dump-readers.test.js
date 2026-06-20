@@ -39,6 +39,24 @@ test('findLatestSqpDump matches *-search-query-performance-*.json', () => {
   }
 });
 
+test('findLatestSqpDump skips an empty newest dump for an older one with rows', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'dump-readers-'));
+  try {
+    const dir = join(tmp, 'data', 'amazon-explore');
+    mkdirSync(dir, { recursive: true });
+    const good = join(dir, '2026-05-01-search-query-performance-production.json'); // older, has rows
+    const empty = join(dir, '2026-06-14-search-query-performance-production.json'); // newest, FATAL → no rows
+    writeFileSync(good, JSON.stringify({ rows: [{ asin: 'B0X', searchQueryData: { searchQuery: 'k' } }] }));
+    writeFileSync(empty, JSON.stringify({ rows: [] }));
+    utimesSync(good, new Date('2026-05-01T00:00:00Z'), new Date('2026-05-01T00:00:00Z'));
+    utimesSync(empty, new Date('2026-06-14T00:00:00Z'), new Date('2026-06-14T00:00:00Z'));
+    // newest is empty → must fall back to the older dump that actually has rows
+    assert.equal(findLatestSqpDump(tmp), good);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test('parseSqpDump returns empty for empty / malformed dumps', () => {
   assert.deepEqual(parseSqpDump(null), {});
   assert.deepEqual(parseSqpDump({}), {});
