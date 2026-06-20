@@ -276,6 +276,10 @@ if (new Date().getDay() === 0) {
   // Step 8c: AI citation tracking across LLMs
   runStep('ai-citation-tracker', `"${NODE}" agents/ai-citation-tracker/index.js`, { indent: '    ' });
 
+  // Step 8d: turn the citation data into a ranked PR target list (runs AFTER the
+  // tracker so it consumes the freshest snapshot, with full citation URLs).
+  runStep('pr-target-finder', `"${NODE}" agents/pr-target-finder/index.js`, { indent: '    ' });
+
   // Step 8e: generate llms.txt for LLM crawlers
   runStep('llms-txt-generator', `"${NODE}" agents/llms-txt-generator/index.js`, { indent: '    ' });
 
