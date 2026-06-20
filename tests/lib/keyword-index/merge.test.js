@@ -66,3 +66,28 @@ test('mergeSources falls back to "unclustered" when no cluster match', () => {
   const slug = Object.keys(out)[0];
   assert.equal(out[slug].cluster, 'unclustered');
 });
+
+test('mergeSources derives a cluster from keyword text when prior has none', () => {
+  // GSC-discovered keyword, no prior cluster — must be derived, not 'unclustered'.
+  const gsc = { 'best body lotion for sensitive skin': { impressions: 500, clicks: 30, ctr: 0.06, position: 8, top_page: '/p/y', pages: [] } };
+  const ga4Map = { '/p/y': { sessions: 100, conversions: 5, page_revenue: 200 } };
+  const out = mergeSources({ amazon: {}, gsc, ga4Map, clusters: {} });
+  assert.equal(out[Object.keys(out)[0]].cluster, 'lotion');
+});
+
+test('mergeSources does NOT copy a stale "unclustered" forward — it recomputes', () => {
+  // Prior build collapsed this keyword to 'unclustered'; we must re-derive it.
+  const gsc = { 'fluoride free toothpaste': { impressions: 800, clicks: 40, ctr: 0.05, position: 6, top_page: '/p/z', pages: [] } };
+  const ga4Map = { '/p/z': { sessions: 120, conversions: 7, page_revenue: 300 } };
+  const clusters = { 'fluoride free toothpaste': 'unclustered' };
+  const out = mergeSources({ amazon: {}, gsc, ga4Map, clusters });
+  assert.equal(out[Object.keys(out)[0]].cluster, 'toothpaste');
+});
+
+test('mergeSources preserves a real cluster carried over from the prior index', () => {
+  const gsc = { 'some kw': { impressions: 500, clicks: 30, ctr: 0.06, position: 8, top_page: '/p/w', pages: [] } };
+  const ga4Map = { '/p/w': { sessions: 100, conversions: 5, page_revenue: 200 } };
+  const clusters = { 'some kw': 'coconut oil' }; // manually curated; must win
+  const out = mergeSources({ amazon: {}, gsc, ga4Map, clusters });
+  assert.equal(out[Object.keys(out)[0]].cluster, 'coconut oil');
+});
