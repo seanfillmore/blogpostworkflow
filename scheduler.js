@@ -205,6 +205,11 @@ if (!dryFlag) {
 runStep('change-verdict', `"${NODE}" agents/change-verdict/index.js${dryFlag}`);
 runStep('change-queue-processor', `"${NODE}" agents/change-queue-processor/index.js${dryFlag}`);
 
+// Step 5z.1: seo-impact — "what's actually working?" revenue/ROI analysis.
+// Read-only GA4+GSC join over a 28-day window; feeds the daily digest, dashboard,
+// and the prioritizers (which expect it fresh within 3 days). Runs daily.
+runStep('seo-impact', `"${NODE}" agents/seo-impact/index.js`);
+
 // Keyword-index foundation — runs daily but self-paces to biweekly via built_at.
 runStep('keyword-index-builder', `"${NODE}" agents/keyword-index-builder/index.js${dryFlag}`);
 
