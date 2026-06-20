@@ -19,19 +19,19 @@ import {
   pollReport,
   streamReportToFile,
 } from '../../lib/amazon/sp-api-client.js';
+import { settledWeekWindow } from '../../lib/amazon/report-window.js';
 
 const client = getClient();
 console.log(`Hitting ${client.env} endpoint: ${client.baseUrl}`);
 
-// Last complete Sunday-Saturday week.
-const now = new Date();
-const day = now.getUTCDay(); // 0 = Sunday
-const lastSaturday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day - 1));
-const lastSunday = new Date(lastSaturday);
-lastSunday.setUTCDate(lastSaturday.getUTCDate() - 6);
-
-const dataStartTime = lastSunday.toISOString();
-const dataEndTime = new Date(lastSaturday.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString();
+// Most recent Sun–Sat week that ended at least ~7 days ago. Brand Analytics
+// weekly data isn't finalized the instant a week ends, so requesting the
+// just-ended week FATAL'd / sat IN_QUEUE on every Sunday run (same bug the SQP
+// explore had — see lib/amazon/report-window.js).
+const SETTLE_LAG_DAYS = Number(process.env.BA_SETTLE_LAG_DAYS || 7);
+const { dataStartTime: startDate, dataEndTime: endDate } = settledWeekWindow(new Date(), SETTLE_LAG_DAYS);
+const dataStartTime = `${startDate}T00:00:00.000Z`;
+const dataEndTime = `${endDate}T23:59:59.999Z`;
 
 console.log(`Requesting GET_BRAND_ANALYTICS_SEARCH_TERMS_REPORT`);
 console.log(`  start: ${dataStartTime}`);
