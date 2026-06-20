@@ -33,6 +33,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getReferringDomains } from '../../lib/dataforseo.js';
+import { classifySource } from '../../lib/pr-targets.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -97,12 +98,15 @@ async function fetchReferringDomains(target, today) {
 
 // ── opportunity scoring ───────────────────────────────────────────────────────
 
-function buildOpportunities(competitorMap, ourDomains) {
+function buildOpportunities(competitorMap, ourDomains, competitorDomains) {
   const map = new Map();
 
   for (const [competitor, refdomains] of competitorMap.entries()) {
     for (const rd of refdomains) {
       if (ourDomains.has(rd.domain)) continue;
+      // Keep only editorial domains we could actually pitch — drop shorteners,
+      // coupon/reward/directory junk, platforms, retailers, and competitors.
+      if (classifySource(rd.domain, { competitorDomains }) !== 'pitch') continue;
       if (!map.has(rd.domain)) {
         map.set(rd.domain, { domain: rd.domain, rank: rd.rank, dofollow: rd.dofollow, competitors: [] });
       }
@@ -254,10 +258,11 @@ async function main() {
   }
 
   const competitors = [...competitorMap.keys()];
+  const competitorDomains = competitorConfig.map((c) => c.domain);
 
   // Find opportunities.
   process.stdout.write('\n  Computing link gap... ');
-  const opportunities = buildOpportunities(competitorMap, ourDomains);
+  const opportunities = buildOpportunities(competitorMap, ourDomains, competitorDomains);
   console.log(`${opportunities.length} opportunities (rank ≥ ${minRank})`);
 
   if (opportunities.length === 0) {
