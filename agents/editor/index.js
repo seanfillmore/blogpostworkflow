@@ -41,6 +41,7 @@ import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
 import { findUncitedClaims } from '../../lib/citation-check.js';
+import { findStaleYears } from '../../lib/year-accuracy.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -482,42 +483,33 @@ function loadCompetitorAliases() {
  * stale years that don't exist in body (confusing slug/id attrs with
  * visible text), so we override the LLM's verdict with this.
  *
- * "Stale" means a year in [2020, currentYear). Current year and future
- * years are fine. Pre-2020 years are treated as historical references
- * and not flagged.
+ * "Stale" means a year in [2020, currentYear) that is used as CURRENT-YEAR
+ * framing (a title/theme/edition marker). Current year and future years are
+ * fine, as are pre-2020 years. Crucially, legitimate HISTORICAL references —
+ * "since 2020", "a 2021 study", "founded in 2019", "the 2020 pandemic",
+ * "2018–2021" — are NOT flagged: the gate keeps titles/themes current, it does
+ * not rewrite citations or facts about the past. See lib/year-accuracy.js.
  */
 function buildYearAccuracyVerdict(editorialContent) {
   const currentYear = new Date().getFullYear();
-  const stale = new Set();
-  const staleContexts = [];
-  const re = /\b(20\d{2})\b/g;
-  let m;
-  while ((m = re.exec(editorialContent)) !== null) {
-    const yr = parseInt(m[1], 10);
-    if (yr < 2020 || yr >= currentYear) continue;
-    stale.add(yr);
-    // Capture surrounding context for the report
-    const start = Math.max(0, m.index - 40);
-    const end = Math.min(editorialContent.length, m.index + 50);
-    const snippet = editorialContent.slice(start, end).replace(/\s+/g, ' ').trim();
-    staleContexts.push(`"…${snippet}…"`);
-    if (staleContexts.length >= 5) break;
-  }
+  const staleMatches = findStaleYears(editorialContent, currentYear);
+  const stale = new Set(staleMatches.map((s) => s.year));
+  const staleContexts = staleMatches.slice(0, 5).map((s) => `"…${s.snippet}…"`);
 
   if (stale.size === 0) {
     return `## 4. YEAR ACCURACY
 **VERDICT:** Pass
-**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale year references detected. Any YYYY patterns in href slugs, id attributes, or other HTML attributes are ignored by design (immutable technical identifiers).
+**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale current-year references detected. Legitimate historical references (e.g. "since 2020", "a 2021 study"), and any YYYY patterns in href slugs, id attributes, or other HTML attributes, are ignored by design.
 
 ---
 `;
   }
   return `## 4. YEAR ACCURACY
 **VERDICT:** BLOCKER
-**NOTES:** Found ${staleContexts.length} stale year reference(s) in visible body text: ${[...stale].sort().join(', ')}. Contexts:
+**NOTES:** Found ${staleContexts.length} stale CURRENT-YEAR reference(s) (title/theme/edition framing) that should read ${currentYear}: ${[...stale].sort().join(', ')}. Contexts:
 ${staleContexts.map((c, i) => `  ${i + 1}. ${c}`).join('\n')}
 
-Run pre-review auto-fix patterns or rewrite the surrounding text to use ${currentYear}.
+These are current-year markers, not historical citations (references like "since 2020" or "a 2021 study" are intentionally not flagged). Bump them to ${currentYear}.
 
 ---
 `;
