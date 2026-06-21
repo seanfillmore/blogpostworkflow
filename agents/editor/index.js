@@ -41,7 +41,7 @@ import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
 import { findUncitedClaims } from '../../lib/citation-check.js';
-import { findStaleYears } from '../../lib/year-accuracy.js';
+import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../../lib/year-accuracy.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -873,14 +873,18 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
         changes.push(`Corrected year: "${prefix} ${year}" → "${prefix} ${currentYear}"`);
       }
     }
-    // Parenthesized year: "(2025)"
-    const parenRegex = new RegExp(`\\((${year})\\)`, 'g');
-    const beforeParen = fixed;
-    fixed = fixed.replace(parenRegex, `(${currentYear})`);
-    if (fixed !== beforeParen) {
-      changes.push(`Corrected year: (${year}) → (${currentYear})`);
-    }
   }
+
+  // Parenthesized year: "(2025)" → "(2026)". But NEVER touch an academic/source
+  // citation like "Smith et al. (2021)" or "Dayrit, F.M. (2021)" — that year is a
+  // publication date, not a current-year marker. isHistoricalYearReference guards it.
+  fixed = fixed.replace(/\((20\d{2})\)/g, (m, yr, offset) => {
+    const n = parseInt(yr, 10);
+    if (n < 2020 || n >= currentYear) return m;
+    if (isHistoricalYearReference(fixed, offset + 1)) return m; // citation/historical — preserve
+    changes.push(`Corrected year: (${yr}) → (${currentYear})`);
+    return `(${currentYear})`;
+  });
 
   // Stale years inside heading tags. Almost always "current year" markers
   // like "Best X 2025" — safe to bump.
@@ -898,11 +902,11 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
   // Stale years inside <a> link text and title="" attributes. The href slug
   // stays untouched (slug is immutable for indexed posts), but visible labels
   // and title attributes should match the refreshed destination titles.
+  // Citation links ("Shilling et al. (2021)", "Dayrit, F.M. (2021)") commonly live
+  // in <a> text — bumpStaleYears preserves those (and historical refs) while still
+  // bumping edition-marker link text like "Best Lotions 2024".
   fixed = fixed.replace(/<a([^>]*)>([\s\S]*?)<\/a>/gi, (match, attrs, inner) => {
-    const bumpYear = (str) => str.replace(/\b(20\d{2})\b/g, (ym, yr) => {
-      const n = parseInt(yr, 10);
-      return n >= 2020 && n < currentYear ? String(currentYear) : ym;
-    });
+    const bumpYear = (str) => bumpStaleYears(str, currentYear).text;
     // Bump the inner anchor text
     const updatedInner = bumpYear(inner);
     // Bump title="..." attribute (but NEVER href — slugs are immutable)
