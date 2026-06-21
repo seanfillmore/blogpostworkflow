@@ -11,7 +11,9 @@
  *   3. Claude analyzes what's weak (thin sections, missing keywords, stale info)
  *   4. Claude produces a refreshed HTML with improvements applied
  *   5. Saves refreshed content to data/posts/<slug>-refreshed.html
- *   6. With --apply, republishes to Shopify (as draft for review)
+ *   6. With --apply, pushes the refreshed HTML to Shopify, PRESERVING the
+ *      article's current publish state (a live post stays live / refreshed in
+ *      place; a draft stays a draft). Never unpublishes a live post.
  *
  * Output:
  *   data/posts/<slug>-refreshed.html       — refreshed HTML for each post
@@ -19,7 +21,7 @@
  *
  * Usage:
  *   node agents/content-refresher/index.js                   # dry run, auto-select targets
- *   node agents/content-refresher/index.js --apply            # push refreshed drafts to Shopify
+ *   node agents/content-refresher/index.js --apply            # push refreshes to Shopify (preserves publish state)
  *   node agents/content-refresher/index.js --slug <slug>      # refresh one specific post
  *   node agents/content-refresher/index.js --count 5          # limit to 5 posts (default: 3)
  *   node agents/content-refresher/index.js --min-impr 50      # lower impression threshold
@@ -510,11 +512,17 @@ ${afCheck.intro?.html || ''}`,
 
       let applied = false;
       if (apply) {
-        process.stdout.write('    Publishing draft to Shopify... ');
+        // NEVER unpublish a live post to "stage a draft for review" — that 404s a
+        // ranking page and nothing consumes the draft. Preserve the article's
+        // current publish state: a live post is refreshed in place (stays live),
+        // an existing draft stays a draft. (Was `published: false`, the root cause
+        // of the daily publish-drift oscillation — see project_shopify_unpublish_drift.)
+        const wasPublished = !!article.published_at;
+        process.stdout.write(`    ${wasPublished ? 'Refreshing live article' : 'Updating draft'} on Shopify... `);
         try {
           await updateArticle(article.blogId, article.id, {
             body_html: finalHtml,
-            published: false, // save as draft for review
+            published: wasPublished,
           });
           applied = true;
           console.log('done');

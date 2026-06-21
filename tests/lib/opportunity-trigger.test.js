@@ -91,9 +91,9 @@ test('buildTriggerCommand throws when it cannot derive the target', () => {
     recommended_action: 'rank_push',
     signal_source: { page: 'https://www.realskincare.com/collections/x' },
   }), /keyword/i);
-  // no page at all → cannot derive a slug
+  // no page at all → cannot resolve a post to refresh
   assert.throws(() => buildTriggerCommand({
     recommended_action: 'refresh',
     signal_source: {},
-  }), /derive/i);
+  }), /no local post found|cannot refresh/i);
 });

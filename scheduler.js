@@ -169,37 +169,14 @@ runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 
 // Step 5g: refresh stale year references in titles + meta descriptions (idempotent)
 runStep('meta-optimizer --refresh-stale-years', `"${NODE}" agents/meta-optimizer/index.js --refresh-stale-years${dryFlag ? '' : ' --apply'}`);
 
-// Step 5e: auto-refresh posts stuck in "crawled_not_indexed" for 45+ days
-if (!dryFlag) {
-  const { listAllSlugs, getPostMeta } = await import('./lib/posts.js');
-  const reportPath = join(__dirname, 'data', 'reports', 'indexing', 'latest.json');
-  if (existsSync(reportPath)) {
-    try {
-      const report = JSON.parse(readFileSync(reportPath, 'utf8'));
-      const stale = (report.results || []).filter(r => {
-        if (r.state !== 'crawled_not_indexed') return false;
-        const age = r.age_days ?? 0;
-        return age >= 45;
-      });
-      if (stale.length > 0) {
-        log(`  Crawled-not-indexed refresh: ${stale.length} post(s) older than 45 days`);
-        for (const r of stale) {
-          log(`    Refreshing: ${r.slug} (${r.age_days}d old)`);
-          try {
-            execSync(`"${NODE}" agents/content-refresher/index.js --slug "${r.slug}" --apply`, { stdio: 'inherit', cwd: __dirname });
-            log(`    ✓ ${r.slug} refreshed and pushed`);
-          } catch (e) {
-            log(`    ✗ ${r.slug} refresh failed (exit ${e.status})`);
-          }
-        }
-      } else {
-        log('  Crawled-not-indexed refresh: none older than 45 days');
-      }
-    } catch (e) {
-      log(`  Crawled-not-indexed refresh: failed to read report (${e.message})`);
-    }
-  }
-}
+// Step 5e: (removed 2026-06-21) — crawled_not_indexed refresh is owned by the
+// indexing-fixer (cron 11:30 UTC) via refresh-runner, which keeps posts PUBLISHED
+// and respects a 30-day refresh cooldown. This step duplicated that but called
+// `content-refresher --apply`, which sets `published:false` ("draft for review")
+// on the LIVE article — silently 404'ing ranking posts. With no cooldown it fired
+// daily, oscillating against `publish-drift --fix` (4 posts flipped draft↔live every
+// day). The "draft for review" output has no consumer. Removed entirely; the
+// indexing-fixer path is the single correct owner. See project_shopify_unpublish_drift.
 
 // Step 5z: change-log verdict + queue release (run daily, after all agent runs)
 runStep('change-verdict', `"${NODE}" agents/change-verdict/index.js${dryFlag}`);
