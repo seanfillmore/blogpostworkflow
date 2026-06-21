@@ -69,3 +69,37 @@ test('snippet is captured for reporting', () => {
   assert.equal(out.length, 1);
   assert.match(out[0].snippet, /2024/);
 });
+
+// ── Academic / source citations must be preserved (not flagged, not bumped) ──
+import { bumpStaleYears } from '../../lib/year-accuracy.js';
+
+test('parenthesized citations are not flagged as stale', () => {
+  const cases = [
+    'Coconut oil reduces protein loss (Rele & Mohile, 2021).',
+    'A landmark result, Smith et al. (2021), confirmed this.',
+    'Per Dayrit, F.M. (2021), lauric acid dominates.',
+    'Published in Nutrients (2021).',
+    'The mechanism is well documented (Robbins, 2021).',
+  ];
+  for (const text of cases) {
+    assert.deepEqual(findStaleYears(text, CUR), [], `should not flag: ${text}`);
+  }
+});
+
+test('bumpStaleYears: preserves citations and historical refs', () => {
+  assert.equal(bumpStaleYears('Smith et al. (2021)', CUR).text, 'Smith et al. (2021)');
+  assert.equal(bumpStaleYears('Dayrit, F.M. (2021)', CUR).text, 'Dayrit, F.M. (2021)');
+  assert.equal(bumpStaleYears('Nutrients (2021)', CUR).text, 'Nutrients (2021)');
+  assert.equal(bumpStaleYears('the market has grown since 2021', CUR).text, 'the market has grown since 2021');
+  assert.equal(bumpStaleYears('founded in 2021', CUR).text, 'founded in 2021');
+});
+
+test('bumpStaleYears: bumps edition-marker text', () => {
+  assert.equal(bumpStaleYears('Best Lotions 2024', CUR).text, 'Best Lotions 2026');
+  assert.equal(bumpStaleYears('updated for 2023', CUR).text, 'updated for 2026');
+  assert.equal(bumpStaleYears('guide (2024)', CUR).text, 'guide (2026)'); // lowercase noun → not a citation
+});
+
+test('bumpStaleYears: leaves current/future/pre-2020 alone', () => {
+  assert.equal(bumpStaleYears('ready for 2026 and 2030, since 2008', CUR).changed, false);
+});
