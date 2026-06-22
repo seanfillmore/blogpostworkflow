@@ -24,6 +24,14 @@ const MAX_ATTEMPTS = 3;
 if (!slug) { console.error('Usage: node scripts/remediate-live-post.js <slug> [--push]'); process.exit(1); }
 
 const quiet = (cmd) => execSync(cmd, { cwd: ROOT, stdio: ['ignore', 'ignore', 'inherit'] });
+// A single repair agent failing (e.g. content-remediator's integrity guard trips
+// on one LLM sample) must NOT abort the whole Fix-blockers run — other agents in
+// the same attempt may have already fixed the real blocker. Log and continue; the
+// re-gate decides pass/fail.
+const tryRepair = (cmd, label) => {
+  try { quiet(cmd); return true; }
+  catch (e) { console.log(`  ⚠ ${label} failed (exit ${e.status ?? '?'}) — continuing; re-gate will decide.`); return false; }
+};
 
 function gate() {
   quiet(`node agents/editor/index.js ${getContentPath(slug)}`);
@@ -56,16 +64,17 @@ while (!g.pass && attempts < MAX_ATTEMPTS) {
   let acted = false;
   if (/broken link|404|link health/.test(sectionText)) {
     console.log(`  attempt ${attempts}: link-repair`);
-    quiet(`node agents/link-repair/index.js ${slug}`); acted = true;
+    if (tryRepair(`node agents/link-repair/index.js ${slug}`, 'link-repair')) acted = true;
   }
   // Uncited claims (YMYL): add verified citations first, then soften residuals.
   if (/factual|citation|uncited|unsourced|credibility|claim/.test(sectionText)) {
     console.log(`  attempt ${attempts}: citation-finder`);
-    quiet(`node agents/citation-finder/index.js --slug ${slug}`); acted = true;
+    if (tryRepair(`node agents/citation-finder/index.js --slug ${slug}`, 'citation-finder')) acted = true;
   }
-  if (g.blockers.length) {
+  // Prose-substance blockers (content-remediator skips factual/citation/overall itself).
+  if (g.blockers.some((b) => !/factual|citation|uncited|unsourced|credibility|overall quality/i.test(b.section))) {
     console.log(`  attempt ${attempts}: content-remediator (${g.blockers.map((b) => b.section).join(', ')})`);
-    quiet(`node agents/content-remediator/index.js --slug ${slug}`); acted = true;
+    if (tryRepair(`node agents/content-remediator/index.js --slug ${slug}`, 'content-remediator')) acted = true;
   }
   if (!acted) {
     console.log(`  attempt ${attempts}: no actionable blocker parsed — stopping.`);
