@@ -72,9 +72,18 @@ async function main() {
   const original = readFileSync(contentPath, 'utf8');
   const report = readFileSync(reportPath, 'utf8');
 
-  const blockers = contentBlockers(parseEditorBlockers(report));
+  // content-remediator revises PROSE SUBSTANCE. Two section types are NOT its job
+  // and it must not attempt them:
+  //   - Factual concerns / citations: owned by citation-finder (cite or soften).
+  //     Asking the reviser to "fix unsourced claims" makes it add citation links,
+  //     which trips the externalLinksAdded guard below → throws (exit 1) and, via
+  //     the dashboard's remediate-live-post.js, crashes the whole Fix-blockers run.
+  //   - Overall Quality: a SUMMARY, not a concrete issue — it resolves once the
+  //     underlying sections do (and reconcileOverallQuality clears a stale one).
+  const NOT_PROSE = /factual|citation|uncited|unsourced|credibility|overall quality/i;
+  const blockers = contentBlockers(parseEditorBlockers(report)).filter((b) => !NOT_PROSE.test(b.section));
   if (blockers.length === 0) {
-    console.log(`  content-remediator: no content-substance blockers for "${slug}" — nothing to revise.`);
+    console.log(`  content-remediator: no prose-substance blockers for "${slug}" (citation/overall are handled by citation-finder / gate reconciliation) — nothing to revise.`);
     return;
   }
   console.log(`  content-remediator: ${blockers.length} content blocker(s) for "${slug}": ${blockers.map((b) => b.section).join(', ')}`);
