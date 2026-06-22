@@ -5,7 +5,8 @@ import { spawn } from 'node:child_process';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
 import { getBlogs, updateArticle, getProducts, updateProduct, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
 import { getPostMeta, getMetaPath, getContentPath, listAllSlugs } from '../../../lib/posts.js';
-import { buildTriggerCommand } from '../lib/opportunity-trigger.js';
+import { buildTriggerCommand, agentForOpportunityItem } from '../lib/opportunity-trigger.js';
+import { ensureLocalPostForUrl } from '../../../lib/ensure-local-post.js';
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -131,7 +132,17 @@ function findPostMeta(slug, _postsDir) {
 // IN_PROGRESS forever — even when the executor silently failed (e.g. a slug that
 // doesn't match a post dir). The exit handler runs after this synchronous block
 // (Node defers 'exit'/'error' callbacks), so it always sees the in_progress write.
-function triggerOpportunity(item, ctx, res) {
+async function triggerOpportunity(item, ctx, res) {
+  // A refresh opportunity targets a LIVE post that may have no local tracking
+  // (older posts, posts created outside the pipeline). Bootstrap it from Shopify
+  // so refresh-runner can operate — otherwise buildTriggerCommand throws
+  // "No local post found … cannot refresh" and the action dead-ends.
+  if (agentForOpportunityItem(item) === 'refresh-runner') {
+    const url = item.signal_source?.page || item.target_url || '';
+    try { await ensureLocalPostForUrl(url); }
+    catch (e) { /* non-fatal — buildTriggerCommand surfaces a clear error if still unresolved */ }
+  }
+
   let cmd;
   try {
     cmd = buildTriggerCommand(item);
@@ -222,7 +233,7 @@ export default [
 
       // These item types aren't "publish pre-made content to Shopify" — they
       // delegate to the responsible agent, which responds for itself and returns.
-      if (item.trigger === 'seo-opportunity') return triggerOpportunity(item, ctx, res);
+      if (item.trigger === 'seo-opportunity') return await triggerOpportunity(item, ctx, res);
       if (item.trigger === 'collection-content') return publishCollectionContent(item, ctx, res);
 
       try {
