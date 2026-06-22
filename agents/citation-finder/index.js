@@ -22,7 +22,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getContentPath, getBackupsDir, ensurePostDir, ROOT } from '../../lib/posts.js';
-import { findUncitedClaims } from '../../lib/citation-check.js';
+import { findUncitedClaims, softenClaimsInHtml } from '../../lib/citation-check.js';
 import { claimSearchQuery, isAuthoritativeSource, insertCitation, AUTHORITATIVE_DOMAINS } from '../../lib/citation-finder.js';
 import { searchWeb } from '../../lib/tavily.js';
 import { assertHtmlComplete, externalLinksAdded } from '../../lib/html-output-guards.js';
@@ -145,22 +145,31 @@ async function main() {
   }
 
   // Escape hatch: soften the claims we couldn't source so the YMYL gate stops
-  // dead-ending on them (the loop this fixes). Anything STILL flagged after
-  // softening is genuinely stuck → report for a human.
+  // dead-ending on them. Two stages: (1) an LLM rewrite for the best prose, and
+  // (2) a DETERMINISTIC soften that is guaranteed to clear the gate. Stage 2 means
+  // a tripped guard in stage 1 no longer leaves the post blocked "for a human" —
+  // uncited claims always resolve to softened, publishable copy. Never fabricates.
   const config = loadJson(join(ROOT, 'config', 'site.json'), {});
   let softened = 0;
   let stillFlagged = unresolved.map((t) => t.slice(0, 80));
   if (unresolved.length && !process.argv.includes('--no-soften')) {
     console.log(`  citation-finder: softening ${unresolved.length} unsourceable claim(s)…`);
+    // Stage 1 — LLM rewrite (best prose; discarded if it trips a guard).
     const revised = await softenUnsourcedClaims(anthropic, html, unresolved, { brand: config.brand_description });
     if (revised) {
-      const remaining = findUncitedClaims(revised).map((c) => c.text.slice(0, 80));
-      softened = Math.max(0, unresolved.length - remaining.length);
-      if (softened > 0) { html = revised; changed = true; }
-      stillFlagged = remaining;
+      html = revised;
+      changed = true;
     } else {
-      console.log('  citation-finder: soften pass discarded (guard tripped) — claims left for human.');
+      console.log('  citation-finder: LLM soften discarded (guard tripped) — applying deterministic soften.');
     }
+    // Stage 2 — deterministic guarantee for anything still flagged. Targeted
+    // substring edits (no whole-HTML rewrite), so this cannot be discarded.
+    if (findUncitedClaims(html).length) {
+      const det = softenClaimsInHtml(html);
+      if (det.changed) { html = det.html; changed = true; }
+    }
+    stillFlagged = findUncitedClaims(html).map((c) => c.text.slice(0, 80));
+    softened = Math.max(0, unresolved.length - stillFlagged.length);
   }
 
   if (changed) {
