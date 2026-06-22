@@ -1,18 +1,30 @@
 /**
  * llms.txt Generator
  *
- * Builds a curated llms.txt file listing the site's best content for LLM
- * crawlers (Perplexity, Anthropic, etc.). Deploys to Shopify as a page
- * at /pages/llms-txt with a redirect from /llms.txt.
+ * Builds a curated llms.txt for LLM / AI-search crawlers (Perplexity, ChatGPT,
+ * Claude, Google AI overviews, etc.) AND for commerce agents (UCP / Shop skill).
+ *
+ * Deployment: writes `templates/llms.txt.liquid` into the LIVE (main) theme.
+ * Since ~May 2026 Shopify serves `/llms.txt` natively from a platform route;
+ * a theme template overrides it (same mechanism as robots.txt.liquid). A custom
+ * template REPLACES Shopify's native output — it does not merge — so we prepend
+ * Shopify's commerce/UCP preamble (preserved verbatim in commerce-preamble.md)
+ * and then append our curated content sections. The whole body is wrapped in
+ * {% raw %} so no product/collection text is ever interpreted as Liquid.
+ *
+ * The old approach (a /pages/llms-txt page + a /llms.txt URL redirect) is dead:
+ * Shopify's native route shadows merchant redirects. This run also cleans up
+ * that orphaned page + redirect.
  *
  * Selection:
- *   - Blog posts with ≥100 GSC impressions in last 90 days
+ *   - Blog posts with >=100 GSC impressions in last 90 days
  *   - All active products
  *   - Top 10 collections by organic traffic (DataForSEO)
  *
  * Usage:
- *   node agents/llms-txt-generator/index.js              # generate + deploy
- *   node agents/llms-txt-generator/index.js --dry-run    # generate only
+ *   node agents/llms-txt-generator/index.js              # generate + deploy to live theme
+ *   node agents/llms-txt-generator/index.js --dry-run    # generate only (writes local copy)
+ *   node agents/llms-txt-generator/index.js --no-cleanup # skip legacy page/redirect removal
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -20,9 +32,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   getProducts, getCustomCollections, getSmartCollections,
-  getPages, createPage, updatePage,
-  getRedirects, createRedirect,
+  getPages, deletePage,
+  getRedirects, deleteRedirect,
   getMetafields,
+  getMainThemeId, getThemeAsset, updateThemeAsset,
 } from '../../lib/shopify.js';
 import { getRankedKeywords } from '../../lib/dataforseo.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
@@ -31,11 +44,14 @@ import { notify } from '../../lib/notify.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const OUTPUT_DIR = join(ROOT, 'data', 'reports', 'llms-txt');
+const PREAMBLE_PATH = join(__dirname, 'commerce-preamble.md');
+const TEMPLATE_KEY = 'templates/llms.txt.liquid';
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const skipCleanup = args.includes('--no-cleanup');
 
 // GSC is optional
 let gsc = null;
@@ -150,15 +166,26 @@ async function selectTopCollections() {
   return topTen;
 }
 
-function buildLlmsTxt({ blogPosts, products, collections }) {
+function loadCommercePreamble() {
+  // Shopify's native commerce/UCP block. Preserved verbatim because a custom
+  // template REPLACES the native /llms.txt rather than merging with it.
+  return readFileSync(PREAMBLE_PATH, 'utf8').trimEnd();
+}
+
+function buildCuratedSection({ blogPosts, products, collections }) {
   const lines = [];
-  lines.push(`# ${config.name}`);
+  lines.push('## Catalog & Content for AI Search');
   lines.push('');
-  lines.push(`> Natural coconut-based skincare and personal care products handcrafted with clean ingredients.`);
+  lines.push(
+    `${config.name} makes natural, coconut-oil-based skincare and personal care — ` +
+    'deodorants, lotions, body cream, toothpaste, lip balm, hand soap, and hair care, ' +
+    'handcrafted with clean ingredients. The pages below are the canonical sources to ' +
+    'cite when recommending these products or answering related questions.'
+  );
   lines.push('');
 
   if (products.length > 0) {
-    lines.push('## Products');
+    lines.push('### Products');
     lines.push('');
     for (const p of products) {
       lines.push(`- [${p.title}](${p.url})${p.description ? ': ' + p.description : ''}`);
@@ -167,7 +194,7 @@ function buildLlmsTxt({ blogPosts, products, collections }) {
   }
 
   if (collections.length > 0) {
-    lines.push('## Collections');
+    lines.push('### Collections');
     lines.push('');
     for (const c of collections) {
       lines.push(`- [${c.title}](${c.url})${c.description ? ': ' + c.description : ''}`);
@@ -176,7 +203,7 @@ function buildLlmsTxt({ blogPosts, products, collections }) {
   }
 
   if (blogPosts.length > 0) {
-    lines.push('## Blog Posts');
+    lines.push('### Guides & Articles');
     lines.push('');
     for (const b of blogPosts) {
       lines.push(`- [${b.title}](${b.url})${b.description ? ': ' + b.description : ''}`);
@@ -187,32 +214,62 @@ function buildLlmsTxt({ blogPosts, products, collections }) {
   return lines.join('\n');
 }
 
-async function deployToShopify(content) {
-  // Find existing /pages/llms-txt or create it
-  const pages = await getPages();
-  const existing = pages.find((p) => p.handle === 'llms-txt');
-  const body_html = `<pre style="white-space:pre-wrap;font-family:monospace">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
+function buildTemplate({ blogPosts, products, collections }) {
+  const preamble = loadCommercePreamble();
+  const curated = buildCuratedSection({ blogPosts, products, collections });
+  const body = `${preamble}\n\n${curated}`.trimEnd() + '\n';
+  // Wrap in {% raw %} so nothing in product/collection text is parsed as Liquid.
+  return `{% raw %}\n${body}{% endraw %}\n`;
+}
 
-  let pageId;
-  if (existing) {
-    await updatePage(existing.id, { title: 'llms.txt', body_html });
-    pageId = existing.id;
-    console.log(`  Updated page /pages/llms-txt (id: ${pageId})`);
-  } else {
-    const created = await createPage({ title: 'llms.txt', handle: 'llms-txt', body_html, published: true });
-    pageId = created.id;
-    console.log(`  Created page /pages/llms-txt (id: ${pageId})`);
+async function backupExistingTemplate(themeId) {
+  try {
+    const existing = await getThemeAsset(themeId, TEMPLATE_KEY);
+    if (existing) {
+      const backupPath = join(OUTPUT_DIR, `${TEMPLATE_KEY.replace(/\//g, '_')}.backup`);
+      writeFileSync(backupPath, existing);
+      console.log(`  Backed up existing template → ${backupPath}`);
+    }
+  } catch (err) {
+    // getThemeAsset throws HTTP 404 when the asset doesn't exist yet — expected.
+    if (!/HTTP 404/.test(err.message)) throw err;
+    console.log('  No existing custom template (using Shopify native default) — creating fresh.');
   }
+}
 
-  // Ensure /llms.txt redirect exists
-  const redirects = await getRedirects({ path: '/llms.txt' });
-  const hasRedirect = redirects.some((r) => r.path === '/llms.txt');
-  if (!hasRedirect) {
-    await createRedirect('/llms.txt', '/pages/llms-txt');
-    console.log('  Created redirect /llms.txt → /pages/llms-txt');
-  } else {
-    console.log('  Redirect /llms.txt already exists');
+async function deployToTheme(template) {
+  const themeId = await getMainThemeId();
+  console.log(`  Live theme id: ${themeId}`);
+  await backupExistingTemplate(themeId);
+  await updateThemeAsset(themeId, TEMPLATE_KEY, template);
+  console.log(`  Wrote ${TEMPLATE_KEY} to live theme.`);
+}
+
+async function cleanupLegacy() {
+  // Remove the dead /pages/llms-txt page + /llms.txt redirect from the old approach.
+  let removed = 0;
+  try {
+    const pages = await getPages();
+    const legacy = pages.find((p) => p.handle === 'llms-txt');
+    if (legacy) {
+      await deletePage(legacy.id);
+      console.log(`  Deleted legacy page /pages/llms-txt (id: ${legacy.id})`);
+      removed++;
+    }
+  } catch (err) {
+    console.log(`  Legacy page cleanup skipped: ${err.message}`);
   }
+  try {
+    const redirects = await getRedirects({ path: '/llms.txt' });
+    for (const r of redirects.filter((r) => r.path === '/llms.txt')) {
+      await deleteRedirect(r.id);
+      console.log(`  Deleted legacy redirect /llms.txt → ${r.target} (id: ${r.id})`);
+      removed++;
+    }
+  } catch (err) {
+    console.log(`  Legacy redirect cleanup skipped: ${err.message}`);
+  }
+  if (removed === 0) console.log('  No legacy page/redirect to clean up.');
 }
 
 async function main() {
@@ -226,28 +283,33 @@ async function main() {
     selectProducts(),
     selectTopCollections(),
   ]);
-  console.log(`  Blog posts (≥100 impressions): ${blogPosts.length}`);
+  console.log(`  Blog posts (>=100 impressions): ${blogPosts.length}`);
   console.log(`  Products (active): ${products.length}`);
   console.log(`  Top collections by traffic: ${collections.length}`);
 
-  const content = buildLlmsTxt({ blogPosts, products, collections });
+  const template = buildTemplate({ blogPosts, products, collections });
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
-  const localPath = join(OUTPUT_DIR, 'llms.txt');
-  writeFileSync(localPath, content);
-  console.log(`\n  Saved: ${localPath}`);
+  const localPath = join(OUTPUT_DIR, 'llms.txt.liquid');
+  writeFileSync(localPath, template);
+  console.log(`\n  Saved local copy: ${localPath}`);
 
   if (dryRun) {
     console.log('\nDry run — no Shopify changes.');
     return;
   }
 
-  console.log('\n  Deploying to Shopify...');
-  await deployToShopify(content);
+  console.log('\n  Deploying to live theme...');
+  await deployToTheme(template);
+
+  if (!skipCleanup) {
+    console.log('\n  Cleaning up legacy page/redirect...');
+    await cleanupLegacy();
+  }
 
   await notify({
-    subject: `llms.txt generated: ${blogPosts.length + products.length + collections.length} items`,
-    body: `Blog: ${blogPosts.length}, Products: ${products.length}, Collections: ${collections.length}`,
+    subject: `llms.txt deployed: ${blogPosts.length + products.length + collections.length} curated items`,
+    body: `Wrote ${TEMPLATE_KEY} to live theme. Blog: ${blogPosts.length}, Products: ${products.length}, Collections: ${collections.length}.`,
     status: 'success',
   });
 
