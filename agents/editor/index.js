@@ -42,6 +42,7 @@ import { verifyProduct, extractBrandMentions } from '../product-verifier/index.j
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
 import { findUncitedClaims } from '../../lib/citation-check.js';
 import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../../lib/year-accuracy.js';
+import { reconcileOverallQuality } from '../../lib/editor-remediation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -1255,12 +1256,38 @@ async function runEditor(htmlPath) {
     yearVerdict.trim() + '\n'
   );
 
+  // Same treatment for FACTUAL CONCERNS. The LLM independently demands visible
+  // sources for health/efficacy claims, decoupled from — and stricter than — the
+  // deterministic uncited-claims gate (section 2c). That dead-ends posts on claims
+  // 2c already passes (and citation-finder can't act on, since 2c sees them as
+  // sourced). Make the deterministic citation check authoritative here too: this
+  // section mirrors 2c, so the citation gate has exactly one source of truth (and
+  // one remediation path — cite or soften — at the threshold).
+  const factualBlocker = uncited.length >= UNCITED_CLAIM_THRESHOLD;
+  const factualVerdict = `## 5. Factual Concerns
+**VERDICT:** ${factualBlocker ? 'BLOCKER' : 'Pass'}
+**NOTES:** ${factualBlocker
+    ? `${uncited.length} statistical/health claim(s) lack a credible outbound citation (deterministic uncited-claims check, section 2c). citation-finder will cite or soften these.`
+    : 'Citation sufficiency is governed by the deterministic uncited-claims check (section 2c), which is within threshold. General consumer-guidance health phrasing does not each require its own source.'}
+
+---
+`;
+  review = review.replace(
+    /#{2,6}\s*\d?\.?\s*FACTUAL\s+(?:CONCERNS?|ACCURACY)[\s\S]*?(?=\n#{2,6}\s|\n---|$)/i,
+    factualVerdict.trim() + '\n'
+  );
+
   // Build and save report
-  const report = buildReport({
+  let report = buildReport({
     slug, meta, linkResults, internalIssues,
     sourceVerifications, topicalSuggestions,
     editorialReview: review, linkedBlogUrls, ctaResult, uncited,
   });
+
+  // Overall Quality is a summary, not an independent gate — if every concrete
+  // section passes after the deterministic overrides above, don't let an LLM
+  // "Needs Work" summary (usually echoing an overridden concern) dead-end the post.
+  report = reconcileOverallQuality(report);
 
   ensurePostDir(slug);
   const reportPath = getEditorReportPath(slug);

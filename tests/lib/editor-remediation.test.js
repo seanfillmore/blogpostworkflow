@@ -95,3 +95,48 @@ test('formatBlockersForPrompt lists section + note lines', () => {
   assert.match(text, /INGREDIENT ACCURACY/i);
   assert.match(text, /baking soda/);
 });
+
+// ── reconcileOverallQuality: the summary must not dead-end an otherwise-clean post ──
+import { reconcileOverallQuality } from '../../lib/editor-remediation.js';
+
+const REPORT_ONLY_OVERALL_FAILS = `## 4. Year Accuracy
+**VERDICT:** Pass
+**NOTES:** none
+
+---
+## 5. Factual Concerns
+**VERDICT:** Pass
+**NOTES:** within threshold
+
+---
+## 9. Overall Quality
+**VERDICT:** Needs Work
+**NOTES:** The factual-concerns blocker and year references prevent publication.
+`;
+
+test('reconcileOverallQuality: flips Overall to Pass when no concrete section blocks', () => {
+  const out = reconcileOverallQuality(REPORT_ONLY_OVERALL_FAILS);
+  assert.equal(isPassing(out), true);
+  assert.match(out, /OVERALL QUALITY[\s\S]*VERDICT:\*{0,2}\s*Pass/i);
+});
+
+const REPORT_REAL_SECTION_BLOCKS = `## 5. Factual Concerns
+**VERDICT:** BLOCKER
+**NOTES:** 3 uncited claims
+
+---
+## 9. Overall Quality
+**VERDICT:** Needs Work
+**NOTES:** Fix the citations.
+`;
+
+test('reconcileOverallQuality: leaves report unchanged when a concrete section blocks', () => {
+  const out = reconcileOverallQuality(REPORT_REAL_SECTION_BLOCKS);
+  assert.equal(out, REPORT_REAL_SECTION_BLOCKS); // untouched
+  assert.equal(isPassing(out), false);           // still fails on Factual Concerns
+});
+
+test('reconcileOverallQuality: no-op when Overall already passes', () => {
+  const clean = `## 9. Overall Quality\n**VERDICT:** Excellent\n**NOTES:** great\n`;
+  assert.equal(reconcileOverallQuality(clean), clean);
+});
