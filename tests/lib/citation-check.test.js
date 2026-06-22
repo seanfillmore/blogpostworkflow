@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { findUncitedClaims } from '../../lib/citation-check.js';
+import { findUncitedClaims, softenClaimsInHtml, softenClaimText } from '../../lib/citation-check.js';
 
 test('flags a statistic with no nearby outbound citation', () => {
   const html = '<p>Studies show 80% of people sweat less with this method.</p>';
@@ -58,4 +58,54 @@ test('does NOT flag recipe/spec percentages or bare "proven"', () => {
   assert.deepEqual(findUncitedClaims('<p>At 3% concentration, this is safe for most cotton.</p>'), []);
   assert.deepEqual(findUncitedClaims('<p>Use a paste of hydrogen peroxide (3%) and baking soda.</p>'), []);
   assert.deepEqual(findUncitedClaims('<p>Here are the most effective strategies — practical and proven.</p>'), []);
+});
+
+// ── Deterministic soften: guarantees the gate clears (no dead-end) ──
+
+test('softens the exact reported claims so the gate clears', () => {
+  const html = [
+    '<p>Research also suggests it may have mild antimicrobial properties, making it a solid choice for sensitive or eczema-prone skin.</p>',
+    '<p>The lauric acid in coconut oil (about 50% of its fatty acid content) is particularly effective at penetrating the skin barrier, which sets it apart from many other plant oils that only sit on the surface.</p>',
+  ].join('\n');
+  assert.equal(findUncitedClaims(html).length, 2); // flagged before
+  const { html: out, changed } = softenClaimsInHtml(html);
+  assert.equal(changed, true);
+  assert.deepEqual(findUncitedClaims(out), []); // cleared after
+  assert.ok(/Many people find that/.test(out));
+  assert.ok(/about half of its fatty acid content/.test(out));
+  assert.ok(!/50\s?%/.test(out));
+});
+
+test('softens every claim pattern category to clear the gate', () => {
+  const cases = [
+    '<p>Studies show 80% of users sweat less.</p>',
+    '<p>According to recent research, it works better.</p>',
+    '<p>It is clinically proven to reduce odor.</p>',
+    '<p>Doctors recommend it for daily use.</p>',
+    '<p>It kills odor-causing bacteria on contact.</p>',
+    '<p>It is scientifically proven to hydrate.</p>',
+  ];
+  for (const html of cases) {
+    assert.ok(findUncitedClaims(html).length >= 1, `should flag: ${html}`);
+    const { html: out } = softenClaimsInHtml(html);
+    assert.deepEqual(findUncitedClaims(out), [], `should clear: ${html} -> ${out}`);
+  }
+});
+
+test('soften leaves cited blocks, non-claim blocks, and links untouched', () => {
+  const cited = '<p>Studies show 80% sweat less (<a href="https://pubmed.ncbi.nlm.nih.gov/123">source</a>).</p>';
+  assert.equal(softenClaimsInHtml(cited).changed, false); // already cited → not flagged → untouched
+
+  const plain = '<p>Our deodorant smells like fresh coconut and goes on smooth.</p>';
+  assert.equal(softenClaimsInHtml(plain).changed, false);
+
+  const withLink = '<p>Research shows it helps, per our <a href="https://www.realskincare.com/x">guide</a>.</p>';
+  const out = softenClaimsInHtml(withLink).html;
+  assert.ok(out.includes('href="https://www.realskincare.com/x"')); // link preserved
+  assert.deepEqual(findUncitedClaims(out), []);
+});
+
+test('softenClaimText preserves percentages in non-claim contexts', () => {
+  // "3% concentration" is excluded by the detector and must stay numeric.
+  assert.equal(softenClaimText('a 3% concentration'), 'a 3% concentration');
 });
