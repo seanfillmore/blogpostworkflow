@@ -33,11 +33,16 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { getBlogs, getArticles, updateArticle, getRedirects } from '../../lib/shopify.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
-import { findPublishDrift, reconcileEverPublishedLedger } from '../../lib/publish-drift.js';
+import { findPublishDrift, reconcileEverPublishedLedger, crawlDraftDriftRecords } from '../../lib/publish-drift.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'publish-drift');
+// Site-crawler output — the 3rd drift-detection source. Any 404 the crawler
+// found that is actually a live Shopify *draft* (not deleted, not redirected) is
+// drift, regardless of whether we track it locally or in the ledger.
+const CRAWL_PATH = join(ROOT, 'data', 'technical_seo', 'crawl-results.json');
+const CRAWL_MAX_AGE_DAYS = 30; // ignore crawl data older than this (avoid acting on stale 404s)
 // Persistent record of every article ever seen live-published on Shopify. This
 // is what closes the gap behind the 2026-06-21 sweep: 5 live posts had reverted
 // to draft but were invisible to the detector because they had no local meta.json
@@ -49,6 +54,25 @@ const FIX = process.argv.includes('--fix');
 function loadLedger() {
   if (!existsSync(LEDGER_PATH)) return {};
   try { return JSON.parse(readFileSync(LEDGER_PATH, 'utf8')); } catch { return {}; }
+}
+
+// Load the site-crawler's 404 rows, if the crawl is present and fresh enough.
+// Returns { rows, crawledAt, ageDays } or null.
+function loadCrawlResults(now) {
+  if (!existsSync(CRAWL_PATH)) return null;
+  try {
+    const j = JSON.parse(readFileSync(CRAWL_PATH, 'utf8'));
+    const rows = j?.issues?.error_404 || [];
+    const crawledAt = j?.crawled_at || null;
+    const ageDays = crawledAt ? (new Date(now) - new Date(crawledAt)) / 86400000 : Infinity;
+    if (ageDays > CRAWL_MAX_AGE_DAYS) {
+      console.log(`  Crawl data is ${Math.round(ageDays)}d old (> ${CRAWL_MAX_AGE_DAYS}d) — skipping crawl cross-ref.`);
+      return null;
+    }
+    return { rows, crawledAt, ageDays };
+  } catch {
+    return null;
+  }
 }
 
 // Posts deliberately unpublished by the cannibalization-resolver (REDIRECT/
@@ -129,9 +153,26 @@ async function main() {
   for (const r of ledgerRecords) if (!recordsById.has(String(r.articleId))) recordsById.set(String(r.articleId), r);
   console.log(`  Ever-published ledger: ${Object.keys(ledger).length} (${ledgerRecords.length} watched only via ledger, no local record)`);
 
-  const records = [...recordsById.values()];
   const intentional = await loadIntentionalUnpublishes();
   console.log(`  Intentionally retired (redirect/cannibalization/kill, excluded): ${intentional.size}`);
+
+  // 3rd detection source: cross-reference the latest site crawl. A 404 the
+  // crawler found that is actually a live Shopify *draft* (not deleted, not a
+  // redirect source) is drift — and live content links to it. Catches drafts
+  // invisible to both local records and the ledger (the 2026-06-23 backlog).
+  const crawl = loadCrawlResults(now);
+  if (crawl) {
+    const liveByHandle = new Map();
+    for (const a of live.values()) liveByHandle.set(a.handle, a);
+    const crawlRecords = crawlDraftDriftRecords(crawl.rows, liveByHandle, { intentional });
+    let added = 0;
+    for (const r of crawlRecords) {
+      if (!recordsById.has(String(r.articleId))) { recordsById.set(String(r.articleId), r); added++; }
+    }
+    console.log(`  Crawl 404→draft cross-ref (crawl ${Math.round(crawl.ageDays)}d old): ${crawlRecords.length} live draft(s) content links to, ${added} new to watch-list`);
+  }
+
+  const records = [...recordsById.values()];
   const drift = findPublishDrift(records, live, { intentional });
   const drafts = drift.filter((d) => d.reason === 'draft');
   const missing = drift.filter((d) => d.reason === 'missing');
