@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { findPublishDrift, reconcileEverPublishedLedger } from '../../lib/publish-drift.js';
+import { findPublishDrift, reconcileEverPublishedLedger, crawlDraftDriftRecords, handleFromBlogUrl } from '../../lib/publish-drift.js';
 
 // records: posts we believe are published (our meta says shopify_status: published)
 // live: Map<String(articleId), { published:boolean, handle }>
@@ -117,4 +117,64 @@ test('reconcileEverPublishedLedger: does not duplicate records already tracked l
   const live = new Map([['3', { published: false, handle: 'tracked' }]]);
   const { records } = reconcileEverPublishedLedger(ledger, live, '2026-06-21T00:00:00Z', new Set(['3']));
   assert.deepEqual(records, []); // already covered by a local record
+});
+
+// ── crawl-404 → draft cross-reference (3rd detection source) ──
+
+test('handleFromBlogUrl: extracts handle from a blog-article URL, strips query/fragment', () => {
+  assert.equal(handleFromBlogUrl('https://www.realskincare.com/blogs/news/some-handle?utm=1#x'), 'some-handle');
+  assert.equal(handleFromBlogUrl('https://www.realskincare.com/blogs/guide/another-one'), 'another-one');
+});
+
+test('handleFromBlogUrl: returns null for non blog-article URLs', () => {
+  assert.equal(handleFromBlogUrl('https://www.realskincare.com/collections/all'), null);
+  assert.equal(handleFromBlogUrl(''), null);
+  assert.equal(handleFromBlogUrl(undefined), null);
+});
+
+test('crawlDraftDriftRecords: a 404 that is a live DRAFT is drift', () => {
+  const rows = [{ url: 'https://x/blogs/news/ghost' }];
+  const liveByHandle = new Map([['ghost', { published: false, id: 99, handle: 'ghost' }]]);
+  const out = crawlDraftDriftRecords(rows, liveByHandle);
+  assert.equal(out.length, 1);
+  assert.deepEqual(out[0], { slug: 'ghost', articleId: '99', handle: 'ghost', source: 'crawl-404' });
+});
+
+test('crawlDraftDriftRecords: a 404 whose article is MISSING (deleted) is skipped — wants a redirect, not republish', () => {
+  const rows = [{ url: 'https://x/blogs/news/deleted' }];
+  const liveByHandle = new Map(); // not present on Shopify
+  assert.deepEqual(crawlDraftDriftRecords(rows, liveByHandle), []);
+});
+
+test('crawlDraftDriftRecords: a 404 that is actually published (stale crawl) is skipped', () => {
+  const rows = [{ url: 'https://x/blogs/news/healed' }];
+  const liveByHandle = new Map([['healed', { published: true, id: 7, handle: 'healed' }]]);
+  assert.deepEqual(crawlDraftDriftRecords(rows, liveByHandle), []);
+});
+
+test('crawlDraftDriftRecords: an intentionally-retired (redirect-source) draft is skipped', () => {
+  const rows = [{ url: 'https://x/blogs/news/consolidated' }];
+  const liveByHandle = new Map([['consolidated', { published: false, id: 5, handle: 'consolidated' }]]);
+  const intentional = new Set(['consolidated']);
+  assert.deepEqual(crawlDraftDriftRecords(rows, liveByHandle, { intentional }), []);
+});
+
+test('crawlDraftDriftRecords: dedups repeated 404 rows for the same handle', () => {
+  const rows = [
+    { url: 'https://x/blogs/news/dup' },
+    { url: 'https://x/blogs/news/dup' },
+  ];
+  const liveByHandle = new Map([['dup', { published: false, id: 1, handle: 'dup' }]]);
+  assert.equal(crawlDraftDriftRecords(rows, liveByHandle).length, 1);
+});
+
+test('crawlDraftDriftRecords: non-blog 404s (collections/products) are ignored', () => {
+  const rows = [{ url: 'https://x/collections/all' }, { url: 'https://x/products/widget' }];
+  const liveByHandle = new Map([['all', { published: false, id: 2 }]]);
+  assert.deepEqual(crawlDraftDriftRecords(rows, liveByHandle), []);
+});
+
+test('crawlDraftDriftRecords: empty / nullish input is safe', () => {
+  assert.deepEqual(crawlDraftDriftRecords(null, new Map()), []);
+  assert.deepEqual(crawlDraftDriftRecords([], new Map()), []);
 });
