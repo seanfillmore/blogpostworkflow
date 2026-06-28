@@ -136,6 +136,8 @@ function loadCrawlResults() {
     'Notice-indexable-Page_has_only_one_dofollow_incoming_internal_link': issues.single_link || [],
     'Error-indexable-Page_has_links_to_broken_page': issues.links_to_404 || [],
     'Warning-indexable-Page_has_links_to_redirect': issues.links_to_redirect || [],
+    'Error-Empty_collection_(published_no_products)': issues.empty_collection || [],
+    'Error-Orphan_collection_(has_no_incoming_internal_links)': issues.orphan_collection || [],
   };
 }
 
@@ -557,6 +559,22 @@ async function audit() {
     }
   }
 
+  // ── Collection health (empty / orphan published collections) ──
+  // Fresh 🔴 header so the dashboard parser tags these as errors.
+  const emptyCollections = csvs['Error-Empty_collection_(published_no_products)'] || [];
+  const orphanCollections = csvs['Error-Orphan_collection_(has_no_incoming_internal_links)'] || [];
+  sections.push('## 🔴 Errors — Collections\n');
+  sections.push(`### 14. Empty Collections — ${emptyCollections.length} pages (published, 0 products)`);
+  sections.push('Published collection pages with no products: thin content + nothing to buy. Assign products, or unpublish + 301 to a populated collection.\n');
+  for (const r of emptyCollections.slice(0, 30)) sections.push(`- [${r.title || r.url}](${r.url})`);
+  if (emptyCollections.length > 30) sections.push(`\n*...and ${emptyCollections.length - 30} more*`);
+  sections.push('');
+  sections.push(`### 15. Orphan Collections — ${orphanCollections.length} pages (no inbound internal links)`);
+  sections.push('Populated collections with zero internal links pointing to them — no link equity, hard to discover. Add links via collection-linker / blog posts.\n');
+  for (const r of orphanCollections.slice(0, 30)) sections.push(`- [${r.title || r.url}](${r.url})`);
+  if (orphanCollections.length > 30) sections.push(`\n*...and ${orphanCollections.length - 30} more*`);
+  sections.push('');
+
   // ── Summary ──
   sections.push('---');
   sections.push('## Summary\n');
@@ -567,6 +585,8 @@ async function audit() {
   sections.push(`| 🔴 Error | Missing meta description | ${metaMissing.length} | \`fix-meta\` |`);
   sections.push(`| 🔴 Error | Duplicate meta/title tags | ${multiMeta.length + multiTitle.length} | Manual (theme) |`);
   sections.push(`| 🔴 Error | Orphan pages | ${orphans.length} | Manual (link building) |`);
+  sections.push(`| 🔴 Error | Empty collections (published, 0 products) | ${emptyCollections.length} | Assign products or unpublish + 301 |`);
+  sections.push(`| 🔴 Error | Orphan collections (no inbound links) | ${orphanCollections.length} | \`collection-linker\` |`);
   sections.push(`| 🟡 Warning | Meta description too long/short | ${metaTooLong.length + metaTooShort.length} | \`fix-meta\` |`);
   sections.push(`| 🟡 Warning | Title too long | ${titleTooLong.length} | \`fix-meta\` |`);
   sections.push(`| 🟡 Warning | H1 missing/multiple | ${h1Missing.length + multiH1.length} | Manual |`);

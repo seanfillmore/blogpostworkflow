@@ -14,6 +14,8 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startCrawl, getCrawlSummary, getCrawlPages, getCrawlLinks, getCrawlTasksReady } from '../../lib/dataforseo.js';
+import { getCustomCollections, getSmartCollections, getCollectionProductCount } from '../../lib/shopify.js';
+import { classifyCollectionHealth } from '../../lib/collection-health.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -128,6 +130,39 @@ function normalizePages(pages) {
 // didn't visit (page_to_status_code: null), and HEAD-verifies them ourselves.
 // Returns the broken targets and a per-source-page map of broken hrefs so the
 // technical-seo agent can drive create-redirects + fix-links from the result.
+// Detect empty + orphan PUBLISHED collections — the DataForSEO page crawl can't
+// (it only flags orphans among pages in its link graph; a collection with zero
+// inbound links is never discovered). Pulls published collections from Shopify,
+// counts their products, and checks each against the crawl's link targets.
+// Wrapped so a Shopify hiccup degrades gracefully (skip, don't fail the crawl).
+async function detectCollectionIssues(allLinks, domain) {
+  const baseUrl = `https://${domain}`;
+  // Set of internal link-target pathnames seen anywhere in the crawl.
+  const linkedPaths = new Set();
+  for (const l of allLinks) {
+    if (!l.link_to) continue;
+    try { linkedPaths.add(new URL(l.link_to).pathname.replace(/\/$/, '')); } catch { /* skip */ }
+  }
+
+  const [custom, smart] = await Promise.all([getCustomCollections(), getSmartCollections()]);
+  const published = [...custom, ...smart].filter((c) => c.published_at);
+
+  const enriched = [];
+  for (const c of published) {
+    let productCount = 0;
+    try { productCount = await getCollectionProductCount(c.id); } catch { productCount = -1; } // -1 = unknown; don't flag as empty
+    enriched.push({
+      handle: c.handle,
+      published: true,
+      productCount: productCount < 0 ? 1 : productCount, // unknown → treat as non-empty (avoid false positive)
+      hasInlinks: linkedPaths.has(`/collections/${c.handle}`),
+    });
+  }
+  const { empty, orphan } = classifyCollectionHealth(enriched, { baseUrl });
+  console.log(`    Collection health: ${published.length} published, ${empty.length} empty, ${orphan.length} orphan`);
+  return { empty, orphan };
+}
+
 async function verifyBrokenLinks(allLinks) {
   const targets = new Map(); // link_to → { sources: Set, status, isBroken }
   for (const l of allLinks) {
@@ -301,6 +336,17 @@ async function main() {
   }
   for (const [sourceUrl, brokenHrefs] of brokenBySource.entries()) {
     issues.links_to_404.push(rowFromSource(sourceUrl, brokenHrefs, allPages));
+  }
+
+  // Collection-level health (empty / orphan published collections)
+  issues.empty_collection = [];
+  issues.orphan_collection = [];
+  try {
+    const { empty, orphan } = await detectCollectionIssues(allLinks, domain);
+    issues.empty_collection = empty;
+    issues.orphan_collection = orphan;
+  } catch (err) {
+    console.warn(`    Collection-health check skipped: ${err.message}`);
   }
 
   const issueSummary = Object.entries(issues)
