@@ -7,6 +7,7 @@ import {
   recommendedAgentFor,
   clusterByPage,
   analyzeOpportunities,
+  partitionLiveOpportunities,
 } from '../../lib/seo-opportunities.js';
 
 // ── expectedCtr ─────────────────────────────────────────────────────────────
@@ -132,4 +133,37 @@ test('analyzeOpportunities: collection outscores an equivalent product (collecti
   const info = opps.find((o) => o.page_type === 'content');
   assert.ok(coll.score >= prod.score, 'collection should score >= product');
   assert.ok(prod.score > info.score, 'product should score > non-commercial content');
+});
+
+// ── partitionLiveOpportunities ───────────────────────────────────────────────
+
+test('partitionLiveOpportunities: 2xx targets are live', () => {
+  const opps = [{ page: '/a' }, { page: '/b' }];
+  const { live, dead } = partitionLiveOpportunities(opps, { '/a': 200, '/b': 200 });
+  assert.equal(live.length, 2);
+  assert.equal(dead.length, 0);
+});
+
+test('partitionLiveOpportunities: 3xx (redirect) and 4xx targets are dead', () => {
+  const opps = [{ page: '/redir' }, { page: '/gone' }, { page: '/ok' }];
+  const { live, dead } = partitionLiveOpportunities(opps, { '/redir': 301, '/gone': 404, '/ok': 200 });
+  assert.deepEqual(live.map((o) => o.page), ['/ok']);
+  assert.deepEqual(dead.map((o) => o.page), ['/redir', '/gone']);
+});
+
+test('partitionLiveOpportunities: status 0 (unreachable) is dead', () => {
+  const { live, dead } = partitionLiveOpportunities([{ page: '/x' }], { '/x': 0 });
+  assert.equal(live.length, 0);
+  assert.equal(dead.length, 1);
+});
+
+test('partitionLiveOpportunities: unknown/missing status is kept live (never drop on a failed check)', () => {
+  const { live, dead } = partitionLiveOpportunities([{ page: '/unchecked' }], {});
+  assert.deepEqual(live.map((o) => o.page), ['/unchecked']);
+  assert.equal(dead.length, 0);
+});
+
+test('partitionLiveOpportunities: empty/nullish input is safe', () => {
+  assert.deepEqual(partitionLiveOpportunities(null, {}), { live: [], dead: [] });
+  assert.deepEqual(partitionLiveOpportunities([], {}), { live: [], dead: [] });
 });
