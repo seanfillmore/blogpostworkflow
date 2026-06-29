@@ -15,7 +15,7 @@
  *   node agents/faq-rewriter/index.js <slug> --push-shopify
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';

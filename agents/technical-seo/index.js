@@ -29,7 +29,7 @@
  * Shopify token scope: read_products, write_products, read_content, write_content
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import * as cheerio from 'cheerio';
 import { notify } from '../../lib/notify.js';
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, statSync } from 'fs';

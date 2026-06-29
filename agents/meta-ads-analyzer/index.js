@@ -150,7 +150,7 @@ async function main() {
     byPage.get(ad.page_id).push(ad);
   }
 
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const { default: Anthropic } = await import('../../lib/anthropic.js');
   const client = new Anthropic({ apiKey });
 
   // Pass 1 — variation grouping per brand

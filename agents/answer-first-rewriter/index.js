@@ -30,7 +30,7 @@
  *   node agents/answer-first-rewriter/index.js --no-rewrite # heuristic only, skip Claude
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import * as cheerio from 'cheerio';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname, basename } from 'path';

@@ -13,7 +13,7 @@
  *   node agents/insight-aggregator/index.js --verbose # print each report as it's loaded
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, existsSync, readdirSync, statSync, mkdirSync } from 'fs';
 import { join, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';

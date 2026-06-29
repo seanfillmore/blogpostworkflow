@@ -33,7 +33,7 @@
  *   node agents/product-optimizer/index.js --expand-faq         # expand FAQ page with GSC question queries
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

@@ -20,7 +20,7 @@
  *   node agents/content-researcher/index.js --all                     # process all from keyword-research.json
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import * as cheerio from 'cheerio';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';

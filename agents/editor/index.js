@@ -30,7 +30,7 @@
  *   - Corrects stale years to the current year in visible text
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import * as cheerio from 'cheerio';
 import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';

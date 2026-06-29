@@ -23,7 +23,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { notify } from '../../lib/notify.js';
 import { QUEUE_DIR, listQueueItems, writeItem, activeSlugs } from './lib/queue.js';
 import { buildSummaryPrompt } from './prompts.js';

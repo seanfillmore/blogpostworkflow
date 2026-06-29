@@ -29,7 +29,7 @@
  *   node agents/collection-creator/index.js --publish-approved       # publish approved queue items to Shopify
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

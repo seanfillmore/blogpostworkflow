@@ -10,8 +10,11 @@ import { readAllDashboardSource } from '../helpers/dashboard-source.js';
 
 const src = readAllDashboardSource();
 
-// Anthropic SDK is wired in somewhere
-assert.ok(src.includes("from '@anthropic-ai/sdk'"), 'must import Anthropic SDK somewhere');
+// Anthropic SDK is wired in somewhere — either the raw SDK or the metering
+// wrapper (lib/anthropic.js), which re-exports a logging subclass.
+assert.ok(
+  /from ['"]@anthropic-ai\/sdk['"]/.test(src) || /from ['"][^'"]*lib\/anthropic\.js['"]/.test(src),
+  'must import the Anthropic client (raw SDK or lib/anthropic.js wrapper) somewhere');
 assert.ok(src.includes('new Anthropic('), 'must instantiate Anthropic client somewhere');
 
 // Per-suggestion chat endpoint exists (matched via router pattern in routes/ads.js)

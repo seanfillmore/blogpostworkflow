@@ -18,7 +18,7 @@
  * Usage:
  *   node agents/citation-finder/index.js --slug <slug> [--max <n>] [--no-soften]
  */
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getContentPath, getBackupsDir, ensurePostDir, ROOT } from '../../lib/posts.js';
