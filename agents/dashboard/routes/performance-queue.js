@@ -139,8 +139,24 @@ async function triggerOpportunity(item, ctx, res) {
   // "No local post found … cannot refresh" and the action dead-ends.
   if (agentForOpportunityItem(item) === 'refresh-runner') {
     const url = item.signal_source?.page || item.target_url || '';
-    try { await ensureLocalPostForUrl(url); }
-    catch (e) { /* non-fatal — buildTriggerCommand surfaces a clear error if still unresolved */ }
+    let slug = null;
+    try { slug = await ensureLocalPostForUrl(url); }
+    catch (e) { /* non-fatal — handled below / buildTriggerCommand surfaces a clear error */ }
+    // If we can't resolve a live post, the target may have been redirected or
+    // removed (GSC lags weeks behind). Don't dead-end with a scary error —
+    // confirm the URL is dead and retire the opportunity gracefully.
+    if (!slug) {
+      let status = null;
+      try { status = (await fetch(url, { method: 'HEAD', redirect: 'manual' })).status; }
+      catch { status = 0; }
+      if (status === 0 || status >= 300) {
+        item.status = 'dismissed';
+        item.dismissed_reason = `Target no longer live (HTTP ${status}) — redirected or removed; opportunity retired.`;
+        item.dismissed_at = new Date().toISOString();
+        writeItem(item);
+        return respondJson(res, { ok: true, dismissed: true, message: `Opportunity retired: ${url} is no longer live (HTTP ${status}).` });
+      }
+    }
   }
 
   let cmd;

@@ -29,7 +29,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
 import { getSearchVolume } from '../../lib/dataforseo.js';
-import { analyzeOpportunities, recommendedAgentFor } from '../../lib/seo-opportunities.js';
+import { analyzeOpportunities, recommendedAgentFor, partitionLiveOpportunities } from '../../lib/seo-opportunities.js';
 import { writeItem, activeSlugs } from '../performance-engine/lib/queue.js';
 import { notify } from '../../lib/notify.js';
 
@@ -111,6 +111,26 @@ async function enrichVolumes(keywords) {
   return (kw) => cache[kw.toLowerCase()]?.volume ?? 0;
 }
 
+// HEAD-check URLs (no redirect-follow) with bounded concurrency. Returns
+// url → status (0 = unreachable). Used to drop dead-target opportunities.
+async function headCheckUrls(urls, concurrency = 8) {
+  const out = {};
+  let i = 0;
+  async function worker() {
+    while (i < urls.length) {
+      const u = urls[i++];
+      try {
+        const r = await fetch(u, { method: 'HEAD', redirect: 'manual' });
+        out[u] = r.status;
+      } catch {
+        out[u] = 0;
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, urls.length) }, worker));
+  return out;
+}
+
 async function main() {
   console.log(`\nSEO Opportunity Analyzer${DRY ? ' (dry-run)' : ''}\n`);
 
@@ -132,8 +152,18 @@ async function main() {
     volume: volOf(r.query),
   }));
 
-  const opps = analyzeOpportunities(enriched, { productHandles: productHandlesFromConfig() });
-  console.log(`  Opportunities (clustered by page): ${opps.length}`);
+  const allOpps = analyzeOpportunities(enriched, { productHandles: productHandlesFromConfig() });
+  console.log(`  Opportunities (clustered by page): ${allOpps.length}`);
+
+  // Drop opportunities targeting redirected/removed URLs. GSC lags weeks behind
+  // Shopify redirects, so consolidated/retired posts keep surfacing — and
+  // approving them dead-ends with "No local post found … cannot refresh".
+  const statusByUrl = await headCheckUrls([...new Set(allOpps.map((o) => o.page))]);
+  const { live: opps, dead } = partitionLiveOpportunities(allOpps, statusByUrl);
+  if (dead.length) {
+    console.log(`  Dropped ${dead.length} opportunit(ies) on redirected/removed URLs:`);
+    for (const d of dead) console.log(`    ${statusByUrl[d.page]}  ${d.page}`);
+  }
 
   // ── persist report ──────────────────────────────────────────────────────
   mkdirSync(REPORTS_DIR, { recursive: true });
