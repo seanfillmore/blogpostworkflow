@@ -9,7 +9,7 @@
  *   node agents/cro-analyzer/index.js
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

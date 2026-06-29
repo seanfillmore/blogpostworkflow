@@ -16,7 +16,7 @@
  *   node agents/blog-post-verifier/index.js --limit 10 # verify N most recent
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import * as cheerio from 'cheerio';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';

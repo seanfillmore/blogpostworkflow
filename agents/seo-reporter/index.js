@@ -24,7 +24,7 @@
  *   node agents/seo-reporter/index.js --period 2026-03   # specify month
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';

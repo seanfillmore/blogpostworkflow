@@ -23,7 +23,7 @@
  *   node agents/meta-optimizer/index.js --refresh-stale-years --apply  # scan + push refreshed titles to Shopify
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

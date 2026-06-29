@@ -18,7 +18,7 @@
  *   node agents/content-remediator/index.js --slug <slug>
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

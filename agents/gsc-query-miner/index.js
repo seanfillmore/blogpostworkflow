@@ -30,7 +30,7 @@
  * Output: data/reports/gsc-query-mining-report.md
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { loadIndex } from '../../lib/keyword-index/consumer.js';
 import { tagQueries, buildUntappedCandidates } from './lib/index-tagger.js';

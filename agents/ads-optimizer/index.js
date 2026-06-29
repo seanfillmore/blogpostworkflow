@@ -274,7 +274,7 @@ When Previous Recommendation History is provided:
     shopifySnaps.length ? `### Shopify Data (${shopifySnaps.length} days, most recent first)\n${JSON.stringify(shopifySnaps, null, 2)}` : '',
   ].filter(Boolean).join('\n\n');
 
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const { default: Anthropic } = await import('../../lib/anthropic.js');
   const client = new Anthropic({ apiKey });
 
   process.stdout.write('  Running AI analysis... ');

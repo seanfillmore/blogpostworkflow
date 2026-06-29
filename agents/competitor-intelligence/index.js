@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import puppeteer from 'puppeteer';
 import { getProducts, getCustomCollections, getSmartCollections, getMetafields } from '../../lib/shopify.js';
 import { matchCompetitorUrl } from './matcher.js';

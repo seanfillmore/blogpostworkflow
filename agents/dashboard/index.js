@@ -14,7 +14,7 @@
 import http from 'node:http';
 import { readFileSync, readdirSync, existsSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
 

@@ -34,7 +34,7 @@
  *      and include them as reference images in the Gemini request.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../lib/anthropic.js';
 import { GoogleGenAI } from '@google/genai';
 import OpenAI from 'openai';
 import sharp from 'sharp';

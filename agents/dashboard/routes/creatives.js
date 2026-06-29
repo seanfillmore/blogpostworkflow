@@ -2,7 +2,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, createReadStream, unlinkSync, renameSync, copyFileSync } from 'node:fs';
 import { join, basename, extname } from 'node:path';
 import { spawn } from 'node:child_process';
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../../../lib/anthropic.js';
 import { GEMINI_MODELS, saveSession, createSession } from '../lib/creatives-store.js';
 
 export default [

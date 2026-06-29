@@ -195,7 +195,7 @@ async function main() {
   const ad = insights.ads.find(a => a.id === adId);
   if (!ad) throw new Error(`Ad ${adId} not found in latest insights`);
 
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const { default: Anthropic } = await import('../../lib/anthropic.js');
   const { GoogleGenAI } = await import('@google/genai');
   const { default: sharp } = await import('sharp');
   const client = new Anthropic({ apiKey });

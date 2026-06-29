@@ -346,7 +346,7 @@ async function main() {
       `## Task\nUsing the user's answers, produce a complete updated campaign proposal. If answers are still insufficient, output clarificationNeeded with refined questions.`,
     ].join('\n\n');
 
-    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const { default: Anthropic } = await import('../../lib/anthropic.js');
     const client = new Anthropic({ apiKey });
     process.stdout.write('  Running AI re-analysis... ');
     const response = await client.messages.create({
@@ -396,7 +396,7 @@ async function main() {
   console.log(`  Data loaded: ads=${context.adsSnaps.length} gsc=${context.gscSnaps.length} ga4=${context.ga4Snaps.length} shopify=${context.shopifySnaps.length}`);
 
   const userPrompt = buildAnalyzerPrompt(context);
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const { default: Anthropic } = await import('../../lib/anthropic.js');
   const client = new Anthropic({ apiKey });
   process.stdout.write('  Running AI analysis... ');
   const response = await client.messages.create({
