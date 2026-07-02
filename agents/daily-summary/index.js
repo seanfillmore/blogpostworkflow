@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
+import { readUsage, summarizeRecords, listUsageDates } from '../../lib/llm-usage.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -766,11 +767,31 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
 
   const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
+  // LLM cost — passive spend monitoring (best-effort; never breaks the digest).
+  let costSection = '';
+  try {
+    const dayRecs = readUsage(targetDate);
+    if (dayRecs.length) {
+      const day = summarizeRecords(dayRecs);
+      const weekDates = listUsageDates().slice(-7);
+      const week = summarizeRecords(weekDates.flatMap(readUsage));
+      const runRate = weekDates.length ? (week.totalCost / weekDates.length) * 7 : 0;
+      const overBudget = runRate > 20;
+      const topAgents = day.byAgent.slice(0, 3).map((a) => `${esc(a.key)} $${a.cost.toFixed(2)}`).join(' &middot; ');
+      costSection = `<div class="section"><div class="section-title">&#128176; LLM Cost</div>`
+        + `<p style="font-size:13px;margin:0 0 6px 0;"><strong>$${day.totalCost.toFixed(2)}</strong> on ${esc(targetDate)} &middot; ${day.totalCalls} calls</p>`
+        + `<p style="font-size:12px;color:${overBudget ? '#b91c1c' : '#6b7280'};margin:0 0 6px 0;">Last ${weekDates.length}d: <strong>$${week.totalCost.toFixed(2)}</strong> &middot; projected run-rate <strong>$${runRate.toFixed(2)}/wk</strong>${overBudget ? ' &#9888;&#65039; over $20 target' : ''}</p>`
+        + (topAgents ? `<p style="font-size:12px;color:#6b7280;margin:0;">Top: ${topAgents}</p>` : '')
+        + `</div>`;
+    }
+  } catch { /* cost section is best-effort */ }
+
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
   <h1>Daily Recap</h1>
   <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
   ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
+  ${costSection}
   ${healthSection}
   ${seoImpactSection}
   ${prioritizerSection}

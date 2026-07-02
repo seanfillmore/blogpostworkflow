@@ -144,8 +144,17 @@ runStep('collection content publish-approved', `"${NODE}" agents/collection-cont
 // Step 4c: pages from GSC
 runStep('pages-from-gsc', `"${NODE}" agents/product-optimizer/index.js --pages-from-gsc${dryFlag}`);
 
-// Step 5: run collection linker to inject cross-links from blog posts to collections
-runStep('collection-linker', `"${NODE}" agents/collection-linker/index.js --top-targets --apply${dryFlag}`);
+// Step 5: run collection linker to inject cross-links from blog posts to collections.
+// WEEKLY (Mondays), not daily: it makes ~1 Claude call per (target × article) and
+// re-analyzed the same pairs every day — the #1 metered cost driver (~250 Haiku
+// calls/run, ~$7.7/wk). Internal cross-linking is slow-moving; a weekly sweep keeps
+// the benefit at ~1/7 the cost. Tighter --limit halves per-run calls too.
+// (Dashboard "Approve & Run" still triggers single-target runs on demand.)
+if (new Date().getDay() === 1) {
+  runStep('collection-linker', `"${NODE}" agents/collection-linker/index.js --top-targets --apply --limit 12${dryFlag}`);
+} else {
+  log('  collection-linker: skipped (weekly, Mondays only)');
+}
 
 // Step 5b: rank alerter — flag sudden position changes
 runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
