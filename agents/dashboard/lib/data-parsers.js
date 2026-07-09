@@ -12,6 +12,20 @@ import {
   getEditorReportPath,
 } from '../../../lib/posts.js';
 
+// Read + parse a JSON file, tolerating a corrupt/truncated/empty file. Returns
+// null and logs once rather than throwing — one bad daily snapshot must never
+// take down the whole dashboard API. Regression: a 2026-07-05 disk-full event
+// left 0-byte snapshot files that made parseCROData throw on every /api/data
+// request, surfacing as a Cloudflare 502 on the dashboard.
+function safeReadJson(path) {
+  try {
+    return JSON.parse(readFileSync(path, 'utf8'));
+  } catch (err) {
+    console.warn(`[dashboard] skipping unreadable JSON ${basename(path)}: ${err.message}`);
+    return null;
+  }
+}
+
 export function parseCalendar() {
   // Prefer JSON; fall back to legacy markdown parse via calendar-store
   try {
@@ -182,7 +196,8 @@ export function parseRankings(device = 'desktop') {
   });
   if (!files.length) return empty;
 
-  const latest = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, files[0]), 'utf8'));
+  const latest = safeReadJson(join(SNAPSHOTS_DIR, files[0]));
+  if (!latest) return empty;
 
   // Resolve comparison baselines and load each baseline's position maps once.
   const baselineDefs = resolveRankBaselines(files, latest.date);
@@ -194,7 +209,8 @@ export function parseRankings(device = 'desktop') {
 
   const baselineMaps = {}; // key -> { posts: {slug:pos}, kws: {kw:pos} }
   for (const b of baselineDefs) {
-    const snap = JSON.parse(readFileSync(join(SNAPSHOTS_DIR, b.file), 'utf8'));
+    const snap = safeReadJson(join(SNAPSHOTS_DIR, b.file));
+    if (!snap) continue;
     const postMap = {}, kwMap = {};
     for (const p of snap.posts ?? []) postMap[p.slug] = p.position;
     for (const p of snap.allKeywords ?? []) kwMap[p.keyword] = p.position;
@@ -251,7 +267,7 @@ export function parseCROData() {
   if (existsSync(CLARITY_SNAPSHOTS_DIR)) {
     const files = readdirSync(CLARITY_SNAPSHOTS_DIR)
       .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
-    clarityAll = files.map(f => JSON.parse(readFileSync(join(CLARITY_SNAPSHOTS_DIR, f), 'utf8')));
+    clarityAll = files.map(f => safeReadJson(join(CLARITY_SNAPSHOTS_DIR, f))).filter(Boolean);
   }
 
   // Load up to 60 shopify snapshots
@@ -259,7 +275,7 @@ export function parseCROData() {
   if (existsSync(SHOPIFY_SNAPSHOTS_DIR)) {
     const files = readdirSync(SHOPIFY_SNAPSHOTS_DIR)
       .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
-    shopifyAll = files.map(f => JSON.parse(readFileSync(join(SHOPIFY_SNAPSHOTS_DIR, f), 'utf8')));
+    shopifyAll = files.map(f => safeReadJson(join(SHOPIFY_SNAPSHOTS_DIR, f))).filter(Boolean);
   }
 
   // Load most recent CRO brief
@@ -281,7 +297,7 @@ export function parseCROData() {
   if (existsSync(GSC_SNAPSHOTS_DIR)) {
     const files = readdirSync(GSC_SNAPSHOTS_DIR)
       .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 90);
-    gscAll = files.map(f => JSON.parse(readFileSync(join(GSC_SNAPSHOTS_DIR, f), 'utf8')));
+    gscAll = files.map(f => safeReadJson(join(GSC_SNAPSHOTS_DIR, f))).filter(Boolean);
   }
 
   // Load up to 60 GA4 snapshots
@@ -289,7 +305,7 @@ export function parseCROData() {
   if (existsSync(GA4_SNAPSHOTS_DIR)) {
     const files = readdirSync(GA4_SNAPSHOTS_DIR)
       .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
-    ga4All = files.map(f => JSON.parse(readFileSync(join(GA4_SNAPSHOTS_DIR, f), 'utf8')));
+    ga4All = files.map(f => safeReadJson(join(GA4_SNAPSHOTS_DIR, f))).filter(Boolean);
   }
 
   // Load up to 60 Google Ads snapshots
@@ -297,7 +313,7 @@ export function parseCROData() {
   if (existsSync(GOOGLE_ADS_SNAPSHOTS_DIR)) {
     const files = readdirSync(GOOGLE_ADS_SNAPSHOTS_DIR)
       .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 60);
-    googleAdsAll = files.map(f => JSON.parse(readFileSync(join(GOOGLE_ADS_SNAPSHOTS_DIR, f), 'utf8')));
+    googleAdsAll = files.map(f => safeReadJson(join(GOOGLE_ADS_SNAPSHOTS_DIR, f))).filter(Boolean);
   }
 
   return { clarityAll, shopifyAll, gscAll, ga4All, brief, googleAdsAll };
