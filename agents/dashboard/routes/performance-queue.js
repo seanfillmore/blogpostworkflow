@@ -3,7 +3,7 @@ import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { listQueueItems, writeItem } from '../../performance-engine/lib/queue.js';
-import { getBlogs, updateArticle, getProducts, updateProduct, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
+import { getBlogs, getArticle, updateArticle, getProducts, updateProduct, createCustomCollection, upsertMetafield } from '../../../lib/shopify.js';
 import { getPostMeta, getMetaPath, getContentPath, listAllSlugs } from '../../../lib/posts.js';
 import { buildTriggerCommand, agentForOpportunityItem } from '../lib/opportunity-trigger.js';
 import { ensureLocalPostForUrl } from '../../../lib/ensure-local-post.js';
@@ -225,6 +225,14 @@ function publishCollectionContent(item, ctx, res) {
   return respondJson(res, { ok: true, publishing: true });
 }
 
+// True only for a "the article no longer exists" Shopify 404 — the signal that a
+// refresh target was deleted + redirected by a cannibalization consolidation.
+// Transient failures (5xx, 429, network) must NOT match, so they still surface
+// as real errors instead of silently retiring a live post's refresh.
+export function isArticleGoneError(err) {
+  return /HTTP 404\b|Not Found/i.test(err?.message || '');
+}
+
 async function publishBlogRefresh(item, ctx) {
   const found = findPostMeta(item.slug, ctx.POSTS_DIR);
   if (!found) throw new Error(`No post metadata found for "${item.slug}". The post may not have been published to Shopify yet — run it through the calendar pipeline first.`);
@@ -233,9 +241,27 @@ async function publishBlogRefresh(item, ctx) {
   if (!existsSync(item.refreshed_html_path)) throw new Error(`Refreshed HTML not found at ${item.refreshed_html_path}`);
   const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
   const blogs = await getBlogs();
-  await updateArticle(blogs[0].id, postMeta.shopify_article_id, { body_html: refreshedHtml });
+  const blogId = blogs[0].id;
+
+  // A refresh can outlive its Shopify article: the cannibalization-resolver
+  // deletes consolidation losers and 301-redirects them, so the queued
+  // shopify_article_id may now be gone. PUTting to it returns a bare Shopify 404
+  // the user can't act on. Verify the article still exists first and, if it was
+  // consolidated away, retire the queue item gracefully — same pattern as the
+  // seo-opportunity refresh path (triggerOpportunity above).
+  try {
+    await getArticle(blogId, postMeta.shopify_article_id);
+  } catch (err) {
+    if (isArticleGoneError(err)) {
+      return { dismissed: true, reason: `Post "${item.slug}" was consolidated away — Shopify article ${postMeta.shopify_article_id} no longer exists (redirected/removed). Refresh retired.` };
+    }
+    throw err; // transient/unexpected — surface as a real failure
+  }
+
+  await updateArticle(blogId, postMeta.shopify_article_id, { body_html: refreshedHtml });
   // Update canonical HTML using the post's own slug (may differ from queue item slug)
   writeFileSync(getContentPath(postMeta.slug || item.slug), refreshedHtml);
+  return { published: true };
 }
 
 export default [
@@ -264,7 +290,14 @@ export default [
         } else if (item.trigger === 'product-title-rewrite') {
           await publishProductTitleRewrite(item);
         } else {
-          await publishBlogRefresh(item, ctx);
+          const result = await publishBlogRefresh(item, ctx);
+          if (result?.dismissed) {
+            item.status = 'dismissed';
+            item.dismissed_reason = result.reason;
+            item.dismissed_at = new Date().toISOString();
+            writeItem(item);
+            return respondJson(res, { ok: true, dismissed: true, message: result.reason });
+          }
         }
       } catch (err) {
         // 422 (not 502) — these are user-state errors (post not on Shopify yet,
