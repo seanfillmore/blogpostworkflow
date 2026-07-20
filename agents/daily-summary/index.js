@@ -22,7 +22,7 @@
  *   0 13 * * * cd ~/seo-claude && node agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1
  */
 
-import { readFileSync, readdirSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
@@ -778,7 +778,8 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
       const runRate = weekDates.length ? (week.totalCost / weekDates.length) * 7 : 0;
       const overBudget = runRate > 20;
       const topAgents = day.byAgent.slice(0, 3).map((a) => `${esc(a.key)} $${a.cost.toFixed(2)}`).join(' &middot; ');
-      costSection = `<div class="section"><div class="section-title">&#128176; LLM Cost</div>`
+      // Only a needle-mover when spend is over target; otherwise stays off the digest.
+      if (overBudget) costSection = `<div class="section"><div class="section-title">&#128176; LLM Cost</div>`
         + `<p style="font-size:13px;margin:0 0 6px 0;"><strong>$${day.totalCost.toFixed(2)}</strong> on ${esc(targetDate)} &middot; ${day.totalCalls} calls</p>`
         + `<p style="font-size:12px;color:${overBudget ? '#b91c1c' : '#6b7280'};margin:0 0 6px 0;">Last ${weekDates.length}d: <strong>$${week.totalCost.toFixed(2)}</strong> &middot; projected run-rate <strong>$${runRate.toFixed(2)}/wk</strong>${overBudget ? ' &#9888;&#65039; over $20 target' : ''}</p>`
         + (topAgents ? `<p style="font-size:12px;color:#6b7280;margin:0;">Top: ${topAgents}</p>` : '')
@@ -786,33 +787,79 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     }
   } catch { /* cost section is best-effort */ }
 
+  // ── Lean digest: only what moved the needle (revenue-first) ───────────────
+  // Every agent still runs and its full output is on the dashboard. The digest
+  // deliberately surfaces only the handful of things that change revenue or need
+  // a decision — not a listing of everything that happened. The verbose per-
+  // category sections above are intentionally left unrendered here.
+
+  // Rank movers — biggest position gains/drops on tracked queries (rank-alerter).
+  let rankMoversSection = '';
+  try {
+    const raPath = join(ROOT, 'data', 'reports', 'rank-alerter', 'latest.json');
+    if (existsSync(raPath)) {
+      const ra = JSON.parse(readFileSync(raPath, 'utf8'));
+      const moverRow = (m, up) =>
+        `<p style="font-size:13px;margin:5px 0;">${up ? '&#128200;' : '&#128201;'} <strong>${esc(m.query)}</strong> `
+        + `#${Math.round(m.from)} &rarr; <span style="color:${up ? '#166534' : '#991b1b'};font-weight:600;">#${Math.round(m.to)}</span></p>`;
+      const gains = (ra.gains || []).slice(0, 3).map((g) => moverRow(g, true)).join('');
+      const drops = (ra.drops || []).slice(0, 3).map((d) => moverRow(d, false)).join('');
+      if (gains || drops) {
+        rankMoversSection = `<div class="section"><div class="section-title">&#128202; Rank Movers</div>${gains}${drops}</div>`;
+      }
+    }
+  } catch { /* best-effort */ }
+
+  // Failures that cost money — error-status entries only.
+  let errorsSection = '';
+  {
+    const errs = visible.filter((e) => e.status === 'error').slice(0, 5);
+    if (errs.length) {
+      const rows = errs.map((e) =>
+        `<div class="blocked-post"><div class="title">&#10060; ${esc(e.subject)}</div>`
+        + `${e.body ? `<div class="blockers">${esc(previewBody(e.body, { maxLines: 3, maxChars: 220 }))}</div>` : ''}</div>`).join('');
+      errorsSection = `<div class="action-required"><div class="section-title">&#10060; Failures &mdash; ${errs.length}</div>${rows}</div>`;
+    }
+  }
+
+  // Did our bets pay off — change-verdict outcomes (they notify as entries).
+  let verdictSection = '';
+  {
+    const vs = visible.filter((e) => /verdict/i.test(e.subject || '')).slice(0, 4);
+    if (vs.length) {
+      verdictSection = `<div class="section"><div class="section-title">&#9989; Change Verdicts</div>${renderEntries(vs)}</div>`;
+    }
+  }
+
+  // Decisions awaiting you — pending optimization queue + posts blocked from publish.
+  const decisionsBody = `${queueSection}${blockedSection}`;
+
+  // Everything else ran; collapse to a single activity line (no listing).
+  const errCount = entries.filter((e) => e.status === 'error').length;
+  const okCount = entries.length - errCount;
+  const activityLine = `${entries.length} task${entries.length !== 1 ? 's' : ''} ran`
+    + ` &middot; ${okCount} ok${errCount ? ` &middot; <span style="color:#991b1b;">${errCount} error${errCount > 1 ? 's' : ''}</span>` : ''}`;
+
+  // Priority order — most revenue-critical first. Each block self-hides when empty.
+  const movers = [
+    healthSection,       // data outage / stale feeds
+    errorsSection,       // things that broke
+    seoImpactSection,    // revenue & conversion (the number)
+    rankMoversSection,   // leading indicator of traffic → revenue
+    decisionsBody,       // unrealized revenue awaiting a click
+    verdictSection,      // did our changes work
+    abTestSection,       // CTR bets concluded
+    costSection,         // only present when over budget
+  ].filter(Boolean);
+
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>
-  <h1>Daily Recap</h1>
-  <div class="date">${targetDate}${suppressed > 0 ? ` &middot; ${suppressed} routine task${suppressed > 1 ? 's' : ''} ran normally` : ''}</div>
-  ${nothingToReport ? '<div class="section"><p class="empty">All systems ran normally yesterday. Nothing requires attention.</p></div>' : ''}
-  ${costSection}
-  ${healthSection}
-  ${seoImpactSection}
-  ${prioritizerSection}
-  ${reviewSection}
-  ${blockedImagesSection}
-  ${queueSection}
-  ${blockedSection}
-  ${flopSection}
-  ${performanceSection}
-  ${gscSection}
-  ${competitorSection}
-  ${quickWinSection}
-  ${pipelineSection}
-  ${imageSection}
-  ${adsSection}
-  ${seoSection}
-  ${backlinksSection}
-  ${abTestSection}
-  ${aiCitationSection}
-  ${otherSection}
-  <div class="footer"><a href="${esc(dashboardUrl)}" style="color:#6b7280;">Open Dashboard</a></div>
+  <h1>Daily Recap &mdash; What Moved</h1>
+  <div class="date">${targetDate}</div>
+  ${movers.length
+    ? movers.join('\n  ')
+    : '<div class="section"><p class="empty">Nothing moved the needle yesterday — revenue steady, no failures, no decisions waiting.</p></div>'}
+  <div class="footer">${activityLine} &middot; <a href="${esc(dashboardUrl)}" style="color:#6b7280;">Full activity on dashboard &rarr;</a></div>
 </body></html>`;
 }
 
@@ -969,6 +1016,15 @@ async function main() {
   if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
   if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
   const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
+
+  // --preview: write the rendered HTML to a file and skip sending. Lets us eyeball
+  // the digest against real data without emailing.
+  if (process.argv.includes('--preview')) {
+    const outPath = join(ROOT, 'data', 'reports', 'daily-summary', `preview-${targetDate}.html`);
+    writeFileSync(outPath, html);
+    log(`Preview written (not sent): ${outPath}`);
+    return;
+  }
 
   await sendHtmlEmail(
     `Daily Recap — ${targetDate} (${subtitle})`,

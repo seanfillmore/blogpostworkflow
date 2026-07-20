@@ -1,6 +1,40 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { previewBody, formatBodyHtml } from '../../agents/daily-summary/index.js';
+import { previewBody, formatBodyHtml, buildDigestHtml } from '../../agents/daily-summary/index.js';
+
+// ── buildDigestHtml: lean, revenue-first digest (only needle-movers) ──────────
+
+test('buildDigestHtml: surfaces revenue + failures, drops the routine listing', () => {
+  const entries = [
+    { subject: 'Content Refresh completed', status: 'success', ts: '2026-07-20T22:00:00Z', body: 'refreshed 1 post' },
+    { subject: 'Publisher failed', status: 'error', ts: '2026-07-20T22:01:00Z', body: 'Shopify API 404' },
+    { subject: 'Image Generator completed', status: 'success', ts: '2026-07-20T22:02:00Z' },
+  ];
+  const seoImpact = {
+    totals: { organic_revenue: 157, organic_revenue_delta: -20, organic_conversions: 27 },
+    window: { start: '2026-06-21', end: '2026-07-18' },
+    top_revenue: [{ revenue: 132, path: '/', conversions: 5, sessions: 45 }],
+  };
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], seoImpact, null);
+
+  assert.ok(html.includes('Organic Revenue'), 'revenue block shown');
+  assert.ok(html.includes('$157'), 'revenue number shown');
+  assert.ok(html.includes('Publisher failed'), 'error surfaced');
+  assert.ok(html.includes('Failures'), 'failures section present');
+  // routine successes are collapsed, not listed
+  assert.ok(!html.includes('Content Pipeline'), 'no verbose pipeline section');
+  assert.ok(!html.includes('Image Generator completed'), 'routine success not individually listed');
+  // single activity line replaces the full listing
+  assert.ok(/3 tasks ran/.test(html), 'footer shows task count');
+  assert.ok(html.includes('1 error'), 'footer shows error count');
+});
+
+test('buildDigestHtml: quiet day collapses to a single "nothing moved" line', () => {
+  const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null);
+  assert.ok(html.includes('Nothing moved the needle'), 'quiet-day message shown');
+  assert.ok(/1 task ran/.test(html), 'activity line still present');
+});
 
 test('previewBody: empty or missing body returns empty string', () => {
   assert.equal(previewBody(''), '');
