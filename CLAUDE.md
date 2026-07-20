@@ -1,6 +1,19 @@
 # SEO Claude Team
 
-A fleet of AI agents that grow the SEO performance of **Real Skin Care** (natural deodorants, body care, oral care, lip balm) on its Shopify storefront `realskincare.com`. RSC also sells on Amazon, where it shares a seller account with a sister brand, **Culina** (cast iron / Blackstone griddle care). Culina is on a separate website with its own SEO automation; this codebase's Shopify/content/SEO pipelines are RSC-only. The Shopify website is the primary revenue channel. Amazon is complementary and validates commercial intent for keyword/SEO decisions.
+A fleet of AI agents that grow **Shopify revenue** for **Real Skin Care** (natural deodorants, body care, oral care, lip balm) on its storefront `realskincare.com`, using SEO as the means. RSC also sells on Amazon, where it shares a seller account with a sister brand, **Culina** (cast iron / Blackstone griddle care). Culina is on a separate website with its own SEO automation; this codebase's Shopify/content/SEO pipelines are RSC-only. The Shopify website is the primary revenue channel. Amazon is complementary and validates commercial intent for keyword/SEO decisions.
+
+## Prime Directive — Revenue
+
+**The purpose of this project is to generate revenue for Real Skin Care's Shopify store. SEO is the means, not the goal.** Every agent, report, and change exists to drive *traffic that converts to sales*. Traffic that doesn't convert, content with no purchase path, and rankings that don't produce revenue are not wins — they are unfinished work at best and wasted effort at worst. Before building or optimizing anything, answer: **how does this convert traffic to sales?** If it can't, it's a waste of time.
+
+This reorders how every agent prioritizes:
+
+- **Commercial pages first.** Collections and PDPs convert; informational blog posts mostly don't (collections ≈80% of ecommerce SEO revenue). Prioritize creating/optimizing collection and product pages over publishing more top-of-funnel blog content.
+- **Every page that earns traffic needs a conversion path** — a prominent above-the-fold link/CTA to the relevant collection or PDP, plus a working buy-box. A post with traffic and no buy path is a bug to fix, not a success.
+- **Measure in dollars, not clicks.** `agents/seo-impact` attributes Shopify revenue to pages/clusters. A cluster with high clicks and $0 revenue (e.g. toothpaste ≈268 clicks / $0) is a top priority to fix or stop investing in — not a ranking to celebrate.
+- **CTR and conversion are first-class.** Impressions without clicks (low CTR) and clicks without purchases (no conversion) are the two revenue leaks. Closing them beats chasing new keywords.
+
+When an agent has the data to make a revenue-improving decision, it makes it and applies it (see Autonomy Principle below).
 
 ## Brand Context
 
