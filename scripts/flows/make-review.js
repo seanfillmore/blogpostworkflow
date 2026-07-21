@@ -46,10 +46,19 @@ for (const f of FLOWS) {
   const cards = [];
   for (const e of f.emails) {
     const ctx = { ...CTX.base, ...CTX[e.ctx] };
-    const r = await k.renderTemplate(templates[e.key], ctx);
-    // pull subject/preview from the module
     const mod = (await import(`./flows/${f.name}.js`)).default;
     const meta = mod.emails[e.key];
+    let r;
+    try {
+      r = await k.renderTemplate(templates[e.key], ctx);
+    } catch (err) {
+      // Coupon-tag emails can't be preview-rendered (Klaviyo assigns a unique code
+      // per recipient at send). Substitute a sample code so the layout still shows.
+      const html = (await k.getTemplate(templates[e.key])).html.replace(/\{%\s*coupon_code[^%]*%\}/g, 'WB25-SAMPLE');
+      const r2 = await k.createTemplate({ name: `__ZZ_PREVIEW_${e.key}`, html });
+      r = await k.renderTemplate(r2.id, ctx).catch(() => ({ html }));
+      await k.klaviyoRequest('DELETE', `/templates/${r2.id}/`).catch(() => {});
+    }
     cards.push(`
       <article class="card">
         <div class="card-meta">

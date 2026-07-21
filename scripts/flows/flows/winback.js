@@ -51,7 +51,9 @@ export default {
         'Our best offer to welcome you back — don\'t let it slip away.',
         H1('One more try — 25% off') +
         P_('We won\'t sugarcoat it: we want you back, and this is the best offer we\'ve got. Take <strong>25% off your entire order</strong> — our way of saying we\'d love to see you again.') +
-        codeBox('25% off your order', 'ComeBack25') +
+        // Dynamic unique-per-recipient code (Klaviyo assigns from the WINBACK25 pool
+        // at send). Not previewable via API render — verify with a Klaviyo test-send.
+        codeBox('25% off your order', `{% coupon_code 'WINBACK25' %}`) +
         button(P.bestSellers.url, 'Claim 25% off') +
         P_('This is the last email in this series, so if you\'ve been meaning to restock — now\'s the moment.') +
         SIGN,
