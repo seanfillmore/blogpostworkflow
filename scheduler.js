@@ -162,6 +162,10 @@ runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 // Step 5c: insight aggregator — refresh writer standing rules
 runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 
+// Step 5c.1: keep the Winback 25% dynamic-coupon pool topped up (Klaviyo skips
+// the email at 0 codes). Cheap daily check; auto-refills + alerts when low.
+runStep('winback-coupon-monitor', `"${NODE}" agents/winback-coupon-monitor/index.js${dryFlag}`);
+
 // Step 5d: submit pending pages to indexing API (daily, up to quota limit)
 runStep('submit-indexing', `"${NODE}" agents/technical-seo/index.js fix-submit-indexing`);
 
