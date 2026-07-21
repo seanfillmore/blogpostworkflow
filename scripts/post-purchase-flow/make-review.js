@@ -108,13 +108,13 @@ const page = `<style>
 
 <header class="top"><div class="top-in">
   <span class="brand">Real Skin Care · Klaviyo</span>
-  <span class="pill">Draft · not live</span>
+  <span class="pill">Live</span>
 </div></header>
 
 <div class="wrap">
   <section class="hero">
     <h1>Post-Purchase Flow</h1>
-    <p><span class="lead-accent">Five emails, built and staged as a draft in Klaviyo.</span> The sequence is engineered around the two things that move RSC revenue: pushing order value toward the <strong>$50 free-shipping</strong> line with a set cross-sell, and driving the repeat order with a one-click replenishment reorder. No price discounts — free shipping is the only lever, including a <strong>SETSHIP</strong> code that ships the bundle free in Email 3.</p>
+    <p><span class="lead-accent">Five emails, now live in Klaviyo.</span> The sequence is engineered around the two things that move RSC revenue: pushing order value toward the <strong>$50 free-shipping</strong> line with a set cross-sell, and driving the repeat order with a one-click replenishment reorder. No price discounts — free shipping is the only lever, including a <strong>SETSHIP</strong> code that ships the bundle free in Email 3.</p>
 
     <ul class="timeline">${timeline}
     </ul>
@@ -126,10 +126,10 @@ const page = `<style>
 
   <footer>
     <h2>Where this stands</h2>
-    <p><span class="status-good">Built &amp; verified</span> — trigger (Placed Order, excludes cancellations), timing, links (all CTAs return 200, reorder cart-permalinks resolve), and per-product personalization all confirmed. Nothing sends yet.</p>
+    <p><span class="status-good">Live &amp; verified</span> — flow status live, all five messages active. Triggers on each new Placed Order (excludes cancellations); does not backfill past customers. The old unfinished draft is left inert (draft never sends).</p>
     <ul>
       <li>Emails&nbsp;2 &amp; 5 change content by what was purchased — previews above show a <em>deodorant&nbsp;+ toothpaste</em> order.</li>
-      <li>To launch after your review: set the flow status to <code>live</code> in Klaviyo (or one API call), and archive the old unfinished draft so nobody double-sends.</li>
+      <li>Free shipping on the bundle is handled by an active <code>SETSHIP</code> code ($45 min, once per customer).</li>
     </ul>
   </footer>
 </div>

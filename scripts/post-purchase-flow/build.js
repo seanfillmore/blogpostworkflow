@@ -57,13 +57,13 @@ const delay = (tid, value, unit, next) => ({
   links: { next },
 });
 
-function send(tid, emailKey, templateId, next) {
+function send(tid, emailKey, templateId, next, status = 'draft') {
   const e = EMAILS[emailKey];
   return {
     temporary_id: tid,
     type: 'send-email',
     data: {
-      status: 'draft',
+      status,
       message: {
         from_email: 'support@realskincare.com',
         from_label: 'Real Skin Care',
@@ -111,9 +111,10 @@ function itemSplit(tid, titles, nextTrue, nextFalse) {
   };
 }
 
-function buildDefinition(ids) {
+function buildDefinition(ids, sendStatus = 'draft') {
   // ids: { e1_thankyou: '<templateId>', ... }
   const tpl = (key) => ids[key];
+  const s = (tid, key, next) => send(tid, key, tpl(key), next, sendStatus);
   // Single linear trunk. Email 2 personalization lives INSIDE the e2 template
   // (conditional blocks on event.Items) rather than as graph branches, because
   // Klaviyo flows are trees — branch paths cannot re-converge, so per-product
@@ -121,24 +122,24 @@ function buildDefinition(ids) {
   // split is the terminal consumable gate before Email 5 (no convergence).
   const actions = [
     delay('d_1h', 1, 'hours', 'e1'),
-    send('e1', 'e1_thankyou', tpl('e1_thankyou'), 'd_2d'),
+    s('e1', 'e1_thankyou', 'd_2d'),
 
     // Email 2 — how-to-use, personalized via in-template conditionals (all)
     delay('d_2d', 2, 'days', 'e2'),
-    send('e2', 'e2_howto', tpl('e2_howto'), 'd_3d'),
+    s('e2', 'e2_howto', 'd_3d'),
 
     // Email 3 — set cross-sell (all)
     delay('d_3d', 3, 'days', 'e3'),
-    send('e3', 'e3_set', tpl('e3_set'), 'd_5d'),
+    s('e3', 'e3_set', 'd_5d'),
 
     // Email 4 — review + referral (all)
     delay('d_5d', 5, 'days', 'e4'),
-    send('e4', 'e4_review', tpl('e4_review'), 'split_consumable'),
+    s('e4', 'e4_review', 'split_consumable'),
 
     // Email 5 — replenishment (consumable buyers only; non-consumables exit)
     itemSplit('split_consumable', CONSUMABLE_ITEMS, 'd_25d', null),
     delay('d_25d', 25, 'days', 'e5'),
-    send('e5', 'e5_restock', tpl('e5_restock'), null),
+    s('e5', 'e5_restock', null),
   ];
 
   return {
@@ -192,17 +193,38 @@ async function cmdRender(key) {
   console.log(`Rendered ${key} -> ${path} (${out.html.length} bytes)`);
 }
 
-async function cmdFlow() {
+async function cmdFlow(sendStatus = 'draft') {
   const state = loadState();
   if (!state.templates || Object.keys(state.templates).length < ORDER.length) {
     throw new Error('Templates not fully built. Run: node build.js templates');
   }
-  const definition = buildDefinition(state.templates);
+  const definition = buildDefinition(state.templates, sendStatus);
   const flow = await k.createFlow({ name: 'Post-Purchase Flow (RSC v2)', definition });
   state.flowId = flow.id;
   saveState(state);
-  console.log(`✓ Created DRAFT flow ${flow.id} (status: ${flow.status})`);
-  console.log('  Review, seed-send, then set live explicitly. Nothing is live yet.');
+  console.log(`✓ Created flow ${flow.id} (flow status: ${flow.status}, messages: ${sendStatus})`);
+}
+
+// Take the flow live: recreate with live messages (Klaviyo forces new flows to
+// draft, but action statuses persist), then flip the flow status to live.
+async function cmdGolive() {
+  const state = loadState();
+  // Replace any existing draft build so message statuses are 'live' from creation.
+  if (state.flowId) {
+    await k.deleteFlow(state.flowId).catch(() => {});
+    console.log(`  removed prior draft flow ${state.flowId}`);
+  }
+  await cmdFlow('live');
+  const s2 = loadState();
+  const live = await k.updateFlowStatus(s2.flowId, 'live');
+  console.log(`✓ Flow ${s2.flowId} status -> ${live.status}`);
+  // Verify both flow and every send action are live
+  const acts = await k.listFlowActions(s2.flowId);
+  const sends = acts.filter((a) => a.action_type === 'SEND_EMAIL');
+  const draftSends = sends.filter((a) => a.status !== 'live');
+  console.log(`  messages live: ${sends.length - draftSends.length}/${sends.length}`);
+  if (draftSends.length || live.status !== 'live') throw new Error('Go-live incomplete — check statuses');
+  console.log('  ✓ LIVE — flow and all messages active.');
 }
 
 async function cmdVerify() {
@@ -229,9 +251,9 @@ async function cmdVerify() {
 }
 
 const [cmd, arg] = process.argv.slice(2);
-const run = { templates: () => cmdTemplates(arg), render: () => cmdRender(arg), flow: cmdFlow, verify: cmdVerify }[cmd];
+const run = { templates: () => cmdTemplates(arg), render: () => cmdRender(arg), flow: () => cmdFlow('draft'), golive: cmdGolive, verify: cmdVerify }[cmd];
 if (!run) {
-  console.log('Usage: node build.js <templates [key] | render <key> | flow | verify>');
+  console.log('Usage: node build.js <templates [key] | render <key> | flow | golive | verify>');
   process.exit(1);
 }
 run().catch((e) => { console.error('ERROR:', e.message); process.exit(1); });
