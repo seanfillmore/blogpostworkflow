@@ -65,27 +65,35 @@ Linear graph with two `trigger-split`/`conditional-split` points. Times are rela
 | 4 | Review + soft referral | +10 days | All | Judge.me review request + "friends get free ship with `NEWCUS`" |
 | 5 | Restock in one click | +~35 days | **Consumables only**; others exit | **Repeat lever.** One-click reorder + "stock up 2–3, ship free" |
 
-### Graph (linked-list definition)
+### Graph (linked-list definition) — AS BUILT
+
+**Architecture note (discovered during build):** Klaviyo flows are **trees, not DAGs** —
+branch paths cannot re-converge. A definition with converging branches is accepted by
+the API but silently keeps only the *first* inbound edge, orphaning the rest. Verified by
+inspecting raw `links` after create (three of four Email-2 branches came back
+`next: null`). Therefore Email 2's per-product personalization lives **inside the template**
+as conditional blocks on `event.Items` (validated: renders correct block per order), and the
+flow is a **single linear trunk** with only one terminal split (consumables → Email 5), which
+needs no convergence.
 
 ```
 Trigger: Placed Order (V69ueg), profile_filter: Cancelled Order (WSzmJK) count == 0 since flow-start
   → time-delay 1 hour
   → EMAIL 1 (all)
   → time-delay 2 days
-  → trigger-split by purchased product category
-        ├─ Deodorant  → EMAIL 2a
-        ├─ Toothpaste → EMAIL 2b
-        ├─ Soap/Lotion/Moisturizer → EMAIL 2c
-        └─ else (Set/other) → EMAIL 2d
-     (branches rejoin)
+  → EMAIL 2 (all) — product guidance chosen in-template via {% if ... in event.Items %}
+      (deodorant adjustment / toothpaste usage / soap+body routine / fallback)
   → time-delay 3 days   (≈ Day 5)
   → EMAIL 3 (all)
   → time-delay 5 days   (≈ Day 10)
   → EMAIL 4 (all)
-  → conditional-split: purchased a consumable?
-        ├─ yes → time-delay ~25 days (≈ Day 35) → EMAIL 5
+  → trigger-split: order contains a consumable? (deodorant/toothpaste/soaps)
+        ├─ yes → time-delay 25 days (≈ Day 35) → EMAIL 5 (reorder card personalized in-template)
         └─ no  → exit
 ```
+
+**Implementation:** `lib/klaviyo.js` (API wrapper) + `scripts/post-purchase-flow/`
+(`emails.js` templates, `build.js` orchestrator). 8 templates → 5 (Email 2 consolidated).
 
 ### Per-email content spec
 
