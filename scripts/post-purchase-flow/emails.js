@@ -188,7 +188,7 @@ export const EMAILS = {
       H1('How are you liking it?') +
       P_('You\'ve had your order for a couple of weeks now — long enough to know how it\'s working for you. If you have a minute, we\'d be truly grateful for an honest review. It helps us improve, and it helps other people find clean products they can trust.') +
       button(P.shopAll.url, 'Leave a review') +
-      P_('<strong>Love it? Share it.</strong> Send a friend to realskincare.com and they\'ll get <strong>free shipping</strong> on their first order with code <strong>NEWCUS</strong>.') +
+      P_('<strong>Love it? Share it.</strong> Send a friend to realskincare.com and they\'ll get <strong>free shipping</strong> on their first order with code <strong>NEWCUSTOMER</strong>.') +
       SIGN,
     ),
   },
