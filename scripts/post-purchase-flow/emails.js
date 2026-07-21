@@ -178,17 +178,20 @@ export const EMAILS = {
     ),
   },
 
+  // Review ask lives in the dedicated Product Review flow (fires on Fulfilled
+  // Order — better timing). This email is a check-in + referral, no review CTA,
+  // to avoid double-asking. (Template name unchanged so it updates in place.)
   e4_review: {
     key: 'e4',
     name: 'Post-Purchase — 04 Review + Referral',
     subject: 'How\'s it going, {{ first_name|default:"there" }}?',
-    preview: 'We\'d love your honest take — and your friends get free shipping.',
+    preview: 'Checking in — and your friends get free shipping.',
     html: shell(
-      'We\'d love your honest take — and your friends get free shipping.',
+      'Checking in — and your friends get free shipping.',
       H1('How are you liking it?') +
-      P_('You\'ve had your order for a couple of weeks now — long enough to know how it\'s working for you. If you have a minute, we\'d be truly grateful for an honest review. It helps us improve, and it helps other people find clean products they can trust.') +
-      button(P.shopAll.url, 'Leave a review') +
+      P_('You\'ve had your order for a couple of weeks now — long enough to know how it\'s working for you. If anything isn\'t perfect, just reply to this email. We read every message, and we want you to genuinely love what you bought.') +
       P_('<strong>Love it? Share it.</strong> Send a friend to realskincare.com and they\'ll get <strong>free shipping</strong> on their first order with code <strong>NEWCUSTOMER</strong>.') +
+      button(P.shopAll.url, 'Send a friend our way') +
       SIGN,
     ),
   },
