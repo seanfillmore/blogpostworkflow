@@ -177,12 +177,17 @@ function stripExistingProductSchema(html) {
     .trim();
 }
 
-function injectSchemas(html, schemas) {
-  const cleaned = stripExistingProductSchema(html);
-  const blocks = schemas
-    .map((s) => `<script type="application/ld+json">\n${JSON.stringify(s, null, 2)}\n</script>`)
-    .join('\n');
-  return `${SCHEMA_MARKER}\n${blocks}\n${SCHEMA_MARKER}\n${cleaned}`;
+function injectSchemas(html, _schemas) {
+  // RETIRED 2026-07-20 — body_html schema injection corrupted descriptions.
+  // buildProductSchema read the previous schema block back in as the new schema's
+  // `description` (line ~77: stripHtml(body_html)), so every run nested the prior
+  // JSON one level deeper (observed 5× on live products), and the raw JSON leaked
+  // as visible text into anything that renders the description — the product page
+  // and One-Click-Upsell offers. The storefront theme already emits valid native
+  // Product schema (ProductGroup w/ brand, offers, gtin), so this added no SEO
+  // value. This now only STRIPS any prior injected block: the agent is self-
+  // healing and can never re-corrupt a description.
+  return stripExistingProductSchema(html);
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -207,18 +212,21 @@ async function main() {
 
       const schema = buildProductSchema(product);
       const updatedHtml = injectSchemas(product.body_html || '', [schema]);
+      const changed = updatedHtml !== (product.body_html || '');
 
       let applied = false;
-      if (apply) {
+      if (apply && changed) {
         try {
           await updateProduct(product.id, { body_html: updatedHtml });
           applied = true;
-          console.log('✓');
+          console.log('✓ stripped stale schema');
         } catch (e) {
           console.error(`✗ ${e.message}`);
         }
+      } else if (apply) {
+        console.log('(clean)');
       } else {
-        console.log('(dry run)');
+        console.log(changed ? '(dry run — would strip schema)' : '(dry run — clean)');
       }
 
       results.push({
@@ -248,9 +256,10 @@ async function main() {
 
       const schemas = buildCollectionSchema(col);
       const updatedHtml = injectSchemas(col.body_html || '', schemas);
+      const changed = updatedHtml !== (col.body_html || '');
 
       let applied = false;
-      if (apply) {
+      if (apply && changed) {
         try {
           if (col.collectionType === 'custom') {
             await updateCustomCollection(col.id, { body_html: updatedHtml });
@@ -258,10 +267,12 @@ async function main() {
             await updateSmartCollection(col.id, { body_html: updatedHtml });
           }
           applied = true;
-          console.log('✓');
+          console.log('✓ stripped stale schema');
         } catch (e) {
           console.error(`✗ ${e.message}`);
         }
+      } else if (apply) {
+        console.log('(clean)');
       } else {
         console.log('(dry run)');
       }
