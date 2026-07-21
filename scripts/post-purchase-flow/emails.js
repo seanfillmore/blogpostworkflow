@@ -163,7 +163,16 @@ export const EMAILS = {
       H1('Ready to complete your routine?') +
       P_('If you\'re loving what you ordered, the easiest next step is our <strong>Sensitive Skin Moisturizing Set</strong> — a curated bundle of our gentlest coconut-oil essentials, priced below buying each piece on its own.') +
       productCard({ ...P.set, note: 'Everything you need for soft, comfortable skin — for less than buying each piece separately.' }) +
-      P_(`At ${P.set.price}, the set leaves you just <strong>$3.20</strong> from our ${FREE_SHIP} free-shipping line. Add a coconut lip balm 4-pack (${P.lipbalm.price}) or a bar of coconut soap (${P.barsoap.price}) and <strong>shipping's on us.</strong>`) +
+      P_('And this one\'s on us to ship. Use the code below at checkout and <strong>your set ships free</strong> — our thank-you for coming back.') +
+      // Free-shipping code callout
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;">
+        <tr><td align="center">
+          <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border:2px dashed #2f5e3f;border-radius:10px;padding:14px 34px;text-align:center;">
+            <div style="font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#6b6b6b;">Free shipping on your set</div>
+            <div style="font-family:Georgia,serif;font-size:24px;letter-spacing:4px;color:#2f5e3f;font-weight:700;margin-top:4px;">SETSHIP</div>
+          </td></tr></table>
+        </td></tr>
+      </table>` +
       SIGN +
       button(P.set.url, 'Shop the Set'),
     ),

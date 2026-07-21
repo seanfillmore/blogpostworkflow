@@ -114,7 +114,7 @@ const page = `<style>
 <div class="wrap">
   <section class="hero">
     <h1>Post-Purchase Flow</h1>
-    <p><span class="lead-accent">Five emails, built and staged as a draft in Klaviyo.</span> The sequence is engineered around the two things that move RSC revenue: pushing order value toward the <strong>$50 free-shipping</strong> line with a set cross-sell, and driving the repeat order with a one-click replenishment reorder. No discount codes — free shipping is the only incentive.</p>
+    <p><span class="lead-accent">Five emails, built and staged as a draft in Klaviyo.</span> The sequence is engineered around the two things that move RSC revenue: pushing order value toward the <strong>$50 free-shipping</strong> line with a set cross-sell, and driving the repeat order with a one-click replenishment reorder. No price discounts — free shipping is the only lever, including a <strong>SETSHIP</strong> code that ships the bundle free in Email 3.</p>
 
     <ul class="timeline">${timeline}
     </ul>
