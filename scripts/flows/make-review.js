@@ -42,19 +42,28 @@ const escT = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g,
 
 const sections = [];
 for (const f of FLOWS) {
-  const templates = state[f.name].templates;
+  const mod = (await import(`./flows/${f.name}.js`)).default;
+  // Render from the ACTUAL flow-clone templates (source of truth), not the
+  // standalone templates — flows clone content at creation, so only the clones
+  // reflect what actually sends. Map email name -> clone template id.
+  const nameToClone = {};
+  const acts = await k.listFlowActions(state[f.name].flowId);
+  for (const a of acts.filter((x) => x.action_type === 'SEND_EMAIL')) {
+    const msgs = await k.klaviyoRequest('GET', `/flow-actions/${a.id}/flow-messages/`);
+    for (const m of msgs.data || []) nameToClone[m.attributes.name] = m.relationships.template.data.id;
+  }
   const cards = [];
   for (const e of f.emails) {
     const ctx = { ...CTX.base, ...CTX[e.ctx] };
-    const mod = (await import(`./flows/${f.name}.js`)).default;
     const meta = mod.emails[e.key];
+    const cloneId = nameToClone[meta.name];
     let r;
     try {
-      r = await k.renderTemplate(templates[e.key], ctx);
+      r = await k.renderTemplate(cloneId, ctx);
     } catch (err) {
       // Coupon-tag emails can't be preview-rendered (Klaviyo assigns a unique code
       // per recipient at send). Substitute a sample code so the layout still shows.
-      const html = (await k.getTemplate(templates[e.key])).html.replace(/\{%\s*coupon_code[^%]*%\}/g, 'WB25-SAMPLE');
+      const html = (await k.getTemplate(cloneId)).html.replace(/\{%\s*coupon_code[^%]*%\}/g, 'WB25-SAMPLE');
       const r2 = await k.createTemplate({ name: `__ZZ_PREVIEW_${e.key}`, html });
       r = await k.renderTemplate(r2.id, ctx).catch(() => ({ html }));
       await k.klaviyoRequest('DELETE', `/templates/${r2.id}/`).catch(() => {});

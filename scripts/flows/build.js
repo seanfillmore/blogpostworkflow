@@ -58,6 +58,9 @@ async function cmdFlow(flowName, mod, sendStatus = 'draft') {
   const state = loadState();
   const templateIds = state[flowName]?.templates;
   if (!templateIds || Object.keys(templateIds).length < Object.keys(mod.emails).length) throw new Error('Run templates first');
+  // Flows clone templates at creation, so a rebuild is the only way to refresh
+  // content. Delete any prior draft of ours first so re-running is idempotent.
+  if (state[flowName]?.flowId) { await k.deleteFlow(state[flowName].flowId).catch(() => {}); console.log(`  removed prior draft ${state[flowName].flowId}`); }
   const old = await k.getFlowDefinition(mod.oldFlowId);
   const def = buildDefinition(mod, templateIds, old.definition.triggers, old.definition.profile_filter, sendStatus);
   const flow = await k.createFlow({ name: mod.name, definition: def });
