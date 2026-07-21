@@ -162,8 +162,8 @@ export const EMAILS = {
       'The Sensitive Skin Set — everything you need, less than buying separately.',
       H1('Ready to complete your routine?') +
       P_('If you\'re loving what you ordered, the easiest next step is our <strong>Sensitive Skin Moisturizing Set</strong> — a curated bundle of our gentlest coconut-oil essentials, priced below buying each piece on its own.') +
-      productCard({ ...P.set, note: 'Everything you need for soft, comfortable skin — and it clears our free-shipping threshold.' }) +
-      P_(`Because the set is over ${FREE_SHIP}, <strong>shipping is on us.</strong> One order, full routine, nothing extra to think about.`) +
+      productCard({ ...P.set, note: 'Everything you need for soft, comfortable skin — for less than buying each piece separately.' }) +
+      P_(`At ${P.set.price}, the set leaves you just <strong>$3.20</strong> from our ${FREE_SHIP} free-shipping line. Add a coconut lip balm 4-pack (${P.lipbalm.price}) or a bar of coconut soap (${P.barsoap.price}) and <strong>shipping's on us.</strong>`) +
       SIGN +
       button(P.set.url, 'Shop the Set'),
     ),
