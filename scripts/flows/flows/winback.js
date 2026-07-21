@@ -35,7 +35,9 @@ export default {
         'Free shipping to pick up right where you left off.',
         H1('Let\'s make this easy') +
         P_('We\'d love to have you back. To make it easy, here\'s <strong>free shipping</strong> on your next order:') +
-        codeBox('Free shipping — welcome back', 'SHIPFREE') +
+        // Dedicated winback code (NOT the welcome SHIPFREE, which is once-per-customer
+        // and most lapsed customers already used it).
+        codeBox('Free shipping — welcome back', 'WELCOMEBACK') +
         button(P.bestSellers.url, 'Restock your favorites') +
         P_('Use the code at checkout. No minimum, no catch.') +
         SIGN,
