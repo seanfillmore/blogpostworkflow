@@ -221,8 +221,12 @@ if (new Date().getDay() === 0) {
     runStep('amazon-explore-ba',           `"${NODE}" scripts/amazon/explore-brand-analytics.mjs`,                 { indent: '    ', retries: 1 });
   }
 
-  // Step 6: product schema with Judge.me reviews (GSC-filtered)
-  runStep('product-schema --auto', `"${NODE}" agents/product-schema/index.js --auto --apply${dryFlag}`, { indent: '    ' });
+  // Step 6: product-schema RETIRED 2026-07-20 — body_html JSON-LD injection
+  // corrupted product/collection descriptions (nested schema leaked as raw text
+  // into product pages + One-Click-Upsell offers). The theme emits valid native
+  // Product schema, so this step added no SEO value. Agent kept as a self-healing
+  // strip-only cleaner; run manually if a stray schema block ever reappears.
+  // runStep('product-schema --auto', `"${NODE}" agents/product-schema/index.js --auto --apply${dryFlag}`, { indent: '    ' });
 
   // Step 7a: collection gap detection from GSC opportunities
   runStep('collection-creator --from-opportunities', `"${NODE}" agents/collection-creator/index.js --from-opportunities --queue${dryFlag}`, { indent: '    ' });
