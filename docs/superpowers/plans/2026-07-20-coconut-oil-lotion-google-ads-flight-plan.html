@@ -1,0 +1,339 @@
+<title>Coconut Oil Lotion — Google Ads Flight Plan</title>
+<style>
+  :root {
+    --ground:#f6f9f8; --surface:#ffffff; --surface-2:#eef4f2;
+    --ink:#132019; --muted:#556b63; --faint:#7b8f88;
+    --line:#dde6e2; --line-strong:#c6d3ce;
+    --accent:#0c7d6e; --accent-ink:#0a5f54; --accent-soft:#e0f0ec;
+    --go:#137a3b; --go-soft:#e3f3e8;
+    --caution:#9a5710; --caution-soft:#fbeedd;
+    --stop:#a82820; --stop-soft:#fae4e2;
+    --shadow:0 1px 2px rgba(19,32,25,.05),0 8px 24px -12px rgba(19,32,25,.12);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0c1312; --surface:#111b19; --surface-2:#16231f;
+      --ink:#e7efeb; --muted:#93a69e; --faint:#6d817a;
+      --line:#233330; --line-strong:#2f433e;
+      --accent:#2dd4bf; --accent-ink:#5ee7d6; --accent-soft:#0f2b27;
+      --go:#48c078; --go-soft:#12291b;
+      --caution:#e0a458; --caution-soft:#2c2113;
+      --stop:#f0776b; --stop-soft:#2c1815;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f9f8; --surface:#ffffff; --surface-2:#eef4f2;
+    --ink:#132019; --muted:#556b63; --faint:#7b8f88;
+    --line:#dde6e2; --line-strong:#c6d3ce;
+    --accent:#0c7d6e; --accent-ink:#0a5f54; --accent-soft:#e0f0ec;
+    --go:#137a3b; --go-soft:#e3f3e8; --caution:#9a5710; --caution-soft:#fbeedd;
+    --stop:#a82820; --stop-soft:#fae4e2;
+    --shadow:0 1px 2px rgba(19,32,25,.05),0 8px 24px -12px rgba(19,32,25,.12);
+  }
+  :root[data-theme="dark"]{
+    --ground:#0c1312; --surface:#111b19; --surface-2:#16231f;
+    --ink:#e7efeb; --muted:#93a69e; --faint:#6d817a;
+    --line:#233330; --line-strong:#2f433e;
+    --accent:#2dd4bf; --accent-ink:#5ee7d6; --accent-soft:#0f2b27;
+    --go:#48c078; --go-soft:#12291b; --caution:#e0a458; --caution-soft:#2c2113;
+    --stop:#f0776b; --stop-soft:#2c1815;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;margin:0;
+    -webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:860px;margin:0 auto;padding:48px 24px 96px}
+  .mono{font-family:var(--mono)}
+  h1,h2,h3{text-wrap:balance;line-height:1.15;margin:0}
+
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+  .lede{color:var(--muted);font-size:18px;max-width:60ch}
+
+  /* header */
+  header{border-bottom:2px solid var(--ink);padding-bottom:26px;margin-bottom:14px}
+  header h1{font-size:clamp(30px,5vw,46px);font-weight:850;letter-spacing:-.02em;margin:14px 0 16px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:22px}
+  .chip{font-family:var(--mono);font-size:12px;padding:5px 10px;border:1px solid var(--line-strong);border-radius:6px;color:var(--muted);background:var(--surface)}
+  .chip b{color:var(--ink);font-weight:600}
+
+  section{margin-top:56px}
+  .snum{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.1em}
+  h2{font-size:25px;font-weight:800;letter-spacing:-.015em;margin:6px 0 6px}
+  .sub{color:var(--muted);max-width:64ch;margin:0 0 22px}
+
+  /* stat tiles */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 16px 18px}
+  .stat .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .stat .v{font-family:var(--mono);font-size:30px;font-weight:600;letter-spacing:-.02em;margin-top:6px;line-height:1}
+  .stat .n{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .v.good{color:var(--go)} .v.bad{color:var(--stop)}
+
+  .callout{margin-top:16px;border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 18px;border-radius:0 10px 10px 0;font-size:15.5px}
+  .callout b{color:var(--accent-ink)}
+
+  /* tables */
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+  thead th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--surface-2)}
+  tbody tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .tag{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .tag.go{background:var(--go-soft);color:var(--go)}
+  .tag.warn{background:var(--caution-soft);color:var(--caution)}
+  .tag.stop{background:var(--stop-soft);color:var(--stop)}
+
+  /* tier cards */
+  .tiers{display:flex;flex-direction:column;gap:14px}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow)}
+  .tier.dead{background:transparent;box-shadow:none;border-style:dashed;border-color:var(--line-strong)}
+  .tier-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+  .tier-head h3{font-size:18px;font-weight:750}
+  .tier-head .role{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+  .tier.dead .role{color:var(--stop)}
+  .tier p{margin:10px 0 0;color:var(--muted);font-size:14.5px}
+  .tier dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:14px 0 0;font-size:13.5px}
+  .tier dt{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);align-self:center}
+  .tier dd{margin:0;color:var(--ink)}
+  .split{font-family:var(--mono);font-weight:600;color:var(--accent)}
+
+  /* two-col lists */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .panel h3{font-size:14px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
+  .panel.keep h3{color:var(--go)} .panel.kill h3{color:var(--stop)}
+  .panel ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+  .panel li{font-family:var(--mono);font-size:13px;color:var(--ink);padding-left:18px;position:relative;line-height:1.45}
+  .panel.keep li::before{content:"+";position:absolute;left:0;color:var(--go);font-weight:700}
+  .panel.kill li::before{content:"\2212";position:absolute;left:0;color:var(--stop);font-weight:700}
+
+  /* fix list */
+  .fixes{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+  .fix{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .fix .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-ink);
+    background:var(--accent-soft);padding:5px 10px;border-radius:6px;white-space:nowrap;align-self:start;margin-top:2px}
+  .fix p{margin:0;font-size:14.5px}
+  .fix p b{font-weight:650}
+  .fix .why{color:var(--muted);font-size:13px;margin-top:4px}
+
+  /* phases */
+  .phases{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line-strong);margin-left:8px}
+  .phase{position:relative;padding:0 0 26px 26px}
+  .phase:last-child{padding-bottom:0}
+  .phase::before{content:"";position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;
+    background:var(--accent);border:2px solid var(--ground)}
+  .phase .when{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+  .phase h3{font-size:16px;font-weight:700;margin:4px 0 4px}
+  .phase p{margin:0;color:var(--muted);font-size:14px}
+  .gate .phase::before{background:var(--go)}
+
+  .foot{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);
+    font-size:12.5px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+  a{color:var(--accent-ink);text-decoration-color:var(--line-strong);text-underline-offset:2px}
+  strong{font-weight:650}
+  @media (max-width:680px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .cols{grid-template-columns:1fr}
+    .wrap{padding:32px 18px 72px}
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Real Skin Care &middot; Paid Acquisition</div>
+    <h1>Coconut Oil Lotion: a Google&nbsp;Ads flight plan built to actually convert</h1>
+    <p class="lede">The last run had great ads and almost no sales. This plan keeps what worked, cuts what burned money, and only lets spend scale once it earns a 2&times; return.</p>
+    <div class="meta">
+      <span class="chip">Hero: <b>Coconut Oil Body Lotion &mdash; $30</b></span>
+      <span class="chip">Goal: <b>Acquire customers</b></span>
+      <span class="chip">Scale gate: <b>ROAS &ge; 2.0&times;</b></span>
+      <span class="chip">Status: <b>Framework &mdash; needs sign-off</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="snum">01 / DIAGNOSIS</div>
+    <h2>Why the last run lost money</h2>
+    <p class="sub">23 active days (Mar&ndash;May 2026), $341 spent. The problem wasn&rsquo;t the ads &mdash; people clicked. The sale never closed.</p>
+    <div class="stats">
+      <div class="stat"><div class="k">Click-through</div><div class="v good">6.6%</div><div class="n">Strong. The message resonated.</div></div>
+      <div class="stat"><div class="k">Conversion rate</div><div class="v bad">0.23%</div><div class="n">~10&times; below a healthy DTC store.</div></div>
+      <div class="stat"><div class="k">Return on ad spend</div><div class="v bad">0.19&times;</div><div class="n">$341 in, $64 back.</div></div>
+      <div class="stat"><div class="k">Sales tracked</div><div class="v bad">1</div><div class="n">Only the brand term converted.</div></div>
+    </div>
+    <div class="callout">
+      Every cold &ldquo;body lotion&rdquo; keyword pulled 50&ndash;120 clicks and produced <b>zero</b> sales. That&rsquo;s the exact pattern we see in organic: traffic arrives, traffic doesn&rsquo;t buy. Fix the post-click experience &mdash; landing page, offer, and tracking &mdash; and the CTR you already have turns into revenue.
+    </div>
+  </section>
+
+  <section>
+    <div class="snum">02 / THE MATH</div>
+    <h2>The number you can&rsquo;t out-run</h2>
+    <p class="sub">At ROAS 2&times;, allowable cost-per-sale is order value &divide; 2. A $30 lotion gives you a <b>$15</b> ceiling &mdash; and your clicks cost ~$1.34. On cold Search you&rsquo;d need a ~9% conversion rate to break even. Realistic cold-traffic conversion is 1&ndash;3%. So the lotion only works two ways: <b>bigger orders</b> and <b>cheaper, higher-intent clicks</b>.</p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>What the click buys</th>
+            <th class="num">Order value</th>
+            <th class="num">CPA ceiling&nbsp;@2&times;</th>
+            <th class="num">CVR needed &mdash; Search<br>(~$1.34 CPC)</th>
+            <th class="num">CVR needed &mdash; Shopping<br>(~$0.50 CPC)</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Single lotion</td><td class="num">$30</td><td class="num">$15.00</td><td class="num">8.9%</td><td class="num">3.3%</td><td><span class="tag stop">Don&rsquo;t</span></td></tr>
+          <tr><td>Lotion + free-ship push</td><td class="num">$45</td><td class="num">$22.50</td><td class="num">5.9%</td><td class="num">2.2%</td><td><span class="tag warn">Workable</span></td></tr>
+          <tr><td>Starter set</td><td class="num">$47</td><td class="num">$23.50</td><td class="num">5.7%</td><td class="num">2.1%</td><td><span class="tag go">Best</span></td></tr>
+          <tr><td>Lotion + cart upsell</td><td class="num">$60</td><td class="num">$30.00</td><td class="num">4.5%</td><td class="num">1.7%</td><td><span class="tag go">Best</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      Read the last two columns: <b>Shopping traffic pointed at a set converts at a rate you can realistically hit (1.7&ndash;2.2%)</b>. A single lotion on cold Search never does. That single insight sets the whole structure below.
+    </div>
+  </section>
+
+  <section>
+    <div class="snum">03 / STRUCTURE</div>
+    <h2>Three campaigns that can hit 2&times; &mdash; and one you retire</h2>
+    <p class="sub">Suggested test split on a starter budget (scale winners, not the whole account). Percentages shift as data lands.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tier-head"><h3>Brand Search</h3><span class="role">Always on &middot; harvest</span></div>
+        <p>The only thing that converted last time was your name. Cheap clicks, high intent, and it blocks competitors from bidding on &ldquo;Real Skin Care.&rdquo; Typically 4&ndash;8&times; ROAS.</p>
+        <dl>
+          <dt>Budget</dt><dd><span class="split">~15%</span> of test spend</dd>
+          <dt>Lands on</dt><dd>Homepage / best-seller collection</dd>
+          <dt>Target</dt><dd>ROAS &ge; 4&times;, CPA &le; $12</dd>
+        </dl>
+      </div>
+      <div class="tier">
+        <div class="tier-head"><h3>Shopping / Performance Max</h3><span class="role">The engine &middot; missing last time</span></div>
+        <p>The lever the old account never used. Image + price + shopping intent, at roughly a third of Search CPC. Feed the <b>starter sets and the lotion PDP</b> &mdash; never a blog page. This is where the 2&times; comes from.</p>
+        <dl>
+          <dt>Budget</dt><dd><span class="split">~55%</span> of test spend</dd>
+          <dt>Lands on</dt><dd>Set page &rarr; lotion PDP</dd>
+          <dt>Target</dt><dd>ROAS &ge; 2&times; after learning</dd>
+        </dl>
+      </div>
+      <div class="tier">
+        <div class="tier-head"><h3>High-intent Search</h3><span class="role">Controlled &middot; long-tail only</span></div>
+        <p>Tight exact/phrase ad groups on <b>buy-intent, product-specific</b> terms &mdash; one product per group, heavy negatives. Points at the set or PDP with a first-order offer. Turned on <em>after</em> Shopping proves the product sells.</p>
+        <dl>
+          <dt>Budget</dt><dd><span class="split">~30%</span> of test spend</dd>
+          <dt>Lands on</dt><dd>Matching PDP / set</dd>
+          <dt>Target</dt><dd>ROAS &ge; 1.8&times;, mine terms weekly</dd>
+        </dl>
+      </div>
+      <div class="tier dead">
+        <div class="tier-head"><h3>Broad &ldquo;body lotion&rdquo; prospecting</h3><span class="role">Retired &middot; $0</span></div>
+        <p>&ldquo;Fragrance free body lotion,&rdquo; &ldquo;coconut oil body lotion&rdquo; broad &mdash; 300+ clicks, $200+ spent, <b>zero sales</b>. The AOV&divide;CPC math can&rsquo;t close here. It stays off until everything else is profitable.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="snum">04 / CONVERSION</div>
+    <h2>Make the lotion actually sell</h2>
+    <p class="sub">Same clicks as last time, four things fixed. These are the difference between 0.23% and a rate that pays.</p>
+    <div class="fixes">
+      <div class="fix"><span class="lbl">Fix first</span><div><p><b>Verify conversion tracking before spending a dollar.</b> One tracked sale on 432 clicks, while the store does 1&ndash;2 orders/day, means Google is blind &mdash; and smart bidding can&rsquo;t optimize toward a signal it can&rsquo;t see.</p><p class="why">Confirm the Ads purchase conversion fires on the Shopify thank-you page, passes order value + transaction ID, dedupes, and has Enhanced Conversions on. Place one live test order and confirm it records.</p></div></div>
+      <div class="fix"><span class="lbl">Raise AOV</span><div><p><b>Sell the set, or push the cart over a free-shipping threshold.</b> This is what moves the math from &ldquo;don&rsquo;t&rdquo; to &ldquo;best&rdquo; &mdash; a $47 order can afford a $23 sale, a $30 order can&rsquo;t.</p><p class="why">Free shipping at ~$45, a lotion + moisturizer bundle, and a one-click cart upsell. Point paid traffic at the set page, not the bare $30 PDP.</p></div></div>
+      <div class="fix"><span class="lbl">Land + offer</span><div><p><b>Every paid click hits a page built to sell</b> &mdash; PDP or set, never a blog post &mdash; with a first-order incentive and visible trust.</p><p class="why">A welcome offer (e.g. 15% off first order), reviews and ingredient/trust badges above the fold, clear coconut-oil / natural USP. Your 6.6% CTR proves the promise lands; the page has to keep it.</p></div></div>
+      <div class="fix"><span class="lbl">Bank the LTV</span><div><p><b>Lotion is a consumable &mdash; capture the customer and earn the repeat.</b> That&rsquo;s what makes an &ldquo;acquire customers&rdquo; goal add up to ROAS 2&times; over time, not just on order one.</p><p class="why">Email/SMS capture on entry, a subscribe-&amp;-save option, and a post-purchase flow. A near-breakeven first order becomes 2&times;+ across the second and third.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="snum">05 / BUDGET</div>
+    <h2>Prove first, then scale &mdash; your rule, made mechanical</h2>
+    <p class="sub">&ldquo;I&rsquo;ll run higher budgets if the ROAS is 2+&rdquo; becomes an explicit gate, so money never rides on hope.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Signal (trailing 14 days)</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Campaign &ge; <b>2.0&times;</b> ROAS &amp; &ge; 15 conversions</td><td><span class="tag go">Scale</span> &nbsp;+20&ndash;30% budget / week while it holds</td></tr>
+          <tr><td>Between <b>1.2&times;</b> and 2.0&times;</td><td><span class="tag warn">Hold &amp; fix</span> &nbsp;tune offer, negatives, landing &mdash; no budget increase</td></tr>
+          <tr><td>Below <b>1.2&times;</b> after the learning period</td><td><span class="tag stop">Pause</span> &nbsp;rework or cut; never &ldquo;wait it out&rdquo;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">Start bidding on <b>Maximize Clicks / manual</b> to gather real conversion data. Only switch to Target ROAS once tracking is trustworthy <em>and</em> you have ~15&ndash;30 conversions &mdash; smart bidding on 1 conversion is what starved the last run.</div>
+  </section>
+
+  <section>
+    <div class="snum">06 / KEYWORDS</div>
+    <h2>Where the money goes &mdash; and where it stops</h2>
+    <p class="sub">Non-brand Search stays tight and buy-intent. The negative list is where the last run bled; build it on day one.</p>
+    <div class="cols">
+      <div class="panel keep">
+        <h3>Buy-intent (exact / phrase)</h3>
+        <ul>
+          <li>coconut oil body lotion</li>
+          <li>coconut lotion for extremely dry skin</li>
+          <li>coconut oil lotion for eczema</li>
+          <li>natural body lotion for dry skin</li>
+          <li>organic coconut body moisturizer</li>
+          <li>fragrance free lotion sensitive skin</li>
+          <li>real skin care lotion&nbsp;<span style="color:var(--faint)">(brand)</span></li>
+        </ul>
+      </div>
+      <div class="panel kill">
+        <h3>Negatives (day one)</h3>
+        <ul>
+          <li>diy / homemade / recipe</li>
+          <li>how to make</li>
+          <li>coconut oil&nbsp;<span style="color:var(--faint)">(pure ingredient)</span></li>
+          <li>for hair / for face / for cooking</li>
+          <li>benefits / uses / vs</li>
+          <li>cheap / free / wholesale / bulk</li>
+          <li>amazon / walmart / target</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="snum">07 / SEQUENCE</div>
+    <h2>Launch order</h2>
+    <p class="sub">Nothing scales before the thing beneath it is proven. Roughly four weeks to a trustworthy read.</p>
+    <div class="phases gate">
+      <div class="phase"><div class="when">Week 0 &middot; before any spend</div><h3>Fix the plumbing</h3><p>Verify conversion tracking end-to-end (live test order). Build the product feed. Stand up the set/bundle, free-ship threshold, first-order offer, and email/SMS capture.</p></div>
+      <div class="phase"><div class="when">Week 1&ndash;2</div><h3>Launch Brand + Shopping, small</h3><p>Maximize Clicks. Goal isn&rsquo;t profit yet &mdash; it&rsquo;s ~15&ndash;30 clean conversions and a sanity-checked tracking number.</p></div>
+      <div class="phase"><div class="when">Week 3&ndash;4</div><h3>Add high-intent Search, switch bidding</h3><p>If Shopping clears target, turn on the tight Search ad groups to the set/PDP and move winners to Target ROAS.</p></div>
+      <div class="phase"><div class="when">Ongoing &middot; weekly</div><h3>Mine, negate, scale</h3><p>Search-term report &rarr; new negatives every week. Apply the 2&times; gate: scale what earns, pause what doesn&rsquo;t. Broad prospecting only reopens once the core is profitable.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="snum">08 / TARGETS</div>
+    <h2>What &ldquo;working&rdquo; means, per campaign</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Campaign</th><th class="num">Target CPA</th><th class="num">Target ROAS</th><th>Primary read</th></tr></thead>
+        <tbody>
+          <tr><td>Brand Search</td><td class="num">&le; $12</td><td class="num">&ge; 4.0&times;</td><td>Impression share, cost</td></tr>
+          <tr><td>Shopping / PMax</td><td class="num">&le; $23</td><td class="num">&ge; 2.0&times;</td><td>ROAS, new-customer rate</td></tr>
+          <tr><td>High-intent Search</td><td class="num">&le; $25</td><td class="num">&ge; 1.8&times;</td><td>Conv. rate by ad group</td></tr>
+          <tr><td>Blended account</td><td class="num">&mdash;</td><td class="num">&ge; 2.0&times;</td><td>The number that gates scaling</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">First-order ROAS may sit near breakeven early &mdash; that&rsquo;s the &ldquo;acquire customers&rdquo; bet. It only holds if the LTV plumbing (capture + repeat) is live, which is why Week 0 isn&rsquo;t optional.</div>
+  </section>
+
+  <div class="foot">
+    <span>Real Skin Care &middot; Paid acquisition framework</span>
+    <span>Grounded in Google Ads history + rank / revenue data</span>
+  </div>
+</div>
