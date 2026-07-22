@@ -79,10 +79,11 @@ but the flow should never promote monthly.
 - **Profile filter (flow filter):** *has not placed another order since starting the
   flow* — mirrors the Winback pattern. The moment a customer reorders (one-time or
   subscription), they exit and receive no further nudges.
-- **Enrollment guard:** exclude orders whose line items are exclusively
-  subscription/recurring (they're already subscribers) — a subscriber shouldn't get a
-  "come back and reorder" email. Implemented as a profile/flow filter on the order's
-  line items.
+- **Subscriber handling (v1):** the profile filter above exits anyone whose next order
+  fires during the flow. Subscribers bill monthly (~30 days), i.e. before Email 1 at
+  day 35, so they self-exclude. An explicit "don't enroll subscription-only orders"
+  trigger filter is a **fast-follow** — deferred until the Klaviyo Placed Order event's
+  subscription property is confirmed (no guessing the property shape).
 
 ## Flow structure (tree — fits `scripts/flows` model)
 
