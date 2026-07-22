@@ -1,6 +1,13 @@
 import { strict as assert } from 'node:assert';
 import test from 'node:test';
-import { resolveEnrollment } from '../../scripts/flows/klaviyo-graph.js';
+import { resolveEnrollment, isNetNew } from '../../scripts/flows/klaviyo-graph.js';
+
+test('isNetNew: true only when both triggers and profileFilter are set', () => {
+  assert.equal(isNetNew({ triggers: [{ id: 'X' }], profileFilter: { condition_groups: [] } }), true);
+  assert.equal(isNetNew({ triggers: [{ id: 'X' }] }), false);
+  assert.equal(isNetNew({ profileFilter: { condition_groups: [] } }), false);
+  assert.equal(isNetNew({}), false);
+});
 
 test('resolveEnrollment: net-new module uses its own triggers/profileFilter', () => {
   const mod = { triggers: [{ type: 'metric', id: 'V69ueg', trigger_filter: null }], profileFilter: { condition_groups: [] } };

@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import k from '../../lib/klaviyo.js';
-import { send, delay, itemSplit, verifyFlow, resolveEnrollment } from './klaviyo-graph.js';
+import { send, delay, itemSplit, verifyFlow, resolveEnrollment, isNetNew } from './klaviyo-graph.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATE = join(__dirname, 'build-state.json');
@@ -61,7 +61,7 @@ async function cmdFlow(flowName, mod, sendStatus = 'draft') {
   // Flows clone templates at creation, so a rebuild is the only way to refresh
   // content. Delete any prior draft of ours first so re-running is idempotent.
   if (state[flowName]?.flowId) { await k.deleteFlow(state[flowName].flowId).catch(() => {}); console.log(`  removed prior draft ${state[flowName].flowId}`); }
-  const oldDef = (mod.triggers && mod.profileFilter) ? null : (await k.getFlowDefinition(mod.oldFlowId)).definition;
+  const oldDef = isNetNew(mod) ? null : (await k.getFlowDefinition(mod.oldFlowId)).definition;
   const { triggers, profileFilter } = resolveEnrollment(mod, oldDef);
   const def = buildDefinition(mod, templateIds, triggers, profileFilter, sendStatus);
   const flow = await k.createFlow({ name: mod.name, definition: def });

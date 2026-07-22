@@ -2,12 +2,18 @@ import { strict as assert } from 'node:assert';
 import test from 'node:test';
 import mod from '../../scripts/flows/flows/replenishment.js';
 import { send, delay } from '../../scripts/flows/klaviyo-graph.js';
+import { P } from '../../scripts/flows/components.js';
 
 test('module shape: net-new flow with inline enrollment', () => {
   assert.equal(mod.oldFlowId, null);
   assert.equal(mod.entry, 'd1');
   assert.equal(mod.triggers[0].id, 'V69ueg');
-  assert.ok(mod.profileFilter.condition_groups[0].conditions[0].metric_id === 'V69ueg');
+  const cond = mod.profileFilter.condition_groups[0].conditions[0];
+  assert.equal(cond.metric_id, 'V69ueg');
+  assert.equal(cond.measurement, 'count');
+  assert.equal(cond.measurement_filter.operator, 'equals');
+  assert.equal(cond.measurement_filter.value, 0);
+  assert.equal(cond.timeframe_filter.operator, 'flow-start');
   assert.ok(mod.emails.replenish_1 && mod.emails.replenish_2);
 });
 
@@ -38,4 +44,20 @@ test('Email 2: keeps subscription hero + RESTOCK10 fallback', () => {
   assert.match(h, /RESTOCK10/);
   assert.match(h, /Skip, pause, swap scent, or cancel anytime/);
   assert.doesNotMatch(h, /monthly/i);
+});
+
+test('Email 1: CTAs are per-product, not hardcoded to lotion', () => {
+  const h = mod.emails.replenish_1.html;
+  assert.match(h, /\{% if "[^"]+" in items %\}/, 'expected per-product {% if ... in items %} branching');
+  assert.ok(h.includes(P.deodorant.url), 'missing deodorant PDP branch');
+  assert.ok(h.includes(P.toothpaste.url), 'missing toothpaste PDP branch');
+  assert.ok(h.includes(P.bestSellers.url), 'missing best-sellers fallback');
+});
+
+test('Email 2: CTAs are per-product, not hardcoded to lotion', () => {
+  const h = mod.emails.replenish_2.html;
+  assert.match(h, /\{% if "[^"]+" in items %\}/, 'expected per-product {% if ... in items %} branching');
+  assert.ok(h.includes(P.deodorant.url), 'missing deodorant PDP branch');
+  assert.ok(h.includes(P.toothpaste.url), 'missing toothpaste PDP branch');
+  assert.ok(h.includes(P.bestSellers.url), 'missing best-sellers fallback');
 });
