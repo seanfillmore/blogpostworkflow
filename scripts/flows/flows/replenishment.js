@@ -53,7 +53,7 @@ export default {
         'Most folks are getting low around now — the easy way to restock.',
         H1('Running low?') +
         P_(`Hi {{ first_name|default:"there" }}, you picked up ${PROD} about five weeks ago — right around when most folks start running low.`) +
-        P_('The easiest way to never run out? <strong>Subscribe &amp; Save — 15% off every order</strong>, delivered every 6&ndash;8 weeks to match how fast you actually use it.') +
+        P_('The easiest way to never run out? <strong>Subscribe &amp; Save — 15% off on a 6-week refill</strong> (or 10% every 8 weeks), matched to how fast you actually use it.') +
         FLEX +
         pdpButton('Subscribe & Save 15%') +
         P_('Prefer to grab it just once?') +
@@ -69,7 +69,7 @@ export default {
         'Your favorite is probably empty by now — here are two easy ways to restock.',
         H1('Never run out again') +
         P_(`Hi {{ first_name|default:"there" }}, your ${PROD} is probably running empty about now.`) +
-        P_('Subscribe &amp; Save is the no-brainer: <strong>15% off every order</strong>, delivered every 6&ndash;8 weeks.') +
+        P_('Subscribe &amp; Save is the no-brainer: <strong>15% off on a 6-week refill</strong> (or 10% every 8 weeks).') +
         FLEX +
         pdpButton('Subscribe & Save 15%') +
         P_('Not ready to subscribe? Here&rsquo;s <strong>10% off a one-time restock</strong>:') +

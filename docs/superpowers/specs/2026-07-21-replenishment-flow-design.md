@@ -57,8 +57,11 @@ coupon codes, subscribe-&-save cadence changes (see Recommendations).
 
 ## Subscription facts (from the live PDP buy box, confirmed 2026-07-21)
 
-- **Subscribe & Save = 15% off** (e.g., hero lotion $30.00 → **$25.50**).
-- **Cadence:** monthly (default; "You will receive an order every month").
+- **Subscribe & Save (updated 2026-07-21 by Sean, replacing the old monthly/15%):**
+  **6 weeks = 15% off**, **8 weeks = 10% off**. Monthly removed. 6-week/15% is the
+  default and the flow's headline — it matches the ~7-week runout and its higher
+  discount nudges the higher-frequency (higher-LTV) choice, directly countering the
+  over-supply churn.
 - **Copy:** "Never run out of moisture. Cancel anytime."
 - One-time purchase: full price.
 - Separate standing promo: "Buy 2 save 10%, Buy 3 save 20%" (auto-applied at checkout).
@@ -67,11 +70,10 @@ The 15% ongoing subscription discount is a **stronger** offer than the 10% one-t
 coupon, so the flow leads with subscription and never lets the one-time coupon
 undercut it.
 
-**Cadence:** the flow promotes an "every 6–8 weeks" schedule that matches the ~7-week
-(median 49-day) runout, NOT the current monthly default that is the top cancellation
-driver. Changing the PDP/app **default** cadence to 6–8 weeks is a recommended
-follow-up action for Sean in the subscription app (Recurpay) — separate from this flow,
-but the flow should never promote monthly.
+**Cadence:** the flow leads with the **6-week / 15%** option (matches the ~7-week runout;
+best discount = nudge toward higher frequency), and mentions the **8-week / 10%** option
+for slower users. It never promotes monthly. ✅ **DONE 2026-07-21:** Sean changed the
+Recurpay cadence to 6 weeks (15%) + 8 weeks (10%), monthly removed.
 
 ## Trigger & enrollment
 
