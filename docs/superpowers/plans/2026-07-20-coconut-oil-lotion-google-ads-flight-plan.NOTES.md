@@ -70,9 +70,21 @@ Two further data corrections vs the plan's assumptions:
    `PRODUCTS`; `campaign-creator` is Search-only so hand-built). *(Earlier builds:
    all-products 24055192055, then all-lotion 24055379690 — both replaced.)*
 3. **Sean (NEXT):** review the two paused campaigns in Google Ads, then **enable**.
-4. Watch under the plan's 2× scale gate; defuse the `Purchase (2)` landmine
-   (`conversionActions/7556810073`) before any move to conversion/value bidding.
-   Add more scents/products only if these clear the gate and you want more volume.
+4. Defuse the `Purchase (2)` landmine (`conversionActions/7556810073`) before any
+   move to conversion/value bidding. Add more scents/products as data supports.
+
+### Gate revision (Sean, 2026-07-21) — supersedes the plan's 2× rule
+
+**~1× ROAS is a win, not the floor.** Priority is generating revenue and *evolving
+the campaign as data comes in*, not hitting 2× out of the gate. So:
+- **Don't auto-pause at 1.2×.** Keep spending while it produces sales at ~1×+.
+- Pause only on genuinely dead spend (meaningful clicks, ~0 conversions / far
+  below 1×) — a "this product/scent/term doesn't work," not a ROAS-target miss.
+- The bet is acquisition + LTV: at ~1× the first order roughly breaks even on ad
+  cost (a loss after COGS/fees), and pays off via repeat purchase — so the live
+  post-purchase / email-SMS flow is what makes 1× rational. Keep it healthy.
+- Scale winners gradually; refine by search-term/product report, not a fixed
+  ROAS threshold. Revisit a higher target later once there's a conversion base.
 
 Audit scripts (scratchpad, session 08ea6f2a): `audit-conversion-tracking.mjs`,
 `ga4-purchases.mjs`.
