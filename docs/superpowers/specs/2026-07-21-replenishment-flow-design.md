@@ -24,6 +24,25 @@ Amazon or a competitor.
 **Primary success metric:** 90-day repeat-customer rate, **17.8% today → 25%+** within
 2–3 months. Secondary: subscription starts attributed to the flow.
 
+### Subscription base & churn evidence (export 2026-07-21)
+
+17 subscriptions created lifetime: **4 active**, 2 halted (failed payment), 11
+cancelled (~65% lifetime cancel rate on a tiny base). The dominant, addressable
+cancel reasons:
+
+- **Over-supply from monthly billing** — "I already have more than I need" (×2), "I'm
+  away for my next shipment" (×2). ~4 of 11. The product bills monthly but lasts ~7
+  weeks, so subscribers accumulate product and quit. **This is the #1 churn driver and
+  it is a cadence problem.**
+- **Portal friction** — "I'll stay subscribed, I just want lavender instead of coconut":
+  a customer cancelled because they didn't know they could swap scent.
+- **Value/size** — "too expensive / larger bottles."
+- **Recoverable payments** — 2 halted subs (insufficient funds, card revoked) with no
+  failed-payment recovery. See Future work (dunning flow, committed next project).
+
+This evidence drives two design choices below: promote a runout-matched cadence, and
+lead every subscription mention with flexibility (skip/pause/swap/cancel anytime).
+
 ## Scope (v1)
 
 - **Channel:** email only. (SMS is a fast-follow, gated on confirmed SMS consent volume.)
@@ -47,6 +66,12 @@ coupon codes, subscribe-&-save cadence changes (see Recommendations).
 The 15% ongoing subscription discount is a **stronger** offer than the 10% one-time
 coupon, so the flow leads with subscription and never lets the one-time coupon
 undercut it.
+
+**Cadence:** the flow promotes an "every 6–8 weeks" schedule that matches the ~7-week
+(median 49-day) runout, NOT the current monthly default that is the top cancellation
+driver. Changing the PDP/app **default** cadence to 6–8 weeks is a recommended
+follow-up action for Sean in the subscription app (Recurpay) — separate from this flow,
+but the flow should never promote monthly.
 
 ## Trigger & enrollment
 
@@ -74,14 +99,17 @@ Flow filter exits anyone who reorders mid-flow. Non-actors age into Winback at d
 - **Goal:** helpful reminder at the moment of runout; move to subscription.
 - **Body:** "You picked up {{ product }} about 5 weeks ago — most folks are getting low
   around now." Reinforce the 6-clean-ingredients story and "Never run out of moisture."
-- **CTAs:** **primary** = "Subscribe & Save 15% — never run out" (→ PDP subscribe
-  option); **secondary** = "Reorder once" (→ PDP / prefilled cart).
+- **CTAs:** **primary** = "Subscribe & Save 15%, delivered every 6–8 weeks — never run
+  out" (→ PDP subscribe option); **secondary** = "Reorder once" (→ PDP / prefilled cart).
+- **Flexibility line (required):** "Skip, pause, swap scent, or cancel anytime from your
+  account." Directly counters the observed cancel reasons.
 - **No coupon.** The standing 15% subscription discount is the only incentive.
 
 ### Email 2 — day 50 — "Never run out 🥥" (only if no reorder)
 - **Goal:** convert fence-sitters; still subscription-first.
-- **Body:** lead with subscription value — 15% off every order, cancel anytime, never
-  run out — plus gentle urgency ("your {{ product }} is probably empty by now").
+- **Body:** lead with subscription value — 15% off every order, delivered every 6–8
+  weeks, skip/pause/swap/cancel anytime, never run out — plus gentle urgency ("your
+  {{ product }} is probably empty by now").
 - **CTAs:** **primary** = Subscribe & Save; **fallback** = one-time reorder with
   **`RESTOCK10`** (10% off) for those who won't subscribe. Framed so subscription
   (15% ongoing) clearly beats the 10% one-time.
@@ -126,9 +154,10 @@ Flow filter exits anyone who reorders mid-flow. Non-actors age into Winback at d
 
 ## Recommendations / observations (not blocking v1)
 
-- **Cadence mismatch:** subscription defaults to *monthly*, but the lotion lasts ~7
-  weeks. Monthly delivery risks over-supply → cancellations. Recommend offering a 6- or
-  8-week cadence option (subscription-app config, Sean's call). Separate from this flow.
+- **Cadence default (confirmed churn driver):** subscription defaults to *monthly*, but
+  the lotion lasts ~7 weeks — the top cancel reason ("more than I need" / "away"). The
+  flow promotes 6–8 weeks; **Sean to change the PDP/Recurpay default cadence to 6–8
+  weeks** as a follow-up action. Separate from this flow but high-impact.
 - **Per-category timing:** toothpaste/deodorant last longer than day-35; a future
   version can branch timing by product category.
 - **Subscriber conversion tracking:** attribute subscription starts to this flow so we
@@ -136,6 +165,9 @@ Flow filter exits anyone who reorders mid-flow. Non-actors age into Winback at d
 
 ## Future work (post-v1)
 
+- **Failed-payment / dunning recovery flow — COMMITTED as the next project** (Sean,
+  2026-07-21). Trigger on halted / payment-failed subscription; recover the halted subs
+  (2 sitting unrecovered today). Gets its own brainstorm → spec → plan cycle.
 - SMS touch (needs consent volume + Klaviyo SMS plan).
 - Dynamic unique-per-recipient reorder codes.
 - Per-category replenishment timing.
