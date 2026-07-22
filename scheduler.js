@@ -164,6 +164,15 @@ runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 // flags only genuinely dead spend (gate: ~1× ROAS is a win, no auto-pause).
 runStep('shopping-test-monitor', `"${NODE}" agents/shopping-test-monitor/index.js`);
 
+// Step 5b.2: amazon snapshot — WEEKLY (Sundays). RSC Amazon net (post-Finance-role),
+// fees, per-ASIN net, and hero-lotion stockout guard → data/snapshots/amazon/ + digest.
+// Weekly, not daily: the 30-day finance pull is heavy and Amazon data moves slowly.
+if (new Date().getDay() === 0) {
+  runStep('amazon-snapshot', `"${NODE}" agents/amazon-snapshot/index.js`);
+} else {
+  log('  amazon-snapshot: skipped (weekly, Sundays only)');
+}
+
 // Step 5c: insight aggregator — refresh writer standing rules
 runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 
