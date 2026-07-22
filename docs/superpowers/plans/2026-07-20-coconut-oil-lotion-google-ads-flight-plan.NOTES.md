@@ -57,21 +57,22 @@ Two further data corrections vs the plan's assumptions:
    "Top Quality Store". (Minor non-blocking nudges: "Return cost — Incomplete",
    descriptions missing on 10 products.)
 2. ~~**Claude (Ads API):** build the paused $10/day Standard Shopping campaign.~~
-   ✅ **DONE 2026-07-21** — campaign **`24055379690`** "RSC | Shopping Test |
-   Coconut Body Lotion", PAUSED, SHOPPING, TARGET_SPEND (Max Clicks), $10/day, MC
-   729030085/US. **Scope = hero lotion only:** listing tree subdivides by
-   `product_type`, includes UNIT `lotion` ($0.40 bid) = the 5 Coconut Body Lotion
-   variants, EXCLUDES everything else. The lotion is ~70% of store revenue
-   ($2,813/111u Mar–Jul); all-products + Max Clicks would just buy the cheapest
-   low-intent clicks (last run's failure mode). Built by
-   `scripts/create-shopping-test-campaign.mjs` (idempotent; `campaign-creator` is
-   Search-only so hand-built). *(First build was all-products campaign 24055192055,
-   replaced.)*
-3. **Sean (NEXT):** review the paused campaign in Google Ads, then **enable** it.
+   ✅ **DONE 2026-07-21** — **two** single-product campaigns, PAUSED, SHOPPING,
+   TARGET_SPEND (Max Clicks), MC 729030085/US, each scoped to one item_id (that
+   variant included, all else excluded, $0.40 bid). Budget split enforces Sean's
+   60/40 (Standard Shopping budgets are campaign-level; one campaign per product
+   is the only way to hold a budget %):
+     - **`24060021778`** "…Lotion - Pure Unscented" — **$6/day (60%)** — item
+       `shopify_US_7691181686954_45828179165354`
+     - **`24050427048`** "…Lotion - Coconut Breeze" — **$4/day (40%)** — item
+       `shopify_US_7691181686954_44414530781354`
+   Built by `scripts/create-shopping-test-campaign.mjs` (idempotent; loops
+   `PRODUCTS`; `campaign-creator` is Search-only so hand-built). *(Earlier builds:
+   all-products 24055192055, then all-lotion 24055379690 — both replaced.)*
+3. **Sean (NEXT):** review the two paused campaigns in Google Ads, then **enable**.
 4. Watch under the plan's 2× scale gate; defuse the `Purchase (2)` landmine
    (`conversionActions/7556810073`) before any move to conversion/value bidding.
-   Widen scope to the moisturizer family (#2 seller) or sets only if the lotion
-   test clears the gate and you want more volume.
+   Add more scents/products only if these clear the gate and you want more volume.
 
 Audit scripts (scratchpad, session 08ea6f2a): `audit-conversion-tracking.mjs`,
 `ga4-purchases.mjs`.

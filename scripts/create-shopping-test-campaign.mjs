@@ -1,16 +1,21 @@
 /**
- * Create the paused Standard Shopping test campaign (Google Ads flight plan).
+ * Create the paused Standard Shopping test campaigns (Google Ads flight plan).
  *
- *   Type:    Standard Shopping (advertising_channel_type = SHOPPING)
- *   Budget:  $10/day
- *   Bidding: Maximize Clicks (target_spend) — no ROAS target until a conv base exists
+ * Budget is split 60/40 across the two hero Coconut Body Lotion scents Sean
+ * chose. Standard Shopping sets budget at the campaign level and Maximize Clicks
+ * ignores per-product bids for allocation, so the ONLY way to enforce a budget
+ * split is one campaign per product with its own daily budget:
+ *
+ *   Pure Unscented   $6/day  (60%)  item_id shopify_US_7691181686954_45828179165354
+ *   Coconut Breeze   $4/day  (40%)  item_id shopify_US_7691181686954_44414530781354
+ *
+ *   Type:    Standard Shopping, Maximize Clicks
  *   Feed:    Merchant Center 729030085, feed label "US"
- *   Scope:   ONLY the hero Coconut Body Lotion (feed product_type "lotion" = all
- *            5 scent variants + any future scent), everything else excluded. The
- *            lotion is ~70% of store revenue ($2,813/111u Mar–Jul); concentrating
- *            $10/day there beats spreading it across 36 SKUs where Maximize Clicks
- *            would just buy the cheapest low-intent clicks.
- *   Status:  campaign PAUSED (built for review; Sean enables it manually)
+ *   Scope:   each campaign advertises exactly one variant (item_id), all else excluded
+ *   Status:  PAUSED (built for review; Sean enables them manually)
+ *
+ * The lotion is ~70% of store revenue ($2,813/111u Mar–Jul); these two scents are
+ * the chosen focus. Total $10/day.
  *
  * Usage:
  *   node scripts/create-shopping-test-campaign.mjs            # dry-run: print ops
@@ -26,151 +31,96 @@ const C = `customers/${CID}`;
 
 const MERCHANT_ID = 729030085;
 const FEED_LABEL = 'US';
-const DAILY_BUDGET_USD = 10;
-const CAMPAIGN_NAME = 'RSC | Shopping Test | Coconut Body Lotion';
-const PRODUCT_TYPE = 'lotion'; // feed product_type_level1 that isolates the hero lotion
 
-// Temp (negative) resource names, wired together within the single mutate.
-const budgetRN = `${C}/campaignBudgets/-1`;
-const campaignRN = `${C}/campaigns/-2`;
-const adGroupRN = `${C}/adGroups/-3`;
-const adGroupAdRN = `${C}/adGroupAds/-3~-4`; // ad group ad temp id
-const listingRootRN = `${C}/adGroupCriteria/-3~-5`;   // subdivision (root)
-const listingLotionRN = `${C}/adGroupCriteria/-3~-6`; // included: product_type = lotion
-const listingOtherRN = `${C}/adGroupCriteria/-3~-7`;  // excluded: everything else
-
-const operations = [
-  {
-    campaignBudgetOperation: {
-      create: {
-        resourceName: budgetRN,
-        name: `RSC | Shopping Test | Budget ($${DAILY_BUDGET_USD}/day)`,
-        amountMicros: DAILY_BUDGET_USD * 1_000_000,
-        deliveryMethod: 'STANDARD',
-        explicitlyShared: false,
-      },
-    },
-  },
-  {
-    campaignOperation: {
-      create: {
-        resourceName: campaignRN,
-        name: CAMPAIGN_NAME,
-        status: 'PAUSED',
-        advertisingChannelType: 'SHOPPING',
-        campaignBudget: budgetRN,
-        // Required since Google Ads API v19 — RSC ads are not political.
-        containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
-        // Maximize Clicks
-        targetSpend: {},
-        shoppingSetting: {
-          merchantId: MERCHANT_ID,
-          feedLabel: FEED_LABEL,
-          campaignPriority: 0,
-          enableLocal: false,
-        },
-        networkSettings: {
-          targetGoogleSearch: true,
-          targetSearchNetwork: true,
-          targetContentNetwork: false,
-          targetPartnerSearchNetwork: false,
-        },
-      },
-    },
-  },
-  {
-    adGroupOperation: {
-      create: {
-        resourceName: adGroupRN,
-        name: 'Coconut Body Lotion',
-        campaign: campaignRN,
-        status: 'ENABLED',
-        type: 'SHOPPING_PRODUCT_ADS',
-      },
-    },
-  },
-  {
-    adGroupAdOperation: {
-      create: {
-        resourceName: adGroupAdRN,
-        adGroup: adGroupRN,
-        status: 'ENABLED',
-        ad: { shoppingProductAd: {} },
-      },
-    },
-  },
-  {
-    // Root: subdivide by product_type (level 1).
-    adGroupCriterionOperation: {
-      create: {
-        resourceName: listingRootRN,
-        adGroup: adGroupRN,
-        status: 'ENABLED',
-        listingGroup: { type: 'SUBDIVISION' },
-      },
-    },
-  },
-  {
-    // Included: product_type = "lotion" (the 5 hero-lotion variants).
-    adGroupCriterionOperation: {
-      create: {
-        resourceName: listingLotionRN,
-        adGroup: adGroupRN,
-        status: 'ENABLED',
-        cpcBidMicros: 400000, // $0.40 ceiling (Maximize Clicks)
-        listingGroup: {
-          type: 'UNIT',
-          parentAdGroupCriterion: listingRootRN,
-          caseValue: { productType: { level: 'LEVEL1', value: PRODUCT_TYPE } },
-        },
-      },
-    },
-  },
-  {
-    // Excluded: everything else (the "Other" bucket under the same dimension).
-    adGroupCriterionOperation: {
-      create: {
-        resourceName: listingOtherRN,
-        adGroup: adGroupRN,
-        negative: true,
-        listingGroup: {
-          type: 'UNIT',
-          parentAdGroupCriterion: listingRootRN,
-          caseValue: { productType: { level: 'LEVEL1' } },
-        },
-      },
-    },
-  },
+// One campaign per product so the daily budget enforces the 60/40 split.
+const PRODUCTS = [
+  { label: 'Pure Unscented', budget: 6, itemId: 'shopify_US_7691181686954_45828179165354' },
+  { label: 'Coconut Breeze', budget: 4, itemId: 'shopify_US_7691181686954_44414530781354' },
 ];
 
-console.log(`Standard Shopping test campaign — customer ${CID}`);
-console.log(`  Name:    ${CAMPAIGN_NAME}`);
-console.log(`  Budget:  $${DAILY_BUDGET_USD}/day (Maximize Clicks)`);
-console.log(`  Feed:    MC ${MERCHANT_ID} / label ${FEED_LABEL} / product_type "${PRODUCT_TYPE}" only`);
-console.log(`  Status:  PAUSED (review then enable manually)`);
-console.log('');
+const NAME_PREFIX = 'RSC | Shopping Test | Lotion';
+
+function buildOperations({ label, budget, itemId }) {
+  const budgetRN = `${C}/campaignBudgets/-1`;
+  const campaignRN = `${C}/campaigns/-2`;
+  const adGroupRN = `${C}/adGroups/-3`;
+  const adGroupAdRN = `${C}/adGroupAds/-3~-4`;
+  const listingRootRN = `${C}/adGroupCriteria/-3~-5`;  // subdivision (root)
+  const listingItemRN = `${C}/adGroupCriteria/-3~-6`;  // included: this item_id
+  const listingOtherRN = `${C}/adGroupCriteria/-3~-7`; // excluded: everything else
+  const name = `${NAME_PREFIX} - ${label}`;
+  return [
+    { campaignBudgetOperation: { create: {
+      resourceName: budgetRN,
+      name: `${name} | Budget ($${budget}/day)`,
+      amountMicros: budget * 1_000_000,
+      deliveryMethod: 'STANDARD',
+      explicitlyShared: false,
+    } } },
+    { campaignOperation: { create: {
+      resourceName: campaignRN,
+      name,
+      status: 'PAUSED',
+      advertisingChannelType: 'SHOPPING',
+      campaignBudget: budgetRN,
+      containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
+      targetSpend: {}, // Maximize Clicks
+      shoppingSetting: { merchantId: MERCHANT_ID, feedLabel: FEED_LABEL, campaignPriority: 0, enableLocal: false },
+      networkSettings: { targetGoogleSearch: true, targetSearchNetwork: true, targetContentNetwork: false, targetPartnerSearchNetwork: false },
+    } } },
+    { adGroupOperation: { create: {
+      resourceName: adGroupRN, name: label, campaign: campaignRN, status: 'ENABLED', type: 'SHOPPING_PRODUCT_ADS',
+    } } },
+    { adGroupAdOperation: { create: {
+      resourceName: adGroupAdRN, adGroup: adGroupRN, status: 'ENABLED', ad: { shoppingProductAd: {} },
+    } } },
+    // Root: subdivide by item_id.
+    { adGroupCriterionOperation: { create: {
+      resourceName: listingRootRN, adGroup: adGroupRN, status: 'ENABLED', listingGroup: { type: 'SUBDIVISION' },
+    } } },
+    // Included: this one variant.
+    { adGroupCriterionOperation: { create: {
+      resourceName: listingItemRN, adGroup: adGroupRN, status: 'ENABLED', cpcBidMicros: 400000, // $0.40 ceiling
+      listingGroup: { type: 'UNIT', parentAdGroupCriterion: listingRootRN, caseValue: { productItemId: { value: itemId } } },
+    } } },
+    // Excluded: everything else.
+    { adGroupCriterionOperation: { create: {
+      resourceName: listingOtherRN, adGroup: adGroupRN, negative: true,
+      listingGroup: { type: 'UNIT', parentAdGroupCriterion: listingRootRN, caseValue: { productItemId: {} } },
+    } } },
+  ];
+}
+
+const totalBudget = PRODUCTS.reduce((s, p) => s + p.budget, 0);
+console.log(`Standard Shopping test campaigns — customer ${CID}`);
+console.log(`  Total:   $${totalBudget}/day across ${PRODUCTS.length} single-product campaigns (Maximize Clicks)`);
+for (const p of PRODUCTS) {
+  console.log(`   • ${NAME_PREFIX} - ${p.label}: $${p.budget}/day → ${p.itemId}`);
+}
+console.log(`  Feed:    MC ${MERCHANT_ID} / label ${FEED_LABEL}`);
+console.log(`  Status:  PAUSED (review then enable manually)\n`);
 
 if (!APPLY) {
-  console.log('DRY RUN — operations that would be sent:\n');
-  console.log(JSON.stringify(operations, null, 2));
+  console.log('DRY RUN — operations per campaign:\n');
+  for (const p of PRODUCTS) {
+    console.log(`### ${NAME_PREFIX} - ${p.label}`);
+    console.log(JSON.stringify(buildOperations(p), null, 2));
+  }
   console.log('\nRe-run with --apply to create.');
   process.exit(0);
 }
 
-// Idempotency: remove any leftover test campaign/budget from a prior partial run
-// (partial_failure commits successful ops, so a failed attempt can orphan a budget).
+// Idempotency: remove any leftover test campaigns/budgets from prior runs.
 const stale = await gaqlQuery(`
-  SELECT campaign.resource_name, campaign.name FROM campaign
+  SELECT campaign.resource_name FROM campaign
   WHERE campaign.name LIKE 'RSC | Shopping Test%' AND campaign.status != 'REMOVED'
 `);
 const staleBudgets = await gaqlQuery(`
   SELECT campaign_budget.resource_name FROM campaign_budget
-  WHERE campaign_budget.name LIKE 'RSC | Shopping Test%'
-    AND campaign_budget.status = 'ENABLED'
+  WHERE campaign_budget.name LIKE 'RSC | Shopping Test%' AND campaign_budget.status = 'ENABLED'
 `);
 const cleanupOps = [
   ...stale.map(x => ({ campaignOperation: { remove: x.campaign.resourceName } })),
-  // Budgets can only be removed once no campaign references them, so remove after campaigns.
   ...staleBudgets.map(x => ({ campaignBudgetOperation: { remove: x.campaignBudget.resourceName } })),
 ];
 if (cleanupOps.length) {
@@ -178,22 +128,20 @@ if (cleanupOps.length) {
   await mutate(cleanupOps);
 }
 
-const res = await mutate(operations);
-console.log('Created. Mutate results:');
-for (const r of res.mutateOperationResponses || []) {
-  const key = Object.keys(r)[0];
-  console.log(`  ${key}: ${r[key]?.resourceName}`);
+for (const p of PRODUCTS) {
+  const res = await mutate(buildOperations(p));
+  const camp = (res.mutateOperationResponses || []).find(r => r.campaignResult)?.campaignResult;
+  console.log(`Created ${NAME_PREFIX} - ${p.label} → ${camp?.resourceName}`);
 }
 
-// Read back the campaign to confirm state.
+// Read-back
 const check = await gaqlQuery(`
-  SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type,
-         campaign.bidding_strategy_type, campaign.shopping_setting.merchant_id,
-         campaign.shopping_setting.feed_label, campaign_budget.amount_micros
-  FROM campaign WHERE campaign.name = '${CAMPAIGN_NAME.replace(/'/g, "\\'")}'
+  SELECT campaign.id, campaign.name, campaign.status, campaign.bidding_strategy_type, campaign_budget.amount_micros
+  FROM campaign WHERE campaign.name LIKE 'RSC | Shopping Test%' AND campaign.status != 'REMOVED'
+  ORDER BY campaign.name
 `);
 console.log('\nRead-back:');
 for (const x of check) {
   const c = x.campaign, b = Number(x.campaignBudget?.amountMicros || 0) / 1e6;
-  console.log(`  [${c.status}] ${c.name} | ${c.advertisingChannelType} | ${c.biddingStrategyType} | $${b}/day | MC ${c.shoppingSetting?.merchantId}/${c.shoppingSetting?.feedLabel}`);
+  console.log(`  [${c.status}] ${c.name} | ${c.biddingStrategyType} | $${b}/day`);
 }
