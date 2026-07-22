@@ -56,23 +56,32 @@ Each stage is a **gate**. Do not fund the next stage until the current one passe
 3. **Offer / AOV (make paid math possible).** Lift AOV $19 → ~$48 via the hero bundle, free-ship threshold, and subscription. Without this, no CAC is survivable.
 4. **Traffic (scale acquisition).** Only now pour capital into Meta + Google + Amazon Ads, bidding up to breakeven CAC because the funnel converts and LTV compounds.
 
-## 4. The offer (Grand Slam)
+## 4. The offer (Grand Slam) — already exists, use it
 
-Concrete, built from real margins:
+The hero acquisition offer is **live today**: the **Sensitive Skin Moisturizing Set**
+(`/products/sensitive-skin-starter-set`) — Pure Unscented Lotion + Cream, **$46.80**
+(reg $58, 19% off). It already hits the AOV target and already contains the harvest mechanic.
 
-| Offer | Price | COGS | Ship+Proc | **Contribution** |
-|---|---|---|---|---|
-| **Hero bundle:** Lotion + Cream + Bar Soap | ~$59 | ~$13.6 | ~$11.5 | **~$34 (57%)** |
-| Free-shipping threshold at **$50** (nudges basket up) | | | | |
-| Subscribe-&-save **15%** (Recurpay) on lotion/cream at 6–8wk cadence | | | | |
-| Post-purchase 1-click upsell (Zipify OCU: 12–16% take, +172% AOV) | | | | |
+| Element (already built) | Detail |
+|---|---|
+| **Hero set** | Lotion + Cream, $46.80 · COGS ~$10.7 · ship $9.50 · **contribution ~$24.9 (53%)** |
+| **Built-in harvest** | First-subscription bonus: free Lip Balm ($15) + Bar Soap ($11) — cross-sells the low-margin catalog to acquired skin customers *at their COGS (~$8), not at paid CAC* |
+| **Free shipping** | Threshold at **$50** + all subscription orders (already live) |
+| **Guarantee** | 30-day money-back, no return required (already live) |
+| **Positioning** | Sensitive skin / "clean-slate" vs Cetaphil & CeraVe; targets the 51% of women reporting sensitive skin — a sharp, ad-ready angle |
 
-**Target new-customer AOV ~$48; first-order contribution ~$23.**
+**Do not rebuild the offer — sharpen and instrument it.** Work items:
+1. Make it the **primary paid-traffic landing destination** (dedicated LP / PDP tuned for cold traffic).
+2. Add **subscribe-&-save** framing up front (Recurpay) so first order defaults toward a subscription — the bonus already incentivizes it.
+3. Add **post-purchase 1-click upsell** (Zipify OCU: 12–16% take, +172% AOV) for one-time buyers.
+4. A/B the price/discount framing ($46.80 vs $58 anchor) once tracking is trustworthy.
+
+**AOV ~$47; first-order contribution ~$25 (one-time) / ~$17 (subscriber, after bonus) — the subscriber trade is margin-for-LTV and is the intended path.**
 
 ## 5. Acquisition math & CAC policy
 
-- **First-order contribution:** ~$23 at $48 AOV.
-- **CAC ceiling:** **up to ~$23–28 (breakeven-to-slightly-negative on first order)** — funded by capital, profitable on LTV. The owner's stated appetite to run at breakeven is the lever that lets RSC outbid margin-constrained competitors during the scaling window. **Guardrail:** breakeven acquisition is permitted only when LTV:CAC ≥ ~1.8:1 on cohort data; below that, fix offer/retention before adding spend.
+- **First-order contribution:** ~$25 one-time / ~$17 subscriber (after the free lip balm + soap bonus) at ~$47 AOV.
+- **CAC ceiling:** **up to ~$25–30 (breakeven-to-slightly-negative on first order)** — funded by capital, profitable on LTV. The owner's stated appetite to run at breakeven is the lever that lets RSC outbid margin-constrained competitors during the scaling window. **Guardrail:** breakeven acquisition is permitted only when LTV:CAC ≥ ~1.8:1 on cohort data; below that, fix offer/retention before adding spend.
 - **12-mo LTV:** ~$45–55 (AOV $48 × ~2.2 orders × ~47% margin, with repeat lifted 18% → ~30% via replenishment + subscription).
 - **LTV:CAC target:** ~1.8–2.2:1.
 
