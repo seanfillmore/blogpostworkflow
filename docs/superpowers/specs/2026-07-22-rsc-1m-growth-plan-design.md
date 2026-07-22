@@ -12,15 +12,18 @@ RSC is two businesses with opposite economics. **Skin care (lotion / cream / set
 
 > **Acquire skin customers with paid ads → force AOV up so the first order roughly pays for itself → harvest the low-margin categories through the retention flows already built.**
 
-The plan does not chase $1M by "more SEO" or "more traffic." It fixes the two revenue leaks first (**tracking, then conversion**), stands up an AOV-lifting offer, and only then pours capital into acquisition — where the owner's willingness to run at breakeven becomes a scaling weapon.
+The plan does not chase $1M by "more SEO" or "more traffic." It fixes the revenue leaks first (**tracking, then conversion**), then pours capital into acquisition — where the owner's willingness to run at breakeven becomes a scaling weapon.
 
-The binding constraint is **conversion rate**, not capacity and not capital.
+**The binding constraints (corrected by the 2026-07-22 live pull) are, in order: (1) broken tracking** (GA4 counts ~4× the real orders — you can't buy ads blind); **(2) true purchase CVR ~0.85%**, driven by a 12% JavaScript-error rate, a mobile-heavy funnel, and **wrong-intent traffic** (organic blog readers, not buyers); **(3) traffic volume** (only ~2,125 sessions/mo). **AOV is *not* a constraint** — it's already ~$47.66 (the old "$19" figure is stale). Capacity and capital are not constraints. So the highest-leverage work is tracking + conversion + acquiring *right-intent* traffic via paid — not lifting AOV.
 
 ## 2. Verified baseline & unit economics
 
-**Baseline (from memory + live pulls, 2026-07-22):**
-- Shopify ~$875/mo · Amazon ~$1,800/mo (74% one lotion) → **combined ~$2.7K/mo (~$32K/yr)**
-- Shopify: **true CVR 0.82%** (GA4 overstates), **AOV ~$19**, **repeat rate 18%**
+**Baseline (live pulls, 2026-07-22 — corrects stale memory figures):**
+- Shopify ~$860/mo (55 orders/90d, ~18/mo) · Amazon ~$1,800/mo (74% one lotion) → **combined ~$2.7K/mo (~$32K/yr)**
+- Shopify: **~2,125 sessions/mo**; **AOV ~$47.66** (90d actual — the "$19" in old memory is **stale**; OCU upsell + sets already lifted it)
+- **True purchase CVR ~0.85%** (~18 orders ÷ 2,125 sessions). GA4 reports **3.53% / 75 "conversions"** — ~**4× the real order count**, i.e. the tracking problem quantified: you cannot optimize ads against GA4 events.
+- **Traffic is ~85% Organic Search + Direct, ~0 paid.** Organic lands on **informational blog posts that convert ≈0** (e.g. `best-soap-for-tattoos` 106 sessions / 0 orders; toothpaste-SLS posts) — the Prime-Directive leak, live.
+- Repeat rate: memory says ~18% (this pull's `orders_count` field was unpopulated → re-measure).
 - Capacity: **20–30k units/mo** available
 - Amazon: **RSC fully Brand Registered** — all features available (SQP/BA reports, A+ Content, Sponsored Brands, Brand Store, Vine). Culina to be separated on its own Brand Registry.
 
@@ -53,8 +56,8 @@ Each stage is a **gate**. Do not fund the next stage until the current one passe
 
 1. **Tracking (fix the measurement).** Past Google Ads lost money on *broken tracking* (0.23% CVR, 0.19x ROAS reported). GA4 overstates CVR; seo-impact organic $ is unreliable. **Nothing scales on numbers you can't trust.** Stand up server-side / CAPI conversion tracking reconciled against Shopify orders.
 2. **Conversion rate (fix the leak).** At 0.82% CVR, every dollar of traffic is ~half-wasted vs a 1.5–2% benchmark. Doubling CVR doubles revenue from *existing* traffic at **zero acquisition cost** — the highest-ROI work in the plan. Fix funnel, PDP, offer clarity, buy-box, trust, mobile speed.
-3. **Offer / AOV (make paid math possible).** Lift AOV $19 → ~$48 via the hero bundle, free-ship threshold, and subscription. Without this, no CAC is survivable.
-4. **Traffic (scale acquisition).** Only now pour capital into Meta + Google + Amazon Ads, bidding up to breakeven CAC because the funnel converts and LTV compounds.
+3. **Offer (sharpen, don't rebuild AOV).** AOV is already ~$47.66, so this stage is about *conversion-lifting* offer framing (value stack, Buy-X-Get-Y, named guarantee) + adding the $99 bundle for CFA headroom — not fixing a low basket.
+4. **Traffic (scale acquisition of *right-intent* buyers).** Only now pour capital into Meta + Google + Amazon Ads pointed at the offer (not blog posts), bidding up to breakeven CAC because the funnel converts and LTV compounds.
 
 ## 4. The offer architecture (Grand Slam Offer — $100M Offers) — two front doors
 
@@ -124,7 +127,7 @@ Wired assets:
 
 Acquire on **skin only** (margin survives CAC); harvest the rest via §6. Prioritized by leverage-per-headcount:
 
-1. **Post free content (agent fleet's core strength) — primary.** Reframe content **"How to" → "How I"** (founder voice), Hook→Retain→Reward, **give-until-they-ask**. Repurpose Judge.me reviews into UGC. This is the compounding organic asset.
+1. **Post free content (agent fleet + founder on-camera) — primary.** **Creative split (founder is male = not the target demo, willing on-camera, no production b-roll):** the **founder is the *authority/education* channel** — "How I built a sensitive-skin brand," ingredient myth-busting, "why fragrance wrecks reactive skin," shot anywhere (desk/phone), reframed **"How to" → "How I."** The **target-demo/direct-response creative comes from customers, affiliates, and UGC** (131 reviews, esthetician partners) — women with sensitive skin featured in the ads that must convert them. Hook→Retain→Reward, give-until-they-ask. This split makes the affiliate/referral/UGC pillars *more* important for RSC than for an avatar-matching founder.
 2. **Paid ads — skin only.** Ad = **Call-Out → Value (What/Who/When) → CTA**; landing page must match the ad. **Track money before spending; test at 2× a customer's 30-day cash, kill losers at 1×, scale winners.** Seed lookalikes from customer + Klaviyo lists. Google Shopping is live; Meta (Set/bundle) is next.
 3. **Customer referrals** — two-sided incentive (Dropbox/PayPal model) via Klaviyo + Judge.me + a **point-of-sale ask** ("who else has sensitive skin?"). Cheapest compounding channel; goal = referrals > churn.
 4. **Affiliates/partners** — recruit estheticians + sensitive-skin/clean-beauty micro-influencers; launch **Whisper-Tease-Shout**; Integrate (they give the quiz/sample away or sell the Set). Highest leverage for scale.
@@ -161,8 +164,8 @@ Capacity check: ~$83K/mo ≈ 3–5k units/mo vs 20–30k available. **Headroom t
   Build the $99 bundle + reframe the Set (value stack, Buy-X-Get-Y, named offer/guarantee) + subscribe-first continuity. **Fix tracking (server-side/CAPI, reconciled to Shopify)** — this is Hormozi's "Track Money" and RSC's own known attribution gap. Fix Amazon lotion price. **Fix the 10.4% Clarity `scriptErrorPct`** (JS errors can break add-to-cart *and* the pixel).
   **KPI/Gate:** conversions tracked accurately end-to-end (paid → Shopify order match within tolerance).
 - **Phase 1 — Conversion rate (Month 1–3).**
-  Attack the three CRO suspects surfaced in Clarity: (a) **10.4% script-error rate**, (b) **28.8% scroll depth / ~68% mobile** — above-the-fold + mobile PDP do the whole job, (c) **offer↔traffic misalignment** — paid traffic was landing on a single-lotion page, not the hero offer. Ship the free digital quiz lead magnet. Small paid test ($1–3K/mo, skin only) to source real traffic and read CAC/creative.
-  **⛔ Gate:** **CVR ≥ ~1.5%** *and* **30-day GP ≥ CAC** on the acquiring offer (breakeven CFA). Do not scale spend until both hold. *(Confirm the CRO suspects on a fresh data pull before committing fixes.)*
+  Attack the CRO leaks **confirmed by the 2026-07-22 live pull**: (a) **12.4% Clarity `scriptErrorPct`** (up from April's 10.4% — persistent; can break add-to-cart *and* the pixel) + **6.7% dead-click rate**; (b) **~69% mobile, 1.19 pages/session** — mobile PDP + above-the-fold do the whole job; (c) **wrong-intent traffic** — organic buyers land on blog posts (`best-soap-for-tattoos` etc.) that convert ≈0, so paid must point at the *offer*, and blog posts need above-the-fold buy-paths. Ship the free digital quiz lead magnet. Small paid test ($1–3K/mo, skin only) to source right-intent traffic and read CAC/creative.
+  **⛔ Gate:** true purchase **CVR ≥ ~1.5%** (reconciled to Shopify orders, not GA4) *and* **30-day GP ≥ CAC** on the acquiring offer. Do not scale spend until both hold.
 - **Phase 2 — Scale acquisition (Month 4–9).**
   Ramp spend on *proven* creative, routing scaled traffic to the **$99 bundle** (2× CFA). Full retention loop live (6–8wk cadence, continuity bonus, dunning, rollover winback, post-purchase cross-sell). Content on the Rule of 100; launch referrals + first affiliates. Amazon Ads on. Target ~$25–35K/mo combined.
   **Gate:** **30-day GP ≥ 2× CAC** on the bundle funnel; contribution ≥ spend + overhead trending.
