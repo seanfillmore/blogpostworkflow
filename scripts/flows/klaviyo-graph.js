@@ -63,3 +63,16 @@ export async function verifyFlow(flowId) {
 export async function setLive(flowId) {
   return k.updateFlowStatus(flowId, 'live');
 }
+
+/**
+ * Resolve a flow's enrollment (triggers + profile_filter). Net-new flows set
+ * `mod.triggers` + `mod.profileFilter` inline; legacy flows clone them from an
+ * existing flow's definition (`oldDef`).
+ */
+export function resolveEnrollment(mod, oldDef) {
+  if (mod.triggers && mod.profileFilter) {
+    return { triggers: mod.triggers, profileFilter: mod.profileFilter };
+  }
+  if (!oldDef) throw new Error(`flow "${mod.name}": no inline enrollment and no cloned flow to derive it from`);
+  return { triggers: oldDef.triggers, profileFilter: oldDef.profile_filter };
+}
