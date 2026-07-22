@@ -73,6 +73,17 @@ Two further data corrections vs the plan's assumptions:
 4. Defuse the `Purchase (2)` landmine (`conversionActions/7556810073`) before any
    move to conversion/value bidding. Add more scents/products as data supports.
 
+### Monitoring
+
+`agents/shopping-test-monitor/index.js` — daily (wired into `scheduler.js` after
+rank-alerter). Reports spend / clicks / CTR / CPC / conversions / revenue / ROAS /
+CPA per campaign + combined + lifetime, into the daily digest (`category: 'ads'`).
+Applies the revised gate below: **no auto-pause**; flags only `dead_spend`
+(≥40 clicks, 0 conv) or `unprofitable` (ROAS <0.5× after ≥15 conv). Output:
+`data/reports/shopping-test-monitor/{latest.json,YYYY-MM-DD.md}`. Tests:
+`tests/agents/shopping-test-monitor.test.js`. Manual run: `node
+agents/shopping-test-monitor/index.js [--days N] [--json]`.
+
 ### Gate revision (Sean, 2026-07-21) — supersedes the plan's 2× rule
 
 **~1× ROAS is a win, not the floor.** Priority is generating revenue and *evolving

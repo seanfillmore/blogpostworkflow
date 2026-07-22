@@ -159,6 +159,11 @@ if (new Date().getDay() === 1) {
 // Step 5b: rank alerter — flag sudden position changes
 runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 
+// Step 5b.1: shopping-test monitor — spend/clicks/conv/ROAS for the paid Shopping
+// test campaigns. Cheap (2 GAQL queries, no LLM). Reports into the daily digest;
+// flags only genuinely dead spend (gate: ~1× ROAS is a win, no auto-pause).
+runStep('shopping-test-monitor', `"${NODE}" agents/shopping-test-monitor/index.js`);
+
 // Step 5c: insight aggregator — refresh writer standing rules
 runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 
