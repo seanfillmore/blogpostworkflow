@@ -5,8 +5,11 @@
  *   Budget:  $10/day
  *   Bidding: Maximize Clicks (target_spend) — no ROAS target until a conv base exists
  *   Feed:    Merchant Center 729030085, feed label "US"
- *   Scope:   all products (single root UNIT listing group) — refine to best-sellers
- *            after the first product/search-term report
+ *   Scope:   ONLY the hero Coconut Body Lotion (feed product_type "lotion" = all
+ *            5 scent variants + any future scent), everything else excluded. The
+ *            lotion is ~70% of store revenue ($2,813/111u Mar–Jul); concentrating
+ *            $10/day there beats spreading it across 36 SKUs where Maximize Clicks
+ *            would just buy the cheapest low-intent clicks.
  *   Status:  campaign PAUSED (built for review; Sean enables it manually)
  *
  * Usage:
@@ -24,14 +27,17 @@ const C = `customers/${CID}`;
 const MERCHANT_ID = 729030085;
 const FEED_LABEL = 'US';
 const DAILY_BUDGET_USD = 10;
-const CAMPAIGN_NAME = 'RSC | Shopping Test | All Products';
+const CAMPAIGN_NAME = 'RSC | Shopping Test | Coconut Body Lotion';
+const PRODUCT_TYPE = 'lotion'; // feed product_type_level1 that isolates the hero lotion
 
 // Temp (negative) resource names, wired together within the single mutate.
 const budgetRN = `${C}/campaignBudgets/-1`;
 const campaignRN = `${C}/campaigns/-2`;
 const adGroupRN = `${C}/adGroups/-3`;
 const adGroupAdRN = `${C}/adGroupAds/-3~-4`; // ad group ad temp id
-const listingRN = `${C}/adGroupCriteria/-3~-5`;
+const listingRootRN = `${C}/adGroupCriteria/-3~-5`;   // subdivision (root)
+const listingLotionRN = `${C}/adGroupCriteria/-3~-6`; // included: product_type = lotion
+const listingOtherRN = `${C}/adGroupCriteria/-3~-7`;  // excluded: everything else
 
 const operations = [
   {
@@ -76,7 +82,7 @@ const operations = [
     adGroupOperation: {
       create: {
         resourceName: adGroupRN,
-        name: 'All Products',
+        name: 'Coconut Body Lotion',
         campaign: campaignRN,
         status: 'ENABLED',
         type: 'SHOPPING_PRODUCT_ADS',
@@ -94,16 +100,44 @@ const operations = [
     },
   },
   {
-    // Root listing group = single UNIT node covering all products.
+    // Root: subdivide by product_type (level 1).
     adGroupCriterionOperation: {
       create: {
-        resourceName: listingRN,
+        resourceName: listingRootRN,
         adGroup: adGroupRN,
         status: 'ENABLED',
-        listingGroup: { type: 'UNIT' },
-        // Required on a biddable UNIT even under Maximize Clicks (acts as a ceiling).
-        cpcBidMicros: 300000, // $0.30
-
+        listingGroup: { type: 'SUBDIVISION' },
+      },
+    },
+  },
+  {
+    // Included: product_type = "lotion" (the 5 hero-lotion variants).
+    adGroupCriterionOperation: {
+      create: {
+        resourceName: listingLotionRN,
+        adGroup: adGroupRN,
+        status: 'ENABLED',
+        cpcBidMicros: 400000, // $0.40 ceiling (Maximize Clicks)
+        listingGroup: {
+          type: 'UNIT',
+          parentAdGroupCriterion: listingRootRN,
+          caseValue: { productType: { level: 'LEVEL1', value: PRODUCT_TYPE } },
+        },
+      },
+    },
+  },
+  {
+    // Excluded: everything else (the "Other" bucket under the same dimension).
+    adGroupCriterionOperation: {
+      create: {
+        resourceName: listingOtherRN,
+        adGroup: adGroupRN,
+        negative: true,
+        listingGroup: {
+          type: 'UNIT',
+          parentAdGroupCriterion: listingRootRN,
+          caseValue: { productType: { level: 'LEVEL1' } },
+        },
       },
     },
   },
@@ -112,7 +146,7 @@ const operations = [
 console.log(`Standard Shopping test campaign — customer ${CID}`);
 console.log(`  Name:    ${CAMPAIGN_NAME}`);
 console.log(`  Budget:  $${DAILY_BUDGET_USD}/day (Maximize Clicks)`);
-console.log(`  Feed:    MC ${MERCHANT_ID} / label ${FEED_LABEL} / all products`);
+console.log(`  Feed:    MC ${MERCHANT_ID} / label ${FEED_LABEL} / product_type "${PRODUCT_TYPE}" only`);
 console.log(`  Status:  PAUSED (review then enable manually)`);
 console.log('');
 
@@ -127,7 +161,7 @@ if (!APPLY) {
 // (partial_failure commits successful ops, so a failed attempt can orphan a budget).
 const stale = await gaqlQuery(`
   SELECT campaign.resource_name, campaign.name FROM campaign
-  WHERE campaign.name = '${CAMPAIGN_NAME.replace(/'/g, "\\'")}'
+  WHERE campaign.name LIKE 'RSC | Shopping Test%' AND campaign.status != 'REMOVED'
 `);
 const staleBudgets = await gaqlQuery(`
   SELECT campaign_budget.resource_name FROM campaign_budget

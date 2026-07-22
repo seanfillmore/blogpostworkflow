@@ -57,15 +57,21 @@ Two further data corrections vs the plan's assumptions:
    "Top Quality Store". (Minor non-blocking nudges: "Return cost — Incomplete",
    descriptions missing on 10 products.)
 2. ~~**Claude (Ads API):** build the paused $10/day Standard Shopping campaign.~~
-   ✅ **DONE 2026-07-21** — campaign **`24055192055`** "RSC | Shopping Test | All
-   Products", PAUSED, SHOPPING, TARGET_SPEND (Max Clicks), $10/day, MC
-   729030085/US, ad group "All Products" → single all-products UNIT listing group
-   ($0.30 bid). Built by `scripts/create-shopping-test-campaign.mjs` (idempotent;
-   `campaign-creator` is Search-only so hand-built).
+   ✅ **DONE 2026-07-21** — campaign **`24055379690`** "RSC | Shopping Test |
+   Coconut Body Lotion", PAUSED, SHOPPING, TARGET_SPEND (Max Clicks), $10/day, MC
+   729030085/US. **Scope = hero lotion only:** listing tree subdivides by
+   `product_type`, includes UNIT `lotion` ($0.40 bid) = the 5 Coconut Body Lotion
+   variants, EXCLUDES everything else. The lotion is ~70% of store revenue
+   ($2,813/111u Mar–Jul); all-products + Max Clicks would just buy the cheapest
+   low-intent clicks (last run's failure mode). Built by
+   `scripts/create-shopping-test-campaign.mjs` (idempotent; `campaign-creator` is
+   Search-only so hand-built). *(First build was all-products campaign 24055192055,
+   replaced.)*
 3. **Sean (NEXT):** review the paused campaign in Google Ads, then **enable** it.
 4. Watch under the plan's 2× scale gate; defuse the `Purchase (2)` landmine
    (`conversionActions/7556810073`) before any move to conversion/value bidding.
-   Refine product scope to best-sellers after the first product/search-term report.
+   Widen scope to the moisturizer family (#2 seller) or sets only if the lotion
+   test clears the gate and you want more volume.
 
 Audit scripts (scratchpad, session 08ea6f2a): `audit-conversion-tracking.mjs`,
 `ga4-purchases.mjs`.
