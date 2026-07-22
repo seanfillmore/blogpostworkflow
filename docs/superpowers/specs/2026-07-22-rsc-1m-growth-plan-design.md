@@ -56,49 +56,84 @@ Each stage is a **gate**. Do not fund the next stage until the current one passe
 3. **Offer / AOV (make paid math possible).** Lift AOV $19 → ~$48 via the hero bundle, free-ship threshold, and subscription. Without this, no CAC is survivable.
 4. **Traffic (scale acquisition).** Only now pour capital into Meta + Google + Amazon Ads, bidding up to breakeven CAC because the funnel converts and LTV compounds.
 
-## 4. The offer (Grand Slam) — already exists, use it
+## 4. The offer architecture (Grand Slam Offer — $100M Offers) — two front doors
 
-The hero acquisition offer is **live today**: the **Sensitive Skin Moisturizing Set**
-(`/products/sensitive-skin-starter-set`) — Pure Unscented Lotion + Cream, **$46.80**
-(reg $58, 19% off). It already hits the AOV target and already contains the harvest mechanic.
+Grounded in Hormozi's three books (full framework extraction in the companion reference; key mechanics cited inline). The core insight from the Money Model math: **the $46.80 Set is the right hero but the wrong cold-traffic attraction offer.** We run **two front doors** with one back end.
 
-| Element (already built) | Detail |
-|---|---|
-| **Hero set** | Lotion + Cream, $46.80 · COGS ~$10.7 · ship $9.50 · **contribution ~$24.9 (53%)** |
-| **Built-in harvest** | First-subscription bonus: free Lip Balm ($15) + Bar Soap ($11) — cross-sells the low-margin catalog to acquired skin customers *at their COGS (~$8), not at paid CAC* |
-| **Free shipping** | Threshold at **$50** + all subscription orders (already live) |
-| **Guarantee** | 30-day money-back, no return required (already live) |
-| **Positioning** | Sensitive skin / "clean-slate" vs Cetaphil & CeraVe; targets the 51% of women reporting sensitive skin — a sharp, ad-ready angle |
+### 4a. Front door #1 — the Set, reframed (lifts CVR)
 
-**Do not rebuild the offer — sharpen and instrument it.** Work items:
-1. Make it the **primary paid-traffic landing destination** (dedicated LP / PDP tuned for cold traffic).
-2. Add **subscribe-&-save** framing up front (Recurpay) so first order defaults toward a subscription — the bonus already incentivizes it.
-3. Add **post-purchase 1-click upsell** (Zipify OCU: 12–16% take, +172% AOV) for one-time buyers.
-4. A/B the price/discount framing ($46.80 vs $58 anchor) once tracking is trustworthy.
+The **Sensitive Skin Moisturizing Set** (`/products/sensitive-skin-starter-set`) — Lotion + Cream, contribution ~$25 — stays as the hero, but is **reframed per $100M Offers**:
 
-**AOV ~$47; first-order contribution ~$25 (one-time) / ~$17 (subscriber, after bonus) — the subscriber trade is margin-for-LTV and is the intended path.**
+- **Stop leading with the "reg $58 → $46.80" discount.** Discounting the *core* commoditizes it and price-anchors it against Cetaphil/CeraVe. Instead present a **value stack**: Lotion ($30) + Cream ($28) + free Lip Balm ($15) + free Bar Soap ($11) + zero-COGS info bonuses (Calm-Skin Routine Card, Patch-Test Guide, Trigger-Proofing Checklist, "$39 value") + free shipping → **stated value ~$115–125, your price $46.80.** Bonus value eclipses the price — Hormozi's core rule.
+- **Frame as Buy-X-Get-Y-Free, not "% off"** (Money Models: "free" out-pulls "% off"): "Get the Set — **free Bar Soap + Lip Balm today**" (free items ~$6.40 COGS).
+- **Value Equation levers:** ↑ Perceived Likelihood (surface the 131 Judge.me reviews, "formulated for sensitive skin," patch-test/ingredient proof — the cheapest lever to move a 0.82% page); ↓ Time Delay (promise a fast sensory win — "relief from tightness on first use"); ↓ Effort (done-for-you 2-step routine + subscription "never run out").
+- **Name it (MAGIC):** e.g. **"The 14-Day Sensitive-Skin Calm-Down System."**
+- **Name the guarantee:** **"The Calm-Skin Promise — 30 days; if your skin isn't calmer, email 'refund,' keep the products."** Unconditional is correct for low-ticket B2C; the "keep it" costs ~$5.49 COGS and removes return friction. Run the refund math, don't flinch (130 sales @10% refund beats 100 @5%).
 
-## 5. Acquisition math & CAC policy
+### 4b. Front door #2 — the $99 bundle (the CFA scaling engine) — **NET-NEW, recommended**
 
-- **First-order contribution:** ~$25 one-time / ~$17 subscriber (after the free lip balm + soap bonus) at ~$47 AOV.
-- **CAC ceiling:** **up to ~$25–30 (breakeven-to-slightly-negative on first order)** — funded by capital, profitable on LTV. The owner's stated appetite to run at breakeven is the lever that lets RSC outbid margin-constrained competitors during the scaling window. **Guardrail:** breakeven acquisition is permitted only when LTV:CAC ≥ ~1.8:1 on cohort data; below that, fix offer/retention before adding spend.
-- **12-mo LTV:** ~$45–55 (AOV $48 × ~2.2 orders × ~47% margin, with repeat lifted 18% → ~30% via replenishment + subscription).
-- **LTV:CAC target:** ~1.8–2.2:1.
+A higher-AOV bundle is what makes aggressive/breakeven paid spend *safe* (see §5). Build **"The 90-Day Coconut Reset"** — 3× Lotion + 1× Cream, **$99** (COGS ~$21, contribution **~$47**). This is the primary destination for *scaled* paid traffic once CVR is proven, because its 30-day gross profit clears Hormozi's 2× infinite-scaling threshold.
+
+### 4c. Back end (same for both doors) — Upsell → Downsell → Continuity
+
+- **Upsell (Zipify 1-click, post-purchase, highest-profit-first, Anchor mechanic):** anchor the $99 bundle, then offer **lotion refill 25% off ($22.50, ~$12 contribution)**; second 1-click **"Everyday Essentials" (deo + toothpaste, $19, ~$9 contribution).**
+- **Downsell (never price-cut — AOV too low for payment plans):** quantity/size downsell — single full-size Lotion ($30) or a cheap consumable as a foot-in-the-door for decliners. Goal = more *customers*, not per-buyer GP.
+- **Continuity (Recurpay, subscribe-first — but never the cold attraction offer):** see §6.
+
+## 5. Acquisition math & CAC policy — Client-Financed Acquisition ($100M Money Models)
+
+The spend policy is Hormozi's **30-day rule**, not a raw LTV:CAC target. A credit card floats you interest-free for ~30 days, so the binding test is **30-day gross profit per new customer vs. cost to acquire + service**:
+- **Breakeven CFA:** 30-day GP ≥ CAC.
+- **Infinite-scaling ("print money"):** 30-day GP ≥ **~2× CAC** — one customer funds acquiring two more inside 30 days. Above this, cash stops constraining spend.
+
+**Worked against RSC's real contribution numbers:**
+
+| Attraction offer | 30-day GP / new customer* | vs. $25 CAC |
+|---|---|---|
+| **$46.80 Set** (Buy-X-Get-Y + 1-click upsells) | ~$22 | **0.9× — below breakeven unless CAC held < ~$22** |
+| **$99 "90-Day Coconut Reset"** (+ upsells) | ~$50 | **~2.0× — hits infinite-scaling threshold** |
+
+*Continuity's 2nd charge lands ~day 42–56, outside the 30-day window, so it's the **LTV** engine, not the **CFA** engine.
+
+**Policy:**
+- **CAC ceiling = first-order contribution of the offer that acquired the customer.** Run the Set / cheap offers at **breakeven-to-slightly-negative** to maximize customer *count*; push CAC toward the 2× "print money" zone **only on the $99 bundle funnel**, where 30-day GP (~$50) supports it.
+- The owner's willingness to run at breakeven is correct — but the machine that makes it *safe* is the **higher-AOV bundle + continuity (12-mo LTV ~$45–55)**, not the $19-AOV status quo.
+- **Diagnostic guardrail ($100M Leads):** "don't confuse a sales problem with an advertising problem." At 0.82% CVR the constraint is conversion/business-model, so **CRO and offer come before spend** (§3).
 
 **Spend → revenue model at $55K/mo Shopify (steady state):**
-- 60% new / 40% repeat. New: ~$33K ÷ $48 ≈ 690 customers × ~$25 CAC ≈ **~$17K/mo ad spend**. Repeat: ~$22K organic (retention, no ad cost).
-- **Blended ROAS ~3.2x.** Contribution $55K × 47% ≈ $26K − $17K spend ≈ **~$9K/mo profit** before overhead — and profit rises as the repeat base compounds.
+- ~60% new / 40% repeat. New: ~$33K via the bundle/Set mix, CAC held at breakeven-to-2× → **~$12–17K/mo ad spend**. Repeat: ~$22K organic (retention, no ad cost).
+- Profit compounds as the subscription/repeat base grows; early phases deliberately run near breakeven on new-customer acquisition by design.
 
-## 6. Retention / LTV engine (existing tools mapped)
+## 6. Retention / LTV engine — Continuity done right ($100M Money Models)
 
-The tools already exist; the plan *wires them into one loop*:
-- **Replenishment flow** (Klaviyo TAfpnV, live) — day 35/50, subscribe-first, per-product CTAs. Move cadence to 6–8wk.
-- **Post-purchase flow** (Klaviyo VLQaYZ, live) — cross-sell the low-margin catalog to acquired skin customers.
-- **Subscriptions** (Recurpay, 15% off) — shift cadence to 6–8wk to prevent over-supply churn; add **dunning flow** for failed payments.
-- **OCU / Zipify** — expand post-purchase upsell offers (12–16% take, +172% AOV).
-- **Reviews** (Judge.me, 131 on the Set) — feed social proof back into PDPs and ads.
+Retention is the true growth ceiling (18% repeat). The tools exist; the plan wires them into one loop **and fixes three continuity mistakes Hormozi flags**:
 
-## 7. Amazon parallel track (full Brand Registry)
+1. **Cadence: monthly → 6–8 weeks.** Monthly billing on a product used in 6–8 weeks *causes* over-supply churn (Profitwell: monthly 10.7% cancel vs. quarterly ~5%). Match cadence to consumption.
+2. **Replace the flat 15% subscription discount with a Continuity Bonus + earned lifetime discount.** Discounting trains price-negotiability; instead give a **free soap/lip balm each shipment** (~$3 COGS, high perceived value) and **earn the 15% only after 3 shipments** (Hormozi: lifetime discount at your churn point). Never make the subscription the *cold attraction* offer — "no successful continuity business has a standalone membership offer"; front it with a cash offer, then subscribe-first at checkout.
+3. **Add bulk-prepay + 4-week billing:** "Prepay 4 refills, get 1 free" (stacks 30-day cash) and bill in **4-week cycles = 13/yr = +8.3% revenue** for zero extra work.
+
+Wired assets:
+- **Replenishment flow** (Klaviyo TAfpnV, live) — day 35/50, subscribe-first, per-product CTAs → move to 6–8wk.
+- **Post-purchase flow** (Klaviyo VLQaYZ, live) — cross-sell the low-margin catalog ("tell them what to buy next").
+- **Recurpay** — continuity per the fixes above; add a **dunning flow** for failed payments.
+- **Zipify OCU** — the CFA upsell engine (§4c).
+- **Judge.me (131 reviews)** — Perceived-Likelihood proof in ads/PDP + UGC source for paid creative.
+- **Rollover winback** — credit lapsed customers' past spend toward a bundle priced ≥4× the credit; highest-ROI play against 18% repeat.
+
+## 7. Lead-generation engine — the Core Four ($100M Leads), sequenced for 1 person + agent fleet
+
+Acquire on **skin only** (margin survives CAC); harvest the rest via §6. Prioritized by leverage-per-headcount:
+
+1. **Post free content (agent fleet's core strength) — primary.** Reframe content **"How to" → "How I"** (founder voice), Hook→Retain→Reward, **give-until-they-ask**. Repurpose Judge.me reviews into UGC. This is the compounding organic asset.
+2. **Paid ads — skin only.** Ad = **Call-Out → Value (What/Who/When) → CTA**; landing page must match the ad. **Track money before spending; test at 2× a customer's 30-day cash, kill losers at 1×, scale winners.** Seed lookalikes from customer + Klaviyo lists. Google Shopping is live; Meta (Set/bundle) is next.
+3. **Customer referrals** — two-sided incentive (Dropbox/PayPal model) via Klaviyo + Judge.me + a **point-of-sale ask** ("who else has sensitive skin?"). Cheapest compounding channel; goal = referrals > churn.
+4. **Affiliates/partners** — recruit estheticians + sensitive-skin/clean-beauty micro-influencers; launch **Whisper-Tease-Shout**; Integrate (they give the quiz/sample away or sell the Set). Highest leverage for scale.
+5. **Warm outreach** — the **9-word email** ("Are you still looking to calm your sensitive skin?") to the dormant Klaviyo list; founder network for early wins.
+6. **Cold outreach — deprioritize for D2C** (labor-heavy, ~1yr to scale). Use only 1:1 to recruit affiliates.
+
+**Lead magnet for cold paid traffic:** a **free digital "What's sabotaging your sensitive skin?" quiz** that diagnoses and routes to the Set/bundle and captures the email (near-zero marginal cost). **Never ship free physical samples to cold paid traffic** — it destroys unit economics at this AOV; reserve samples for warm/referral/affiliate/in-box.
+
+## 8. Amazon parallel track (full Brand Registry)
 
 Runs alongside DTC, not instead of it:
 1. **Price fix (Phase 0):** test lotion $21.99 → $25.99–27.99. Recovers ~$4–6/unit on the 74%-of-Amazon SKU.
@@ -109,7 +144,7 @@ Runs alongside DTC, not instead of it:
 6. **Culina separation:** complete once its Brand Registry approves; unblocks clean per-brand reporting.
 - **Target:** $1,800/mo → ~$18K/mo (~10x) by month 18–24.
 
-## 8. Revenue bridge
+## 9. Revenue bridge
 
 | Channel | Now | Target | Lever |
 |---|---|---|---|
@@ -120,22 +155,22 @@ Runs alongside DTC, not instead of it:
 
 Capacity check: ~$83K/mo ≈ 3–5k units/mo vs 20–30k available. **Headroom to ~$3–5M** — the machine can outrun this plan.
 
-## 9. Phased roadmap with gates & KPIs
+## 10. Phased roadmap with gates & KPIs
 
 - **Phase 0 — Foundation & measurement (Month 0–1).**
-  Build hero bundle + free-ship threshold + subscription. **Fix tracking (server-side/CAPI, reconciled to Shopify).** Fix Amazon lotion price. Build skin funnel/landing page.
+  Build the $99 bundle + reframe the Set (value stack, Buy-X-Get-Y, named offer/guarantee) + subscribe-first continuity. **Fix tracking (server-side/CAPI, reconciled to Shopify)** — this is Hormozi's "Track Money" and RSC's own known attribution gap. Fix Amazon lotion price. **Fix the 10.4% Clarity `scriptErrorPct`** (JS errors can break add-to-cart *and* the pixel).
   **KPI/Gate:** conversions tracked accurately end-to-end (paid → Shopify order match within tolerance).
 - **Phase 1 — Conversion rate (Month 1–3).**
-  CRO on PDP, funnel, mobile speed, trust, buy-box, offer clarity. Small paid test ($1–3K/mo, skin only) to source real traffic for CRO and to read CAC/creative.
-  **⛔ Gate:** **CVR ≥ ~1.5%** *and* cold-traffic **ROAS ≥ 2x / CAC ≤ ~$28**. Do not scale spend until both hold.
+  Attack the three CRO suspects surfaced in Clarity: (a) **10.4% script-error rate**, (b) **28.8% scroll depth / ~68% mobile** — above-the-fold + mobile PDP do the whole job, (c) **offer↔traffic misalignment** — paid traffic was landing on a single-lotion page, not the hero offer. Ship the free digital quiz lead magnet. Small paid test ($1–3K/mo, skin only) to source real traffic and read CAC/creative.
+  **⛔ Gate:** **CVR ≥ ~1.5%** *and* **30-day GP ≥ CAC** on the acquiring offer (breakeven CFA). Do not scale spend until both hold. *(Confirm the CRO suspects on a fresh data pull before committing fixes.)*
 - **Phase 2 — Scale acquisition (Month 4–9).**
-  Ramp to $10–15K/mo on *proven* creative. Full retention loop live (replenishment 6–8wk, subscription, dunning, post-purchase cross-sell). Amazon Ads on. Target ~$25–35K/mo combined.
-  **Gate:** cohort **LTV:CAC ≥ 1.8:1**; contribution ≥ spend + overhead trending.
+  Ramp spend on *proven* creative, routing scaled traffic to the **$99 bundle** (2× CFA). Full retention loop live (6–8wk cadence, continuity bonus, dunning, rollover winback, post-purchase cross-sell). Content on the Rule of 100; launch referrals + first affiliates. Amazon Ads on. Target ~$25–35K/mo combined.
+  **Gate:** **30-day GP ≥ 2× CAC** on the bundle funnel; contribution ≥ spend + overhead trending.
 - **Phase 3 — Compound + omnichannel (Month 10–24).**
-  Scale to $20–25K/mo spend at held ROAS. Add wholesale/retail leg (Faire, boutiques). Expand catalog / new hero SKUs.
+  Scale spend at held CFA ratio. Scale affiliates (Whisper-Tease-Shout). Add wholesale/retail leg (Faire, boutiques). Expand catalog / new hero SKUs.
   **Gate:** capacity + cash flow keep pace. Approach **$83K/mo run-rate by month 18–24.**
 
-## 10. Existing tooling → role mapping ("pull it all together")
+## 11. Existing tooling → role mapping ("pull it all together")
 
 | Asset (already built) | Role in the $1M engine |
 |---|---|
@@ -150,21 +185,23 @@ Capacity check: ~$83K/mo ≈ 3–5k units/mo vs 20–30k available. **Headroom t
 | Google Shopping test (live) | Seed of the paid engine — scale winners |
 | Dashboard | Single pane for KPIs across the phases |
 
-## 11. Risks & kill criteria
+## 12. Risks & kill criteria
 
 1. **Tracking not trustworthy →** repeat past Ads loss. *Kill:* no spend scaling until Phase 0 gate passes.
 2. **CVR won't clear ~1.5% →** funnel is the ceiling. *Kill:* pause paid, keep working CRO/offer.
-3. **CAC won't hold ≤ ~$28 at scale →** creative/offer problem. *Kill:* return to offer/LTV before more spend.
+3. **30-day GP won't clear CAC →** creative/offer problem. *Kill:* return to offer/CRO before more spend; don't confuse a sales problem with an ad problem.
 4. **Amazon 10x** depends on review velocity + ranking — partly external. *Mitigate:* Vine, Sponsored Products, price tests.
-5. **Cash-flow timing —** paid burns cash before repeat compounds. *Mitigate:* breakeven-CAC policy is deliberate; monitor weekly.
+5. **Cash-flow timing —** paid burns cash before continuity compounds. *Mitigate:* CFA 30-day policy is the deliberate control; bulk-prepay + 4-week billing pull cash forward; monitor weekly.
+6. **Continuity churn** (monthly cadence over-supplies) → *Mitigate:* 6–8wk cadence + bonus-not-discount; if >5% cancel early, fix the product, don't handcuff.
 
-## 12. Immediate next actions (Phase 0)
+## 13. Immediate next actions (Phase 0)
 
-1. Stand up **server-side conversion tracking** (Meta CAPI + Google enhanced conversions) reconciled to Shopify orders.
-2. Build the **hero bundle** product + **$50 free-ship threshold** + **subscription** offer in Shopify.
+1. Stand up **server-side conversion tracking** (Meta CAPI + Google enhanced conversions) reconciled to Shopify orders; **fix the 10.4% JS script-error rate.**
+2. Build the **$99 "90-Day Coconut Reset" bundle** + reframe the Set (value stack, Buy-X-Get-Y, named offer + "Calm-Skin Promise" guarantee) + subscribe-first continuity (6–8wk, bonus-not-discount) in Shopify.
 3. **Test Amazon lotion price** $21.99 → $25.99 (watch buy-box + conversion).
-4. Define the **KPI dashboard** (CVR, AOV, CAC, ROAS, LTV, repeat rate) as the gate scoreboard.
-5. Confirm true blended **contribution margin per offer** once tracking is live.
+4. Define the **KPI dashboard** (CVR, AOV, **30-day GP/customer per funnel**, CAC, repeat rate) as the gate scoreboard.
+5. Ship the **free digital sensitive-skin quiz** lead magnet; confirm true blended **contribution margin per offer** once tracking is live.
+6. **Fresh data pull** (GA4/Clarity/Shopify/Klaviyo) to confirm the CRO suspects on current numbers.
 
 ---
 
