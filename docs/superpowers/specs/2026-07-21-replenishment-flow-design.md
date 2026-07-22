@@ -131,6 +131,13 @@ Flow filter exits anyone who reorders mid-flow. Non-actors age into Winback at d
   Shopify Discounts. Dynamic unique-per-recipient codes (like `WINBACK25`) are a
   fast-follow to prevent sharing, not v1.
 
+**Decision (2026-07-21): keep the one-time fallback rather than going
+subscription-only.** This flow's audience self-selected out of subscription (they chose
+one-time at checkout), and the churn data confirms a real "don't over-supply me" segment
+("away," "more than I need"). Subscription-only would forfeit those reorders. 15%
+ongoing > 10% once means no cannibalization — the coupon only converts people who won't
+subscribe, recovering otherwise-lost day-50 fence-sitters. Higher-revenue choice.
+
 ## Build approach
 
 - New flow module: `scripts/flows/flows/replenishment.js`, exporting the standard shape
