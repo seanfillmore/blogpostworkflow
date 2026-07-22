@@ -63,3 +63,21 @@ export async function verifyFlow(flowId) {
 export async function setLive(flowId) {
   return k.updateFlowStatus(flowId, 'live');
 }
+
+/** True when a flow module defines its own enrollment (net-new) rather than cloning an old flow. */
+export function isNetNew(mod) {
+  return !!(mod.triggers && mod.profileFilter);
+}
+
+/**
+ * Resolve a flow's enrollment (triggers + profile_filter). Net-new flows set
+ * `mod.triggers` + `mod.profileFilter` inline; legacy flows clone them from an
+ * existing flow's definition (`oldDef`).
+ */
+export function resolveEnrollment(mod, oldDef) {
+  if (isNetNew(mod)) {
+    return { triggers: mod.triggers, profileFilter: mod.profileFilter };
+  }
+  if (!oldDef) throw new Error(`flow "${mod.name}": no inline enrollment and no cloned flow to derive it from`);
+  return { triggers: oldDef.triggers, profileFilter: oldDef.profile_filter };
+}

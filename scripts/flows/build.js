@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import k from '../../lib/klaviyo.js';
-import { send, delay, itemSplit, verifyFlow } from './klaviyo-graph.js';
+import { send, delay, itemSplit, verifyFlow, resolveEnrollment, isNetNew } from './klaviyo-graph.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATE = join(__dirname, 'build-state.json');
@@ -61,8 +61,9 @@ async function cmdFlow(flowName, mod, sendStatus = 'draft') {
   // Flows clone templates at creation, so a rebuild is the only way to refresh
   // content. Delete any prior draft of ours first so re-running is idempotent.
   if (state[flowName]?.flowId) { await k.deleteFlow(state[flowName].flowId).catch(() => {}); console.log(`  removed prior draft ${state[flowName].flowId}`); }
-  const old = await k.getFlowDefinition(mod.oldFlowId);
-  const def = buildDefinition(mod, templateIds, old.definition.triggers, old.definition.profile_filter, sendStatus);
+  const oldDef = isNetNew(mod) ? null : (await k.getFlowDefinition(mod.oldFlowId)).definition;
+  const { triggers, profileFilter } = resolveEnrollment(mod, oldDef);
+  const def = buildDefinition(mod, templateIds, triggers, profileFilter, sendStatus);
   const flow = await k.createFlow({ name: mod.name, definition: def });
   state[flowName].flowId = flow.id;
   saveState(state);
@@ -97,8 +98,12 @@ async function cmdGolive(flowName, mod) {
   const draftSends = v.sends.filter((s) => s.status !== 'live');
   if (live.status !== 'live' || draftSends.length || v.issues.length) throw new Error(`go-live incomplete: status=${live.status} draftSends=${draftSends.length} issues=${v.issues.join(';')}`);
   // set OLD flow to draft so it stops sending
-  await k.updateFlowStatus(mod.oldFlowId, 'draft');
-  console.log(`✓ ${flowName} LIVE (${id}); old flow ${mod.oldFlowId} set to draft. Messages: ${v.sends.length}/${v.sends.length} live.`);
+  if (mod.oldFlowId) {
+    await k.updateFlowStatus(mod.oldFlowId, 'draft');
+    console.log(`✓ ${flowName} LIVE (${id}); old flow ${mod.oldFlowId} set to draft. Messages: ${v.sends.length}/${v.sends.length} live.`);
+  } else {
+    console.log(`✓ ${flowName} LIVE (${id}); net-new flow (no old flow to retire). Messages: ${v.sends.length}/${v.sends.length} live.`);
+  }
 }
 
 async function cmdRender(flowName, key, itemsCsv) {
