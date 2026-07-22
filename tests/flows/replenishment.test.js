@@ -17,6 +17,16 @@ test('module shape: net-new flow with inline enrollment', () => {
   assert.ok(mod.emails.replenish_1 && mod.emails.replenish_2);
 });
 
+test('CTA branch order: "Soap" is matched before "Moisturiz" (collision guard)', () => {
+  // "Moisturizing Coconut Soap" contains both substrings; soap must win, so the
+  // Soap branch must appear before the Moisturiz branch in the template.
+  const h = mod.emails.replenish_1.html;
+  const soapIdx = h.indexOf('"Soap" in items');
+  const moistIdx = h.indexOf('"Moisturiz" in items');
+  assert.ok(soapIdx > -1 && moistIdx > -1, 'both branches present');
+  assert.ok(soapIdx < moistIdx, 'Soap branch must precede Moisturiz branch');
+});
+
 test('actions build the day-35 / day-50 two-email graph', () => {
   const msg = (key) => ({ subject: key, preview: '', template_id: 't-' + key, name: key });
   const acts = mod.actions(msg, { send, delay }, 'draft');

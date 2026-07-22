@@ -15,13 +15,16 @@ const PROD = '{{ event.Items|first|default:"your Real Skin Care favorites" }}';
 // best-sellers). Klaviyo's template engine has no confirmed `{% elif %}` support anywhere
 // else in this codebase (see product-review.js), so mutual exclusivity is emulated with
 // nested {% if %}/{% else %}/{% endif %} rather than {% elif %}.
+// ORDER MATTERS: "Soap" is checked before "Moisturiz" because "Moisturizing Coconut
+// Soap" contains both substrings — a moisturizer title never contains "Soap", so
+// soap-first routes that product to the soap PDP correctly.
 const pdpButton = (label) =>
   `{% with items=event.Items|join:", " %}` +
   `{% if "Deodorant" in items %}` + button(P.deodorant.url, label) +
   `{% else %}{% if "Toothpaste" in items %}` + button(P.toothpaste.url, label) +
+  `{% else %}{% if "Soap" in items %}` + button(P.barsoap.url, label) +
   `{% else %}{% if "Moisturiz" in items %}` + button(P.moisturizer.url, label) +
   `{% else %}{% if "Lotion" in items %}` + button(P.lotion.url, label) +
-  `{% else %}{% if "Soap" in items %}` + button(P.barsoap.url, label) +
   `{% else %}{% if "Lip" in items %}` + button(P.lipbalm.url, label) +
   `{% else %}` + button(P.bestSellers.url, label) +
   `{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}` +
