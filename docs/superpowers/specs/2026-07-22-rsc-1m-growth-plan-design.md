@@ -109,7 +109,7 @@ The spend policy is Hormozi's **30-day rule**, not a raw LTV:CAC target. A credi
 
 ## 6. Retention / LTV engine — Continuity done right ($100M Money Models)
 
-Retention is the true growth ceiling (18% repeat). The tools exist; the plan wires them into one loop **and fixes three continuity mistakes Hormozi flags**:
+Retention is the true growth ceiling (18% repeat). **Infrastructure is fully built** — 7 live Klaviyo flows (Welcome, Abandoned Cart, Browse Abandonment, Post-Purchase, Review/Cross-Sell, Replenishment, Winback) — **but under-fed: the email list is only ~481 subscribers and SMS is 0** (live pull 2026-07-22). So two extra levers sit here: **(a) grow the list** (the free quiz lead magnet does double duty — acquisition + capture), and **(b) stand up SMS** (consent capture + a basic flow; 0 → any is high-engagement upside). The tools exist; the plan wires them into one loop **and fixes three continuity mistakes Hormozi flags**:
 
 1. **Cadence: monthly → 6–8 weeks.** Monthly billing on a product used in 6–8 weeks *causes* over-supply churn (Profitwell: monthly 10.7% cancel vs. quarterly ~5%). Match cadence to consumption.
 2. **Replace the flat 15% subscription discount with a Continuity Bonus + earned lifetime discount.** Discounting trains price-negotiability; instead give a **free soap/lip balm each shipment** (~$3 COGS, high perceived value) and **earn the 15% only after 3 shipments** (Hormozi: lifetime discount at your churn point). Never make the subscription the *cold attraction* offer — "no successful continuity business has a standalone membership offer"; front it with a cash offer, then subscribe-first at checkout.
