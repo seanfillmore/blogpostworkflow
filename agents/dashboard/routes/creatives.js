@@ -4,6 +4,8 @@ import { join, basename, extname } from 'node:path';
 import { spawn } from 'node:child_process';
 import Anthropic from '../../../lib/anthropic.js';
 import { GEMINI_MODELS, saveSession, createSession } from '../lib/creatives-store.js';
+import sharp from 'sharp';
+import { CREATIVE_MODELS } from '../../../config/creative-models.js';
 
 export default [
   // ── exact matches first ──────────────────────────────────────────────────────
@@ -53,7 +55,7 @@ export default [
 
           const client = new Anthropic();
           const message = await client.messages.create({
-            model: 'claude-sonnet-4-6',
+            model: CREATIVE_MODELS.templateVision,
             max_tokens: 1024,
             messages: [{
               role: 'user',
@@ -432,6 +434,18 @@ export default [
           const absImagePath = join(sessionDir, imageFilename);
           writeFileSync(absImagePath, Buffer.from(imagePart.inlineData.data, 'base64'));
 
+          // Honor a custom aspect ratio: Gemini can't target arbitrary WxH,
+          // so resize the returned image to the requested pixel box.
+          if (aspectRatio === 'custom') {
+            const cw = parseInt(req.body.customWidth, 10);
+            const ch = parseInt(req.body.customHeight, 10);
+            if (cw > 0 && ch > 0) {
+              const resized = await sharp(readFileSync(absImagePath))
+                .resize(cw, ch, { fit: 'cover' }).toBuffer();
+              writeFileSync(absImagePath, resized);
+            }
+          }
+
           // Relative path for client
           const imagePath = session.id + '/' + imageFilename;
 
@@ -443,6 +457,8 @@ export default [
             negativePrompt,
             model,
             aspectRatio,
+            productImagePaths,
+            historyImagePaths,
             createdAt: new Date().toISOString()
           };
           if (!session.versions) session.versions = [];
@@ -545,18 +561,29 @@ export default [
 
           // Send previous image + refinement text to Gemini
           console.log('[Creatives Refine] model:', geminiModel, 'version:', version, 'refinement:', refinement.slice(0, 80));
+
+          // Re-attach the source product/history images so a refine keeps the
+          // product in frame and doesn't drift the composition.
+          const refineParts = [];
+          const mimeMapRefine = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+          for (const relPath of (prevVersion.productImagePaths || [])) {
+            const abs = join(ctx.PRODUCT_IMAGES_DIR, relPath);
+            if (existsSync(abs)) {
+              refineParts.push({ inlineData: { mimeType: mimeMapRefine[extname(abs).toLowerCase()] || 'image/jpeg', data: readFileSync(abs).toString('base64') } });
+            }
+          }
+          refineParts.push({ inlineData: { mimeType: prevMimeType, data: prevImageData.toString('base64') } });
+          refineParts.push({ text: 'Edit this image with the following changes: ' + refinement });
+
+          const refineImageConfig = {};
+          if (prevVersion.aspectRatio && prevVersion.aspectRatio !== 'custom') refineImageConfig.aspectRatio = prevVersion.aspectRatio;
+
           const result = await ctx.geminiClient.models.generateContent({
             model: geminiModel,
-            contents: [{
-              role: 'user',
-              parts: [
-                { inlineData: { mimeType: prevMimeType, data: prevImageData.toString('base64') } },
-                { text: 'Edit this image with the following changes: ' + refinement }
-              ]
-            }],
+            contents: [{ role: 'user', parts: refineParts }],
             config: {
               responseModalities: ['TEXT', 'IMAGE'],
-              imageConfig: {},
+              imageConfig: refineImageConfig,
             }
           });
 
@@ -605,6 +632,8 @@ export default [
             refinement,
             model: geminiModel,
             aspectRatio: prevVersion.aspectRatio,
+            productImagePaths: prevVersion.productImagePaths || [],
+            historyImagePaths: prevVersion.historyImagePaths || [],
             basedOnVersion: version,
             createdAt: new Date().toISOString()
           };
