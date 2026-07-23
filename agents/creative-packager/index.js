@@ -12,6 +12,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CREATIVE_MODELS } from '../../config/creative-models.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -176,9 +177,9 @@ async function generateImage(gemini, prompt, productImagePaths, referenceImages 
   contents.push({ text: prompt });
 
   const response = await gemini.models.generateContent({
-    model: 'gemini-2.0-flash-preview-image-generation',
+    model: CREATIVE_MODELS.imageGen,
     contents: [{ role: 'user', parts: contents }],
-    generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+    config: { responseModalities: ['IMAGE', 'TEXT'], imageConfig: {} },
   });
 
   const imgPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
@@ -225,25 +226,13 @@ async function main() {
   if (!existsSync(jobPath)) throw new Error(`Job file not found: ${jobPath}`);
 
   const job = JSON.parse(readFileSync(jobPath, 'utf8'));
-  const { adId, productImages = [] } = job;
-
   writeJobStatus(jobPath, { status: 'running' });
 
   const env = loadEnv();
   const apiKey = env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-  const tavilyKey = env.TAVILY_API_KEY || process.env.TAVILY_API_KEY;
   if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY');
   if (!geminiKey) throw new Error('Missing GEMINI_API_KEY');
-
-  // Find the ad in the latest insights file
-  const insightsDir = join(ROOT, 'data', 'meta-ads-insights');
-  const insightFiles = readdirSync(insightsDir)
-    .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
-  if (!insightFiles.length) throw new Error('No insights files found');
-  const insights = JSON.parse(readFileSync(join(insightsDir, insightFiles[0]), 'utf8'));
-  const ad = insights.ads.find(a => a.id === adId);
-  if (!ad) throw new Error(`Ad ${adId} not found in latest insights`);
 
   const { default: Anthropic } = await import('../../lib/anthropic.js');
   const { GoogleGenAI } = await import('@google/genai');
@@ -251,84 +240,85 @@ async function main() {
   const client = new Anthropic({ apiKey });
   const gemini = new GoogleGenAI({ apiKey: geminiKey });
 
-  // Step 1: Style extraction
-  process.stdout.write('  Extracting style... ');
-  const styleResponse = await client.messages.create({
-    model: 'claude-opus-4-6', max_tokens: 512,
-    messages: [{ role: 'user', content: buildStylePrompt(ad) }],
-  });
-  const stylePrompt = styleResponse.content[0].text.trim();
-  console.log('done');
-
-  // Step 1b: Pull web-grounded reference photography via Tavily (best-effort).
-  // These extra images steer Gemini toward real-world product-ad aesthetics
-  // and away from the generic AI look. When Tavily is unconfigured or errors,
-  // we proceed with just the product images (byte-identical prior behavior).
-  let referenceImages = [];
-  if (tavilyKey) {
-    process.stdout.write('  Searching reference photography... ');
-    const { searchImages, downloadImage } = await import('../../lib/tavily.js');
-    const refQuery = buildReferenceQuery(ad, job);
-    const hits = await searchImages(tavilyKey, refQuery, { maxResults: 5 });
-    for (const hit of hits.slice(0, 4)) {
-      const dl = await downloadImage(hit.url);
-      if (dl) referenceImages.push(dl);
-    }
-    console.log(`${referenceImages.length} reference image(s) (query: "${refQuery}")`);
-  }
-
-  // Step 2: Generate images per placement size
-  const sizes = placementSizes(ad.publisherPlatforms || ['instagram', 'facebook']);
-  const PRODUCT_IMAGES_DIR = join(ROOT, 'data', 'product-images');
-  const productImagePaths = productImages
-    .map(f => join(PRODUCT_IMAGES_DIR, f))
-    .filter(p => existsSync(p));
-
+  const source = job.source || 'ad';
+  let brief;
+  let sizes;
+  let slug;
   const generatedImages = [];
-  for (const size of sizes) {
-    process.stdout.write(`  Generating ${size.name}... `);
-    let imgBuffer = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const raw = await generateImage(gemini, `${stylePrompt}\n\nGenerate as ${size.width}x${size.height} pixel image. No text, logos, or labels.`, productImagePaths, referenceImages);
-        imgBuffer = await sharp(raw).resize(size.width, size.height, { fit: 'cover' }).webp({ quality: 85 }).toBuffer();
-        break;
-      } catch (e) {
-        if (attempt === 1) throw new Error(`Gemini failed for ${size.name}: ${e.message}`);
-        console.warn(`  retry...`);
-      }
+
+  if (source === 'session') {
+    // Session path: one approved hero → resize to every placement (no ad lookup).
+    brief = job.copyBrief || { product: 'Real Skin Care', angle: '', destinationUrl: '' };
+    sizes = placementSizes(job.placements && job.placements.length ? job.placements : ['instagram', 'facebook']);
+    slug = (brief.product || 'creative').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'creative';
+
+    const CREATIVES_DIR = join(ROOT, 'data', 'creatives');
+    const heroPath = join(CREATIVES_DIR, job.heroImagePath || '');
+    if (!existsSync(heroPath)) throw new Error(`Hero image not found: ${heroPath}`);
+    const heroBuffer = readFileSync(heroPath);
+    for (const size of sizes) {
+      process.stdout.write(`  Resizing ${size.name}... `);
+      const buffer = await sharp(heroBuffer).resize(size.width, size.height, { fit: 'cover' }).webp({ quality: 85 }).toBuffer();
+      generatedImages.push({ size, buffer });
+      console.log('done');
     }
-    generatedImages.push({ size, buffer: imgBuffer });
+  } else {
+    // Legacy ad path: resolve the competitor ad and generate one image per placement.
+    const { adId, productImages = [] } = job;
+    const insightsDir = join(ROOT, 'data', 'meta-ads-insights');
+    const insightFiles = readdirSync(insightsDir).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+    if (!insightFiles.length) throw new Error('No insights files found');
+    const insights = JSON.parse(readFileSync(join(insightsDir, insightFiles[0]), 'utf8'));
+    const ad = insights.ads.find(a => a.id === adId);
+    if (!ad) throw new Error(`Ad ${adId} not found in latest insights`);
+
+    brief = buildCopyBrief(ad);
+    sizes = placementSizes(ad.publisherPlatforms || ['instagram', 'facebook']);
+    slug = ad.pageSlug || 'creative';
+
+    process.stdout.write('  Extracting style... ');
+    const styleResponse = await client.messages.create({
+      model: CREATIVE_MODELS.styleBrief, max_tokens: 512,
+      messages: [{ role: 'user', content: buildStylePrompt(ad) }],
+    });
+    const stylePrompt = styleResponse.content[0].text.trim();
     console.log('done');
+
+    const PRODUCT_IMAGES_DIR = join(ROOT, 'data', 'product-images');
+    const productImagePaths = productImages
+      .map(f => join(PRODUCT_IMAGES_DIR, f))
+      .filter(p => existsSync(p));
+
+    for (const size of sizes) {
+      process.stdout.write(`  Generating ${size.name}... `);
+      let imgBuffer = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const raw = await generateImage(gemini, `${stylePrompt}\n\nGenerate as ${size.width}x${size.height} pixel image. No text, logos, or labels.`, productImagePaths, []);
+          imgBuffer = await sharp(raw).resize(size.width, size.height, { fit: 'cover' }).webp({ quality: 85 }).toBuffer();
+          break;
+        } catch (e) {
+          if (attempt === 1) throw new Error(`Gemini failed for ${size.name}: ${e.message}`);
+          console.warn('  retry...');
+        }
+      }
+      generatedImages.push({ size, buffer: imgBuffer });
+      console.log('done');
+    }
   }
 
-  // Step 3: Copy generation
+  // Copy generation (both paths) — flagship model, revenue-critical.
   process.stdout.write('  Generating copy... ');
   const copyResponse = await client.messages.create({
-    model: 'claude-opus-4-6', max_tokens: 1024,
-    messages: [{
-      role: 'user', content: `Write 3 ad copy variations for Real Skin Care (realskincare.com) inspired by this competitor ad.
-
-Competitor messaging angle: ${ad.analysis?.messagingAngle || 'unknown'}
-Why the competitor's ad works: ${ad.analysis?.copyInsights || 'unknown'}
-Competitor body copy: ${ad.adCreativeBody || '(none)'}
-
-Our brand makes natural skincare products. Match the messaging angle but make it authentic to Real Skin Care.
-
-Return ONLY valid JSON (no markdown):
-[
-  { "headline": "max 40 chars", "body": "max 125 chars", "cta": "2-4 words", "placement": "general" },
-  { "headline": "...", "body": "...", "cta": "...", "placement": "instagram-feed" },
-  { "headline": "...", "body": "...", "cta": "...", "placement": "facebook-feed" }
-]`
-    }],
+    model: CREATIVE_MODELS.adCopy, max_tokens: 1024,
+    messages: [{ role: 'user', content: buildCopyPrompt(brief) }],
   });
   const copyVariations = JSON.parse(copyResponse.content[0].text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
   console.log('done');
 
-  // Step 4 + 5: Package ZIP
+  // Package ZIP
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-  const zipName = `${ad.pageSlug}-${today}.zip`;
+  const zipName = `${slug}-${today}.zip`;
   const PACKAGES_DIR = join(ROOT, 'data', 'creative-packages');
   mkdirSync(PACKAGES_DIR, { recursive: true });
   const zipPath = join(PACKAGES_DIR, zipName);
@@ -336,7 +326,7 @@ Return ONLY valid JSON (no markdown):
   const zipFiles = [
     { name: 'copy.txt', content: formatCopyFile(copyVariations) },
     { name: 'specs.txt', content: formatSpecsFile(sizes) },
-    { name: 'analysis.txt', content: ad.analysis ? JSON.stringify(ad.analysis, null, 2) : '(no analysis available)' },
+    { name: 'manifest.json', content: formatManifest(brief, sizes, new Date().toISOString()) },
   ];
   for (const { size, buffer } of generatedImages) {
     zipFiles.push({ name: `images/${size.name}.webp`, content: buffer });
@@ -346,7 +336,6 @@ Return ONLY valid JSON (no markdown):
   await createZip(zipPath, zipFiles);
   console.log(`done → ${zipName}`);
 
-  // Step 6: Update job complete
   writeJobStatus(jobPath, { status: 'complete', downloadUrl: `/api/creative-packages/download/${jobIdArg}`, zipPath });
 }
 
