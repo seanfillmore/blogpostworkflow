@@ -8,8 +8,8 @@
 The pixels are **not broken at the network level** — the earlier "aborted beacons" were a headless artifact. The real tracking failure is a **conversion-definition** problem plus a **purchase-capture gap**, both in GA4 / Google Ads:
 
 - GA4 reports **75 "conversions" / 30d**, but only **7** are `purchase`. The other 68 are `add_to_cart` (46), `begin_checkout` (21), `add_payment_info` (1) — all marked as **key events**.
-- Actual Shopify orders same window: **13**. So GA4 also **under-captures purchases** (7 tracked of 13 real ≈ 54%).
-- Net: any Google Ads optimization on "conversions" is optimizing toward **add-to-carts**, at a value/volume that is simultaneously **inflated 10× (by cart events) and undercounted on real sales**. This is the mechanism behind "past Google Ads lost money on broken tracking."
+- Actual Shopify orders same window: **13** — but only **9 were `web` checkouts** (2 Recurpay subscription renewals + 2 app-channel orders don't fire a web GA4 purchase). So the right comparison is **7 GA4 purchases of 9 web orders ≈ 78% capture** — normal client-side attrition (ad-blockers/ITP/consent), **not broken tracking.** (Earlier "7 of 13 = 54%" over-counted the gap by including non-web orders.)
+- Net: the **real** problem was the conversion *definition* (cart events counted as conversions, inflating 10×) plus **double-counting in Google Ads** — both now fixed. Purchase *capture* is in normal range; Enhanced Conversions + removing the stray GA4 tag are optimizations, not emergencies.
 
 ## Evidence
 
