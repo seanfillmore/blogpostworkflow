@@ -2857,6 +2857,14 @@ async function renderCreativesTab() {
 function switchCreativesMode(mode) {
   creativesState.mode = mode;
   syncModeUI();
+  if (creativesState.sessionId) {
+    fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ mode: mode })
+    }).catch(function() {});
+  }
 }
 
 function syncModeUI() {
@@ -2932,6 +2940,8 @@ async function loadCreativesSession(sessionId) {
     creativesState.sessionId = session.id;
     creativesState.referenceImages = session.referenceImages || [];
     creativesState.aspectRatio = session.aspectRatio || '1:1';
+    creativesState.mode = session.mode || 'studio';
+    syncModeUI();
     // Populate form
     var promptEl = document.getElementById('creatives-prompt');
     var negEl = document.getElementById('creatives-negative-prompt');
