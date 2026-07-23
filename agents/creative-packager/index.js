@@ -231,6 +231,7 @@ async function main() {
   const env = loadEnv();
   const apiKey = env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  const tavilyKey = env.TAVILY_API_KEY || process.env.TAVILY_API_KEY;
   if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY');
   if (!geminiKey) throw new Error('Missing GEMINI_API_KEY');
 
@@ -284,6 +285,21 @@ async function main() {
     const stylePrompt = styleResponse.content[0].text.trim();
     console.log('done');
 
+    // Best-effort web-grounded reference photography (steers Gemini toward
+    // authentic product-ad aesthetics). Skipped silently if Tavily is unset.
+    let referenceImages = [];
+    if (tavilyKey) {
+      process.stdout.write('  Searching reference photography... ');
+      const { searchImages, downloadImage } = await import('../../lib/tavily.js');
+      const refQuery = buildReferenceQuery(ad, job);
+      const hits = await searchImages(tavilyKey, refQuery, { maxResults: 5 });
+      for (const hit of hits.slice(0, 4)) {
+        const dl = await downloadImage(hit.url);
+        if (dl) referenceImages.push(dl);
+      }
+      console.log(`${referenceImages.length} reference image(s) (query: "${refQuery}")`);
+    }
+
     const PRODUCT_IMAGES_DIR = join(ROOT, 'data', 'product-images');
     const productImagePaths = productImages
       .map(f => join(PRODUCT_IMAGES_DIR, f))
@@ -294,7 +310,7 @@ async function main() {
       let imgBuffer = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const raw = await generateImage(gemini, `${stylePrompt}\n\nGenerate as ${size.width}x${size.height} pixel image. No text, logos, or labels.`, productImagePaths, []);
+          const raw = await generateImage(gemini, `${stylePrompt}\n\nGenerate as ${size.width}x${size.height} pixel image. No text, logos, or labels.`, productImagePaths, referenceImages);
           imgBuffer = await sharp(raw).resize(size.width, size.height, { fit: 'cover' }).webp({ quality: 85 }).toBuffer();
           break;
         } catch (e) {
