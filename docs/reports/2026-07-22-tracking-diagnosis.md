@@ -44,7 +44,34 @@ TOTAL keyEvents: 75   (vs 13 Shopify orders)
    - This raises tracked purchases toward parity with Shopify orders.
 4. **Verify convergence:** re-run `node scripts/growth-scoreboard.mjs`. Target: GA4 "conversions" ≈ Shopify orders (**overcount → ~1.0×**). That is the Phase-0 tracking gate.
 
+## Google Ads side (`ga-conversion-actions.mjs`) — TWO more problems
+
+Conversion actions (live pull 2026-07-22):
+```
+primary=true  [ENABLED] PURCHASE       "purchase"                       (GA4 import) OK
+primary=false [HIDDEN]  PURCHASE       "CrossFit1873 - GA4 web purchase" leftover (wrong GA4 property once linked)
+primary=false [ENABLED] BEGIN_CHECKOUT "begin_checkout"
+primary=false [ENABLED] ADD_TO_CART    "add_to_cart"
+primary=true  [ENABLED] PURCHASE       "Purchase (2)"                   (WEBPAGE tag) <-- DUPLICATE
+```
+Customer conversion goals (biddable = counts toward Smart Bidding):
+```
+biddable=true  PURCHASE          OK
+biddable=true  BEGIN_CHECKOUT    <-- Ads is bidding on checkout-starts
+biddable=-     ADD_TO_CART / PAGE_VIEW / DEFAULT
+```
+
+**Problem A — Ads bids on `begin_checkout`.** The BEGIN_CHECKOUT goal is biddable, so Smart Bidding optimizes toward checkout starts, not sales — independent of the GA4 key-event fix.
+**Problem B — purchases double-count.** Two `primary=true` PURCHASE actions fire on the same order (`"purchase"` GA4 import **and** `"Purchase (2)"` webpage tag), so every sale is counted twice in the conversions column.
+
+### Fixes (Google Ads → Goals → Conversions)
+1. Set the **BEGIN_CHECKOUT** conversion goal to **Secondary** (remove biddable). Only Purchase biddable.
+2. Keep **one** primary purchase action — recommend `"purchase"` (GA4, carries value + Enhanced Conversions) — and set **`"Purchase (2)"`** (webpage) to **Secondary**.
+3. Optional: remove the HIDDEN `CrossFit1873` leftover action.
+4. Re-run `node scripts/ga-conversion-actions.mjs` to confirm: exactly one primary PURCHASE, no biddable non-purchase goal.
+
 ## Reproduce
 - `node scripts/verify-tracking-beacons.mjs [url]`
 - `node scripts/ga4-conversion-events.mjs [days]`
+- `node scripts/ga-conversion-actions.mjs`
 - `node scripts/growth-scoreboard.mjs [days]`
