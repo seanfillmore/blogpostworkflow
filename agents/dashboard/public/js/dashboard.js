@@ -2821,7 +2821,9 @@ var creativesState = {
   templates: [],
   sessions: [],
   compareMode: false,
-  compareVersions: []
+  compareVersions: [],
+  mode: 'studio',
+  adBuilder: { product: '', angle: '', destinationUrl: '' }
 };
 
 async function renderCreativesTab() {
@@ -2846,9 +2848,49 @@ async function renderCreativesTab() {
       document.getElementById('creatives-session-select').value = latest.id;
       await loadCreativesSession(latest.id);
     }
+    syncModeUI();
   } catch (e) {
     console.error('renderCreativesTab error', e);
   }
+}
+
+function switchCreativesMode(mode) {
+  creativesState.mode = mode;
+  syncModeUI();
+}
+
+function syncModeUI() {
+  var isAd = creativesState.mode === 'adbuilder';
+  var studioBtn = document.getElementById('mode-studio-btn');
+  var adBtn = document.getElementById('mode-adbuilder-btn');
+  if (studioBtn) { studioBtn.style.background = isAd ? 'var(--surface)' : 'var(--accent)'; studioBtn.style.color = isAd ? 'var(--fg)' : '#fff'; }
+  if (adBtn) { adBtn.style.background = isAd ? 'var(--accent)' : 'var(--surface)'; adBtn.style.color = isAd ? '#fff' : 'var(--fg)'; }
+  var adPanel = document.getElementById('adbuilder-panel');
+  if (adPanel) adPanel.style.display = isAd ? 'block' : 'none';
+  // Studio's free-prompt fields hide in Ad Builder (hero prompt is generated).
+  var promptEl = document.getElementById('creatives-prompt');
+  var promptWrap = promptEl ? promptEl.closest('div') : null;
+  if (promptWrap) promptWrap.style.display = isAd ? 'none' : 'block';
+  // Package/Ad-Set action only in Ad Builder.
+  var pkgWrap = document.getElementById('creatives-package-wrap');
+  if (pkgWrap) pkgWrap.style.display = isAd ? 'block' : 'none';
+}
+
+function generateHero() {
+  creativesState.adBuilder = {
+    product: (document.getElementById('adbuilder-product') || {}).value || '',
+    angle: (document.getElementById('adbuilder-angle') || {}).value || '',
+    destinationUrl: (document.getElementById('adbuilder-desturl') || {}).value || ''
+  };
+  if (!creativesState.adBuilder.product.trim()) { showCreativesError('Enter a product for the hero.'); return; }
+  // Seed the studio prompt with a product+angle hero brief, then reuse generate.
+  var promptEl = document.getElementById('creatives-prompt');
+  if (promptEl) {
+    promptEl.value = 'Clean, bright product photography of ' + creativesState.adBuilder.product
+      + (creativesState.adBuilder.angle ? ', conveying: ' + creativesState.adBuilder.angle : '')
+      + '. Natural light, minimal on-brand background, product as hero. No text, logos, or labels.';
+  }
+  generateCreativeImage();
 }
 
 function renderCreativesModels() {
