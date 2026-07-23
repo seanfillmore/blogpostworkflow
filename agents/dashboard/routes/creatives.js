@@ -635,15 +635,48 @@ export default [
           res.end(JSON.stringify({ error: 'Invalid JSON' }));
           return;
         }
+        const { sessionId, product, angle, destinationUrl, placements } = payload;
+        const version = parseInt(payload.version, 10);
+        if (!sessionId || !version) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'sessionId and version are required' }));
+          return;
+        }
         try {
+          const sessionPath = join(ctx.CREATIVE_SESSIONS_DIR, sessionId + '.json');
+          if (!existsSync(sessionPath)) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Session not found' }));
+            return;
+          }
+          const session = JSON.parse(readFileSync(sessionPath, 'utf8'));
+          const verObj = (session.versions || []).find(v => v.version === version);
+          if (!verObj) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Version not found' }));
+            return;
+          }
           const jobId = 'pkg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
           ctx.ensureDir(ctx.CREATIVE_JOBS_DIR);
-          const jobData = { ...payload, jobId, status: 'pending', createdAt: new Date().toISOString() };
+          const jobData = {
+            jobId,
+            source: 'session',
+            heroImagePath: verObj.imagePath,
+            productImages: [],
+            copyBrief: {
+              product: product || session.name || 'Real Skin Care',
+              angle: angle || '',
+              destinationUrl: destinationUrl || '',
+            },
+            placements: Array.isArray(placements) && placements.length ? placements : ['instagram', 'facebook'],
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+          };
           writeFileSync(join(ctx.CREATIVE_JOBS_DIR, jobId + '.json'), JSON.stringify(jobData, null, 2));
           spawn('node', [join(ctx.ROOT, 'agents/creative-packager/index.js'), '--job-id', jobId], {
             detached: true,
             stdio: 'ignore',
-            cwd: ctx.ROOT
+            cwd: ctx.ROOT,
           }).unref();
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ jobId }));
