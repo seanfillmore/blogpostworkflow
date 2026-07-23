@@ -6,6 +6,9 @@ import {
   formatSpecsFile,
   buildStylePrompt,
   buildReferenceQuery,
+  buildCopyBrief,
+  buildCopyPrompt,
+  formatManifest,
 } from '../../agents/creative-packager/index.js';
 
 // placementSizes — instagram only
@@ -102,6 +105,50 @@ import {
 // buildReferenceQuery — falls back when pageSlug + analysis are missing
 {
   assert.ok(buildReferenceQuery({}).includes('natural skincare'));
+}
+
+// buildCopyBrief — maps ad fields
+{
+  const ad = {
+    pageName: 'Sensitive Skin Set',
+    landingUrl: 'https://www.realskincare.com/products/sensitive-skin-set',
+    adCreativeBody: 'Gentle for reactive skin',
+    analysis: { messagingAngle: 'gentle', copyInsights: 'social proof' },
+  };
+  const b = buildCopyBrief(ad);
+  assert.equal(b.product, 'Sensitive Skin Set');
+  assert.equal(b.angle, 'gentle');
+  assert.equal(b.destinationUrl, 'https://www.realskincare.com/products/sensitive-skin-set');
+  assert.equal(b.competitorBody, 'Gentle for reactive skin');
+  assert.equal(b.copyInsights, 'social proof');
+}
+
+// buildCopyBrief — falls back safely
+{
+  const b = buildCopyBrief({});
+  assert.equal(b.product, 'Real Skin Care');
+  assert.equal(typeof b.angle, 'string');
+  assert.equal(b.destinationUrl, '');
+}
+
+// buildCopyPrompt — includes product/angle and JSON instruction; tolerates missing fields
+{
+  const p = buildCopyPrompt({ product: 'Coconut Lotion', angle: 'dry skin', destinationUrl: '' });
+  assert.ok(p.includes('Coconut Lotion'));
+  assert.ok(p.includes('dry skin'));
+  assert.ok(p.includes('JSON'));
+  assert.ok(!p.includes('undefined'));
+}
+
+// formatManifest — shape + empty destinationUrl becomes null
+{
+  const sizes = placementSizes(['instagram']);
+  const brief = { product: 'X', angle: 'a', destinationUrl: '' };
+  const m = JSON.parse(formatManifest(brief, sizes, '2026-07-23T00:00:00Z'));
+  assert.equal(m.product, 'X');
+  assert.equal(m.destinationUrl, null);
+  assert.ok(Array.isArray(m.placements) && m.placements.length === sizes.length);
+  assert.equal(m.generatedAt, '2026-07-23T00:00:00Z');
 }
 
 console.log('✓ creative-packager unit tests pass');

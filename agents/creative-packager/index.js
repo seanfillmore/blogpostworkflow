@@ -85,6 +85,56 @@ Write a Gemini image generation prompt that:
 Return only the image prompt as plain text — no JSON, no explanation.`;
 }
 
+/**
+ * Build a copy brief from a competitor ad (legacy Ad Intelligence path).
+ * Session jobs supply their copyBrief directly from the route.
+ */
+export function buildCopyBrief(ad) {
+  return {
+    product: ad.pageName || ad.pageSlug || 'Real Skin Care',
+    angle: ad.analysis?.messagingAngle || '',
+    destinationUrl: ad.landingUrl || '',
+    competitorBody: ad.adCreativeBody || '',
+    copyInsights: ad.analysis?.copyInsights || '',
+  };
+}
+
+/** Prompt for Claude to write 3 ad-copy variations from a copy brief. */
+export function buildCopyPrompt(brief) {
+  const lines = [
+    'Write 3 ad copy variations for Real Skin Care (realskincare.com).',
+    '',
+    `Product: ${brief.product}`,
+    `Angle: ${brief.angle || 'natural skincare'}`,
+  ];
+  if (brief.destinationUrl) lines.push(`Landing page: ${brief.destinationUrl}`);
+  if (brief.competitorBody) lines.push(`Reference competitor copy: ${brief.competitorBody}`);
+  if (brief.copyInsights) lines.push(`What works about it: ${brief.copyInsights}`);
+  lines.push(
+    '',
+    'Our brand makes natural skincare products. Make it authentic to Real Skin Care and lead with a benefit tied to the angle.',
+    '',
+    'Return ONLY valid JSON (no markdown):',
+    '[',
+    '  { "headline": "max 40 chars", "body": "max 125 chars", "cta": "2-4 words", "placement": "general" },',
+    '  { "headline": "...", "body": "...", "cta": "...", "placement": "instagram-feed" },',
+    '  { "headline": "...", "body": "...", "cta": "...", "placement": "facebook-feed" }',
+    ']',
+  );
+  return lines.join('\n');
+}
+
+/** Serialize a manifest.json describing the ad set and its conversion path. */
+export function formatManifest(brief, sizes, generatedAt = null) {
+  return JSON.stringify({
+    product: brief.product,
+    angle: brief.angle || '',
+    destinationUrl: brief.destinationUrl || null,
+    placements: sizes.map(s => s.name),
+    generatedAt,
+  }, null, 2);
+}
+
 // ── Job file helpers ───────────────────────────────────────────────────────────
 
 function loadEnv() {
