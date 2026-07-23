@@ -3358,38 +3358,45 @@ function downloadCreativeImage() {
   window.open('/api/creatives/image/' + creativesState.currentImagePath + '?download=1', '_blank');
 }
 
-async function packageCreative() {
+async function generateAdSet() {
   if (!creativesState.sessionId || !creativesState.currentVersion) return;
   var btn = document.getElementById('creatives-package-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Packaging...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating ad set...'; }
+  var ab = creativesState.adBuilder || {};
   try {
     var res = await fetch('/api/creatives/package', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify({ sessionId: creativesState.sessionId, version: creativesState.currentVersion })
+      body: JSON.stringify({
+        sessionId: creativesState.sessionId,
+        version: creativesState.currentVersion,
+        product: ab.product || '',
+        angle: ab.angle || '',
+        destinationUrl: ab.destinationUrl || ''
+      })
     });
     var data = await res.json();
-    if (!data.ok) { resetPackageBtn(); showCreativesError(data.error || 'Package failed'); return; }
-    pollCreativePackage(data.jobId);
+    if (!data.jobId) { resetPackageBtn(); showCreativesError(data.error || 'Ad set failed'); return; }
+    pollAdSet(data.jobId);
   } catch (e) {
     resetPackageBtn();
-    showCreativesError('Package failed: ' + e.message);
+    showCreativesError('Ad set failed: ' + e.message);
   }
 }
 
-function pollCreativePackage(jobId) {
+function pollAdSet(jobId) {
   fetch('/api/creatives/package/' + encodeURIComponent(jobId), { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.status === 'done') {
+      if (data.status === 'complete') {
         resetPackageBtn();
         window.open('/api/creatives/package/download/' + encodeURIComponent(jobId), '_blank');
       } else if (data.status === 'error') {
         resetPackageBtn();
-        showCreativesError(data.error || 'Package failed');
+        showCreativesError(data.error || 'Ad set failed');
       } else {
-        setTimeout(function() { pollCreativePackage(jobId); }, 3000);
+        setTimeout(function() { pollAdSet(jobId); }, 3000);
       }
     })
     .catch(function(e) { resetPackageBtn(); showCreativesError('Polling failed: ' + e.message); });
@@ -3397,7 +3404,7 @@ function pollCreativePackage(jobId) {
 
 function resetPackageBtn() {
   var btn = document.getElementById('creatives-package-btn');
-  if (btn) { btn.disabled = false; btn.innerHTML = '&#128230; Package for All Placements'; }
+  if (btn) { btn.disabled = false; btn.innerHTML = '&#128230; Generate Ad Set'; }
 }
 
 function showCreativesSpinner(text) {
