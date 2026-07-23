@@ -38,3 +38,20 @@
 
 ## Reproduce
 `node scripts/capture-console-errors.mjs` (defaults to homepage + hero PDP + top blog page; pass URLs to target others).
+
+---
+
+## RESOLUTION (2026-07-22, applied to live theme 145536778410)
+
+Two of the three JS errors fixed directly in the theme via Admin API; verified live with Puppeteer (homepage + PDP, cache-busted, two consecutive clean reads).
+
+1. **✅ `twq` orphaned Twitter pixel — FIXED.** Removed the `//X Ads` / `<!-- Twitter conversion tracking event code -->` block (the `twq('event','tw-odnr8-pz09i',…)` call) from `layout/theme.liquid`, leaving the surrounding Ahrefs loader intact. This also removed the invalid `<!-- -->` HTML comments inside the `<script>`. Confirmed gone from homepage and PDP after CDN propagation. Original backed up at `docs/reports/theme-backups/2026-07-22/theme.liquid.orig`.
+2. **✅ `MulticolumnVideoItem` double-declaration — FIXED.** Wrapped `assets/section-multicolumn.js` in `if (!customElements.get('multicolumn-video-item')) { … }` so a second evaluation (2+ multicolumn sections on a page) is a no-op instead of a re-declaration `SyntaxError`. The top-level `class` was previously unguarded (only the `define()` was). Confirmed gone from PDP. Backup at `docs/reports/theme-backups/2026-07-22/section-multicolumn.js.orig`.
+
+### Still open
+- **⛔ Sean (admin, ~2 min): `twq` in the custom web pixel.** A third copy lives in **Settings → Customer events → [custom pixel]** (rendered as `web-pixels@…/custom/…`). Not editable via the theme API. Open that pixel and delete the `twq(...)` call (or the whole pixel if it only holds the orphaned Twitter code). This is the last on-page `twq` error.
+- **🟡 Cross-origin `SecurityError`** on the homepage — a third-party iframe embed; benign to conversion, low priority.
+- **⚠️ Google Ads / GA beacon aborts** — carried into Phase 0 Task 3 (server-side tracking) for a consented Tag-Assistant check.
+
+### Verify the drop
+Re-pull Clarity in ~3 days: `node -e "import('./lib/clarity.js').then(m=>m.fetchClarityInsights({numOfDays:3}).then(c=>console.log(c.behavior)))"` → expect `scriptErrorPct` well below 12.4% (won't hit 0 until the web-pixel copy is removed).
