@@ -291,18 +291,23 @@ async function main() {
   let brief;
   let sizes;
   let slug;
+  let heroBufferForMaster = null;
   const generatedImages = [];
 
   if (source === 'session') {
     // Session path: one approved hero → resize to every placement (no ad lookup).
     brief = job.copyBrief || { product: 'Real Skin Care', angle: '', destinationUrl: '' };
-    sizes = placementSizes(job.placements && job.placements.length ? job.placements : ['instagram', 'facebook']);
+    sizes = (job.sizes && job.sizes.length)
+      ? sizesByName(job.sizes)
+      : placementSizes(job.placements && job.placements.length ? job.placements : ['instagram', 'facebook']);
+    if (!sizes.length) sizes = placementSizes(['instagram', 'facebook']);
     slug = (brief.product || 'creative').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'creative';
 
     const CREATIVES_DIR = join(ROOT, 'data', 'creatives');
     const heroPath = join(CREATIVES_DIR, job.heroImagePath || '');
     if (!existsSync(heroPath)) throw new Error(`Hero image not found: ${heroPath}`);
     const heroBuffer = readFileSync(heroPath);
+    heroBufferForMaster = heroBuffer;
     for (const size of sizes) {
       process.stdout.write(`  Resizing ${size.name}... `);
       const buffer = await sharp(heroBuffer).resize(size.width, size.height, { fit: 'cover' }).webp({ quality: 85 }).toBuffer();
@@ -367,6 +372,7 @@ async function main() {
       generatedImages.push({ size, buffer: imgBuffer });
       console.log('done');
     }
+    heroBufferForMaster = generatedImages[0] && generatedImages[0].buffer;
   }
 
   // Copy generation (both paths) — flagship model, revenue-critical.
@@ -390,6 +396,30 @@ async function main() {
     { name: 'specs.txt', content: formatSpecsFile(sizes) },
     { name: 'manifest.json', content: formatManifest(brief, sizes, new Date().toISOString()) },
   ];
+  if (heroBufferForMaster) {
+    // Full-resolution clean master (max canvas for compositing).
+    try {
+      const master = await (await import('sharp')).default(heroBufferForMaster).webp({ quality: 92 }).toBuffer();
+      zipFiles.push({ name: 'master.webp', content: master });
+    } catch (e) { console.warn('  master.webp skipped:', e.message); }
+
+    // Low-res layout guides: downscaled background + copy placed in safe zones.
+    const guideCopy = (copyVariations && copyVariations[0]) || { headline: '', body: '', cta: '' };
+    const sharpLib = (await import('sharp')).default;
+    for (const size of sizes) {
+      try {
+        const bg = await sharpLib(heroBufferForMaster).resize(size.width, size.height, { fit: 'cover' }).toBuffer();
+        const svg = buildGuideSvg(size, guideCopy);
+        const composited = await sharpLib(bg).composite([{ input: Buffer.from(svg), top: 0, left: 0 }]).png().toBuffer();
+        const scale = Math.min(1, 540 / Math.max(size.width, size.height));
+        const lowres = await sharpLib(composited)
+          .resize(Math.max(1, Math.round(size.width * scale)), Math.max(1, Math.round(size.height * scale)))
+          .png().toBuffer();
+        zipFiles.push({ name: `guides/${size.name}.png`, content: lowres });
+      } catch (e) { console.warn(`  guide ${size.name} skipped:`, e.message); }
+    }
+  }
+
   for (const { size, buffer } of generatedImages) {
     zipFiles.push({ name: `images/${size.name}.webp`, content: buffer });
   }
