@@ -874,3 +874,5 @@
   background: var(--accent);
   color: #fff;
 }
+.creatives-mode-btn { background: var(--surface); color: var(--fg); border: none; cursor: pointer; }
+.creatives-mode-btn.active { background: var(--accent); color: #fff; }

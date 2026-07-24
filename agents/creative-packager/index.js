@@ -352,7 +352,8 @@ async function main() {
   await createZip(zipPath, zipFiles);
   console.log(`done → ${zipName}`);
 
-  writeJobStatus(jobPath, { status: 'complete', downloadUrl: `/api/creative-packages/download/${jobIdArg}`, zipPath });
+  const downloadUrl = source === 'session' ? `/api/creatives/package/download/${jobIdArg}` : `/api/creative-packages/download/${jobIdArg}`;
+  writeJobStatus(jobPath, { status: 'complete', downloadUrl, zipPath });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

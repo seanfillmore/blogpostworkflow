@@ -2871,8 +2871,8 @@ function syncModeUI() {
   var isAd = creativesState.mode === 'adbuilder';
   var studioBtn = document.getElementById('mode-studio-btn');
   var adBtn = document.getElementById('mode-adbuilder-btn');
-  if (studioBtn) { studioBtn.style.background = isAd ? 'var(--surface)' : 'var(--accent)'; studioBtn.style.color = isAd ? 'var(--fg)' : '#fff'; }
-  if (adBtn) { adBtn.style.background = isAd ? 'var(--accent)' : 'var(--surface)'; adBtn.style.color = isAd ? '#fff' : 'var(--fg)'; }
+  if (studioBtn) studioBtn.classList.toggle('active', !isAd);
+  if (adBtn) adBtn.classList.toggle('active', isAd);
   var adPanel = document.getElementById('adbuilder-panel');
   if (adPanel) adPanel.style.display = isAd ? 'block' : 'none';
   // Studio's free-prompt fields hide in Ad Builder (hero prompt is generated).
