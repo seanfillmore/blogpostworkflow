@@ -136,6 +136,52 @@ export function formatManifest(brief, sizes, generatedAt = null) {
   }, null, 2);
 }
 
+export const ALL_PLACEMENTS = [...PLACEMENT_MAP.instagram, ...PLACEMENT_MAP.facebook];
+
+/** Return the size objects matching the given names, in ALL_PLACEMENTS order. */
+export function sizesByName(names) {
+  const want = new Set(names || []);
+  return ALL_PLACEMENTS.filter(s => want.has(s.name));
+}
+
+/** Safe-area insets (px) per placement. Stories reserve platform-UI margins. */
+export function safeZonesFor(sizeName) {
+  const s = ALL_PLACEMENTS.find(p => p.name === sizeName);
+  if (!s) return { top: 0, bottom: 0, left: 0, right: 0 };
+  if (sizeName.includes('stories')) {
+    return { top: 250, bottom: 340, left: 60, right: 60 };
+  }
+  return {
+    top: Math.round(s.height * 0.06),
+    bottom: Math.round(s.height * 0.06),
+    left: Math.round(s.width * 0.06),
+    right: Math.round(s.width * 0.06),
+  };
+}
+
+/** Build a layout-guide SVG: border, dashed safe zone, and copy placed in it. */
+export function buildGuideSvg(size, copy) {
+  const z = safeZonesFor(size.name);
+  const W = size.width, H = size.height;
+  const safeW = W - z.left - z.right, safeH = H - z.top - z.bottom;
+  const esc = (t) => String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cx = W / 2;
+  const headlineY = z.top + safeH * 0.62;
+  const bodyY = z.top + safeH * 0.74;
+  const ctaY = z.top + safeH * 0.86;
+  const fs = Math.max(12, Math.round(W * 0.045));
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="#ff2d55" stroke-width="4"/>
+  <rect x="${z.left}" y="${z.top}" width="${safeW}" height="${safeH}" fill="none" stroke="#00c2ff" stroke-width="3" stroke-dasharray="16 12"/>
+  <text x="${z.left + 8}" y="${z.top + Math.round(W * 0.035)}" font-family="Arial, sans-serif" font-size="${Math.round(W * 0.028)}" fill="#00c2ff">SAFE ZONE</text>
+  <text x="${cx}" y="${headlineY}" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="${fs}" fill="#111">${esc(copy && copy.headline)}</text>
+  <text x="${cx}" y="${bodyY}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${Math.round(fs * 0.6)}" fill="#333">${esc(copy && copy.body)}</text>
+  <rect x="${cx - W * 0.16}" y="${ctaY - fs * 0.7}" width="${W * 0.32}" height="${fs * 1.1}" rx="${fs * 0.2}" fill="#111"/>
+  <text x="${cx}" y="${ctaY}" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="${Math.round(fs * 0.55)}" fill="#fff">${esc(copy && copy.cta)}</text>
+</svg>`;
+}
+
 // ── Job file helpers ───────────────────────────────────────────────────────────
 
 function loadEnv() {
