@@ -399,20 +399,19 @@ async function main() {
   if (heroBufferForMaster) {
     // Full-resolution clean master (max canvas for compositing).
     try {
-      const master = await (await import('sharp')).default(heroBufferForMaster).webp({ quality: 92 }).toBuffer();
+      const master = await sharp(heroBufferForMaster).webp({ quality: 92 }).toBuffer();
       zipFiles.push({ name: 'master.webp', content: master });
     } catch (e) { console.warn('  master.webp skipped:', e.message); }
 
     // Low-res layout guides: downscaled background + copy placed in safe zones.
     const guideCopy = (copyVariations && copyVariations[0]) || { headline: '', body: '', cta: '' };
-    const sharpLib = (await import('sharp')).default;
     for (const size of sizes) {
       try {
-        const bg = await sharpLib(heroBufferForMaster).resize(size.width, size.height, { fit: 'cover' }).toBuffer();
+        const bg = await sharp(heroBufferForMaster).resize(size.width, size.height, { fit: 'cover' }).toBuffer();
         const svg = buildGuideSvg(size, guideCopy);
-        const composited = await sharpLib(bg).composite([{ input: Buffer.from(svg), top: 0, left: 0 }]).png().toBuffer();
+        const composited = await sharp(bg).composite([{ input: Buffer.from(svg), top: 0, left: 0 }]).png().toBuffer();
         const scale = Math.min(1, 540 / Math.max(size.width, size.height));
-        const lowres = await sharpLib(composited)
+        const lowres = await sharp(composited)
           .resize(Math.max(1, Math.round(size.width * scale)), Math.max(1, Math.round(size.height * scale)))
           .png().toBuffer();
         zipFiles.push({ name: `guides/${size.name}.png`, content: lowres });

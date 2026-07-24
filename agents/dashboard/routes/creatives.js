@@ -129,7 +129,8 @@ export default [
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'referenceImage required' })); return;
         }
-        const absPath = join(ctx.REFERENCE_IMAGES_DIR, filename);
+        const safe = basename(filename);
+        const absPath = join(ctx.REFERENCE_IMAGES_DIR, safe);
         if (!existsSync(absPath)) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Reference image not found' })); return;
@@ -421,7 +422,8 @@ export default [
             if (rawRef) referenceImagePaths = Array.isArray(rawRef) ? rawRef : JSON.parse(rawRef);
           } catch {}
           for (const relPath of referenceImagePaths) {
-            const absPath = join(ctx.REFERENCE_IMAGES_DIR, relPath);
+            const safe = basename(relPath);
+            const absPath = join(ctx.REFERENCE_IMAGES_DIR, safe);
             if (existsSync(absPath)) {
               const imgData = readFileSync(absPath);
               const ext = extname(absPath).toLowerCase();

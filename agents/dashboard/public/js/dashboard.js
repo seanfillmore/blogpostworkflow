@@ -2881,12 +2881,14 @@ function syncModeUI() {
   var promptEl = document.getElementById('creatives-prompt');
   var promptWrap = promptEl ? promptEl.closest('div') : null;
   if (promptWrap) promptWrap.style.display = isAd ? 'none' : 'block';
-  // Package/Ad-Set action only in Ad Builder.
+  // Package/Ad-Set action + placement checklist only reveal once a variation is selected
+  // in Ad Builder (selectVariation() is the trigger); entering Ad Builder alone must not show them.
   var pkgWrap = document.getElementById('creatives-package-wrap');
-  if (pkgWrap) pkgWrap.style.display = isAd ? 'block' : 'none';
+  var hasSelectedVariation = isAd && creativesState.currentVersion != null;
+  if (pkgWrap) pkgWrap.style.display = hasSelectedVariation ? 'block' : 'none';
   if (isAd) { renderVariationGrid(); }
   var plc = document.getElementById('adbuilder-placements');
-  if (plc && !isAd) plc.style.display = 'none';
+  if (plc) plc.style.display = hasSelectedVariation ? 'block' : 'none';
   var g = document.getElementById('adbuilder-variation-grid');
   if (g && !isAd) g.style.display = 'none';
 }
@@ -2966,7 +2968,10 @@ async function generateVariations() {
     var adata = await ares.json();
     stylePrompt = adata.stylePrompt || '';
   } catch (e) { /* fall back to generic below */ }
-  if (!stylePrompt) stylePrompt = 'Clean, bright, professional product advertising photography with natural light and a minimal on-brand background.';
+  if (!stylePrompt) {
+    stylePrompt = 'Clean, bright, professional product advertising photography with natural light and a minimal on-brand background.';
+    showCreativesError('Could not read the reference ad’s style — using a generic style. Generating anyway…');
+  }
   var fullPrompt = stylePrompt + '\n\nFeature the provided product prominently as the hero. Do NOT include any text, logos, or labels in the image.';
   // 2. Generate N variations (each is a session version)
   ab.variationVersions = [];
@@ -3513,8 +3518,6 @@ async function generateAdSet() {
       body: JSON.stringify({
         sessionId: creativesState.sessionId,
         version: creativesState.currentVersion,
-        product: ab.product || '',
-        angle: ab.angle || '',
         destinationUrl: ab.destinationUrl || '',
         sizes: sizes
       })
@@ -3890,7 +3893,7 @@ async function openProductImageModal(target) {
 function selectProductImage(handle, imgPath, el) {
   if (productPickerTarget === 'adbuilder') {
     addAdBuilderProduct(imgPath);
-    if (el) { el.style.border = '3px solid #6c5ce7'; el.dataset.selected = 'true'; }
+    if (el) { el.style.border = '3px solid var(--accent)'; el.dataset.selected = 'true'; }
     return;
   }
   var alreadyIdx = creativesState.referenceImages.findIndex(function(r) { return r.path === imgPath; });
