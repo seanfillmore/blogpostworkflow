@@ -2997,7 +2997,7 @@ async function generateVariations() {
     'Create an original, premium advertising photo for our natural coconut-based skincare brand. Use the style notes below ONLY as loose inspiration — borrow the composition, lighting, camera angle, background finish, and mood, then reinterpret them and make it our own. Do NOT copy the reference’s specific props, fruit, or exact arrangement:\n"' + stylePrompt + '"'
     + productBlock
     + '\n\nProps and ingredients must suit OUR product: coconuts, coconut flakes, and soft natural botanical leaves — tastefully arranged. Do NOT include kiwi or any fruit or ingredient unrelated to a coconut skincare product.'
-    + '\n\nThe product from the provided image must be the clear hero, shown with its real label and packaging graphics fully visible and legible exactly as in that image — never blank, plain, or unlabeled. Do not redesign or substitute the product, and do not add any promotional headlines, captions, or logo text to the scene.';
+    + '\n\nThe product from the provided image must be the clear hero, rendered EXACTLY as shown — its OWN label and packaging text (the brand name and product name) must be sharp, correctly spelled, and clearly legible. This product label text is required, not optional, and must never be blank, blurred, or gibberish. Do not redesign or substitute the product. Separately, do NOT add any advertising headlines, captions, CTAs, or extra logos to the scene.';
   // 2. Generate N variations (each a session version).
   // IMPORTANT: send ONLY the product image(s) + the text style brief to the
   // generator — never the reference ad image itself. Passing the reference
@@ -3011,7 +3011,11 @@ async function generateVariations() {
     fd.append('sessionId', creativesState.sessionId);
     fd.append('prompt', fullPrompt);
     fd.append('aspectRatio', '1:1');
-    fd.append('model', (document.getElementById('creatives-model-select') || {}).value || '');
+    // Ad Builder needs legible product-label text, so force the highest-fidelity
+    // image model (Gemini 3 Pro) at 2K regardless of the Studio selector — the
+    // flash models render label text poorly.
+    fd.append('model', 'gemini-3-pro-image-preview');
+    fd.append('imageSize', '2K');
     if (ab.products.length) fd.append('productImagePaths', JSON.stringify(ab.products));
     try {
       var gres = await fetch('/api/creatives/generate', { method: 'POST', credentials: 'same-origin', body: fd });
