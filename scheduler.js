@@ -164,6 +164,11 @@ runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 // flags only genuinely dead spend (gate: ~1× ROAS is a win, no auto-pause).
 runStep('shopping-test-monitor', `"${NODE}" agents/shopping-test-monitor/index.js`);
 
+// Step 5b.1a: pagespeed monitor — mobile+desktop Lighthouse scores for commercial
+// pages (config/pagespeed.json) → data/snapshots/pagespeed/. Flags score regressions
+// vs. the prior snapshot into the daily digest. Cheap (PSI API, no LLM).
+runStep('pagespeed-monitor', `"${NODE}" agents/pagespeed-monitor/index.js`);
+
 // Step 5b.2: amazon snapshot — WEEKLY (Sundays). RSC Amazon net (post-Finance-role),
 // fees, per-ASIN net, and hero-lotion stockout guard → data/snapshots/amazon/ + digest.
 // Weekly, not daily: the 30-day finance pull is heavy and Amazon data moves slowly.
