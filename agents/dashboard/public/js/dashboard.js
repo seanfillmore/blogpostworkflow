@@ -2884,6 +2884,35 @@ function syncModeUI() {
   // Package/Ad-Set action only in Ad Builder.
   var pkgWrap = document.getElementById('creatives-package-wrap');
   if (pkgWrap) pkgWrap.style.display = isAd ? 'block' : 'none';
+  if (isAd) { renderVariationGrid(); }
+  var plc = document.getElementById('adbuilder-placements');
+  if (plc && !isAd) plc.style.display = 'none';
+  var g = document.getElementById('adbuilder-variation-grid');
+  if (g && !isAd) g.style.display = 'none';
+}
+
+function renderVariationGrid() {
+  var grid = document.getElementById('adbuilder-variation-grid');
+  if (!grid) return;
+  var vers = creativesState.adBuilder.variationVersions || [];
+  grid.style.display = vers.length ? 'flex' : 'none';
+  grid.innerHTML = vers.map(function(v) {
+    var sel = creativesState.currentVersion === v.version;
+    return '<img src="/api/creatives/image/' + v.imagePath + '" title="Variation ' + v.version + '" ' +
+      'onclick="selectVariation(' + v.version + ',\'' + v.imagePath + '\')" ' +
+      'style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:3px solid ' + (sel ? 'var(--accent)' : 'transparent') + '">';
+  }).join('');
+}
+
+function selectVariation(version, imagePath) {
+  creativesState.currentVersion = version;
+  showCreativeImage(imagePath, version);
+  renderVariationGrid();
+  // Reveal placement checklist + Generate Ad Set once a variation is chosen.
+  var pl = document.getElementById('adbuilder-placements');
+  var pkg = document.getElementById('creatives-package-wrap');
+  if (pl) pl.style.display = 'block';
+  if (pkg) pkg.style.display = 'block';
 }
 
 async function uploadAdBuilderReference(input) {
@@ -3474,6 +3503,8 @@ async function generateAdSet() {
   var btn = document.getElementById('creatives-package-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Generating ad set...'; }
   var ab = creativesState.adBuilder || {};
+  var sizes = Array.prototype.slice.call(document.querySelectorAll('.ab-size:checked')).map(function(c) { return c.value; });
+  if (creativesState.mode === 'adbuilder' && sizes.length === 0) { resetPackageBtn(); showCreativesError('Check at least one placement.'); return; }
   try {
     var res = await fetch('/api/creatives/package', {
       method: 'POST',
@@ -3484,7 +3515,8 @@ async function generateAdSet() {
         version: creativesState.currentVersion,
         product: ab.product || '',
         angle: ab.angle || '',
-        destinationUrl: ab.destinationUrl || ''
+        destinationUrl: ab.destinationUrl || '',
+        sizes: sizes
       })
     });
     var data = await res.json();
