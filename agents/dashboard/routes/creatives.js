@@ -111,6 +111,56 @@ export default [
     },
   },
 
+  // POST /api/creatives/analyze-reference
+  {
+    method: 'POST',
+    match: '/api/creatives/analyze-reference',
+    handler(req, res, ctx) {
+      let body = '';
+      req.on('data', d => { body += d; });
+      req.on('end', async () => {
+        let payload;
+        try { payload = JSON.parse(body); } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' })); return;
+        }
+        const filename = payload.referenceImage;
+        if (!filename) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'referenceImage required' })); return;
+        }
+        const absPath = join(ctx.REFERENCE_IMAGES_DIR, filename);
+        if (!existsSync(absPath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Reference image not found' })); return;
+        }
+        try {
+          const imgData = readFileSync(absPath);
+          const ext = extname(absPath).toLowerCase();
+          const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+          const client = new Anthropic();
+          const message = await client.messages.create({
+            model: CREATIVE_MODELS.styleVision,
+            max_tokens: 400,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mimeMap[ext] || 'image/jpeg', data: imgData.toString('base64') } },
+                { type: 'text', text: 'Analyze this ad’s visual STYLE only — mood, lighting, composition, color palette, and setting. Write a concise image-generation prompt that recreates this AESTHETIC for a NEW product photo of a different product. Do NOT describe the specific product shown, any brand, logos, or text. Return ONLY the prompt, no preamble.' }
+              ]
+            }]
+          });
+          const stylePrompt = (message.content[0] && message.content[0].text || '').trim();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ stylePrompt }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+    },
+  },
+
   // POST /api/creatives/templates
   {
     method: 'POST',
@@ -364,6 +414,22 @@ export default [
             }
           }
 
+          // Add reference-ad images from REFERENCE_IMAGES_DIR (style cue, not re-uploaded per call)
+          let referenceImagePaths = [];
+          try {
+            const rawRef = req.body.referenceImagePaths;
+            if (rawRef) referenceImagePaths = Array.isArray(rawRef) ? rawRef : JSON.parse(rawRef);
+          } catch {}
+          for (const relPath of referenceImagePaths) {
+            const absPath = join(ctx.REFERENCE_IMAGES_DIR, relPath);
+            if (existsSync(absPath)) {
+              const imgData = readFileSync(absPath);
+              const ext = extname(absPath).toLowerCase();
+              const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+              parts.push({ inlineData: { mimeType: mimeMap[ext] || 'image/jpeg', data: imgData.toString('base64') } });
+            }
+          }
+
           // Add uploaded reference files
           for (const file of (req.files || [])) {
             const imgData = readFileSync(file.path);
@@ -459,6 +525,7 @@ export default [
             aspectRatio,
             productImagePaths,
             historyImagePaths,
+            referenceImagePaths,
             createdAt: new Date().toISOString()
           };
           if (!session.versions) session.versions = [];
@@ -664,7 +731,7 @@ export default [
           res.end(JSON.stringify({ error: 'Invalid JSON' }));
           return;
         }
-        const { sessionId, product, angle, destinationUrl, placements } = payload;
+        const { sessionId, product, angle, destinationUrl, placements, sizes } = payload;
         const version = parseInt(payload.version, 10);
         if (!sessionId || !version) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -698,6 +765,7 @@ export default [
               destinationUrl: destinationUrl || '',
             },
             placements: Array.isArray(placements) && placements.length ? placements : ['instagram', 'facebook'],
+            sizes: Array.isArray(sizes) ? sizes : [],
             status: 'pending',
             createdAt: new Date().toISOString(),
           };
