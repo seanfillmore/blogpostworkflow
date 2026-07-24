@@ -5,6 +5,8 @@
     --border:  #e2e8f0;
     --text:    #0f172a;
     --muted:   #94a3b8;
+    --fg:      #0f172a;
+    --card:    #f1f5f9;
     --green:   #10b981;
     --amber:   #f59e0b;
     --red:     #ef4444;
@@ -361,8 +363,6 @@
   .section-title { font-weight: 600; font-size: 15px; }
   .badge-gray { background: #f3f4f6; color: #6b7280; }
   .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
-  .ar-btn { background:var(--card);color:var(--muted);border:1px solid var(--border);transition:all 0.15s; }
-  .ar-btn.active { background:#6c5ce7;color:white;border-color:#6c5ce7;font-weight:600; }
   .filmstrip-thumb:hover .filmstrip-delete, .filmstrip-thumb:hover .filmstrip-ref { display:block !important; }
 
 /* ── Mobile responsive ──────────────────────────────────────────────────── */
@@ -840,3 +840,39 @@
 .feedback-buttons { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
 .queue-pending-feedback { margin-top: 8px; padding: 8px 10px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 6px; font-size: 11px; color: #92400e; }
 
+
+/* Creatives — shared tokens + component classes (both pathways) */
+:root { --accent: #6c5ce7; }
+:root[data-theme="dark"] { --accent: #8b7cf0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #8b7cf0; } }
+
+.creatives-select {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.82rem;
+  background: var(--surface);
+  color: var(--fg);
+}
+.creatives-primary-btn {
+  padding: 0.65rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ar-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+}
+.ar-btn.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+.creatives-mode-btn { background: var(--surface); color: var(--fg); border: none; cursor: pointer; }
+.creatives-mode-btn.active { background: var(--accent); color: #fff; }

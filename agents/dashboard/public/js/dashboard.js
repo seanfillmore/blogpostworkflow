@@ -2821,7 +2821,9 @@ var creativesState = {
   templates: [],
   sessions: [],
   compareMode: false,
-  compareVersions: []
+  compareVersions: [],
+  mode: 'studio',
+  adBuilder: { product: '', angle: '', destinationUrl: '' }
 };
 
 async function renderCreativesTab() {
@@ -2846,9 +2848,57 @@ async function renderCreativesTab() {
       document.getElementById('creatives-session-select').value = latest.id;
       await loadCreativesSession(latest.id);
     }
+    syncModeUI();
   } catch (e) {
     console.error('renderCreativesTab error', e);
   }
+}
+
+function switchCreativesMode(mode) {
+  creativesState.mode = mode;
+  syncModeUI();
+  if (creativesState.sessionId) {
+    fetch('/api/creatives/sessions/' + encodeURIComponent(creativesState.sessionId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ mode: mode })
+    }).catch(function() {});
+  }
+}
+
+function syncModeUI() {
+  var isAd = creativesState.mode === 'adbuilder';
+  var studioBtn = document.getElementById('mode-studio-btn');
+  var adBtn = document.getElementById('mode-adbuilder-btn');
+  if (studioBtn) studioBtn.classList.toggle('active', !isAd);
+  if (adBtn) adBtn.classList.toggle('active', isAd);
+  var adPanel = document.getElementById('adbuilder-panel');
+  if (adPanel) adPanel.style.display = isAd ? 'block' : 'none';
+  // Studio's free-prompt fields hide in Ad Builder (hero prompt is generated).
+  var promptEl = document.getElementById('creatives-prompt');
+  var promptWrap = promptEl ? promptEl.closest('div') : null;
+  if (promptWrap) promptWrap.style.display = isAd ? 'none' : 'block';
+  // Package/Ad-Set action only in Ad Builder.
+  var pkgWrap = document.getElementById('creatives-package-wrap');
+  if (pkgWrap) pkgWrap.style.display = isAd ? 'block' : 'none';
+}
+
+function generateHero() {
+  creativesState.adBuilder = {
+    product: (document.getElementById('adbuilder-product') || {}).value || '',
+    angle: (document.getElementById('adbuilder-angle') || {}).value || '',
+    destinationUrl: (document.getElementById('adbuilder-desturl') || {}).value || ''
+  };
+  if (!creativesState.adBuilder.product.trim()) { showCreativesError('Enter a product for the hero.'); return; }
+  // Seed the studio prompt with a product+angle hero brief, then reuse generate.
+  var promptEl = document.getElementById('creatives-prompt');
+  if (promptEl) {
+    promptEl.value = 'Clean, bright product photography of ' + creativesState.adBuilder.product
+      + (creativesState.adBuilder.angle ? ', conveying: ' + creativesState.adBuilder.angle : '')
+      + '. Natural light, minimal on-brand background, product as hero. No text, logos, or labels.';
+  }
+  generateCreativeImage();
 }
 
 function renderCreativesModels() {
@@ -2890,6 +2940,8 @@ async function loadCreativesSession(sessionId) {
     creativesState.sessionId = session.id;
     creativesState.referenceImages = session.referenceImages || [];
     creativesState.aspectRatio = session.aspectRatio || '1:1';
+    creativesState.mode = session.mode || 'studio';
+    syncModeUI();
     // Populate form
     var promptEl = document.getElementById('creatives-prompt');
     var negEl = document.getElementById('creatives-negative-prompt');
@@ -3358,38 +3410,45 @@ function downloadCreativeImage() {
   window.open('/api/creatives/image/' + creativesState.currentImagePath + '?download=1', '_blank');
 }
 
-async function packageCreative() {
+async function generateAdSet() {
   if (!creativesState.sessionId || !creativesState.currentVersion) return;
   var btn = document.getElementById('creatives-package-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Packaging...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating ad set...'; }
+  var ab = creativesState.adBuilder || {};
   try {
     var res = await fetch('/api/creatives/package', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify({ sessionId: creativesState.sessionId, version: creativesState.currentVersion })
+      body: JSON.stringify({
+        sessionId: creativesState.sessionId,
+        version: creativesState.currentVersion,
+        product: ab.product || '',
+        angle: ab.angle || '',
+        destinationUrl: ab.destinationUrl || ''
+      })
     });
     var data = await res.json();
-    if (!data.ok) { resetPackageBtn(); showCreativesError(data.error || 'Package failed'); return; }
-    pollCreativePackage(data.jobId);
+    if (!data.jobId) { resetPackageBtn(); showCreativesError(data.error || 'Ad set failed'); return; }
+    pollAdSet(data.jobId);
   } catch (e) {
     resetPackageBtn();
-    showCreativesError('Package failed: ' + e.message);
+    showCreativesError('Ad set failed: ' + e.message);
   }
 }
 
-function pollCreativePackage(jobId) {
+function pollAdSet(jobId) {
   fetch('/api/creatives/package/' + encodeURIComponent(jobId), { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.status === 'done') {
+      if (data.status === 'complete') {
         resetPackageBtn();
         window.open('/api/creatives/package/download/' + encodeURIComponent(jobId), '_blank');
       } else if (data.status === 'error') {
         resetPackageBtn();
-        showCreativesError(data.error || 'Package failed');
+        showCreativesError(data.error || 'Ad set failed');
       } else {
-        setTimeout(function() { pollCreativePackage(jobId); }, 3000);
+        setTimeout(function() { pollAdSet(jobId); }, 3000);
       }
     })
     .catch(function(e) { resetPackageBtn(); showCreativesError('Polling failed: ' + e.message); });
@@ -3397,7 +3456,7 @@ function pollCreativePackage(jobId) {
 
 function resetPackageBtn() {
   var btn = document.getElementById('creatives-package-btn');
-  if (btn) { btn.disabled = false; btn.innerHTML = '&#128230; Package for All Placements'; }
+  if (btn) { btn.disabled = false; btn.innerHTML = '&#128230; Generate Ad Set'; }
 }
 
 function showCreativesSpinner(text) {
