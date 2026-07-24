@@ -9,6 +9,7 @@ import {
   buildCopyBrief,
   buildCopyPrompt,
   formatManifest,
+  ALL_PLACEMENTS, sizesByName, safeZonesFor, buildGuideSvg,
 } from '../../agents/creative-packager/index.js';
 
 // placementSizes — instagram only
@@ -149,6 +150,52 @@ import {
   assert.equal(m.destinationUrl, null);
   assert.ok(Array.isArray(m.placements) && m.placements.length === sizes.length);
   assert.equal(m.generatedAt, '2026-07-23T00:00:00Z');
+}
+
+// ALL_PLACEMENTS has all six
+{
+  assert.equal(ALL_PLACEMENTS.length, 6);
+  const names = ALL_PLACEMENTS.map(s => s.name);
+  assert.ok(names.includes('instagram-stories-1080x1920'));
+  assert.ok(names.includes('facebook-feed-1200x628'));
+}
+
+// sizesByName filters to requested, in ALL_PLACEMENTS order, ignoring unknowns
+{
+  const got = sizesByName(['facebook-feed-1200x628', 'instagram-feed-1080x1080', 'bogus']);
+  assert.equal(got.length, 2);
+  assert.ok(got.every(s => typeof s.width === 'number'));
+  assert.ok(got.some(s => s.name === 'instagram-feed-1080x1080'));
+}
+
+// safeZonesFor: stories get big top/bottom; feed gets ~6% margins
+{
+  const story = safeZonesFor('instagram-stories-1080x1920');
+  assert.ok(story.top >= 200 && story.bottom >= 300, 'story reserves UI margins');
+  const feed = safeZonesFor('facebook-feed-1080x1080');
+  assert.ok(feed.top > 0 && feed.top < 200);
+  const unknown = safeZonesFor('nope');
+  assert.deepEqual(unknown, { top: 0, bottom: 0, left: 0, right: 0 });
+}
+
+// buildGuideSvg: contains copy text, safe-zone marker, correct dims
+{
+  const size = { name: 'instagram-stories-1080x1920', width: 1080, height: 1920 };
+  const svg = buildGuideSvg(size, { headline: 'Fresh All Day', body: 'Coconut clean', cta: 'Shop Now' });
+  assert.ok(svg.includes('width="1080"') && svg.includes('height="1920"'));
+  assert.ok(svg.includes('Fresh All Day'));
+  assert.ok(svg.includes('Coconut clean'));
+  assert.ok(svg.includes('Shop Now'));
+  assert.ok(svg.includes('SAFE ZONE'));
+  assert.ok(svg.trim().startsWith('<svg'));
+}
+
+// buildGuideSvg escapes XML-special chars in copy
+{
+  const size = { name: 'facebook-feed-1080x1080', width: 1080, height: 1080 };
+  const svg = buildGuideSvg(size, { headline: 'Tom & Jerry', body: '<b>', cta: 'Go' });
+  assert.ok(svg.includes('Tom &amp; Jerry'));
+  assert.ok(!svg.includes('<b>'));
 }
 
 console.log('✓ creative-packager unit tests pass');
