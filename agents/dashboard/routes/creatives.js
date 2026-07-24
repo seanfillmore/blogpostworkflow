@@ -147,7 +147,7 @@ export default [
               role: 'user',
               content: [
                 { type: 'image', source: { type: 'base64', media_type: mimeMap[ext] || 'image/jpeg', data: imgData.toString('base64') } },
-                { type: 'text', text: 'Analyze this ad’s visual STYLE only — mood, lighting, composition, color palette, and setting. Write a concise image-generation prompt that recreates this AESTHETIC for a NEW product photo of a different product. Do NOT describe the specific product shown, any brand, logos, or text. Return ONLY the prompt, no preamble.' }
+                { type: 'text', text: 'You are a commercial photography art director. Describe ONLY the transferable production style of this ad so it can be reused to photograph a DIFFERENT product (a natural coconut-based skincare product). Capture: camera angle and framing, lighting quality and direction, background surface and finish, depth and shadows, the styling/prop approach (density and placement), and the overall mood and level of polish. Do NOT name or describe the specific product, brand, fruit, ingredient, text, or logos shown, and do not lock onto its exact colors — keep it about a style that would flatter a premium natural skincare product. Write it as a concise image-generation prompt of 2–4 sentences. Return ONLY the prompt, no preamble.' }
               ]
             }]
           });

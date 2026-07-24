@@ -2972,8 +2972,34 @@ async function generateVariations() {
     stylePrompt = 'Clean, bright, professional product advertising photography with natural light and a minimal on-brand background.';
     showCreativesError('Could not read the reference ad’s style — using a generic style. Generating anyway…');
   }
-  var fullPrompt = stylePrompt + '\n\nFeature the provided product prominently as the hero. Do NOT include any text, logos, or labels in the image.';
-  // 2. Generate N variations (each is a session version)
+  // Pull each selected product's detailed packaging description (from the
+  // manifest, matched by image directory) so the generator renders the REAL
+  // product accurately — the product-description context that makes Studio
+  // renders faithful.
+  var productDescriptions = [];
+  try {
+    var pres = await fetch('/api/creatives/product-images', { credentials: 'same-origin' });
+    var plist = await pres.json();
+    var byDir = {};
+    (Array.isArray(plist) ? plist : (plist.products || [])).forEach(function(p) {
+      var dir = p.imageDir || p.handle || '';
+      if (dir && p.productDescription) byDir[dir] = p.productDescription;
+    });
+    ab.products.forEach(function(path) {
+      var desc = byDir[String(path).split('/')[0]];
+      if (desc && productDescriptions.indexOf(desc) === -1) productDescriptions.push(desc);
+    });
+  } catch (e) { /* proceed without descriptions */ }
+  var productBlock = productDescriptions.length
+    ? '\n\nHero product(s) — render EXACTLY as described, matching packaging shape, cap, color, proportions, and label precisely:\n' + productDescriptions.map(function(d) { return '- ' + d; }).join('\n')
+    : '';
+  var fullPrompt = stylePrompt + productBlock + '\n\nThe product shown in the provided product image must be the clear hero of the scene. Do not redesign, relabel, or substitute it. Do not add any promotional text, headlines, captions, or logo graphics to the scene.';
+  // 2. Generate N variations (each a session version).
+  // IMPORTANT: send ONLY the product image(s) + the text style brief to the
+  // generator — never the reference ad image itself. Passing the reference
+  // image makes the model copy its subject (props) and blend/reinvent the
+  // product. Product images + prompt is the Studio recipe that renders the
+  // real product accurately.
   ab.variationVersions = [];
   for (var i = 0; i < ab.variationCount; i++) {
     showCreativesSpinner('Generating variation ' + (i + 1) + ' of ' + ab.variationCount + '...');
@@ -2983,7 +3009,6 @@ async function generateVariations() {
     fd.append('aspectRatio', '1:1');
     fd.append('model', (document.getElementById('creatives-model-select') || {}).value || '');
     if (ab.products.length) fd.append('productImagePaths', JSON.stringify(ab.products));
-    fd.append('referenceImagePaths', JSON.stringify([ab.referenceAd]));
     try {
       var gres = await fetch('/api/creatives/generate', { method: 'POST', credentials: 'same-origin', body: fd });
       var gdata = await gres.json();
