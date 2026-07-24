@@ -2823,8 +2823,10 @@ var creativesState = {
   compareMode: false,
   compareVersions: [],
   mode: 'studio',
-  adBuilder: { product: '', angle: '', destinationUrl: '' }
+  adBuilder: { referenceAd: null, products: [], variationCount: 4, destinationUrl: '', sizes: [], variationVersions: [] }
 };
+// Tracks which flow (studio vs ad builder) the product image modal was opened for.
+var productPickerTarget = 'studio';
 
 async function renderCreativesTab() {
   try {
@@ -2884,21 +2886,78 @@ function syncModeUI() {
   if (pkgWrap) pkgWrap.style.display = isAd ? 'block' : 'none';
 }
 
-function generateHero() {
-  creativesState.adBuilder = {
-    product: (document.getElementById('adbuilder-product') || {}).value || '',
-    angle: (document.getElementById('adbuilder-angle') || {}).value || '',
-    destinationUrl: (document.getElementById('adbuilder-desturl') || {}).value || ''
-  };
-  if (!creativesState.adBuilder.product.trim()) { showCreativesError('Enter a product for the hero.'); return; }
-  // Seed the studio prompt with a product+angle hero brief, then reuse generate.
-  var promptEl = document.getElementById('creatives-prompt');
-  if (promptEl) {
-    promptEl.value = 'Clean, bright product photography of ' + creativesState.adBuilder.product
-      + (creativesState.adBuilder.angle ? ', conveying: ' + creativesState.adBuilder.angle : '')
-      + '. Natural light, minimal on-brand background, product as hero. No text, logos, or labels.';
+async function uploadAdBuilderReference(input) {
+  if (!input.files || !input.files.length) return;
+  var fd = new FormData();
+  fd.append('image', input.files[0]);
+  try {
+    var res = await fetch('/api/creatives/reference-images', { method: 'POST', credentials: 'same-origin', body: fd });
+    var data = await res.json();
+    if (data.error) { showCreativesError(data.error); return; }
+    creativesState.adBuilder.referenceAd = data.filename;
+    var thumb = document.getElementById('adbuilder-ref-thumb');
+    if (thumb) thumb.innerHTML = '<img src="/api/creatives/reference-image/' + encodeURIComponent(data.filename) + '" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid var(--border)">';
+  } catch (e) { showCreativesError('Reference upload failed: ' + e.message); }
+  input.value = '';
+}
+
+function pickAdBuilderProducts() {
+  // Reuse the product picker modal; it calls addAdBuilderProduct(path) on selection.
+  openProductImageModal('adbuilder');
+}
+
+function addAdBuilderProduct(path) {
+  if (creativesState.adBuilder.products.indexOf(path) === -1) creativesState.adBuilder.products.push(path);
+  var el = document.getElementById('adbuilder-products-thumb');
+  if (el) {
+    el.innerHTML = creativesState.adBuilder.products.map(function(p) {
+      return '<img src="/api/creatives/product-image/' + encodeURIComponent(p) + '" style="width:44px;height:44px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">';
+    }).join('');
   }
-  generateCreativeImage();
+}
+
+async function generateVariations() {
+  var ab = creativesState.adBuilder;
+  ab.destinationUrl = (document.getElementById('adbuilder-desturl') || {}).value || '';
+  ab.variationCount = parseInt((document.getElementById('adbuilder-count') || {}).value, 10) || 4;
+  if (!ab.referenceAd) { showCreativesError('Upload a reference ad first.'); return; }
+  // Ensure a session exists
+  if (!creativesState.sessionId) {
+    try {
+      var sres = await fetch('/api/creatives/sessions', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      var s = await sres.json();
+      creativesState.sessionId = s.id; creativesState.sessions.unshift(s); renderCreativesSessions();
+    } catch (e) { showCreativesError('Could not create session: ' + e.message); return; }
+  }
+  // 1. Extract style brief from the reference ad
+  showCreativesSpinner('Reading the ad’s style...');
+  var stylePrompt = '';
+  try {
+    var ares = await fetch('/api/creatives/analyze-reference', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referenceImage: ab.referenceAd }) });
+    var adata = await ares.json();
+    stylePrompt = adata.stylePrompt || '';
+  } catch (e) { /* fall back to generic below */ }
+  if (!stylePrompt) stylePrompt = 'Clean, bright, professional product advertising photography with natural light and a minimal on-brand background.';
+  var fullPrompt = stylePrompt + '\n\nFeature the provided product prominently as the hero. Do NOT include any text, logos, or labels in the image.';
+  // 2. Generate N variations (each is a session version)
+  ab.variationVersions = [];
+  for (var i = 0; i < ab.variationCount; i++) {
+    showCreativesSpinner('Generating variation ' + (i + 1) + ' of ' + ab.variationCount + '...');
+    var fd = new FormData();
+    fd.append('sessionId', creativesState.sessionId);
+    fd.append('prompt', fullPrompt);
+    fd.append('aspectRatio', '1:1');
+    fd.append('model', (document.getElementById('creatives-model-select') || {}).value || '');
+    if (ab.products.length) fd.append('productImagePaths', JSON.stringify(ab.products));
+    fd.append('referenceImagePaths', JSON.stringify([ab.referenceAd]));
+    try {
+      var gres = await fetch('/api/creatives/generate', { method: 'POST', credentials: 'same-origin', body: fd });
+      var gdata = await gres.json();
+      if (gdata.imagePath) { ab.variationVersions.push({ version: gdata.version, imagePath: gdata.imagePath }); renderVariationGrid(); }
+    } catch (e) { /* continue with the rest */ }
+  }
+  hideCreativesSpinner();
+  if (!ab.variationVersions.length) showCreativesError('No variations were generated. Try again or adjust the reference/product.');
 }
 
 function renderCreativesModels() {
@@ -3759,7 +3818,8 @@ function selectCompareVersion(version) {
 
 // ── Task 17: Product image picker modal ─────────────────────────────────────
 
-async function openProductImageModal() {
+async function openProductImageModal(target) {
+  productPickerTarget = target || 'studio';
   var modal = document.getElementById('product-image-modal');
   if (!modal) return;
   var grid = document.getElementById('product-image-grid');
@@ -3796,6 +3856,11 @@ async function openProductImageModal() {
 }
 
 function selectProductImage(handle, imgPath, el) {
+  if (productPickerTarget === 'adbuilder') {
+    addAdBuilderProduct(imgPath);
+    if (el) { el.style.border = '3px solid #6c5ce7'; el.dataset.selected = 'true'; }
+    return;
+  }
   var alreadyIdx = creativesState.referenceImages.findIndex(function(r) { return r.path === imgPath; });
   if (alreadyIdx !== -1) {
     creativesState.referenceImages.splice(alreadyIdx, 1);
@@ -3816,6 +3881,7 @@ function selectProductImage(handle, imgPath, el) {
 function closeProductImageModal() {
   var modal = document.getElementById('product-image-modal');
   if (modal) modal.style.display = 'none';
+  productPickerTarget = 'studio';
   renderCreativesRefImages();
 }
 
