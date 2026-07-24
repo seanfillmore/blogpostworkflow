@@ -49,12 +49,35 @@ export function serveStatic(req, res, publicDir) {
   const st = statSync(filePath);
   if (st.isDirectory()) return false;
 
-  const mime = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream';
+  const ext = extname(filePath).toLowerCase();
+  const mime = MIME[ext] || 'application/octet-stream';
+  const lastModified = st.mtime.toUTCString();
+
+  // App-shell assets (HTML/JS/CSS/maps) must always revalidate: otherwise a
+  // freshly deployed index.html can pair with a stale cached dashboard.js and
+  // call functions the old JS doesn't have. `no-cache` = cache but revalidate
+  // every load; a matching If-Modified-Since gets a cheap 304. Other assets
+  // (images, fonts, icons) rarely change and stay cached for a day.
+  const REVALIDATE = new Set(['.html', '.js', '.css', '.map']);
+  const cacheControl = REVALIDATE.has(ext) ? 'no-cache' : 'public, max-age=86400';
+
+  // Conditional GET: 304 when the file hasn't changed since the client's copy.
+  const ims = req.headers && req.headers['if-modified-since'];
+  if (ims) {
+    const imsTime = Date.parse(ims);
+    const fileTime = Math.floor(st.mtimeMs / 1000) * 1000; // HTTP-date second precision
+    if (!Number.isNaN(imsTime) && fileTime <= imsTime) {
+      res.writeHead(304, { 'Last-Modified': lastModified, 'Cache-Control': cacheControl });
+      res.end();
+      return true;
+    }
+  }
+
   res.writeHead(200, {
     'Content-Type': mime,
     'Content-Length': st.size,
-    // Cache aggressively in production; cheap to bust by editing the file.
-    'Cache-Control': 'public, max-age=60',
+    'Last-Modified': lastModified,
+    'Cache-Control': cacheControl,
   });
   if (req.method === 'HEAD') { res.end(); return true; }
   createReadStream(filePath).on('error', () => { res.end(); }).pipe(res);
