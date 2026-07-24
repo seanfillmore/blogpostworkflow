@@ -2993,7 +2993,11 @@ async function generateVariations() {
   var productBlock = productDescriptions.length
     ? '\n\nHero product(s) — render EXACTLY as described, matching packaging shape, cap, color, proportions, and label precisely:\n' + productDescriptions.map(function(d) { return '- ' + d; }).join('\n')
     : '';
-  var fullPrompt = stylePrompt + productBlock + '\n\nThe product shown in the provided product image must be the clear hero of the scene. Do not redesign, relabel, or substitute it. Do not add any promotional text, headlines, captions, or logo graphics to the scene.';
+  var fullPrompt =
+    'Create an original, premium advertising photo for our natural coconut-based skincare brand. Use the style notes below ONLY as loose inspiration — borrow the composition, lighting, camera angle, background finish, and mood, then reinterpret them and make it our own. Do NOT copy the reference’s specific props, fruit, or exact arrangement:\n"' + stylePrompt + '"'
+    + productBlock
+    + '\n\nProps and ingredients must suit OUR product: coconuts, coconut flakes, and soft natural botanical leaves — tastefully arranged. Do NOT include kiwi or any fruit or ingredient unrelated to a coconut skincare product.'
+    + '\n\nThe product from the provided image must be the clear hero, shown with its real label and packaging graphics fully visible and legible exactly as in that image — never blank, plain, or unlabeled. Do not redesign or substitute the product, and do not add any promotional headlines, captions, or logo text to the scene.';
   // 2. Generate N variations (each a session version).
   // IMPORTANT: send ONLY the product image(s) + the text style brief to the
   // generator — never the reference ad image itself. Passing the reference
