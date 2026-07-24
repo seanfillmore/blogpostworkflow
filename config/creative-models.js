@@ -5,6 +5,7 @@ export const CREATIVE_MODELS = {
   adCopy: 'claude-opus-4-8',
   styleBrief: 'claude-haiku-4-5',
   templateVision: 'claude-haiku-4-5',
+  styleVision: 'claude-haiku-4-5',
   sessionName: 'claude-haiku-4-5',
   imageGen: 'gemini-2.5-flash-image',
 };

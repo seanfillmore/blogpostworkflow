@@ -7,5 +7,6 @@ assert.equal(CREATIVE_MODELS.styleBrief, 'claude-haiku-4-5');
 assert.equal(CREATIVE_MODELS.templateVision, 'claude-haiku-4-5');
 assert.equal(CREATIVE_MODELS.sessionName, 'claude-haiku-4-5');
 assert.equal(CREATIVE_MODELS.imageGen, 'gemini-2.5-flash-image');
+assert.equal(CREATIVE_MODELS.styleVision, 'claude-haiku-4-5', 'reference-ad style extraction uses Haiku vision');
 
 console.log('✓ creative-models config tests pass');
