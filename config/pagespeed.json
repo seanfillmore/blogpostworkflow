@@ -1,0 +1,10 @@
+{
+  "_comment": "Pages the pagespeed-monitor agent tracks. Commercial pages first (Prime Directive). Add/remove URLs here; each is measured on every strategy.",
+  "strategies": ["mobile", "desktop"],
+  "deadBand": 3,
+  "pages": [
+    { "label": "Homepage", "url": "https://www.realskincare.com/" },
+    { "label": "Collection: Coconut Oil Lotion", "url": "https://www.realskincare.com/collections/coconut-oil-lotion" },
+    { "label": "PDP: Coconut Moisturizer", "url": "https://www.realskincare.com/products/coconut-moisturizer" }
+  ]
+}
