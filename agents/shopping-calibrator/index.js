@@ -177,8 +177,20 @@ async function main() {
     const sharedSet = sets.find((s) => s.sharedSet.name === SHARED_SET_NAME)?.sharedSet.resourceName;
     if (!sharedSet) throw new Error(`Shared set "${SHARED_SET_NAME}" not found`);
 
-    // Final safety rail: never negate a query that produced a sale.
-    const safe = waste.filter((r) => !protectedSet.has(norm(r.query)));
+    // Final safety rail. Checking the candidate against its own text is not
+    // enough: a PHRASE negative also blocks every longer query containing it,
+    // so "coconut body lotion" would silently kill the protected brand query
+    // "real skin care organic coconut body lotion". Test each candidate against
+    // EVERY query that produced a sale.
+    const sellers = rows.filter((r) => r.ourPurchases > 0);
+    const safe = waste.filter((r) => {
+      const collateral = sellers.filter((s) => negativeBlocks(s.query, r.query, 'PHRASE'));
+      if (collateral.length) {
+        console.log(`  skip "${r.query}" — would block ${collateral.map((c) => `"${c.query}" (${c.ourPurchases} sales)`).join(', ')}`);
+        return false;
+      }
+      return true;
+    });
     for (let i = 0; i < safe.length; i += 100) {
       await mutate(safe.slice(i, i + 100).map((r) => ({
         sharedCriterionOperation: { create: { sharedSet, keyword: { text: r.query, matchType: 'PHRASE' } } },

@@ -74,3 +74,21 @@ test('buildMarkdown states the all-clear rather than rendering empty tables', ()
   assert.match(md, /no high-volume query clears meaningfully below our price/);
   assert.match(md, /no existing negative blocks a query that produced a sale/);
 });
+
+test('a PHRASE negative must not be added when it would block a longer converting query', () => {
+  // The real trap: "coconut body lotion" clears at $10.77 vs our $30 and looks
+  // like safe waste — but as a PHRASE negative it also blocks the brand query
+  // "real skin care organic coconut body lotion", which produced a sale.
+  const sellers = [
+    { query: 'real skin care organic coconut body lotion', ourPurchases: 1 },
+    { query: 'organic coconut lotion non-greasy', ourPurchases: 2 },
+  ];
+  const candidate = 'coconut body lotion';
+  const collateral = sellers.filter((s) => negativeBlocks(s.query, candidate, 'PHRASE'));
+  assert.equal(collateral.length, 1);
+  assert.equal(collateral[0].query, 'real skin care organic coconut body lotion');
+
+  // A candidate with no such overlap is safe.
+  const safeCandidate = 'weleda body lotion';
+  assert.equal(sellers.filter((s) => negativeBlocks(s.query, safeCandidate, 'PHRASE')).length, 0);
+});
