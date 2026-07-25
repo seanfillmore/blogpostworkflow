@@ -124,6 +124,21 @@ Full numbers in [`bundle-economics.md`](./bundle-economics.md). Summary:
 
 ---
 
+### Bar soap subscription — rebuilt 2026-07-25
+
+The single-bar monthly subscription lost money on every shipment. Replaced with a 4-pack on a longer cycle:
+
+| | Price | COGS | Freight | Contribution | Per year |
+|---|--:|--:|--:|--:|--:|
+| 1 bar, monthly, 20% off | $8.80 | $2.99 | $6.66 | **−$1.41** | −$16.92 (12 shipments) |
+| 4-pack, every 4 months, 15% off | $33.15 | $11.96 | $7.83 | **$12.10** | **$36.30** (3 shipments) |
+
+A $53/subscriber/year swing. Built as **`coconut-bar-soap-4-pack`** (draft, $39, 16 oz, COGS $11.96) with selling plan group `BARSOAP_4MO` — "Every 4 months, 15% off" — attached.
+
+**Still to do:** publish it, map inventory to component SKUs via the bundle app (it is currently untracked, same pattern the $99 Reset needed), and detach the single-bar plans once subscriber impact is known.
+
+---
+
 ## 6. Open decisions (need Sean)
 
 1. **Publish the $99 Reset.** It is ~95% built — lander done, digital bonuses hosted on CDN, Klaviyo delivery flow `XEMgA7` live, 131 Judge.me reviews wired. Blocked on: 3 of 5 scents at 0 stock with `policy=deny` (only Coconut Breeze 11 + Pure Unscented 12 are buyable), preview the lander, flip to active, fire a test order to confirm delivery email.
@@ -136,7 +151,9 @@ Full numbers in [`bundle-economics.md`](./bundle-economics.md). Summary:
 
 ## 7. Known gaps
 
-- **`Subscription Free Shipping` has no minimum order value.** It is the only *still-active* discount that zeroes shipping on tiny orders — 5 orders/yr, $30.35 of freight, average order $15.81, including three separate $9.35 bar-soap orders. Adding a minimum is a subscriber-perk trade-off, so it is deliberately unresolved.
+- **`Subscription Free Shipping` has no minimum order value** — 5 orders/yr, $30.35 of freight, average order $15.81. Left in place deliberately: the root cause was the *subscription SKU*, not the shipping rule, and that has been addressed (below). Revisit only if small subscription orders reappear.
+- **Single-bar subscription plans are still attached to `coconut-soap`.** Three overlapping groups let a customer subscribe to one $11 bar monthly at 20% off — **−$1.41 per shipment**, ~−$16.92/yr per subscriber. The replacement 4-pack exists; detaching the single-bar plans needs `read_own_subscription_contracts` to check for existing subscribers first.
+- **Subscription plan sprawl.** Every product carries 3–4 overlapping selling plan groups from two apps ("Subscribe and save" 6wk/monthly, plus Recurpay `RP_PLAN_*` monthly/6wk/8wk). Customers see competing options. Worth consolidating.
 - **`OCU Shipping Discount` (Zipify) has never applied to a single order** in 365 days. It is an inert function the app installs; it is *not* a leak. (An earlier version of this doc claimed otherwise — that was wrong.)
 - **Comped orders ship more expensively than paid ones** — 33 orders at $0.00 subtotal averaged $8.81 freight vs $7.33 overall, including one **UPS Next Day Air Saver at $52.75** on a giveaway. Operational control at label-purchase time.
 - **The Google feed title** is `global.title_tag` = "Coconut Body Lotion – Real Skin Care" — it leads with the exact term we lose on, while the storefront title already carries the clean-ingredient angle that converts. Changing it trades organic SEO on a ranking page for feed relevance; needs GSC data first.
