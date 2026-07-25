@@ -17,20 +17,19 @@
 import { execSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { appendFileSync, mkdirSync, existsSync, readdirSync, readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { notify, notifyLatestReport } from './lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOG_DIR  = join(__dirname, 'data/reports/scheduler');
-const LOG_PATH = join(LOG_DIR, 'scheduler.log');
 
+// The cron entry redirects stdout into data/reports/scheduler/scheduler.log
+// already, so appending to that same file from here too
+// wrote every line twice — which is why a single nightly run reads as if each
+// step executed twice, and why scheduler.log had grown to ~12 MB. Write to
+// stdout only and let the redirect own the file.
 function log(msg) {
-  const line = `[${new Date().toISOString()}] ${msg}`;
-  console.log(line);
-  try {
-    mkdirSync(LOG_DIR, { recursive: true });
-    appendFileSync(LOG_PATH, line + '\n');
-  } catch { /* ignore */ }
+  console.log(`[${new Date().toISOString()}] ${msg}`);
 }
 
 const failures = [];
