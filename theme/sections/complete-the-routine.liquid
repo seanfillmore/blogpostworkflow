@@ -1,0 +1,184 @@
+{%- liquid
+  assign upsell = section.settings.product
+  assign has_compare = false
+  if upsell != blank and upsell.compare_at_price > upsell.price
+    assign has_compare = true
+    assign saving = upsell.compare_at_price | minus: upsell.price
+  endif
+-%}
+
+{%- if upsell != blank -%}
+  {%- style -%}
+    #shopify-section-{{ section.id }} {
+      --ctr-accent: {{ section.settings.accent_color }};
+      padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px;
+    }
+    #shopify-section-{{ section.id }} .ctr-card {
+      display: flex;
+      align-items: center;
+      gap: 1.6rem;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 1.4rem;
+      background: {{ section.settings.background_color }};
+    }
+    #shopify-section-{{ section.id }} .ctr-card__media {
+      flex: 0 0 88px;
+      width: 88px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    #shopify-section-{{ section.id }} .ctr-card__media img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    #shopify-section-{{ section.id }} .ctr-card__body { flex: 1 1 auto; min-width: 0; }
+    #shopify-section-{{ section.id }} .ctr-card__eyebrow {
+      display: block;
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ctr-accent);
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+    #shopify-section-{{ section.id }} .ctr-card__title {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin: 0 0 0.3rem;
+      line-height: 1.25;
+    }
+    #shopify-section-{{ section.id }} .ctr-card__blurb {
+      font-size: 1.3rem;
+      margin: 0 0 0.5rem;
+      opacity: 0.8;
+    }
+    #shopify-section-{{ section.id }} .ctr-card__price { font-size: 1.4rem; font-weight: 600; }
+    #shopify-section-{{ section.id }} .ctr-card__was {
+      text-decoration: line-through;
+      opacity: 0.55;
+      font-weight: 400;
+      margin-left: 0.5rem;
+    }
+    #shopify-section-{{ section.id }} .ctr-card__save {
+      display: inline-block;
+      margin-left: 0.6rem;
+      background: var(--ctr-accent);
+      color: #fff;
+      border-radius: 3px;
+      padding: 0.1rem 0.6rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    #shopify-section-{{ section.id }} .ctr-card__cta {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      align-self: center;
+    }
+    @media screen and (max-width: 749px) {
+      #shopify-section-{{ section.id }} .ctr-card { flex-wrap: wrap; gap: 1.2rem; }
+      #shopify-section-{{ section.id }} .ctr-card__cta { flex: 1 1 100%; }
+      #shopify-section-{{ section.id }} .ctr-card__cta .button { width: 100%; }
+    }
+  {%- endstyle -%}
+
+  <div class="page-width">
+    <a class="ctr-card" href="{{ upsell.url }}" aria-label="{{ section.settings.heading | escape }}: {{ upsell.title | escape }}">
+      {%- if upsell.featured_image != blank -%}
+        <div class="ctr-card__media">
+          {{ upsell.featured_image | image_url: width: 176 | image_tag: loading: 'lazy', width: 88, alt: upsell.featured_image.alt | default: upsell.title | escape }}
+        </div>
+      {%- endif -%}
+
+      <div class="ctr-card__body">
+        <span class="ctr-card__eyebrow">{{ section.settings.heading }}</span>
+        <p class="ctr-card__title">{{ upsell.title }}</p>
+        {%- if section.settings.blurb != blank -%}
+          <p class="ctr-card__blurb">{{ section.settings.blurb }}</p>
+        {%- endif -%}
+        <span class="ctr-card__price">
+          {{ upsell.price | money }}
+          {%- if has_compare -%}
+            <span class="ctr-card__was">{{ upsell.compare_at_price | money }}</span>
+            <span class="ctr-card__save">Save {{ saving | money }}</span>
+          {%- endif -%}
+        </span>
+      </div>
+
+      <span class="ctr-card__cta">
+        <span class="button button--secondary">{{ section.settings.cta_label }}</span>
+      </span>
+    </a>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Complete the routine",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Upsell product"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Eyebrow text",
+      "default": "Complete the routine"
+    },
+    {
+      "type": "text",
+      "id": "blurb",
+      "label": "Short supporting line",
+      "default": "Pair it with the gentle cleanser — the full sensitive-skin routine."
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Button label",
+      "default": "View the set"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent colour",
+      "default": "#4a8b3c"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Card background",
+      "default": "#faf8f4"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Complete the routine"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,62 @@
+{
+  "start": "2026-07-11",
+  "end": "2026-07-24",
+  "days": 14,
+  "rows": [
+    {
+      "id": "24050427048",
+      "name": "RSC | Shopping Test | Lotion - Coconut Breeze",
+      "status": "ENABLED",
+      "impressions": 2918,
+      "clicks": 16,
+      "spend": 17.38,
+      "ctr": 0.0055,
+      "avgCpc": 1.09,
+      "conversions": 0,
+      "revenue": 0,
+      "roas": 0,
+      "cpa": null,
+      "cvr": 0,
+      "verdict": "learning",
+      "reason": "16 clicks, 0 conversions — not yet interpretable (needs 150 clicks for a zero to mean anything). Judge on search-term quality and CTR 0.55%, not ROAS."
+    },
+    {
+      "id": "24060021778",
+      "name": "RSC | Shopping Test | Lotion - Pure Unscented",
+      "status": "PAUSED",
+      "impressions": 655,
+      "clicks": 11,
+      "spend": 26.13,
+      "ctr": 0.0168,
+      "avgCpc": 2.38,
+      "conversions": 0,
+      "revenue": 0,
+      "roas": 0,
+      "cpa": null,
+      "cvr": 0,
+      "verdict": "learning",
+      "reason": "11 clicks, 0 conversions — not yet interpretable (needs 150 clicks for a zero to mean anything). Judge on search-term quality and CTR 1.68%, not ROAS."
+    }
+  ],
+  "totals": {
+    "spend": 43.51,
+    "clicks": 27,
+    "impressions": 3573,
+    "conversions": 0,
+    "revenue": 0,
+    "roas": 0,
+    "ctr": 0.0076,
+    "avgCpc": 1.61
+  },
+  "lifetime": {
+    "spend": 47.88,
+    "clicks": 31,
+    "impressions": 4269,
+    "conversions": 0,
+    "revenue": 0,
+    "roas": 0,
+    "ctr": 0.0073,
+    "avgCpc": 1.54
+  },
+  "flags": []
+}

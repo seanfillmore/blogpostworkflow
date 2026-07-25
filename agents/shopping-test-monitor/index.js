@@ -37,7 +37,12 @@ const NAME_PREFIX = 'RSC | Shopping Test';
 
 // Gate thresholds — deliberately permissive per the "~1× is a win" directive.
 export const DEFAULTS = {
-  deadClicks: 40,        // clicks in-window with 0 conversions ⇒ likely dead spend
+  // Statistical floor before a zero-conversion result means anything. The store's
+  // true CVR is ~0.82%, so 40 clicks expects 0.33 conversions — seeing zero there
+  // is the overwhelmingly likely outcome even for a perfectly healthy campaign,
+  // and flagging it was a false positive. 150 clicks expects ~1.2-1.5, which is
+  // the earliest point a zero is worth surfacing at all.
+  deadClicks: 150,       // clicks in-window with 0 conversions ⇒ likely dead spend
   deepUnprofitRoas: 0.5, // ROAS below this, AFTER a conversion base, is a real problem
   minConvForRoasJudgement: 15,
   watchRoas: 1.0,        // ≥ this = healthy under the 1× gate
@@ -71,8 +76,12 @@ export function computeMetrics(row) {
 
 /**
  * Classify a campaign under the revised gate. Returns { verdict, reason } where
- * verdict ∈ 'no_spend' | 'ok' | 'watch' | 'dead_spend' | 'unprofitable'.
+ * verdict ∈ 'no_spend' | 'ok' | 'watch' | 'learning' | 'dead_spend' | 'unprofitable'.
  * Only 'dead_spend' and 'unprofitable' are problems worth surfacing.
+ *
+ * 'learning' means the click volume is too low for a zero-conversion result to
+ * carry information. Judge those campaigns on search-term quality and CTR, not
+ * on ROAS — the conversion number is noise until deadClicks is reached.
  */
 export function classifyCampaign(m, cfg = DEFAULTS) {
   if (m.spend === 0) return { verdict: 'no_spend', reason: 'No spend in window (paused or not yet serving).' };
@@ -85,9 +94,12 @@ export function classifyCampaign(m, cfg = DEFAULTS) {
   if (m.roas !== null && m.roas >= cfg.watchRoas) {
     return { verdict: 'ok', reason: `ROAS ${m.roas}× — at/above the 1× target.` };
   }
-  return { verdict: 'watch', reason: m.conversions > 0
-    ? `${m.conversions} conv, ROAS ${m.roas ?? 'n/a'}× — early, keep gathering data.`
-    : `${m.clicks} clicks, no conversions yet — below the ${cfg.deadClicks}-click dead-spend threshold; keep watching.` };
+  if (m.conversions > 0) {
+    return { verdict: 'watch', reason: `${m.conversions} conv, ROAS ${m.roas ?? 'n/a'}× — early, keep gathering data.` };
+  }
+  return { verdict: 'learning', reason:
+    `${m.clicks} clicks, 0 conversions — not yet interpretable (needs ${cfg.deadClicks} clicks for a zero to mean anything). ` +
+    `Judge on search-term quality and CTR ${pctStr(m.ctr)}, not ROAS.` };
 }
 
 export function summarize(recent, lifetime, cfg = DEFAULTS) {
@@ -111,6 +123,8 @@ function aggregate(list) {
     avgCpc: clicks > 0 ? round2(spend / clicks) : 0,
   };
 }
+
+const pctStr = v => `${((v || 0) * 100).toFixed(2)}%`;
 
 const round2 = n => Math.round(n * 100) / 100;
 const round4 = n => Math.round(n * 10000) / 10000;

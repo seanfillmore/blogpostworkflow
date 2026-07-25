@@ -36,13 +36,22 @@ test('classify: ROAS between 0.5 and 1 with few conv is watch, not a flag', () =
 });
 
 test('classify: many clicks, zero conversions = dead_spend flag', () => {
-  const m = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 45, costMicros: 12_000_000, conversions: 0, conversionsValue: 0 } });
+  const m = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 160, costMicros: 12_000_000, conversions: 0, conversionsValue: 0 } });
   assert.equal(classifyCampaign(m).verdict, 'dead_spend');
 });
 
-test('classify: below dead-click threshold with no conv is only watch', () => {
-  const m = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 12, costMicros: 4_000_000, conversions: 0, conversionsValue: 0 } });
-  assert.equal(classifyCampaign(m).verdict, 'watch');
+test('classify: below dead-click threshold with no conv is learning, not a flag', () => {
+  // 27 clicks / 0 conv was the real Jul-2026 state; at a ~0.82% CVR that expects
+  // 0.22 conversions, so a zero there carries no information.
+  const m = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 27, costMicros: 43_510_000, conversions: 0, conversionsValue: 0 } });
+  const { verdict, reason } = classifyCampaign(m);
+  assert.equal(verdict, 'learning');
+  assert.match(reason, /search-term quality and CTR/);
+});
+
+test('classify: 45 clicks with no conv is no longer flagged as dead spend', () => {
+  const m = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 45, costMicros: 12_000_000, conversions: 0, conversionsValue: 0 } });
+  assert.equal(classifyCampaign(m).verdict, 'learning');
 });
 
 test('classify: deeply unprofitable only after a conversion base', () => {
@@ -54,7 +63,7 @@ test('classify: deeply unprofitable only after a conversion base', () => {
 
 test('summarize aggregates totals and collects only real flags', () => {
   const recent = [
-    computeMetrics({ campaign: { name: 'A', status: 'ENABLED' }, metrics: { clicks: 45, costMicros: 6_000_000, conversions: 0, conversionsValue: 0 } }),
+    computeMetrics({ campaign: { name: 'A', status: 'ENABLED' }, metrics: { clicks: 160, costMicros: 6_000_000, conversions: 0, conversionsValue: 0 } }),
     computeMetrics({ campaign: { name: 'B', status: 'ENABLED' }, metrics: { clicks: 10, costMicros: 4_000_000, conversions: 1, conversionsValue: 46 } }),
   ];
   const out = summarize(recent, recent);
@@ -69,5 +78,5 @@ test('summarize aggregates totals and collects only real flags', () => {
 
 test('DEFAULTS are permissive per the 1x directive', () => {
   assert.equal(DEFAULTS.watchRoas, 1.0);
-  assert.ok(DEFAULTS.deadClicks >= 30);
+  assert.ok(DEFAULTS.deadClicks >= 150, 'zero-conversion results need a real statistical floor');
 });
