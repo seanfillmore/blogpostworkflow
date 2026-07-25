@@ -88,6 +88,16 @@ $45 was chosen so the $46.80 hero Set clears free shipping on its own. It recove
 | SETSHIP | $45 |
 | Subscription Free Shipping (automatic) | none (subscription only) |
 
+**Where absorbed freight actually goes** (365d, $1,231.61 total). The mechanism matters, because only one bucket is fixable:
+
+| Mechanism | Orders | Freight | Note |
+|---|--:|--:|---|
+| Threshold rate quoted $0.00 | 79 | $644.41 | policy — orders over the threshold. Intentional AOV lever. |
+| Zeroed by a discount | 40 | $308.03 | of which **$238.37 came from two automatic discounts since deleted** (`Free shipping`, `FreeShippingLotion`) |
+| Customer paid | 67 | −$16.03 | correctly priced ✓ |
+
+Only **$30.35/yr** of discount-driven giveaway is still live, all of it `Subscription Free Shipping`. Discriminate these in order data with `shipping_lines[0].price > 0 && discounted_price == 0` — a `$0.00` quoted price is the threshold rate, not a giveaway, and Shopify confusingly labels it "Free shipping" in `discount_applications` anyway.
+
 **Weights**: 46 bundle variants previously shipped declaring **0 lb**, including the live Sensitive Set and all 5 variants of the $99 Reset. All now set from component weights. Bundle products do **not** expand into component weights at checkout — verify any new bundle declares its own weight.
 
 ⚠️ **`inventoryItemUpdate` needs `write_inventory`; the legacy REST `PUT /variants/{id}` path sets the same field under `write_products`.** Both scopes now exist, but REST is the proven route.
@@ -126,7 +136,8 @@ Full numbers in [`bundle-economics.md`](./bundle-economics.md). Summary:
 
 ## 7. Known gaps
 
-- **`OCU Shipping Discount` (Zipify) is app-controlled** and can zero shipping regardless of every cap and minimum above. Only reachable in Zipify's settings.
+- **`Subscription Free Shipping` has no minimum order value.** It is the only *still-active* discount that zeroes shipping on tiny orders — 5 orders/yr, $30.35 of freight, average order $15.81, including three separate $9.35 bar-soap orders. Adding a minimum is a subscriber-perk trade-off, so it is deliberately unresolved.
+- **`OCU Shipping Discount` (Zipify) has never applied to a single order** in 365 days. It is an inert function the app installs; it is *not* a leak. (An earlier version of this doc claimed otherwise — that was wrong.)
 - **Comped orders ship more expensively than paid ones** — 33 orders at $0.00 subtotal averaged $8.81 freight vs $7.33 overall, including one **UPS Next Day Air Saver at $52.75** on a giveaway. Operational control at label-purchase time.
 - **The Google feed title** is `global.title_tag` = "Coconut Body Lotion – Real Skin Care" — it leads with the exact term we lose on, while the storefront title already carries the clean-ingredient angle that converts. Changing it trades organic SEO on a ranking page for feed relevance; needs GSC data first.
 - **Bucket B freight** ($422/yr, 50 orders ≥$45 shipping free) is an intentional AOV lever, not a leak.
