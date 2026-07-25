@@ -22,7 +22,7 @@
  *   0 13 * * * cd ~/seo-claude && node agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
@@ -33,7 +33,6 @@ import { readUsage, summarizeRecords, listUsageDates } from '../../lib/llm-usage
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const DAILY_SUMMARY_DIR = join(ROOT, 'data', 'reports', 'daily-summary');
-const LOG_DIR = join(ROOT, 'data', 'logs');
 
 import {
   listAllSlugs, getPostMeta, getEditorReportPath, POSTS_DIR,
@@ -47,13 +46,14 @@ const SILENT_ON_SUCCESS = new Set([
   'meta a/b', 'meta-ab',
 ]);
 
-function log(msg) {
-  const line = `[${new Date().toISOString()}] ${msg}`;
-  console.log(line);
-  try {
-    mkdirSync(LOG_DIR, { recursive: true });
-    appendFileSync(join(LOG_DIR, 'daily-summary.log'), line + '\n');
-  } catch { /* ignore */ }
+// The cron entry already redirects stdout into data/logs/daily-summary.log, so
+// also appending there duplicated every line in the file and made a single run
+// read as if the digest had been sent twice. Write to stdout only, and let the
+// redirect own the file — the same contract every other agent in cron uses.
+// When there is no redirect (interactive run), stdout is a TTY and nothing is
+// lost; the operator sees the output directly.
+export function log(msg, out = console.log) {
+  out(`[${new Date().toISOString()}] ${msg}`);
 }
 
 function loadEnv() {

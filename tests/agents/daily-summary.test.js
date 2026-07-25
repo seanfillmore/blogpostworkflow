@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { previewBody, formatBodyHtml, buildDigestHtml } from '../../agents/daily-summary/index.js';
+import { previewBody, formatBodyHtml, buildDigestHtml, log } from '../../agents/daily-summary/index.js';
 
 // ── buildDigestHtml: lean, revenue-first digest (only needle-movers) ──────────
 
@@ -132,4 +132,15 @@ test('previewBody: keeps the "Saved locally" title line that was being clipped',
   ].join('\n');
   const out = previewBody(body);
   assert.ok(out.includes('Best Natural Options 2026"'), 'the full title must survive truncation');
+});
+
+// ── log: must write exactly once per call ────────────────────────────────────
+// Regression: log() used to console.log AND appendFileSync to the same file the
+// cron entry already redirects stdout into, so every line landed twice and a
+// single run read as though the digest had been emailed twice.
+test('log writes exactly one line per call', () => {
+  const written = [];
+  log('Daily summary sent.', (l) => written.push(l));
+  assert.equal(written.length, 1);
+  assert.match(written[0], /^\[\d{4}-\d{2}-\d{2}T[\d:.]+Z\] Daily summary sent\.$/);
 });
