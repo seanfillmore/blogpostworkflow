@@ -21,6 +21,7 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 | Pump 3-pack + Lotion | proposed | $69.00 | $59.00 | 14% | $17.70 | 2.50 | 4 | $7.83 | **$31.46** | 🟡 breakeven (≥1× CAC) |
 | Sensitive Skin Set | live | $58.00 | $46.80 | 19% | $10.10 | 0.94 | 2 | $6.66 | **$28.38** | 🟡 breakeven (≥1× CAC) |
 | Two-Step Dry Skin Starter Set | draft | $58.00 | $39.99 | 31% | $10.10 | 0.94 | 2 | $6.66 | **$21.77** | 🟠 thin (<1× CAC) |
+| Bar Soap 4-Pack | draft | $44.00 | $39.00 | 11% | $11.96 | 1.00 | 4 | $7.83 | **$17.78** | 🟠 thin (<1× CAC) |
 | Pump 4-pack | proposed | $52.00 | $44.00 | 15% | $17.04 | 2.50 | 4 | $7.83 | **$17.55** | 🟠 thin (<1× CAC) |
 | Single lotion (reference) | live | $30.00 | $30.00 | 0% | $4.92 | 0.63 | 1 | $6.66 | **$17.25** | 🟠 thin (<1× CAC) |
 | Pump + Refill | rejected | $39.00 | $34.00 | 13% | $13.05 | 3.43 | 2 | $21.31 | **$-1.65** | ❌ loses money |
@@ -37,6 +38,7 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 - **Pump 3-pack + Lotion** (proposed, $31.46) — Smaller pump entry.
 - **Sensitive Skin Set** (live, $28.38) — Current hero. Clears the $45 free-shipping threshold on its own.
 - **Two-Step Dry Skin Starter Set** (draft, $21.77) — Same contents as the hero at a deeper discount. Redundant.
+- **Bar Soap 4-Pack** (draft, $17.78) — Subscription vehicle, every 4 months. Replaces the single-bar monthly sub, which lost $1.41 per shipment.
 - **Pump 4-pack** (proposed, $17.55) — One per scent, one per sink. Sits on the CAC line at full MSRP; any discount sinks it. Reorder/AOV, not paid acquisition.
 - **Single lotion (reference)** (live, $17.25) — Reference point, not an offer. Anchor for the $99 bundle.
 - **Pump + Refill** (rejected, $-1.65) — Loses money: the refill forces a $21.31 box.
