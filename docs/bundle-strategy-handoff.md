@@ -133,9 +133,45 @@ The single-bar monthly subscription lost money on every shipment. Replaced with 
 | 1 bar, monthly, 20% off | $8.80 | $2.99 | $6.66 | **−$1.41** | −$16.92 (12 shipments) |
 | 4-pack, every 4 months, 15% off | $33.15 | $11.96 | $7.83 | **$12.10** | **$36.30** (3 shipments) |
 
-A $53/subscriber/year swing. Built as **`coconut-bar-soap-4-pack`** (draft, $39, 16 oz, COGS $11.96) with selling plan group `BARSOAP_4MO` — "Every 4 months, 15% off" — attached.
+**`coconut-bar-soap-4-pack`** (draft, $39, compare-at $44, 16 oz, COGS $11.96), selling plan group `BARSOAP_4MO` "Every 4 months, 15% off". Five variants so buyers can take one of each scent *or* four of one:
 
-**Still to do:** publish it, map inventory to component SKUs via the bundle app (it is currently untracked, same pattern the $99 Reset needed), and detach the single-bar plans once subscriber impact is known.
+| Variant | Components | Availability |
+|---|---|--:|
+| Variety — one of each | 1× each of 4 scents | limited by the scarcest scent |
+| 4x Calming Lavender | 4× Calming Lavender | 13 |
+| 4x Nourishing Tea Tree | 4× Nourishing Tea Tree | 11 |
+| 4x Refreshing Lemongrass | 4× Refreshing Lemongrass | 0 (component out of stock) |
+| 4x Pure Unscented | 4× Pure Unscented | 1 (only 7 bars in stock) |
+
+### RULE: every bundle must be inventory-tracked
+
+Bundles are **componentized** with `productVariantRelationshipBulkUpdate`, which is how the Sensitive Set and 90-Day Reset already work. Shopify then computes bundle availability from component stock — no double-counting, no phantom inventory.
+
+Do **not** create a bundle as a standalone SKU with untracked inventory. A first attempt at the 4-pack did exactly that and had to be deleted and rebuilt.
+
+Gotchas:
+- Shopify overwrites the bundle variant price with the **component sum** at componentization time. Set the price *after* mapping components (the 4-pack came out $44 and had to be reset to $39).
+- Bundle inventory takes ~10s to compute after mapping; an immediate read shows 0.
+- Only the app that assigned components can manage them.
+
+### Subscription cadence — partially done
+
+Sean's rule: **flat 15% at every frequency.** A bigger discount for a longer cycle isn't the goal; removing the incentive to pick monthly is.
+
+Done: `11134100` monthly 15% · `11150631` 6-week 15% · `11150632` 4-week 15%.
+
+**Still at the wrong discount:**
+
+| Plan | Cadence | Now | Blocker |
+|---|---|--:|---|
+| `11134099` | monthly (30 day) | 5% | position-1 PUT should work |
+| `11150631` | 8 week | 10% | position 2 — not reachable by API |
+| `11150632` | 8 week / 12 week | 10% | positions 2–3 — not reachable by API |
+| "Subscribe and save" | monthly | **20%** | owned by app `66228322305`, not Recurpay |
+
+⚠️ **The Recurpay `PUT /plans/{id}` is positional and destructive.** It requires exactly one `selling_plans` entry and a description ≤512 chars, then **overwrites selling plan position 1 regardless of the id you send** — it does not target by id, and it takes the delivery/billing policy from your payload. Sending a 12-week plan rewrote the *4-week* plan to deliver every 12 weeks. Caught and repaired because the test was run on plan `11150632`, which is attached to no products. **Test Recurpay plan writes on an unattached plan first.** Positions 2+ should be edited in the Recurpay admin UI.
+
+**The 20% monthly plan is the one that actually matters** — it's the biggest discount on the worst cadence, and it's why all six live subscribers are monthly. It belongs to a second subscription app that isn't Recurpay (all 17 contracts live in Recurpay). Identifying and removing that app's selling plan group is the highest-value remaining retention fix; the app query needs a scope this app lacks.
 
 ---
 
