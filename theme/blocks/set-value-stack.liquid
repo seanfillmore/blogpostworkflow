@@ -1,0 +1,22 @@
+{%- assign ship_value = 599 -%}
+{%- assign product_value = product.compare_at_price -%}
+{%- assign total_value = product_value | plus: ship_value -%}
+{%- assign you_save = total_value | minus: product.price -%}
+{%- if product_value > product.price -%}
+<style>
+  .set-value{border:1px solid #e0ded8;border-radius:8px;padding:14px 16px;margin:10px 0 12px 0;background:#faf8f4}
+  .set-value__row{display:flex;justify-content:space-between;align-items:baseline;font-size:0.95em;padding:3px 0;color:#1a1b18}
+  .set-value__row span:last-child{font-variant-numeric:tabular-nums}
+  .set-value__free{color:#4a8b3c;font-weight:700}
+  .set-value__total{display:flex;justify-content:space-between;align-items:baseline;font-size:1em;font-weight:700;padding:8px 0 0 0;margin-top:6px;border-top:1px solid #e0ded8;color:#1a1b18}
+  .set-value__save{display:inline-block;margin-top:10px;background:#4a8b3c;color:#fff;border-radius:4px;padding:4px 10px;font-size:0.9em;font-weight:700}
+  .set-value__note{font-size:0.85em;color:#6d7175;margin:10px 0 0 0;line-height:1.45}
+</style>
+<div class="set-value">
+  <div class="set-value__row"><span>Body Lotion + Body Cream</span><span>{{ product_value | money }}</span></div>
+  <div class="set-value__row"><span>Free shipping</span><span class="set-value__free">{{ ship_value | money }}</span></div>
+  <div class="set-value__total"><span>Total value</span><span>{{ total_value | money }}</span></div>
+  <div class="set-value__save">You save {{ you_save | money }} today</div>
+  <p class="set-value__note">A jar and bottle last about 12 weeks of daily use — roughly {{ product.price | divided_by: 84 | money }} per day, shipped free.</p>
+</div>
+{%- endif -%}
