@@ -154,24 +154,35 @@ Gotchas:
 - Bundle inventory takes ~10s to compute after mapping; an immediate read shows 0.
 - Only the app that assigned components can manage them.
 
-### Subscription cadence — partially done
+### Subscription cadence — flat 15%
 
 Sean's rule: **flat 15% at every frequency.** A bigger discount for a longer cycle isn't the goal; removing the incentive to pick monthly is.
 
-Done: `11134100` monthly 15% · `11150631` 6-week 15% · `11150632` 4-week 15%.
+The **Shopify Subscriptions app was uninstalled 2026-07-25**, which removed the "Subscribe and save" group carrying monthly at **20%** — the biggest discount on the worst cadence, and the reason every live subscriber was monthly. All 17 Recurpay contracts were unaffected (active=4, cancelled=11, halted=2, unchanged before and after).
 
-**Still at the wrong discount:**
+Current state — 5 groups, all Recurpay-owned:
 
-| Plan | Cadence | Now | Blocker |
-|---|---|--:|---|
-| `11134099` | monthly (30 day) | 5% | position-1 PUT should work |
-| `11150631` | 8 week | 10% | position 2 — not reachable by API |
-| `11150632` | 8 week / 12 week | 10% | positions 2–3 — not reachable by API |
-| "Subscribe and save" | monthly | **20%** | owned by app `66228322305`, not Recurpay |
+| Plan | Cadence | Discount |
+|---|---|--:|
+| `RP_PLAN_11134100` | 1 month | 15% ✓ |
+| `RP_PLAN_11150631` | 6 week | 15% ✓ |
+| `RP_PLAN_11150631` | 8 week | **10%** ✗ |
+| `subscribe-and-save` | 30 day | 15% ✓ |
+| `subscribe-and-save` | 4 week | 15% ✓ |
+| `subscribe-and-save` | 8 week | **10%** ✗ |
+| `subscribe-and-save` | 12 week | **10%** ✗ |
+| `BARSOAP_4MO` | 4 month | 15% ✓ |
 
-⚠️ **The Recurpay `PUT /plans/{id}` is positional and destructive.** It requires exactly one `selling_plans` entry and a description ≤512 chars, then **overwrites selling plan position 1 regardless of the id you send** — it does not target by id, and it takes the delivery/billing policy from your payload. Sending a 12-week plan rewrote the *4-week* plan to deliver every 12 weeks. Caught and repaired because the test was run on plan `11150632`, which is attached to no products. **Test Recurpay plan writes on an unattached plan first.** Positions 2+ should be edited in the Recurpay admin UI.
+**The three at 10% must be finished in the Recurpay admin UI.** They sit at selling-plan positions 2 and 3, and the API cannot reach them (below). It is a couple of minutes of clicking.
 
-**The 20% monthly plan is the one that actually matters** — it's the biggest discount on the worst cadence, and it's why all six live subscribers are monthly. It belongs to a second subscription app that isn't Recurpay (all 17 contracts live in Recurpay). Identifying and removing that app's selling plan group is the highest-value remaining retention fix; the app query needs a scope this app lacks.
+⚠️ **Recurpay's `PUT /plans/{id}` is positional and destructive.** It requires exactly one `selling_plans` entry and a description ≤512 chars, then **overwrites selling plan position 1 regardless of the id you send**, taking the delivery/billing policy from your payload. Sending a 12-week plan rewrote the *4-week* plan to deliver every 12 weeks. Caught and repaired because the test ran on a plan attached to no products.
+
+Rules for this API:
+- Only safe on plans with a **single** selling plan (position 1) — that is how `11134099` was moved 5% → 15%.
+- Never test on an attached plan. There is currently **no** unattached plan left to test on.
+- Positions 2+ are UI-only.
+
+Selling plan groups owned by another app are **not listable or editable** via `sellingPlanGroups` even when `appId` reads as null on `product.sellingPlanGroups`. Read them per-product; write them through the owning app's API.
 
 ---
 
