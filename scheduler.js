@@ -177,6 +177,17 @@ if (new Date().getDay() === 0) {
   log('  amazon-snapshot: skipped (weekly, Sundays only)');
 }
 
+// Step 5b.3: shopping calibrator — WEEKLY (Sundays, after the SQP pull settles).
+// Joins Google Shopping search terms to Amazon SQP purchase data so paid search
+// is tuned on what actually SELLS rather than on what we happened to spend on.
+// Auto-negates queries where the market clears far below our price (a 3x price
+// gap is not a bidding problem); never negates a query that produced a sale.
+if (new Date().getDay() === 0) {
+  runStep('shopping-calibrator', `"${NODE}" agents/shopping-calibrator/index.js${dryFlag ? '' : ' --apply'}`);
+} else {
+  log('  shopping-calibrator: skipped (weekly, Sundays only)');
+}
+
 // Step 5c: insight aggregator — refresh writer standing rules
 runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
 
