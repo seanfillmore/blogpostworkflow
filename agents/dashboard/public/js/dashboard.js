@@ -2933,18 +2933,24 @@ async function uploadAdBuilderReference(input) {
 }
 
 function pickAdBuilderProducts() {
-  // Reuse the product picker modal; it calls addAdBuilderProduct(path) on selection.
+  // Reuse the product picker modal; selectProductImage toggles ad-builder products.
   openProductImageModal('adbuilder');
 }
 
-function addAdBuilderProduct(path) {
-  if (creativesState.adBuilder.products.indexOf(path) === -1) creativesState.adBuilder.products.push(path);
+function renderAdBuilderProductThumbs() {
   var el = document.getElementById('adbuilder-products-thumb');
-  if (el) {
-    el.innerHTML = creativesState.adBuilder.products.map(function(p) {
-      return '<img src="/api/creatives/product-image/' + encodeURIComponent(p) + '" style="width:44px;height:44px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">';
-    }).join('');
-  }
+  if (!el) return;
+  // encodeURI (not encodeURIComponent) so the path separators stay '/', or the
+  // image route 404s on the %2F-encoded slash and the thumbnail breaks.
+  el.innerHTML = creativesState.adBuilder.products.map(function(p) {
+    return '<img src="/api/creatives/product-image/' + encodeURI(p) + '" title="Click to remove" onclick="removeAdBuilderProduct(&apos;' + p + '&apos;)" style="width:44px;height:44px;object-fit:cover;border-radius:5px;border:1px solid var(--border);cursor:pointer">';
+  }).join('');
+}
+
+function removeAdBuilderProduct(path) {
+  var idx = creativesState.adBuilder.products.indexOf(path);
+  if (idx !== -1) creativesState.adBuilder.products.splice(idx, 1);
+  renderAdBuilderProductThumbs();
 }
 
 async function generateVariations() {
@@ -3910,7 +3916,9 @@ async function openProductImageModal(target) {
         '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
         (p.images || []).map(function(imgFile) {
           var imgPath = imgDir + '/' + imgFile;
-          var selected = creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
+          var selected = productPickerTarget === 'adbuilder'
+            ? creativesState.adBuilder.products.indexOf(imgPath) !== -1
+            : creativesState.referenceImages.some(function(r) { return r.path === imgPath; });
           var border = selected ? '3px solid #6c5ce7' : '1px solid #e5e7eb';
           return '<div onclick="selectProductImage(&apos;' + esc(p.handle) + '&apos;,&apos;' + esc(imgPath) + '&apos;,this)" style="cursor:pointer;border-radius:6px;overflow:hidden;border:' + border + ';width:100px;height:100px;flex-shrink:0" data-selected="' + selected + '">' +
             '<img src="/api/creatives/product-image/' + esc(imgPath) + '" style="width:100%;height:100%;object-fit:contain;display:block;background:#fafafa" onerror="this.style.background=&apos;#f3f4f6&apos;">' +
@@ -3925,8 +3933,15 @@ async function openProductImageModal(target) {
 
 function selectProductImage(handle, imgPath, el) {
   if (productPickerTarget === 'adbuilder') {
-    addAdBuilderProduct(imgPath);
-    if (el) { el.style.border = '3px solid var(--accent)'; el.dataset.selected = 'true'; }
+    var pIdx = creativesState.adBuilder.products.indexOf(imgPath);
+    if (pIdx !== -1) {
+      creativesState.adBuilder.products.splice(pIdx, 1); // toggle off — deselect a mistake
+      if (el) { el.style.border = '1px solid #e5e7eb'; el.dataset.selected = 'false'; }
+    } else {
+      creativesState.adBuilder.products.push(imgPath);
+      if (el) { el.style.border = '3px solid var(--accent)'; el.dataset.selected = 'true'; }
+    }
+    renderAdBuilderProductThumbs();
     return;
   }
   var alreadyIdx = creativesState.referenceImages.findIndex(function(r) { return r.path === imgPath; });
