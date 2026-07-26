@@ -343,3 +343,46 @@ Clean Swap  4 products, 90 days.   3 × Body Lotion · 3 × Deodorant · 3 × To
 ```
 
 **Known fragility:** `component_qty` is index-aligned with `components` — reorder one without the other and quantities silently attach to the wrong product. Worth folding into `verify-bundle-contents.mjs`.
+
+
+---
+
+# Round 4 — bundle #3 was, finally, data entry
+
+**Head-to-Toe ($105)** — one of each of all seven products. Component math matched [`bundle-economics.md`](./bundle-economics.md) to the cent before a single write: MSRP $125, COGS $29.54, 2.24 lb.
+
+**No template work. No section edits. No theme changes.** Just: create the product, componentize two curated kits, then populate metafields —
+
+```
+bundle.value_stack     7 line items summing to $125
+bundle.components      7 product references
+bundle.component_qty   [1,1,1,1,1,1,1]
+bundle.contents        per-variant, per-kit
+bundle.lander          -> new bundle_lander entry
+templateSuffix         bundle-landing
+```
+
+Rendered correctly first time: heading "Head-to-Toe", bullets showing `$125` → `$105`, seven component cards each with its own image, value stack summing to $125, save $20, kit contents panel, note field. Zero leaked tokens.
+
+That is the claim finally holding — after two bundles where it didn't.
+
+## What the verifier now covers
+
+`verify-bundle-contents.mjs` checks, for every componentized bundle:
+
+- every component ships **and** is named in the customer-facing copy
+- copy never promises a component that does not ship
+- `bundle.components` / `bundle.component_qty` stay index-aligned against the real components
+
+Proven by injecting drift rather than trusting a clean pass — swapping the Reset's quantities to `[1,3]` produced:
+
+```
+COMPONENT CARDS MISMATCH
+    coconut-lotion: card says 1x, components ship 3x
+    coconut-moisturizer: card says 3x, components ship 1x
+```
+
+## Open
+
+- **`Sensitive Skin Moisturizing Set` has no `bundle.contents` copy.** It is live and selling, and the verifier flags it. It is not on the lean template, so nothing renders wrong today — but it will the moment it is migrated.
+- **The `whats-in-it` subtitle is hardcoded** as "N products, D days." That works for the two 90-day bundles and reads oddly on Head-to-Toe, a discovery/gift bundle where duration is not the pitch. It should come from the metaobject.
