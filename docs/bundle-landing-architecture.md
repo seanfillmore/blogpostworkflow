@@ -119,11 +119,40 @@ The claim was that a shared template plus per-product metafields makes bundle #2
 
 `scripts/build-bundle-landing.mjs` now **refuses to run when the template is shared** (exit 1, naming the other products). That prevents the corruption but does not solve the underlying problem.
 
-### The real fix
+### The fix, implemented 2026-07-26
 
-Convert the three price-displaying blocks to `custom-liquid` **sections**, which compute per product. This template already contains `custom-liquid` sections (`free-from-block`, `stats-hero`, `compare-table-styles`), so the type is available.
+Replacing those sections with `custom-liquid` would have discarded their theme styling (section padding, colour custom properties), so the settings now carry **tokens** instead: `[[TOTAL]]`, `[[PRICE]]`, `[[SAVINGS]]`.
 
-They cannot stay where they are: `stats-row` is `multicolumn` and `final-cta-strip` is `rich-text`, and neither accepts a `custom_liquid` block — only whole sections can carry Liquid.
+Three section files compute the values and substitute the tokens on output:
+
+| Section | Templates affected | Why safe |
+|---|--:|---|
+| `hero-landing-section.liquid` | 1 | bespoke to this lander |
+| `multicolumn.liquid` | 13 | substitution is a **no-op when tokens are absent** |
+| `rich-text.liquid` | 30 | same — every other page renders byte-identically |
+
+Each begins with a prelude that sums `bundle.value_stack` and derives price and savings, guarded by `if product != blank`.
+
+**⚠️ Liquid gotcha that cost a debugging cycle.** Multi-argument filters **cannot be used inline in `{% render %}` argument lists** — the comma in `replace: '[[TOTAL]]', bundle_total` is parsed as an *argument separator for the render tag*, so the filter chain breaks **silently** and the raw token renders. Both shared sections pipe text through `{% render 'highlight-text', hl_input: ... %}`, so they hit this while the hero (a direct `{{ }}` output) worked. Fix is assign-then-pass:
+
+```liquid
+{%- assign bt_text = block.settings.text
+      | replace: '[[TOTAL]]', bundle_total
+      | replace: '[[PRICE]]', bundle_price
+      | replace: '[[SAVINGS]]', bundle_savings -%}
+{%- render 'highlight-text', hl_input: bt_text, ... -%}
+```
+
+**Verified:** one template, two products, all figures computed —
+
+| | Hero | CTA | Stack total |
+|---|---|---|---|
+| Reset | $158 → $99 | save $59 | $158 |
+| Clean Swap | $213 → $159 | save $54 | $213 |
+
+Zero leaked tokens on either; homepage, collection and a non-bundle PDP all still 200.
+
+`scripts/build-bundle-landing.mjs` is now redundant — nothing is generated because everything computes. It is kept only as a drift **detector**; its shared-template guard still refuses to write.
 
 | Block | Section type | Move to |
 |---|---|---|
