@@ -44,63 +44,73 @@ This cannot be answered while the GA4 Admin API is disabled (section 5), which i
 
 We report on property `358754048` (`GOOGLE_ANALYTICS_PROPERTY_ID`); which measurement ID maps to it is blocked by the same thing.
 
-## 3. ROOT CAUSE — the site fires purchases at a DELETED conversion action
+## 3. Verdict: tracking is imperfect, not broken
 
-Confirmed 2026-07-26 by mapping the Ads conversion labels embedded in the live page against `conversion_action.tag_snippets`.
+This section was rewritten twice. Both earlier versions overstated the problem; this one is measured against GA4 event data and Shopify orders directly.
 
-**The live purchase event fires `AW-10923654107/C8AzCJD3p5gYENv35tgo`.**
-That label belongs to **"Google Shopping App Purchase" — status REMOVED.**
+**GA4 is recording purchases.** Last 30 days, property `358754048`:
 
-**`Purchase (2)`**, the only ENABLED website-origin purchase action and the one every campaign bids on, carries label `AW-10923654107/8ETbCNmKr5McENv35tgo` — **which appears nowhere in the page.**
+| | Orders | Revenue |
+|---|--:|--:|
+| GA4 `purchase` events | 7 | $417.80 |
+| Shopify actual | 13 | $723.45 |
 
-Every Ads label the Shopify Google & YouTube channel emits points at a REMOVED action:
+The gap is explained, not mysterious:
 
-| Site event | Label | Conversion action | Status |
+| Source | Orders | Fires a browser `purchase`? |
+|---|--:|---|
+| `web` checkout | 9 | yes |
+| `3890849` (channel) | 2 | unclear |
+| `subscription_contract_checkout_one` | 2 | **no — billed server-side** |
+
+**~78% capture on browser orders (7 of 9)** is within the normal range for GA4 — ad blockers, ITP, and consent gating routinely cost 10–30%. It is not evidence of misconfiguration.
+
+**Recurring subscription orders are a permanent blind spot.** They are charged server-side and never fire a client event, so GA4 will always under-report by roughly the subscription share of orders (2 of 13 here, ~15%). This is by design, not a bug — but it means **GA4 revenue must never be treated as truth.** Use Shopify orders, as [`bundle-marketing-plan.md`](./bundle-marketing-plan.md) §5 does.
+
+### The Ads conversion chain is correctly configured
+
+| Action | Role | Source | Value | Ads label |
+|---|---|---|---|---|
+| `purchase` | **PRIMARY** | GA4 import | actual | none — GA4-sourced |
+| `Purchase (2)` | secondary, not in Conversions | Website tag | actual (fixed 2026-07-26) | `8ETb…` |
+
+The primary action imports from GA4 and needs no page label, so the dead labels in section 3a below **do not affect the metric campaigns bid on.**
+
+`Purchase (2)` previously forced a $1 value; corrected to actual value on 2026-07-26 and verified via the API. It is secondary with `include_in_conversions_metric = false`, so it is observation-only.
+
+**Zero ad conversions in 30 days is expected, not alarming.** Ads counts only ad-attributed orders. 27 clicks at a 0.82% conversion rate predicts ~0.2 orders. The 13 organic orders would never appear.
+
+### 3a. Real but lower-priority: dead page labels
+
+The Shopify Google & YouTube channel still emits the old Google Shopping app's conversion labels, all of which are REMOVED in Ads:
+
+| Site event | Label | Action | Status |
 |---|---|---|---|
-| `purchase` | `C8AzCJD3p5gY…` | Google Shopping App Purchase | **REMOVED** |
-| `page_view` | `ACDHCJP3p5gY…` | Google Shopping App Page View | **REMOVED** |
-| `view_item` | `KdHwCJb3p5gY…` | Google Shopping App View Item | **REMOVED** |
-| `add_to_cart` | `gxmTCJz3p5gY…` | Google Shopping App Add To Cart | **REMOVED** |
-| `begin_checkout` | `p8rcCJ_3p5gY…` | Google Shopping App Begin Checkout | **REMOVED** |
-| `add_payment_info` | `crWqCKL3p5gY…` | Google Shopping App Add Payment Info | **REMOVED** |
-| `search` | `M484CJn3p5gY…` | Google Shopping App Search | **REMOVED** |
+| `purchase` | `C8AzCJD3p5gY…` | Google Shopping App Purchase | REMOVED |
+| `page_view` | `ACDHCJP3p5gY…` | Google Shopping App Page View | REMOVED |
+| `view_item` | `KdHwCJb3p5gY…` | Google Shopping App View Item | REMOVED |
+| `add_to_cart` | `gxmTCJz3p5gY…` | Google Shopping App Add To Cart | REMOVED |
+| `begin_checkout` | `p8rcCJ_3p5gY…` | Google Shopping App Begin Checkout | REMOVED |
+| `add_payment_info` | `crWqCKL3p5gY…` | Google Shopping App Add Payment Info | REMOVED |
+| `search` | `M484CJn3p5gY…` | Google Shopping App Search | REMOVED |
 
-**Conversions sent to a removed action are discarded.** So purchase tracking is not merely inaccurate — it records nothing at all, and has done since the old Google Shopping app's conversion actions were removed. The channel config kept emitting that app's labels; Ads stopped honouring them.
+Conversions sent to a removed action are discarded — but since no enabled action depends on these, the practical cost is wasted requests and a misleading page, not lost measurement. Worth cleaning by reconnecting the channel; **not a blocker for spending.**
 
-This alone explains 0 conversions on 27 clicks, and the historical 0.23% CVR / 0.19× ROAS, without needing any other theory. **Those campaigns were very likely not as bad as they looked — their results were being thrown away.**
+### 3b. Cleanup items
 
-### The forced-$1 problem is real but secondary
+- `CrossFit1873 - GA4 (web) purchase` (HIDDEN) still exists in the Ads account. Deleting the Google *tag* on 2026-07-26 did not remove the Ads *conversion action* — separate systems, the same lesson as `google_tag_ids`.
+- `G-12BJ5N9FNX` and a stale `GT-TBVN96Q` remain in Shopify's `google_tag_ids` (the admin shows `GT-PHR6R7H`). Both are initialized but receive no events since Sean's 2026-07-26 cleanup.
+- `begin_checkout` forces a value of $0. Harmless — it is excluded from Conversions — but wrong if it is ever promoted.
+- 16 REMOVED conversion actions are legacy clutter.
 
-`Purchase (2)` has `always_use_default_value = true` with a default of $1. Against a $50.46 AOV that understates value ~50×. It has recorded nothing yet only because the site never fires its label. **Fix it before reconnecting the channel**, or the first working conversion will report $1.
+### What this means for spending
 
-`add_to_cart` and `begin_checkout` are also ENABLED and GA4-sourced; `begin_checkout` forces a value of $0.
+**The gate is passable.** The primary conversion action is correctly wired to GA4 with actual values, GA4 is capturing browser purchases at a normal rate, and the known undercount is understood and quantified.
 
-### Foreign conversion action
+Two standing rules follow from the measurement, and they matter more than the cleanup:
 
-`CrossFit1873 - GA4 (web) purchase` (GA4 purchase, HIDDEN) is still present. Deleting the Google *tag* on 2026-07-26 did not remove the Ads *conversion action* — separate systems, the same lesson as `google_tag_ids`. Not counting, but it evidences a past third-party link to this Ads account.
-
-The remaining 16 actions are REMOVED — legacy clutter from prior app installs.
-
-### Fix
-
-Reconnecting/re-provisioning the Shopify **Google & YouTube** channel is the real fix: it should emit labels matching currently-enabled actions. Re-enabling the removed Shopping App actions is not generally possible in Google Ads.
-
-Order matters: **fix `Purchase (2)`'s value setting first, then reconnect the channel, then test with a live order.**
-
-## 4. What the last 30 days actually show
-
-| Campaign | Status | Cost | Clicks | Conversions | Value |
-|---|---|--:|--:|--:|--:|
-| Shopping Test — Coconut Breeze | ENABLED | $17.38 | 16 | 0 | $0 |
-| Shopping Test — Pure Unscented | PAUSED | $26.13 | 11 | 0 | $0 |
-
-Zero conversions recorded across $43.51 and 27 clicks.
-
-**This does NOT by itself prove tracking is broken, and shouldn't be reported as if it does.** At 27 clicks and a true 0.82% conversion rate, the expected number of orders is about 0.2. Observing zero is entirely unremarkable. The sample is far too small to distinguish "tracking is broken" from "27 clicks didn't produce a sale."
-
-What *is* proven is structural: the duplicate GA4 properties, the two competing purchase actions, and the forced $1 value are real misconfigurations that would corrupt measurement the moment volume arrives. Fix them before spending, not after.
-
-**The decisive test is a real transaction** — place a live order and confirm exactly one purchase conversion registers, with the correct value.
+1. **Judge revenue on Shopify orders, never GA4.** GA4 will read ~20% low on browser orders and miss subscriptions entirely.
+2. **Expect Ads-reported conversions to lag Shopify.** Ads sees only ad-attributed, GA4-captured orders — roughly 78% of the browser subset. A campaign showing 1 conversion may well have produced 1.3.
 
 ## 5. Blocker
 
