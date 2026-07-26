@@ -187,10 +187,28 @@ CAC target is $25. ✅ = ≥2× CAC (scalable on paid once tracking clears), �
 | **On-site cross-sell / cart** | All pump bundles, Bar Soap 4-Pack | — |
 | **Paid — held until tracking clears** | 90-Day Clean Swap, Coconut Reset, Head-to-Toe (the ✅ tier only) | **The single $30 lotion.** Every 🟡 and 🟠 bundle. |
 | **Amazon** | Nothing yet — see below | — |
+| **Google Shopping feed / Meta catalog** | ⚠️ **nothing — see below** | every componentized bundle |
 
 Two standing prohibitions, both already costing money:
 
 **Never send paid traffic to the single $30 lotion.** It produced 27 clicks and zero sales on generic lotion terms. It is an anchor SKU (3 × $30 + $28 = $118, which is what makes $99 read as an offer) and a reorder unit. `agents/shopping-calibrator` runs Sundays and auto-negates queries whose market clears below 60% of our price, which contains the bleeding but doesn't fix the destination.
+
+### ⚠️ Componentized bundles cannot enter the Shopping feed or Meta catalog
+
+Verified 2026-07-26. Publishing the Clean Swap or Head-to-Toe to either channel is rejected outright:
+
+```
+Channel Google & YouTube does not support variant-fixed bundles
+Channel Facebook & Instagram does not support variant-fixed bundles
+```
+
+This is a Shopify platform limit on native (variant-fixed) bundles, not a settings problem. The 90-Day Reset shows as published to both channels because it predates its componentization; do not read that as proof the restriction can be worked around.
+
+**This changes how paid traffic reaches bundles.** They cannot be Shopping listings or catalog items. Paid to a bundle has to be Search, Performance Max with a page feed, or Meta traffic ads pointing at the product URL — never a product/catalog ad.
+
+That is not fatal: the marketing plan already sends paid to bundle *landing pages* rather than to a feed. But it removes Shopping as an option for the ≥2× CAC bundles, which was the assumed vehicle. It also means the single $30 lotion and other simple SKUs remain the only Shopping-eligible products — and per section 1, the lotion is exactly what should never be a paid destination.
+
+Worth resolving before spending: either accept Search/PMax-to-lander only, or rebuild a bundle as a plain SKU with its own inventory (which forfeits component-level stock tracking, and the 4-pack was rebuilt *away* from that for good reason).
 
 **Amazon is out of scope for bundles this cycle**, with one exception worth noting: the lotion sells there at $21.99 against $30 on Shopify. Testing a step-up on Amazon is a separate, higher-leverage piece of work than porting bundles to a price-comparison surface where the whole bundle thesis is weakest.
 
