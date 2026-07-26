@@ -186,3 +186,56 @@ Once done, the generator script can be deleted — nothing is generated because 
 - `product.price` is in **cents** in Liquid. `divided_by: 90` on 9900 yields 110 → `$1.10`. Use `divided_by: 100.0` to get dollars for arithmetic against `amount` values.
 - JSON-template sections render as `#shopify-section-template--<numericId>__<sectionKey>`. Scope CSS with `[id$="__<key>"]`, not `#shopify-section-<key>`.
 - `compareAtPrice` must remain the genuine retail price of the **goods** ($118). The $158 value-stack total includes digital goods and shipping and is a marketing figure — it belongs in the itemized stack where it is verifiable, never as a second strikethrough.
+
+
+---
+
+# Round 2 — what building bundle #2 *properly* required
+
+Tokens fixed the numbers. They cannot fix prose, and prose is most of a landing page. Building the Clean Swap on the shared template rendered it with the Reset's heading, subheading, CTA label and bullets — correct prices, wrong product.
+
+## Component choice: curated kits
+
+Shopify allows a **maximum of 3 options per product**. The Clean Swap has four components, so free choice across all four is impossible as native variants — not hard, impossible. (Variant *count* is not the limit; that is 2048.)
+
+Sean's call: **curated kits**, with a free-text note for anyone wanting a swap.
+
+| Kit | Composition | Available |
+|---|---|--:|
+| Gentle | Unscented lotion · Calming Lavender deo · All Natural paste · Unscented soap | 2 |
+| Calm | Unscented lotion · Calming Lavender deo · Fresh Mint paste · Lavender soap | 10 |
+| Fresh | Coconut Breeze lotion · Geranium deo · Fresh Mint paste · Tea Tree soap | 11 |
+
+A native `line_item_property` block ("Prefer different scents? Tell us here") sits before the buy buttons, so requests ride on the order line.
+
+**Product gap:** there is **no unscented deodorant SKU** — the range is Geranium, Calming Lavender, and two at zero stock. A genuinely fragrance-free kit is therefore not possible today, which is why the first kit is named "Gentle" and not "Fragrance-Free". Fragrance-free is one of the strongest converting angles in the catalogue; this looks like a real product gap.
+
+## The `bundle_lander` metaobject
+
+Per-product copy, so one template serves every bundle.
+
+| Field | Type | Notes |
+|---|---|---|
+| `heading` | `single_line_text_field` | required |
+| `subheading` | `multi_line_text_field` | |
+| `cta_label` | `single_line_text_field` | |
+| `rating_caption` | `single_line_text_field` | |
+| `bullets` | `list.single_line_text_field` | supports `[[TOTAL]]` / `[[PRICE]]` / `[[SAVINGS]]` |
+
+Referenced from a product metafield `bundle.lander` of type `metaobject_reference`, validated to `bundle_lander`.
+
+`sections/hero-landing-section.liquid` then reads the metaobject and falls back to its own settings when absent — the section is bespoke to this lander, so this is safe. That is cleaner than tokens for prose: the section reads real values rather than substituting placeholders.
+
+**⚠️ Blocked on scopes.** `read_metaobjects` and `write_metaobjects` are granted; `read_metaobject_definitions` and `write_metaobject_definitions` are not, so the definition cannot be created by API. Either grant both scopes and re-install the app, or create the definition by hand in Settings → Custom data → Metaobjects using the table above — entries can then be populated over the API.
+
+## Still bundle-specific after the hero is fixed
+
+The hero is the loudest offender but not the only one. These sections still hold Reset-specific prose and will need the same treatment before a third bundle:
+
+- `collapsible-content` — 8 FAQ blocks
+- `compare-table` — 7 rows
+- `why-it-works` — 4 blocks
+
+## Fixed in passing: the variant/quantity row
+
+The scent and quantity controls could not align because the markup was broken, not because of styling. `<div class="vqr-row">` opened *inside* an `{% if %}` whose `{% endif %}` fired **before the closing `</div>`**, so the row was never closed and the quantity block nested inside it instead of beside it. Browsers auto-repaired the HTML, which is why it rendered at all. Rebuilt as one flex row containing both columns.
