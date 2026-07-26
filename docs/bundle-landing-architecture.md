@@ -259,3 +259,35 @@ It is a **variant** metafield rather than derived from the bundle components for
 The panel only renders when at least one variant has contents, so it is inert on any bundle that has not been given copy. The swap note only appears when there is more than one variant, and points at the `line_item_property` field.
 
 Populated for all five variants across both bundles.
+
+
+## The metaobject, built 2026-07-26
+
+`bundle_lander` metaobject + `bundle.lander` product metafield (`metaobject_reference`). `sections/hero-landing-section.liquid` prefers the metaobject and falls back to its own section settings, so non-bundle uses of the section are untouched.
+
+| Field | Type |
+|---|---|
+| `heading` | `single_line_text_field` |
+| `subheading` | `multi_line_text_field` |
+| `cta_label` | `single_line_text_field` |
+| `rating_caption` | `single_line_text_field` |
+| `bullets` | `list.single_line_text_field` — `[[TOTAL]]`/`[[PRICE]]`/`[[SAVINGS]]` still substitute |
+
+**Verified — one template, two bundles, everything per-product:**
+
+| | Reset | Clean Swap |
+|---|---|---|
+| heading | The 90-Day Coconut Skin Reset | The 90-Day Clean Swap |
+| CTA | Start My 90-Day Reset | Start My Clean Swap |
+| bullet 2 | $158 … $99 | $213 … $159 |
+| bullet 3 | coconut oil + jojoba | aluminium-free, fluoride-free |
+
+Zero leaked tokens on either.
+
+**Gotcha:** the metafield definition's validation takes `metaobject_definition_id` (a gid), not `metaobject_definition_type`. Passing the type string returns `INVALID_OPTION — Validations require that you select a metaobject`.
+
+**Known limit:** bullets are capped by the number of `bullet` blocks in the template, because the loop reuses each block's icon settings by index. Three blocks exist; a bundle wanting a fourth bullet needs a fourth block added to the template. Acceptable for now — worth revisiting if a bundle needs a different bullet count.
+
+### Still template-level
+
+`collapsible-content` (8 FAQ blocks), `compare-table` (7 rows) and `why-it-works` (4 blocks) remain shared prose. They are below the fold and generic enough to survive two bundles, but a third with a materially different story will need them moved to the metaobject too.
