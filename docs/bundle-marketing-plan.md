@@ -208,7 +208,16 @@ This is a Shopify platform limit on native (variant-fixed) bundles, not a settin
 
 That is not fatal: the marketing plan already sends paid to bundle *landing pages* rather than to a feed. But it removes Shopping as an option for the ≥2× CAC bundles, which was the assumed vehicle. It also means the single $30 lotion and other simple SKUs remain the only Shopping-eligible products — and per section 1, the lotion is exactly what should never be a paid destination.
 
-Worth resolving before spending: either accept Search/PMax-to-lander only, or rebuild a bundle as a plain SKU with its own inventory (which forfeits component-level stock tracking, and the 4-pack was rebuilt *away* from that for good reason).
+**Decided 2026-07-26 (Sean): Search + Performance Max to the landing pages.** Bundles stay componentized, so component-level inventory and no-phantom-stock are preserved; paid reaches them through Search campaigns and PMax with a **page feed** pointing at the bundle URLs rather than a product feed.
+
+The rejected alternative was rebuilding a bundle as a plain SKU to gain Shopping placement. That forfeits component-level stock tracking and reintroduces overselling risk — the bar soap 4-pack was deliberately rebuilt *away* from exactly that, and repeating it to win a channel would be trading a real operational guarantee for a placement.
+
+Practical consequences to carry into campaign setup:
+
+- **No product ads for bundles.** Search text ads and PMax page-feed asset groups only.
+- **The landing page is the entire conversion surface** — no Shopping listing to carry price, image or rating. That raises the value of what is already built: the lean 7-section page, the per-variant contents panel, and the 131 Judge.me reviews.
+- **PMax needs a page feed**, not the Merchant Center product feed, for these URLs.
+- Simple SKUs remain Shopping-eligible, but per section 1 the single $30 lotion must not be a paid destination — so Shopping stays effectively unused for acquisition until a bundle-equivalent exists.
 
 **Amazon is out of scope for bundles this cycle**, with one exception worth noting: the lotion sells there at $21.99 against $30 on Shopify. Testing a step-up on Amazon is a separate, higher-leverage piece of work than porting bundles to a price-comparison surface where the whole bundle thesis is weakest.
 
