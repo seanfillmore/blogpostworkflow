@@ -29,6 +29,7 @@ const q = `{
   products(first: 100, query: "tag:bundle") {
     nodes {
       handle title
+      priceRangeV2 { minVariantPrice { amount } maxVariantPrice { amount } }
       components: metafield(namespace: "bundle", key: "components") { value }
       qty: metafield(namespace: "bundle", key: "component_qty") { value }
       variants(first: 20) {
@@ -70,6 +71,17 @@ for (const p of products) {
   // ── bundle.components / bundle.component_qty are two index-aligned lists.
   // Reorder one without the other and quantities silently attach to the wrong
   // product — nothing errors, the card just lies. This is that check.
+  // Componentizing a variant OVERWRITES its price with the component sum. Do it
+  // after setting the price — as happened to the Clean Swap's Gentle kit, which
+  // silently reverted to $207 — and nothing errors; the page just sells at the
+  // wrong price. So: every variant of a bundle must share one price.
+  const lo = Number(p.priceRangeV2.minVariantPrice.amount);
+  const hi = Number(p.priceRangeV2.maxVariantPrice.amount);
+  if (lo !== hi) {
+    console.log(`  PRICE SPLIT ACROSS VARIANTS: $${lo.toFixed(2)} - $${hi.toFixed(2)} — one variant likely reverted to its component sum after re-componentizing`);
+    problems++;
+  }
+
   let refIds = [], refQty = [];
   try { refIds = JSON.parse(p.components?.value ?? '[]'); } catch {}
   try { refQty = JSON.parse(p.qty?.value ?? '[]'); } catch {}

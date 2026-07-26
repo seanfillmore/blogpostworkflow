@@ -386,3 +386,33 @@ COMPONENT CARDS MISMATCH
 
 - **`Sensitive Skin Moisturizing Set` has no `bundle.contents` copy.** It is live and selling, and the verifier flags it. It is not on the lean template, so nothing renders wrong today — but it will the moment it is migrated.
 - **The `whats-in-it` subtitle is hardcoded** as "N products, D days." That works for the two 90-day bundles and reads oddly on Head-to-Toe, a discovery/gift bundle where duration is not the pitch. It should come from the metaobject.
+
+
+---
+
+# Round 5 — the buy box was still the Reset
+
+Three bugs on one screenshot of the Clean Swap, all fixed:
+
+**Price displayed $207 instead of $159.** Re-componentizing the Gentle kit (swapping All Natural for Fresh Mint) **overwrote its price with the component sum again** — the documented gotcha, biting a second time because I changed components *after* setting the price. Nothing errored; the page simply offered the bundle at its undiscounted total.
+
+The verifier now checks that **every variant of a bundle shares one price**, which catches exactly this: a lone variant reverting to its component sum shows up as a price split.
+
+**"$213 of product & expert guides"** — the Clean Swap has no guides. Made generic: "of value".
+
+**Four hardcoded benefit lines** in the buy box, all describing the Reset ("Two formulas, one routine — daily lotion + overnight cream") on every bundle. Replaced the four `text` blocks with one `custom_liquid` block rendering a new `buybox_bullets` metaobject list, with token substitution.
+
+**And the `whats-in-it` subtitle**, flagged last round, is now a `whats_in_it_note` metaobject field — duration framing for the supply bundles, "One of everything we make - full size, not samples" for the discovery bundle.
+
+| | Reset | Clean Swap | Head-to-Toe |
+|---|---|---|---|
+| price | $99.00 | $159.00 | $105.00 |
+| value line | $158 of value | $213 of value | $125 of value |
+| benefit lines | own 4 | own 4 | own 4 |
+| subtitle | own | own | own |
+
+## The pattern worth remembering
+
+Every round of this has been the same bug in a new costume: **content that should be per-product living in a template**. Hero, then prices, then component images, then buy-box benefits, then a subtitle. Each looked like the last one.
+
+The general rule, learned expensively: **on a shared template, assume every string is wrong for the next product until proven otherwise.** Grep the template for product nouns — lotion, cream, guides, days — before declaring a bundle done.
