@@ -78,7 +78,10 @@
     "campaign-ad-fixer": "node agents/campaign-ad-fixer/index.js",
     "daily-summary": "node agents/daily-summary/index.js",
     "ai-citations": "node agents/ai-citation-tracker/index.js",
-    "answer-first": "node agents/answer-first-rewriter/index.js"
+    "answer-first": "node agents/answer-first-rewriter/index.js",
+    "sync-snapshots": "bash scripts/sync-snapshots.sh",
+    "archive-snapshots": "bash scripts/archive-snapshots.sh",
+    "backup-snapshots-offsite": "bash scripts/backup-snapshots-offsite.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

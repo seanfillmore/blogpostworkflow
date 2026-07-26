@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Daily pull of server metric snapshots to this machine, plus a weekly-in-effect
+  versioned archive (archive-snapshots.sh keeps 8 dated tarballs and prunes).
+
+  Install:
+    cp scripts/launchd/com.realskincare.sync-snapshots.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.realskincare.sync-snapshots.plist
+
+  Status / logs / removal:
+    launchctl print gui/$(id -u)/com.realskincare.sync-snapshots
+    tail -f ~/Library/Logs/sync-snapshots.log
+    launchctl bootout gui/$(id -u)/com.realskincare.sync-snapshots
+
+  Runs at 09:00 local. The server's collectors run on the 15:00 UTC (08:00 PT)
+  scheduler, so 09:00 local picks up the same morning's write. RunAtLoad also
+  fires it once on login, which covers a laptop that was closed at 09:00 —
+  without it, a machine that is asleep every morning would never sync.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.realskincare.sync-snapshots</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>/Users/seanfillmore/Code/Claude/scripts/sync-snapshots.sh &amp;&amp; /Users/seanfillmore/Code/Claude/scripts/archive-snapshots.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/seanfillmore/Library/Logs/sync-snapshots.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/seanfillmore/Library/Logs/sync-snapshots.log</string>
+</dict>
+</plist>
