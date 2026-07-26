@@ -106,6 +106,14 @@ Rules:
 ssh root@137.184.119.230 'cd ~/seo-claude && git pull && pm2 restart seo-dashboard'
 ```
 
+### Snapshot backups
+
+`data/snapshots/` is the only copy of GSC/Clarity history past those APIs' retention windows (~16 months for GSC, shorter for Clarity) — it cannot be re-fetched once gone.
+
+- **Offsite (authoritative):** `scripts/backup-snapshots-offsite.sh` runs on the **server**, Sundays 17:00 UTC via cron → DigitalOcean Spaces `rsc-backups/snapshots/`, keeps 12 weekly archives. Credentials are `SPACES_*` in `.env`; rclone is configured purely via `RCLONE_CONFIG_*` env vars, so there is no `rclone.conf` holding a second copy of the secret. Verifies the uploaded object's byte size against local before reporting success, then prunes.
+- **Local working copy:** `npm run sync-snapshots` (rsync server→local, ~78 MB, ~3s). Direction is hardcoded and `--delete` is deliberately omitted — local accumulates as a superset so a server-side loss can't propagate. A launchd job runs it daily at 09:00.
+- **Restore:** download the archive from Spaces and `tar xzf` it over `data/snapshots/`. Verified working 2026-07-26.
+
 ### Status check
 
 ```bash

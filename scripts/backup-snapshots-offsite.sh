@@ -1,67 +1,108 @@
 #!/usr/bin/env bash
 #
-# Push the snapshot archive offsite to object storage.
+# Archive the snapshot tree and push it offsite to DigitalOcean Spaces.
 #
-#   ./scripts/backup-snapshots-offsite.sh
+#   ./scripts/backup-snapshots-offsite.sh [--dry-run]
 #
-# STATUS: ready to run, blocked on one credential that only Sean can create.
+# DESIGNED TO RUN ON THE SERVER, not a laptop. The server holds the authoritative
+# data, it is always on, and SFO3 droplet -> SFO3 Space transfer is free. A laptop
+# is asleep most of the time, which is the one state in which a backup schedule
+# quietly stops running. It still works locally if you need a manual push.
 #
-# WHY OFFSITE IS THE ONE THAT ACTUALLY MATTERS
-#   Everything else is one machine. The server is a single 24 GB droplet whose
-#   disk filled once and silently killed all cron for four days; the laptop copy
-#   can be lost or stolen. ~74 MB of the tree is GSC history that Google's API
-#   only serves for a trailing ~16 months, and Clarity's window is shorter. Past
-#   those windows the snapshots are the only record — losing them is permanent,
-#   not inconvenient.
+# WHY OFFSITE IS THE COPY THAT MATTERS
+#   ~74 MB of the tree is GSC history, which Google's API only serves for a
+#   trailing ~16 months; Clarity's window is shorter. Past those, these snapshots
+#   are the only surviving record and cannot be re-fetched. Everything else is one
+#   25 GB droplet whose disk filled once and silently killed cron for four days.
 #
-# SETUP (one time, ~5 minutes)
-#   1. DigitalOcean console -> Spaces -> create a bucket (e.g. rsc-backups),
-#      then API -> Spaces Keys -> generate a key pair.
-#   2. brew install rclone
-#   3. rclone config
-#        name:     spaces
-#        storage:  s3
-#        provider: DigitalOcean
-#        endpoint: <region>.digitaloceanspaces.com
-#        (paste the access key and secret from step 1)
-#   4. export SNAPSHOT_BUCKET=rsc-backups     # add to your shell profile
-#   5. Re-run this script.
+# CREDENTIALS come from .env (gitignored, never committed):
+#   SPACES_KEY, SPACES_SECRET, SPACES_REGION, SPACES_BUCKET
 #
-#   The AWS_ACCESS_KEY / AWS_SECRET_KEY / AWS_ARN already in .env are NOT usable
-#   here. They are dead leftovers from Amazon SP-API's old IAM role-assumption
-#   requirement, are referenced nowhere in the codebase, and carry no S3 grant.
-#   Do not wire them in.
+# rclone is configured entirely through RCLONE_CONFIG_* environment variables, so
+# there is no rclone.conf holding a second copy of the secret. One source of truth.
 
 set -euo pipefail
 
-readonly ARCHIVE_DIR="${SNAPSHOT_ARCHIVE_DIR:-$HOME/Backups/seo-snapshots}"
-readonly REMOTE="${SNAPSHOT_REMOTE:-spaces}"
-readonly BUCKET="${SNAPSHOT_BUCKET:-}"
+readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly SRC="$ROOT/data/snapshots"
+readonly KEEP_REMOTE=12          # ~3 months of weekly archives, ~72 MB total
+readonly PREFIX="snapshots"
 
-fail_setup() {
-  echo "ERROR: $1" >&2
-  echo "" >&2
-  echo "Offsite backup is not configured yet. See the SETUP block at the top of" >&2
-  echo "$0 — it is about five minutes of work and needs a DigitalOcean Spaces key." >&2
-  exit 1
-}
+DRY_RUN=0
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && echo "DRY RUN — will not upload or prune"
 
-command -v rclone >/dev/null 2>&1 || fail_setup "rclone is not installed"
-[[ -n "$BUCKET" ]] || fail_setup "SNAPSHOT_BUCKET is not set"
-rclone listremotes 2>/dev/null | grep -q "^${REMOTE}:$" \
-  || fail_setup "rclone remote '${REMOTE}' is not configured"
+die() { echo "ERROR: $*" >&2; exit 1; }
 
-latest=$(ls -1t "$ARCHIVE_DIR"/snapshots-*.tar.gz 2>/dev/null | head -1 || true)
-[[ -n "$latest" ]] || fail_setup "no archive found in $ARCHIVE_DIR — run scripts/archive-snapshots.sh first"
+# ── credentials ──────────────────────────────────────────────────────────────
+[[ -f "$ROOT/.env" ]] || die "no .env at $ROOT"
+# Read only the keys we need. Never echo the values.
+for k in SPACES_KEY SPACES_SECRET SPACES_REGION SPACES_BUCKET; do
+  v="$(grep -E "^${k}=" "$ROOT/.env" | head -1 | cut -d= -f2- | tr -d '"'"'"' \r')"
+  [[ -n "$v" ]] || die "$k missing from .env"
+  printf -v "$k" '%s' "$v"
+done
 
-echo "uploading $(basename "$latest") ($(du -h "$latest" | cut -f1)) -> ${REMOTE}:${BUCKET}/snapshots/"
-rclone copy "$latest" "${REMOTE}:${BUCKET}/snapshots/" --progress
+command -v rclone >/dev/null 2>&1 || die "rclone not installed (apt install rclone / brew install rclone)"
 
-# Confirm the object is actually there. An upload that reports success but lands
-# nothing is the failure mode that makes a backup worthless exactly when needed.
-if rclone lsf "${REMOTE}:${BUCKET}/snapshots/" | grep -qF "$(basename "$latest")"; then
-  echo "verified present offsite: ${REMOTE}:${BUCKET}/snapshots/$(basename "$latest")"
-else
-  echo "ERROR: upload reported success but the object is not listed offsite" >&2
-  exit 1
+# Configure rclone from the environment — no config file, no second copy of the secret.
+# Point RCLONE_CONFIG at /dev/null so rclone stops emitting a "config file not found"
+# NOTICE on every call; under weekly cron that noise would land in root's mail and
+# train you to ignore output from the one job whose output actually matters.
+export RCLONE_CONFIG=/dev/null
+export RCLONE_CONFIG_SPACES_TYPE=s3
+export RCLONE_CONFIG_SPACES_PROVIDER=DigitalOcean
+export RCLONE_CONFIG_SPACES_ACCESS_KEY_ID="$SPACES_KEY"
+export RCLONE_CONFIG_SPACES_SECRET_ACCESS_KEY="$SPACES_SECRET"
+export RCLONE_CONFIG_SPACES_ENDPOINT="${SPACES_REGION}.digitaloceanspaces.com"
+export RCLONE_CONFIG_SPACES_ACL=private
+
+readonly REMOTE="spaces:${SPACES_BUCKET}/${PREFIX}"
+
+# ── build the archive ────────────────────────────────────────────────────────
+[[ -d "$SRC" ]] || die "$SRC does not exist"
+file_count=$(find "$SRC" -name '*.json' | wc -l | tr -d ' ')
+(( file_count > 0 )) || die "$SRC has no snapshots — refusing to back up an empty tree"
+
+stamp=$(date +%Y-%m-%d)
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+archive="$tmp/${PREFIX}-${stamp}.tar.gz"
+
+tar czf "$archive" -C "$(dirname "$SRC")" "$(basename "$SRC")"
+
+# An archive that cannot be read is not a backup. Verify before uploading.
+entries=$(tar tzf "$archive" | wc -l | tr -d ' ')
+(( entries >= file_count )) || die "archive has $entries entries but source has $file_count files"
+echo "archived $entries entries, $(du -h "$archive" | cut -f1), verified readable"
+
+if (( DRY_RUN )); then
+  echo "would upload $(basename "$archive") -> $REMOTE/"
+  rclone lsf "$REMOTE/" 2>/dev/null | tail -5 || echo "  (bucket empty or unreachable)"
+  exit 0
 fi
+
+# ── upload ───────────────────────────────────────────────────────────────────
+rclone copy "$archive" "$REMOTE/" --s3-no-check-bucket
+
+# Confirm the object is actually listed. An upload that reports success but stores
+# nothing is the failure mode that makes a backup worthless exactly when needed.
+remote_name="$(basename "$archive")"
+rclone lsf "$REMOTE/" | grep -qF "$remote_name" \
+  || die "upload reported success but $remote_name is not listed in $REMOTE"
+
+size=$(rclone size "$REMOTE/$remote_name" --json 2>/dev/null | grep -oE '"bytes":[0-9]+' | cut -d: -f2)
+local_size=$(wc -c < "$archive" | tr -d ' ')
+[[ "$size" == "$local_size" ]] \
+  || die "size mismatch: local $local_size bytes, remote ${size:-unknown} bytes"
+
+echo "verified offsite: $REMOTE/$remote_name ($size bytes, matches local)"
+
+# ── prune old remote archives ────────────────────────────────────────────────
+# Names are date-stamped, so lexical sort is chronological.
+rclone lsf "$REMOTE/" | grep -E "^${PREFIX}-[0-9]{4}-[0-9]{2}-[0-9]{2}\.tar\.gz$" \
+  | sort -r | tail -n +$((KEEP_REMOTE + 1)) | while read -r old; do
+    rclone deletefile "$REMOTE/$old"
+    echo "  pruned $old"
+  done
+
+echo "retained $(rclone lsf "$REMOTE/" | grep -cE "^${PREFIX}-" || echo 0) archives offsite"
