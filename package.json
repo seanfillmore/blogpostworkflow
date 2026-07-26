@@ -81,7 +81,8 @@
     "answer-first": "node agents/answer-first-rewriter/index.js",
     "sync-snapshots": "bash scripts/sync-snapshots.sh",
     "archive-snapshots": "bash scripts/archive-snapshots.sh",
-    "backup-snapshots-offsite": "bash scripts/backup-snapshots-offsite.sh"
+    "backup-snapshots-offsite": "bash scripts/backup-snapshots-offsite.sh",
+    "recurpay-audit": "node scripts/recurpay-audit.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

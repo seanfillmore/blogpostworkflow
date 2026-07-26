@@ -175,12 +175,17 @@ Current state — 5 groups, all Recurpay-owned:
 
 **The three at 10% must be finished in the Recurpay admin UI.** They sit at selling-plan positions 2 and 3, and the API cannot reach them (below). It is a couple of minutes of clicking.
 
-⚠️ **Recurpay's `PUT /plans/{id}` is positional and destructive.** It requires exactly one `selling_plans` entry and a description ≤512 chars, then **overwrites selling plan position 1 regardless of the id you send**, taking the delivery/billing policy from your payload. Sending a 12-week plan rewrote the *4-week* plan to deliver every 12 weeks. Caught and repaired because the test ran on a plan attached to no products.
+⚠️ **Recurpay's `PUT /plans/{id}` is positional and destructive.** Client and full constraints now live in **`lib/recurpay.js`**; audit with **`node scripts/recurpay-audit.mjs`**. Don't re-derive this API by hand again.
+
+The root cause, confirmed live 2026-07-26: **the API rejects any request whose `selling_plans` array holds more than one item** — `422 "The selling_plans must contain exactly one item."` on both POST and PUT. So the single plan you send always becomes position 1, taking your delivery/billing policy with it. That is why a 12-week payload sent to plan `11150632` rewrote that plan's *4-week* position-1 plan to deliver every 12 weeks.
 
 Rules for this API:
 - Only safe on plans with a **single** selling plan (position 1) — that is how `11134099` was moved 5% → 15%.
-- Never test on an attached plan. There is currently **no** unattached plan left to test on.
-- Positions 2+ are UI-only.
+- **Positions 2+ are genuinely unreachable, not merely awkward.** No payload shape fixes this; sending the full array is rejected outright. `updatePlan()` refuses multi-plan targets unless forced.
+- **Shopify's API cannot substitute.** `sellingPlanGroupUpdate` on a Recurpay-owned group returns `"Selling plan group does not exist."` even though the group reads fine per-product. That route is closed.
+- To test safely, `createPlan()` a throwaway, probe it, then `deletePlan()` — verified working. Don't test on an attached plan.
+- Auth is `X-Recurpay-Access-Token`, **not** `Authorization: Bearer` (which 404s with an empty message and looks like a bad path).
+- The discount field is spelled **`pricing_polices`** — Recurpay's typo, in both request and response.
 
 Selling plan groups owned by another app are **not listable or editable** via `sellingPlanGroups` even when `appId` reads as null on `product.sellingPlanGroups`. Read them per-product; write them through the owning app's API.
 
