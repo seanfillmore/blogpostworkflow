@@ -109,6 +109,32 @@ node scripts/build-bundle-landing.mjs 99-coconut-reset-digital          # dry ru
 node scripts/build-bundle-landing.mjs 99-coconut-reset-digital --apply  # push
 ```
 
+## What building bundle #2 exposed
+
+The claim was that a shared template plus per-product metafields makes bundle #2 data entry. **Half right, and the failing half only appeared on the second build.**
+
+**Worked:** `bundle.value_stack` drives the computed blocks per product. The Clean Swap renders its own $213 / $159 / save $54 from the same `product.bundle-landing` template the Reset uses. No new template file.
+
+**Failed:** the three *generated* settings live in the **template**, and the template is now shared. Running the generator for the Clean Swap would have rewritten the live Reset's prices to $213/$159. The copy is wrong across bundles too — *"lotions, cream & expert guides"* describes the Reset, not a lotion/deodorant/toothpaste/soap swap.
+
+`scripts/build-bundle-landing.mjs` now **refuses to run when the template is shared** (exit 1, naming the other products). That prevents the corruption but does not solve the underlying problem.
+
+### The real fix
+
+Convert the three price-displaying blocks to `custom-liquid` **sections**, which compute per product. This template already contains `custom-liquid` sections (`free-from-block`, `stats-hero`, `compare-table-styles`), so the type is available.
+
+They cannot stay where they are: `stats-row` is `multicolumn` and `final-cta-strip` is `rich-text`, and neither accepts a `custom_liquid` block — only whole sections can carry Liquid.
+
+| Block | Section type | Move to |
+|---|---|---|
+| `hero.bullet-2` | `hero-landing-section` | `custom-liquid` section, or drop the price and let the value stack own it |
+| `stats-row.stat-3` | `multicolumn` / `column` | replace `stats-row` with a `custom-liquid` section rendering all four stats |
+| `final-cta-strip.fc-text` | `rich-text` | `custom-liquid` section |
+
+Once done, the generator script can be deleted — nothing is generated because everything computes.
+
+**Simpler alternative worth considering:** delete the price claims from all three. The computed value stack already states total, price and savings authoritatively, and repeating them in a hero bullet, a stat card and a closing line is redundant. That removes three drift sources permanently and needs no new sections.
+
 ## Migration order
 
 **Done for the Reset, 2026-07-26:**

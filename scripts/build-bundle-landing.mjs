@@ -55,6 +55,28 @@ console.log(`${p.title}  (template: ${p.templateSuffix})`);
 console.log(`  stack: ${stack.map(r => r.label + ' $' + r.amount).join(' + ')}`);
 console.log(`  total $${total}  price $${price}  savings $${savings}  duration ${days}d\n`);
 
+// GUARD: these settings live in the TEMPLATE, so if more than one product uses
+// that template they cannot each hold their own prices. Writing here would push
+// one bundle's numbers onto every other bundle sharing the template.
+//
+// Found the hard way building bundle #2: the Clean Swap ($213/$159) and the
+// Reset ($158/$99) both use product.bundle-landing, and applying would have
+// rewritten the live Reset's prices. Refuse rather than corrupt.
+// `template_suffix:` is not a supported search field — it silently returns
+// everything. Read templateSuffix off each product and filter in JS instead.
+const sharers = await shopifyGraphQL(`{
+  products(first:250){ nodes { handle title templateSuffix } } }`);
+const others = sharers.products.nodes.filter(
+  x => x.templateSuffix === p.templateSuffix && x.handle !== handle);
+if (others.length) {
+  console.error(`\nREFUSING: template "${p.templateSuffix}" is shared with ${others.length} other product(s):`);
+  for (const o of others) console.error(`   ${o.handle}  (${o.title})`);
+  console.error(`\nWriting ${handle}'s prices into it would overwrite theirs. Either give this`);
+  console.error(`product its own template, or convert the price-displaying sections to`);
+  console.error(`custom-liquid so they compute per product. See docs/bundle-landing-architecture.md.`);
+  process.exit(1);
+}
+
 const key = `templates/product.${p.templateSuffix}.json`;
 const themeId = await getMainThemeId();
 const raw0 = await getThemeAsset(themeId, key);
