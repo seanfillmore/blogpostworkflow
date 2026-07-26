@@ -239,3 +239,23 @@ The hero is the loudest offender but not the only one. These sections still hold
 ## Fixed in passing: the variant/quantity row
 
 The scent and quantity controls could not align because the markup was broken, not because of styling. `<div class="vqr-row">` opened *inside* an `{% if %}` whose `{% endif %}` fired **before the closing `</div>`**, so the row was never closed and the quantity block nested inside it instead of beside it. Browsers auto-repaired the HTML, which is why it rendered at all. Rebuilt as one flex row containing both columns.
+
+
+## Kit names are labels, not information
+
+"Gentle" tells a customer nothing about what arrives in the box. Each variant now carries a **`bundle.contents`** variant metafield (`multi_line_text_field`, one item per line) rendered in a small panel directly under the picker, showing only the selected variant and swapping on change.
+
+```
+WHAT'S IN THE GENTLE BOX
+ • 3 × Body Lotion — Pure Unscented (no fragrance at all)
+ • 3 × Deodorant — Calming Lavender (our mildest)
+ • 3 × Toothpaste — All Natural (unflavoured)
+ • 3 × Bar Soap — Pure Unscented
+ Want different scents? Add a note below and we'll swap them.
+```
+
+It is a **variant** metafield rather than derived from the bundle components for two reasons: Liquid does not expose `productVariantComponents` on the storefront, and the customer-facing wording should be better than raw component handles — "Calming Lavender (our mildest)" carries the reassurance that `coconut-oil-deodorant/Calming Lavender` does not.
+
+The panel only renders when at least one variant has contents, so it is inert on any bundle that has not been given copy. The swap note only appears when there is more than one variant, and points at the `line_item_property` field.
+
+Populated for all five variants across both bundles.
