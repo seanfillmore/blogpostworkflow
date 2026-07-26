@@ -44,26 +44,48 @@ This cannot be answered while the GA4 Admin API is disabled (section 5), which i
 
 We report on property `358754048` (`GOOGLE_ANALYTICS_PROPERTY_ID`); which measurement ID maps to it is blocked by the same thing.
 
-## 3. Google Ads conversion actions — 21, and the enabled ones conflict
+## 3. ROOT CAUSE — the site fires purchases at a DELETED conversion action
 
-Four are ENABLED:
+Confirmed 2026-07-26 by mapping the Ads conversion labels embedded in the live page against `conversion_action.tag_snippets`.
 
-| Name | Type | Category | Primary | Value |
-|---|---|---|---|---|
-| `purchase` | GA4 purchase | PURCHASE | **yes** | 1 |
-| `Purchase (2)` | Webpage | PURCHASE | no | **FORCED $1** |
-| `add_to_cart` | GA4 custom | ADD_TO_CART | no | 1 |
-| `begin_checkout` | GA4 custom | BEGIN_CHECKOUT | no | FORCED $0 |
+**The live purchase event fires `AW-10923654107/C8AzCJD3p5gYENv35tgo`.**
+That label belongs to **"Google Shopping App Purchase" — status REMOVED.**
 
-Two problems:
+**`Purchase (2)`**, the only ENABLED website-origin purchase action and the one every campaign bids on, carries label `AW-10923654107/8ETbCNmKr5McENv35tgo` — **which appears nowhere in the page.**
 
-**Two purchase actions are live at once** — one GA4-sourced, one webpage-sourced. A single order can register against both.
+Every Ads label the Shopify Google & YouTube channel emits points at a REMOVED action:
 
-**`Purchase (2)` has `always_use_default_value = true` with a default of $1.** Every purchase it records is worth exactly $1 regardless of the real order value. On a store with a $50.46 AOV that understates value ~50×, and any ROAS computed from it is meaningless. This is a strong candidate for the historical 0.19× ROAS being a measurement artifact rather than a performance result.
+| Site event | Label | Conversion action | Status |
+|---|---|---|---|
+| `purchase` | `C8AzCJD3p5gY…` | Google Shopping App Purchase | **REMOVED** |
+| `page_view` | `ACDHCJP3p5gY…` | Google Shopping App Page View | **REMOVED** |
+| `view_item` | `KdHwCJb3p5gY…` | Google Shopping App View Item | **REMOVED** |
+| `add_to_cart` | `gxmTCJz3p5gY…` | Google Shopping App Add To Cart | **REMOVED** |
+| `begin_checkout` | `p8rcCJ_3p5gY…` | Google Shopping App Begin Checkout | **REMOVED** |
+| `add_payment_info` | `crWqCKL3p5gY…` | Google Shopping App Add Payment Info | **REMOVED** |
+| `search` | `M484CJn3p5gY…` | Google Shopping App Search | **REMOVED** |
 
-**A foreign conversion action is in the account:** `CrossFit1873 - GA4 (web) purchase`, GA4 purchase type, status HIDDEN. It belongs to an unrelated business. It isn't currently counting, but its presence means this Ads account has been linked to a third party's GA4 property — worth understanding before trusting any historical figure from this account.
+**Conversions sent to a removed action are discarded.** So purchase tracking is not merely inaccurate — it records nothing at all, and has done since the old Google Shopping app's conversion actions were removed. The channel config kept emitting that app's labels; Ads stopped honouring them.
 
-The other 16 are REMOVED — legacy clutter from previous Shopping app installs, harmless but noisy.
+This alone explains 0 conversions on 27 clicks, and the historical 0.23% CVR / 0.19× ROAS, without needing any other theory. **Those campaigns were very likely not as bad as they looked — their results were being thrown away.**
+
+### The forced-$1 problem is real but secondary
+
+`Purchase (2)` has `always_use_default_value = true` with a default of $1. Against a $50.46 AOV that understates value ~50×. It has recorded nothing yet only because the site never fires its label. **Fix it before reconnecting the channel**, or the first working conversion will report $1.
+
+`add_to_cart` and `begin_checkout` are also ENABLED and GA4-sourced; `begin_checkout` forces a value of $0.
+
+### Foreign conversion action
+
+`CrossFit1873 - GA4 (web) purchase` (GA4 purchase, HIDDEN) is still present. Deleting the Google *tag* on 2026-07-26 did not remove the Ads *conversion action* — separate systems, the same lesson as `google_tag_ids`. Not counting, but it evidences a past third-party link to this Ads account.
+
+The remaining 16 actions are REMOVED — legacy clutter from prior app installs.
+
+### Fix
+
+Reconnecting/re-provisioning the Shopify **Google & YouTube** channel is the real fix: it should emit labels matching currently-enabled actions. Re-enabling the removed Shopping App actions is not generally possible in Google Ads.
+
+Order matters: **fix `Purchase (2)`'s value setting first, then reconnect the channel, then test with a live order.**
 
 ## 4. What the last 30 days actually show
 
