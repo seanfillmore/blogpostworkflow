@@ -80,9 +80,19 @@ The primary action imports from GA4 and needs no page label, so the dead labels 
 
 **Zero ad conversions in 30 days is expected, not alarming.** Ads counts only ad-attributed orders. 27 clicks at a 0.82% conversion rate predicts ~0.2 orders. The 13 organic orders would never appear.
 
-### 3a. Real but lower-priority: dead page labels
+### 3a. Dead page labels — persist after reconnect, and are harmless
 
-The Shopify Google & YouTube channel still emits the old Google Shopping app's conversion labels, all of which are REMOVED in Ads:
+Sean disconnected and reconnected the Google & YouTube channel on 2026-07-26. Verified after (cache-busted, `cf-cache-status: DYNAMIC`):
+
+**Fixed by the reconnect:**
+
+| | Before | After |
+|---|---|---|
+| `google_tag_ids` | `[G-PYV4WG2QL8, GT-TBVN96Q, G-12BJ5N9FNX]` | **`[G-PYV4WG2QL8, GT-M398J7WG]`** |
+| Merchant Center | `MC-FJPZDQBF71` | `MC-R6QBET60G0` |
+| stray GA4 | present | **gone** |
+
+**Not fixed, and it will not be:** the seven Ads conversion labels are byte-identical to before, and the Ads account still holds 21 conversion actions — the reconnect created none. The channel re-provisioned its GA4/Google Tag/Merchant Center IDs but kept the conversion labels from the old Google Shopping app install:
 
 | Site event | Label | Action | Status |
 |---|---|---|---|
@@ -94,7 +104,9 @@ The Shopify Google & YouTube channel still emits the old Google Shopping app's c
 | `add_payment_info` | `crWqCKL3p5gY…` | Google Shopping App Add Payment Info | REMOVED |
 | `search` | `M484CJn3p5gY…` | Google Shopping App Search | REMOVED |
 
-Conversions sent to a removed action are discarded — but since no enabled action depends on these, the practical cost is wasted requests and a misleading page, not lost measurement. Worth cleaning by reconnecting the channel; **not a blocker for spending.**
+**Stop chasing this.** The primary conversion action `purchase` is GA4-sourced and carries no page label — it imports from GA4, so none of the above feeds it. `Purchase (2)` is secondary and excluded from the Conversions metric. The practical cost of these labels is a handful of discarded HTTP requests per pageview. Measurement is unaffected.
+
+Two further reconnect attempts have now been spent on this. Any additional effort should go to the live test order in section 7, which validates the path that actually carries the data.
 
 ### 3b. Cleanup items
 
