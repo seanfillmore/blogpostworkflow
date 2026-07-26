@@ -16,7 +16,13 @@
         "id": "pure-unscented",
         "name": "Pure Unscented",
         "shopify_option": "Pure Unscented",
-        "keywords": ["unscented", "fragrance free", "fragrance-free", "sensitive", "pure"],
+        "keywords": [
+          "unscented",
+          "fragrance free",
+          "fragrance-free",
+          "sensitive",
+          "pure"
+        ],
         "essential_oils": [],
         "image_subdir": "pure-unscented"
       },
@@ -24,32 +30,60 @@
         "id": "coconut-breeze",
         "name": "Coconut Breeze",
         "shopify_option": "Coconut Breeze",
-        "keywords": ["coconut", "coconut breeze", "coconut scent"],
-        "essential_oils": ["organic coconut oil extract"],
+        "keywords": [
+          "coconut",
+          "coconut breeze",
+          "coconut scent"
+        ],
+        "essential_oils": [
+          "organic coconut oil extract"
+        ],
         "image_subdir": "coconut-breeze"
       },
       {
         "id": "rose-petal",
         "name": "Rose Petal",
         "shopify_option": "Rose Petal",
-        "keywords": ["rose", "rose petal", "floral"],
-        "essential_oils": ["organic essential oil of rose", "organic essential oils of ylang ylang."],
+        "keywords": [
+          "rose",
+          "rose petal",
+          "floral"
+        ],
+        "essential_oils": [
+          "organic essential oil of rose",
+          "organic essential oils of ylang ylang."
+        ],
         "image_subdir": "rose-petal"
       },
       {
         "id": "lavender-and-rose",
         "name": "Lavender & Rose",
         "shopify_option": "Lavender & Rose",
-        "keywords": ["lavender rose", "lavender and rose", "floral lavender"],
-        "essential_oils": ["organic essential oil of lavender", "organic essential oil of rose", "organic essential oil of roman chamomile", "organic essential oil of geranium"],
+        "keywords": [
+          "lavender rose",
+          "lavender and rose",
+          "floral lavender"
+        ],
+        "essential_oils": [
+          "organic essential oil of lavender",
+          "organic essential oil of rose",
+          "organic essential oil of roman chamomile",
+          "organic essential oil of geranium"
+        ],
         "image_subdir": "lavender-and-rose"
       },
       {
         "id": "calming-lavender",
         "name": "Calming Lavender",
         "shopify_option": "Calming Lavender",
-        "keywords": ["lavender", "calming lavender", "lavender lotion"],
-        "essential_oils": ["organic essential oil of lavender"],
+        "keywords": [
+          "lavender",
+          "calming lavender",
+          "lavender lotion"
+        ],
+        "essential_oils": [
+          "organic essential oil of lavender"
+        ],
         "image_subdir": "calming-lavender"
       }
     ]
@@ -72,39 +106,69 @@
         "id": "coconut-breeze",
         "name": "Coconut Breeze",
         "shopify_option": "Coconut Breeze",
-        "keywords": ["coconut", "coconut breeze", "coconut moisturizer"],
-        "essential_oils": ["organic coconut oil extract"],
+        "keywords": [
+          "coconut",
+          "coconut breeze",
+          "coconut moisturizer"
+        ],
+        "essential_oils": [
+          "organic coconut oil extract"
+        ],
         "image_subdir": "coconut-breeze"
       },
       {
         "id": "lavender-and-rose",
         "name": "Lavender & Rose",
         "shopify_option": "Lavender & Rose",
-        "keywords": ["lavender rose", "lavender and rose"],
-        "essential_oils": ["organic essential oil of lavender", "organic essential oil of rose", "organic essential oil of roman chamomile", "organic essential oil of geranium"],
+        "keywords": [
+          "lavender rose",
+          "lavender and rose"
+        ],
+        "essential_oils": [
+          "organic essential oil of lavender",
+          "organic essential oil of rose",
+          "organic essential oil of roman chamomile",
+          "organic essential oil of geranium"
+        ],
         "image_subdir": "lavender-and-rose"
       },
       {
         "id": "calming-lavender",
         "name": "Calming Lavender",
         "shopify_option": "Calming Lavender",
-        "keywords": ["lavender", "calming lavender"],
-        "essential_oils": ["organic essential oil of lavender"],
+        "keywords": [
+          "lavender",
+          "calming lavender"
+        ],
+        "essential_oils": [
+          "organic essential oil of lavender"
+        ],
         "image_subdir": "calming-lavender"
       },
       {
         "id": "rose-petal",
         "name": "Rose Petal",
         "shopify_option": "Rose Petal",
-        "keywords": ["rose", "rose petal", "rose cream"],
-        "essential_oils": ["organic essential oil of rose", "organic essential oils of ylang ylang."],
+        "keywords": [
+          "rose",
+          "rose petal",
+          "rose cream"
+        ],
+        "essential_oils": [
+          "organic essential oil of rose",
+          "organic essential oils of ylang ylang."
+        ],
         "image_subdir": "rose-petal"
       },
       {
         "id": "pure-unscented",
         "name": "Pure Unscented",
         "shopify_option": "Pure Unscented",
-        "keywords": ["unscented", "fragrance free", "sensitive skin cream"],
+        "keywords": [
+          "unscented",
+          "fragrance free",
+          "sensitive skin cream"
+        ],
         "essential_oils": [],
         "image_subdir": "pure-unscented"
       }
@@ -122,31 +186,58 @@
         "id": "calming-lavender",
         "name": "Calming Lavender",
         "shopify_option": "Calming Lavender",
-        "keywords": ["lavender", "calming lavender", "lavender soap"],
-        "essential_oils": ["organic essential oil of lavender"],
+        "keywords": [
+          "lavender",
+          "calming lavender",
+          "lavender soap"
+        ],
+        "essential_oils": [
+          "organic essential oil of lavender"
+        ],
         "image_subdir": "calming-lavender"
       },
       {
         "id": "nourishing-tea-tree",
         "name": "Nourishing Tea Tree",
         "shopify_option": "Nourishing Tea Tree",
-        "keywords": ["tea tree", "nourishing tea tree", "tea tree soap", "acne", "antibacterial"],
-        "essential_oils": ["organic essential oil of tea tree"],
+        "keywords": [
+          "tea tree",
+          "nourishing tea tree",
+          "tea tree soap",
+          "acne",
+          "antibacterial"
+        ],
+        "essential_oils": [
+          "organic essential oil of tea tree"
+        ],
         "image_subdir": "nourishing-tea-tree"
       },
       {
         "id": "refreshing-lemongrass",
         "name": "Refreshing Lemongrass",
         "shopify_option": "Refreshing Lemongrass",
-        "keywords": ["lemongrass", "refreshing lemongrass", "lemongrass soap", "citrus"],
-        "essential_oils": ["organic essential oil of lemongrass", "organic essential oil of tea tree"],
+        "keywords": [
+          "lemongrass",
+          "refreshing lemongrass",
+          "lemongrass soap",
+          "citrus"
+        ],
+        "essential_oils": [
+          "organic essential oil of lemongrass",
+          "organic essential oil of tea tree"
+        ],
         "image_subdir": "refreshing-lemongrass"
       },
       {
         "id": "pure-unscented",
         "name": "Pure Unscented",
         "shopify_option": "Pure Unscented",
-        "keywords": ["unscented", "fragrance free", "pure unscented soap", "sensitive"],
+        "keywords": [
+          "unscented",
+          "fragrance free",
+          "pure unscented soap",
+          "sensitive"
+        ],
         "essential_oils": [],
         "image_subdir": "pure-unscented"
       }
@@ -164,31 +255,59 @@
         "id": "orange-zest",
         "name": "Orange Zest",
         "shopify_option": "Orange Zest",
-        "keywords": ["orange", "orange zest", "citrus", "orange soap"],
-        "essential_oils": ["organic essential oil of orange", "organic essential oil of bergamot", "organic essential oil of spearmint", "organic essential oil of lemon", "organic essential oil of grapefruit"],
+        "keywords": [
+          "orange",
+          "orange zest",
+          "citrus",
+          "orange soap"
+        ],
+        "essential_oils": [
+          "organic essential oil of orange",
+          "organic essential oil of bergamot",
+          "organic essential oil of spearmint",
+          "organic essential oil of lemon",
+          "organic essential oil of grapefruit"
+        ],
         "image_subdir": "orange-zest"
       },
       {
         "id": "coconut-breeze",
         "name": "Coconut Breeze",
         "shopify_option": "Coconut Breeze",
-        "keywords": ["coconut", "coconut breeze", "coconut soap"],
-        "essential_oils": ["organic coconut oil extract"],
+        "keywords": [
+          "coconut",
+          "coconut breeze",
+          "coconut soap"
+        ],
+        "essential_oils": [
+          "organic coconut oil extract"
+        ],
         "image_subdir": "coconut-breeze"
       },
       {
         "id": "calming-lavender",
         "name": "Calming Lavender",
         "shopify_option": "Calming Lavender",
-        "keywords": ["lavender", "calming lavender", "lavender soap"],
-        "essential_oils": ["organic essential oil of lavender"],
+        "keywords": [
+          "lavender",
+          "calming lavender",
+          "lavender soap"
+        ],
+        "essential_oils": [
+          "organic essential oil of lavender"
+        ],
         "image_subdir": "calming-lavender"
       },
       {
         "id": "pure-unscented",
         "name": "Pure Unscented",
         "shopify_option": "Pure Unscented",
-        "keywords": ["unscented", "fragrance free", "pure", "sensitive skin soap"],
+        "keywords": [
+          "unscented",
+          "fragrance free",
+          "pure",
+          "sensitive skin soap"
+        ],
         "essential_oils": [],
         "image_subdir": "pure-unscented"
       }
@@ -211,7 +330,11 @@
         "id": "geranium-flower",
         "name": "Geranium Flower",
         "shopify_option": "Geranium Flower",
-        "keywords": ["geranium", "geranium flower", "floral deodorant"],
+        "keywords": [
+          "geranium",
+          "geranium flower",
+          "floral deodorant"
+        ],
         "essential_oils": [
           "organic essential oil of geranium",
           "organic essential oil of cedarwood",
@@ -224,24 +347,51 @@
         "id": "calming-lavender",
         "name": "Calming Lavender",
         "shopify_option": "Calming Lavender",
-        "keywords": ["lavender", "calming lavender", "lavender deodorant"],
-        "essential_oils": ["organic essential oil of lavender", "organic essential oil of lemon", "organic essential oil of rosemary"],
+        "keywords": [
+          "lavender",
+          "calming lavender",
+          "lavender deodorant"
+        ],
+        "essential_oils": [
+          "organic essential oil of lavender",
+          "organic essential oil of lemon",
+          "organic essential oil of rosemary"
+        ],
         "image_subdir": "calming-lavender"
       },
       {
         "id": "mountain-cedarwood",
         "name": "Mountain Cedarwood",
         "shopify_option": "Mountain Cedarwood",
-        "keywords": ["cedarwood", "cedar", "mountain cedarwood", "woodsy", "men deodorant", "men's deodorant"],
-        "essential_oils": ["organic essential oil of cedarwood", "organic essential oil of geranium", "organic essential oil of patchouli", "organic essential oil of tea tree"],
+        "keywords": [
+          "cedarwood",
+          "cedar",
+          "mountain cedarwood",
+          "woodsy",
+          "men deodorant",
+          "men's deodorant"
+        ],
+        "essential_oils": [
+          "organic essential oil of cedarwood",
+          "organic essential oil of geranium",
+          "organic essential oil of patchouli",
+          "organic essential oil of tea tree"
+        ],
         "image_subdir": "mountain-cedarwood"
       },
       {
         "id": "wildcrafted-frankincense",
         "name": "Wildcrafted Frankincense",
         "shopify_option": "Wildcrafted Frankincence",
-        "keywords": ["frankincense", "wildcrafted frankincense", "frankincense deodorant"],
-        "essential_oils": ["organic essential oil of frankincense", "organic essential oil of sandalwood"],
+        "keywords": [
+          "frankincense",
+          "wildcrafted frankincense",
+          "frankincense deodorant"
+        ],
+        "essential_oils": [
+          "organic essential oil of frankincense",
+          "organic essential oil of sandalwood"
+        ],
         "image_subdir": "wildcrafted-frankincense"
       }
     ]
@@ -260,31 +410,57 @@
         "id": "vanilla-dream",
         "name": "Vanilla Dream",
         "shopify_option": "Vanilla Dream",
-        "keywords": ["vanilla", "vanilla dream", "vanilla lip balm"],
-        "essential_oils": ["organic vanilla extract"],
+        "keywords": [
+          "vanilla",
+          "vanilla dream",
+          "vanilla lip balm"
+        ],
+        "essential_oils": [
+          "organic vanilla extract"
+        ],
         "image_subdir": "vanilla-dream"
       },
       {
         "id": "sweet-tangerine",
         "name": "Sweet Tangerine",
         "shopify_option": "Sweet Tangerine",
-        "keywords": ["tangerine", "sweet tangerine", "citrus lip balm", "orange lip balm"],
-        "essential_oils": ["organic essential oil of tangerine", "organic essential oil of orange", "organic essential oil of lemon"],
+        "keywords": [
+          "tangerine",
+          "sweet tangerine",
+          "citrus lip balm",
+          "orange lip balm"
+        ],
+        "essential_oils": [
+          "organic essential oil of tangerine",
+          "organic essential oil of orange",
+          "organic essential oil of lemon"
+        ],
         "image_subdir": "sweet-tangerine"
       },
       {
         "id": "coconut-breeze",
         "name": "Coconut Breeze",
         "shopify_option": "Coconut Breeze",
-        "keywords": ["coconut", "coconut breeze", "coconut lip balm"],
-        "essential_oils": ["organic coconut oil extract"],
+        "keywords": [
+          "coconut",
+          "coconut breeze",
+          "coconut lip balm"
+        ],
+        "essential_oils": [
+          "organic coconut oil extract"
+        ],
         "image_subdir": "coconut-breeze"
       },
       {
         "id": "pure-unscented",
         "name": "Pure Unscented",
         "shopify_option": "Pure Unscented",
-        "keywords": ["unscented", "fragrance free", "plain lip balm", "sensitive lips"],
+        "keywords": [
+          "unscented",
+          "fragrance free",
+          "plain lip balm",
+          "sensitive lips"
+        ],
         "essential_oils": [],
         "image_subdir": "pure-unscented"
       }
@@ -307,7 +483,14 @@
         "id": "fresh-mint",
         "name": "Fresh Mint",
         "shopify_option": "Fresh Mint",
-        "keywords": ["mint", "peppermint", "spearmint", "fresh mint", "coconut mint", "minty"],
+        "keywords": [
+          "mint",
+          "peppermint",
+          "spearmint",
+          "fresh mint",
+          "coconut mint",
+          "minty"
+        ],
         "essential_oils": [
           "organic essential oil of peppermint",
           "organic essential oil of spearmint"
@@ -318,17 +501,32 @@
         "id": "all-natural",
         "name": "All Natural",
         "shopify_option": "All Natural",
-        "keywords": ["all natural", "unflavored", "plain toothpaste", "no flavor"],
-        "essential_oils": ["organic essential oil of peppermint",
-          "organic essential oil of spearmint","organic essential oil of cinnamon",
-          "organic essential oil of clove"],
-        "image_subdir": "all-natural"
+        "keywords": [
+          "all natural",
+          "mint and spice toothpaste",
+          "cinnamon clove mint",
+          "herbal toothpaste"
+        ],
+        "essential_oils": [
+          "organic essential oil of peppermint",
+          "organic essential oil of spearmint",
+          "organic essential oil of cinnamon",
+          "organic essential oil of clove"
+        ],
+        "image_subdir": "all-natural",
+        "flavor_note": "Despite the name, this is the MOST flavoured of the three: peppermint, spearmint, cinnamon and clove. It is not unflavoured. There is no unflavoured toothpaste in the range."
       },
       {
         "id": "cinnamon-spice",
         "name": "Cinnamon Spice",
         "shopify_option": "Cinnamon Spice",
-        "keywords": ["cinnamon", "cinnamon spice", "cinnamon toothpaste", "clove", "spice"],
+        "keywords": [
+          "cinnamon",
+          "cinnamon spice",
+          "cinnamon toothpaste",
+          "clove",
+          "spice"
+        ],
         "essential_oils": [
           "organic essential oil of cinnamon",
           "organic essential oil of clove"
