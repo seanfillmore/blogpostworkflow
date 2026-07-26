@@ -291,3 +291,55 @@ Zero leaked tokens on either.
 ### Still template-level
 
 `collapsible-content` (8 FAQ blocks), `compare-table` (7 rows) and `why-it-works` (4 blocks) remain shared prose. They are below the fold and generic enough to survive two bundles, but a third with a materially different story will need them moved to the metaobject too.
+
+
+---
+
+# Round 3 — the template got simpler instead of smarter
+
+An audit found **12 of 17 sections carried bundle-specific content**. Metaobject-ising all of them would have meant authoring twelve sections per new bundle — that is writing a landing page each time, which is exactly what a shared template was meant to avoid.
+
+Sean's call: cut the page down. **17 sections → 7.**
+
+| Kept | Why |
+|---|---|
+| `hero` | metaobject-driven, per-bundle |
+| `main` | buy box: price, kit picker, contents panel, value stack, note field |
+| `whats-in-it` | **new** — component-driven, see below |
+| `free-from-block` | ingredient claims |
+| Judge.me reviews | 131 reviews, 4.9 |
+| `collapsible-content` | FAQ |
+| `final-cta-strip` | closing CTA |
+
+Dropped: `hook-rich-text`, `hero-ingredient-cards`, `founder-block`, `loox-product-reviews-app-section`, `why-it-works`, `stats-hero`, `stats-row`, `judgeme_carousel_cream`, `ugc-photos`, `compare-table-styles`, `compare-table`. Template went 51 KB → 32 KB. The full 17-section version is backed up at `~/Backups/shopify/bundle-landing-17section-2026-07-26.json`.
+
+**`free-from-block` was kept against the "six sections" brief, deliberately.** It is *"What's NOT in any bottle or jar"* — mineral oil, petrolatum, parabens, synthetic fragrance, SLS. The Amazon SQP data in [`bundle-strategy-handoff.md`](./bundle-strategy-handoff.md) shows ingredient-led queries (`paraben chemical free body lotion`, `severe dry skin lotion free of petroleum chemicals`) converting at full price with no discount pressure. It is also brand-level, so it costs nothing per bundle.
+
+## `whats-in-it` — driven by component references, not image slots
+
+The old `why-it-works` had `image_1` / `image_2` / `image_3` as **section settings**: template-level, so shared across bundles, and hard-capped at three slots. The Clean Swap has four products. No amount of metaobject work fixes a hardcoded slot count.
+
+Replaced with a `custom-liquid` section looping three product metafields:
+
+| Metafield | Type | Role |
+|---|---|---|
+| `bundle.components` | `list.product_reference` | which products, in display order |
+| `bundle.component_qty` | `list.number_integer` | index-aligned quantities |
+| `bundle.short_name` | `single_line_text_field` (on each component product) | card label |
+
+Each card pulls its **own featured image** from the component product, so:
+
+- the card count is always the real component count — 2 for the Reset, 4 for the Clean Swap
+- product photos can never go stale; change one and every bundle lander follows
+- authoring is picking products, not managing image assets
+
+`short_name` exists because the real titles are SEO-shaped — *"Non-Toxic Body Lotion Made With Only 6 Clean Ingredients"* is correct for search and unusable on a card. Set once per product, reused by every bundle.
+
+**Verified:**
+
+```
+Reset       2 products, 90 days.   3 × Body Lotion · 1 × Body Cream
+Clean Swap  4 products, 90 days.   3 × Body Lotion · 3 × Deodorant · 3 × Toothpaste · 3 × Bar Soap
+```
+
+**Known fragility:** `component_qty` is index-aligned with `components` — reorder one without the other and quantities silently attach to the wrong product. Worth folding into `verify-bundle-contents.mjs`.
