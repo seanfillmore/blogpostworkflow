@@ -83,7 +83,8 @@
     "archive-snapshots": "bash scripts/archive-snapshots.sh",
     "backup-snapshots-offsite": "bash scripts/backup-snapshots-offsite.sh",
     "recurpay-audit": "node scripts/recurpay-audit.mjs",
-    "recurpay-solo-economics": "node scripts/recurpay-solo-economics.mjs"
+    "recurpay-solo-economics": "node scripts/recurpay-solo-economics.mjs",
+    "verify-bundle-contents": "node scripts/verify-bundle-contents.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
