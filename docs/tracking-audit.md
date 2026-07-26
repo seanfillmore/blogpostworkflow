@@ -22,13 +22,27 @@ Identical on the homepage, a PDP and a collection page — so it's site-wide, no
 
 **Correction to the prior record.** An earlier audit recorded that GA4 `…QL8` double-fires via "the channel integration plus a hardcoded theme gtag." That is wrong. All 241 liquid/js theme assets were scanned: **there is no hardcoded Google tag or `gtag(` call anywhere in the theme.** The duplication is two GA4 properties listed in one integration — which matters, because the fix is a channel setting, not a theme edit.
 
-## 2. Two GA4 properties collect every event
+## 2. `G-12BJ5N9FNX` is still an active event destination
 
-`G-PYV4WG2QL8` and `G-12BJ5N9FNX` both fire on every pageview. Whatever either reports, sessions and events are being collected twice across two properties.
+Re-verified 2026-07-26 02:53 UTC with a cache-busted request returning `cf-cache-status: DYNAMIC` — a fresh origin response, not a CDN copy. Sean removed this property on Google's side earlier the same day; **the Shopify channel config did not follow.**
 
-We report on property `358754048` (`GOOGLE_ANALYTICS_PROPERTY_ID`). **Which measurement ID belongs to it cannot currently be determined** — see the blocker in section 5.
+The ID appears in two distinct functional roles:
 
-This is the most likely explanation for GA4 disagreeing with reality: true CVR is 0.82% measured from Shopify orders, and GA4 reports something else. See [`bundle-marketing-plan.md`](./bundle-marketing-plan.md) §5 for why the AOV baseline was rebuilt from raw orders rather than GA4.
+1. In **`google_tag_ids`** — the array gtag initializes.
+2. As an **`action_label` destination** on seven events: `search`, `begin_checkout`, `view_item`, **`purchase`**, `page_view`, `add_payment_info`, `add_to_cart`.
+
+The second is what matters. This is not a stale identifier parked in a list — it is a live recipient. A purchase currently routes to `G-PYV4WG2QL8`, `AW-10923654107/C8Az…`, `MC-FJPZDQBF71` **and** `G-12BJ5N9FNX`.
+
+**Removing a property in GA4, or unlinking a destination from the Google Tag (`GT-TBVN96Q`), does not rewrite Shopify's `google_tag_ids`.** They are separate systems. The fix belongs in **Shopify admin → Sales channels → Google & YouTube → Settings**, which is what emits config blob `id: 390103210`.
+
+**Open question, and it changes the severity:** whether `G-12BJ5N9FNX` still exists as a property.
+
+- If it was deleted — the tag still loads and still issues requests, but they land nowhere. Noise and wasted requests, no double-counting.
+- If it still exists — every event is counted twice.
+
+This cannot be answered while the GA4 Admin API is disabled (section 5), which is what makes enabling it the highest-value click available.
+
+We report on property `358754048` (`GOOGLE_ANALYTICS_PROPERTY_ID`); which measurement ID maps to it is blocked by the same thing.
 
 ## 3. Google Ads conversion actions — 21, and the enabled ones conflict
 
