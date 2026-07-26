@@ -238,7 +238,11 @@ Two related numbers worth carrying forward, both from the same pull:
 
 This is consistent with how each is positioned in section 3, but it means **the monthly review must segment AOV by whether an order contained an accretive bundle.** A blended AOV number will show the Bar Soap 4-Pack succeeding as a failure.
 
-**Fix the snapshot job.** `data/snapshots/shopify/` stops at 2026-03-23 and its recent entries are zeros, so the daily feed contributed nothing to answering this. That is worth repairing on its own — a stale metrics feed is how two contradictory numbers survived on record for months.
+**The daily snapshot feed is healthy — read it on the server, not in your checkout.** `data/snapshots/` is gitignored and written by cron on the production box. The shopify feed has 112 days through 2026-07-24 and reconciles to the cent against a direct order pull (07-13: 2 orders/$82.83; 07-16: 1/$58.52; 07-17: 1/$132.00; 07-19: 2/$75.18; 07-20 through 07-24 genuinely had no orders). Zero-order days are real, not gaps — the store averages ~0.5 orders/day.
+
+A local checkout showing six files ending 2026-03-23 is the expected state and is **not** evidence of a broken collector. Those six were committed once before the ignore rule took effect and then froze, which made a healthy feed look dead. They have been untracked so the directory is uniformly ignored.
+
+**Judge feed health on the server:** `ssh root@137.184.119.230 'ls -t ~/seo-claude/data/snapshots/shopify | head'`.
 
 **Kill criteria.** A bundle is retired if, after 90 days live with its assets actually built:
 
