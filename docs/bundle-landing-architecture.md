@@ -89,16 +89,42 @@ Replace `product.landing-page-99-coconut-reset` with **`product.bundle-landing`*
 
 Bundle #2 through #8 then need **data entry, not a new template**. That is the whole return on this work — and it needs doing before bundle #2, because that is when the copy-paste cost becomes real.
 
+## Platform constraint: Liquid only runs in `custom_liquid`
+
+Verified on this theme — the only settings containing Liquid are the three `custom_liquid` blocks. Rich-text, multicolumn and heading settings render their value **verbatim**, so `{{ ... }}` in them prints rather than computes.
+
+That is precisely how the drift happened: `compareAtPrice` was data and updated itself; the hero's `$158` was a rich-text string and did not.
+
+So the migration splits in two:
+
+- **Computed** — `main.value-stack` and `main.bundle-savings` are `custom_liquid`, and now loop the metafield and **sum** the total. Nothing is asserted.
+- **Generated** — three settings display a price and cannot evaluate Liquid: `hero.bullet-2`, `stats-row.stat-3`, `final-cta-strip.fc-text`. `scripts/build-bundle-landing.mjs` rewrites their price tokens from the same metafield.
+
+The generator substitutes **price tokens only** — prose is human-authored and survives untouched. An earlier version rebuilt whole sentences and would have silently replaced the copy; that was caught in dry-run and fixed.
+
+Treat those three settings as generated output, like `docs/bundle-economics.md`. **Don't hand-edit them in the theme editor** — run the script, or the next edit reintroduces the drift.
+
+```bash
+node scripts/build-bundle-landing.mjs 99-coconut-reset-digital          # dry run
+node scripts/build-bundle-landing.mjs 99-coconut-reset-digital --apply  # push
+```
+
 ## Migration order
 
-1. Create the metafield definitions (`bundle` namespace, product owner type).
-2. Populate them for the Reset from the values already in its template.
-3. Fork `product.landing-page-99-coconut-reset` → `product.bundle-landing`, swapping literals for the metafield renders above. Compare rendered output against the current page — it should be pixel-identical.
-4. Point the Reset at the new template. Verify, then delete the old one.
-5. Write `product.description` and the SEO fields.
-6. Build bundle #2 by populating metafields only.
+**Done for the Reset, 2026-07-26:**
 
-Step 3 is the real work; steps 1–2 are mechanical; step 6 is the payoff.
+1. ✅ Metafield definitions created (`bundle` namespace, product owner).
+2. ✅ Populated for the Reset from its existing template values — sums to $158, savings $59, matching the page exactly.
+3. ✅ Forked to `product.bundle-landing`, computed blocks loop and sum the metafield.
+4. ✅ Reset points at the new template. Live output verified identical to the hand-built version.
+5. ✅ `product.description`, SEO title/description, Google category, productType, tags and SKUs all populated.
+
+**Verified the generator actually works** rather than trusting a no-op: temporarily set the stack to $160, confirmed all three literals were flagged with the prose intact, then restored to $158.
+
+**Still to do:**
+
+6. Build bundle #2 by populating metafields only — that is the payoff, and the first real test of whether the template generalises.
+7. Delete `templates/product.landing-page-99-coconut-reset.json` once bundle #2 confirms the shared template holds. Kept for now as a rollback path.
 
 ## Gotchas
 
