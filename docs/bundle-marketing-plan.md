@@ -28,7 +28,7 @@ Nine of eleven bundles clear $45 unaided. Freight is paid once per order regardl
 
 **4. Retention is the constraint, not traffic — and that is also what the tracking gate permits.**
 
-Repeat rate is 18%; repeat buyers are 45% of revenue. The highest-confidence bundle revenue available right now is owned-audience and replenishment, not acquisition. That happens to align with the `Tracking → CRO → Offer/AOV → Traffic` sequence: **paid acquisition is held for every bundle until GA4/Ads tracking is trustworthy**, regardless of how good the contribution math looks. Bundles at ≥2× CAC are marked paid-*eligible* below, meaning they go live on paid the moment the gate clears — not before.
+22.5% of customers repeat and they produce 52.0% of revenue, at a $52.10 AOV against $39.44 for one-time buyers (measured 2026-07-25, section 5). The highest-confidence bundle revenue available right now is owned-audience and replenishment, not acquisition. That happens to align with the `Tracking → CRO → Offer/AOV → Traffic` sequence: **paid acquisition is held for every bundle until GA4/Ads tracking is trustworthy**, regardless of how good the contribution math looks. Bundles at ≥2× CAC are marked paid-*eligible* below, meaning they go live on paid the moment the gate clears — not before.
 
 ---
 
@@ -204,12 +204,41 @@ Two standing prohibitions, both already costing money:
 
 | Metric | Baseline | Why it's the right measure |
 |---|---|---|
-| AOV | ⚠️ **unresolved — see below** | Bundles are an AOV instrument first. This is the headline. |
-| Repeat rate | 18% | Retention is the constraint. The Reset and Bar Soap 4-Pack are aimed squarely here. |
+| AOV | **$50.46** (trailing 90d, 49 orders) | Bundles are an AOV instrument first. This is the headline. |
+| Repeat rate | **22.5%** of customers, **52.0%** of revenue (trailing 365d) | Retention is the constraint. The Reset and Bar Soap 4-Pack are aimed squarely here. |
 | Bundle share of orders | establish at launch | If bundles aren't displacing single-SKU orders, the merchandising isn't working. |
 | Contribution per order | per `bundle-economics.md` | Dollars, not clicks. |
 
-⚠️ **The AOV baseline has to be re-established from Shopify orders before this plan can be judged.** Two figures are on record from prior work — ~$19 and ~$46 — and they cannot both be the current all-orders AOV. The `data/snapshots/shopify/` series is stale (last file 2026-03-23, and the recent entries are zeros), so it can't settle the question either. Since AOV is the headline metric for the entire bundle thesis, measuring it against the wrong baseline would make a successful launch look flat or a flat one look successful. Pull it directly from Shopify orders for a defined trailing window, record the window alongside the number, and fix the snapshot job — a stale metrics feed is how this went ambiguous in the first place.
+### The AOV baseline, settled
+
+Measured 2026-07-25 from a full paginated pull of every Shopify order — `node scripts/aov-analysis.mjs [days]`.
+
+| Window | Orders | AOV |
+|---|--:|--:|
+| Last 30 days | 13 | $55.65 |
+| **Last 90 days** | **49** | **$50.46** |
+| Last 180 days | 104 | $48.95 |
+| Last 365 days | 182 | $45.14 |
+
+**Use $50.46 as the pre-bundle baseline**, with the trailing-365 figure of $45.14 as the conservative comparator. The 90-day window is the right one because the store has a structural break: AOV ran high-$20s to low-$30s through mid-2025 and stepped to the mid-$40s from September 2025 onward, where it has stayed for eleven straight months. Averaging across that break produces a number describing no actual period. The 90-day window is also almost entirely *before* the $45 free-shipping threshold went live on 2026-07-25, so it is a clean pre-treatment baseline. Caveat honestly: 49 orders is small, so read monthly AOV as a trend, never a single month as a verdict.
+
+**Both figures on record were right, about different things.** $19 is real — it is May–June 2024, when the store did 297 orders at ~$19.3. June 2024 alone was 239 orders, **37% of every order in the store's history**, so any all-time average is still dragged down to roughly $19 by one promotional month more than two years old. ~$46 is the current business. The trap is that `lib/shopify.js getOrders()` caps at `limit=250` with no Link-header pagination, so any query spanning that spike either truncates or silently over-weights it. `scripts/aov-analysis.mjs` paginates properly, which is why it can separate the two.
+
+Two related numbers worth carrying forward, both from the same pull:
+
+- **Repeat is stronger than recorded.** 22.5% of customers repeat (not 18%) and they produce 52.0% of revenue (not 45%), at a $52.10 AOV against $39.44 for one-time buyers. Retention being the constraint is *more* true than the earlier figures suggested, not less.
+- **16.5% of orders are comped** — 36 of 218 in the last year, at $0.00. Combined with the handoff's finding that comped orders average $8.81 freight versus $7.33 overall, that is roughly $317/yr of pure freight cost. Excluding them is why the "all orders" AOV reads $38.04 against the true $45.14; any AOV number quoted without saying whether comps are in is unusable.
+
+### What this changes about the plan
+
+**AOV is already ~$50, which reprices what each bundle is actually for.** A bundle below the current AOV cannot be an AOV instrument — it *dilutes* the average even while selling well.
+
+- **AOV-accretive** (above $50.46): 90-Day Clean Swap $159, Head-to-Toe $105, 90-Day Coconut Reset $99, Pump 4-pack + Lotion $72, Gift Box $62, The Clean Swap $59, Pump 3-pack + Lotion $59.
+- **Not AOV instruments** (at or below baseline): Sensitive Skin Set $46.80, Pump 4-pack $44, Two-Step $39.99, Bar Soap 4-Pack $39. These are first-order conversion and retention plays, and they should be judged on repeat rate and attach rate — never on AOV, which they will correctly appear to hurt.
+
+This is consistent with how each is positioned in section 3, but it means **the monthly review must segment AOV by whether an order contained an accretive bundle.** A blended AOV number will show the Bar Soap 4-Pack succeeding as a failure.
+
+**Fix the snapshot job.** `data/snapshots/shopify/` stops at 2026-03-23 and its recent entries are zeros, so the daily feed contributed nothing to answering this. That is worth repairing on its own — a stale metrics feed is how two contradictory numbers survived on record for months.
 
 **Kill criteria.** A bundle is retired if, after 90 days live with its assets actually built:
 
