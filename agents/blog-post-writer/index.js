@@ -23,6 +23,7 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { sliceVocSections, BLOG_VOC_HEADINGS } from '../../lib/voice-of-customer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
@@ -71,10 +72,16 @@ function loadAgentFeedback(agentName) {
 /**
  * Load the voice-of-customer research written by agents/voice-of-customer.
  * Returns '' when absent so the writer behaves exactly as before the first run.
+ *
+ * Only BLOG_VOC_HEADINGS reaches this consumer. The full doc also contains
+ * "Who we're not for" (a disqualifier meant for the ad and PDP consumers) and
+ * "Source notes" — neither belongs in a post that flows calendar-runner →
+ * editor → publisher with no human in the loop.
  */
 function loadVoiceOfCustomer() {
   try {
-    return readFileSync(join(ROOT, 'data', 'context', 'voice-of-customer.md'), 'utf8').trim();
+    const raw = readFileSync(join(ROOT, 'data', 'context', 'voice-of-customer.md'), 'utf8');
+    return sliceVocSections(raw, BLOG_VOC_HEADINGS).trim();
   } catch { return ''; }
 }
 
@@ -240,9 +247,17 @@ FORMAT OVERRIDE (${format}) — this changes the shape of the "CONTENT SECTIONS"
 ${fmtBody}` : '';
   const feedback = loadAgentFeedback('blog-post-writer');
   const voc = loadVoiceOfCustomer();
-  const vocBlock = voc
-    ? `\n\nVOICE OF CUSTOMER — real objections, phrases and triggers from our own reviews, Reddit and Google. Open the post by naming the objection the reader actually has, and prefer this customer language over invented phrasing:\n\n${voc}`
-    : '';
+  const vocBlock = voc ? `
+
+═══════════════════════════════════
+VOICE OF CUSTOMER (internal research — NOT source material to quote)
+═══════════════════════════════════
+Real objections, phrases and triggers mined from reviews and outside discussion. Use them only to anticipate the hesitation a reader brings to this CATEGORY, so the post answers it instead of ignoring it.
+- Never quote, paraphrase closely, or reproduce any line below in the post.
+- Never restate a complaint about our own products as fact — these are individual opinions, not findings.
+- Address the underlying worry in your own words, in the brand voice.
+
+${voc}` : '';
   const ingredientList = productIngredients.ingredients.join(', ');
   const formatNote = productIngredients.format
     ? `\nProduct format: ${productIngredients.format} — always describe this product using the correct format name (e.g. "${productIngredients.format}"), never as a different format (e.g. "stick", "bar", "cream" unless that is the actual format).`

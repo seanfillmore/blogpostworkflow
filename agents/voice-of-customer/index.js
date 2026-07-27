@@ -34,6 +34,7 @@ import {
   dedupeRecords,
   filterSkinCluster,
   validateAnalysis,
+  findUnsourcedQuotes,
   rankPersonas,
   renderPersonasMarkdown,
   renderVoiceOfCustomerMarkdown,
@@ -46,12 +47,22 @@ const CONTEXT_DIR = join('data', 'context');
 
 const MODEL = 'claude-opus-5';
 
-/** Where the objections actually live — our own reviews are 4.68 stars. */
+/**
+ * Where the objections actually live — our own reviews are 4.68 stars.
+ *
+ * These run against Tavily scoped to REDDIT_DOMAINS. The queries used to carry
+ * a literal "reddit " prefix instead, which is a search term and not a filter:
+ * it pulled back the Reddit Wikipedia article, the Reddit iOS App Store page
+ * and YouTube videos, all of which the analysis prompt then weighted as forum
+ * friction. Broad-web coverage comes from the DataForSEO SERP pass below.
+ */
+export const REDDIT_DOMAINS = ['reddit.com'];
+
 export const EXTERNAL_QUERIES = [
-  'reddit natural deodorant coconut oil lotion does it actually work',
-  'reddit coconut oil lotion clogged pores breakout',
-  'reddit sensitive skin natural lotion eczema what worked',
-  'reddit natural bar soap dry skin stripping',
+  'natural deodorant coconut oil lotion does it actually work',
+  'coconut oil lotion clogged pores breakout',
+  'sensitive skin natural lotion eczema what worked',
+  'natural bar soap dry skin stripping',
   'is coconut oil lotion worth it review complaints',
   'natural body lotion greasy absorbs slowly problem',
 ];
@@ -106,14 +117,28 @@ export async function collectCorpus({ env, root = ROOT, deps = {} } = {}) {
     console.warn('  no TAVILY_API_KEY — skipping Reddit collection');
     partial = true;
   } else {
+    // lib/tavily.js swallows every failure and returns [] — a bad key, a 401 or
+    // a network outage all look like "no results". So the honest signal is the
+    // record count, not an exception. The try/catch stays for a future
+    // implementation that throws.
+    let tavilyRecords = 0;
     for (const query of EXTERNAL_QUERIES) {
       try {
-        const results = await searchTavily(tavilyKey, query, { maxResults: 6 });
-        records.push(...(results || []).map(normalizeTavilyResult));
+        const results = await searchTavily(tavilyKey, query, {
+          maxResults: 6,
+          includeDomains: REDDIT_DOMAINS,
+        });
+        const mapped = (results || []).map(normalizeTavilyResult);
+        tavilyRecords += mapped.length;
+        records.push(...mapped);
       } catch (err) {
         console.warn(`  tavily "${query}" failed: ${err.message}`);
         partial = true;
       }
+    }
+    if (tavilyRecords === 0) {
+      console.warn('  tavily returned 0 records across all queries — treating the corpus as partial');
+      partial = true;
     }
   }
 
@@ -224,12 +249,13 @@ export function buildAnalysisPrompt(corpus) {
     '',
     'Each record is labelled with its source:',
     '  judgeme — one of our own verified customer reviews (survivor-biased, 4.68 avg)',
-    '  reddit  — an outside discussion thread (where the real objections live)',
+    '  reddit  — an outside discussion thread on reddit.com (where the real objections live)',
+    '  web     — another outside page returned by the same search; weigh it on its merits',
     '  serp    — a Google page-1 result a first-time buyer would hit',
     '',
     'Produce:',
     '  1. personas — 3 to 5 distinct buyer personas, each with 2-3 angles.',
-    '  2. objections — what stops people buying. Weight the reddit and serp records',
+    '  2. objections — what stops people buying. Weight the outside records (reddit, web, serp)',
     '     heavily here; our own reviews are from people who already bought and stayed.',
     '  3. golden_nugget_phrases — striking customer language worth putting in an ad verbatim.',
     '  4. trigger_points — what makes someone finally buy.',
@@ -293,7 +319,16 @@ export async function runAnalysis({ corpus, client, root = ROOT }) {
     }
 
     const check = validateAnalysis(parsed);
-    if (check.ok) return { analysis: parsed, partial: corpus.partial };
+    if (check.ok) {
+      // Provenance is structural, not a matter of the model having obeyed the
+      // prompt: every quote must be findable in the corpus we handed it.
+      const unsourced = findUnsourcedQuotes(parsed, corpus);
+      if (unsourced.length === 0) return { analysis: parsed, partial: corpus.partial };
+      lastErrors = unsourced.map((u) => `unsourced quote at ${u.location}: "${u.quote}"`);
+      console.warn(`  attempt ${attempt} produced ${unsourced.length} unsourced quote(s):`);
+      unsourced.forEach((u) => console.warn(`    ${u.location}: "${u.quote}"`));
+      continue;
+    }
     lastErrors = check.errors;
     console.warn(`  attempt ${attempt} failed validation: ${check.errors.slice(0, 3).join('; ')}`);
   }
@@ -320,9 +355,16 @@ export function writeArtifacts({ analysis, corpus, root = ROOT }) {
   const personasMdPath = join(contextDir, 'personas.md');
   const vocMdPath = join(contextDir, 'voice-of-customer.md');
 
-  writeFileSync(personasJsonPath, JSON.stringify(personasJson, null, 2), 'utf8');
-  writeFileSync(personasMdPath, renderPersonasMarkdown(analysis), 'utf8');
-  writeFileSync(vocMdPath, renderVoiceOfCustomerMarkdown(analysis, { partial: corpus.partial }), 'utf8');
+  // Render everything before writing anything. A throw inside the second
+  // renderer used to leave personas.json fresh and the two markdown files from
+  // last month — three artifacts that are supposed to agree, silently skewed.
+  const personasJsonBody = JSON.stringify(personasJson, null, 2);
+  const personasMdBody = renderPersonasMarkdown(analysis);
+  const vocMdBody = renderVoiceOfCustomerMarkdown(analysis, { partial: corpus.partial });
+
+  writeFileSync(personasJsonPath, personasJsonBody, 'utf8');
+  writeFileSync(personasMdPath, personasMdBody, 'utf8');
+  writeFileSync(vocMdPath, vocMdBody, 'utf8');
 
   const reportDir = join(root, REPORT_DIR);
   mkdirSync(reportDir, { recursive: true });
@@ -335,6 +377,34 @@ export function writeArtifacts({ analysis, corpus, root = ROOT }) {
   }, null, 2), 'utf8');
 
   return { personasJsonPath, personasMdPath, vocMdPath };
+}
+
+// ── failure detection ────────────────────────────────────────────────────────
+
+/**
+ * An empty review corpus is a failure, not a quiet no-op.
+ *
+ * fetchAllReviews warns and returns [] on an HTTP error, so an expired
+ * JUDGEME_API_TOKEN is indistinguishable from "the store has no reviews".
+ * Returning quietly there meant exit 0, a "✓ complete" line in the scheduler
+ * log, no notify() at all, and three context artifacts silently frozen for
+ * however many months it took someone to notice.
+ *
+ * Returned as data rather than sent from here so it is testable without
+ * touching Resend.
+ *
+ * @returns {{subject: string, body: string}|null} null when the corpus is fine
+ */
+export function emptyCorpusFailure(corpus) {
+  const reviews = ((corpus && corpus.records) || []).filter((r) => r.source === 'judgeme').length;
+  if (reviews > 0) return null;
+  return {
+    subject: 'Voice-of-customer FAILED — empty review corpus',
+    body: 'The corpus came back with ZERO Judge.me reviews. That is almost certainly a '
+      + 'credential or API failure — check JUDGEME_API_TOKEN and the Judge.me API — not a '
+      + 'store without reviews. Skipping the LLM call; data/context/voice-of-customer.md, '
+      + 'personas.md and personas.json were NOT refreshed and are now stale.',
+  };
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
@@ -357,8 +427,11 @@ async function main() {
 
     if (collectOnly) return;
 
-    if (corpus.records.filter((r) => r.source === 'judgeme').length === 0) {
-      console.log('  no reviews in corpus — skipping the LLM call.');
+    const emptyFailure = emptyCorpusFailure(corpus);
+    if (emptyFailure) {
+      console.error(`  ${emptyFailure.body}`);
+      await notify({ ...emptyFailure, status: 'error', category: 'voice-of-customer', immediate: true });
+      process.exitCode = 1;
       return;
     }
 
@@ -384,6 +457,7 @@ async function main() {
       body: err.stack || err.message,
       status: 'error',
       category: 'voice-of-customer',
+      immediate: true,
     });
     process.exitCode = 1;
   }

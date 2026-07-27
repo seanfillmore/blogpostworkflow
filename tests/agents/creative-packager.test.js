@@ -1,6 +1,9 @@
 // tests/agents/creative-packager.test.js
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   placementSizes,
   formatCopyFile,
@@ -9,6 +12,7 @@ import {
   buildReferenceQuery,
   buildCopyBrief,
   buildCopyPrompt,
+  loadPersonas,
   formatManifest,
   ALL_PLACEMENTS, sizesByName, safeZonesFor, buildGuideSvg,
 } from '../../agents/creative-packager/index.js';
@@ -270,6 +274,40 @@ test('buildCopyPrompt surfaces the persona and objection to the model', () => {
   const prompt = buildCopyPrompt(brief);
   assert.match(prompt, /The eczema flare parent/);
   assert.match(prompt, /Will natural actually work\?/);
+});
+
+// loadPersonas — a persona with no angles would reach persona.angles[0] in
+// buildCopyBrief and throw a bare TypeError inside a live creative job.
+function personasRoot(payload) {
+  const root = mkdtempSync(join(tmpdir(), 'packager-'));
+  mkdirSync(join(root, 'data', 'context'), { recursive: true });
+  writeFileSync(join(root, 'data', 'context', 'personas.json'), JSON.stringify(payload), 'utf8');
+  return root;
+}
+
+test('loadPersonas drops personas with no usable angles', () => {
+  const root = personasRoot({
+    personas: [
+      { id: 'no-angles', name: 'No angles', angles: [] },
+      { id: 'missing-angles', name: 'Missing angles' },
+      PERSONAS.personas[1],
+    ],
+  });
+  const loaded = loadPersonas(root);
+  assert.deepEqual(loaded.personas.map((p) => p.id), ['ingredient-reader']);
+  // and the survivor is usable end-to-end, not just present
+  assert.equal(buildCopyBrief(AD, { personas: loaded }).angle, 'Four ingredients, that is it');
+});
+
+test('loadPersonas returns null when no persona has an angle, so callers degrade', () => {
+  const root = personasRoot({ personas: [{ id: 'no-angles', name: 'No angles', angles: [] }] });
+  assert.equal(loadPersonas(root), null);
+  // degradation path: the competitor angle, exactly as before personas existed
+  assert.equal(buildCopyBrief(AD, { personas: loadPersonas(root) }).angle, 'competitor-derived angle');
+});
+
+test('loadPersonas returns null when personas.json is absent', () => {
+  assert.equal(loadPersonas(mkdtempSync(join(tmpdir(), 'packager-'))), null);
 });
 
 console.log('✓ creative-packager unit tests pass');

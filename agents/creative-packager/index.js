@@ -89,12 +89,26 @@ Return only the image prompt as plain text — no JSON, no explanation.`;
 /**
  * Load the approved persona set, if the voice-of-customer agent has run.
  * Returns null when absent so every caller degrades to prior behavior.
+ *
+ * A persona with no usable angle is dropped rather than carried: buildCopyBrief
+ * reads persona.angles[0], so an angle-less persona would surface as a bare
+ * TypeError inside a live creative job with no persona id in the message. If
+ * that leaves nothing, return null and take the same degradation path as a
+ * missing file.
  */
 export function loadPersonas(root = ROOT) {
   try {
     const raw = readFileSync(join(root, 'data', 'context', 'personas.json'), 'utf8');
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed.personas) && parsed.personas.length ? parsed : null;
+    if (!Array.isArray(parsed.personas)) return null;
+    const usable = parsed.personas.filter((p) => Array.isArray(p?.angles) && p.angles.length > 0);
+    if (usable.length !== parsed.personas.length) {
+      const dropped = parsed.personas
+        .filter((p) => !(Array.isArray(p?.angles) && p.angles.length > 0))
+        .map((p) => p?.id || '(no id)');
+      console.warn(`loadPersonas: dropped ${dropped.length} persona(s) with no angles: ${dropped.join(', ')}`);
+    }
+    return usable.length ? { ...parsed, personas: usable } : null;
   } catch { return null; }
 }
 
