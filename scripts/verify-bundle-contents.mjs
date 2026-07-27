@@ -22,7 +22,8 @@
  */
 
 import { shopifyGraphQL } from '../lib/shopify.js';
-import { loadRoster } from '../lib/bundle-roster.js';
+import { loadRoster, SKU_BY_HANDLE } from '../lib/bundle-roster.js';
+import { SKUS } from './bundle-economics.mjs';
 
 const only = process.argv[2];
 
@@ -30,13 +31,13 @@ const q = `{
   products(first: 100, query: "tag:bundle") {
     nodes {
       handle title
-      priceRangeV2 { minVariantPrice { amount } maxVariantPrice { amount } }
       components: metafield(namespace: "bundle", key: "components") { value }
       qty: metafield(namespace: "bundle", key: "component_qty") { value }
       variants(first: 20) {
         pageInfo { hasNextPage }
         nodes {
           title
+          price
           selectedOptions { name value }
           metafield(namespace: "bundle", key: "contents") { value }
           productVariantComponents(first: 20) {
@@ -85,16 +86,9 @@ for (const p of products) {
   // ── bundle.components / bundle.component_qty are two index-aligned lists.
   // Reorder one without the other and quantities silently attach to the wrong
   // product — nothing errors, the card just lies. This is that check.
-  // Componentizing a variant OVERWRITES its price with the component sum. Do it
-  // after setting the price — as happened to the Clean Swap's Gentle kit, which
-  // silently reverted to $207 — and nothing errors; the page just sells at the
-  // wrong price. So: every variant of a bundle must share one price.
-  const lo = Number(p.priceRangeV2.minVariantPrice.amount);
-  const hi = Number(p.priceRangeV2.maxVariantPrice.amount);
-  if (lo !== hi) {
-    console.log(`  PRICE SPLIT ACROSS VARIANTS: $${lo.toFixed(2)} - $${hi.toFixed(2)} — one variant likely reverted to its component sum after re-componentizing`);
-    problems++;
-  }
+  // (Price correctness — including the componentize-overwrite trap — is
+  // checked exactly against config/bundles.json in the roster section below,
+  // not guessed here. See the comment there for why.)
 
   let refIds = [], refQty = [];
   try { refIds = JSON.parse(p.components?.value ?? '[]'); } catch {}
@@ -192,6 +186,29 @@ for (const spec of bundlesToCheck) {
         && specKeys.every(k => liveOpts[k] === sv.options[k]);
     });
     if (!lv) { console.log(`\n${spec.handle} / ${wanted}: variant missing in Shopify`); drift++; continue; }
+
+    // Exact comparison, not a spread heuristic: componentizing overwrites a
+    // variant's price with its component sum, and that has mispriced live
+    // products three times. A "do all variants share one price" heuristic
+    // used to catch it, but it also fired on the Hand Soap Set's deliberate
+    // $44/$59/$72 ladder — a false positive indistinguishable in output from
+    // the real bug, which got a genuine $48 overcharge dismissed as noise.
+    // The roster now names every variant's intended price, so there is no
+    // need to guess: compare live to roster, and when they differ, name the
+    // component sum too — if live price equals it, that IS the overwrite bug.
+    const livePrice = Number(lv.price);
+    const wantPrice = Number(sv.price);
+    if (livePrice !== wantPrice) {
+      const sum = sv.components.reduce((s, c) => {
+        const key = SKU_BY_HANDLE[c.product];
+        return s + (key && SKUS[key] ? SKUS[key].price * c.qty : 0);
+      }, 0);
+      const sumNote = livePrice === sum
+        ? ` — equals the component sum ($${sum.toFixed(2)}): this is the componentize-overwrite bug, not a deliberate reprice`
+        : '';
+      console.log(`\n${spec.handle} / ${wanted}: live price $${livePrice.toFixed(2)}, roster expects $${wantPrice.toFixed(2)}${sumNote}`);
+      drift++;
+    }
 
     const liveSet = new Set(lv.productVariantComponents.nodes
       .map(c => `${c.productVariant.product.handle}/${c.productVariant.title}×${c.quantity}`));
