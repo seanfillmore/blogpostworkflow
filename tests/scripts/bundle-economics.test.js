@@ -77,3 +77,20 @@ test('buildMarkdown renders tables and flags losses', () => {
   assert.match(md, /loses money/);
   assert.match(md, /Regenerate with/);
 });
+
+test('packaging cost comes straight off contribution', () => {
+  const withoutBox = ev({ name: 'Gift Box', status: 'x', price: 62,
+    items: { lotion: 1, lipbalm: 1, barsoap: 1, deo: 1 }, story: '' });
+  const withBox = ev({ name: 'Gift Box', status: 'x', price: 62, packaging: 1.00,
+    items: { lotion: 1, lipbalm: 1, barsoap: 1, deo: 1 }, story: '' });
+
+  assert.equal(withoutBox.contrib - withBox.contrib, 1.00,
+    'a $1 box must cost exactly $1 of contribution');
+  assert.equal(withBox.packaging, 1.00, 'packaging must survive onto the result');
+});
+
+test('packaging defaults to zero so every other bundle is unchanged', () => {
+  const r = ev({ name: 'Reset', status: 'draft', price: 99, items: { lotion: 3, cream: 1 }, story: '' });
+  assert.equal(r.packaging, 0);
+  assert.equal(r.contrib, 68.06, 'the Reset contribution must not move');
+});

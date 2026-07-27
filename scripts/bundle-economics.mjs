@@ -58,9 +58,9 @@ export const BUNDLES = [
   { name: 'Pump 4-pack + Lotion', status: 'proposed', price: 72,
     items: { pump: 4, lotion: 1 },
     story: 'The pump push, anchored by a high-margin lotion so it clears CAC.' },
-  { name: 'Gift Box', status: 'proposed', price: 62,
+  { name: 'Gift Box', status: 'proposed', price: 62, packaging: 1.00,
     items: { lotion: 1, lipbalm: 1, barsoap: 1, deo: 1 },
-    story: 'Gifting escapes price comparison entirely. Q4.' },
+    story: 'Gifting escapes price comparison entirely. Q4. Ships in the custom box ($1/unit).' },
   { name: 'The Clean Swap', status: 'proposed', price: 59,
     items: { deo: 1, toothpaste: 1, barsoap: 1, lotion: 1 },
     story: 'Entry version of the 90-day. Turns three weak singles into margin.' },
@@ -98,9 +98,10 @@ export function evaluate(bundle, packageCosts) {
   const oversize = entries.some(([k]) => SKUS[k].oversize);
   const pounds = oz / 16;
   const shipping = estimateShipping({ units, pounds, hasOversizeItem: oversize }, packageCosts);
-  const contrib = contribution({ price: bundle.price, cogs, shipping });
+  const packaging = bundle.packaging ?? 0;
+  const contrib = contribution({ price: bundle.price, cogs, shipping, packaging });
   return {
-    ...bundle, msrp, cogs: round(cogs), pounds: round(pounds), units, shipping, contrib,
+    ...bundle, msrp, cogs: round(cogs), pounds: round(pounds), units, shipping, packaging, contrib,
     discountPct: msrp > 0 ? Math.round((1 - bundle.price / msrp) * 100) : 0,
     verdict: contrib >= CAC * 2 ? 'scale' : contrib >= CAC ? 'breakeven' : contrib > 0 ? 'thin' : 'loss',
   };

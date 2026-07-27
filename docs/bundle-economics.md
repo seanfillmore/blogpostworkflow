@@ -16,7 +16,7 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 | 90-Day Coconut Reset | live | $118.00 | $99.00 | 16% | $19.94 | 2.19 | 4 | $7.83 | **$68.06** | ✅ scale (≥2× CAC) |
 | Head-to-Toe | live | $125.00 | $105.00 | 16% | $29.54 | 2.24 | 7 | $7.83 | **$64.29** | ✅ scale (≥2× CAC) |
 | Pump 4-pack + Lotion | proposed | $82.00 | $72.00 | 12% | $21.96 | 3.13 | 5 | $7.83 | **$39.82** | 🟡 breakeven (≥1× CAC) |
-| Gift Box | proposed | $71.00 | $62.00 | 13% | $16.75 | 1.06 | 4 | $7.83 | **$35.32** | 🟡 breakeven (≥1× CAC) |
+| Gift Box | proposed | $71.00 | $62.00 | 13% | $16.75 | 1.06 | 4 | $7.83 | **$34.32** | 🟡 breakeven (≥1× CAC) |
 | The Clean Swap | proposed | $69.00 | $59.00 | 14% | $15.10 | 1.28 | 4 | $7.83 | **$34.06** | 🟡 breakeven (≥1× CAC) |
 | Pump 3-pack + Lotion | proposed | $69.00 | $59.00 | 14% | $17.70 | 2.50 | 4 | $7.83 | **$31.46** | 🟡 breakeven (≥1× CAC) |
 | Sensitive Skin Set | live | $58.00 | $46.80 | 19% | $10.10 | 0.94 | 2 | $6.68 | **$28.36** | 🟡 breakeven (≥1× CAC) |
@@ -33,7 +33,7 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 - **90-Day Coconut Reset** (live, $68.06) — Live on the lean lander, two scents, digital bonuses delivered by Klaviyo.
 - **Head-to-Toe** (live, $64.29) — One of everything. Discovery and gifting.
 - **Pump 4-pack + Lotion** (proposed, $39.82) — The pump push, anchored by a high-margin lotion so it clears CAC.
-- **Gift Box** (proposed, $35.32) — Gifting escapes price comparison entirely. Q4.
+- **Gift Box** (proposed, $34.32) — Gifting escapes price comparison entirely. Q4. Ships in the custom box ($1/unit).
 - **The Clean Swap** (proposed, $34.06) — Entry version of the 90-day. Turns three weak singles into margin.
 - **Pump 3-pack + Lotion** (proposed, $31.46) — Smaller pump entry.
 - **Sensitive Skin Set** (live, $28.36) — Current hero. Clears the $45 free-shipping threshold on its own.
