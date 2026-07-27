@@ -59,6 +59,7 @@ async function getProduct(handle) {
   const d = await shopifyGraphQL(`{
     productByHandle(handle: "${handle}") {
       id status templateSuffix
+      lander: metafield(namespace: "bundle", key: "lander") { value }
       options { id name values }
       variants(first: 50) {
         nodes { id title price selectedOptions { name value }
@@ -76,6 +77,8 @@ const optionKey = opts => Object.entries(opts).sort(([a], [b]) => a.localeCompar
 async function buildBundle(bundle, catalogue) {
   log(`\n=== ${bundle.handle}`);
 
+  let product = await getProduct(bundle.handle);
+
   // Guard: "bundle-landing" is a template SHARED across every bundle, driven
   // entirely by a per-product `bundle_lander` metaobject. This script never
   // writes that metaobject — it only ever wrote `bundle.components`,
@@ -85,19 +88,26 @@ async function buildBundle(bundle, catalogue) {
   // happens to resolve, rendering that product's H1, CTA and price. That is
   // exactly how clean-swap, gift-box and hand-soap-set went live all showing
   // the 90-Day Reset's copy and "$0 value, $0 today — you save $0". Refuse to
-  // set this template until the roster entry proves the lander exists.
-  if (bundle.templateSuffix === 'bundle-landing' &&
-      (!bundle.lander || typeof bundle.lander !== 'object' || Array.isArray(bundle.lander) ||
-        Object.keys(bundle.lander).length === 0)) {
+  // set this template until lander content is proven to exist.
+  //
+  // "Exist" means EITHER source: a non-empty roster `lander` object (for
+  // bundles not yet backfilled onto Shopify), OR a live `bundle.lander`
+  // metafield already on the product (pre-existing bundles like
+  // 99-coconut-reset-digital, 90-day-clean-swap and head-to-toe were built
+  // directly in Shopify — their lander metaobject reference was never
+  // mirrored into the roster). Only refuse when NEITHER source has it.
+  const hasRosterLander = bundle.lander && typeof bundle.lander === 'object' &&
+    !Array.isArray(bundle.lander) && Object.keys(bundle.lander).length > 0;
+  const hasLiveLander = Boolean(product?.lander?.value);
+  if (bundle.templateSuffix === 'bundle-landing' && !hasRosterLander && !hasLiveLander) {
     throw new Error(
       `${bundle.handle}: refusing to set templateSuffix "bundle-landing" — this roster entry has no ` +
-      `non-empty "lander" object. A shared template with no per-product content renders another ` +
-      `product's copy. Build the bundle_lander metaobject for "${bundle.handle}" first, then add its ` +
-      `reference under this bundle's "lander" key in config/bundles.json.`
+      `non-empty "lander" object AND the live product has no "bundle.lander" metafield. A shared ` +
+      `template with no per-product content renders another product's copy. Build the bundle_lander ` +
+      `metaobject for "${bundle.handle}" first, then add its reference under this bundle's "lander" ` +
+      `key in config/bundles.json (or confirm it directly in Shopify).`
     );
   }
-
-  let product = await getProduct(bundle.handle);
 
   // 1 — product shell
   //
@@ -322,10 +332,24 @@ async function buildBundle(bundle, catalogue) {
     );
     log('  prices re-asserted after componentization');
   } catch (err) {
-    await gql(
-      `mutation ($input: ProductInput!) { productUpdate(input: $input) { product { id } userErrors { field message } } }`,
-      { input: { id: product.id, status: 'DRAFT' } }
-    );
+    // The DRAFT mutation itself is not protected by anything upstream — if it
+    // throws (network error, userErrors), it must never replace the pending
+    // error. Losing the original failure here would erase the reason the
+    // product needs attention, while leaving it ACTIVE and possibly priced at
+    // the component sum with nothing in the output to explain why.
+    try {
+      await gql(
+        `mutation ($input: ProductInput!) { productUpdate(input: $input) { product { id } userErrors { field message } } }`,
+        { input: { id: product.id, status: 'DRAFT' } }
+      );
+    } catch (draftErr) {
+      console.error(
+        `  ✗✗ ${bundle.handle}: FAILED TO DRAFT after componentization/price re-assertion error — the ` +
+        `product is STILL ACTIVE and may be priced at its component sum. Needs immediate manual ` +
+        `attention. Drafting error: ${draftErr.message}`
+      );
+      throw err; // rethrow the ORIGINAL error, not the drafting error
+    }
     throw new Error(
       `${bundle.handle}: componentization/price re-assertion failed — product set to DRAFT to prevent ` +
       `selling at the component sum. Original error: ${err.message}`
@@ -419,4 +443,17 @@ if (!targets.length) {
 }
 
 if (!APPLY) log('DRY RUN — re-run with --apply to write.\n');
-for (const b of targets) await buildBundle(b, catalogue);
+
+// One bad bundle must not silently abort the rest of the run — report the
+// failing handle, keep going, and only exit non-zero (after every target has
+// been attempted) if anything failed.
+let anyFailed = false;
+for (const b of targets) {
+  try {
+    await buildBundle(b, catalogue);
+  } catch (err) {
+    anyFailed = true;
+    console.error(`\n✗ ${b.handle} failed: ${err.message}`);
+  }
+}
+if (anyFailed) process.exit(1);
