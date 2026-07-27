@@ -131,27 +131,48 @@ There is no rolling-window duplication in the API output.
 `404` error body is `{ "detail": "Video <id> not found or unavailable" }`. No
 credit-remaining headers are returned on any response.
 
-#### Publish date: not available — resolved
+#### Publish date: supplied by the operator
 
-Neither endpoint returns one. `metadata` carries only title, author, and thumbnail. Per
-the prior decision, recency is **not** invented or scraped from a second source.
+Neither endpoint returns one. `metadata` carries only title, author, and thumbnail. Recency
+is **not** scraped from a second source; it is passed in.
 
-Two things cover the gap adequately:
+Since videos are hand-picked, the operator is already looking at the upload date on the
+YouTube page. `--published YYYY-MM-DD` carries it in. Optional; when absent, the extractor
+falls back to a `recencySignals` string — era cues found in the transcript itself ("since
+the iOS 14 update", "the new Reels placement") — which is **inferred and labeled as such**,
+never presented as authoritative.
 
-1. Sean hand-picks every video, so he already knows roughly how old it is. A bulk-ingest
-   system would need the field; an on-demand one does not. The report includes the video
-   URL so the upload date is one click away.
-2. The extractor returns a `recencySignals` string — explicit year mentions, platform
-   features, or product names in the transcript that date it ("since the iOS 14 update",
-   "the new Reels placement"). This is **inferred and labeled as such**, never presented
-   as an authoritative date, and it feeds the reasoning rather than the score.
+Validation, in `lib/marketing-learner.js`:
+
+- Must parse as a real calendar date in `YYYY-MM-DD` form
+- Must not be in the future
+- Warn (do not fail) when older than ~4 years
+
+**A single `--published` with multiple URLs is an error, not a broadcast.** Stamping one
+date across several videos produces confident, wrong, authoritative-looking metadata that
+silently skews scoring and that nobody will think to re-check. Repeatable `--published`
+flags pair positionally with URLs when the counts match; otherwise run once per video.
+
+#### Why an authoritative date is worth the manual step
+
+Staleness is not uniform, and this is the distinction `recencySignals` could not support:
+
+| Tactic class | Decay | Example |
+|---|---|---|
+| Platform mechanics | Fast — treat >18mo with suspicion | Ad account structure, algorithm behavior, placement names, attribution windows |
+| Durable principle | Slow — age is nearly irrelevant | Offer construction, positioning, retention psychology, pricing logic |
+
+A 2022 Meta campaign structure describes a system that no longer exists. A 2019 offer
+principle is fine. Without a real date the model must treat "old" as one undifferentiated
+signal; with one it can apply the table above. This rule goes in the constraint block, and
+`rscFit.reasoning` must name the tactic class when age is what drove the score down.
 
 ### 2. Extract
 
 One Opus call (`claude-opus-5`, consistent with `voice-of-customer`). The prompt carries:
 
 - The transcript
-- Video metadata (title, channel, duration, and publish date if available)
+- Video metadata (title, channel, duration, and publish date when `--published` was given)
 - **The current skill inventory** — every `.claude/skills/marketing-*/SKILL.md`'s name,
   description, and full content
 - The RSC constraint block (below)
@@ -263,6 +284,9 @@ would duplicate it and rot. Rejecting a video's output means closing the PR.
 ```
 node agents/marketing-learner/index.js <url> [<url>…]
 
+  --published <YYYY-MM-DD>  Upload date of the video. Optional but recommended — the API
+                            does not provide it. Repeatable, pairing positionally with
+                            URLs. Supplying one date for multiple URLs is an error.
   --extract-only   Fetch, extract, write report. Do not touch skills or open a PR.
   --no-pr          Write skills and report into the working tree. No branch, no PR.
   --refetch        Ignore the transcript cache and re-fetch (costs a credit).
@@ -306,7 +330,9 @@ value of the tool is judgment quality on the scoring step.
 - `renderSkillMarkdown` — valid frontmatter, provenance present on every claim
 - `validateSkillEdit` — passes a legitimate expansion; throws on frontmatter damage,
   renamed `name`, and unexplained >25% shrink
-- `buildConstraintBlock` — includes the AOV and retention figures
+- `buildConstraintBlock` — includes the AOV and retention figures, and the tactic-decay table
+- `parsePublishedFlags` — pairs dates to URLs positionally; throws on one-date-many-URLs,
+  on a malformed or non-calendar date, and on a future date; warns beyond ~4 years
 - `lib/transcript-source.js` against recorded fixture responses (captured from the live
   probe) — normalization of a successful payload including newline collapse, correct
   language-priority selection from `available_languages` (manual `en` chosen over
@@ -333,11 +359,14 @@ single-function interface. yt-dlp remains the documented fallback implementation
 is the reason for the seam; without it the risk would not be acceptable.
 
 **Thinner metadata than yt-dlp.** Confirmed by live probe: no view count, no description,
-and **no publish date**. View count was only ever weak credibility signal and is not worth
-a second provider. Publish date is handled by the two mitigations in Fetch above; accepted
-as a real but tolerable loss given on-demand, hand-picked input. If this ever becomes a
-bulk-ingest tool, revisit — a stale-tactic filter matters much more without a human in
-the selection loop.
+and no publish date. View count was only ever weak credibility signal and is not worth a
+second provider. Publish date is solved by `--published`, which is better than what
+yt-dlp would have given us anyway — operator-supplied and authoritative rather than parsed.
+
+The residual risk is that `--published` is *optional*, so the fallback path (inferred
+`recencySignals`) will get used whenever it is forgotten. That is acceptable for on-demand
+use. If this ever becomes bulk ingest, make the flag required — an unattended pipeline with
+no reliable date cannot apply the platform-mechanics-vs-principle decay rule at all.
 
 ## Deferred
 
