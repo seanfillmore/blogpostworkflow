@@ -207,10 +207,25 @@ on every page.
 
 ### Current state
 
-**Header** (rendered twice — desktop nav and mobile drawer): 6 collection links
-(`natural-toothpaste`, `natural-lip-balm`, `natural-deodorant`, `natural-bar-soap`,
-`foaming-hand-soap`, `coconut-oil-lotion`), plus `/collections/all`, plus all 8 PDPs. The route
-to products already exists.
+**Header — 7 top-level category labels, each opening a dropdown of collections, 32 collection
+links in total:**
+
+| Top-level label | Dropdown children |
+|---|---|
+| Lotion | Coconut Oil, Lavender, Natural Body, Non Toxic body, Rose, Unscented (6) |
+| Body Cream | Coconut, Moisturizing, Natural (3) |
+| Toothpaste | Cinnamon, Mint, Fluoride Free, Natural, SLS Free, Vegan (6) |
+| Deodorant | Aluminum Free, Natural, Non Toxic, Roll-on, Vegan (5) |
+| Liquid Soap | Foaming Hand Soap, Foaming Soap Dispenser, Orange (3) |
+| Bar Soap | Coconut, Men's Natural, Natural Bar, Organic Bar, Vegan (5) |
+| Lip Balm | Coconut, Organic, Natural, Vegan (4) |
+
+The top-level labels are not links — they are dropdown triggers. There is currently **no
+direct route from the header to any PDP**.
+
+An earlier draft of this spec recorded the header as holding 6 collection links plus 8 PDP
+links, inferred from raw HTML. That was wrong, and the correction matters: header 32 plus
+footer 30 means **62 internal links point at collections this project removes**.
 
 **Footer** (rendered on every page): **30 collection links**, of which **28 are being
 redirected** — only `all-products` and `non-toxic-body-lotion` survive. This is the single
@@ -219,26 +234,30 @@ project removes. Cleaning it matters as much as the redirects themselves.
 
 ### Target
 
-**Header — direct PDP links at the top level.** Revised 2026-07-27 at Sean's direction: no
-`Shop` dropdown. Each product is its own top-level menu item, linking straight to its PDP. A
-9-product catalog is browsed by product, not by category, and a dropdown adds a click between
-the visitor and the buy button for no benefit.
+**Header — delete every dropdown; each top-level label links straight to its PDP.**
 
-The header already contains 8 of these links today, so this is mostly a removal of the 6
-collection links rather than new construction.
+The existing 7 labels already map one-to-one onto the 7 primary products, so this is a
+retarget rather than a redesign. Keep the labels, delete all 32 children:
 
-Primary top-level items (7), plus `Sets & Bundles`, plus About/Support:
+| Top-level label | Links to |
+|---|---|
+| Lotion | `/products/coconut-lotion` |
+| Body Cream | `/products/coconut-moisturizer` |
+| Toothpaste | `/products/coconut-oil-toothpaste` |
+| Deodorant | `/products/coconut-oil-deodorant` |
+| Liquid Soap | `/products/organic-foaming-hand-soap` |
+| Bar Soap | `/products/coconut-soap` |
+| Lip Balm | `/products/coconut-oil-lip-balm` |
 
-`coconut-lotion`, `coconut-moisturizer`, `coconut-oil-deodorant`, `coconut-oil-toothpaste`,
-`coconut-oil-lip-balm`, `coconut-soap`, `organic-foaming-hand-soap`.
+Plus `Sets & Bundles` → `/collections/sets-and-bundles`, and the existing About/Support items.
 
-Two of the nine products are deliberately not top-level: **`foam-soap-refill-32oz`** is an
-accessory whose natural home is the hand-soap PDP and the hand-soap collection, and
-**`cut-and-scrape`** sits outside the skin-care line. Promoting either to the top level costs
-header space that the seven primary products need. If you want all nine at the top level
-instead, that is a one-line change to this list — but nine product links plus Sets and the
-support items will crowd the desktop header, and crowding is what pushes menus into the
-hamburger breakpoint earlier.
+The category labels are worth keeping as anchor text: "Lotion" and "Toothpaste" describe what
+the visitor wants better than the product titles do, and they pass category-relevant anchor
+text to the PDPs that must now rank for those terms.
+
+Two of the nine products stay off the top level. **`foam-soap-refill-32oz`** is an accessory
+whose home is the hand-soap PDP and the hand-soap collection; **`cut-and-scrape`** sits outside
+the skin-care line. Both remain reachable via `/collections`, search, and cross-links.
 
 **Footer — a single `Collections` link** pointing at `/collections`, replacing all 30 current
 collection links. Revised 2026-07-27 at Sean's direction: the footer does not enumerate
@@ -347,9 +366,9 @@ Already wired, no new instrumentation:
    physical bundle products, and is linked from the store's navigation.
 8. The homepage title and meta description lead with the brand, and the meta description is
    under 160 characters.
-9. No header or footer link points at a redirected collection. The footer's 30 collection links
-   become a single `Collections` link to `/collections`; the header's top level is direct PDP
-   links plus Sets & Bundles and the support items.
+9. No header or footer link points at a redirected collection. All 32 header dropdown links and
+   all 30 footer collection links are gone: the header's 7 labels link directly to their PDPs,
+   with no dropdowns at all, and the footer carries one `Collections` link to `/collections`.
 10. `/collections` has its own meta description rather than the homepage's, and a title that
    does not compete with the homepage for brand queries.
 11. At 28 days: the lotion survivor's average position on its target queries has improved
@@ -370,3 +389,8 @@ Already wired, no new instrumentation:
 - **2026-07-27, revised twice more:** footer reduced from a four-item category block to one
   `Collections` link to Shopify's native `/collections` index (Sean); header top level changed
   from a `Shop` dropdown to direct PDP links (Sean).
+- **2026-07-27, corrected against a screenshot:** the header's real structure is 7 category
+  labels opening dropdowns of 32 collection links, with no direct PDP route at all — not the
+  "6 collection links plus 8 PDPs" an earlier draft inferred from raw HTML. Header 32 + footer
+  30 = 62 internal links pointing at removed collections. The 7 labels map 1:1 onto the 7
+  primary products, so the fix is to retarget the labels and delete every dropdown.
