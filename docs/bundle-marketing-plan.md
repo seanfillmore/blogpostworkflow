@@ -38,19 +38,19 @@ Sorted by readiness × contribution, not by contribution alone. Inventory is **n
 
 | # | Bundle | Status | Price | Contribution | CAC | Gate | Priority |
 |--:|---|---|--:|--:|---|---|---|
-| 1 | 90-Day Coconut Reset | draft | $99 | $68.06 | ✅ 2.7× | Build: publish + prune to 2 scents | **Ship this week** |
+| 1 | 90-Day Coconut Reset | **live** | $99 | $68.06 | ✅ 2.7× | None — two scents, lander live | **Ongoing** |
 | 2 | Sensitive Skin Set | **live** | $46.80 | $28.38 | 🟡 1.1× | None — optimize in place | **Ongoing** |
-| 3 | Bar Soap 4-Pack | draft | $39 | $17.78 | 🟠 0.7× | Build: publish + detach single-bar subs | **Ship this week** |
-| 4 | 90-Day Clean Swap | proposed | $159 | $100.85 | ✅ 4.0× | Build: componentize + lander | **Next** |
-| 5 | Head-to-Toe | proposed | $105 | $64.29 | ✅ 2.6× | Build: componentize + lander | **Next** |
-| 6 | Pump 4-pack + Lotion | proposed | $72 | $39.82 | 🟡 1.6× | Build | Then |
-| 7 | The Clean Swap | proposed | $59 | $34.06 | 🟡 1.4× | Build | Then |
+| 3 | Bar Soap 4-Pack | **live** | $39 | $17.78 | 🟠 0.7× | Detach single-bar subs; restock Lemongrass | **Ship this week** |
+| 4 | 90-Day Clean Swap | **live** | $159 | $100.85 | ✅ 4.0× | Tracking, for paid | **Ongoing** |
+| 5 | Head-to-Toe | **live** | $105 | $64.29 | ✅ 2.6× | Tracking, for paid | **Ongoing** |
+| 6 | Pump 4-pack + Lotion | proposed | $72 | $39.82 | 🟡 1.6× | Build | **Next** |
+| 7 | The Clean Swap | proposed | $59 | $34.06 | 🟡 1.4× | Build | **Next** |
 | 8 | Pump 3-pack + Lotion | proposed | $59 | $31.46 | 🟡 1.3× | Build | Then |
 | 9 | Pump 4-pack | proposed | $44 | $17.55 | 🟠 0.7× | Build | Attach only |
 | 10 | Gift Box | proposed | $62 | $35.32 | 🟡 1.4× | Build by mid-September | Q4 |
-| 11 | Two-Step Starter Set | draft | $39.99 | $21.77 | 🟠 0.9× | — | **Retire** |
+| 11 | Two-Step Starter Set | **retired** | $39.99 | $21.77 | 🟠 0.9× | — | Deleted 2026-07-26 |
 
-**Not marketed, retire:** Pump + Refill (−$1.65) and Foam Soap Bundle (−$19.48) both lose money per order. The Foam Soap Bundle is a live draft and **must not be published**. Neither gets a playbook; the decision is to remove them, not to sell them better.
+**Retired 2026-07-26.** The Two-Step Starter Set and the Foam Soap Bundle have both been deleted from the catalogue. Neither had ever been published, so no redirect was needed — a deleted draft has no inbound links to preserve. Pump + Refill (−$1.65) was rejected before it was ever built. The decision on all three was to remove them, not to sell them better.
 
 CAC target is $25. ✅ = ≥2× CAC (scalable on paid once tracking clears), 🟡 = ≥1× CAC (owned/organic/warm traffic), 🟠 = below CAC (attach and reorder only — never a paid destination).
 
@@ -87,8 +87,11 @@ CAC target is $25. ✅ = ≥2× CAC (scalable on paid once tracking clears), �
 - **Angle** — *Four bars, four months, one box.* Cadence is the pitch.
 - **Channels** — Post-purchase flow and replenishment flow only. Cross-sell module on other PDPs. Not a landing page, not a paid target, not a collection hero.
 - **Offer mechanics** — $39 against $44, on selling plan group `BARSOAP_4MO` — every 4 months, 15% off, per the flat-15% rule. Five variants: variety, or four of one scent.
-- **Assets** — Componentized and inventory-tracked. Needs: publish, plus a cross-sell placement in the post-purchase flow.
-- **Gate** — Build, plus one cleanup: the single-bar monthly subscription plans are **still attached to `coconut-soap`** and lose $1.41 per shipment. Detaching them requires `read_own_subscription_contracts` to check for existing subscribers first. Until that's done, the money-losing option is still purchasable — this is the highest-value item on the list relative to its effort.
+- **Assets** — **Live as of 2026-07-26** (`scripts/publish-bar-soap-4pack.mjs`): 2×2 variety grid built from the four real bar photos, per-variant images, description, SEO, `natural-bar-soap` collection, published to Online Store and Shop. Still needs a cross-sell placement in the post-purchase flow.
+- **Note the shipping trap** — at $39 this is the one live bundle that does **not** clear the $45 free-shipping threshold. Its copy must never imply free shipping, and it is a natural candidate for a cart nudge rather than a standalone destination.
+- **Gate** — Two cleanups remain:
+  1. **Single-bar subscription is still money-losing.** The 20%-monthly plan died with the Shopify Subscriptions app, but `coconut-soap` still carries Recurpay 6-week and 8-week plans at 15%. An $11 bar at 15% off is $9.35 against $2.99 COGS, $6.66 bubble-envelope freight and $0.57 fees — **−$0.87 per shipment**. Better than the −$1.41 it was, still negative. Detaching needs `read_own_subscription_contracts` to check for existing subscribers first, and could not have been done before now because the 4-pack is its replacement.
+  2. **Refreshing Lemongrass bar is at zero**, which zeroes both the "4× Lemongrass" variant *and* the "Variety — one of each" variant that carries the whole pitch. Pure Unscented at 7 bars allows exactly one more variety pack. Lavender (55) and Tea Tree (47) are deep. This is a restock, not a build.
 - **Success metric** — Subscribers converted from single-bar monthly to 4-pack quarterly. Each conversion is +$53/yr (−$16.92 → +$36.30).
 
 ### 4. 90-Day Clean Swap — $159
@@ -187,22 +190,27 @@ CAC target is $25. ✅ = ≥2× CAC (scalable on paid once tracking clears), �
 | **On-site cross-sell / cart** | All pump bundles, Bar Soap 4-Pack | — |
 | **Paid — held until tracking clears** | 90-Day Clean Swap, Coconut Reset, Head-to-Toe (the ✅ tier only) | **The single $30 lotion.** Every 🟡 and 🟠 bundle. |
 | **Amazon** | Nothing yet — see below | — |
-| **Google Shopping feed / Meta catalog** | ⚠️ **nothing — see below** | every componentized bundle |
+| **Any product-feed channel** (Google, Meta, Pinterest, TikTok, Buy Button) | ⚠️ **nothing — see below** | every componentized bundle |
 
 Two standing prohibitions, both already costing money:
 
 **Never send paid traffic to the single $30 lotion.** It produced 27 clicks and zero sales on generic lotion terms. It is an anchor SKU (3 × $30 + $28 = $118, which is what makes $99 read as an offer) and a reorder unit. `agents/shopping-calibrator` runs Sundays and auto-negates queries whose market clears below 60% of our price, which contains the bleeding but doesn't fix the destination.
 
-### ⚠️ Componentized bundles cannot enter the Shopping feed or Meta catalog
+### ⚠️ Componentized bundles cannot enter *any* product-feed channel
 
-Verified 2026-07-26. Publishing the Clean Swap or Head-to-Toe to either channel is rejected outright:
+Verified 2026-07-26. Publishing a componentized bundle is rejected outright by every channel that syncs a product feed — not just the two originally tested:
 
 ```
 Channel Google & YouTube does not support variant-fixed bundles
 Channel Facebook & Instagram does not support variant-fixed bundles
+Channel Pinterest does not support bundle products
+Channel TikTok does not support bundle products
+Channel Buy Button does not support bundle products
 ```
 
-This is a Shopify platform limit on native (variant-fixed) bundles, not a settings problem. The 90-Day Reset shows as published to both channels because it predates its componentization; do not read that as proof the restriction can be worked around.
+Publishing the Bar Soap 4-Pack found the last three. **Online Store and Shop are the only channels that accept a bundle** — assume any new channel will refuse until proven otherwise, and publish channels one at a time so one refusal doesn't abort the rest (`scripts/publish-bar-soap-4pack.mjs` does this).
+
+This is a Shopify platform limit on native (variant-fixed) bundles, not a settings problem. The 90-Day Reset shows as published to Google and Meta because it predates its componentization; do not read that as proof the restriction can be worked around.
 
 **This changes how paid traffic reaches bundles.** They cannot be Shopping listings or catalog items. Paid to a bundle has to be Search, Performance Max with a page feed, or Meta traffic ads pointing at the product URL — never a product/catalog ad.
 
@@ -286,6 +294,6 @@ Retiring is unpublish plus a 301 to the nearest surviving bundle — never leave
 ## 6. Open decisions
 
 1. **Foam Soap Bundle** — still a live draft at −$19.48/order. Delete it, or reprice to $52 at 0% discount, which makes it pointless. Recommend delete.
-2. **Subscription plan sprawl** — every product carries 3–4 overlapping selling plan groups from two apps, so customers see competing options. Three plans remain at 10% and must be fixed in the Recurpay admin UI; the API cannot reach them safely.
+2. **Subscription plan sprawl** — ~~three plans remain at 10%~~ **closed 2026-07-26: every selling plan on every product now reads 15%**, verified per-product across all seven SKUs (the group-level `sellingPlanGroups` query can't see Recurpay's groups, so this has to be read per product). What remains is *cadence* sprawl, not discount sprawl: most products still carry three overlapping groups offering 1-month, 6-week and 8-week at the same 15%. That is a clarity problem rather than a money one, so it drops down the list — but the monthly cadence is still the over-supply cadence, and consolidating to 6/8-week is the open question.
 3. **Google feed title** — currently leads with "Coconut Body Lotion", the exact term the price data says we lose on. Changing it trades organic ranking for feed relevance and needs GSC data first.
 4. **Deodorant scent range** — narrowed for lotion and cream only. Whether deodorant's four scents should also be pruned is unresolved; it has no Unscented or Coconut Breeze to narrow to, so it needs its own decision.

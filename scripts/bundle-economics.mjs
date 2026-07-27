@@ -40,19 +40,21 @@ export const SKUS = {
 };
 
 /**
- * status: live | draft | proposed
+ * status: live | draft | proposed | rejected | retired
  * Prices for proposed bundles are the recommended starting point, not fixed.
+ * `retired` rows are kept deliberately — the row is the record of why the bundle
+ * was removed, and deleting it invites someone to re-propose it next quarter.
  */
 export const BUNDLES = [
-  { name: '90-Day Clean Swap', status: 'proposed', price: 159,
+  { name: '90-Day Clean Swap', status: 'live', price: 159,
     items: { deo: 3, toothpaste: 3, barsoap: 3, lotion: 3 },
     story: 'Replace the four things you put on your body every day, for a quarter.' },
-  { name: 'Head-to-Toe', status: 'proposed', price: 105,
+  { name: 'Head-to-Toe', status: 'live', price: 105,
     items: { lotion: 1, cream: 1, deo: 1, toothpaste: 1, barsoap: 1, pump: 1, lipbalm: 1 },
     story: 'One of everything. Discovery and gifting.' },
-  { name: '90-Day Coconut Reset', status: 'draft', price: 99,
+  { name: '90-Day Coconut Reset', status: 'live', price: 99,
     items: { lotion: 3, cream: 1 },
-    story: 'Built, lander done, delivery flow live. Blocked on 3 zero-stock scents + publish.' },
+    story: 'Live on the lean lander, two scents, digital bonuses delivered by Klaviyo.' },
   { name: 'Pump 4-pack + Lotion', status: 'proposed', price: 72,
     items: { pump: 4, lotion: 1 },
     story: 'The pump push, anchored by a high-margin lotion so it clears CAC.' },
@@ -70,15 +72,17 @@ export const BUNDLES = [
   { name: 'Pump 4-pack', status: 'proposed', price: 44,
     items: { pump: 4 },
     story: 'One per scent, one per sink. Sits on the CAC line at full MSRP; any discount sinks it. Reorder/AOV, not paid acquisition.' },
-  { name: 'Bar Soap 4-Pack', status: 'draft', price: 39,
+  { name: 'Bar Soap 4-Pack', status: 'live', price: 39,
     items: { barsoap: 4 },
-    story: 'Subscription vehicle, every 4 months. Replaces the single-bar monthly sub, which lost $1.41 per shipment.' },
-  { name: 'Two-Step Dry Skin Starter Set', status: 'draft', price: 39.99,
-    items: { lotion: 1, cream: 1 }, story: 'Same contents as the hero at a deeper discount. Redundant.' },
+    story: 'Subscription vehicle, every 4 months. Replaces the single-bar sub, which still loses money per shipment. Does not clear the $45 free-shipping threshold — never lead its copy with shipping.' },
+  { name: 'Two-Step Dry Skin Starter Set', status: 'retired', price: 39.99,
+    items: { lotion: 1, cream: 1 },
+    story: 'Deleted 2026-07-26. Same contents as the hero at a deeper discount; it only split traffic and reviews.' },
   { name: 'Pump + Refill', status: 'rejected', price: 34,
     items: { pump: 1, refill: 1 }, story: 'Loses money: the refill forces a $21.31 box.' },
-  { name: 'Foam Soap Bundle', status: 'draft', price: 20.02,
-    items: { pump: 2, refill: 1 }, story: 'MUST NOT PUBLISH — loses ~$19/order.' },
+  { name: 'Foam Soap Bundle', status: 'retired', price: 20.02,
+    items: { pump: 2, refill: 1 },
+    story: 'Deleted 2026-07-26 without ever being published — lost ~$19/order.' },
   { name: 'Single lotion (reference)', status: 'live', price: 30,
     items: { lotion: 1 }, story: 'Reference point, not an offer. Anchor for the $99 bundle.' },
 ];
