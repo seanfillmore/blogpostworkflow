@@ -242,10 +242,32 @@ test('validateAnalysis rejects a voice-of-customer entry with no quote', () => {
 });
 
 // ── ranking ─────────────────────────────────────────────────────────────────
-test('rankPersonas orders by evidence_count x emotional_intensity, highest first', () => {
-  const low = validPersona({ id: 'low', evidence_count: 40, emotional_intensity: 2 });   // 80
-  const high = validPersona({ id: 'high', evidence_count: 12, emotional_intensity: 9 }); // 108
-  assert.deepEqual(rankPersonas([low, high]).map((p) => p.id), ['high', 'low']);
+test('rankPersonas orders qualified personas by emotional intensity, highest first', () => {
+  const loud = validPersona({ id: 'loud', evidence_count: 40, emotional_intensity: 2 });
+  const intense = validPersona({ id: 'intense', evidence_count: 12, emotional_intensity: 9 });
+  assert.deepEqual(rankPersonas([loud, intense]).map((p) => p.id), ['intense', 'loud']);
+});
+
+test('rankPersonas: volume does not outrank intensity once both clear the floor', () => {
+  // The first live run's actual shape: the most intense persona had fewer
+  // mentions and the old evidence x intensity score buried it.
+  const labelReader = validPersona({ id: 'label', evidence_count: 25, emotional_intensity: 7.5 });
+  const eczema = validPersona({ id: 'eczema', evidence_count: 18, emotional_intensity: 9.2 });
+  assert.deepEqual(rankPersonas([labelReader, eczema]).map((p) => p.id), ['eczema', 'label']);
+});
+
+test('rankPersonas sinks an under-evidenced persona below qualified ones, without dropping it', () => {
+  const thin = validPersona({ id: 'thin', evidence_count: 2, emotional_intensity: 10 });
+  const solid = validPersona({ id: 'solid', evidence_count: 20, emotional_intensity: 5 });
+  const out = rankPersonas([thin, solid]);
+  assert.deepEqual(out.map((p) => p.id), ['solid', 'thin'], 'a 2-mention persona must not drive the default angle');
+  assert.equal(out.length, 2, 'nothing is dropped — it is a floor, not a filter');
+});
+
+test('rankPersonas breaks intensity ties on evidence_count so the order is deterministic', () => {
+  const fewer = validPersona({ id: 'fewer', evidence_count: 10, emotional_intensity: 7 });
+  const more = validPersona({ id: 'more', evidence_count: 30, emotional_intensity: 7 });
+  assert.deepEqual(rankPersonas([fewer, more]).map((p) => p.id), ['more', 'fewer']);
 });
 
 test('rankPersonas does not mutate its input', () => {
