@@ -111,6 +111,12 @@ async function loadVideo(url, publishedAt, { refetch, apiKey }) {
  * revise earlier claims rather than stacking duplicates on top of them.
  */
 async function writeSkill({ name, description, tactics, existing, client }) {
+  // Belt-and-braces: validateExtraction already constrains targetSkill.name to
+  // /^marketing-[a-z0-9]+(-[a-z0-9]+)*$/, but this function is the last thing
+  // standing between model output and a filesystem write, so it checks again.
+  if (name.includes('/') || name.includes('\\') || name.includes('..')) {
+    throw new Error(`Refusing to write skill with unsafe name: "${name}"`);
+  }
   const dir = join(SKILLS_DIR, name);
   const path = join(dir, 'SKILL.md');
 
@@ -167,17 +173,63 @@ async function processVideo(item, { client, apiKey, args }) {
   return { video, extraction, skillsTouched };
 }
 
+function branchExists(name) {
+  try {
+    git(['rev-parse', '--verify', '--quiet', `refs/heads/${name}`]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The design encourages repeat incremental runs against the same skill, so a
+ * `feature/marketing-skill-<topic>` collision is expected, normal use — not an
+ * error. Disambiguate by videoId first (stable, meaningful), then a numeric
+ * suffix, rather than aborting a run that already wrote files and spent credits.
+ */
+function resolveBranchName(base, results) {
+  if (!branchExists(base)) return base;
+
+  const videoId = results[0]?.video?.videoId ?? 'run';
+  const withVideo = `${base}-${videoId}`;
+  if (!branchExists(withVideo)) return withVideo;
+
+  for (let i = 2; i <= 10; i++) {
+    const candidate = `${withVideo}-${i}`;
+    if (!branchExists(candidate)) return candidate;
+  }
+  throw new Error(
+    `Could not find an available branch name. Tried "${base}", "${withVideo}", and `
+    + `"${withVideo}-2" through "${withVideo}-10" — all already exist.`
+  );
+}
+
 function openPullRequest(results) {
   const touched = results.flatMap((r) => r.skillsTouched);
   if (!touched.length) {
     console.log('No skills changed — skipping the PR.');
     return null;
   }
+
+  // Fail fast, before any commit/push, if gh is missing or unauthenticated — a
+  // pushed branch with no PR (because gh died after the push) is a worse state
+  // than never having started.
+  try {
+    execFileSync('gh', ['--version'], { cwd: ROOT, encoding: 'utf8' });
+  } catch {
+    throw new Error('gh CLI is not available. Install/auth GitHub CLI before running with PR automation (or pass --no-pr).');
+  }
+
   const topics = [...new Set(touched.map((s) => s.name.replace(/^marketing-/, '')))];
-  const branch = topics.length === 1
+  const baseBranch = topics.length === 1
     ? `feature/marketing-skill-${topics[0]}`
     : `feature/marketing-skills-${topics.length}-topics`;
+  const branch = resolveBranchName(baseBranch, results);
 
+  // -b (not -B): the design encourages repeat incremental runs against the same
+  // skill, so branch-name collisions are expected. -B would silently reset an
+  // existing branch and discard whatever work is sitting on it.
   git(['checkout', '-b', branch]);
   git(['add', '.claude/skills', 'data/reports/marketing-learner']);
   git(['commit', '-m', `feat(skills): marketing tactics from ${results.length} video(s)\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`]);

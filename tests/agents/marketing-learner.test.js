@@ -284,6 +284,16 @@ assert.throws(
   'skill name must be namespaced'
 );
 assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-../../evil', action: 'create' } }] }),
+  /must start with "marketing-"/,
+  'path traversal in skill name is rejected'
+);
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-Has Spaces', action: 'create' } }] }),
+  /must start with "marketing-"/,
+  'non-kebab-case skill name is rejected'
+);
+assert.throws(
   () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-x', action: 'delete' } }] }),
   /action must be/,
   'unknown action rejected'
