@@ -29,39 +29,67 @@ half the original ask, and it is invisible in a skill diff.
 
 ## Non-Goals
 
-- No channel watchlist, no polling, no scheduler entry, no cron. On-demand only.
-- No server deployment. This runs on Sean's Mac (see Bot Detection below).
+- No channel watchlist, no polling, no scheduler entry, no cron. On-demand only —
+  Sean wants to inject videos he encounters, not subscribe to firehoses. This is a
+  preference, not a technical limit; see Deferred below.
 - No dashboard UI.
 - No `data/context/*.md` artifact for the agent fleet. Skills only, for now.
 - No audio transcription fallback (Whisper/Deepgram). If a video has no captions,
   it is skipped.
 
-These are deliberate. Revisit only if the tool earns its keep.
-
 ## Architecture
 
-Two files, mirroring the `voice-of-customer` split:
+Three files:
 
 | File | Responsibility |
 |---|---|
-| `agents/marketing-learner/index.js` | CLI, orchestration, `yt-dlp` shell-out, Anthropic calls, git/PR |
-| `lib/marketing-learner.js` | Pure functions: VTT parsing, skill inventory, skill rendering, validation guards |
+| `agents/marketing-learner/index.js` | CLI, orchestration, Anthropic calls, git/PR |
+| `lib/transcript-source.js` | Transcript + metadata retrieval. The only file that knows about TranscriptAPI. |
+| `lib/marketing-learner.js` | Pure functions: skill inventory, skill rendering, constraint block, validation guards |
 
-Everything in `lib/` is network-free and unit-testable. Everything that touches the
-outside world lives in the agent.
+`lib/marketing-learner.js` is network-free and unit-testable. `lib/transcript-source.js`
+exists as a seam: it exposes one function, `fetchTranscript(videoUrl)`, returning a
+normalized `{ videoId, title, creator, durationSeconds, publishedAt, text }`. If the
+vendor disappears or prices badly, a yt-dlp implementation drops in behind the same
+signature without touching the agent.
+
+### Transcript provider
+
+[TranscriptAPI](https://transcriptapi.com/docs/api/), base `https://transcriptapi.com/api/v2`,
+auth `Authorization: Bearer $TRANSCRIPTAPI_KEY`.
+
+Chosen over local `yt-dlp` for three reasons:
+
+1. **Clean segments.** Returns non-overlapping `{text, start, duration}` or `format=text`
+   plain prose. YouTube's auto-caption VTT uses a rolling window that repeats each phrase
+   two to three times; parsing it correctly is subtle, and getting it wrong yields a
+   transcript ~2.5× too long that reads as a stutter and silently degrades extraction
+   quality. Using the API removes that failure mode rather than testing against it.
+2. **No datacenter-IP blocking.** YouTube blocks cloud IPs; yt-dlp from the DigitalOcean
+   box would fail with "confirm you're not a bot" / HTTP 429. The vendor absorbs this,
+   which is what makes a future server-side run possible at all.
+3. **No local binary, no quarterly breakage.** YouTube changes internal formats roughly
+   every quarter. That becomes the vendor's maintenance burden, not ours.
+
+Cost: 1 credit per successful transcript; **failed requests are not charged**. Free tier
+is 100 credits with no card; paid is $54/yr for 1,000 credits/month. At on-demand volume
+this is free-tier territory for months, and negligible against the ~$0.30–0.60 in Opus
+tokens each video costs to *analyze*. The transcript was never the expensive part.
+
+New `.env` key: `TRANSCRIPTAPI_KEY`.
 
 ### Data locations
 
 | Path | Committed? | Contents |
 |---|---|---|
-| `data/marketing-corpus/<videoId>/` | No — gitignored | `raw.en.vtt`, `info.json`, `transcript.txt` |
+| `data/marketing-corpus/<videoId>/` | No — gitignored | `transcript.txt`, `meta.json` |
 | `data/reports/marketing-learner/<videoId>.md` | Yes | Human-readable scoring report incl. rejects |
 | `data/reports/marketing-learner/<videoId>.json` | Yes | Structured extraction output |
 | `.claude/skills/marketing-<topic>/SKILL.md` | Yes | The actual deliverable |
 
-Transcripts are gitignored: they are large, re-fetchable, and of no review value. The
-extraction JSON is committed because it is the auditable record of what the model
-concluded from a transcript that no longer exists in the repo.
+Transcripts are gitignored: large, re-fetchable, and of no review value. The extraction
+JSON is committed because it is the auditable record of what the model concluded from a
+transcript that no longer exists in the repo.
 
 Requires adding `data/marketing-corpus/` to `.gitignore`.
 
@@ -69,54 +97,34 @@ Requires adding `data/marketing-corpus/` to `.gitignore`.
 
 ### 1. Fetch
 
-Shell out to `yt-dlp`:
+`lib/transcript-source.js`:
 
-```
-yt-dlp --write-subs --write-auto-subs --sub-langs "en.*,en" --sub-format vtt \
-       --skip-download --write-info-json \
-       -o "<corpusDir>/raw" <url>
-```
+1. `GET /youtube/info?video_url=<url>` — **costs 0 credits**. Confirms the video exists
+   and reports available caption languages. If no English variant is listed, skip the
+   video without spending anything.
+2. `GET /youtube/transcript?video_url=<url>&format=text&send_metadata=true&language=<list>`
+   — 1 credit. `language` is a comma-separated priority list; pass the English variants
+   that step 1 reported as available, in preference order (manual before auto-generated
+   where the response distinguishes them). Returns the prose transcript plus title,
+   `author_name`, `author_url`, `length_seconds`.
 
-Both manual and auto captions are requested. **Manual captions are preferred when
-present** — they are human-written and lack the duplication artifacts described below.
-Fall back to auto.
+Both responses are cached to `data/marketing-corpus/<videoId>/`; re-running a URL reuses
+the cache unless `--refetch`. This matters more than it did with yt-dlp, because re-runs
+now cost money rather than bandwidth.
 
-`info.json` supplies title, channel/uploader, upload date, duration, view count, and
-description. Channel and view count feed the extraction prompt as weak credibility
-signal — not as truth, but a 400-view video from an unknown channel should clear a
-higher bar than one from an operator with a track record.
+**Open implementation detail:** the docs do not state whether a publish date is returned
+by either endpoint. Publish date is a real scoring input — a 2019 Facebook-ads tactic
+deserves a harder look than a 2026 one. **Step one of implementation is to obtain a free
+key and dump one real response for both endpoints**, then either wire the field through
+or, if absent, drop recency from the scoring prompt rather than inventing it. Do not
+finalize the prompt before this is settled.
 
-Fetch is cached. Re-running a URL reuses the corpus directory unless `--refetch`.
-
-### 2. Normalize — the part that quietly breaks things
-
-YouTube auto-generated VTT is not clean text. It contains:
-
-- Inline word-level timing spans: `so<00:00:00.719><c> the</c><00:00:00.960><c> first</c>`
-- Cue-level positioning cruft: `align:start position:0%`
-- **A rolling caption window**: each cue repeats the tail of the previous cue as its
-  head, so every phrase appears two to three times.
-
-Naive VTT stripping produces a transcript roughly 2.5× too long that reads as a stutter.
-The failure mode is insidious: extraction quality drops, and it presents as the model
-being bad at its job rather than as a parsing bug.
-
-`vttToPlainText(vtt)` must:
-
-1. Strip `<c>` tags and `<timestamp>` markers.
-2. Strip cue settings and `WEBVTT` / `Kind:` / `Language:` headers.
-3. Drop each cue's leading overlap with the accumulated output tail.
-4. Collapse whitespace, join into paragraphs.
-
-This function gets a unit test against a real captured VTT fixture. It is the single
-highest-risk piece of logic in the design.
-
-### 3. Extract
+### 2. Extract
 
 One Opus call (`claude-opus-5`, consistent with `voice-of-customer`). The prompt carries:
 
-- The normalized transcript
-- Video metadata (title, channel, date, duration, views)
+- The transcript
+- Video metadata (title, channel, duration, and publish date if available)
 - **The current skill inventory** — every `.claude/skills/marketing-*/SKILL.md`'s name,
   description, and full content
 - The RSC constraint block (below)
@@ -145,7 +153,7 @@ Returns JSON:
 
 `targetSkill` is null when `verdict` is `reject`.
 
-### 4. Score
+### 3. Score
 
 Fit is judged against real numbers pulled from the repo and CLAUDE.md, assembled into a
 constraint block by `buildConstraintBlock()`:
@@ -168,10 +176,10 @@ Automatic reject criteria, stated explicitly in the prompt:
 | Restates something an existing skill already covers | Duplication degrades skill triggering |
 | Depends on scale RSC does not have (list size, traffic volume, review count) | Won't reproduce |
 
-Scores are 0–10 with written reasoning. Only `adopt` verdicts reach step 5; everything
+Scores are 0–10 with written reasoning. Only `adopt` verdicts reach step 4; everything
 else still lands in the report.
 
-### 5. Render
+### 4. Render
 
 Adopted tactics are grouped by `targetSkill.name` and written to
 `.claude/skills/marketing-<topic>/SKILL.md`.
@@ -204,13 +212,13 @@ source of silent corruption; whole-file replacement plus validation is safer.
 
 A guard trip throws. It does not warn and write.
 
-### 6. Report
+### 5. Report
 
 `data/reports/marketing-learner/<videoId>.md` — the video's summary, then every tactic
 in score order with verdict and reasoning, adopted and rejected alike, then a footer
 listing which skills were touched.
 
-### 7. Pull request
+### 6. Pull request
 
 Branch `feature/marketing-skill-<topic>` where `<topic>` is the most-touched skill's
 topic slug (repo rule #1: `feature/` or `fix/` prefix). When a run touches more than one
@@ -229,7 +237,7 @@ node agents/marketing-learner/index.js <url> [<url>…]
 
   --extract-only   Fetch, extract, write report. Do not touch skills or open a PR.
   --no-pr          Write skills and report into the working tree. No branch, no PR.
-  --refetch        Ignore the transcript cache and re-fetch.
+  --refetch        Ignore the transcript cache and re-fetch (costs a credit).
 ```
 
 Add to `package.json`: `"learn": "node agents/marketing-learner/index.js"`.
@@ -240,23 +248,19 @@ Multiple URLs in one invocation produce one PR covering all of them.
 
 | Condition | Behavior |
 |---|---|
-| `yt-dlp` not on PATH | Message with `brew install yt-dlp`, exit 1 |
-| Video has no captions in any English variant | Skip with reason, continue the batch |
-| yt-dlp bot-block / HTTP 429 | Surface yt-dlp's actual stderr, suggest `--cookies-from-browser chrome`. **No retry.** |
+| `TRANSCRIPTAPI_KEY` missing | Message pointing at `.env`, exit 1 |
+| `401` invalid key | Fail fast, do not retry |
+| `402` out of credits | Clear message with the billing URL from the response body, exit 1 |
+| `404` no transcript / no English caption | Skip with reason, continue the batch |
+| `408`, `429`, `503` | Retry with backoff via `lib/retry.js`, capped; then skip the video |
 | Anthropic `stop_reason === 'max_tokens'` | Throw, do not save. Mirrors the blog-post-writer rule — truncated structured output is corrupt, not partial. |
-| Extraction JSON fails schema validation | Throw with the offending payload written to the corpus dir for inspection |
+| Extraction JSON fails schema validation | Throw, writing the offending payload to the corpus dir for inspection |
 | `validateSkillEdit` guard trip | Throw. Leave the existing skill untouched. |
 
 Completion calls `notify()` per repo convention.
 
-### Bot detection
-
-YouTube blocks datacenter IPs — the DigitalOcean server at 137.184.119.230 will
-reliably fail with "Sign in to confirm you're not a bot" or HTTP 429. This is the
-reason the tool is local-only and has no scheduler entry.
-
-Retrying into a rate limit escalates the block. The tool fails fast and reports rather
-than backing off and retrying.
+Note the pre-flight `/youtube/info` check is free, so the common "no captions" case
+costs nothing and never consumes a credit.
 
 ## Token cost
 
@@ -269,18 +273,16 @@ value of the tool is judgment quality on the scoring step.
 
 `tests/agents/marketing-learner.test.js`, run under `node --test`:
 
-- `vttToPlainText` against a real captured auto-caption VTT fixture — asserts dedupe,
-  tag stripping, and that output length is plausible against the source
-- `vttToPlainText` against a manual-caption VTT (no rolling window) — asserts it is not
-  over-deduped
 - `scanSkillInventory` — finds `marketing-*` skills, ignores others, tolerates an
   absent `.claude/skills/` directory
 - `renderSkillMarkdown` — valid frontmatter, provenance present on every claim
 - `validateSkillEdit` — passes a legitimate expansion; throws on frontmatter damage,
   renamed `name`, and unexplained >25% shrink
 - `buildConstraintBlock` — includes the AOV and retention figures
+- `lib/transcript-source.js` against recorded fixture responses — normalization of a
+  successful payload, and correct classification of `402` / `404` / `429`
 
-`yt-dlp` and the Anthropic client are mocked. No network in tests.
+The HTTP client and the Anthropic client are mocked. No network in tests.
 
 Per repo rule #4, one manual end-to-end run on a single real video before any batch use.
 
@@ -295,11 +297,24 @@ failing.
 extraction so later videos edit rather than duplicate. If sprawl appears anyway, the fix
 is a consolidation pass, not more automation.
 
-**yt-dlp breakage.** YouTube changes internal formats roughly quarterly and yt-dlp
-follows. `brew upgrade yt-dlp` is the fix. Not worth engineering around.
+**Vendor dependency.** TranscriptAPI is a small provider. If it folds, prices badly, or
+degrades, the blast radius is one file — `lib/transcript-source.js` — behind a
+single-function interface. yt-dlp remains the documented fallback implementation. This
+is the reason for the seam; without it the risk would not be acceptable.
 
-## Open questions
+**Thinner metadata than yt-dlp.** No view count or description, and publish date is
+unconfirmed. View count was only ever weak credibility signal and is not worth a second
+provider. Publish date is load-bearing enough to verify before the prompt is written
+(see Fetch above).
 
-None blocking. Deferred by choice: whether adopted tactics should also flow into
-`data/context/` for the agent fleet, and whether tactic outcomes should be tracked
-against actual RSC results. Both are additive later; neither changes this design.
+## Deferred
+
+Not in scope, and none of these change the design:
+
+- **Channel watchlist.** Now cheap: `GET /youtube/channel/latest` is free (RSS, 15 newest)
+  and `GET /youtube/channel/videos` is 1 credit per ~100 items. Sean chose on-demand
+  input; noting only that this door is inexpensive to open later.
+- **Server-side / scheduled runs.** The datacenter-IP blocking that ruled this out under
+  yt-dlp no longer applies. Still out of scope by choice, not by constraint.
+- Flowing adopted tactics into `data/context/` for the agent fleet.
+- Tracking tactic outcomes against actual RSC results.
