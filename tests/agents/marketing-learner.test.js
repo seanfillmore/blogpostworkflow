@@ -329,4 +329,37 @@ await assert.rejects(
   'non-JSON output throws'
 );
 
+import { renderReport } from '../../lib/marketing-learner.js';
+
+{
+  const md = renderReport({
+    extraction: GOOD,
+    video: { ...VIDEO },
+    skillsTouched: [{ name: 'marketing-retention-flows', action: 'create' }],
+  });
+
+  assert.match(md, /Retention Playbook/, 'names the video');
+  assert.match(md, /abc12345678/, 'links or names the video id');
+  assert.match(md, /2026-03-14/, 'shows the publish date');
+  assert.match(md, /Send replenishment at 60% of cycle/, 'lists the adopted tactic');
+  assert.match(md, /Hire a media buyer/, 'lists the REJECTED tactic too');
+  assert.match(md, /Requires staff/, 'shows why it was rejected');
+  assert.match(md, /marketing-retention-flows/, 'footer names skills touched');
+
+  // The rejects are half the value — they must be a visible section, not a footnote.
+  assert.match(md, /## Rejected/i, 'has a dedicated rejected section');
+  assert.match(md, /## Adopted/i, 'has a dedicated adopted section');
+}
+
+// A video where nothing survived must still produce a useful report.
+{
+  const md = renderReport({
+    extraction: { ...GOOD, tactics: [GOOD.tactics[1]] },
+    video: { ...VIDEO },
+    skillsTouched: [],
+  });
+  assert.match(md, /Hire a media buyer/, 'still lists the reject');
+  assert.match(md, /No tactics adopted/i, 'says so plainly when nothing was adopted');
+}
+
 console.log('✓ marketing-learner date + constraint tests pass');
