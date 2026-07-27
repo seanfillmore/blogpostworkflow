@@ -200,6 +200,57 @@ pattern, so those rows describe a Shopping surface, not organic web results, and
 placement with no clicks is unremarkable there. An earlier reading in conversation called this a
 parameter-handling bug; it is not, and no work should be spent on it.
 
+## Workstream F — navigation
+
+Added 2026-07-27 at Sean's direction. Without this, the site's own navigation points at 301s
+on every page.
+
+### Current state
+
+**Header** (rendered twice — desktop nav and mobile drawer): 6 collection links
+(`natural-toothpaste`, `natural-lip-balm`, `natural-deodorant`, `natural-bar-soap`,
+`foaming-hand-soap`, `coconut-oil-lotion`), plus `/collections/all`, plus all 8 PDPs. The route
+to products already exists.
+
+**Footer** (rendered on every page): **30 collection links**, of which **28 are being
+redirected** — only `all-products` and `non-toxic-body-lotion` survive. This is the single
+largest internal-link signal on the site, and it currently points almost entirely at pages this
+project removes. Cleaning it matters as much as the redirects themselves.
+
+### Target
+
+**Header — product-led.** `Shop` dropdown listing the 9 distinct products, plus `Sets &
+Bundles`, plus About/Support. A 9-product catalog is browsed by product, not by category.
+
+**Footer — "Shop by Category" block** holding exactly the four survivors:
+`non-toxic-body-lotion`, `foaming-hand-soap`, `sets-and-bundles`, `all-products`. Collections
+keep real internal links — which the consolidation depends on for ranking signal — without
+occupying prime navigation.
+
+Collections remain reachable from the footer, from PDP cross-links, and from the sitemap.
+
+### Constraint: this cannot be automated with the current app
+
+The Shopify app holds 26 scopes including `write_themes`, but **not
+`write_online_store_navigation`**. Menus live in Online Store → Navigation, not in theme files,
+so `write_themes` does not reach them. Two routes:
+
+1. **Sean edits both menus in admin** — a one-time change of roughly 15 minutes. Recommended:
+   this is a single structural edit, not a recurring job.
+2. **Add `write_online_store_navigation` and re-install the app** to grant it (adding a scope
+   requires clicking "Install app" again; no token regeneration). Worth it only if we expect the
+   fleet to manage navigation on an ongoing basis, which nothing currently does.
+
+The implementation plan must not assume programmatic menu edits.
+
+### Sequencing
+
+Navigation should be updated in the same change window as the redirects. If the redirects land
+first, every header and footer link becomes a 301 hop until the menus are fixed — functional,
+but it wastes crawl budget across every page on the site and leaves the internal link graph
+pointing at dead ends. If navigation cannot be updated first, run it immediately after and treat
+the gap as a known temporary state rather than a finished result.
+
 ## What this does not promise
 
 Consolidation alone will not convert 93,785 impressions into revenue. Site-wide CTR is 0.054%
@@ -257,7 +308,9 @@ Already wired, no new instrumentation:
    physical bundle products, and is linked from the store's navigation.
 8. The homepage title and meta description lead with the brand, and the meta description is
    under 160 characters.
-9. At 28 days: the lotion survivor's average position on its target queries has improved
+9. No header or footer link points at a redirected collection: the footer's 30 collection links
+   become a four-item "Shop by Category" block, and the header is product-led.
+10. At 28 days: the lotion survivor's average position on its target queries has improved
    against the rank-tracker baseline, and the homepage's average position on brand queries has
    improved from 4.5. These are the two hypotheses under test — a null result on either is an
    acceptable outcome to learn, not a failure to hide.
@@ -268,3 +321,7 @@ Already wired, no new instrumentation:
   Workstream D (`all-products`) at Sean's direction, and Workstream E (brand-query
   cannibalization) which was discovered while investigating D and folded in at his direction
   rather than deferred.
+- **2026-07-27, later:** added Workstream F (navigation) after Sean flagged that collections are
+  linked from the main menu. Investigation found the footer links 30 collections on every page,
+  28 of which this project redirects, and that menu edits cannot be automated with the current
+  app scopes.
