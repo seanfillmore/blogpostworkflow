@@ -95,3 +95,6 @@ data/analysis/
 
 # Dashboard background-run job logs (ephemeral)
 data/reports/run-jobs/
+
+# Marketing-learner transcript cache (large, re-fetchable, no review value)
+data/marketing-corpus/
