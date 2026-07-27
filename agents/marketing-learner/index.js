@@ -20,7 +20,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import Anthropic from '../../lib/anthropic.js';
@@ -95,8 +95,17 @@ async function loadVideo(url, publishedAt, { refetch, apiKey }) {
   const cachePath = join(dir, 'video.json');
 
   if (!refetch && existsSync(cachePath)) {
-    console.log('  (transcript from cache — 0 credits)');
-    return { ...JSON.parse(readFileSync(cachePath, 'utf8')), publishedAt };
+    try {
+      const cached = JSON.parse(readFileSync(cachePath, 'utf8'));
+      console.log('  (transcript from cache — 0 credits)');
+      return { ...cached, publishedAt };
+    } catch {
+      // A partial write (e.g. a Ctrl-C mid-write) leaves opaque, unparseable JSON on
+      // disk. That is not a TranscriptError, so letting it propagate would kill the
+      // whole batch and the only way out would cost another credit. Treat it as a
+      // cache miss instead — refetching is cheap next to losing the run.
+      console.warn(`  ⚠ cached transcript at ${cachePath} is corrupt (partial write?) — refetching`);
+    }
   }
 
   const fetched = await fetchTranscript(url, { apiKey });
@@ -109,26 +118,50 @@ async function loadVideo(url, publishedAt, { refetch, apiKey }) {
 /**
  * Create a new skill, or merge into an existing one via the LLM so later videos
  * revise earlier claims rather than stacking duplicates on top of them.
+ *
+ * `skillsDir` defaults to the real project skills dir; tests pass a temp dir.
  */
-async function writeSkill({ name, description, tactics, existing, client }) {
+export async function writeSkill({ name, description, tactics, existing, client, skillsDir = SKILLS_DIR }) {
   // Belt-and-braces: validateExtraction already constrains targetSkill.name to
   // /^marketing-[a-z0-9]+(-[a-z0-9]+)*$/, but this function is the last thing
   // standing between model output and a filesystem write, so it checks again.
   if (name.includes('/') || name.includes('\\') || name.includes('..')) {
     throw new Error(`Refusing to write skill with unsafe name: "${name}"`);
   }
-  const dir = join(SKILLS_DIR, name);
-  const path = join(dir, 'SKILL.md');
 
   if (existing) {
+    // Write to the path the inventory scan actually found — NEVER recompute it from
+    // the model's name. If the on-disk frontmatter `name` differs from the directory
+    // name (or the model just echoed a slightly different name), join(skillsDir, name)
+    // points at a directory that may not exist, or worse, at a different directory
+    // than the one the model read when it produced this merge.
     const { content, supersedes } = await mergeSkillContent({
       existingContent: existing.content,
       tactics,
       client,
     });
-    writeFileSync(path, content);
+    writeFileSync(existing.path, content);
     if (supersedes) console.log(`  ↻ ${name} superseded content: ${supersedes}`);
-    return { path, action: 'edit' };
+    return { path: existing.path, action: 'edit' };
+  }
+
+  const dir = join(skillsDir, name);
+  const path = join(dir, 'SKILL.md');
+
+  // A skill file can exist on disk without being in the inventory: malformed
+  // frontmatter makes scanSkillInventory warn-and-skip it, and a symlinked skill
+  // directory is invisible too (readdirSync withFileTypes: entry.isDirectory() is
+  // false for a symlink). Either way `existing` comes back undefined even though
+  // real, accumulated content sits at this exact path. Refuse rather than let
+  // writeFileSync silently overwrite it wholesale — validateSkillEdit's
+  // shrink/rename guard never gets a chance to run on the CREATE path.
+  if (existsSync(path)) {
+    throw new Error(
+      `Refusing to create "${name}": ${path} already exists but was not found by the skill ` +
+      `inventory scan. Its frontmatter is probably malformed (or the directory is a symlink), ` +
+      `which made it invisible to scanSkillInventory. Fix the file by hand, then re-run — ` +
+      `this run will not overwrite it.`
+    );
   }
 
   mkdirSync(dir, { recursive: true });
@@ -141,13 +174,32 @@ async function processVideo(item, { client, apiKey, args }) {
   if (item.warning) console.warn(`  ⚠ ${item.warning}`);
 
   const inventory = scanSkillInventory(SKILLS_DIR);
-  const extraction = await extractTactics({ video, inventory, client });
+  let extraction;
+  try {
+    extraction = await extractTactics({ video, inventory, client });
+  } catch (err) {
+    // Spec: a schema-validation failure must throw AND write the offending payload
+    // to the corpus dir for inspection — otherwise the operator can't see what was
+    // malformed and has to re-pay for the Opus call just to look at it again.
+    // lib/marketing-learner.js deliberately doesn't know the corpus path, so it
+    // attaches the raw payload to the error and this is where it gets persisted.
+    if (err.offendingPayload !== undefined) {
+      const dir = join(CORPUS_DIR, video.videoId);
+      mkdirSync(dir, { recursive: true });
+      const badPath = join(dir, `invalid-extraction-${Date.now()}.json`);
+      writeFileSync(badPath, JSON.stringify(err.offendingPayload, null, 2));
+      console.error(`  ✗ schema validation failed — offending payload saved to ${relative(ROOT, badPath)}`);
+    }
+    throw err;
+  }
 
   mkdirSync(REPORT_DIR, { recursive: true });
-  writeFileSync(join(REPORT_DIR, `${video.videoId}.json`), JSON.stringify(extraction, null, 2));
+  const extractionJsonPath = join(REPORT_DIR, `${video.videoId}.json`);
+  writeFileSync(extractionJsonPath, JSON.stringify(extraction, null, 2));
 
   const adopted = extraction.tactics.filter((t) => t.verdict === 'adopt');
   const skillsTouched = [];
+  const writtenPaths = [extractionJsonPath];
 
   if (!args.extractOnly) {
     const bySkill = new Map();
@@ -161,16 +213,19 @@ async function processVideo(item, { client, apiKey, args }) {
       const description = existing
         ? parseFrontmatter(existing.content).description
         : `Use when working on ${name.replace(/^marketing-/, '').replace(/-/g, ' ')} for Real Skin Care.`;
-      const { action } = await writeSkill({ name, description, tactics, existing, client });
-      skillsTouched.push({ name, action });
+      const { path, action } = await writeSkill({ name, description, tactics, existing, client });
+      skillsTouched.push({ name, action, path });
+      writtenPaths.push(path);
     }
   }
 
   const report = renderReport({ extraction, video, skillsTouched });
-  writeFileSync(join(REPORT_DIR, `${video.videoId}.md`), report);
+  const reportMdPath = join(REPORT_DIR, `${video.videoId}.md`);
+  writeFileSync(reportMdPath, report);
+  writtenPaths.push(reportMdPath);
 
   console.log(`  ${adopted.length} adopted, ${extraction.tactics.length - adopted.length} rejected`);
-  return { video, extraction, skillsTouched };
+  return { video, extraction, skillsTouched, writtenPaths };
 }
 
 function branchExists(name) {
@@ -227,26 +282,44 @@ function openPullRequest(results) {
     : `feature/marketing-skills-${topics.length}-topics`;
   const branch = resolveBranchName(baseBranch, results);
 
-  // -b (not -B): the design encourages repeat incremental runs against the same
-  // skill, so branch-name collisions are expected. -B would silently reset an
-  // existing branch and discard whatever work is sitting on it.
-  git(['checkout', '-b', branch]);
-  git(['add', '.claude/skills', 'data/reports/marketing-learner']);
-  git(['commit', '-m', `feat(skills): marketing tactics from ${results.length} video(s)\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`]);
-  git(['push', '-u', 'origin', branch]);
+  // The repo's working tree is habitually dirty (per-project convention, not a bug
+  // here). Record where the operator actually is so we can put them back — and only
+  // ever stage the exact files this run wrote, never whole directories, so an
+  // unrelated in-flight edit or a hand-authored skill never rides along in the commit.
+  const originalBranch = git(['rev-parse', '--abbrev-ref', 'HEAD']);
+  const paths = [...new Set(results.flatMap((r) => r.writtenPaths))].map((p) => relative(ROOT, p));
 
-  const body = results.map((r) => {
-    const rows = r.extraction.tactics
-      .sort((a, b) => b.rscFit.score - a.rscFit.score)
-      .map((t) => `| ${t.rscFit.score}/10 | ${t.verdict} | ${t.claim} | ${t.rejectReason ?? t.rscFit.reasoning} |`)
-      .join('\n');
-    return `## ${r.video.title}\n\nhttps://www.youtube.com/watch?v=${r.video.videoId}\n\n| Score | Verdict | Claim | Reasoning |\n|---|---|---|---|\n${rows}`;
-  }).join('\n\n');
+  try {
+    // -b (not -B): the design encourages repeat incremental runs against the same
+    // skill, so branch-name collisions are expected. -B would silently reset an
+    // existing branch and discard whatever work is sitting on it.
+    //
+    // Branch from `main`, not current HEAD: `checkout -b` with no start-point branches
+    // from wherever the operator happens to be, so running this from an unrelated
+    // feature branch would carry its unrelated commits straight into the PR.
+    git(['checkout', '-b', branch, 'main']);
+    git(['add', ...paths]);
+    git(['commit', '-m', `feat(skills): marketing tactics from ${results.length} video(s)\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`]);
+    git(['push', '-u', 'origin', branch]);
 
-  execFileSync('gh', ['pr', 'create', '--title', `Marketing skills: ${topics.join(', ')}`, '--body',
-    `${body}\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)`],
-    { cwd: ROOT, encoding: 'utf8', stdio: 'inherit' });
-  return branch;
+    const body = results.map((r) => {
+      const rows = r.extraction.tactics
+        .sort((a, b) => b.rscFit.score - a.rscFit.score)
+        .map((t) => `| ${t.rscFit.score}/10 | ${t.verdict} | ${t.claim} | ${t.rejectReason ?? t.rscFit.reasoning} |`)
+        .join('\n');
+      const title = r.video.title ?? r.video.videoId;
+      return `## ${title}\n\nhttps://www.youtube.com/watch?v=${r.video.videoId}\n\n| Score | Verdict | Claim | Reasoning |\n|---|---|---|---|\n${rows}`;
+    }).join('\n\n');
+
+    execFileSync('gh', ['pr', 'create', '--title', `Marketing skills: ${topics.join(', ')}`, '--body',
+      `${body}\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)`],
+      { cwd: ROOT, encoding: 'utf8', stdio: 'inherit' });
+    return branch;
+  } finally {
+    // Land back where the operator started even if any step above throws — this run
+    // must never silently relocate whatever they had in progress onto a new branch.
+    git(['checkout', originalBranch]);
+  }
 }
 
 async function main() {
@@ -265,7 +338,10 @@ async function main() {
     try {
       results.push(await processVideo(item, { client, apiKey, args }));
     } catch (err) {
-      if (err instanceof TranscriptError && ['NOT_FOUND', 'NO_ENGLISH'].includes(err.code)) {
+      // RATE_LIMIT (408/429/503) has already exhausted lib/transcript-source.js's
+      // capped backoff retries by the time it reaches here — spec: skip the video,
+      // don't kill a batch where earlier videos already wrote skills and spent credits.
+      if (err instanceof TranscriptError && ['NOT_FOUND', 'NO_ENGLISH', 'RATE_LIMIT'].includes(err.code)) {
         console.warn(`  ⏭ skipped: ${err.message}`);
         continue; // one bad video must not kill the batch
       }
@@ -283,7 +359,7 @@ async function main() {
   const rejected = results.reduce((n, r) => n + r.extraction.tactics.filter((t) => t.verdict === 'reject').length, 0);
   await notify({
     subject: `Marketing learner: ${adopted} adopted, ${rejected} rejected`,
-    body: results.map((r) => `${r.video.title}: ${r.skillsTouched.map((s) => s.name).join(', ') || 'no skills changed'}`).join('\n'),
+    body: results.map((r) => `${r.video.title ?? r.video.videoId}: ${r.skillsTouched.map((s) => s.name).join(', ') || 'no skills changed'}`).join('\n'),
     category: 'marketing-learner',
   });
 }

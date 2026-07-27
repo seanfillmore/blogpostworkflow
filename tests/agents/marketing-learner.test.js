@@ -82,7 +82,7 @@ assert.throws(() => parsePublishedFlags(['a'], ['2026-07-28'], { today: TODAY })
   assert.match(block, /solo operator/i, 'states the staffing constraint');
   assert.match(block, /Platform mechanics/, 'includes the decay table');
   assert.match(block, /Durable principle/, 'includes the decay table');
-  assert.match(block, /18/, 'states the ~18mo platform-mechanics horizon');
+  assert.match(block, /~18 months/, 'states the ~18mo platform-mechanics horizon');
 }
 
 // ── parseFrontmatter ────────────────────────────────────────────────────────
@@ -297,6 +297,16 @@ assert.throws(
   () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-x', action: 'delete' } }] }),
   /action must be/,
   'unknown action rejected'
+);
+// A tactic with no stated mechanism is motivational framing, not actionable — the
+// constraint block explicitly tells the model to reject that, so a schema-valid
+// payload must not be able to omit it. Without this guard, renderSkillMarkdown and
+// renderReport interpolate `${t.mechanism}` with no `??` fallback and write the
+// literal string "undefined" into a committed skill file.
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], mechanism: undefined }] }),
+  /mechanism is required/,
+  'tactic missing a mechanism is rejected'
 );
 
 // ── extractTactics ──────────────────────────────────────────────────────────
