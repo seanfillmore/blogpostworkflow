@@ -49,7 +49,7 @@ Three files:
 
 `lib/marketing-learner.js` is network-free and unit-testable. `lib/transcript-source.js`
 exists as a seam: it exposes one function, `fetchTranscript(videoUrl)`, returning a
-normalized `{ videoId, title, creator, durationSeconds, publishedAt, text }`. If the
+normalized `{ videoId, title, creator, creatorUrl, durationSeconds, language, text }`. If the
 vendor disappears or prices badly, a yt-dlp implementation drops in behind the same
 signature without touching the agent.
 
@@ -100,24 +100,51 @@ Requires adding `data/marketing-corpus/` to `.gitignore`.
 `lib/transcript-source.js`:
 
 1. `GET /youtube/info?video_url=<url>` — **costs 0 credits**. Confirms the video exists
-   and reports available caption languages. If no English variant is listed, skip the
-   video without spending anything.
-2. `GET /youtube/transcript?video_url=<url>&format=text&send_metadata=true&language=<list>`
-   — 1 credit. `language` is a comma-separated priority list; pass the English variants
-   that step 1 reported as available, in preference order (manual before auto-generated
-   where the response distinguishes them). Returns the prose transcript plus title,
-   `author_name`, `author_url`, `length_seconds`.
+   and returns `available_languages`. If no English variant is listed, skip the video
+   without spending anything.
+2. `GET /youtube/transcript?video_url=<url>&format=text&include_timestamp=false&send_metadata=true&language=<list>`
+   — 1 credit.
 
 Both responses are cached to `data/marketing-corpus/<videoId>/`; re-running a URL reuses
 the cache unless `--refetch`. This matters more than it did with yt-dlp, because re-runs
 now cost money rather than bandwidth.
 
-**Open implementation detail:** the docs do not state whether a publish date is returned
-by either endpoint. Publish date is a real scoring input — a 2019 Facebook-ads tactic
-deserves a harder look than a 2026 one. **Step one of implementation is to obtain a free
-key and dump one real response for both endpoints**, then either wire the field through
-or, if absent, drop recency from the scoring prompt rather than inventing it. Do not
-finalize the prompt before this is settled.
+#### Verified response shapes (probed live 2026-07-27)
+
+`/youtube/info` → `{ video_id, metadata, available_languages }`. Language codes
+distinguish manual from auto-generated: `en` is human-written, **`asr-en` is
+auto-generated**. Build the `language` priority list from this — manual first, ASR as
+fallback — rather than guessing variant names.
+
+`/youtube/transcript` → `{ video_id, language, transcript, metadata, length_seconds, lengthText }`
+where `metadata` is `{ title, author_name, author_url, thumbnail_url }`.
+
+**`include_timestamp=false` is required.** It defaults to `true` and applies even when
+`format=text`, producing `[1.36s] ` prefixes on every line. This is not in the docs'
+parameter description and is easy to miss.
+
+Residual normalization is one regex: caption line wrapping leaves newlines mid-sentence
+(`"You know the rules\nand so do I"`), so collapse `\n` and runs of whitespace to single
+spaces. That is the whole of it — three lines in `lib/transcript-source.js`, not a module.
+There is no rolling-window duplication in the API output.
+
+`404` error body is `{ "detail": "Video <id> not found or unavailable" }`. No
+credit-remaining headers are returned on any response.
+
+#### Publish date: not available — resolved
+
+Neither endpoint returns one. `metadata` carries only title, author, and thumbnail. Per
+the prior decision, recency is **not** invented or scraped from a second source.
+
+Two things cover the gap adequately:
+
+1. Sean hand-picks every video, so he already knows roughly how old it is. A bulk-ingest
+   system would need the field; an on-demand one does not. The report includes the video
+   URL so the upload date is one click away.
+2. The extractor returns a `recencySignals` string — explicit year mentions, platform
+   features, or product names in the transcript that date it ("since the iOS 14 update",
+   "the new Reels placement"). This is **inferred and labeled as such**, never presented
+   as an authoritative date, and it feeds the reasoning rather than the score.
 
 ### 2. Extract
 
@@ -137,6 +164,7 @@ Returns JSON:
   "creator": "…",
   "title": "…",
   "summary": "one paragraph: what this video is actually about",
+  "recencySignals": "inferred era cues found in the transcript, or null",
   "tactics": [
     {
       "claim": "what the creator asserts",
@@ -251,7 +279,7 @@ Multiple URLs in one invocation produce one PR covering all of them.
 | `TRANSCRIPTAPI_KEY` missing | Message pointing at `.env`, exit 1 |
 | `401` invalid key | Fail fast, do not retry |
 | `402` out of credits | Clear message with the billing URL from the response body, exit 1 |
-| `404` no transcript / no English caption | Skip with reason, continue the batch |
+| `404` no transcript / no English caption | Skip with reason from the body's `detail` field, continue the batch |
 | `408`, `429`, `503` | Retry with backoff via `lib/retry.js`, capped; then skip the video |
 | Anthropic `stop_reason === 'max_tokens'` | Throw, do not save. Mirrors the blog-post-writer rule — truncated structured output is corrupt, not partial. |
 | Extraction JSON fails schema validation | Throw, writing the offending payload to the corpus dir for inspection |
@@ -279,8 +307,10 @@ value of the tool is judgment quality on the scoring step.
 - `validateSkillEdit` — passes a legitimate expansion; throws on frontmatter damage,
   renamed `name`, and unexplained >25% shrink
 - `buildConstraintBlock` — includes the AOV and retention figures
-- `lib/transcript-source.js` against recorded fixture responses — normalization of a
-  successful payload, and correct classification of `402` / `404` / `429`
+- `lib/transcript-source.js` against recorded fixture responses (captured from the live
+  probe) — normalization of a successful payload including newline collapse, correct
+  language-priority selection from `available_languages` (manual `en` chosen over
+  `asr-en`), and correct classification of `402` / `404` / `429`
 
 The HTTP client and the Anthropic client are mocked. No network in tests.
 
@@ -302,10 +332,12 @@ degrades, the blast radius is one file — `lib/transcript-source.js` — behind
 single-function interface. yt-dlp remains the documented fallback implementation. This
 is the reason for the seam; without it the risk would not be acceptable.
 
-**Thinner metadata than yt-dlp.** No view count or description, and publish date is
-unconfirmed. View count was only ever weak credibility signal and is not worth a second
-provider. Publish date is load-bearing enough to verify before the prompt is written
-(see Fetch above).
+**Thinner metadata than yt-dlp.** Confirmed by live probe: no view count, no description,
+and **no publish date**. View count was only ever weak credibility signal and is not worth
+a second provider. Publish date is handled by the two mitigations in Fetch above; accepted
+as a real but tolerable loss given on-demand, hand-picked input. If this ever becomes a
+bulk-ingest tool, revisit — a stale-tactic filter matters much more without a human in
+the selection loop.
 
 ## Deferred
 
