@@ -86,13 +86,18 @@ function loadEnv(root = ROOT) {
  * fail we degrade to Judge.me-only and set partial=true rather than silently
  * shipping a thin corpus as a full one.
  */
-export async function collectCorpus({ env, root = ROOT } = {}) {
+export async function collectCorpus({ env, root = ROOT, deps = {} } = {}) {
+  const {
+    fetchReviews = fetchAllReviews,
+    searchTavily = searchWeb,
+    fetchSerp = getSerpResults,
+  } = deps;
   const e = env || loadEnv(root);
   const records = [];
   let partial = false;
 
   const shop = e.JUDGEME_SHOP_DOMAIN || 'realskincare-com.myshopify.com';
-  const reviews = await fetchAllReviews(shop, e.JUDGEME_API_TOKEN);
+  const reviews = await fetchReviews(shop, e.JUDGEME_API_TOKEN);
   console.log(`  judge.me: ${reviews.length} reviews with bodies`);
   records.push(...reviews.map(normalizeJudgemeReview));
 
@@ -103,7 +108,7 @@ export async function collectCorpus({ env, root = ROOT } = {}) {
   } else {
     for (const query of EXTERNAL_QUERIES) {
       try {
-        const results = await searchWeb(tavilyKey, query, { maxResults: 6 });
+        const results = await searchTavily(tavilyKey, query, { maxResults: 6 });
         records.push(...(results || []).map(normalizeTavilyResult));
       } catch (err) {
         console.warn(`  tavily "${query}" failed: ${err.message}`);
@@ -114,8 +119,8 @@ export async function collectCorpus({ env, root = ROOT } = {}) {
 
   for (const keyword of SERP_KEYWORDS) {
     try {
-      const items = await getSerpResults(keyword, 10);
-      records.push(...(items || []).map(normalizeSerpItem));
+      const result = await fetchSerp(keyword, 10);
+      records.push(...((result && result.organic) || []).map(normalizeSerpItem));
     } catch (err) {
       console.warn(`  dataforseo "${keyword}" failed: ${err.message}`);
       partial = true;

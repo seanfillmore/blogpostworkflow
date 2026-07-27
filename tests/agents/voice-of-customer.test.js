@@ -6,9 +6,29 @@ import { join } from 'node:path';
 import {
   EXTERNAL_QUERIES,
   buildAnalysisPrompt,
+  collectCorpus,
   runAnalysis,
   writeArtifacts,
 } from '../../agents/voice-of-customer/index.js';
+
+// Stubs mirror the REAL return shapes of the libs collectCorpus depends on:
+//   fetchAllReviews -> array of { id, product_handle, rating, body, created_at }
+//   searchWeb       -> array of { url, title, content }
+//   getSerpResults  -> { organic: [{ position, url, title, description }], serpFeatures }
+function stubReviews(handle = 'coconut-lotion') {
+  return [{ id: 1, product_handle: handle, rating: 5, body: 'Great lotion.', created_at: '2026-01-01' }];
+}
+
+function stubTavilyResults() {
+  return [{ url: 'https://reddit.com/x', title: 'Broke me out', content: 'my skin broke out' }];
+}
+
+function stubSerpResult() {
+  return {
+    organic: [{ position: 1, url: 'https://example.com/review', title: 'Lotion review', description: 'It works great for dry skin.' }],
+    serpFeatures: [],
+  };
+}
 
 function fixtureAnalysis() {
   return {
@@ -130,4 +150,59 @@ test('writeArtifacts carries the partial flag into personas.json and the markdow
 
   assert.equal(JSON.parse(readFileSync(paths.personasJsonPath, 'utf8')).partial, true);
   assert.match(readFileSync(paths.vocMdPath, 'utf8'), /generated without external friction data/);
+});
+
+// Regression: getSerpResults() returns { organic, serpFeatures }, not a bare array.
+// A live run against the real lib surfaced `(items || []).map is not a function`
+// because collectCorpus originally treated the whole result as the array.
+test('collectCorpus reads the .organic array out of the real getSerpResults shape', async () => {
+  const corpus = await collectCorpus({
+    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' },
+    deps: {
+      fetchReviews: async () => stubReviews(),
+      searchTavily: async () => stubTavilyResults(),
+      fetchSerp: async () => stubSerpResult(),
+    },
+  });
+  assert.ok(corpus.records.some((r) => r.source === 'serp'), 'expected at least one serp record');
+  assert.equal(corpus.partial, false);
+});
+
+test('collectCorpus sets partial:true when a fetchSerp call throws, without aborting other sources', async () => {
+  const corpus = await collectCorpus({
+    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' },
+    deps: {
+      fetchReviews: async () => stubReviews(),
+      searchTavily: async () => stubTavilyResults(),
+      fetchSerp: async () => { throw new Error('dataforseo down'); },
+    },
+  });
+  assert.equal(corpus.partial, true);
+  assert.ok(corpus.records.some((r) => r.source === 'judgeme'), 'judge.me records should still be present');
+  assert.ok(corpus.records.some((r) => r.source === 'reddit'), 'tavily records should still be present');
+});
+
+test('collectCorpus sets partial:true and still returns Judge.me records when TAVILY_API_KEY is missing', async () => {
+  const corpus = await collectCorpus({
+    env: { JUDGEME_API_TOKEN: 'x' }, // no TAVILY_API_KEY
+    deps: {
+      fetchReviews: async () => stubReviews(),
+      searchTavily: async () => stubTavilyResults(),
+      fetchSerp: async () => stubSerpResult(),
+    },
+  });
+  assert.equal(corpus.partial, true);
+  assert.ok(corpus.records.some((r) => r.source === 'judgeme'), 'judge.me records should still be present');
+});
+
+test('collectCorpus yields partial:false when all three sources succeed', async () => {
+  const corpus = await collectCorpus({
+    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' },
+    deps: {
+      fetchReviews: async () => stubReviews(),
+      searchTavily: async () => stubTavilyResults(),
+      fetchSerp: async () => stubSerpResult(),
+    },
+  });
+  assert.equal(corpus.partial, false);
 });
