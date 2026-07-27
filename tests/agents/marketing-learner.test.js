@@ -193,4 +193,140 @@ assert.equal(
   'shrink with an explicit supersedes reason is allowed'
 );
 
+import { buildExtractionPrompt, validateExtraction, extractTactics } from '../../lib/marketing-learner.js';
+
+const VIDEO = {
+  videoId: 'abc12345678',
+  title: 'Retention Playbook',
+  creator: 'Some Operator',
+  durationSeconds: 1800,
+  publishedAt: '2026-03-14',
+  text: 'Send your replenishment email at sixty percent of the consumption cycle.',
+};
+
+// ── buildExtractionPrompt ───────────────────────────────────────────────────
+{
+  const p = buildExtractionPrompt({ video: VIDEO, inventory: [] });
+  assert.match(p, /Retention Playbook/, 'includes the title');
+  assert.match(p, /Some Operator/, 'includes the creator');
+  assert.match(p, /2026-03-14/, 'includes the publish date');
+  assert.match(p, /50\.46/, 'embeds the constraint block');
+  assert.match(p, /sixty percent of the consumption cycle/, 'includes the transcript');
+  assert.match(p, /recencySignals/, 'asks for the fallback recency field');
+}
+{
+  const p = buildExtractionPrompt({ video: { ...VIDEO, publishedAt: null }, inventory: [] });
+  assert.match(p, /publish date is unknown/i, 'says the date is unknown when absent');
+}
+{
+  const p = buildExtractionPrompt({
+    video: VIDEO,
+    inventory: [{ name: 'marketing-offers', description: 'Offer construction', path: 'x', content: 'BODY_OF_EXISTING_SKILL' }],
+  });
+  assert.match(p, /marketing-offers/, 'lists the existing skill');
+  assert.match(p, /BODY_OF_EXISTING_SKILL/, 'includes existing skill content so it edits rather than duplicates');
+}
+
+// ── validateExtraction ──────────────────────────────────────────────────────
+const GOOD = {
+  videoId: 'abc12345678',
+  creator: 'Some Operator',
+  title: 'Retention Playbook',
+  summary: 'A talk about lifecycle email.',
+  recencySignals: null,
+  tactics: [
+    {
+      claim: 'Send replenishment at 60% of cycle',
+      mechanism: 'Intent peaks before running out',
+      evidence: 'assertion only',
+      rscFit: { score: 8, reasoning: 'Retention is the constraint' },
+      verdict: 'adopt',
+      rejectReason: null,
+      targetSkill: { name: 'marketing-retention-flows', action: 'create' },
+    },
+    {
+      claim: 'Hire a media buyer',
+      mechanism: 'Specialists beat generalists',
+      evidence: 'assertion only',
+      rscFit: { score: 1, reasoning: 'Solo operator' },
+      verdict: 'reject',
+      rejectReason: 'Requires staff',
+      targetSkill: null,
+    },
+  ],
+};
+assert.equal(validateExtraction(GOOD), GOOD, 'valid payload returns itself');
+
+assert.throws(() => validateExtraction({ ...GOOD, tactics: 'nope' }), /tactics must be an array/);
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], verdict: 'maybe' }] }),
+  /verdict must be/,
+  'unknown verdict rejected'
+);
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], rscFit: { score: 42, reasoning: 'x' } }] }),
+  /score must be/,
+  'out-of-range score rejected'
+);
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[1], rejectReason: null }] }),
+  /rejectReason is required/,
+  'reject without a reason is rejected'
+);
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], targetSkill: null }] }),
+  /targetSkill is required/,
+  'adopt without a target skill is rejected'
+);
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'retention', action: 'create' } }] }),
+  /must start with "marketing-"/,
+  'skill name must be namespaced'
+);
+assert.throws(
+  () => validateExtraction({ ...GOOD, tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-x', action: 'delete' } }] }),
+  /action must be/,
+  'unknown action rejected'
+);
+
+// ── extractTactics ──────────────────────────────────────────────────────────
+function fakeClient(response) {
+  return { messages: { create: async () => response } };
+}
+
+// max_tokens must throw and never return a partial payload
+await assert.rejects(
+  () => extractTactics({
+    video: VIDEO,
+    inventory: [],
+    client: fakeClient({ stop_reason: 'max_tokens', content: [{ type: 'text', text: '{}' }] }),
+  }),
+  /max_tokens/,
+  'truncated output throws rather than saving'
+);
+
+// happy path, including fenced JSON
+{
+  const out = await extractTactics({
+    video: VIDEO,
+    inventory: [],
+    client: fakeClient({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: '```json\n' + JSON.stringify(GOOD) + '\n```' }],
+    }),
+  });
+  assert.equal(out.tactics.length, 2, 'parses JSON out of a fenced block');
+}
+
+// unparseable output
+await assert.rejects(
+  () => extractTactics({
+    video: VIDEO,
+    inventory: [],
+    client: fakeClient({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'I am not JSON' }] }),
+  }),
+  /Could not parse/,
+  'non-JSON output throws'
+);
+
 console.log('✓ marketing-learner date + constraint tests pass');
