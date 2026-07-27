@@ -87,6 +87,31 @@ test('dedupeRecords keeps distinct Judge.me reviews that have no URL', () => {
   assert.equal(out.length, 2);
 });
 
+test('dedupeRecords keeps distinct Tavily results with no URL and different text', () => {
+  const out = dedupeRecords([
+    normalizeTavilyResult({ url: null, title: 'First discussion', content: 'Great product' }),
+    normalizeTavilyResult({ url: null, title: 'Second discussion', content: 'Terrible experience' }),
+  ]);
+  assert.equal(out.length, 2);
+});
+
+test('dedupeRecords collapses Tavily results with no URL but identical text', () => {
+  const result = { url: null, title: 'Same discussion', content: 'Same feedback' };
+  const out = dedupeRecords([
+    normalizeTavilyResult(result),
+    normalizeTavilyResult(result),
+  ]);
+  assert.equal(out.length, 1);
+});
+
+test('dedupeRecords keeps distinct SERP items with no URL and different text', () => {
+  const out = dedupeRecords([
+    normalizeSerpItem({ url: null, title: 'Article A', description: 'Content A' }),
+    normalizeSerpItem({ url: null, title: 'Article B', description: 'Content B' }),
+  ]);
+  assert.equal(out.length, 2);
+});
+
 // ── cluster filter ──────────────────────────────────────────────────────────
 test('filterSkinCluster keeps skin handles and drops other clusters', () => {
   const out = filterSkinCluster([
