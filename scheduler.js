@@ -234,7 +234,11 @@ runStep('seo-impact', `"${NODE}" agents/seo-impact/index.js`);
 // queries with impressions and zero clicks, which the index's conversion-based
 // qualification can never admit on its own. One Anthropic call per run.
 if (new Date().getDay() === 0) {
-  runStep('gsc-query-miner', `"${NODE}" agents/gsc-query-miner/index.js`);
+  if (!dryFlag) {
+    runStep('gsc-query-miner', `"${NODE}" agents/gsc-query-miner/index.js`);
+  } else {
+    log('  gsc-query-miner: skipped (dry-run — makes a live Anthropic call and overwrites untapped-candidates.json, a real keyword-index build input)');
+  }
 } else {
   log('  gsc-query-miner: skipped (weekly, Sundays only)');
 }

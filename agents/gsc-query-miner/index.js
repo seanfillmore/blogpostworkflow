@@ -152,11 +152,13 @@ function pct(ctr) { return `${(ctr * 100).toFixed(1)}%`; }
 function pos(p) { return `#${Math.round(p * 10) / 10}`; }
 function srcSym(t) { return t === 'amazon' ? '★' : t === 'gsc_ga4' ? '✓' : '—'; }
 
+const LEAK_DISPLAY_CAP = 30; // table rows shown for leaks; the true count is always reported separately
+
 function formatLeaks(leaks) {
   if (!leaks.length) return 'None found above threshold.';
   return ['| Query | Impressions | Avg Position | Source |',
     '|---|---|---|---|',
-    ...leaks.slice(0, 30).map((q) => `| ${q.keyword} | ${q.impressions} | ${pos(q.position)} | ${srcSym(q.validation_source)} |`)
+    ...leaks.slice(0, LEAK_DISPLAY_CAP).map((q) => `| ${q.keyword} | ${q.impressions} | ${pos(q.position)} | ${srcSym(q.validation_source)} |`)
   ].join('\n');
 }
 
@@ -186,7 +188,7 @@ function formatClusters(clusters) {
 
 // ── claude analysis ───────────────────────────────────────────────────────────
 
-async function generateAnalysis(leaks, nearMisses, cannibalization, clusters, totalQueries) {
+async function generateAnalysis(leaks, nearMisses, cannibalization, clusters, totalQueries, totalLeaks) {
   const amzCount = (rows) => (rows || []).filter((r) => r.validation_source === 'amazon').length;
   const totalAmz = amzCount(leaks) + amzCount(nearMisses) + clusters.reduce((s, c) => s + amzCount(c.keywords), 0);
   const validationLine = totalAmz > 0
@@ -199,7 +201,7 @@ Below is GSC data (last ${days} days) surfacing four categories of opportunity. 
 
 ---
 
-## 1. Impression Leaks (${leaks.length} queries — impressions ≥ ${minImpr}, 0 clicks)
+## 1. Impression Leaks (showing ${Math.min(LEAK_DISPLAY_CAP, totalLeaks)} of ${totalLeaks} queries — impressions ≥ ${minImpr}, 0 clicks)
 These queries show our pages in Google but nobody clicks. Root causes: wrong title/meta, wrong search intent match, ranking too low to matter even with impressions.
 
 ${formatLeaks(leaks)}
@@ -275,16 +277,16 @@ async function main() {
   // Run analyses
   process.stdout.write('  Analysing... ');
   const rawLeaksAll = findImpressionLeaks(allQueries);          // full set — data feed
-  const rawLeaks = rawLeaksAll.slice(0, 50);                    // capped — report/prompt
   const rawNearMisses = findNearMisses(allQueries);
   const cannibalization = findCannibalization(queryPageRows);
   const rawClusters = buildTopicClusters(allQueries);
-  console.log(`${rawLeaks.length} leaks, ${rawNearMisses.length} near-misses, ${cannibalization.length} cannibalization groups, ${rawClusters.length} clusters`);
+  console.log(`${rawLeaksAll.length} leaks, ${rawNearMisses.length} near-misses, ${cannibalization.length} cannibalization groups, ${rawClusters.length} clusters`);
 
-  // Annotate with keyword-index validation tags.
+  // Annotate with keyword-index validation tags. Tag the full leak set once —
+  // the capped, report/prompt-facing set is just a slice of the tagged data.
   const idx = loadIndex(ROOT);
-  const leaks = tagQueries(rawLeaks, idx);
-  const leaksAll = tagQueries(rawLeaksAll, idx);
+  const leaksAll = tagQueries(rawLeaksAll, idx);   // full set — data feed
+  const leaks    = leaksAll.slice(0, 50);          // capped — report/prompt
   const nearMisses = tagQueries(rawNearMisses, idx);
   const clusters = rawClusters.map((c) => ({ ...c, keywords: tagQueries(c.keywords, idx) }));
 
@@ -293,22 +295,27 @@ async function main() {
     const amzNm = nearMisses.filter((q) => q.validation_source === 'amazon').length;
     console.log(`  Amazon-validated: ${amzLeaks} leaks, ${amzNm} near-misses`);
 
-    // Write untapped candidates for the next index build to ingest.
+    // Write untapped candidates for the next index build to ingest. Always
+    // write — even an empty candidates array — so generated_at stays a
+    // reliable liveness signal for the builder's staleness guard instead of
+    // silently going stale on a cycle that finds nothing.
     const untapped = buildUntappedCandidates(leaksAll, clusters, idx, { minImpr });
-    if (untapped.length > 0) {
-      const untappedPath = join(REPORTS_DIR, 'untapped-candidates.json');
-      writeFileSync(untappedPath, JSON.stringify({
-        generated_at: new Date().toISOString(),
-        source: 'gsc-query-miner',
-        candidates: untapped,
-      }, null, 2));
-      console.log(`  Untapped candidates: ${untapped.length} written to ${untappedPath}`);
-    }
+    const untappedPath = join(REPORTS_DIR, 'untapped-candidates.json');
+    writeFileSync(untappedPath, JSON.stringify({
+      generated_at: new Date().toISOString(),
+      source: 'gsc-query-miner',
+      candidates: untapped,
+    }, null, 2));
+    console.log(untapped.length > 0
+      ? `  Untapped candidates: ${untapped.length} written to ${untappedPath}`
+      : `  Untapped candidates: none this cycle — wrote empty feed to ${untappedPath}`);
+  } else {
+    console.warn('  keyword-index.json not found — skipping validation tagging and untapped-candidates feed.');
   }
 
   // Claude analysis
   process.stdout.write('\n  Generating analysis with Claude... ');
-  const analysis = await generateAnalysis(leaks, nearMisses, cannibalization, clusters, allQueries.length);
+  const analysis = await generateAnalysis(leaks, nearMisses, cannibalization, clusters, allQueries.length, leaksAll.length);
   console.log('done');
 
   // Build full report
@@ -330,7 +337,7 @@ async function main() {
     '',
     '## Raw Data',
     '',
-    `### Impression Leaks (${leaks.length})`,
+    `### Impression Leaks (showing ${Math.min(LEAK_DISPLAY_CAP, leaksAll.length)} of ${leaksAll.length})`,
     formatLeaks(leaks),
     '',
     `### Near-Misses (${nearMisses.length})`,
