@@ -94,3 +94,21 @@ test('packaging defaults to zero so every other bundle is unchanged', () => {
   assert.equal(r.packaging, 0);
   assert.equal(r.contrib, 68.06, 'the Reset contribution must not move');
 });
+
+test('roster-derived bundles reproduce the known contributions', () => {
+  const byName = Object.fromEntries(BUNDLES.map(b => [b.name, b]));
+
+  const cleanSwap90 = ev(byName['The 90-Day Clean Swap']);
+  assert.equal(cleanSwap90.contrib, 100.85, '90-Day Clean Swap must still be $100.85');
+
+  const giftBox = ev(byName['Gift Box']);
+  assert.equal(giftBox.packaging, 1.0);
+  assert.equal(giftBox.contrib, 34.32, 'Gift Box after its $1 box');
+});
+
+test('the Hand Soap Set produces three ladder rows', () => {
+  const rows = BUNDLES.filter(b => b.name.startsWith('Hand Soap Set'));
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map(r => r.price), [44, 59, 72], 'rows must read as a ladder');
+  assert.deepEqual(ev(rows[2]).items, { pump: 4, lotion: 1 });
+});

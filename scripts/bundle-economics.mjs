@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import {
   estimateShipping, contribution, FALLBACK_PACKAGE_COSTS, FALLBACK_AVERAGE,
 } from '../lib/shipping-costs.js';
+import { loadRoster, economicsRows } from '../lib/bundle-roster.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(__dirname, '..');
@@ -40,51 +41,31 @@ export const SKUS = {
 };
 
 /**
- * status: live | draft | proposed | rejected | retired
- * Prices for proposed bundles are the recommended starting point, not fixed.
- * `retired` rows are kept deliberately — the row is the record of why the bundle
- * was removed, and deleting it invites someone to re-propose it next quarter.
+ * Rows with no Shopify product behind them: a reference SKU, and records of
+ * bundles we decided against. Kept because the row IS the record of why —
+ * deleting it invites someone to re-propose it next quarter.
  */
-export const BUNDLES = [
-  { name: '90-Day Clean Swap', status: 'live', price: 159,
-    items: { deo: 3, toothpaste: 3, barsoap: 3, lotion: 3 },
-    story: 'Replace the four things you put on your body every day, for a quarter.' },
-  { name: 'Head-to-Toe', status: 'live', price: 105,
-    items: { lotion: 1, cream: 1, deo: 1, toothpaste: 1, barsoap: 1, pump: 1, lipbalm: 1 },
-    story: 'One of everything. Discovery and gifting.' },
-  { name: '90-Day Coconut Reset', status: 'live', price: 99,
-    items: { lotion: 3, cream: 1 },
-    story: 'Live on the lean lander, two scents, digital bonuses delivered by Klaviyo.' },
-  { name: 'Pump 4-pack + Lotion', status: 'proposed', price: 72,
-    items: { pump: 4, lotion: 1 },
-    story: 'The pump push, anchored by a high-margin lotion so it clears CAC.' },
-  { name: 'Gift Box', status: 'proposed', price: 62, packaging: 1.00,
-    items: { lotion: 1, lipbalm: 1, barsoap: 1, deo: 1 },
-    story: 'Gifting escapes price comparison entirely. Q4. Ships in the custom box ($1/unit).' },
-  { name: 'The Clean Swap', status: 'proposed', price: 59,
-    items: { deo: 1, toothpaste: 1, barsoap: 1, lotion: 1 },
-    story: 'Entry version of the 90-day. Turns three weak singles into margin.' },
-  { name: 'Pump 3-pack + Lotion', status: 'proposed', price: 59,
-    items: { pump: 3, lotion: 1 }, story: 'Smaller pump entry.' },
-  { name: 'Sensitive Skin Set', status: 'live', price: 46.80,
-    items: { lotion: 1, cream: 1 },
-    story: 'Current hero. Clears the $45 free-shipping threshold on its own.' },
-  { name: 'Pump 4-pack', status: 'proposed', price: 44,
-    items: { pump: 4 },
-    story: 'One per scent, one per sink. Sits on the CAC line at full MSRP; any discount sinks it. Reorder/AOV, not paid acquisition.' },
-  { name: 'Bar Soap 4-Pack', status: 'live', price: 39,
-    items: { barsoap: 4 },
-    story: 'Subscription vehicle, every 4 months. Replaces the single-bar sub, which still loses money per shipment. Does not clear the $45 free-shipping threshold — never lead its copy with shipping.' },
-  { name: 'Two-Step Dry Skin Starter Set', status: 'retired', price: 39.99,
-    items: { lotion: 1, cream: 1 },
-    story: 'Deleted 2026-07-26. Same contents as the hero at a deeper discount; it only split traffic and reviews.' },
+const EDITORIAL = [
   { name: 'Pump + Refill', status: 'rejected', price: 34,
     items: { pump: 1, refill: 1 }, story: 'Loses money: the refill forces a $21.31 box.' },
+  { name: 'Two-Step Dry Skin Starter Set', status: 'retired', price: 39.99,
+    items: { lotion: 1, cream: 1 },
+    story: 'Deleted 2026-07-26. Same contents as the hero at a deeper discount.' },
   { name: 'Foam Soap Bundle', status: 'retired', price: 20.02,
     items: { pump: 2, refill: 1 },
     story: 'Deleted 2026-07-26 without ever being published — lost ~$19/order.' },
   { name: 'Single lotion (reference)', status: 'live', price: 30,
     items: { lotion: 1 }, story: 'Reference point, not an offer. Anchor for the $99 bundle.' },
+];
+
+/**
+ * The real bundles come from config/bundles.json — the same file that builds
+ * the Shopify products — plus the editorial rows above, which have nothing to
+ * derive from. Status/price/items live on the roster now, not here.
+ */
+export const BUNDLES = [
+  ...loadRoster().bundles.flatMap(economicsRows),
+  ...EDITORIAL,
 ];
 
 // ── computation ──────────────────────────────────────────────────────────────
