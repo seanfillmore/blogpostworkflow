@@ -78,13 +78,20 @@ async function buildBundle(bundle, catalogue) {
   let product = await getProduct(bundle.handle);
 
   // 1 — product shell
+  //
+  // A reconciler must never blank a field the roster is simply silent about —
+  // descriptionHtml and tags are only sent when the roster actually specifies
+  // them, same guard as `seo` already had. Status follows the roster: only
+  // "live" bundles go ACTIVE and get published later; anything else stays
+  // DRAFT and step 7 skips publishing.
+  const isLive = bundle.status === 'live';
   const input = {
     title: bundle.title,
     handle: bundle.handle,
-    descriptionHtml: bundle.descriptionHtml ?? '',
     templateSuffix: bundle.templateSuffix ?? null,
-    tags: bundle.tags ?? [],
-    status: 'ACTIVE',
+    status: isLive ? 'ACTIVE' : 'DRAFT',
+    ...(bundle.descriptionHtml ? { descriptionHtml: bundle.descriptionHtml } : {}),
+    ...(bundle.tags ? { tags: bundle.tags } : {}),
     ...(bundle.seo ? { seo: bundle.seo } : {}),
   };
 
@@ -108,6 +115,15 @@ async function buildBundle(bundle, catalogue) {
   // 2 — variants
   const existing = new Map(product.variants.nodes.map(v =>
     [optionKey(Object.fromEntries(v.selectedOptions.map(o => [o.name, o.value]))), v]));
+
+  // Orphans: variants live in Shopify but absent from the roster. Never
+  // deleted here — deleting live variants is out of scope and dangerous —
+  // but silent divergence from the source of truth is worse than a warning.
+  const rosterKeys = new Set(bundle.variants.map(v => optionKey(v.options)));
+  const orphans = [...existing.entries()].filter(([key]) => !rosterKeys.has(key)).map(([, v]) => v);
+  if (orphans.length) {
+    log(`  ⚠ orphan variant(s) in Shopify not in the roster (left alone): ${orphans.map(v => v.title).join(', ')}`);
+  }
 
   const missing = bundle.variants.filter(v => !existing.has(optionKey(v.options)));
   if (missing.length) {
@@ -135,18 +151,26 @@ async function buildBundle(bundle, catalogue) {
   const live = new Map(product.variants.nodes.map(v =>
     [optionKey(Object.fromEntries(v.selectedOptions.map(o => [o.name, o.value]))), v]));
 
-  // 3 — components
-  const relationships = bundle.variants.map(v => {
+  // Resolve every roster variant to its live counterpart ONCE, before any
+  // write. A miss here must throw immediately, naming the bundle and the
+  // option key — not surface later as a bare "Cannot read properties of
+  // undefined" after componentization has already overwritten the price
+  // with the component sum, leaving the product live at the wrong price.
+  const resolved = bundle.variants.map(v => {
     const target = live.get(optionKey(v.options));
-    return {
-      parentProductVariantId: target.id,
-      productVariantRelationshipsToUpdate: v.components.map(c => {
-        const id = catalogue[c.product]?.variants[c.variant];
-        if (!id) throw new Error(`no variant id for ${c.product} / ${c.variant}`);
-        return { id, quantity: c.qty };
-      }),
-    };
+    if (!target) throw new Error(`${bundle.handle}: no live variant matches roster option key "${optionKey(v.options)}"`);
+    return { v, target };
   });
+
+  // 3 — components
+  const relationships = resolved.map(({ v, target }) => ({
+    parentProductVariantId: target.id,
+    productVariantRelationshipsToUpdate: v.components.map(c => {
+      const id = catalogue[c.product]?.variants[c.variant];
+      if (!id) throw new Error(`no variant id for ${c.product} / ${c.variant}`);
+      return { id, quantity: c.qty };
+    }),
+  }));
 
   await gql(
     `mutation ($input: [ProductVariantRelationshipUpdateInput!]!) {
@@ -163,8 +187,8 @@ async function buildBundle(bundle, catalogue) {
         productVariants { id price } userErrors { field message } } }`,
     {
       productId: product.id,
-      variants: bundle.variants.map(v => ({
-        id: live.get(optionKey(v.options)).id,
+      variants: resolved.map(({ v, target }) => ({
+        id: target.id,
         price: String(v.price),
         ...(v.compareAtPrice ? { compareAtPrice: String(v.compareAtPrice) } : {}),
       })),
@@ -181,7 +205,13 @@ async function buildBundle(bundle, catalogue) {
   // declared configuration; the per-variant `bundle.contents` panel is what
   // tells a buyer what their selection actually contains. Order the Hand Soap
   // Set's variants so the intended default configuration is first.
-  const componentHandles = [...new Set(bundle.variants.flatMap(v => v.components.map(c => c.product)))];
+  //
+  // Both lists are derived from variants[0] ONLY — mixing components from
+  // every variant into the handle list while quantities came from variants[0]
+  // used to yield zero-quantity entries (e.g. hand-soap-set's product-level
+  // card would read "0 × Coconut Lotion") whenever a later variant introduced
+  // a component the first variant didn't have.
+  const componentHandles = [...new Set(bundle.variants[0].components.map(c => c.product))];
   const qtyByHandle = componentHandles.map(h =>
     bundle.variants[0].components.filter(c => c.product === h).reduce((s, c) => s + c.qty, 0));
 
@@ -190,9 +220,9 @@ async function buildBundle(bundle, catalogue) {
       value: JSON.stringify(componentHandles.map(h => catalogue[h].id)) },
     { ownerId: product.id, namespace: 'bundle', key: 'component_qty', type: 'list.number_integer',
       value: JSON.stringify(qtyByHandle) },
-    ...bundle.variants
-      .filter(v => v.contents)
-      .map(v => ({ ownerId: live.get(optionKey(v.options)).id, namespace: 'bundle', key: 'contents',
+    ...resolved
+      .filter(({ v }) => v.contents)
+      .map(({ v, target }) => ({ ownerId: target.id, namespace: 'bundle', key: 'contents',
         type: 'multi_line_text_field', value: v.contents })),
   ];
 
@@ -212,17 +242,22 @@ async function buildBundle(bundle, catalogue) {
     );
   }
 
-  // 7 — publish, channel by channel
-  for (const [publicationId, name] of PUBLICATIONS) {
-    try {
-      await gql(
-        `mutation ($id: ID!, $input: [PublicationInput!]!) {
-          publishablePublish(id: $id, input: $input) { publishable { availablePublicationsCount { count } } userErrors { field message } } }`,
-        { id: product.id, input: [{ publicationId }] }
-      );
-      log(`  ✓ ${name}`);
-    } catch (err) {
-      log(`  ✗ ${name} — ${err.message}`);
+  // 7 — publish, channel by channel. Only "live" roster bundles publish; a
+  // draft/proposed bundle stays DRAFT (set in step 1) and unpublished.
+  if (!isLive) {
+    log(`  status "${bundle.status}" is not live — skipping publish`);
+  } else {
+    for (const [publicationId, name] of PUBLICATIONS) {
+      try {
+        await gql(
+          `mutation ($id: ID!, $input: [PublicationInput!]!) {
+            publishablePublish(id: $id, input: $input) { publishable { availablePublicationsCount { count } } userErrors { field message } } }`,
+          { id: product.id, input: [{ publicationId }] }
+        );
+        log(`  ✓ ${name}`);
+      } catch (err) {
+        log(`  ✗ ${name} — ${err.message}`);
+      }
     }
   }
 
