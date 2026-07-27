@@ -87,16 +87,77 @@ Return only the image prompt as plain text — no JSON, no explanation.`;
 }
 
 /**
- * Build a copy brief from a competitor ad (legacy Ad Intelligence path).
- * Session jobs supply their copyBrief directly from the route.
+ * Load the approved persona set, if the voice-of-customer agent has run.
+ * Returns null when absent so every caller degrades to prior behavior.
+ *
+ * A persona with no usable angle is dropped rather than carried: buildCopyBrief
+ * reads persona.angles[0], so an angle-less persona would surface as a bare
+ * TypeError inside a live creative job with no persona id in the message. If
+ * that leaves nothing, return null and take the same degradation path as a
+ * missing file.
  */
-export function buildCopyBrief(ad) {
-  return {
+export function loadPersonas(root = ROOT) {
+  try {
+    const raw = readFileSync(join(root, 'data', 'context', 'personas.json'), 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.personas)) return null;
+    const usable = parsed.personas.filter((p) => Array.isArray(p?.angles) && p.angles.length > 0);
+    if (usable.length !== parsed.personas.length) {
+      const dropped = parsed.personas
+        .filter((p) => !(Array.isArray(p?.angles) && p.angles.length > 0))
+        .map((p) => p?.id || '(no id)');
+      console.warn(`loadPersonas: dropped ${dropped.length} persona(s) with no angles: ${dropped.join(', ')}`);
+    }
+    return usable.length ? { ...parsed, personas: usable } : null;
+  } catch { return null; }
+}
+
+/**
+ * Build a copy brief.
+ *
+ * The angle used to come from the competitor reference ad's messagingAngle,
+ * which made this a competitor reverse-engineering machine. When personas.json
+ * exists the angle now comes from our own research and the reference ad drives
+ * style only. With no personas.json we fall back to the old behavior so the
+ * agent never breaks.
+ *
+ * personas.personas is rank-ordered by the voice-of-customer agent, so
+ * personas[0].angles[0] is the default.
+ */
+export function buildCopyBrief(ad, { personas = null, personaId = null, angleId = null } = {}) {
+  const base = {
     product: ad.pageName || ad.pageSlug || 'Real Skin Care',
-    angle: ad.analysis?.messagingAngle || '',
     destinationUrl: ad.landingUrl || '',
-    competitorBody: ad.adCreativeBody || '',
-    copyInsights: ad.analysis?.copyInsights || '',
+  };
+
+  if (!personas) {
+    return {
+      ...base,
+      angle: ad.analysis?.messagingAngle || '',
+      competitorBody: ad.adCreativeBody || '',
+      copyInsights: ad.analysis?.copyInsights || '',
+    };
+  }
+
+  const persona = personaId
+    ? personas.personas.find((p) => p.id === personaId)
+    : personas.personas[0];
+  if (!persona) throw new Error(`buildCopyBrief: no persona with id "${personaId}" in personas.json`);
+
+  const angle = angleId
+    ? persona.angles.find((a) => a.id === angleId)
+    : persona.angles[0];
+  if (!angle) throw new Error(`buildCopyBrief: no angle with id "${angleId}" on persona "${persona.id}"`);
+
+  return {
+    ...base,
+    angle: angle.label,
+    persona: persona.name,
+    personaSummary: persona.summary,
+    awareness: angle.awareness,
+    objection: angle.objection_addressed,
+    proof: angle.proof,
+    hooks: angle.hook_examples || [],
   };
 }
 
@@ -108,6 +169,13 @@ export function buildCopyPrompt(brief) {
     `Product: ${brief.product}`,
     `Angle: ${brief.angle || 'natural skincare'}`,
   ];
+  if (brief.persona) {
+    lines.push(`Audience: ${brief.persona} — ${brief.personaSummary || ''}`);
+    lines.push(`Awareness level: ${brief.awareness}`);
+    lines.push(`Objection to overcome: ${brief.objection}`);
+    lines.push(`Proof we can point to: ${brief.proof}`);
+    if (brief.hooks?.length) lines.push(`Hook directions from customer language: ${brief.hooks.join(' / ')}`);
+  }
   if (brief.destinationUrl) lines.push(`Landing page: ${brief.destinationUrl}`);
   if (brief.competitorBody) lines.push(`Reference competitor copy: ${brief.competitorBody}`);
   if (brief.copyInsights) lines.push(`What works about it: ${brief.copyInsights}`);
@@ -324,7 +392,11 @@ async function main() {
     const ad = insights.ads.find(a => a.id === adId);
     if (!ad) throw new Error(`Ad ${adId} not found in latest insights`);
 
-    brief = buildCopyBrief(ad);
+    brief = buildCopyBrief(ad, {
+      personas: loadPersonas(),
+      personaId: job.personaId || null,
+      angleId: job.angleId || null,
+    });
     sizes = placementSizes(ad.publisherPlatforms || ['instagram', 'facebook']);
     slug = ad.pageSlug || 'creative';
 

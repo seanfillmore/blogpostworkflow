@@ -37,6 +37,35 @@ function relevantIngredientStories(ingredientStories, clusterSpec) {
 }
 
 /**
+ * The voice-of-customer block, or nothing at all.
+ *
+ * Returns [] when data/context/voice-of-customer.md has not been generated yet,
+ * so a pdp-builder run before the VOC agent's first run produces a
+ * byte-identical prompt to the one it produced before this feature existed.
+ *
+ * The framing matters: this is internal research into what customers object to,
+ * not copy. Verbatim reproduction of a complaint about our own product on a PDP
+ * would be worse than not having the research at all.
+ */
+function voiceOfCustomerSection(foundation) {
+  const voc = String(foundation?.voiceOfCustomer || '').trim();
+  if (!voc) return [];
+  return [
+    `# Voice of customer (INTERNAL RESEARCH — not copy)`,
+    `Scope: this research covers the skin cluster ONLY — coconut lotion, body lotion,`,
+    `coconut moisturizer, coconut bar soap and foaming hand soap. If the page you are`,
+    `writing is not one of those, disregard this section entirely; an objection does not`,
+    `transfer across categories.`,
+    `Real objections, phrases and triggers mined from our reviews and outside discussion.`,
+    `Use it to decide which hesitation this page must answer and which proof to lead with.`,
+    `Never quote it verbatim on the page, and never restate a complaint about our own`,
+    `products as fact — answer the underlying worry instead.`,
+    voc,
+    ``,
+  ];
+}
+
+/**
  * Builds the system prompt for cluster mode. The agent uses this to generate
  * the cluster template's content blocks (FAQs, ingredient cards, mechanism,
  * founder, free-from, badges, etc.).
@@ -68,6 +97,7 @@ export function buildClusterSystemPrompt({ foundation, clusterName }) {
     `# Cluster product spec (every ingredient claim must come from this list)`,
     JSON.stringify(clusterSpec, null, 2),
     ``,
+    ...voiceOfCustomerSection(foundation),
     `# Your task`,
     `Generate the content for the ${clusterName} cluster's product-page template.`,
     `Output a single JSON object with these keys:`,
@@ -114,6 +144,7 @@ export function buildProductSystemPrompt({ foundation, clusterName, product }) {
     `Title:  ${product.title || ''}`,
     `Cluster spec: ${JSON.stringify(clusterSpec, null, 2)}`,
     ``,
+    ...voiceOfCustomerSection(foundation),
     `# Your task`,
     `Generate per-SKU content for this product's PDP. Output JSON with keys:`,
     `  seoTitle:           string, STRICTLY 50-70 characters INCLUSIVE — count the characters carefully before output. Format: "[Variant/Type] [Product] | [Differentiator] | Real Skin Care"`,

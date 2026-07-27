@@ -1,5 +1,9 @@
 // tests/agents/creative-packager.test.js
+import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   placementSizes,
   formatCopyFile,
@@ -8,6 +12,7 @@ import {
   buildReferenceQuery,
   buildCopyBrief,
   buildCopyPrompt,
+  loadPersonas,
   formatManifest,
   ALL_PLACEMENTS, sizesByName, safeZonesFor, buildGuideSvg,
 } from '../../agents/creative-packager/index.js';
@@ -197,5 +202,112 @@ import {
   assert.ok(svg.includes('Tom &amp; Jerry'));
   assert.ok(!svg.includes('<b>'));
 }
+
+const PERSONAS = {
+  personas: [
+    {
+      id: 'eczema-flare-parent',
+      name: 'The eczema flare parent',
+      summary: 'Buys for a child whose skin reacts to everything.',
+      angles: [
+        { id: 'steroid-off-ramp', label: 'The steroid-cream off-ramp', awareness: 'problem-aware',
+          objection_addressed: 'Will natural actually work?', proof: '97 reviews at 4.91',
+          hook_examples: ['Off the steroid cream in three weeks'], source_quotes: ['q'] },
+      ],
+    },
+    {
+      id: 'ingredient-reader',
+      name: 'The ingredient reader',
+      summary: 'Reads every label.',
+      angles: [
+        { id: 'four-ingredients', label: 'Four ingredients, that is it', awareness: 'solution-aware',
+          objection_addressed: 'What is actually in it?', proof: 'Full INCI on the PDP',
+          hook_examples: ['Four ingredients. Read them out loud.'], source_quotes: ['q'] },
+      ],
+    },
+  ],
+};
+
+const AD = {
+  pageName: 'Rival Brand',
+  pageSlug: 'rival-brand',
+  landingUrl: 'https://realskincare.com/products/coconut-lotion',
+  adCreativeBody: 'Competitor body copy',
+  analysis: { messagingAngle: 'competitor-derived angle', copyInsights: 'insight' },
+};
+
+test('buildCopyBrief falls back to the competitor angle when no personas exist', () => {
+  const brief = buildCopyBrief(AD, { personas: null });
+  assert.equal(brief.angle, 'competitor-derived angle');
+  assert.equal(brief.persona, undefined);
+});
+
+test('buildCopyBrief defaults to the top-ranked persona angle when personas exist', () => {
+  const brief = buildCopyBrief(AD, { personas: PERSONAS });
+  assert.equal(brief.angle, 'The steroid-cream off-ramp');
+  assert.equal(brief.persona, 'The eczema flare parent');
+  assert.equal(brief.awareness, 'problem-aware');
+});
+
+test('buildCopyBrief honours an explicit personaId and angleId', () => {
+  const brief = buildCopyBrief(AD, {
+    personas: PERSONAS, personaId: 'ingredient-reader', angleId: 'four-ingredients',
+  });
+  assert.equal(brief.angle, 'Four ingredients, that is it');
+  assert.equal(brief.persona, 'The ingredient reader');
+});
+
+test('buildCopyBrief drops the competitor reference copy once a persona drives the angle', () => {
+  const brief = buildCopyBrief(AD, { personas: PERSONAS });
+  assert.ok(!brief.competitorBody, 'reference ad should drive style only, not copy');
+});
+
+test('buildCopyBrief throws on an unknown personaId rather than silently defaulting', () => {
+  assert.throws(
+    () => buildCopyBrief(AD, { personas: PERSONAS, personaId: 'nope' }),
+    /nope/,
+  );
+});
+
+test('buildCopyPrompt surfaces the persona and objection to the model', () => {
+  const brief = buildCopyBrief(AD, { personas: PERSONAS });
+  const prompt = buildCopyPrompt(brief);
+  assert.match(prompt, /The eczema flare parent/);
+  assert.match(prompt, /Will natural actually work\?/);
+});
+
+// loadPersonas — a persona with no angles would reach persona.angles[0] in
+// buildCopyBrief and throw a bare TypeError inside a live creative job.
+function personasRoot(payload) {
+  const root = mkdtempSync(join(tmpdir(), 'packager-'));
+  mkdirSync(join(root, 'data', 'context'), { recursive: true });
+  writeFileSync(join(root, 'data', 'context', 'personas.json'), JSON.stringify(payload), 'utf8');
+  return root;
+}
+
+test('loadPersonas drops personas with no usable angles', () => {
+  const root = personasRoot({
+    personas: [
+      { id: 'no-angles', name: 'No angles', angles: [] },
+      { id: 'missing-angles', name: 'Missing angles' },
+      PERSONAS.personas[1],
+    ],
+  });
+  const loaded = loadPersonas(root);
+  assert.deepEqual(loaded.personas.map((p) => p.id), ['ingredient-reader']);
+  // and the survivor is usable end-to-end, not just present
+  assert.equal(buildCopyBrief(AD, { personas: loaded }).angle, 'Four ingredients, that is it');
+});
+
+test('loadPersonas returns null when no persona has an angle, so callers degrade', () => {
+  const root = personasRoot({ personas: [{ id: 'no-angles', name: 'No angles', angles: [] }] });
+  assert.equal(loadPersonas(root), null);
+  // degradation path: the competitor angle, exactly as before personas existed
+  assert.equal(buildCopyBrief(AD, { personas: loadPersonas(root) }).angle, 'competitor-derived angle');
+});
+
+test('loadPersonas returns null when personas.json is absent', () => {
+  assert.equal(loadPersonas(mkdtempSync(join(tmpdir(), 'packager-'))), null);
+});
 
 console.log('✓ creative-packager unit tests pass');

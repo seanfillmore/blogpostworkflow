@@ -74,3 +74,62 @@ test('buildProductSystemPrompt: includes voice doc + cluster POV (same as cluste
   assert.match(prompt, /Clinical-confident/);
   assert.match(prompt, /## toothpaste/);
 });
+
+// ── voice-of-customer (optional foundation input) ──────────────────────────
+// load-foundation populates foundation.voiceOfCustomer; before this it was
+// loaded and then dropped on the floor because prompt-builder never read it.
+const VOC_MD = '## Objections\n\n- **Greasy** — 9 mentions. > "It takes forever to absorb."';
+
+test('buildClusterSystemPrompt: includes the voice-of-customer research when present', () => {
+  const prompt = buildClusterSystemPrompt({
+    foundation: { ...foundation, voiceOfCustomer: VOC_MD },
+    clusterName: 'toothpaste',
+  });
+  assert.match(prompt, /# Voice of customer/);
+  assert.match(prompt, /It takes forever to absorb\./);
+  assert.match(prompt, /INTERNAL RESEARCH/);
+  assert.match(prompt, /Never quote it verbatim/);
+  // The research is skin-cluster only, but every one of the 7 clusters in
+  // config/ingredients.json gets this prompt — the model has to be told so.
+  assert.match(prompt, /Scope: this research covers the skin cluster ONLY/);
+  assert.match(prompt, /coconut bar soap and foaming hand soap/);
+  assert.match(prompt, /disregard this section entirely/);
+});
+
+test('buildProductSystemPrompt: includes the voice-of-customer research when present', () => {
+  const prompt = buildProductSystemPrompt({
+    foundation: { ...foundation, voiceOfCustomer: VOC_MD },
+    clusterName: 'toothpaste',
+    product: { handle: 'coconut-oil-toothpaste', title: 'Coconut Oil Toothpaste' },
+  });
+  assert.match(prompt, /# Voice of customer/);
+  assert.match(prompt, /It takes forever to absorb\./);
+  assert.match(prompt, /Scope: this research covers the skin cluster ONLY/);
+});
+
+// Degradation contract: with the artifact absent the prompt must be byte-identical
+// to the one produced before the voice-of-customer branch existed.
+test('buildClusterSystemPrompt: contributes nothing at all when voiceOfCustomer is empty', () => {
+  const args = { clusterName: 'toothpaste' };
+  const withEmpty = buildClusterSystemPrompt({ foundation: { ...foundation, voiceOfCustomer: '' }, ...args });
+  const withBlank = buildClusterSystemPrompt({ foundation: { ...foundation, voiceOfCustomer: '   \n\n' }, ...args });
+  const withMissing = (() => {
+    const { voiceOfCustomer, ...rest } = foundation;
+    return buildClusterSystemPrompt({ foundation: rest, ...args });
+  })();
+  assert.equal(withEmpty, withMissing);
+  assert.equal(withBlank, withMissing);
+  assert.ok(!withEmpty.includes('# Voice of customer'));
+});
+
+test('buildProductSystemPrompt: contributes nothing at all when voiceOfCustomer is empty', () => {
+  const args = {
+    clusterName: 'toothpaste',
+    product: { handle: 'coconut-oil-toothpaste', title: 'Coconut Oil Toothpaste' },
+  };
+  const withEmpty = buildProductSystemPrompt({ foundation: { ...foundation, voiceOfCustomer: '' }, ...args });
+  const { voiceOfCustomer, ...rest } = foundation;
+  const withMissing = buildProductSystemPrompt({ foundation: rest, ...args });
+  assert.equal(withEmpty, withMissing);
+  assert.ok(!withEmpty.includes('# Voice of customer'));
+});

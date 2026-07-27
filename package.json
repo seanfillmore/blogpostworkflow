@@ -79,6 +79,8 @@
     "daily-summary": "node agents/daily-summary/index.js",
     "ai-citations": "node agents/ai-citation-tracker/index.js",
     "answer-first": "node agents/answer-first-rewriter/index.js",
+    "voc": "node agents/voice-of-customer/index.js",
+    "voc-analyze": "node agents/voice-of-customer/index.js --analyze",
     "sync-snapshots": "bash scripts/sync-snapshots.sh",
     "archive-snapshots": "bash scripts/archive-snapshots.sh",
     "backup-snapshots-offsite": "bash scripts/backup-snapshots-offsite.sh",

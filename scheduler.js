@@ -346,6 +346,11 @@ if (new Date().getDate() === 1) {
   // agents (quick-win-targeter, content-strategist, legacy-triage) read these
   // weights to blend desktop and mobile rank positions by revenue share.
   runStep('device-weights', `"${NODE}" agents/device-weights/index.js`, { indent: '    ' });
+
+  // Step 13: voice-of-customer — mine Judge.me reviews + Reddit/SERP friction into
+  // data/context/{voice-of-customer,personas}.md and personas.json. Monthly because
+  // reviews accrue a handful a week and Reddit sentiment moves slowly.
+  runStep('voice-of-customer', `"${NODE}" agents/voice-of-customer/index.js`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
 }
