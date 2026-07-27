@@ -219,15 +219,54 @@ project removes. Cleaning it matters as much as the redirects themselves.
 
 ### Target
 
-**Header — product-led.** `Shop` dropdown listing the 9 distinct products, plus `Sets &
-Bundles`, plus About/Support. A 9-product catalog is browsed by product, not by category.
+**Header — direct PDP links at the top level.** Revised 2026-07-27 at Sean's direction: no
+`Shop` dropdown. Each product is its own top-level menu item, linking straight to its PDP. A
+9-product catalog is browsed by product, not by category, and a dropdown adds a click between
+the visitor and the buy button for no benefit.
 
-**Footer — "Shop by Category" block** holding exactly the four survivors:
-`non-toxic-body-lotion`, `foaming-hand-soap`, `sets-and-bundles`, `all-products`. Collections
-keep real internal links — which the consolidation depends on for ranking signal — without
-occupying prime navigation.
+The header already contains 8 of these links today, so this is mostly a removal of the 6
+collection links rather than new construction.
 
-Collections remain reachable from the footer, from PDP cross-links, and from the sitemap.
+Primary top-level items (7), plus `Sets & Bundles`, plus About/Support:
+
+`coconut-lotion`, `coconut-moisturizer`, `coconut-oil-deodorant`, `coconut-oil-toothpaste`,
+`coconut-oil-lip-balm`, `coconut-soap`, `organic-foaming-hand-soap`.
+
+Two of the nine products are deliberately not top-level: **`foam-soap-refill-32oz`** is an
+accessory whose natural home is the hand-soap PDP and the hand-soap collection, and
+**`cut-and-scrape`** sits outside the skin-care line. Promoting either to the top level costs
+header space that the seven primary products need. If you want all nine at the top level
+instead, that is a one-line change to this list — but nine product links plus Sets and the
+support items will crowd the desktop header, and crowding is what pushes menus into the
+hamburger breakpoint earlier.
+
+**Footer — a single `Collections` link** pointing at `/collections`, replacing all 30 current
+collection links. Revised 2026-07-27 at Sean's direction: the footer does not enumerate
+collections.
+
+`/collections` is Shopify's native collection index. It already exists, returns 200, and lists
+every published collection — so once Workstream A runs, it lists the four survivors
+automatically with no maintenance. Nothing needs to be built.
+
+Collections remain reachable from `/collections`, from PDP cross-links, and from the sitemap.
+
+**Two defects on `/collections` to fix while we are pointing the whole site's footer at it:**
+
+1. **Its meta description is the homepage's, verbatim** — the same 352-character block of
+   general copy. Give it its own, describing what the page is.
+2. **It is competing for brand queries** — 554 impressions at average position 5.3 for
+   `real skin care` variants, one of the pages outranking the homepage in Workstream E. Its
+   title (`Collections – Real Skin Care`) and duplicated brand-heavy meta are why. Distinct
+   copy reduces that overlap, so this fix serves both workstreams.
+
+Note the interaction: adding a sitewide footer link to `/collections` strengthens it
+internally, which pulls against Workstream E unless its title and meta are made
+category-specific rather than brand-specific. Doing (1) and (2) is therefore a requirement of
+this change, not an optional polish.
+
+`/collections` has no admin-editable SEO fields — it is theme-controlled, so this is a
+`templates/list-collections` edit. The app holds `write_themes`, so unlike the menus themselves
+this part *can* be automated.
 
 ### Constraint: this cannot be automated with the current app
 
@@ -308,9 +347,12 @@ Already wired, no new instrumentation:
    physical bundle products, and is linked from the store's navigation.
 8. The homepage title and meta description lead with the brand, and the meta description is
    under 160 characters.
-9. No header or footer link points at a redirected collection: the footer's 30 collection links
-   become a four-item "Shop by Category" block, and the header is product-led.
-10. At 28 days: the lotion survivor's average position on its target queries has improved
+9. No header or footer link points at a redirected collection. The footer's 30 collection links
+   become a single `Collections` link to `/collections`; the header's top level is direct PDP
+   links plus Sets & Bundles and the support items.
+10. `/collections` has its own meta description rather than the homepage's, and a title that
+   does not compete with the homepage for brand queries.
+11. At 28 days: the lotion survivor's average position on its target queries has improved
    against the rank-tracker baseline, and the homepage's average position on brand queries has
    improved from 4.5. These are the two hypotheses under test — a null result on either is an
    acceptable outcome to learn, not a failure to hide.
@@ -325,3 +367,6 @@ Already wired, no new instrumentation:
   linked from the main menu. Investigation found the footer links 30 collections on every page,
   28 of which this project redirects, and that menu edits cannot be automated with the current
   app scopes.
+- **2026-07-27, revised twice more:** footer reduced from a four-item category block to one
+  `Collections` link to Shopify's native `/collections` index (Sean); header top level changed
+  from a `Shop` dropdown to direct PDP links (Sean).
