@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import {
   estimateShipping, contribution, FALLBACK_PACKAGE_COSTS, FALLBACK_AVERAGE,
 } from '../lib/shipping-costs.js';
+import { loadRoster, economicsRows } from '../lib/bundle-roster.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(__dirname, '..');
@@ -40,47 +41,31 @@ export const SKUS = {
 };
 
 /**
- * status: live | draft | proposed
- * Prices for proposed bundles are the recommended starting point, not fixed.
+ * Rows with no Shopify product behind them: a reference SKU, and records of
+ * bundles we decided against. Kept because the row IS the record of why —
+ * deleting it invites someone to re-propose it next quarter.
  */
-export const BUNDLES = [
-  { name: '90-Day Clean Swap', status: 'proposed', price: 159,
-    items: { deo: 3, toothpaste: 3, barsoap: 3, lotion: 3 },
-    story: 'Replace the four things you put on your body every day, for a quarter.' },
-  { name: 'Head-to-Toe', status: 'proposed', price: 105,
-    items: { lotion: 1, cream: 1, deo: 1, toothpaste: 1, barsoap: 1, pump: 1, lipbalm: 1 },
-    story: 'One of everything. Discovery and gifting.' },
-  { name: '90-Day Coconut Reset', status: 'draft', price: 99,
-    items: { lotion: 3, cream: 1 },
-    story: 'Built, lander done, delivery flow live. Blocked on 3 zero-stock scents + publish.' },
-  { name: 'Pump 4-pack + Lotion', status: 'proposed', price: 72,
-    items: { pump: 4, lotion: 1 },
-    story: 'The pump push, anchored by a high-margin lotion so it clears CAC.' },
-  { name: 'Gift Box', status: 'proposed', price: 62,
-    items: { lotion: 1, lipbalm: 1, barsoap: 1, deo: 1 },
-    story: 'Gifting escapes price comparison entirely. Q4.' },
-  { name: 'The Clean Swap', status: 'proposed', price: 59,
-    items: { deo: 1, toothpaste: 1, barsoap: 1, lotion: 1 },
-    story: 'Entry version of the 90-day. Turns three weak singles into margin.' },
-  { name: 'Pump 3-pack + Lotion', status: 'proposed', price: 59,
-    items: { pump: 3, lotion: 1 }, story: 'Smaller pump entry.' },
-  { name: 'Sensitive Skin Set', status: 'live', price: 46.80,
-    items: { lotion: 1, cream: 1 },
-    story: 'Current hero. Clears the $45 free-shipping threshold on its own.' },
-  { name: 'Pump 4-pack', status: 'proposed', price: 44,
-    items: { pump: 4 },
-    story: 'One per scent, one per sink. Sits on the CAC line at full MSRP; any discount sinks it. Reorder/AOV, not paid acquisition.' },
-  { name: 'Bar Soap 4-Pack', status: 'draft', price: 39,
-    items: { barsoap: 4 },
-    story: 'Subscription vehicle, every 4 months. Replaces the single-bar monthly sub, which lost $1.41 per shipment.' },
-  { name: 'Two-Step Dry Skin Starter Set', status: 'draft', price: 39.99,
-    items: { lotion: 1, cream: 1 }, story: 'Same contents as the hero at a deeper discount. Redundant.' },
+const EDITORIAL = [
   { name: 'Pump + Refill', status: 'rejected', price: 34,
     items: { pump: 1, refill: 1 }, story: 'Loses money: the refill forces a $21.31 box.' },
-  { name: 'Foam Soap Bundle', status: 'draft', price: 20.02,
-    items: { pump: 2, refill: 1 }, story: 'MUST NOT PUBLISH — loses ~$19/order.' },
+  { name: 'Two-Step Dry Skin Starter Set', status: 'retired', price: 39.99,
+    items: { lotion: 1, cream: 1 },
+    story: 'Deleted 2026-07-26. Same contents as the hero at a deeper discount.' },
+  { name: 'Foam Soap Bundle', status: 'retired', price: 20.02,
+    items: { pump: 2, refill: 1 },
+    story: 'Deleted 2026-07-26 without ever being published — lost ~$19/order.' },
   { name: 'Single lotion (reference)', status: 'live', price: 30,
     items: { lotion: 1 }, story: 'Reference point, not an offer. Anchor for the $99 bundle.' },
+];
+
+/**
+ * The real bundles come from config/bundles.json — the same file that builds
+ * the Shopify products — plus the editorial rows above, which have nothing to
+ * derive from. Status/price/items live on the roster now, not here.
+ */
+export const BUNDLES = [
+  ...loadRoster().bundles.flatMap(economicsRows),
+  ...EDITORIAL,
 ];
 
 // ── computation ──────────────────────────────────────────────────────────────
@@ -94,9 +79,10 @@ export function evaluate(bundle, packageCosts) {
   const oversize = entries.some(([k]) => SKUS[k].oversize);
   const pounds = oz / 16;
   const shipping = estimateShipping({ units, pounds, hasOversizeItem: oversize }, packageCosts);
-  const contrib = contribution({ price: bundle.price, cogs, shipping });
+  const packaging = bundle.packaging ?? 0;
+  const contrib = contribution({ price: bundle.price, cogs, shipping, packaging });
   return {
-    ...bundle, msrp, cogs: round(cogs), pounds: round(pounds), units, shipping, contrib,
+    ...bundle, msrp, cogs: round(cogs), pounds: round(pounds), units, shipping, packaging, contrib,
     discountPct: msrp > 0 ? Math.round((1 - bundle.price / msrp) * 100) : 0,
     verdict: contrib >= CAC * 2 ? 'scale' : contrib >= CAC ? 'breakeven' : contrib > 0 ? 'thin' : 'loss',
   };
@@ -118,7 +104,7 @@ export function buildMarkdown(rows, { packageCosts, average, live }) {
   md += `> Regenerate with \`node scripts/bundle-economics.mjs --write\`. Do not hand-edit the tables.\n\n`;
 
   md += `## How to read this\n\n`;
-  md += `CAC target is **$${CAC}**. Under the CFA rule, 30-day gross profit ≥ CAC breaks even; ≥ 2× CAC (**$${CAC * 2}**) is the threshold for scaling paid spend. Contribution = price − COGS − freight − payment fees (2.9% + $0.30).\n\n`;
+  md += `CAC target is **$${CAC}**. Under the CFA rule, 30-day gross profit ≥ CAC breaks even; ≥ 2× CAC (**$${CAC * 2}**) is the threshold for scaling paid spend. Contribution = price − COGS − freight − packaging − payment fees (2.9% + $0.30).\n\n`;
 
   md += `## Bundles\n\n`;
   md += `| Bundle | Status | MSRP | Price | Disc | COGS | lb | Units | Freight | **Contribution** | Verdict |\n`;

@@ -411,6 +411,40 @@ The verifier now checks that **every variant of a bundle shares one price**, whi
 | benefit lines | own 4 | own 4 | own 4 |
 | subtitle | own | own | own |
 
+## Two ways a lander silently renders the wrong product (2026-07-27)
+
+Both were found by reading the rendered page, not the Admin API response. The API said success in both cases.
+
+### 1. A DRAFT metaobject is invisible to Liquid
+
+`metaobjectUpsert` defaults a new metaobject to **DRAFT**, and Liquid does not expose a draft metaobject to the storefront. `product.metafields.bundle.lander.value` then reads blank, the shared template falls through to its own settings, and the page renders **another product's** headline, subheading and bullets.
+
+The metafield looks perfect from the Admin API while this is happening — correct `metaobject_reference` type, valid gid, definition attached, every field populated. The Gift Box page displayed "The 90-Day Coconut Skin Reset" and "three daily lotions and an overnight cream" in exactly that state.
+
+`scripts/build-bundle.mjs` now upserts with `capabilities: { publishable: { status: ACTIVE } }` **and asserts the status that comes back**, because there is no way to see this failure from the API side.
+
+### 2. Per-product strings in the shared template
+
+The closing `final-cta-strip` is a stock `rich-text` section, and its heading and button label were literal strings — `"Start your 90-day reset."` and `"Start My 90-Day Reset"`. Its body text used `[[TOTAL]]`-style tokens and substituted correctly, so the section *looked* wired up. It was not: `sections/rich-text.liquid` only ran the replace chain over the **text** block.
+
+Result: every bundle landing page ended with the Reset's call to action. Head-to-Toe showed it and none of its own.
+
+Fixed by adding a `[[CTA]]` token, sourced from the lander metaobject's `cta_label`, and running the replace chain over the heading and button blocks too:
+
+```liquid
+assign bundle_cta = 'Shop Now'
+if product != blank and product.metafields.bundle.lander.value.cta_label != blank
+  assign bundle_cta = product.metafields.bundle.lander.value.cta_label
+endif
+```
+
+The template now carries `"[[CTA]]."` as the closing heading and `"[[CTA]]"` as the button. It falls back to a neutral label rather than an empty button, and is a no-op on the templates that never use the token.
+
+**These are theme files and are not in this repo.** Backups of both, taken immediately before the edit, are at `~/Backups/shopify/`:
+`sections__rich-text.liquid.2026-07-27-cta.bak` and `templates__product.bundle-landing.json.2026-07-27-cta.bak`.
+
+The order that prevents both classes: **content first, template last.** `build-bundle.mjs` writes the metaobject, links it, writes the value stack, and only then sets `templateSuffix`.
+
 ## The pattern worth remembering
 
 Every round of this has been the same bug in a new costume: **content that should be per-product living in a template**. Hero, then prices, then component images, then buy-box benefits, then a subtitle. Each looked like the last one.

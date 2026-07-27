@@ -126,14 +126,17 @@ Full numbers in [`bundle-economics.md`](./bundle-economics.md). Summary:
 
 ### Bar soap subscription — rebuilt 2026-07-25
 
-The single-bar monthly subscription lost money on every shipment. Replaced with a 4-pack on a longer cycle:
+The single-bar subscription loses money on every shipment. Replaced with a 4-pack on a longer cycle:
 
 | | Price | COGS | Freight | Contribution | Per year |
 |---|--:|--:|--:|--:|--:|
-| 1 bar, monthly, 20% off | $8.80 | $2.99 | $6.66 | **−$1.41** | −$16.92 (12 shipments) |
+| 1 bar, monthly, 20% off *(gone — died with the Shopify Subscriptions app)* | $8.80 | $2.99 | $6.66 | **−$1.41** | −$16.92 (12 shipments) |
+| 1 bar, 8-week, 15% off *(still live on `coconut-soap`)* | $9.35 | $2.99 | $6.66 | **−$0.87** | −$5.66 (6.5 shipments) |
 | 4-pack, every 4 months, 15% off | $33.15 | $11.96 | $7.83 | **$12.10** | **$36.30** (3 shipments) |
 
-**`coconut-bar-soap-4-pack`** (draft, $39, compare-at $44, 16 oz, COGS $11.96), selling plan group `BARSOAP_4MO` "Every 4 months, 15% off". Five variants so buyers can take one of each scent *or* four of one:
+Note the middle row: killing the 20% monthly plan **narrowed the loss but did not end it**. A single $11 bar cannot carry a $6.66 envelope at any subscription discount. The remaining 6-week and 8-week single-bar plans on `coconut-soap` should be detached now that the 4-pack is live — pending a `read_own_subscription_contracts` check for existing subscribers.
+
+**`coconut-bar-soap-4-pack`** (**live 2026-07-26**, $39, compare-at $44, 16 oz, COGS $11.96), on **Recurpay plan `11151699`** "Every 4 months, 15% off". Five variants so buyers can take one of each scent *or* four of one:
 
 | Variant | Components | Availability |
 |---|---|--:|
@@ -142,6 +145,8 @@ The single-bar monthly subscription lost money on every shipment. Replaced with 
 | 4x Nourishing Tea Tree | 4× Nourishing Tea Tree | 11 |
 | 4x Refreshing Lemongrass | 4× Refreshing Lemongrass | 0 (component out of stock) |
 | 4x Pure Unscented | 4× Pure Unscented | 1 (only 7 bars in stock) |
+
+**Lemongrass at zero also zeroes the Variety pack**, which is the variant carrying the pitch. Restocking Lemongrass is the single highest-value action on this product; Lavender (55) and Tea Tree (47) are deep.
 
 ### RULE: every bundle must be inventory-tracked
 
@@ -160,20 +165,34 @@ Sean's rule: **flat 15% at every frequency.** A bigger discount for a longer cyc
 
 The **Shopify Subscriptions app was uninstalled 2026-07-25**, which removed the "Subscribe and save" group carrying monthly at **20%** — the biggest discount on the worst cadence, and the reason every live subscriber was monthly. All 17 Recurpay contracts were unaffected (active=4, cancelled=11, halted=2, unchanged before and after).
 
-Current state — 5 groups, all Recurpay-owned:
+**Done as of 2026-07-26 — every plan on every product reads 15%.** Verified per-product across all seven SKUs (see the caveat at the end of this section: the shop-level `sellingPlanGroups` query cannot see Recurpay's groups, so a per-product read is the only honest check).
 
 | Plan | Cadence | Discount |
 |---|---|--:|
 | `RP_PLAN_11134100` | 1 month | 15% ✓ |
-| `RP_PLAN_11150631` | 6 week | 15% ✓ |
-| `RP_PLAN_11150631` | 8 week | **10%** ✗ |
+| `RP_PLAN_11150631` / `11151619` | 6 week | 15% ✓ |
+| `RP_PLAN_11150631` / `11151619` | 8 week | 15% ✓ (was 10%) |
 | `subscribe-and-save` | 30 day | 15% ✓ |
-| `subscribe-and-save` | 4 week | 15% ✓ |
-| `subscribe-and-save` | 8 week | **10%** ✗ |
-| `subscribe-and-save` | 12 week | **10%** ✗ |
-| `BARSOAP_4MO` | 4 month | 15% ✓ |
+| Recurpay `11151699` | 4 month | 15% ✓ (new — bar soap 4-pack) |
 
-**The three at 10% must be finished in the Recurpay admin UI.** They sit at selling-plan positions 2 and 3, and the API cannot reach them (below). It is a couple of minutes of clicking.
+What is left is **cadence** sprawl, not discount sprawl: most products still show three groups at the same 15%, offering 1-month, 6-week and 8-week. Monthly is still the over-supply cadence, so consolidating remains worthwhile — it just no longer costs money.
+
+### ☠️ Never create a selling plan group through the Shopify Admin API
+
+Found 2026-07-26, an hour after publishing the 4-pack. Its "Every 4 months, 15% off" option was a native Shopify selling plan group (`BARSOAP_4MO`) created by **our own custom app** in an earlier session. Our app has no billing engine — it never calls `subscriptionContractCreate`. A customer choosing it would have got **15% off one shipment and then nothing, ever**: no second order, no contract, no cancellation email. Silent.
+
+**The tell reads backwards, so learn it:**
+
+| Visible to a shop-level `sellingPlanGroups` query? | Owner | Bills? |
+|---|---|---|
+| **Yes** | our custom app | ❌ **no** |
+| **No** | Recurpay | ✅ yes |
+
+That query only returns groups the *calling app* owns, so Recurpay's real plans are invisible and the broken one was the only thing listed. `BARSOAP_4MO` was the sole entry — that is what gave it away. Cross-check with `node scripts/recurpay-audit.mjs`: if a cadence is offered on the storefront but absent from that list, nothing is billing it.
+
+Repaired by `scripts/fix-bar-soap-subscription.mjs`: group detached and deleted, real plan created in Recurpay. Zero contracts existed, because the product had been a draft its whole life.
+
+**Rule: subscriptions are Recurpay's. Create plans there, never through Shopify's Admin API.** A selling plan with no subscription app behind it is not a subscription — it is a discount that lies about recurring.
 
 ⚠️ **Recurpay's `PUT /plans/{id}` is positional and destructive.** Client and full constraints now live in **`lib/recurpay.js`**; audit with **`node scripts/recurpay-audit.mjs`**. Don't re-derive this API by hand again.
 
@@ -193,18 +212,20 @@ Selling plan groups owned by another app are **not listable or editable** via `s
 
 ## 6. Open decisions (need Sean)
 
-1. **Publish the $99 Reset.** It is ~95% built — lander done, digital bonuses hosted on CDN, Klaviyo delivery flow `XEMgA7` live, 131 Judge.me reviews wired. Blocked on: 3 of 5 scents at 0 stock with `policy=deny` (only Coconut Breeze 11 + Pure Unscented 12 are buyable), preview the lander, flip to active, fire a test order to confirm delivery email.
-2. **Foam Soap Bundle** — reprice to ~$52 (0% discount, pointless) or retire.
-3. **Two-Step Set** — same contents as the hero at a deeper discount. Retire or differentiate.
-4. **90-Day Clean Swap inventory** — needs 3× depth on deodorant and toothpaste.
-5. **Which proposed bundles to actually build**, and in what order.
+Items 1–3 are **closed** — the Reset, Clean Swap, Head-to-Toe and Bar Soap 4-Pack are all live, and the Foam Soap Bundle and Two-Step Set were deleted 2026-07-26. What remains:
+
+1. **Live test order.** The last unverified link in the chain: browser → GA4 → Google Ads conversion import at the correct value. Sean has to place it; no script can. Until it happens, paid stays gated by the `Tracking → CRO → Offer/AOV → Traffic` rule regardless of how good the bundle contribution math looks.
+2. **Restock Refreshing Lemongrass bar soap.** At 0 it zeroes both the Lemongrass 4-pack and the Variety pack. Pure Unscented at 7 bars allows one more Variety pack.
+3. **Detach the single-bar 6-week/8-week subscription plans** from `coconut-soap` — still −$0.87/shipment. Needs `read_own_subscription_contracts` to check for existing subscribers first. The 4-pack replacement is now live, so this is unblocked.
+4. **90-Day Clean Swap inventory** — needs 3× depth on deodorant and toothpaste. Gentle is down to 2 kits.
+5. **Which of the remaining proposed bundles to build**, and in what order. Next by contribution: Pump 4-pack + Lotion ($39.82) and The Clean Swap ($34.06); the Gift Box needs to exist by mid-September to catch Q4.
 
 ---
 
 ## 7. Known gaps
 
 - **`Subscription Free Shipping` has no minimum order value** — 5 orders/yr, $30.35 of freight, average order $15.81. Left in place deliberately: the root cause was the *subscription SKU*, not the shipping rule, and that has been addressed (below). Revisit only if small subscription orders reappear.
-- **Single-bar subscription plans are still attached to `coconut-soap`.** Three overlapping groups let a customer subscribe to one $11 bar monthly at 20% off — **−$1.41 per shipment**, ~−$16.92/yr per subscriber. The replacement 4-pack exists; detaching the single-bar plans needs `read_own_subscription_contracts` to check for existing subscribers first.
+- **Single-bar subscription plans are still attached to `coconut-soap`.** The 20%-monthly option is gone, but two Recurpay groups still sell one $11 bar every 6 or 8 weeks at 15% — **−$0.87 per shipment**. The replacement 4-pack went live 2026-07-26, so detaching is now unblocked; it needs `read_own_subscription_contracts` to check for existing subscribers first.
 - **Subscription plan sprawl.** Every product carries 3–4 overlapping selling plan groups from two apps ("Subscribe and save" 6wk/monthly, plus Recurpay `RP_PLAN_*` monthly/6wk/8wk). Customers see competing options. Worth consolidating.
 - **`OCU Shipping Discount` (Zipify) has never applied to a single order** in 365 days. It is an inert function the app installs; it is *not* a leak. (An earlier version of this doc claimed otherwise — that was wrong.)
 - **Comped orders ship more expensively than paid ones** — 33 orders at $0.00 subtotal averaged $8.81 freight vs $7.33 overall, including one **UPS Next Day Air Saver at $52.75** on a giveaway. Operational control at label-purchase time.
