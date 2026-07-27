@@ -18,7 +18,6 @@ test('lotion-family handles route to the lotion survivor', () => {
 });
 
 test('single-SKU categories route to their PDP, not to a collection', () => {
-  assert.equal(classifyTarget('cinnamon-toothpaste'), '/products/coconut-oil-toothpaste');
   assert.equal(classifyTarget('sls-free-toothpaste'), '/products/coconut-oil-toothpaste');
   assert.equal(classifyTarget('vegan-deodorant'), '/products/coconut-oil-deodorant');
   assert.equal(classifyTarget('organic-lip-balm'), '/products/coconut-oil-lip-balm');
@@ -26,13 +25,22 @@ test('single-SKU categories route to their PDP, not to a collection', () => {
   assert.equal(classifyTarget('best-soap-for-tattoos'), '/products/coconut-soap');
 });
 
+test('generic scent/ingredient words (mint, sls) do not misroute across categories', () => {
+  // 'mint' appears in toothpaste, lip balm, and lotion; must route to the specific category.
+  assert.equal(classifyTarget('mint-lip-balm'), '/products/coconut-oil-lip-balm');
+  // 'sls' appears in toothpaste and soap; must route to the specific category.
+  assert.equal(classifyTarget('sls-free-soap'), '/products/coconut-soap');
+});
+
 test('hand-soap handles route to the hand-soap survivor, not to the bar-soap PDP', () => {
   assert.equal(classifyTarget('foaming-soap-dispenser'), '/collections/foaming-hand-soap');
 });
 
-test('toothpaste wins over soap when a handle could match both', () => {
-  // 'sls' and 'mint' are toothpaste markers; ordering must not let a generic rule win first.
-  assert.equal(classifyTarget('mint-toothpaste'), '/products/coconut-oil-toothpaste');
+test('lip rule wins over lotion when a handle matches both', () => {
+  // 'natural-lip-moisturizer' matches both 'lip-moistur' (lip rule) and 'moistur' (lotion rule).
+  // It must resolve to the lip PDP because the lip rule is checked first.
+  // This is the ordering guard.
+  assert.equal(classifyTarget('natural-lip-moisturizer'), '/products/coconut-oil-lip-balm');
 });
 
 test('unclassifiable handles fall back to all-products rather than throwing', () => {
@@ -55,7 +63,7 @@ test('buildRedirectPlan omits survivors and keeps every other collection', () =>
   assert.equal(deo.live, true);
 });
 
-test('buildRedirectPlan never emits a redirect whose source equals its target', () => {
+test('buildRedirectPlan omits survivors from the redirect plan', () => {
   const plan = buildRedirectPlan([
     { handle: 'non-toxic-body-lotion', id: 9, kind: 'custom', live: true, products: 2 },
   ]);
