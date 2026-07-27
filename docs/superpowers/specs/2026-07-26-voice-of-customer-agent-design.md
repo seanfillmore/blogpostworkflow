@@ -40,11 +40,21 @@ launches.
   explicit handle list, not a keyword match (see below).
 - Sources: Judge.me reviews, Reddit via Tavily, Google page-1 via DataForSEO SERP.
 - Three artifacts: `voice-of-customer.md`, `personas.md`, `personas.json`.
-- Consumers: `creative-packager`, dashboard Ad Builder, `blog-post-writer`,
-  `pdp-builder`.
+- Consumers: `creative-packager`, `blog-post-writer`, `pdp-builder` — plus
+  ad-hoc human queries against the files themselves.
 
 **Out of scope (v1), with reasons:**
 
+- **Any dashboard UI.** No picker, no review card, no approval screen. The
+  artifacts are files; agents read them and so does a human with a text editor
+  or a Claude Code session. Adding UI would be the most expensive part of the
+  build for the least benefit.
+- **An approval gate.** Without a dashboard there is nowhere to approve, and the
+  gate's justification — personas must not change silently beneath a live ad
+  account — does not apply while no Meta account is running. The agent writes
+  its artifacts directly, per the Autonomy Principle. If a live account later
+  makes silent drift a real risk, a gate can be added then; the corpus cache
+  and dated report files make any regression diffable in git meanwhile.
 - `cro-cta-injector` — injects a static CTA block, not LLM-driven. Consuming
   this research means generating copy, a materially larger job.
 - Amazon review mining — SP-API exposes BA/SQP search terms, not review text.
@@ -162,8 +172,6 @@ The only artifact with a schema contract.
   "corpus_ref": "corpus-2026-08-01.json",
   "cluster": "skin",
   "partial": false,
-  "status": "pending",
-  "approved_at": null,
   "personas": [{
     "id": "eczema-flare-parent",
     "name": "…",
@@ -188,6 +196,11 @@ tagging is what makes awareness-gap analysis possible later without re-running
 research. Every angle carries `source_quotes`; nothing enters the file
 unsourced.
 
+The `personas` array is **ordered by rank, highest first**, combining
+`evidence_count` and `emotional_intensity`. Order is part of the contract:
+`creative-packager` uses `personas[0].angles[0]` as its default when no persona
+is named explicitly.
+
 ### `data/context/voice-of-customer.md`
 
 LLM prompt context. Fixed sections, stable across runs:
@@ -202,41 +215,46 @@ Each entry carries an evidence count and a verbatim quote.
 
 ### `data/context/personas.md`
 
-Human-readable rendering of the JSON — the artifact to review before approving.
+Human-readable rendering of the JSON. This is the artifact to read when you want
+to know who we are selling to, and the one to check first after any run.
 
-## Approval gate
+### Written for querying, not just parsing
 
-The agent always writes `status: "pending"` and never mutates an active file.
+Both markdown files are committed to git and live under `data/context/`
+alongside `feedback.md`, so they are greppable, diffable across runs, and
+loadable into a Claude Code session by path. Two constraints follow from that
+and are binding on the generator:
 
-The dashboard shows a review card diffing new and changed personas against the
-current active set, with an Approve button reusing the pattern in
-`agents/dashboard/lib/opportunity-trigger.js`. Approving flips status to
-`active` and stamps `approved_at`. The persona picker reads active only.
-
-This is the deliberate compromise on the Autonomy Principle: the agent decides
-and produces without asking, but personas that steer ad spend do not silently
-change underneath a running account.
+- **Stable heading text.** Section headings never change wording between runs,
+  so `grep`-based lookups and any consumer slicing by heading keep working.
+- **Self-contained entries.** Every objection, phrase and trigger point states
+  its own context in one line rather than referring to a preceding entry, so a
+  single grep hit is useful on its own.
 
 ## Consumer wiring
 
 | Consumer | Change |
 |---|---|
-| `agents/creative-packager/index.js:109` | `job.copyBrief` gains `personaId` + `angleId`. When set, `brief.angle` and a new persona line come from active `personas.json`; the reference ad drops to style-only. When unset, behavior is unchanged byte-for-byte. |
-| dashboard Ad Builder | Persona → angle dependent dropdowns sourced from active personas; pending-review card with Approve. |
+| `agents/creative-packager/index.js:109` | `job.copyBrief` gains optional `personaId` + `angleId`, set from the job spec or CLI — no UI. When set, `brief.angle` and a new persona line come from `personas.json` and the reference ad drops to style-only. When unset, the default angle becomes `personas[0].angles[0]` instead of the competitor ad's `messagingAngle`. |
 | `agents/blog-post-writer/index.js:44` | New `loadVoiceOfCustomer()` alongside `loadAgentFeedback()`; whole doc into the prompt for objection-led openings. |
 | `agents/pdp-builder/index.js` | VOC doc fed into `loadFoundation()`. |
 
-With no active `personas.json`, every consumer degrades to exactly current
+Note that `creative-packager`'s behavior *does* change when no persona is named:
+that is the point of the build. If `personas.json` is missing or empty it falls
+back to the current competitor-derived angle, so the agent never breaks — but
+once the file exists, the competitor ad no longer supplies the angle.
+
+With no `personas.json` at all, every consumer degrades to exactly current
 behavior. The feature is never half-live.
 
 ## Failure modes
 
 | Condition | Behavior |
 |---|---|
-| Tavily or DataForSEO unavailable | Degrade to Judge.me-only, mark corpus `partial: true`, carry the flag into `personas.json` so the review card reads "generated without external friction data." Never silently ship a thin corpus as a full one. |
-| Malformed or schema-violating LLM output | Validate, retry once, then throw and `notify()` as an error. Errors bypass digest deferral and email immediately. No partial write. |
+| Tavily or DataForSEO unavailable | Degrade to Judge.me-only, mark corpus `partial: true`, carry the flag into `personas.json` and print a `## Source notes` line reading "generated without external friction data." Never silently ship a thin corpus as a full one. |
+| Malformed or schema-violating LLM output | Validate, retry once, then throw and `notify()` as an error. Errors bypass digest deferral and email immediately. No partial write — the previous artifacts stay in place. |
 | Zero new reviews since last run | Skip the LLM call, log, exit 0. Expected on a store averaging ~0.5 orders/day. |
-| Existing active `personas.json` | Never touched. Worst case, a bad pending file is rejected at the review card. |
+| Bad output survives validation | The artifacts are committed to git, so `git diff data/context/personas.md` shows exactly what changed month over month and reverting is one command. This replaces the approval gate. |
 | Judge.me pagination cap | `fetchAllReviewStats` caps at 50 pages / 5000 reviews. Currently 390. The collector logs the count so approaching the cap is visible. |
 
 ## Testing
@@ -254,7 +272,9 @@ over the pure functions in `lib/voice-of-customer.js`:
 - `partial` flag propagates from corpus into output
 
 Plus `tests/agents/voice-of-customer.test.js`: one smoke test with a stubbed LLM
-client asserting all three artifacts are written and `status` is `pending`.
+client asserting all three artifacts are written, and one asserting
+`creative-packager` picks `personas[0].angles[0]` when no `personaId` is given
+and falls back to the competitor-derived angle when `personas.json` is absent.
 
 The LLM call itself is not unit-tested. The value is in the prompt, and the real
 check is reading `personas.md` on the first run.
@@ -263,12 +283,13 @@ check is reading `personas.md` on the first run.
 
 1. A single run produces all three artifacts from live data, and `personas.md`
    is good enough to act on without editing.
-2. The Ad Builder can generate a creative from a chosen persona + angle with no
-   competitor reference ad involved.
+2. `creative-packager` can generate a creative from a chosen persona + angle
+   with no competitor reference ad involved.
 3. `voice-of-customer.md` contains at least one objection that did not come from
    our own reviews — proving the external sources are earning their place.
-4. Every consumer behaves identically to today when no active personas file
-   exists.
+4. Every consumer behaves identically to today when no personas file exists.
+5. A question like "what stops people buying our lotion?" is answerable by
+   grepping `data/context/voice-of-customer.md`, with quotes attached.
 
 ## Follow-on work (not v1)
 
