@@ -21,10 +21,11 @@ import { aggregateGscWindow } from '../../lib/keyword-index/gsc-aggregator.js';
 import { aggregateGa4Window } from '../../lib/keyword-index/ga4-aggregator.js';
 import { parseBaReportStream } from '../../lib/keyword-index/amazon-ba.js';
 import { findLatestListingsDump, listRscAsinsFromDump } from '../../lib/keyword-index/rsc-asins.js';
-import { findLatestSqpDump, findLatestBaDump, parseSqpDump } from '../../lib/keyword-index/dump-readers.js';
+import { findLatestSqpDump, findLatestBaDump, parseSqpDump, readUntappedCandidates } from '../../lib/keyword-index/dump-readers.js';
 import { mergeSources, loadClustersFromPriorIndex } from '../../lib/keyword-index/merge.js';
 import { rollUpCompetitorsByCluster } from '../../lib/keyword-index/competitors.js';
 import { enrichWithMarketData } from '../../lib/keyword-index/dataforseo-enricher.js';
+import { normalize } from '../../lib/keyword-index/normalize.js';
 
 import { notify } from '../../lib/notify.js';
 
@@ -163,6 +164,23 @@ async function main() {
     process.exit(1);
   }
 
+  // Stage 2b: untapped candidates from gsc-query-miner.
+  // These are queries with impressions and zero clicks — they can never satisfy
+  // classifyValidationSource's amazon/ga4 conversion bar, so this feed is the
+  // only path by which they reach the index. Optional input: a missing, stale,
+  // or malformed file degrades to zero candidates and never fails the build.
+  const untappedFeed = readUntappedCandidates(ROOT);
+  const untapped = new Map();
+  for (const c of untappedFeed.candidates) {
+    const key = normalize(c.keyword);
+    if (key) untapped.set(key, { impressions: c.impressions, position: c.position, reason: c.reason });
+  }
+  if (untappedFeed.status === 'ok') {
+    console.log(`  Untapped: ${untapped.size} candidates (feed ${untappedFeed.ageDays}d old)`);
+  } else {
+    console.warn(`  Untapped: feed ${untappedFeed.status}${untappedFeed.ageDays != null ? ` (${untappedFeed.ageDays}d old)` : ''} — no untapped keywords this build.`);
+  }
+
   // Stage 3: GA4 join
   const ga4Map = await runStage('ga4',
     () => aggregateGa4Window({ snapshotsDir: SNAPSHOTS_GA4, fromDate, toDate }),
@@ -170,7 +188,7 @@ async function main() {
   ) || {};
 
   // Stage 4: Merge
-  const entries = mergeSources({ amazon: amazonMap, gsc: gscMap, ga4Map, clusters });
+  const entries = mergeSources({ amazon: amazonMap, gsc: gscMap, ga4Map, clusters, untapped });
   console.log(`  Merge: ${Object.keys(entries).length} entries qualified`);
 
   // Stage 5: DataForSEO enrich
@@ -183,7 +201,7 @@ async function main() {
   const clusterCompetitors = rollUpCompetitorsByCluster(entries);
 
   // Final assembly
-  const bySource = { amazon: 0, gsc_ga4: 0 };
+  const bySource = { amazon: 0, gsc_ga4: 0, gsc_untapped: 0 };
   for (const e of Object.values(entries)) bySource[e.validation_source] = (bySource[e.validation_source] || 0) + 1;
 
   const output = {
