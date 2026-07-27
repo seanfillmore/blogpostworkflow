@@ -852,7 +852,7 @@
       "handle": "clean-swap",
       "title": "The Clean Swap",
       "status": "live",
-      "templateSuffix": null,
+      "templateSuffix": "bundle-landing",
       "packaging": 0,
       "tags": [
         "bundle",
@@ -962,13 +962,91 @@
             }
           ]
         }
-      ]
+      ],
+      "valueStack": [
+        {
+          "label": "Body Lotion (8oz)",
+          "amount": 30,
+          "digital": false
+        },
+        {
+          "label": "Natural Deodorant",
+          "amount": 15,
+          "digital": false
+        },
+        {
+          "label": "Coconut Toothpaste",
+          "amount": 13,
+          "digital": false
+        },
+        {
+          "label": "Coconut Bar Soap",
+          "amount": 11,
+          "digital": false
+        },
+        {
+          "label": "Free shipping",
+          "amount": 6,
+          "digital": false
+        }
+      ],
+      "lander": {
+        "heading": "The Clean Swap",
+        "subheading": "Lotion, deodorant, toothpaste and soap — the four things you put on your body every day, swapped in one go.",
+        "cta_label": "Start My Swap",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "bullets": [
+          "One of each: body lotion, deodorant, toothpaste and bar soap",
+          "Coconut-oil based throughout — no SLS, no parabens, no synthetic fragrance, no fluoride",
+          "Three kits, so the scents work together instead of fighting each other",
+          "Ships free"
+        ],
+        "buybox_bullets": [
+          "1 Body Lotion + 1 Deodorant + 1 Toothpaste + 1 Bar Soap",
+          "Choose Gentle, Calm or Fresh",
+          "Ships free",
+          "30-day money-back guarantee"
+        ],
+        "whats_in_it_note": "One of each of the four daily products.",
+        "faq": [
+          {
+            "q": "How is this different from the 90-Day Clean Swap?",
+            "a": "Same four products — one of each here, three of each there. This is the way to try the whole swap before committing to a quarter's supply."
+          },
+          {
+            "q": "Which kit should I choose?",
+            "a": "Gentle is the fragrance-free-leaning one: unscented lotion and soap, mint toothpaste, and a lavender deodorant — we don't make an unscented deodorant, so we won't call the box unscented. Calm is lavender soap and deodorant with an unscented lotion. Fresh is coconut lotion, geranium deodorant and tea tree soap."
+          },
+          {
+            "q": "Is the toothpaste fluoride free?",
+            "a": "Yes — no fluoride, no SLS, no artificial sweeteners."
+          },
+          {
+            "q": "Can I swap one of the four?",
+            "a": "Not in this set; the four are fixed so the kits stay simple. If you want a different combination, the products are all sold individually."
+          }
+        ],
+        "tabs": [
+          {
+            "heading": "What's Inside",
+            "body": "1 Body Lotion (8oz), 1 Natural Deodorant, 1 Coconut Toothpaste, 1 Coconut Bar Soap."
+          },
+          {
+            "heading": "Ingredients",
+            "body": "Coconut-oil based throughout, with essential oils where a scent is named. No SLS, no parabens, no synthetic fragrance, no fluoride, no palm oil. Vegan and cruelty-free."
+          },
+          {
+            "heading": "Shipping",
+            "body": "Ships free. Most orders leave within one business day."
+          }
+        ]
+      }
     },
     {
       "handle": "gift-box",
       "title": "Gift Box",
       "status": "live",
-      "templateSuffix": null,
+      "templateSuffix": "bundle-landing",
       "packaging": 1.0,
       "tags": [
         "bundle",
@@ -1078,7 +1156,85 @@
             }
           ]
         }
-      ]
+      ],
+      "valueStack": [
+        {
+          "label": "Body Lotion (8oz)",
+          "amount": 30,
+          "digital": false
+        },
+        {
+          "label": "Lip Balm 4-pack",
+          "amount": 15,
+          "digital": false
+        },
+        {
+          "label": "Natural Deodorant",
+          "amount": 15,
+          "digital": false
+        },
+        {
+          "label": "Coconut Bar Soap",
+          "amount": 11,
+          "digital": false
+        },
+        {
+          "label": "Free shipping",
+          "amount": 6,
+          "digital": false
+        }
+      ],
+      "lander": {
+        "heading": "The Gift Box",
+        "subheading": "A gift that gets used up. Four everyday things, chosen so none of it ends up in the back of a drawer.",
+        "cta_label": "Send This Gift",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "bullets": [
+          "Body lotion, lip balm, bar soap and deodorant — four things that actually get used",
+          "Arrives in our custom gift box, ready to hand over",
+          "Coconut-oil based throughout — no SLS, no parabens, no synthetic fragrance",
+          "Ships free"
+        ],
+        "buybox_bullets": [
+          "Body Lotion + Lip Balm 4-pack + Bar Soap + Deodorant",
+          "Choose Gentle, Calm or Fresh",
+          "Ships free in a custom gift box",
+          "30-day money-back guarantee"
+        ],
+        "whats_in_it_note": "Four everyday products in a custom gift box.",
+        "faq": [
+          {
+            "q": "Does it arrive ready to give?",
+            "a": "Yes — it ships in our custom gift box."
+          },
+          {
+            "q": "Which kit should I choose?",
+            "a": "Gentle is the safest bet if you don't know their preferences: unscented lotion, lip balm and soap, with a lavender deodorant — we don't make an unscented deodorant, so we won't call the box unscented. Calm is lavender soap and deodorant with vanilla lip balm. Fresh is coconut lotion, tangerine lip balm, tea tree soap and geranium deodorant."
+          },
+          {
+            "q": "What if it doesn't suit them?",
+            "a": "30-day money-back guarantee."
+          },
+          {
+            "q": "How long does it last?",
+            "a": "The lotion and deodorant run a month or two of regular use; the soap and lip balms last longer."
+          }
+        ],
+        "tabs": [
+          {
+            "heading": "What's Inside",
+            "body": "1 Body Lotion (8oz), 1 Lip Balm 4-pack, 1 Coconut Bar Soap, 1 Natural Deodorant — in a custom gift box."
+          },
+          {
+            "heading": "Ingredients",
+            "body": "Coconut-oil based throughout, with essential oils where a scent is named. No SLS, no parabens, no synthetic fragrance, no palm oil. Vegan and cruelty-free."
+          },
+          {
+            "heading": "Shipping",
+            "body": "Ships free. Most orders leave within one business day."
+          }
+        ]
+      }
     },
     {
       "handle": "coconut-deodorant-4-pack",

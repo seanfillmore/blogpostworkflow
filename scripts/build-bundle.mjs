@@ -116,11 +116,15 @@ async function buildBundle(bundle, catalogue) {
   // them, same guard as `seo` already had. Status follows the roster: only
   // "live" bundles go ACTIVE and get published later; anything else stays
   // DRAFT and step 7 skips publishing.
+  // `templateSuffix` is deliberately NOT set here. It is applied in step 6,
+  // after the lander metaobject and value stack exist. Setting it here would
+  // publish the shared template against absent content for the length of the
+  // run — which is not "no landing page", it is another product's copy and a
+  // stack reading "$0 value, $0 today — you save $0". That shipped once.
   const isLive = bundle.status === 'live';
   const input = {
     title: bundle.title,
     handle: bundle.handle,
-    templateSuffix: bundle.templateSuffix ?? null,
     status: isLive ? 'ACTIVE' : 'DRAFT',
     ...(bundle.descriptionHtml ? { descriptionHtml: bundle.descriptionHtml } : {}),
     ...(bundle.tags ? { tags: bundle.tags } : {}),
@@ -285,6 +289,17 @@ async function buildBundle(bundle, catalogue) {
     } else {
       log('    prices already match the roster — no changes');
     }
+    // The lander and the template are the pair that put "$0 value, $0 today"
+    // on three live pages, so the preview names them explicitly rather than
+    // leaving them to be inferred from a clean run.
+    if (bundle.lander) {
+      log(`    would upsert bundle_lander "${bundle.handle}" (${Object.keys(bundle.lander).length} fields)` +
+          `${bundle.valueStack ? ` + value stack (${bundle.valueStack.length} lines)` : ''}`);
+    }
+    const previewTemplate = bundle.templateSuffix ?? null;
+    if ((product?.templateSuffix ?? null) !== previewTemplate) {
+      log(`    template: ${product?.templateSuffix ?? '(default PDP)'} -> ${previewTemplate ?? '(default PDP)'}`);
+    }
     if (channelsToPublish.length) {
       log(`    would publish to: ${channelsToPublish.map(([, name]) => name).join(', ')}`);
     } else if (isLive) {
@@ -392,6 +407,79 @@ async function buildBundle(bundle, catalogue) {
     { metafields }
   );
   log(`  wrote ${metafields.length} metafields`);
+
+  // 6 — lander content, and ONLY THEN the template that renders it.
+  //
+  // The `bundle-landing` template is shared and carries no per-product copy of
+  // its own: every string comes from a `bundle_lander` metaobject linked by the
+  // `bundle.lander` metafield, and the price tokens come from
+  // `bundle.value_stack`. Applying the template before those exist does not
+  // degrade gracefully — Shopify falls back to another product's metaobject, so
+  // three live pages once carried the 90-Day Reset's headline and CTA above a
+  // stack reading "$0 value, $0 today — you save $0".
+  //
+  // Hence the order: content first, template last. `metaobjectUpsert` keys on
+  // the handle, so re-running overwrites in place rather than accumulating
+  // duplicates.
+  if (bundle.lander) {
+    const fields = Object.entries(bundle.lander).map(([key, value]) => ({
+      key,
+      value: typeof value === 'string' ? value : JSON.stringify(value),
+    }));
+
+    // `publishable: ACTIVE` is NOT optional. metaobjectUpsert defaults a new
+    // metaobject to DRAFT, and Liquid does not expose a draft metaobject to the
+    // storefront — `product.metafields.bundle.lander.value` reads blank, the
+    // shared template falls back, and the page silently renders ANOTHER
+    // product's headline, subheading and bullets. The metafield looks perfect
+    // from the Admin API while the page is wrong, which is why this is asserted
+    // below rather than assumed.
+    const up = await gql(
+      `mutation ($handle: MetaobjectHandleInput!, $metaobject: MetaobjectUpsertInput!) {
+        metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
+          metaobject { id handle capabilities { publishable { status } } }
+          userErrors { field message code }
+        } }`,
+      {
+        handle: { type: 'bundle_lander', handle: bundle.handle },
+        metaobject: { fields, capabilities: { publishable: { status: 'ACTIVE' } } },
+      }
+    );
+    const upserted = up.metaobjectUpsert.metaobject;
+    const metaobjectId = upserted.id;
+    const status = upserted.capabilities?.publishable?.status;
+    if (status && status !== 'ACTIVE') {
+      throw new Error(
+        `${bundle.handle}: lander metaobject is ${status}, not ACTIVE. A draft lander is invisible to ` +
+        `Liquid, so the page would render another product's copy. Refusing to continue.`
+      );
+    }
+
+    const landerMetafields = [
+      { ownerId: product.id, namespace: 'bundle', key: 'lander',
+        type: 'metaobject_reference', value: metaobjectId },
+    ];
+    if (bundle.valueStack) {
+      landerMetafields.push({ ownerId: product.id, namespace: 'bundle', key: 'value_stack',
+        type: 'json', value: JSON.stringify(bundle.valueStack) });
+    }
+    await gql(
+      `mutation ($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) { metafields { id } userErrors { field message } } }`,
+      { metafields: landerMetafields }
+    );
+    log(`  lander metaobject ${metaobjectId.split('/').pop()} linked${bundle.valueStack ? ' + value stack' : ''}`);
+  }
+
+  const wantedTemplate = bundle.templateSuffix ?? null;
+  if ((product.templateSuffix ?? null) !== wantedTemplate) {
+    await gql(
+      `mutation ($input: ProductInput!) {
+        productUpdate(input: $input) { product { templateSuffix } userErrors { field message } } }`,
+      { input: { id: product.id, templateSuffix: wantedTemplate } }
+    );
+    log(`  template → ${wantedTemplate ?? '(default PDP)'}`);
+  }
 
   // 6 — collections
   for (const gid of bundle.collections ?? []) {
