@@ -55,3 +55,14 @@ test('buildUntappedCandidates dedupes between leaks and clusters', () => {
   const out = buildUntappedCandidates(leaks, clusters, idx, { minImpr: 100, minClusterImpr: 200 });
   assert.equal(out.length, 1);
 });
+
+test('buildUntappedCandidates is not bounded at 50 when the leak set is larger', () => {
+  const leaks = Array.from({ length: 80 }, (_, i) => ({
+    keyword: `leak query ${i}`,
+    impressions: 500 - i,
+    clicks: 0,
+    position: 40,
+  }));
+  const out = buildUntappedCandidates(leaks, [], null, { minImpr: 50 });
+  assert.equal(out.length, 80, 'every qualifying leak should reach the feed');
+});

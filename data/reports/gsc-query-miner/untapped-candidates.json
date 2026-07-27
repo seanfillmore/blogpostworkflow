@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-27T05:26:26.637Z",
+  "generated_at": "2026-07-27T12:29:56.070Z",
   "source": "gsc-query-miner",
   "candidates": [
     {
@@ -282,6 +282,474 @@
       "keyword": "all natural handcrafted lotions",
       "impressions": 168,
       "position": 52.61309523809524,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil body",
+      "impressions": 165,
+      "position": 26.69090909090909,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut face cream",
+      "impressions": 163,
+      "position": 58.95092024539877,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best aluminum-free deodorants 2025 2026",
+      "impressions": 162,
+      "position": 3.493827160493827,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "clean body lotions",
+      "impressions": 161,
+      "position": 42.90683229813665,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best all natural body cream",
+      "impressions": 160,
+      "position": 62.65625,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "cinnamon toothpaste with fluoride",
+      "impressions": 160,
+      "position": 35.36875,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil chapstick",
+      "impressions": 156,
+      "position": 22.352564102564102,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best soap to wash tattoo",
+      "impressions": 154,
+      "position": 9.597402597402597,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut cream for skin",
+      "impressions": 150,
+      "position": 32.879999999999995,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best fluoride free toothpaste 2026",
+      "impressions": 149,
+      "position": 3.7181208053691277,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil cream for skin",
+      "impressions": 149,
+      "position": 15.120805369127517,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "can you use coconut oil as toothpaste",
+      "impressions": 146,
+      "position": 4.9589041095890405,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best fluoride-free toothpaste 2025 2026 reviews",
+      "impressions": 145,
+      "position": 2.4413793103448276,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best sls-free toothpastes 2025 2026",
+      "impressions": 145,
+      "position": 2.1586206896551725,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best toothpaste without fluoride",
+      "impressions": 145,
+      "position": 20.951724137931034,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best natural toothpaste without fluoride",
+      "impressions": 143,
+      "position": 32.51748251748252,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut moisturizer cream",
+      "impressions": 142,
+      "position": 18.5,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil creams",
+      "impressions": 142,
+      "position": 12.049295774647888,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "analyze the characteristics and benefits of coconut oil soap base",
+      "impressions": 136,
+      "position": 2.8823529411764706,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best soap for tattoo healing",
+      "impressions": 134,
+      "position": 9.507462686567164,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "clean deodorant for kids",
+      "impressions": 133,
+      "position": 9.962406015037594,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut as moisturizer",
+      "impressions": 132,
+      "position": 25.03787878787879,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "clean lotions",
+      "impressions": 131,
+      "position": 10.946564885496183,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut lotion for dry skin",
+      "impressions": 131,
+      "position": 15.16793893129771,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut moisturiser",
+      "impressions": 130,
+      "position": 17.79230769230769,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil as moisturizer",
+      "impressions": 129,
+      "position": 35.70542635658915,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut moisturizing cream",
+      "impressions": 128,
+      "position": 27.609375,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut moisture cream",
+      "impressions": 127,
+      "position": 13.881889763779528,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best all natural body lotion",
+      "impressions": 126,
+      "position": 51.05555555555556,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best aluminum-free deodorants for sensitive skin 2025 2026",
+      "impressions": 124,
+      "position": 3.5080645161290325,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best body lotion paraben free",
+      "impressions": 124,
+      "position": 44.25,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best rust proof body lotion 2025",
+      "impressions": 122,
+      "position": 8.37704918032787,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best natural lotion",
+      "impressions": 121,
+      "position": 41.06611570247934,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil as a moisturizer",
+      "impressions": 120,
+      "position": 45.35,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil as moisturizer for face",
+      "impressions": 120,
+      "position": 42.75,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "are natural bar soaps better for men’s daily cleansing?",
+      "impressions": 119,
+      "position": 6.369747899159663,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil as skin moisturizer",
+      "impressions": 119,
+      "position": 33.588235294117645,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut cream moisturizer",
+      "impressions": 118,
+      "position": 22.89830508474576,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut moisturiser cream",
+      "impressions": 117,
+      "position": 16.70940170940171,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best non toxic lotion",
+      "impressions": 116,
+      "position": 32.275862068965516,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "body lotions for sensitive skin",
+      "impressions": 116,
+      "position": 49.48275862068966,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut lip balm",
+      "impressions": 116,
+      "position": 48.38793103448276,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best coconut lotion",
+      "impressions": 115,
+      "position": 15.547826086956523,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "body lotion without harmful chemicals",
+      "impressions": 115,
+      "position": 20.53913043478261,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best body lotion for sensitive skin 2025 2026",
+      "impressions": 114,
+      "position": 6.947368421052632,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best fragrance free body lotion",
+      "impressions": 114,
+      "position": 34.25438596491228,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "are natural sls-free toothpastes easy to find?",
+      "impressions": 113,
+      "position": 5.398230088495575,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "body coconut oil",
+      "impressions": 111,
+      "position": 20.99099099099099,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil face lotion",
+      "impressions": 111,
+      "position": 22.324324324324323,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "body lotions with coconut oil",
+      "impressions": 110,
+      "position": 36.08181818181818,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil facial moisturizer",
+      "impressions": 110,
+      "position": 30.563636363636363,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil as face moisturizer",
+      "impressions": 109,
+      "position": 47.11009174311926,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best aluminum-free deodorants 2026",
+      "impressions": 108,
+      "position": 5.2407407407407405,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best coconut oil toothpaste natural oral care",
+      "impressions": 108,
+      "position": 9.527777777777779,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil as facial moisturizer",
+      "impressions": 108,
+      "position": 42.25,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best deodorant for kids",
+      "impressions": 107,
+      "position": 20.682242990654206,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut moisturising cream",
+      "impressions": 107,
+      "position": 19,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "all natural body lotion",
+      "impressions": 106,
+      "position": 49.39622641509434,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "are there any natural toothpaste brands that are sls-free?",
+      "impressions": 106,
+      "position": 8.18867924528302,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "carpe deodorant",
+      "impressions": 106,
+      "position": 2.2924528301886795,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil creme",
+      "impressions": 106,
+      "position": 13.358490566037736,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil for face lotion",
+      "impressions": 106,
+      "position": 34.028301886792455,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "buy coconut oil skin",
+      "impressions": 105,
+      "position": 17.590476190476192,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut cream for face",
+      "impressions": 105,
+      "position": 46.628571428571426,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "baking soda deodorant irritation sensitive skin dermatologist",
+      "impressions": 104,
+      "position": 5.701923076923077,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best soap to clean tattoo",
+      "impressions": 104,
+      "position": 10.451923076923077,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut body lotions",
+      "impressions": 104,
+      "position": 15.10576923076923,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil cream skin",
+      "impressions": 104,
+      "position": 20.307692307692307,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "boka vs davids toothpaste",
+      "impressions": 103,
+      "position": 34.75728155339806,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil cream uses",
+      "impressions": 103,
+      "position": 42.47572815533981,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best safest body lotion 2025",
+      "impressions": 102,
+      "position": 9.450980392156863,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut oil as a face moisturiser",
+      "impressions": 102,
+      "position": 48.27450980392157,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best vegan body lotions",
+      "impressions": 101,
+      "position": 28.00990099009901,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best body cream for sensitive skin 2025 2026",
+      "impressions": 100,
+      "position": 8.18,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best fluoride-free toothpaste 2025 2026",
+      "impressions": 100,
+      "position": 2.33,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "best sls free toothpaste for sensitive teeth?",
+      "impressions": 100,
+      "position": 8.08,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "can you use coconut oil as moisturiser",
+      "impressions": 100,
+      "position": 38.59,
+      "reason": "impression_leak"
+    },
+    {
+      "keyword": "coconut cream oil skin",
+      "impressions": 100,
+      "position": 26.63,
       "reason": "impression_leak"
     }
   ]

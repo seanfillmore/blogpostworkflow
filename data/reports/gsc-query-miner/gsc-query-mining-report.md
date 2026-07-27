@@ -1,155 +1,185 @@
 # GSC Query Mining Report — Real Skin Care
-**Run date:** July 26, 2026  
+**Run date:** July 27, 2026  
 **Window:** Last 90 days  
 **Impression threshold:** 50+  
 **Total queries in GSC:** 5000  
 
 ---
-# Real Skin Care — SEO Action Plan (Last 90 Days GSC Data)
+# Real Skin Care — SEO Action Plan (Last 90 Days)
 
 ---
 
 ## Executive Summary
 
-- **Cannibalization is the #1 revenue leak.** The SLS-free toothpaste topic alone splits 11,826+ impressions across four competing blog posts, capping average position in the 6–14 range when a single consolidated page could realistically rank in the top 3. This one fix has the highest expected click upside.
-- **Two queries rank in the top 3 with zero clicks**, signaling critical title/meta mismatch. "Are coconut oil toothpastes safe for sensitive teeth?" (414 impressions, #3, 0 clicks) and "Are coconut oil toothpastes effective for everyday use?" (341 impressions, #3, 0 clicks) are almost certainly being served by a page whose title/meta description does not match the question format, causing searchers to skip the result.
-- **The lotion and coconut categories are impression deserts.** The lotion cluster generates 17,756 impressions but only 42 clicks (0.24% CTR) at an average position of 28.3. No single page is strong enough to own the space, and four collection pages are cannibalizing each other for "all natural lotion."
-- **The tattoo soap cluster is an overlooked near-miss.** Five tattoo-related queries sit in positions 8–10 with minimal clicks, and two blog posts are splitting signals for "best soap for tattoos." A single consolidated, freshened post with a strong title could move into the top 5.
-- **The "2026" cluster (11,318 impressions, 5 clicks) has near-zero CTR**, suggesting dated-year blog post URLs are ranking but losing to fresher results — a quick title/date refresh and internal linking push can recapture these impressions at almost zero cost.
+- **Cannibalization is the single biggest revenue leak.** The "sls free toothpaste" topic alone has 4 competing blog posts splitting ~11,826 impressions across fragmented URLs. Consolidating these into one authoritative page could 3–5× clicks overnight without creating a single new word of content.
+- **Two queries ranking #3 generate zero clicks**, meaning the title/meta or SERP feature is completely misaligned with what searchers expect to find. "Are coconut oil toothpastes safe for sensitive teeth?" (414 impressions, pos #3, 0 clicks) and "are coconut oil toothpastes effective for everyday use?" (341 impressions, pos #3, 0 clicks) are the most urgent title/meta fixes in the dataset.
+- **The lotion category is nearly invisible despite real demand.** "Coconut lotion" (1,111 impressions, pos #30), "coconut body lotion" (861 impressions, pos #23), and "clean body lotion" (500 impressions, pos #20) are all ranking too low to generate clicks and pointing to no clearly optimized landing page. The lotion cluster has 17,756 impressions and only 42 clicks — a 0.24% CTR.
+- **The tattoo soap opportunity is being wasted on duplicate URLs.** Four separate pages compete for "best soap for tattoos," collectively ranking around position 10–15 with minimal clicks. One consolidated, authoritative page could realistically reach top 5.
+- **The "2026" content cluster shows early traction with nearly zero payoff** (11,318 impressions, 5 clicks, avg pos #9.1). Dated blog posts are already pulling impressions, but CTR is catastrophically low — likely a title/freshness mismatch that needs immediate attention before a competitor locks in those rankings.
 
 ---
 
 ## Impression Leaks — Action Plan
 
-### Group A: Ranking Too Low to Matter (position >20, intent roughly matched)
-*Root cause: page lacks authority/content depth to rank on page 1. Clicks won't come until position breaks into top 10.*
+### Group 1: Ranking Too Low to Matter (Positions 20–50) — Need Ranking Lift
 
-| Query | Impressions | Avg Position | Action |
-|---|---|---|---|
-| coconut lotion | 1,111 | #30.3 | Redirect `/collections/organic-body-lotion` and `/collections/natural-body-lotion` into a single canonical `/collections/coconut-body-lotion` collection page; rewrite the collection description (300+ words) targeting "coconut lotion" and "coconut body lotion" as primary H1/H2 terms. Build 3 internal links to it from the homepage, the coconut oil product page, and any top-performing blog post. |
-| coconut body lotion | 861 | #23.5 | Consolidate into same canonical action above — "coconut lotion" and "coconut body lotion" share near-identical intent and should land on the same destination page. |
-| best clean body lotion | 397 | #18.2 | Create or expand a blog post at `/blogs/news/best-clean-body-lotion` that explicitly answers "what makes a body lotion clean?" with ingredient-level detail, then places Real Skin Care's lotion in a comparison table. Target "clean body lotion," "chemical free body lotion," and "body lotion without chemicals" as secondary H2 keywords in the same post. |
-| chemical free body lotion | 300 | #29.9 | Fold into the same "best clean body lotion" post above (do not create a third separate page). Add a dedicated H2: "What Makes a Body Lotion Chemical-Free?" |
-| body lotion without chemicals | 329 | #30.4 | Same action as above. |
-| cinnamon toothpaste brands | 282 | #34.8 | The page currently ranking for this is almost certainly not optimized for it. Create a dedicated H2 section on the existing cinnamon toothpaste blog/product page titled "Cinnamon Toothpaste Brands: How Ours Compares" to satisfy the comparison intent while keeping the user on-site. |
+**Queries:** `coconut lotion` (#30.3), `coconut body lotion` (#23.5), `clean body lotion` (#20.1), `best clean body lotion` (#18.2), `chemical free body lotion` (#29.9), `body lotion without chemicals` (#30.4), `best natural body lotion` (#40.4), `coconut body cream` (#24.1)
+
+**Root Cause:** No single optimized collection or pillar page is consolidating authority for the lotion category. Multiple collection URLs (`/collections/natural-body-lotion`, `/collections/organic-body-lotion`, `/collections/best-non-toxic-body-lotion`, `/collections/non-toxic-body-lotion`) are splitting signals at positions 50–75, ensuring none rank.
+
+**Action:** 301-redirect `/collections/organic-body-lotion`, `/collections/best-non-toxic-body-lotion`, and `/collections/non-toxic-body-lotion` into a single canonical page at `/collections/natural-body-lotion`. Rewrite that page's title to `Natural Coconut Body Lotion — Chemical Free & Clean | Real Skin Care`, expand its on-page copy to 300+ words covering "coconut body lotion," "clean body lotion," and "chemical free" language, and add internal links from all coconut oil blog posts.
 
 ---
 
-### Group B: Strong Position, Zero Clicks — Wrong Title/Meta (positions 3–12, CTR = 0%)
-*Root cause: the page is visible but the SERP snippet doesn't match what the searcher expects to see. This is the most urgent group.*
+### Group 2: Wrong SERP Intent — Informational Queries Landing on Product/Collection Pages
 
-| Query | Impressions | Avg Position | Action |
-|---|---|---|---|
-| are coconut oil toothpastes safe for sensitive teeth? | 414 | #3 | The current title tag for `/blogs/news/can-you-use-coconut-oil-as-toothpaste` is almost certainly statement-style ("Can You Use Coconut Oil as Toothpaste?"). Change title tag to: **"Are Coconut Oil Toothpastes Safe for Sensitive Teeth? Here's the Truth"**. Update the meta description to include the answer in the first sentence (e.g., "Yes — coconut oil toothpastes are generally safe for sensitive teeth because they contain no SLS or harsh abrasives. Here's what to know."). This directly matches question-phrased query intent. |
-| are coconut oil toothpastes effective for everyday use? | 341 | #3 | Same page, same fix. Add a second variant title using a `|` separator if the CMS allows, or—better—add a dedicated FAQ block on the page with both questions as H3s so Google can serve them as featured snippets or PAA pulls. |
-| coconut oil for armpits | 247 | #8.6 | The ranking page is likely the deodorant product page or a generic coconut oil post. Title tag should be updated to: **"Coconut Oil for Armpits: Natural Deodorant Benefits & How to Use It"**. This matches the informational intent of the query. |
-| coconut oil as toothpaste | 495 | #8.9 | Update title of `/blogs/news/can-you-use-coconut-oil-as-toothpaste` to: **"Coconut Oil as Toothpaste: Does It Actually Work? (Honest Review)"**. The meta description should include "coconut oil toothpaste" and a specific benefit claim to improve CTR. |
+**Queries:** `coconut for the skin` (#11.8), `coconut oil for face` (#20), `coconut oil for body` (#36), `coconut moisturizer for face` (#31.1), `coconut oil face moisturizer` (#29.6)
+
+**Root Cause:** These are informational/research-phase queries ("how does coconut oil help skin?"). If they're resolving to product or collection pages, searchers won't click because the page won't look like the answer to their question.
+
+**Action:** Create or designate one existing blog post as the canonical "Coconut Oil for Skin: Benefits, Uses & How to Apply" guide at `/blogs/news/coconut-oil-for-skin`. It should cover face, body, and moisturizing use cases in distinct H2 sections, naturally targeting all five queries above. Add product CTAs mid-post. Internal-link to it from every coconut product page.
 
 ---
 
-### Group C: No Dedicated Page Exists
-*Root cause: we're ranking incidentally on an irrelevant or loosely relevant page. A dedicated page would capture both impressions and clicks.*
+### Group 3: High-Position, Zero-Click — Title/Meta Mismatch (Urgent)
 
-| Query | Impressions | Avg Position | Action |
-|---|---|---|---|
-| coconut deodorant | 258 | #30.5 | Create `/collections/coconut-deodorant` or a blog post `/blogs/news/coconut-deodorant-how-it-works` that consolidates the "coconut oil deodorant," "coconut oil as deodorant," and "coconut oil for armpits" queries under one content hub. The product page should be the conversion destination; the blog post should handle informational traffic and link to it. |
-| best natural body lotion | 236 | #40.4 | No dedicated landing page exists for this commercial-investigation query. Create `/blogs/news/best-natural-body-lotion` as a listicle featuring Real Skin Care's lotion against 3–4 named competitors (real comparison builds E-E-A-T and wins featured snippets). Target "best natural body lotion," "best clean body lotion," and "best coconut lotions" together. |
-| all natural lip balm | 309 | #48.3 | At position 48, the lip balm product page is not competing. Create a supporting blog post `/blogs/news/best-all-natural-lip-balm` optimized for this informational query, with a clear CTA to the product page. This is a topic we sell — we should own it. |
+**Queries:** `are coconut oil toothpastes safe for sensitive teeth?` (#3, 414 impressions, 0 clicks), `are coconut oil toothpastes effective for everyday use?` (#3, 0 clicks), `coconut oil as toothpaste` (#8.9, 495 impressions, 0 clicks), `best coconut oil toothpaste for a natural oral care routine.` (#4.7, 275 impressions, 0 clicks)
+
+**Root Cause:** Ranking in the top 5 with zero clicks means the title tag or meta description is failing to match search intent or is being outcompeted by rich SERP features (featured snippets, People Also Ask boxes). The page at `/blogs/news/can-you-use-coconut-oil-as-toothpaste` is surfacing for question-format queries but not earning the click.
+
+**Action:** Rewrite the title tag of `/blogs/news/can-you-use-coconut-oil-as-toothpaste` to directly answer the question: `Is Coconut Oil Toothpaste Safe & Effective? | Real Skin Care`. Rewrite the meta description to lead with a direct answer: *"Yes — coconut oil toothpaste is safe for sensitive teeth and effective for daily use. Here's what the research says."* Add a structured FAQ schema block with direct answers to the two question-format queries to compete for the PAA box and featured snippet. Also add an H2 that reads "Is Coconut Oil Toothpaste Safe for Sensitive Teeth?" with a 40–60 word direct answer immediately below it.
+
+---
+
+### Group 4: No Dedicated Page Exists
+
+**Queries:** `cinnamon toothpaste` (#41.9), `cinnamon sensitive toothpaste` (#27.3), `cinnamon toothpaste for sensitive teeth` (#23.8), `cinnamon toothpaste brands` (#34.8), `cinnamon flavored toothpaste` (#39)
+
+**Root Cause:** Real Skin Care appears to sell or feature a cinnamon toothpaste, but there's no dedicated content or landing page targeting this keyword cluster. Positions in the 24–42 range with 282–500 impressions each confirm Google knows the site is relevant but has no strong target page to rank.
+
+**Action:** Create `/blogs/news/best-cinnamon-toothpaste-for-sensitive-teeth` targeting the full cluster. Structure it as a listicle/guide covering: what makes a good cinnamon toothpaste, whether cinnamon is safe for sensitive teeth (answer: yes, and explain why), and a list of top options with Real Skin Care's product featured first. Target H1: "Best Cinnamon Toothpaste for Sensitive Teeth (2026 Guide)." This single post captures all five queries simultaneously.
+
+---
+
+### Group 5: Category Pages Ranking for Wrong-Funnel Queries
+
+**Queries:** `all natural lip balm` (#48.3), `best soap for women` (#11.9), `coconut hand soap` (#25.6), `coconut deodorant` (#30.5), `coconut oil bar soap` (#20.7)
+
+**Root Cause:** These transactional queries need optimized collection or product pages, not blog content. Positions 11–48 suggest Google is ranking whatever page it can find, not a purpose-built landing page.
+
+**Action:** Audit whether dedicated collection pages exist for each of these:
+- `/collections/lip-balm` → title: `All Natural Lip Balm — Real Skin Care`
+- `/collections/bar-soap` → title: `Coconut Oil Bar Soap for Women | Real Skin Care`
+- `/collections/deodorant` → title: `Natural Coconut Deodorant — Aluminum Free | Real Skin Care`
+- `/collections/hand-soap` → title: `Coconut Hand Soap — Natural & Gentle | Real Skin Care`
+
+If collection pages exist, rewrite title tags and add 150-word descriptive copy to each. If they don't exist, create them and redirect any orphan product pages into the correct collection.
 
 ---
 
 ## Near-Miss Opportunities
 
-For each of the top 10, here is the specific lever that would move rankings from current position into the top 3.
+### 1. `sls free toothpaste list` — 5,922 impressions, pos #8.1, 55 clicks, 0.9% CTR
+
+**What's holding it back:** The page ranking here (`/blogs/news/best-toothpaste-without-sls-2025`) is competing with three other internal URLs, diluting link equity. Position #8 with 0.9% CTR suggests the title isn't signaling "list" format.
+
+**Actions to push to pos #2–3:**
+- Consolidate all SLS toothpaste content (see cannibalization section) into `/blogs/news/toothpaste-without-sls-what-to-know-best-options` which already sits at pos #4.8 for this query.
+- Rewrite the title to include the word "List": `SLS-Free Toothpaste List: 12 Best Options in 2026 | Real Skin Care`.
+- Add a numbered HTML list (not just bullet points) of SLS-free brands near the top of the post with a comparison table — this is the format that earns featured snippets for list queries.
+- Add 5 internal links pointing to the canonical URL from the redirected pages.
 
 ---
 
-### 1. "sls free toothpaste list" — 5,922 impressions, #8.1, 55 clicks
+### 2. `best sls free toothpaste` — 3,179 impressions, pos #5.9, 90 clicks, 2.8% CTR
 
-**Consolidation is the unlock.** Four pages split this query. Redirect `/blogs/news/best-toothpaste-without-sls-2025` and `/blogs/news/best-sls-free-toothpaste-2025` into `/blogs/news/toothpaste-without-sls-what-to-know-best-options` (currently at #4.8 for this variant). Then absorb `/blogs/news/sls-free-toothpaste-list-best-natural-options-2026` content into the canonical or redirect it too. Once signals consolidate into one URL, add a scannable HTML table titled "SLS-Free Toothpaste: Complete Brand List" to satisfy the "list" intent explicitly and target the featured snippet.
+**What's holding it back:** Already the best performer in the near-miss group, but pos #5.9 with 2.8% CTR means moving to #2–3 could deliver 200–300 clicks from this query alone.
 
----
-
-### 2. "best sls free toothpaste" — 3,179 impressions, #5.9, 90 clicks
-
-**Title tag + featured snippet optimization.** `/blogs/news/best-toothpaste-without-sls-2025` is the strongest page (2,825 impressions, 77 clicks). Change the title tag to: **"Best SLS-Free Toothpaste in 2026: Top Picks for Sensitive Mouths"**. Add a comparison table at the top of the post (above the fold) with a column for "SLS-Free?", "Fluoride-Free?", and "Best For" — this structure matches the featured snippet format Google serves for "best [product]" queries. Add 5+ internal links from other blog posts pointing to this URL using anchor text variants: "best SLS-free toothpaste," "toothpaste without SLS," "SLS-free toothpaste list."
-
----
-
-### 3. "real skin" — 2,149 impressions, #6.3, 80 clicks
-
-**Brand disambiguation + homepage title update.** The homepage ranks at #6.3 for this navigational/branded query. The title tag is likely something like "Real Skin Care | Natural Skincare Products." Change it to: **"Real Skin Care — Natural Skincare, Deodorant & Toothpaste"** to reinforce brand identity and include product category terms that Google uses as relevancy signals. Add structured data (Organization schema) to the homepage with `name: "Real Skin Care"` and `alternateName: "Real Skin"` to help Google understand brand equivalence.
+**Actions:**
+- After cannibalization consolidation, all link equity flows to one URL. That alone may push this into the top 3.
+- Add a "Best SLS-Free Toothpaste" comparison table near the top (product name, key benefit, fluoride Y/N, price range) — this format matches the transactional intent and can earn a featured snippet.
+- Add 3 external links to authoritative dental sources citing SLS sensitivity research to boost E-E-A-T.
+- Refresh the publish date and add a "Last Updated: [current month] 2026" tag visibly in the post.
 
 ---
 
-### 4. "coconut oil deodorant" — 1,008 impressions, #9.2, 5 clicks
+### 3. `coconut oil deodorant` — 1,008 impressions, pos #9.2, 5 clicks, 0.5% CTR
 
-**Content expansion + FAQ block.** The ranking page (likely the deodorant product page or a blog post) needs a dedicated FAQ section with H3s addressing: "Does coconut oil work as a deodorant?", "How do I use coconut oil as a deodorant?", "Is coconut oil deodorant safe for sensitive skin?" This targets PAA pulls and pushes the page toward featured snippet territory. Also update the title tag to include "coconut oil deodorant" explicitly. Then add 3 internal links from the coconut oil and deodorant product pages using exact-match anchor text "coconut oil deodorant."
+**What's holding it back:** 0.5% CTR at position #9 is well below the expected ~2% for that position, pointing to a title mismatch. The page likely answers "can you use coconut oil as deodorant" (an informational question) but this query has commercial intent.
 
----
-
-### 5. "coconut oil as deodorant" — 860 impressions, #6.5, 13 clicks
-
-**Same page as above** — do not create a separate page. "Coconut oil deodorant" and "coconut oil as deodorant" are the same intent. Ensure the page targets both variants. The meta description should include a direct answer: "Coconut oil works as a natural deodorant by neutralizing odor-causing bacteria — here's how to use it safely." High-specificity meta descriptions routinely lift CTR 1–2 percentage points from position 6.
-
----
-
-### 6. "what soap to use for tattoo" — 622 impressions, #8.1, 4 clicks
-
-**Title tag rewrite + step-by-step content.** The ranking blog post (`/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing`) needs its title changed to: **"What Soap to Use for a Tattoo: Safe Healing Guide (Artist-Recommended)"**. Searchers here want a direct answer, not a general guide. Add a "Quick Answer" box at the top of the post: "Use a fragrance-free, SLS-free bar soap like [Product Name]. Avoid antibacterial soaps with triclosan." This increases click-through by promising a fast answer and increases dwell time by delivering it.
+**Actions:**
+- Identify which URL ranks for this query (likely the coconut oil deodorant blog post). Check if it's an informational post ranking for a transactional query — if so, create or strengthen the `/collections/deodorant` page with "coconut oil deodorant" in the title and H1.
+- Add "Shop Our Coconut Oil Deodorant" CTA with a product card near the top of the blog post so even informational visitors convert.
+- Build 3 internal links from coconut oil topic posts to the deodorant collection page using anchor text "coconut oil deodorant."
 
 ---
 
-### 7. "soap for tattoos" — 517 impressions, #9.8, 1 click
+### 4. `what soap to use for tattoo` — 622 impressions, pos #8.1, 4 clicks, 0.6% CTR
 
-**Consolidate two competing posts first** (see Cannibalization section below), then push the unified post's title and first 100 words to match this exact phrasing. Position #9.8 is borderline page 1 — a single strong internal link from the homepage ("Shop our tattoo-safe bar soap →") plus consolidation should push it to #6 or better.
+**What's holding it back:** Low CTR at pos #8 suggests title isn't clearly answering the question. Searchers want a direct recommendation, not a general guide.
 
----
-
-### 8. "best toothpaste without sls" — 453 impressions, #7.4, 18 clicks
-
-**Internal linking sprint.** This query is already served by a strong page but sits at #7.4. Identify the 5 highest-traffic blog posts on the site. In each, add a contextual sentence linking to `/blogs/news/best-toothpaste-without-sls-2025` (post-consolidation) with anchor text variations: "toothpaste without SLS," "best SLS-free toothpaste," "fluoride-free SLS-free toothpaste." This is a same-day action with meaningful ranking impact within 2–4 weeks.
-
----
-
-### 9. "coconut oil soap benefits" — 426 impressions, #4.5, 4 clicks
-
-**CTR fix: title and meta rewrite.** At position #4.5 with only 4 clicks, the snippet is failing to convert impressions. Change title to: **"Coconut Oil Soap Benefits: 7 Reasons Dermatologists Recommend It"** — numbered-list titles outperform generic titles for "benefits" queries by signaling a complete, scannable answer. Update meta description to include two specific benefits in the first sentence.
+**Actions:**
+- After consolidating the tattoo soap cannibalization (see below), the surviving page title should lead with the answer: `Best Soap for Tattoos: What to Use for Safe Healing | Real Skin Care`.
+- Add a TL;DR box at the very top of the post: *"The best soap for a new tattoo is fragrance-free, sulfate-free bar soap. Here's why and what to look for."* Google often pulls this into the featured snippet, improving both ranking and CTR.
+- Add FAQ schema for "what soap should I use on a new tattoo" directly answering in 40 words.
 
 ---
 
-### 10. "glycerin free toothpaste" — 312 impressions, #6.8, 4 clicks
+### 5. `coconut oil as deodorant` — 860 impressions, pos #6.5, 13 clicks, 1.5% CTR
 
-**Add a dedicated section to the SLS-free toothpaste pillar page.** Most visitors searching "glycerin free toothpaste" are looking for the same clean-formulation toothpaste audience. Add an H2 section titled "Does Our Toothpaste Contain Glycerin?" to the canonical SLS-free toothpaste post. Update the title to include "glycerin-free" as a parenthetical: **"Best SLS-Free Toothpaste 2026 (Also Glycerin-Free & Fluoride-Free Options)"**. This satisfies the query without creating a separate page.
+**What's holding it back:** Competing with related queries across possibly multiple pages. The page serving this query needs to be clearly the most comprehensive answer.
 
----
-
-## Cannibalization Fixes
-
-### 1. "sls free toothpaste" cluster — 11,826 impressions across 4 URLs
-
-**Canonical URL:** `/blogs/news/toothpaste-without-sls-what-to-know-best-options`
-*(Rationale: currently ranks #6.5 for the cluster, holds the strongest average position across related queries, and has the most balanced impression/click ratio.)*
-
-| URL | Action |
-|---|---|
-| `/blogs/news/best-toothpaste-without-sls-2025` | Migrate best-performing content sections into the canonical, then 301 redirect to canonical |
-| `/blogs/news/best-sls-free-toothpaste-2025` | 301 redirect to canonical immediately — only 197 impressions, 1 click, position #66 |
-| `/blogs/news/best-toothpaste-without-sls-2026` | Extract any 2026-specific updates and add them to canonical as a "Updated [Month] 2026" section, then 301 redirect |
-
-**Expected outcome:** Consolidating ~11,826 impressions and link equity into one URL should push the canonical from #6.5 toward #2–4 within 4–8 weeks.
+**Actions:**
+- Expand the existing post with a dedicated section titled "How to Use Coconut Oil as Deodorant (Step-by-Step)" — this directly targets the how-to intent embedded in this query and can capture a featured snippet.
+- Add a FAQ section answering: "Does coconut oil work as deodorant?", "How long does coconut oil deodorant last?", "Is coconut oil deodorant safe for sensitive skin?" with schema markup.
+- Add internal links from the coconut oil for skin pillar post (to be created) back to this page.
 
 ---
 
-### 2. "best soap for tattoos" cluster — 1,371 impressions across 4 URLs
+### 6. `best toothpaste without sls` — 453 impressions, pos #7.4, 18 clicks, 4.0% CTR
 
-**Canonical URL:** `/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing`
-*(Rationale: highest impression volume at 800, and the cleaner, more authoritative-sounding URL slug.)*
+**What's holding it back:** CTR of 4% is actually strong, meaning ranking improvement alone will compound clicks. Currently 3 URLs compete for this query.
 
-| URL | Action |
-|---|---|
-| `/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2` | Merge unique content into canonical, then 301 redirect |
-| `/collections/best-soap-for-tattoos` | Keep as a collection/product page but add `noindex` or change canonical to the blog post; this commercial page should not compete with the informational post for the same query |
+**Actions:**
+- Cannibalization fix (see below) is the primary lever — consolidating to one URL should push this into the top 5 automatically.
+- Ensure the surviving page's title starts with "Best Toothpaste Without SLS" (exact match) — don't bury the keyword in the middle of the title.
+- Add a "Why SLS-Free?" intro section in the first 100 words of the post that Google can pull as a featured snippet definition.
+
+---
+
+### 7. `soap for tattoos` — 517 impressions, pos #9.8, 1 click, 0.2% CTR
+
+**What's holding it back:** Position #9.8 is essentially page 1 row 3 — invisible without a strong title. 0.2% CTR confirms the title/description are not compelling.
+
+**Actions:**
+- Same consolidation as "best soap for tattoos" (see cannibalization). The surviving URL should rank for this query automatically once competing pages are redirected.
+- Rewrite meta description to include social proof language: *"Used by thousands for tattoo aftercare — here's the exact soap type dermatologists and tattoo artists recommend."*
+
+---
+
+### 8. `coconut oil soap benefits` — 426 impressions, pos #4.5, 4 clicks, 0.9% CTR
+
+**What's holding it back:** Position #4.5 with 0.9% CTR is significantly underperforming (expected CTR at pos 4–5 is 8–10%). This is a clear title/meta failure or a featured snippet is suppressing clicks.
+
+**Actions:**
+- Check if a featured snippet (likely a bulleted list of benefits) is appearing above position 1 for this query. If yes, reformat the relevant section of the ranking page as a clean bulleted list of 5–7 benefits with an H2 "Benefits of Coconut Oil Soap" to try to capture the snippet.
+- Rewrite the meta description to lead with a compelling hook: *"Coconut oil soap moisturizes, fights bacteria, and is gentle on sensitive skin. Here are 7 science-backed benefits."*
+- Add a "Shop Coconut Oil Bar Soap" product card within the first scroll of the post.
+
+---
+
+### 9. `glycerin free toothpaste` — 312 impressions, pos #6.8, 4 clicks, 1.3% CTR
+
+**What's holding it back:** Likely a secondary keyword on an SLS-focused post that hasn't been intentionally optimized for glycerin-free searchers.
+
+**Actions:**
+- Add a dedicated H2 section titled "Is Real Skin Care Toothpaste Glycerin-Free?" to the primary SLS toothpaste post.
+- Add "glycerin-free" to the page's meta keywords and title tag secondary clause: `Best SLS-Free Toothpaste (Also Glycerin-Free) | Real Skin Care`.
+- Internal link from the coconut oil toothpaste product page to this post using anchor text "glycerin-free toothpaste."
+
+---
+
+### 10. `best coconut oil toothpaste for a natural oral care routine
 ---
 
 ## Raw Data

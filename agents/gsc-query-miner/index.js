@@ -82,11 +82,11 @@ const minImpr = parseInt(getArg('--min-impr') || '50', 10);
 
 // ── analysis functions ────────────────────────────────────────────────────────
 
-function findImpressionLeaks(queries) {
+function findImpressionLeaks(queries, limit = Infinity) {
   return queries
     .filter((q) => q.impressions >= minImpr && q.clicks === 0)
     .sort((a, b) => b.impressions - a.impressions)
-    .slice(0, 50);
+    .slice(0, limit);
 }
 
 function findNearMisses(queries) {
@@ -274,7 +274,8 @@ async function main() {
 
   // Run analyses
   process.stdout.write('  Analysing... ');
-  const rawLeaks = findImpressionLeaks(allQueries);
+  const rawLeaksAll = findImpressionLeaks(allQueries);          // full set — data feed
+  const rawLeaks = rawLeaksAll.slice(0, 50);                    // capped — report/prompt
   const rawNearMisses = findNearMisses(allQueries);
   const cannibalization = findCannibalization(queryPageRows);
   const rawClusters = buildTopicClusters(allQueries);
@@ -283,6 +284,7 @@ async function main() {
   // Annotate with keyword-index validation tags.
   const idx = loadIndex(ROOT);
   const leaks = tagQueries(rawLeaks, idx);
+  const leaksAll = tagQueries(rawLeaksAll, idx);
   const nearMisses = tagQueries(rawNearMisses, idx);
   const clusters = rawClusters.map((c) => ({ ...c, keywords: tagQueries(c.keywords, idx) }));
 
@@ -292,7 +294,7 @@ async function main() {
     console.log(`  Amazon-validated: ${amzLeaks} leaks, ${amzNm} near-misses`);
 
     // Write untapped candidates for the next index build to ingest.
-    const untapped = buildUntappedCandidates(leaks, clusters, idx, { minImpr });
+    const untapped = buildUntappedCandidates(leaksAll, clusters, idx, { minImpr });
     if (untapped.length > 0) {
       const untappedPath = join(REPORTS_DIR, 'untapped-candidates.json');
       writeFileSync(untappedPath, JSON.stringify({
@@ -346,7 +348,7 @@ async function main() {
 
   console.log(`\n  Report saved: ${reportPath}`);
   console.log('\n  Summary:');
-  console.log(`    Impression leaks:        ${leaks.length} queries (${leaks.reduce((s, q) => s + q.impressions, 0).toLocaleString()} impressions wasted)`);
+  console.log(`    Impression leaks:        ${leaksAll.length} queries (${leaksAll.reduce((s, q) => s + q.impressions, 0).toLocaleString()} impressions wasted)`);
   console.log(`    Near-miss opportunities: ${nearMisses.length} queries`);
   console.log(`    Cannibalization groups:  ${cannibalization.length} queries`);
   console.log(`    Topic clusters:          ${clusters.length} groups`);
