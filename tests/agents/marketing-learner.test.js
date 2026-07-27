@@ -362,4 +362,86 @@ import { renderReport } from '../../lib/marketing-learner.js';
   assert.match(md, /No tactics adopted/i, 'says so plainly when nothing was adopted');
 }
 
+import { mergeSkillContent } from '../../lib/marketing-learner.js';
+
+const EXISTING_SKILL = '---\nname: marketing-retention-flows\ndescription: Lifecycle email\n---\n\n'
+  + '## Old claim\n\n' + 'y'.repeat(800);
+
+const NEW_TACTICS = [{
+  claim: 'Send replenishment at 60% of cycle',
+  mechanism: 'Intent peaks before running out',
+  evidence: 'assertion only',
+  rscFit: { score: 8, reasoning: 'Retention is the constraint' },
+  source: { creator: 'Some Operator', title: 'Retention Playbook', videoId: 'abc12345678' },
+}];
+
+function mergeClient(payload, stop = 'end_turn') {
+  return { messages: { create: async () => ({ stop_reason: stop, content: [{ type: 'text', text: payload }] }) } };
+}
+
+// ── happy path ──────────────────────────────────────────────────────────────
+{
+  const merged = EXISTING_SKILL + '\n\n## Send replenishment at 60% of cycle\n\nBody.\n';
+  const out = await mergeSkillContent({
+    existingContent: EXISTING_SKILL,
+    tactics: NEW_TACTICS,
+    client: mergeClient(JSON.stringify({ content: merged, supersedes: null })),
+  });
+  assert.match(out.content, /Send replenishment/, 'new tactic present');
+  assert.match(out.content, /Old claim/, 'existing content retained');
+  assert.equal(out.supersedes, null);
+}
+
+// ── max_tokens must throw ───────────────────────────────────────────────────
+await assert.rejects(
+  () => mergeSkillContent({
+    existingContent: EXISTING_SKILL,
+    tactics: NEW_TACTICS,
+    client: mergeClient('{}', 'max_tokens'),
+  }),
+  /max_tokens/,
+  'truncated merge throws rather than writing a mangled skill'
+);
+
+// ── guard fires on unexplained shrink ───────────────────────────────────────
+await assert.rejects(
+  () => mergeSkillContent({
+    existingContent: EXISTING_SKILL,
+    tactics: NEW_TACTICS,
+    client: mergeClient(JSON.stringify({
+      content: '---\nname: marketing-retention-flows\ndescription: Lifecycle email\n---\n\ntiny',
+      supersedes: null,
+    })),
+  }),
+  /shrink/,
+  'gutting a skill without a reason throws'
+);
+
+// ── explained shrink is allowed through the guard ───────────────────────────
+{
+  const out = await mergeSkillContent({
+    existingContent: EXISTING_SKILL,
+    tactics: NEW_TACTICS,
+    client: mergeClient(JSON.stringify({
+      content: '---\nname: marketing-retention-flows\ndescription: Lifecycle email\n---\n\ntiny',
+      supersedes: 'Removed the 2019 bidding section; that auction no longer exists.',
+    })),
+  });
+  assert.match(out.supersedes, /2019 bidding/, 'reason is carried out for the report');
+}
+
+// ── rename attempt is blocked by the guard ──────────────────────────────────
+await assert.rejects(
+  () => mergeSkillContent({
+    existingContent: EXISTING_SKILL,
+    tactics: NEW_TACTICS,
+    client: mergeClient(JSON.stringify({
+      content: '---\nname: marketing-renamed\ndescription: Lifecycle email\n---\n\n' + 'y'.repeat(900),
+      supersedes: null,
+    })),
+  }),
+  /name changed/,
+  'the merge cannot rename the skill'
+);
+
 console.log('✓ marketing-learner date + constraint tests pass');
