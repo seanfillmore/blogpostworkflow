@@ -144,8 +144,13 @@ earn approximately no organic search traffic. If it is reviewed on rankings in t
 will look like a failure while doing exactly its job. Its measure is AOV and bundle
 attach-rate, not impressions.
 
-Exclude `99-coconut-reset-digital` — it is a digital product and does not belong in a physical
-sets page.
+~~Exclude `99-coconut-reset-digital` — it is a digital product.~~ **Corrected 2026-07-27 during
+implementation: it is NOT digital.** The product data shows `weight=35`, `requires_shipping=true`,
+`price=99.00` — it is the "$99 Reset", one of the store's five live bundles. The `-digital`
+suffix is a leftover from how its landing page was built. The original instruction came from
+reading a handle instead of the data, and acting on it would have hidden a $99 product from its
+own category page. All 10 bundle-tagged products belong in the collection; `tag equals bundle`
+needs no exclusion rule.
 
 ## Workstream D — `all-products`
 
@@ -430,3 +435,6 @@ Already wired, no new instrumentation:
   from the `menus` GraphQL query, never from page source.**
 - **2026-07-27:** `write_online_store_navigation` granted by Sean and verified; menu edits are
   automatable via `menuUpdate`, superseding the earlier "manual admin work required" constraint.
+- **2026-07-27, corrected during implementation:** the instruction to exclude
+  `99-coconut-reset-digital` from `sets-and-bundles` was wrong — the product is physical and is
+  one of the five live bundles. See Workstream C.
