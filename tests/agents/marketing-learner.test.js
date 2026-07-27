@@ -533,4 +533,117 @@ await assert.rejects(
   'the merge cannot rename the skill'
 );
 
+import { falsifyTactic, extractFalsifiedClaims } from '../../lib/marketing-learner.js';
+
+const LIVE_SKILL = [
+  '---',
+  'name: marketing-conversion-copy-angles',
+  'description: Use when writing product page copy',
+  '---',
+  '',
+  '# Conversion Copy Angles',
+  '',
+  '## Use taboo or negative framing to stop the scroll',
+  '',
+  '**Why it works:** Pattern interrupt.',
+  '',
+  '*Source: Dara Denney — "Static Ads" (5C5VhqW9HCc)*',
+  '',
+  '## Lead with a hard number',
+  '',
+  '**Why it works:** Specifics are falsifiable.',
+  '',
+  '*Source: Dara Denney — "Static Ads" (5C5VhqW9HCc)*',
+  '',
+].join('\n');
+
+// ── extractFalsifiedClaims ──────────────────────────────────────────────────
+assert.deepEqual(extractFalsifiedClaims(LIVE_SKILL), [], 'no Falsified section returns empty');
+assert.deepEqual(
+  extractFalsifiedClaims(LIVE_SKILL + '\n## Falsified\n\n### Dead one\n**Falsified 2026-08-14:** nope\n'),
+  ['Dead one'],
+  'reads ### headings under the Falsified section'
+);
+assert.deepEqual(
+  extractFalsifiedClaims('## Falsified\n\n### A\n\n### B\n'),
+  ['A', 'B'],
+  'reads several'
+);
+
+// ── falsifyTactic: happy path ───────────────────────────────────────────────
+{
+  const out = falsifyTactic(LIVE_SKILL, {
+    claim: 'taboo',
+    reason: 'CTR 0.4% vs 1.1% control',
+    today: '2026-08-14',
+  });
+
+  assert.match(out, /## Falsified/, 'creates the Falsified section');
+  assert.match(out, /### Use taboo or negative framing to stop the scroll/, 'demotes the heading to ###');
+  assert.match(out, /\*\*Falsified 2026-08-14:\*\* CTR 0\.4% vs 1\.1% control/, 'stamps date and reason');
+  assert.match(out, /Pattern interrupt/, 'preserves the body');
+  assert.match(out, /5C5VhqW9HCc/, 'preserves provenance');
+
+  // The surviving tactic is untouched and still live.
+  assert.match(out, /^## Lead with a hard number$/m, 'other tactic stays a live ## heading');
+  assert.ok(!/^## Use taboo/m.test(out), 'falsified tactic is no longer a live ## heading');
+
+  // Frontmatter survives and the file still round-trips.
+  const fm = parseFrontmatter(out);
+  assert.equal(fm.name, 'marketing-conversion-copy-angles');
+  assert.deepEqual(extractFalsifiedClaims(out), ['Use taboo or negative framing to stop the scroll']);
+}
+
+// ── falsifyTactic: appends to an existing Falsified section ─────────────────
+{
+  const once = falsifyTactic(LIVE_SKILL, { claim: 'taboo', reason: 'r1', today: '2026-08-14' });
+  const twice = falsifyTactic(once, { claim: 'hard number', reason: 'r2', today: '2026-08-20' });
+  assert.deepEqual(extractFalsifiedClaims(twice).sort(), [
+    'Lead with a hard number',
+    'Use taboo or negative framing to stop the scroll',
+  ], 'both entries present');
+  assert.equal((twice.match(/## Falsified/g) || []).length, 1, 'only ONE Falsified section');
+}
+
+// ── falsifyTactic: refuses ambiguity ────────────────────────────────────────
+assert.throws(
+  () => falsifyTactic(LIVE_SKILL, { claim: 'nonexistent', reason: 'r', today: '2026-08-14' }),
+  /No live tactic matching "nonexistent"/,
+  'zero matches throws and lists candidates'
+);
+assert.throws(
+  () => falsifyTactic(LIVE_SKILL, { claim: 'nonexistent', reason: 'r', today: '2026-08-14' }),
+  /Lead with a hard number/,
+  'the zero-match error names the available claims'
+);
+assert.throws(
+  () => falsifyTactic(LIVE_SKILL, { claim: 'e', reason: 'r', today: '2026-08-14' }),
+  /matches 2 live tactics/,
+  'multiple matches throws'
+);
+
+// ── falsifyTactic: already falsified ────────────────────────────────────────
+{
+  const once = falsifyTactic(LIVE_SKILL, { claim: 'taboo', reason: 'r1', today: '2026-08-14' });
+  assert.throws(
+    () => falsifyTactic(once, { claim: 'taboo', reason: 'r2', today: '2026-08-20' }),
+    /already falsified/,
+    'refuses to falsify twice'
+  );
+}
+
+// ── falsifyTactic: reason is mandatory ──────────────────────────────────────
+for (const bad of [undefined, '', '   ']) {
+  assert.throws(
+    () => falsifyTactic(LIVE_SKILL, { claim: 'taboo', reason: bad, today: '2026-08-14' }),
+    /reason is required/,
+    `reason ${JSON.stringify(bad)} rejected`
+  );
+}
+assert.throws(
+  () => falsifyTactic(LIVE_SKILL, { claim: '  ', reason: 'r', today: '2026-08-14' }),
+  /claim is required/,
+  'blank claim rejected'
+);
+
 console.log('✓ marketing-learner date + constraint tests pass');
