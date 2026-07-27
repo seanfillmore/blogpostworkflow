@@ -10,7 +10,7 @@ import { parseSqpReport, mergeSqpReports } from '../../lib/keyword-index/amazon-
 import { parseBaReportStream } from '../../lib/keyword-index/amazon-ba.js';
 import { mergeSources } from '../../lib/keyword-index/merge.js';
 import { rollUpCompetitorsByCluster } from '../../lib/keyword-index/competitors.js';
-import { normalize } from '../../lib/keyword-index/normalize.js';
+import { buildUntappedMap } from '../../lib/keyword-index/dump-readers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures', 'keyword-index');
@@ -123,16 +123,9 @@ test('integration: full build from fixtures produces well-formed outputs', async
   assert.ok(clusterCompetitors.deodorant.total_purchases > 0, 'deodorant cluster has total_purchases > 0');
 });
 
-// The builder converts the miner's raw query strings into normalized Map keys.
-// This is the step that silently no-ops if normalization is skipped.
-function buildUntappedMap(candidates) {
-  const m = new Map();
-  for (const c of candidates || []) {
-    const key = normalize(c.keyword);
-    if (key) m.set(key, { impressions: c.impressions, position: c.position, reason: c.reason });
-  }
-  return m;
-}
+// buildUntappedMap is imported from lib/keyword-index/dump-readers.js — the
+// same function Stage 2b calls in the builder — so these tests guard the
+// shipped normalization behavior, not a hand-copied duplicate of it.
 
 test('untapped candidates are normalized before use as merge keys', () => {
   // Raw GSC text with trailing punctuation and mixed case — normalize() strips both.

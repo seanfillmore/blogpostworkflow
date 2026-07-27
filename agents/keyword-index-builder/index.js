@@ -21,11 +21,10 @@ import { aggregateGscWindow } from '../../lib/keyword-index/gsc-aggregator.js';
 import { aggregateGa4Window } from '../../lib/keyword-index/ga4-aggregator.js';
 import { parseBaReportStream } from '../../lib/keyword-index/amazon-ba.js';
 import { findLatestListingsDump, listRscAsinsFromDump } from '../../lib/keyword-index/rsc-asins.js';
-import { findLatestSqpDump, findLatestBaDump, parseSqpDump, readUntappedCandidates } from '../../lib/keyword-index/dump-readers.js';
+import { findLatestSqpDump, findLatestBaDump, parseSqpDump, readUntappedCandidates, buildUntappedMap } from '../../lib/keyword-index/dump-readers.js';
 import { mergeSources, loadClustersFromPriorIndex } from '../../lib/keyword-index/merge.js';
 import { rollUpCompetitorsByCluster } from '../../lib/keyword-index/competitors.js';
 import { enrichWithMarketData } from '../../lib/keyword-index/dataforseo-enricher.js';
-import { normalize } from '../../lib/keyword-index/normalize.js';
 
 import { notify } from '../../lib/notify.js';
 
@@ -170,11 +169,7 @@ async function main() {
   // only path by which they reach the index. Optional input: a missing, stale,
   // or malformed file degrades to zero candidates and never fails the build.
   const untappedFeed = readUntappedCandidates(ROOT);
-  const untapped = new Map();
-  for (const c of untappedFeed.candidates) {
-    const key = normalize(c.keyword);
-    if (key) untapped.set(key, { impressions: c.impressions, position: c.position, reason: c.reason });
-  }
+  const untapped = buildUntappedMap(untappedFeed.candidates);
   if (untappedFeed.status === 'ok') {
     console.log(`  Untapped: ${untapped.size} candidates (feed ${untappedFeed.ageDays}d old)`);
   } else {
@@ -236,6 +231,7 @@ async function main() {
     `- Total keywords: ${output.total_keywords}`,
     `- Amazon-validated: ${bySource.amazon}`,
     `- GSC+GA4-validated: ${bySource.gsc_ga4}`,
+    `- GSC-untapped (impressions, zero clicks): ${bySource.gsc_untapped}`,
     `- Clusters: ${output.cluster_count}`,
   ];
   const degraded = !stageReport.amazon?.ok;
@@ -255,7 +251,7 @@ async function main() {
   const notifyStatus = degraded ? 'error' : 'info';
   await notify({
     subject: degraded ? 'Keyword Index Builder ran (degraded)' : 'Keyword Index Builder ran',
-    body: `Built keyword-index with ${output.total_keywords} keywords (${bySource.amazon} amazon, ${bySource.gsc_ga4} gsc_ga4). See ${reportPath}.`,
+    body: `Built keyword-index with ${output.total_keywords} keywords (${bySource.amazon} amazon, ${bySource.gsc_ga4} gsc_ga4, ${bySource.gsc_untapped} gsc_untapped). See ${reportPath}.`,
     status: notifyStatus,
   });
   console.log(`\n  Wrote ${INDEX_PATH}, ${COMPETITORS_PATH}, ${reportPath}`);
