@@ -123,7 +123,7 @@ export function buildMarkdown(rows, { packageCosts, average, live }) {
   md += `> Regenerate with \`node scripts/bundle-economics.mjs --write\`. Do not hand-edit the tables.\n\n`;
 
   md += `## How to read this\n\n`;
-  md += `CAC target is **$${CAC}**. Under the CFA rule, 30-day gross profit ≥ CAC breaks even; ≥ 2× CAC (**$${CAC * 2}**) is the threshold for scaling paid spend. Contribution = price − COGS − freight − payment fees (2.9% + $0.30).\n\n`;
+  md += `CAC target is **$${CAC}**. Under the CFA rule, 30-day gross profit ≥ CAC breaks even; ≥ 2× CAC (**$${CAC * 2}**) is the threshold for scaling paid spend. Contribution = price − COGS − freight − packaging − payment fees (2.9% + $0.30).\n\n`;
 
   md += `## Bundles\n\n`;
   md += `| Bundle | Status | MSRP | Price | Disc | COGS | lb | Units | Freight | **Contribution** | Verdict |\n`;

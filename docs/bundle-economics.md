@@ -6,7 +6,7 @@ Generated 2026-07-26 by `scripts/bundle-economics.mjs`. Freight is **measured**,
 
 ## How to read this
 
-CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks even; ≥ 2× CAC (**$50**) is the threshold for scaling paid spend. Contribution = price − COGS − freight − payment fees (2.9% + $0.30).
+CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks even; ≥ 2× CAC (**$50**) is the threshold for scaling paid spend. Contribution = price − COGS − freight − packaging − payment fees (2.9% + $0.30).
 
 ## Bundles
 
