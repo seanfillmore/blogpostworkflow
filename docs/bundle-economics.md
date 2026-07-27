@@ -20,6 +20,8 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 | The Clean Swap | live | $69.00 | $59.00 | 14% | $15.10 | 1.28 | 4 | $7.83 | **$34.06** | 🟡 breakeven (≥1× CAC) |
 | Hand Soap Set — 3 pumps + body lotion | live | $69.00 | $59.00 | 14% | $17.70 | 2.50 | 4 | $7.83 | **$31.46** | 🟡 breakeven (≥1× CAC) |
 | Sensitive Skin Moisturizing Set | live | $58.00 | $46.80 | 19% | $10.10 | 0.94 | 2 | $6.68 | **$28.36** | 🟡 breakeven (≥1× CAC) |
+| Coconut Deodorant — 4-Pack | live | $60.00 | $53.00 | 12% | $15.36 | 0.63 | 4 | $7.83 | **$27.97** | 🟡 breakeven (≥1× CAC) |
+| Coconut Oil Toothpaste — 4-Pack | live | $52.00 | $46.00 | 12% | $13.40 | 1.00 | 4 | $7.83 | **$23.14** | 🟠 thin (<1× CAC) |
 | Two-Step Dry Skin Starter Set | retired | $58.00 | $39.99 | 31% | $10.10 | 0.94 | 2 | $6.68 | **$21.75** | 🟠 thin (<1× CAC) |
 | Coconut Bar Soap — 4-Pack | live | $44.00 | $39.00 | 11% | $11.96 | 1.00 | 4 | $7.83 | **$17.78** | 🟠 thin (<1× CAC) |
 | Hand Soap Set — 4 pumps | live | $52.00 | $44.00 | 15% | $17.04 | 2.50 | 4 | $7.83 | **$17.55** | 🟠 thin (<1× CAC) |
@@ -37,6 +39,8 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 - **The Clean Swap** (live, $34.06) — Entry version of the 90-day. Turns three weak singles into margin.
 - **Hand Soap Set — 3 pumps + body lotion** (live, $31.46) — The pump ladder: a scent for every sink at full MSRP, or step up to a high-margin lotion so the box clears CAC — 3 pumps for a lighter box, 4 for the full set.
 - **Sensitive Skin Moisturizing Set** (live, $28.36) — Current hero. Clears the $45 free-shipping threshold on its own.
+- **Coconut Deodorant — 4-Pack** (live, $27.97) — Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription.
+- **Coconut Oil Toothpaste — 4-Pack** (live, $23.14) — Subscription vehicle for toothpaste, mirroring the bar soap 4-pack. Replaces the single-tube subscription.
 - **Two-Step Dry Skin Starter Set** (retired, $21.75) — Deleted 2026-07-26. Same contents as the hero at a deeper discount.
 - **Coconut Bar Soap — 4-Pack** (live, $17.78) — Subscription vehicle, every 4 months. Replaces the single-bar sub, which still loses money per shipment. Does not clear the $45 free-shipping threshold — never lead its copy with shipping.
 - **Hand Soap Set — 4 pumps** (live, $17.55) — The pump ladder: a scent for every sink at full MSRP, or step up to a high-margin lotion so the box clears CAC — 3 pumps for a lighter box, 4 for the full set.
