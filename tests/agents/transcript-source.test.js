@@ -192,4 +192,17 @@ await assert.rejects(
   assert.ok(!String(caught.message).includes('SUPERSECRET'), 'api key absent from error message');
 }
 
+// ── 429 persists through all retries: RATE_LIMIT classification ──────────────
+{
+  const impl = makeFetch([
+    { status: 429, body: { detail: 'slow down' } },
+    { status: 429, body: { detail: 'still slow' } },
+    { status: 429, body: { detail: 'still slow' } },
+  ]);
+  const caught = await fetchTranscript('dQw4w9WgXcQ', { apiKey: 'k', fetchImpl: impl, backoffMs: 1 }).catch((e) => e);
+  assert.equal(caught.code, 'RATE_LIMIT', 'exhausted retries on 429 produces RATE_LIMIT code');
+  assert.equal(caught.status, 429, 'status is preserved');
+  assert.equal(impl.calls.length, 3, 'exhausted all 3 attempts');
+}
+
 console.log('✓ transcript-source pure-helper tests pass');
