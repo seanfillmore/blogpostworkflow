@@ -1,6 +1,6 @@
 # Bundle economics — Real Skin Care
 
-Generated 2026-07-26 by `scripts/bundle-economics.mjs`. Freight is **measured**, pulled live from Shopify's `shipping_labels` dataset.
+Generated 2026-07-27 by `scripts/bundle-economics.mjs`. Freight is **measured**, pulled live from Shopify's `shipping_labels` dataset.
 
 > Regenerate with `node scripts/bundle-economics.mjs --write`. Do not hand-edit the tables.
 
