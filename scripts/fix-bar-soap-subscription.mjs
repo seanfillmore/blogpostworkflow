@@ -47,7 +47,7 @@
  */
 
 import { shopifyGraphQL } from '../lib/shopify.js';
-import { createPlan, listSellingPlans } from '../lib/recurpay.js';
+import { createPlan, listSellingPlans, getPlanProducts } from '../lib/recurpay.js';
 
 const APPLY = process.argv.includes('--apply');
 const HANDLE = 'coconut-bar-soap-4-pack';
@@ -111,7 +111,23 @@ const recurpayPlans = await listSellingPlans();
 const fourMonth = recurpayPlans.filter((sp) => sp.interval === 'month' && sp.frequency === 4);
 log(`  Recurpay 4-month plans: ${fourMonth.length ? fourMonth.map((p) => p.planId).join(', ') : 'NONE — this is the gap'}`);
 
-if (!orphaned.length && fourMonth.length) {
+// A 4-month plan existing is necessary but not sufficient. Recurpay's API
+// cannot write product associations (getPlanProducts in lib/recurpay.js is
+// READ-ONLY — see its docstring), so attaching this product to the plan is
+// a manual step in the Recurpay admin UI (step [3] below). The plan can sit
+// there for weeks with the product never actually attached, and "a 4-month
+// plan exists" would silently read as "repaired" while the product is still
+// a one-time purchase only. Check attachment directly.
+const numericProductId = product.id.split('/').pop();
+let attachedPlanIds = [];
+for (const plan of fourMonth) {
+  const attachedProducts = await getPlanProducts(plan.planId);
+  const isAttached = (attachedProducts ?? []).some((ap) => String(ap.id) === numericProductId);
+  if (isAttached) attachedPlanIds.push(plan.planId);
+}
+log(`  attached to a Recurpay 4-month plan: ${attachedPlanIds.length ? `yes (${attachedPlanIds.join(', ')})` : 'NO — manual attach in the Recurpay admin UI is still outstanding'}`);
+
+if (!orphaned.length && fourMonth.length && attachedPlanIds.length) {
   log('\nAlready repaired. Nothing to do.');
   process.exit(0);
 }
@@ -124,7 +140,16 @@ if (state.contracts.nodes.length) {
 }
 
 if (!APPLY) {
-  log('\nDry run. Re-run with --apply to repair.');
+  if (!orphaned.length && fourMonth.length && !attachedPlanIds.length) {
+    // Nothing left for --apply to detach or create — the only remaining
+    // step is the manual attach, and it is still outstanding. Say so here
+    // too, not just in the post-apply epilogue below, so a dry run doesn't
+    // read as "clean" when a real step is still open.
+    log('\nDry run — nothing to detach or create, but the product is still NOT attached to the Recurpay plan.');
+    log('  [3] MANUAL — attach it in the Recurpay admin UI, then re-run to confirm.');
+  } else {
+    log('\nDry run. Re-run with --apply to repair.');
+  }
   process.exit(0);
 }
 

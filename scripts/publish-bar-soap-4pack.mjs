@@ -1,4 +1,23 @@
 /**
+ * SUPERSEDED — kept only as the historical record of how the 4-pack was first
+ * published, not as a script to run again.
+ *
+ * The roster path now owns this product: `config/bundles.json` (handle
+ * "coconut-bar-soap-4-pack") is the source of truth, and
+ * `scripts/build-bundle.mjs coconut-bar-soap-4-pack [--apply]` is what
+ * reconciles it. Do not run this script to republish or re-fix the 4-pack —
+ * use build-bundle.mjs instead.
+ *
+ * Its channel list below (Buy Button, Pinterest, TikTok, in addition to
+ * Online Store and Shop) predates the discovery that only Online Store and
+ * Shop actually accept componentized bundles — every other channel either
+ * refuses them outright or silently carries phantom sellable inventory.
+ * build-bundle.mjs's PUBLICATIONS list deliberately only contains Online
+ * Store and Shop; do not copy this script's longer list into it.
+ *
+ * Not deleted because it is still the record of how the 4-pack went live —
+ * see WHY THIS EXISTS below.
+ *
  * Finish and publish the Coconut Bar Soap — 4-Pack.
  *
  *   node scripts/publish-bar-soap-4pack.mjs [--apply]

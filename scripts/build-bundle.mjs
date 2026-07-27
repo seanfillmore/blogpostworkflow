@@ -75,6 +75,28 @@ const optionKey = opts => Object.entries(opts).sort(([a], [b]) => a.localeCompar
 
 async function buildBundle(bundle, catalogue) {
   log(`\n=== ${bundle.handle}`);
+
+  // Guard: "bundle-landing" is a template SHARED across every bundle, driven
+  // entirely by a per-product `bundle_lander` metaobject. This script never
+  // writes that metaobject — it only ever wrote `bundle.components`,
+  // `component_qty` and `contents`. Setting the template suffix without the
+  // lander content existing first does not fall back to "no landing page";
+  // it falls back to whatever OTHER product's lander metaobject Shopify
+  // happens to resolve, rendering that product's H1, CTA and price. That is
+  // exactly how clean-swap, gift-box and hand-soap-set went live all showing
+  // the 90-Day Reset's copy and "$0 value, $0 today — you save $0". Refuse to
+  // set this template until the roster entry proves the lander exists.
+  if (bundle.templateSuffix === 'bundle-landing' &&
+      (!bundle.lander || typeof bundle.lander !== 'object' || Array.isArray(bundle.lander) ||
+        Object.keys(bundle.lander).length === 0)) {
+    throw new Error(
+      `${bundle.handle}: refusing to set templateSuffix "bundle-landing" — this roster entry has no ` +
+      `non-empty "lander" object. A shared template with no per-product content renders another ` +
+      `product's copy. Build the bundle_lander metaobject for "${bundle.handle}" first, then add its ` +
+      `reference under this bundle's "lander" key in config/bundles.json.`
+    );
+  }
+
   let product = await getProduct(bundle.handle);
 
   // 1 — product shell
@@ -127,7 +149,7 @@ async function buildBundle(bundle, catalogue) {
 
   const missing = bundle.variants.filter(v => !existing.has(optionKey(v.options)));
   if (missing.length) {
-    log(`  creating ${missing.length} variants`);
+    log(`  ${APPLY ? 'creating' : 'would create'} ${missing.length} variant(s): ${missing.map(v => Object.values(v.options).join(' / ')).join(', ')}`);
     if (APPLY) {
       await gql(
         `mutation ($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
@@ -146,8 +168,6 @@ async function buildBundle(bundle, catalogue) {
     }
   }
 
-  if (!APPLY) return log('  (dry run — stopping before componentization)');
-
   const live = new Map(product.variants.nodes.map(v =>
     [optionKey(Object.fromEntries(v.selectedOptions.map(o => [o.name, o.value]))), v]));
 
@@ -156,11 +176,19 @@ async function buildBundle(bundle, catalogue) {
   // option key — not surface later as a bare "Cannot read properties of
   // undefined" after componentization has already overwritten the price
   // with the component sum, leaving the product live at the wrong price.
-  const resolved = bundle.variants.map(v => {
+  // In a dry run against an EXISTING product, a roster variant with no live
+  // counterpart is one already reported above as "would create" — skip it
+  // here instead of throwing, since there is nothing live yet to diff
+  // components or price against.
+  const resolved = [];
+  for (const v of bundle.variants) {
     const target = live.get(optionKey(v.options));
-    if (!target) throw new Error(`${bundle.handle}: no live variant matches roster option key "${optionKey(v.options)}"`);
-    return { v, target };
-  });
+    if (!target) {
+      if (!APPLY) continue;
+      throw new Error(`${bundle.handle}: no live variant matches roster option key "${optionKey(v.options)}"`);
+    }
+    resolved.push({ v, target });
+  }
 
   // 3 — components
   //
@@ -180,7 +208,7 @@ async function buildBundle(bundle, catalogue) {
   // assume the bundle is either fully new or fully built, because a partial
   // failure (like this one) can leave a single variant with some components
   // attached and others missing. Do not collapse this back to one verb.
-  const relationships = resolved.map(({ v, target }) => {
+  const componentDiffs = resolved.map(({ v, target }) => {
     const present = new Map(
       target.productVariantComponents.nodes.map(n => [n.productVariant.id, n.quantity])
     );
@@ -202,44 +230,107 @@ async function buildBundle(bundle, catalogue) {
       .map(([id, quantity]) => ({ id, quantity }));
     const toRemove = [...present.keys()].filter(id => !desired.has(id));
 
-    const input = { parentProductVariantId: target.id };
-    if (toCreate.length) input.productVariantRelationshipsToCreate = toCreate;
-    if (toUpdate.length) input.productVariantRelationshipsToUpdate = toUpdate;
-    if (toRemove.length) input.productVariantRelationshipsToRemove = toRemove;
-    return input;
-  }).filter(input =>
-    input.productVariantRelationshipsToCreate ||
-    input.productVariantRelationshipsToUpdate ||
-    input.productVariantRelationshipsToRemove
-  );
+    return { v, target, toCreate, toUpdate, toRemove };
+  });
 
-  if (relationships.length) {
-    await gql(
-      `mutation ($input: [ProductVariantRelationshipUpdateInput!]!) {
-        productVariantRelationshipBulkUpdate(input: $input) {
-          parentProductVariants { id } userErrors { field message } } }`,
-      { input: relationships }
-    );
-    log(`  componentized ${relationships.length} variant(s) (create/update/remove as needed)`);
-  } else {
-    log('  components already match the roster — nothing to do');
+  const relationships = componentDiffs
+    .filter(d => d.toCreate.length || d.toUpdate.length || d.toRemove.length)
+    .map(d => {
+      const input = { parentProductVariantId: d.target.id };
+      if (d.toCreate.length) input.productVariantRelationshipsToCreate = d.toCreate;
+      if (d.toUpdate.length) input.productVariantRelationshipsToUpdate = d.toUpdate;
+      if (d.toRemove.length) input.productVariantRelationshipsToRemove = d.toRemove;
+      return input;
+    });
+
+  // Price diffs, needed both for the dry-run preview below and for the real
+  // re-assertion in step 4.
+  const priceChanges = resolved.filter(({ v, target }) => Number(target.price) !== v.price);
+
+  // Channels not yet published, needed both for the dry-run preview and step 7.
+  const alreadyPublished = new Set((product.resourcePublications?.nodes ?? [])
+    .filter(rp => rp.isPublished)
+    .map(rp => rp.publication.name));
+  const channelsToPublish = isLive ? PUBLICATIONS.filter(([, name]) => !alreadyPublished.has(name)) : [];
+
+  if (!APPLY) {
+    log('  --- dry run preview (nothing written) ---');
+    if (componentDiffs.some(d => d.toCreate.length || d.toUpdate.length || d.toRemove.length)) {
+      for (const d of componentDiffs) {
+        if (!d.toCreate.length && !d.toUpdate.length && !d.toRemove.length) continue;
+        const label = Object.values(d.v.options).join(' / ');
+        const parts = [];
+        if (d.toCreate.length) parts.push(`+${d.toCreate.length} create`);
+        if (d.toUpdate.length) parts.push(`~${d.toUpdate.length} update`);
+        if (d.toRemove.length) parts.push(`-${d.toRemove.length} remove`);
+        log(`    components, ${label}: ${parts.join(', ')}`);
+      }
+    } else {
+      log('    components already match the roster — no changes');
+    }
+    if (priceChanges.length) {
+      for (const { v, target } of priceChanges) {
+        log(`    price, ${Object.values(v.options).join(' / ')}: $${target.price} -> $${v.price}`);
+      }
+    } else {
+      log('    prices already match the roster — no changes');
+    }
+    if (channelsToPublish.length) {
+      log(`    would publish to: ${channelsToPublish.map(([, name]) => name).join(', ')}`);
+    } else if (isLive) {
+      log('    already published to Online Store and Shop');
+    }
+    log('  (dry run — nothing written)');
+    return;
   }
 
-  // 4 — RE-ASSERT PRICES. Componentizing just overwrote them with the component sum.
-  await gql(
-    `mutation ($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants { id price } userErrors { field message } } }`,
-    {
-      productId: product.id,
-      variants: resolved.map(({ v, target }) => ({
-        id: target.id,
-        price: String(v.price),
-        ...(v.compareAtPrice ? { compareAtPrice: String(v.compareAtPrice) } : {}),
-      })),
+  // 3 & 4 — components, then RE-ASSERT PRICES. Componentizing overwrites
+  // variant prices with the component sum as a Shopify side-effect, and the
+  // product has been ACTIVE and published since step 1. These are two
+  // separate mutations with no shared transaction: if EITHER throws, the
+  // product is left in an unknown state that may already be componentized
+  // (and therefore mispriced at the component sum) while still live and for
+  // sale. Assume the worse case, draft the product immediately so nothing
+  // can be purchased at the wrong price, and rethrow loudly rather than
+  // swallow the error.
+  try {
+    if (relationships.length) {
+      await gql(
+        `mutation ($input: [ProductVariantRelationshipUpdateInput!]!) {
+          productVariantRelationshipBulkUpdate(input: $input) {
+            parentProductVariants { id } userErrors { field message } } }`,
+        { input: relationships }
+      );
+      log(`  componentized ${relationships.length} variant(s) (create/update/remove as needed)`);
+    } else {
+      log('  components already match the roster — nothing to do');
     }
-  );
-  log('  prices re-asserted after componentization');
+
+    // RE-ASSERT PRICES. Componentizing just overwrote them with the component sum.
+    await gql(
+      `mutation ($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+        productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+          productVariants { id price } userErrors { field message } } }`,
+      {
+        productId: product.id,
+        variants: resolved.map(({ v, target }) => ({
+          id: target.id,
+          price: String(v.price),
+          ...(v.compareAtPrice ? { compareAtPrice: String(v.compareAtPrice) } : {}),
+        })),
+      }
+    );
+    log('  prices re-asserted after componentization');
+  } catch (err) {
+    await gql(
+      `mutation ($input: ProductInput!) { productUpdate(input: $input) { product { id } userErrors { field message } } }`,
+      { input: { id: product.id, status: 'DRAFT' } }
+    );
+    throw new Error(
+      `${bundle.handle}: componentization/price re-assertion failed — product set to DRAFT to prevent ` +
+      `selling at the component sum. Original error: ${err.message}`
+    );
+  }
 
   // 5 — metafields
   //
