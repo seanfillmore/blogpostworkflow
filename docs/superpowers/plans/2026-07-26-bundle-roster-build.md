@@ -988,11 +988,17 @@ async function buildBundle(bundle, catalogue) {
   log('  prices re-asserted after componentization');
 
   // 5 — metafields
+  //
+  // `bundle.components` / `bundle.component_qty` drive the "what's in the box"
+  // cards, which are PRODUCT-level and so can only describe one basket. For a
+  // single-basket bundle (every kit holds the same SKUs, differing only by
+  // scent) that is exact. For the Hand Soap Set the cards describe the FIRST
+  // declared configuration; the per-variant `bundle.contents` panel is what
+  // tells a buyer what their selection actually contains. Order the Hand Soap
+  // Set's variants so the intended default configuration is first.
   const componentHandles = [...new Set(bundle.variants.flatMap(v => v.components.map(c => c.product)))];
-  const qtyByHandle = componentHandles.map(h => {
-    const first = bundle.variants[0].components.filter(c => c.product === h);
-    return first.reduce((s, c) => s + c.qty, 0);
-  });
+  const qtyByHandle = componentHandles.map(h =>
+    bundle.variants[0].components.filter(c => c.product === h).reduce((s, c) => s + c.qty, 0));
 
   const metafields = [
     { ownerId: product.id, namespace: 'bundle', key: 'components', type: 'list.product_reference',
@@ -1088,7 +1094,24 @@ a componentized bundle."
 - Consumes: `loadRoster`, `SKU_BY_HANDLE` (Task 2)
 - Produces: CLI exit code `1` when any bundle drifts from the roster
 
-- [ ] **Step 1: Add the spec↔Shopify check**
+- [ ] **Step 1: Add `selectedOptions` to the existing query**
+
+The existing query fetches variant `title` only. Matching a roster variant to a live one by substring is unsafe — `"4 pumps"` is a prefix of `"4 pumps + body lotion"`, so a substring match would silently compare the wrong basket and report a false pass. Add `selectedOptions` to the variant selection in the `q` template at the top of `scripts/verify-bundle-contents.mjs`:
+
+```javascript
+      variants(first: 50) {
+        nodes {
+          title
+          selectedOptions { name value }
+          metafield(namespace: "bundle", key: "contents") { value }
+          productVariantComponents(first: 20) {
+            nodes { quantity productVariant { title product { handle title } } }
+          }
+        }
+      }
+```
+
+- [ ] **Step 2: Add the spec↔Shopify check**
 
 In `scripts/verify-bundle-contents.mjs`, after the existing per-variant checks, add:
 
@@ -1108,8 +1131,15 @@ for (const spec of roster.bundles) {
 
   for (const sv of spec.variants) {
     const wanted = Object.values(sv.options).join(' / ');
-    const lv = live.variants.nodes.find(v =>
-      Object.values(sv.options).every(val => v.title.includes(val)));
+    // Match on the exact option map, never on the title. "4 pumps" is a prefix
+    // of "4 pumps + body lotion", so a substring match compares the wrong
+    // basket and reports a false pass.
+    const lv = live.variants.nodes.find(v => {
+      const liveOpts = Object.fromEntries(v.selectedOptions.map(o => [o.name, o.value]));
+      const specKeys = Object.keys(sv.options);
+      return specKeys.length === Object.keys(liveOpts).length
+        && specKeys.every(k => liveOpts[k] === sv.options[k]);
+    });
     if (!lv) { console.log(`\n${spec.handle} / ${wanted}: variant missing in Shopify`); drift++; continue; }
 
     const liveSet = new Set(lv.productVariantComponents.nodes
