@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { validateRoster, SKU_BY_HANDLE, economicsRows } from '../../lib/bundle-roster.js';
+import { validateRoster, SKU_BY_HANDLE, economicsRows, loadRoster } from '../../lib/bundle-roster.js';
 
 const CATALOGUE = {
   'coconut-lotion': ['Pure Unscented', 'Coconut Breeze', 'Calming Lavender'],
@@ -117,4 +117,41 @@ test('packaging and status carry onto every row', () => {
   const rows = economicsRows({ ...CLEAN_SWAP, packaging: 1.0, status: 'proposed' });
   assert.equal(rows[0].packaging, 1.0);
   assert.equal(rows[0].status, 'proposed');
+});
+
+test('the real roster has all eight bundles', () => {
+  const handles = loadRoster().bundles.map(b => b.handle);
+  for (const h of ['hand-soap-set', 'clean-swap', 'gift-box', '90-day-clean-swap',
+                   'head-to-toe', '99-coconut-reset-digital', 'coconut-bar-soap-4-pack',
+                   'sensitive-skin-starter-set']) {
+    assert.ok(handles.includes(h), `roster is missing ${h}`);
+  }
+});
+
+test('the Hand Soap Set grid is complete and lotion is paired correctly', () => {
+  const b = loadRoster().bundles.find(x => x.handle === 'hand-soap-set');
+  assert.equal(b.variants.length, 15, 'three configurations by five scents');
+
+  for (const v of b.variants) {
+    const config = v.options.Configuration;
+    const pumps = v.components.filter(c => c.product === 'organic-foaming-hand-soap');
+    const total = pumps.reduce((s, c) => s + c.qty, 0);
+    assert.equal(total, config.startsWith('3 pumps') ? 3 : 4,
+      `${config} / ${v.options.Scent} must contain the right number of pumps`);
+
+    const lotion = v.components.filter(c => c.product === 'coconut-lotion');
+    if (config.includes('body lotion')) {
+      assert.equal(lotion.length, 1, `${config} must carry a lotion`);
+      const expected = v.options.Scent === 'Coconut Breeze' ? 'Coconut Breeze' : 'Pure Unscented';
+      assert.equal(lotion[0].variant, expected,
+        `${v.options.Scent} must pair with ${expected} lotion`);
+    } else {
+      assert.equal(lotion.length, 0, `${config} must not carry a lotion`);
+    }
+  }
+});
+
+test('the Gift Box carries the $1 custom box', () => {
+  const b = loadRoster().bundles.find(x => x.handle === 'gift-box');
+  assert.equal(b.packaging, 1.0);
 });
