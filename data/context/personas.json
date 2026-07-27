@@ -1,0 +1,317 @@
+{
+  "generated_at": "2026-07-27T03:19:41.845Z",
+  "corpus_ref": "corpus-2026-07-27.json",
+  "cluster": "skin",
+  "partial": false,
+  "personas": [
+    {
+      "id": "p2",
+      "name": "The Label Reader",
+      "summary": "Ingredient-obsessed buyers who flip the bottle before they look at the price. They avoid parabens, synthetic fragrance, dyes and 'complex sounding names,' talk about skin as an absorbing organ, and are actively trying to reduce their household's chemical load. They will pay more for a two-ingredient product and say so out loud.",
+      "evidence_count": 22,
+      "emotional_intensity": 7.5,
+      "angles": [
+        {
+          "id": "p2a1",
+          "label": "An ingredient list you can actually read",
+          "awareness": "solution-aware",
+          "objection_addressed": "'Every brand says clean and natural — how do I know this isn't just greenwashed filler?'",
+          "proof": "Customers cite the literal list: saponified organic extra virgin coconut oil and essential oil; coconut, jojoba, grapefruit, red palm and spring water — no alcohol, petroleum, parabens, dyes, soy or GMOs.",
+          "hook_examples": [
+            "Read the ingredients out loud. If you stumble on one, we did it wrong.",
+            "One ingredient: saponified coconut oil. That's the whole label.",
+            "'If a product has too many artificial ingredients with complex sounding names, I'm out.'"
+          ],
+          "source_quotes": [
+            "I love that you can read the ingredients and it’s all things I know. Great value and great for your skin!",
+            "First off, I'm super picky about what products I buy based on the ingredients. If a product has too many artificial ingredients with complex sounding names, I'm out.",
+            "I ordered the unscented option for this Real Skin Care bar soap, so it has just one ingredient: saponified coconut oil.",
+            "Contains NO Alcohol, Petroleum Products, Parabens, Dyes, Soy or GMOs."
+          ]
+        },
+        {
+          "id": "p2a2",
+          "label": "What goes on your skin goes in you",
+          "awareness": "unaware",
+          "objection_addressed": "'It's just soap and lotion — does it really matter what's in it?'",
+          "proof": "A massage therapist cites 125+ chemicals a day on average skin; another customer frames skin as the largest organ feeding the bloodstream.",
+          "hook_examples": [
+            "The average person puts 125+ chemicals on their skin every day. Yours could be two.",
+            "'It beats rubbing unnecessary toxic chemicals onto the largest organ of our body.'",
+            "Zero crap added. That's the entire formula philosophy."
+          ],
+          "source_quotes": [
+            "Given that the average person puts 125+ chemicals on their skin every day, this is a great option for anyone looking to \"clean up\" their health.",
+            "A little pricey, yeah, but it beats rubbing unnecessary toxic chemicals onto the largest organ of our body - our skin.",
+            "I prefer anything with minimal, natural ingredients and this lotion definitely is a home run there. Zero crap added.",
+            "This lotion is wonderful! I hate it when it takes too long for a lotion to absorb, and this one is very quick. It smells wonderful and I love that I am not putting all the harmful chemicals into my skin!"
+          ]
+        },
+        {
+          "id": "p2a3",
+          "label": "Safe enough for the kids' bath",
+          "awareness": "problem-aware",
+          "objection_addressed": "'I need one product I can use on my toddler, my seven-year-old and myself without worrying.'",
+          "proof": "Parents report using the same lotion on kids' faces and after bath time with no irritation, and cite the free-from list for the little ones.",
+          "hook_examples": [
+            "The soap her seven-year-old uses in the bath. And the one you keep by the kitchen sink.",
+            "Free of parabens, GMOs, artificial fillers, synthetic fragrances, soy and gluten — so you can stop reading labels at bath time.",
+            "I use it on my kids' faces. That's the whole review."
+          ],
+          "source_quotes": [
+            "For use with the little ones, this soap is a great choice. Mainly because it is free of parabens, GMOs, artificial fillers, synthetic fragrances, soy or gluten.",
+            "This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day. It doesn't irritate their skin further like other lotions do. I even use on their faces.",
+            "My whole family loves it, including my seven-year-old, who uses it in her bath!",
+            "I use it in the morning after the shower and at night and on my kids too after bath time. Great product and price."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p4",
+      "name": "The Greasy-Lotion Refugee",
+      "summary": "Texture-driven shoppers who have quit lotion after lotion because it left them slick, sticky, shiny or unable to get dressed. They read absorption reviews obsessively, hate waiting to put clothes on, and have often spent serious money auditioning 'clean' brands that all felt like oil slicks.",
+      "evidence_count": 25,
+      "emotional_intensity": 6,
+      "angles": [
+        {
+          "id": "p4a1",
+          "label": "It absorbs before you can put the cap back on",
+          "awareness": "problem-aware",
+          "objection_addressed": "'Natural lotions are always oily and take forever to sink in — I can't get dressed after.'",
+          "proof": "Repeated reviews describing immediate absorption, no oily residue, and use before bed or before clothes.",
+          "hook_examples": [
+            "'Dude as soon as you put it on it just ABSORBS.'",
+            "Coconut oil, without the coconut-oil slick.",
+            "Put it on. Get dressed. No waiting, no shine, no towel on the sheets."
+          ],
+          "source_quotes": [
+            "dude as soon as you put it on it just ABSORBS. My hands are in water a lot at my job and this locks moisture in better than any B & B Works or Body shop product.",
+            "Coconut Breeze leaves my skin feeling clean and moisturized without the greasy residue.",
+            "I've been searching for an organic lotion that doesn't leave me feeling greasy and I finally found it!",
+            "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized."
+          ]
+        },
+        {
+          "id": "p4a2",
+          "label": "Warm it up first — the honest texture brief",
+          "awareness": "most-aware",
+          "objection_addressed": "'Some reviews say it goes on greasy and takes minutes to absorb. Which is it?'",
+          "proof": "Customers who found it initially rich explain it thins at skin temperature, that a little goes a long way, and that it sinks in fully on damp post-shower skin.",
+          "hook_examples": [
+            "Yes, it's rich out of the bottle. Here's how to use it so it isn't.",
+            "It thins at skin temperature — you need far less than you think.",
+            "Apply on damp skin. That's the whole trick."
+          ],
+          "source_quotes": [
+            "This comes out of the bottle really thick, but thins a LOT as it gets to skin temperature. As a result, you will need a lot less than you think.",
+            "This lotion is a bit on the greasy side when initially applied, but as I worked it into my skin it was wonderful! It healed the cracked skin around my thumb after the first use.",
+            "It does leave a bit of a waxy/greasy feel on my skin, but it will soak in better on already-wet (after shower) skin.",
+            "You do not need but a tiny bit applied to your dry skin to immediately moisturize. It does not feel super greasy and it absorbs quickly."
+          ]
+        },
+        {
+          "id": "p4a3",
+          "label": "The end of the $200 search",
+          "awareness": "solution-aware",
+          "objection_addressed": "'I've already wasted a fortune on organic lotions that disappointed me.'",
+          "proof": "Reviewers who spent years and hundreds of dollars testing organic lotions and named this the one they stopped on, at a lower price point.",
+          "hook_examples": [
+            "She spent over $200 looking for the perfect organic lotion. This one cost a fraction of it.",
+            "'I've spent years searching for a lotion that is as moisturizing and non-greasy as this one.'",
+            "The last bottle you'll audition."
+          ],
+          "source_quotes": [
+            "I have been looking for a good organic lotion for a while now and had spent over $200 trying to find the perfect one. I was skeptical about this one at first, but thought I would give it a chance. For the price, it's absolutely incredible!",
+            "I love this product! I've spent years searching for a lotion that is as moisturizing and non-greasy as this one. I finally found it and will never go back to an inferior lotion again.",
+            "I've tried other natural body lotions, but this one is by far the best one I've ever used."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p1",
+      "name": "The Eczema Veteran (tried everything, still itching)",
+      "summary": "Adults and parents managing chronic eczema, psoriasis, cracked feet and diabetic dryness who have already cycled through steroids, prescription creams and every drugstore tub. They are exhausted, skeptical, and measuring products by one thing: does the itch stop. Their language is the most anguished in the corpus and their loyalty, once earned, is absolute.",
+      "evidence_count": 12,
+      "emotional_intensity": 9.2,
+      "angles": [
+        {
+          "id": "p1a1",
+          "label": "After the steroids failed",
+          "awareness": "solution-aware",
+          "objection_addressed": "'I've already tried prescription strength and everything OTC — another 'natural' lotion is not going to do anything.'",
+          "proof": "Verified reviewers describe replacing 3-4 rotating creams and hourly reapplication with twice-a-day use, and a spouse with psoriasis reporting the same relief.",
+          "hook_examples": [
+            "She tried steroids, prescription lotions, and everything under the sun. Then a $20 coconut lotion ended it.",
+            "If you're reapplying lotion every time you wash your hands, you don't have a dry skin problem — you have a wrong-lotion problem.",
+            "'My feet are no longer cracked and painful to walk on.'"
+          ],
+          "source_quotes": [
+            "I have tried prescription strength lotions, steroids, you name it, and everything under the sun over the counter to no avail.... Until Real Skin Care!!!!",
+            "I used to have to carry 3-4 different lotions or creams around with me and apply almost hourly or anytime I washed my hands.",
+            "My husband who suffers from psoriasis agrees this is the first product that keeps him hydrated and stops him from being itchy all day long. 1000/10 recommended!",
+            "This is the cleanest & BEST lotion & creams we’ve found. It’s not greasy & really works. Esp for chronic dry skin & eczema."
+          ]
+        },
+        {
+          "id": "p1a2",
+          "label": "The one-month photo (kids' eczema)",
+          "awareness": "problem-aware",
+          "objection_addressed": "'My child's flare-ups are on the creases of her elbows and nothing has calmed them — I don't believe a body cream can do this.'",
+          "proof": "A mother's before/after photos taken a month apart, with imperfect application, showing itch and redness gone.",
+          "hook_examples": [
+            "These photos are one month apart. She's 8. She forgot to put it on half the time.",
+            "'The itch and redness is gone, her skin is smooth, and now we can't be without this cream.'",
+            "Months of struggling to find relief for her. One jar."
+          ],
+          "source_quotes": [
+            "These photos were taken a month apart. I bought this cream because my 8 year old daughter had horribly itchy eczema rashes on the creases of her elbows. This is the result.",
+            "But after a month, the itch and redness is gone, her skin is smooth, and now we can't be without this cream.",
+            "I am so glad that after months of struggling to find relief for her, we were recommended this product. Worth every cent."
+          ]
+        },
+        {
+          "id": "p1a3",
+          "label": "Thick and scentless on purpose",
+          "awareness": "product-aware",
+          "objection_addressed": "'Reviews say it's too thick and barely smells like anything — that sounds like a bad product.'",
+          "proof": "Eczema customers explicitly reframe the thickness and lack of fragrance as the reason it works on reactive skin.",
+          "hook_examples": [
+            "The two things people complain about are the two things eczema skin needs.",
+            "No scent. Thick as butter. That's the point.",
+            "Fragrance is the #1 thing dermatologists tell eczema patients to avoid. So we left it out."
+          ],
+          "source_quotes": [
+            "And for the comments that mention the thickness and lack of scent, that is actually the best thing for someone with eczema!",
+            "During an eczema flare, choose the gentlest, simplest formulas—preferably fragrance-free and minimal-ingredient.",
+            "Very thick cream. Moisturizing. No scent. I use on my knees, legs and feet- areas that need a thicker product."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p5",
+      "name": "The Wrecked-Hands Worker",
+      "summary": "Nurses, dishwashers, parents doing constant diaper changes, chefs, massage therapists and anyone living through a hard winter. Their hands are cracked, split, crepey and stinging from wash after wash. They need something that survives handwashing, doesn't burn open cuts, and lasts a full shift.",
+      "evidence_count": 14,
+      "emotional_intensity": 6.5,
+      "angles": [
+        {
+          "id": "p5a1",
+          "label": "For hands that are in water all day",
+          "awareness": "problem-aware",
+          "objection_addressed": "'Any lotion I put on washes straight off at the next sink.'",
+          "proof": "Reviews from people who wash dishes all day and work with their hands in water reporting all-day moisture and no sting on cuts.",
+          "hook_examples": [
+            "'I wash dishes all day and this lotion keeps my hands moisturized all day.'",
+            "It doesn't burn your cuts. Ask anyone whose hands are in water for a living.",
+            "Cracked thumb, healed after the first use."
+          ],
+          "source_quotes": [
+            "For the price this lotion is amazing! I wash dishes all day and this lotion keeps my hands moisturized all day!",
+            "My hands are in water a lot at my job and this locks moisture in better than any B & B Works or Body shop product. It also doesn't burn my cuts.",
+            "I'm always trying to find a good lotion to help my dry skin, especially my hands, they stay real dry and cracked and this has been helping with that a lot.",
+            "It healed the cracked skin around my thumb after the first use."
+          ]
+        },
+        {
+          "id": "p5a2",
+          "label": "Winter-proof for the whole household",
+          "awareness": "solution-aware",
+          "objection_addressed": "'Cold, dry air destroys my family's skin every year and normal soap makes it worse.'",
+          "proof": "Multi-person households in cold climates report one product covering everyone, plus a hand soap that doesn't strip in dry weather.",
+          "hook_examples": [
+            "THE moisturizer for Wisconsin winters. One bottle, whole family.",
+            "A hand soap that cleans without leaving winter hands tight and cracked.",
+            "Long lasting, doesn't feel greasy, and everyone in the house uses it."
+          ],
+          "source_quotes": [
+            "This is THE moisturizer for Wisconsin winters for my whole family. It's long lasting and doesn't feel greasy. We use it all over and love it!",
+            "My hands get very dry in the winter and using this lightweight, amazing-smelling, gentle soap has really helped them stay healthy and non-irritated.",
+            "It cleans well, is non-drying (a must in the cold, dry weather), and it leaves my hands soft. I will buy more of this once I run out.",
+            "This soap is very sudsy and effectively cleans hands in the kitchen or bathroom."
+          ]
+        },
+        {
+          "id": "p5a3",
+          "label": "Crepey, aging, sun-spotted hands",
+          "awareness": "problem-aware",
+          "objection_addressed": "'My hands look older than I am — dry, crepey, spotted — and lotion just sits on top.'",
+          "proof": "Reviewers report visible brightening and improvement in crepey skin on hands and upper arms within weeks.",
+          "hook_examples": [
+            "'After just a couple of weeks using this cream the improvement is dramatic.'",
+            "For the crepey skin on the underside of your arms.",
+            "Brighter hands in two weeks — without a single synthetic."
+          ],
+          "source_quotes": [
+            "My hands were in quite poor condition because of over-dry and crepey skin dark spots. After just a couple of weeks using this cream the improvement is dramatic,my hands brighten - and it s easily absorbed, not leaving hands greasy or sticky.",
+            "It really helps with the crepey skin on the underside of my arms. It absorbs quickly and leave my skin feeling smooth and silky.",
+            "Does make my skin look brighter and healthier!! It was great for moisturizing and a lot of great qualities."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p3",
+      "name": "The Fragrance-Sensitive Minimalist",
+      "summary": "People who react to — or simply can't stand — perfume. Migraine-prone noses, sensitive-skin adults, gift buyers shopping for a friend who 'can't have any products that are scented,' and DIY types who want a clean unscented base to add their own essential oils. For them, 'no smell' is the feature they're searching for, not a compromise.",
+      "evidence_count": 16,
+      "emotional_intensity": 5.5,
+      "angles": [
+        {
+          "id": "p3a1",
+          "label": "Truly scent-free, not 'lightly fragranced'",
+          "awareness": "solution-aware",
+          "objection_addressed": "'Brands call things unscented and they still reek of something — I can't risk it.'",
+          "proof": "Sensitive-nose reviewers confirm the unscented bar is as close to scent-free as it gets and contains no natural or artificial fragrance.",
+          "hook_examples": [
+            "'As close as you can get to a scent-free soap.' Judged by someone with a sensitive nose.",
+            "No fragrance. No 'natural fragrance.' No masking scent. Just saponified coconut oil.",
+            "If unscented has burned you before, read this one review."
+          ],
+          "source_quotes": [
+            "I have a sensitive nose, and the unscented version is as close as you can get to a scent-free soap. It's just saponified coconut oil.",
+            "Happy the soap has no smell to it! Mild. Soft to skin. This is what I needed & this soap did not disappoint!",
+            "I really like that it contains no natural or artificial fragrance.",
+            "This is a nice soap with a great pump. It foams up well and cleans the hands without any smell. It is perfect for anyone who is sensitive to smells or has sensitive skin."
+          ]
+        },
+        {
+          "id": "p3a2",
+          "label": "A blank canvas for your own scent",
+          "awareness": "unaware",
+          "objection_addressed": "'I make/wear my own fragrance and every lotion I try fights with it.'",
+          "proof": "Customers buy the unscented lotion specifically as a base and add their own essential oils or wear it under their own perfume.",
+          "hook_examples": [
+            "The lotion that doesn't argue with your perfume.",
+            "Buy it plain. Scent it yourself. Drop in your own oils.",
+            "'There are no ingredients that block my own organic original fragrance.'"
+          ],
+          "source_quotes": [
+            "I LOVE this pure unscented lotion.It's purity has my skin smiling! There are no ingredients that block my own organic original fragrance that I make which is a huge bonus for me.",
+            "Was looking for a good all-natural, unscented lotion to add essential oils to to scent myself. This is a great one.",
+            "I actually added some essential oils to mine so it would smell how I wanted it to smell. This is very moisturizing. Healthy ingredients. I would purchase this again."
+          ]
+        },
+        {
+          "id": "p3a3",
+          "label": "The gift for the person nothing works on",
+          "awareness": "product-aware",
+          "objection_addressed": "'I want to give a nice body-care gift but my friend/relative reacts to everything scented.'",
+          "proof": "Reviews from buyers who purchased the unscented lotion and bar as birthday and stocking-stuffer gifts for scent-restricted recipients.",
+          "hook_examples": [
+            "The birthday gift for the friend who can't have scented anything.",
+            "Handmade, wrapped in recyclable paper, and safe for the person who reacts to everything.",
+            "Finally, a gift that doesn't come with an apology."
+          ],
+          "source_quotes": [
+            "The lotion is scent free. Bought for a friend's birthday who can't have any products that are scented. She loves it!",
+            "This is a nice round bar of unscented soap. Good for the whole family, especially those sensitive to fragrance.",
+            "A nice gift or stocking stuffer.Best to keep the soap out of standing water to help it last longer.Hand made in the USA by a small business."
+          ]
+        }
+      ]
+    }
+  ]
+}
