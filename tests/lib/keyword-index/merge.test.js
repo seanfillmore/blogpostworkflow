@@ -91,3 +91,63 @@ test('mergeSources preserves a real cluster carried over from the prior index', 
   const out = mergeSources({ amazon: {}, gsc, ga4Map, clusters });
   assert.equal(out[Object.keys(out)[0]].cluster, 'coconut oil');
 });
+
+const UNTAPPED = new Map([
+  ['coconut for the skin', { impressions: 536, position: 11.8, reason: 'impression_leak' }],
+]);
+
+test('classifyValidationSource is "gsc_untapped" when the key is untapped and nothing else qualifies', () => {
+  const entry = { amazon: null, gsc: { impressions: 536, clicks: 0 }, ga4: { conversions: 0 } };
+  const r = classifyValidationSource(entry, UNTAPPED, 'coconut for the skin');
+  assert.equal(r, 'gsc_untapped');
+});
+
+test('classifyValidationSource still returns null for a non-untapped key with no signal', () => {
+  const entry = { amazon: null, gsc: { impressions: 536, clicks: 0 }, ga4: { conversions: 0 } };
+  const r = classifyValidationSource(entry, UNTAPPED, 'some other query');
+  assert.equal(r, null);
+});
+
+test('classifyValidationSource prefers "amazon" over "gsc_untapped" for the same key', () => {
+  const entry = { amazon: { clicks: 5, purchases: 0 }, gsc: null, ga4: null };
+  const r = classifyValidationSource(entry, UNTAPPED, 'coconut for the skin');
+  assert.equal(r, 'amazon');
+});
+
+test('classifyValidationSource prefers "gsc_ga4" over "gsc_untapped" for the same key', () => {
+  const entry = { amazon: null, gsc: { impressions: 536 }, ga4: { conversions: 4 } };
+  const r = classifyValidationSource(entry, UNTAPPED, 'coconut for the skin');
+  assert.equal(r, 'gsc_ga4');
+});
+
+test('classifyValidationSource keeps its old behavior when no untapped map is passed', () => {
+  assert.equal(classifyValidationSource({ amazon: null, gsc: {}, ga4: { conversions: 0 } }), null);
+  assert.equal(classifyValidationSource({ amazon: { clicks: 3 }, gsc: null, ga4: null }), 'amazon');
+});
+
+test('mergeSources admits an untapped key that has a GSC aggregate but no conversions', () => {
+  const gsc = { 'coconut for the skin': { impressions: 536, clicks: 0, ctr: 0, position: 11.8, top_page: '/blogs/news/x', pages: [] } };
+  const out = mergeSources({ amazon: {}, gsc, ga4Map: {}, clusters: {}, untapped: UNTAPPED });
+  const e = out['coconut-for-the-skin'];
+  assert.ok(e, 'entry should exist');
+  assert.equal(e.validation_source, 'gsc_untapped');
+  assert.equal(e.untapped_reason, 'impression_leak');
+  assert.equal(e.amazon, null);
+  assert.equal(e.gsc.impressions, 536);
+});
+
+test('mergeSources admits an untapped key with no GSC aggregate by synthesising one', () => {
+  const out = mergeSources({ amazon: {}, gsc: {}, ga4Map: {}, clusters: {}, untapped: UNTAPPED });
+  const e = out['coconut-for-the-skin'];
+  assert.ok(e, 'entry should exist even with no GSC row');
+  assert.equal(e.validation_source, 'gsc_untapped');
+  assert.equal(e.gsc.impressions, 536);
+  assert.equal(e.gsc.clicks, 0);
+  assert.equal(e.gsc.position, 11.8);
+});
+
+test('mergeSources without an untapped map produces the same entries as before', () => {
+  const gsc = { 'coconut for the skin': { impressions: 536, clicks: 0, ctr: 0, position: 11.8, top_page: '/x', pages: [] } };
+  const out = mergeSources({ amazon: {}, gsc, ga4Map: {}, clusters: {} });
+  assert.equal(Object.keys(out).length, 0);
+});

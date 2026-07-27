@@ -281,3 +281,21 @@ test('topAmazonValidatedForAds respects limit', () => {
 test('topAmazonValidatedForAds returns [] for null index', () => {
   assert.deepEqual(topAmazonValidatedForAds(null), []);
 });
+
+const gatedFixture = {
+  keywords: {
+    'natural-deodorant':    { slug: 'natural-deodorant',    keyword: 'natural deodorant',    validation_source: 'amazon',       amazon: { purchases: 100 } },
+    'natural-bar-soap':     { slug: 'natural-bar-soap',     keyword: 'natural bar soap',     validation_source: 'gsc_ga4',      ga4: { conversions: 5 } },
+    'coconut-for-the-skin': { slug: 'coconut-for-the-skin', keyword: 'coconut for the skin', validation_source: 'gsc_untapped', gsc: { impressions: 536 } },
+  },
+};
+
+test('unmappedIndexEntries excludes gsc_untapped entries so content-strategist cannot brief them', () => {
+  const out = unmappedIndexEntries(gatedFixture, new Set());
+  assert.ok(!out.some((e) => e.slug === 'coconut-for-the-skin'), 'gsc_untapped must not reach new-content discovery');
+});
+
+test('unmappedIndexEntries still returns amazon and gsc_ga4 entries alongside a gated one', () => {
+  const out = unmappedIndexEntries(gatedFixture, new Set());
+  assert.deepEqual(out.map((e) => e.slug), ['natural-deodorant', 'natural-bar-soap']);
+});

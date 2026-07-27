@@ -10,6 +10,7 @@ import { parseSqpReport, mergeSqpReports } from '../../lib/keyword-index/amazon-
 import { parseBaReportStream } from '../../lib/keyword-index/amazon-ba.js';
 import { mergeSources } from '../../lib/keyword-index/merge.js';
 import { rollUpCompetitorsByCluster } from '../../lib/keyword-index/competitors.js';
+import { buildUntappedMap } from '../../lib/keyword-index/dump-readers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures', 'keyword-index');
@@ -120,4 +121,24 @@ test('integration: full build from fixtures produces well-formed outputs', async
   assert.ok(Array.isArray(clusterCompetitors.deodorant.competitors), 'competitors is an array');
   assert.ok(clusterCompetitors.deodorant.competitors.length > 0, 'deodorant cluster has at least 1 competitor');
   assert.ok(clusterCompetitors.deodorant.total_purchases > 0, 'deodorant cluster has total_purchases > 0');
+});
+
+// buildUntappedMap is imported from lib/keyword-index/dump-readers.js — the
+// same function Stage 2b calls in the builder — so these tests guard the
+// shipped normalization behavior, not a hand-copied duplicate of it.
+
+test('untapped candidates are normalized before use as merge keys', () => {
+  // Raw GSC text with trailing punctuation and mixed case — normalize() strips both.
+  const candidates = [{ keyword: '  Coconut For The Skin.  ', impressions: 536, position: 11.8, reason: 'impression_leak' }];
+  const untapped = buildUntappedMap(candidates);
+  assert.ok(untapped.has('coconut for the skin'), 'key must be normalized');
+
+  const out = mergeSources({ amazon: {}, gsc: {}, ga4Map: {}, clusters: {}, untapped });
+  assert.ok(out['coconut-for-the-skin'], 'a raw-text candidate must still produce an entry');
+  assert.equal(out['coconut-for-the-skin'].validation_source, 'gsc_untapped');
+});
+
+test('an empty candidate list produces no untapped entries', () => {
+  const out = mergeSources({ amazon: {}, gsc: {}, ga4Map: {}, clusters: {}, untapped: buildUntappedMap([]) });
+  assert.equal(Object.keys(out).length, 0);
 });

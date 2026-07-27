@@ -33,7 +33,10 @@ export function buildUntappedCandidates(leaks, clusters, index, { minImpr = 50, 
 
   const inIndex = (kw) => {
     if (!kw) return false;
-    return Boolean(lookupByKeyword(index, kw));
+    const e = lookupByKeyword(index, kw);
+    // Don't self-exclude: a keyword this feed put into the index must keep
+    // appearing in the feed, or the next build drops it and it oscillates.
+    return Boolean(e) && e.validation_source !== 'gsc_untapped';
   };
 
   for (const q of leaks || []) {
