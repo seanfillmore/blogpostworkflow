@@ -207,8 +207,26 @@ on every page.
 
 ### Current state
 
-**Header — 7 top-level category labels, each opening a dropdown of collections, 32 collection
-links in total:**
+> **Read this section's numbers from the Admin API, not from rendered HTML.** Two earlier
+> drafts described this navigation by counting link occurrences in the homepage source and were
+> wrong both times — first claiming the header held 6 collection links plus 8 PDP links, then
+> claiming the footer enumerated 30 collections. The figures below come from the `menus`
+> GraphQL query and supersede both.
+
+**Authoritative state (Admin API, 2026-07-27).** The store has **12 menus**; 5 contain
+collection links. **49 menu items point at a collection, across 35 distinct collection URLs.**
+
+| Menu | Handle | Collection links |
+|---|---|---|
+| Product Menu (the visible header) | `product-menu` | 32 |
+| Main menu | `main-menu` | 8 |
+| Catalog sidebar | `sidebar-menu` | 7 |
+| Footer menu | `footer` | 1 (`on-sale`) |
+| Multi main | `multi-main` | 1 |
+
+The footer menu holds **one** collection link. It does not enumerate collections.
+
+**`product-menu` — the header — already links its 7 top-level items to the PDPs:**
 
 | Top-level label | Dropdown children |
 |---|---|
@@ -220,12 +238,9 @@ links in total:**
 | Bar Soap | Coconut, Men's Natural, Natural Bar, Organic Bar, Vegan (5) |
 | Lip Balm | Coconut, Organic, Natural, Vegan (4) |
 
-The top-level labels are not links — they are dropdown triggers. There is currently **no
-direct route from the header to any PDP**.
-
-An earlier draft of this spec recorded the header as holding 6 collection links plus 8 PDP
-links, inferred from raw HTML. That was wrong, and the correction matters: header 32 plus
-footer 30 means **62 internal links point at collections this project removes**.
+Every one of those 7 top-level items is already `type: PRODUCT` pointing at the correct PDP.
+The dropdowns hang off links that are already right. **No retargeting is required — the work
+is deleting the 32 children.**
 
 **Footer** (rendered on every page): **30 collection links**, of which **28 are being
 redirected** — only `all-products` and `non-toxic-body-lotion` survive. This is the single
@@ -287,19 +302,34 @@ this change, not an optional polish.
 `templates/list-collections` edit. The app holds `write_themes`, so unlike the menus themselves
 this part *can* be automated.
 
-### Constraint: this cannot be automated with the current app
+### Menu edits are automatable
 
-The Shopify app holds 26 scopes including `write_themes`, but **not
-`write_online_store_navigation`**. Menus live in Online Store → Navigation, not in theme files,
-so `write_themes` does not reach them. Two routes:
+`write_online_store_navigation` was granted 2026-07-27, verified against
+`oauth/access_scopes.json` (28 scopes, `read_` and `write_online_store_navigation` both
+present). `shopifyGraphQL` is already exported from `lib/shopify.js`, and the `menus` query
+returns the full structure with item IDs. Menu changes go through `menuUpdate`; no manual admin
+work is required.
 
-1. **Sean edits both menus in admin** — a one-time change of roughly 15 minutes. Recommended:
-   this is a single structural edit, not a recurring job.
-2. **Add `write_online_store_navigation` and re-install the app** to grant it (adding a scope
-   requires clicking "Install app" again; no token regeneration). Worth it only if we expect the
-   fleet to manage navigation on an ongoing basis, which nothing currently does.
+An earlier draft of this spec stated these edits could not be automated. That is no longer
+true.
 
-The implementation plan must not assume programmatic menu edits.
+### Per-menu changes
+
+| Menu | Change |
+|---|---|
+| `product-menu` | Delete all 32 children. Keep the 7 top-level PDP links unchanged. Add `Sets & Bundles` → `/collections/sets-and-bundles`. |
+| `main-menu` | Delete the 7 collection children under `Shop`. Keep `Shop` itself, which already points at `/collections` — that is the Collections link. |
+| `sidebar-menu` | Retarget its 7 collection links to the matching PDPs, mirroring `product-menu`. |
+| `footer` | Leave the single `on-sale` link, subject to the decision below. |
+| `multi-main` | Same. |
+
+**Two utility collections need a decision, and neither is a category:**
+
+- **`on-sale`** — merchandising, not keyword-chasing. Recommend keeping it, on the same
+  footing as `sets-and-bundles`: it exists to sell, not to rank. It carries 50 impressions and
+  0 clicks, so nothing is lost either way.
+- **`live-collection`** — 108 impressions, 0 clicks, and appears to be leftover plumbing from a
+  live-selling app rather than anything deliberate. Recommend redirecting it with the rest.
 
 ### Sequencing
 
@@ -366,9 +396,10 @@ Already wired, no new instrumentation:
    physical bundle products, and is linked from the store's navigation.
 8. The homepage title and meta description lead with the brand, and the meta description is
    under 160 characters.
-9. No header or footer link points at a redirected collection. All 32 header dropdown links and
-   all 30 footer collection links are gone: the header's 7 labels link directly to their PDPs,
-   with no dropdowns at all, and the footer carries one `Collections` link to `/collections`.
+9. No menu item points at a redirected collection. Across all 12 menus, the 49 collection-
+   pointing items reduce to the survivors plus any retained utility collection: `product-menu`
+   has no dropdowns, `main-menu`'s `Shop` still points at `/collections`, and `sidebar-menu`
+   points at PDPs.
 10. `/collections` has its own meta description rather than the homepage's, and a title that
    does not compete with the homepage for brand queries.
 11. At 28 days: the lotion survivor's average position on its target queries has improved
@@ -389,8 +420,13 @@ Already wired, no new instrumentation:
 - **2026-07-27, revised twice more:** footer reduced from a four-item category block to one
   `Collections` link to Shopify's native `/collections` index (Sean); header top level changed
   from a `Shop` dropdown to direct PDP links (Sean).
-- **2026-07-27, corrected against a screenshot:** the header's real structure is 7 category
-  labels opening dropdowns of 32 collection links, with no direct PDP route at all — not the
-  "6 collection links plus 8 PDPs" an earlier draft inferred from raw HTML. Header 32 + footer
-  30 = 62 internal links pointing at removed collections. The 7 labels map 1:1 onto the 7
-  primary products, so the fix is to retarget the labels and delete every dropdown.
+- **2026-07-27, corrected against a screenshot:** the header is 7 category labels opening
+  dropdowns of collection links, not the flat list an earlier draft inferred from raw HTML.
+- **2026-07-27, corrected again against the Admin API** — the authoritative source, after two
+  wrong readings taken from rendered HTML. 12 menus exist; 5 carry collection links; 49 items
+  point at 35 distinct collections. The footer menu holds ONE collection link, not 30. And
+  `product-menu`'s 7 top-level items already point at the correct PDPs, so the header work is
+  purely deleting 32 children, not retargeting anything. **Lesson for the plan: read navigation
+  from the `menus` GraphQL query, never from page source.**
+- **2026-07-27:** `write_online_store_navigation` granted by Sean and verified; menu edits are
+  automatable via `menuUpdate`, superseding the earlier "manual admin work required" constraint.
