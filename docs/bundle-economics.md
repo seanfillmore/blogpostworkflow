@@ -21,11 +21,11 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 | Hand Soap Set — 3 pumps + body lotion | live | $69.00 | $59.00 | 14% | $17.70 | 2.50 | 4 | $7.83 | **$31.46** | 🟡 breakeven (≥1× CAC) |
 | Sensitive Skin Moisturizing Set | live | $58.00 | $46.80 | 19% | $10.10 | 0.94 | 2 | $6.68 | **$28.36** | 🟡 breakeven (≥1× CAC) |
 | Coconut Deodorant — 4-Pack | live | $60.00 | $53.00 | 12% | $15.36 | 0.63 | 4 | $7.83 | **$27.97** | 🟡 breakeven (≥1× CAC) |
-| Coconut Oil Toothpaste — 4-Pack | live | $52.00 | $46.00 | 12% | $13.40 | 1.00 | 4 | $7.83 | **$23.14** | 🟠 thin (<1× CAC) |
 | Two-Step Dry Skin Starter Set | retired | $58.00 | $39.99 | 31% | $10.10 | 0.94 | 2 | $6.68 | **$21.75** | 🟠 thin (<1× CAC) |
 | Coconut Bar Soap — 4-Pack | live | $44.00 | $39.00 | 11% | $11.96 | 1.00 | 4 | $7.83 | **$17.78** | 🟠 thin (<1× CAC) |
 | Hand Soap Set — 4 pumps | live | $52.00 | $44.00 | 15% | $17.04 | 2.50 | 4 | $7.83 | **$17.55** | 🟠 thin (<1× CAC) |
 | Single lotion (reference) | live | $30.00 | $30.00 | 0% | $4.92 | 0.63 | 1 | $6.68 | **$17.23** | 🟠 thin (<1× CAC) |
+| Coconut Oil Toothpaste — 3-Pack | live | $39.00 | $34.00 | 13% | $10.05 | 0.75 | 3 | $7.83 | **$14.83** | 🟠 thin (<1× CAC) |
 | Pump + Refill | rejected | $39.00 | $34.00 | 13% | $13.05 | 3.43 | 2 | $21.31 | **$-1.65** | ❌ loses money |
 | Foam Soap Bundle | retired | $52.00 | $20.02 | 62% | $17.31 | 4.05 | 3 | $21.31 | **$-19.48** | ❌ loses money |
 
@@ -40,11 +40,11 @@ CAC target is **$25**. Under the CFA rule, 30-day gross profit ≥ CAC breaks ev
 - **Hand Soap Set — 3 pumps + body lotion** (live, $31.46) — The pump ladder: a scent for every sink at full MSRP, or step up to a high-margin lotion so the box clears CAC — 3 pumps for a lighter box, 4 for the full set.
 - **Sensitive Skin Moisturizing Set** (live, $28.36) — Current hero. Clears the $45 free-shipping threshold on its own.
 - **Coconut Deodorant — 4-Pack** (live, $27.97) — Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription.
-- **Coconut Oil Toothpaste — 4-Pack** (live, $23.14) — Subscription vehicle for toothpaste, mirroring the bar soap 4-pack. Replaces the single-tube subscription.
 - **Two-Step Dry Skin Starter Set** (retired, $21.75) — Deleted 2026-07-26. Same contents as the hero at a deeper discount.
 - **Coconut Bar Soap — 4-Pack** (live, $17.78) — Subscription vehicle, every 4 months. Replaces the single-bar sub, which still loses money per shipment. Does not clear the $45 free-shipping threshold — never lead its copy with shipping.
 - **Hand Soap Set — 4 pumps** (live, $17.55) — The pump ladder: a scent for every sink at full MSRP, or step up to a high-margin lotion so the box clears CAC — 3 pumps for a lighter box, 4 for the full set.
 - **Single lotion (reference)** (live, $17.23) — Reference point, not an offer. Anchor for the $99 bundle.
+- **Coconut Oil Toothpaste — 3-Pack** (live, $14.83) — Subscription vehicle for toothpaste. Three flavours means a three-pack: one of each, or three of one.
 - **Pump + Refill** (rejected, $-1.65) — Loses money: the refill forces a $21.31 box.
 - **Foam Soap Bundle** (retired, $-19.48) — Deleted 2026-07-26 without ever being published — lost ~$19/order.
 

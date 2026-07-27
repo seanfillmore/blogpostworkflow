@@ -1200,8 +1200,8 @@
       ]
     },
     {
-      "handle": "coconut-toothpaste-4-pack",
-      "title": "Coconut Oil Toothpaste — 4-Pack",
+      "handle": "coconut-toothpaste-3-pack",
+      "title": "Coconut Oil Toothpaste — 3-Pack",
       "status": "live",
       "templateSuffix": null,
       "packaging": 0,
@@ -1212,31 +1212,31 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Subscription vehicle for toothpaste, mirroring the bar soap 4-pack. Replaces the single-tube subscription.",
+      "story": "Subscription vehicle for toothpaste. Three flavours means a three-pack: one of each, or three of one.",
       "options": [
         {
-          "name": "Scent",
+          "name": "Flavour",
           "values": [
-            "Variety — mint-led",
-            "4x Fresh Mint",
-            "4x All Natural",
-            "4x Cinnamon Spice"
+            "Variety — one of each",
+            "3x Fresh Mint",
+            "3x All Natural",
+            "3x Cinnamon Spice"
           ]
         }
       ],
       "variants": [
         {
           "options": {
-            "Scent": "Variety — mint-led"
+            "Flavour": "Variety — one of each"
           },
-          "price": 46,
-          "compareAtPrice": 52,
-          "contents": "2 × Fresh Mint (peppermint & spearmint)\n1 × All Natural (mint, cinnamon & clove)\n1 × Cinnamon Spice (cinnamon & clove)",
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "1 × Fresh Mint (peppermint & spearmint)\n1 × All Natural (mint, cinnamon & clove)\n1 × Cinnamon Spice (cinnamon & clove)",
           "components": [
             {
               "product": "coconut-oil-toothpaste",
               "variant": "Fresh Mint",
-              "qty": 2
+              "qty": 1
             },
             {
               "product": "coconut-oil-toothpaste",
@@ -1252,46 +1252,46 @@
         },
         {
           "options": {
-            "Scent": "4x Fresh Mint"
+            "Flavour": "3x Fresh Mint"
           },
-          "price": 46,
-          "compareAtPrice": 52,
-          "contents": "4 × Fresh Mint (peppermint & spearmint)",
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "3 × Fresh Mint (peppermint & spearmint)",
           "components": [
             {
               "product": "coconut-oil-toothpaste",
               "variant": "Fresh Mint",
-              "qty": 4
+              "qty": 3
             }
           ]
         },
         {
           "options": {
-            "Scent": "4x All Natural"
+            "Flavour": "3x All Natural"
           },
-          "price": 46,
-          "compareAtPrice": 52,
-          "contents": "4 × All Natural (mint, cinnamon & clove)",
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "3 × All Natural (mint, cinnamon & clove)",
           "components": [
             {
               "product": "coconut-oil-toothpaste",
               "variant": "All Natural",
-              "qty": 4
+              "qty": 3
             }
           ]
         },
         {
           "options": {
-            "Scent": "4x Cinnamon Spice"
+            "Flavour": "3x Cinnamon Spice"
           },
-          "price": 46,
-          "compareAtPrice": 52,
-          "contents": "4 × Cinnamon Spice (cinnamon & clove)",
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "3 × Cinnamon Spice (cinnamon & clove)",
           "components": [
             {
               "product": "coconut-oil-toothpaste",
               "variant": "Cinnamon Spice",
-              "qty": 4
+              "qty": 3
             }
           ]
         }
