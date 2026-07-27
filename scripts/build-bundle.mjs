@@ -163,22 +163,67 @@ async function buildBundle(bundle, catalogue) {
   });
 
   // 3 — components
-  const relationships = resolved.map(({ v, target }) => ({
-    parentProductVariantId: target.id,
-    productVariantRelationshipsToUpdate: v.components.map(c => {
-      const id = catalogue[c.product]?.variants[c.variant];
-      if (!id) throw new Error(`no variant id for ${c.product} / ${c.variant}`);
-      return { id, quantity: c.qty };
-    }),
-  }));
+  //
+  // `productVariantRelationshipBulkUpdate`'s three verbs are NOT
+  // interchangeable, and picking the wrong one fails in a way that looks like
+  // something else entirely. `...ToUpdate` only changes the quantity of a
+  // component relationship that ALREADY EXISTS on the parent variant — a
+  // brand-new bundle has none, so Shopify rejects the call with
+  // PRODUCT_VARIANTS_NOT_FOUND naming the PARENT variant id. That reads
+  // exactly like the variant hasn't propagated yet (a transient timing issue)
+  // and it is not one — it cost a full review cycle to trace back to "wrong
+  // verb" instead of "wait and retry". `...ToCreate` is the verb that attaches
+  // a component for the first time; `...ToRemove` (bare component variant
+  // IDs, not `{id, quantity}`) detaches one. A reconciler that promises
+  // idempotency has to read what's actually attached and route each desired
+  // component to the correct one of the three verbs every time it runs — not
+  // assume the bundle is either fully new or fully built, because a partial
+  // failure (like this one) can leave a single variant with some components
+  // attached and others missing. Do not collapse this back to one verb.
+  const relationships = resolved.map(({ v, target }) => {
+    const present = new Map(
+      target.productVariantComponents.nodes.map(n => [n.productVariant.id, n.quantity])
+    );
+    const desired = new Map(
+      v.components.map(c => {
+        const id = catalogue[c.product]?.variants[c.variant];
+        if (!id) throw new Error(`no variant id for ${c.product} / ${c.variant}`);
+        return [id, c.qty];
+      })
+    );
 
-  await gql(
-    `mutation ($input: [ProductVariantRelationshipUpdateInput!]!) {
-      productVariantRelationshipBulkUpdate(input: $input) {
-        parentProductVariants { id } userErrors { field message } } }`,
-    { input: relationships }
+    const toCreate = [...desired].filter(([id]) => !present.has(id)).map(([id, quantity]) => ({ id, quantity }));
+    // Only resend "present" relationships whose quantity actually changed —
+    // otherwise a second run would call ToUpdate for every unchanged
+    // component too, which isn't wrong but isn't a true no-op either, and the
+    // docstring promises steps "skip when already correct".
+    const toUpdate = [...desired]
+      .filter(([id, quantity]) => present.has(id) && present.get(id) !== quantity)
+      .map(([id, quantity]) => ({ id, quantity }));
+    const toRemove = [...present.keys()].filter(id => !desired.has(id));
+
+    const input = { parentProductVariantId: target.id };
+    if (toCreate.length) input.productVariantRelationshipsToCreate = toCreate;
+    if (toUpdate.length) input.productVariantRelationshipsToUpdate = toUpdate;
+    if (toRemove.length) input.productVariantRelationshipsToRemove = toRemove;
+    return input;
+  }).filter(input =>
+    input.productVariantRelationshipsToCreate ||
+    input.productVariantRelationshipsToUpdate ||
+    input.productVariantRelationshipsToRemove
   );
-  log(`  componentized ${relationships.length} variants`);
+
+  if (relationships.length) {
+    await gql(
+      `mutation ($input: [ProductVariantRelationshipUpdateInput!]!) {
+        productVariantRelationshipBulkUpdate(input: $input) {
+          parentProductVariants { id } userErrors { field message } } }`,
+      { input: relationships }
+    );
+    log(`  componentized ${relationships.length} variant(s) (create/update/remove as needed)`);
+  } else {
+    log('  components already match the roster — nothing to do');
+  }
 
   // 4 — RE-ASSERT PRICES. Componentizing just overwrote them with the component sum.
   await gql(
