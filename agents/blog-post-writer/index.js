@@ -68,6 +68,16 @@ function loadAgentFeedback(agentName) {
   return combined;
 }
 
+/**
+ * Load the voice-of-customer research written by agents/voice-of-customer.
+ * Returns '' when absent so the writer behaves exactly as before the first run.
+ */
+function loadVoiceOfCustomer() {
+  try {
+    return readFileSync(join(ROOT, 'data', 'context', 'voice-of-customer.md'), 'utf8').trim();
+  } catch { return ''; }
+}
+
 // ── env ───────────────────────────────────────────────────────────────────────
 
 function loadEnv() {
@@ -229,6 +239,10 @@ FORMAT OVERRIDE (${format}) — this changes the shape of the "CONTENT SECTIONS"
 ═══════════════════════════════════
 ${fmtBody}` : '';
   const feedback = loadAgentFeedback('blog-post-writer');
+  const voc = loadVoiceOfCustomer();
+  const vocBlock = voc
+    ? `\n\nVOICE OF CUSTOMER — real objections, phrases and triggers from our own reviews, Reddit and Google. Open the post by naming the objection the reader actually has, and prefer this customer language over invented phrasing:\n\n${voc}`
+    : '';
   const ingredientList = productIngredients.ingredients.join(', ');
   const formatNote = productIngredients.format
     ? `\nProduct format: ${productIngredients.format} — always describe this product using the correct format name (e.g. "${productIngredients.format}"), never as a different format (e.g. "stick", "bar", "cream" unless that is the actual format).`
@@ -439,7 +453,7 @@ HTML RULES:
 - All links must be absolute URLs (https://...)
 - No markdown, no CSS classes, no <div> tags
 - Inline styles exactly as shown in the templates above — do not deviate
-- Use exact product/collection URLs provided in the brief${feedback ? `\n\n═══════════════════════════════════\nSTANDING FEEDBACK (from insight-aggregator)\n═══════════════════════════════════\n${feedback}` : ''}`;
+- Use exact product/collection URLs provided in the brief${feedback ? `\n\n═══════════════════════════════════\nSTANDING FEEDBACK (from insight-aggregator)\n═══════════════════════════════════\n${feedback}` : ''}${vocBlock}`;
 }
 
 function buildUserPrompt(brief, sitemapCtx, blogPosts) {

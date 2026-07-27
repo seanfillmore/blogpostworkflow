@@ -17,6 +17,7 @@ const DEFAULT_ROOT = join(__dirname, '..', '..', '..');
  *     comparisonFramework:  string  // raw markdown of data/brand/comparison-framework.md
  *     founderNarrative:     string  // raw markdown of data/brand/founder-narrative.md
  *     ingredientsByCluster: object  // parsed JSON of config/ingredients.json (existing source-of-truth)
+ *     voiceOfCustomer:      string  // raw markdown, '' when the VOC agent has not run yet
  *   }
  *
  * Throws (loud failure) if any required file is missing or malformed.
@@ -53,6 +54,16 @@ export function loadFoundation({ root = DEFAULT_ROOT } = {}) {
     } else {
       out[file.key] = raw;
     }
+  }
+
+  // Optional foundation files. Unlike `required` above these must never throw —
+  // voice-of-customer.md does not exist until agents/voice-of-customer has run,
+  // and pdp-builder has to keep working before and after that.
+  const optional = [
+    { path: join(root, 'data', 'context', 'voice-of-customer.md'), key: 'voiceOfCustomer', type: 'text' },
+  ];
+  for (const file of optional) {
+    out[file.key] = existsSync(file.path) ? readFileSync(file.path, 'utf8') : '';
   }
   return out;
 }
