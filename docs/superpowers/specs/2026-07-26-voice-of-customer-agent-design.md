@@ -153,12 +153,32 @@ mid-size LLM call plus ~20 Tavily/DataForSEO queries per month.
 
 ### Ranking by emotional intensity
 
-Personas are ranked by volume **and** emotional intensity, not volume alone. The
-LLM scores each persona cluster on how much affect-laden language its source
-quotes carry, and that score is a first-class field in `personas.json` beside
-`evidence_count`. A persona appearing in 12 reviews with intense language
-outranks one appearing in 40 flat ones. This is what surfaces under-served
-segments that a pure frequency count buries.
+Personas are ranked by **emotional intensity**, with `evidence_count` acting as a
+qualification floor rather than a ranking dimension. The LLM scores each persona
+cluster on how much affect-laden language its source quotes carry, and that score
+is a first-class field in `personas.json` beside `evidence_count`.
+
+The two fields do different jobs. `evidence_count` answers *is this persona real?*
+— and it is a corpus artifact, counting how often a theme appeared in our own
+reviews rather than measuring how many such buyers exist. `emotional_intensity`
+answers *which real persona should we lead with?*, which is a judgment about the
+buying decision and the better predictor of paid-social response.
+
+**Revised 2026-07-26 after the first live run.** The original design multiplied the
+two, which let the sampling artifact dominate: the most emotionally charged persona
+in the corpus (intensity 9.2, with a customer's own before/after eczema photos) was
+pushed to #2 by a flatter persona mentioned seven more times, so
+`creative-packager`'s default angle was the wrong one. Multiplication was defeating
+the stated purpose of having an intensity score at all.
+
+Personas below `MIN_PERSONA_EVIDENCE` (8) sink below qualified ones but are never
+dropped — it is a floor, not a filter. Ties break on `evidence_count` so ordering is
+deterministic across runs.
+
+One consequence worth knowing: this ordering serves `creative-packager`, which reads
+`personas[0].angles[0]`. A consumer optimising for reach rather than response — SEO
+content, say — should sort on `evidence_count` itself. Both numbers stay in the file
+precisely so it can.
 
 ## Artifact contracts
 
@@ -196,10 +216,10 @@ tagging is what makes awareness-gap analysis possible later without re-running
 research. Every angle carries `source_quotes`; nothing enters the file
 unsourced.
 
-The `personas` array is **ordered by rank, highest first**, combining
-`evidence_count` and `emotional_intensity`. Order is part of the contract:
-`creative-packager` uses `personas[0].angles[0]` as its default when no persona
-is named explicitly.
+The `personas` array is **ordered by rank, highest first** — qualified personas
+(`evidence_count >= 8`) sorted by `emotional_intensity`, ties broken on
+`evidence_count`. Order is part of the contract: `creative-packager` uses
+`personas[0].angles[0]` as its default when no persona is named explicitly.
 
 ### `data/context/voice-of-customer.md`
 

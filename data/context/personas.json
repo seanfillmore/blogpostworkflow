@@ -5,66 +5,6 @@
   "partial": false,
   "personas": [
     {
-      "id": "p2",
-      "name": "The Ingredient-Label Reader",
-      "summary": "Reads every label, rejects anything with unpronounceable names, parabens, dyes or synthetic fragrance, and is actively trying to lower the chemical load going onto the body's largest organ. Distrusts 'natural' marketing claims and wants a short ingredient list she can verify.",
-      "evidence_count": 25,
-      "emotional_intensity": 7.5,
-      "angles": [
-        {
-          "id": "p2a1",
-          "label": "One ingredient: saponified coconut oil",
-          "awareness": "solution-aware",
-          "objection_addressed": "'Every brand says natural — how do I know this isn't just greenwashing with a long chemical list hiding on the back?'",
-          "proof": "The unscented bar has a single verifiable ingredient — saponified organic extra virgin coconut oil — confirmed by multiple independent reviewers who checked the label.",
-          "hook_examples": [
-            "Read the whole ingredient list out loud: saponified coconut oil. That's it.",
-            "Finally, a soap without anything added.",
-            "If a product has complex-sounding names, I'm out. That's why I tried this."
-          ],
-          "source_quotes": [
-            "this soap is absolutely the BEST. Finally, a soap without anything added. For those with sensitivity issues this soap is a huge blessing. Nothing but pure coconut.",
-            "I ordered the unscented option for this Real Skin Care bar soap, so it has just one ingredient: saponified coconut oil.",
-            "First off, I'm super picky about what products I buy based on the ingredients. If a product has too many artificial ingredients with complex sounding names, I'm out. That's the reason I was eager to try this soap."
-          ]
-        },
-        {
-          "id": "p2a2",
-          "label": "125 chemicals a day",
-          "awareness": "unaware",
-          "objection_addressed": "'Does what I put on my skin actually matter enough to switch brands?'",
-          "proof": "A massage therapist who tests lotions professionally frames the switch as cleaning up your health, citing the 125+ chemicals the average person applies daily; customers echo that what goes on skin goes into the bloodstream.",
-          "hook_examples": [
-            "The average person puts 125+ chemicals on their skin every day. Here's one that adds zero.",
-            "What goes on our skin goes into the blood stream — and every organ and cell.",
-            "Zero crap added. From a massage therapist who tests lotions for a living."
-          ],
-          "source_quotes": [
-            "Given that the average person puts 125+ chemicals on their skin every day, this is a great option for anyone looking to \"clean up\" their health.",
-            "it beats rubbing unnecessary toxic chemicals onto the largest organ of our body - our skin. What goes on our skin goes into the blood stream and every organ and cell.",
-            "This lotion is wonderful! I hate it when it takes too long for a lotion to absorb, and this one is very quick. It smells wonderful and I love that I am not putting all the harmful chemicals into my skin!"
-          ]
-        },
-        {
-          "id": "p2a3",
-          "label": "Ingredients you can actually read",
-          "awareness": "most-aware",
-          "objection_addressed": "'Clean lotions cost a fortune — I'd be paying a premium just for a nicer label.'",
-          "proof": "Buyers who spent $200+ hunting the perfect organic lotion say this one beat them all on price, and repeat buyers call the ingredient list a rare find.",
-          "hook_examples": [
-            "I spent over $200 trying to find the perfect organic lotion. This one won.",
-            "Ingredients you can read. Every one of them.",
-            "Simple ingredients and very affordable — the two words that never go together."
-          ],
-          "source_quotes": [
-            "I have been looking for a good organic lotion for a while now and had spent over $200 trying to find the perfect one. I was skeptical about this one at first, but thought I would give it a chance. For the price, it's absolutely incredible!",
-            "I love that you can read the ingredients and it’s all things I know. Great value and great for your skin!",
-            "Great product. Natural ingredients rare find."
-          ]
-        }
-      ]
-    },
-    {
       "id": "p1",
       "name": "The Eczema-Exhausted Parent / Chronic Dry Skin Sufferer",
       "summary": "Has burned through prescription steroids, Aquaphor, CeraVe and Etsy balms for themselves or their kid's eczema, psoriasis, or cracked feet. Emotionally worn down by itch, cracking and failed products; will pay anything for something that finally stops the itch.",
@@ -120,6 +60,66 @@
             "dude as soon as you put it on it just ABSORBS. My hands are in water a lot at my job and this locks moisture in better than any B & B Works or Body shop product. It also doesn't burn my cuts.",
             "It healed the cracked skin around my thumb after the first use.",
             "For the price this lotion is amazing! I wash dishes all day and this lotion keeps my hands moisturized all day!"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "name": "The Ingredient-Label Reader",
+      "summary": "Reads every label, rejects anything with unpronounceable names, parabens, dyes or synthetic fragrance, and is actively trying to lower the chemical load going onto the body's largest organ. Distrusts 'natural' marketing claims and wants a short ingredient list she can verify.",
+      "evidence_count": 25,
+      "emotional_intensity": 7.5,
+      "angles": [
+        {
+          "id": "p2a1",
+          "label": "One ingredient: saponified coconut oil",
+          "awareness": "solution-aware",
+          "objection_addressed": "'Every brand says natural — how do I know this isn't just greenwashing with a long chemical list hiding on the back?'",
+          "proof": "The unscented bar has a single verifiable ingredient — saponified organic extra virgin coconut oil — confirmed by multiple independent reviewers who checked the label.",
+          "hook_examples": [
+            "Read the whole ingredient list out loud: saponified coconut oil. That's it.",
+            "Finally, a soap without anything added.",
+            "If a product has complex-sounding names, I'm out. That's why I tried this."
+          ],
+          "source_quotes": [
+            "this soap is absolutely the BEST. Finally, a soap without anything added. For those with sensitivity issues this soap is a huge blessing. Nothing but pure coconut.",
+            "I ordered the unscented option for this Real Skin Care bar soap, so it has just one ingredient: saponified coconut oil.",
+            "First off, I'm super picky about what products I buy based on the ingredients. If a product has too many artificial ingredients with complex sounding names, I'm out. That's the reason I was eager to try this soap."
+          ]
+        },
+        {
+          "id": "p2a2",
+          "label": "125 chemicals a day",
+          "awareness": "unaware",
+          "objection_addressed": "'Does what I put on my skin actually matter enough to switch brands?'",
+          "proof": "A massage therapist who tests lotions professionally frames the switch as cleaning up your health, citing the 125+ chemicals the average person applies daily; customers echo that what goes on skin goes into the bloodstream.",
+          "hook_examples": [
+            "The average person puts 125+ chemicals on their skin every day. Here's one that adds zero.",
+            "What goes on our skin goes into the blood stream — and every organ and cell.",
+            "Zero crap added. From a massage therapist who tests lotions for a living."
+          ],
+          "source_quotes": [
+            "Given that the average person puts 125+ chemicals on their skin every day, this is a great option for anyone looking to \"clean up\" their health.",
+            "it beats rubbing unnecessary toxic chemicals onto the largest organ of our body - our skin. What goes on our skin goes into the blood stream and every organ and cell.",
+            "This lotion is wonderful! I hate it when it takes too long for a lotion to absorb, and this one is very quick. It smells wonderful and I love that I am not putting all the harmful chemicals into my skin!"
+          ]
+        },
+        {
+          "id": "p2a3",
+          "label": "Ingredients you can actually read",
+          "awareness": "most-aware",
+          "objection_addressed": "'Clean lotions cost a fortune — I'd be paying a premium just for a nicer label.'",
+          "proof": "Buyers who spent $200+ hunting the perfect organic lotion say this one beat them all on price, and repeat buyers call the ingredient list a rare find.",
+          "hook_examples": [
+            "I spent over $200 trying to find the perfect organic lotion. This one won.",
+            "Ingredients you can read. Every one of them.",
+            "Simple ingredients and very affordable — the two words that never go together."
+          ],
+          "source_quotes": [
+            "I have been looking for a good organic lotion for a while now and had spent over $200 trying to find the perfect one. I was skeptical about this one at first, but thought I would give it a chance. For the price, it's absolutely incredible!",
+            "I love that you can read the ingredients and it’s all things I know. Great value and great for your skin!",
+            "Great product. Natural ingredients rare find."
           ]
         }
       ]
