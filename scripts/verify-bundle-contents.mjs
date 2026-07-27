@@ -22,6 +22,7 @@
  */
 
 import { shopifyGraphQL } from '../lib/shopify.js';
+import { loadRoster } from '../lib/bundle-roster.js';
 
 const only = process.argv[2];
 
@@ -35,6 +36,7 @@ const q = `{
       variants(first: 20) {
         nodes {
           title
+          selectedOptions { name value }
           metafield(namespace: "bundle", key: "contents") { value }
           productVariantComponents(first: 20) {
             nodes { quantity productVariant { title product { handle title } } }
@@ -151,3 +153,42 @@ if (problems) {
   process.exit(1);
 }
 console.log('\nAll bundle copy matches components.');
+
+// ── spec ↔ Shopify ─────────────────────────────────────────────────────────
+// The roster is only a source of truth if drift from it is an error. Without
+// this, config/bundles.json is documentation that rots.
+
+const roster = loadRoster();
+let drift = 0;
+
+// When checking a single handle, only validate that bundle in the roster.
+const bundlesToCheck = only ? roster.bundles.filter(b => b.handle === only) : roster.bundles;
+
+for (const spec of bundlesToCheck) {
+  const live = products.find(p => p.handle === spec.handle);
+  if (!live) { console.log(`\n${spec.handle}: in the roster but not live`); drift++; continue; }
+
+  for (const sv of spec.variants) {
+    const wanted = Object.values(sv.options).join(' / ');
+    // Match on the exact option map, never on the title. "4 pumps" is a prefix
+    // of "4 pumps + body lotion", so a substring match compares the wrong
+    // basket and reports a false pass.
+    const lv = live.variants.nodes.find(v => {
+      const liveOpts = Object.fromEntries(v.selectedOptions.map(o => [o.name, o.value]));
+      const specKeys = Object.keys(sv.options);
+      return specKeys.length === Object.keys(liveOpts).length
+        && specKeys.every(k => liveOpts[k] === sv.options[k]);
+    });
+    if (!lv) { console.log(`\n${spec.handle} / ${wanted}: variant missing in Shopify`); drift++; continue; }
+
+    const liveSet = new Set(lv.productVariantComponents.nodes
+      .map(c => `${c.productVariant.product.handle}/${c.productVariant.title}×${c.quantity}`));
+    const specSet = new Set(sv.components.map(c => `${c.product}/${c.variant}×${c.qty}`));
+
+    for (const s of specSet) if (!liveSet.has(s)) { console.log(`\n${spec.handle} / ${wanted}: roster expects ${s}, Shopify does not ship it`); drift++; }
+    for (const l of liveSet) if (!specSet.has(l)) { console.log(`\n${spec.handle} / ${wanted}: Shopify ships ${l}, roster does not list it`); drift++; }
+  }
+}
+
+console.log(drift ? `\n${drift} drift(s) between config/bundles.json and Shopify.` : '\nRoster matches Shopify.');
+if (drift) process.exitCode = 1;
