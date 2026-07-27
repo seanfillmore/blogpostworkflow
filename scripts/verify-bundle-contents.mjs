@@ -34,6 +34,7 @@ const q = `{
       components: metafield(namespace: "bundle", key: "components") { value }
       qty: metafield(namespace: "bundle", key: "component_qty") { value }
       variants(first: 20) {
+        pageInfo { hasNextPage }
         nodes {
           title
           selectedOptions { name value }
@@ -50,6 +51,17 @@ const q = `{
 const res = await shopifyGraphQL(q);
 let products = res.products.nodes.filter(p => p.variants.nodes.some(v => v.productVariantComponents.nodes.length));
 if (only) products = products.filter(p => p.handle === only);
+
+// Truncation guard: variants(first: 20) must not silently truncate
+for (const p of products) {
+  if (p.variants.pageInfo.hasNextPage) {
+    throw new Error(
+      `verify-bundle-contents: "${p.handle}" has more than 20 variants — ` +
+      'variants(first: 20) truncated silently. Raise `first` on the variants connection ' +
+      '(and re-check the query cost budget) before trusting the component drift check.'
+    );
+  }
+}
 
 if (!products.length) {
   console.log(only ? `no componentized bundle with handle "${only}"` : 'no componentized bundles found (are they tagged "bundle"?)');
@@ -150,9 +162,9 @@ for (const p of products) {
 
 if (problems) {
   console.log(`\n${problems} variant(s) with mismatched copy. Customers would receive something other than what the page says.`);
-  process.exit(1);
+  process.exitCode = 1;
 }
-console.log('\nAll bundle copy matches components.');
+if (!problems) console.log('\nAll bundle copy matches components.');
 
 // ── spec ↔ Shopify ─────────────────────────────────────────────────────────
 // The roster is only a source of truth if drift from it is an error. Without
