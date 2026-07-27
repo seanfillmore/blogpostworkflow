@@ -7,6 +7,11 @@ import {
   normalizeSerpItem,
   dedupeRecords,
   filterSkinCluster,
+  AWARENESS_LEVELS,
+  validateAnalysis,
+  rankPersonas,
+  renderPersonasMarkdown,
+  renderVoiceOfCustomerMarkdown,
 } from '../../lib/voice-of-customer.js';
 
 // ── cluster definition ──────────────────────────────────────────────────────
@@ -127,4 +132,136 @@ test('filterSkinCluster keeps handle-less external records', () => {
     normalizeTavilyResult({ url: 'https://reddit.com/r/x/1', title: 'T', content: 'b' }),
   ]);
   assert.equal(out.length, 1);
+});
+
+function validAngle(overrides = {}) {
+  return {
+    id: 'steroid-cream-off-ramp',
+    label: 'The steroid-cream off-ramp',
+    awareness: 'problem-aware',
+    objection_addressed: 'Will a natural lotion actually do anything?',
+    proof: '97 reviews at 4.91 stars',
+    hook_examples: ['Off the steroid cream in three weeks'],
+    source_quotes: ['I finally stopped using hydrocortisone.'],
+    ...overrides,
+  };
+}
+
+function validPersona(overrides = {}) {
+  return {
+    id: 'eczema-flare-parent',
+    name: 'The eczema flare parent',
+    summary: 'Buys for a child whose skin reacts to everything.',
+    evidence_count: 23,
+    emotional_intensity: 8.4,
+    angles: [validAngle()],
+    ...overrides,
+  };
+}
+
+function validAnalysis(overrides = {}) {
+  return {
+    personas: [validPersona()],
+    objections: [{ text: 'Worried it will feel greasy', evidence_count: 12, quote: 'Too greasy for me.' }],
+    golden_nugget_phrases: [{ text: 'like butter for your skin', evidence_count: 3, quote: 'It is like butter for your skin.' }],
+    trigger_points: [{ text: 'A winter flare-up', evidence_count: 7, quote: 'My hands cracked in January.' }],
+    not_for: [{ text: 'People who want a fragrance-free gel', evidence_count: 4, quote: 'I wanted a gel, not a balm.' }],
+    ...overrides,
+  };
+}
+
+// ── validation ──────────────────────────────────────────────────────────────
+test('validateAnalysis accepts a well-formed analysis', () => {
+  const res = validateAnalysis(validAnalysis());
+  assert.equal(res.ok, true, res.errors.join('; '));
+  assert.deepEqual(res.errors, []);
+});
+
+test('validateAnalysis rejects a persona with zero angles', () => {
+  const res = validateAnalysis(validAnalysis({ personas: [validPersona({ angles: [] })] }));
+  assert.equal(res.ok, false);
+  assert.match(res.errors.join(' '), /at least one angle/i);
+});
+
+test('validateAnalysis rejects an angle with no source_quotes', () => {
+  const persona = validPersona({ angles: [validAngle({ source_quotes: [] })] });
+  const res = validateAnalysis(validAnalysis({ personas: [persona] }));
+  assert.equal(res.ok, false);
+  assert.match(res.errors.join(' '), /source_quotes/);
+});
+
+test('validateAnalysis rejects an awareness value outside the allowed set', () => {
+  const persona = validPersona({ angles: [validAngle({ awareness: 'vaguely-curious' })] });
+  const res = validateAnalysis(validAnalysis({ personas: [persona] }));
+  assert.equal(res.ok, false);
+  assert.match(res.errors.join(' '), /awareness/);
+  assert.ok(AWARENESS_LEVELS.includes('problem-aware'));
+});
+
+test('validateAnalysis rejects an analysis with no personas', () => {
+  const res = validateAnalysis(validAnalysis({ personas: [] }));
+  assert.equal(res.ok, false);
+});
+
+test('validateAnalysis rejects a voice-of-customer entry with no quote', () => {
+  const res = validateAnalysis(validAnalysis({
+    objections: [{ text: 'Too greasy', evidence_count: 2, quote: '' }],
+  }));
+  assert.equal(res.ok, false);
+  assert.match(res.errors.join(' '), /quote/);
+});
+
+// ── ranking ─────────────────────────────────────────────────────────────────
+test('rankPersonas orders by evidence_count x emotional_intensity, highest first', () => {
+  const low = validPersona({ id: 'low', evidence_count: 40, emotional_intensity: 2 });   // 80
+  const high = validPersona({ id: 'high', evidence_count: 12, emotional_intensity: 9 }); // 108
+  assert.deepEqual(rankPersonas([low, high]).map((p) => p.id), ['high', 'low']);
+});
+
+test('rankPersonas does not mutate its input', () => {
+  const input = [
+    validPersona({ id: 'a', evidence_count: 1, emotional_intensity: 1 }),
+    validPersona({ id: 'b', evidence_count: 10, emotional_intensity: 10 }),
+  ];
+  rankPersonas(input);
+  assert.deepEqual(input.map((p) => p.id), ['a', 'b']);
+});
+
+// ── rendering ───────────────────────────────────────────────────────────────
+test('renderVoiceOfCustomerMarkdown emits the five stable headings', () => {
+  const md = renderVoiceOfCustomerMarkdown(validAnalysis(), { partial: false });
+  for (const heading of [
+    '## Objections',
+    '## Golden-nugget phrases',
+    '## Trigger points',
+    "## Who we're not for",
+    '## Source notes',
+  ]) {
+    assert.ok(md.includes(heading), `missing ${heading}`);
+  }
+});
+
+test('renderVoiceOfCustomerMarkdown flags a partial corpus in Source notes', () => {
+  const md = renderVoiceOfCustomerMarkdown(validAnalysis(), { partial: true });
+  assert.match(md, /generated without external friction data/);
+});
+
+test('renderVoiceOfCustomerMarkdown puts evidence count and quote on every entry', () => {
+  const md = renderVoiceOfCustomerMarkdown(validAnalysis(), { partial: false });
+  assert.match(md, /Worried it will feel greasy/);
+  assert.match(md, /12 mentions/);
+  assert.match(md, /Too greasy for me\./);
+});
+
+test('renderPersonasMarkdown lists personas in rank order with their angles', () => {
+  const analysis = validAnalysis({
+    personas: [
+      validPersona({ id: 'low', name: 'Low persona', evidence_count: 1, emotional_intensity: 1 }),
+      validPersona({ id: 'high', name: 'High persona', evidence_count: 50, emotional_intensity: 9 }),
+    ],
+  });
+  const md = renderPersonasMarkdown(analysis);
+  assert.ok(md.indexOf('High persona') < md.indexOf('Low persona'));
+  assert.match(md, /problem-aware/);
+  assert.match(md, /steroid-cream-off-ramp/);
 });
