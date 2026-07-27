@@ -3,196 +3,186 @@
 **Creator:** Dara Denney  
 **Video:** https://www.youtube.com/watch?v=5C5VhqW9HCc  
 **Published:** 2026-06-25  
-**Inferred era cues:** Published 2026-06-25; creator says 'I can't believe people are still saying this in 2026'; sponsored by Super Scale (AI ad agent with autonomous sub-agents and ad-library scanning); references a prior 'Claude Co-work' video; live competitor analysis of Dr. Squatch, Native, Every Man Jack, Harry's; claim that low-fi creator statics are 'moving the needle right now' in client ad accounts.  
+**Inferred era cues:** Published 2026-06-25; explicit '2026' reference ('I can't believe people are still saying this in 2026'); sponsored integration with Super Scale AI ad agent; references a prior 'Claude Co-work' video and Claude-built brand context docs; live scanning of Meta Ad Library for Native, Every Man Jack, Harry's, Dr. Squatch.  
 
-A paid-social creative masterclass on static (image) ads: first debunking myths that statics are retargeting-only or just for rapid message testing, then laying out a three-layer framework — strategy (single goal, specific persona, format choice, awareness level), design (visual hierarchy, one-second comprehension test), and copy (specificity with numbers, audience call-outs, taboo, primal desire, curiosity loops, negative framing, mined customer testimonials, shown transformation) — followed by a library of durable static formats (infographic, headliner, benefits call-out, comparison, transformation, grid, text-only). The final third is a sponsored walkthrough of generating and iterating those statics with an AI ad agent (Super Scale) fed a Claude-built 'brand brain,' including automated competitor ad-library research and creative gap analysis.
+A paid-social creative strategist walks through how to build high-performing static (image) ads in three layers: strategy (one goal, one persona, one format, one awareness level), design (visual hierarchy, 1-second comprehension test), and copy (specificity, audience callout, taboo, primal desire, curiosity loops, negative framing, review mining, transformation proof). She then catalogs the core static formats worth testing (educational infographic, headliner, benefit callout, us-vs-them comparison, transformation, grid, text-only) and spends the back half demoing a sponsored AI ad-generation tool (Super Scale) using Claude-built brand context, running competitor ad-library research and creative gap analysis against Dr. Squatch, Native, Every Man Jack, and Harry's. The strategy and copy layers are durable and transferable to any single-frame asset; the production half assumes an active ad account, a paid tool subscription, and budget to test.
 
-Found 20 tactics: 14 adopted, 6 rejected.
+Found 19 tactics: 13 adopted, 6 rejected.
 
 ## Adopted
 
-### Run a one-second comprehension test: if a stranger can't tell what you're selling instantly, kill the creative — clarity beats creativity. — 8/10
+### Build a visual hierarchy where the headline is the focal point, then the product/key visual, then supporting elements — and kill any asset that fails a 1-second comprehension test. — 8/10
 
-**Why it works:** Comprehension is the gate before persuasion; ambiguity spends the only second of attention you get, so unclear assets fail before the message is even evaluated.
+**Why it works:** The eye lands on one thing first; if that thing is text that does the targeting, the viewer self-qualifies instantly. Clarity beats creativity because a confused viewer scrolls.
 
-**Evidence:** Creator applies it live to reject a strategist's ad; assertion otherwise.
+**Evidence:** Shows a rejected client asset ('way too much going on, no focal point') versus a compliant one; also critiques the AI tool's own cluttered outputs by the same rule.
 
-**Fit:** Durable principle, free, and testable by one person in minutes. It is a CRO-stage screen — exactly the gate that precedes any paid spend under the required sequence — and applies to Amazon main images, PDP heroes, and email headers alike.
+**Fit:** Durable design principle, no decay. Directly applicable to Amazon secondary images — which drive roughly two-thirds of revenue at ~$1,800/mo — and to PDP imagery. Solo-operator executable with no budget, no tools, no traffic.
 
-**Target skill:** `marketing-visual-hierarchy-and-clarity` (edit)
+**Target skill:** `marketing-product-image-stack` (edit)
 
-### Be concretely specific: name the demographic, use exact numbers, and lead with the time, cost, or effort outcome (e.g. '5 minutes, under $5', '2 inches in one use'). — 8/10
+### Always have these static formats in rotation: educational infographic, headliner, benefit callout, us-vs-them comparison, transformation, grid/multi-SKU, and text-only. — 8/10
 
-**Why it works:** Specific numbers are cognitively credible and self-verifying, while generic benefit language is skipped because it makes no falsifiable promise.
+**Why it works:** Each format carries a different job and reaches a different awareness stage; missing formats are literal gaps in who you can convert. Infographics and text-only borrow credibility from organic formats and don't read as ads.
 
-**Evidence:** Assertion from pattern recognition across winning creative.
+**Evidence:** Traces headliner and callout formats back to Ogilvy-era print, cites a Laura Geller grid top performer, and notes transformation formats are the most common gap she finds in ad accounts.
 
-**Fit:** Durable copy principle with zero dependency on budget, list size, or attribution. Directly rewritable into PDP headlines, Amazon bullets, and email subject lines — e.g. quantified claims about hours of odor protection or transition period length.
+**Fit:** Durable principle class. This maps almost one-to-one onto an Amazon image stack: infographic (ingredients / what's not in it), benefit callout, us-vs-them comparison chart against conventional aluminum deodorant, transformation, and a grid for a 12-SKU catalog or bundle. Zero cost, no traffic required, and it improves conversion on the surface that already produces most revenue.
+
+**Target skill:** `marketing-product-image-stack` (edit)
+
+### Replace generic copy with specificity: exact numbers that quantify time, effort, or cost ('5 minutes, under $5', '2 inches in one use'). — 8/10
+
+**Why it works:** Numbers are concrete and falsifiable-feeling, so they read as a real outcome rather than a claim; generic phrasing gives the brain nothing to hold.
+
+**Evidence:** Assertion, presented as the number-one copy rule behind winning statics.
+
+**Fit:** Durable principle. Applies to Amazon bullets, PDP headlines, and email subject lines with no spend and no traffic. With AOV at $50.46 and conversion as the near-term lever, tightening claim specificity is exactly the CRO-stage work the sequence calls for.
 
 **Target skill:** `marketing-conversion-copy-angles` (create)
 
-### Lean into the taboo — say the thing competitors are too polite to say. — 8/10
+### Export your reviews to a CSV, hand it to an LLM, and ask it to surface the 'golden nugget' testimonials that would work as ad or headline copy. — 8/10
 
-**Why it works:** Naming the embarrassing reality both stops the scroll and signals that you understand the customer's actual lived problem, creating identification competitors cannot buy.
+**Why it works:** Customers already articulate the objection, the transformation, and the vocabulary better than you can; borrowing verbatim language beats writing it, and an LLM can scan the whole corpus for the few lines that carry.
 
-**Evidence:** Creator's experience; demonstrated live with the visceral 'your deodorant is ruining your shirts' pit-stain concept for Dr. Squatch.
+**Evidence:** 'This again and again has gotten me winners' — repeated practitioner claim, no data.
 
-**Fit:** Durable persuasion principle, and the worked example in the video is literally deodorant — pit stains, odor, the natural-deodorant detox period. Free to apply to PDP copy, email, and organic content by a solo operator with no budget.
+**Fit:** Durable principle, and the single best-fit tactic here for a solo operator. Amazon and Shopify reviews already exist and export as CSV; it costs nothing, needs no traffic, no budget, and no team. It does not require thousands of reviews — the method works on dozens, since the output is a handful of quotable lines for Amazon bullets, PDP copy, and email.
 
-**Target skill:** `marketing-conversion-copy-angles` (edit)
+**Target skill:** `marketing-review-mining` (create)
 
-### Export your reviews to a CSV, hand them to an LLM, and have it surface 'golden nugget' testimonials to use as ad and page copy. — 8/10
+### Every creative asset should have exactly one goal and one persona — never try to do two jobs or speak to two people in one image. — 7/10
 
-**Why it works:** Customers already articulate the benefit in the vocabulary and objection frame that converts other customers; borrowing their words beats writing new copy because it is pre-validated language.
+**Why it works:** A single job lets the headline, proof, and objection handling all pull the same direction; two jobs split the focal point and the message reaches nobody clearly.
 
-**Evidence:** Creator states this has produced winners 'again and again' across her accounts.
+**Evidence:** Assertion from practice; she cites this as the most common failure mode she sees in statics.
 
-**Fit:** Durable principle, and the only input required is the existing Amazon and Shopify review corpus plus an LLM — no staff, no budget, no traffic. It does not need thousands of reviews to work; a few dozen produce usable language. Feeds CRO copy, the stage that gates paid spend.
+**Fit:** Durable principle class, so age is irrelevant. Real Skin Care has 12 SKUs and its highest-leverage single-frame surfaces are Amazon listing image slots and Shopify PDP imagery — each slot is exactly the kind of asset that fails when it tries to say five things. Costs nothing and needs no traffic.
 
-**Target skill:** `marketing-review-mining-for-copy` (create)
+**Target skill:** `marketing-product-image-stack` (create)
 
-### Give every creative exactly one job — one goal, one persona, one objection — never two. — 7/10
+### Match every message to a specific market awareness level, which bridges persona and goal to the copy framework. — 7/10
 
-**Why it works:** An asset that tries to educate, sell an offer, and answer objections at once loses the focal point and speaks clearly to nobody, so comprehension and click intent both drop.
+**Why it works:** What a stranger needs to hear depends on whether they know they have a problem, know solutions exist, or know your product — mismatched messaging talks past them regardless of format quality.
 
-**Evidence:** Assertion from experience; creator says this is where she most often sees statics fail.
+**Evidence:** Presented as the fourth strategic prerequisite; the AI gap analysis in the demo is structured around awareness-level and market-sophistication coverage.
 
-**Fit:** Durable principle class — transfers straight to Amazon listing image slots, Shopify PDP hero blocks, and single-purpose emails, all of which a solo operator controls for free. Directly supports the CRO stage that gates everything else.
+**Fit:** Durable principle class, age irrelevant. Useful for deciding what a PDP above-the-fold says versus what an Amazon listing says versus what a post-purchase email says — and retention is the binding constraint, so knowing that repeat buyers are most-aware (and need reorder/ritual messaging, not education) is directly actionable at zero cost.
 
 **Target skill:** `marketing-awareness-level-messaging` (create)
 
-### Pick a narrow persona — stage and active objection, not a broad demographic — before writing any copy. — 7/10
+### Call your audience out by name in the copy — self-selection is a targeting mechanic, not just a stylistic choice. — 7/10
 
-**Why it works:** Persona determines vocabulary, the type of proof required, and which objections must be answered; without it copy defaults to generic language that self-selects nobody.
-
-**Evidence:** Assertion only; illustrated with the 'small business owners' counter-example.
-
-**Fit:** Durable positioning principle, platform-agnostic and zero-cost. For 12 SKUs across natural deodorant, oral care, and lip balm, objection-specific copy (does it actually work, detox period, aluminum-free skepticism) is usable on the PDP and Amazon bullets today without any ad spend.
-
-**Target skill:** `marketing-awareness-level-messaging` (edit)
-
-### Match each creative to a specific level of market awareness; awareness is the bridge between persona/goal and the copy framework. — 7/10
-
-**Why it works:** Unaware, problem-aware, solution-aware, and product-aware prospects need structurally different openings; mismatching the entry point means the message never lands regardless of design quality.
-
-**Evidence:** Assertion; reinforced by the competitor gap analysis showing awareness levels not being targeted.
-
-**Fit:** Durable principle class — Schwartz-era logic that ages slowly. Applies to organic content, email sequences, and listing copy, none of which require budget or attribution. Problem-aware framing is the natural entry for natural-deodorant switchers.
-
-**Target skill:** `marketing-awareness-level-messaging` (edit)
-
-### Enforce a strict visual hierarchy — headline first (it does the targeting), then product/key visual, then supporting elements. — 7/10
-
-**Why it works:** The eye needs one deliberate entry point; when everything competes for attention nothing is read, so the headline must own the focal point and everything else must recede.
-
-**Evidence:** Creator shows a rejected strategist ad with no focal point versus a compliant one; assertion otherwise.
-
-**Fit:** Durable design principle, not platform mechanics. Real Skin Care's highest-leverage image real estate is the Amazon listing image stack ($1,800/mo channel) and the Shopify PDP — both editable by a solo operator with Canva, no designer required.
-
-**Target skill:** `marketing-visual-hierarchy-and-clarity` (create)
-
-### Write to a primal desire (status, sex, belonging, safety, approval) and treat the product as merely the mechanism. — 7/10
-
-**Why it works:** Product benefits are rational and comparable; primal desires are the actual purchase driver, so the desire belongs in the headline and the feature belongs in the supporting copy.
-
-**Evidence:** Assertion from pattern recognition across winning creative.
-
-**Fit:** Durable positioning principle, age-irrelevant. Usable immediately in listing and email copy; for natural body care the safety/approval axis (what you're not putting on your body, not smelling in a meeting) is directly available without spend.
-
-**Target skill:** `marketing-conversion-copy-angles` (edit)
-
-### Call out your audience by name in the copy — self-selection is a targeting mechanic. — 6/10
-
-**Why it works:** Naming the reader makes them stop and identify, doing targeting work inside the creative rather than relying on the platform's audience settings.
+**Why it works:** Naming the reader makes them stop and identify, which filters in the right buyer and filters out the wrong one before they cost you anything.
 
 **Evidence:** Assertion only.
 
-**Fit:** Durable copy principle; works without ads on listing copy and email. Scored below the specificity tactic because its stated payoff — replacing platform targeting — is an ad-account benefit Real Skin Care does not currently collect.
+**Fit:** Durable principle, executable solo at zero cost on PDP headlines, Amazon bullets, and email subject lines. Especially relevant for natural deodorant where the buyer is a self-identified group (people who switched off aluminum, people whose natural deodorant failed them).
 
 **Target skill:** `marketing-conversion-copy-angles` (edit)
 
-### Use negative framing — name explicitly what the audience is afraid of. — 6/10
+### Lean into the taboo — say the thing competitors are too polite to say. — 7/10
 
-**Why it works:** Loss and fear are stronger motivators than gain; naming the feared outcome creates recognition and urgency that a positive benefit statement does not.
+**Why it works:** Naming the uncomfortable reality both stops the scroll and signals that you actually understand the buyer's lived experience, creating identification at a deeper level than benefit copy.
+
+**Evidence:** Assertion, reinforced in the demo where she argues Dr. Squatch is 'playing it very clean and very safe' and should go more visceral on gunky pits and pit stains.
+
+**Fit:** Durable principle and unusually well-matched to the category: deodorant, body odor, and oral care are inherently taboo-adjacent, and the competitors named in this very video (Native, Every Man Jack, Harry's) are the ones playing it safe. Free to execute on PDP, Amazon, and email copy.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+### Show the transformation rather than describing the after-state — before/after visuals are the highest-leverage format for problem-aware and solution-aware buyers looking for proof. — 6/10
+
+**Why it works:** Problem- and solution-aware buyers have stopped needing persuasion and only need evidence; a visual before/after is proof in a form that requires no reading.
+
+**Evidence:** Assertion plus her observation that transformation is the biggest format gap in the ad accounts she audits; AI demo produces a pit-stain before/after she rates highly.
+
+**Fit:** Durable principle. Genuinely executable for natural deodorant (stained shirt vs. clean shirt, pit-stain agitation) and oral care, and it belongs on Amazon/PDP images, not just ads. Scored below the format library because honest before/afters are harder to produce solo for body care than for cosmetics, and category claims need care.
+
+**Target skill:** `marketing-product-image-stack` (edit)
+
+### Write to a primal desire (status, sex, belonging, safety, approval) and treat the product as the mechanism, not the headline. — 6/10
+
+**Why it works:** People buy the end state, not the feature; the product is only the route to the desire, so the desire belongs in the headline and the feature belongs in the supporting line.
+
+**Evidence:** Assertion; framed as one of the recurring patterns across all her winning creative, video and static.
+
+**Fit:** Durable positioning principle, free to apply. Scored slightly lower because natural body care sits closest to 'safety' and 'approval' and the risk of overreach into unsupportable claims is real — but reframing 'aluminum-free' as a safety/confidence outcome is straightforward PDP and Amazon work.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+### Use negative framing — name what the audience is afraid of rather than only what they'll gain. — 6/10
+
+**Why it works:** Fear and avoidance language cuts through where benefit language blends in; naming the feared outcome proves you understand the stakes.
 
 **Evidence:** Assertion only.
 
-**Fit:** Durable persuasion principle, free to apply. Overlaps heavily with the taboo angle, so it belongs as a variant inside the same copy-angles skill rather than a separate skill — duplicate skills degrade triggering.
+**Fit:** Durable copy principle, zero cost. Fits the category (aluminum, ruined shirts, natural deodorant that quits by noon) and is testable on Amazon bullets and PDP copy without any ad spend or traffic.
 
 **Target skill:** `marketing-conversion-copy-angles` (edit)
 
-### Show the transformation visually rather than describing the after-state; before/after creative is legal, with tighter restrictions only on cosmetic procedures and weight loss. — 6/10
+### Research competitor ad libraries first and run a gap analysis on which awareness levels, personas, and formats are missing from your own rotation before producing anything. — 6/10
 
-**Why it works:** Problem-aware and solution-aware buyers are shopping for proof, not description; a visible before/after is the fastest proof format and it is the biggest gap in most ad accounts.
+**Why it works:** Competitors' persistent creative reveals what the market responds to; comparing their coverage to yours exposes the specific angles and formats you have no asset for, so production targets a known gap instead of guessing.
 
-**Evidence:** Creator's account of ad-account gaps; explicit compliance correction that before/after is not banned in 2026.
+**Evidence:** Live demo scanning Native, Every Man Jack, Harry's, and Dr. Squatch; identifies Dr. Squatch's missing comparison and ingredient-infographic archetypes and notes Every Man Jack's top performers are all comparison/problem-solution.
 
-**Fit:** Durable format principle. Feasible for a solo operator with a phone camera — pit stains on a white shirt, chapped-to-healed lips, stained-to-clean teeth — and usable as Amazon listing images and PDP proof blocks without any ad spend. Scored mid because the compliance nuance mentioned is platform policy (fast-decay class) and marketplace image rules are stricter than the video implies.
+**Fit:** The underlying practice — reading competitor messaging and auditing your own coverage for gaps — is durable and free via the public Meta Ad Library, and the exact competitors demoed are Real Skin Care's category. Scored mid because the tool-driven automated version is a fast-decaying platform mechanic; the manual version is what transfers, and the output should feed Amazon/PDP copy rather than an ad account that isn't running yet.
 
-**Target skill:** `marketing-static-creative-formats` (create)
+**Target skill:** `marketing-competitor-messaging-teardown` (create)
 
-### Always be testing a fixed library of static formats: educational infographic, headliner, benefits call-out, comparison (us vs them), transformation, grid, and text-only. — 6/10
+### Open a curiosity loop — show the setup, hide the payoff behind the click — and make sure the destination actually satisfies it. — 5/10
 
-**Why it works:** Each format survives a different kind of copy and carries a different job, so a format library forces coverage across awareness levels instead of repeating one archetype; several formats trace back to Ogilvy-era print and still work.
+**Why it works:** An unresolved gap compels the click; failing to close the loop on the destination page breaks trust and kills the conversion you just bought.
 
-**Evidence:** Creator's account of top performers (Laura Geller grid) plus the explicit print-era lineage; assertion otherwise.
+**Evidence:** Assertion, with the explicit caveat about closing the loop on the landing page.
 
-**Fit:** Durable principle class — the creator herself dates these to the print era, so age is irrelevant. Repurposable as Amazon listing image slots and organic posts: the grid format is explicitly recommended for multi-SKU brands, and 12 SKUs makes it a natural bundle/collection asset. Scored mid because 'always be testing' implies a test volume this account cannot fund; adopt the format library, not the testing cadence.
-
-**Target skill:** `marketing-static-creative-formats` (edit)
-
-### Open a curiosity loop — show the setup, hide the payoff behind the click — and make sure the landing page closes the loop. — 5/10
-
-**Why it works:** An unresolved gap compels the click; resolving it on-page prevents the bounce that an unpaid-off tease would cause.
-
-**Evidence:** Assertion; creator notes she checks that top performers have the payoff on the landing page.
-
-**Fit:** Durable principle, but its payoff is measured in click-through, and Real Skin Care's binding constraint is retention, not traffic. Still usable on email subject lines at current list scale, so it earns a place inside the copy-angles skill rather than its own.
+**Fit:** Durable principle but its native home is ad-to-landing-page, which is gated behind the traffic stage. It transfers usefully to email subject lines and preview text, which is a live surface given retention is the binding constraint — hence a middling rather than high score.
 
 **Target skill:** `marketing-conversion-copy-angles` (edit)
 
 ## Rejected
 
-### Run a creative gap analysis against competitor ad libraries to find missing awareness levels, personas, and formats before producing anything. — 4/10
+### Low-fidelity creator-style statics are underused and are currently moving the needle in client ad accounts. — 3/10
 
-**Rejected because:** Assumes an existing ad creative library to audit and produces a paid-production brief; the durable portion duplicates the awareness-level and format skills already being created.
+**Rejected because:** Time-sensitive platform performance claim that also assumes creator sourcing and an active ad account.
 
-**Fit reasoning:** The analytic frame (gap by awareness level and format) is durable, but the method assumes you have a live creative catalogue to diff against — Real Skin Care has none. Its output is a paid-creative production brief, which is premature, and it does nothing for the 18-22.5% repeat rate that is the binding constraint. The reusable half is already captured by the awareness-level and format skills.
+**Fit reasoning:** Platform-mechanics class: an explicitly 'right now' performance claim about what the feed rewards, which decays fast even though the video is recent. It also assumes creator content and an ad account to run it in — Real Skin Care is a solo operator with no creator budget and no live paid program.
 
-### Build a 'brand brain' context document in Claude and load it into your AI ad tool before generating creative. — 3/10
+### Once a message wins, port it across multiple visual formats to build creative diversity and increase volume in the account. — 3/10
 
-**Rejected because:** Tool-coupled workflow step with no independent marketing mechanism; the generic version is not actionable or testable against revenue.
+**Rejected because:** Depends on ad testing volume and working attribution that do not exist at $2,700/mo with no media buyer.
 
-**Fit reasoning:** Durable in concept but the mechanism as stated is tool-specific plumbing for a paid AI ad generator, and the generic version — keep a brand context doc for your LLM — is AI hygiene rather than a marketing tactic with a revenue mechanism. Does not touch retention, the binding constraint.
+**Fit reasoning:** Requires an ad account with enough spend to establish a 'winner' in the first place and enough volume for diversity to matter. Attribution isn't working and paid spend is gated behind tracking and CRO — there is no winner to port.
 
-### Static ads can carry cold, top-of-funnel audiences and scale — they are not retargeting-only. — 2/10
+### Static ads are not retargeting-only — with the right awareness-level messaging they can acquire cold audiences at scale. — 2/10
 
-**Rejected because:** Presupposes an active prospecting ad budget and working attribution; premature under the hard paid-media sequence.
+**Rejected because:** Presumes an active paid social account with prospecting budget — premature given the hard Tracking -> CRO -> Offer/AOV -> Traffic sequence.
 
-**Fit reasoning:** Durable principle class, so age is not the problem — the problem is that it only pays off inside a prospecting ad budget. Paid spend is gated behind Tracking -> CRO -> Offer/AOV -> Traffic, and at ~$2,700/mo combined revenue there is no cold-traffic budget to allocate.
+**Fit reasoning:** This is a claim about what to expect from a cold-traffic ad account. Real Skin Care has no meaningful ad budget and paid spend is gated behind tracking, CRO, and offer work; there is no surface where this belief changes an action today.
 
-### Low-fi creator-style statics are what is moving the needle in ad accounts right now. — 2/10
+### Build a brand context document ('brand brain') in Claude, load it into an autonomous AI ad platform (Super Scale), have it research your brand and competitors, then generate and iteratively edit static variations. — 2/10
 
-**Rejected because:** Fast-decay performance claim with no testable mechanism, and requires creator sourcing plus an active ad account to validate.
+**Rejected because:** Sponsored, vendor-specific tooling that assumes ad budget and an active creative pipeline; the transferable parts are already captured by the image-stack and copy-angle tactics.
 
-**Fit reasoning:** This is a platform-mechanics / current-performance claim (fast-decay class) with no stated mechanism beyond 'it's working now', and it also implies sourcing creator content plus a live ad account to test in. No team, no budget, no attribution.
+**Fit reasoning:** Platform-mechanics class and vendor-specific — a paid tool whose interface and capabilities will shift within months. It also exists to feed an ad account Real Skin Care cannot yet fund, and the demo output is judged by a strategist's eye that a solo operator with no designer does not have. Sponsored placement further weakens the evidence.
 
-### Port a proven message across multiple visual formats to build creative diversity and increase volume in the account. — 2/10
+### Before/after ads are not banned on paid social, though cosmetic-procedure and weight-loss categories face heavier restriction. — 2/10
 
-**Rejected because:** Depends on ad-account scale and attribution that do not exist; there is no measured winning ad to port.
+**Rejected because:** Ad platform policy trivia with fast decay; irrelevant until paid traffic is unlocked, and must be checked against current policy anyway.
 
-**Fit reasoning:** Durable in principle but the payoff mechanism is ad-account creative volume, which requires a media budget and working attribution to identify a 'proven message' in the first place. Both are explicitly gated behind Tracking -> CRO -> Offer/AOV -> Traffic.
+**Fit reasoning:** Pure ad-platform policy — platform-mechanics class, which decays fast and must be verified against live policy rather than a video. It also only matters once ads are running, which is downstream of tracking, CRO, and offer work.
 
-### Use an autonomous AI ad agent (Super Scale) to research, generate three static variations at a time, and iterate them with plain-language edit prompts. — 2/10
+### Using statics only as a cheap way to rapid-test messaging before scaling into video wastes their real potential. — 1/10
 
-**Rejected because:** Sponsored tool requiring paid subscription and an active ad account; premature under the paid-spend sequence.
+**Rejected because:** Assumes ad budget and a creative testing cadence that does not exist here.
 
-**Fit reasoning:** Sponsored platform-mechanics content (fast-decay class) whose entire value is producing ad creative for an account with spend. Adds a subscription cost against ~$2,700/mo revenue and produces assets there is no budget to run.
+**Fit reasoning:** Entirely a media-buying workflow opinion; requires an ad account with enough spend to run a testing cadence at all. Not applicable to a $2,700/mo solo operation with no media buyer.
 
 ## Skills touched
 
+- `marketing-product-image-stack` (create)
 - `marketing-awareness-level-messaging` (create)
-- `marketing-visual-hierarchy-and-clarity` (create)
 - `marketing-conversion-copy-angles` (create)
-- `marketing-review-mining-for-copy` (create)
-- `marketing-static-creative-formats` (create)
+- `marketing-review-mining` (create)
+- `marketing-competitor-messaging-teardown` (create)

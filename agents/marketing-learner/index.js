@@ -210,9 +210,15 @@ async function processVideo(item, { client, apiKey, args }) {
     }
     for (const [name, { tactics }] of bySkill) {
       const existing = inventory.find((s) => s.name === name);
+      // For an existing skill, keep its current description — mergeSkillContent
+      // already lets the model sharpen it in place. For a new skill, use the
+      // model-supplied description (it just read the transcript and knows what the
+      // tactic is actually for); validateExtraction guarantees every adopted
+      // tactic carries one. Several adopted tactics can map to the same new skill,
+      // so use the first one's.
       const description = existing
         ? parseFrontmatter(existing.content).description
-        : `Use when working on ${name.replace(/^marketing-/, '').replace(/-/g, ' ')} for Real Skin Care.`;
+        : tactics[0].targetSkill.description;
       const { path, action } = await writeSkill({ name, description, tactics, existing, client });
       skillsTouched.push({ name, action, path });
       writtenPaths.push(path);

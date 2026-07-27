@@ -219,6 +219,17 @@ const VIDEO = {
   assert.match(p, /publish date is unknown/i, 'says the date is unknown when absent');
 }
 {
+  // The whole fix: the model must author targetSkill.description itself (it just
+  // read the transcript), with concrete guidance so it doesn't just restate the
+  // skill's title back — that gives Claude Code's skill matcher nothing to match.
+  const p = buildExtractionPrompt({ video: VIDEO, inventory: [] });
+  assert.match(p, /targetSkill.*description/s, 'requests a description field on targetSkill');
+  assert.match(p, /Use when/, 'guidance tells the model descriptions must start with "Use when"');
+  assert.match(p, /restates the title, matches nothing/, 'includes the bad-example guidance verbatim');
+  assert.match(p, /product page copy, Amazon bullet points, ad copy, or email subject/, 'includes the good-example guidance verbatim');
+  assert.match(p, /required.*even when action is "edit"/i, 'states the description requirement is unconditional on action');
+}
+{
   const p = buildExtractionPrompt({
     video: VIDEO,
     inventory: [{ name: 'marketing-offers', description: 'Offer construction', path: 'x', content: 'BODY_OF_EXISTING_SKILL' }],
@@ -242,7 +253,11 @@ const GOOD = {
       rscFit: { score: 8, reasoning: 'Retention is the constraint' },
       verdict: 'adopt',
       rejectReason: null,
-      targetSkill: { name: 'marketing-retention-flows', action: 'create' },
+      targetSkill: {
+        name: 'marketing-retention-flows',
+        action: 'create',
+        description: 'Use when building lifecycle email or replenishment flows and you need timing that matches consumption cycles.',
+      },
     },
     {
       claim: 'Hire a media buyer',
@@ -298,6 +313,42 @@ assert.throws(
   /action must be/,
   'unknown action rejected'
 );
+
+// A description-less targetSkill defeats the entire point of the skill: Claude Code
+// selects skills by matching description against the task, so a missing one means
+// the skill silently never triggers. Required unconditionally — not just on
+// action: "create" — because the model routinely proposes "edit" for a skill that
+// does not exist yet.
+assert.throws(
+  () => validateExtraction({
+    ...GOOD,
+    tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-retention-flows', action: 'create' } }],
+  }),
+  /targetSkill\.description is required/,
+  'missing description is rejected'
+);
+assert.throws(
+  () => validateExtraction({
+    ...GOOD,
+    tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-retention-flows', action: 'create', description: '' } }],
+  }),
+  /targetSkill\.description is required/,
+  'empty-string description is rejected'
+);
+assert.throws(
+  () => validateExtraction({
+    ...GOOD,
+    tactics: [{ ...GOOD.tactics[0], targetSkill: { name: 'marketing-retention-flows', action: 'edit', description: '   ' } }],
+  }),
+  /targetSkill\.description is required/,
+  'whitespace-only description is rejected even on action: edit'
+);
+{
+  // A reject tactic carries targetSkill: null and must never be required to have
+  // a description — the description guard only applies to adopted tactics.
+  const rejectOnly = { ...GOOD, tactics: [GOOD.tactics[1]] };
+  assert.equal(validateExtraction(rejectOnly), rejectOnly, 'reject tactic with targetSkill: null still passes');
+}
 // A tactic with no stated mechanism is motivational framing, not actionable — the
 // constraint block explicitly tells the model to reject that, so a schema-valid
 // payload must not be able to omit it. Without this guard, renderSkillMarkdown and
