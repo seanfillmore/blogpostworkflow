@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { validateRoster, SKU_BY_HANDLE } from '../../lib/bundle-roster.js';
+import { validateRoster, SKU_BY_HANDLE, economicsRows } from '../../lib/bundle-roster.js';
 
 const CATALOGUE = {
   'coconut-lotion': ['Pure Unscented', 'Coconut Breeze', 'Calming Lavender'],
@@ -64,4 +64,57 @@ test('every component handle maps to a known SKU key', () => {
   }
   assert.equal(SKU_BY_HANDLE['organic-foaming-hand-soap'], 'pump');
   assert.equal(SKU_BY_HANDLE['coconut-soap'], 'barsoap');
+});
+
+const CLEAN_SWAP = {
+  handle: 'clean-swap', title: 'The Clean Swap', status: 'live', price: 59, packaging: 0,
+  story: 'Entry version of the 90-day.',
+  options: [{ name: 'Kit', values: ['Gentle', 'Calm'] }],
+  variants: [
+    { options: { Kit: 'Gentle' }, price: 59, components: [
+      { product: 'coconut-lotion', variant: 'Pure Unscented', qty: 1 },
+      { product: 'coconut-soap', variant: 'Pure Unscented', qty: 1 }] },
+    { options: { Kit: 'Calm' }, price: 59, components: [
+      { product: 'coconut-lotion', variant: 'Pure Unscented', qty: 1 },
+      { product: 'coconut-soap', variant: 'Calming Lavender', qty: 1 }] },
+  ],
+};
+
+test('kits with the same basket collapse to one economics row', () => {
+  const rows = economicsRows(CLEAN_SWAP);
+  assert.equal(rows.length, 1, 'Gentle and Calm differ only by scent, not by basket');
+  assert.equal(rows[0].name, 'The Clean Swap');
+  assert.deepEqual(rows[0].items, { lotion: 1, barsoap: 1 });
+  assert.equal(rows[0].price, 59);
+});
+
+test('genuinely different baskets produce a row each, named by configuration', () => {
+  const handSoap = {
+    handle: 'hand-soap-set', title: 'Hand Soap Set', status: 'live', packaging: 0, story: 'Pumps.',
+    options: [
+      { name: 'Configuration', values: ['4 pumps', '4 pumps + body lotion'] },
+      { name: 'Scent', values: ['Pure Unscented'] },
+    ],
+    variants: [
+      { options: { Configuration: '4 pumps', Scent: 'Pure Unscented' }, price: 44,
+        components: [{ product: 'organic-foaming-hand-soap', variant: 'Pure Unscented', qty: 4 }] },
+      { options: { Configuration: '4 pumps + body lotion', Scent: 'Pure Unscented' }, price: 72,
+        components: [
+          { product: 'organic-foaming-hand-soap', variant: 'Pure Unscented', qty: 4 },
+          { product: 'coconut-lotion', variant: 'Pure Unscented', qty: 1 }] },
+    ],
+  };
+  const rows = economicsRows(handSoap);
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows.map(r => r.name),
+    ['Hand Soap Set — 4 pumps', 'Hand Soap Set — 4 pumps + body lotion']);
+  assert.deepEqual(rows[0].items, { pump: 4 });
+  assert.deepEqual(rows[1].items, { pump: 4, lotion: 1 });
+  assert.equal(rows[1].price, 72);
+});
+
+test('packaging and status carry onto every row', () => {
+  const rows = economicsRows({ ...CLEAN_SWAP, packaging: 1.0, status: 'proposed' });
+  assert.equal(rows[0].packaging, 1.0);
+  assert.equal(rows[0].status, 'proposed');
 });
