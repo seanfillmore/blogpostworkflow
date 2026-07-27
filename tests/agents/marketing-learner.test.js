@@ -113,6 +113,21 @@ assert.throws(() => parseFrontmatter('no frontmatter at all'), /frontmatter/, 'm
 assert.deepEqual(scanSkillInventory(join(tmpdir(), 'definitely-does-not-exist-12345')), [],
   'absent skills dir returns empty, does not throw');
 
+// ── scanSkillInventory with malformed skill ─────────────────────────────────
+{
+  const dir = mkdtempSync(join(tmpdir(), 'skills-malformed-'));
+  mkdirSync(join(dir, 'marketing-valid'), { recursive: true });
+  writeFileSync(join(dir, 'marketing-valid', 'SKILL.md'),
+    '---\nname: marketing-valid\ndescription: This one is fine\n---\n\nGood stuff.\n');
+  mkdirSync(join(dir, 'marketing-broken'), { recursive: true });
+  writeFileSync(join(dir, 'marketing-broken', 'SKILL.md'),
+    'no frontmatter at all, just garbage\n');
+
+  const inv = scanSkillInventory(dir);
+  assert.equal(inv.length, 1, 'only valid skill returned');
+  assert.equal(inv[0].name, 'marketing-valid', 'the broken one is skipped silently');
+}
+
 // ── renderSkillMarkdown ─────────────────────────────────────────────────────
 {
   const md = renderSkillMarkdown({
