@@ -30,14 +30,17 @@ test('stripCollectionChildren keeps children that are not collections', () => {
   assert.equal(out[0].items[0].url, '/pages/faq');
 });
 
-test('stripCollectionChildren preserves a child pointing at a survivor', () => {
+// Survivors are reachable via /collections (main-menu's Shop item), not via
+// header dropdowns — a dropdown with one link in it is still a dropdown, and
+// still a click between the visitor and the buy button. Do not "restore" a
+// survivor exception here thinking this is a bug; it was removed on purpose.
+test('stripCollectionChildren drops a child pointing at a survivor too', () => {
   const m = [{ id: 'a', title: 'Shop', type: 'HTTP', url: '/collections', items: [
     { id: 'b', title: 'Hand Soap', type: 'COLLECTION', url: '/collections/foaming-hand-soap', items: [] },
     { id: 'c', title: 'Rose', type: 'COLLECTION', url: '/collections/rose-lotion', items: [] },
   ] }];
   const out = stripCollectionChildren(m);
-  assert.equal(out[0].items.length, 1);
-  assert.equal(out[0].items[0].url, '/collections/foaming-hand-soap');
+  assert.equal(out[0].items.length, 0);
 });
 
 test('retargetToPdp rewrites mapped collection links and leaves others alone', () => {

@@ -14,7 +14,6 @@
  */
 
 import { shopifyGraphQL } from '../lib/shopify.js';
-import { SURVIVORS } from '../lib/collection-consolidation.js';
 
 const MENUS_QUERY = `{ menus(first: 20) { nodes { id handle title
   items { id title type url items { id title type url } } } } }`;
@@ -26,19 +25,22 @@ const MENU_UPDATE = `mutation menuUpdate($id: ID!, $title: String!, $handle: Str
   }
 }`;
 
-const isSurvivorUrl = (url) => {
-  const m = /^\/collections\/([a-z0-9-]+)$/.exec(url || '');
-  return Boolean(m && SURVIVORS.has(m[1]));
-};
-
 const isCollectionLink = (item) =>
   item?.type === 'COLLECTION' || /^\/collections\/[a-z0-9-]+$/.test(item?.url || '');
 
-/** Drop every child that points at a non-survivor collection. */
+/**
+ * Drop every child that is a collection link, survivor or not.
+ *
+ * A dropdown containing a survivor link is still a dropdown — it keeps a
+ * click between the visitor and the buy button, which header cleanup exists
+ * to remove. Survivors stay reachable via /collections (main-menu's `Shop`
+ * item), the single deliberate route into collections. Do not restore a
+ * survivor exception here thinking it's a bug — it was removed on purpose.
+ */
 export function stripCollectionChildren(items) {
   return (items || []).map((it) => ({
     ...it,
-    items: (it.items || []).filter((c) => !isCollectionLink(c) || isSurvivorUrl(c.url)),
+    items: (it.items || []).filter((c) => !isCollectionLink(c)),
   }));
 }
 
