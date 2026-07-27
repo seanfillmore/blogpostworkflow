@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stripCollectionChildren, retargetToPdp } from '../../scripts/update-navigation.mjs';
+import { stripCollectionChildren, retargetToPdp, toInput } from '../../scripts/update-navigation.mjs';
 
 const header = [
   { id: 'gid://1', title: 'Lotion', type: 'PRODUCT', url: '/products/coconut-lotion', items: [
@@ -41,6 +41,56 @@ test('stripCollectionChildren drops a child pointing at a survivor too', () => {
   ] }];
   const out = stripCollectionChildren(m);
   assert.equal(out[0].items.length, 0);
+});
+
+// Regression guard for the resourceId bug: menuUpdate replaces the whole
+// item tree from what's sent, so a MenuItem tied to a real product/collection
+// resource must round-trip its resourceId, and an item with no resource
+// (HTTP, PAGE, BLOG) must NOT get an explicit `resourceId: null` — Shopify
+// treats "sent as null" differently from "not sent". If this test starts
+// failing after an edit to toInput, that edit reintroduced the bug that
+// silently severs every nav item's resource association on --apply.
+test('toInput preserves resourceId where present and omits the key where absent', () => {
+  const items = [
+    {
+      id: 'gid://shopify/MenuItem/1', title: 'Lotion', type: 'PRODUCT',
+      url: '/products/coconut-lotion', resourceId: 'gid://shopify/Product/111',
+      items: [],
+    },
+    {
+      id: 'gid://shopify/MenuItem/2', title: 'On Sale', type: 'COLLECTION',
+      url: '/collections/on-sale', resourceId: 'gid://shopify/Collection/222',
+      items: [],
+    },
+    {
+      id: 'gid://shopify/MenuItem/3', title: 'About Us', type: 'PAGE',
+      url: '/pages/about-us', resourceId: null,
+      items: [],
+    },
+  ];
+  const out = toInput(items);
+
+  assert.equal(out[0].resourceId, 'gid://shopify/Product/111');
+  assert.equal(out[0].id, 'gid://shopify/MenuItem/1');
+  assert.equal(out[1].resourceId, 'gid://shopify/Collection/222');
+
+  assert.ok(!('resourceId' in out[2]), 'item with no resource must omit the key, not send null');
+});
+
+test('toInput preserves resourceId and id on nested children too', () => {
+  const items = [{
+    id: 'gid://shopify/MenuItem/10', title: 'Shop', type: 'HTTP', url: '/collections',
+    resourceId: null,
+    items: [
+      { id: 'gid://shopify/MenuItem/11', title: 'On Sale', type: 'COLLECTION',
+        url: '/collections/on-sale', resourceId: 'gid://shopify/Collection/222', items: [] },
+    ],
+  }];
+  const out = toInput(items);
+  const child = out[0].items[0];
+  assert.equal(child.id, 'gid://shopify/MenuItem/11');
+  assert.equal(child.resourceId, 'gid://shopify/Collection/222');
+  assert.ok(!('resourceId' in out[0]), 'parent with no resource must omit the key, not send null');
 });
 
 test('retargetToPdp rewrites mapped collection links and leaves others alone', () => {

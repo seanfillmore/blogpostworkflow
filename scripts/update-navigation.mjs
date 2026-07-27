@@ -16,7 +16,7 @@
 import { shopifyGraphQL } from '../lib/shopify.js';
 
 const MENUS_QUERY = `{ menus(first: 20) { nodes { id handle title
-  items { id title type url items { id title type url } } } } }`;
+  items { id title type url resourceId items { id title type url resourceId } } } } }`;
 
 const MENU_UPDATE = `mutation menuUpdate($id: ID!, $title: String!, $handle: String!, $items: [MenuItemUpdateInput!]!) {
   menuUpdate(id: $id, title: $title, handle: $handle, items: $items) {
@@ -64,12 +64,22 @@ const SIDEBAR_MAP = {
   // foaming-hand-soap is a survivor and stays a collection link.
 };
 
-const toInput = (items) => items.map((it) => ({
+// menuUpdate replaces the whole item tree from what's sent, so every field
+// that should survive the round trip must be sent back explicitly. `id`
+// targets the existing MenuItem for an in-place update instead of a
+// recreate; `resourceId` is the item's association with a product/collection
+// resource and must be omitted (not sent as null) for items that don't have
+// one (HTTP, PAGE, BLOG, etc.) — an explicit null is not the same as absent.
+const toItemInput = (it) => ({
+  id: it.id,
   title: it.title,
   type: it.type,
   url: it.url,
-  items: (it.items || []).map((c) => ({ title: c.title, type: c.type, url: c.url })),
-}));
+  ...(it.resourceId ? { resourceId: it.resourceId } : {}),
+  items: (it.items || []).map(toItemInput),
+});
+
+export const toInput = (items) => items.map(toItemInput);
 
 async function main() {
   const apply = process.argv.includes('--apply');
