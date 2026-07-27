@@ -53,17 +53,18 @@ Soap totals 10 collection URLs / 7,773 impressions / 3 clicks; the split above b
 hand is derived from handle intent and is the one place the implementation plan must confirm
 per-URL rather than inherit from this table.
 
-**Survivors — three collections:**
+**Survivors — four collections:**
 
 1. **`non-toxic-body-lotion`** — absorbs all 28 other lotion URLs. Holds `coconut-lotion`
    and `coconut-moisturizer`.
 2. **`foaming-hand-soap`** — absorbs the hand-soap URLs. Currently holds 1 product;
    `foam-soap-refill-32oz` must be added, which is what makes it a legitimate two-SKU
    category rather than a PDP duplicate.
-3. **`all-products`** — the native catch-all, 19 products, left exactly as it is. It earns
-   the best CTR on the site (1,008 impressions, 8 clicks, **0.79%** — roughly 15× the site
-   average), which is worth noticing: the one page that behaves like a real browse page is
-   the one nobody optimised.
+3. **`all-products`** — the native catch-all, 19 products. Retained and optimized; its
+   `body_html` is currently empty. Its 0.79% CTR is brand traffic, not browse-page quality —
+   see Workstream D.
+4. **`sets-and-bundles`** — new smart collection, added 2026-07-27 at Sean's direction. See
+   "Workstream C" below for why this is consistent with the rule rather than an exception to it.
 
 Everything else 301s to its category's survivor, or to the category's PDP where the category
 is single-product.
@@ -82,7 +83,7 @@ clicks (13 vs 9). `non-toxic-body-lotion` still wins:
 
 The 13 clicks on `organic-body-lotion` are not discarded — that URL 301s into the survivor.
 
-## Mechanism
+## Workstream A — the consolidation mechanism
 
 The pattern already proven in the 2026-07-20 toothpaste consolidation:
 
@@ -103,10 +104,11 @@ Two conditions in the current data need handling beyond a plain redirect:
   serving pages that now 404. These need redirects *more* urgently than the live ones,
   because they are actively bleeding.
 
-Each of the three survivors then gets a prominent above-the-fold link to its primary PDP.
-That is what makes this "focus clicks on the PDP" rather than merely tidier collections.
+Each surviving collection then gets a prominent above-the-fold link to its primary PDP —
+`sets-and-bundles` to the highest-AOV bundle. That is what makes this "focus clicks on the PDP"
+rather than merely tidier collections.
 
-## The operating change
+## Workstream B — the operating change
 
 The cleanup is worthless without this. Three changes, or the fleet regenerates the sprawl
 within weeks:
@@ -122,6 +124,81 @@ within weeks:
    ecommerce SEO revenue." That statistic describes stores with hundreds of SKUs, where
    collections are genuine browse pages. With 9 products it does not transfer, and following
    it produced 62 collections. Replace it with the rule above.
+
+## Workstream C — the bundles collection
+
+**Create `sets-and-bundles` as a smart collection with the rule `tag equals bundle`.** Ten
+products carry that tag, so this satisfies the 2+ distinct products rule on its own terms; it
+is not an exception. Being tag-driven, it maintains itself as bundles are added or retired,
+which is the property a hand-curated custom collection would lack.
+
+**Justify it on merchandising, not search.** Genuine bundle/set query demand is roughly 130
+impressions across 90 days — `day and night moisturizer set` (18), `skincare set for dry
+sensitive skin` (9), `moisturizer set` (6), and a long tail of ones and twos. Building this
+page to capture that traffic would be precisely the keyword-chasing this project exists to
+stop. The case for it is that bundles run $39–159 against a $50.46 AOV, and browse and
+cross-sell currently have no destination.
+
+**Record the expectation now, so the page is judged correctly later:** this collection should
+earn approximately no organic search traffic. If it is reviewed on rankings in three months it
+will look like a failure while doing exactly its job. Its measure is AOV and bundle
+attach-rate, not impressions.
+
+Exclude `99-coconut-reset-digital` — it is a digital product and does not belong in a physical
+sets page.
+
+## Workstream D — `all-products`
+
+`all-products` is a live smart collection of 19 products whose `body_html` is **empty**. It has
+no description, no intro copy, nothing for a browse visitor or a crawler to read.
+
+Its 0.79% CTR — 15× the site average — must not be misread as evidence that the page is well
+built. Its top queries are `real skin care` (409 impressions), `real skincare` (242), and
+`realskincare` (position 1.0). It performs because it catches the **brand name**, not because
+it is a good category page. An earlier reading of this number in conversation drew the opposite
+conclusion and was wrong.
+
+Optimize it as a genuine browse page — a real description covering the catalog, and internal
+links to the surviving category collections and the primary PDPs. Do **not** optimize it for
+brand queries: it is one of the pages competing with the homepage for the brand term, which
+Workstream E addresses.
+
+## Workstream E — brand-query cannibalization
+
+Brand queries (`real skin care`, `realskincare`, and variants) draw **9,723 impressions and 170
+clicks over 90 days, a 1.75% CTR**. The homepage takes only 1,290 of those impressions, at
+**average position 4.5**, while these internal pages rank above it:
+
+| Page | Impressions | Clicks | Position |
+|---|---|---|---|
+| `/` | 1,290 | 145 | 4.5 |
+| `/products/coconut-lotion` | 756 | 0 | 3.0 |
+| `/collections/all-products` | 722 | 5 | 3.7 |
+| `/collections/organic-body-lotion` | 674 | 13 | 3.1 |
+| `/collections` | 554 | 1 | 5.3 |
+
+Brand searchers already know the brand; they are the highest-intent traffic the site has.
+Ranking fourth for your own name wastes it.
+
+**Two fixes, both small:**
+
+1. **Homepage title** is `Coconut Oil Based Skin Care Products | Real Skin Care` — the brand
+   sits last. Lead with it: `Real Skin Care | Coconut Oil Skin Care for Sensitive Skin` or
+   similar. The exact string is a copy decision; the requirement is brand-first.
+2. **Homepage meta description is 352 characters** of general copy that never names the brand.
+   Google truncates near 155. Rewrite it brand-first and specific.
+
+**What the consolidation fixes for free:** `organic-body-lotion` (674 brand impressions,
+position 3.1) is being redirected by Workstream A, removing one competitor outright. That is
+the argument for doing these together rather than sequentially.
+
+**Explicitly NOT a defect, having been checked:** the indexed Shopping-feed URLs
+(`?utm_medium=product_sync&utm_source=google&utm_content=sag_organic`) that appear at position
+1.0 with zero clicks are **not** a canonical bug. Their canonical tags correctly point at the
+clean PDP — verified by fetching both. That tagging is Shopify's Google channel free-listing
+pattern, so those rows describe a Shopping surface, not organic web results, and a product-grid
+placement with no clicks is unremarkable there. An earlier reading in conversation called this a
+parameter-handling bug; it is not, and no work should be spent on it.
 
 ## What this does not promise
 
@@ -160,22 +237,34 @@ Already wired, no new instrumentation:
 
 - Collection-scoped product URLs (`/collections/rose-lotion/products/coconut-moisturizer?variant=…`)
   are duplicating PDPs, but that is a canonical-tag question, not a consolidation one.
-- The bundle products (10 of them) have landing pages already and no collection. Creating one
-  would be defensible under the rule — bundles are a 10-SKU category — but creating a new
-  collection while simultaneously banning collection creation deserves its own decision.
-  Deferred, not forgotten.
+- ~~The bundle products have no collection; creating one deserves its own decision.~~
+  **Resolved 2026-07-27: in scope — see Workstream C.**
 - Non-lotion, non-soap collections with zero impressions and zero products are swept by the
   same redirect pass but are not individually analysed here.
 
 ## Success criteria
 
-1. Live collection count drops from 62 to 3.
+1. Live collection count drops from 62 to 4 (the three survivors plus `sets-and-bundles`).
 2. Every redirected source returns 301 to a target returning 200. No redirect points at an
    unpublished or missing target.
 3. No live collection has zero products.
 4. No unpublished collection is left 404ing on non-zero impressions.
 5. `scheduler.js` no longer invokes `collection-creator` on a timer, and
    `COLLECTION_BOOST < PRODUCT_BOOST`.
-6. At 28 days: the lotion survivor's average position on its target queries has improved
-   against the rank-tracker baseline. This is the hypothesis under test — a null result is
-   an acceptable outcome to learn, not a failure to hide.
+6. `all-products` has a non-empty description and links to the surviving collections and
+   primary PDPs.
+7. `sets-and-bundles` exists as a smart collection on `tag equals bundle`, holding the 9
+   physical bundle products, and is linked from the store's navigation.
+8. The homepage title and meta description lead with the brand, and the meta description is
+   under 160 characters.
+9. At 28 days: the lotion survivor's average position on its target queries has improved
+   against the rank-tracker baseline, and the homepage's average position on brand queries has
+   improved from 4.5. These are the two hypotheses under test — a null result on either is an
+   acceptable outcome to learn, not a failure to hide.
+
+## Amendment log
+
+- **2026-07-27, after initial approval:** added Workstream C (bundles collection) and
+  Workstream D (`all-products`) at Sean's direction, and Workstream E (brand-query
+  cannibalization) which was discovered while investigating D and folded in at his direction
+  rather than deferred.
