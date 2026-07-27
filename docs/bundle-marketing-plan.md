@@ -43,12 +43,14 @@ Sorted by readiness × contribution, not by contribution alone. Inventory is **n
 | 3 | Bar Soap 4-Pack | **live** | $39 | $17.78 | 🟠 0.7× | Detach single-bar subs; restock Lemongrass | **Ship this week** |
 | 4 | 90-Day Clean Swap | **live** | $159 | $100.85 | ✅ 4.0× | Tracking, for paid | **Ongoing** |
 | 5 | Head-to-Toe | **live** | $105 | $64.29 | ✅ 2.6× | Tracking, for paid | **Ongoing** |
-| 6 | Pump 4-pack + Lotion | proposed | $72 | $39.82 | 🟡 1.6× | Build | **Next** |
-| 7 | The Clean Swap | proposed | $59 | $34.06 | 🟡 1.4× | Build | **Next** |
-| 8 | Pump 3-pack + Lotion | proposed | $59 | $31.46 | 🟡 1.3× | Build | Then |
-| 9 | Pump 4-pack | proposed | $44 | $17.55 | 🟠 0.7× | Build | Attach only |
-| 10 | Gift Box | proposed | $62 | $35.32 | 🟡 1.4× | Build by mid-September | Q4 |
+| 6 | Hand Soap Set — 4 pumps + Lotion¹ | **live** | $72 | $39.82 | 🟡 1.6× | None — built 2026-07-27 | **Ongoing** |
+| 7 | The Clean Swap | **live** | $59 | $34.06 | 🟡 1.4× | None — built 2026-07-27 | **Ongoing** |
+| 8 | Hand Soap Set — 3 pumps + Lotion¹ | **live** | $59 | $31.46 | 🟡 1.3× | None — built 2026-07-27 | Attach only |
+| 9 | Hand Soap Set — 4 pumps¹ | **live** | $44 | $17.55 | 🟠 0.7× | None — built 2026-07-27 | Attach only |
+| 10 | Gift Box | **live** | $62 | $34.32 | 🟡 1.4× | Lander content, packaging/photography for Q4 (product build done) | Q4 |
 | 11 | Two-Step Starter Set | **retired** | $39.99 | $21.77 | 🟠 0.9× | — | Deleted 2026-07-26 |
+
+¹ Rows 6, 8 and 9 are not three separate bundles. They are three `Configuration` × `Scent` variant groups on one Shopify product, **Hand Soap Set** (handle `hand-soap-set`, 15 variants total, all componentized and price-verified at $44 / $59 / $72 — not the $52 / $69 / $82 component sums). Built 2026-07-27 alongside The Clean Swap ($59) and the Gift Box ($62). Nothing links to any of the three yet — each product is live and purchasable at its direct URL, but lander copy, collection placement and campaign/cross-sell wiring are unbuilt funnel work (sub-project B).
 
 **Retired 2026-07-26.** The Two-Step Starter Set and the Foam Soap Bundle have both been deleted from the catalogue. Neither had ever been published, so no redirect was needed — a deleted draft has no inbound links to preserve. Pump + Refill (−$1.65) was rejected before it was ever built. The decision on all three was to remove them, not to sell them better.
 
