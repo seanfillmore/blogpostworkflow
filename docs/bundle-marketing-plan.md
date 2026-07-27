@@ -86,7 +86,7 @@ CAC target is $25. ✅ = ≥2× CAC (scalable on paid once tracking clears), �
 - **Buyer** — Existing customer on any product. Bar soap is a terrible standalone ($11 nets ~$1 after freight) and an excellent subscription because it is nearly weightless and consumed on a predictable cycle.
 - **Angle** — *Four bars, four months, one box.* Cadence is the pitch.
 - **Channels** — Post-purchase flow and replenishment flow only. Cross-sell module on other PDPs. Not a landing page, not a paid target, not a collection hero.
-- **Offer mechanics** — $39 against $44, on selling plan group `BARSOAP_4MO` — every 4 months, 15% off, per the flat-15% rule. Five variants: variety, or four of one scent.
+- **Offer mechanics** — $39 against $44, every 4 months at 15% off per the flat-15% rule, on **Recurpay plan `11151699`**. Five variants: variety, or four of one scent. The plan exists but the product still has to be attached to it in the Recurpay admin UI — until then the 4-pack is a one-time purchase, which is the correct failure mode.
 - **Assets** — **Live as of 2026-07-26** (`scripts/publish-bar-soap-4pack.mjs`): 2×2 variety grid built from the four real bar photos, per-variant images, description, SEO, `natural-bar-soap` collection, published to Online Store and Shop. Still needs a cross-sell placement in the post-purchase flow.
 - **Note the shipping trap** — at $39 this is the one live bundle that does **not** clear the $45 free-shipping threshold. Its copy must never imply free shipping, and it is a natural candidate for a cart nudge rather than a standalone destination.
 - **Gate** — Two cleanups remain:

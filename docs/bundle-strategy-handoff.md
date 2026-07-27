@@ -136,7 +136,7 @@ The single-bar subscription loses money on every shipment. Replaced with a 4-pac
 
 Note the middle row: killing the 20% monthly plan **narrowed the loss but did not end it**. A single $11 bar cannot carry a $6.66 envelope at any subscription discount. The remaining 6-week and 8-week single-bar plans on `coconut-soap` should be detached now that the 4-pack is live — pending a `read_own_subscription_contracts` check for existing subscribers.
 
-**`coconut-bar-soap-4-pack`** (**live 2026-07-26**, $39, compare-at $44, 16 oz, COGS $11.96), selling plan group `BARSOAP_4MO` "Every 4 months, 15% off". Five variants so buyers can take one of each scent *or* four of one:
+**`coconut-bar-soap-4-pack`** (**live 2026-07-26**, $39, compare-at $44, 16 oz, COGS $11.96), on **Recurpay plan `11151699`** "Every 4 months, 15% off". Five variants so buyers can take one of each scent *or* four of one:
 
 | Variant | Components | Availability |
 |---|---|--:|
@@ -173,9 +173,26 @@ The **Shopify Subscriptions app was uninstalled 2026-07-25**, which removed the 
 | `RP_PLAN_11150631` / `11151619` | 6 week | 15% ✓ |
 | `RP_PLAN_11150631` / `11151619` | 8 week | 15% ✓ (was 10%) |
 | `subscribe-and-save` | 30 day | 15% ✓ |
-| `BARSOAP_4MO` | 4 month | 15% ✓ |
+| Recurpay `11151699` | 4 month | 15% ✓ (new — bar soap 4-pack) |
 
 What is left is **cadence** sprawl, not discount sprawl: most products still show three groups at the same 15%, offering 1-month, 6-week and 8-week. Monthly is still the over-supply cadence, so consolidating remains worthwhile — it just no longer costs money.
+
+### ☠️ Never create a selling plan group through the Shopify Admin API
+
+Found 2026-07-26, an hour after publishing the 4-pack. Its "Every 4 months, 15% off" option was a native Shopify selling plan group (`BARSOAP_4MO`) created by **our own custom app** in an earlier session. Our app has no billing engine — it never calls `subscriptionContractCreate`. A customer choosing it would have got **15% off one shipment and then nothing, ever**: no second order, no contract, no cancellation email. Silent.
+
+**The tell reads backwards, so learn it:**
+
+| Visible to a shop-level `sellingPlanGroups` query? | Owner | Bills? |
+|---|---|---|
+| **Yes** | our custom app | ❌ **no** |
+| **No** | Recurpay | ✅ yes |
+
+That query only returns groups the *calling app* owns, so Recurpay's real plans are invisible and the broken one was the only thing listed. `BARSOAP_4MO` was the sole entry — that is what gave it away. Cross-check with `node scripts/recurpay-audit.mjs`: if a cadence is offered on the storefront but absent from that list, nothing is billing it.
+
+Repaired by `scripts/fix-bar-soap-subscription.mjs`: group detached and deleted, real plan created in Recurpay. Zero contracts existed, because the product had been a draft its whole life.
+
+**Rule: subscriptions are Recurpay's. Create plans there, never through Shopify's Admin API.** A selling plan with no subscription app behind it is not a subscription — it is a discount that lies about recurring.
 
 ⚠️ **Recurpay's `PUT /plans/{id}` is positional and destructive.** Client and full constraints now live in **`lib/recurpay.js`**; audit with **`node scripts/recurpay-audit.mjs`**. Don't re-derive this API by hand again.
 
