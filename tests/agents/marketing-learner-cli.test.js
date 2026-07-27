@@ -38,6 +38,16 @@ assert.ok(existsSync('agents/marketing-learner/index.js'), 'agent file exists');
 assert.ok(src.includes("from '../../lib/transcript-source.js'"), 'uses the transcript seam');
 assert.ok(src.includes("from '../../lib/anthropic.js'"), 'uses the METERED Anthropic wrapper');
 assert.ok(!src.includes("from '@anthropic-ai/sdk'"), 'must not import the SDK directly — that bypasses cost metering');
+
+// Regression: a bare `new Anthropic()` reads process.env, which loadEnv() never
+// populates — it parses .env into a local object. This threw at request time on
+// the first real run, AFTER a paid transcript credit had already been spent.
+assert.ok(!/new Anthropic\(\s*\)/.test(src),
+  'must not construct Anthropic with no args — loadEnv() does not populate process.env');
+assert.ok(/new Anthropic\(\{\s*apiKey:/.test(src),
+  'must pass apiKey explicitly, as every other agent in this repo does');
+assert.ok(src.includes('ANTHROPIC_API_KEY'),
+  'must read ANTHROPIC_API_KEY from the local env loader and fail fast when absent');
 assert.ok(src.includes('mergeSkillContent'), 'merges into existing skills rather than appending');
 assert.ok(src.includes('extractVideoId'), 'derives the cache key without spending a credit');
 assert.ok(src.includes('notify'), 'notifies on completion');

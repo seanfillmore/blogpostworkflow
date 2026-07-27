@@ -324,13 +324,25 @@ function openPullRequest(results) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const apiKey = loadEnv().TRANSCRIPTAPI_KEY || process.env.TRANSCRIPTAPI_KEY;
+  const env = loadEnv();
+  const apiKey = env.TRANSCRIPTAPI_KEY || process.env.TRANSCRIPTAPI_KEY;
   if (!apiKey) {
     console.error('TRANSCRIPTAPI_KEY is not set. Add it to .env.');
     process.exit(1);
   }
+
+  // loadEnv() reads .env into a local object — it does NOT populate process.env,
+  // so constructing the client with no arguments finds no credentials and throws
+  // at request time, after a paid transcript credit has already been spent. Every
+  // agent in this repo passes the key explicitly; see agents/voice-of-customer.
+  const anthropicKey = env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) {
+    console.error('ANTHROPIC_API_KEY is not set. Add it to .env.');
+    process.exit(1);
+  }
+
   const items = parsePublishedFlags(args.urls, args.published, {});
-  const client = new Anthropic();
+  const client = new Anthropic({ apiKey: anthropicKey });
 
   const results = [];
   for (const item of items) {
