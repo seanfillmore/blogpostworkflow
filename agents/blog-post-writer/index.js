@@ -252,7 +252,8 @@ ${fmtBody}` : '';
 ═══════════════════════════════════
 VOICE OF CUSTOMER (internal research — NOT source material to quote)
 ═══════════════════════════════════
-Real objections, phrases and triggers mined from reviews and outside discussion. Use them only to anticipate the hesitation a reader brings to this CATEGORY, so the post answers it instead of ignoring it.
+SCOPE — this research covers the skin cluster ONLY: coconut lotion, body lotion, coconut moisturizer, coconut bar soap, and foaming hand soap. If this post is about anything else (toothpaste, deodorant, lip balm, hair), ignore this whole block. An objection never transfers across categories — a bar-soap price complaint has nothing to say about toothpaste.
+Real objections, phrases and triggers mined from reviews and outside discussion. Where the post IS about the products above, use them only to anticipate the hesitation the reader already has, so the post answers it instead of ignoring it.
 - Never quote, paraphrase closely, or reproduce any line below in the post.
 - Never restate a complaint about our own products as fact — these are individual opinions, not findings.
 - Address the underlying worry in your own words, in the brand voice.

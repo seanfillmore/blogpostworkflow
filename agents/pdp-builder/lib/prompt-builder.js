@@ -52,6 +52,10 @@ function voiceOfCustomerSection(foundation) {
   if (!voc) return [];
   return [
     `# Voice of customer (INTERNAL RESEARCH — not copy)`,
+    `Scope: this research covers the skin cluster ONLY — coconut lotion, body lotion,`,
+    `coconut moisturizer, coconut bar soap and foaming hand soap. If the page you are`,
+    `writing is not one of those, disregard this section entirely; an objection does not`,
+    `transfer across categories.`,
     `Real objections, phrases and triggers mined from our reviews and outside discussion.`,
     `Use it to decide which hesitation this page must answer and which proof to lead with.`,
     `Never quote it verbatim on the page, and never restate a complaint about our own`,

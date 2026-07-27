@@ -73,6 +73,21 @@ test('blog-post-writer frames the block as internal research, not copy to reuse'
   );
 });
 
+test('the block carries a skin-cluster scope caveat, since the writer also writes toothpaste', () => {
+  // sliceVocSections strips the doc's "# Voice of Customer — skin cluster" H1
+  // along with every other non-"## " line, so the injected text carries no scope
+  // of its own. Without the caveat a toothpaste post can open by answering a
+  // bar-soap price objection — and that pipeline auto-publishes.
+  const block = SRC.slice(SRC.indexOf('const vocBlock'), SRC.indexOf('const ingredientList'));
+  assert.match(block, /SCOPE — this research covers the skin cluster ONLY/);
+  assert.match(block, /coconut lotion, body lotion, coconut moisturizer, coconut bar soap, and foaming hand soap/);
+  assert.match(block, /toothpaste, deodorant, lip balm, hair/);
+  assert.match(block, /ignore this whole block/);
+  // and it must live inside the non-empty guard, not outside it
+  assert.match(block, /const vocBlock = voc \? `/);
+  assert.match(block, /` : '';/);
+});
+
 test('the voice-of-customer block uses the same divider styling as its neighbours', () => {
   const block = SRC.slice(SRC.indexOf('const vocBlock'), SRC.indexOf('const ingredientList'));
   const dividers = block.match(/═══════════════════════════════════/g) || [];

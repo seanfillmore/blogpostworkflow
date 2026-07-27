@@ -89,6 +89,11 @@ test('buildClusterSystemPrompt: includes the voice-of-customer research when pre
   assert.match(prompt, /It takes forever to absorb\./);
   assert.match(prompt, /INTERNAL RESEARCH/);
   assert.match(prompt, /Never quote it verbatim/);
+  // The research is skin-cluster only, but every one of the 7 clusters in
+  // config/ingredients.json gets this prompt — the model has to be told so.
+  assert.match(prompt, /Scope: this research covers the skin cluster ONLY/);
+  assert.match(prompt, /coconut bar soap and foaming hand soap/);
+  assert.match(prompt, /disregard this section entirely/);
 });
 
 test('buildProductSystemPrompt: includes the voice-of-customer research when present', () => {
@@ -99,6 +104,7 @@ test('buildProductSystemPrompt: includes the voice-of-customer research when pre
   });
   assert.match(prompt, /# Voice of customer/);
   assert.match(prompt, /It takes forever to absorb\./);
+  assert.match(prompt, /Scope: this research covers the skin cluster ONLY/);
 });
 
 // Degradation contract: with the artifact absent the prompt must be byte-identical
