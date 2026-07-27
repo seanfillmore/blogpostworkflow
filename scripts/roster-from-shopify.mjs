@@ -15,9 +15,11 @@ const only = process.argv.slice(2);
 
 const q = `{
   products(first: 10, query: "tag:bundle") {
+    pageInfo { hasNextPage }
     nodes {
       handle title status templateSuffix tags
       variants(first: 20) {
+        pageInfo { hasNextPage }
         nodes {
           title price compareAtPrice
           selectedOptions { name value }
@@ -33,6 +35,24 @@ const q = `{
 }`;
 
 const { products } = await shopifyGraphQL(q);
+
+if (products.pageInfo.hasNextPage) {
+  throw new Error(
+    'roster-from-shopify: products(first: 10, query: "tag:bundle") has more pages — ' +
+    'more than 10 bundle-tagged products now exist in Shopify. Raise `first` on the ' +
+    'products connection (and re-check the query cost budget) before trusting this output.'
+  );
+}
+for (const p of products.nodes) {
+  if (p.variants.pageInfo.hasNextPage) {
+    throw new Error(
+      `roster-from-shopify: "${p.handle}" has more than 20 variants — ` +
+      'variants(first: 20) truncated silently. Raise `first` on the variants connection ' +
+      '(and re-check the query cost budget) before trusting this output.'
+    );
+  }
+}
+
 const bundles = products.nodes
   .filter(p => p.variants.nodes.some(v => v.productVariantComponents.nodes.length))
   .filter(p => !only.length || only.includes(p.handle))
