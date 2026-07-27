@@ -152,6 +152,24 @@ assert.deepEqual(scanSkillInventory(join(tmpdir(), 'definitely-does-not-exist-12
   assert.equal(fm.name, 'marketing-retention-flows', 'output round-trips through the parser');
 }
 
+// A newline in a model-authored description would push the rest of the sentence
+// onto its own line, where parseFrontmatter's line regex silently drops it — the
+// skill would ship with a truncated trigger description and match badly.
+{
+  const md = renderSkillMarkdown({
+    name: 'marketing-retention-flows',
+    description: 'Use when building lifecycle email\nor replenishment flows — covers cadence.',
+    tactics: [],
+  });
+  const fm = parseFrontmatter(md);
+  assert.equal(
+    fm.description,
+    'Use when building lifecycle email or replenishment flows — covers cadence.',
+    'newlines in the description collapse to a space rather than truncating it'
+  );
+  assert.ok(!fm.description.includes('\n'), 'no raw newline survives into frontmatter');
+}
+
 // ── validateSkillEdit ───────────────────────────────────────────────────────
 const OLD = '---\nname: marketing-offers\ndescription: Offer construction\n---\n\n' + 'x'.repeat(1000);
 
