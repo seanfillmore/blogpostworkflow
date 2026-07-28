@@ -630,6 +630,14 @@ assert.throws(
     /already falsified/,
     'refuses to falsify twice'
   );
+  // The message must name WHEN it was falsified, not just that it was — an
+  // operator re-running --falsify later needs the date to know if this is the
+  // same finding or a new one.
+  assert.throws(
+    () => falsifyTactic(once, { claim: 'taboo', reason: 'r2', today: '2026-08-20' }),
+    /already falsified on 2026-08-14/,
+    'the error names the date the tactic was originally falsified'
+  );
 }
 
 // ── falsifyTactic: reason is mandatory ──────────────────────────────────────
@@ -799,11 +807,10 @@ assert.throws(
     'dropping a falsified entry throws and names it'
   );
 
-  // Preserving it passes.
-  const kept = dropped.replace(
-    '## Another live one',
-    '## Falsified\n\n### Dead one\n**Falsified 2026-08-14:** did not work\n\n## Another live one'
-  );
+  // Preserving it passes. Falsified must land LAST (F3/validateSkillEdit's new
+  // ordering guard) — append it after "## Another live one" rather than
+  // splicing it in the middle.
+  const kept = `${dropped.trimEnd()}\n\n## Falsified\n\n### Dead one\n**Falsified 2026-08-14:** did not work\n`;
   assert.equal(validateSkillEdit(OLD_WITH_DEAD, kept), true, 'preserving the entry passes');
 
   // A skill with no Falsified section is unaffected.
@@ -1043,6 +1050,203 @@ Body.`,
   // The names/descriptions from frontmatter are used (fallbacks kick in for inventory fields)
   assert.match(md, /marketing-fallback-name/, 'skill section still rendered');
   assert.match(md, /marketing-fallback-desc/, 'skill section still rendered');
+}
+
+// ── F7 cosmetic: renderContextMirror — skill H1 must not collide with the ──
+// mirror's own "## marketing-*" section heading. Real skill files (see
+// renderSkillMarkdown) start their body with an H1 title, then ## tactic
+// sections. Demoting everything by one level puts the H1 at the same level
+// (##) as the mirror's own per-skill wrapper heading — two adjacent, non-
+// nested ## headings. H1 must demote by TWO levels instead.
+{
+  const inv = [{
+    name: 'marketing-copy',
+    description: 'Copy tactics',
+    path: '/tmp/a/SKILL.md',
+    content: '---\nname: marketing-copy\ndescription: Copy tactics\n---\n\n# Conversion Copy Angles\n\n## Live Tactic\n\nBody.\n',
+  }];
+
+  const md = renderContextMirror(inv);
+
+  assert.match(md, /^### Conversion Copy Angles$/m, 'H1 demoted by two levels (to ###), not one');
+  assert.ok(!/^## Conversion Copy Angles$/m.test(md), 'H1 must not survive at ## — that collides with the mirror wrapper');
+
+  // Only the mirror's own structural headings remain at level 2.
+  const h2Lines = md.split('\n').filter((l) => /^## /.test(l));
+  assert.deepEqual(h2Lines, ['## Do not propose', '## marketing-copy'],
+    'no skill-authored heading rides at the same level as the mirror\'s own ## structure');
+}
+
+// ── F3(1): falsifyTactic demotes nested headings inside the moved body ─────
+// A tactic body containing its own ### subheadings (e.g. multi-step
+// instructions) must not have those subheadings survive as their own ### line
+// once moved under ## Falsified — extractFalsifiedClaims reads every "### "
+// line after the Falsified heading as a distinct falsified claim, so an
+// un-demoted "### Step 1" would show up as a bogus standalone entry in the
+// "Do not propose" blocklist.
+{
+  const skillWithNestedHeading = [
+    '---',
+    'name: marketing-nested',
+    'description: Testing nested headings',
+    '---',
+    '',
+    '## Run a multi-step play',
+    '',
+    '**Why it works:** Sequence matters.',
+    '',
+    '### Step 1',
+    '',
+    'Do the first thing.',
+    '',
+    '### Step 2',
+    '',
+    'Do the second thing.',
+    '',
+  ].join('\n');
+
+  const result = falsifyTactic(skillWithNestedHeading, {
+    claim: 'multi-step',
+    reason: 'Did not move the needle',
+    today: '2026-08-14',
+  });
+
+  assert.deepEqual(
+    extractFalsifiedClaims(result),
+    ['Run a multi-step play'],
+    'only the falsified tactic itself is a falsified claim — its nested Step headings must not leak in as separate entries'
+  );
+  // The nested headings must still be readable in the body, just demoted so
+  // they no longer read as top-level falsified claims.
+  assert.match(result, /#### Step 1/, 'nested ### heading demoted to #### inside the moved body');
+  assert.match(result, /#### Step 2/, 'second nested heading demoted too');
+}
+
+// ── F3(2): validateSkillEdit requires "## Falsified" to be the LAST section ─
+// mergeSkillContent hands the model a whole file. If the model's replacement
+// puts a new "## " tactic section BELOW "## Falsified", extractFalsifiedClaims
+// (heading-to-EOF) would silently swallow that live tactic's ### subheadings
+// as falsified claims — a live tactic gets blocklisted with no error anywhere.
+// validateSkillEdit must catch this at write time.
+{
+  const oldContent = [
+    '---',
+    'name: marketing-order',
+    'description: Use when ordering things',
+    '---',
+    '',
+    '## Live one',
+    'body'.repeat(60),
+    '',
+  ].join('\n');
+
+  const falsifiedNotLast = [
+    '---',
+    'name: marketing-order',
+    'description: Use when ordering things',
+    '---',
+    '',
+    '## Live one',
+    'body'.repeat(60),
+    '',
+    '## Falsified',
+    '',
+    '### Dead one',
+    '**Falsified 2026-08-14:** did not work',
+    '',
+    '## New tactic after Falsified',
+    '',
+    '### Step 1',
+    'do this',
+    '',
+  ].join('\n');
+
+  assert.throws(
+    () => validateSkillEdit(oldContent, falsifiedNotLast),
+    /Falsified.*must be the last section/i,
+    'a live section trailing ## Falsified throws'
+  );
+
+  const falsifiedLast = [
+    '---',
+    'name: marketing-order',
+    'description: Use when ordering things',
+    '---',
+    '',
+    '## Live one',
+    'body'.repeat(60),
+    '',
+    '## New tactic after Falsified',
+    '',
+    '### Step 1',
+    'do this',
+    '',
+    '## Falsified',
+    '',
+    '### Dead one',
+    '**Falsified 2026-08-14:** did not work',
+    '',
+  ].join('\n');
+
+  assert.equal(validateSkillEdit(oldContent, falsifiedLast), true, 'Falsified genuinely last passes');
+}
+
+// ── F6: falsifiedIndex must tolerate CRLF line endings ──────────────────────
+// The regex used to omit \r from its character class. On a CRLF file the line
+// is "## Falsified\r" before the \n, and JS's multiline $ only matches right
+// before \n (it doesn't skip a trailing \r), so the match failed, returning
+// -1 — which made extractFalsifiedClaims return [], which made
+// validateSkillEdit's oldDead.length check short-circuit: the only
+// non-prompt falsified guard silently disabled itself on CRLF files.
+{
+  const crlfSkill = LIVE_SKILL.replace(/\n/g, '\r\n')
+    + '## Falsified\r\n\r\n### Dead one\r\n**Falsified 2026-08-14:** nope\r\n';
+  assert.ok(crlfSkill.includes('## Falsified\r\n'), 'fixture genuinely has CRLF around the heading');
+
+  assert.deepEqual(
+    extractFalsifiedClaims(crlfSkill),
+    ['Dead one'],
+    'extractFalsifiedClaims finds the Falsified heading on a CRLF file'
+  );
+}
+{
+  // Stronger regression: the guard that actually matters — validateSkillEdit
+  // must still refuse to drop a falsified entry when the file is CRLF.
+  const oldCRLF = [
+    '---',
+    'name: marketing-crlf',
+    'description: Use when doing x',
+    '---',
+    '',
+    '## Live one',
+    'body'.repeat(60),
+    '',
+    '## Falsified',
+    '',
+    '### Dead one',
+    '**Falsified 2026-08-14:** did not work',
+    '',
+  ].join('\r\n');
+
+  const droppedCRLF = [
+    '---',
+    'name: marketing-crlf',
+    'description: Use when doing x',
+    '---',
+    '',
+    '## Live one',
+    'body'.repeat(60),
+    '',
+    '## Another live one',
+    'body'.repeat(60),
+    '',
+  ].join('\r\n');
+
+  assert.throws(
+    () => validateSkillEdit(oldCRLF, droppedCRLF),
+    /Dead one/,
+    'the graveyard guard fires on CRLF files too — it must not silently no-op'
+  );
 }
 
 console.log('✓ marketing-learner date + constraint tests pass');

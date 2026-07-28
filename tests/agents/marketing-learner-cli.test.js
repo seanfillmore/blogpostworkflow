@@ -181,20 +181,43 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
 // the checked-in projection stale. A plain `src.includes('syncContextMirror')` check
 // would still pass with that bug present; this exercises the real function and
 // inspects its actual return value.
+//
+// F4: sandboxed with mkdtempSync overrides (like writeSkill's tests below) rather
+// than exercising the default SKILLS_DIR/MIRROR_PATH — those point at the real
+// project tree, and `npm test` must never rewrite the tracked mirror file.
 {
+  const skillsDir = mkdtempSync(join(tmpdir(), 'ml-mirror-skills-'));
+  mkdirSync(join(skillsDir, 'marketing-x'), { recursive: true });
+  writeFileSync(join(skillsDir, 'marketing-x', 'SKILL.md'),
+    '---\nname: marketing-x\ndescription: d\n---\n\n# X\n\n## Tactic\n\nBody.\n');
+  const mirrorPath = join(mkdtempSync(join(tmpdir(), 'ml-mirror-out-')), 'marketing-tactics.md');
+
   const writtenPaths = ['/fake/report.json', '/fake/skill/SKILL.md'];
-  const result = syncMirrorIfTouched(writtenPaths, [{ name: 'marketing-x', action: 'edit', path: '/fake/skill/SKILL.md' }]);
+  const result = syncMirrorIfTouched(
+    writtenPaths,
+    [{ name: 'marketing-x', action: 'edit', path: '/fake/skill/SKILL.md' }],
+    { skillsDir, mirrorPath }
+  );
 
   assert.equal(result, writtenPaths, 'mutates and returns the same array processVideo passes to openPullRequest');
   assert.equal(writtenPaths.length, 3, 'mirror path was pushed on top of the existing entries');
-  assert.equal(writtenPaths[2], MIRROR_PATH, 'the exact path syncContextMirror() returned was captured, not discarded');
-  assert.ok(writtenPaths.includes(MIRROR_PATH), 'mirror path is in the same collection the PR stages from');
+  assert.equal(writtenPaths[2], mirrorPath, 'the exact path syncContextMirror() returned was captured, not discarded');
+  assert.ok(writtenPaths.includes(mirrorPath), 'mirror path is in the same collection the PR stages from');
+  assert.ok(existsSync(mirrorPath), 'the sandboxed mirror path was actually written to');
+  assert.match(readFileSync(mirrorPath, 'utf8'), /marketing-x/, 'sandboxed mirror reflects the sandboxed skills dir');
 }
 {
   // No skill touched → nothing to re-sync, writtenPaths passes through unchanged.
+  // No skillsDir/mirrorPath override needed: skillsTouched is empty, so
+  // syncContextMirror is never called and nothing real gets touched either way.
   const writtenPaths = ['/fake/report.json'];
   syncMirrorIfTouched(writtenPaths, []);
   assert.deepEqual(writtenPaths, ['/fake/report.json'], 'mirror sync skipped, and nothing spuriously staged, when no skill changed');
 }
+
+// Confirm MIRROR_PATH itself is unaffected by this test file — it is exported for
+// production wiring (e.g. the dashboard reads it), not written to by these tests.
+assert.ok(MIRROR_PATH.endsWith(join('data', 'context', 'marketing-tactics.md')),
+  'MIRROR_PATH still points at the real project mirror location');
 
 console.log('✓ marketing-learner CLI tests pass');

@@ -14,7 +14,21 @@
  *     --no-pr                   Write into the working tree. No branch, no PR.
  *     --refetch                 Ignore the transcript cache (costs a credit).
  *
- * Requires TRANSCRIPTAPI_KEY in .env.
+ *   node agents/marketing-learner/index.js --falsify <skill-name> --claim "<substring
+ *       of the tactic's heading>" --reason "<what happened when you tested it>"
+ *     A separate mode — cannot be combined with URLs or any of the flags above. Marks
+ *     one live tactic in an existing skill dead: moves its section into that skill's
+ *     "## Falsified" graveyard, stamped with today's date and --reason, then
+ *     regenerates data/context/marketing-tactics.md so the "Do not propose" blocklist
+ *     every agent reads picks it up immediately. Pure text surgery — no network call,
+ *     no LLM call, no credential required, and unlike the video path above it does
+ *     NOT branch or open a PR: it writes directly into the current working tree
+ *     (mutates the target skill's SKILL.md and the mirror file, both tracked files —
+ *     commit them yourself). Throws (does not warn-and-continue) on: skill not found,
+ *     zero or multiple matching live tactics, or a claim that is already falsified.
+ *
+ * Requires TRANSCRIPTAPI_KEY in .env for the video path. --falsify needs neither that
+ * nor ANTHROPIC_API_KEY — it never touches the network.
  * Spec: docs/superpowers/specs/2026-07-27-marketing-learner-design.md
  */
 
@@ -200,11 +214,14 @@ export const MIRROR_PATH = join(ROOT, 'data', 'context', 'marketing-tactics.md')
  * to .claude/skills/ — create, merge, or falsify — so the mirror cannot drift.
  * Re-scans rather than tracking deltas: it is a handful of file reads, and
  * correctness beats cleverness for a file other agents act on.
+ *
+ * `skillsDir`/`mirrorPath` default to the real project paths; tests pass
+ * `mkdtempSync` sandboxes so `npm test` never rewrites the tracked mirror file.
  */
-function syncContextMirror() {
-  mkdirSync(dirname(MIRROR_PATH), { recursive: true });
-  writeFileSync(MIRROR_PATH, renderContextMirror(scanSkillInventory(SKILLS_DIR)));
-  return MIRROR_PATH;
+function syncContextMirror(skillsDir = SKILLS_DIR, mirrorPath = MIRROR_PATH) {
+  mkdirSync(dirname(mirrorPath), { recursive: true });
+  writeFileSync(mirrorPath, renderContextMirror(scanSkillInventory(skillsDir)));
+  return mirrorPath;
 }
 
 /**
@@ -214,9 +231,14 @@ function syncContextMirror() {
  * function so this specific wiring — "the mirror rides along in the same PR as
  * the skills and report" — is directly testable without exercising the rest of
  * processVideo (network fetch, LLM extraction, git/PR).
+ *
+ * Called once per skill write inside processVideo's loop (not once after the
+ * whole loop) so a mid-loop failure on a later skill still leaves the mirror
+ * consistent with whatever already landed on disk — see the shrink/rename/
+ * falsified guards in validateSkillEdit, any of which can throw mid-batch.
  */
-export function syncMirrorIfTouched(writtenPaths, skillsTouched) {
-  if (skillsTouched.length) writtenPaths.push(syncContextMirror());
+export function syncMirrorIfTouched(writtenPaths, skillsTouched, { skillsDir = SKILLS_DIR, mirrorPath = MIRROR_PATH } = {}) {
+  if (skillsTouched.length) writtenPaths.push(syncContextMirror(skillsDir, mirrorPath));
   return writtenPaths;
 }
 
@@ -287,8 +309,11 @@ async function processVideo(item, { client, apiKey, args }) {
       const { path, action } = await writeSkill({ name, description, tactics, existing, client });
       skillsTouched.push({ name, action, path });
       writtenPaths.push(path);
+      // Resync after EACH write, not once after the whole loop: if the next
+      // skill in this batch throws (shrink/rename/falsified guard), this one's
+      // change must not be left invisible to the mirror every other agent reads.
+      syncMirrorIfTouched(writtenPaths, skillsTouched);
     }
-    syncMirrorIfTouched(writtenPaths, skillsTouched);
   }
 
   const report = renderReport({ extraction, video, skillsTouched });

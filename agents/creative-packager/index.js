@@ -125,6 +125,22 @@ export function loadTacticMenu(root = ROOT) {
 }
 
 /**
+ * Build the copy brief for the session path (dashboard-approved hero image).
+ *
+ * Unlike buildCopyBrief (the ad path), the caller has already assembled the
+ * brief's product/angle/destinationUrl — this only merges in the tactic menu
+ * so both paths reach buildCopyPrompt with the same tactic guidance and
+ * blocklist. Split out as its own pure, exported function so the wiring is
+ * unit-testable without exercising main() (job files, Anthropic/Gemini calls).
+ */
+export function buildSessionCopyBrief(copyBrief, tacticMenu = null) {
+  return {
+    ...(copyBrief || { product: 'Real Skin Care', angle: '', destinationUrl: '' }),
+    tacticMenu,
+  };
+}
+
+/**
  * Build a copy brief.
  *
  * The angle used to come from the competitor reference ad's messagingAngle,
@@ -386,7 +402,11 @@ async function main() {
 
   if (source === 'session') {
     // Session path: one approved hero → resize to every placement (no ad lookup).
-    brief = job.copyBrief || { product: 'Real Skin Care', angle: '', destinationUrl: '' };
+    // Same tacticMenu wiring as the ad path below — buildCopyPrompt is shared by
+    // both, and without this the session path (the one that actually has data:
+    // data/creative-sessions/ exists, data/meta-ads-insights/ does not) would
+    // silently generate ad copy with no tactic menu and no blocklist.
+    brief = buildSessionCopyBrief(job.copyBrief, loadTacticMenu());
     sizes = (job.sizes && job.sizes.length)
       ? sizesByName(job.sizes)
       : placementSizes(job.placements && job.placements.length ? job.placements : ['instagram', 'facebook']);
