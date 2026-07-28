@@ -1,0 +1,112 @@
+[
+ {
+  "id": "gid://shopify/Menu/113248698403",
+  "handle": "main-menu",
+  "title": "Main menu",
+  "items": [
+   {
+    "id": "gid://shopify/MenuItem/259405905955",
+    "title": "Shop",
+    "type": "COLLECTIONS",
+    "url": "/collections",
+    "resourceId": null,
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/260160552995",
+    "title": "On Sale",
+    "type": "COLLECTION",
+    "url": "/collections/on-sale",
+    "resourceId": "gid://shopify/Collection/153342902307",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/464825450666",
+    "title": "About Us",
+    "type": "PAGE",
+    "url": "/pages/about-us-1",
+    "resourceId": "gid://shopify/Page/93868196010",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/465074454698",
+    "title": "Blogs",
+    "type": "BLOG",
+    "url": "/blogs/news",
+    "resourceId": "gid://shopify/Blog/48998449187",
+    "items": []
+   }
+  ]
+ },
+ {
+  "id": "gid://shopify/Menu/200084193450",
+  "handle": "product-menu",
+  "title": "Product Menu",
+  "items": [
+   {
+    "id": "gid://shopify/MenuItem/467849609386",
+    "title": "Lotion",
+    "type": "PRODUCT",
+    "url": "/products/coconut-lotion",
+    "resourceId": "gid://shopify/Product/7691181686954",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/465292591274",
+    "title": "Body Cream",
+    "type": "PRODUCT",
+    "url": "/products/coconut-moisturizer",
+    "resourceId": "gid://shopify/Product/7644968911018",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/465292656810",
+    "title": "Toothpaste",
+    "type": "PRODUCT",
+    "url": "/products/coconut-oil-toothpaste",
+    "resourceId": "gid://shopify/Product/7644970975402",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/465292624042",
+    "title": "Deodorant",
+    "type": "PRODUCT",
+    "url": "/products/coconut-oil-deodorant",
+    "resourceId": "gid://shopify/Product/7644970451114",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/465292689578",
+    "title": "Liquid Soap",
+    "type": "PRODUCT",
+    "url": "/products/organic-foaming-hand-soap",
+    "resourceId": "gid://shopify/Product/7644971892906",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/465292722346",
+    "title": "Bar Soap",
+    "type": "PRODUCT",
+    "url": "/products/coconut-soap",
+    "resourceId": "gid://shopify/Product/7644973465770",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/465292755114",
+    "title": "Lip Balm",
+    "type": "PRODUCT",
+    "url": "/products/coconut-oil-lip-balm",
+    "resourceId": "gid://shopify/Product/7644975071402",
+    "items": []
+   },
+   {
+    "id": "gid://shopify/MenuItem/546441593002",
+    "title": "Sets & Bundles",
+    "type": "COLLECTION",
+    "url": "/collections/sets-and-bundles",
+    "resourceId": "gid://shopify/Collection/362561405098",
+    "items": []
+   }
+  ]
+ }
+]
