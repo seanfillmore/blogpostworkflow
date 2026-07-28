@@ -11,7 +11,7 @@ _Nothing falsified yet._
 
 ## marketing-awareness-level-messaging
 
-_Use when deciding what a page, email, or listing should actually say — mapping product page hero copy, Amazon titles and bullets, welcome and post-purchase email flows, and landing pages to whether the reader is problem-aware, solution-aware, or product-aware, and turning that diagnosis into concrete headline stems._
+_Use when deciding what a page, email, or listing should actually say — mapping product page hero copy, Amazon titles and bullets, welcome and post-purchase email flows, and landing pages to whether the reader is unaware, problem-aware, solution-aware, or product-aware, turning that diagnosis into concrete headline stems, and deriving extra assets by re-entering one proven angle at a different awareness level._
 
 ### Match every message to a specific market awareness level, which bridges persona and goal to the copy framework.
 
@@ -39,6 +39,18 @@ This is the concrete execution layer for the principle above — instead of abst
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
+### Hold the proven angle fixed and change only the entry point to make a second asset.
+
+Once an angle converts, don't rewrite it — swap only the hook and the bridge sentence so the reader enters at a different awareness level, then funnel into the identical body copy. Example: instead of the direct problem-aware open ("if your dog eats grass, do this"), open unaware ("our dogs can't talk to us when they feel off") and bridge into the same script.
+
+**Why it works:** A hook that names the problem directly only catches people who already recognize the problem. A less-aware entry point catches people upstream and walks them into the same working argument, expanding the addressable audience without discarding the message that already converts.
+
+**Evidence offered:** Side-by-side of the direct "if your dog eats grass, do this" hook versus the unaware "our dogs can't talk to us" hook leading into the identical script; both described as winners. Practitioner assertion, no numbers.
+
+**Fit here (6/10):** Durable principle class, age irrelevant. This is the derivation move that sits on top of the diagnosis above: the earlier sections tell you which awareness level a surface serves; this one tells you how to generate a variant for a *different* surface without starting from scratch. Free and solo-executable across an Amazon title vs. an A+ block vs. a PDP hero vs. an email subject line — one natural-deodorant angle, four entry points. Pair it with the how-to stems: keep the body, swap the stem ("how to know if..." → "how do I pick...") to slide the same argument up or down the awareness ladder. Capped at 6 because Real Skin Care cannot measure which variant wins — it can only reason about coverage, not test it.
+
+*Source: Spencer Pawliw — "We 38x'd Meta Spend in 4 Months. Here's What Actually Did It" (goedDlD00T0)*
+
 ### Lead with a "why is it important" hook that answers the question buyers think but never ask.
 
 Take your single biggest value prop and answer the unasked "why does that actually matter to me?"
@@ -47,7 +59,7 @@ Take your single biggest value prop and answer the unasked "why does that actual
 
 **Evidence offered:** Cited as a top performer for Pax over the last year (per their chief digital officer) and pressure-tested at the agency with "amazing results." No numbers given.
 
-**Fit here (7/10):** Durable principle class — an educational framing device, not a platform mechanic. Directly usable as an Amazon bullet lead-in, a PDP section header, and a post-purchase/education email subject line. Natural deodorant and oral care are exactly the categories where "why does aluminum-free matter" / "why does the transition period happen" is a real unasked objection, and answering it is zero-cost CRO-stage work. Pairs naturally with the how-to stems above: the how-to stem sets the awareness stage, the why-is-it-important body supplies the reason to act.
+**Fit here (7/10):** Durable principle class — an educational framing device, not a platform mechanic. Directly usable as an Amazon bullet lead-in, a PDP section header, and a post-purchase/education email subject line. Natural deodorant and oral care are exactly the categories where "why does aluminum-free matter" / "why does the transition period happen" is a real unasked objection, and answering it is zero-cost CRO-stage work. Pairs naturally with the how-to stems above: the how-to stem sets the awareness stage, the why-is-it-important body supplies the reason to act — and because the body stays fixed, it is exactly the kind of proven copy worth re-entering from a different hook.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
@@ -67,7 +79,7 @@ _Use when deciding what angle to lead with on a product page, Amazon listing, or
 
 ## marketing-conversion-copy-angles
 
-_Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, one-thing simplicity promises, and curiosity setups that pay off on the page._
+_Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, one-thing simplicity promises, curiosity setups that pay off on the page, and who the claim is attributed to._
 
 ### Replace generic copy with specificity: exact numbers that quantify time, effort, or cost ('5 minutes, under $5', '2 inches in one use').
 
@@ -148,6 +160,16 @@ _Use when writing or rewriting product page copy, Amazon titles and bullets, ema
 **Fit here (6/10):** Durable retention/persuasion psychology, age irrelevant, and free to test on email subject lines and PDP headlines. Fits a 12-SKU catalog where the honest version is real ('the one switch that fixed my transition period', 'one bar replaces three products'). Capped at 6 because in a body-care category the simplicity promise is easy to push into unsupportable claim territory — pair it with the specificity rule above so the 'one thing' always has a defensible referent (a named SKU, a named swap, a countable replacement) rather than an implied cure.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
+
+### Raise the authority behind the same message — attribute the claim to a credentialed source and place it in a context that itself signals authority.
+
+**Why it works:** The identical sentence carries different weight depending on who says it and where. A credential plus an authority-signaling setting answers the 'why should I trust this person' objection that the message itself can never answer on its own. This is the attribution lever, orthogonal to every angle above: after you have chosen the angle (taboo, negative framing, one-thing) and tightened the numbers, decide whose mouth the line comes out of.
+
+**Evidence offered:** Two Pet Lab Co. iterations of the same grass-eating angle — one with a vet filmed in a podcast room, one with a dog trainer — both described as winners. Assertion; no spend or rate breakdown.
+
+**Fit here (5/10):** Durable persuasion principle, age irrelevant, and it fills a genuine gap — this skill covers what the claim says but had nothing on who it is attributed to. Real Skin Care can borrow authority cheaply on Amazon bullets, PDP copy, and education emails: dentist-relevant framing on oral care, cited third-party testing or ingredient sourcing, named reviewer quotes pulled verbatim, founder formulation credentials. Held to 5 because the video's actual execution — hiring a credentialed spokesperson and shooting a staged podcast set — is impossible for a solo operator with no team and no budget, and fabricated or implied authority in a body-care category is a real compliance risk. Only the honest, already-true version transfers; pair with the specificity rule above so the cited authority comes with a real number or a real name attached rather than a vague 'dermatologist-approved' gesture.
+
+*Source: Spencer Pawliw — "We 38x'd Meta Spend in 4 Months. Here's What Actually Did It" (goedDlD00T0)*
 
 ### Open a curiosity loop — show the setup, hide the payoff behind the click — and make sure the destination actually satisfies it.
 
