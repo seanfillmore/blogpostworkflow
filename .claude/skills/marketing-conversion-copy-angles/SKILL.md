@@ -1,6 +1,6 @@
 ---
 name: marketing-conversion-copy-angles
-description: Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, one-thing simplicity promises, and curiosity setups that pay off on the page.
+description: Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, one-thing simplicity promises, curiosity setups that pay off on the page, and who the claim is attributed to.
 ---
 
 # Conversion Copy Angles
@@ -84,6 +84,16 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 **Fit here (6/10):** Durable retention/persuasion psychology, age irrelevant, and free to test on email subject lines and PDP headlines. Fits a 12-SKU catalog where the honest version is real ('the one switch that fixed my transition period', 'one bar replaces three products'). Capped at 6 because in a body-care category the simplicity promise is easy to push into unsupportable claim territory — pair it with the specificity rule above so the 'one thing' always has a defensible referent (a named SKU, a named swap, a countable replacement) rather than an implied cure.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
+
+## Raise the authority behind the same message — attribute the claim to a credentialed source and place it in a context that itself signals authority.
+
+**Why it works:** The identical sentence carries different weight depending on who says it and where. A credential plus an authority-signaling setting answers the 'why should I trust this person' objection that the message itself can never answer on its own. This is the attribution lever, orthogonal to every angle above: after you have chosen the angle (taboo, negative framing, one-thing) and tightened the numbers, decide whose mouth the line comes out of.
+
+**Evidence offered:** Two Pet Lab Co. iterations of the same grass-eating angle — one with a vet filmed in a podcast room, one with a dog trainer — both described as winners. Assertion; no spend or rate breakdown.
+
+**Fit here (5/10):** Durable persuasion principle, age irrelevant, and it fills a genuine gap — this skill covers what the claim says but had nothing on who it is attributed to. Real Skin Care can borrow authority cheaply on Amazon bullets, PDP copy, and education emails: dentist-relevant framing on oral care, cited third-party testing or ingredient sourcing, named reviewer quotes pulled verbatim, founder formulation credentials. Held to 5 because the video's actual execution — hiring a credentialed spokesperson and shooting a staged podcast set — is impossible for a solo operator with no team and no budget, and fabricated or implied authority in a body-care category is a real compliance risk. Only the honest, already-true version transfers; pair with the specificity rule above so the cited authority comes with a real number or a real name attached rather than a vague 'dermatologist-approved' gesture.
+
+*Source: Spencer Pawliw — "We 38x'd Meta Spend in 4 Months. Here's What Actually Did It" (goedDlD00T0)*
 
 ## Open a curiosity loop — show the setup, hide the payoff behind the click — and make sure the destination actually satisfies it.
 
