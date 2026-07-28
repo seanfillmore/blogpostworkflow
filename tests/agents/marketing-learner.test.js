@@ -646,4 +646,118 @@ assert.throws(
   'blank claim rejected'
 );
 
+// ── EDGE CASE: already-falsified guard runs too early ──────────────────────
+// Skill with falsified "Archived tactic" that contains substring "tactic"
+// AND a live heading "Use tactics daily" that also contains "tactic".
+// Falsifying by "tactic" should match the live heading cleanly, not throw
+// "already falsified" just because a falsified entry happens to contain the substring.
+{
+  const skillWithFalsified = [
+    '---',
+    'name: marketing-tactics-test',
+    'description: Testing tactics',
+    '---',
+    '',
+    '## Use tactics daily',
+    '',
+    'Body here.',
+    '',
+    '## Falsified',
+    '',
+    'Tried here and did not work. Do not reintroduce these.',
+    '',
+    '### Archived tactic that mentions tactics',
+    '**Falsified 2026-08-01:** Did not work',
+    '',
+  ].join('\n');
+
+  // Falsifying by "tactic" must match the live "Use tactics daily" heading,
+  // not throw "already falsified" because a falsified entry contains "tactic".
+  const result = falsifyTactic(skillWithFalsified, {
+    claim: 'tactic',
+    reason: 'CTR too low',
+    today: '2026-08-15',
+  });
+  assert.match(result, /### Use tactics daily/, 'moved the live tactic, not confused by falsified entry');
+  assert.ok(!/^## Use tactics daily$/m.test(result), 'live heading no longer at ## level (as a complete line)');
+}
+
+// ── EDGE CASE: falsifiedIndex prefix match on "## Falsified Campaigns" ──────
+// Skill with live "## Falsified Campaigns" heading and NO real Falsified section.
+// falsifiedIndex must not treat "## Falsified Campaigns" as the boundary.
+{
+  const skillWithFalsifiedLiveHeading = [
+    '---',
+    'name: marketing-campaigns',
+    'description: Campaign tactics',
+    '---',
+    '',
+    '## Run Paid Campaigns',
+    '',
+    'Body.',
+    '',
+    '## Falsified Campaigns',
+    '',
+    'This is a live tactic, not a Falsified section.',
+    '',
+  ].join('\n');
+
+  // extractFalsifiedClaims must return empty, not treat "Falsified Campaigns" as the boundary.
+  const extracted = extractFalsifiedClaims(skillWithFalsifiedLiveHeading);
+  assert.deepEqual(extracted, [], 'does not mistake "## Falsified Campaigns" for the Falsified section');
+
+  // Falsifying a tactic must not silently consume the "Falsified Campaigns" heading.
+  const result = falsifyTactic(skillWithFalsifiedLiveHeading, {
+    claim: 'Paid',
+    reason: 'Bad ROAS',
+    today: '2026-08-14',
+  });
+  assert.match(result, /^## Falsified Campaigns$/m, 'preserves the live "Falsified Campaigns" heading at ## level (not consumed as section boundary)');
+  assert.match(result, /This is a live tactic, not a Falsified section/, 'preserves the body of "Falsified Campaigns"');
+  assert.match(result, /^### Run Paid Campaigns$/m, 'falsified the correct "Run Paid Campaigns" tactic');
+}
+
+// ── EDGE CASE: splitLiveSections treats ## inside fenced blocks as boundaries ─
+// Tactic body contains a fenced markdown example with a ## heading inside.
+// Must not split the section at that ##.
+{
+  const skillWithFencedBlock = [
+    '---',
+    'name: marketing-copywriting',
+    'description: Copy tactics',
+    '---',
+    '',
+    '## Use power words',
+    '',
+    '**Why it works:** Emotional resonance.',
+    '',
+    'Example markdown:',
+    '',
+    '```',
+    '## This is a fake heading inside the fence',
+    'Not a real section.',
+    '```',
+    '',
+    '*Source: Someone — "Video" (abc123)*',
+    '',
+    '## Another real tactic',
+    '',
+    'Real body.',
+    '',
+  ].join('\n');
+
+  // Falsifying "power" must move only the "Use power words" section,
+  // leaving "Another real tactic" as a live ## heading.
+  const result = falsifyTactic(skillWithFencedBlock, {
+    claim: 'power',
+    reason: 'Testing',
+    today: '2026-08-14',
+  });
+  assert.match(result, /^## Another real tactic$/m, 'other tactic stays live at ## level');
+  assert.match(result, /^### Use power words$/m, 'moved tactic is now ### (complete line)');
+  // The fenced block content must survive intact.
+  assert.match(result, /## This is a fake heading inside the fence/, 'fenced block content preserved');
+  assert.ok(result.includes('```'), 'fence markers survive');
+}
+
 console.log('✓ marketing-learner date + constraint tests pass');
