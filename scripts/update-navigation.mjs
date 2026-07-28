@@ -21,7 +21,7 @@
  */
 
 import { shopifyGraphQL, getCustomCollections, getSmartCollections, getProducts } from '../lib/shopify.js';
-import { appendAction } from '../lib/consolidation-log.js';
+import { appendAction, assertPreStateCaptured } from '../lib/consolidation-log.js';
 
 const MENUS_QUERY = `{ menus(first: 20) { nodes { id handle title
   items { id title type url resourceId items { id title type url resourceId } } } } }`;
@@ -190,7 +190,7 @@ async function main() {
       if (withSab !== items) {
         note += '; added Sets & Bundles top-level item';
       } else {
-        note += '; WARN sets-and-bundles collection not found — run setup-survivor-collections.mjs --apply first, then re-run this script';
+        note += '; WARN sets-and-bundles collection not found — --apply will hard-fail; run setup-survivor-collections.mjs --apply first, then re-run this script';
       }
       items = withSab;
     }
@@ -230,6 +230,22 @@ async function main() {
     console.log('\n  Dry run: nothing written. Re-run with --apply.');
     return;
   }
+
+  // Hard failure, not a WARN-and-proceed: a nav missing the collection this
+  // project exists to add is not an acceptable silent outcome. This must
+  // block before any menu is written, not just product-menu's — a partial
+  // apply that updates every other menu but skips the one that matters is
+  // its own kind of silent failure.
+  if (!setsAndBundlesGid) {
+    throw new Error(
+      'update-navigation: sets-and-bundles collection not found — refusing to apply. ' +
+      'Run setup-survivor-collections.mjs --apply first, then re-run this script.'
+    );
+  }
+
+  // Hard precondition: this script must never be the first to mutate the
+  // store on a given day — see lib/consolidation-log.js.
+  assertPreStateCaptured();
 
   for (const ch of changes) {
     const res = await shopifyGraphQL(MENU_UPDATE, {

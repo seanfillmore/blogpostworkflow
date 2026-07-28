@@ -47,7 +47,7 @@ import {
   getCollectionProductCount, shopifyGraphQL,
 } from '../lib/shopify.js';
 import { SURVIVORS } from '../lib/collection-consolidation.js';
-import { capturePreState, writePreState, appendAction } from '../lib/consolidation-log.js';
+import { capturePreState, writePreState, preStateExists, preStatePath, appendAction } from '../lib/consolidation-log.js';
 
 // Paragraph of links to the surviving category collections, since
 // `all-products` has no single primary PDP to lead with.
@@ -232,13 +232,22 @@ async function main() {
 
   // This is the first script in the documented run order, so it captures
   // pre-state before making any change — see lib/consolidation-log.js.
+  // Guarded on preStateExists (not a bare capture-and-write) so a legitimate
+  // same-day re-run of this idempotent script doesn't itself crash against
+  // writePreState's write-once guard, and — more importantly — never
+  // overwrites the true pre-mutation baseline with state captured after this
+  // script's own earlier run already mutated things.
   if (apply) {
-    const preState = await capturePreState({
-      getCustomCollections, getSmartCollections, shopifyGraphQL,
-      survivorHandles: [...SURVIVORS],
-    });
-    const p = writePreState(preState);
-    log(`pre-state captured -> ${p}`);
+    if (preStateExists()) {
+      log(`pre-state already captured today -> ${preStatePath()} (leaving it as the rollback baseline)`);
+    } else {
+      const preState = await capturePreState({
+        getCustomCollections, getSmartCollections, shopifyGraphQL,
+        survivorHandles: [...SURVIVORS],
+      });
+      const p = writePreState(preState);
+      log(`pre-state captured -> ${p}`);
+    }
   }
 
   const smart = await getSmartCollections({ limit: 250 });

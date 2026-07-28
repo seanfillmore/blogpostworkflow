@@ -133,3 +133,35 @@ test('findChainedRedirects is scoped to ready sources so it never repoints at a 
   const existing = [{ id: 9, path: '/collections/deodorant', target: '/collections/natural-toothpaste' }];
   assert.deepEqual(findChainedRedirects(readyPlan, existing), []);
 });
+
+// --- Blocker 1 regression: chained and toRewrite must never double-process
+// the same redirect record. Live audit found all 22 toRewrite rows also
+// satisfied findChainedRedirects's predicate (e.g.
+// /collections/no-sls-toothpaste -> /collections/sls-free-toothpaste, where
+// both are plan sources). Under --apply that meant the chain loop deleted
+// the record and recreated it under a new id, then the rewrite loop tried to
+// delete the already-gone id (404) or create an already-existing path (422)
+// — a deterministic crash after 50 chain fixes, before any of the 61 new
+// redirects or 58 unpublishes ran.
+test('a redirect record whose path AND target are both plan sources is excluded from chained — toRewrite handles it instead', () => {
+  const readyPlan = [
+    { handle: 'no-sls-toothpaste', target: '/products/coconut-oil-toothpaste', live: false },
+    { handle: 'sls-free-toothpaste', target: '/products/coconut-oil-toothpaste', live: false },
+  ];
+  const existing = [
+    { id: 100, path: '/collections/no-sls-toothpaste', target: '/collections/sls-free-toothpaste' },
+  ];
+
+  const chained = findChainedRedirects(readyPlan, existing);
+  const { toRewrite } = diffRedirectsAgainstPlan(readyPlan, existing);
+
+  const inChained = chained.some((c) => c.id === 100);
+  const inToRewrite = toRewrite.some((r) => r.existingRedirectId === 100);
+
+  assert.notEqual(inChained, inToRewrite, 'record 100 must appear in exactly one of the two work lists, never both, never neither');
+  assert.equal(inToRewrite, true, 'toRewrite is the authoritative loop for a record whose own path is a plan source');
+  assert.equal(chained.length, 0);
+  assert.equal(toRewrite.length, 1);
+  assert.equal(toRewrite[0].existingRedirectId, 100);
+  assert.equal(toRewrite[0].target, '/products/coconut-oil-toothpaste');
+});

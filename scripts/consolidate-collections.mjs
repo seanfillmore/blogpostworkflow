@@ -14,7 +14,7 @@ import {
   updateCustomCollection, updateSmartCollection, createRedirect, deleteRedirect, getRedirects,
 } from '../lib/shopify.js';
 import { buildRedirectPlan } from '../lib/collection-consolidation.js';
-import { appendAction } from '../lib/consolidation-log.js';
+import { appendAction, assertPreStateCaptured } from '../lib/consolidation-log.js';
 
 const SITE = 'https://www.realskincare.com';
 
@@ -123,11 +123,27 @@ export function diffRedirectsAgainstPlan(readyPlan, existingRedirects) {
  *
  * Scoped to `readyPlan` (not the full plan) so a chain is never repointed at
  * a target that failed the health check.
+ *
+ * Excludes any record whose own `path` is itself a plan source. Live audit
+ * found 22 of 22 `toRewrite` rows (see `diffRedirectsAgainstPlan`) also
+ * satisfied this function's predicate — e.g.
+ * `/collections/no-sls-toothpaste -> /collections/sls-free-toothpaste`, where
+ * both `no-sls-toothpaste` and `sls-free-toothpaste` are plan sources.
+ * `diffRedirectsAgainstPlan` already sets that record's target authoritatively
+ * to `classifyTarget(no-sls-toothpaste)` via `toRewrite` — reprocessing the
+ * same redirect id here would mean two loops both delete-then-recreate the
+ * same record under --apply, and the second one always 404s on the delete
+ * (the first already removed it) or 422s on the create (the first already
+ * recreated the path). Skipping it here is safe: the excluded row's own
+ * classified target and this function's would-be `newTarget` are always the
+ * same PDP/survivor, since both source and chained-from paths land in the
+ * same category by construction.
  */
 export function findChainedRedirects(readyPlan, existingRedirects) {
   const finalTargetByPath = new Map(readyPlan.map((row) => [`/collections/${row.handle}`, row.target]));
   const out = [];
   for (const r of existingRedirects) {
+    if (finalTargetByPath.has(r.path)) continue;
     const finalTarget = finalTargetByPath.get(r.target);
     if (finalTarget && finalTarget !== r.target) {
       out.push({ id: r.id, path: r.path, staleTarget: r.target, newTarget: finalTarget });
@@ -224,7 +240,16 @@ async function main() {
     return;
   }
 
+  // Hard precondition: this script must never be the first to mutate the
+  // store on a given day. setup-survivor-collections.mjs --apply is the
+  // documented first step and is the only place that captures the rollback
+  // baseline — see lib/consolidation-log.js. Enforce it instead of merely
+  // documenting it.
+  assertPreStateCaptured();
+
   // Chain fixes first — independent of the sources' own redirects/unpublish.
+  // These records are disjoint from toRewrite by construction (see
+  // findChainedRedirects) — no redirect id is ever touched by both loops.
   let chainFixed = 0;
   for (const c of chained) {
     await deleteRedirect(c.id);
@@ -234,20 +259,29 @@ async function main() {
     console.log(`    ✓ chain-fixed ${c.path} -> ${c.newTarget}`);
   }
 
-  // Rewrites: delete the stale redirect before creating the correct one —
-  // Shopify does not expose an update, and a path can't hold two redirects.
+  // Rewrites: delete the stale redirect and create the correct one for the
+  // SAME row before moving to the next — Shopify does not expose an update,
+  // a path can't hold two redirects, so the delete must land first, but
+  // batching all 22 deletes before any create would leave every one of those
+  // paths redirect-less for up to ~83 API calls. Interleaving bounds that
+  // window to the single gap between these two calls.
+  let redirected = 0;
   for (const r of toRewrite) {
     await deleteRedirect(r.existingRedirectId);
     appendAction({ action: 'delete_redirect', path: r.path, target: r.staleTarget });
+    await createRedirect(r.path, r.target);
+    redirected++;
+    appendAction({ action: 'create_redirect', path: r.path, target: r.target });
+    console.log(`    ✓ redirect ${r.handle} -> ${r.target}`);
   }
 
-  // Create/recreate every redirect BEFORE unpublishing anything. A redirect
-  // lies dormant while its source collection is still published and only
-  // activates the moment the collection 404s, so if the loop crashes midway
-  // there are zero permanent 404s — versus unpublish-then-redirect, which
-  // opens a live 404 window between the two calls for every source.
-  let redirected = 0;
-  for (const r of toWrite) {
+  // New redirects (no existing record to replace) BEFORE unpublishing
+  // anything. A redirect lies dormant while its source collection is still
+  // published and only activates the moment the collection 404s, so if the
+  // loop crashes midway there are zero permanent 404s — versus
+  // unpublish-then-redirect, which opens a live 404 window between the two
+  // calls for every source.
+  for (const r of toCreate) {
     await createRedirect(r.path, r.target);
     redirected++;
     appendAction({ action: 'create_redirect', path: r.path, target: r.target });
