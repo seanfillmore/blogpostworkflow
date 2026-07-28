@@ -1413,4 +1413,145 @@ Body.`,
   );
 }
 
+// ── F-fence: isFence must track marker TYPE, not treat ``` and ~~~ as one toggle ─
+// e45c74a unified fence detection into a single toggle that flipped on EITHER
+// ``` or ~~~, so a ~~~ line inside a ```-opened fence (or vice versa) closed
+// the fence early. Everything after that point — including a real "##
+// Falsified" heading — was then read as still being inside a fence and the
+// graveyard vanished. Per CommonMark, a fence is closed only by a line with
+// the SAME marker character, at least as long as the opening run.
+{
+  const skillWithMixedFence = [
+    '---',
+    'name: marketing-fence-types',
+    'description: Use when documenting fenced code examples',
+    '---',
+    '',
+    '## Documenting fences',
+    '',
+    '```markdown',
+    '~~~',
+    '```',
+    '',
+    '## Falsified',
+    '',
+    '### Dead one',
+    '**Falsified 2026-01-01:** no',
+    '',
+  ].join('\n');
+
+  assert.deepEqual(
+    extractFalsifiedClaims(skillWithMixedFence),
+    ['Dead one'],
+    'finds the graveyard past a ```-fence that contains a ~~~ line'
+  );
+
+  const droppedGraveyard = [
+    '---',
+    'name: marketing-fence-types',
+    'description: Use when documenting fenced code examples',
+    '---',
+    '',
+    '## Documenting fences',
+    '',
+    '```markdown',
+    '~~~',
+    '```',
+    '',
+  ].join('\n');
+
+  assert.throws(
+    () => validateSkillEdit(skillWithMixedFence, droppedGraveyard),
+    /Dead one/,
+    'validateSkillEdit still refuses a wholesale graveyard drop when a mixed fence precedes it'
+  );
+}
+
+// ── F-fence: mirrored case — a ~~~-opened fence containing a ``` line ───────
+{
+  const skillWithMixedFenceReversed = [
+    '---',
+    'name: marketing-fence-types-2',
+    'description: Use when documenting fenced code examples',
+    '---',
+    '',
+    '## Documenting fences the other way',
+    '',
+    '~~~markdown',
+    '```',
+    '~~~',
+    '',
+    '## Falsified',
+    '',
+    '### Dead two',
+    '**Falsified 2026-01-01:** no',
+    '',
+  ].join('\n');
+
+  assert.deepEqual(
+    extractFalsifiedClaims(skillWithMixedFenceReversed),
+    ['Dead two'],
+    'finds the graveyard past a ~~~-fence that contains a ``` line'
+  );
+
+  const droppedGraveyard2 = [
+    '---',
+    'name: marketing-fence-types-2',
+    'description: Use when documenting fenced code examples',
+    '---',
+    '',
+    '## Documenting fences the other way',
+    '',
+    '~~~markdown',
+    '```',
+    '~~~',
+    '',
+  ].join('\n');
+
+  assert.throws(
+    () => validateSkillEdit(skillWithMixedFenceReversed, droppedGraveyard2),
+    /Dead two/,
+    'validateSkillEdit still refuses a wholesale graveyard drop when the fence types are swapped'
+  );
+}
+
+// ── F-fence: falsifyTactic must not fork into two ## Falsified sections ────
+// when a mixed fence precedes the real graveyard — this was symptom #3 of
+// the regression: falsifyTactic couldn't find the existing graveyard, so it
+// synthesized a second one and the original entry vanished from
+// extractFalsifiedClaims.
+{
+  const skillWithMixedFence = [
+    '---',
+    'name: marketing-fence-types-3',
+    'description: Use when documenting fenced code examples',
+    '---',
+    '',
+    '## Documenting fences',
+    '',
+    '```markdown',
+    '~~~',
+    '```',
+    '',
+    '## Falsified',
+    '',
+    '### Dead one',
+    '**Falsified 2026-01-01:** no',
+    '',
+  ].join('\n');
+
+  const out = falsifyTactic(skillWithMixedFence, {
+    claim: 'Documenting',
+    reason: 'did not work',
+    today: '2026-07-27',
+  });
+
+  assert.equal((out.match(/^## Falsified$/gm) || []).length, 1, 'only ONE Falsified section');
+  assert.deepEqual(
+    extractFalsifiedClaims(out).sort(),
+    ['Dead one', 'Documenting fences'],
+    'both the pre-existing and newly falsified claims are present'
+  );
+}
+
 console.log('✓ marketing-learner date + constraint tests pass');
