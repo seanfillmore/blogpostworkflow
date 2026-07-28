@@ -760,4 +760,69 @@ assert.throws(
   assert.ok(result.includes('```'), 'fence markers survive');
 }
 
+// ── validateSkillEdit preserves the graveyard ───────────────────────────────
+{
+  const OLD_WITH_DEAD = [
+    '---',
+    'name: marketing-x',
+    'description: Use when doing x',
+    '---',
+    '',
+    '## Live one',
+    'body'.repeat(60),
+    '',
+    '## Falsified',
+    '',
+    '### Dead one',
+    '**Falsified 2026-08-14:** did not work',
+    '',
+  ].join('\n');
+
+  // Dropping the falsified entry throws even though the file GREW.
+  const dropped = [
+    '---',
+    'name: marketing-x',
+    'description: Use when doing x',
+    '---',
+    '',
+    '## Live one',
+    'body'.repeat(60),
+    '',
+    '## Another live one',
+    'body'.repeat(60),
+    '',
+  ].join('\n');
+  assert.ok(dropped.length > OLD_WITH_DEAD.length, 'fixture grew — shrink guard cannot catch this');
+  assert.throws(
+    () => validateSkillEdit(OLD_WITH_DEAD, dropped),
+    /Dead one/,
+    'dropping a falsified entry throws and names it'
+  );
+
+  // Preserving it passes.
+  const kept = dropped.replace(
+    '## Another live one',
+    '## Falsified\n\n### Dead one\n**Falsified 2026-08-14:** did not work\n\n## Another live one'
+  );
+  assert.equal(validateSkillEdit(OLD_WITH_DEAD, kept), true, 'preserving the entry passes');
+
+  // A skill with no Falsified section is unaffected.
+  const plain = '---\nname: marketing-y\ndescription: d\n---\n\n' + 'x'.repeat(400);
+  assert.equal(validateSkillEdit(plain, plain + '\nmore'), true, 'no falsified section, no new constraint');
+}
+
+// ── both prompts state the falsified list ──────────────────────────────────
+{
+  const inv = [{
+    name: 'marketing-x',
+    description: 'Use when doing x',
+    path: '/tmp/x/SKILL.md',
+    content: '---\nname: marketing-x\ndescription: d\n---\n\n## Live\n\n## Falsified\n\n### Dead tactic\n',
+  }];
+  const p = buildExtractionPrompt({ video: VIDEO, inventory: inv });
+  assert.match(p, /Dead tactic/, 'extraction prompt names the falsified claim');
+  assert.match(p, /tested at this business and failed|already been tested here and failed/i,
+    'extraction prompt explains what falsified means');
+}
+
 console.log('✓ marketing-learner date + constraint tests pass');
