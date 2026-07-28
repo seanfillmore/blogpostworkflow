@@ -1,0 +1,29 @@
+{%- comment -%}
+  Real User Monitoring beacon.
+
+  Included from layout/theme.liquid, immediately before </body>. Loads deferred
+  and off the critical path — this measures page speed and must not cost any.
+
+  Why we self-host and beacon to our own dashboard instead of sending a GA4
+  event: GA4 runs through Shopify's Google channel web pixel, which is
+  sandboxed, so window.gtag does not exist in theme scope. Re-adding gtag.js to
+  the theme would re-introduce the duplicate-GA4 problem the 2026-07-24 tag
+  audit fixed and add ~100KB to every page. Measurement Protocol would put the
+  api_secret in client-side source. So: our own collector.
+
+  Set rum_sample below 1.0 to sample down if traffic grows.
+{%- endcomment -%}
+
+{%- liquid
+  assign rum_endpoint = 'https://gizmo-borax-domain.ngrok-free.dev/api/rum'
+  assign rum_sample = 1.0
+-%}
+
+<script>
+  window.__RSC_RUM = {
+    endpoint: {{ rum_endpoint | json }},
+    sample: {{ rum_sample }},
+    template: {{ template.name | json }}
+  };
+</script>
+<script src="{{ 'rsc-rum.js' | asset_url }}" defer="defer"></script>

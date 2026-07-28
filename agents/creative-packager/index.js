@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
+import { scanSkillInventory, renderContextMirror } from '../../lib/marketing-learner.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -119,8 +120,9 @@ export function loadPersonas(root = ROOT) {
  */
 export function loadTacticMenu(root = ROOT) {
   try {
-    const raw = readFileSync(join(root, 'data', 'context', 'marketing-tactics.md'), 'utf8');
-    return raw.trim() || null;
+    const inventory = scanSkillInventory(join(root, '.claude', 'skills'));
+    if (!inventory.length) return null;
+    return renderContextMirror(inventory).trim() || null;
   } catch { return null; }
 }
 
