@@ -229,6 +229,20 @@ runStep('change-queue-processor', `"${NODE}" agents/change-queue-processor/index
 // and the prioritizers (which expect it fresh within 3 days). Runs daily.
 runStep('seo-impact', `"${NODE}" agents/seo-impact/index.js`);
 
+// gsc-query-miner — WEEKLY (Sundays), immediately before the index build so a
+// fresh untapped-candidates feed is on disk when the builder reads it. Surfaces
+// queries with impressions and zero clicks, which the index's conversion-based
+// qualification can never admit on its own. One Anthropic call per run.
+if (new Date().getDay() === 0) {
+  if (!dryFlag) {
+    runStep('gsc-query-miner', `"${NODE}" agents/gsc-query-miner/index.js`);
+  } else {
+    log('  gsc-query-miner: skipped (dry-run — makes a live Anthropic call and overwrites untapped-candidates.json, a real keyword-index build input)');
+  }
+} else {
+  log('  gsc-query-miner: skipped (weekly, Sundays only)');
+}
+
 // Keyword-index foundation — runs daily but self-paces to biweekly via built_at.
 runStep('keyword-index-builder', `"${NODE}" agents/keyword-index-builder/index.js${dryFlag}`);
 

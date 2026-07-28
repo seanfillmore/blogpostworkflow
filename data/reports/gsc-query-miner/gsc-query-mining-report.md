@@ -1,393 +1,433 @@
 # GSC Query Mining Report — Real Skin Care
-**Run date:** March 9, 2026  
+**Run date:** July 27, 2026  
 **Window:** Last 90 days  
 **Impression threshold:** 50+  
 **Total queries in GSC:** 5000  
 
 ---
-# Real Skin Care — SEO Action Plan
-*Based on GSC data, last 90 days*
+# Real Skin Care — SEO Action Plan (Last 90 Days)
 
 ---
 
 ## Executive Summary
 
-- **Cannibalization is the #1 revenue leak.** Multiple thin collection pages (`/collections/coconut-oil-lotion`, `/collections/coconut-body-cream`, `/collections/best-non-toxic-body-lotion`, etc.) are fragmenting link equity across the same keyword clusters. No single page is strong enough to rank, so impressions are massive and clicks are near zero.
-- **The toothpaste blog cluster is underperforming despite real ranking potential.** Two near-duplicate posts (`/blogs/news/best-sls-free-toothpaste-2025` and `/blogs/news/best-toothpaste-without-sls-2025`) are splitting 1,841 impressions. The stronger post is already at position 5.7 for "best sls free toothpaste" — consolidation alone could push it to page 1 top 3.
-- **The "2025/2026" sensitive-toothpaste cluster is sitting at position 5–7 with 9,167 impressions and 1 click.** CTR is essentially zero because the title tag almost certainly doesn't match the year-specific query intent. A title and meta update is a same-day fix with immediate upside.
-- **Stretch marks is a near-miss cluster hiding a conversion opportunity.** The blog post ranks ~#5–8 for high-intent queries ("is coconut oil good for stretch marks," 866 impressions) but earns 2 clicks total. The page needs a clear CTA linking to the coconut oil product, structured FAQ for featured snippet capture, and fresher content signals.
-- **"real skin" (2,037 impressions, position 7.7, 11 clicks) is a brand identity miss.** People searching the brand name variant aren't finding the site reliably. This is fixable with homepage title tag tuning and structured brand markup.
+- **Cannibalization is the single biggest revenue leak.** The "sls free toothpaste" topic alone has 4 competing blog posts splitting ~11,826 impressions across fragmented URLs. Consolidating these into one authoritative page could 3–5× clicks overnight without creating a single new word of content.
+- **Two queries ranking #3 generate zero clicks**, meaning the title/meta or SERP feature is completely misaligned with what searchers expect to find. "Are coconut oil toothpastes safe for sensitive teeth?" (414 impressions, pos #3, 0 clicks) and "are coconut oil toothpastes effective for everyday use?" (341 impressions, pos #3, 0 clicks) are the most urgent title/meta fixes in the dataset.
+- **The lotion category is nearly invisible despite real demand.** "Coconut lotion" (1,111 impressions, pos #30), "coconut body lotion" (861 impressions, pos #23), and "clean body lotion" (500 impressions, pos #20) are all ranking too low to generate clicks and pointing to no clearly optimized landing page. The lotion cluster has 17,756 impressions and only 42 clicks — a 0.24% CTR.
+- **The tattoo soap opportunity is being wasted on duplicate URLs.** Four separate pages compete for "best soap for tattoos," collectively ranking around position 10–15 with minimal clicks. One consolidated, authoritative page could realistically reach top 5.
+- **The "2026" content cluster shows early traction with nearly zero payoff** (11,318 impressions, 5 clicks, avg pos #9.1). Dated blog posts are already pulling impressions, but CTR is catastrophically low — likely a title/freshness mismatch that needs immediate attention before a competitor locks in those rankings.
 
 ---
 
 ## Impression Leaks — Action Plan
 
-### Root Cause Group 1: Ranking Too Deep to Matter (Position 40+) — Wrong or No Dedicated Page
+### Group 1: Ranking Too Low to Matter (Positions 20–50) — Need Ranking Lift
 
-These queries have high impressions but rank so far down that clicks are impossible regardless of CTR. A dedicated, optimized page doesn't exist or the existing page has no SEO substance.
+**Queries:** `coconut lotion` (#30.3), `coconut body lotion` (#23.5), `clean body lotion` (#20.1), `best clean body lotion` (#18.2), `chemical free body lotion` (#29.9), `body lotion without chemicals` (#30.4), `best natural body lotion` (#40.4), `coconut body cream` (#24.1)
 
-| Query | Impressions | Position | Action |
-|---|---|---|---|
-| coconut lotion | 1,087 | #43.4 | Designate `/products/coconut-lotion` as the single canonical product page (see Cannibalization). Rewrite the page title to: *"Coconut Lotion — Real Skin Care \| Natural Body Lotion with Coconut Oil"* and add 300+ words of on-page copy covering ingredients and benefits. |
-| coconut body lotion | 899 | #28.6 | Same canonical page as above. Add "coconut body lotion" as a secondary H2 on `/products/coconut-lotion`. Redirect `/collections/coconut-body-cream` and `/collections/coconut-oil-lotion` to the product page. |
-| natural lip balm | 713 | #72.1 | No dedicated page exists at a rankable depth. Create `/products/natural-lip-balm` (or optimize the existing lip balm product page) with title: *"Natural Lip Balm with Coconut Oil — Real Skin Care"* and add ingredient transparency copy. |
-| coconut oil for skin | 699 | #57.4 | The blog post `/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides` is ranking but clearly under-optimized. Rewrite the H1 to match the query exactly, add a "Shop Coconut Oil Products" internal CTA block, and build 3 internal links from related posts. |
-| body lotion without chemicals | 650 | #27.1 | Consolidate all four `/collections/` variants into one — keep `/collections/non-toxic-body-lotion` (best position at 23.3), 301 redirect the others, and rewrite the collection title/description targeting "body lotion without chemicals" and "chemical free body lotion." |
-| coconut oil for lips | 533 | #45.3 | Add a dedicated section or blog post targeting "coconut oil for lips" with internal links to the lip balm product. Quick win: add a FAQ entry "Can you use coconut oil on your lips?" to the existing coconut oil skin guide. |
-| coconut oil moisturizer | 519 | #55.1 | Four pages competing (see Cannibalization). Pick `/blogs/news/is-coconut-oil-a-good-moisturizer-...` as the informational winner, consolidate collection pages, and update the blog H1 to "Coconut Oil as a Moisturizer: Benefits, Uses & Skin Types." |
+**Root Cause:** No single optimized collection or pillar page is consolidating authority for the lotion category. Multiple collection URLs (`/collections/natural-body-lotion`, `/collections/organic-body-lotion`, `/collections/best-non-toxic-body-lotion`, `/collections/non-toxic-body-lotion`) are splitting signals at positions 50–75, ensuring none rank.
+
+**Action:** 301-redirect `/collections/organic-body-lotion`, `/collections/best-non-toxic-body-lotion`, and `/collections/non-toxic-body-lotion` into a single canonical page at `/collections/natural-body-lotion`. Rewrite that page's title to `Natural Coconut Body Lotion — Chemical Free & Clean | Real Skin Care`, expand its on-page copy to 300+ words covering "coconut body lotion," "clean body lotion," and "chemical free" language, and add internal links from all coconut oil blog posts.
 
 ---
 
-### Root Cause Group 2: Wrong Title / Meta (Position 5–20 but Zero Clicks)
+### Group 2: Wrong SERP Intent — Informational Queries Landing on Product/Collection Pages
 
-These are ranking respectably but something about the snippet is killing CTR. The title tag doesn't match year-specific or emotionally resonant intent.
+**Queries:** `coconut for the skin` (#11.8), `coconut oil for face` (#20), `coconut oil for body` (#36), `coconut moisturizer for face` (#31.1), `coconut oil face moisturizer` (#29.6)
 
-| Query | Impressions | Position | Action |
-|---|---|---|---|
-| best toothpaste for sensitive teeth 2025 2026 | 638 | #5.9 | Update the title tag of the ranking page to include "2025 & 2026" explicitly: *"Best Toothpaste for Sensitive Teeth 2025–2026 — Natural, SLS-Free Picks"*. Update the meta description to include a specific hook: "No fluoride, no SLS — our picks for sensitive teeth this year." |
-| best fluoride-free toothpaste brands 2025 | 624 | #12 | The page `/blogs/news/best-fluoride-free-toothpaste-2025` is at position 73 for the broader term but #12 here. Push it up with a dedicated H2: "Best Fluoride-Free Toothpaste Brands in 2025" and add a brand comparison table. Update title tag to front-load "2025." |
-| cinnamon toothpaste for sensitive teeth | 624 | #16.6 | No dedicated page targets this exact query. Add a section to the cinnamon toothpaste product page (or the best-sensitive-teeth blog post) with H2: "Is Cinnamon Toothpaste Good for Sensitive Teeth?" and 150 words of supporting copy. |
-| benefits of coconut oil on skin everyday | 422 | #9.6 | This is a near-miss (see next section) but the snippet is wrong. The current meta description likely doesn't answer "everyday use." Add a direct answer in the meta: "Yes — using coconut oil on skin daily can hydrate, protect, and soothe. Here's what to expect." |
-| coconut oil chapstick | 474 | #11 | Ranking at #11 with zero clicks. The lip balm product page title likely says "lip balm" not "chapstick." Add "coconut oil chapstick" as an alt term in the product title or meta description: *"Coconut Oil Lip Balm & Chapstick — Real Skin Care."* |
+**Root Cause:** These are informational/research-phase queries ("how does coconut oil help skin?"). If they're resolving to product or collection pages, searchers won't click because the page won't look like the answer to their question.
+
+**Action:** Create or designate one existing blog post as the canonical "Coconut Oil for Skin: Benefits, Uses & How to Apply" guide at `/blogs/news/coconut-oil-for-skin`. It should cover face, body, and moisturizing use cases in distinct H2 sections, naturally targeting all five queries above. Add product CTAs mid-post. Internal-link to it from every coconut product page.
 
 ---
 
-### Root Cause Group 3: No Dedicated Page (Informational Intent Gap)
+### Group 3: High-Position, Zero-Click — Title/Meta Mismatch (Urgent)
 
-| Query | Impressions | Position | Action |
-|---|---|---|---|
-| cinnamon toothpaste benefits | 423 | #32.4 | Create a standalone blog post: *"Cinnamon Toothpaste Benefits: Why Cinnamon Works for Oral Health"* targeting this exact query and related terms (cinnamon flavored toothpaste, natural cinnamon toothpaste). Internal link to the product. |
-| best natural toothpaste | 446 | #66.7 | `/blogs/news/best-natural-toothpaste-2025` exists but ranks at 66.7, suggesting it's thin or poorly linked. Audit the page: add a comparison table, H2s matching queries (best organic toothpaste, all natural toothpaste), and build 5 internal links from toothpaste-adjacent posts. |
+**Queries:** `are coconut oil toothpastes safe for sensitive teeth?` (#3, 414 impressions, 0 clicks), `are coconut oil toothpastes effective for everyday use?` (#3, 0 clicks), `coconut oil as toothpaste` (#8.9, 495 impressions, 0 clicks), `best coconut oil toothpaste for a natural oral care routine.` (#4.7, 275 impressions, 0 clicks)
+
+**Root Cause:** Ranking in the top 5 with zero clicks means the title tag or meta description is failing to match search intent or is being outcompeted by rich SERP features (featured snippets, People Also Ask boxes). The page at `/blogs/news/can-you-use-coconut-oil-as-toothpaste` is surfacing for question-format queries but not earning the click.
+
+**Action:** Rewrite the title tag of `/blogs/news/can-you-use-coconut-oil-as-toothpaste` to directly answer the question: `Is Coconut Oil Toothpaste Safe & Effective? | Real Skin Care`. Rewrite the meta description to lead with a direct answer: *"Yes — coconut oil toothpaste is safe for sensitive teeth and effective for daily use. Here's what the research says."* Add a structured FAQ schema block with direct answers to the two question-format queries to compete for the PAA box and featured snippet. Also add an H2 that reads "Is Coconut Oil Toothpaste Safe for Sensitive Teeth?" with a 40–60 word direct answer immediately below it.
+
+---
+
+### Group 4: No Dedicated Page Exists
+
+**Queries:** `cinnamon toothpaste` (#41.9), `cinnamon sensitive toothpaste` (#27.3), `cinnamon toothpaste for sensitive teeth` (#23.8), `cinnamon toothpaste brands` (#34.8), `cinnamon flavored toothpaste` (#39)
+
+**Root Cause:** Real Skin Care appears to sell or feature a cinnamon toothpaste, but there's no dedicated content or landing page targeting this keyword cluster. Positions in the 24–42 range with 282–500 impressions each confirm Google knows the site is relevant but has no strong target page to rank.
+
+**Action:** Create `/blogs/news/best-cinnamon-toothpaste-for-sensitive-teeth` targeting the full cluster. Structure it as a listicle/guide covering: what makes a good cinnamon toothpaste, whether cinnamon is safe for sensitive teeth (answer: yes, and explain why), and a list of top options with Real Skin Care's product featured first. Target H1: "Best Cinnamon Toothpaste for Sensitive Teeth (2026 Guide)." This single post captures all five queries simultaneously.
+
+---
+
+### Group 5: Category Pages Ranking for Wrong-Funnel Queries
+
+**Queries:** `all natural lip balm` (#48.3), `best soap for women` (#11.9), `coconut hand soap` (#25.6), `coconut deodorant` (#30.5), `coconut oil bar soap` (#20.7)
+
+**Root Cause:** These transactional queries need optimized collection or product pages, not blog content. Positions 11–48 suggest Google is ranking whatever page it can find, not a purpose-built landing page.
+
+**Action:** Audit whether dedicated collection pages exist for each of these:
+- `/collections/lip-balm` → title: `All Natural Lip Balm — Real Skin Care`
+- `/collections/bar-soap` → title: `Coconut Oil Bar Soap for Women | Real Skin Care`
+- `/collections/deodorant` → title: `Natural Coconut Deodorant — Aluminum Free | Real Skin Care`
+- `/collections/hand-soap` → title: `Coconut Hand Soap — Natural & Gentle | Real Skin Care`
+
+If collection pages exist, rewrite title tags and add 150-word descriptive copy to each. If they don't exist, create them and redirect any orphan product pages into the correct collection.
 
 ---
 
 ## Near-Miss Opportunities
 
-*Target: move from position 5–10 to position 2–4. Specific lever for each.*
+### 1. `sls free toothpaste list` — 5,922 impressions, pos #8.1, 55 clicks, 0.9% CTR
 
-### 1. "real skin" — Position 7.7 | 2,037 impressions | 11 clicks | 0.5% CTR
-**Problem:** Generic brand-adjacent query. Users searching "real skin" may not be looking for Real Skin Care specifically — intent is mixed (skincare philosophy content vs. brand). CTR of 0.5% at position 7 confirms mismatch.
-**Action:** Update the homepage meta description to explicitly address both intents: *"Real Skin Care — natural skincare made with real ingredients. No fillers, no synthetics."* Add `Organization` schema markup with `alternateName: "Real Skin"` to help Google understand brand relevance. Build 2 internal links from blog posts using anchor text "Real Skin Care products."
+**What's holding it back:** The page ranking here (`/blogs/news/best-toothpaste-without-sls-2025`) is competing with three other internal URLs, diluting link equity. Position #8 with 0.9% CTR suggests the title isn't signaling "list" format.
 
----
-
-### 2. "coconut oil for stretch marks" — Position 8.2 | 1,996 impressions | 1 click | 0.1% CTR
-**Problem:** The blog post ranks at 8.2 but earns 1 click. The snippet is not compelling enough and there's no featured snippet capture attempt.
-**Action:** Add a direct-answer paragraph (40–50 words) immediately after the H1 answering "Does coconut oil help stretch marks?" — formatted for featured snippet. Add an FAQ schema block with 4 questions (can coconut oil prevent stretch marks, reduce, clear, before and after). Add a product CTA block linking to `/products/coconut-oil` or the lotion. This query cluster has 8,143 impressions — getting the snippet moves the needle significantly.
+**Actions to push to pos #2–3:**
+- Consolidate all SLS toothpaste content (see cannibalization section) into `/blogs/news/toothpaste-without-sls-what-to-know-best-options` which already sits at pos #4.8 for this query.
+- Rewrite the title to include the word "List": `SLS-Free Toothpaste List: 12 Best Options in 2026 | Real Skin Care`.
+- Add a numbered HTML list (not just bullet points) of SLS-free brands near the top of the post with a comparison table — this is the format that earns featured snippets for list queries.
+- Add 5 internal links pointing to the canonical URL from the redirected pages.
 
 ---
 
-### 3. "coconut oil toothpaste" — Position 7.4 | 1,445 impressions | 3 clicks | 0.2% CTR
-**Problem:** `/blogs/news/can-you-use-coconut-oil-as-toothpaste` ranks at 4.8 but earns almost no clicks. The product page `/products/coconut-oil-toothpaste` is cannibalizing at position 25.6.
-**Action:** Consolidate — add a canonical tag on the product page pointing to the blog post *or* redirect the product page and merge its content into the blog. Then rewrite the blog post title to: *"Coconut Oil Toothpaste: Does It Work? (+ Our Natural Alternative)"* — this matches informational intent AND creates a product bridge. Add 3 internal links to the blog from other coconut oil posts.
+### 2. `best sls free toothpaste` — 3,179 impressions, pos #5.9, 90 clicks, 2.8% CTR
+
+**What's holding it back:** Already the best performer in the near-miss group, but pos #5.9 with 2.8% CTR means moving to #2–3 could deliver 200–300 clicks from this query alone.
+
+**Actions:**
+- After cannibalization consolidation, all link equity flows to one URL. That alone may push this into the top 3.
+- Add a "Best SLS-Free Toothpaste" comparison table near the top (product name, key benefit, fluoride Y/N, price range) — this format matches the transactional intent and can earn a featured snippet.
+- Add 3 external links to authoritative dental sources citing SLS sensitivity research to boost E-E-A-T.
+- Refresh the publish date and add a "Last Updated: [current month] 2026" tag visibly in the post.
 
 ---
 
-### 4. "best sls free toothpaste" — Position 5.7 | 1,330 impressions | 17 clicks | 1.3% CTR
-**Problem:** Already your best-performing near-miss. At position 5.7, moving to position 3 could 3–4× clicks.
-**Action:** Add a "Quick Answer" box at the top of `/blogs/news/best-sls-free-toothpaste-2025` with a 2-sentence direct answer (featured snippet bait). Add a structured comparison table with columns: Brand | SLS-Free | Fluoride-Free | Price — Google loves tables for list queries. Build 3 new internal links from `/blogs/news/best-toothpaste-without-sls-2025` (after consolidation) and the cinnamon toothpaste post using anchor text "best SLS-free toothpaste."
+### 3. `coconut oil deodorant` — 1,008 impressions, pos #9.2, 5 clicks, 0.5% CTR
+
+**What's holding it back:** 0.5% CTR at position #9 is well below the expected ~2% for that position, pointing to a title mismatch. The page likely answers "can you use coconut oil as deodorant" (an informational question) but this query has commercial intent.
+
+**Actions:**
+- Identify which URL ranks for this query (likely the coconut oil deodorant blog post). Check if it's an informational post ranking for a transactional query — if so, create or strengthen the `/collections/deodorant` page with "coconut oil deodorant" in the title and H1.
+- Add "Shop Our Coconut Oil Deodorant" CTA with a product card near the top of the blog post so even informational visitors convert.
+- Build 3 internal links from coconut oil topic posts to the deodorant collection page using anchor text "coconut oil deodorant."
 
 ---
 
-### 5. "non toxic lotion" — Position 5 | 808 impressions | 1 click | 0.1% CTR
-**Problem:** Position 5 with 808 impressions and 1 click is a severe CTR failure. The title tag is almost certainly generic.
-**Action:** Find the ranking URL and update its title to: *"Non-Toxic Body Lotion — Real Skin Care \| Clean Ingredients, No Synthetics"*. Update meta description to include a differentiator: "No parabens, no synthetic fragrance — just coconut oil, shea butter, and real ingredients." The word "non-toxic" must appear in the title tag.
+### 4. `what soap to use for tattoo` — 622 impressions, pos #8.1, 4 clicks, 0.6% CTR
+
+**What's holding it back:** Low CTR at pos #8 suggests title isn't clearly answering the question. Searchers want a direct recommendation, not a general guide.
+
+**Actions:**
+- After consolidating the tattoo soap cannibalization (see below), the surviving page title should lead with the answer: `Best Soap for Tattoos: What to Use for Safe Healing | Real Skin Care`.
+- Add a TL;DR box at the very top of the post: *"The best soap for a new tattoo is fragrance-free, sulfate-free bar soap. Here's why and what to look for."* Google often pulls this into the featured snippet, improving both ranking and CTR.
+- Add FAQ schema for "what soap should I use on a new tattoo" directly answering in 40 words.
 
 ---
 
-### 6. "sls free toothpaste list" — Position 7 | 743 impressions | 11 clicks | 1.5% CTR
-**Problem:** "List" intent means the user wants a scannable, structured list — and the current page may bury it.
-**Action:** On `/blogs/news/best-sls-free-toothpaste-2025`, ensure the SLS-free brands list appears as a proper `<ol>` or `<ul>` HTML list within the first 25% of the page. Add "SLS-Free Toothpaste List" as an H2 header. This directly targets the list-intent query and improves snippet eligibility.
+### 5. `coconut oil as deodorant` — 860 impressions, pos #6.5, 13 clicks, 1.5% CTR
+
+**What's holding it back:** Competing with related queries across possibly multiple pages. The page serving this query needs to be clearly the most comprehensive answer.
+
+**Actions:**
+- Expand the existing post with a dedicated section titled "How to Use Coconut Oil as Deodorant (Step-by-Step)" — this directly targets the how-to intent embedded in this query and can capture a featured snippet.
+- Add a FAQ section answering: "Does coconut oil work as deodorant?", "How long does coconut oil deodorant last?", "Is coconut oil deodorant safe for sensitive skin?" with schema markup.
+- Add internal links from the coconut oil for skin pillar post (to be created) back to this page.
 
 ---
 
-### 7. "is coconut oil good for stretch marks" — Position 5.3 | 866 impressions | 2 clicks | 0.2% CTR
-**Problem:** Part of the same stretch marks cluster as #2 above. Position 5.3 with 2 clicks means the snippet is failing.
-**Action:** Same page as #2 fix (`/blogs/news/is-coconut-oil-good-for-stretch-marks-...`). The H1 should match the question exactly: *"Is Coconut Oil Good for Stretch Marks?"* Add a bolded direct answer in the first paragraph. These changes serve both this query and the broader cluster.
+### 6. `best toothpaste without sls` — 453 impressions, pos #7.4, 18 clicks, 4.0% CTR
+
+**What's holding it back:** CTR of 4% is actually strong, meaning ranking improvement alone will compound clicks. Currently 3 URLs compete for this query.
+
+**Actions:**
+- Cannibalization fix (see below) is the primary lever — consolidating to one URL should push this into the top 5 automatically.
+- Ensure the surviving page's title starts with "Best Toothpaste Without SLS" (exact match) — don't bury the keyword in the middle of the title.
+- Add a "Why SLS-Free?" intro section in the first 100 words of the post that Google can pull as a featured snippet definition.
 
 ---
 
-### 8. "can you use coconut oil as deodorant" — Position 4.1 | 174 impressions | 0 clicks | 0.0% CTR
-**Problem:** Position 4.1 with zero clicks is a title/meta problem. The intent is informational ("can you") but the page likely leads with the product.
-**Action:** Find the ranking URL. If it's the deodorant product page, it's wrong intent — create a short blog post: *"Can You Use Coconut Oil as Deodorant? Here's What Actually Works."* Link to the deodorant product in the post. If a blog post is ranking, rewrite the meta description to answer the question directly and add "yes, here's how" framing.
+### 7. `soap for tattoos` — 517 impressions, pos #9.8, 1 click, 0.2% CTR
+
+**What's holding it back:** Position #9.8 is essentially page 1 row 3 — invisible without a strong title. 0.2% CTR confirms the title/description are not compelling.
+
+**Actions:**
+- Same consolidation as "best soap for tattoos" (see cannibalization). The surviving URL should rank for this query automatically once competing pages are redirected.
+- Rewrite meta description to include social proof language: *"Used by thousands for tattoo aftercare — here's the exact soap type dermatologists and tattoo artists recommend."*
 
 ---
 
-### 9. "cleanest body lotion" — Position 5.4 | 185 impressions | 6 clicks | 3.2% CTR
-**Problem:** Best CTR in the near-miss set at 3.2%, meaning the snippet is working — just need a ranking boost.
-**Action:** This is a content authority play. Add a "What Makes a Body Lotion Clean?" section with a clear ingredient checklist (avoid: parabens, PEGs, synthetic fragrance; look for: coconut oil, shea butter). This adds topical depth and earns topical authority signals. Build 2 internal links from the stretch marks and coconut oil skin posts using anchor text "clean body lotion."
+### 8. `coconut oil soap benefits` — 426 impressions, pos #4.5, 4 clicks, 0.9% CTR
+
+**What's holding it back:** Position #4.5 with 0.9% CTR is significantly underperforming (expected CTR at pos 4–5 is 8–10%). This is a clear title/meta failure or a featured snippet is suppressing clicks.
+
+**Actions:**
+- Check if a featured snippet (likely a bulleted list of benefits) is appearing above position 1 for this query. If yes, reformat the relevant section of the ranking page as a clean bulleted list of 5–7 benefits with an H2 "Benefits of Coconut Oil Soap" to try to capture the snippet.
+- Rewrite the meta description to lead with a compelling hook: *"Coconut oil soap moisturizes, fights bacteria, and is gentle on sensitive skin. Here are 7 science-backed benefits."*
+- Add a "Shop Coconut Oil Bar Soap" product card within the first scroll of the post.
 
 ---
 
-### 10. "coconut oil as deodorant" — Position 7.5 | 181 impressions | 3 clicks | 1.7% CTR
-**Problem:** Related to #8. Two "coconut oil + deodorant" queries in near-miss territory with a combined ~355 impressions and near-zero clicks.
-**Action:** Consolidate the informational angle into one blog post targeting both "coconut oil as deodorant" and "can you use coconut oil as deodorant." Title: *"Using Coconut Oil as Deodorant: Does It Actually Work?"* Add a natural deodorant product CTA. Build an internal link from the coconut oil for skin guide.
+### 9. `glycerin free toothpaste` — 312 impressions, pos #6.8, 4 clicks, 1.3% CTR
+
+**What's holding it back:** Likely a secondary keyword on an SLS-focused post that hasn't been intentionally optimized for glycerin-free searchers.
+
+**Actions:**
+- Add a dedicated H2 section titled "Is Real Skin Care Toothpaste Glycerin-Free?" to the primary SLS toothpaste post.
+- Add "glycerin-free" to the page's meta keywords and title tag secondary clause: `Best SLS-Free Toothpaste (Also Glycerin-Free) | Real Skin Care`.
+- Internal link from the coconut oil toothpaste product page to this post using anchor text "glycerin-free toothpaste."
 
 ---
 
-## Cannibalization Fixes
-
-### 1. "sls free toothpaste" — 1,841 impressions across 2 pages
-
-**The problem:** `/blogs/news/best-sls-free-toothpaste-2025` (pos 33.8) and `/blogs/news/best-toothpaste-without-sls-2025` (pos 33.5) are virtually identical in position and topic. Neither is breaking through.
-
-**Decision:**
-- **Canonical winner:** `/blogs/news/best-sls-free-toothpaste-2025`
-- **Why:** It has 2× the impressions (1,244 vs. 597) and already ranks at position 5.7 for the more valuable query "best sls free toothpaste."
-- **Action:** Migrate the best content and unique sections from `/blogs/news/best-toothpaste-without-sls-2025` into the winner page. Then **301 redirect** `/blogs/news/best-toothpaste-without-sls-2025` → `/blogs/news/best-sls-free-toothpaste-2025`. Also redirect `/collections/sls-free-toothpaste` to the blog post (it ranks at position 76 and provides zero value as a collection page for this intent).
-
----
-
-### 2. "coconut lotion" / "coconut body lo
+### 10. `best coconut oil toothpaste for a natural oral care routine
 ---
 
 ## Raw Data
 
 ### Impression Leaks (50)
-| Query | Impressions | Avg Position |
-|---|---|---|
-| coconut lotion | 1087 | #43.4 |
-| coconut body lotion | 899 | #28.6 |
-| coconut oil lotion | 733 | #16.2 |
-| natural lip balm | 713 | #72.1 |
-| coconut oil for skin | 699 | #57.4 |
-| body lotion without chemicals | 650 | #27.1 |
-| best toothpaste for sensitive teeth 2025 2026 | 638 | #5.9 |
-| best fluoride free toothpaste | 627 | #71.9 |
-| best fluoride-free toothpaste brands 2025 | 624 | #12 |
-| cinnamon toothpaste for sensitive teeth | 624 | #16.6 |
-| natural body lotion | 587 | #41.8 |
-| cinnamon toothpaste | 583 | #39.1 |
-| chemical free body lotion | 556 | #27.3 |
-| coconut oil for lips | 533 | #45.3 |
-| coconut oil moisturizer | 519 | #55.1 |
-| coconut oil lip balm | 510 | #43.2 |
-| cinnamon flavored toothpaste | 498 | #21.6 |
-| cinnamon sensitive toothpaste | 492 | #18.5 |
-| coconut soap | 486 | #54.7 |
-| best toothpaste for sensitive teeth 2025 or 2026 | 475 | #6.7 |
-| coconut oil chapstick | 474 | #11 |
-| natural cinnamon toothpaste | 471 | #16.5 |
-| best natural toothpaste | 446 | #66.7 |
-| coconut hand soap | 445 | #57.2 |
-| cinnamon toothpaste benefits | 423 | #32.4 |
-| benefits of coconut oil on skin everyday | 422 | #9.6 |
-| coconut oil for body | 402 | #67.4 |
-| all natural toothpaste | 392 | #50.2 |
-| best organic toothpaste | 383 | #45.2 |
-| cinnamon toothpaste with fluoride | 383 | #28 |
+| Query | Impressions | Avg Position | Source |
+|---|---|---|---|
+| coconut lotion | 1111 | #30.3 | — |
+| coconut body lotion | 861 | #23.5 | — |
+| coconut for the skin | 536 | #11.8 | — |
+| cinnamon toothpaste | 500 | #41.9 | — |
+| clean body lotion | 500 | #20.1 | — |
+| coconut oil as toothpaste | 495 | #8.9 | — |
+| are coconut oil toothpastes safe for sensitive teeth? | 414 | #3 | — |
+| best clean body lotion | 397 | #18.2 | — |
+| cinnamon sensitive toothpaste | 392 | #27.3 | — |
+| coconut hand soap | 371 | #25.6 | — |
+| cinnamon toothpaste for sensitive teeth | 369 | #23.8 | — |
+| are coconut oil toothpastes effective for everyday use? | 341 | #3 | — |
+| body lotion without chemicals | 329 | #30.4 | — |
+| cinnamon flavored toothpaste | 329 | #39 | — |
+| all natural lip balm | 309 | #48.3 | — |
+| chemical free body lotion | 300 | #29.9 | — |
+| best soap for women | 287 | #11.9 | — |
+| cinnamon toothpaste brands | 282 | #34.8 | — |
+| coconut body cream | 280 | #24.1 | — |
+| best coconut oil toothpaste for a natural oral care routine. | 275 | #4.7 | — |
+| coconut oil for face | 263 | #20 | — |
+| best coconut lotions | 259 | #46.4 | — |
+| coconut deodorant | 258 | #30.5 | — |
+| coconut oil bar soap | 256 | #20.7 | — |
+| coconut oil for body | 253 | #36 | — |
+| coconut oil for armpits | 247 | #8.6 | — |
+| coconut moisturizer for face | 245 | #31.1 | — |
+| coconut oil face moisturizer | 245 | #29.6 | — |
+| are natural coconut oil toothpastes easy to find? | 236 | #7.7 | — |
+| best natural body lotion | 236 | #40.4 | — |
 
 ### Near-Misses (30)
-| Query | Impressions | Position | Clicks | CTR |
-|---|---|---|---|---|
-| real skin | 2037 | #7.7 | 11 | 0.5% |
-| coconut oil for stretch marks | 1996 | #8.2 | 1 | 0.1% |
-| coconut oil toothpaste | 1445 | #7.4 | 3 | 0.2% |
-| best sls free toothpaste | 1330 | #5.7 | 17 | 1.3% |
-| is coconut oil good for stretch marks | 866 | #5.3 | 2 | 0.2% |
-| real skin care | 820 | #4 | 53 | 6.5% |
-| non toxic lotion | 808 | #5 | 1 | 0.1% |
-| sls free toothpaste list | 743 | #7 | 11 | 1.5% |
-| best toothpaste for sensitive teeth 2025 2026 | 638 | #5.9 | 0 | 0.0% |
-| real skincare | 590 | #4.3 | 16 | 2.7% |
-| best toothpaste for sensitive teeth 2025 or 2026 | 475 | #6.7 | 0 | 0.0% |
-| benefits of coconut oil on skin everyday | 422 | #9.6 | 0 | 0.0% |
-| #realskincare | 271 | #6.1 | 0 | 0.0% |
-| best natural toothpaste for sensitive teeth 2025 or 2026 | 265 | #6.9 | 0 | 0.0% |
-| best toothpastes for sensitive teeth 2025 2026 | 262 | #5.8 | 0 | 0.0% |
-| best natural toothpaste alternatives 2025 or 2026 | 242 | #9.3 | 0 | 0.0% |
-| sls free toothpaste brands | 220 | #9.6 | 2 | 0.9% |
-| realskin | 216 | #7.3 | 3 | 1.4% |
-| coconut oil soap benefits | 214 | #6.9 | 0 | 0.0% |
-| coconut oil stretch marks | 214 | #5 | 0 | 0.0% |
-| coconut lotion benefits | 212 | #6.9 | 1 | 0.5% |
-| does coconut oil help stretch marks | 200 | #5.3 | 0 | 0.0% |
-| coconut oil as toothpaste | 197 | #5.4 | 0 | 0.0% |
-| cleanest body lotion | 185 | #5.4 | 6 | 3.2% |
-| chemical free lotion | 182 | #7.5 | 0 | 0.0% |
-| coconut oil for toothpaste | 182 | #6.3 | 0 | 0.0% |
-| coconut oil as deodorant | 181 | #7.5 | 3 | 1.7% |
-| boka toothpaste alternative | 179 | #5.9 | 1 | 0.6% |
-| is coconut oil a good face moisturizer | 175 | #5.2 | 0 | 0.0% |
-| can you use coconut oil as deodorant | 174 | #4.1 | 0 | 0.0% |
+| Query | Impressions | Position | Clicks | CTR | Source |
+|---|---|---|---|---|---|
+| sls free toothpaste list | 5922 | #8.1 | 55 | 0.9% | — |
+| best sls free toothpaste | 3179 | #5.9 | 90 | 2.8% | — |
+| real skin | 2149 | #6.3 | 80 | 3.7% | — |
+| non sls toothpaste | 1803 | #7.8 | 19 | 1.1% | — |
+| coconut oil deodorant | 1008 | #9.2 | 5 | 0.5% | — |
+| coconut oil as deodorant | 860 | #6.5 | 13 | 1.5% | — |
+| toothpaste with no sls | 631 | #8.4 | 1 | 0.2% | — |
+| what soap to use for tattoo | 622 | #8.1 | 4 | 0.6% | — |
+| soap for tattoos | 517 | #9.8 | 1 | 0.2% | — |
+| coconut oil as toothpaste | 495 | #8.9 | 0 | 0.0% | — |
+| best toothpaste without sls | 453 | #7.4 | 18 | 4.0% | — |
+| sls free toothpaste brands | 441 | #8.1 | 4 | 0.9% | — |
+| toothpaste without sls list | 435 | #7.6 | 1 | 0.2% | — |
+| best soap for tattoo aftercare | 427 | #9.1 | 1 | 0.2% | — |
+| coconut oil soap benefits | 426 | #4.5 | 4 | 0.9% | — |
+| best toothpaste without sodium lauryl sulfate | 423 | #9.1 | 11 | 2.6% | — |
+| coconut oil for toothpaste | 404 | #8.9 | 4 | 1.0% | — |
+| real skincare | 379 | #4.7 | 62 | 16.4% | — |
+| coconut oil for deodorant | 345 | #7.7 | 3 | 0.9% | — |
+| what toothpaste doesn't have sodium lauryl sulfate | 336 | #9.7 | 2 | 0.6% | — |
+| can you use coconut oil as deodorant | 334 | #7.4 | 2 | 0.6% | — |
+| what soap is good for tattoos | 326 | #8.2 | 1 | 0.3% | — |
+| coconut soap benefits | 324 | #4.5 | 1 | 0.3% | — |
+| glycerin free toothpaste | 312 | #6.8 | 4 | 1.3% | — |
+| sls free toothpaste for adults | 306 | #7.8 | 4 | 1.3% | — |
+| good soap for tattoos | 288 | #9.9 | 1 | 0.3% | — |
+| best soap to use on new tattoo | 285 | #9.6 | 1 | 0.4% | — |
+| best coconut oil toothpaste for a natural oral care routine. | 275 | #4.7 | 0 | 0.0% | — |
+| what soap can i use to wash my tattoo | 248 | #8.7 | 4 | 1.6% | — |
+| coconut oil for armpits | 247 | #8.6 | 0 | 0.0% | — |
 
 ### Cannibalization Groups (25)
-**"real skin care"** — 2003 total impressions across 4 pages
-  - `/` — pos 2.4, 725 impr, 46 clicks
-  - `/collections` — pos 4.7, 474 impr, 2 clicks
-  - `/products/coconut-lotion` — pos 3.9, 441 impr, 4 clicks
-  - `/collections/all` — pos 1.6, 215 impr, 1 clicks
+**"sls free toothpaste"** — 11826 total impressions across 4 pages
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 11.3, 6533 impr, 34 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 6.5, 4900 impr, 50 clicks
+  - `/blogs/news/best-sls-free-toothpaste-2025` — pos 66.4, 197 impr, 1 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2026` — pos 2.4, 184 impr, 3 clicks
 
-**"coconut oil for stretch marks"** — 2000 total impressions across 2 pages
-  - `/blogs/news/is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks` — pos 8.2, 1996 impr, 1 clicks
-  - `/` — pos 1, 4 impr, 0 clicks
+**"sls free toothpaste list"** — 6268 total impressions across 4 pages
+  - `/blogs/news/sls-free-toothpaste-list-best-natural-options-2026` — pos 9.2, 2613 impr, 18 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 8.7, 2423 impr, 19 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 4.8, 868 impr, 13 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2026` — pos 6.3, 364 impr, 6 clicks
 
-**"sls free toothpaste"** — 1841 total impressions across 2 pages
-  - `/blogs/news/best-sls-free-toothpaste-2025` — pos 33.8, 1244 impr, 4 clicks
-  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 33.5, 597 impr, 1 clicks
+**"toothpaste without sls"** — 4993 total impressions across 3 pages
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 14.1, 2291 impr, 12 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2026` — pos 9, 1830 impr, 11 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 5, 872 impr, 8 clicks
 
-**"coconut oil toothpaste"** — 1500 total impressions across 2 pages
-  - `/blogs/news/can-you-use-coconut-oil-as-toothpaste` — pos 4.8, 1286 impr, 3 clicks
-  - `/products/coconut-oil-toothpaste` — pos 25.6, 214 impr, 0 clicks
+**"toothpaste without sodium lauryl sulfate"** — 4321 total impressions across 3 pages
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 16.3, 2125 impr, 11 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 5.2, 1555 impr, 19 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2026` — pos 8.7, 641 impr, 4 clicks
 
-**"best sls free toothpaste"** — 1437 total impressions across 4 pages
-  - `/blogs/news/best-sls-free-toothpaste-2025` — pos 5, 1285 impr, 17 clicks
-  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 42.3, 136 impr, 0 clicks
-  - `/collections/sls-free-toothpaste` — pos 76.4, 13 impr, 0 clicks
-  - `/blogs/news/best-natural-toothpaste-2025` — pos 4.5, 2 impr, 0 clicks
+**"best sls free toothpaste"** — 3774 total impressions across 4 pages
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 6, 2825 impr, 77 clicks
+  - `/blogs/news/best-sls-free-toothpaste-2025` — pos 13.5, 535 impr, 0 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 3.5, 286 impr, 11 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2026` — pos 6.1, 117 impr, 2 clicks
 
-**"coconut lotion"** — 1282 total impressions across 4 pages
-  - `/products/coconut-lotion` — pos 37.9, 740 impr, 0 clicks
-  - `/collections/coconut-oil-lotion` — pos 60, 414 impr, 0 clicks
-  - `/collections/coconut-body-cream` — pos 84.9, 86 impr, 0 clicks
-  - `/blogs/news/benefits-of-using-coconut-oil-lotion` — pos 2.6, 30 impr, 0 clicks
+**"non sls toothpaste"** — 1828 total impressions across 3 pages
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 8.1, 1335 impr, 15 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2026` — pos 9.1, 298 impr, 2 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 4.8, 195 impr, 2 clicks
 
-**"fluoride free toothpaste"** — 1111 total impressions across 4 pages
-  - `/blogs/news/best-fluoride-free-toothpaste-2025` — pos 73.4, 613 impr, 0 clicks
-  - `/collections/fluoride-free-toothpaste` — pos 60.8, 471 impr, 0 clicks
-  - `/blogs/news/best-natural-toothpaste-2025` — pos 2.5, 18 impr, 1 clicks
-  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 3.9, 9 impr, 0 clicks
+**"sodium lauryl sulfate free toothpaste"** — 1512 total impressions across 2 pages
+  - `/blogs/news/sls-free-toothpaste-list-best-natural-options-2026` — pos 13.8, 807 impr, 2 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 5.4, 705 impr, 8 clicks
 
-**"body lotion without chemicals"** — 956 total impressions across 4 pages
-  - `/collections/non-toxic-body-lotion` — pos 23.3, 539 impr, 0 clicks
-  - `/collections/best-non-toxic-body-lotion` — pos 43.6, 241 impr, 0 clicks
-  - `/blogs/news/best-non-toxic-body-lotion-2025` — pos 88.6, 98 impr, 0 clicks
-  - `/collections/best-body-lotion-without-chemicals` — pos 91.2, 75 impr, 0 clicks
+**"real skin care"** — 1485 total impressions across 4 pages
+  - `/` — pos 2.2, 573 impr, 61 clicks
+  - `/collections/all-products` — pos 3.1, 373 impr, 2 clicks
+  - `/collections` — pos 2.4, 316 impr, 1 clicks
+  - `/collections/coconut-oil-products` — pos 3.7, 96 impr, 1 clicks
 
-**"coconut body lotion"** — 945 total impressions across 4 pages
-  - `/products/coconut-lotion` — pos 32.9, 617 impr, 0 clicks
-  - `/blogs/news/benefits-of-using-coconut-oil-lotion` — pos 1.9, 197 impr, 0 clicks
-  - `/collections/coconut-oil-lotion` — pos 64.6, 79 impr, 0 clicks
-  - `/collections/coconut-body-cream` — pos 81.6, 40 impr, 0 clicks
+**"best fluoride free toothpaste"** — 1410 total impressions across 2 pages
+  - `/blogs/news/best-fluoride-free-toothpaste-2025` — pos 20.1, 1409 impr, 5 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 1, 1 impr, 0 clicks
 
-**"coconut oil lotion"** — 935 total impressions across 4 pages
-  - `/collections/coconut-oil-lotion` — pos 24.4, 444 impr, 0 clicks
-  - `/blogs/news/benefits-of-using-coconut-oil-lotion` — pos 12.7, 215 impr, 0 clicks
-  - `/products/coconut-lotion` — pos 64.7, 125 impr, 0 clicks
-  - `/collections/coconut-oil-body-lotion` — pos 34, 93 impr, 0 clicks
+**"best soap for tattoos"** — 1371 total impressions across 4 pages
+  - `/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing` — pos 14.7, 800 impr, 3 clicks
+  - `/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2` — pos 9.3, 399 impr, 3 clicks
+  - `/collections/best-soap-for-tattoos` — pos 12.7, 160 impr, 0 clicks
+  - `/collections/best-soap-for-new-tattoo` — pos 37.3, 12 impr, 0 clicks
 
-**"natural toothpaste"** — 790 total impressions across 2 pages
-  - `/blogs/news/best-natural-toothpaste-2025` — pos 56.9, 772 impr, 2 clicks
-  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 2.8, 18 impr, 1 clicks
+**"toothpastes without sodium lauryl sulfate"** — 814 total impressions across 4 pages
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 10.6, 374 impr, 2 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 5.2, 162 impr, 3 clicks
+  - `/blogs/news/sls-free-toothpaste-list-best-natural-options-2026` — pos 10.8, 159 impr, 1 clicks
+  - `/blogs/news/best-toothpaste-without-sls-2026` — pos 9.2, 119 impr, 1 clicks
 
-**"sls free toothpaste list"** — 752 total impressions across 2 pages
-  - `/blogs/news/best-sls-free-toothpaste-2025` — pos 5.4, 568 impr, 10 clicks
-  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 14.9, 184 impr, 1 clicks
+**"all natural lotion"** — 621 total impressions across 4 pages
+  - `/collections/natural-body-lotion` — pos 50.5, 131 impr, 0 clicks
+  - `/collections/organic-body-lotion` — pos 55.5, 121 impr, 0 clicks
+  - `/collections/best-non-toxic-body-lotion` — pos 74.9, 104 impr, 0 clicks
+  - `/collections/non-toxic-body-lotion` — pos 73.9, 88 impr, 0 clicks
 
-**"chemical free body lotion"** — 734 total impressions across 4 pages
-  - `/collections/non-toxic-body-lotion` — pos 21.1, 490 impr, 0 clicks
-  - `/collections/best-non-toxic-body-lotion` — pos 64.5, 143 impr, 0 clicks
-  - `/blogs/news/best-non-toxic-body-lotion-2025` — pos 95.3, 57 impr, 0 clicks
-  - `/collections/best-body-lotion-without-chemicals` — pos 73.6, 44 impr, 0 clicks
+**"sls free toothpaste with fluoride"** — 573 total impressions across 2 pages
+  - `/blogs/news/best-toothpaste-without-sls-2025` — pos 14.7, 443 impr, 1 clicks
+  - `/blogs/news/toothpaste-without-sls-what-to-know-best-options` — pos 9.6, 130 impr, 1 clicks
 
-**"coconut oil for skin"** — 704 total impressions across 3 pages
-  - `/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides` — pos 57.2, 696 impr, 0 clicks
-  - `/collections/coconut-oil-lotion` — pos 93.5, 4 impr, 0 clicks
-  - `/collections/coconut-oil-products` — pos 87.3, 4 impr, 0 clicks
+**"real skincare"** — 540 total impressions across 2 pages
+  - `/` — pos 3.2, 337 impr, 61 clicks
+  - `/collections/all-products` — pos 3, 203 impr, 1 clicks
 
-**"coconut oil moisturizer"** — 690 total impressions across 4 pages
-  - `/collections/coconut-oil-lotion` — pos 63.8, 330 impr, 0 clicks
-  - `/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin` — pos 53, 311 impr, 0 clicks
-  - `/collections/coconut-body-cream` — pos 92.5, 34 impr, 0 clicks
-  - `/products/coconut-moisturizer` — pos 89.3, 12 impr, 0 clicks
+**"are coconut oil toothpastes safe for sensitive teeth?"** — 534 total impressions across 3 pages
+  - `/blogs/news/can-you-use-coconut-oil-as-toothpaste` — pos 4.5, 317 impr, 0 clicks
+  - `/products/coconut-oil-toothpaste` — pos 2.2, 205 impr, 0 clicks
+  - `/collections/non-fluoride-toothpaste/products/coconut-oil-toothpaste?variant=45828181196970` — pos 1, 12 impr, 0 clicks
 
 ### Topic Clusters (15)
-**"coconut" cluster** — 50780 impressions, 59 clicks, avg pos 34
-  - "best coconut body lotion" (75 impr, pos #15.7)
-  - "coconut oil instead of toothpaste" (66 impr, pos #2.4)
-  - "best coconut lotion" (114 impr, pos #7.2)
-  - "coconut oil as deodorant" (181 impr, pos #7.5)
-  - "coconut oil toothpaste" (1445 impr, pos #7.4)
-  - "best coconut oil for stretch marks" (75 impr, pos #5.1)
-  - "brushing teeth with coconut oil" (501 impr, pos #2)
-  - "coconut oil deodorant" (390 impr, pos #13)
+**"toothpaste" cluster** — 67051 impressions, 530 clicks, avg pos 12.8
+  - "best sls free toothpaste" (3179 impr, pos #5.9)
+  - "sls free toothpaste" (12305 impr, pos #10.9)
+  - "sls free toothpaste list" (5922 impr, pos #8.1)
+  - "toothpaste without sodium lauryl sulfate" (4865 impr, pos #14.5)
+  - "toothpaste without sls" (5139 impr, pos #11.6)
+  - "non sls toothpaste" (1803 impr, pos #7.8)
+  - "best toothpaste without sls" (453 impr, pos #7.4)
+  - "coconut oil toothpaste" (2811 impr, pos #11.1)
 
-**"toothpaste" cluster** — 32691 impressions, 90 clicks, avg pos 22.8
-  - "best sls free toothpaste" (1330 impr, pos #5.7)
-  - "sls free toothpaste list" (743 impr, pos #7)
-  - "sls free toothpaste" (1911 impr, pos #32.2)
-  - "coconut oil instead of toothpaste" (66 impr, pos #2.4)
-  - "coconut oil toothpaste" (1445 impr, pos #7.4)
-  - "natural toothpaste" (807 impr, pos #54.5)
-  - "non sls toothpaste" (481 impr, pos #16.1)
-  - "davids toothpaste alternative" (129 impr, pos #1.2)
+**"coconut" cluster** — 35268 impressions, 106 clicks, avg pos 28.3
+  - "coconut oil toothpaste" (2811 impr, pos #11.1)
+  - "coconut oil as deodorant" (860 impr, pos #6.5)
+  - "coconut oil deodorant" (1008 impr, pos #9.2)
+  - "coconut oil for toothpaste" (404 impr, pos #8.9)
+  - "coconut oil soap benefits" (426 impr, pos #4.5)
+  - "coconut oil for deodorant" (345 impr, pos #7.7)
+  - "can you use coconut oil as deodorant" (334 impr, pos #7.4)
+  - "coconut oil armpits" (117 impr, pos #8.1)
 
-**"lotion" cluster** — 24428 impressions, 64 clicks, avg pos 34.6
-  - "cleanest body lotion" (185 impr, pos #5.4)
-  - "natural body lotion without chemicals" (638 impr, pos #27.5)
-  - "real skin care lotion" (74 impr, pos #2.1)
-  - "best coconut body lotion" (75 impr, pos #15.7)
-  - "best coconut lotion" (114 impr, pos #7.2)
-  - "best non toxic body lotion" (362 impr, pos #14.9)
-  - "non toxic body lotion" (1069 impr, pos #31.4)
-  - "real lotion" (125 impr, pos #2.6)
+**"lotion" cluster** — 17756 impressions, 42 clicks, avg pos 28.3
+  - "real skin care lotion" (69 impr, pos #1.1)
+  - "all natural lotion no chemicals" (81 impr, pos #25.9)
+  - "best body lotion without chemicals" (351 impr, pos #11.1)
+  - "coconut oil as body lotion" (153 impr, pos #16.8)
+  - "non toxic body lotion" (1450 impr, pos #41.3)
+  - "real skin care organic body lotion" (35 impr, pos #2.7)
+  - "toxic free body lotion" (52 impr, pos #12.6)
+  - "unscented lotion" (700 impr, pos #26)
 
-**"body" cluster** — 21101 impressions, 44 clicks, avg pos 36.3
-  - "cleanest body lotion" (185 impr, pos #5.4)
-  - "natural body lotion without chemicals" (638 impr, pos #27.5)
-  - "best coconut body lotion" (75 impr, pos #15.7)
-  - "best non toxic body lotion" (362 impr, pos #14.9)
-  - "non toxic body lotion" (1069 impr, pos #31.4)
-  - "nontoxic body lotion" (96 impr, pos #11.8)
-  - "best body lotion chemical free" (2 impr, pos #9)
-  - "best body lotion with clean ingredients" (13 impr, pos #5.2)
+**"body" cluster** — 17486 impressions, 24 clicks, avg pos 29.2
+  - "best body lotion without chemicals" (351 impr, pos #11.1)
+  - "coconut oil as body lotion" (153 impr, pos #16.8)
+  - "coconut oil for body odor" (131 impr, pos #9.1)
+  - "non toxic body lotion" (1450 impr, pos #41.3)
+  - "real skin care organic body lotion" (35 impr, pos #2.7)
+  - "toxic free body lotion" (52 impr, pos #12.6)
+  - "best body lotion for sensitive skin 2026" (11 impr, pos #9.4)
+  - "best body lotions for sensitive skin 2026" (48 impr, pos #5.9)
 
-**"skin" cluster** — 14230 impressions, 83 clicks, avg pos 53.6
-  - "real skin care" (820 impr, pos #4)
-  - "real skin" (2037 impr, pos #7.7)
-  - "real skin care lotion" (74 impr, pos #2.1)
-  - "real skin care crema" (36 impr, pos #4.8)
-  - "real skin care formula original" (2 impr, pos #5.5)
-  - "real skin care products" (68 impr, pos #4.1)
-  - "best coconut lotion for dry skin" (50 impr, pos #8.5)
-  - "best fragrance free body lotion for sensitive skin" (38 impr, pos #31.7)
+**"soap" cluster** — 16866 impressions, 108 clicks, avg pos 22.2
+  - "best soap for new tattoo" (460 impr, pos #12.7)
+  - "best soap for tattoos" (1360 impr, pos #13)
+  - "coconut oil soap benefits" (426 impr, pos #4.5)
+  - "what soap can i use to wash my tattoo" (248 impr, pos #8.7)
+  - "what soap to use for tattoo" (622 impr, pos #8.1)
+  - "best soap for new tattoos" (128 impr, pos #11.9)
+  - "real soap" (177 impr, pos #12.3)
+  - "best soap for fresh tattoo" (228 impr, pos #9.9)
 
-**"2025" cluster** — 9167 impressions, 1 clicks, avg pos 11.2
-  - "best toothpaste for sensitive teeth 2025" (113 impr, pos #12)
-  - "average price of natural toothpaste 2025 or 2026" (1 impr, pos #5)
-  - "best adult toothpastes without harsh chemicals fluoride-free natural effective 2025 2026" (12 impr, pos #7.3)
-  - "best affordable clean natural toothpaste recommendations 2025 2026" (8 impr, pos #8.6)
-  - "best affordable clean toothpaste 2025 2026" (10 impr, pos #8.7)
-  - "best all-natural toothpaste options 2025" (16 impr, pos #8.8)
-  - "best all-natural toothpaste options 2025 2026" (42 impr, pos #7.4)
-  - "best aluminum-free conditioners for sensitive skin 2025 2026" (3 impr, pos #14.7)
+**"skin" cluster** — 12657 impressions, 178 clicks, avg pos 36.9
+  - "real skin" (2149 impr, pos #6.3)
+  - "real skin care" (597 impr, pos #3.2)
+  - "real skin care lotion" (69 impr, pos #1.1)
+  - "real skin care products" (99 impr, pos #7.5)
+  - "real skin products" (60 impr, pos #9.7)
+  - "real skin care organic body lotion" (35 impr, pos #2.7)
+  - "best body lotion for sensitive skin 2026" (11 impr, pos #9.4)
+  - "best body lotions for sensitive skin 2026" (48 impr, pos #5.9)
 
-**"stretch" cluster** — 8143 impressions, 16 clicks, avg pos 8
-  - "best coconut oil for stretch marks" (75 impr, pos #5.1)
-  - "coconut oil on stretch marks before and after" (152 impr, pos #1.9)
-  - "is coconut oil good for stretch marks" (866 impr, pos #5.3)
-  - "best coconut oil for pregnancy stretch marks" (35 impr, pos #3.4)
-  - "can coconut oil clear stretch marks" (118 impr, pos #1.8)
-  - "can coconut oil get rid of stretch marks" (63 impr, pos #2.2)
-  - "can coconut oil prevent stretch marks" (86 impr, pos #3.2)
-  - "can coconut oil reduce stretch marks" (75 impr, pos #2.3)
+**"sulfate" cluster** — 12239 impressions, 89 clicks, avg pos 10.7
+  - "toothpaste without sodium lauryl sulfate" (4865 impr, pos #14.5)
+  - "best toothpaste without sodium lauryl sulfate" (423 impr, pos #9.1)
+  - "sodium lauryl sulfate free toothpaste" (2825 impr, pos #19.2)
+  - "toothpastes without sodium lauryl sulfate" (819 impr, pos #10)
+  - "best sodium lauryl sulfate free toothpaste" (117 impr, pos #9.2)
+  - "fluoride toothpaste without sodium lauryl sulfate" (118 impr, pos #11.5)
+  - "natural toothpaste without sodium lauryl sulfate" (107 impr, pos #6.8)
+  - "what toothpaste doesn't have sodium lauryl sulfate" (336 impr, pos #9.7)
 
-**"moisturizer" cluster** — 8006 impressions, 2 clicks, avg pos 31.2
-  - "coconut oil as a body moisturizer" (23 impr, pos #42.2)
-  - "coconut oil as moisturizer" (267 impr, pos #17.4)
-  - "all natural body moisturizer" (13 impr, pos #71.7)
-  - "all natural lip moisturizer" (8 impr, pos #47.9)
-  - "bar soap with moisturizer" (1 impr, pos #100)
-  - "bath soap with moisturizer" (1 impr, pos #71)
-  - "benefits of coconut oil for face moisturizer" (75 impr, pos #54.5)
-  - "best all natural body moisturizer" (29 impr, pos #63.7)
+**"lauryl" cluster** — 11457 impressions, 88 clicks, avg pos 10.7
+  - "toothpaste without sodium lauryl sulfate" (4865 impr, pos #14.5)
+  - "best toothpaste without sodium lauryl sulfate" (423 impr, pos #9.1)
+  - "sodium lauryl sulfate free toothpaste" (2825 impr, pos #19.2)
+  - "toothpastes without sodium lauryl sulfate" (819 impr, pos #10)
+  - "best sodium lauryl sulfate free toothpaste" (117 impr, pos #9.2)
+  - "fluoride toothpaste without sodium lauryl sulfate" (118 impr, pos #11.5)
+  - "natural toothpaste without sodium lauryl sulfate" (107 impr, pos #6.8)
+  - "what toothpaste doesn't have sodium lauryl sulfate" (336 impr, pos #9.7)
 
-**"marks" cluster** — 7996 impressions, 16 clicks, avg pos 7.9
-  - "best coconut oil for stretch marks" (75 impr, pos #5.1)
-  - "coconut oil on stretch marks before and after" (152 impr, pos #1.9)
-  - "is coconut oil good for stretch marks" (866 impr, pos #5.3)
-  - "best coconut oil for pregnancy stretch marks" (35 impr, pos #3.4)
-  - "can coconut oil clear stretch marks" (118 impr, pos #1.8)
-  - "can coconut oil get rid of stretch marks" (63 impr, pos #2.2)
-  - "can coconut oil prevent stretch marks" (86 impr, pos #3.2)
-  - "can coconut oil reduce stretch marks" (75 impr, pos #2.3)
+**"sodium" cluster** — 11369 impressions, 90 clicks, avg pos 10.6
+  - "toothpaste without sodium lauryl sulfate" (4865 impr, pos #14.5)
+  - "best toothpaste without sodium lauryl sulfate" (423 impr, pos #9.1)
+  - "sodium lauryl sulfate free toothpaste" (2825 impr, pos #19.2)
+  - "toothpastes without sodium lauryl sulfate" (819 impr, pos #10)
+  - "best sodium lauryl sulfate free toothpaste" (117 impr, pos #9.2)
+  - "fluoride toothpaste without sodium lauryl sulfate" (118 impr, pos #11.5)
+  - "natural toothpaste without sodium lauryl sulfate" (107 impr, pos #6.8)
+  - "what toothpaste doesn't have sodium lauryl sulfate" (336 impr, pos #9.7)
 
-**"2026" cluster** — 7264 impressions, 0 clicks, avg pos 10.5
-  - "average price of natural toothpaste 2025 or 2026" (1 impr, pos #5)
-  - "best adult toothpastes without harsh chemicals fluoride-free natural effective 2025 2026" (12 impr, pos #7.3)
-  - "best affordable clean natural toothpaste recommendations 2025 2026" (8 impr, pos #8.6)
-  - "best affordable clean toothpaste 2025 2026" (10 impr, pos #8.7)
-  - "best affordable sls-free toothpaste 2026" (3 impr, pos #3)
-  - "best all-natural toothpaste options 2025 2026" (42 impr, pos #7.4)
-  - "best aluminum-free conditioners for sensitive skin 2025 2026" (3 impr, pos #14.7)
-  - "best beginner-friendly anti-aging body lotions vegan cruelty-free 2025 2026" (4 impr, pos #10.5)
+**"2026" cluster** — 11318 impressions, 5 clicks, avg pos 9.1
+  - "best body lotion for sensitive skin 2026" (11 impr, pos #9.4)
+  - "best body lotions for sensitive skin 2026" (48 impr, pos #5.9)
+  - "best non fluoride toothpaste 2026" (12 impr, pos #4.5)
+  - "best sls free toothpaste 2026" (28 impr, pos #1.9)
+  - "best sls-free toothpaste 2026" (32 impr, pos #3.5)
+  - "affordable aluminum-free deodorants long-lasting odor protection sensitive skin 2025 2026" (3 impr, pos #8.3)
+  - "aluminum free deodorant best 2026" (2 impr, pos #4.5)
+  - "aluminum free deodorant recommendations 2026" (2 impr, pos #4)

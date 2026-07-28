@@ -77,3 +77,38 @@ test('buildMarkdown renders tables and flags losses', () => {
   assert.match(md, /loses money/);
   assert.match(md, /Regenerate with/);
 });
+
+test('packaging cost comes straight off contribution', () => {
+  const withoutBox = ev({ name: 'Gift Box', status: 'x', price: 62,
+    items: { lotion: 1, lipbalm: 1, barsoap: 1, deo: 1 }, story: '' });
+  const withBox = ev({ name: 'Gift Box', status: 'x', price: 62, packaging: 1.00,
+    items: { lotion: 1, lipbalm: 1, barsoap: 1, deo: 1 }, story: '' });
+
+  assert.equal(withoutBox.contrib - withBox.contrib, 1.00,
+    'a $1 box must cost exactly $1 of contribution');
+  assert.equal(withBox.packaging, 1.00, 'packaging must survive onto the result');
+});
+
+test('packaging defaults to zero so every other bundle is unchanged', () => {
+  const r = ev({ name: 'Reset', status: 'draft', price: 99, items: { lotion: 3, cream: 1 }, story: '' });
+  assert.equal(r.packaging, 0);
+  assert.equal(r.contrib, 68.06, 'the Reset contribution must not move');
+});
+
+test('roster-derived bundles reproduce the known contributions', () => {
+  const byName = Object.fromEntries(BUNDLES.map(b => [b.name, b]));
+
+  const cleanSwap90 = ev(byName['The 90-Day Clean Swap']);
+  assert.equal(cleanSwap90.contrib, 100.85, '90-Day Clean Swap must still be $100.85');
+
+  const giftBox = ev(byName['Gift Box']);
+  assert.equal(giftBox.packaging, 1.0);
+  assert.equal(giftBox.contrib, 34.32, 'Gift Box after its $1 box');
+});
+
+test('the Hand Soap Set produces three ladder rows', () => {
+  const rows = BUNDLES.filter(b => b.name.startsWith('Hand Soap Set'));
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map(r => r.price), [44, 59, 72], 'rows must read as a ladder');
+  assert.deepEqual(ev(rows[2]).items, { pump: 4, lotion: 1 });
+});

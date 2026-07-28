@@ -1,0 +1,1457 @@
+{
+  "bundles": [
+    {
+      "handle": "sensitive-skin-starter-set",
+      "title": "Sensitive Skin Moisturizing Set",
+      "status": "live",
+      "templateSuffix": "landing-page-sensitive-skin-set-lander",
+      "packaging": 0,
+      "tags": [
+        "body-cream",
+        "body-lotion",
+        "bundle",
+        "fragrance-free",
+        "sensitive-skin",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Current hero. Clears the $45 free-shipping threshold on its own.",
+      "options": [
+        {
+          "name": "Title",
+          "values": [
+            "Default Title"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Title": "Default Title"
+          },
+          "price": 46.8,
+          "compareAtPrice": 58,
+          "contents": "",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "99-coconut-reset-digital",
+      "title": "The 90-Day Coconut Reset",
+      "status": "live",
+      "templateSuffix": "bundle-landing",
+      "packaging": 0,
+      "tags": [
+        "90-day-supply",
+        "body-cream",
+        "body-lotion",
+        "bundle",
+        "clean-beauty",
+        "coconut",
+        "fragrance-free",
+        "gift",
+        "sensitive-skin",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Live on the lean lander, two scents, digital bonuses delivered by Klaviyo.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "Coconut Breeze",
+            "Pure Unscented"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "Coconut Breeze"
+          },
+          "price": 99,
+          "compareAtPrice": 118,
+          "contents": "3 × Body Lotion — Coconut Breeze (coconut oil extract)\n1 × Body Cream — Coconut Breeze\n2 × digital guides, emailed within minutes",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "Pure Unscented"
+          },
+          "price": 99,
+          "compareAtPrice": 118,
+          "contents": "3 × Body Lotion — Pure Unscented (no essential oils at all)\n1 × Body Cream — Pure Unscented\n2 × digital guides, emailed within minutes",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-bar-soap-4-pack",
+      "title": "Coconut Bar Soap — 4-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bar-soap",
+        "bundle",
+        "subscription"
+      ],
+      "collections": [],
+      "story": "Subscription vehicle, every 4 months. Replaces the single-bar sub, which still loses money per shipment. Does not clear the $45 free-shipping threshold — never lead its copy with shipping.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "Variety — one of each",
+            "4x Calming Lavender",
+            "4x Nourishing Tea Tree",
+            "4x Refreshing Lemongrass",
+            "4x Pure Unscented"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "Variety — one of each"
+          },
+          "price": 39,
+          "compareAtPrice": 44,
+          "contents": "1 × Calming Lavender (lavender)\n1 × Nourishing Tea Tree (tea tree)\n1 × Refreshing Lemongrass (lemongrass & tea tree)\n1 × Pure Unscented (no essential oils)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Refreshing Lemongrass",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Calming Lavender"
+          },
+          "price": 39,
+          "compareAtPrice": 44,
+          "contents": "4 × Calming Lavender (lavender)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Calming Lavender",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Nourishing Tea Tree"
+          },
+          "price": 39,
+          "compareAtPrice": 44,
+          "contents": "4 × Nourishing Tea Tree (tea tree)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Refreshing Lemongrass"
+          },
+          "price": 39,
+          "compareAtPrice": 44,
+          "contents": "4 × Refreshing Lemongrass (lemongrass & tea tree)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Refreshing Lemongrass",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Pure Unscented"
+          },
+          "price": 39,
+          "compareAtPrice": 44,
+          "contents": "4 × Pure Unscented (no essential oils)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "90-day-clean-swap",
+      "title": "The 90-Day Clean Swap",
+      "status": "live",
+      "templateSuffix": "bundle-landing",
+      "packaging": 0,
+      "tags": [
+        "90-day-supply",
+        "bar-soap",
+        "body-lotion",
+        "bundle",
+        "clean-swap",
+        "coconut",
+        "deodorant",
+        "toothpaste",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Replace the four things you put on your body every day, for a quarter.",
+      "options": [
+        {
+          "name": "Kit",
+          "values": [
+            "Gentle",
+            "Calm",
+            "Fresh"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Kit": "Gentle"
+          },
+          "price": 159,
+          "compareAtPrice": 207,
+          "contents": "3 × Body Lotion — Pure Unscented (no essential oils at all)\n3 × Deodorant — Calming Lavender (lavender, lemon & rosemary)\n3 × Toothpaste — Fresh Mint (peppermint & spearmint)\n3 × Bar Soap — Pure Unscented (no essential oils)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 3
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 3
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 3
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Kit": "Calm"
+          },
+          "price": 159,
+          "compareAtPrice": 207,
+          "contents": "3 × Body Lotion — Pure Unscented (no essential oils at all)\n3 × Deodorant — Calming Lavender (lavender, lemon & rosemary)\n3 × Toothpaste — Fresh Mint (peppermint & spearmint)\n3 × Bar Soap — Calming Lavender (lavender)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 3
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 3
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 3
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Calming Lavender",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Kit": "Fresh"
+          },
+          "price": 159,
+          "compareAtPrice": 207,
+          "contents": "3 × Body Lotion — Coconut Breeze (coconut oil extract)\n3 × Deodorant — Geranium Flower (geranium, cedarwood, tea tree & patchouli)\n3 × Toothpaste — Fresh Mint (peppermint & spearmint)\n3 × Bar Soap — Nourishing Tea Tree (tea tree)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 3
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Geranium Flower",
+              "qty": 3
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 3
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "head-to-toe",
+      "title": "Head-to-Toe",
+      "status": "live",
+      "templateSuffix": "bundle-landing",
+      "packaging": 0,
+      "tags": [
+        "bar-soap",
+        "body-cream",
+        "body-lotion",
+        "bundle",
+        "coconut",
+        "deodorant",
+        "discovery",
+        "gift",
+        "lip-balm",
+        "toothpaste",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "One of everything. Discovery and gifting.",
+      "options": [
+        {
+          "name": "Kit",
+          "values": [
+            "Gentle",
+            "Fresh"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Kit": "Gentle"
+          },
+          "price": 105,
+          "compareAtPrice": 125,
+          "contents": "1 × Body Lotion — Pure Unscented (no essential oils)\n1 × Body Cream — Pure Unscented\n1 × Deodorant — Calming Lavender (lavender, lemon & rosemary)\n1 × Toothpaste — Fresh Mint (peppermint & spearmint)\n1 × Bar Soap — Pure Unscented (no essential oils)\n1 × Lip Balm — Pure Unscented\n1 × Foaming Hand Soap — Pure Unscented",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Kit": "Fresh"
+          },
+          "price": 105,
+          "compareAtPrice": 125,
+          "contents": "1 × Body Lotion — Coconut Breeze (coconut oil extract)\n1 × Body Cream — Coconut Breeze\n1 × Deodorant — Geranium Flower (geranium, cedarwood, tea tree & patchouli)\n1 × Toothpaste — Fresh Mint (peppermint & spearmint)\n1 × Bar Soap — Nourishing Tea Tree (tea tree)\n1 × Lip Balm — Sweet Tangerine\n1 × Foaming Hand Soap — Orange Zest",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Geranium Flower",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Sweet Tangerine",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "hand-soap-set",
+      "title": "Hand Soap Set",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "value-set",
+        "hand-soap"
+      ],
+      "collections": [],
+      "story": "The pump ladder: a scent for every sink at full MSRP, or step up to a high-margin lotion so the box clears CAC — 3 pumps for a lighter box, 4 for the full set.",
+      "options": [
+        {
+          "name": "Configuration",
+          "values": [
+            "4 pumps",
+            "3 pumps + body lotion",
+            "4 pumps + body lotion"
+          ]
+        },
+        {
+          "name": "Scent",
+          "values": [
+            "Variety",
+            "Calming Lavender",
+            "Orange Zest",
+            "Coconut Breeze",
+            "Pure Unscented"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Configuration": "4 pumps",
+            "Scent": "Variety"
+          },
+          "price": 44,
+          "compareAtPrice": 52,
+          "contents": "1 × Orange Zest\n1 × Coconut Breeze\n1 × Calming Lavender\n1 × Pure Unscented",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps",
+            "Scent": "Calming Lavender"
+          },
+          "price": 44,
+          "compareAtPrice": 52,
+          "contents": "4 × Calming Lavender",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps",
+            "Scent": "Orange Zest"
+          },
+          "price": 44,
+          "compareAtPrice": 52,
+          "contents": "4 × Orange Zest",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps",
+            "Scent": "Coconut Breeze"
+          },
+          "price": 44,
+          "compareAtPrice": 52,
+          "contents": "4 × Coconut Breeze",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps",
+            "Scent": "Pure Unscented"
+          },
+          "price": 44,
+          "compareAtPrice": 52,
+          "contents": "4 × Pure Unscented",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "3 pumps + body lotion",
+            "Scent": "Variety"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "1 × Foaming Hand Soap — Orange Zest\n1 × Foaming Hand Soap — Coconut Breeze\n1 × Foaming Hand Soap — Calming Lavender\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "3 pumps + body lotion",
+            "Scent": "Calming Lavender"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "3 × Foaming Hand Soap — Calming Lavender\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 3
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "3 pumps + body lotion",
+            "Scent": "Orange Zest"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "3 × Foaming Hand Soap — Orange Zest\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 3
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "3 pumps + body lotion",
+            "Scent": "Coconut Breeze"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "3 × Foaming Hand Soap — Coconut Breeze\n1 × Body Lotion — Coconut Breeze (coconut oil extract)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 3
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "3 pumps + body lotion",
+            "Scent": "Pure Unscented"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "3 × Foaming Hand Soap — Pure Unscented\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 3
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps + body lotion",
+            "Scent": "Variety"
+          },
+          "price": 72,
+          "compareAtPrice": 82,
+          "contents": "1 × Foaming Hand Soap — Orange Zest\n1 × Foaming Hand Soap — Coconut Breeze\n1 × Foaming Hand Soap — Calming Lavender\n1 × Foaming Hand Soap — Pure Unscented\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps + body lotion",
+            "Scent": "Calming Lavender"
+          },
+          "price": 72,
+          "compareAtPrice": 82,
+          "contents": "4 × Foaming Hand Soap — Calming Lavender\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 4
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps + body lotion",
+            "Scent": "Orange Zest"
+          },
+          "price": 72,
+          "compareAtPrice": 82,
+          "contents": "4 × Foaming Hand Soap — Orange Zest\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 4
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps + body lotion",
+            "Scent": "Coconut Breeze"
+          },
+          "price": 72,
+          "compareAtPrice": 82,
+          "contents": "4 × Foaming Hand Soap — Coconut Breeze\n1 × Body Lotion — Coconut Breeze (coconut oil extract)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 4
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Configuration": "4 pumps + body lotion",
+            "Scent": "Pure Unscented"
+          },
+          "price": 72,
+          "compareAtPrice": 82,
+          "contents": "4 × Foaming Hand Soap — Pure Unscented\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 4
+            },
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "clean-swap",
+      "title": "The Clean Swap",
+      "status": "live",
+      "templateSuffix": "bundle-landing",
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "value-set",
+        "clean-swap"
+      ],
+      "collections": [],
+      "story": "Entry version of the 90-day. Turns three weak singles into margin.",
+      "options": [
+        {
+          "name": "Kit",
+          "values": [
+            "Gentle",
+            "Calm",
+            "Fresh"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Kit": "Gentle"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "1 × Body Lotion — Pure Unscented (no essential oils at all)\n1 × Deodorant — Calming Lavender (lavender, lemon & rosemary)\n1 × Toothpaste — Fresh Mint (peppermint & spearmint)\n1 × Bar Soap — Pure Unscented (no essential oils)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Kit": "Calm"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "1 × Body Lotion — Pure Unscented (no essential oils at all)\n1 × Deodorant — Calming Lavender (lavender, lemon & rosemary)\n1 × Toothpaste — Fresh Mint (peppermint & spearmint)\n1 × Bar Soap — Calming Lavender (lavender)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Calming Lavender",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Kit": "Fresh"
+          },
+          "price": 59,
+          "compareAtPrice": 69,
+          "contents": "1 × Body Lotion — Coconut Breeze (coconut oil extract)\n1 × Deodorant — Geranium Flower (geranium, cedarwood, tea tree & patchouli)\n1 × Toothpaste — Fresh Mint (peppermint & spearmint)\n1 × Bar Soap — Nourishing Tea Tree (tea tree)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Geranium Flower",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "valueStack": [
+        {
+          "label": "Body Lotion (8oz)",
+          "amount": 30,
+          "digital": false
+        },
+        {
+          "label": "Natural Deodorant",
+          "amount": 15,
+          "digital": false
+        },
+        {
+          "label": "Coconut Toothpaste",
+          "amount": 13,
+          "digital": false
+        },
+        {
+          "label": "Coconut Bar Soap",
+          "amount": 11,
+          "digital": false
+        },
+        {
+          "label": "Free shipping",
+          "amount": 6,
+          "digital": false
+        }
+      ],
+      "lander": {
+        "heading": "The Clean Swap",
+        "subheading": "Lotion, deodorant, toothpaste and soap — the four things you put on your body every day, swapped in one go.",
+        "cta_label": "Start My Swap",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "bullets": [
+          "One of each: body lotion, deodorant, toothpaste and bar soap",
+          "Coconut-oil based throughout — no SLS, no parabens, no synthetic fragrance, no fluoride",
+          "Three kits, so the scents work together instead of fighting each other",
+          "Ships free"
+        ],
+        "buybox_bullets": [
+          "1 Body Lotion + 1 Deodorant + 1 Toothpaste + 1 Bar Soap",
+          "Choose Gentle, Calm or Fresh",
+          "Ships free",
+          "30-day money-back guarantee"
+        ],
+        "whats_in_it_note": "One of each of the four daily products.",
+        "faq": [
+          {
+            "q": "How is this different from the 90-Day Clean Swap?",
+            "a": "Same four products — one of each here, three of each there. This is the way to try the whole swap before committing to a quarter's supply."
+          },
+          {
+            "q": "Which kit should I choose?",
+            "a": "Gentle is the fragrance-free-leaning one: unscented lotion and soap, mint toothpaste, and a lavender deodorant — we don't make an unscented deodorant, so we won't call the box unscented. Calm is lavender soap and deodorant with an unscented lotion. Fresh is coconut lotion, geranium deodorant and tea tree soap."
+          },
+          {
+            "q": "Is the toothpaste fluoride free?",
+            "a": "Yes — no fluoride, no SLS, no artificial sweeteners."
+          },
+          {
+            "q": "Can I swap one of the four?",
+            "a": "Not in this set; the four are fixed so the kits stay simple. If you want a different combination, the products are all sold individually."
+          }
+        ],
+        "tabs": [
+          {
+            "heading": "What's Inside",
+            "body": "1 Body Lotion (8oz), 1 Natural Deodorant, 1 Coconut Toothpaste, 1 Coconut Bar Soap."
+          },
+          {
+            "heading": "Ingredients",
+            "body": "Coconut-oil based throughout, with essential oils where a scent is named. No SLS, no parabens, no synthetic fragrance, no fluoride, no palm oil. Vegan and cruelty-free."
+          },
+          {
+            "heading": "Shipping",
+            "body": "Ships free. Most orders leave within one business day."
+          }
+        ]
+      }
+    },
+    {
+      "handle": "gift-box",
+      "title": "Gift Box",
+      "status": "live",
+      "templateSuffix": "bundle-landing",
+      "packaging": 1.0,
+      "tags": [
+        "bundle",
+        "value-set",
+        "gift"
+      ],
+      "collections": [],
+      "story": "Gifting escapes price comparison entirely. Q4. Ships in the custom box ($1/unit).",
+      "options": [
+        {
+          "name": "Kit",
+          "values": [
+            "Gentle",
+            "Calm",
+            "Fresh"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Kit": "Gentle"
+          },
+          "price": 62,
+          "compareAtPrice": 71,
+          "contents": "1 × Body Lotion — Pure Unscented (no essential oils at all)\n1 × Lip Balm — Pure Unscented\n1 × Bar Soap — Pure Unscented (no essential oils)\n1 × Deodorant — Calming Lavender (lavender, lemon & rosemary)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Kit": "Calm"
+          },
+          "price": 62,
+          "compareAtPrice": 71,
+          "contents": "1 × Body Lotion — Pure Unscented (no essential oils at all)\n1 × Lip Balm — Vanilla Dream\n1 × Bar Soap — Calming Lavender (lavender)\n1 × Deodorant — Calming Lavender (lavender, lemon & rosemary)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Vanilla Dream",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Kit": "Fresh"
+          },
+          "price": 62,
+          "compareAtPrice": 71,
+          "contents": "1 × Body Lotion — Coconut Breeze (coconut oil extract)\n1 × Lip Balm — Sweet Tangerine\n1 × Bar Soap — Nourishing Tea Tree (tea tree)\n1 × Deodorant — Geranium Flower (geranium, cedarwood, tea tree & patchouli)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Sweet Tangerine",
+              "qty": 1
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Geranium Flower",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "valueStack": [
+        {
+          "label": "Body Lotion (8oz)",
+          "amount": 30,
+          "digital": false
+        },
+        {
+          "label": "Lip Balm 4-pack",
+          "amount": 15,
+          "digital": false
+        },
+        {
+          "label": "Natural Deodorant",
+          "amount": 15,
+          "digital": false
+        },
+        {
+          "label": "Coconut Bar Soap",
+          "amount": 11,
+          "digital": false
+        },
+        {
+          "label": "Free shipping",
+          "amount": 6,
+          "digital": false
+        }
+      ],
+      "lander": {
+        "heading": "The Gift Box",
+        "subheading": "A gift that gets used up. Four everyday things, chosen so none of it ends up in the back of a drawer.",
+        "cta_label": "Send This Gift",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "bullets": [
+          "Body lotion, lip balm, bar soap and deodorant — four things that actually get used",
+          "Arrives in our custom gift box, ready to hand over",
+          "Coconut-oil based throughout — no SLS, no parabens, no synthetic fragrance",
+          "Ships free"
+        ],
+        "buybox_bullets": [
+          "Body Lotion + Lip Balm 4-pack + Bar Soap + Deodorant",
+          "Choose Gentle, Calm or Fresh",
+          "Ships free in a custom gift box",
+          "30-day money-back guarantee"
+        ],
+        "whats_in_it_note": "Four everyday products in a custom gift box.",
+        "faq": [
+          {
+            "q": "Does it arrive ready to give?",
+            "a": "Yes — it ships in our custom gift box."
+          },
+          {
+            "q": "Which kit should I choose?",
+            "a": "Gentle is the safest bet if you don't know their preferences: unscented lotion, lip balm and soap, with a lavender deodorant — we don't make an unscented deodorant, so we won't call the box unscented. Calm is lavender soap and deodorant with vanilla lip balm. Fresh is coconut lotion, tangerine lip balm, tea tree soap and geranium deodorant."
+          },
+          {
+            "q": "What if it doesn't suit them?",
+            "a": "30-day money-back guarantee."
+          },
+          {
+            "q": "How long does it last?",
+            "a": "The lotion and deodorant run a month or two of regular use; the soap and lip balms last longer."
+          }
+        ],
+        "tabs": [
+          {
+            "heading": "What's Inside",
+            "body": "1 Body Lotion (8oz), 1 Lip Balm 4-pack, 1 Coconut Bar Soap, 1 Natural Deodorant — in a custom gift box."
+          },
+          {
+            "heading": "Ingredients",
+            "body": "Coconut-oil based throughout, with essential oils where a scent is named. No SLS, no parabens, no synthetic fragrance, no palm oil. Vegan and cruelty-free."
+          },
+          {
+            "heading": "Shipping",
+            "body": "Ships free. Most orders leave within one business day."
+          }
+        ]
+      }
+    },
+    {
+      "handle": "coconut-deodorant-4-pack",
+      "title": "Coconut Deodorant — 4-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "deodorant",
+        "subscription",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "Variety — one of each",
+            "4x Geranium Flower",
+            "4x Calming Lavender",
+            "4x Mountain Cedarwood",
+            "4x Wildcrafted Frankincence"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "Variety — one of each"
+          },
+          "price": 53,
+          "compareAtPrice": 60,
+          "contents": "1 × Geranium Flower (geranium & cedarwood)\n1 × Calming Lavender (lavender, lemon & rosemary)\n1 × Mountain Cedarwood (cedarwood & geranium)\n1 × Wildcrafted Frankincence (frankincense & sandalwood)",
+          "components": [
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Geranium Flower",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Mountain Cedarwood",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Wildcrafted Frankincence",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Geranium Flower"
+          },
+          "price": 53,
+          "compareAtPrice": 60,
+          "contents": "4 × Geranium Flower (geranium & cedarwood)",
+          "components": [
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Geranium Flower",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Calming Lavender"
+          },
+          "price": 53,
+          "compareAtPrice": 60,
+          "contents": "4 × Calming Lavender (lavender, lemon & rosemary)",
+          "components": [
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Calming Lavender",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Mountain Cedarwood"
+          },
+          "price": 53,
+          "compareAtPrice": 60,
+          "contents": "4 × Mountain Cedarwood (cedarwood & geranium)",
+          "components": [
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Mountain Cedarwood",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Wildcrafted Frankincence"
+          },
+          "price": 53,
+          "compareAtPrice": 60,
+          "contents": "4 × Wildcrafted Frankincence (frankincense & sandalwood)",
+          "components": [
+            {
+              "product": "coconut-oil-deodorant",
+              "variant": "Wildcrafted Frankincence",
+              "qty": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-toothpaste-3-pack",
+      "title": "Coconut Oil Toothpaste — 3-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "toothpaste",
+        "subscription",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Subscription vehicle for toothpaste. Three flavours means a three-pack: one of each, or three of one.",
+      "options": [
+        {
+          "name": "Flavour",
+          "values": [
+            "Variety — one of each",
+            "3x Fresh Mint",
+            "3x All Natural",
+            "3x Cinnamon Spice"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Flavour": "Variety — one of each"
+          },
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "1 × Fresh Mint (peppermint & spearmint)\n1 × All Natural (mint, cinnamon & clove)\n1 × Cinnamon Spice (cinnamon & clove)",
+          "components": [
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "All Natural",
+              "qty": 1
+            },
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Cinnamon Spice",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "options": {
+            "Flavour": "3x Fresh Mint"
+          },
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "3 × Fresh Mint (peppermint & spearmint)",
+          "components": [
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Fresh Mint",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Flavour": "3x All Natural"
+          },
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "3 × All Natural (mint, cinnamon & clove)",
+          "components": [
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "All Natural",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Flavour": "3x Cinnamon Spice"
+          },
+          "price": 34,
+          "compareAtPrice": 39,
+          "contents": "3 × Cinnamon Spice (cinnamon & clove)",
+          "components": [
+            {
+              "product": "coconut-oil-toothpaste",
+              "variant": "Cinnamon Spice",
+              "qty": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
