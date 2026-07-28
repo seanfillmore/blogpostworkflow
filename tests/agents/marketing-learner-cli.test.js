@@ -199,12 +199,17 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
     { skillsDir, mirrorPath }
   );
 
-  assert.equal(result, writtenPaths, 'mutates and returns the same array processVideo passes to openPullRequest');
-  assert.equal(writtenPaths.length, 3, 'mirror path was pushed on top of the existing entries');
-  assert.equal(writtenPaths[2], mirrorPath, 'the exact path syncContextMirror() returned was captured, not discarded');
-  assert.ok(writtenPaths.includes(mirrorPath), 'mirror path is in the same collection the PR stages from');
+  assert.equal(result, writtenPaths, 'returns the same array processVideo passes to openPullRequest');
   assert.ok(existsSync(mirrorPath), 'the sandboxed mirror path was actually written to');
   assert.match(readFileSync(mirrorPath, 'utf8'), /marketing-x/, 'sandboxed mirror reflects the sandboxed skills dir');
+
+  // The mirror is written but deliberately NOT staged. It is gitignored: a
+  // generated file under version control made every pair of concurrent learner
+  // PRs conflict, and let git 3-way-merge it into content the generator would
+  // never emit. creative-packager reads .claude/skills/ directly now, so the
+  // local copy exists only for a human running `cat`.
+  assert.equal(writtenPaths.length, 2, 'mirror is NOT pushed onto the staging list');
+  assert.ok(!writtenPaths.includes(mirrorPath), 'the PR must never stage the gitignored mirror');
 }
 {
   // No skill touched → nothing to re-sync, writtenPaths passes through unchanged.
@@ -215,12 +220,11 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
   assert.deepEqual(writtenPaths, ['/fake/report.json'], 'mirror sync skipped, and nothing spuriously staged, when no skill changed');
 }
 
-// ── F7: repeated syncs must not stack duplicate mirror entries ──────────────
+// ── repeated syncs never add staging entries, and always rewrite the file ──
 // processVideo calls this once per skill write (deliberately — a mid-loop throw
-// must still leave the mirror consistent with what already landed on disk), so
-// an unconditional push accumulated one MIRROR_PATH per skill. That was harmless
-// only because openPullRequest dedupes with a Set — an accidental load-bearing
-// dedupe two functions away. Keep the array clean at source instead.
+// must still leave the mirror consistent with what already landed on disk). The
+// staging list must stay untouched across all of them, and the last write must
+// still reflect the current skills dir.
 {
   const skillsDir = mkdtempSync(join(tmpdir(), 'ml-mirror-dupe-'));
   mkdirSync(join(skillsDir, 'marketing-x'), { recursive: true });
@@ -234,8 +238,10 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
   syncMirrorIfTouched(writtenPaths, [...touched, { name: 'marketing-y', action: 'create', path: '/fake/b/SKILL.md' }], { skillsDir, mirrorPath });
   syncMirrorIfTouched(writtenPaths, touched, { skillsDir, mirrorPath });
 
-  assert.deepEqual(writtenPaths, ['/fake/report.json', mirrorPath],
-    'three syncs, one mirror entry — no reliance on openPullRequest deduping');
+  assert.deepEqual(writtenPaths, ['/fake/report.json'],
+    'three syncs, zero staging entries — the mirror is gitignored and never staged');
+  assert.match(readFileSync(mirrorPath, 'utf8'), /marketing-x/,
+    'the file is still rewritten each time, so a mid-loop throw leaves it consistent');
 }
 
 // ── F4: the mirror is regenerated AFTER the PR branch is cut from main ──────

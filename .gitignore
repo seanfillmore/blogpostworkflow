@@ -98,3 +98,7 @@ data/reports/run-jobs/
 
 # Marketing-learner transcript cache (large, re-fetchable, no review value)
 data/marketing-corpus/
+
+# Generated projection of .claude/skills/marketing-* — creative-packager builds it
+# in memory at read time. Committing it made every concurrent learner PR conflict.
+data/context/marketing-tactics.md

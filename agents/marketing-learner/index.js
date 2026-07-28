@@ -239,11 +239,16 @@ function syncContextMirror(skillsDir = SKILLS_DIR, mirrorPath = MIRROR_PATH) {
  */
 export function syncMirrorIfTouched(writtenPaths, skillsTouched, { skillsDir = SKILLS_DIR, mirrorPath = MIRROR_PATH } = {}) {
   if (!skillsTouched.length) return writtenPaths;
-  const path = syncContextMirror(skillsDir, mirrorPath);
-  // Called once per skill write, so the same mirror path comes back every time.
-  // openPullRequest dedupes its staging list with a Set, but relying on that
-  // makes the dedupe load-bearing by accident — keep this array clean at source.
-  if (!writtenPaths.includes(path)) writtenPaths.push(path);
+  syncContextMirror(skillsDir, mirrorPath);
+  // Deliberately NOT pushed onto writtenPaths, so the PR never stages it.
+  //
+  // The mirror is gitignored. It used to be committed, which made a generated
+  // file a version-controlled artifact: every learner run regenerated it, so any
+  // two concurrent PRs conflicted on it, and git could 3-way-merge it into
+  // content the generator would never emit. creative-packager now generates the
+  // menu in memory from .claude/skills/ instead of reading this file, so the
+  // only reader is a human running `cat` — and a local, uncommitted copy serves
+  // that fine.
   return writtenPaths;
 }
 

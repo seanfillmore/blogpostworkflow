@@ -4,19 +4,56 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadTacticMenu, buildCopyBrief, buildCopyPrompt, buildSessionCopyBrief } from '../../agents/creative-packager/index.js';
 
-// ── loadTacticMenu ──────────────────────────────────────────────────────────
+// ── loadTacticMenu: generated from the skills, not read from a committed file ──
+// It used to read data/context/marketing-tactics.md. That made a GENERATED file a
+// version-controlled artifact: every concurrent learner run regenerated it, so any
+// two PRs conflicted on it, and git could 3-way-merge it into content the generator
+// would never emit. Reading .claude/skills/ directly removes the copy, and with it
+// the conflict and the whole class of staleness bug.
 {
   const root = mkdtempSync(join(tmpdir(), 'cp-'));
-  mkdirSync(join(root, 'data', 'context'), { recursive: true });
-  writeFileSync(join(root, 'data', 'context', 'marketing-tactics.md'), '# Marketing Tactics\n\n## Do not propose\n\n- Use taboo framing\n');
+  const skills = join(root, '.claude', 'skills');
+  mkdirSync(join(skills, 'marketing-copy'), { recursive: true });
+  writeFileSync(join(skills, 'marketing-copy', 'SKILL.md'),
+    '---\nname: marketing-copy\ndescription: Use when writing product page copy\n---\n\n' +
+    '## Lead with a hard number\n\n**Why it works:** Specifics are falsifiable.\n\n' +
+    '## Falsified\n\n### Use taboo framing\n**Falsified 2026-08-14:** CTR tanked\n');
+
   const menu = loadTacticMenu(root);
-  assert.match(menu, /Do not propose/, 'reads the mirror');
-  assert.match(menu, /Use taboo framing/, 'carries the blocklist');
+  assert.match(menu, /Do not propose/, 'generates the blocklist section');
+  assert.match(menu, /Use taboo framing/, 'carries the falsified claim');
+  assert.match(menu, /Lead with a hard number/, 'carries live tactics');
+  assert.match(menu, /Use when writing product page copy/, 'carries the trigger description');
 }
 
-// Absent file must NOT throw — it does not exist until the first learn run.
+// A stale committed mirror must NOT be preferred over the live skills — that file
+// is exactly what this change removes, so its presence should change nothing.
+{
+  const root = mkdtempSync(join(tmpdir(), 'cp-stale-'));
+  const skills = join(root, '.claude', 'skills');
+  mkdirSync(join(skills, 'marketing-copy'), { recursive: true });
+  writeFileSync(join(skills, 'marketing-copy', 'SKILL.md'),
+    '---\nname: marketing-copy\ndescription: d\n---\n\n## FRESH TACTIC FROM SKILLS\n\n**Why it works:** x.\n');
+  mkdirSync(join(root, 'data', 'context'), { recursive: true });
+  writeFileSync(join(root, 'data', 'context', 'marketing-tactics.md'), '# STALE COMMITTED COPY\n');
+
+  const menu = loadTacticMenu(root);
+  assert.match(menu, /FRESH TACTIC FROM SKILLS/, 'reads the skills, the source of truth');
+  assert.ok(!menu.includes('STALE COMMITTED COPY'), 'never reads the old committed mirror');
+}
+
+// No skills at all (fresh checkout before any learn run) must NOT throw.
 assert.equal(loadTacticMenu(join(tmpdir(), 'definitely-not-here-98765')), null,
-  'missing mirror returns null instead of throwing');
+  'missing skills dir returns null instead of throwing');
+
+// A skills dir with no marketing-* skills is also null, not an empty shell document.
+{
+  const root = mkdtempSync(join(tmpdir(), 'cp-empty-'));
+  mkdirSync(join(root, '.claude', 'skills', 'unrelated-skill'), { recursive: true });
+  writeFileSync(join(root, '.claude', 'skills', 'unrelated-skill', 'SKILL.md'),
+    '---\nname: unrelated-skill\ndescription: d\n---\n\nBody.\n');
+  assert.equal(loadTacticMenu(root), null, 'no marketing skills means no menu, not a header-only doc');
+}
 
 // ── the menu reaches the prompt ─────────────────────────────────────────────
 {
