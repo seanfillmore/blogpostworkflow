@@ -1,0 +1,1380 @@
+{
+  "capturedAt": "2026-07-28T01:29:57.253Z",
+  "collections": [
+    {
+      "id": 335680798890,
+      "handle": "best-body-lotion-without-chemicals",
+      "published_at": "2025-07-09T21:47:23-06:00"
+    },
+    {
+      "id": 359223591082,
+      "handle": "best-clean-lotion",
+      "published_at": "2026-06-29T15:33:49-06:00"
+    },
+    {
+      "id": 359223558314,
+      "handle": "best-coconut-body-lotion",
+      "published_at": "2026-06-29T15:33:42-06:00"
+    },
+    {
+      "id": 355005235370,
+      "handle": "best-non-toxic-lotion",
+      "published_at": null
+    },
+    {
+      "id": 300047433898,
+      "handle": "best-sellers",
+      "published_at": "2023-08-09T20:34:11-06:00"
+    },
+    {
+      "id": 360041021610,
+      "handle": "best-soap-for-new-tattoo",
+      "published_at": null
+    },
+    {
+      "id": 360041054378,
+      "handle": "best-soap-for-tattoos",
+      "published_at": null
+    },
+    {
+      "id": 354568208554,
+      "handle": "best-toothpaste-without-sls",
+      "published_at": null
+    },
+    {
+      "id": 352411353258,
+      "handle": "blog-sidebar",
+      "published_at": "2026-03-25T21:54:14-06:00"
+    },
+    {
+      "id": 153343131683,
+      "handle": "body-cream",
+      "published_at": "2019-10-22T00:53:20-06:00"
+    },
+    {
+      "id": 332121800874,
+      "handle": "body-lotion-for-dry-skin",
+      "published_at": "2025-04-16T17:15:39-06:00"
+    },
+    {
+      "id": 335676637354,
+      "handle": "sensitive-skin-lotion",
+      "published_at": "2025-07-09T17:33:22-06:00"
+    },
+    {
+      "id": 354568241322,
+      "handle": "boka-toothpaste-alternative",
+      "published_at": null
+    },
+    {
+      "id": 354299183274,
+      "handle": "coconut-body-butter",
+      "published_at": null
+    },
+    {
+      "id": 355988766890,
+      "handle": "coconut-lotion-benefits",
+      "published_at": null
+    },
+    {
+      "id": 354299150506,
+      "handle": "coconut-oil-as-deodorant",
+      "published_at": null
+    },
+    {
+      "id": 354295873706,
+      "handle": "coconut-oil-as-moisturizer",
+      "published_at": null
+    },
+    {
+      "id": 358224625834,
+      "handle": "coconut-oil-as-toothpaste",
+      "published_at": null
+    },
+    {
+      "id": 335676801194,
+      "handle": "coconut-oil-body-lotion",
+      "published_at": "2025-07-09T17:45:05-06:00"
+    },
+    {
+      "id": 353939718314,
+      "handle": "coconut-oil-deodorant",
+      "published_at": "2026-04-12T12:56:42-06:00"
+    },
+    {
+      "id": 358848102570,
+      "handle": "coconut-oil-for-deodorant",
+      "published_at": null
+    },
+    {
+      "id": 152897683491,
+      "handle": "coconut-oil-lotion",
+      "published_at": "2019-10-17T12:40:50-06:00"
+    },
+    {
+      "id": 358848168106,
+      "handle": "coconut-oil-soap-benefits",
+      "published_at": null
+    },
+    {
+      "id": 353940013226,
+      "handle": "coconut-oil-toothpaste",
+      "published_at": "2026-04-12T13:09:51-06:00"
+    },
+    {
+      "id": 355555279018,
+      "handle": "coconut-scented-body-lotion",
+      "published_at": null
+    },
+    {
+      "id": 354568274090,
+      "handle": "coconut-toothpaste",
+      "published_at": null
+    },
+    {
+      "id": 355005202602,
+      "handle": "davids-toothpaste-alternative",
+      "published_at": null
+    },
+    {
+      "id": 153343098915,
+      "handle": "foaming-hand-soap",
+      "published_at": "2019-10-22T00:53:20-06:00"
+    },
+    {
+      "id": 335676604586,
+      "handle": "fragrance-free-lotion",
+      "published_at": "2025-07-09T17:31:04-06:00"
+    },
+    {
+      "id": 295062864042,
+      "handle": "home-page-collection",
+      "published_at": "2022-12-19T21:58:39-07:00"
+    },
+    {
+      "id": 344570233002,
+      "handle": "lotions-and-creams",
+      "published_at": "2025-11-25T12:00:05-07:00"
+    },
+    {
+      "id": 295109820586,
+      "handle": "main-menu-3",
+      "published_at": "2022-12-21T19:51:17-07:00"
+    },
+    {
+      "id": 153343066147,
+      "handle": "natural-deodorant",
+      "published_at": "2019-10-22T00:53:20-06:00"
+    },
+    {
+      "id": 335676866730,
+      "handle": "face-and-body-lotion",
+      "published_at": "2025-07-09T17:47:37-06:00"
+    },
+    {
+      "id": 153343164451,
+      "handle": "natural-lip-balm",
+      "published_at": "2019-10-22T00:53:20-06:00"
+    },
+    {
+      "id": 153343000611,
+      "handle": "natural-toothpaste",
+      "published_at": "2019-10-22T00:53:20-06:00"
+    },
+    {
+      "id": 153343197219,
+      "handle": "natural-bar-soap",
+      "published_at": "2019-10-22T00:53:20-06:00"
+    },
+    {
+      "id": 358848135338,
+      "handle": "no-sls-toothpaste",
+      "published_at": null
+    },
+    {
+      "id": 339002228906,
+      "handle": "non-fluoride-toothpaste",
+      "published_at": null
+    },
+    {
+      "id": 354295840938,
+      "handle": "non-sls-toothpaste",
+      "published_at": null
+    },
+    {
+      "id": 339002425514,
+      "handle": "best-non-toxic-body-lotion",
+      "published_at": "2025-08-23T22:04:21-06:00"
+    },
+    {
+      "id": 355988734122,
+      "handle": "nontoxic-body-lotion",
+      "published_at": null
+    },
+    {
+      "id": 153342902307,
+      "handle": "on-sale",
+      "published_at": "2019-10-22T00:53:20-06:00"
+    },
+    {
+      "id": 335680733354,
+      "handle": "organic-baby-lotion",
+      "published_at": "2025-07-09T21:45:11-06:00"
+    },
+    {
+      "id": 332110561450,
+      "handle": "organic-body-lotion",
+      "published_at": "2025-04-16T08:17:56-06:00"
+    },
+    {
+      "id": 332121374890,
+      "handle": "organic-hand-lotion",
+      "published_at": "2025-04-16T16:50:10-06:00"
+    },
+    {
+      "id": 335676768426,
+      "handle": "paraben-free-lotion",
+      "published_at": "2025-07-09T17:40:52-06:00"
+    },
+    {
+      "id": 357769805994,
+      "handle": "real-soap-bar",
+      "published_at": null
+    },
+    {
+      "id": 296424997034,
+      "handle": "reelup-do-not-delete",
+      "published_at": "2023-01-17T14:35:06-07:00"
+    },
+    {
+      "id": 296983789738,
+      "handle": "live-collection",
+      "published_at": "2023-03-04T00:25:21-07:00"
+    },
+    {
+      "id": 358224593066,
+      "handle": "toothpaste-without-sodium-lauryl-sulfate",
+      "published_at": null
+    },
+    {
+      "id": 335676375210,
+      "handle": "vegan-body-lotion",
+      "published_at": "2025-07-09T17:20:46-06:00"
+    },
+    {
+      "id": 153385697315,
+      "handle": "all-products",
+      "published_at": "2019-10-22T13:15:53-06:00"
+    },
+    {
+      "id": 312401461418,
+      "handle": "aluminum-free-deodorant",
+      "published_at": "2024-04-21T21:31:59-06:00"
+    },
+    {
+      "id": 298415030442,
+      "handle": "bundle-builder-products",
+      "published_at": null
+    },
+    {
+      "id": 312401526954,
+      "handle": "cinnamon-toothpaste",
+      "published_at": "2024-04-21T21:32:24-06:00"
+    },
+    {
+      "id": 312402051242,
+      "handle": "coconut-body-cream",
+      "published_at": "2024-04-21T21:35:26-06:00"
+    },
+    {
+      "id": 312402182314,
+      "handle": "coconut-lip-balm",
+      "published_at": "2024-04-21T21:36:14-06:00"
+    },
+    {
+      "id": 294614532266,
+      "handle": "coconut-oil-products",
+      "published_at": "2022-12-16T05:59:22-07:00"
+    },
+    {
+      "id": 312401756330,
+      "handle": "coconut-soap",
+      "published_at": "2024-04-21T21:33:36-06:00"
+    },
+    {
+      "id": 312401494186,
+      "handle": "fluoride-free-toothpaste",
+      "published_at": "2024-04-21T21:32:09-06:00"
+    },
+    {
+      "id": 312401690794,
+      "handle": "foaming-soap-dispenser",
+      "published_at": null
+    },
+    {
+      "id": 294614663338,
+      "handle": "geranium-products",
+      "published_at": "2022-11-21T06:45:18-07:00"
+    },
+    {
+      "id": 312401395882,
+      "handle": "kids-deodorant",
+      "published_at": "2024-04-21T21:31:35-06:00"
+    },
+    {
+      "id": 312401821866,
+      "handle": "lavender-lotion",
+      "published_at": "2024-04-21T21:34:01-06:00"
+    },
+    {
+      "id": 312401952938,
+      "handle": "mens-natural-soap",
+      "published_at": "2024-04-21T21:34:45-06:00"
+    },
+    {
+      "id": 312401592490,
+      "handle": "mint-toothpaste",
+      "published_at": "2024-04-21T21:32:47-06:00"
+    },
+    {
+      "id": 312402018474,
+      "handle": "moisturizing-body-cream",
+      "published_at": "2024-04-21T21:35:06-06:00"
+    },
+    {
+      "id": 312401887402,
+      "handle": "natural-body-cream",
+      "published_at": "2024-04-21T21:34:24-06:00"
+    },
+    {
+      "id": 312401854634,
+      "handle": "natural-body-lotion",
+      "published_at": "2024-04-21T21:34:10-06:00"
+    },
+    {
+      "id": 312402149546,
+      "handle": "natural-lip-moisturizer",
+      "published_at": "2024-04-21T21:36:00-06:00"
+    },
+    {
+      "id": 338789302442,
+      "handle": "for-shopify-performance-tracking",
+      "published_at": null
+    },
+    {
+      "id": 312401920170,
+      "handle": "non-toxic-body-lotion",
+      "published_at": "2024-04-21T21:34:35-06:00"
+    },
+    {
+      "id": 312401363114,
+      "handle": "non-toxic-deodorant",
+      "published_at": "2024-04-21T21:31:26-06:00"
+    },
+    {
+      "id": 294614728874,
+      "handle": "orange-soap",
+      "published_at": "2024-04-28T07:30:00-06:00"
+    },
+    {
+      "id": 312402116778,
+      "handle": "organic-lip-balm",
+      "published_at": "2024-04-21T21:35:46-06:00"
+    },
+    {
+      "id": 312401985706,
+      "handle": "organic-bar-soap",
+      "published_at": "2024-04-21T21:34:54-06:00"
+    },
+    {
+      "id": 153384747043,
+      "handle": "popular",
+      "published_at": "2019-10-22T13:00:40-06:00"
+    },
+    {
+      "id": 312401428650,
+      "handle": "roll-on-deodorant",
+      "published_at": "2024-04-21T21:31:49-06:00"
+    },
+    {
+      "id": 312401789098,
+      "handle": "rose-lotion",
+      "published_at": "2024-04-21T21:33:49-06:00"
+    },
+    {
+      "id": 294614696106,
+      "handle": "rose-products",
+      "published_at": "2024-04-28T08:00:01-06:00"
+    },
+    {
+      "id": 312401559722,
+      "handle": "sls-free-toothpaste",
+      "published_at": "2024-04-21T21:32:37-06:00"
+    },
+    {
+      "id": 158429806627,
+      "handle": "unscented",
+      "published_at": null
+    },
+    {
+      "id": 294614597802,
+      "handle": "unscented-lotion",
+      "published_at": "2024-05-25T11:30:02-06:00"
+    },
+    {
+      "id": 312401330346,
+      "handle": "vegan-deodorant",
+      "published_at": "2024-04-21T21:27:35-06:00"
+    },
+    {
+      "id": 312402084010,
+      "handle": "vegan-lip-balm",
+      "published_at": "2024-04-21T21:35:35-06:00"
+    },
+    {
+      "id": 312401658026,
+      "handle": "vegan-soap",
+      "published_at": "2024-04-21T21:33:12-06:00"
+    },
+    {
+      "id": 312401625258,
+      "handle": "vegan-toothpaste",
+      "published_at": null
+    }
+  ],
+  "menus": [
+    {
+      "id": "gid://shopify/Menu/113248698403",
+      "handle": "main-menu",
+      "title": "Main menu",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/259405905955",
+          "title": "Shop",
+          "type": "COLLECTIONS",
+          "url": "/collections",
+          "resourceId": null,
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/260164419619",
+              "title": "Body Lotion",
+              "type": "COLLECTION",
+              "url": "/collections/coconut-oil-lotion",
+              "resourceId": "gid://shopify/Collection/152897683491"
+            },
+            {
+              "id": "gid://shopify/MenuItem/260164452387",
+              "title": "Body Cream",
+              "type": "COLLECTION",
+              "url": "/collections/body-cream",
+              "resourceId": "gid://shopify/Collection/153343131683"
+            },
+            {
+              "id": "gid://shopify/MenuItem/260164485155",
+              "title": "Deodorant",
+              "type": "COLLECTION",
+              "url": "/collections/natural-deodorant",
+              "resourceId": "gid://shopify/Collection/153343066147"
+            },
+            {
+              "id": "gid://shopify/MenuItem/260164517923",
+              "title": "Toothpaste",
+              "type": "COLLECTION",
+              "url": "/collections/natural-toothpaste",
+              "resourceId": "gid://shopify/Collection/153343000611"
+            },
+            {
+              "id": "gid://shopify/MenuItem/260164550691",
+              "title": "Liquid soap",
+              "type": "COLLECTION",
+              "url": "/collections/foaming-hand-soap",
+              "resourceId": "gid://shopify/Collection/153343098915"
+            },
+            {
+              "id": "gid://shopify/MenuItem/260164583459",
+              "title": "Bar Soap",
+              "type": "COLLECTION",
+              "url": "/collections/natural-bar-soap",
+              "resourceId": "gid://shopify/Collection/153343197219"
+            },
+            {
+              "id": "gid://shopify/MenuItem/260164616227",
+              "title": "Lip Balm",
+              "type": "COLLECTION",
+              "url": "/collections/natural-lip-balm",
+              "resourceId": "gid://shopify/Collection/153343164451"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/260160552995",
+          "title": "On Sale",
+          "type": "COLLECTION",
+          "url": "/collections/on-sale",
+          "resourceId": "gid://shopify/Collection/153342902307",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/464825450666",
+          "title": "About Us",
+          "type": "PAGE",
+          "url": "/pages/about-us-1",
+          "resourceId": "gid://shopify/Page/93868196010",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465074454698",
+          "title": "Blogs",
+          "type": "BLOG",
+          "url": "/blogs/news",
+          "resourceId": "gid://shopify/Blog/48998449187",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/113248731171",
+      "handle": "footer",
+      "title": "Footer menu",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/464825483434",
+          "title": "Track Your Order",
+          "type": "HTTP",
+          "url": "/apps/track123",
+          "resourceId": null,
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/464799760554",
+          "title": "On Sale",
+          "type": "COLLECTION",
+          "url": "/collections/on-sale",
+          "resourceId": "gid://shopify/Collection/153342902307",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/464814669994",
+          "title": "Information Policy",
+          "type": "PAGE",
+          "url": "/pages/ccpa-opt-out",
+          "resourceId": "gid://shopify/Page/93623976106",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/464814702762",
+          "title": "Contact Information",
+          "type": "SHOP_POLICY",
+          "url": "/policies/contact-information",
+          "resourceId": "gid://shopify/ShopPolicy/26579337386",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/464814735530",
+          "title": "Privacy Policy",
+          "type": "SHOP_POLICY",
+          "url": "/policies/privacy-policy",
+          "resourceId": "gid://shopify/ShopPolicy/26579239082",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/464814768298",
+          "title": "Refund Policy",
+          "type": "SHOP_POLICY",
+          "url": "/policies/refund-policy",
+          "resourceId": "gid://shopify/ShopPolicy/26579206314",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/464814801066",
+          "title": "Terms of Service",
+          "type": "SHOP_POLICY",
+          "url": "/policies/terms-of-service",
+          "resourceId": "gid://shopify/ShopPolicy/26579271850",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/113858871331",
+      "handle": "company",
+      "title": "Company",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/260160847907",
+          "title": "About",
+          "type": "PAGE",
+          "url": "/pages/about-us-1",
+          "resourceId": "gid://shopify/Page/93868196010",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/260160880675",
+          "title": "FAQ",
+          "type": "PAGE",
+          "url": "/pages/faq",
+          "resourceId": "gid://shopify/Page/46224867363",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/113860214819",
+      "handle": "sidebar-menu",
+      "title": " Catalog",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/260166058019",
+          "title": "Body Lotion",
+          "type": "COLLECTION",
+          "url": "/collections/coconut-oil-lotion",
+          "resourceId": "gid://shopify/Collection/152897683491",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/260166090787",
+          "title": "Body Cream",
+          "type": "COLLECTION",
+          "url": "/collections/body-cream",
+          "resourceId": "gid://shopify/Collection/153343131683",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/260166123555",
+          "title": "Deodorant",
+          "type": "COLLECTION",
+          "url": "/collections/natural-deodorant",
+          "resourceId": "gid://shopify/Collection/153343066147",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/260166156323",
+          "title": "Toothpaste",
+          "type": "COLLECTION",
+          "url": "/collections/natural-toothpaste",
+          "resourceId": "gid://shopify/Collection/153343000611",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/260166189091",
+          "title": "Liquid soap",
+          "type": "COLLECTION",
+          "url": "/collections/foaming-hand-soap",
+          "resourceId": "gid://shopify/Collection/153343098915",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/260166221859",
+          "title": "Bar Soap",
+          "type": "COLLECTION",
+          "url": "/collections/natural-bar-soap",
+          "resourceId": "gid://shopify/Collection/153343197219",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/260166254627",
+          "title": "Lip Balm",
+          "type": "COLLECTION",
+          "url": "/collections/natural-lip-balm",
+          "resourceId": "gid://shopify/Collection/153343164451",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/200084193450",
+      "handle": "product-menu",
+      "title": "Product Menu",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/467849609386",
+          "title": "Lotion",
+          "type": "PRODUCT",
+          "url": "/products/coconut-lotion",
+          "resourceId": "gid://shopify/Product/7691181686954",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/484492443818",
+              "title": "Coconut Oil Lotion",
+              "type": "COLLECTION",
+              "url": "/collections/coconut-oil-lotion",
+              "resourceId": "gid://shopify/Collection/152897683491"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492476586",
+              "title": "Lavender Lotion",
+              "type": "COLLECTION",
+              "url": "/collections/lavender-lotion",
+              "resourceId": "gid://shopify/Collection/312401821866"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492509354",
+              "title": "Natural Body Lotion",
+              "type": "COLLECTION",
+              "url": "/collections/natural-body-lotion",
+              "resourceId": "gid://shopify/Collection/312401854634"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492542122",
+              "title": "Non Toxic body Lotion",
+              "type": "COLLECTION",
+              "url": "/collections/non-toxic-body-lotion",
+              "resourceId": "gid://shopify/Collection/312401920170"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492574890",
+              "title": "Rose Lotion",
+              "type": "COLLECTION",
+              "url": "/collections/rose-lotion",
+              "resourceId": "gid://shopify/Collection/312401789098"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492607658",
+              "title": "Unscented Lotion",
+              "type": "COLLECTION",
+              "url": "/collections/unscented-lotion",
+              "resourceId": "gid://shopify/Collection/294614597802"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292591274",
+          "title": "Body Cream",
+          "type": "PRODUCT",
+          "url": "/products/coconut-moisturizer",
+          "resourceId": "gid://shopify/Product/7644968911018",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/484492837034",
+              "title": "Coconut Body Cream",
+              "type": "COLLECTION",
+              "url": "/collections/coconut-body-cream",
+              "resourceId": "gid://shopify/Collection/312402051242"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492869802",
+              "title": "Moisturizing Body Cream",
+              "type": "COLLECTION",
+              "url": "/collections/moisturizing-body-cream",
+              "resourceId": "gid://shopify/Collection/312402018474"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492902570",
+              "title": "Natural Body Cream",
+              "type": "COLLECTION",
+              "url": "/collections/natural-body-cream",
+              "resourceId": "gid://shopify/Collection/312401887402"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292656810",
+          "title": "Toothpaste",
+          "type": "PRODUCT",
+          "url": "/products/coconut-oil-toothpaste",
+          "resourceId": "gid://shopify/Product/7644970975402",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/484492935338",
+              "title": "Cinnamon Toothpaste",
+              "type": "COLLECTION",
+              "url": "/collections/cinnamon-toothpaste",
+              "resourceId": "gid://shopify/Collection/312401526954"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484492968106",
+              "title": "Mint Toothpaste",
+              "type": "COLLECTION",
+              "url": "/collections/mint-toothpaste",
+              "resourceId": "gid://shopify/Collection/312401592490"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493000874",
+              "title": "Fluoride Free Toothpaste",
+              "type": "COLLECTION",
+              "url": "/collections/fluoride-free-toothpaste",
+              "resourceId": "gid://shopify/Collection/312401494186"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493033642",
+              "title": "Natural Toothpaste",
+              "type": "COLLECTION",
+              "url": "/collections/natural-toothpaste",
+              "resourceId": "gid://shopify/Collection/153343000611"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493066410",
+              "title": "SLS Free Toothpaste",
+              "type": "COLLECTION",
+              "url": "/collections/sls-free-toothpaste",
+              "resourceId": "gid://shopify/Collection/312401559722"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493099178",
+              "title": "Vegan Toothpaste",
+              "type": "COLLECTION",
+              "url": "/collections/vegan-toothpaste",
+              "resourceId": "gid://shopify/Collection/312401625258"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292624042",
+          "title": "Deodorant",
+          "type": "PRODUCT",
+          "url": "/products/coconut-oil-deodorant",
+          "resourceId": "gid://shopify/Product/7644970451114",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/484493787306",
+              "title": "Aluminum Free Deodorant",
+              "type": "COLLECTION",
+              "url": "/collections/aluminum-free-deodorant",
+              "resourceId": "gid://shopify/Collection/312401461418"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493820074",
+              "title": "Natural Deodorant",
+              "type": "COLLECTION",
+              "url": "/collections/natural-deodorant",
+              "resourceId": "gid://shopify/Collection/153343066147"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493852842",
+              "title": "Non Toxic Deodorant",
+              "type": "COLLECTION",
+              "url": "/collections/non-toxic-deodorant",
+              "resourceId": "gid://shopify/Collection/312401363114"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493885610",
+              "title": "Roll-on Deodorant",
+              "type": "COLLECTION",
+              "url": "/collections/roll-on-deodorant",
+              "resourceId": "gid://shopify/Collection/312401428650"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493918378",
+              "title": "Vegan Deodorant",
+              "type": "COLLECTION",
+              "url": "/collections/vegan-deodorant",
+              "resourceId": "gid://shopify/Collection/312401330346"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292689578",
+          "title": "Liquid Soap",
+          "type": "PRODUCT",
+          "url": "/products/organic-foaming-hand-soap",
+          "resourceId": "gid://shopify/Product/7644971892906",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/484493951146",
+              "title": "Foaming Hand Soap",
+              "type": "COLLECTION",
+              "url": "/collections/foaming-hand-soap",
+              "resourceId": "gid://shopify/Collection/153343098915"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484493983914",
+              "title": "Foaming Soap Dispenser",
+              "type": "COLLECTION",
+              "url": "/collections/foaming-soap-dispenser",
+              "resourceId": "gid://shopify/Collection/312401690794"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494016682",
+              "title": "Orange Soap",
+              "type": "COLLECTION",
+              "url": "/collections/orange-soap",
+              "resourceId": "gid://shopify/Collection/294614728874"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292722346",
+          "title": "Bar Soap",
+          "type": "PRODUCT",
+          "url": "/products/coconut-soap",
+          "resourceId": "gid://shopify/Product/7644973465770",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/484494246058",
+              "title": "Coconut Soap",
+              "type": "COLLECTION",
+              "url": "/collections/coconut-soap",
+              "resourceId": "gid://shopify/Collection/312401756330"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494278826",
+              "title": "Men's Natural Soap",
+              "type": "COLLECTION",
+              "url": "/collections/mens-natural-soap",
+              "resourceId": "gid://shopify/Collection/312401952938"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494311594",
+              "title": "Natural Bar Soap",
+              "type": "COLLECTION",
+              "url": "/collections/natural-bar-soap",
+              "resourceId": "gid://shopify/Collection/153343197219"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494344362",
+              "title": "Organic Bar Soap",
+              "type": "COLLECTION",
+              "url": "/collections/organic-bar-soap",
+              "resourceId": "gid://shopify/Collection/312401985706"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494377130",
+              "title": "Vegan Soap",
+              "type": "COLLECTION",
+              "url": "/collections/vegan-soap",
+              "resourceId": "gid://shopify/Collection/312401658026"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292755114",
+          "title": "Lip Balm",
+          "type": "PRODUCT",
+          "url": "/products/coconut-oil-lip-balm",
+          "resourceId": "gid://shopify/Product/7644975071402",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/484494409898",
+              "title": "Coconut Lip Balm",
+              "type": "COLLECTION",
+              "url": "/collections/coconut-lip-balm",
+              "resourceId": "gid://shopify/Collection/312402182314"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494442666",
+              "title": "Organic Lip Balm",
+              "type": "COLLECTION",
+              "url": "/collections/organic-lip-balm",
+              "resourceId": "gid://shopify/Collection/312402116778"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494475434",
+              "title": "Natural Lip Balm",
+              "type": "COLLECTION",
+              "url": "/collections/natural-lip-balm",
+              "resourceId": "gid://shopify/Collection/153343164451"
+            },
+            {
+              "id": "gid://shopify/MenuItem/484494508202",
+              "title": "Vegan Lip Balm",
+              "type": "COLLECTION",
+              "url": "/collections/vegan-lip-balm",
+              "resourceId": "gid://shopify/Collection/312402084010"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/200084226218",
+      "handle": "customer-care",
+      "title": "Customer Care",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/465292853418",
+          "title": "About Us",
+          "type": "PAGE",
+          "url": "/pages/about-us-1",
+          "resourceId": "gid://shopify/Page/93868196010",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292886186",
+          "title": "Contact Us",
+          "type": "PAGE",
+          "url": "/pages/contact-1",
+          "resourceId": "gid://shopify/Page/46224736291",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292918954",
+          "title": "FAQs",
+          "type": "PAGE",
+          "url": "/pages/faqs",
+          "resourceId": "gid://shopify/Page/93868261546",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465292951722",
+          "title": "Track Order",
+          "type": "PAGE",
+          "url": "/pages/track-order",
+          "resourceId": "gid://shopify/Page/93868294314",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/200084258986",
+      "handle": "our-policies",
+      "title": "Our Policies",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/465292984490",
+          "title": "Privacy Policy",
+          "type": "PAGE",
+          "url": "/pages/privacy-policy",
+          "resourceId": "gid://shopify/Page/93868327082",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465293017258",
+          "title": "Refund Policy",
+          "type": "PAGE",
+          "url": "/pages/refund-policy",
+          "resourceId": "gid://shopify/Page/93868359850",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465293050026",
+          "title": "Shipping Policy",
+          "type": "PAGE",
+          "url": "/pages/shipping-policy",
+          "resourceId": "gid://shopify/Page/93868392618",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465293082794",
+          "title": "Terms of Service",
+          "type": "PAGE",
+          "url": "/pages/terms-of-services",
+          "resourceId": "gid://shopify/Page/93868425386",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/200108376234",
+      "handle": "main-menu-2",
+      "title": "Main Menu 2",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/465441554602",
+          "title": "Body Cream",
+          "type": "PRODUCT",
+          "url": "/products/coconut-moisturizer",
+          "resourceId": "gid://shopify/Product/7644968911018",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465441587370",
+          "title": "Deodorant",
+          "type": "PRODUCT",
+          "url": "/products/coconut-oil-deodorant",
+          "resourceId": "gid://shopify/Product/7644970451114",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465441620138",
+          "title": "Toothpaste",
+          "type": "PRODUCT",
+          "url": "/products/coconut-oil-toothpaste",
+          "resourceId": "gid://shopify/Product/7644970975402",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465441652906",
+          "title": "Liquid Soap",
+          "type": "PRODUCT",
+          "url": "/products/organic-foaming-hand-soap",
+          "resourceId": "gid://shopify/Product/7644971892906",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465441685674",
+          "title": "Bar Soap",
+          "type": "PRODUCT",
+          "url": "/products/coconut-soap",
+          "resourceId": "gid://shopify/Product/7644973465770",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465441718442",
+          "title": "Lip Balm",
+          "type": "PRODUCT",
+          "url": "/products/coconut-oil-lip-balm",
+          "resourceId": "gid://shopify/Product/7644975071402",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/465486053546",
+          "title": "Blog",
+          "type": "BLOG",
+          "url": "/blogs/news",
+          "resourceId": "gid://shopify/Blog/48998449187",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/200216019114",
+      "handle": "ops-header",
+      "title": "ONE main",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/466105827498",
+          "title": "Shop",
+          "type": "PRODUCT",
+          "url": "/products/coconut-lotion",
+          "resourceId": "gid://shopify/Product/7691181686954",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466105893034",
+          "title": "About",
+          "type": "PAGE",
+          "url": "/pages/about-us-1",
+          "resourceId": "gid://shopify/Page/93868196010",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466106581162",
+          "title": "Blog",
+          "type": "BLOG",
+          "url": "/blogs/news",
+          "resourceId": "gid://shopify/Blog/48998449187",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466105925802",
+          "title": "Contact",
+          "type": "PAGE",
+          "url": "/pages/contact-1",
+          "resourceId": "gid://shopify/Page/46224736291",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/469377581226",
+          "title": "FAQ",
+          "type": "PAGE",
+          "url": "/pages/faqs",
+          "resourceId": "gid://shopify/Page/93868261546",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/200216084650",
+      "handle": "one-footer",
+      "title": "ONE legal",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/466106548394",
+          "title": "Terms of service",
+          "type": "PAGE",
+          "url": "/pages/terms-of-service",
+          "resourceId": "gid://shopify/Page/94499111082",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466106450090",
+          "title": "Privacy policy",
+          "type": "PAGE",
+          "url": "/pages/privacy-policy-1",
+          "resourceId": "gid://shopify/Page/94499176618",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466106515626",
+          "title": "Refund policy",
+          "type": "PAGE",
+          "url": "/pages/refund-policy-1",
+          "resourceId": "gid://shopify/Page/94499012778",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466106482858",
+          "title": "Shipping policy",
+          "type": "PAGE",
+          "url": "/pages/shipping-policy",
+          "resourceId": "gid://shopify/Page/93868392618",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466106745002",
+          "title": "Track order",
+          "type": "PAGE",
+          "url": "/pages/track-order",
+          "resourceId": "gid://shopify/Page/93868294314",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/496259924138",
+          "title": "Return Policy",
+          "type": "PAGE",
+          "url": "/pages/refund-policy-1",
+          "resourceId": "gid://shopify/Page/94499012778",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/200239317162",
+      "handle": "multi-main",
+      "title": "MULTI main",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/466247352490",
+          "title": "Shop",
+          "type": "COLLECTION",
+          "url": "/collections/live-collection",
+          "resourceId": "gid://shopify/Collection/296983789738",
+          "items": [
+            {
+              "id": "gid://shopify/MenuItem/466247385258",
+              "title": "Organic Body Lotion",
+              "type": "PRODUCT",
+              "url": "/products/coconut-lotion",
+              "resourceId": "gid://shopify/Product/7691181686954"
+            },
+            {
+              "id": "gid://shopify/MenuItem/466247418026",
+              "title": "Organic Body Cream",
+              "type": "PRODUCT",
+              "url": "/products/coconut-moisturizer",
+              "resourceId": "gid://shopify/Product/7644968911018"
+            },
+            {
+              "id": "gid://shopify/MenuItem/466247450794",
+              "title": "Organic Deodorant",
+              "type": "PRODUCT",
+              "url": "/products/coconut-oil-deodorant",
+              "resourceId": "gid://shopify/Product/7644970451114"
+            },
+            {
+              "id": "gid://shopify/MenuItem/466247483562",
+              "title": "Organic Toothpaste",
+              "type": "PRODUCT",
+              "url": "/products/coconut-oil-toothpaste",
+              "resourceId": "gid://shopify/Product/7644970975402"
+            },
+            {
+              "id": "gid://shopify/MenuItem/466247516330",
+              "title": "Organic Foaming Hand Soap",
+              "type": "PRODUCT",
+              "url": "/products/organic-foaming-hand-soap",
+              "resourceId": "gid://shopify/Product/7644971892906"
+            },
+            {
+              "id": "gid://shopify/MenuItem/466247549098",
+              "title": "Organic Bar Soap",
+              "type": "PRODUCT",
+              "url": "/products/coconut-soap",
+              "resourceId": "gid://shopify/Product/7644973465770"
+            },
+            {
+              "id": "gid://shopify/MenuItem/466247581866",
+              "title": "Organic Lip Balm",
+              "type": "PRODUCT",
+              "url": "/products/coconut-oil-lip-balm",
+              "resourceId": "gid://shopify/Product/7644975071402"
+            }
+          ]
+        },
+        {
+          "id": "gid://shopify/MenuItem/466247614634",
+          "title": "About",
+          "type": "PAGE",
+          "url": "/pages/about-us-1",
+          "resourceId": "gid://shopify/Page/93868196010",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466247647402",
+          "title": "Blog",
+          "type": "BLOG",
+          "url": "/blogs/news",
+          "resourceId": "gid://shopify/Blog/48998449187",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/466247680170",
+          "title": "Contact",
+          "type": "PAGE",
+          "url": "/pages/contact-1",
+          "resourceId": "gid://shopify/Page/46224736291",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/469377613994",
+          "title": "FAQS",
+          "type": "PAGE",
+          "url": "/pages/faqs",
+          "resourceId": "gid://shopify/Page/93868261546",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/490553933994",
+          "title": "Wholesale",
+          "type": "PAGE",
+          "url": "/pages/wholesale-inquiry",
+          "resourceId": "gid://shopify/Page/101700010154",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/508305113258",
+          "title": "Veterans",
+          "type": "PAGE",
+          "url": "/pages/veterans",
+          "resourceId": "gid://shopify/Page/107612307626",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/Menu/201049866410",
+      "handle": "customer-account-main-menu",
+      "title": "Customer account main menu",
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/474016678058",
+          "title": "Orders",
+          "type": "CUSTOMER_ACCOUNT_PAGE",
+          "url": "https://account.realskincare.com/orders",
+          "resourceId": "gid://shopify/CustomerAccountPage/11792580778",
+          "items": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/523662098602",
+          "title": "Profile",
+          "type": "CUSTOMER_ACCOUNT_PAGE",
+          "url": "https://account.realskincare.com/profile",
+          "resourceId": "gid://shopify/CustomerAccountPage/11792613546",
+          "items": []
+        }
+      ]
+    }
+  ],
+  "survivors": [
+    {
+      "handle": "foaming-hand-soap",
+      "id": 153343098915,
+      "body_html": "<p>All natural foaming hand soap cleans without stripping. That's the short version. The longer version: most conventional hand soaps rely on sulfates and synthetic detergents that disrupt the skin's moisture barrier, leaving hands tight and dry after every wash. Real Skin Care foaming hand soaps are built around saponified organic virgin coconut oil — a single, clean ingredient that produces a rich lather, rinses completely, and leaves behind a faint softness instead of residue.</p>\n\n<h2>How to Choose the Right Natural Foaming Hand Soap</h2>\n\n<p>Skin type matters more than most labels suggest. Dry or sensitive skin benefits most from a soap base grounded in coconut oil — it cleanses without over-stripping, and the saponification process preserves glycerin naturally. If your hands take a beating from frequent washing, look for a formula without added sulfates or synthetic fragrance, both of which compound dryness over time.</p>\n\n<p>Scent is a real decision factor, not just a preference. Essential oil blends — lavender, citrus, eucalyptus — behave differently on skin than synthetic fragrance. They fade faster, but they don't accumulate or irritate. If you're sensitive to fragrance of any kind, an unscented option is the cleaner choice.</p>\n\n<p>Format: foaming soaps dispense pre-aerated lather, which means less product per wash, more even coverage, and no need to work up a foam manually. For households with kids or for bathroom sinks that get heavy daily use, foaming format stretches a bottle further than liquid pump soap.</p>\n\n<h2>What Sets Real Skin Care Apart</h2>\n\n<ul>\n<li>Single hero ingredient: saponified organic virgin coconut oil — no synthetic fillers, no hidden detergents</li>\n<li>Handmade in small batches, which means tighter quality control and fresher product</li>\n<li>Sulfate-free, paraben-free, synthetic fragrance-free</li>\n<li>Pure essential oil scent profiles — nothing artificial layered in</li>\n<li>Appropriate for all skin types, including sensitive and dry skin</li>\n</ul>\n\n<p>Curious about how different soap bases compare? Our blog covers the tradeoffs in detail — see <a href=\"https://www.realskincare.com/blogs/news/handcrafted-soap-what-it-is-why-its-better\">Handcrafted Soap: What It Is and Why It's Better</a> and <a href=\"https://www.realskincare.com/blogs/news/tallow-soap-benefits-ingredients-natural-alternatives\">Tallow Soap: Benefits, Ingredients and Natural Alternatives</a>. For a deep dive into one of nature's most studied cleansing ingredients, read our guide on <a href=\"https://www.realskincare.com/blogs/news/turmeric-soap-benefits-uses-what-to-look-for\">Turmeric Soap: Benefits, Uses and What to Look For</a>.</p>\n\n<h2>Is all natural foaming hand soap actually antibacterial?</h2>\n<p>Soap doesn't need to be labeled antibacterial to remove bacteria effectively. The mechanical action of lathering and rinsing — especially with a coconut oil-based soap that produces dense foam — physically lifts and removes bacteria from skin. Essential oils like eucalyptus and lavender have documented antimicrobial properties, adding a secondary layer without synthetic triclosan or other harsh agents.</p>\n\n<h2>Is this soap safe for sensitive skin?</h2>\n<p>Yes. Saponified organic virgin coconut oil is one of the gentler cleansing bases available — it's free from sulfates, which are the primary culprit behind post-wash irritation and dryness. Synthetic fragrance is also excluded from all formulas. Patch testing is always a reasonable step for severely reactive skin, but most people with sensitivity tolerate these soaps without issue.</p>\n\n<h2>Does natural hand soap dry out your hands?</h2>\n<p>Most dryness from hand washing comes from sulfates and alcohol-based ingredients, not from washing frequency alone. Coconut oil soap retains natural glycerin through the saponification process, which helps buffer moisture loss. Hands typically feel noticeably different after switching from a conventional sulfate-based soap to a coconut oil formula.</p>\n\n<h2>What does foaming hand soap actually do differently than liquid soap?</h2>\n<p>Foaming dispensers aerate the soap before it reaches your hands, so the lather is instant and coverage is immediate. You use less product per wash, which extends bottle life considerably. The rinse is also cleaner — less residue, less film. For all natural formulas built on simple ingredients, that matters.</p>\n\n<h2>Are the scents in these soaps natural?</h2>\n<p>All scent in Real Skin Care foaming hand soaps comes from pure essential oils — no synthetic fragrance compounds, no parfum blends, no phthalates. Essential oil scents are lighter and fade faster than synthetic alternatives, but they don't linger on skin in ways that can cause sensitivity or buildup.</p>"
+    },
+    {
+      "handle": "on-sale",
+      "id": 153342902307,
+      "body_html": ""
+    },
+    {
+      "handle": "all-products",
+      "id": 153385697315,
+      "body_html": ""
+    },
+    {
+      "handle": "non-toxic-body-lotion",
+      "id": 312401920170,
+      "body_html": "<p>Finding a body lotion without chemicals that actually works starts here. This collection is formulated for anyone who wants effective daily hydration without parabens, synthetic fragrances, phthalates, or artificial dyes—including those with sensitive, reactive, or pregnancy-sensitive skin.</p><p>What makes Real Skin Care different: we keep formulas intentionally simple. Plant-based ingredients like shea butter, coconut oil, and aloe vera do the work—no fillers, no masking agents, no unnecessary additives. Every formula is transparent about what's in it and why.</p><p>These lotions absorb cleanly, work well for full-body and hand hydration, and fit easily into minimalist skincare routines. Whether you're building a cleaner routine or shopping for the whole family, you'll find options here that are straightforward, gentle, and honest. Real ingredients. No harsh chemicals. Nothing your skin doesn't need.</p>"
+    }
+  ]
+}
