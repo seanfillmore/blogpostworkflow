@@ -134,10 +134,13 @@ export function diffRedirectsAgainstPlan(readyPlan, existingRedirects) {
  * same redirect id here would mean two loops both delete-then-recreate the
  * same record under --apply, and the second one always 404s on the delete
  * (the first already removed it) or 422s on the create (the first already
- * recreated the path). Skipping it here is safe: the excluded row's own
- * classified target and this function's would-be `newTarget` are always the
- * same PDP/survivor, since both source and chained-from paths land in the
- * same category by construction.
+ * recreated the path). Skipping it here is safe: `toRewrite` is authoritative
+ * for this record because it classifies the row by the row's own handle,
+ * not by whatever a possibly-stale existing redirect happens to point at —
+ * so `diffRedirectsAgainstPlan`'s target and this function's would-be
+ * `newTarget` are not guaranteed to agree (a chain between two plan sources
+ * can compute different targets in each loop), and `toRewrite` correctly
+ * wins.
  */
 export function findChainedRedirects(readyPlan, existingRedirects) {
   const finalTargetByPath = new Map(readyPlan.map((row) => [`/collections/${row.handle}`, row.target]));

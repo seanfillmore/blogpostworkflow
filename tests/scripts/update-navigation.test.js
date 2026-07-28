@@ -186,6 +186,25 @@ test('withSetsAndBundlesItem is a no-op when the collection GID is not resolved 
   assert.equal(out, items, 'must return the same reference so the caller can detect the no-op');
 });
 
+test('withSetsAndBundlesItem is idempotent: running it twice over its own output yields exactly one item', () => {
+  const items = [{ id: 'p1', title: 'Lotion', type: 'PRODUCT', url: '/products/coconut-lotion', items: [] }];
+  const once = withSetsAndBundlesItem(items, 'gid://shopify/Collection/999');
+  const twice = withSetsAndBundlesItem(once, 'gid://shopify/Collection/999');
+  const setsAndBundlesItems = twice.filter((i) => i.url === '/collections/sets-and-bundles');
+  assert.equal(setsAndBundlesItems.length, 1, 'a second run (re-run recovery) must not duplicate the top-level item');
+  assert.equal(twice.length, once.length, 'a second run must not grow the item list at all');
+});
+
+test('withSetsAndBundlesItem skips the append when a top-level item already targets the collection by resourceId, even with a different url', () => {
+  const items = [
+    { id: 'p1', title: 'Lotion', type: 'PRODUCT', url: '/products/coconut-lotion', items: [] },
+    { id: 'p2', title: 'Sets & Bundles (old handle)', type: 'COLLECTION', url: '/collections/sets-bundles', resourceId: 'gid://shopify/Collection/999', items: [] },
+  ];
+  const out = withSetsAndBundlesItem(items, 'gid://shopify/Collection/999');
+  assert.equal(out, items, 'must return the same reference so the caller can detect the no-op');
+  assert.equal(out.length, 2);
+});
+
 test('toInput omits id for a brand-new item so menuUpdate creates it', () => {
   const items = [
     { title: 'Sets & Bundles', type: 'COLLECTION', url: '/collections/sets-and-bundles',

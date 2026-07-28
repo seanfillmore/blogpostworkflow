@@ -126,9 +126,19 @@ export function retargetShopToAllCollections(items) {
  * collection doesn't exist yet (setup-survivor-collections.mjs --apply must
  * run first) and the item is not appended, since a COLLECTION-typed item
  * with no resourceId is exactly the malformed shape Critical 4 fixes.
+ *
+ * Idempotent: re-running after a partial failure is the documented recovery
+ * path (see assertPreStateCaptured), so a second call over the first call's
+ * own output must not duplicate the item. `stripCollectionChildren` only
+ * filters *children*, so a top-level item survives untouched across re-runs
+ * — skip the append if one already targets the collection.
  */
 export function withSetsAndBundlesItem(items, resourceId) {
   if (!resourceId) return items;
+  const alreadyPresent = (items || []).some(
+    (it) => it.url === '/collections/sets-and-bundles' || it.resourceId === resourceId
+  );
+  if (alreadyPresent) return items;
   return [...items, {
     title: 'Sets & Bundles',
     type: 'COLLECTION',

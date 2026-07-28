@@ -116,11 +116,6 @@ test('writePreState succeeds normally when no file exists yet at the path', () =
 // --- Blocker 3 regression: consolidate-collections.mjs and
 // update-navigation.mjs must hard-fail rather than mutate the store with no
 // rollback record when no pre-state snapshot exists for the run.
-test('preStateExists reflects whether a pre-state file exists for the given date', () => {
-  const date = new Date('2026-07-27T12:00:00Z');
-  assert.equal(preStateExists(date), existsSync(preStatePath(date)));
-});
-
 test('assertPreStateCaptured throws with actionable guidance when no pre-state file exists for the date', () => {
   // A date far enough in the future/past that no real run will ever have
   // captured pre-state for it.
@@ -128,18 +123,30 @@ test('assertPreStateCaptured throws with actionable guidance when no pre-state f
   assert.throws(() => assertPreStateCaptured(date), /setup-survivor-collections\.mjs/);
 });
 
-test('assertPreStateCaptured returns the path without throwing once pre-state exists for the date', () => {
-  // preStatePath is not parameterised on directory, so exercise the success
-  // branch against the real repo-relative path it always resolves to for
-  // this date — but never touch it if a genuine rollback record already
-  // lives there, and always clean up what this test itself wrote.
-  const date = new Date('2099-06-01T00:00:00Z');
-  const p = preStatePath(date);
-  assert.ok(!preStateExists(date), 'a future date must never already have a real snapshot');
-  writePreState({ a: 1 }, p);
+// preStateExists and assertPreStateCaptured are not parameterised on
+// directory — they always resolve against the real REPORT_DIR relative to
+// process.cwd(). To exercise their true/false transition without touching
+// the real data/ directory (consolidation-log.js's stated contract for
+// tests), chdir into a throwaway temp directory for the duration of the
+// test so every relative path they compute resolves under it instead, then
+// restore cwd and delete the temp directory in `finally`.
+test('preStateExists and assertPreStateCaptured reflect real file state, isolated in a temp cwd', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'consolidation-log-cwd-'));
+  const originalCwd = process.cwd();
   try {
-    assert.equal(assertPreStateCaptured(date), p);
+    process.chdir(dir);
+    const date = new Date('2099-06-01T00:00:00Z');
+
+    assert.equal(preStateExists(date), false, 'a fresh temp directory must start with no snapshot');
+    assert.throws(() => assertPreStateCaptured(date), /setup-survivor-collections\.mjs/);
+
+    const p = preStatePath(date);
+    writePreState({ a: 1 }, p);
+
+    assert.equal(preStateExists(date), true, 'preStateExists must flip to true once the file is written');
+    assert.equal(assertPreStateCaptured(date), p, 'assertPreStateCaptured must return the path once it exists, no throw');
   } finally {
-    rmSync(p, { force: true });
+    process.chdir(originalCwd);
+    rmSync(dir, { recursive: true, force: true });
   }
 });
