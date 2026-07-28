@@ -34,6 +34,8 @@ import {
   extractTactics,
   mergeSkillContent,
   renderReport,
+  falsifyTactic,
+  renderContextMirror,
 } from '../../lib/marketing-learner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -60,14 +62,22 @@ function loadEnv(root = ROOT) {
   } catch { return {}; }
 }
 
+const VALUE_FLAGS = { '--published': 'published', '--falsify': 'falsify', '--claim': 'claim', '--reason': 'reason' };
+
 export function parseArgs(argv) {
-  const out = { urls: [], published: [], extractOnly: false, noPr: false, refetch: false };
+  const out = {
+    urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
+    falsify: null, claim: null, reason: null,
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--published') {
+    if (VALUE_FLAGS[a]) {
       const v = argv[++i];
-      if (!v || v.startsWith('--')) throw new Error('--published requires a YYYY-MM-DD value.');
-      out.published.push(v);
+      if (!v || v.startsWith('--')) {
+        throw new Error(a === '--falsify' ? '--falsify requires a skill name.' : `${a} requires a value.`);
+      }
+      if (a === '--published') out.published.push(v);
+      else out[VALUE_FLAGS[a]] = v;
     } else if (FLAGS[a]) {
       out[FLAGS[a]] = true;
     } else if (a.startsWith('--')) {
@@ -76,6 +86,18 @@ export function parseArgs(argv) {
       out.urls.push(a);
     }
   }
+
+  if (out.falsify) {
+    if (!out.claim) throw new Error('--falsify requires --claim "<substring of the tactic>".');
+    if (!out.reason) throw new Error('--falsify requires --reason "<what happened when you tested it>".');
+    if (out.urls.length) throw new Error('--falsify cannot be combined with URLs — it is a separate mode.');
+    if (out.extractOnly || out.noPr || out.refetch || out.published.length) {
+      throw new Error('--falsify cannot be combined with --extract-only, --no-pr, --refetch, or --published.');
+    }
+    return out;
+  }
+
+  if (out.claim || out.reason) throw new Error('--claim and --reason are only valid with --falsify.');
   if (!out.urls.length) throw new Error('Provide at least one YouTube URL.');
   return out;
 }
@@ -169,6 +191,34 @@ export async function writeSkill({ name, description, tactics, existing, client,
   return { path, action: 'create' };
 }
 
+const MIRROR_PATH = join(ROOT, 'data', 'context', 'marketing-tactics.md');
+
+/**
+ * Regenerate the fleet-readable projection of the skills. Runs after EVERY write
+ * to .claude/skills/ — create, merge, or falsify — so the mirror cannot drift.
+ * Re-scans rather than tracking deltas: it is a handful of file reads, and
+ * correctness beats cleverness for a file other agents act on.
+ */
+function syncContextMirror() {
+  mkdirSync(dirname(MIRROR_PATH), { recursive: true });
+  writeFileSync(MIRROR_PATH, renderContextMirror(scanSkillInventory(SKILLS_DIR)));
+  return MIRROR_PATH;
+}
+
+/** Mark a tactic dead. No network, no LLM call — pure text surgery. */
+function runFalsify({ falsify, claim, reason }) {
+  const inventory = scanSkillInventory(SKILLS_DIR);
+  const skill = inventory.find((s) => s.name === falsify);
+  if (!skill) {
+    const names = inventory.map((s) => s.name).join(', ') || '(no marketing skills yet)';
+    throw new Error(`No skill named "${falsify}". Available: ${names}`);
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  writeFileSync(skill.path, falsifyTactic(skill.content, { claim, reason, today }));
+  console.log(`✓ falsified in ${relative(ROOT, skill.path)}`);
+  console.log(`✓ mirror updated: ${relative(ROOT, syncContextMirror())}`);
+}
+
 async function processVideo(item, { client, apiKey, args }) {
   const video = await loadVideo(item.url, item.publishedAt, { refetch: args.refetch, apiKey });
   if (item.warning) console.warn(`  ⚠ ${item.warning}`);
@@ -223,6 +273,7 @@ async function processVideo(item, { client, apiKey, args }) {
       skillsTouched.push({ name, action, path });
       writtenPaths.push(path);
     }
+    if (skillsTouched.length) syncContextMirror();
   }
 
   const report = renderReport({ extraction, video, skillsTouched });
@@ -330,6 +381,12 @@ function openPullRequest(results) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  if (args.falsify) {
+    runFalsify(args);
+    return;
+  }
+
   const env = loadEnv();
   const apiKey = env.TRANSCRIPTAPI_KEY || process.env.TRANSCRIPTAPI_KEY;
   if (!apiKey) {

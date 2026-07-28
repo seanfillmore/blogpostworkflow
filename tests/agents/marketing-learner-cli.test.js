@@ -128,4 +128,46 @@ await assert.rejects(
   'create path throws instead of silently overwriting a file the inventory scan missed'
 );
 
+// ── --falsify parsing ───────────────────────────────────────────────────────
+{
+  const a = parseArgs(['--falsify', 'marketing-copy', '--claim', 'taboo', '--reason', 'CTR tanked']);
+  assert.equal(a.falsify, 'marketing-copy');
+  assert.equal(a.claim, 'taboo');
+  assert.equal(a.reason, 'CTR tanked');
+  assert.deepEqual(a.urls, [], 'no URLs needed in falsify mode');
+}
+
+assert.throws(() => parseArgs(['--falsify', 'marketing-copy', '--claim', 'x']),
+  /--falsify requires --reason/, 'reason is mandatory');
+assert.throws(() => parseArgs(['--falsify', 'marketing-copy', '--reason', 'x']),
+  /--falsify requires --claim/, 'claim is mandatory');
+assert.throws(() => parseArgs(['--falsify']),
+  /--falsify requires a skill name/, 'dangling --falsify throws');
+
+// Modes are exclusive — silently ignoring one would be worse than refusing.
+assert.throws(
+  () => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--falsify', 'marketing-copy', '--claim', 'x', '--reason', 'y']),
+  /cannot be combined with URLs/,
+  'falsify + URL throws'
+);
+assert.throws(
+  () => parseArgs(['--falsify', 'marketing-copy', '--claim', 'x', '--reason', 'y', '--no-pr']),
+  /cannot be combined with/,
+  'falsify + run flag throws'
+);
+
+// Normal runs still work unchanged.
+{
+  const a = parseArgs(['https://youtu.be/aaaaaaaaaaa', '--published', '2026-03-14']);
+  assert.equal(a.falsify, null);
+  assert.deepEqual(a.published, ['2026-03-14']);
+}
+
+// ── wiring ──────────────────────────────────────────────────────────────────
+assert.ok(src.includes('falsifyTactic'), 'agent wires falsifyTactic');
+assert.ok(src.includes('renderContextMirror'), 'agent wires renderContextMirror');
+assert.ok(src.includes("'marketing-tactics.md'") || src.includes('marketing-tactics.md'),
+  'agent writes the context mirror');
+assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
+
 console.log('✓ marketing-learner CLI tests pass');
