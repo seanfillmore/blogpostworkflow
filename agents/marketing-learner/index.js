@@ -74,7 +74,9 @@ export function parseArgs(argv) {
     if (VALUE_FLAGS[a]) {
       const v = argv[++i];
       if (!v || v.startsWith('--')) {
-        throw new Error(a === '--falsify' ? '--falsify requires a skill name.' : `${a} requires a value.`);
+        if (a === '--falsify') throw new Error('--falsify requires a skill name.');
+        if (a === '--published') throw new Error('--published requires a YYYY-MM-DD value.');
+        throw new Error(`${a} requires a value.`);
       }
       if (a === '--published') out.published.push(v);
       else out[VALUE_FLAGS[a]] = v;
@@ -191,7 +193,7 @@ export async function writeSkill({ name, description, tactics, existing, client,
   return { path, action: 'create' };
 }
 
-const MIRROR_PATH = join(ROOT, 'data', 'context', 'marketing-tactics.md');
+export const MIRROR_PATH = join(ROOT, 'data', 'context', 'marketing-tactics.md');
 
 /**
  * Regenerate the fleet-readable projection of the skills. Runs after EVERY write
@@ -203,6 +205,19 @@ function syncContextMirror() {
   mkdirSync(dirname(MIRROR_PATH), { recursive: true });
   writeFileSync(MIRROR_PATH, renderContextMirror(scanSkillInventory(SKILLS_DIR)));
   return MIRROR_PATH;
+}
+
+/**
+ * If any skill was created or edited, regenerate the mirror AND capture its path
+ * into `writtenPaths` — the exact array `openPullRequest` stages from (it
+ * `git add`s only `writtenPaths`, never whole directories). Pulled out as its own
+ * function so this specific wiring — "the mirror rides along in the same PR as
+ * the skills and report" — is directly testable without exercising the rest of
+ * processVideo (network fetch, LLM extraction, git/PR).
+ */
+export function syncMirrorIfTouched(writtenPaths, skillsTouched) {
+  if (skillsTouched.length) writtenPaths.push(syncContextMirror());
+  return writtenPaths;
 }
 
 /** Mark a tactic dead. No network, no LLM call — pure text surgery. */
@@ -273,7 +288,7 @@ async function processVideo(item, { client, apiKey, args }) {
       skillsTouched.push({ name, action, path });
       writtenPaths.push(path);
     }
-    if (skillsTouched.length) syncContextMirror();
+    syncMirrorIfTouched(writtenPaths, skillsTouched);
   }
 
   const report = renderReport({ extraction, video, skillsTouched });

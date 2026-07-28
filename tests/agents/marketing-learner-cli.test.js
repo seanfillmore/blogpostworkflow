@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseArgs, writeSkill } from '../../agents/marketing-learner/index.js';
+import { parseArgs, writeSkill, syncMirrorIfTouched, MIRROR_PATH } from '../../agents/marketing-learner/index.js';
 
 // ── parseArgs ───────────────────────────────────────────────────────────────
 {
@@ -169,5 +169,28 @@ assert.ok(src.includes('renderContextMirror'), 'agent wires renderContextMirror'
 assert.ok(src.includes("'marketing-tactics.md'") || src.includes('marketing-tactics.md'),
   'agent writes the context mirror');
 assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
+
+// ── syncMirrorIfTouched: mirror rides in the SAME collection openPullRequest stages ──
+// Regression: processVideo used to call `syncContextMirror();` as a bare statement,
+// discarding its return value. The mirror got rewritten on disk but never landed in
+// `writtenPaths` — the only array openPullRequest git-adds from — so a merged PR left
+// the checked-in projection stale. A plain `src.includes('syncContextMirror')` check
+// would still pass with that bug present; this exercises the real function and
+// inspects its actual return value.
+{
+  const writtenPaths = ['/fake/report.json', '/fake/skill/SKILL.md'];
+  const result = syncMirrorIfTouched(writtenPaths, [{ name: 'marketing-x', action: 'edit', path: '/fake/skill/SKILL.md' }]);
+
+  assert.equal(result, writtenPaths, 'mutates and returns the same array processVideo passes to openPullRequest');
+  assert.equal(writtenPaths.length, 3, 'mirror path was pushed on top of the existing entries');
+  assert.equal(writtenPaths[2], MIRROR_PATH, 'the exact path syncContextMirror() returned was captured, not discarded');
+  assert.ok(writtenPaths.includes(MIRROR_PATH), 'mirror path is in the same collection the PR stages from');
+}
+{
+  // No skill touched → nothing to re-sync, writtenPaths passes through unchanged.
+  const writtenPaths = ['/fake/report.json'];
+  syncMirrorIfTouched(writtenPaths, []);
+  assert.deepEqual(writtenPaths, ['/fake/report.json'], 'mirror sync skipped, and nothing spuriously staged, when no skill changed');
+}
 
 console.log('✓ marketing-learner CLI tests pass');
