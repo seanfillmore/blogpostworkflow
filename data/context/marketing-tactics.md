@@ -13,8 +13,6 @@ _Nothing falsified yet._
 
 _Use when deciding what a page, email, or listing should actually say — mapping product page hero copy, Amazon titles and bullets, welcome and post-purchase email flows, and landing pages to whether the reader is problem-aware, solution-aware, or product-aware, and turning that diagnosis into concrete headline stems._
 
-### Awareness Level Messaging
-
 ### Match every message to a specific market awareness level, which bridges persona and goal to the copy framework.
 
 **Why it works:** What a stranger needs to hear depends on whether they know they have a problem, know solutions exist, or know your product — mismatched messaging talks past them regardless of format quality.
@@ -57,8 +55,6 @@ Take your single biggest value prop and answer the unasked "why does that actual
 
 _Use when deciding what angle to lead with on a product page, Amazon listing, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and listings in the natural deodorant and body care category, and auditing your own assets for missing angles, formats, and awareness levels._
 
-### Competitor Messaging Teardown
-
 ### Research competitor ad libraries first and run a gap analysis on which awareness levels, personas, and formats are missing from your own rotation before producing anything.
 
 **Why it works:** Competitors' persistent creative reveals what the market responds to; comparing their coverage to yours exposes the specific angles and formats you have no asset for, so production targets a known gap instead of guessing.
@@ -72,8 +68,6 @@ _Use when deciding what angle to lead with on a product page, Amazon listing, or
 ## marketing-conversion-copy-angles
 
 _Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, one-thing simplicity promises, and curiosity setups that pay off on the page._
-
-### Conversion Copy Angles
 
 ### Replace generic copy with specificity: exact numbers that quantify time, effort, or cost ('5 minutes, under $5', '2 inches in one use').
 
@@ -169,8 +163,6 @@ _Use when writing or rewriting product page copy, Amazon titles and bullets, ema
 
 _Use when designing or rewriting Amazon listing image slots, Shopify product page imagery, collection tiles, or any single-frame graphic — covers assigning one job and one buyer per frame, headline-first visual hierarchy, and the 1-second comprehension check before an asset ships._
 
-### Product Image Stack
-
 ### Every creative asset should have exactly one goal and one persona — never try to do two jobs or speak to two people in one image.
 
 **Why it works:** A single job lets the headline, proof, and objection handling all pull the same direction; two jobs split the focal point and the message reaches nobody clearly.
@@ -214,8 +206,6 @@ _Use when designing or rewriting Amazon listing image slots, Shopify product pag
 ## marketing-review-mining
 
 _Use when you need customer language for product page copy, Amazon bullets and titles, email subject lines, or ad creative — covers exporting Shopify and Amazon reviews to CSV, running them through an LLM to extract verbatim phrasing, recurring objections, and quotable testimonials worth putting on-page._
-
-### Review Mining
 
 ### Export your reviews to a CSV, hand it to an LLM, and ask it to surface the 'golden nugget' testimonials that would work as ad or headline copy.
 
