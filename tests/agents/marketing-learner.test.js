@@ -862,4 +862,187 @@ import { renderContextMirror } from '../../lib/marketing-learner.js';
   assert.match(md, /Nothing falsified yet/i, 'says so plainly when nothing is dead');
 }
 
+// ── renderContextMirror: heading-level demotion ─────────────────────────────
+// Skill bodies have their own ## headings that collide with mirror structure.
+// They must be demoted one level (## → ###, ### → ####) so the body nests
+// logically under its skill section header. Fenced code blocks exempt.
+{
+  const inv = [{
+    name: 'marketing-copy',
+    description: 'Copy tactics',
+    path: '/tmp/a/SKILL.md',
+    content: `---
+name: marketing-copy
+description: Copy tactics
+---
+
+## Live Tactic
+
+Body text.
+
+### Subsection
+
+More body.
+
+## Falsified
+
+### Dead Tactic
+Falsified: reason.
+`,
+  }];
+
+  const md = renderContextMirror(inv);
+
+  // The skill's own ## headings must become ###
+  assert.match(md, /^### Live Tactic$/m, 'live ## demoted to ###');
+  assert.match(md, /^#### Dead Tactic$/m, 'falsified ### demoted to ####');
+  assert.match(md, /^#### Subsection$/m, 'nested ### demoted to ####');
+
+  // The mirror's own structure must remain at ##
+  assert.match(md, /^## Do not propose$/m, 'mirror "Do not propose" stays ##');
+  assert.match(md, /^## marketing-copy$/m, 'mirror skill heading stays ##');
+}
+
+// Fenced code blocks are not demoted (fence detection via line tracking).
+{
+  const inv = [{
+    name: 'marketing-example',
+    description: 'Example tactics',
+    path: '/tmp/x/SKILL.md',
+    content: `---
+name: marketing-example
+description: Example
+---
+
+## Live Tactic
+
+Example markdown:
+
+\`\`\`
+## This is inside a fence
+
+Not a real heading.
+\`\`\`
+
+Body.`,
+  }];
+
+  const md = renderContextMirror(inv);
+
+  // Outside fence: demoted
+  assert.match(md, /^### Live Tactic$/m, 'live tactic demoted');
+  // Inside fence: preserved exactly
+  assert.match(md, /^## This is inside a fence$/m, 'fence content untouched');
+  assert.ok(md.includes('```'), 'fence markers preserved');
+}
+
+// ── renderContextMirror: blocklist dedup ────────────────────────────────────
+// Same claim falsified in two skills appears only once in the blocklist.
+{
+  const inv = [
+    {
+      name: 'marketing-copy',
+      description: 'Copy',
+      path: '/tmp/a/SKILL.md',
+      content: '---\nname: marketing-copy\ndescription: Copy\n---\n\n## Falsified\n\n### Bad tactic\n**Falsified 2026-08-14:** nope\n',
+    },
+    {
+      name: 'marketing-images',
+      description: 'Images',
+      path: '/tmp/b/SKILL.md',
+      content: '---\nname: marketing-images\ndescription: Images\n---\n\n## Falsified\n\n### Bad tactic\n**Falsified 2026-08-15:** nope again\n',
+    },
+  ];
+
+  const md = renderContextMirror(inv);
+
+  // Count "- Bad tactic" lines in the blocklist (before first skill heading)
+  const blocklist = md.split(/^## marketing-/m)[0];
+  const count = (blocklist.match(/^- Bad tactic$/gm) || []).length;
+  assert.equal(count, 1, 'same claim appears exactly once in blocklist, not duplicated');
+}
+
+// ── renderContextMirror: blocklist is hoisted ───────────────────────────────
+// The "## Do not propose" section must appear before any skill sections, so
+// it is scannable as a top-level authoritative blocklist.
+{
+  const inv = [
+    {
+      name: 'marketing-copy',
+      description: 'Copy',
+      path: '/tmp/a/SKILL.md',
+      content: '---\nname: marketing-copy\ndescription: Copy\n---\n\n## Live\n\n## Falsified\n\n### Dead\n',
+    },
+  ];
+
+  const md = renderContextMirror(inv);
+
+  const proposeIdx = md.indexOf('## Do not propose');
+  const firstSkillIdx = md.indexOf('## marketing-copy');
+
+  assert.ok(proposeIdx > -1, 'blocklist section exists');
+  assert.ok(firstSkillIdx > -1, 'skill section exists');
+  assert.ok(proposeIdx < firstSkillIdx, 'blocklist is hoisted above skills');
+}
+
+// ── renderContextMirror: malformed frontmatter is skipped silently ──────────
+// One skill with no frontmatter is skipped; good skills still render.
+{
+  const inv = [
+    {
+      name: 'marketing-good',
+      description: 'Good',
+      path: '/tmp/good/SKILL.md',
+      content: '---\nname: marketing-good\ndescription: Good\n---\n\n## Tactic\n\nBody.',
+    },
+    {
+      name: 'marketing-broken',
+      description: 'Broken',
+      path: '/tmp/broken/SKILL.md',
+      content: 'no frontmatter at all, just trash\n',
+    },
+  ];
+
+  const md = renderContextMirror(inv);
+
+  // Good skill is present
+  assert.match(md, /## marketing-good/, 'good skill rendered');
+  assert.match(md, /## Tactic/, 'good skill body included');
+
+  // Broken skill is NOT present (skipped silently)
+  assert.ok(!md.includes('marketing-broken'), 'broken skill skipped');
+  assert.ok(!md.includes('no frontmatter'), 'broken skill body not included');
+
+  // Document is still valid (no throw)
+  assert.match(md, /Do not edit by hand/i, 'document is valid');
+}
+
+// ── renderContextMirror: undefined fallbacks for name and description ──────
+// Caller passes undefined or empty values → should default to empty string.
+{
+  const inv = [
+    {
+      name: undefined,
+      description: 'Good desc',
+      path: '/tmp/a/SKILL.md',
+      content: '---\nname: marketing-fallback-name\ndescription: Good desc\n---\n\nBody.',
+    },
+    {
+      name: 'marketing-fallback-desc',
+      description: undefined,
+      path: '/tmp/b/SKILL.md',
+      content: '---\nname: marketing-fallback-desc\ndescription: Good desc\n---\n\nBody.',
+    },
+  ];
+
+  const md = renderContextMirror(inv);
+
+  // Should not contain literal "undefined" in the output
+  assert.ok(!md.includes('undefined'), 'no literal "undefined" in output');
+
+  // The names/descriptions from frontmatter are used (fallbacks kick in for inventory fields)
+  assert.match(md, /marketing-fallback-name/, 'skill section still rendered');
+  assert.match(md, /marketing-fallback-desc/, 'skill section still rendered');
+}
+
 console.log('✓ marketing-learner date + constraint tests pass');
