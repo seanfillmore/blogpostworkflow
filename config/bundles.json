@@ -486,7 +486,7 @@
       "handle": "hand-soap-set",
       "title": "Hand Soap Set",
       "status": "live",
-      "templateSuffix": null,
+      "templateSuffix": "bundle-landing",
       "packaging": 0,
       "tags": [
         "bundle",
@@ -846,7 +846,65 @@
             }
           ]
         }
-      ]
+      ],
+      "valueStack": [
+        {
+          "label": "Foaming Hand Soap (8oz) × 4",
+          "amount": 52,
+          "digital": false
+        }
+      ],
+      "lander": {
+        "heading": "The Hand Soap Set",
+        "subheading": "Hand soap for the whole house in one order, instead of one bottle at a time — one scent at every sink, or a different one at each.",
+        "cta_label": "Stock Every Sink",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "bullets": [
+          "Full-size 8oz pumps for the kitchen, the bathrooms and wherever else there's a sink",
+          "Real soap, not detergent — saponified organic virgin coconut oil, no SLS, no parabens, no synthetic fragrance",
+          "Add an 8oz body lotion for hands that are in water all day, or take the pumps on their own",
+          "Free shipping on orders over $45"
+        ],
+        "buybox_bullets": [
+          "Four 8oz pumps — or three or four pumps with an 8oz Body Lotion added",
+          "One scent throughout, or Variety for a different scent at each sink",
+          "Free shipping on orders over $45",
+          "30-day money-back guarantee"
+        ],
+        "whats_in_it_note": "Full-size 8oz bottles, the same ones we sell singly — no travel sizes. The panel under the picker lists exactly what ships in the configuration you've chosen.",
+        "faq": [
+          {
+            "q": "How many pumps do I get?",
+            "a": "Whichever configuration you pick: four pumps on their own, or three or four pumps with an 8oz body lotion added. The panel under the picker lists exactly what ships in the one you've selected."
+          },
+          {
+            "q": "Can I have a different scent at each sink?",
+            "a": "Yes — choose Variety and no two pumps are the same: Orange Zest, Coconut Breeze and Calming Lavender, plus Pure Unscented on the four-pump sets. Pick any single scent instead and every pump is that one."
+          },
+          {
+            "q": "Does it leave your hands feeling stripped?",
+            "a": "It's a true soap — saponified coconut oil, no detergent — so it cleans rather than moisturizes, and customers whose hands are in water all day tell us they feel it. That is what the configurations with a body lotion are there for."
+          },
+          {
+            "q": "What happens when a bottle runs out?",
+            "a": "The pumps refill. We sell a 32oz refill separately, and one bottle of it fills an 8oz pump four times over."
+          }
+        ],
+        "tabs": [
+          {
+            "heading": "What's Inside",
+            "body": "Four 8oz Foaming Hand Soap pumps — or three or four pumps plus an 8oz Body Lotion, depending on the configuration you choose. The panel under the picker lists the exact contents of the one you've selected."
+          },
+          {
+            "heading": "Ingredients",
+            "body": "Foaming hand soap: saponified organic virgin coconut oil, with organic essential oils where a scent is named — Pure Unscented has none. The body lotion, where a configuration includes one, is coconut-oil based. No SLS, no parabens, no synthetic fragrance, no palm oil. Vegan and cruelty-free."
+          },
+          {
+            "heading": "Shipping",
+            "body": "Free shipping on orders over $45. Most orders leave within one business day."
+          }
+        ]
+      }
     },
     {
       "handle": "clean-swap",
