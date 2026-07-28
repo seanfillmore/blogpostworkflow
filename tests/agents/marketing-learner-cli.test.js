@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseArgs, writeSkill } from '../../agents/marketing-learner/index.js';
+import { parseArgs, writeSkill, syncMirrorIfTouched, runFalsify } from '../../agents/marketing-learner/index.js';
 
 // ── parseArgs ───────────────────────────────────────────────────────────────
 {
@@ -28,7 +28,11 @@ import { parseArgs, writeSkill } from '../../agents/marketing-learner/index.js';
   assert.equal(a.extractOnly, true);
   assert.equal(a.refetch, true);
 }
-assert.throws(() => parseArgs(['--published']), /--published requires/, 'dangling flag throws');
+// Regression: parseArgs's --falsify rewrite collapsed this into a generic
+// "${a} requires a value." ternary, silently dropping the specific
+// YYYY-MM-DD guidance. Pin the exact restored wording so a future refactor
+// can't lose it again without the test noticing.
+assert.throws(() => parseArgs(['--published']), /--published requires a YYYY-MM-DD value\./, 'dangling flag throws, with the specific format hint');
 assert.throws(() => parseArgs([]), /at least one YouTube URL/, 'no urls throws');
 assert.throws(() => parseArgs(['u1', '--bogus']), /Unknown flag/, 'unknown flag throws');
 
@@ -127,5 +131,228 @@ await assert.rejects(
   /already exists but was not found/,
   'create path throws instead of silently overwriting a file the inventory scan missed'
 );
+
+// ── --falsify parsing ───────────────────────────────────────────────────────
+{
+  const a = parseArgs(['--falsify', 'marketing-copy', '--claim', 'taboo', '--reason', 'CTR tanked']);
+  assert.equal(a.falsify, 'marketing-copy');
+  assert.equal(a.claim, 'taboo');
+  assert.equal(a.reason, 'CTR tanked');
+  assert.deepEqual(a.urls, [], 'no URLs needed in falsify mode');
+}
+
+assert.throws(() => parseArgs(['--falsify', 'marketing-copy', '--claim', 'x']),
+  /--falsify requires --reason/, 'reason is mandatory');
+assert.throws(() => parseArgs(['--falsify', 'marketing-copy', '--reason', 'x']),
+  /--falsify requires --claim/, 'claim is mandatory');
+assert.throws(() => parseArgs(['--falsify']),
+  /--falsify requires a skill name/, 'dangling --falsify throws');
+
+// Modes are exclusive — silently ignoring one would be worse than refusing.
+assert.throws(
+  () => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--falsify', 'marketing-copy', '--claim', 'x', '--reason', 'y']),
+  /cannot be combined with URLs/,
+  'falsify + URL throws'
+);
+assert.throws(
+  () => parseArgs(['--falsify', 'marketing-copy', '--claim', 'x', '--reason', 'y', '--no-pr']),
+  /cannot be combined with/,
+  'falsify + run flag throws'
+);
+
+// Normal runs still work unchanged.
+{
+  const a = parseArgs(['https://youtu.be/aaaaaaaaaaa', '--published', '2026-03-14']);
+  assert.equal(a.falsify, null);
+  assert.deepEqual(a.published, ['2026-03-14']);
+}
+
+// ── wiring ──────────────────────────────────────────────────────────────────
+assert.ok(src.includes('falsifyTactic'), 'agent wires falsifyTactic');
+assert.ok(src.includes('renderContextMirror'), 'agent wires renderContextMirror');
+assert.ok(src.includes("'marketing-tactics.md'") || src.includes('marketing-tactics.md'),
+  'agent writes the context mirror');
+assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
+
+// ── syncMirrorIfTouched: mirror rides in the SAME collection openPullRequest stages ──
+// Regression: processVideo used to call `syncContextMirror();` as a bare statement,
+// discarding its return value. The mirror got rewritten on disk but never landed in
+// `writtenPaths` — the only array openPullRequest git-adds from — so a merged PR left
+// the checked-in projection stale. A plain `src.includes('syncContextMirror')` check
+// would still pass with that bug present; this exercises the real function and
+// inspects its actual return value.
+//
+// F4: sandboxed with mkdtempSync overrides (like writeSkill's tests below) rather
+// than exercising the default SKILLS_DIR/MIRROR_PATH — those point at the real
+// project tree, and `npm test` must never rewrite the tracked mirror file.
+{
+  const skillsDir = mkdtempSync(join(tmpdir(), 'ml-mirror-skills-'));
+  mkdirSync(join(skillsDir, 'marketing-x'), { recursive: true });
+  writeFileSync(join(skillsDir, 'marketing-x', 'SKILL.md'),
+    '---\nname: marketing-x\ndescription: d\n---\n\n# X\n\n## Tactic\n\nBody.\n');
+  const mirrorPath = join(mkdtempSync(join(tmpdir(), 'ml-mirror-out-')), 'marketing-tactics.md');
+
+  const writtenPaths = ['/fake/report.json', '/fake/skill/SKILL.md'];
+  const result = syncMirrorIfTouched(
+    writtenPaths,
+    [{ name: 'marketing-x', action: 'edit', path: '/fake/skill/SKILL.md' }],
+    { skillsDir, mirrorPath }
+  );
+
+  assert.equal(result, writtenPaths, 'mutates and returns the same array processVideo passes to openPullRequest');
+  assert.equal(writtenPaths.length, 3, 'mirror path was pushed on top of the existing entries');
+  assert.equal(writtenPaths[2], mirrorPath, 'the exact path syncContextMirror() returned was captured, not discarded');
+  assert.ok(writtenPaths.includes(mirrorPath), 'mirror path is in the same collection the PR stages from');
+  assert.ok(existsSync(mirrorPath), 'the sandboxed mirror path was actually written to');
+  assert.match(readFileSync(mirrorPath, 'utf8'), /marketing-x/, 'sandboxed mirror reflects the sandboxed skills dir');
+}
+{
+  // No skill touched → nothing to re-sync, writtenPaths passes through unchanged.
+  // No skillsDir/mirrorPath override needed: skillsTouched is empty, so
+  // syncContextMirror is never called and nothing real gets touched either way.
+  const writtenPaths = ['/fake/report.json'];
+  syncMirrorIfTouched(writtenPaths, []);
+  assert.deepEqual(writtenPaths, ['/fake/report.json'], 'mirror sync skipped, and nothing spuriously staged, when no skill changed');
+}
+
+// ── F7: repeated syncs must not stack duplicate mirror entries ──────────────
+// processVideo calls this once per skill write (deliberately — a mid-loop throw
+// must still leave the mirror consistent with what already landed on disk), so
+// an unconditional push accumulated one MIRROR_PATH per skill. That was harmless
+// only because openPullRequest dedupes with a Set — an accidental load-bearing
+// dedupe two functions away. Keep the array clean at source instead.
+{
+  const skillsDir = mkdtempSync(join(tmpdir(), 'ml-mirror-dupe-'));
+  mkdirSync(join(skillsDir, 'marketing-x'), { recursive: true });
+  writeFileSync(join(skillsDir, 'marketing-x', 'SKILL.md'),
+    '---\nname: marketing-x\ndescription: d\n---\n\n# X\n\n## Tactic\n\nBody.\n');
+  const mirrorPath = join(mkdtempSync(join(tmpdir(), 'ml-mirror-dupe-out-')), 'marketing-tactics.md');
+
+  const writtenPaths = ['/fake/report.json'];
+  const touched = [{ name: 'marketing-x', action: 'edit', path: '/fake/a/SKILL.md' }];
+  syncMirrorIfTouched(writtenPaths, touched, { skillsDir, mirrorPath });
+  syncMirrorIfTouched(writtenPaths, [...touched, { name: 'marketing-y', action: 'create', path: '/fake/b/SKILL.md' }], { skillsDir, mirrorPath });
+  syncMirrorIfTouched(writtenPaths, touched, { skillsDir, mirrorPath });
+
+  assert.deepEqual(writtenPaths, ['/fake/report.json', mirrorPath],
+    'three syncs, one mirror entry — no reliance on openPullRequest deduping');
+}
+
+// ── F4: the mirror is regenerated AFTER the PR branch is cut from main ──────
+// syncContextMirror projects whatever .claude/skills/ the WORKING TREE holds.
+// The in-loop sync runs on the operator's branch, which may carry skills that do
+// not exist on main; checking out from main drops those files, so that mirror
+// would advertise tactics whose SKILL.md the PR does not contain. Structural
+// check (the real thing shells out to git/gh and pushes): the regeneration call
+// must sit between the checkout and the `git add`.
+{
+  const checkoutIdx = src.indexOf("git(['checkout', '-b', branch, 'main'])");
+  const regenIdx = src.indexOf('syncContextMirror()', checkoutIdx);
+  const addIdx = src.indexOf("git(['add', ...paths])");
+  assert.ok(checkoutIdx > -1, 'still branches from main');
+  assert.ok(regenIdx > checkoutIdx && regenIdx < addIdx,
+    'the mirror is regenerated after the branch is cut from main and before the files are staged');
+}
+
+// ── F2: runFalsify — the actual write path, in a sandbox ────────────────────
+// falsifyTactic is exhaustively unit-tested as a pure string transform, but the
+// function that resolves the skill from the inventory, writes skill.path and
+// syncs the mirror had no coverage at all. Sandboxed with mkdtempSync: no
+// network, no LLM call, no tracked file touched.
+{
+  const skillsDir = mkdtempSync(join(tmpdir(), 'ml-falsify-skills-'));
+  const skillPath = join(skillsDir, 'marketing-copy', 'SKILL.md');
+  mkdirSync(join(skillsDir, 'marketing-copy'), { recursive: true });
+  writeFileSync(skillPath, [
+    '---',
+    'name: marketing-copy',
+    'description: Use when writing product page copy',
+    '---',
+    '',
+    '# Conversion Copy Angles',
+    '',
+    '## Use taboo framing to stop the scroll',
+    '',
+    '**Why it works:** Pattern interrupt.',
+    '',
+    '## Lead with a hard number',
+    '',
+    '**Why it works:** Specifics are falsifiable.',
+    '',
+  ].join('\n'));
+  const mirrorPath = join(mkdtempSync(join(tmpdir(), 'ml-falsify-out-')), 'marketing-tactics.md');
+
+  const result = runFalsify(
+    { falsify: 'marketing-copy', claim: 'taboo', reason: 'CTR 0.4% vs 1.1% control' },
+    { skillsDir, mirrorPath, today: '2026-08-14' }
+  );
+
+  assert.equal(result.skillPath, skillPath, 'writes the path the inventory scan found');
+
+  const written = readFileSync(skillPath, 'utf8');
+  assert.match(written, /^## Falsified$/m, 'the skill file on disk grew a graveyard');
+  assert.match(written, /^### Use taboo framing to stop the scroll$/m, 'the tactic moved into it');
+  assert.match(written, /\*\*Falsified 2026-08-14:\*\* CTR 0\.4% vs 1\.1% control/, 'stamped with the injected date and the reason');
+  assert.match(written, /^## Lead with a hard number$/m, 'the untouched tactic is still live');
+  assert.ok(!/^## Use taboo framing/m.test(written), 'the falsified tactic is no longer live');
+
+  const mirror = readFileSync(mirrorPath, 'utf8');
+  assert.match(mirror, /## Do not propose/, 'the mirror was regenerated');
+  assert.match(mirror, /^- Use taboo framing to stop the scroll$/m, 'the blocklist picked the claim up immediately');
+  assert.match(mirror, /Lead with a hard number/, 'live tactics still projected');
+}
+
+// ── F2: runFalsify refusal paths ────────────────────────────────────────────
+// These previously existed only as manual observations. All four must throw
+// rather than write something confident and wrong into a curated skill.
+{
+  const skillsDir = mkdtempSync(join(tmpdir(), 'ml-falsify-refuse-'));
+  const skillPath = join(skillsDir, 'marketing-copy', 'SKILL.md');
+  mkdirSync(join(skillsDir, 'marketing-copy'), { recursive: true });
+  const original = [
+    '---',
+    'name: marketing-copy',
+    'description: Use when writing product page copy',
+    '---',
+    '',
+    '## Use taboo framing to stop the scroll',
+    '',
+    'Body.',
+    '',
+    '## Use a hard number in the headline',
+    '',
+    'Body.',
+    '',
+  ].join('\n');
+  writeFileSync(skillPath, original);
+  const mirrorPath = join(mkdtempSync(join(tmpdir(), 'ml-falsify-refuse-out-')), 'marketing-tactics.md');
+  const opts = { skillsDir, mirrorPath, today: '2026-08-14' };
+
+  assert.throws(
+    () => runFalsify({ falsify: 'marketing-nonexistent', claim: 'x', reason: 'y' }, opts),
+    /No skill named "marketing-nonexistent"\. Available: marketing-copy/,
+    'unknown skill throws and lists what exists'
+  );
+  assert.throws(
+    () => runFalsify({ falsify: 'marketing-copy', claim: 'nothing like this', reason: 'y' }, opts),
+    /No live tactic matching "nothing like this"/,
+    'zero matches throws'
+  );
+  assert.throws(
+    () => runFalsify({ falsify: 'marketing-copy', claim: 'Use', reason: 'y' }, opts),
+    /matches 2 live tactics/,
+    'an ambiguous claim throws instead of guessing'
+  );
+  assert.equal(readFileSync(skillPath, 'utf8'), original, 'no refusal left a partial write behind');
+  assert.ok(!existsSync(mirrorPath), 'and no refusal regenerated the mirror');
+
+  // Already falsified: falsify once (which succeeds), then again.
+  runFalsify({ falsify: 'marketing-copy', claim: 'taboo', reason: 'CTR tanked' }, opts);
+  assert.throws(
+    () => runFalsify({ falsify: 'marketing-copy', claim: 'taboo', reason: 'again' }, { ...opts, today: '2026-09-01' }),
+    /already falsified on 2026-08-14/,
+    're-falsifying names the date of the original record'
+  );
+}
 
 console.log('✓ marketing-learner CLI tests pass');

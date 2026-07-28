@@ -113,6 +113,34 @@ export function loadPersonas(root = ROOT) {
 }
 
 /**
+ * The fleet-readable projection of the marketing skills, written by
+ * agents/marketing-learner. Absent on any checkout that has never run the
+ * learner, so a miss degrades to current behavior rather than throwing.
+ */
+export function loadTacticMenu(root = ROOT) {
+  try {
+    const raw = readFileSync(join(root, 'data', 'context', 'marketing-tactics.md'), 'utf8');
+    return raw.trim() || null;
+  } catch { return null; }
+}
+
+/**
+ * Build the copy brief for the session path (dashboard-approved hero image).
+ *
+ * Unlike buildCopyBrief (the ad path), the caller has already assembled the
+ * brief's product/angle/destinationUrl — this only merges in the tactic menu
+ * so both paths reach buildCopyPrompt with the same tactic guidance and
+ * blocklist. Split out as its own pure, exported function so the wiring is
+ * unit-testable without exercising main() (job files, Anthropic/Gemini calls).
+ */
+export function buildSessionCopyBrief(copyBrief, tacticMenu = null) {
+  return {
+    ...(copyBrief || { product: 'Real Skin Care', angle: '', destinationUrl: '' }),
+    tacticMenu,
+  };
+}
+
+/**
  * Build a copy brief.
  *
  * The angle used to come from the competitor reference ad's messagingAngle,
@@ -124,10 +152,13 @@ export function loadPersonas(root = ROOT) {
  * personas.personas is rank-ordered by the voice-of-customer agent, so
  * personas[0].angles[0] is the default.
  */
-export function buildCopyBrief(ad, { personas = null, personaId = null, angleId = null } = {}) {
+export function buildCopyBrief(ad, { personas = null, personaId = null, angleId = null, tacticMenu = null } = {}) {
   const base = {
     product: ad.pageName || ad.pageSlug || 'Real Skin Care',
     destinationUrl: ad.landingUrl || '',
+    // Always set, never conditionally spread — buildSessionCopyBrief does the
+    // same and buildCopyPrompt already treats a null menu as "no menu".
+    tacticMenu,
   };
 
   if (!personas) {
@@ -179,6 +210,15 @@ export function buildCopyPrompt(brief) {
   if (brief.destinationUrl) lines.push(`Landing page: ${brief.destinationUrl}`);
   if (brief.competitorBody) lines.push(`Reference competitor copy: ${brief.competitorBody}`);
   if (brief.copyInsights) lines.push(`What works about it: ${brief.copyInsights}`);
+  if (brief.tacticMenu) {
+    lines.push(
+      '',
+      'Tactics learned from marketing research, and tactics already tested here that failed:',
+      brief.tacticMenu,
+      '',
+      'Draw an angle from the live tactics above. Never propose anything under "Do not propose" — those were tested at this business and lost.'
+    );
+  }
   lines.push(
     '',
     'Our brand makes natural skincare products. Make it authentic to Real Skin Care and lead with a benefit tied to the angle.',
@@ -364,7 +404,11 @@ async function main() {
 
   if (source === 'session') {
     // Session path: one approved hero → resize to every placement (no ad lookup).
-    brief = job.copyBrief || { product: 'Real Skin Care', angle: '', destinationUrl: '' };
+    // Same tacticMenu wiring as the ad path below — buildCopyPrompt is shared by
+    // both, and without this the session path (the one that actually has data:
+    // data/creative-sessions/ exists, data/meta-ads-insights/ does not) would
+    // silently generate ad copy with no tactic menu and no blocklist.
+    brief = buildSessionCopyBrief(job.copyBrief, loadTacticMenu());
     sizes = (job.sizes && job.sizes.length)
       ? sizesByName(job.sizes)
       : placementSizes(job.placements && job.placements.length ? job.placements : ['instagram', 'facebook']);
@@ -396,6 +440,7 @@ async function main() {
       personas: loadPersonas(),
       personaId: job.personaId || null,
       angleId: job.angleId || null,
+      tacticMenu: loadTacticMenu(),
     });
     sizes = placementSizes(ad.publisherPlatforms || ['instagram', 'facebook']);
     slug = ad.pageSlug || 'creative';

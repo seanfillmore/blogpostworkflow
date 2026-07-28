@@ -14,7 +14,21 @@
  *     --no-pr                   Write into the working tree. No branch, no PR.
  *     --refetch                 Ignore the transcript cache (costs a credit).
  *
- * Requires TRANSCRIPTAPI_KEY in .env.
+ *   node agents/marketing-learner/index.js --falsify <skill-name> --claim "<substring
+ *       of the tactic's heading>" --reason "<what happened when you tested it>"
+ *     A separate mode — cannot be combined with URLs or any of the flags above. Marks
+ *     one live tactic in an existing skill dead: moves its section into that skill's
+ *     "## Falsified" graveyard, stamped with today's Pacific-time date and --reason, then
+ *     regenerates data/context/marketing-tactics.md so the "Do not propose" blocklist
+ *     every agent reads picks it up immediately. Pure text surgery — no network call,
+ *     no LLM call, no credential required, and unlike the video path above it does
+ *     NOT branch or open a PR: it writes directly into the current working tree
+ *     (mutates the target skill's SKILL.md and the mirror file, both tracked files —
+ *     commit them yourself). Throws (does not warn-and-continue) on: skill not found,
+ *     zero or multiple matching live tactics, or a claim that is already falsified.
+ *
+ * Requires TRANSCRIPTAPI_KEY in .env for the video path. --falsify needs neither that
+ * nor ANTHROPIC_API_KEY — it never touches the network.
  * Spec: docs/superpowers/specs/2026-07-27-marketing-learner-design.md
  */
 
@@ -34,6 +48,8 @@ import {
   extractTactics,
   mergeSkillContent,
   renderReport,
+  falsifyTactic,
+  renderContextMirror,
 } from '../../lib/marketing-learner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -60,14 +76,24 @@ function loadEnv(root = ROOT) {
   } catch { return {}; }
 }
 
+const VALUE_FLAGS = { '--published': 'published', '--falsify': 'falsify', '--claim': 'claim', '--reason': 'reason' };
+
 export function parseArgs(argv) {
-  const out = { urls: [], published: [], extractOnly: false, noPr: false, refetch: false };
+  const out = {
+    urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
+    falsify: null, claim: null, reason: null,
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--published') {
+    if (VALUE_FLAGS[a]) {
       const v = argv[++i];
-      if (!v || v.startsWith('--')) throw new Error('--published requires a YYYY-MM-DD value.');
-      out.published.push(v);
+      if (!v || v.startsWith('--')) {
+        if (a === '--falsify') throw new Error('--falsify requires a skill name.');
+        if (a === '--published') throw new Error('--published requires a YYYY-MM-DD value.');
+        throw new Error(`${a} requires a value.`);
+      }
+      if (a === '--published') out.published.push(v);
+      else out[VALUE_FLAGS[a]] = v;
     } else if (FLAGS[a]) {
       out[FLAGS[a]] = true;
     } else if (a.startsWith('--')) {
@@ -76,6 +102,18 @@ export function parseArgs(argv) {
       out.urls.push(a);
     }
   }
+
+  if (out.falsify) {
+    if (!out.claim) throw new Error('--falsify requires --claim "<substring of the tactic>".');
+    if (!out.reason) throw new Error('--falsify requires --reason "<what happened when you tested it>".');
+    if (out.urls.length) throw new Error('--falsify cannot be combined with URLs — it is a separate mode.');
+    if (out.extractOnly || out.noPr || out.refetch || out.published.length) {
+      throw new Error('--falsify cannot be combined with --extract-only, --no-pr, --refetch, or --published.');
+    }
+    return out;
+  }
+
+  if (out.claim || out.reason) throw new Error('--claim and --reason are only valid with --falsify.');
   if (!out.urls.length) throw new Error('Provide at least one YouTube URL.');
   return out;
 }
@@ -169,6 +207,78 @@ export async function writeSkill({ name, description, tactics, existing, client,
   return { path, action: 'create' };
 }
 
+const MIRROR_PATH = join(ROOT, 'data', 'context', 'marketing-tactics.md');
+
+/**
+ * Regenerate the fleet-readable projection of the skills. Runs after EVERY write
+ * to .claude/skills/ — create, merge, or falsify — so the mirror cannot drift.
+ * Re-scans rather than tracking deltas: it is a handful of file reads, and
+ * correctness beats cleverness for a file other agents act on.
+ *
+ * `skillsDir`/`mirrorPath` default to the real project paths; tests pass
+ * `mkdtempSync` sandboxes so `npm test` never rewrites the tracked mirror file.
+ */
+function syncContextMirror(skillsDir = SKILLS_DIR, mirrorPath = MIRROR_PATH) {
+  mkdirSync(dirname(mirrorPath), { recursive: true });
+  writeFileSync(mirrorPath, renderContextMirror(scanSkillInventory(skillsDir)));
+  return mirrorPath;
+}
+
+/**
+ * If any skill was created or edited, regenerate the mirror AND capture its path
+ * into `writtenPaths` — the exact array `openPullRequest` stages from (it
+ * `git add`s only `writtenPaths`, never whole directories). Pulled out as its own
+ * function so this specific wiring — "the mirror rides along in the same PR as
+ * the skills and report" — is directly testable without exercising the rest of
+ * processVideo (network fetch, LLM extraction, git/PR).
+ *
+ * Called once per skill write inside processVideo's loop (not once after the
+ * whole loop) so a mid-loop failure on a later skill still leaves the mirror
+ * consistent with whatever already landed on disk — see the shrink/rename/
+ * falsified guards in validateSkillEdit, any of which can throw mid-batch.
+ */
+export function syncMirrorIfTouched(writtenPaths, skillsTouched, { skillsDir = SKILLS_DIR, mirrorPath = MIRROR_PATH } = {}) {
+  if (!skillsTouched.length) return writtenPaths;
+  const path = syncContextMirror(skillsDir, mirrorPath);
+  // Called once per skill write, so the same mirror path comes back every time.
+  // openPullRequest dedupes its staging list with a Set, but relying on that
+  // makes the dedupe load-bearing by accident — keep this array clean at source.
+  if (!writtenPaths.includes(path)) writtenPaths.push(path);
+  return writtenPaths;
+}
+
+/**
+ * Today in Pacific time, not UTC. A falsification date is a permanent audit
+ * record on a hand-run operator command: toISOString() stamps tomorrow's date
+ * for anything run after 5pm PT, which is most of the evening.
+ */
+function todayPacific() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+}
+
+/**
+ * Mark a tactic dead. No network, no LLM call — pure text surgery.
+ *
+ * `skillsDir`/`mirrorPath`/`today` default to the real project paths and the
+ * real clock; tests pass a `mkdtempSync` sandbox and a fixed date so this write
+ * path is exercised without touching a tracked file.
+ */
+export function runFalsify(
+  { falsify, claim, reason },
+  { skillsDir = SKILLS_DIR, mirrorPath = MIRROR_PATH, today = todayPacific() } = {}
+) {
+  const inventory = scanSkillInventory(skillsDir);
+  const skill = inventory.find((s) => s.name === falsify);
+  if (!skill) {
+    const names = inventory.map((s) => s.name).join(', ') || '(no marketing skills yet)';
+    throw new Error(`No skill named "${falsify}". Available: ${names}`);
+  }
+  writeFileSync(skill.path, falsifyTactic(skill.content, { claim, reason, today }));
+  console.log(`✓ falsified in ${relative(ROOT, skill.path)}`);
+  console.log(`✓ mirror updated: ${relative(ROOT, syncContextMirror(skillsDir, mirrorPath))}`);
+  return { skillPath: skill.path, mirrorPath };
+}
+
 async function processVideo(item, { client, apiKey, args }) {
   const video = await loadVideo(item.url, item.publishedAt, { refetch: args.refetch, apiKey });
   if (item.warning) console.warn(`  ⚠ ${item.warning}`);
@@ -222,6 +332,10 @@ async function processVideo(item, { client, apiKey, args }) {
       const { path, action } = await writeSkill({ name, description, tactics, existing, client });
       skillsTouched.push({ name, action, path });
       writtenPaths.push(path);
+      // Resync after EACH write, not once after the whole loop: if the next
+      // skill in this batch throws (shrink/rename/falsified guard), this one's
+      // change must not be left invisible to the mirror every other agent reads.
+      syncMirrorIfTouched(writtenPaths, skillsTouched);
     }
   }
 
@@ -304,6 +418,16 @@ function openPullRequest(results) {
     // from wherever the operator happens to be, so running this from an unrelated
     // feature branch would carry its unrelated commits straight into the PR.
     git(['checkout', '-b', branch, 'main']);
+
+    // The mirror is a projection of whatever .claude/skills/ the working tree
+    // holds. The in-loop sync ran while we were still on the operator's branch,
+    // which may carry skills that do not exist on main — checking out from main
+    // drops those files, so that mirror would advertise tactics whose SKILL.md
+    // this PR does not contain. Regenerate now that the tree is main + this
+    // run's writes, and stage that. (Concurrent `learn` runs still each rewrite
+    // the whole file and will conflict; the runs are hand-triggered and rare.)
+    if (paths.includes(relative(ROOT, MIRROR_PATH))) syncContextMirror();
+
     git(['add', ...paths]);
     git(['commit', '-m', `feat(skills): marketing tactics from ${results.length} video(s)\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`]);
     git(['push', '-u', 'origin', branch]);
@@ -330,6 +454,12 @@ function openPullRequest(results) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  if (args.falsify) {
+    runFalsify(args);
+    return;
+  }
+
   const env = loadEnv();
   const apiKey = env.TRANSCRIPTAPI_KEY || process.env.TRANSCRIPTAPI_KEY;
   if (!apiKey) {
