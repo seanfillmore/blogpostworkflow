@@ -825,4 +825,41 @@ assert.throws(
     'extraction prompt explains what falsified means');
 }
 
+import { renderContextMirror } from '../../lib/marketing-learner.js';
+
+{
+  const inv = [
+    {
+      name: 'marketing-copy',
+      description: 'Use when writing product page copy or Amazon bullets',
+      path: '/tmp/a/SKILL.md',
+      content: '---\nname: marketing-copy\ndescription: d\n---\n\n## Lead with a hard number\n\n**Why it works:** Specifics.\n\n## Falsified\n\n### Use taboo framing\n**Falsified 2026-08-14:** CTR tanked\n',
+    },
+    {
+      name: 'marketing-images',
+      description: 'Use when designing Amazon listing image slots',
+      path: '/tmp/b/SKILL.md',
+      content: '---\nname: marketing-images\ndescription: d\n---\n\n## One job per frame\n\n**Why it works:** Clarity.\n',
+    },
+  ];
+
+  const md = renderContextMirror(inv);
+
+  assert.match(md, /Do not edit by hand/i, 'says it is generated');
+  assert.match(md, /\.claude\/skills/, 'names its source');
+  assert.match(md, /## Do not propose/, 'has the blocklist section');
+  assert.match(md, /- Use taboo framing/, 'blocklist carries the falsified claim');
+  assert.match(md, /marketing-copy/, 'names each skill');
+  assert.match(md, /Use when designing Amazon listing image slots/, 'carries trigger descriptions');
+  assert.match(md, /Lead with a hard number/, 'carries live tactics');
+  assert.match(md, /One job per frame/, 'carries tactics from every skill');
+}
+
+// Empty inventory still produces a valid document rather than throwing.
+{
+  const md = renderContextMirror([]);
+  assert.match(md, /Do not edit by hand/i);
+  assert.match(md, /Nothing falsified yet/i, 'says so plainly when nothing is dead');
+}
+
 console.log('✓ marketing-learner date + constraint tests pass');
