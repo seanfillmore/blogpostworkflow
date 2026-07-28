@@ -28,7 +28,11 @@ import { parseArgs, writeSkill, syncMirrorIfTouched, MIRROR_PATH } from '../../a
   assert.equal(a.extractOnly, true);
   assert.equal(a.refetch, true);
 }
-assert.throws(() => parseArgs(['--published']), /--published requires/, 'dangling flag throws');
+// Regression: parseArgs's --falsify rewrite collapsed this into a generic
+// "${a} requires a value." ternary, silently dropping the specific
+// YYYY-MM-DD guidance. Pin the exact restored wording so a future refactor
+// can't lose it again without the test noticing.
+assert.throws(() => parseArgs(['--published']), /--published requires a YYYY-MM-DD value\./, 'dangling flag throws, with the specific format hint');
 assert.throws(() => parseArgs([]), /at least one YouTube URL/, 'no urls throws');
 assert.throws(() => parseArgs(['u1', '--bogus']), /Unknown flag/, 'unknown flag throws');
 
