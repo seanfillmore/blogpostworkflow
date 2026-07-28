@@ -6,6 +6,13 @@
  * anything. `main-menu`'s `Shop` item already points at /collections, which is
  * the Collections link; only its children go.
  *
+ * `sidebar-menu`'s 7 collection links get retargeted to the matching PDPs.
+ * `multi-main`'s top-level `Shop` item points at `/collections/live-collection`,
+ * a collection this run redirects — it gets retargeted to Shopify's native
+ * "all collections" link, mirroring `main-menu`'s existing `Shop` item.
+ * `product-menu` also gains a new top-level `Sets & Bundles` item, since the
+ * new collection needs a way into the navigation.
+ *
  * Dry-run by default. Pass --apply to mutate.
  *
  * Usage:
@@ -13,7 +20,8 @@
  *   node scripts/update-navigation.mjs --apply
  */
 
-import { shopifyGraphQL } from '../lib/shopify.js';
+import { shopifyGraphQL, getCustomCollections, getSmartCollections, getProducts } from '../lib/shopify.js';
+import { appendAction } from '../lib/consolidation-log.js';
 
 const MENUS_QUERY = `{ menus(first: 20) { nodes { id handle title
   items { id title type url resourceId items { id title type url resourceId } } } } }`;
@@ -44,13 +52,44 @@ export function stripCollectionChildren(items) {
   }));
 }
 
-/** Rewrite collection links to PDPs using an explicit url->url map. */
+/**
+ * Rewrite collection links to PDPs using an explicit url -> {to, resourceId}
+ * map. `resourceId` must be the DESTINATION product's GID, not whatever the
+ * item already carried — a plain `{...it, url: to, type: 'PRODUCT'}` spread
+ * preserves the item's original Collection resourceId, which Shopify treats
+ * as governing for resource-typed items. That sent `{type: PRODUCT, url:
+ * /products/…, resourceId: gid://shopify/Collection/…}` for every sidebar
+ * item, a mismatched pair Shopify either rejects or silently accepts while
+ * still resolving the item to the (now-unpublished) collection. Build the
+ * map with `buildRetargetMap` so the resourceId always names the product.
+ */
 export function retargetToPdp(items, map) {
   return (items || []).map((it) => {
-    const to = map[it.url];
-    if (!to) return it;
-    return { ...it, url: to, type: 'PRODUCT' };
+    const target = map[it.url];
+    if (!target) return it;
+    return { ...it, url: target.to, type: 'PRODUCT', resourceId: target.resourceId };
   });
+}
+
+/**
+ * Resolve each retarget destination's product GID via `fetchProducts` (the
+ * real store's product list, or an injected fake in tests) so retargetToPdp
+ * never has to fall back to a stale/wrong resourceId. Throws if a mapped
+ * destination has no matching product — better to fail loudly before
+ * mutating the menu than to silently omit resourceId for one item.
+ */
+export async function buildRetargetMap(urlMap, fetchProducts) {
+  const products = await fetchProducts({ limit: 250 });
+  const gidByUrl = new Map(products.map((p) => [`/products/${p.handle}`, `gid://shopify/Product/${p.id}`]));
+  const out = {};
+  for (const [from, to] of Object.entries(urlMap)) {
+    const resourceId = gidByUrl.get(to);
+    if (!resourceId) {
+      throw new Error(`update-navigation: no product found for retarget destination ${to} (source ${from})`);
+    }
+    out[from] = { to, resourceId };
+  }
+  return out;
 }
 
 // sidebar-menu mirrors the header's category->PDP mapping.
@@ -64,14 +103,60 @@ const SIDEBAR_MAP = {
   // foaming-hand-soap is a survivor and stays a collection link.
 };
 
+/**
+ * `multi-main`'s sole collection link is its top-level `Shop` item, pointing
+ * at `/collections/live-collection` — a collection this run redirects (it
+ * falls through classifyTarget to the all-products fallback). Its children
+ * are already PRODUCT links and untouched. Rather than send a top-level
+ * "Shop" item at a single category collection, mirror `main-menu`'s existing
+ * `Shop` item: Shopify's native COLLECTIONS type, which points at
+ * `/collections` and carries no resourceId.
+ */
+export function retargetShopToAllCollections(items) {
+  return (items || []).map((it) => {
+    if (it.type !== 'COLLECTION') return it;
+    const { resourceId, ...rest } = it;
+    return { ...rest, type: 'COLLECTIONS', url: '/collections' };
+  });
+}
+
+/**
+ * Append a top-level `Sets & Bundles` item to product-menu, pointing at the
+ * new collection. `resourceId` is required — a null/undefined id means the
+ * collection doesn't exist yet (setup-survivor-collections.mjs --apply must
+ * run first) and the item is not appended, since a COLLECTION-typed item
+ * with no resourceId is exactly the malformed shape Critical 4 fixes.
+ */
+export function withSetsAndBundlesItem(items, resourceId) {
+  if (!resourceId) return items;
+  return [...items, {
+    title: 'Sets & Bundles',
+    type: 'COLLECTION',
+    url: '/collections/sets-and-bundles',
+    resourceId,
+    items: [],
+  }];
+}
+
+async function findCollectionGid(handle, { fetchCustom, fetchSmart }) {
+  const [custom, smart] = await Promise.all([
+    fetchCustom({ limit: 250 }),
+    fetchSmart({ limit: 250 }),
+  ]);
+  const found = [...custom, ...smart].find((c) => c.handle === handle);
+  return found ? `gid://shopify/Collection/${found.id}` : null;
+}
+
 // menuUpdate replaces the whole item tree from what's sent, so every field
 // that should survive the round trip must be sent back explicitly. `id`
 // targets the existing MenuItem for an in-place update instead of a
-// recreate; `resourceId` is the item's association with a product/collection
-// resource and must be omitted (not sent as null) for items that don't have
-// one (HTTP, PAGE, BLOG, etc.) — an explicit null is not the same as absent.
+// recreate, and must be OMITTED (not sent as undefined/null) for a brand-new
+// item so Shopify creates it; `resourceId` is the item's association with a
+// product/collection resource and must likewise be omitted for items that
+// don't have one (HTTP, PAGE, BLOG, etc.) — an explicit null is not the same
+// as absent.
 const toItemInput = (it) => ({
-  id: it.id,
+  ...(it.id ? { id: it.id } : {}),
   title: it.title,
   type: it.type,
   url: it.url,
@@ -88,21 +173,47 @@ async function main() {
 
   const changes = [];
 
+  const setsAndBundlesGid = await findCollectionGid('sets-and-bundles', {
+    fetchCustom: getCustomCollections, fetchSmart: getSmartCollections,
+  });
+
   for (const handle of ['product-menu', 'main-menu']) {
     const m = byHandle[handle];
     if (!m) continue;
     const before = m.items.reduce((n, i) => n + (i.items || []).length, 0);
-    const items = stripCollectionChildren(m.items);
+    let items = stripCollectionChildren(m.items);
     const after = items.reduce((n, i) => n + (i.items || []).length, 0);
-    changes.push({ menu: m, items, note: `children ${before} -> ${after}` });
+    let note = `children ${before} -> ${after}`;
+
+    if (handle === 'product-menu') {
+      const withSab = withSetsAndBundlesItem(items, setsAndBundlesGid);
+      if (withSab !== items) {
+        note += '; added Sets & Bundles top-level item';
+      } else {
+        note += '; WARN sets-and-bundles collection not found — run setup-survivor-collections.mjs --apply first, then re-run this script';
+      }
+      items = withSab;
+    }
+
+    changes.push({ menu: m, items, note });
   }
 
   const sidebar = byHandle['sidebar-menu'];
   if (sidebar) {
+    const retargetMap = await buildRetargetMap(SIDEBAR_MAP, getProducts);
     changes.push({
       menu: sidebar,
-      items: retargetToPdp(sidebar.items, SIDEBAR_MAP),
+      items: retargetToPdp(sidebar.items, retargetMap),
       note: 'collection links retargeted to PDPs',
+    });
+  }
+
+  const multiMain = byHandle['multi-main'];
+  if (multiMain) {
+    changes.push({
+      menu: multiMain,
+      items: retargetShopToAllCollections(stripCollectionChildren(multiMain.items)),
+      note: 'top-level collection link (live-collection) retargeted to the native collections index',
     });
   }
 
@@ -129,6 +240,7 @@ async function main() {
     });
     const errs = res.menuUpdate.userErrors;
     if (errs?.length) throw new Error(`${ch.menu.handle}: ${errs.map((e) => e.message).join('; ')}`);
+    appendAction({ action: 'menu_update', handle: ch.menu.handle, note: ch.note });
     console.log(`  ✓ ${ch.menu.handle} updated`);
   }
 }

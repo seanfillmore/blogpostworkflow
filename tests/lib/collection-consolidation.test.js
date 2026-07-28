@@ -3,10 +3,20 @@ import assert from 'node:assert/strict';
 import { SURVIVORS, classifyTarget, buildRedirectPlan } from '../../lib/collection-consolidation.js';
 
 test('survivors classify as null so they are never redirected', () => {
-  for (const h of ['non-toxic-body-lotion', 'foaming-hand-soap', 'all-products', 'on-sale']) {
+  for (const h of ['non-toxic-body-lotion', 'foaming-hand-soap', 'all-products', 'on-sale', 'sets-and-bundles']) {
     assert.equal(classifyTarget(h), null, `${h} must survive`);
   }
-  assert.equal(SURVIVORS.size, 4);
+  assert.equal(SURVIVORS.size, 5);
+});
+
+// Regression guard for the critical defect where sets-and-bundles fell
+// through to the fallback and got destroyed one command after creation
+// (setup-survivor-collections.mjs creates it, then consolidate-collections.mjs
+// would unpublish + 301 it away). It must survive classification exactly like
+// the other three survivors.
+test('sets-and-bundles survives classification (regression: it was missing from SURVIVORS)', () => {
+  assert.equal(classifyTarget('sets-and-bundles'), null);
+  assert.ok(SURVIVORS.has('sets-and-bundles'));
 });
 
 test('lotion-family handles route to the lotion survivor', () => {

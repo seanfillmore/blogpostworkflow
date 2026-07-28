@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { planLeadLink, SURVIVOR_LEAD } from '../../scripts/setup-survivor-collections.mjs';
+import {
+  planLeadLink, SURVIVOR_LEAD, planLotionRule, planRefillCollect, LOTION_RULE,
+} from '../../scripts/setup-survivor-collections.mjs';
 
 test('empty body_html gets the full lead-link + description body', () => {
   const plan = planLeadLink('', SURVIVOR_LEAD['non-toxic-body-lotion']);
@@ -64,4 +66,40 @@ test('sets-and-bundles: empty body_html gets the lead link plus the description 
   assert.equal(plan.action, 'write-full');
   assert.ok(plan.body.includes('/products/90-day-clean-swap'));
   assert.ok(plan.body.includes('Multi-product sets and value packs'));
+});
+
+// --- planLotionRule (Critical 2: the lotion survivor held 1 product) ---
+
+test('planLotionRule rewrites the rule when the collection holds fewer than 2 products', () => {
+  const plan = planLotionRule(1);
+  assert.equal(plan.action, 'rewrite');
+  assert.deepEqual(plan.rules, [LOTION_RULE]);
+  assert.equal(LOTION_RULE.condition, 'Paraben-Free Lotion');
+});
+
+test('planLotionRule rewrites when the collection holds zero products too', () => {
+  assert.equal(planLotionRule(0).action, 'rewrite');
+});
+
+// Guard: idempotent re-runs, and a merchandiser's later change, must not be
+// clobbered once the collection legitimately holds 2+ products.
+test('planLotionRule skips once the collection holds 2 or more products, regardless of rule text', () => {
+  assert.equal(planLotionRule(2).action, 'skip');
+  assert.equal(planLotionRule(5).action, 'skip');
+});
+
+// --- planRefillCollect (Critical 3: the refill was never actually added) ---
+
+test('planRefillCollect adds the refill when it is not yet in the collection', () => {
+  const plan = planRefillCollect([111, 222], 333);
+  assert.equal(plan.action, 'add');
+});
+
+test('planRefillCollect skips when the refill is already in the collection (idempotent)', () => {
+  const plan = planRefillCollect([111, 222, 333], 333);
+  assert.equal(plan.action, 'skip');
+});
+
+test('planRefillCollect handles an empty collection', () => {
+  assert.equal(planRefillCollect([], 333).action, 'add');
 });

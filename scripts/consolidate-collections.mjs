@@ -11,9 +11,10 @@
 
 import {
   getCustomCollections, getSmartCollections, getCollectionProductCount,
-  updateCustomCollection, updateSmartCollection, createRedirect, getRedirects,
+  updateCustomCollection, updateSmartCollection, createRedirect, deleteRedirect, getRedirects,
 } from '../lib/shopify.js';
 import { buildRedirectPlan } from '../lib/collection-consolidation.js';
+import { appendAction } from '../lib/consolidation-log.js';
 
 const SITE = 'https://www.realskincare.com';
 
@@ -63,9 +64,9 @@ export function validateFlags({ apply, asJson }) {
 /**
  * Page through every redirect via since_id. A single `{ limit: 250 }` call
  * truncates once the store has more than 250 redirects — the live store has
- * 163 already and this run adds 84 (247, then more on later runs), so the
- * `existing` idempotency check would silently miss real redirects and
- * `createRedirect` would throw mid-run on a duplicate path.
+ * 163 already and this run adds 83 (246, then more on later runs), so the
+ * idempotency check would silently miss real redirects and `createRedirect`
+ * would throw mid-run on a duplicate path.
  */
 export async function loadAllRedirects(fetchRedirects) {
   const all = [];
@@ -78,6 +79,61 @@ export async function loadAllRedirects(fetchRedirects) {
     sinceId = page[page.length - 1].id;
   }
   return all;
+}
+
+/**
+ * Compare the plan against existing redirects by (path, target), not path
+ * alone. A source whose redirect already points at the plan's target is done
+ * — `alreadyCorrect`. A source with a redirect pointing somewhere stale needs
+ * deleting and recreating — `toRewrite`, carrying the existing redirect's id
+ * and stale target so the apply loop and the report can show the diff. A
+ * source with no redirect at all is `toCreate`.
+ *
+ * This replaces a path-only idempotency check that treated "a redirect
+ * exists" as "the redirect is correct" — live audit found 22 of 23
+ * previously-skipped sources had a stale target that check would never fix.
+ */
+export function diffRedirectsAgainstPlan(readyPlan, existingRedirects) {
+  const byPath = new Map(existingRedirects.map((r) => [r.path, r]));
+  const toCreate = [];
+  const toRewrite = [];
+  const alreadyCorrect = [];
+  for (const row of readyPlan) {
+    const path = `/collections/${row.handle}`;
+    const existing = byPath.get(path);
+    if (!existing) {
+      toCreate.push({ ...row, path });
+    } else if (existing.target === row.target) {
+      alreadyCorrect.push({ ...row, path });
+    } else {
+      toRewrite.push({ ...row, path, existingRedirectId: existing.id, staleTarget: existing.target });
+    }
+  }
+  return { toCreate, toRewrite, alreadyCorrect };
+}
+
+/**
+ * Existing store redirects (independent of this run's sources — e.g. a prior
+ * consolidation's `/collections/toothpaste -> /collections/natural-toothpaste`)
+ * whose target is itself one of this plan's sources become a 301->301->200
+ * chain the moment this run's own redirect lands. Repoint them straight at
+ * the plan's final (terminal) target instead. Plan targets are always
+ * survivors or PDPs, never another plan source, so a single pass fully
+ * collapses any chain regardless of how many hops it had before.
+ *
+ * Scoped to `readyPlan` (not the full plan) so a chain is never repointed at
+ * a target that failed the health check.
+ */
+export function findChainedRedirects(readyPlan, existingRedirects) {
+  const finalTargetByPath = new Map(readyPlan.map((row) => [`/collections/${row.handle}`, row.target]));
+  const out = [];
+  for (const r of existingRedirects) {
+    const finalTarget = finalTargetByPath.get(r.target);
+    if (finalTarget && finalTarget !== r.target) {
+      out.push({ id: r.id, path: r.path, staleTarget: r.target, newTarget: finalTarget });
+    }
+  }
+  return out;
 }
 
 async function loadCollections() {
@@ -110,18 +166,32 @@ async function main() {
   const plan = buildRedirectPlan(collections);
   const { ready, blocked } = await partitionByTargetHealth(plan, targetIsLive);
 
-  const existing = new Set((await loadAllRedirects(getRedirects)).map((r) => r.path));
-  const toWrite = ready.filter((r) => !existing.has(`/collections/${r.handle}`));
+  const existingRedirects = await loadAllRedirects(getRedirects);
+  const { toCreate, toRewrite, alreadyCorrect } = diffRedirectsAgainstPlan(ready, existingRedirects);
+  const chained = findChainedRedirects(ready, existingRedirects);
+  const toWrite = [...toCreate, ...toRewrite];
+
+  // Unpublishing is derived independently of what needs writing — a source
+  // whose redirect is already correct still needs its (still-live) collection
+  // unpublished. Coupling this to toWrite meant a live collection with an
+  // already-correct redirect never got unpublished and stayed served, since
+  // Shopify redirects only fire on 404.
+  const toUnpublish = ready.filter((r) => r.live);
 
   if (asJson) {
-    console.log(JSON.stringify({ plan, ready, blocked, toWrite, productCountFailures }, null, 1));
+    console.log(JSON.stringify({
+      plan, ready, blocked, toCreate, toRewrite, alreadyCorrect, chained, toWrite, toUnpublish,
+      productCountFailures,
+    }, null, 1));
     return;
   }
 
   console.log(`\nCollection consolidation — ${apply ? 'APPLY' : 'DRY RUN'}`);
   console.log(`  collections: ${collections.length} (live ${collections.filter((c) => c.live).length})`);
   console.log(`  to redirect: ${plan.length}  ready: ${ready.length}  blocked: ${blocked.length}`);
-  console.log(`  redirects already present: ${ready.length - toWrite.length}`);
+  console.log(`  redirects already correct: ${alreadyCorrect.length}  needing rewrite (stale target): ${toRewrite.length}  new: ${toCreate.length}`);
+  console.log(`  chained redirects to repoint (existing redirect -> a source in this plan): ${chained.length}`);
+  console.log(`  to unpublish: ${toUnpublish.length}`);
 
   if (productCountFailures > 0) {
     console.log(`  WARN: product count unavailable for ${productCountFailures} collection${productCountFailures === 1 ? '' : 's'}`);
@@ -132,30 +202,69 @@ async function main() {
     for (const b of blocked) console.log(`    /collections/${b.handle} -> ${b.target}`);
   }
 
-  console.log('\n  Plan:');
-  for (const r of toWrite) {
-    console.log(`    ${r.live ? 'LIVE ' : 'draft'} /collections/${r.handle} -> ${r.target}`);
+  // Print the skipped rows, not just a count — an operator otherwise cannot
+  // see which already-correct sources are still live and about to be
+  // unpublished for the first time.
+  if (alreadyCorrect.length) {
+    console.log('\n  Already correct (redirect exists, target matches — still unpublished below if live):');
+    for (const r of alreadyCorrect) console.log(`    ${r.live ? 'LIVE ' : 'draft'} ${r.path} -> ${r.target}`);
   }
+
+  if (chained.length) {
+    console.log('\n  CHAIN FIX (existing redirect currently points at a source this run redirects):');
+    for (const c of chained) console.log(`    ${c.path} -> ${c.staleTarget}  =>  ${c.newTarget}`);
+  }
+
+  console.log('\n  Plan:');
+  for (const r of toCreate) console.log(`    CREATE  ${r.live ? 'LIVE ' : 'draft'} ${r.path} -> ${r.target}`);
+  for (const r of toRewrite) console.log(`    REWRITE ${r.live ? 'LIVE ' : 'draft'} ${r.path} -> ${r.target} (was ${r.staleTarget})`);
 
   if (!apply) {
     console.log('\n  Dry run: nothing written. Re-run with --apply.');
     return;
   }
 
-  let unpublished = 0;
+  // Chain fixes first — independent of the sources' own redirects/unpublish.
+  let chainFixed = 0;
+  for (const c of chained) {
+    await deleteRedirect(c.id);
+    await createRedirect(c.path, c.newTarget);
+    chainFixed++;
+    appendAction({ action: 'chain_fix', path: c.path, from: c.staleTarget, to: c.newTarget });
+    console.log(`    ✓ chain-fixed ${c.path} -> ${c.newTarget}`);
+  }
+
+  // Rewrites: delete the stale redirect before creating the correct one —
+  // Shopify does not expose an update, and a path can't hold two redirects.
+  for (const r of toRewrite) {
+    await deleteRedirect(r.existingRedirectId);
+    appendAction({ action: 'delete_redirect', path: r.path, target: r.staleTarget });
+  }
+
+  // Create/recreate every redirect BEFORE unpublishing anything. A redirect
+  // lies dormant while its source collection is still published and only
+  // activates the moment the collection 404s, so if the loop crashes midway
+  // there are zero permanent 404s — versus unpublish-then-redirect, which
+  // opens a live 404 window between the two calls for every source.
   let redirected = 0;
   for (const r of toWrite) {
-    if (r.live) {
-      const fields = { published: false };
-      if (r.kind === 'custom') await updateCustomCollection(r.id, fields);
-      else await updateSmartCollection(r.id, fields);
-      unpublished++;
-    }
-    await createRedirect(`/collections/${r.handle}`, r.target);
+    await createRedirect(r.path, r.target);
     redirected++;
-    console.log(`    ✓ ${r.handle} -> ${r.target}`);
+    appendAction({ action: 'create_redirect', path: r.path, target: r.target });
+    console.log(`    ✓ redirect ${r.handle} -> ${r.target}`);
   }
-  console.log(`\n  Unpublished ${unpublished}, redirected ${redirected}.`);
+
+  let unpublished = 0;
+  for (const r of toUnpublish) {
+    const fields = { published: false };
+    if (r.kind === 'custom') await updateCustomCollection(r.id, fields);
+    else await updateSmartCollection(r.id, fields);
+    unpublished++;
+    appendAction({ action: 'unpublish', handle: r.handle, id: r.id, kind: r.kind });
+    console.log(`    ✓ unpublished ${r.handle}`);
+  }
+
+  console.log(`\n  Unpublished ${unpublished}, redirected ${redirected}, chain-fixed ${chainFixed}.`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
