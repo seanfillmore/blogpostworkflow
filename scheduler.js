@@ -168,6 +168,15 @@ runStep('shopping-test-monitor', `"${NODE}" agents/shopping-test-monitor/index.j
 // vs. the prior snapshot into the daily digest. Cheap (PSI API, no LLM).
 runStep('pagespeed-monitor', `"${NODE}" agents/pagespeed-monitor/index.js`);
 
+// Step 5b.1b: RUM monitor — aggregates the real-user Core Web Vitals beacons the
+// storefront sends to the dashboard's /api/rum collector into p75 by page and
+// device. This is the field counterpart to pagespeed-monitor above: CrUX has no
+// data for this origin (traffic is below Google's reporting threshold), so
+// without this the only speed signal is Lighthouse's throttled lab emulation.
+// Prunes raw beacon files past their retention window on the way through.
+runStep('rum-monitor', `"${NODE}" agents/rum-monitor/index.js --days 7`);
+runStep('rum-monitor-prune', `"${NODE}" agents/rum-monitor/index.js --prune`);
+
 // Step 5b.2: amazon snapshot — WEEKLY (Sundays). RSC Amazon net (post-Finance-role),
 // fees, per-ASIN net, and hero-lotion stockout guard → data/snapshots/amazon/ + digest.
 // Weekly, not daily: the 30-day finance pull is heavy and Amazon data moves slowly.

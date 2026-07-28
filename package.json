@@ -102,6 +102,7 @@
     "puppeteer": "^24.40.0",
     "sharp": "^0.34.5",
     "stream-chain": "^3.6.1",
-    "stream-json": "^2.1.0"
+    "stream-json": "^2.1.0",
+    "web-vitals": "^4.2.4"
   }
 }

@@ -44,6 +44,7 @@ import rejectedImagesRoutes from './routes/rejected-images.js';
 import postsKillRoutes from './routes/posts-kill.js';
 import cannibalizationRoutes from './routes/cannibalization.js';
 import ideasRoutes from './routes/ideas.js';
+import rumRoutes from './routes/rum.js';
 
 const {
   ROOT, PUBLIC_DIR,
@@ -107,6 +108,7 @@ const ROUTES = [
   ...postsKillRoutes,
   ...cannibalizationRoutes,
   ...ideasRoutes,
+  ...rumRoutes,
 ];
 
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key
@@ -163,6 +165,15 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(BOT_LANDING_HTML);
     return;
+  }
+
+  // The RUM collector is reached by storefront browsers, which cannot send
+  // basic-auth credentials — and dashboard credentials must never appear in
+  // public theme JS. This is the one deliberately unauthenticated route.
+  // Abuse is bounded in routes/rum.js: 8KB body cap, strict metric validation,
+  // and a hard ceiling on the daily file so it cannot fill the disk.
+  if (urlPath === '/api/rum') {
+    if (dispatch(ROUTES, req, res, ctx)) return;
   }
 
   if (!checkAuth(req, res)) return;

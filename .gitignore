@@ -65,6 +65,7 @@ data/clarity/
 
 # Theme file backups (downloaded by apply-blog-sidebar.js)
 backup/
+theme/backups/
 
 # Misc
 Ingredients/
