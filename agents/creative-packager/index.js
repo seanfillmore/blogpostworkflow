@@ -113,6 +113,18 @@ export function loadPersonas(root = ROOT) {
 }
 
 /**
+ * The fleet-readable projection of the marketing skills, written by
+ * agents/marketing-learner. Absent on any checkout that has never run the
+ * learner, so a miss degrades to current behavior rather than throwing.
+ */
+export function loadTacticMenu(root = ROOT) {
+  try {
+    const raw = readFileSync(join(root, 'data', 'context', 'marketing-tactics.md'), 'utf8');
+    return raw.trim() || null;
+  } catch { return null; }
+}
+
+/**
  * Build a copy brief.
  *
  * The angle used to come from the competitor reference ad's messagingAngle,
@@ -124,10 +136,11 @@ export function loadPersonas(root = ROOT) {
  * personas.personas is rank-ordered by the voice-of-customer agent, so
  * personas[0].angles[0] is the default.
  */
-export function buildCopyBrief(ad, { personas = null, personaId = null, angleId = null } = {}) {
+export function buildCopyBrief(ad, { personas = null, personaId = null, angleId = null, tacticMenu = null } = {}) {
   const base = {
     product: ad.pageName || ad.pageSlug || 'Real Skin Care',
     destinationUrl: ad.landingUrl || '',
+    ...(tacticMenu ? { tacticMenu } : {}),
   };
 
   if (!personas) {
@@ -179,6 +192,15 @@ export function buildCopyPrompt(brief) {
   if (brief.destinationUrl) lines.push(`Landing page: ${brief.destinationUrl}`);
   if (brief.competitorBody) lines.push(`Reference competitor copy: ${brief.competitorBody}`);
   if (brief.copyInsights) lines.push(`What works about it: ${brief.copyInsights}`);
+  if (brief.tacticMenu) {
+    lines.push(
+      '',
+      'Tactics learned from marketing research, and tactics already tested here that failed:',
+      brief.tacticMenu,
+      '',
+      'Draw an angle from the live tactics above. Never propose anything under "Do not propose" — those were tested at this business and lost.'
+    );
+  }
   lines.push(
     '',
     'Our brand makes natural skincare products. Make it authentic to Real Skin Care and lead with a benefit tied to the angle.',
@@ -396,6 +418,7 @@ async function main() {
       personas: loadPersonas(),
       personaId: job.personaId || null,
       angleId: job.angleId || null,
+      tacticMenu: loadTacticMenu(),
     });
     sizes = placementSizes(ad.publisherPlatforms || ['instagram', 'facebook']);
     slug = ad.pageSlug || 'creative';
