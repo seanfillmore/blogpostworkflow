@@ -49,6 +49,12 @@ async function main() {
   const impactAge = impactDate ? Math.floor((Date.parse(today) - Date.parse(impactDate)) / 86400000) : Infinity;
   if (impactAge > 35) {
     console.log(`  seo-impact stale (${impactDate || 'missing'}); skipping tune.`);
+    // A dry run must not write, on EVERY exit path — this one used to call
+    // writeReport() unguarded, so `--dry-run` created data/reports/priority-tuner/
+    // whenever seo-impact was stale or absent. Stale is not the rare case: the
+    // feed is cron-written, and it was missing for four days during the
+    // disk-full incident.
+    if (DRY_RUN) { console.log('\nDry-run: no changes written.'); return; }
     writeReport({ today, status: 'skipped', reason: `seo-impact stale (${impactDate || 'missing'})`, perf: {}, changes: [] });
     return;
   }
