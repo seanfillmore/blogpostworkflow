@@ -30,9 +30,17 @@ assert.equal(loadTacticMenu(join(tmpdir(), 'definitely-not-here-98765')), null,
 }
 
 // ── absent menu leaves the prompt working and unchanged in shape ────────────
+// F9: both brief builders set `tacticMenu` unconditionally (buildCopyBrief used
+// to spread it in only when truthy, buildSessionCopyBrief always set it), so the
+// two briefs have the same shape whether or not a mirror file exists.
 {
   const ad = { pageName: 'Coconut Lotion', landingUrl: 'https://realskincare.com/x' };
-  const prompt = buildCopyPrompt(buildCopyBrief(ad, {}));
+  const brief = buildCopyBrief(ad, {});
+  assert.ok('tacticMenu' in brief, 'the key is always present, matching buildSessionCopyBrief');
+  assert.equal(brief.tacticMenu, null, 'and is null when there is no menu');
+  assert.equal(buildSessionCopyBrief({ product: 'x' }).tacticMenu, null, 'same shape on the session path');
+
+  const prompt = buildCopyPrompt(brief);
   assert.match(prompt, /Write 3 ad copy variations/, 'still builds a usable prompt with no menu');
   assert.ok(!/do not propose/i.test(prompt), 'no empty menu block leaks in');
 }

@@ -156,7 +156,9 @@ export function buildCopyBrief(ad, { personas = null, personaId = null, angleId 
   const base = {
     product: ad.pageName || ad.pageSlug || 'Real Skin Care',
     destinationUrl: ad.landingUrl || '',
-    ...(tacticMenu ? { tacticMenu } : {}),
+    // Always set, never conditionally spread — buildSessionCopyBrief does the
+    // same and buildCopyPrompt already treats a null menu as "no menu".
+    tacticMenu,
   };
 
   if (!personas) {
