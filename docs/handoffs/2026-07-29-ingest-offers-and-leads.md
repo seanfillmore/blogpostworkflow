@@ -54,42 +54,55 @@ took 0.8 seconds and zero API calls to reach the merge step.
 `--published`: `$100M Offers` is 2021, `$100M Leads` is 2023. A bare `YYYY` is correct and
 accepted for file sources — do not invent a month and day.
 
-## Cost — measured, not estimated
+## Cost — not the deciding factor
 
-From the rehearsal (4 calls, $1.02 real): extraction ~$0.41/chunk, consolidation ~$0.23,
-skill merge ~$0.27 for an edit.
+**Do not use run cost as a reason to skip a book.** Sean is on a Claude subscription, and
+he has said plainly he is not paying per book. An earlier version of this handoff argued
+against running `$100M Leads` partly on a ~$13 price tag; that argument was wrong and has
+been removed.
 
-| Book | Run 1 | Run 2 | Total |
-|---|---|---|---|
-| `$100M Offers` (11 chunks) | ~$5 | ~$5–7 | **~$10–12** |
-| `$100M Leads` (16 chunks) | ~$7 | ~$5–7 | **~$12–14** |
+The one nuance to keep straight: the agent authenticates with `ANTHROPIC_API_KEY` from
+`.env`, a real Console key that is metered independently of the Claude Code subscription.
+So a run *is* measured even though it is not a constraint Sean is managing. Confirm the
+state of that Console account before ever quoting a dollar figure as an argument.
 
-**Skill merges dominate**, because a merge sends the whole existing skill file in and gets
-the whole rewritten file back — and those files grow with every ingest. Expect book 3 to
-cost more per merge than book 2 did.
+Measured per-call figures from the rehearsal, for sizing runs rather than gating them:
+extraction ~$0.41/chunk, consolidation ~$0.23, skill merge ~$0.27 for an edit — about $1.02
+for the 4 calls on a 2,191-word chapter. **Skill merges dominate**, because a merge sends
+the whole existing skill file in and gets the whole rewritten file back, and those files
+grow with every ingest.
 
 > ⚠️ `lib/llm-usage.js:21` prices Opus at `$15/$75`, the legacy Opus 4.x rates.
 > `claude-opus-5` is `$5/$25`, so **every Opus figure in the cost reports is exactly 3×
-> high**. A $10 run will show as $30. This is a known, unfixed one-line bug — do not
-> re-derive budgets from those reports until it is fixed.
+> high**. Known, unfixed one-line bug — do not read those reports as accurate.
 
-## Which book, and whether to run both
+## Which book first, and what to watch
 
-**Recommendation: run `$100M Offers` next. Hold `$100M Leads`.**
+**Run `$100M Offers` first, then `$100M Leads`. Run both.**
 
-Offer construction is the current phase. The growth plan sequences
-Tracking → CRO → **Offer/AOV** → Traffic, and `$100M Offers` sits squarely on the active
-phase. `$100M Leads` is advertising and lead generation — the constraint block will reject
-most of it as premature, because paid spend is explicitly gated behind the earlier phases.
-That is the scoring working correctly, but it means paying ~$13 to be told "not yet."
+Offers goes first because it is on-phase: the growth plan sequences
+Tracking → CRO → **Offer/AOV** → Traffic, and offer construction is the live constraint.
 
-**Expect a high reject rate on Offers too, and treat that as information.** The video corpus
-saturated per-topic after five inputs (adoption fell 14/20 → 5/12 → 4/16 → 2/7). Money Models
-and Offers cover adjacent ground, so a large fraction of Offers will restate what
-`marketing-offer-construction` already holds. The consolidation step will merge duplicates
-*within* the run; the existing skill-inventory dedup handles duplicates *against* what is
-already written. If Offers adopts fewer than ~5 tactics, that is the signal that this axis is
-saturated and the third book is not worth running at all.
+`$100M Leads` is advertising and lead generation, which the constraint block will reject
+much of as premature — paid spend is explicitly gated behind the earlier phases. That is the
+scoring working correctly, and with cost off the table it is worth running anyway for two
+reasons: the rejects report is itself the useful artifact (it tells you what is waiting on
+the Traffic phase), and whatever *does* adopt is banked for when that phase opens.
+
+**The real cost of these runs is skill quality and review time, not money.** Two things to
+watch:
+
+1. **Saturation.** The video corpus saturated per-topic after five inputs (adoption fell
+   14/20 → 5/12 → 4/16 → 2/7). Money Models and Offers cover adjacent ground, so much of
+   Offers will restate what `marketing-offer-construction` already holds. Consolidation
+   merges duplicates *within* a run; the skill-inventory dedup handles duplicates *against*
+   what is already written. **If Offers adopts fewer than ~5 tactics, say so plainly** —
+   that is the signal this axis is done, and it should change how much weight the Leads
+   report gets.
+2. **Dilution.** Premature Leads tactics written into skills will surface to
+   `creative-packager` and anything else reading `.claude/skills/marketing-*`. Read the
+   Leads report critically before run 2, and be willing to run only `--extract-only` on it
+   and never write the skills at all. That is a legitimate outcome.
 
 ## Things that will bite you
 
