@@ -226,11 +226,22 @@ test('fetchPageSpeed retries on 429 then throws after exhausting retries', async
 });
 
 test('fetchPageSpeed aborts a hung request via timeout and surfaces the error', async () => {
-  const fakeFetch = (url, opts) => new Promise((_, reject) => {
-    opts.signal.addEventListener('abort', () => reject(new Error('The operation was aborted')));
-  });
-  await assert.rejects(
-    fetchPageSpeed('https://x.com/', 'mobile', { apiKey: 'k', retries: 0, timeoutMs: 20, backoffMs: 0, fetchImpl: fakeFetch }),
-    /abort/i,
-  );
+  // AbortSignal.timeout() schedules an UNREF'd timer, so with a stubbed fetch
+  // there is nothing else keeping the event loop alive and it can drain before
+  // the abort fires — the test then never settles and node:test reports it as
+  // cancelledByParent (seen on the server's Node 22, though not on Node 25).
+  // A real run always has a pending socket holding the loop open; this keep-alive
+  // stands in for it. Without it this assertion silently stops being exercised.
+  const keepAlive = setInterval(() => {}, 5);
+  try {
+    const fakeFetch = (url, opts) => new Promise((_, reject) => {
+      opts.signal.addEventListener('abort', () => reject(new Error('The operation was aborted')));
+    });
+    await assert.rejects(
+      fetchPageSpeed('https://x.com/', 'mobile', { apiKey: 'k', retries: 0, timeoutMs: 20, backoffMs: 0, fetchImpl: fakeFetch }),
+      /abort/i,
+    );
+  } finally {
+    clearInterval(keepAlive);
+  }
 });
