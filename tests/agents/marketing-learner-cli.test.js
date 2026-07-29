@@ -361,4 +361,45 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
   );
 }
 
+// ── --file requires author and title ────────────────────────────────────────
+{
+  assert.throws(() => parseArgs(['--file', 'b.txt']), /--file requires --author/);
+  assert.throws(() => parseArgs(['--file', 'b.txt', '--author', 'A']), /--file requires --title/);
+  const a = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T']);
+  assert.equal(a.file, 'b.txt');
+  assert.equal(a.author, 'A');
+  assert.equal(a.title, 'T');
+  assert.deepEqual(a.urls, []);
+}
+
+// ── --file is a mode, not a batch member ────────────────────────────────────
+{
+  assert.throws(
+    () => parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', 'https://youtu.be/aaaaaaaaaaa']),
+    /cannot be combined with URLs/);
+  assert.throws(
+    () => parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--falsify', 'marketing-x', '--claim', 'c', '--reason', 'r']),
+    /cannot be combined/);
+}
+
+// ── chunking knobs parse, with defaults ─────────────────────────────────────
+{
+  const d = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T']);
+  assert.equal(d.chunkWords, 4500, 'default budget');
+  assert.equal(d.splitOn, null);
+  const c = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--chunk-words', '2000', '--split-on', '^Chapter ']);
+  assert.equal(c.chunkWords, 2000);
+  assert.equal(c.splitOn, '^Chapter ');
+  assert.throws(
+    () => parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--chunk-words', 'lots']),
+    /--chunk-words must be a positive integer/);
+}
+
+// ── author/title/chunk flags are meaningless without --file ─────────────────
+{
+  assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--author', 'A']), /only valid with --file/);
+  assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--chunk-words', '10']), /only valid with --file/);
+  assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--split-on', '^C']), /only valid with --file/);
+}
+
 console.log('✓ marketing-learner CLI tests pass');

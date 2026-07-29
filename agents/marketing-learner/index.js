@@ -76,12 +76,17 @@ function loadEnv(root = ROOT) {
   } catch { return {}; }
 }
 
-const VALUE_FLAGS = { '--published': 'published', '--falsify': 'falsify', '--claim': 'claim', '--reason': 'reason' };
+const VALUE_FLAGS = {
+  '--published': 'published', '--falsify': 'falsify', '--claim': 'claim', '--reason': 'reason',
+  '--file': 'file', '--author': 'author', '--title': 'title',
+  '--chunk-words': 'chunkWords', '--split-on': 'splitOn',
+};
 
 export function parseArgs(argv) {
   const out = {
     urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
     falsify: null, claim: null, reason: null,
+    file: null, author: null, title: null, chunkWords: 4500, splitOn: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -106,7 +111,7 @@ export function parseArgs(argv) {
   if (out.falsify) {
     if (!out.claim) throw new Error('--falsify requires --claim "<substring of the tactic>".');
     if (!out.reason) throw new Error('--falsify requires --reason "<what happened when you tested it>".');
-    if (out.urls.length) throw new Error('--falsify cannot be combined with URLs — it is a separate mode.');
+    if (out.urls.length || out.file) throw new Error('--falsify cannot be combined with URLs or --file — it is a separate mode.');
     if (out.extractOnly || out.noPr || out.refetch || out.published.length) {
       throw new Error('--falsify cannot be combined with --extract-only, --no-pr, --refetch, or --published.');
     }
@@ -114,7 +119,26 @@ export function parseArgs(argv) {
   }
 
   if (out.claim || out.reason) throw new Error('--claim and --reason are only valid with --falsify.');
-  if (!out.urls.length) throw new Error('Provide at least one YouTube URL.');
+
+  // --file is a MODE, not a batch member. One source per run: a book and a video
+  // have nothing to share in a single PR, and mixing them would make the report
+  // and the branch name incoherent.
+  if (out.file) {
+    if (!out.author) throw new Error('--file requires --author "<name>" — it is the provenance on every claim.');
+    if (!out.title) throw new Error('--file requires --title "<title>" — it is the provenance on every claim.');
+    if (out.urls.length) throw new Error('--file cannot be combined with URLs — it is a separate mode. Run once per source.');
+    const n = Number(out.chunkWords);
+    if (!Number.isInteger(n) || n <= 0) throw new Error(`--chunk-words must be a positive integer, got "${out.chunkWords}".`);
+    out.chunkWords = n;
+    return out;
+  }
+
+  for (const [prop, flag] of [['author', '--author'], ['title', '--title'], ['splitOn', '--split-on']]) {
+    if (out[prop]) throw new Error(`${flag} is only valid with --file.`);
+  }
+  if (out.chunkWords !== 4500) throw new Error('--chunk-words is only valid with --file.');
+
+  if (!out.urls.length) throw new Error('Provide at least one YouTube URL, or --file <path> for a local text source.');
   return out;
 }
 

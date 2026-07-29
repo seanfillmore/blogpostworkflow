@@ -1604,4 +1604,24 @@ Body.`,
   }
 }
 
+// ── bare YYYY: allowed for files, rejected for videos ───────────────────────
+{
+  const ok = parsePublishedFlags(['book.txt'], ['2025'], { today: '2026-07-28', allowYearOnly: true });
+  assert.equal(ok[0].publishedAt, '2025', 'a copyright page carries a year, not a date');
+
+  assert.throws(
+    () => parsePublishedFlags(['https://youtu.be/aaaaaaaaaaa'], ['2025'], { today: '2026-07-28' }),
+    /YYYY-MM-DD/,
+    'a video has a real upload date; a bare year there would be invented precision',
+  );
+
+  assert.throws(
+    () => parsePublishedFlags(['book.txt'], ['2099'], { today: '2026-07-28', allowYearOnly: true }),
+    /in the future/,
+  );
+
+  const stale = parsePublishedFlags(['book.txt'], ['2015'], { today: '2026-07-28', allowYearOnly: true });
+  assert.ok(/older than 4 years/.test(stale[0].warning), 'staleness warning still fires on a year');
+}
+
 console.log('✓ marketing-learner date + constraint tests pass');
