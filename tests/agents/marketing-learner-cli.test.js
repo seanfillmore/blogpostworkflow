@@ -94,7 +94,7 @@ assert.equal(pkg.scripts.learn, 'node agents/marketing-learner/index.js', 'npm r
     tactics: [{
       claim: 'X', mechanism: 'Y', evidence: 'assertion only',
       rscFit: { score: 5, reasoning: 'z' },
-      source: { creator: 'C', title: 'T', videoId: 'v' },
+      source: { creator: 'C', title: 'T', locator: 'v' },
     }],
     existing,
     client: fakeClient,
