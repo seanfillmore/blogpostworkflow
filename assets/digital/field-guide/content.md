@@ -2,10 +2,10 @@
 
 You already own the products. This is the reference that goes with them — the part that will not fit on a bottle. It covers why the oil in your bottle is made the way it is, how to read any label fast enough to do it in a shop aisle, what to change when the weather does, and which product suits which problem. The ingredient lists at the back are generated from our product records, so they cannot drift out of date.
 
-Nothing here is medical advice. These are moisturisers, soaps and a toothpaste. If a clinician has given you a routine, this guide is not a reason to change it.
+Nothing here is medical advice. These are moisturizers, soaps and a toothpaste. If a clinician has given you a routine, this guide is not a reason to change it.
 
 :::callout title="The short version, if you read nothing else"
-Buy oil that has not been refined. Read the first five ingredients and the last five; ignore the middle. Assume anything labelled unscented may contain something added to make it smell like nothing. Warm the product in your hands in winter, and apply within three minutes of a shower.
+Buy oil that has not been refined. Read the first five ingredients and the last five; ignore the middle. Assume anything labeled unscented may contain something added to make it smell like nothing. Warm the product in your hands in winter, and apply within three minutes of a shower.
 :::
 
 ## Why cold-pressed coconut oil
@@ -75,7 +75,7 @@ Being straight about this matters more than the rest of the page.
 
 :::image product=coconut-oil-deodorant index=1 size=half caption="A deodorant, not an antiperspirant. It contains no aluminium salts, because that is the ingredient class that stops sweat."
 
-**Sodium bicarbonate is in our deodorant.** Baking soda is what makes a natural deodorant work — it shifts underarm pH so odour-causing bacteria are less comfortable. It is also the most common reason people react to natural deodorants, usually as redness or stinging in the first fortnight, and more often on freshly shaved skin. If baking soda is on your avoid list, our deodorant is not for you, and we would rather you learned that here than from your armpit.
+**Sodium bicarbonate is in our deodorant.** Baking soda is what makes a natural deodorant work — it shifts underarm pH so odor-causing bacteria are less comfortable. It is also the most common reason people react to natural deodorants, usually as redness or stinging in the first two weeks, and more often on freshly shaved skin. If baking soda is on your avoid list, our deodorant is not for you, and we would rather you learned that here than from your armpit.
 
 **Essential oils are fragrance.** Naturally derived fragrance is still fragrance, and the compounds that make people react to scented products — limonene, linalool, geraniol, citral — occur in citrus, lavender and rose oils as a matter of botany. If you are fragrance-reactive, buy Pure Unscented. That variant contains no essential oils at all, which is why it exists.
 
@@ -164,7 +164,7 @@ Your reset ships with lotion and cream. The rest of the range covers problems th
 | Skin tight and papery minutes after a shower | Body Lotion, within three minutes | Damp skin holds what you put on it. Water-first, so it covers a whole body without dragging |
 | Cracked heels, elbows, knuckles lotion does not touch | Body Cream | Same oil, far less water, plus beeswax. Stays on the surface long enough to matter |
 | Hands in water all day, lotion washes straight off | Body Cream on the backs of the hands | The heavier format survives more hand washes than a lotion |
-| Chapped, flaking lips | Lip Balm | Three ingredients. No flavour oils, no menthol |
+| Chapped, flaking lips | Lip Balm | Three ingredients. No flavor oils, no menthol |
 | Underarms sore since switching deodorant brands | Natural Deodorant, or a break from deodorant | No aluminium salts, no propylene glycol. It does contain baking soda — see the irritant page |
 | Body wash leaves skin itchy and stripped | Bar Soap, Pure Unscented | One ingredient. Nothing added means nothing to react to except soap |
 | Hands washed twenty times a day, starting to split | Foaming Liquid Soap | Saponified coconut oil, diluted and foamed. No SLS, no cocamidopropyl betaine, no isothiazolinone |
@@ -185,13 +185,13 @@ Both soaps are the same material: coconut oil turned into soap, with the essenti
 
 :::image product=organic-foaming-hand-soap index=1 size=half caption="Foaming Liquid Soap — the same soap, diluted and aerated."
 
-Neither contains SLS, cocamidopropyl betaine or an isothiazolinone preservative — most of what people avoid in a hand wash. Both clean thoroughly rather than gently, so if your hands are splitting, follow with the cream rather than expecting soap to moisturise.
+Neither contains SLS, cocamidopropyl betaine or an isothiazolinone preservative — most of what people avoid in a hand wash. Both clean thoroughly rather than gently, so if your hands are splitting, follow with the cream rather than expecting soap to moisturize.
 
 ### The toothpaste
 
 :::image product=coconut-oil-toothpaste index=1 size=half caption="Coconut oil, baking soda and myrrh. No SLS, and no fluoride."
 
-The odd one out in the range, and the one most people do not know exists. Coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder and stevia, flavoured with essential oils. It is fluoride-free.
+The odd one out in the range, and the one most people do not know exists. Coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder and stevia, flavored with essential oils. It is fluoride-free.
 
 Two things are worth knowing before the first brush. It does not foam, because the ingredient that makes toothpaste foam is SLS. And it is not sweet the way a supermarket tube is — the stevia takes the edge off the baking soda, nothing more. Both stop registering after about a week.
 
