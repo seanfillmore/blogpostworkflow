@@ -104,4 +104,89 @@ const streamingClient = (message) => ({
     (e) => /dropped 2 candidate/.test(e.message) && e.offendingPayload?.tactics?.length === 1);
 }
 
+// ── consolidateTactics: budgeted for a whole book ───────────────────────────
+// Output scales with candidate count, because the no-drop guard makes every
+// candidate land in a group and every group carry a full tactic object. 37
+// candidates once overflowed 16k; $100M Money Models produced 172 across 11
+// chunks and overflowed 32k. 128k is claude-opus-5's output ceiling, so there is
+// no budget raise after this one — if a book overflows it, consolidation has to
+// be batched rather than made bigger.
+{
+  let sent = null;
+  const capturing = {
+    messages: {
+      stream: (req) => {
+        sent = req;
+        return {
+          finalMessage: async () => ({
+            stop_reason: 'end_turn',
+            content: [{ type: 'text', text: JSON.stringify({ tactics: [group('a', [0, 1, 2])] }) }],
+          }),
+        };
+      },
+    },
+  };
+  await consolidateTactics({ candidates: CANDIDATES, source: { title: 'B', creator: 'A' }, client: capturing });
+  assert.ok(sent.max_tokens >= 64000, 'consolidation budgets for book-scale candidate counts');
+}
+
+// ── consolidateTactics: transient overload is retried ───────────────────────
+// Consolidation is the single call standing between 11 cached chunk extractions
+// and a saved report. An overloaded_error here discards nothing, but it does mean
+// a manual re-run, and the same sustained window that hit extraction hits this.
+{
+  let calls = 0;
+  const flaky = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          if (calls === 1) {
+            const err = new Error('Overloaded');
+            err.status = 529;
+            throw err;
+          }
+          return {
+            stop_reason: 'end_turn',
+            content: [{ type: 'text', text: JSON.stringify({ tactics: [group('a', [0, 1, 2])] }) }],
+          };
+        },
+      }),
+    },
+  };
+  const out = await consolidateTactics({
+    candidates: CANDIDATES,
+    source: { title: 'B', creator: 'A' },
+    client: flaky,
+    retryOptions: { delayMs: 1 },
+  });
+  assert.equal(calls, 2, 'a 529 is retried rather than discarding the run');
+  assert.equal(out.tactics.length, 1);
+}
+
+// Truncation is deterministic — retrying a 128k overflow would pay for four of
+// the most expensive calls in the pipeline to reach the identical error.
+{
+  let calls = 0;
+  const truncating = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          return { stop_reason: 'max_tokens', content: [] };
+        },
+      }),
+    },
+  };
+  await assert.rejects(
+    () => consolidateTactics({
+      candidates: CANDIDATES,
+      source: { title: 'B', creator: 'A' },
+      client: truncating,
+      retryOptions: { delayMs: 1 },
+    }),
+    /hit max_tokens/);
+  assert.equal(calls, 1, 'truncation is not retried');
+}
+
 console.log('✓ consolidateTactics tests pass');
