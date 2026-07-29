@@ -34,6 +34,15 @@ Both brands ship from the same Amazon seller account. Until Culina Brand Registr
 3. **Test locally before pushing to the server.**
 4. **Test a fix on one post before bulk-applying.** End-to-end (edit → upload → check live site) before writing batch scripts.
 5. **These rules apply even for one-line fixes.**
+6. **Never work in the main checkout — take a worktree.** Multiple sessions run against this repo at once, and two sessions sharing `/Users/seanfillmore/Code/Claude` fight over HEAD. This has cost real work twice: 2026-07-24 a session switched the shared working dir onto its branch mid-task and a commit landed on the wrong branch; 2026-07-27 two sessions committed to `feature/marketing-tactic-lifecycle` within the same hour, one of them opening a PR whose body was stale inside the hour.
+
+```bash
+scripts/new-worktree.sh <name> [branch-name]     # branches from origin/main, symlinks .env + node_modules
+cd .claude/worktrees/<name>                       # commit and open the PR from here
+git worktree remove .claude/worktrees/<name>      # after the PR merges
+```
+
+Branch from `origin/main`, never from wherever the main checkout is sitting — it is 40+ commits stale as often as not. Before committing anywhere, re-check `git branch --show-current`; never assume the branch you left is the branch you are on.
 
 ## Autonomy Principle
 

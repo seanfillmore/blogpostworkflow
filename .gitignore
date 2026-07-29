@@ -1,5 +1,9 @@
 # Dependencies
+# Both forms on purpose: the trailing slash matches the real directory, the bare
+# name matches the symlink that scripts/new-worktree.sh drops into each worktree.
+# Without the bare form a worktree reads as dirty and `git worktree remove` refuses.
 node_modules/
+node_modules
 
 # Credentials — never commit
 .env
@@ -103,3 +107,6 @@ data/marketing-corpus/
 # Generated projection of .claude/skills/marketing-* — creative-packager builds it
 # in memory at read time. Committing it made every concurrent learner PR conflict.
 data/context/marketing-tactics.md
+
+# Agent worktrees (one isolated checkout per concurrent session)
+.claude/worktrees/
