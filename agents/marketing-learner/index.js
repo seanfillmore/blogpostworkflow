@@ -34,12 +34,14 @@
 
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import Anthropic from '../../lib/anthropic.js';
 import { notify } from '../../lib/notify.js';
 import { fetchTranscript, extractVideoId, TranscriptError } from '../../lib/transcript-source.js';
+import { loadTextFile } from '../../lib/text-source.js';
 import {
   parsePublishedFlags,
   scanSkillInventory,
@@ -50,6 +52,9 @@ import {
   renderReport,
   falsifyTactic,
   renderContextMirror,
+  chunkText,
+  consolidateTactics,
+  buildConstraintBlock,
 } from '../../lib/marketing-learner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -160,7 +165,7 @@ async function loadVideo(url, publishedAt, { refetch, apiKey }) {
     try {
       const cached = JSON.parse(readFileSync(cachePath, 'utf8'));
       console.log('  (transcript from cache — 0 credits)');
-      return { ...cached, publishedAt };
+      return withSourceIdentity({ ...cached, publishedAt });
     } catch {
       // A partial write (e.g. a Ctrl-C mid-write) leaves opaque, unparseable JSON on
       // disk. That is not a TranscriptError, so letting it propagate would kill the
@@ -174,7 +179,16 @@ async function loadVideo(url, publishedAt, { refetch, apiKey }) {
   mkdirSync(dir, { recursive: true });
   writeFileSync(cachePath, JSON.stringify(fetched, null, 2));
   writeFileSync(join(dir, 'transcript.txt'), fetched.text);
-  return { ...fetched, publishedAt };
+  return withSourceIdentity({ ...fetched, publishedAt });
+}
+
+/**
+ * Both loaders return a `sourceId`/`sourceType` pair so everything downstream —
+ * corpus paths, report filenames, the extraction prompt — stops caring which
+ * front door the text came through. For a video the id IS the video id.
+ */
+function withSourceIdentity(video) {
+  return { ...video, sourceId: video.videoId, sourceType: 'video' };
 }
 
 /**
@@ -323,7 +337,7 @@ async function processVideo(item, { client, apiKey, args }) {
     // lib/marketing-learner.js deliberately doesn't know the corpus path, so it
     // attaches the raw payload to the error and this is where it gets persisted.
     if (err.offendingPayload !== undefined) {
-      const dir = join(CORPUS_DIR, video.videoId);
+      const dir = join(CORPUS_DIR, video.sourceId);
       mkdirSync(dir, { recursive: true });
       const badPath = join(dir, `invalid-extraction-${Date.now()}.json`);
       writeFileSync(badPath, JSON.stringify(err.offendingPayload, null, 2));
@@ -332,8 +346,20 @@ async function processVideo(item, { client, apiKey, args }) {
     throw err;
   }
 
+  return finishSource({ source: video, extraction, inventory, args, client });
+}
+
+/**
+ * Everything after extraction: write the report, group adopted tactics by target
+ * skill, write/merge each skill, resync the mirror.
+ *
+ * Shared by both front doors so a book and a video cannot drift in how they
+ * write skills. The ONLY source-type-dependent thing in here is the provenance
+ * locator.
+ */
+async function finishSource({ source, extraction, inventory, args, client }) {
   mkdirSync(REPORT_DIR, { recursive: true });
-  const extractionJsonPath = join(REPORT_DIR, `${video.videoId}.json`);
+  const extractionJsonPath = join(REPORT_DIR, `${source.sourceId}.json`);
   writeFileSync(extractionJsonPath, JSON.stringify(extraction, null, 2));
 
   const adopted = extraction.tactics.filter((t) => t.verdict === 'adopt');
@@ -345,7 +371,19 @@ async function processVideo(item, { client, apiKey, args }) {
     for (const t of adopted) {
       const key = t.targetSkill.name;
       if (!bySkill.has(key)) bySkill.set(key, { action: t.targetSkill.action, tactics: [] });
-      bySkill.get(key).tactics.push({ ...t, source: { creator: video.creator, title: video.title, videoId: video.videoId } });
+      bySkill.get(key).tactics.push({
+        ...t,
+        source: {
+          creator: source.creator,
+          title: source.title,
+          // A book cites the excerpt a tactic came from; consolidation records
+          // every excerpt that fed each canonical tactic, and the first is the
+          // one to cite. A video cites its id, exactly as it always has.
+          locator: source.sourceType === 'file'
+            ? `book, ${t.mergedFrom?.[0]?.label ?? 'excerpt unknown'}`
+            : source.videoId,
+        },
+      });
     }
     for (const [name, { tactics }] of bySkill) {
       const existing = inventory.find((s) => s.name === name);
@@ -368,13 +406,119 @@ async function processVideo(item, { client, apiKey, args }) {
     }
   }
 
-  const report = renderReport({ extraction, video, skillsTouched });
-  const reportMdPath = join(REPORT_DIR, `${video.videoId}.md`);
+  const report = renderReport({ extraction, video: source, skillsTouched });
+  const reportMdPath = join(REPORT_DIR, `${source.sourceId}.md`);
   writeFileSync(reportMdPath, report);
   writtenPaths.push(reportMdPath);
 
   console.log(`  ${adopted.length} adopted, ${extraction.tactics.length - adopted.length} rejected`);
-  return { video, extraction, skillsTouched, writtenPaths };
+  return { video: source, extraction, skillsTouched, writtenPaths };
+}
+
+/**
+ * Cache key for one chunk's extraction.
+ *
+ * The skill inventory is in the hash deliberately. If skills changed between
+ * runs the extraction prompt changed, so the cache MUST miss — otherwise run 2
+ * writes skills from an extraction that never saw the current inventory, and
+ * the anti-duplication mechanism silently stops working.
+ */
+export function chunkCacheKey({ chunkText: body, inventoryFingerprint, constraintBlock }) {
+  return createHash('sha256')
+    .update(body).update(' ')
+    .update(inventoryFingerprint).update(' ')
+    .update(constraintBlock)
+    .digest('hex')
+    .slice(0, 16);
+}
+
+async function processFile(item, { client, args }) {
+  const source = loadTextFile(item.file, {
+    author: item.author, title: item.title, publishedAt: item.publishedAt,
+  });
+  if (item.warning) console.warn(`  ⚠ ${item.warning}`);
+  console.log(`  ${source.text.split(/\s+/).length.toLocaleString()} words`);
+
+  const chunks = chunkText(source.text, { maxWords: args.chunkWords, splitOn: args.splitOn });
+  console.log(`  ${chunks.length} chunk${chunks.length === 1 ? '' : 's'} at ${args.chunkWords} words`);
+
+  const inventory = scanSkillInventory(SKILLS_DIR);
+  const inventoryFingerprint = createHash('sha256')
+    .update(inventory.map((s) => `${s.name} ${s.content}`).join(''))
+    .digest('hex');
+  const constraintBlock = buildConstraintBlock({ sourceType: 'file' });
+
+  const corpusDir = join(CORPUS_DIR, source.sourceId);
+  const cacheDir = join(corpusDir, 'chunks');
+  mkdirSync(cacheDir, { recursive: true });
+
+  const candidates = [];
+  for (const chunk of chunks) {
+    const key = chunkCacheKey({ chunkText: chunk.text, inventoryFingerprint, constraintBlock });
+    const cachePath = join(cacheDir, `${String(chunk.index).padStart(3, '0')}-${key}.json`);
+
+    let extraction = null;
+    if (!args.refetch && existsSync(cachePath)) {
+      try {
+        extraction = JSON.parse(readFileSync(cachePath, 'utf8'));
+        console.log(`  ${chunk.label}: cached`);
+      } catch {
+        console.warn(`  ⚠ cached chunk at ${relative(ROOT, cachePath)} is corrupt (partial write?) — re-extracting`);
+      }
+    }
+
+    if (!extraction) {
+      console.log(`  ${chunk.label}: extracting…`);
+      try {
+        extraction = await extractTactics({ video: source, inventory, chunk, client });
+      } catch (err) {
+        if (err.offendingPayload !== undefined) {
+          const badPath = join(cacheDir, `invalid-${chunk.index}-${Date.now()}.json`);
+          writeFileSync(badPath, JSON.stringify(err.offendingPayload, null, 2));
+          console.error(`  ✗ schema validation failed — offending payload saved to ${relative(ROOT, badPath)}`);
+        }
+        throw err;
+      }
+      writeFileSync(cachePath, JSON.stringify(extraction, null, 2));
+    }
+
+    for (const t of extraction.tactics) {
+      candidates.push({ ...t, chunk: { index: chunk.index, label: chunk.label } });
+    }
+  }
+
+  console.log(`  ${candidates.length} candidate tactics across ${chunks.length} chunks — consolidating…`);
+
+  const consolidatedPath = join(
+    corpusDir,
+    `consolidated-${createHash('sha256').update(JSON.stringify(candidates)).digest('hex').slice(0, 16)}.json`,
+  );
+
+  let extraction = null;
+  if (!args.refetch && existsSync(consolidatedPath)) {
+    try {
+      extraction = JSON.parse(readFileSync(consolidatedPath, 'utf8'));
+      console.log('  (consolidation from cache)');
+    } catch {
+      console.warn('  ⚠ cached consolidation is corrupt — redoing');
+    }
+  }
+  if (!extraction) {
+    try {
+      extraction = await consolidateTactics({ candidates, source, client });
+    } catch (err) {
+      if (err.offendingPayload !== undefined) {
+        const badPath = join(corpusDir, `invalid-consolidation-${Date.now()}.json`);
+        writeFileSync(badPath, JSON.stringify(err.offendingPayload, null, 2));
+        console.error(`  ✗ consolidation guard tripped — payload saved to ${relative(ROOT, badPath)}`);
+      }
+      throw err;
+    }
+    writeFileSync(consolidatedPath, JSON.stringify(extraction, null, 2));
+  }
+  console.log(`  ${extraction.tactics.length} canonical tactics after consolidation`);
+
+  return finishSource({ source, extraction, inventory, args, client });
 }
 
 function branchExists(name) {
@@ -466,8 +610,11 @@ function openPullRequest(results) {
         .sort((a, b) => b.rscFit.score - a.rscFit.score)
         .map((t) => `| ${t.rscFit.score}/10 | ${t.verdict} | ${t.claim} | ${t.rejectReason ?? t.rscFit.reasoning} |`)
         .join('\n');
-      const title = r.video.title ?? r.video.videoId;
-      return `## ${title}\n\nhttps://www.youtube.com/watch?v=${r.video.videoId}\n\n| Score | Verdict | Claim | Reasoning |\n|---|---|---|---|\n${rows}`;
+      const title = r.video.title ?? r.video.sourceId;
+      const link = r.video.sourceType === 'file'
+        ? `\`${r.video.sourceId}\` (book)`
+        : `https://www.youtube.com/watch?v=${r.video.videoId}`;
+      return `## ${title}\n\n${link}\n\n| Score | Verdict | Claim | Reasoning |\n|---|---|---|---|\n${rows}`;
     }).join('\n\n');
 
     execFileSync('gh', ['pr', 'create', '--title', `Marketing skills: ${topics.join(', ')}`, '--body',
@@ -490,10 +637,16 @@ async function main() {
   }
 
   const env = loadEnv();
-  const apiKey = env.TRANSCRIPTAPI_KEY || process.env.TRANSCRIPTAPI_KEY;
-  if (!apiKey) {
-    console.error('TRANSCRIPTAPI_KEY is not set. Add it to .env.');
-    process.exit(1);
+
+  // A file source spends no transcript credits, so demanding this key would
+  // block a book run on a credential it never uses.
+  let apiKey = null;
+  if (!args.file) {
+    apiKey = env.TRANSCRIPTAPI_KEY || process.env.TRANSCRIPTAPI_KEY;
+    if (!apiKey) {
+      console.error('TRANSCRIPTAPI_KEY is not set. Add it to .env.');
+      process.exit(1);
+    }
   }
 
   // loadEnv() reads .env into a local object — it does NOT populate process.env,
@@ -506,10 +659,23 @@ async function main() {
     process.exit(1);
   }
 
-  const items = parsePublishedFlags(args.urls, args.published, {});
   const client = new Anthropic({ apiKey: anthropicKey });
-
   const results = [];
+
+  if (args.file) {
+    // parsePublishedFlags does double duty here: it validates the date (bare
+    // YYYY allowed for files) and produces the staleness warning.
+    const [dated] = parsePublishedFlags([args.file], args.published, { allowYearOnly: true });
+    console.log(`\n▶ ${args.file}`);
+    results.push(await processFile(
+      { ...dated, file: args.file, author: args.author, title: args.title },
+      { client, args },
+    ));
+    return finish(results, args);
+  }
+
+  const items = parsePublishedFlags(args.urls, args.published, {});
+
   for (const item of items) {
     console.log(`\n▶ ${item.url}`);
     try {
@@ -526,6 +692,11 @@ async function main() {
     }
   }
 
+  return finish(results, args);
+}
+
+/** PR + notification tail, shared by both front doors. */
+async function finish(results, args) {
   if (!results.length) {
     console.log('\nNothing processed.');
     return;
@@ -536,7 +707,7 @@ async function main() {
   const rejected = results.reduce((n, r) => n + r.extraction.tactics.filter((t) => t.verdict === 'reject').length, 0);
   await notify({
     subject: `Marketing learner: ${adopted} adopted, ${rejected} rejected`,
-    body: results.map((r) => `${r.video.title ?? r.video.videoId}: ${r.skillsTouched.map((s) => s.name).join(', ') || 'no skills changed'}`).join('\n'),
+    body: results.map((r) => `${r.video.title ?? r.video.sourceId}: ${r.skillsTouched.map((s) => s.name).join(', ') || 'no skills changed'}`).join('\n'),
     category: 'marketing-learner',
   });
 }

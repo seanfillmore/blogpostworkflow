@@ -402,4 +402,36 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
   assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--split-on', '^C']), /only valid with --file/);
 }
 
+// ── cache key changes when the inventory changes ────────────────────────────
+{
+  const { chunkCacheKey } = await import('../../agents/marketing-learner/index.js');
+  const a = chunkCacheKey({ chunkText: 'body', inventoryFingerprint: 'inv-1', constraintBlock: 'cb' });
+  const b = chunkCacheKey({ chunkText: 'body', inventoryFingerprint: 'inv-2', constraintBlock: 'cb' });
+  const c = chunkCacheKey({ chunkText: 'other', inventoryFingerprint: 'inv-1', constraintBlock: 'cb' });
+  assert.match(a, /^[0-9a-f]{16}$/, 'short hex digest');
+  assert.notEqual(a, b,
+    'a changed skill inventory must miss the cache — otherwise run 2 writes skills from an extraction that never saw them');
+  assert.notEqual(a, c, 'changed chunk text misses');
+  assert.equal(a, chunkCacheKey({ chunkText: 'body', inventoryFingerprint: 'inv-1', constraintBlock: 'cb' }), 'stable');
+}
+
+// ── report renders a file source without inventing a YouTube URL ────────────
+{
+  const { renderReport } = await import('../../lib/marketing-learner.js');
+  const md = renderReport({
+    extraction: { title: 'B', creator: 'A', summary: 's', tactics: [] },
+    video: { sourceId: 'b', sourceType: 'file', title: 'B', creator: 'A', publishedAt: '2025' },
+    skillsTouched: [],
+  });
+  assert.ok(!/youtube\.com/.test(md), 'no fabricated video URL for a book');
+  assert.ok(/\*\*Source:\*\* book/.test(md));
+
+  const vid = renderReport({
+    extraction: { title: 'V', creator: 'C', summary: 's', tactics: [] },
+    video: { sourceId: 'abc12345678', videoId: 'abc12345678', sourceType: 'video', title: 'V', creator: 'C', publishedAt: null },
+    skillsTouched: [],
+  });
+  assert.ok(/youtube\.com\/watch\?v=abc12345678/.test(vid), 'video reports keep their URL');
+}
+
 console.log('✓ marketing-learner CLI tests pass');
