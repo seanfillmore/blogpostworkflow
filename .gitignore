@@ -110,3 +110,8 @@ data/context/marketing-tactics.md
 
 # Agent worktrees (one isolated checkout per concurrent session)
 .claude/worktrees/
+
+# Long-form source texts for marketing-learner --file (large, re-derivable from
+# the operator's own copy, no review value in a diff). README only.
+digitalassets/*
+!digitalassets/README.md
