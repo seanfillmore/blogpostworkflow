@@ -138,7 +138,7 @@ assert.deepEqual(scanSkillInventory(join(tmpdir(), 'definitely-does-not-exist-12
       mechanism: 'Reminds before the jar runs out, when intent is highest',
       evidence: 'Creator cites their own 3-store test',
       rscFit: { score: 8, reasoning: 'Retention is the binding constraint here' },
-      source: { creator: 'Some Operator', title: 'Retention Playbook', videoId: 'abc12345678' },
+      source: { creator: 'Some Operator', title: 'Retention Playbook', locator: 'abc12345678' },
     }],
   });
 
@@ -461,7 +461,7 @@ const NEW_TACTICS = [{
   mechanism: 'Intent peaks before running out',
   evidence: 'assertion only',
   rscFit: { score: 8, reasoning: 'Retention is the constraint' },
-  source: { creator: 'Some Operator', title: 'Retention Playbook', videoId: 'abc12345678' },
+  source: { creator: 'Some Operator', title: 'Retention Playbook', locator: 'abc12345678' },
 }];
 
 function mergeClient(payload, stop = 'end_turn') {
@@ -1552,6 +1552,76 @@ Body.`,
     ['Dead one', 'Documenting fences'],
     'both the pre-existing and newly falsified claims are present'
   );
+}
+
+// ── provenance locator: video form is byte-identical to what shipped ────────
+{
+  const md = renderSkillMarkdown({
+    name: 'marketing-x',
+    description: 'd',
+    tactics: [{
+      claim: 'c', mechanism: 'm', evidence: 'e', rscFit: { score: 8, reasoning: 'r' },
+      source: { creator: 'Alex Becker', title: 'How I Scaled', locator: 'dQw4w9WgXcQ' },
+    }],
+  });
+  assert.ok(md.includes('*Source: Alex Becker — "How I Scaled" (dQw4w9WgXcQ)*'),
+    'video provenance line is unchanged');
+}
+
+// ── book form renders the book locator ──────────────────────────────────────
+{
+  const md = renderSkillMarkdown({
+    name: 'marketing-x',
+    description: 'd',
+    tactics: [{
+      claim: 'c', mechanism: 'm', rscFit: { score: 8, reasoning: 'r' },
+      source: { creator: 'Alex Hormozi', title: '$100M Money Models', locator: 'book, part 7 of 11' },
+    }],
+  });
+  assert.ok(md.includes('*Source: Alex Hormozi — "$100M Money Models" (book, part 7 of 11)*'));
+}
+
+// ── missing source degrades, never throws ───────────────────────────────────
+{
+  const md = renderSkillMarkdown({
+    name: 'marketing-x',
+    description: 'd',
+    tactics: [{ claim: 'c', mechanism: 'm', rscFit: { score: 1, reasoning: 'r' } }],
+  });
+  assert.ok(md.includes('*Source: unknown — "untitled" (n/a)*'));
+}
+
+// ── constraint block gains a durability note for files only ─────────────────
+{
+  const video = buildConstraintBlock({ sourceType: 'video' });
+  const file = buildConstraintBlock({ sourceType: 'file' });
+  assert.equal(buildConstraintBlock(), video, 'default is the video form');
+  assert.ok(!/durable principle rather than platform mechanics/.test(video));
+  assert.ok(/durable principle rather than platform mechanics/.test(file));
+  for (const b of [video, file]) {
+    assert.ok(/\$50\.46/.test(b), 'AOV survives in both');
+    assert.ok(/Platform mechanics/.test(b), 'decay table survives in both');
+  }
+}
+
+// ── bare YYYY: allowed for files, rejected for videos ───────────────────────
+{
+  const ok = parsePublishedFlags(['book.txt'], ['2025'], { today: '2026-07-28', allowYearOnly: true });
+  assert.equal(ok[0].publishedAt, '2025', 'a copyright page carries a year, not a date');
+
+  assert.throws(
+    () => parsePublishedFlags(['https://youtu.be/aaaaaaaaaaa'], ['2025'], { today: '2026-07-28' }),
+    /YYYY-MM-DD/,
+    'a video has a real upload date; a bare year there would be invented precision',
+  );
+
+  assert.throws(
+    () => parsePublishedFlags(['book.txt'], ['2099'], { today: '2026-07-28', allowYearOnly: true }),
+    /in the future/,
+  );
+
+  const stale = parsePublishedFlags(['book.txt'], ['2015'], { today: '2026-07-28', allowYearOnly: true });
+  assert.ok(/older than 4 years/.test(stale[0].warning), 'staleness warning still fires on a year');
 }
 
 console.log('✓ marketing-learner date + constraint tests pass');

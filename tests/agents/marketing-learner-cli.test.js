@@ -94,7 +94,7 @@ assert.equal(pkg.scripts.learn, 'node agents/marketing-learner/index.js', 'npm r
     tactics: [{
       claim: 'X', mechanism: 'Y', evidence: 'assertion only',
       rscFit: { score: 5, reasoning: 'z' },
-      source: { creator: 'C', title: 'T', videoId: 'v' },
+      source: { creator: 'C', title: 'T', locator: 'v' },
     }],
     existing,
     client: fakeClient,
@@ -359,6 +359,79 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
     /already falsified on 2026-08-14/,
     're-falsifying names the date of the original record'
   );
+}
+
+// ── --file requires author and title ────────────────────────────────────────
+{
+  assert.throws(() => parseArgs(['--file', 'b.txt']), /--file requires --author/);
+  assert.throws(() => parseArgs(['--file', 'b.txt', '--author', 'A']), /--file requires --title/);
+  const a = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T']);
+  assert.equal(a.file, 'b.txt');
+  assert.equal(a.author, 'A');
+  assert.equal(a.title, 'T');
+  assert.deepEqual(a.urls, []);
+}
+
+// ── --file is a mode, not a batch member ────────────────────────────────────
+{
+  assert.throws(
+    () => parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', 'https://youtu.be/aaaaaaaaaaa']),
+    /cannot be combined with URLs/);
+  assert.throws(
+    () => parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--falsify', 'marketing-x', '--claim', 'c', '--reason', 'r']),
+    /cannot be combined/);
+}
+
+// ── chunking knobs parse, with defaults ─────────────────────────────────────
+{
+  const d = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T']);
+  assert.equal(d.chunkWords, 4500, 'default budget');
+  assert.equal(d.splitOn, null);
+  const c = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--chunk-words', '2000', '--split-on', '^Chapter ']);
+  assert.equal(c.chunkWords, 2000);
+  assert.equal(c.splitOn, '^Chapter ');
+  assert.throws(
+    () => parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--chunk-words', 'lots']),
+    /--chunk-words must be a positive integer/);
+}
+
+// ── author/title/chunk flags are meaningless without --file ─────────────────
+{
+  assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--author', 'A']), /only valid with --file/);
+  assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--chunk-words', '10']), /only valid with --file/);
+  assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--split-on', '^C']), /only valid with --file/);
+}
+
+// ── cache key changes when the inventory changes ────────────────────────────
+{
+  const { chunkCacheKey } = await import('../../agents/marketing-learner/index.js');
+  const a = chunkCacheKey({ chunkText: 'body', inventoryFingerprint: 'inv-1', constraintBlock: 'cb' });
+  const b = chunkCacheKey({ chunkText: 'body', inventoryFingerprint: 'inv-2', constraintBlock: 'cb' });
+  const c = chunkCacheKey({ chunkText: 'other', inventoryFingerprint: 'inv-1', constraintBlock: 'cb' });
+  assert.match(a, /^[0-9a-f]{16}$/, 'short hex digest');
+  assert.notEqual(a, b,
+    'a changed skill inventory must miss the cache — otherwise run 2 writes skills from an extraction that never saw them');
+  assert.notEqual(a, c, 'changed chunk text misses');
+  assert.equal(a, chunkCacheKey({ chunkText: 'body', inventoryFingerprint: 'inv-1', constraintBlock: 'cb' }), 'stable');
+}
+
+// ── report renders a file source without inventing a YouTube URL ────────────
+{
+  const { renderReport } = await import('../../lib/marketing-learner.js');
+  const md = renderReport({
+    extraction: { title: 'B', creator: 'A', summary: 's', tactics: [] },
+    video: { sourceId: 'b', sourceType: 'file', title: 'B', creator: 'A', publishedAt: '2025' },
+    skillsTouched: [],
+  });
+  assert.ok(!/youtube\.com/.test(md), 'no fabricated video URL for a book');
+  assert.ok(/\*\*Source:\*\* book/.test(md));
+
+  const vid = renderReport({
+    extraction: { title: 'V', creator: 'C', summary: 's', tactics: [] },
+    video: { sourceId: 'abc12345678', videoId: 'abc12345678', sourceType: 'video', title: 'V', creator: 'C', publishedAt: null },
+    skillsTouched: [],
+  });
+  assert.ok(/youtube\.com\/watch\?v=abc12345678/.test(vid), 'video reports keep their URL');
 }
 
 console.log('✓ marketing-learner CLI tests pass');
