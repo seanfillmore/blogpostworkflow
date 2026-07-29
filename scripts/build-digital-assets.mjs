@@ -79,7 +79,7 @@ function renderIngredients(attrs, ingredients) {
   if (!list.length) throw new Error(`:::ingredients "${key}" resolved to an empty list`);
   const items = list.map((i) => `<li>${inline(i)}</li>`).join('');
   return `<div class="ing"><p class="ing__h">${inline(attrs.title || 'Every ingredient, in order')}</p><ol class="ing__list">${items}</ol>
-    <p class="ing__n">${list.length} ingredients. Generated from the product record — if the formula changes, this page changes.</p></div>`;
+    <p class="ing__n">${list.length} ingredient${list.length === 1 ? '' : 's'}. Generated from the product record — if the formula changes, this page changes.</p></div>`;
 }
 
 /** The fillable grid. This is the artefact people print; it is generated, not drawn. */
