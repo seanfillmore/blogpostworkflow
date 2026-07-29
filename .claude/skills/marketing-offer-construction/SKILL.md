@@ -1,6 +1,6 @@
 ---
 name: marketing-offer-construction
-description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, choosing discount depth (or deciding not to discount at all), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, designing a refill/subscription offer, or picking the incentive behind an email capture popup.
+description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, choosing discount depth (or deciding not to discount at all), how to state the same savings (percent off vs dollars off vs a free portion), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
 ---
 
 # Offer Construction
@@ -105,3 +105,43 @@ description: Use when deciding what you actually sell or give away rather than h
 **Fit here (6/10):** Durable principle class and a useful selection filter for a business whose products are physical and priced — a real travel-size or a full lip balm has an unmistakable market price, unlike a PDF. Scored 6 rather than higher because the same real cost that makes it convert is real cash out of a $2,700/mo operation, so it should be gated to a paid-order threshold (free item with purchase, or with a bundle) rather than given for a bare email.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
+
+## Don't add products, add ways to offer the products you already have — it is less about 100 products than 100 ways to offer one.
+
+**Why it works:** Every new product adds sourcing, inventory, listing and support load, while a new configuration of an existing product (different quantity, cadence, pairing, or payment structure) adds revenue with no new operational surface. Revenue growth comes from offer permutations, not SKU count.
+
+**Evidence offered:** Assertion plus the personal-training example (one, two, three, four sessions per week turns one product into many offers).
+
+**Fit here (8/10):** The most load-bearing framing available for this business. A solo operator with 12 SKUs at $2,700/mo whose constraint is retention has no business launching SKU 13; the leverage is in quantity packs, refill cadences, mixed-SKU routines, prepay tiers and subscription configurations built from what already exists. Zero cost, no team, no traffic, no attribution needed, and it is a direct corrective to the most common growth reflex at this size. Treat it as the gate on any proposal to expand the catalog.
+
+*Source: Alex Hormozi — "$100M Money Models" (book, part 11 of 11)*
+
+## Explain why the small or cheap option physically cannot produce the outcome the buyer wants, using a concrete analogy, so the larger option becomes the obvious one.
+
+**Why it works:** Buyers underestimate the time and quantity required for a result. Once you show them the real dose-and-duration math (the 'turkey talk': you can't cook a three-hour turkey in ninety minutes without burning it), the bigger package stops looking expensive and starts looking like the only version that works.
+
+**Evidence offered:** The $5 five-day tanning pass story — five sessions never gets anyone as tan as they want, so the pass is credited toward a $19.99 unlimited membership — plus a gym version where 8 of 10 leads took the $399 premium. Anecdotal, single-operator claims.
+
+**Fit here (8/10):** Natural deodorant has a genuinely true version of the turkey talk: one stick does not span the transition period, so a single-unit purchase is the version most likely to fail. Saying that plainly on the PDP and in the Amazon A+ block simultaneously lifts AOV from $50.46 and forward-buys enough supply to survive the churn window — hitting both the Offer/AOV stage and the binding retention constraint at zero cost. This is the persuasion layer that makes an already-listed multi-unit pack actually sell, and it is distinct from the published-results-timeline tactic: that one documents what happens, this one uses the timeline to justify quantity.
+
+*Source: Alex Hormozi — "$100M Money Models" (book, part 3 of 11)*
+
+## The same economics can be stated many ways — percent off, dollars off, a free portion, or a total package price — so choose the framing deliberately, and prefer adding good stuff over removing cost.
+
+**Why it works:** The arithmetic is identical but the framings are not psychologically equivalent: free items and discounts trigger different decision heuristics (gain-framing vs loss-avoidance), so buyers respond to the presentation of savings, and you can move conversion without moving price at all.
+
+**Evidence offered:** Worked example: a $1,200/yr item sold for $900 stated as '25% off' vs '$300 off' vs '3 months free' vs 'one year for $900 ($1,200)', plus paired free-bonus/$1 examples. Assertion that they mean the same thing and should be tested; no data.
+
+**Fit here (8/10):** Bundle and multipack pricing is already the adopted AOV lever, and this makes the label on that bundle a free variable — 'save 25%' vs 'save $18' vs 'third stick free' vs '3 for $99, a $132 value'; 'lip balm free with your first refill' vs 'add the lip balm for $1'. The $1 variant even recovers some landed cost at a $50.46 AOV. Applies identically on Shopify bundle widgets, Amazon multipack ASINs and email subject lines, with no spend. Held at 8 only because at ~54 orders/month a clean A/B read is impossible — pick by judgment, favouring the free-portion framing per the source's own argument that 'free' beats an equivalent discount.
+
+*Source: Alex Hormozi — "$100M Money Models" (book, part 4 of 11)*
+
+## Bundle several add-ons into one named package and name every tier deliberately — the top tier an aspirational outcome name, the floor tier something like 'The Minimum' — so one ask sells many items.
+
+**Why it works:** It is easier to sell one thing than nine; a name framed around the outcome or buyer type lets the customer choose an identity or result rather than evaluate each component. Names also do positioning work price columns cannot: an aspirational label attaches identity to the expensive option, and calling the floor 'the minimum' frames it as the baseline so buying nothing feels deficient. The package can later be peeled apart as a downsell.
+
+**Evidence offered:** Assertion from practice with example package names and the airline analogy (First / Business / Economy); claims it boosts upsells-per-person. No conversion data.
+
+**Fit here (8/10):** Extends the buy-X-get-Y multipack already adopted with a naming layer nothing else covers. A 12-SKU catalog at a $50.46 AOV is exactly the case where a named 'Natural Switch Starter' or 'Full Routine' is a single ask that lifts AOV and forward-buys months of a consumable, suppressing churn with no new traffic. Zero cost, solo-executable on Shopify bundle and collection pages today and as a multipack ASIN on Amazon. Held at 8 because naming adds no value by itself and at ~54 orders/month the effect will never be measurable — apply by judgment and move on.
+
+*Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
