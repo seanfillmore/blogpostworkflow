@@ -62,10 +62,10 @@ from. Only the front door is YouTube-shaped. This adds a second front door.
 Manual and one-time, per the Non-Goals. On macOS, no npm dependency:
 
 ```bash
-brew install poppler
-pdftotext -layout ~/Downloads/100m-money-models.pdf \
+brew install poppler        # already installed on this machine
+pdftotext -layout ~/Downloads/_OceanofPDF.com_00M_Money_Models_How_To_Make_Money_-_Alex_Hormozi.pdf \
   digitalassets/100m-money-models.txt
-wc -w digitalassets/100m-money-models.txt     # sanity check: expect ~50-70k
+wc -w digitalassets/100m-money-models.txt
 ```
 
 `-layout` preserves reading order across two-column pages and callout boxes;
@@ -73,6 +73,21 @@ without it, sidebars interleave into body text mid-sentence. After converting,
 eyeball the first and last ~40 lines for page-number and running-header noise —
 a small amount is harmless (the extractor ignores it), a lot means the PDF needs
 a different tool.
+
+**Done, 2026-07-28.** 44,879 words / 264 KB / 220 paragraph blocks. The text
+opens on the endorsements page and ends on the last line of *Free Goodies*, so
+nothing is truncated. No page numbers and no running headers survived into the
+text layer. The only artifact is a `OceanofPDF.com` watermark line, 41
+occurrences — left in place deliberately: it is a rounding error against 44,879
+words, the extractor ignores it, and stripping it would mean shipping a cleanup
+step whose only job is to edit a source text before the model reads it.
+
+Spot-checked that the passage the whole feature was justified on survived intact
+(line 4157): *"There are 12 months in a year, but the year has 13 four-week
+cycles. That's an 8.3% difference."*
+
+The other two Hormozi books are sitting in the same directory (`$100M Offers`,
+`$100M Leads`) and convert with the identical command when this one is done.
 
 ### `digitalassets/`
 
@@ -159,12 +174,24 @@ packed into sub-chunks by the same paragraph rule, labelled
 `<heading> (part 2 of 3)` — otherwise one long chapter silently becomes a single
 oversized call.
 
+At the default 4,500 words, the converted book (44,879 words, 220 paragraph
+blocks) yields **10 chunks**.
+
 **Why word-budget packing over chapter detection.** PDF-extracted headings are
 inconsistent — inconsistent casing, page numbers glued to titles, running headers
 that look like chapter starts. A regex that misfires produces a 3-chunk book or a
 200-chunk book with no error and no warning; the operator discovers it from the
 bill. Word packing is deterministic, and the single knob that matters
 (`--chunk-words`) is the operator's.
+
+**Confirmed against the real file.** The converted `$100M Money Models` text has
+no page numbers or running headers, but every chapter repeats the same four
+structural headings — `Description` (14×), `Examples` (7×), `Important Notes`
+(13×), `Summary Points` (10×), 44 in total. They are indistinguishable by shape
+from the actual chapter titles, so a Title-Case heading regex splits this book
+into ~65 chunks rather than its ~22 chapters. This is precisely the silent
+misfire the design avoids, and it is why `--split-on` stays opt-in: for *this*
+book the default word packing is the correct choice.
 
 Word count is a deliberate proxy for tokens. `client.messages.count_tokens` exists
 but costs a network round trip per chunk for a chunking heuristic; the flag is
@@ -344,14 +371,15 @@ Run 2's chunk extractions and consolidation all hit cache; it pays only for the
 skill merges.
 
 Cost, against `claude-opus-5` at $5/$25 per MTok with the current ~10.5k-token
-skill inventory and ~700-token constraint block:
+skill inventory and ~700-token constraint block, using the **measured** 44,879-word
+converted text:
 
 | | Calls | Cost |
 |---|---|---|
-| Run 1 — extraction | ~18 chunks | ~$5–6 |
+| Run 1 — extraction | 10 chunks | ~$3 |
 | Run 1 — consolidation | 1 | ~$0.25 |
 | Run 2 — skill merges | 10–15 | ~$3–4 |
-| **Total** | | **~$9–10** |
+| **Total** | | **~$6–7** |
 
 The dominant term is output tokens, not input, which is why the deferred
 prefix-caching optimization below moves so little.
