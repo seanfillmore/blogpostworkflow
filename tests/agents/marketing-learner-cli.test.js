@@ -398,7 +398,8 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
 // ── author/title/chunk flags are meaningless without --file ─────────────────
 {
   assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--author', 'A']), /only valid with --file/);
-  assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--chunk-words', '10']), /only valid with --file/);
+  // --chunk-words applies to videos too — long transcripts chunk on the same path.
+  assert.equal(parseArgs(['https://youtu.be/aaaaaaaaaaa', '--chunk-words', '900']).chunkWords, 900);
   assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--split-on', '^C']), /only valid with --file/);
 }
 

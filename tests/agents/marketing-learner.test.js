@@ -394,6 +394,32 @@ await assert.rejects(
   'truncated output throws rather than saving'
 );
 
+// A `chunk` must reach the prompt. Without this, chunking is a silent no-op:
+// every chunk re-sends the whole transcript, so N chunks cost N identical calls
+// and the max_tokens overflow chunking exists to prevent still happens.
+{
+  let sent = null;
+  const capturing = {
+    messages: {
+      create: async (req) => {
+        sent = req;
+        return { stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(GOOD) }] };
+      },
+    },
+  };
+  const longVideo = { ...VIDEO, text: 'FULL TRANSCRIPT BODY that must not be sent verbatim.' };
+  await extractTactics({
+    video: longVideo,
+    inventory: [],
+    client: capturing,
+    chunk: { index: 1, total: 3, label: 'part 2 of 3', text: 'ONLY THIS EXCERPT' },
+  });
+  const prompt = sent.messages[0].content;
+  assert.match(prompt, /ONLY THIS EXCERPT/, 'chunk text reaches the prompt');
+  assert.ok(!prompt.includes('FULL TRANSCRIPT BODY'), 'full source text is not sent alongside the chunk');
+  assert.match(prompt, /EXCERPT of a longer work/, 'chunk framing tells the model it is seeing a part');
+}
+
 // happy path, including fenced JSON
 {
   const out = await extractTactics({

@@ -72,9 +72,15 @@ const group = (claim, idxs) => ({
   assert.ok(/every candidate.*exactly one/is.test(p), 'the no-drop rule is stated');
 }
 
+// Consolidation streams (the SDK rejects a non-streaming call at this max_tokens),
+// so the stub exposes stream().finalMessage(), not create().
+const streamingClient = (message) => ({
+  messages: { stream: () => ({ finalMessage: async () => message }) },
+});
+
 // ── consolidateTactics: refuses truncated output ────────────────────────────
 {
-  const client = { messages: { create: async () => ({ stop_reason: 'max_tokens', content: [] }) } };
+  const client = streamingClient({ stop_reason: 'max_tokens', content: [] });
   await assert.rejects(
     () => consolidateTactics({ candidates: CANDIDATES, source: { title: 'B', creator: 'A' }, client }),
     /hit max_tokens/);
@@ -83,9 +89,7 @@ const group = (claim, idxs) => ({
 // ── consolidateTactics: happy path returns validated output ─────────────────
 {
   const payload = { tactics: [group('Bill every four weeks', [0, 1]), group('Waive the setup fee', [2])] };
-  const client = {
-    messages: { create: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(payload) }] }) },
-  };
+  const client = streamingClient({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(payload) }] });
   const out = await consolidateTactics({ candidates: CANDIDATES, source: { title: 'B', creator: 'A' }, client });
   assert.equal(out.tactics.length, 2);
   assert.deepEqual(out.tactics[0].mergedFrom.map((m) => m.candidateIndex), [0, 1]);
@@ -94,9 +98,7 @@ const group = (claim, idxs) => ({
 // ── consolidateTactics: guard trip carries the payload for inspection ───────
 {
   const bad = { tactics: [group('only one', [0])] };
-  const client = {
-    messages: { create: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(bad) }] }) },
-  };
+  const client = streamingClient({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(bad) }] });
   await assert.rejects(
     () => consolidateTactics({ candidates: CANDIDATES, source: { title: 'B', creator: 'A' }, client }),
     (e) => /dropped 2 candidate/.test(e.message) && e.offendingPayload?.tactics?.length === 1);
