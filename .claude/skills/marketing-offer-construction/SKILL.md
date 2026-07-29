@@ -1,9 +1,19 @@
 ---
 name: marketing-offer-construction
-description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, choosing discount depth, writing a guarantee or risk-reversal promise for a product page or Amazon listing, designing a refill/subscription offer, or picking the incentive behind an email capture popup.
+description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, choosing discount depth (or deciding not to discount at all), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, designing a refill/subscription offer, or picking the incentive behind an email capture popup.
 ---
 
 # Offer Construction
+
+## Stop equating 'offer' with 'discount' — a discount only moves the effort/sacrifice term, and competitors who never discount often out-earn you because their total perceived value is higher.
+
+**Why it works:** Price is only one of four inputs into perceived value (dream outcome, perceived likelihood of achievement, time delay, effort/sacrifice). Pulling the price lever caps your upside at zero revenue per unit, whereas the other three levers have no floor cost — you can keep improving them indefinitely without giving up margin.
+
+**Evidence offered:** Assertion, repeated twice as the video's framing thesis; no data.
+
+**Fit here (7/10):** Durable pricing/offer logic, no decay. Directly corrective for a $2,700/mo solo operation whose default promotional reflex is a percentage-off code. Free to apply and sits inside the Offer/AOV stage that is reachable without ad spend. Treat this as the gate on every other tactic below: before writing a discount, check whether a guarantee, a bundle structure, or a pre-work/ease improvement would move perceived value further at lower cost.
+
+*Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
 ## If your category is easy for buyers to comparison-shop, win on at least one of three value vectors — faster, less risky, or easier — and hammer that one rather than trying to do all three.
 
@@ -15,15 +25,16 @@ description: Use when deciding what you actually sell or give away rather than h
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
 
-## Reverse risk by naming the buyer's single biggest fear and guaranteeing, warrantying, or literally insuring against it — then build that cost into the price.
+## Reverse risk by naming the buyer's single biggest fear and guaranteeing, warrantying, or literally insuring against it — then build that cost into the price and put the promise where the buyer decides, not in the footer.
 
-**Why it works:** The unspoken fear is what stops the purchase; explicitly covering it removes the reason to hesitate, and the actual cost of covering it is usually far lower than sellers assume because most buyers never claim.
+**Why it works:** The unspoken fear is what stops the purchase; explicitly covering it removes the reason to hesitate, and the actual cost of covering it is usually far lower than sellers assume because most buyers never claim. A guarantee also does double duty on perceived value — it raises perceived likelihood of achievement (the seller is willing to back the claim) while lowering sacrifice (the downside is capped) — but neither effect fires if the buyer never sees it. Most brands bury an existing lifetime warranty in the footer 'junk drawer' and get no credit for a promise they are already honoring.
 
-**Evidence offered:** Practitioner claim that he has implemented insurance-backed guarantees with 'plenty of businesses'; no figures.
+**Evidence offered:** Practitioner claim of implementing insurance-backed guarantees with 'plenty of businesses'; repeated client anecdote of lifetime warranties findable only in the footer. Assertions, no figures.
 
-**Fit here (7/10):** Durable principle class. The biggest fear in natural deodorant is precise and well-known — 'it won't work and I'll find out in public during the transition period.' A stated 30-day guarantee costs nothing to write, sits on the PDP and in the Amazon listing, and is pure CRO/Offer-stage work with no spend or traffic required. Redemption cost is bounded at a $50.46 AOV. Capped at 7 because Amazon's own return policy partly duplicates the promise on the channel producing ~$1,800/mo.
+**Fit here (7/10):** Durable principle class. The biggest fear in natural deodorant is precise and well-known — 'it won't work and I'll find out in public during the transition period.' A stated 30-day guarantee costs nothing to write, sits on the PDP and in the Amazon listing, and is pure CRO/Offer-stage work with no spend or traffic required. Redemption cost is bounded at a $50.46 AOV. The placement half is purely editorial and free: move the promise above the fold on the PDP, next to the add-to-cart, and into an Amazon bullet rather than leaving it in a policy page. Capped at 7 because Amazon's own return policy partly duplicates the promise on the channel producing ~$1,800/mo.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
+*Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
 ## Fund the premium (speed, guarantee, white-glove ease) by raising your price to reflect it, not by absorbing it into margin — a de-commoditized product can carry a higher price.
 
@@ -47,7 +58,7 @@ description: Use when deciding what you actually sell or give away rather than h
 
 ## Use buy-X-get-Y-free where the free units outnumber the paid ones (buy four get eight, not buy one get one), and raise the unit price so the total stays where you need it.
 
-**Why it works:** The headline ratio reads as an extraordinary deal and changes behavior, while the arithmetic keeps total revenue per transaction intact — you are repackaging the same total price into a structure that feels radically more generous.
+**Why it works:** The headline ratio reads as an extraordinary deal and changes behavior, while the arithmetic keeps total revenue per transaction intact — you are repackaging the same total price into a structure that feels radically more generous. This is the clearest case of structure beating discount depth: perceived value moves a long way while the price term barely moves.
 
 **Evidence offered:** Worked arithmetic example ($100/mo × 12 = $1,200 restructured as buy-four-get-eight at $300 each); assertion, no performance data. Includes a caveat to check regional advertising law.
 
@@ -77,7 +88,7 @@ description: Use when deciding what you actually sell or give away rather than h
 
 ## Splinter one low-cost component out of your full offer, sell it at 80–90% off or free, and upsell the rest — because a 10–20% discount changes nothing while an 80–90% discount changes behavior.
 
-**Why it works:** Shallow discounts are absorbed as noise; a discount large enough to feel irrational forces a decision. You can afford it only on a component that costs you little, which is why the splinter step comes first — the deep discount buys the relationship and the remaining components carry the margin.
+**Why it works:** Shallow discounts are absorbed as noise; a discount large enough to feel irrational forces a decision. You can afford it only on a component that costs you little, which is why the splinter step comes first — the deep discount buys the relationship and the remaining components carry the margin. Note the ordering with the framing rule above: the reason to discount at all is not to compete on price but to buy a first transaction on a component whose landed cost is trivial.
 
 **Evidence offered:** Whiteboard A/B/C/D decomposition of a $2,000 offer; assertion plus the rebuttal that 'everything I do comes together' is always false (you can always paint, seal, or measure part of it). No data.
 
