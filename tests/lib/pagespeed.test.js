@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parsePsiResult, diffSnapshots, fetchPageSpeed } from '../../lib/pagespeed.js';
+import { parsePsiResult, diffSnapshots, fetchPageSpeed, band, summarizeMarkdown } from '../../lib/pagespeed.js';
 
 // Minimal PSI-shaped fixture (mirrors the real runPagespeed response shape).
 function psiFixture({ score = 0.4, withField = false } = {}) {
@@ -134,6 +134,79 @@ test('diffSnapshots returns empty diff when there is no previous snapshot', () =
   assert.deepEqual(d.improvements, []);
 });
 
+// ---- Core Web Vitals bands ----
+
+test('band classifies each lab vital at its threshold boundaries', () => {
+  // Boundaries are inclusive on the "good" side, matching Google's definitions.
+  assert.equal(band('lcp', 2500), 'good');
+  assert.equal(band('lcp', 2501), 'needs-improvement');
+  assert.equal(band('lcp', 4000), 'needs-improvement');
+  assert.equal(band('lcp', 4001), 'poor');
+  assert.equal(band('cls', 0.1), 'good');
+  assert.equal(band('cls', 0.25), 'needs-improvement');
+  assert.equal(band('cls', 0.2689), 'poor');
+  assert.equal(band('tbt', 200), 'good');
+  assert.equal(band('tbt', 601), 'poor');
+  assert.equal(band('lcp', null), null);
+  assert.equal(band('si', 1000), null); // not a vital — no band
+});
+
+test('diffSnapshots flags a Core Web Vital regression even when the score IMPROVES', () => {
+  // The 2026-07-26 bug: homepage score rose 35 -> 42 and the report called it a
+  // 🟢 improvement on the same run CLS went 0.0000 -> 0.2689 (good -> poor).
+  const cur = snap([page({ score: 42, metrics: { ...page().metrics, cls: 0.2689 } })]);
+  const prev = snap([page({ score: 35, metrics: { ...page().metrics, cls: 0 } })]);
+  const d = diffSnapshots(cur, prev, { deadBand: 3 });
+
+  assert.equal(d.improvements.length, 1, 'score improvement is still reported');
+  const cls = d.metricRegressions.find(m => m.metric === 'cls');
+  assert.ok(cls, 'the CLS band regression must be surfaced');
+  assert.equal(cls.fromBand, 'good');
+  assert.equal(cls.toBand, 'poor');
+  assert.equal(cls.to, 0.2689);
+});
+
+test('diffSnapshots reports a vital sitting in the poor band even with no change', () => {
+  // A persistently broken vital must keep being reported, not go silent after
+  // the first day because the delta is zero.
+  const metrics = { ...page().metrics, lcp: 24000 };
+  const d = diffSnapshots(snap([page({ metrics })]), snap([page({ metrics })]), { deadBand: 3 });
+  assert.equal(d.metricRegressions.length, 0, 'no band change, so not a new regression');
+  assert.ok(d.failing.some(f => f.metric === 'lcp' && f.band === 'poor'));
+});
+
+test('diffSnapshots ignores large raw metric swings inside the same band', () => {
+  // Lab LCP/TBT swing ~4x run-to-run on the same URL, so raw deltas are noise.
+  // Only a band crossing is a signal.
+  const cur = snap([page({ metrics: { ...page().metrics, lcp: 16000 } })]);
+  const prev = snap([page({ metrics: { ...page().metrics, lcp: 4500 } })]);
+  const d = diffSnapshots(cur, prev, { deadBand: 3 });
+  assert.equal(d.metricRegressions.length, 0, 'poor -> poor is not a new regression');
+});
+
+test('diffSnapshots flags a vital recovering out of the poor band as an improvement', () => {
+  const cur = snap([page({ metrics: { ...page().metrics, cls: 0.0357 } })]);
+  const prev = snap([page({ metrics: { ...page().metrics, cls: 0.2689 } })]);
+  const d = diffSnapshots(cur, prev, { deadBand: 3 });
+  const cls = d.metricImprovements.find(m => m.metric === 'cls');
+  assert.ok(cls);
+  assert.equal(cls.fromBand, 'poor');
+  assert.equal(cls.toBand, 'good');
+});
+
+test('summarizeMarkdown cannot present a page as purely improved while a vital regressed', () => {
+  const cur = snap([page({ score: 42, metrics: { ...page().metrics, cls: 0.2689 } })]);
+  const prev = snap([page({ score: 35, metrics: { ...page().metrics, cls: 0 } })]);
+  const md = summarizeMarkdown(cur, diffSnapshots(cur, prev, { deadBand: 3 }));
+
+  assert.match(md, /Core Web Vital regressions/i);
+  assert.match(md, /CLS/);
+  // The score-improvement line must carry the caveat, so a skim cannot mislead.
+  const improvementLine = md.split('\n').find(l => l.includes('35 → 42'));
+  assert.ok(improvementLine, 'score improvement still listed');
+  assert.match(improvementLine, /vital regressed/i);
+});
+
 // ---- fetchPageSpeed (injectable fetch, retry, timeout) ----
 
 test('fetchPageSpeed returns parsed JSON on a successful response', async () => {
@@ -153,11 +226,22 @@ test('fetchPageSpeed retries on 429 then throws after exhausting retries', async
 });
 
 test('fetchPageSpeed aborts a hung request via timeout and surfaces the error', async () => {
-  const fakeFetch = (url, opts) => new Promise((_, reject) => {
-    opts.signal.addEventListener('abort', () => reject(new Error('The operation was aborted')));
-  });
-  await assert.rejects(
-    fetchPageSpeed('https://x.com/', 'mobile', { apiKey: 'k', retries: 0, timeoutMs: 20, backoffMs: 0, fetchImpl: fakeFetch }),
-    /abort/i,
-  );
+  // AbortSignal.timeout() schedules an UNREF'd timer, so with a stubbed fetch
+  // there is nothing else keeping the event loop alive and it can drain before
+  // the abort fires — the test then never settles and node:test reports it as
+  // cancelledByParent (seen on the server's Node 22, though not on Node 25).
+  // A real run always has a pending socket holding the loop open; this keep-alive
+  // stands in for it. Without it this assertion silently stops being exercised.
+  const keepAlive = setInterval(() => {}, 5);
+  try {
+    const fakeFetch = (url, opts) => new Promise((_, reject) => {
+      opts.signal.addEventListener('abort', () => reject(new Error('The operation was aborted')));
+    });
+    await assert.rejects(
+      fetchPageSpeed('https://x.com/', 'mobile', { apiKey: 'k', retries: 0, timeoutMs: 20, backoffMs: 0, fetchImpl: fakeFetch }),
+      /abort/i,
+    );
+  } finally {
+    clearInterval(keepAlive);
+  }
 });

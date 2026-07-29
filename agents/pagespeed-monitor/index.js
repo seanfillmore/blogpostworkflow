@@ -108,7 +108,8 @@ async function main() {
   writeFileSync(join(REPORTS_DIR, `${date}.md`), md);
 
   console.log(`\n  Snapshot saved: ${snapPath}`);
-  console.log(`  Regressions: ${diff.regressions.length} | Improvements: ${diff.improvements.length} | New: ${diff.newPages.length}`);
+  console.log(`  Score: ${diff.regressions.length} regressions, ${diff.improvements.length} improvements, ${diff.newPages.length} new`);
+  console.log(`  Vitals: ${diff.metricRegressions.length} band regressions, ${diff.metricImprovements.length} band improvements, ${diff.failing.length} currently poor`);
 
   return { snapshot, diff, failures };
 }
@@ -116,15 +117,30 @@ async function main() {
 main()
   .then(async ({ snapshot, diff, failures }) => {
     const worst = Math.min(...snapshot.pages.map(p => p.score));
-    const status = diff.regressions.length ? 'error' : 'success';
+    const vitalRegressions = diff.metricRegressions.length;
+
+    // Escalate on *changes*, not on standing state. A Core Web Vital crossing
+    // into a worse band is news; a vital that has been poor for weeks (TBT
+    // usually is) would otherwise mark every single daily digest as an error
+    // until nobody reads them. Standing failures still ship in the body.
+    const status = diff.regressions.length || vitalRegressions ? 'error' : 'success';
+
+    const vitalLine = m => `- ${m.url} (${m.strategy}): ${m.label} ${m.from} → ${m.to} (${m.fromBand} → ${m.toBand})`;
     const parts = [
       `Measured ${snapshot.pages.length} page/strategy results (worst score ${worst}).`,
-      diff.regressions.length ? `\n🔴 Regressions:\n${diff.regressions.map(r => `- ${r.url} (${r.strategy}): ${r.from}→${r.to}`).join('\n')}` : '',
-      diff.improvements.length ? `\n🟢 Improvements:\n${diff.improvements.map(i => `- ${i.url} (${i.strategy}): ${i.from}→${i.to}`).join('\n')}` : '',
+      vitalRegressions ? `\n🔴 Core Web Vital regressions:\n${diff.metricRegressions.map(vitalLine).join('\n')}` : '',
+      diff.regressions.length ? `\n🔴 Score regressions:\n${diff.regressions.map(r => `- ${r.url} (${r.strategy}): ${r.from}→${r.to}`).join('\n')}` : '',
+      diff.improvements.length ? `\n🟢 Score improvements:\n${diff.improvements.map(i => `- ${i.url} (${i.strategy}): ${i.from}→${i.to}`).join('\n')}` : '',
+      diff.metricImprovements.length ? `\n🟢 Core Web Vital improvements:\n${diff.metricImprovements.map(vitalLine).join('\n')}` : '',
+      diff.failing.length ? `\n⚠️ Vitals currently poor:\n${diff.failing.map(f => `- ${f.url} (${f.strategy}): ${f.label} ${f.value}`).join('\n')}` : '',
       failures.length ? `\n⚠️ ${failures.length} fetch failure(s).` : '',
     ].filter(Boolean);
+
+    const headline = vitalRegressions
+      ? `${vitalRegressions} Core Web Vital regression${vitalRegressions > 1 ? 's' : ''}`
+      : diff.regressions.length ? `${diff.regressions.length} score regressions` : null;
     await notify({
-      subject: `PageSpeed Monitor: worst score ${worst}${diff.regressions.length ? ` (${diff.regressions.length} regressions)` : ''}`,
+      subject: `PageSpeed Monitor: worst score ${worst}${headline ? ` (${headline})` : ''}`,
       body: parts.join('\n'),
       status,
       category: 'collector',

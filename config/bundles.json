@@ -81,17 +81,17 @@
           "options": {
             "Scent": "Coconut Breeze"
           },
-          "price": 99,
-          "compareAtPrice": 118,
+          "price": 119,
+          "compareAtPrice": 174,
           "contents": "3 × Body Lotion — Coconut Breeze (coconut oil extract)\n1 × Body Cream — Coconut Breeze\n2 × digital guides, emailed within minutes",
           "components": [
             {
-              "product": "coconut-moisturizer",
+              "product": "coconut-lotion",
               "variant": "Coconut Breeze",
-              "qty": 1
+              "qty": 3
             },
             {
-              "product": "coconut-lotion",
+              "product": "coconut-moisturizer",
               "variant": "Coconut Breeze",
               "qty": 3
             }
@@ -101,21 +101,105 @@
           "options": {
             "Scent": "Pure Unscented"
           },
-          "price": 99,
-          "compareAtPrice": 118,
+          "price": 119,
+          "compareAtPrice": 174,
           "contents": "3 × Body Lotion — Pure Unscented (no essential oils at all)\n1 × Body Cream — Pure Unscented\n2 × digital guides, emailed within minutes",
           "components": [
-            {
-              "product": "coconut-moisturizer",
-              "variant": "Pure Unscented",
-              "qty": 1
-            },
             {
               "product": "coconut-lotion",
               "variant": "Pure Unscented",
               "qty": 3
+            },
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 3
             }
           ]
+        }
+      ],
+      "lander": {
+        "heading": "The 90-Day Coconut Skin Reset",
+        "subheading": "The complete routine in one box — three daily lotions and an overnight cream — for skin that finally stays soft. Ninety days. Never run out.",
+        "cta_label": "Start My 90-Day Reset",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "bullets": [
+          "3 full-size Body Lotions + 3 Body Creams — a complete 90-day routine",
+          "A complete $[[TOTAL]] routine — everything you need in one box — yours for $[[PRICE]]",
+          "Cold-pressed coconut oil + organic jojoba — no fragrance, parabens, or mineral oil"
+        ],
+        "buybox_bullets": [
+          "3 full-size Body Lotions + 3 Body Creams — about a 90-day supply",
+          "Two formulas, one routine — daily lotion + overnight cream",
+          "Cold-pressed coconut oil + organic jojoba + beeswax barrier",
+          "No synthetic fragrance, no petrolatum, no dimethicone, no lanolin"
+        ],
+        "whats_in_it_note": "Three months of lotion, and three months of overnight cream.",
+        "faq": [
+          {
+            "q": "How long will the 90-Day Reset last?",
+            "a": "About 90 days of daily use for one person. Lotion is what you use most, which is why you get three."
+          },
+          {
+            "q": "Is this a subscription?",
+            "a": "No. This is a one-time order — no auto-billing, no commitment."
+          },
+          {
+            "q": "Lotion vs. cream — when do I use each?",
+            "a": "Lotion in the morning and after showers. Cream overnight, where skin cracks."
+          },
+          {
+            "q": "Which scent should I choose?",
+            "a": "Pure Unscented has no essential oils at all — choose it for reactive skin. Coconut Breeze is a light natural coconut scent."
+          },
+          {
+            "q": "Should I patch test first?",
+            "a": "Yes, especially if you have reacted to multiple products before. Apply a small amount to your inner arm and wait 24 hours."
+          },
+          {
+            "q": "What if my skin reacts?",
+            "a": "Email us within 30 days. We will refund you and you do not need to send anything back."
+          }
+        ],
+        "tabs": [
+          {
+            "heading": "What's Inside",
+            "body": "3 full-size Body Lotions (8oz) and 1 Body Cream (4oz), plus two digital guides emailed within minutes of ordering."
+          },
+          {
+            "heading": "Ingredients",
+            "body": "Lotion: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract, organic red palm oil. Cream adds organic beeswax and palm stearic."
+          },
+          {
+            "heading": "How to Use",
+            "body": "Lotion in the morning and after showers — it absorbs in minutes. Cream at night on hands, elbows, heels and anywhere that cracks."
+          },
+          {
+            "heading": "Shipping & Returns",
+            "body": "Free shipping included. Standard delivery 2 business days within the US. 30-day no-questions-asked money-back guarantee — email us and we will refund you; you do not need to send anything back."
+          }
+        ]
+      },
+      "valueStack": [
+        {
+          "label": "3 Body Lotions + 3 Body Creams",
+          "amount": 174,
+          "digital": false
+        },
+        {
+          "label": "90-Day Routine & Tracker",
+          "amount": 19,
+          "digital": true
+        },
+        {
+          "label": "Coconut Skincare Field Guide",
+          "amount": 15,
+          "digital": true
+        },
+        {
+          "label": "Free shipping",
+          "amount": 6,
+          "digital": false
         }
       ]
     },

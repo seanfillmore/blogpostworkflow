@@ -115,3 +115,6 @@ data/context/marketing-tactics.md
 # the operator's own copy, no review value in a diff). README only.
 digitalassets/*
 !digitalassets/README.md
+
+# Generated digital-asset PDFs (build artifacts — source is assets/digital/)
+data/digital-assets/
