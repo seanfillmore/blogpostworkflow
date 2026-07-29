@@ -178,7 +178,11 @@ packed into sub-chunks by the same paragraph rule, labelled
 oversized call.
 
 At the default 4,500 words, the converted book (44,879 words, 220 paragraph
-blocks) yields **10 chunks**.
+blocks) yields **11 chunks**, each 3,716–4,477 words.
+
+Not the 10 that 44,879 ÷ 4,500 suggests: the 200-word overlap adds volume, and
+packing whole paragraphs leaves every chunk a little under budget rather than
+exactly at it. Measured with `chunkText`, not derived.
 
 **Why word-budget packing over chapter detection.** PDF-extracted headings are
 inconsistent — inconsistent casing, page numbers glued to titles, running headers
@@ -379,7 +383,7 @@ converted text:
 
 | | Calls | Cost |
 |---|---|---|
-| Run 1 — extraction | 10 chunks | ~$3 |
+| Run 1 — extraction | 11 chunks | ~$3 |
 | Run 1 — consolidation | 1 | ~$0.25 |
 | Run 2 — skill merges | 10–15 | ~$3–4 |
 | **Total** | | **~$6–7** |

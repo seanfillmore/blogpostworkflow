@@ -490,8 +490,9 @@ import('./lib/marketing-learner.js').then(async (m) => {
   console.log('word counts:', c.map(x => x.text.split(/\s+/).length).join(', '));
 });"
 ```
-Expected: **10 chunks**, each ≤ ~4700 words (4500 budget + 200 overlap).
-If this prints a wildly different count, stop — the spec's cost table assumes 10.
+Expected: **11 chunks**, each 3,716–4,477 words (measured 2026-07-28). Note the loader
+normalizes first, so the check must pipe through `normalizeFileText`.
+If this prints a wildly different count, stop — the spec's cost table assumes 11.
 
 - [ ] **Step 6: Run the full suite, then commit**
 
