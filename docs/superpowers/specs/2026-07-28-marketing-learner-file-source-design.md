@@ -148,9 +148,12 @@ Two places name the video explicitly and must be generalized:
    `*Source: Creator — "Title" (videoId)*`. Left alone, the merge LLM will
    "correct" book provenance back into video shape on the first edit.
 
-**Plan-time check:** confirm nothing else reads `data/reports/marketing-learner/<videoId>.json`
-by that filename shape (the dashboard is the likely candidate). Existing committed
-report JSONs keep their `videoId` field; they are audit records, not inputs.
+**Checked 2026-07-28 — safe to generalize.** `REPORT_DIR` is constructed only in
+`agents/marketing-learner/index.js`, and a repo-wide grep across `.js`/`.json`/`.html`
+finds no other reader of `data/reports/marketing-learner/<videoId>.json` — the
+dashboard does not touch it. The agent is the sole writer and there is no consumer,
+so renaming the path segment breaks nothing. Existing committed report JSONs keep
+their `videoId` field; they are audit records, not inputs.
 
 ## Flow
 
