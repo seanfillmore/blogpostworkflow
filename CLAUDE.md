@@ -105,6 +105,8 @@ Rules:
 
 ## Server Deployment
 
+**Node version:** pinned to **22 LTS** (`.nvmrc`, `engines` in `package.json`). The server runs 22.x and is the production truth; 25 is a non-LTS release and must not be what you validate against. Run `nvm use` in this repo before testing — a mismatch is not cosmetic. Node 25 locally vs 22 on the server hid a dead test for months: `AbortSignal.timeout()` uses an unref'd timer, so a stubbed-fetch test never settled on 22 and `node --test` reported it `cancelled`, which prints alongside `# fail 0` and reads like a pass. **When reading test output, check the cancelled count, not just fail.**
+
 **Server:** `root@137.184.119.230` (DigitalOcean, Ubuntu)
 **Project path:** `/root/seo-claude`
 **Process manager:** PM2 — process name `seo-dashboard`
