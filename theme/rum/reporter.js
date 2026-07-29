@@ -102,24 +102,28 @@
       metrics: metrics,
     });
 
-    // fetch+keepalive over sendBeacon: sendBeacon cannot set headers, and the
-    // free ngrok tunnel needs ngrok-skip-browser-warning to avoid its
-    // interstitial. Falls back to sendBeacon where keepalive is unsupported.
+    // text/plain keeps this a *simple* cross-origin request, so the browser
+    // skips the CORS preflight entirely — one request per flush instead of two.
+    // The collector parses the body as JSON regardless of content type.
+    // sendBeacon first: the browser hands it off out-of-band, so it survives
+    // unload more reliably than anything on the page's own event loop.
     try {
-      if (window.fetch) {
+      var delivered = false;
+      if (navigator.sendBeacon) {
+        delivered = navigator.sendBeacon(
+          cfg.endpoint,
+          new Blob([body], { type: 'text/plain;charset=UTF-8' }),
+        );
+      }
+      if (!delivered && window.fetch) {
         fetch(cfg.endpoint, {
           method: 'POST',
           body: body,
           keepalive: true,
           mode: 'cors',
           credentials: 'omit',
-          headers: {
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': '1',
-          },
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
         }).catch(function () {});
-      } else if (navigator.sendBeacon) {
-        navigator.sendBeacon(cfg.endpoint, body);
       }
     } catch (e) { /* never let telemetry break the page */ }
   }
