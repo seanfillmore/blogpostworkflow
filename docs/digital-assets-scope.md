@@ -112,6 +112,6 @@ Non-negotiable, given the day this scope was written on:
 
 ## 7. Decisions needed
 
-1. **Do the targets in §4 match what you'd pay $19 and $15 for?** They are my read of the gap, not a given. If the answer is that the value should come down to match a leaflet instead, that is a legitimate and much cheaper answer — but it lowers the Reset's value stack from $158 to ~$130 and weakens the $99 argument.
+1. ~~Do the targets in §4 match what you'd pay $19 and $15 for?~~ **Settled 2026-07-28 — build up, don't mark down.** Sean: *"We need to keep the price elevated to keep the perceived value high."* The $19 and $15 stay, so the §4 targets are the commitment rather than a proposal, and the cheaper option of reducing the claim to match a leaflet is off the table. The corollary is that the claim is now a promise with a delivery date attached: until the build lands, the value stack is asserting more than the PDFs contain.
 2. **Should the Field Guide become a lead magnet** (email capture), or stay a purchase benefit only? It changes how hard it sells the range.
 3. **Who writes the content?** The build pipeline is mine to do. The 2,500–3,500 words of tracker copy is a content project — it can run through the existing writer/editor gates, but it is not a side effect of the tooling.
