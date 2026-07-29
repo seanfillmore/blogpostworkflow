@@ -110,3 +110,6 @@ data/context/marketing-tactics.md
 
 # Agent worktrees (one isolated checkout per concurrent session)
 .claude/worktrees/
+
+# Generated digital-asset PDFs (build artifacts — source is assets/digital/)
+data/digital-assets/
