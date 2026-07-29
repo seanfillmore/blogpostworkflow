@@ -1,19 +1,30 @@
 ---
 name: marketing-email-design-production
-description: Use when you have to actually build the email asset rather than decide what it says — assembling a reusable brand kit (logo, colors, fonts, written voice), briefing an AI design tool, laying out preheader/hero/CTA structure, and getting a finished design into Klaviyo or another ESP for campaigns and post-purchase flows.
+description: Use when you have to actually build the email asset rather than decide what it says — assembling a persisted brand kit / design system (logo, colors, fonts, written voice, layout exemplars), briefing an AI design tool, laying out preheader/hero/CTA structure, and getting a finished design into Klaviyo or another ESP for campaigns and post-purchase flows.
 ---
 
 # Email Design Production
 
-## Assemble a reusable brand kit — logo files with transparent background, primary/secondary brand colors, fonts split by headline/body/CTA, an explicit written brand voice, plus your 10 best past-performing emails — and hand it to the AI design tool before asking for any email.
+## Assemble the brand kit once as a persisted design system — logo files with transparent background, primary/secondary brand colors, fonts split by headline/body/CTA, an explicit written brand voice, brand story copy, transparent product images, and layout exemplars (a Figma export of designs you like, or competitor reference emails) — and have every later email generation inherit it rather than re-briefing a fresh project each time.
 
-**Why it works:** The generator has no defaults that match your brand, so quality is bounded by the specificity of the inputs; encoding brand constraints once makes every later generation consistent and removes the per-email design decisions.
+**Why it works:** The generator has no defaults that match your brand, so quality is bounded by the specificity of the inputs. Encoding brand constraints once removes the per-email design decisions; storing them as a durable object rather than re-supplying them per project means each new email starts from full brand context, so quality is repeatable instead of dependent on how good that day's prompt was.
 
-**Evidence offered:** Demonstrated with one email the creator says was produced in a single prompt with no edits; practitioner assertion plus a viral LinkedIn giveaway. No performance data on the emails themselves.
+**Evidence offered:** One creator demonstrated a single email produced in one prompt with no edits (practitioner assertion plus a viral LinkedIn giveaway). A second creator showed a side-by-side: the one-off project produced a rough starting point, while the persisted design system produced what he calls 'the perfect email' he could copy straight into his ESP in roughly ten minutes. No open, click, or revenue data on the emails themselves.
 
-**Fit here (6/10):** Platform-mechanics class but published weeks after Claude Design's launch, so no staleness penalty applies. Email is the one owned retention surface and retention is the binding constraint, so removing the design bottleneck for a solo operator with no designer has real leverage at near-zero cost. Capped at 6 because half the input list — '10 best past-performing emails filtered by all-time campaign revenue' — presumes a campaign history and list size that don't exist here; only the brand-kit half (logo, colors, fonts, voice doc) is fully usable, and it must be written from scratch rather than mined from past sends.
+**Fit here (6/10):** Platform-mechanics class but published weeks after Claude Design's launch, so no staleness penalty applies. Email is the one owned retention surface and retention is the binding constraint, so removing the design bottleneck for a solo operator with no designer has real leverage at near-zero cost. Capped at 6 because the best inputs in both demos — '10 best past-performing emails filtered by all-time campaign revenue' and a Figma export of previously approved layouts 'the owner likes' — presume a campaign history and a design archive that don't exist here; only the brand-kit half (logo, colors, fonts, voice doc, brand story, transparent product shots) is fully usable, it must be written from scratch rather than mined from past sends, and the layout exemplars must be substituted with competitor reference emails. Also a production-speed lever, not a revenue lever.
 
 *Source: Jordan O'Connor — "how to design klaviyo emails with claude design (full playbook)" (JTwdMs_rqxA)*
+*Source: Jayde Emails — "Build Million Dollar Emails With Claude Design In Minutes" (wo6-XJY1tZ0)*
+
+## Deliberately keep the initial brief vague so the tool asks clarifying questions — audience, offer type, tone, module list, length, number of variations — then answer those questions instead of trying to write a complete brief up front.
+
+**Why it works:** The tool's question set surfaces decisions you would otherwise omit — who the email is for, whether it is a launch or a subscribe-and-save push, which modules to include — so answering prompts produces a more complete spec than a monologue brief, with less writing effort.
+
+**Evidence offered:** Demonstrated live: a one-line brief plus a website screenshot, roughly eight clarifying questions answered, and the tool 'spat out everything without me needing to give any edits.' Single demonstration, no comparison against a full brief.
+
+**Fit here (6/10):** Mostly durable-principle class (a briefing habit, not a UI feature), so age is not the limiter. Free, solo-executable, and it lands on the live email surface that carries the 18–22.5% repeat rate. Its real value here is that the question list doubles as a checklist — 'which audience, which single ask, which modules' — for a solo operator who has no strategist to force those decisions. Capped at 6 because it is a workflow habit rather than a revenue mechanism, and the decisions it surfaces (one ask per email, which awareness level) are already owned by other skills.
+
+*Source: Jayde Emails — "Build Million Dollar Emails With Claude Design In Minutes" (wo6-XJY1tZ0)*
 
 ## Don't download and upload product images — paste the product page or homepage URL and let the tool pull imagery and content from the page directly.
 

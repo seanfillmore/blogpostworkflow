@@ -1,0 +1,151 @@
+{
+  "sourceId": "wo6-XJY1tZ0",
+  "creator": "Jayde Emails",
+  "title": "Build Million Dollar Emails With Claude Design In Minutes",
+  "summary": "A head-to-head tool test of Claude Design versus ChatGPT image generation for producing e-commerce marketing emails, rated on speed, output quality, and repeatability. The creator demonstrates two Claude paths — a one-off design project (screenshot the brand's site, upload three or four reference emails pulled from Milled, answer the tool's clarifying questions) and a persisted \"design system\" (Figma export, Brandfetch-sourced logos/fonts/colors, brand story text, transparent product images, plus the agency's own high-converting email formula) — concluding the persisted system produces a near-shippable email in about ten minutes. ChatGPT is faster and produces better hero imagery but is harder to edit region-by-region. Closes with an agency pitch gated at $50k/mo revenue and the argument that AI shifts teams from production to strategy.",
+  "recencySignals": "Published 2026-05-07; \"over the last two weeks we've had the biggest AI updates in terms of design ever\"; Claude Design with high-fidelity mode, design systems, and Figma file import; Brandfetch; Milled email archive; ChatGPT in-chat image generation with aspect-ratio presets; explicit \"in 2026, you no longer need a design team\"",
+  "tactics": [
+    {
+      "claim": "Instead of briefing a fresh project each time, create a persisted 'design system' containing logos, fonts, colors, brand story copy, transparent product images, and an exported Figma file of layouts you like, so every subsequent email generation inherits it.",
+      "mechanism": "Output quality is bounded by context. Storing the brand constraints and layout exemplars once as a durable object means each new email starts from full brand context rather than re-supplying it, so quality is repeatable instead of dependent on how good that day's prompt was.",
+      "evidence": "Side-by-side demonstration: the one-off project produced a rough starting point, the persisted design system produced what the creator calls 'the perfect email' he could copy straight into his ESP in roughly ten minutes. Practitioner assertion, no open/click/revenue data.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Platform-mechanics class, but the video is contemporaneous with the feature so no staleness discount applies. Email is the only owned retention surface and retention is the binding constraint, so a solo operator with no designer gets real leverage from making brand context reusable at near-zero cost. Additive over the existing brand-kit tactic only in the persistence mechanic (store once as a system, not per-email). Capped at 6 because the demo's best inputs — a Figma export of previously approved designs and a library of layouts 'the owner likes' — do not exist here and must be substituted with competitor reference emails, and because this is a production-speed lever, not a revenue lever.",
+        "reasoning_class": "platform mechanics"
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-email-design-production",
+        "action": "edit",
+        "description": "Use when you have to actually build the email asset rather than decide what it says — assembling a reusable brand kit or persisted design system (logo, colors, fonts, product images, written voice, layout exemplars), briefing an AI design tool, laying out preheader/hero/CTA structure, and getting a finished design into Klaviyo or another ESP for campaigns and post-purchase flows."
+      }
+    },
+    {
+      "claim": "Deliberately keep the initial design brief vague so the tool asks clarifying questions (audience, offer type, tone, module list, length, number of variations), then answer those questions instead of trying to write a complete brief up front.",
+      "mechanism": "The tool's question set surfaces decisions you would otherwise omit — who the email is for, whether it is a launch or a subscribe-and-save push, which modules to include — so answering prompts produces a more complete spec than a monologue brief, with less writing effort.",
+      "evidence": "Demonstrated live: he gave a one-line brief plus a website screenshot, answered roughly eight clarifying questions, and the tool 'spat out everything without me needing to give any edits.' Single demonstration, no comparison against a full brief.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Mostly durable-principle class (a briefing habit, not a UI feature), so age is not the limiter. Free, solo-executable, and it lands on the live email surface that carries the 18–22.5% repeat rate. Its real value here is that the question list doubles as a checklist — 'which audience, which single ask, which modules' — for a solo operator who has no strategist to force those decisions. Capped at 6 because it is a workflow habit rather than a revenue mechanism, and the decisions it surfaces (one ask per email, which awareness level) are already owned by other skills.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-email-design-production",
+        "action": "edit",
+        "description": "Use when you have to actually build the email asset rather than decide what it says — assembling a reusable brand kit or design system, briefing an AI design tool (including letting it interrogate you instead of writing a full brief), laying out preheader/hero/CTA structure, and getting a finished design into Klaviyo or another ESP for campaigns and post-purchase flows."
+      }
+    },
+    {
+      "claim": "Pull three or four reference emails from a public email archive (Milled) for brands whose design you admire and hand them to the generator as explicit inspiration rather than describing the look in words.",
+      "mechanism": "An archive lets you search any brand's actual sends on demand, so you can assemble concrete exemplars in minutes instead of waiting for competitor emails to arrive in your inbox; explicit visual targets give the generator something to imitate rather than a generic average.",
+      "evidence": "Demonstrated live pulling Liquid IV and Ring Pop sends off Milled and uploading them as inspo; he shows the ungrounded output first, then the grounded one, and asserts the grounded version is better. No performance data.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable principle class (competitive reference gathering); the named archive is a small platform dependency but the practice survives it. Free and solo-executable, and it fixes the practical weakness in the existing email-channel gap analysis, which requires subscribing and then waiting for sends — an archive gives instant access to Native, Dr. Squatch, Every Man Jack and Harry's reorder, education, and win-back emails, which is exactly where the binding retention constraint lives. Held at 6 because it is an access-method refinement to an already-adopted practice, and copying a well-funded brand's visual polish does not by itself move revenue — the angle and flow-format gaps are what matter.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-competitor-messaging-teardown",
+        "action": "edit",
+        "description": "Use when deciding what angle to lead with on a product page, Amazon listing, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries, pulling their actual sends from public email archives or by subscribing, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category."
+      }
+    },
+    {
+      "claim": "Use the tool's region-select or click-to-edit function to change a headline, color, or block rather than re-prompting the whole design.",
+      "mechanism": "Targeted edits change only the defective element, whereas regeneration is non-deterministic and can degrade parts that were already correct — and burns credits.",
+      "evidence": "Demonstrated in both Claude and ChatGPT; he calls editability a 'non-negotiable' and the main reason he prefers Claude. Assertion.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-ish workflow habit and genuinely cheap, but marketing-email-design-production already carries this exact tactic ('name one to three specific issues and fix them with the tool's direct edit function rather than re-prompting'). Adding it again would degrade skill triggering without adding a mechanism.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplicates an existing tactic in marketing-email-design-production; re-adding it degrades skill selection accuracy without new information.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Screenshot the brand's entire website (and its story/about page) and upload it so the tool can extract branding, colors, and voice.",
+      "mechanism": "A full-page capture carries the palette, type treatment, and tone in one artifact, so the generator infers brand rules instead of inventing them.",
+      "evidence": "Demonstrated live on Grüns' homepage and story page. No comparison against other input methods.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable principle class, so age is not the issue — the problem is duplication. marketing-email-design-production already covers both halves: assembling logo/color/font/voice inputs, and pasting the product or home page URL so the tool pulls imagery and content directly (which is strictly less manual than screenshotting). No additive mechanism for a solo operator.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "reject",
+      "rejectReason": "Restates the brand-kit assembly and paste-the-URL tactics already in marketing-email-design-production, and the URL method is the better version of the same idea.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Write out your own high-converting email formula (hero visual, headline, primary CTA, ingredient/benefit infographic, secondary CTA) and give it to the generator so every output follows a proven conversion structure.",
+      "mechanism": "The generator has no opinion about what converts; supplying the module order means the shipped layout always contains the elements that carry the click, in the order that has worked before.",
+      "evidence": "Attributed to the agency's internal formula; the design-system output is judged against it and 'nails it.' No test data behind the formula itself.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable principle class, and the idea is sound — but marketing-email-design-production already carries a fixed email skeleton (preheader, headline, hero, primary CTA, body, secondary CTA, footer CTA) plus the universal-rules checklist. The only new wrinkle is storing the skeleton inside the persisted design system, which is already captured in the design-system tactic above.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplicates the fixed email skeleton and universal-rules tactics already in marketing-email-design-production; the storage-location wrinkle is covered by the design-system tactic adopted above.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Split the work across tools — generate the hero visual in ChatGPT because its image quality is highest, then upload it into Claude as the asset and do layout and editing there.",
+      "mechanism": "Each tool has a different strength (image fidelity versus editable structured layout), so routing each sub-task to the stronger tool beats forcing one tool to do both.",
+      "evidence": "Comparative demo: ChatGPT finished in under four minutes with better imagery but weaker editability; Claude was slower but fully editable. Practitioner preference, no output performance data.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Fast-decaying platform-mechanics class — a claim about the relative image quality of two specific model releases, which is precisely the kind of statement that will be false within a year. Also carries a real hazard here: Real Skin Care sells 12 physical SKUs that must look identical across Shopify and Amazon, and an AI-generated hero visual of a deodorant stick is a misrepresentation risk the existing skill already warns about. No revenue mechanism attached — it is a production-speed preference.",
+        "reasoning_class": "platform mechanics"
+      },
+      "verdict": "reject",
+      "rejectReason": "Fast-decaying tool-comparison claim with no revenue mechanism, and AI-generated hero imagery of real physical SKUs risks product misrepresentation across Shopify and Amazon.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Use the AI output as a foundation to hand to your design team so they don't have to ideate from scratch.",
+      "mechanism": "A concrete draft communicates intent better than a written brief, so the designer's cycles go to refinement rather than interpretation.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Presupposes a design team. Real Skin Care is a solo operator with no team, no agency, and no designer — the entire premise of the tactic is absent.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "reject",
+      "rejectReason": "Requires a design team to hand the draft to; Real Skin Care is a solo operator with no designer.",
+      "targetSkill": null
+    },
+    {
+      "claim": "AI production capability shifts the value of an agency from making assets to building systems and pulling cross-brand performance data, so brands doing over $50k/mo should hire one to own the strategy layer.",
+      "mechanism": "A single brand only has its own back end to learn from, while an agency aggregates data across hundreds of accounts and knows which headlines perform, so the strategic judgment layer is worth outsourcing even when production is free.",
+      "evidence": "Assertion plus a closing call-to-book gated at $50k/mo revenue.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Requires an agency, and is explicitly gated at $50k/mo — roughly 18x Real Skin Care's ~$2,700/mo combined revenue. It is also a sales pitch rather than a testable mechanism.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "reject",
+      "rejectReason": "Requires hiring an agency and is explicitly gated at $50k/mo revenue; Real Skin Care runs ~$2,700/mo solo.",
+      "targetSkill": null
+    },
+    {
+      "claim": "A beautifully designed email is worthless if it targets the wrong people, so strategy and human interpretation still gate the output.",
+      "mechanism": "Design quality does not compensate for a mismatched audience; the strategic decision upstream determines whether the asset can work at all.",
+      "evidence": "Assertion only, used as the setup for the agency pitch.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "True but purely motivational framing with no stated mechanism — it names no segment, no targeting method, and nothing testable. The actionable version (match the message to the reader's awareness level, segment repeat buyers separately) is already owned by marketing-awareness-level-messaging.",
+        "reasoning_class": "durable principle"
+      },
+      "verdict": "reject",
+      "rejectReason": "Motivational framing with no stated mechanism; the actionable form of the idea is already covered by marketing-awareness-level-messaging.",
+      "targetSkill": null
+    }
+  ]
+}
