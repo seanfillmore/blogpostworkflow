@@ -1,6 +1,6 @@
 ## Start here
 
-Inside your box: three 8 oz bottles of Body Lotion and one 4 oz jar of Body Cream. That is the whole programme. There is no step three hiding at the back of this guide, and nothing else to buy.
+Inside your box: three 8 oz bottles of Body Lotion and three 4 oz jars of Body Cream. That is the whole program. There is no step three hiding at the back of this guide, and nothing else to buy.
 
 What this guide adds is smaller and more useful than a routine. It tells you what each stretch of the 90 days is supposed to feel like, including — the part most guides skip — what it feels like when it is working slowly. That last one matters, because slow is what people mistake for failure.
 
@@ -9,7 +9,7 @@ What this guide adds is smaller and more useful than a routine. It tells you wha
 | What you have | How much | Where it goes | When |
 |---|---|---|---|
 | Body Lotion, 8 oz | 3 bottles | Everywhere — arms, legs, torso, hands | Every morning |
-| Body Cream, 4 oz | 1 jar | Dry patches only — elbows, knees, heels, hands | Every night |
+| Body Cream, 4 oz | 3 jars | Dry patches only — elbows, knees, heels, hands | Every night |
 
 Read this once, take your day-0 photo, then hang the tracker where you will see it. After that this guide is a reference, not homework.
 
@@ -25,7 +25,7 @@ Your skin's outer layer renews on roughly a 28-day cycle. Most dermatologists su
 
 Here is what that figure means for you. The skin you are looking at today was built over the last month, under whatever you were doing last month. Nothing you apply this morning can change it. What it can change is the skin forming underneath — the layer you will be looking at in four weeks.
 
-So the first month is not the result. The first month is the input. That is why this is a 90-day programme and not a 30-day one: three renewal cycles is the first point at which what you see was made entirely under the new routine.
+So the first month is not the result. The first month is the input. That is why this is a 90-day program and not a 30-day one: three renewal cycles is the first point at which what you see was made entirely under the new routine.
 
 ### The two clocks
 
@@ -37,7 +37,7 @@ There are two things happening at different speeds, and confusing them is what m
 Almost everyone gets the first clock in week one, watches the second refuse to move in week two, and concludes it has stopped working. It has not. The two clocks were never running together.
 
 :::callout title="The honest version"
-This is a moisturiser. It is not doing anything clever or medical. What it is doing is putting fat and water on skin twice a day, every day, for long enough that the skin being built underneath is built in better conditions than the skin you have now. The only variable you control is the *every day* part.
+This is a moisturizer. It is not doing anything clever or medical. What it is doing is putting fat and water on skin twice a day, every day, for long enough that the skin being built underneath is built in better conditions than the skin you have now. The only variable you control is the *every day* part.
 :::
 
 :::pagebreak
@@ -63,14 +63,14 @@ Night is when this does its best work, because you are not washing your hands or
 :::callout title="The one rule that matters"
 Apply within 3 minutes of getting out of the shower, while skin is still slightly damp. Damp skin holds moisture, and this single habit does more than any extra product ever could.
 
-If you take nothing else from this guide, take this. It costs nothing, adds no time, and it is the difference between moisturising skin and moisturising a towel.
+If you take nothing else from this guide, take this. It costs nothing, adds no time, and it is the difference between moisturizing skin and moisturizing a towel.
 :::
 
 ### How much is enough
 
 | Area | Roughly | You are aiming for |
 |---|---|---|
-| Full body, morning | Two to three pumps' worth in the palm | A thin sheen that disappears in 2–3 minutes |
+| Full body, morning | A generous coin-sized pool in the palm, twice | A thin sheen that disappears in 2–3 minutes |
 | Hands, after washing | A pea | Absorbed before you pick up your phone |
 | Elbows, knees, heels, night | A fingertip's worth, per spot | Slightly tacky when you get into bed |
 
@@ -129,11 +129,11 @@ This is also the phase to re-read your own week 1 notes. People consistently und
 
 The last phase asks a different question: does it hold?
 
-Anything can look good for a fortnight. What weeks 7 to 12 test is whether the improvement survives normal life — cold weather, travel, a stretch where you were busy and sloppy about the night step.
+Anything can look good for a two weeks. What weeks 7 to 12 test is whether the improvement survives normal life — cold weather, travel, a stretch where you were busy and sloppy about the night step.
 
 Expect the tracker to get less dramatic and more flat here, in a good way. Weekly scores that sit at the same number for five weeks running are not stagnation at this stage; they are the result. The goal of a maintenance phase is boredom.
 
-If you have a bad week here — most people do — what matters is how fast you come back. In week 2, three missed days cost you a fortnight; in week 10, a few days.
+If you have a bad week here — most people do — what matters is how fast you come back. In week 2, three missed days cost you a two weeks; in week 10, a few days.
 
 :::pagebreak
 
@@ -213,7 +213,7 @@ We could add the stabilisers that would keep it identical at every temperature. 
 
 First, be sure it is worse rather than newly noticed — people start looking closely at their skin in week 1 and find things that were always there.
 
-If an area is genuinely more irritated, red or itchy after starting: stop applying there, keep going everywhere else, and give it a week. If it settles, reintroduce that area with a smaller amount every other day. If it does not settle, stop and talk to a doctor or a dermatologist. We are not going to diagnose anything from here, and a moisturiser should not be the reason you delay asking someone qualified.
+If an area is genuinely more irritated, red or itchy after starting: stop applying there, keep going everywhere else, and give it a week. If it settles, reintroduce that area with a smaller amount every other day. If it does not settle, stop and talk to a doctor or a dermatologist. We are not going to diagnose anything from here, and a moisturizer should not be the reason you delay asking someone qualified.
 
 Worth knowing: this is a coconut-oil-based line, and coconut oil does not agree with everyone. If your skin is one of the ones that reacts, more time will not change that — and we would rather you find out in week 1 than week 9.
 
@@ -254,20 +254,20 @@ We would rather give you the real numbers than a comfortable answer.
 | What you have | Measured use rate | How long it covers |
 |---|---|---|
 | Body Lotion — 3 × 8 oz | About 38 days per bottle | Roughly 114 days — past day 90 with room to spare |
-| Body Cream — 1 × 4 oz jar | About 28 days per jar at full daily use | Roughly the first month at that rate |
+| Body Cream — 3 × 4 oz jars | About 28 days per jar at full daily use | Roughly 84 days at that rate — most of the 90 |
 
 These come from measured reorder gaps, not estimates. Read them as an upper bound: people who use more, or have more area to cover, will hit these numbers sooner.
 
 ### What that actually means
 
-**Lotion: you are covered.** Three bottles at the measured rate is about 114 days against a 90-day programme. You do not need to ration it, and rationing is the most common way people under-apply.
+**Lotion: you are covered.** Three bottles at the measured rate is about 114 days against a 90-day program. You do not need to ration it, and rationing is the most common way people under-apply.
 
-**Cream: you are not covered for 90 days, and we are not going to pretend otherwise.** At the rate someone uses a jar as their main daily moisturiser, 4 oz is about a month.
+**Cream: close, and we would rather give you the real number.** At the rate someone uses a jar as their main daily moisturizer, 4 oz is about a month — so three jars is roughly 84 days against a 90-day program. That figure is an upper bound taken from reorder gaps, and it assumes full daily use.
 
-The routine in this guide is built so that is fine. The cream is a night-and-patches product — elbows, knees, heels, hands — not a full-body one. Used that way, a fingertip per spot, a jar stretches well past its 28-day full-use rate. If you find yourself using it all over, expect to want a second jar in the second month.
+The routine in this guide is built so that is fine. The cream is a night-and-patches product — elbows, knees, heels, hands — not a full-body one. Used that way, a fingertip per spot, a jar stretches well past its 28-day full-use rate, and three of them will see you past day 90. If you use it all over instead, expect the last stretch to be tight.
 
 :::callout title="The one to reorder first"
-If you only replace one thing, replace the cream. The lotion is the volume product and you have plenty; the cream is the one that runs out mid-programme and the one whose absence you notice at night in week 7.
+If you only replace one thing, replace the cream. The lotion is the volume product and you have plenty; the cream is the one that runs closest to the line, and the one whose absence you notice at night.
 :::
 
 ### Setting the reminder now
@@ -283,8 +283,8 @@ The gap between running out and reordering is where 90-day routines quietly beco
 
 Look at your four photos side by side before you look at anything else. Then read your tracker from week 1 forward — not the ticks, the notes column. Then answer one question: is this better than day 0?
 
-If the answer is yes, maintenance is cheaper than the reset was. Most people settle into the morning lotion daily and the night cream two or three times a week on the patches that still want it — a considerably slower burn rate than the programme you just finished.
+If the answer is yes, maintenance is cheaper than the reset was. Most people settle into the morning lotion daily and the night cream two or three times a week on the patches that still want it — a considerably slower burn rate than the program you just finished.
 
-If the answer is no, that is worth knowing too, and it took twelve weeks rather than twelve days to find out. Skin that has had a fair trial of oil-based moisturising twice daily for three months and is unchanged is telling you something no further amount of the same will fix. We would rather you found that out properly than kept buying on hope.
+If the answer is no, that is worth knowing too, and it took twelve weeks rather than twelve days to find out. Skin that has had a fair trial of oil-based moisturizing twice daily for three months and is unchanged is telling you something no further amount of the same will fix. We would rather you found that out properly than kept buying on hope.
 
 Either way: you now have a record. Almost nobody does.
