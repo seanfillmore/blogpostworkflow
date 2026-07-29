@@ -3,8 +3,9 @@
  * Real User Monitoring collector.
  *
  * POST /api/rum   — accepts a Core Web Vitals beacon from theme/snippets/rsc-rum.liquid
- * OPTIONS /api/rum — CORS preflight (the beacon sets Content-Type + ngrok-skip header,
- *                    which makes it a non-simple request)
+ * OPTIONS /api/rum — CORS preflight. The beacon is sent as text/plain precisely so
+ *                    it stays a *simple* request and never preflights; this handler
+ *                    exists only for the fetch fallback path.
  *
  * Appends one JSON line per beacon to data/snapshots/rum/YYYY-MM-DD.jsonl.
  * agents/rum-monitor aggregates those into p75 by page x device.
@@ -49,7 +50,7 @@ function corsHeaders(req) {
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, ngrok-skip-browser-warning',
+    'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };

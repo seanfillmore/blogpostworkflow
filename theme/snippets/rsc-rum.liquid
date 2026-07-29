@@ -11,11 +11,16 @@
   audit fixed and add ~100KB to every page. Measurement Protocol would put the
   api_secret in client-side source. So: our own collector.
 
+  The endpoint is a first-party subdomain on purpose. It was briefly on an
+  ngrok-free.dev tunnel, which appears in ad-blocker filter lists and would have
+  quietly biased the sample toward users who don't block. rum.realskincare.com
+  is same-site, so it is not filtered, and it needs no CORS preflight.
+
   Set rum_sample below 1.0 to sample down if traffic grows.
 {%- endcomment -%}
 
 {%- liquid
-  assign rum_endpoint = 'https://gizmo-borax-domain.ngrok-free.dev/api/rum'
+  assign rum_endpoint = 'https://rum.realskincare.com/api/rum'
   assign rum_sample = 1.0
 -%}
 
