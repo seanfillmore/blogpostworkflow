@@ -377,16 +377,27 @@ npm run learn -- --file digitalassets/100m-money-models.txt \
 Run 2's chunk extractions and consolidation all hit cache; it pays only for the
 skill merges.
 
-Cost, against `claude-opus-5` at $5/$25 per MTok with the current ~10.5k-token
-skill inventory and ~700-token constraint block, using the **measured** 44,879-word
-converted text:
+Cost, against `claude-opus-5` at $5/$25 per MTok. The per-call figures below are
+**measured** from the single-chapter rehearsal (2,191 words → 1 chunk, 4 calls,
+$1.02 total), not estimated:
 
-| | Calls | Cost |
-|---|---|---|
-| Run 1 — extraction | 11 chunks | ~$3 |
-| Run 1 — consolidation | 1 | ~$0.25 |
-| Run 2 — skill merges | 10–15 | ~$3–4 |
-| **Total** | | **~$6–7** |
+| Call type | Measured (chapter) | Full book | Cost |
+|---|---|---|---|
+| Extraction | 23.8k in / 11.4k out = $0.41 | 11 chunks, ~2× the text each | ~$4.50 |
+| Consolidation | 6.4k in / 7.9k out = $0.23 (14 candidates) | ~150 candidates | ~$1 |
+| Skill merge | 7.8k in / 9.3k out = $0.27 (edit); $0.11 (create) | 10–15 skills | ~$5–7 |
+| **Total** | **$1.02** | | **~$11–13** |
+
+**Skill merges dominate, and an earlier estimate of ~$6–7 was about half the real
+figure.** A merge sends the whole existing skill file in and gets the whole
+rewritten file back, so its cost scales with how large the skill already is — and
+these files grow as they accumulate tactics. Extraction, which is what a chunked
+book obviously spends on, is the cheaper half.
+
+> ⚠️ `lib/llm-usage.js` prices Opus at $15/$75 — the legacy Opus 4.x rates. Every
+> Opus figure it has logged is exactly 3× high, so this run appears in the cost
+> reports as $3.05 rather than $1.02. Unrelated to this feature; flagged for a
+> separate one-line fix.
 
 The dominant term is output tokens, not input, which is why the deferred
 prefix-caching optimization below moves so little.
@@ -441,6 +452,41 @@ network; the Anthropic client is mocked.
 Per repo rule #4, one manual end-to-end run against a **single chapter** with
 `--no-pr` before the full book. Do not execute the agent without `--no-pr` during
 development — a normal run pushes a branch and opens a real PR.
+
+### End-to-end rehearsal, 2026-07-28 — passed
+
+Continuity Discount Offers (lines 4049–4280, 2,191 words → 1 chunk), run three ways.
+
+| Run | Result |
+|---|---|
+| `--extract-only` | 14 candidates → 13 canonical (one merge), 9 adopted / 4 rejected. **No skill touched, no PR.** |
+| Same command again | Both caches hit. **0.8s wall clock, zero API calls.** |
+| `--no-pr` | Caches hit again; 2 skills written (1 edit, 1 create), paying only for the merges. |
+
+Verified:
+
+- The weekly-billing tactic — the passage this whole feature was justified on —
+  was extracted, with the 8.3% arithmetic and the 13-four-week-cycles mechanism intact.
+- Provenance rendered as `*Source: Alex Hormozi — "Money Models Chapter Test" (book, part 1 of 1)*`.
+  No `(n/a)`, no `(null)`.
+- The report carries a `**Merged from:**` line per adopted tactic.
+- Trial artifacts fully reverted; skill count back to 8.
+
+**A gap the revert step missed.** The run *created* a new skill directory
+(`marketing-cancellation-save-flow/`), and `git checkout -- .claude/skills/` only
+restores tracked files — an untracked new skill survives it untouched. Any future
+rehearsal must also `rm -rf` newly created skill dirs and regenerate the mirror,
+or a trial skill silently ships.
+
+**The scoring earned its keep on the first real run.** The weekly-billing tactic
+was adopted at only 5/10, and the reason is a correction to this spec's own
+premise: the mechanic was built for services where nothing physical ships. For a
+consumable, 13 shipments against ~12 months of real usage means the customer
+accumulates surplus product and cancels — attacking the retention constraint that
+is RSC's actual binding constraint. The tactic is usable only where consumption
+genuinely runs faster than 30 days, never as a blanket default. The "~8% free
+money" framing in the handoff does not survive contact with RSC's situation
+unqualified.
 
 ## Constraints that bind
 
