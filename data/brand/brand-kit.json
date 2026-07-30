@@ -1,0 +1,78 @@
+{
+  "_comment": "Machine-readable brand kit. Source: 'Real Skin Care Brand Kit.pdf' (4pp, supplied 2026-07-29). Consumed by scripts/klaviyo-email-audit.mjs and by marketing-email-design-production. Human-readable companion: data/brand/brand-kit.md",
+  "source": {
+    "document": "Real Skin Care Brand Kit.pdf",
+    "received": "2026-07-29",
+    "pages": 4,
+    "completeness": "partial — see gaps[] below"
+  },
+  "colors": {
+    "black": {
+      "hex": "#000000",
+      "role": "primary — logo, headlines, body text, primary button fill",
+      "notes": "The logo is supplied in solid black only."
+    },
+    "sand": {
+      "hex": "#EDE5D8",
+      "role": "warm neutral — section backgrounds, blocks, the leaf flourish either side of headings",
+      "notes": "The brand's only warm tone. Does the work a plain white background cannot."
+    },
+    "green": {
+      "hex": "#C1DF6D",
+      "role": "accent — the leaf mark, sub-headings, highlights",
+      "notes": "Used sparingly in the source document: one accent word per page plus the leaf shape. Treat as an accent, not a background."
+    },
+    "grey": {
+      "hex": "#EDEDED",
+      "role": "cool neutral — dividers, subtle panels, shadow bases"
+    }
+  },
+  "palette_hexes": ["#000000", "#EDE5D8", "#C1DF6D", "#EDEDED"],
+  "typography": {
+    "family": "Mont",
+    "weights": {
+      "headline": "Mont Bold",
+      "subhead": "Mont Semibold",
+      "body": "Mont Book"
+    },
+    "email_fallback_stack": "'Mont', 'Montserrat', 'Helvetica Neue', Arial, sans-serif",
+    "email_caveat": "Mont is not a web-safe or Google font, so most email clients will not render it. The fallback stack above is what recipients actually see. Montserrat is the closest widely-available geometric sans and is a Google font, so it renders in clients that support web fonts."
+  },
+  "logo": {
+    "wordmark": "'real' in an italic high-contrast serif with a leaf-shaped counter replacing the stem terminal of the r, above 'SKIN CARE' in widely letterspaced sans caps",
+    "monogram": "the lowercase 'r' with its leaf terminal, used standalone (appears top-right on page 4)",
+    "colorways_supplied": ["solid black"],
+    "files_in_repo": false
+  },
+  "design_elements": [
+    "thin single hairline rule (black, hairline weight)",
+    "soft elliptical drop shadow",
+    "sand-filled circle",
+    "sand-filled rectangle block",
+    "white draped fabric / cloth cutout",
+    "soft diagonal light-and-shadow gradient overlay",
+    "green leaf shape (echoes the logo's r terminal)",
+    "wooden circular podium / riser for product shots"
+  ],
+  "email_rules": {
+    "_comment": "Not from the PDF — derived from the brand kit plus marketing-email-design-production. The PDF is a visual identity document and says nothing about email.",
+    "background": "#FFFFFF body, #EDE5D8 for alternating section blocks",
+    "headline": "Mont Bold, #000000",
+    "accent_use": "#C1DF6D for one element per email maximum — a rule, a leaf, or a single highlighted phrase. Not for button fills or backgrounds.",
+    "primary_button": "#000000 fill, #FFFFFF label",
+    "divider": "#EDEDED or the black hairline rule",
+    "off_brand_signals": [
+      "purple or blue gradients",
+      "Inter, Roboto, Arial-only, or system-font stacks with no Mont/Montserrat fallback",
+      "#C1DF6D used as a large background fill",
+      "more than one accent colour in a single email"
+    ]
+  },
+  "gaps": [
+    "No logo files in the repo — PNG/SVG with transparent background, plus a reversed (white) colorway for dark sections, still needed. The PDF supplies black only.",
+    "Mont licensing for email/web is unconfirmed; the fallback stack is what most recipients will render.",
+    "No transparent-background product images catalogued, which marketing-email-design-production names as a required brand-kit input.",
+    "No layout exemplars. That skill's fit note already records that the 'ten best past-performing emails' input does not exist here and competitor reference emails must substitute.",
+    "'Delightful Signs' appears as the heading above the colour palette on page 3. It is ambiguous whether that names an accent typeface or is decorative copy — not recorded as a font until confirmed."
+  ]
+}
