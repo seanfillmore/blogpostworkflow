@@ -1,0 +1,309 @@
+{
+  "sourceId": "bOXEtdZliH8",
+  "creator": "MyWifeQuitHerJob Ecommerce Channel",
+  "title": "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)",
+  "summary": "A zero-to-launch roadmap for building a private-label ecommerce brand: reject dropshipping/arbitrage/wholesale in favor of owning the product, find product ideas from unmet personal problems, source at 66%+ gross margin via Alibaba/trade shows/sourcing agents, validate with a small sample batch sold in niche communities, launch on Amazon with PPC for momentum, then build a Shopify site, install four core email/SMS flows (abandoned cart, pre-purchase nurture, post-purchase, win-back), drive traffic with short-form video and AI-indexable written content, layer paid ads at break-even, and finally treat high-value repeat customers as VIPs. Roughly 80% of the runtime addresses a founder with no product and no store — a stage Real Skin Care passed years ago. The load-bearing residue for an existing store is the flow inventory and the best-customer segment.",
+  "recencySignals": "Published 2025-07-29. Names ChatGPT, Gemini and Perplexity as content-distribution surfaces and claims they index video; references Klaviyo and Postscript by name; Shopify vs WooCommerce; Jungle Scout, Ahrefs, Terapeak, Shop Hunter; 'Amazon owns over half of ecommerce'; Canton Fair attendance 'before COVID hit'; a 2008 dropshipping anecdote and 18 years of operating history.",
+  "tactics": [
+    {
+      "claim": "Abandon dropshipping, retail arbitrage and Amazon wholesale and build a private-label brand where you own the product, the margins and the customer experience.",
+      "mechanism": "If you don't control the product you don't control the business — supplier stockouts become your refunds, and reselling someone else's item puts you in a hundred-seller race to the bottom on price with no defensible asset.",
+      "evidence": "Personal 2008 dropshipping failure (supplier stocked out over the holidays, dozens of refunds), 18 years running a private-label store, 6,000 students taught. Anecdote plus assertion.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Real Skin Care already manufactures and owns 12 private-label SKUs. This is a business-model selection decision made long ago; there is no action available to a solo operator whose constraint is retention on an existing catalog."
+      },
+      "verdict": "reject",
+      "rejectReason": "Not actionable — describes a decision this business already made. No mechanism that changes any current page, email, listing or offer.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Generate product ideas from a problem you or someone you know actually has, not from trending-product lists.",
+      "mechanism": "Pain-derived products come with built-in understanding of the buyer and a real unmet need, whereas trend-derived products are copies competing on price against sellers who found the same trend.",
+      "evidence": "Three anecdotes: his own wedding handkerchiefs, a student's seven-figure party supply business, a friend's drone-remote clip. No data.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Product ideation is directly counter to the operating reality: 12 SKUs, solo operator, retention is the binding constraint, and marketing-offer-construction already carries an explicit gate that a business this size should add ways to offer existing products rather than add SKU 13."
+      },
+      "verdict": "reject",
+      "rejectReason": "New-product ideation is the wrong stage entirely and contradicts the adopted 'don't add products, add offers' rule.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Use Jungle Scout, Ahrefs, Terapeak and Shop Hunter to find what is selling and what people search for but can't find.",
+      "mechanism": "Marketplace and search data reveal demand gaps, so you can build what's missing rather than duplicate what's already saturated.",
+      "evidence": "Tool names listed; no demonstration or results.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "These are paid research tools aimed at product selection, which is not a decision this business faces. Any spend on subscriptions is material against ~$2,700/mo combined revenue, and the output would be rankings/demand data, not revenue — against the prime directive."
+      },
+      "verdict": "reject",
+      "rejectReason": "Paid tooling for a product-selection decision that does not exist here; no revenue mechanism at this stage.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Target at least a 66% gross margin on private label — a $30 retail product should cost $10 or less to manufacture.",
+      "mechanism": "A 3x markup leaves room to absorb ads, returns and discounting while still leaving profit; thinner margins collapse the moment you spend on acquisition.",
+      "evidence": "Stated as a personal rule from sourcing across 20+ factories. No worked case.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Durable pricing-logic class, so age is irrelevant, and the transferable residue — set discount depth from real landed cost — is genuinely relevant to the subscribe-and-save and bundle work. But COGS on 12 existing SKUs is already fixed; the rule as stated is a sourcing gate for products not yet made."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplication — marketing-retention-offers and marketing-offer-construction already instruct sizing discount depth from landed cost rather than a percentage reflex. Adding a sourcing-stage margin target restates that with less specificity.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Always order samples before bulk, get pricing, MOQs, turnaround, payment terms and a defect-rate guarantee in writing, and stay in constant contact with vendors.",
+      "mechanism": "Physical inspection catches quality failures before capital is committed, and written terms give recourse when a factory misses; ongoing contact prevents silent failures.",
+      "evidence": "Personal practice: linens ordered with a contractual <3% defect rate; constant WhatsApp/WeChat contact with vendors.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Supply-chain operations, not marketing. Nothing here touches a page, listing, email, offer or the 18–22.5% repeat rate."
+      },
+      "verdict": "reject",
+      "rejectReason": "Out of scope — sourcing operations, no marketing mechanism.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Validate demand before committing to inventory by selling a handful of samples on eBay, Etsy or Facebook Marketplace and soft-pitching inside niche Facebook and Discord groups.",
+      "mechanism": "A few real transactions and the feedback around them tell you what buyers like, dislike and will pay before thousands of dollars of inventory is locked up.",
+      "evidence": "His handkerchief origin story — posting in bridal groups asking where to find one, then offering 'extras' a week later, producing first sales and feedback — plus a counter-anecdote about 1,000 unsold fidget spinners.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Targets platforms Real Skin Care is not on (eBay, Etsy, Facebook Marketplace) and solves a pre-inventory validation problem that doesn't exist for an established 12-SKU catalog. The group-seeding move also requires ongoing community participation labor from a solo operator with no team."
+      },
+      "verdict": "reject",
+      "rejectReason": "Targets platforms the business is not on and addresses a pre-launch validation stage that has already passed.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Launch on Amazon first to borrow its traffic and trust, and switch on Amazon PPC so a small ad budget seeds sales that carry into organic rankings.",
+      "mechanism": "Amazon supplies instant qualified traffic and buyer trust a new brand cannot generate; early paid sales and reviews feed the organic ranking flywheel.",
+      "evidence": "Assertion from experience plus a plug for his free Amazon minicourse. No spend figures or ACOS data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Paid spend is gated behind Tracking → CRO → Offer/AOV → Traffic and this sits at the traffic stage. It also assumes attribution that does not work here. Real Skin Care is already selling ~$1,800/mo on Amazon, so the 'launch there' half is moot, and the PPC half is premature. Platform-mechanics class as well — 'turn on PPC and rankings follow' describes a much simpler Amazon ads system than the current one."
+      },
+      "verdict": "reject",
+      "rejectReason": "Assumes meaningful ad budget and working attribution; premature under the gated spend sequence.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Write an Amazon listing that sells before the click — attention-grabbing title, benefit-led bullets, search keywords, and clean professional photos.",
+      "mechanism": "Shoppers decide from the search result and the image stack, so the listing has to carry the persuasion rather than relying on the click.",
+      "evidence": "Assertion; no examples or teardowns.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Correct but entirely generic, and every component already has a deeper home: title and bullet framing in marketing-awareness-level-messaging and marketing-conversion-copy-angles, image slots in marketing-product-image-stack."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplication — restates guidance three existing skills cover with far more specificity; adding it would blur their triggering.",
+      "targetSkill": null
+    },
+    {
+      "claim": "A visitor landing on your site should know what you sell, who it's for and why it's better before scrolling — clarity beats cleverness, and you get one shot at attention.",
+      "mechanism": "Attention is spent in the first seconds and is not recoverable; a hero section that fails to answer the three questions forces the visitor to work, and most leave instead.",
+      "evidence": "Assertion only, framed as the thing most new sellers get wrong.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable CRO principle, zero cost, solo-executable, and it sits in the CRO stage that is reachable now with no spend or traffic. Its additive value over what already exists is narrow but real: marketing-conversion-friction-audit covers proof placement and which pages need it, and marketing-product-image-stack covers the 1-second test on a single frame, but nothing states the three questions a hero block must answer above the fold. Capped at 5 because it partly restates the awareness-level diagnosis, and at ~54 orders/month a hero rewrite can never be measured — it is a judgment fix."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-conversion-friction-audit",
+        "action": "edit",
+        "description": "Use when a Shopify product page, homepage, Amazon listing or checkout gets visitors but few orders and you need to decide what to change — covers auditing the above-the-fold block against the three questions a visitor must be able to answer without scrolling (what this is, who it's for, why it's better), perceived risk and proof placement, published results timelines, variant and information overload, checkout speed and guest checkout, and how visibly return and guarantee terms are stated."
+      }
+    },
+    {
+      "claim": "Social proof is required, not optional: show real reviews, customer photos and testimonials, a clear return policy, and pre-answer the questions buyers are already thinking.",
+      "mechanism": "Buyers don't want risk, they want reassurance; each piece of visible evidence chips away at hesitation until they feel confident enough to add to cart.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Directionally right and free, but every element is already owned in more usable form: proof placement and visible return terms in marketing-conversion-friction-audit, quote selection in marketing-review-mining, and pre-answering objections in marketing-problem-solution-inventory."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplication — a generic restatement of three existing skills; adding it would degrade skill triggering without adding a mechanism.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Audit your automated flows against a required set of four — abandoned cart, pre-purchase nurture, post-purchase, and win-back — and have all four running from day one.",
+      "mechanism": "Roughly 98% of visitors leave without buying, and each flow recaptures a different slice of that leakage; a missing flow is a leak with nothing plugging it, and once built they run automatically with no ongoing labor.",
+      "evidence": "Presented as the four essential flows from 18 years of practice; claims email alone accounts for about 30% of his revenue. No per-flow figures.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable principle class (asset coverage), and email is the one owned surface where the binding retention constraint can actually be worked — zero cost, no ad budget, no attribution needed. Two of the four already have homes (marketing-post-purchase-onboarding, the win-back credit in marketing-retention-offers), but abandoned cart and pre-purchase nurture are genuinely uncovered, so the coverage audit has somewhere to point. Held at 6 because it is a checklist rather than a revenue mechanism, and it must be reconciled with the staging discipline already adopted from marketing-upsell-offer-design: build one flow, get it working, then add the next — not all four in a month at ~54 orders."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-lifecycle-email-flows",
+        "action": "create",
+        "description": "Use when deciding which automated Klaviyo or ESP flows should exist before a buyer's first purchase and what each should contain — auditing the flow set for gaps, building abandoned-cart and checkout-recovery sequences, and writing a pre-purchase nurture sequence for subscribers who joined the list but have not ordered yet."
+      }
+    },
+    {
+      "claim": "Run an abandoned cart flow: when someone adds to cart and doesn't check out, send a reminder, optionally with a small discount, which can recover up to 30% of those lost sales.",
+      "mechanism": "Cart abandoners have already selected a product and declared intent; the purchase stalled on distraction or a small hesitation, so a reminder resurfaces a decision that was nearly made rather than persuading a stranger.",
+      "evidence": "'Can recover up to 30% of those lost sales' — an unsourced range, no account data.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "The highest-value uncovered item in the video. Zero cost, one-time setup by a solo operator, needs no ad budget, no new traffic and no working attribution — recovery is read directly off the flow's own revenue. It attacks the Shopify side where revenue is weakest at ~$875/mo. Held at 7 because the '30%' figure is unsourced and will not hold at this volume, and the discount half pulls against the offer-construction warning about reflexive discounting: the first version should be a plain reminder plus the guarantee and transition-period reassurance, with a discount only as the last message."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-lifecycle-email-flows",
+        "action": "edit",
+        "description": "Use when deciding which automated Klaviyo or ESP flows should exist before a buyer's first purchase and what each should contain — auditing the flow set for gaps, building abandoned-cart and checkout-recovery sequences, and writing a pre-purchase nurture sequence for subscribers who joined the list but have not ordered yet."
+      }
+    },
+    {
+      "claim": "Run a pre-purchase flow for people who joined the list but haven't bought — share your story, explain what makes the product different, and build trust so they buy from you when they're ready.",
+      "mechanism": "Someone who opted in is interested but not yet convinced; the gap is belief, not awareness, so a sequence that supplies differentiation and trust closes the specific objection blocking them rather than re-pitching the product.",
+      "evidence": "Assertion from practice; no open, click or conversion figures.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Free, solo-executable, and it names a real hole: the existing skills cover what a welcome email should say by awareness level and how to design it, but no skill owns the non-buyer nurture sequence as an artifact. Natural deodorant has an unusually well-defined pre-purchase objection set (the transition period, baking-soda irritation, 'it quit by noon') that this sequence is the natural place to answer. Held at 6 because the list is small, so absolute revenue is modest, and the content it carries is generated by marketing-problem-solution-inventory and marketing-awareness-level-messaging rather than by this tactic — the additive claim is only that the sequence should exist and target non-buyers specifically."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-lifecycle-email-flows",
+        "action": "edit",
+        "description": "Use when deciding which automated Klaviyo or ESP flows should exist before a buyer's first purchase and what each should contain — auditing the flow set for gaps, building abandoned-cart and checkout-recovery sequences, and writing a pre-purchase nurture sequence for subscribers who joined the list but have not ordered yet."
+      }
+    },
+    {
+      "claim": "Treat the sale as the start of the relationship and make the follow-up personal — thank the customer, confirm the order is moving, and where volume allows include a genuinely personal touch such as a handwritten note.",
+      "mechanism": "A personal gesture converts a transaction into a relationship; the customer feels recognized rather than processed, which is what produces the emotional reason to reorder and to tell others.",
+      "evidence": "Anecdote: a handwritten note to a bride who rush-ordered ten handkerchiefs, who replied with a photo saying 'this made me cry as much as the actual wedding.' Single case, no repeat-rate data.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Unusually feasible precisely because of the scale that disqualifies most tactics: at roughly 54 orders a month a solo operator can genuinely write notes, and repeat customers are 45–52% of revenue so the retention payoff is where the constraint lives. marketing-post-purchase-onboarding owns the box insert and the education sequence but treats both as informational artifacts; nothing there covers the personal, non-templated gesture. Held at 6 because the evidence is one emotional anecdote in the wedding category, the effect is unmeasurable at this volume, and it only reaches Shopify buyers directly — Amazon fulfillment (~$1,800/mo) cannot carry a handwritten note."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-post-purchase-onboarding",
+        "action": "edit",
+        "description": "Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, packaging inserts, handwritten or personalized thank-you touches, first-use instructions, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order."
+      }
+    },
+    {
+      "claim": "Run a win-back flow: when a customer hasn't purchased in a while, check in with a limited-time offer and remind them why they loved the brand.",
+      "mechanism": "Lapsed customers have already cleared the trust barrier and often just need a nudge and a deadline to return.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Aimed at the right constraint, but it is a weaker version of what is already adopted: marketing-retention-offers carries the 6+ month win-back with a credit framed as the customer's own money returned and gated to a larger purchase, and marketing-scarcity-urgency-framing already covers giving the promotion a real deadline and a closing reminder."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplication — a generic restatement of win-back mechanics already covered in more actionable form by two existing skills.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Give visitors a concrete reason to join the list — 10% off, free shipping, or a helpful guide — because none of the flows work if nobody subscribes.",
+      "mechanism": "An opt-in is an exchange; the visitor needs something they actually care about on their side of it.",
+      "evidence": "Assertion; names Klaviyo and Postscript as his tools.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "marketing-offer-construction already owns this ground in more depth: never let the ask be bare, the three lead-magnet types, giving away something with a real market price, and the argument that a 10% discount is too shallow to change behavior. This version actively recommends the shallow 10% the existing skill warns against."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplication, and the specific incentive recommended (10% off) contradicts the adopted discount-depth rule.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Use short-form video on TikTok, Instagram Reels and YouTube Shorts as the primary free discovery channel — show the product, solve a problem, tell a story; no equipment or on-camera presence required.",
+      "mechanism": "These platforms are built for discovery and still give small accounts disproportionate reach, so distribution is free rather than bought.",
+      "evidence": "Assertion; claims some of his highest-converting paid ads started as free TikToks, no view or revenue figures.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Traffic-stage work, and traffic sits last in the gated sequence behind Tracking, CRO and Offer/AOV. It also targets platforms Real Skin Care is not established on, and 'free' understates the real cost: sustained short-form output is the largest recurring labor commitment in this video for an operator with no team. The prime directive is revenue, and reach on a new platform is neither revenue nor measurable here."
+      },
+      "verdict": "reject",
+      "rejectReason": "Traffic-stage tactic on platforms the business is not on; premature under the gated sequence and a large ongoing labor cost for a solo operator.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Write short, structured, scannable posts answering specific buyer questions ('why linen towels are better for sensitive skin') so ChatGPT, Gemini and Perplexity surface them, rather than long essays written to rank on Google.",
+      "mechanism": "AI answer engines pull clear, quotable answers into responses; being cited puts you in front of someone at the moment they are asking, and the creator claims buyers arriving from AI platforms are nine times likelier to purchase.",
+      "evidence": "The 'nine times higher' figure is stated with no source, sample or timeframe. Otherwise assertion.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Fast-decaying platform-mechanics class — AI-citation behavior is changing faster than any ad platform, and this is a 2025 snapshot of an unstable system — though age is not the main problem given the July 2025 date. The disqualifier is stage and directive: this is traffic work, gated last, targeting rankings and citations rather than revenue, with no way to attribute or measure a resulting sale. The one genuinely transferable residue (writing short answers to specific objections like the transition period) is already produced by marketing-problem-solution-inventory and belongs on the PDP and A+ content, not a blog."
+      },
+      "verdict": "reject",
+      "rejectReason": "Traffic/visibility tactic gated behind the spend sequence, unmeasurable here, and its usable residue duplicates the problem-solution inventory that already feeds on-page copy.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Take your best-performing organic short-form videos and run them as paid ads, because creative that worked with no spend usually works with spend.",
+      "mechanism": "Organic performance is a free pre-test of the hook and message, so you buy distribution for creative that has already proven it holds attention.",
+      "evidence": "'Some of my highest converting ads started as simple TikToks that we made for free.' Anecdote, no spend or ROAS figures.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Requires both a library of performing organic video (does not exist) and meaningful ad budget with working attribution to judge the result — two things explicitly gated. Doubly premature."
+      },
+      "verdict": "reject",
+      "rejectReason": "Requires ad budget above current spend and an organic creative library that does not exist; assumes attribution that does not work here.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Layer Facebook/Instagram ads and Google search and shopping ads once organic content is working, targeting visual, emotional or problem-solving products.",
+      "mechanism": "Paid channels buy volume once you know the message converts; Google search in particular reaches people already actively looking to buy.",
+      "evidence": "Assertion; explicitly says a full tutorial is out of scope.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Requires ad budget materially above current spend against ~$2,700/mo combined revenue, and sits at the traffic stage behind Tracking, CRO and Offer/AOV. No structural detail is given either, so there is nothing to execute even if the budget existed."
+      },
+      "verdict": "reject",
+      "rejectReason": "Requires ad budget well above current spend, sits at the gated traffic stage, and offers no executable mechanism.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Aim to break even on the first purchase from paid ads rather than turn a profit, because the email and SMS backend converts that customer into profit later — win on day 30, not day 1.",
+      "mechanism": "If the backend flows reliably generate repeat purchases, a break-even first order means the customer was acquired for free and all subsequent lifetime value is margin.",
+      "evidence": "Framed as a mindset shift; supported only by the claim that email is ~30% of his revenue.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class (CAC against lifetime value), so age is not the issue — the issue is that it presupposes exactly what does not exist: ad spend, working attribution to know whether you broke even, and a proven repeat engine. With repeat at 18–22.5% the backend does not yet reliably return the acquisition cost, so applying this framing would license spending into a leaking bucket. It also inverts the stated sequence: the correct reading here is to fix retention first, then revisit."
+      },
+      "verdict": "reject",
+      "rejectReason": "Assumes ad budget and working attribution, both gated; and the repeat rate that would justify break-even acquisition is precisely the constraint that has not been fixed yet.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Identify your small group of highest-value repeat customers and treat them as VIPs — a personal contact, a reusable discount code, and priority service on every order.",
+      "mechanism": "A minority of customers who order repeatedly and in volume drive a disproportionate share of revenue and referrals; making them feel valued keeps them ordering and turns them into a referral source, which is impossible to replicate through a marketplace.",
+      "evidence": "His own numbers: ~12% of customers return but drive over 36% of total revenue, and the segment turns out to be wedding planners and bulk buyers rather than brides. Named example: Robin, a planner who has ordered 252 times. Self-reported, single business.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "The distribution he describes is almost exactly Real Skin Care's — 18–22.5% repeat driving 45–52% of revenue — which makes this the one part of the video aimed straight at the binding constraint. At ~54 orders/month the solo operator can literally know and personally email the top repeat buyers, so the tactic works because of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves, no ad budget, no attribution needed. Additive to marketing-retention-offers, which covers subscription cadence, milestone rates, win-back credits and store credit but has nothing on identifying and cultivating a top-customer segment. Held at 7 because the reusable discount code is permanent margin against a $50.46 AOV and must be sized from landed cost, Amazon buyers (~$1,800/mo) cannot be contacted this way at all, and the 'best customer is a different persona than you assumed' insight needs to be checked against actual Shopify order history before acting on it."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-retention-offers",
+        "action": "edit",
+        "description": "Use when the goal is a second or repeat purchase from someone who already bought — identifying your highest-value repeat customers from order history and building a VIP tier around them, converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, placing a reward just past the churn point, winning back customers who lapsed months ago, and answering a refund request with store credit instead of cash."
+      }
+    },
+    {
+      "claim": "Don't ask 'how do I get traffic' until conversion is handled — only about 2% of visitors buy, so build the system that converts the other 98% first.",
+      "mechanism": "Traffic multiplies whatever conversion rate already exists, so buying visitors before the store converts wastes the spend; fixing conversion raises the return on every visitor you already have and every one you later buy.",
+      "evidence": "The 2% conversion figure stated as a general benchmark, no source.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Correct and directly aligned with the Tracking → CRO → Offer/AOV → Traffic sequence, but that sequence is already the operating reality and marketing-upsell-offer-design already carries the staging discipline of building one offer type at a time before adding the next."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplication — restates the gated spend sequence that is already encoded as an operating constraint and reflected in existing skills.",
+      "targetSkill": null
+    }
+  ]
+}
