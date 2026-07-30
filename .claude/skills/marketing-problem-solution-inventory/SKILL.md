@@ -34,3 +34,15 @@ description: Use before writing an offer, product page, FAQ, or email sequence, 
 **Fit here (8/10):** Natural deodorant has a short, enumerable objection list — transition period, 'it quit by noon', staining, baking-soda irritation, scent choice, melting in transit — and each can be answered with free on-page copy, an FAQ block, an Amazon A+ module, or a card in the box. CRO-stage work requiring no spend, traffic, or attribution, attacking both first-purchase conversion and the 18–22.5% repeat rate. Not 9 because `marketing-conversion-friction-audit` already owns the risk/returns/proof half, and this must be reconciled with the information-fatigue rule: **every objection gets an answer somewhere, collapsed by decision-relevance — not stacked above the fold.**
 
 *Source: Alex Hormozi — "$100M Offers" (book, part 6 of 11)*
+
+## Source the objections from public complaints rather than from imagination — competitor one-star reviews, ad comments, and forum threads are where honest disqualifying beliefs live.
+
+**Why it works:** People are candid in public forums and hostile comment threads in a way they never are in a survey or in a review of your own product. Those sources surface disqualifying beliefs a seller would never think to name, and each named belief becomes something the page has to answer.
+
+**Evidence offered:** Asserted — 'people are very very honest and you can get some genuine feedback there' — presented as the external half of a signal-gathering setup. No worked output shown.
+
+**Fit here (7/10):** Closes a real hole in the sections above, which tell you to walk the buyer's before/during/after sequence but never name a *source* for the objections. Competitor one-star natural-deodorant reviews on Amazon, and threads in the zero-waste and sensitive-skin communities, are a free high-density supply of the exact disqualifiers blocking first purchase and reorder here — 'burned my armpits', 'quit by noon', 'I gave up during the transition'. The competitors worth reading are the ones already tracked in `marketing-competitor-messaging-teardown`.
+
+Two notes. **`agents/voice-of-customer` already mines Reddit and Judge.me monthly** and writes to `data/context/voice-of-customer.md` — read that file before doing any of this by hand, and use this section for what it does not cover: competitor reviews and ad comments. And the 'write a better spin on each complaint' half must be paired with the specificity rule in `marketing-conversion-copy-angles`, or it drifts into unsupportable body-care claims.
+
+*Source: Intelligems — "IntelliJAMS EP 066: Building an AI Brain for Your Ecommerce Growth Experiments" (CdkhplYma9w)*
