@@ -1,9 +1,39 @@
 # Handoff — Ingest `$100M Offers` and `$100M Leads`
 
 **Written:** 2026-07-29
-**Status:** Tooling shipped and proven. Both books converted and sitting on disk. Nothing run yet.
+**Status: DONE for Money Models and Offers (PR #389). Leads deliberately not run — see below.**
+No further book ingestion is planned. Read this only if that changes.
 **Prerequisite reading:** `docs/superpowers/specs/2026-07-28-marketing-learner-file-source-design.md`
 (especially *Testing → End-to-end rehearsal* and the cost table)
+
+## Outcome (2026-07-29, PR #389)
+
+| Book | Words | Candidates | Canonical | Agent adopted | **Shipped** | Skills |
+|---|---|---|---|---|---|---|
+| Money Models | 44,879 | 172 | 100 | 61 | **16** | 9 → 11 |
+| Offers | 45,101 | 119 | 97 | 44 | **9** | 11 → 13 |
+| Leads | 67,684 | — | — | — | not run | — |
+
+**Leads was not run, and saturation is the wrong reason to cite.** Offers cleared the ~5-tactic
+bar set below (9 sections), so the bar did not trip. The reason is the phase gate: Leads is
+lead-generation and advertising material, and the growth plan gates traffic behind
+Tracking → CRO → Offer/AOV, so the constraint block would reject most of it as premature.
+Revisit only after the offer/AOV work these 25 tactics describe has shipped and converted.
+
+**Four defects surfaced that the single-chapter rehearsal could not.** All fixed in #389:
+extraction overflowed 16k on a dense chunk (now 32k, streamed); no retry, so one
+`overloaded_error` in an 11-call run discarded everything after it (now `withRetry`, transport
+only); consolidation overflowed 32k at 172 candidates (now 128k, **the model's ceiling — a
+bigger book needs batching, not a bigger number**); and a parse failure persisted no evidence
+and reported the source as `null`.
+
+**Curation is not optional, and it is the bulk of the work.** Both runs proposed far more
+skills than they should: Money Models wanted 6 new ones (9 → 15, seven of them about offers).
+The learner enforces anti-duplication per *tactic* but never per *skill creation*. Its
+`(create)`/`(edit)` labels are also unreliable — it treats skills it invented in one chunk as
+pre-existing in later chunks, and consolidation merges the contradictory guesses. Expect to
+ship roughly a quarter of what it adopts, and expect to reconcile tactics that contradict each
+other (both books produced a guarantee conflict; see the commits).
 
 ## What already happened
 
