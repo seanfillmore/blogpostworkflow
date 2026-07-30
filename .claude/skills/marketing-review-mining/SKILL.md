@@ -34,3 +34,15 @@ description: Use when sourcing customer proof and deciding which of it to show �
 **Fit here (7/10):** Unusually well matched to this category's real disqualifiers — 'natural deodorant never works for someone who sweats as much as me', 'baking soda burns my skin', 'I gave up during the transition'. Those are exactly the beliefs blocking first purchase and reorder, and retention is the binding constraint. Executable today by curating existing Shopify and Amazon reviews into a proof set organised **by objection rather than by star rating**, then placing it on the PDP and in the A+ block. Held at 7 because with a small corpus some objection slots will be empty — **an empty slot is a prompt for the post-purchase review request, not something to fabricate.** Note Amazon prohibits directed review solicitation, so only the Shopify-side request can chase a specific gap.
 
 *Source: Exposure Ninja — "COMPLETE Revenue-increasing Conversion Rate Optimisation (CRO) Course" (rfdkMStaBW0)*
+
+## Shape the request so it returns a usable sentence: require a rating *and* text, set a length floor, and ask a specific question rather than prompting for stars.
+
+**Why it works:** Rating-only or one-word reviews carry no persuasive content. A length floor forces the customer to state a situation and an outcome, which is what a reader expects from a credible review and what makes the review usable later as proof. Asking a specific question does that job more reliably than a character minimum alone.
+
+**Evidence offered:** Demonstrated as a settings toggle (require text, minimum ~50 characters) with the reasoning 'you want them to look real… you don't want any short responses'. Assertion, no data.
+
+**Fit here (7/10):** This is the missing half of the selection rules above. Those say an empty objection slot is a prompt for the post-purchase review request — but nothing said how to shape the request so it comes back with a before state and a mechanism already in it. With dozens of reviews rather than thousands, every submission has to carry both, so the Shopify request should ask something specific ('what had you tried before, and what happened in the first two weeks?') instead of a bare star prompt. Free, no traffic needed. Not higher because a character floor cannot be imposed on Amazon reviews, which is the larger channel.
+
+**Two things the source recommends alongside this that must never be done here.** Do **not** set a minimum star rating so only happy customers are shown the review link: review gating is an FTC deception issue, breaches Amazon and Google policy, risks the ~$1,800/mo channel, and strips out exactly the negative before-states the selection rules above depend on. Do **not** incentivize reviews with a free product or gift: a flat Amazon TOS violation, FTC-disclosure-bound elsewhere, and it buys the least usable reviews at real COGS.
+
+*Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*
