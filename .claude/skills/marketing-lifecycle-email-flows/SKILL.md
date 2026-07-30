@@ -11,21 +11,23 @@ description: Use when deciding which automated email/SMS flows should exist and 
 
 **Evidence offered:** Presented as the required set for any store, from 18 years of operating history. Assertion, no per-flow figures.
 
-**Fit here (6/10):** Email is the one owned surface where the binding retention constraint can actually be worked — zero cost, no ad budget, no attribution needed. The audit has somewhere useful to point: **two of the four already have homes** (`marketing-post-purchase-onboarding` owns the post-purchase content, `marketing-retention-offers` owns the win-back credit offer), while abandoned cart and pre-purchase nurture are genuinely uncovered. Held at 6 because a checklist is not itself a revenue mechanism.
+**Fit here (6/10):** Email is the one owned surface where the binding retention constraint can actually be worked — zero cost, no ad budget, no attribution needed. Held at 6 because a checklist is not itself a revenue mechanism.
+
+**Run against the live account on 2026-07-29, all four are already covered** — eight flows are live, including Abandoned Cart, Welcome Series, Post-Purchase, Replenishment, Customer Winback, Browse Abandonment and Product Review / Cross-Sell. So the value here is not a build list; it is (a) re-running the check periodically, and (b) the one question the checklist raises that the account does not obviously answer: whether any flow nurtures subscribers who joined and *never bought*, as distinct from the Welcome Series everyone receives. Verify with the Klaviyo flows endpoint rather than assuming — assuming is how this section originally shipped claiming the cart flow was missing.
 
 **Build one, get it working, then add the next.** This must be reconciled with the staging discipline in `marketing-upsell-offer-design` — four flows launched in a month at ~54 orders teaches nothing about which one worked.
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
 
-## Run an abandoned-cart flow — and make the first version a reminder, not a discount.
+## In the abandoned-cart flow, lead with a reminder rather than a discount.
 
 **Why it works:** Cart abandoners have already selected a product and declared intent; the purchase stalled on distraction or a small hesitation, so a reminder resurfaces a decision that was nearly made rather than persuading a stranger.
 
 **Evidence offered:** Claim that it recovers "up to 30%" of otherwise-lost sales. Unsourced.
 
-**Fit here (7/10):** The highest-value uncovered item in its source. One-time setup by a solo operator, no ad budget, no new traffic, and no working attribution needed — recovery is read directly off the flow's own revenue, which makes it one of the few tactics here that is measurable at this volume. It attacks the Shopify side, where revenue is weakest at ~$875/mo.
+**Fit here (7/10):** **This flow is already live here** (Abandoned Cart (RSC v2)), so this is not a build instruction — it is the standard to audit that flow against. No ad budget, no new traffic and no working attribution needed: recovery reads directly off the flow's own revenue, which makes it one of the very few items in this library that is genuinely measurable at ~54 orders/month. It works the Shopify side, where revenue is weakest at ~$875/mo.
 
-Two cautions. **The 30% figure will not hold at this volume** — treat it as a reason to build the flow, not a forecast. And the optional-discount half pulls directly against the reflexive-discounting warning in `marketing-offer-construction`: the first version should be a plain reminder carrying the guarantee and the transition-period reassurance, with a discount held back for the final message if at all.
+Two cautions. **The 30% figure will not hold at this volume** — treat it as a reason to keep and tune the flow, not a forecast of what it will recover. And the optional-discount half pulls directly against the reflexive-discounting warning in `marketing-offer-construction`: the first message should be a plain reminder carrying the guarantee and the transition-period reassurance, with a discount held back for the final message if at all.
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
 
