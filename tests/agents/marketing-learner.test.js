@@ -379,8 +379,12 @@ assert.throws(
 );
 
 // ── extractTactics ──────────────────────────────────────────────────────────
+// Extraction streams, for the same reason consolidation does: the budget it needs
+// is large enough that the SDK rejects a non-streaming call outright. The stub
+// therefore exposes stream().finalMessage(), not create() — a client offering only
+// create() would fail here, which is the point.
 function fakeClient(response) {
-  return { messages: { create: async () => response } };
+  return { messages: { stream: () => ({ finalMessage: async () => response }) } };
 }
 
 // max_tokens must throw and never return a partial payload
@@ -394,6 +398,42 @@ await assert.rejects(
   'truncated output throws rather than saving'
 );
 
+// A `chunk` must reach the prompt. Without this, chunking is a silent no-op:
+// every chunk re-sends the whole transcript, so N chunks cost N identical calls
+// and the max_tokens overflow chunking exists to prevent still happens.
+{
+  let sent = null;
+  const capturing = {
+    messages: {
+      stream: (req) => {
+        sent = req;
+        return {
+          finalMessage: async () => ({
+            stop_reason: 'end_turn',
+            content: [{ type: 'text', text: JSON.stringify(GOOD) }],
+          }),
+        };
+      },
+    },
+  };
+  const longVideo = { ...VIDEO, text: 'FULL TRANSCRIPT BODY that must not be sent verbatim.' };
+  await extractTactics({
+    video: longVideo,
+    inventory: [],
+    client: capturing,
+    chunk: { index: 1, total: 3, label: 'part 2 of 3', text: 'ONLY THIS EXCERPT' },
+  });
+  const prompt = sent.messages[0].content;
+  assert.match(prompt, /ONLY THIS EXCERPT/, 'chunk text reaches the prompt');
+  assert.ok(!prompt.includes('FULL TRANSCRIPT BODY'), 'full source text is not sent alongside the chunk');
+  assert.match(prompt, /EXCERPT of a longer work/, 'chunk framing tells the model it is seeing a part');
+
+  // A 4,500-word chunk of a BOOK yields far more tactics than 4,500 words of
+  // speech: $100M Money Models overflowed 16k on part 3 of 11 and refused to save.
+  // The budget is shared with adaptive thinking, so it has to clear both.
+  assert.ok(sent.max_tokens >= 32000, 'extraction budgets for a dense book chunk, not a sparse transcript');
+}
+
 // happy path, including fenced JSON
 {
   const out = await extractTactics({
@@ -405,6 +445,79 @@ await assert.rejects(
     }),
   });
   assert.equal(out.tactics.length, 2, 'parses JSON out of a fenced block');
+}
+
+// A transient overload must not kill an 11-chunk book run. Three separate runs of
+// $100M Money Models died on `overloaded_error` at parts 6 and 7, each time
+// discarding the whole remaining run.
+{
+  let calls = 0;
+  const flaky = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          if (calls === 1) {
+            const err = new Error('Overloaded');
+            err.status = 529;
+            throw err;
+          }
+          return { stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(GOOD) }] };
+        },
+      }),
+    },
+  };
+  const out = await extractTactics({
+    video: VIDEO,
+    inventory: [],
+    client: flaky,
+    retryOptions: { delayMs: 1 },
+  });
+  assert.equal(calls, 2, 'a 529 is retried rather than aborting the run');
+  assert.equal(out.tactics.length, 2, 'the retry’s payload is what gets returned');
+}
+
+// Retry wraps the TRANSPORT, not the guards. A truncated response is deterministic —
+// retrying it would burn four expensive calls and three minutes of backoff to arrive
+// at the same failure.
+{
+  let calls = 0;
+  const truncating = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          return { stop_reason: 'max_tokens', content: [] };
+        },
+      }),
+    },
+  };
+  await assert.rejects(
+    () => extractTactics({ video: VIDEO, inventory: [], client: truncating, retryOptions: { delayMs: 1 } }),
+    /max_tokens/,
+    'truncation still throws'
+  );
+  assert.equal(calls, 1, 'truncation is not retried — it is deterministic, not transient');
+}
+
+// An unparseable response must carry its raw text out for inspection. The caller
+// persists err.offendingPayload; without it a parse failure discards a response
+// that was already paid for and leaves nothing to diagnose — which is exactly what
+// happened on part 3 of $100M Offers.
+{
+  const err = await extractTactics({
+    video: { ...VIDEO, videoId: null, sourceType: 'file', sourceId: '100m-offers' },
+    inventory: [],
+    client: fakeClient({ stop_reason: 'refusal', content: [] }),
+    chunk: { index: 2, total: 11, label: 'part 3 of 11', text: 'excerpt' },
+  }).then(() => null, (e) => e);
+
+  assert.ok(err, 'an empty response throws');
+  assert.equal(err.offendingPayload?.stop_reason, 'refusal', 'stop_reason is carried out for inspection');
+  assert.equal(typeof err.offendingPayload?.rawText, 'string', 'the raw text is carried out');
+  // "for null" is what this said before, on every file-source failure.
+  assert.match(err.message, /100m-offers/, 'the error names the source, not null');
+  assert.match(err.message, /part 3 of 11/, 'the error names the chunk that failed');
 }
 
 // unparseable output

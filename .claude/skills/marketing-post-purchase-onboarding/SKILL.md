@@ -24,3 +24,35 @@ description: Use when building or fixing what a customer receives after they buy
 **Fit here (7/10):** Durable principle class, and one of the few tactics that reaches the Amazon customer — where ~$1,800/mo of revenue lives and where there is no email relationship at all, making the insert the only owned onboarding surface on that channel. Cheap for a solo operator (a printed card), directly aimed at the binding retention constraint. Held at 7 rather than higher because it carries real per-unit print cost at a $50.46 AOV and Amazon restricts what an insert may say (no review solicitation or off-platform redirection that violates policy).
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
+
+## Write the first-use instructions as a named multi-product routine — what to use, how much, when, in what order — and let the routine itself do the selling, telling rather than asking.
+
+**Why it works:** A written regimen makes each product a required step in a plan the buyer has already committed to, so the purchase decision collapses into 'follow the plan' rather than 'evaluate nine items', and the yes/no decision point disappears. Vague suggestions leave every item optional.
+
+**Evidence offered:** Anecdote: writing per-item dosing instructions on the order form led the customer to buy everything without being asked; he claims 30-day profits 'skyrocketed' after adopting it. No figures.
+
+**Fit here (8/10):** The artifact already has a home — the packaging insert and post-purchase email sequence. Turning first-use instructions into a named multi-SKU routine (morning: deodorant plus this bar; night: this oral care step, in a stated order and cadence) does double duty: it removes the misuse that causes transition-period churn, the binding constraint, and cross-sells the adjacent SKUs of a 12-SKU catalog. Costs a print run and some copy, no traffic or attribution needed. The additive claim over the instruction-card tactic above is that the sheet is the *upsell vehicle*, not just education. Held below 9 because the AOV lift is a suggestion on a page rather than a live human removing the option to decline. On Amazon, keep it to usage guidance only — the policy limits above still apply.
+
+*Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
+
+## Engineer a visible win as close to the purchase as possible, and name the short-term benefits that appear along the way — buyers purchase the long-term dream but only stay long enough to reach it because of the early wins.
+
+**Why it works:** The gap between paying and receiving the promised outcome is where people quit. An early, visible victory reinforces the purchase decision, builds trust, and creates momentum; the interim benefits are what carry the buyer through a long ramp.
+
+**Evidence offered:** Asserted from service-business experience, with interim benefits (energy, social contact, small visible changes) given as the examples. No figures.
+
+**Fit here (8/10):** Retention is the binding constraint, repeat customers are 45–52% of revenue, and the known churn point is the transition period — weeks where the long-term outcome has not arrived and the buyer concludes the product failed. This gives the post-purchase flow a job no other entry names: define a concrete win observable in the first 48 hours (no irritation, scent holds through the evening, one swipe is enough) and list interim benefits so week two reads as progress rather than failure. Zero cost, no attribution. Not 9 because a consumable cannot manufacture a win as vividly as a service — **it has to be an honest early observation, not a manufactured one**, or it sets up the exact disappointment it is meant to prevent.
+
+*Source: Alex Hormozi — "$100M Offers" (book, part 5 of 11)*
+
+## Give the insert a scannable destination that captures consent — the printed card is the only owned surface for a marketplace buyer, so route it to a page that asks for email/SMS opt-in, not just to a review form.
+
+**Why it works:** The buyer holds the product at the moment enthusiasm is highest and has no obvious path anywhere; a scannable code collapses the gap between 'I like this' and an action. And because they are already completing a form at a moment of goodwill, appending an opt-in costs no extra attention while converting a one-time purchaser into someone you can contact again.
+
+**Evidence offered:** Assertion that 'many customers use package inserts that have QR codes', plus a live demo of printable 4x6 inserts and an opt-in checkbox on the destination page. No response-rate or opt-in figures.
+
+**Fit here (7/10):** This is the highest-leverage version of the insert, because roughly two-thirds of revenue comes from Amazon buyers whose email addresses RSC does not own. A printed card routing to a consent-capturing page is the **only** mechanism available for moving those customers onto the owned email surface where win-back, reorder prompts and transition-period education live — every one of which targets the binding retention constraint. Zero recurring software cost is achievable with a static QR to a Shopify page.
+
+**The Amazon constraint decides the destination.** Amazon prohibits inserts that direct buyers to review or off-platform, so on the larger channel the QR must land on a genuine 'how to use this / how did we do' page, never a review solicitation. The capture also needs a real reason to opt in (see the lead-magnet rules in `marketing-offer-construction`) rather than a bare 'join our list'. Held at 7 because it carries per-unit print cost at a $50.46 AOV.
+
+*Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*

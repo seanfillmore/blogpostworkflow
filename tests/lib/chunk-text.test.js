@@ -25,11 +25,31 @@ const words = (n, w = 'w') => Array.from({ length: n }, () => w).join(' ');
   }
 }
 
-// ── a single paragraph over budget becomes its own oversized chunk ──────────
+// ── a single paragraph over budget is hard-split on word boundaries ─────────
+// Auto-generated YouTube transcripts arrive as one unbroken blob with no blank
+// lines and almost no punctuation, so "never split a paragraph" made chunking a
+// no-op for exactly the sources that need it: a 9,794-word transcript came back
+// as one chunk and overflowed the extraction token cap.
 {
   const out = chunkText(words(500, 'z'), { maxWords: 100, overlapWords: 0 });
-  assert.equal(out.length, 1, 'paragraphs are never split mid-paragraph, even over budget');
-  assert.equal(out[0].text.split(' ').length, 500);
+  assert.ok(out.length >= 5, `oversized paragraph splits, got ${out.length} chunks`);
+  for (const c of out) {
+    assert.ok(c.text.split(/\s+/).filter(Boolean).length <= 100, 'no chunk exceeds the budget');
+  }
+  const total = out.reduce((n, c) => n + c.text.split(/\s+/).filter(Boolean).length, 0);
+  assert.equal(total, 500, 'no words are dropped or duplicated when overlap is 0');
+}
+
+// ── hard-split still carries overlap between the pieces ─────────────────────
+{
+  const out = chunkText(words(300, 'z'), { maxWords: 100, overlapWords: 10 });
+  assert.ok(out.length >= 3, 'still splits with overlap on');
+  for (const c of out) {
+    assert.ok(
+      c.text.split(/\s+/).filter(Boolean).length <= 110,
+      'a chunk may carry the overlap tail on top of the budget, but no more',
+    );
+  }
 }
 
 // ── overlap: chunk N+1 opens with the tail of chunk N ───────────────────────

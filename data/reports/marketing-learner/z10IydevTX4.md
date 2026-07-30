@@ -1,0 +1,90 @@
+# How To Get More Store Reviews That Boost Shopify Sales
+
+**Creator:** Justin Cener  
+**Video:** https://www.youtube.com/watch?v=z10IydevTX4  
+**Published:** 2024-08-12  
+**Inferred era cues:** Published 2024-08. Names GetReviews.ai, Yotpo, Klaviyo, Zapier, Order Desk, TikTok Shop as a marketplace option, and states Shopify has no built-in review functionality (true after the Shopify Product Reviews app deprecation). No explicit years spoken.  
+
+A promotional walkthrough of GetReviews.ai, an app that builds branded 'review funnels' for Shopify and marketplace sellers. Cener asserts reviews are the highest-leverage trust and conversion lever, notes only ~1% of customers review unprompted, and then demos the app end-to-end: creating a survey, connecting a Shopify product by slug, enabling a marketplace, setting a minimum star rating and minimum review length, optionally gifting a free product per household, redirecting reviewers to Yotpo/Amazon review links, installing GA/Facebook pixel on the funnel, and generating printable package inserts with QR codes that route buyers into the funnel. The strategic content is thin — most of the runtime is affiliate-style software configuration, and two of the configuration steps (star-rating gating and incentivized reviews) are policy and FTC problems rather than tactics.
+
+Found 10 tactics: 3 adopted, 7 rejected.
+
+## Adopted
+
+### Use the review request flow as a data and opt-in capture point — collect the customer's email/SMS consent while they are submitting the review. — 7/10
+
+**Why it works:** The buyer is already filling in a form at a moment of goodwill, so appending an opt-in costs no additional attention and converts a one-time purchaser into a contactable subscriber.
+
+**Evidence:** Shown in the demo ('you see the ability to opt in over here as well'); mentions Klaviyo and SMS campaign integrations. Assertion only, no opt-in rates.
+
+**Fit:** Retention is the binding constraint and roughly two-thirds of revenue comes from Amazon buyers whose email addresses Real Skin Care does not own — so a printed insert routing to a page that captures consent is the only mechanism available to move those customers onto the owned email surface where win-back, reorder and transition-period education live. Zero cost beyond the insert print run, no ad budget, no attribution required. Not higher because Amazon restricts what an insert may say and the capture page must offer a genuine reason to opt in (per the lead-magnet rules in marketing-offer-construction) rather than a bare 'join our list'.
+
+**Target skill:** `marketing-post-purchase-onboarding` (edit)
+
+### Require both a star rating and written text, and enforce a minimum review length (e.g. 50 characters), so reviews look and read as real rather than as one-word responses. — 7/10
+
+**Why it works:** Short or rating-only reviews carry no persuasive content; a length floor forces the customer to state a situation and an outcome, which is what readers expect from a credible review and what makes the review usable as proof.
+
+**Evidence:** Demonstrated as a settings toggle with the reasoning 'you want them to look real... you don't want any short responses'. Assertion, no data.
+
+**Fit:** Durable principle class (what makes proof persuasive), so age is irrelevant even though the delivery is a 2024 app setting. This is directly additive to marketing-review-mining, which governs which quotes to display and explicitly notes that empty objection slots are 'a prompt for the post-purchase review request' — but nothing there says how to shape the request so it returns a usable sentence. With only dozens of reviews, every submission has to carry a before state and a mechanism, so the Shopify review request email should ask a specific question ('what had you tried before, and what happened in the first two weeks?') instead of a bare star prompt. Free, no traffic needed. Not higher because Real Skin Care cannot impose a character floor on Amazon reviews, which is the larger channel.
+
+**Target skill:** `marketing-review-mining` (edit)
+
+### Print a branded package insert carrying a QR code that routes the buyer straight into a review request flow, and treat the insert as the entry point to review collection. — 6/10
+
+**Why it works:** The buyer holds the product at the moment enthusiasm is highest, but has no obvious path to a review page; a scannable code collapses the gap between 'I like this' and a submitted review, so a share of buyers who would never navigate to a review link do so.
+
+**Evidence:** Assertion — 'many get reviews customers use package inserts that have QR codes' — plus a live demo of designing and downloading printable 4x6 inserts. No response-rate figures.
+
+**Fit:** The insert itself is already owned by marketing-post-purchase-onboarding, but nothing there names the QR code destination, and this is the one tactic in the video that reaches the ~$1,800/mo Amazon customer, where there is no email relationship at all and the printed card is the only owned surface. Zero recurring software cost is possible (a static QR to a Shopify page). Held at 6 because the QR destination must NOT be an Amazon review solicitation — Amazon prohibits inserts that direct buyers to review or off-platform — so on the larger channel this only works as a general 'how did we do / how to use this' landing page, and it carries real per-unit print cost at a $50.46 AOV.
+
+**Target skill:** `marketing-post-purchase-onboarding` (edit)
+
+## Rejected
+
+### Install a dedicated review-collection app and build custom review funnels, because only about 1% of customers leave a review unprompted. — 3/10
+
+**Rejected because:** Duplicates the existing review-solicitation tactic in marketing-conversion-friction-audit, and the only new material is a fast-decaying app configuration walkthrough.
+
+**Fit reasoning:** The underlying instruction — actively solicit reviews and display them everywhere — is already owned by marketing-conversion-friction-audit ('Actively collect reviews and testimonials... display them on every surface'), so adopting it again is pure duplication and would degrade skill triggering. The additive content is a specific SaaS configuration walkthrough, which is platform-mechanics class and roughly 18 months old, so the UI steps (product slug field, marketplace enable flow) are already suspect. A solo operator at ~$2,700/mo can get the same outcome from the Shopify post-purchase review request email already available at zero marginal cost.
+
+### Brand the review survey page with your logo, background image and colors so it visually matches the store the customer just bought from. — 3/10
+
+**Rejected because:** Cosmetic, near-duplicate of the brand-kit tactic already in marketing-email-design-production, and no stated mechanism connecting it to revenue.
+
+**Fit reasoning:** Durable principle class (a request page must be recognizably yours or it reads as spam), so age is not the issue — the issue is that it is a low-ceiling cosmetic step already covered in substance by the persisted brand kit in marketing-email-design-production, and it moves no revenue on its own. For a solo operator whose binding constraint is retention, this is the last 2% of the review-request problem, not the part worth encoding.
+
+### Distribute review requests through email and SMS campaigns as well as inserts, using the app's campaign feature. — 3/10
+
+**Rejected because:** No mechanism beyond adding channels, requires a paid app duplicating existing Shopify/Klaviyo capability, and restates review solicitation already covered elsewhere.
+
+**Fit reasoning:** Durable principle class but stated with no mechanism beyond 'send it in more places', and Shopify plus Klaviyo already send post-purchase review requests without a second app subscription against ~$2,700/mo revenue. The genuinely useful part — what the request should ask so it returns a mineable quote — is captured in the minimum-length tactic above; adding a channel-list tactic on top would restate the existing review-solicitation entry in marketing-conversion-friction-audit.
+
+### After a customer submits a review in your funnel, redirect them to a marketplace or third-party review link (Yotpo, Amazon, TikTok Shop) so the review lands on the platform that matters. — 2/10
+
+**Rejected because:** Inseparable from the gating flow it is demoed inside, and pushing owned-channel customers to review on the marketplace works against the weaker Shopify channel; the mechanic itself is fast-decaying app configuration.
+
+**Fit reasoning:** Platform-mechanics class and ~18 months old, so the specific integration behaviour is already suspect — but the deeper problem is that in this video the redirect sits downstream of the star-rating gate, which makes the whole flow a filtered-review pipeline that Amazon prohibits. Redirecting a Shopify buyer to review on Amazon also pushes an owned-channel customer onto the marketplace that takes the fees, which is backwards for a business whose Shopify side is the weaker channel at ~$875/mo.
+
+### Install Google Analytics and the Facebook pixel on the review survey pages and read the funnel drop-off report to optimize review-collection conversion. — 2/10
+
+**Rejected because:** Depends on traffic volume that does not exist; at ~54 orders/month a review-funnel drop-off report cannot produce a decision.
+
+**Fit reasoning:** At roughly 54 orders/month, a review funnel receives single-digit weekly sessions — there is no readable drop-off signal, so this is measurement theatre that consumes the solo operator's scarcest resource. It also sits inside the Tracking stage of the gated sequence but points that effort at a non-revenue funnel rather than at the store's own attribution, which is what the sequence actually gates spend on. Platform-mechanics class besides (pixel and GA install steps have changed since Aug 2024).
+
+### Set a minimum star rating in the funnel so that only customers who rate you highly are shown the link to post a public review, which 'force eliminates' negative reviews. — 1/10
+
+**Rejected because:** Review gating violates Amazon and FTC rules on the channel producing most of the revenue, and suppressing negative feedback removes the diagnostic signal the retention constraint depends on.
+
+**Fit reasoning:** Review gating is prohibited by Amazon, by Google's review policies, and is an FTC deception issue in the US — and Amazon is the ~$1,800/mo channel Real Skin Care cannot afford to have suspended. It also destroys the asset the business actually needs: marketing-review-mining depends on real objections and real before-states, and a filtered corpus removes exactly the negative signal that tells a solo operator which SKU or formula is causing the 18–22.5% repeat rate. Not a staleness problem; a legitimacy problem.
+
+### Incentivize reviews by giving reviewers a free product or gift, limited by fine print such as one free product per household. — 1/10
+
+**Rejected because:** Amazon TOS violation on the larger sales channel, requires FTC disclosure, burns real cash at $2,700/mo revenue, and duplicates a prohibition already noted in an existing skill.
+
+**Fit reasoning:** Incentivized reviews are a flat Amazon TOS violation on the channel producing ~$1,800/mo, and require FTC-mandated disclosure elsewhere — marketing-conversion-friction-audit already flags this exact prohibition, so it is both duplicative and unsafe. It also spends real COGS plus postage per review out of a ~$2,700/mo operation, and the resulting reviews are the least usable kind for mining because the reviewer's motive is the gift rather than the product.
+
+## Skills touched
+
+_None._

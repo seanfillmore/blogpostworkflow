@@ -104,3 +104,23 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 **Fit here (5/10):** Durable principle but its native home is ad-to-landing-page, which is gated behind the traffic stage. It transfers usefully to email subject lines and preview text, which is a live surface given retention is the binding constraint — hence a middling rather than high score.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
+## When displaying someone else's proof, keep the identifying detail that has nothing to do with the result — age, occupation, location — because the irrelevant detail is what makes the claim feel real.
+
+**Why it works:** Concrete, checkable-sounding detail signals a real person and a real event rather than a marketing construction. A specific figure is harder to dismiss than 'lost loads of fat', and biographical detail with no bearing on the outcome ('a fireman in California') signals an ordinary person rather than a paid spokesperson.
+
+**Evidence offered:** Line-by-line teardown of a testimonial explaining what each detail is doing, plus B2B testimonials that name both the company and the job title of the person quoted. Assertion with worked examples.
+
+**Fit here (7/10):** Additive to the specificity rule already in this skill in a specific direction: that rule governs numbers in **your own** claim copy, this governs attribution detail on **borrowed** proof. Directly executable by displaying existing Shopify and Amazon reviews with the reviewer's stated context ('switched off aluminium three years ago', 'works through 12-hour shifts') instead of a bare anonymous star quote. Zero cost, no traffic needed. Not higher because the numbers half overlaps the existing rule, and **you can only display detail the reviewer actually volunteered — inventing it is dishonest and an Amazon policy risk.**
+
+*Source: Exposure Ninja — "COMPLETE Revenue-increasing Conversion Rate Optimisation (CRO) Course" (rfdkMStaBW0)*
+
+## With no testimonials to show, describe the buyer's specific problem in extreme detail — accurate articulation of their situation earns credibility the way proof does.
+
+**Why it works:** Naming someone's situation precisely signals that you have seen it many times before, which is the same inference a testimonial produces. The prospect concludes 'you understand me' and grants credibility without third-party evidence.
+
+**Evidence offered:** Worked example of an accountancy firm positioning for early-stage startups seeking investment, plus a palm-reader analogy. Assertion, no data.
+
+**Fit here (7/10):** Fills a real gap: the rules here already cover calling the buyer out by name and attributing a claim to an authority, but not the idea that problem articulation itself **substitutes** for proof — which matters for a brand with dozens rather than thousands of reviews, and for any new SKU or scent with no reviews at all. The natural-deodorant switch has an unusually detailed, nameable problem sequence (the two-week transition, the mid-afternoon check, residue on a dark shirt), and `marketing-problem-solution-inventory` is where that sequence gets enumerated. Writing it out on the PDP and in Amazon bullets is free and needs no traffic.
+
+*Source: Exposure Ninja — "COMPLETE Revenue-increasing Conversion Rate Optimisation (CRO) Course" (rfdkMStaBW0)*

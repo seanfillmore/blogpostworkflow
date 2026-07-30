@@ -74,3 +74,33 @@ description: Use when a Shopify product page, Amazon listing, or checkout gets v
 **Fit here (6/10):** Durable CRO principle, zero cost, solo-executable. Scored mid because it sits in real tension with several adopted tactics that add page content (results timeline, guarantee, returns toggle, proof stack) — the useful form is 'order by decision-relevance and collapse the rest,' not 'delete,' and it overlaps conceptually with the one-job-per-asset and headline-hierarchy rules already in marketing-product-image-stack, though those govern single frames rather than page length.
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
+
+## An improvement the buyer never perceives creates no value — so spend on making the wait and the effort *feel* smaller, not only on actually shrinking them.
+
+**Why it works:** Value exists only in the prospect's mind, so a cheap perceptual intervention can beat an expensive operational one. The London Underground's dotted arrival map cost a few million and raised rider satisfaction more than making the trains faster would have for billions, because what hurt riders was not the wait but the uncertainty of the wait.
+
+**Evidence offered:** The London Underground dot-matrix map case, presented as the canonical illustration. Third-party example, no figures from the author's own accounts.
+
+**Fit here (8/10):** Unusually well matched. RSC cannot shorten the natural-deodorant transition period, but it can publish a dated week-by-week map of what happens and when — exactly the dot-matrix move, where the wait stays the same and the uncertainty disappears. Zero cost, solo-executable on the PDP, the Amazon A+ block, and post-purchase emails, and it attacks the 18–22.5% repeat rate. It is also the 'why' behind the results-timeline tactic and generalizes it: **any real reduction in effort or wait must be stated on the page, or it earns nothing.**
+
+*Source: Alex Hormozi — "$100M Offers" (book, part 5 of 11)*
+
+## Treat every subpage as an entry page for cold traffic — credibility, proof and the offer must repeat on the deep pages people actually land on, not sit once on the homepage or a reviews page nobody visits.
+
+**Why it works:** Organic and paid visitors land directly on deep pages with zero brand context, and nobody navigates down from the homepage, so any trust element living only on the homepage is invisible to most buyers. Proof only works where the decision is made. A buyer who never clicks through still absorbs credibility from seeing a badge or headline sitting next to the offer.
+
+**Evidence offered:** Live demonstration: a law firm's Trustpilot stars and award badges appear on the homepage but vanish on the commercial-contracts subpage that would actually rank in Google; plus service pages with client logos embedded inline, and the assertion that dedicated case-study pages are among the least-visited on any site.
+
+**Fit here (8/10):** An exact match for this business — an Amazon listing and a Shopify PDP are both pure cold-traffic entry points with no homepage visit preceding them, and Amazon is the larger channel at ~$1,800/mo. It also names the failure mode behind "a post with traffic and no buy path is a bug": the review quotes, third-party proof, transition-period guarantee and 'what this is' framing must each appear on **every** PDP, every commercial page, and in the A+ content, rather than once on the homepage or buried in a policy page. Zero cost, purely editorial, no traffic or attribution required. It sharpens the proof-placement rules elsewhere in this skill by naming *which* pages need the proof, which nothing previously owned.
+
+*Source: Exposure Ninja — "COMPLETE Revenue-increasing Conversion Rate Optimisation (CRO) Course" (rfdkMStaBW0)*
+
+## Inventory the credibility assets you actually have, then place at least one at every decision point — above the fold and immediately beside the button you expect people to click.
+
+**Why it works:** Nobody wants to be first to take an action, so everywhere you ask for trust you must supply a reason to trust at the moment of the ask. Credibility markers are an instant shortcut requiring no reading — but a marker the visitor has to hunt for is never counted, and proof only removes an objection if it is physically present when that objection fires.
+
+**Evidence offered:** A client example where NHS, Deloitte and BBC logos were buried on an About page and moved into the hero; an accident-helpline teardown (Trustpilot in the hero, trust score beside the form, testimonials underneath); an ecommerce PDP with an above-the-fold review widget, secure-checkout logos and a '500k sold' badge; and an email popup reading '42,000 other people get our tips'. Teardowns and assertions, no conversion figures.
+
+**Fit here (7/10):** Purely editorial and zero cost on the Shopify PDP and the Amazon A+ block: move the star rating and one verbatim quote adjacent to add-to-cart, put payment and secure-checkout badges above the fold, and add proof to the email capture popup. Held at 7 because **the volume-based variants do not transfer** — RSC has no enterprise logos or press coverage, and displaying a small review count or list size actively undercuts credibility. The marker set has to be chosen honestly from what exists (third-party testing, cruelty-free and made-in-USA certification, small-batch) rather than padded to imitate the examples. Amazon also controls star placement on the larger channel.
+
+*Source: Exposure Ninja — "COMPLETE Revenue-increasing Conversion Rate Optimisation (CRO) Course" (rfdkMStaBW0)*

@@ -125,6 +125,14 @@ export function parseArgs(argv) {
 
   if (out.claim || out.reason) throw new Error('--claim and --reason are only valid with --falsify.');
 
+  // Coerced for both modes, not just --file: the video path chunks too, and a string
+  // chunkWords would reach chunkText and compare as a string against word counts.
+  const chunkWords = Number(out.chunkWords);
+  if (!Number.isInteger(chunkWords) || chunkWords <= 0) {
+    throw new Error(`--chunk-words must be a positive integer, got "${out.chunkWords}".`);
+  }
+  out.chunkWords = chunkWords;
+
   // --file is a MODE, not a batch member. One source per run: a book and a video
   // have nothing to share in a single PR, and mixing them would make the report
   // and the branch name incoherent.
@@ -132,16 +140,14 @@ export function parseArgs(argv) {
     if (!out.author) throw new Error('--file requires --author "<name>" — it is the provenance on every claim.');
     if (!out.title) throw new Error('--file requires --title "<title>" — it is the provenance on every claim.');
     if (out.urls.length) throw new Error('--file cannot be combined with URLs — it is a separate mode. Run once per source.');
-    const n = Number(out.chunkWords);
-    if (!Number.isInteger(n) || n <= 0) throw new Error(`--chunk-words must be a positive integer, got "${out.chunkWords}".`);
-    out.chunkWords = n;
     return out;
   }
 
   for (const [prop, flag] of [['author', '--author'], ['title', '--title'], ['splitOn', '--split-on']]) {
     if (out[prop]) throw new Error(`${flag} is only valid with --file.`);
   }
-  if (out.chunkWords !== 4500) throw new Error('--chunk-words is only valid with --file.');
+  // --chunk-words is valid for videos too: long transcripts chunk on the same path.
+  // --split-on stays file-only — it splits on headings, which transcripts don't have.
 
   if (!out.urls.length) throw new Error('Provide at least one YouTube URL, or --file <path> for a local text source.');
   return out;
@@ -326,10 +332,12 @@ async function processVideo(item, { client, apiKey, args }) {
   const video = await loadVideo(item.url, item.publishedAt, { refetch: args.refetch, apiKey });
   if (item.warning) console.warn(`  ⚠ ${item.warning}`);
 
+  console.log(`  ${video.text.split(/\s+/).length.toLocaleString()} words`);
+
   const inventory = scanSkillInventory(SKILLS_DIR);
   let extraction;
   try {
-    extraction = await extractTactics({ video, inventory, client });
+    extraction = await extractFromSource({ source: video, inventory, args, client });
   } catch (err) {
     // Spec: a schema-validation failure must throw AND write the offending payload
     // to the corpus dir for inspection — otherwise the operator can't see what was
@@ -432,21 +440,29 @@ export function chunkCacheKey({ chunkText: body, inventoryFingerprint, constrain
     .slice(0, 16);
 }
 
-async function processFile(item, { client, args }) {
-  const source = loadTextFile(item.file, {
-    author: item.author, title: item.title, publishedAt: item.publishedAt,
-  });
-  if (item.warning) console.warn(`  ⚠ ${item.warning}`);
-  console.log(`  ${source.text.split(/\s+/).length.toLocaleString()} words`);
-
+/**
+ * Chunk -> extract -> consolidate. Shared by both source paths.
+ *
+ * Length, not source type, is what decides whether chunking is needed: a 70-minute
+ * video transcript is longer than a short book excerpt. Splitting only the file path
+ * left long videos going one-shot into a 16k output cap, where they truncated and the
+ * run aborted (pLhQOYMGa88, 9,794 words). A single chunk skips consolidation entirely
+ * so short sources keep the cheaper one-call behaviour.
+ */
+async function extractFromSource({ source, inventory, args, client }) {
   const chunks = chunkText(source.text, { maxWords: args.chunkWords, splitOn: args.splitOn });
   console.log(`  ${chunks.length} chunk${chunks.length === 1 ? '' : 's'} at ${args.chunkWords} words`);
 
-  const inventory = scanSkillInventory(SKILLS_DIR);
+  if (chunks.length === 1) {
+    return extractTactics({ video: source, inventory, client });
+  }
   const inventoryFingerprint = createHash('sha256')
     .update(inventory.map((s) => `${s.name} ${s.content}`).join(''))
     .digest('hex');
-  const constraintBlock = buildConstraintBlock({ sourceType: 'file' });
+  // Must track the source, not be hardcoded: buildExtractionPrompt embeds the block
+  // keyed off source.sourceType, so a hardcoded value desyncs the cache fingerprint
+  // from the prompt the chunk was actually extracted with.
+  const constraintBlock = buildConstraintBlock({ sourceType: source.sourceType });
 
   const corpusDir = join(CORPUS_DIR, source.sourceId);
   const cacheDir = join(corpusDir, 'chunks');
@@ -518,6 +534,18 @@ async function processFile(item, { client, args }) {
   }
   console.log(`  ${extraction.tactics.length} canonical tactics after consolidation`);
 
+  return extraction;
+}
+
+async function processFile(item, { client, args }) {
+  const source = loadTextFile(item.file, {
+    author: item.author, title: item.title, publishedAt: item.publishedAt,
+  });
+  if (item.warning) console.warn(`  ⚠ ${item.warning}`);
+  console.log(`  ${source.text.split(/\s+/).length.toLocaleString()} words`);
+
+  const inventory = scanSkillInventory(SKILLS_DIR);
+  const extraction = await extractFromSource({ source, inventory, args, client });
   return finishSource({ source, extraction, inventory, args, client });
 }
 
