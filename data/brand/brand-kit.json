@@ -15,12 +15,14 @@
     "sand": {
       "hex": "#EDE5D8",
       "role": "warm neutral — section backgrounds, blocks, the leaf flourish either side of headings",
-      "notes": "The brand's only warm tone. Does the work a plain white background cannot."
+      "notes": "The brand's only warm tone. Does the work a plain white background cannot.",
+      "conflict": "The sand LOGO is #ECE5D8; the palette says #EDE5D8. One digit apart and visually identical, but it is exactly the class of near-miss the email audit flags. Standardise on one."
     },
     "green": {
       "hex": "#C1DF6D",
       "role": "accent — the leaf mark, sub-headings, highlights",
-      "notes": "Used sparingly in the source document: one accent word per page plus the leaf shape. Treat as an accent, not a background."
+      "notes": "Used sparingly in the source document: one accent word per page plus the leaf shape. Treat as an accent, not a background.",
+      "conflict": "The green LOGO is #B0D9AC — a soft sage — not the palette's #C1DF6D yellow-green. These are materially different colours, not a rounding difference. Unresolved: either the palette gains the sage as the true brand green, or the logo is re-exported at #C1DF6D. Do not use both."
     },
     "grey": {
       "hex": "#EDEDED",
@@ -67,10 +69,52 @@
       "green",
       "grey"
     ],
-    "files_in_repo": false,
+    "files_in_repo": true,
     "expected_path": "data/brand/logo/ — see the README there for filenames",
     "hosting_note": "Klaviyo templates reference images by URL, so these must be uploaded to Klaviyo or the Shopify CDN and the URLs recorded here before any template can use them.",
-    "open_question": "The supplied green colorway reads as a softer sage than palette green #C1DF6D. Sample the file and reconcile before use."
+    "open_question": "The supplied green colorway reads as a softer sage than palette green #C1DF6D. Sample the file and reconcile before use.",
+    "path": "data/brand/logo/",
+    "files": {
+      "wordmark_png": [
+        "rsc-logo-black.png",
+        "rsc-logo-white.png",
+        "rsc-logo-sand.png",
+        "rsc-logo-green.png",
+        "rsc-logo-grey.png"
+      ],
+      "wordmark_svg": [
+        "rsc-logo-black.svg",
+        "rsc-logo-white.svg",
+        "rsc-logo-sand.svg",
+        "rsc-logo-green.svg",
+        "rsc-logo-grey.svg"
+      ],
+      "monogram_png": [
+        "monogram_rsc_black.png",
+        "monogram_rsc_white.png",
+        "monogram_rsc_sand.png",
+        "monogram_rsc_green.png",
+        "monogram_rsc_grey.png"
+      ],
+      "monogram_svg": [
+        "monogram_rsc_black.svg",
+        "monogram_rsc_white.svg",
+        "monogram_rsc_sand.svg",
+        "monogram_rsc_green.svg",
+        "monogram_rsc_grey.svg"
+      ]
+    },
+    "colorway_hexes_as_supplied": {
+      "black": "no fill declared — relies on the SVG default (black). Inlining into a context that sets `fill` will recolour it.",
+      "white": "#FFFFFF",
+      "sand": "#ECE5D8",
+      "green": "#B0D9AC",
+      "grey": "#EDEDED"
+    },
+    "cleanup_applied": [
+      "Every supplied SVG wrapped its artwork in <a xlink:href=\"49.7243137254902\"> — an Illustrator export artifact. 55 anchors across 10 files. Inlined in HTML or email that makes the logo a link to a nonsense relative URL, i.e. a guaranteed 404. Stripped; artwork verified intact afterwards by alpha-channel variance.",
+      "rsc-logo.grey.svg renamed to rsc-logo-grey.svg (dot -> dash, matching every other file)."
+    ]
   },
   "design_elements": [
     "thin single hairline rule (black, hairline weight)",
@@ -99,11 +143,12 @@
     "body_text": "Outfit (falling back to Helvetica/Arial), #000000"
   },
   "gaps": [
-    "Logo files not yet in the repo — drop point prepared at data/brand/logo/ with expected filenames.",
-    "Logo files are not yet hosted at a URL Klaviyo can reference.",
-    "Green logo colorway may not equal palette green #C1DF6D — confirm by sampling the file.",
+    "COLOUR CONFLICT — logo green #B0D9AC vs palette green #C1DF6D. Materially different. Needs a decision before any template uses green.",
+    "COLOUR CONFLICT — logo sand #ECE5D8 vs palette sand #EDE5D8. Imperceptible but should be standardised.",
+    "Logo files are in the repo but NOT hosted. Klaviyo references images by URL, so they need uploading to Klaviyo or the Shopify CDN and the URLs recording here before a template can use them.",
+    "The black SVGs declare no fill and rely on the SVG default. Safe standalone; recolours if inlined somewhere that sets `fill`.",
     "No transparent-background product images catalogued, which marketing-email-design-production names as a required brand-kit input.",
     "No layout exemplars; competitor reference emails must substitute per that skill's own fit note.",
-    "The PDF specifies Mont but the live site uses Cabin/Outfit. Worth deciding deliberately whether the site should move to Mont or the identity document should be updated to match the site."
+    "Mont (identity PDF) vs Cabin/Outfit (live site) — email follows the site; worth resolving deliberately."
   ]
 }
