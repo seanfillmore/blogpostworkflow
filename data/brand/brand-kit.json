@@ -22,13 +22,13 @@
       "hex": "#C1DF6D",
       "role": "accent — the leaf mark, sub-headings, highlights",
       "notes": "Used sparingly in the source document: one accent word per page plus the leaf shape. Treat as an accent, not a background.",
-      "conflict": "FOUR values are in circulation for the brand green. Illustrator source (stated by the owner 2026-07-30): #AEDEAC. PNG export: #AFD9AC. SVG export: #B0D9AC. Brand kit PDF palette: #C1DF6D. The first three are export drift off the same colour and are visually identical; #C1DF6D is a different colour entirely (yellow-green vs sage). Treat #AEDEAC as the intended green. Unresolved: whether the palette's #C1DF6D is superseded or is a second, separate brand green.",
       "intended_hex": "#AEDEAC",
       "as_exported": {
         "png": "#AFD9AC",
         "svg": "#B0D9AC",
         "pdf_palette": "#C1DF6D"
-      }
+      },
+      "decision": "Intended green is #AEDEAC (Illustrator source). The PNG (#AFD9AC) and SVG (#B0D9AC) carry export drift; the owner has accepted that drift as-is — do NOT re-export or re-upload for it. Still open: whether the PDF palette's #C1DF6D is superseded or is a second, separate brand green."
     },
     "grey": {
       "hex": "#EDEDED",
@@ -160,15 +160,21 @@
       "#C1DF6D used as a large background fill",
       "more than one accent colour in a single email"
     ],
-    "body_text": "Outfit (falling back to Helvetica/Arial), #000000"
+    "body_text": "Outfit (falling back to Helvetica/Arial), #000000",
+    "dark_mode": {
+      "problem": "Apple Mail, Outlook and Gmail invert light backgrounds in dark mode. A black logo on a white block then sits on a dark background — it either disappears or gets boxed in an auto-generated white patch. None of the 22 live emails handle this today.",
+      "rule": "Serve the black wordmark by default and swap to the white colorway under prefers-color-scheme: dark. Both are hosted, so this is a CSS block, not new artwork.",
+      "snippet": "<style>@media (prefers-color-scheme: dark){ .logo-light{display:none!important} .logo-dark{display:block!important} }</style>",
+      "light_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-black.png?v=1785417244",
+      "dark_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-white.png?v=1785417298",
+      "caveat": "Gmail ignores prefers-color-scheme and applies its own inversion, which it will not always apply to images. The sand block (#EDE5D8) is the safer default background for any section carrying the logo — it survives inversion better than pure white and keeps the black mark legible."
+    }
   },
   "gaps": [
-    "COLOUR DECISION — the intended green is #AEDEAC, but the brand kit PDF palette says #C1DF6D, a different colour. Decide whether #C1DF6D is superseded or a second brand green. Until then no template should use green.",
-    "EXPORT DRIFT — the supplied PNG (#AFD9AC) and SVG (#B0D9AC) both differ from the #AEDEAC source. Imperceptible, but the files should be re-exported from Illustrator at the true value so the repo stops carrying three greens. The uploaded CDN copies carry the drifted value.",
-    "COLOUR CONFLICT — logo sand #ECE5D8 vs palette sand #EDE5D8. Imperceptible; standardise.",
-    "The black SVGs declare no fill and rely on the SVG default. Safe standalone; recolours if inlined somewhere that sets `fill`.",
-    "No transparent-background product images catalogued, which marketing-email-design-production names as a required brand-kit input.",
-    "No layout exemplars; competitor reference emails must substitute per that skill's own fit note.",
-    "Mont (identity PDF) vs Cabin/Outfit (live site) — email follows the site; worth resolving deliberately."
+    "OPEN DECISION — the intended green is #AEDEAC but the brand kit PDF palette says #C1DF6D, a materially different colour. Until this is answered no template should use green, and palette_hexes stays untouched because changing it changes what the email audit flags.",
+    "No transparent-background product images catalogued. Not blocking the eight live FLOWS, which pull product imagery dynamically through Klaviyo's Shopify blocks — it blocks designed promo campaigns only.",
+    "No layout exemplars; per marketing-email-design-production's own fit note, competitor reference emails substitute.",
+    "Sand is #ECE5D8 in the logo files vs #EDE5D8 in the palette. Imperceptible and not worth acting on alone; fold it in if the files are ever re-exported for another reason.",
+    "Mont (identity PDF) vs Cabin/Outfit (live site). Resolved for email — the site wins — but the two documents still disagree."
   ]
 }
