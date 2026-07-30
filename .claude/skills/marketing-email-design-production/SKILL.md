@@ -56,15 +56,15 @@ description: Use when you have to actually build the email asset rather than dec
 
 *Source: Jordan O'Connor — "how to design klaviyo emails with claude design (full playbook)" (JTwdMs_rqxA)*
 
-## Codify universal rules that apply to every email regardless of campaign: at least three CTAs, images doing most of the selling, short copy instead of paragraphs, mobile-first layout, and exactly one offer or ask per email.
+## Pick the email's format from its job before applying any layout rule: designed and image-led for promotional campaigns, plain-text and link-light for education, onboarding and reorder nudges. Mobile-first always. One ask per objective, with at most two destinations.
 
-**Why it works:** Rules that hold across all sends are where the ROI comes from rather than the individual design — three CTAs catch readers at different scroll depths, mobile-first matches where the email is actually opened, and a single ask prevents the click from being split across competing destinations.
+**Why it works:** "Universal" email rules are really promo-campaign rules. Inbox providers classify heavily designed, link-dense, promotion-worded mail as promotional, so the same styling that helps a sale announcement stand out pushes an education email out of the primary tab — where a transition-period explanation has to land to do its job. Within a send, the ask is what converts, so the constraint that matters is one *objective*, not one *link*: a second link earns its place only when it serves a different reader stage (keep-reading vs buy-now) with a clear reason to pick one.
 
-**Evidence offered:** Practitioner assertion from agency practice; no open, click, or revenue figures given.
+**Evidence offered:** Two practitioners in direct conflict. O'Connor's agency rules were "at least three CTAs, images doing most of the selling, exactly one offer or ask per email" — internally contradictory on link count, and asserted from agency practice with no figures. Hormozi reports the opposite for his own sends ("if we put more money stuff in an email it tends to get a higher percentage in the promo tab") and pushes back explicitly on one-link orthodoxy, also without controlled data. Neither ran a test; the reconciliation below is ours, not either source's.
 
-**Fit here (6/10):** Mostly durable-principle class (one ask per asset, mobile-first, scroll-depth CTAs), so age is not the limiter. Free, solo-executable, and it applies to the live email surface that carries the 18–22.5% repeat rate. Capped at 6 for two reasons: the 'one offer per email' rule restates the one-job-per-asset rule already in marketing-product-image-stack, and 'let images do the selling / less copy' pulls directly against the post-purchase education emails that actually attack churn here, where the explanation of the transition period is the point. Adopt as a checklist with the education-email exception written in.
+**Fit here (7/10):** The split is what makes both usable. Real Skin Care's highest-value email work is a small set of post-purchase and reorder flows whose whole point is explaining the natural-deodorant transition period — exactly the content that dies as an image-led promo layout, and exactly where the 18–22.5% repeat rate is decided. Promo campaigns for a launch or a bundle still want the designed treatment. Raised above the original 6 because resolving the contradiction is worth more than either rule alone; not higher because link-level performance is unreadable at ~54 orders/month, so this is a default to build on, not a tested result.
 
-*Source: Jordan O'Connor — "how to design klaviyo emails with claude design (full playbook)" (JTwdMs_rqxA)*
+*Sources: Jordan O'Connor — "how to design klaviyo emails with claude design (full playbook)" (JTwdMs_rqxA); Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
 
 ## When the first generated version is close, name one to three specific issues and fix them with the tool's direct edit function rather than re-prompting, because each new prompt burns usage and tokens.
 
@@ -85,3 +85,33 @@ description: Use when you have to actually build the email asset rather than dec
 **Fit here (6/10):** Durable principle class (tool-selection judgment), age irrelevant. Genuinely load-bearing here because Real Skin Care's highest-value email work is a small set of repeating post-purchase and reorder flows, which is precisely the templated case the creator says not to generate — so the honest read is: use generation once to build each flow template, then stop and reuse. It also flags the real risk that a generator alters product imagery, which matters when the same 12 SKUs must look identical across Shopify and Amazon.
 
 *Source: Jordan O'Connor — "how to design klaviyo emails with claude design (full playbook)" (JTwdMs_rqxA)*
+
+## Never ship an email with a defaulted preheader — write the preview text deliberately, pulling the most valuable or curiosity-inducing nugget forward.
+
+**Why it works:** The preview line is the second thing a reader sees after the subject and functions like a video thumbnail: it either extends the subject's promise or wastes the slot. Left to the client default it renders whatever the email opens with — "Hey John," a view-in-browser link, an unsubscribe preamble — which spends the reader's only pre-open signal on filler.
+
+**Evidence offered:** Claims a 24% increase on his own sends and cites reporting that one in four recipients read the preview before deciding to open; notes the edit takes ten seconds. No underlying data shown, and the 24% figure is unattributed.
+
+**Fit here (8/10):** The highest-value item in its source video for this business and a genuine gap — the copy-angles skill mentions preview text only in passing under curiosity loops, and nothing owns the never-default rule. Free, one field, no traffic or attribution needed, and it applies to every campaign on the surface where retention is decided. **Cost caveat:** ten seconds is right for a *campaign*, but a Klaviyo flow's email content cannot be edited through the API (405/404) — retrofitting the live welcome, post-purchase and reorder flows means replacing each flow against a corrected library template, so budget that as flow rebuilds rather than a field edit.
+
+*Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
+
+## Open with a self-contained payoff and close with a PS: reward the reader in the first glance for opening, and put the ask or a final reward in the postscript.
+
+**Why it works:** Two ends of the same reading pattern. Attention is top-and-bottom heavy, so the opening line and the PS get disproportionate reads while the middle is skimmed. Front-loading something usable — a quote, a one-line insight, the answer itself — reinforces the act of opening, which is what makes the *next* send get opened; the PS then catches the skimmer who never read the body. Behaviour recurs because it was rewarded afterward, so a send that delivers nothing usable quietly costs future opens.
+
+**Evidence offered:** Asserted as rules ("not having a PS statement is PS stupid"), demonstrated in teardowns of two of his own sends. No open-rate or click data.
+
+**Fit here (7/10):** Durable reading-behaviour principle, age irrelevant, free. It also fits the content this catalog actually needs: the transition-period, storage and oral-care usage emails are naturally "one usable thing per send," and the PS is a concrete addition to the skeleton above, which ended at a footer CTA — not the same as an ask carried in body copy. Not higher because the effect surfaces as open rate on a small list, which is both noisy and, post-ATT, unreliable to read.
+
+*Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
+
+## Bridge the CTA to what the reader just read — never paste a generic reusable ask across assets.
+
+**Why it works:** The CTA is the part of the asset that does the converting, so a jarring topic switch at the ask is where the click is lost. A bridge sentence that follows from the content the reader just consumed makes the destination feel like the next step rather than an unrelated pitch.
+
+**Evidence offered:** Assertion plus his own examples of matching each video's CTA to its audience, and a self-critique of an email that pitched a workshop after a testimonial lesson — though he notes that email "still did really well," so there is no clean comparison.
+
+**Fit here (6/10):** Concretely: a transition-period education email bridges to the specific deodorant reorder or refill bundle, not a generic "shop all" — which matters because a page that earns attention with no matching buy path is the exact failure the Prime Directive calls a bug. Held at 6 because the skill already enforces one ask and its placement; the additive claim is narrower (the bridge sentence and the destination must follow the email's subject matter), and nothing here is measurable at ~54 orders/month.
+
+*Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*

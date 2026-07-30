@@ -46,3 +46,13 @@ description: Use when sourcing customer proof and deciding which of it to show �
 **Two things the source recommends alongside this that must never be done here.** Do **not** set a minimum star rating so only happy customers are shown the review link: review gating is an FTC deception issue, breaches Amazon and Google policy, risks the ~$1,800/mo channel, and strips out exactly the negative before-states the selection rules above depend on. Do **not** incentivize reviews with a free product or gift: a flat Amazon TOS violation, FTC-disclosure-bound elsewhere, and it buys the least usable reviews at real COGS.
 
 *Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*
+
+## Elicit pain-based hooks: ask "what was your worst moment" instead of "what was life like before," then pick the testimonials that open on the pain rather than on the result.
+
+**Why it works:** An open-ended "before" question produces a meandering story with no extractable opening line; asking for a single worst moment forces one specific, visceral scene — and that scene is the hook. A testimonial that opens on the customer's pain lets the reader identify *before* any claim is made, while one that opens on the result reads as a brag and gets skipped. Specificity is what makes it land: a concrete moment beats a vague "it was hard."
+
+**Evidence offered:** He reviewed roughly 2,500 testimonials and reports the top four hooks of all time were all pain-based specific moments, two of them independently landing on the same detail. Volume is real but the selection is his own judgement — no conversion or spend figures attached.
+
+**Fit here (7/10):** The strongest revenue link in its source video, because the output feeds the surfaces that actually convert: PDP proof blocks, Amazon A+ modules, and email subject lines. Natural deodorant has an unusually clean worst moment — "I kept my arms down in a meeting," "my shirt was ruined by noon" — so the elicitation question has an obvious form here. Additive to the extraction tactic above, which covers how to mine quotes but not which question produces good ones or which to choose. **Channel constraint:** Amazon prohibits directed review solicitation, so only the Shopify-side request (Judge.me follow-up, post-purchase email) is safe to run; Amazon reviews stay read-only input.
+
+*Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
