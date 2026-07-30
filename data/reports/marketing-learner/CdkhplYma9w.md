@@ -1,0 +1,100 @@
+# IntelliJAMS EP 066: Building an AI Brain for Your Ecommerce Growth Experiments
+
+**Creator:** Intelligems  
+**Video:** https://www.youtube.com/watch?v=CdkhplYma9w  
+**Published:** 2026-07-20  
+**Inferred era cues:** Published 2026-07-20. Mentions Claude Code, the Claude Chrome extension, OpenAI Codex, MCP servers (Shopify, Meta, Intelligems, CX platform), Triple Whale's 'Moby' chat, Rebuy as a Shopify-native app, and 'we're almost in Q3, Q4 is 90–100 days away'. Explicit remarks that 'two months back things were so different' — very fresh, no staleness discount warranted.  
+
+A 20-minute podcast interview with Annie, director of growth at Hume Health (a ~$220–250 AOV connected-hardware brand), covering two things: (1) a specific post-purchase win — their Rebuy upsell flow had gone flat because it only ever offered another expensive product, so they added a cheap ~$30–40 lifetime-warranty downsell for people who declined the upsell, which they claim 'skyrocketed' take rate and took ~90 minutes to build with Claude Code plus the Claude Chrome extension; and (2) a broader operating model — assembling an 'AI brain' that ingests internal signals (reviews, ad comments, post-purchase survey answers, FAQs, support tickets) and external ones (competitor reviews, competitor ads, Reddit/organic chatter), extracts recurring objection themes, feeds a priority-scoring calculator for the next test, and pushes conclusions to the paid/CRM/CRO teams via Slack alerts so learnings cross-pollinate. Most of the second half is tooling and multi-team workflow.
+
+Found 11 tactics: 4 adopted, 7 rejected.
+
+## Adopted
+
+### Read the public complaints — competitor reviews on Amazon and Trustpilot, ad comments, Reddit, what people are 'trashing and trolling you about' — because that is where honest objections live, then write a better spin on each one. — 7/10
+
+**Why it works:** People are candid in public forums and hostile comment threads in a way they never are in a survey or a review of your own product, so those sources surface the disqualifying beliefs a seller would never think to name — and each named belief becomes something the page has to answer.
+
+**Evidence:** Assertion: 'that's the magic of social media, Reddit and all of these — people are very very honest and you can get some genuine feedback there.' Presented as the external half of the AI brain, no worked output.
+
+**Fit:** Durable principle class, zero cost, no traffic or scale needed, and it fills a genuine gap: marketing-problem-solution-inventory currently instructs you to walk the buyer's before/during/after sequence from imagination, and never names a source for the objections. Competitor one-star natural-deodorant reviews on Amazon and r/ZeroWaste-style threads are a free, high-density supply of the exact disqualifiers that block first purchase and reorder here — 'burned my armpits', 'quit by noon', 'I gave up during the transition' — and the competitors are the same ones already tracked in marketing-competitor-messaging-teardown. Not higher because it produces raw material rather than revenue, and the reversed 'better spin' must be paired with the existing specificity rule so it does not drift into unsupportable body-care claims.
+
+**Target skill:** `marketing-problem-solution-inventory` (edit)
+
+### When a buyer declines the post-purchase upsell, don't end the flow — immediately present a much cheaper, no-brainer add-on (theirs was a $30–40 lifetime warranty against a $200+ order) instead of leaving the decline unmonetized. — 6/10
+
+**Why it works:** An upsell priced near the order value asks the buyer to make a second large decision minutes after the first, so take rate is structurally low. A price point far below what they just committed reads as trivial next to the amount already spent, so the decision is easy — and the decline branch, which was previously a leaky bucket producing zero revenue, starts producing attach revenue at zero acquisition cost.
+
+**Evidence:** Single-brand anecdote: their Rebuy post-purchase upsell had been 'hovering quite flat'; adding the warranty downsell 'skyrocketed from here to there', described as 'a marketer's dream' and 'quite ASMR'. No take-rate, AOV-lift, or revenue figures given.
+
+**Fit:** Durable offer-construction logic (slow decay; the app named is current anyway, so age is not the limiter). Additive over the existing four-offer-types audit in marketing-upsell-offer-design, which names 'downsell' as a category but never specifies the trigger (an explicit decline) or the price ratio (roughly 15% of order value). Held at 6 because the price arithmetic does not transfer: at a $50.46 AOV, the proportional downsell is a $5–10 item — a lip balm, a travel size, a single stick when the multipack is declined — not a $30–40 add-on, and a consumable has no warranty analogue. It also lives only on the ~$875/mo Shopify side (Amazon controls that flow entirely on the larger ~$1,800/mo channel), needs the low-cost post-purchase app already flagged in that skill, and at ~54 orders/month the take rate will take months to read, so it is a build-it-and-move-on item rather than a test.
+
+**Target skill:** `marketing-upsell-offer-design` (edit)
+
+### Capture the add-on inside the purchase session, because the same buyer offered the identical or even cheaper deal by email later will not convert the same way — you have a narrow window while they are 'in that journey'. — 6/10
+
+**Why it works:** Purchase intent and trust peak in the minutes after checkout and decay fast; a later email arrives when the buyer is no longer in a buying frame, so the offer has to re-earn attention and re-cross the decision threshold from scratch.
+
+**Evidence:** Assertion with a first-person illustration ('it's Monday 7–8pm, I made the purchase — emailing me even for a cheaper deal, I might not convert the same way'). No held-out comparison of in-session vs. emailed offers.
+
+**Fit:** Durable buyer-psychology principle, age irrelevant, and free to act on. Its real value here is that it reconciles a tension inside the existing skill: the wrong-thing/wrong-time/wrong-way rule currently recommends deferring some cross-sells to a post-purchase email 2–3 weeks in, which is right for anything the buyer must first experience (residue, transition period) but wrong for low-consideration 'more of the same' items — a second stick, a lip balm, a travel size — which have to be taken in-session or not at all. Capped at 6 because it only applies to the ~$875/mo Shopify side, it cannot be verified at ~54 orders/month, and the surrounding framing ('post-purchase is the lowest-hanging fruit, we test thousands of creatives but not this') presumes an experimentation throughput that does not exist here.
+
+**Target skill:** `marketing-upsell-offer-design` (edit)
+
+### Consolidate your own recurring objection sources — reviews, post-purchase survey answers, FAQs, and support tickets — into one place and extract the most common recurring themes, then let those themes decide what to change next. — 6/10
+
+**Why it works:** Any single source is partial and anecdotal; the same objection appearing across reviews, tickets, and survey answers is a real pattern rather than a loud outlier, so ranking themes by recurrence tells you which page, offer, or email change is worth making instead of guessing.
+
+**Evidence:** Described as the internal half of their 'Hume brain'; the worked example is that price is their most recurring objection theme across ad comments. Assertion, no data on what the themes changed.
+
+**Fit:** Durable research practice, and it does not depend on scale — a solo operator already reads every support email and can export Shopify and Amazon reviews for free, and this is exactly the raw material the CRO and Offer/AOV stages consume. Additive to marketing-review-mining in a narrow way: that skill covers extracting language from reviews, and nothing currently names support tickets or post-purchase survey answers as inputs, which is where the transition-period churn that binds this business actually gets voiced. Held at 6 because the MCP-wired, always-on version requires tooling and a data volume RSC does not have — only the manual 'dump everything into one file and ask for recurring themes' version transfers, and it is an input-gathering habit rather than a revenue mechanism.
+
+**Target skill:** `marketing-review-mining` (edit)
+
+## Rejected
+
+### Get a 'master prompt' out of the model that already holds your context (ChatGPT), then hand that prompt to the executor (Claude Code plus the Chrome extension) so it can audit your existing app workflow and find the gap. — 3/10
+
+**Rejected because:** Platform-mechanics class with fast decay, and it is a tool-chaining workflow rather than a testable marketing mechanism — nothing about it changes what a page, offer, or email says.
+
+**Fit reasoning:** Platform-mechanics class — a specific chain of two named tools plus a browser extension, exactly the layer the decay table says to treat with suspicion, and although the video is fresh this coupling will not survive a year. More importantly it is a tooling workflow with no revenue mechanism: it does not tell you what to change on a page, in an offer, or in a flow. Real Skin Care's constraint is retention, not build speed on a Rebuy configuration screen.
+
+### Build a priority-scoring calculator that takes the recurring themes per product and outputs an ICE-style score so you know which experiment to run next. — 3/10
+
+**Rejected because:** Assumes measurable experiment throughput that ~54 orders/month cannot support, and the sequencing discipline underneath it duplicates the existing staging rule in marketing-upsell-offer-design.
+
+**Fit reasoning:** Depends on scale that does not exist here. Prioritising a test queue presupposes a test queue: at ~54 orders/month with attribution not yet fixed, RSC cannot read the result of any single change, so a scoring engine ranks experiments it can never conclude. The useful residue — build one thing at a time and let it stabilise before adding the next — is already owned by the four-offer-types staging discipline in marketing-upsell-offer-design.
+
+### When an angle wins in paid (e.g. comparison), cross-pollinate it immediately into CRM, dedicated comparison landing pages, and PDP modules using the same hooks. — 3/10
+
+**Rejected because:** Presupposes a paid account and working attribution to identify the winner, and the transferable principle duplicates the angle-re-entry entry in marketing-awareness-level-messaging.
+
+**Fit reasoning:** Two problems. First, the validation step requires a running ad account with working attribution — RSC is at the Tracking stage of the gated sequence and has no meaningful media spend, so there is no 'winner' to propagate. Second, the durable half (hold the proven angle fixed, re-enter it on another surface at a different awareness level) is already covered almost verbatim by marketing-awareness-level-messaging, and the comparison-format-on-PDP half is covered by the us-vs-them entry in marketing-product-image-stack.
+
+### Reactivating and monetising customers you already won is far cheaper than acquiring 10x new ones, so squeeze the thank-you-page and post-purchase window hard. — 3/10
+
+**Rejected because:** Restates the operating premise already covered by marketing-retention-offers and marketing-post-purchase-onboarding, with no mechanism of its own.
+
+**Fit reasoning:** Durable and true, but it is the framing premise this business already operates on — retention is explicitly named as the binding constraint, and marketing-retention-offers plus marketing-post-purchase-onboarding already own win-back, refill cadence, and post-purchase monetisation. As stated here it is a rationale with no mechanism attached, and adding it would dilute the descriptions of two skills that already trigger on this.
+
+### Don't try to reinvent the wheel or over-build internal tooling — take a transcript or a rough goal, get an MVP app scoped, ship the minimum version, then iterate it once the inputs look good. — 2/10
+
+**Rejected because:** Tooling/build advice with no stated marketing mechanism — nothing actionable or testable on a page, offer, listing, or email flow.
+
+**Fit reasoning:** General software-build advice with no marketing mechanism — it does not name a surface, an offer, or a message to change, so it is not testable against revenue. For a solo operator whose binding constraint is retention, building any internal app at all is the wrong use of the only available labour hour.
+
+### Accept that ~95% of tests fail and focus on understanding why the 5% worked so you can iterate on it across functions; react weekly to what the data says instead of maintaining a four-month roadmap ('test the plan, don't plan the tests'). — 2/10
+
+**Rejected because:** Motivational framing with no mechanism, and its test-cadence premise depends on experiment volume and working attribution that do not exist at this scale.
+
+**Fit reasoning:** Motivational framing with no stated mechanism — it names no surface, artifact, or measurable change. It also presumes a win-rate denominator: at ~54 orders/month with attribution unresolved, RSC cannot classify a change as one of the 95% or the 5%, so 'iterate on the winners weekly' is not executable here.
+
+### Wire automated Slack alerts that fire when a test concludes or when an ad crosses a spend/ROAS/CAC threshold, so media buyers and creative strategists get the feedback loop without waiting on a person. — 1/10
+
+**Rejected because:** Requires a team, an active ad account with material spend, and working attribution — none of which exist here.
+
+**Fit reasoning:** Rejected on three of the stated criteria at once: it requires a team to notify (media buyers, creative strategists) where there is a solo operator, it requires meaningful ad spend crossing ROAS thresholds, and it requires working attribution — the first gate in the hard sequence, which has not been passed.
+
+## Skills touched
+
+_None._

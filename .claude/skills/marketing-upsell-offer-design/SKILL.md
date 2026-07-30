@@ -64,3 +64,15 @@ description: Use when designing the second ask in a purchase path rather than th
 **Fit here (7/10):** A coverage checklist a solo operator can run in an hour at zero cost, and it maps cleanly onto a 12-SKU consumable catalog: attraction = the low-COGS lip balm or travel size, upsell = multi-unit or mixed-SKU pack above the $50.46 AOV, downsell = single unit when the bundle is declined, continuity = a refill cadence. The staging half matches the gated Tracking → CRO → Offer/AOV → Traffic sequence directly — the failure mode here is stacking a bundle, a subscription, a popup incentive and a post-purchase upsell in the same month and learning nothing at ~54 orders/month. Not higher because it is a taxonomy and a discipline, not a revenue mechanism: it tells you what is missing, not what to build.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 2 of 11)*
+
+## Don't end the flow on a declined upsell — trigger a much cheaper add-on immediately, priced at a fraction of what they just spent.
+
+**Why it works:** An upsell priced near the order value asks the buyer to make a second large decision minutes after the first, so take rate is structurally low. A price point far below what they just committed reads as trivial next to the amount already spent, so the decision is easy — and the decline branch, previously producing nothing, starts producing attach revenue at zero acquisition cost.
+
+**Evidence offered:** Single-brand anecdote from a ~$220–250 AOV hardware brand whose post-purchase upsell had been 'hovering quite flat'; adding a $30–40 lifetime-warranty downsell 'skyrocketed' take rate. No take-rate, AOV-lift or revenue figures given.
+
+**Fit here (6/10):** Additive over the four-offer-types audit above, which names 'downsell' as a category but never specifies the **trigger** (an explicit decline, not a generic second offer) or the **price ratio** (roughly 15% of order value). Directly actionable because the post-purchase upsell surface already exists here.
+
+Held at 6 because **the price arithmetic does not transfer.** At a $50.46 AOV the proportional downsell is a $5–10 item — a lip balm, a travel size, a single stick when the multipack is declined — not a $30–40 add-on, and a consumable has no warranty analogue at all. It also lives only on the Shopify side, since Amazon controls that flow entirely on the larger ~$1,800/mo channel. At ~54 orders/month the take rate takes months to read, so build it and move on rather than treating it as a test.
+
+*Source: Intelligems — "IntelliJAMS EP 066: Building an AI Brain for Your Ecommerce Growth Experiments" (CdkhplYma9w)*
