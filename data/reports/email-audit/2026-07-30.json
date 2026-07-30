@@ -45,7 +45,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -87,7 +88,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -129,7 +131,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -169,7 +172,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -209,7 +213,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -251,7 +256,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -293,7 +299,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -333,7 +340,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -375,7 +383,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -415,7 +424,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -455,7 +465,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -495,7 +506,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -537,7 +549,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -579,7 +592,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -619,7 +633,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -661,7 +676,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -703,7 +719,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -745,7 +762,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -785,7 +803,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -827,7 +846,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -867,7 +887,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     },
@@ -907,7 +928,8 @@
       ],
       "findings": [
         "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
-        "brand font absent (fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
         "neither brand neutral nor accent present — visually generic"
       ]
     }

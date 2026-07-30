@@ -27,22 +27,50 @@
       "role": "cool neutral — dividers, subtle panels, shadow bases"
     }
   },
-  "palette_hexes": ["#000000", "#EDE5D8", "#C1DF6D", "#EDEDED"],
+  "palette_hexes": [
+    "#000000",
+    "#EDE5D8",
+    "#C1DF6D",
+    "#EDEDED"
+  ],
   "typography": {
-    "family": "Mont",
-    "weights": {
-      "headline": "Mont Bold",
-      "subhead": "Mont Semibold",
-      "body": "Mont Book"
+    "_comment": "The brand kit PDF specifies Mont. The LIVE SITE does not use it — realskincare.com serves Cabin for headings and Outfit for body from Shopify's font CDN (verified 2026-07-30 from --font-heading-family / --font-body-family). Email follows the site, not the PDF, because cohesion is site-to-inbox.",
+    "site": {
+      "heading": "Cabin",
+      "body": "Outfit",
+      "source": "realskincare.com CSS variables, served via fonts.shopifycdn.com",
+      "both_are_google_fonts": true
     },
-    "email_fallback_stack": "'Mont', 'Montserrat', 'Helvetica Neue', Arial, sans-serif",
-    "email_caveat": "Mont is not a web-safe or Google font, so most email clients will not render it. The fallback stack above is what recipients actually see. Montserrat is the closest widely-available geometric sans and is a Google font, so it renders in clients that support web fonts."
+    "pdf_specified": {
+      "family": "Mont",
+      "weights": [
+        "Mont Bold",
+        "Mont Semibold",
+        "Mont Book"
+      ],
+      "status": "not in use on the live site; retained here as a record of the identity document, not as the email or web rule"
+    },
+    "email_stacks": {
+      "heading": "Cabin, 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif",
+      "body": "Outfit, 'Helvetica Neue', Helvetica, Arial, sans-serif",
+      "rationale": "Name the real site font first — it renders in Apple Mail and iOS Mail, a large share of opens. Then fall back to the closest widely-installed face. Cabin is a humanist sans, so Trebuchet MS is the nearest universally-installed match and keeps some character in headings. Outfit is geometric with a tall x-height and has no true web-safe equivalent, so body falls to Helvetica/Arial, which is neutral and most legible at small sizes. Keeping different fallbacks preserves the heading/body distinction even when web fonts are stripped.",
+      "single_biggest_fix": "All 22 live emails currently lead with 'Georgia, serif'. Moving from a serif to any of these sans stacks is the largest single cohesion gain available, before any colour work."
+    }
   },
   "logo": {
     "wordmark": "'real' in an italic high-contrast serif with a leaf-shaped counter replacing the stem terminal of the r, above 'SKIN CARE' in widely letterspaced sans caps",
-    "monogram": "the lowercase 'r' with its leaf terminal, used standalone (appears top-right on page 4)",
-    "colorways_supplied": ["solid black"],
-    "files_in_repo": false
+    "monogram": "the lowercase 'r' with its leaf terminal, used standalone",
+    "colorways_supplied": [
+      "black",
+      "white",
+      "sand",
+      "green",
+      "grey"
+    ],
+    "files_in_repo": false,
+    "expected_path": "data/brand/logo/ — see the README there for filenames",
+    "hosting_note": "Klaviyo templates reference images by URL, so these must be uploaded to Klaviyo or the Shopify CDN and the URLs recorded here before any template can use them.",
+    "open_question": "The supplied green colorway reads as a softer sage than palette green #C1DF6D. Sample the file and reconcile before use."
   },
   "design_elements": [
     "thin single hairline rule (black, hairline weight)",
@@ -57,22 +85,25 @@
   "email_rules": {
     "_comment": "Not from the PDF — derived from the brand kit plus marketing-email-design-production. The PDF is a visual identity document and says nothing about email.",
     "background": "#FFFFFF body, #EDE5D8 for alternating section blocks",
-    "headline": "Mont Bold, #000000",
+    "headline": "Cabin (falling back to Trebuchet MS), #000000",
     "accent_use": "#C1DF6D for one element per email maximum — a rule, a leaf, or a single highlighted phrase. Not for button fills or backgrounds.",
     "primary_button": "#000000 fill, #FFFFFF label",
     "divider": "#EDEDED or the black hairline rule",
     "off_brand_signals": [
+      "any serif body stack — Georgia in particular, which all 22 live emails currently use",
       "purple or blue gradients",
-      "Inter, Roboto, Arial-only, or system-font stacks with no Mont/Montserrat fallback",
+      "Inter, Roboto, or system-only font stacks",
       "#C1DF6D used as a large background fill",
       "more than one accent colour in a single email"
-    ]
+    ],
+    "body_text": "Outfit (falling back to Helvetica/Arial), #000000"
   },
   "gaps": [
-    "No logo files in the repo — PNG/SVG with transparent background, plus a reversed (white) colorway for dark sections, still needed. The PDF supplies black only.",
-    "Mont licensing for email/web is unconfirmed; the fallback stack is what most recipients will render.",
+    "Logo files not yet in the repo — drop point prepared at data/brand/logo/ with expected filenames.",
+    "Logo files are not yet hosted at a URL Klaviyo can reference.",
+    "Green logo colorway may not equal palette green #C1DF6D — confirm by sampling the file.",
     "No transparent-background product images catalogued, which marketing-email-design-production names as a required brand-kit input.",
-    "No layout exemplars. That skill's fit note already records that the 'ten best past-performing emails' input does not exist here and competitor reference emails must substitute.",
-    "'Delightful Signs' appears as the heading above the colour palette on page 3. It is ambiguous whether that names an accent typeface or is decorative copy — not recorded as a font until confirmed."
+    "No layout exemplars; competitor reference emails must substitute per that skill's own fit note.",
+    "The PDF specifies Mont but the live site uses Cabin/Outfit. Worth deciding deliberately whether the site should move to Mont or the identity document should be updated to match the site."
   ]
 }

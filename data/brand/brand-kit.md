@@ -23,20 +23,38 @@ shape. Treat it as an accent, never a background fill.
 
 ## Typography
 
-- **Mont Bold** — headlines
-- **Mont Semibold** — sub-heads
-- **Mont Book** — body
+**The identity PDF and the live site disagree, and the site wins for email.**
 
-**Mont will not render in most email clients.** It is not web-safe and not a Google
-font, so the stack that recipients actually see is:
+The PDF specifies **Mont** (Bold / Semibold / Book). The live site does not use it —
+`realskincare.com` serves **Cabin** for headings and **Outfit** for body from Shopify's
+font CDN (verified 2026-07-30 from the theme's `--font-heading-family` and
+`--font-body-family`). Since the goal is cohesion from site to inbox, email follows the
+site. Mont is retained above as a record of the identity document, not as the rule.
+
+Email stacks:
 
 ```css
-font-family: 'Mont', 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+/* headings */
+font-family: Cabin, 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+/* body */
+font-family: Outfit, 'Helvetica Neue', Helvetica, Arial, sans-serif;
 ```
 
-Montserrat is the closest widely-available geometric sans and *is* a Google font, so
-it renders wherever web fonts are supported. Design to the Montserrat fallback, not to
-Mont, or the emails will look nothing like the comps.
+Name the real site font first — it renders in Apple Mail and iOS Mail, a large share of
+opens. Then fall back to the closest widely-installed face. Cabin is a humanist sans, so
+**Trebuchet MS** is the nearest universally-installed match and keeps some character in
+headings. Outfit is geometric with a tall x-height and has no true web-safe equivalent,
+so body falls to **Helvetica/Arial** — neutral, and most legible at small sizes. Using
+different fallbacks preserves the heading/body distinction even when web fonts are
+stripped.
+
+> **The single biggest cohesion gain is here, not in colour.** All 22 live emails lead
+> with `Georgia, serif`. Moving from a serif to either sans stack closes more of the
+> visual gap than any palette change.
+
+Worth deciding deliberately at some point: whether the site should move to Mont, or the
+identity document should be updated to match the site. Right now they are two different
+brands typographically.
 
 ## Logo
 
@@ -44,7 +62,12 @@ Mont, or the emails will look nothing like the comps.
   replacing the stem terminal of the *r*, above `SKIN CARE` in widely letterspaced
   sans caps.
 - **Monogram:** the lowercase *r* with its leaf terminal, standalone (page 4, top right).
-- **Colorway supplied:** solid black only.
+- **Colorways supplied:** black, white, sand, green, grey — all transparent.
+
+Files belong in [`data/brand/logo/`](./logo/) — see the README there for expected
+filenames. Two things still to settle: the files need hosting at a URL before any
+Klaviyo template can reference them, and the green colorway reads as a softer sage than
+palette green `#C1DF6D`, so sample it and reconcile before use.
 
 ## Design elements
 
@@ -60,13 +83,15 @@ Derived from the kit plus `marketing-email-design-production`:
 | Element | Rule |
 |---|---|
 | Body background | `#FFFFFF`; `#EDE5D8` for alternating section blocks |
-| Headline | Mont Bold, `#000000` |
+| Body text | Outfit → Helvetica/Arial, `#000000` |
+| Headline | Cabin → Trebuchet MS, `#000000` |
 | Accent | `#C1DF6D` on **one** element per email maximum. Not button fills, not backgrounds. |
 | Primary button | `#000000` fill, `#FFFFFF` label |
 | Divider | `#EDEDED`, or the black hairline rule |
 
-Off-brand signals to reject: purple or blue gradients; Inter/Roboto/system-only font
-stacks; `#C1DF6D` as a large background; more than one accent colour per email.
+Off-brand signals to reject: **any serif body stack** (Georgia above all — it is what
+all 22 live emails use); purple or blue gradients; Inter/Roboto/system-only font stacks;
+`#C1DF6D` as a large background; more than one accent colour per email.
 
 ## Measured state of the live emails (2026-07-30)
 
@@ -84,7 +109,7 @@ reads as incoherent:
 | Grey `#EDEDED` | `#6B6B6B`, `#9A9385` |
 
 All 22 also declare `Georgia, serif, Helvetica, Arial, sans-serif` — a serif-led stack
-with no Mont or Montserrat anywhere, so the type is off-brand in every email, and none
+carrying neither site font, so the type contradicts the website in every email, and none
 carries the brand neutral or accent at all.
 
 **All 22 templates are `editor_type: CODE`**, so every one can be corrected by
@@ -93,14 +118,18 @@ is reached and what was verified.
 
 ## Known gaps in this kit
 
-1. **No logo files in the repo.** PNG/SVG with transparent background needed, plus a
-   reversed white colorway for dark sections. The PDF supplies black only.
-2. **Mont licensing for web/email is unconfirmed.** The fallback stack is what ships.
-3. **No transparent-background product images catalogued** — a required brand-kit input
+1. **Logo files not yet in the repo.** All five transparent colorways exist — drop point
+   and expected filenames are at [`data/brand/logo/`](./logo/).
+2. **Logo files are not hosted.** Klaviyo references images by URL, so they need
+   uploading to Klaviyo or the Shopify CDN and the URLs recording here before any
+   template can use them.
+3. **Green colorway may not be `#C1DF6D`.** The supplied green logo reads as a softer
+   sage than palette green. Sample the file and reconcile.
+4. **No transparent-background product images catalogued** — a required brand-kit input
    per the email skill.
-4. **No layout exemplars.** The skill's own fit note records that the "ten best
+5. **No layout exemplars.** The skill's own fit note records that the "ten best
    past-performing emails" input doesn't exist here and competitor reference emails
    must substitute.
-5. **"Delightful Signs"** appears as the heading above the palette on page 3. Ambiguous
-   whether that names an accent typeface or is decorative copy — deliberately not
-   recorded as a font until confirmed.
+6. **Mont vs Cabin/Outfit.** The identity document and the live site specify different
+   typefaces. Not a blocker — email follows the site — but worth resolving deliberately
+   rather than leaving two definitions of the brand in circulation.

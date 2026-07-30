@@ -95,13 +95,16 @@ function auditHtml(html) {
   const hexes = hexesIn(html);
   const offBrand = [...hexes.keys()].filter((h) => !onBrand.has(h) && !IGNORED_HEX.has(h));
   const fonts = fontsIn(html);
-  const hasMont = fonts.some((f) => /^mont$/i.test(f));
-  const hasFallback = fonts.some((f) => /montserrat|helvetica|arial|sans-serif/i.test(f));
+  // The site fonts, not the PDF's Mont — cohesion is measured against realskincare.com.
+  const hasSiteFont = fonts.some((f) => /^(cabin|outfit)$/i.test(f));
+  const hasFallback = fonts.some((f) => /trebuchet|helvetica|arial|segoe|tahoma|sans-serif/i.test(f));
+  const leadsWithSerif = /font-family\s*:\s*['"]?(georgia|times|garamond|palatino|serif)/i.test(html);
   const findings = [];
   if (offBrand.length) findings.push(`off-palette colours: ${offBrand.join(', ')}`);
   if (!fonts.length) findings.push('no font-family declared anywhere — client default will render');
-  else if (!hasMont && !hasFallback) findings.push(`no brand or fallback font: ${fonts.join(', ')}`);
-  else if (!hasMont) findings.push(`brand font absent (fallback only): ${fonts.join(', ')}`);
+  else if (!hasSiteFont && !hasFallback) findings.push(`no site or fallback font: ${fonts.join(', ')}`);
+  else if (!hasSiteFont) findings.push(`site font absent (Cabin/Outfit missing, fallback only): ${fonts.join(', ')}`);
+  if (leadsWithSerif) findings.push('leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break');
   if (!/#EDE5D8/i.test(html) && !/#C1DF6D/i.test(html)) {
     findings.push('neither brand neutral nor accent present — visually generic');
   }
@@ -168,7 +171,7 @@ const codeEditable = rows.filter((r) => r.editorType === 'CODE').length;
 const L = [];
 L.push(`# Klaviyo email audit — ${today}`, '');
 L.push(`${rows.length} emails across ${flows.length} flows. **${clean.length} on-brand, ${dirty.length} with findings**${errored.length ? `, ${errored.length} unreadable` : ''}.`, '');
-L.push(`Audited against \`data/brand/brand-kit.json\` — palette ${brand.palette_hexes.join(' ')}, type ${brand.typography.family}.`, '');
+L.push(`Audited against \`data/brand/brand-kit.json\` — palette ${brand.palette_hexes.join(' ')}, type ${brand.typography.site.heading} / ${brand.typography.site.body} (per the live site).`, '');
 L.push(`**${codeEditable} of ${rows.length} templates are \`editor_type: CODE\`**, so their HTML can be replaced via \`PATCH /api/templates/{id}\`. Anything not CODE is a drag-and-drop template and must be rebuilt in the UI or replaced wholesale.`, '');
 if (allOff.length) L.push(`Off-palette colours in use across all emails: ${allOff.map((h) => `\`${h}\``).join(', ')}`, '');
 
