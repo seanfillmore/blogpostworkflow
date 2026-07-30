@@ -1,0 +1,183 @@
+{
+  "_comment": "Machine-readable brand kit. Source: 'Real Skin Care Brand Kit.pdf' (4pp, supplied 2026-07-29). Consumed by scripts/klaviyo-email-audit.mjs and by marketing-email-design-production. Human-readable companion: data/brand/brand-kit.md",
+  "source": {
+    "document": "Real Skin Care Brand Kit.pdf",
+    "received": "2026-07-29",
+    "pages": 4,
+    "completeness": "partial — see gaps[] below"
+  },
+  "colors": {
+    "black": {
+      "hex": "#000000",
+      "role": "primary — logo, headlines, body text, primary button fill",
+      "notes": "The logo is supplied in solid black only."
+    },
+    "sand": {
+      "hex": "#EDE5D8",
+      "role": "warm neutral — section backgrounds, blocks, the leaf flourish either side of headings",
+      "notes": "The brand's only warm tone. Does the work a plain white background cannot.",
+      "conflict": "The sand LOGO is #ECE5D8; the palette says #EDE5D8. One digit apart and visually identical, but it is exactly the class of near-miss the email audit flags. Standardise on one."
+    },
+    "green": {
+      "hex": "#AEDEAC",
+      "role": "accent — the leaf mark, sub-headings, highlights",
+      "notes": "Use sparingly: one accent element per email or page. Not a background fill.",
+      "decision": "#AEDEAC is THE brand green as of 2026-07-30. It supersedes #C1DF6D from the brand kit PDF, which is retired and must not be used. The supplied logo files carry export drift (#AFD9AC in PNG, #B0D9AC in SVG) off this value; the owner accepted that drift — do not re-export or re-upload for it.",
+      "superseded": {
+        "hex": "#C1DF6D",
+        "source": "Real Skin Care Brand Kit.pdf p3",
+        "status": "RETIRED 2026-07-30 — do not use"
+      },
+      "export_drift_accepted": {
+        "png": "#AFD9AC",
+        "svg": "#B0D9AC"
+      }
+    },
+    "grey": {
+      "hex": "#EDEDED",
+      "role": "cool neutral — dividers, subtle panels, shadow bases"
+    }
+  },
+  "palette_hexes": [
+    "#000000",
+    "#EDE5D8",
+    "#AEDEAC",
+    "#EDEDED"
+  ],
+  "typography": {
+    "_comment": "The brand kit PDF specifies Mont. The LIVE SITE does not use it — realskincare.com serves Cabin for headings and Outfit for body from Shopify's font CDN (verified 2026-07-30 from --font-heading-family / --font-body-family). Email follows the site, not the PDF, because cohesion is site-to-inbox.",
+    "site": {
+      "heading": "Cabin",
+      "body": "Outfit",
+      "source": "realskincare.com CSS variables, served via fonts.shopifycdn.com",
+      "both_are_google_fonts": true
+    },
+    "pdf_specified": {
+      "family": "Mont",
+      "weights": [
+        "Mont Bold",
+        "Mont Semibold",
+        "Mont Book"
+      ],
+      "status": "not in use on the live site; retained here as a record of the identity document, not as the email or web rule"
+    },
+    "email_stacks": {
+      "heading": "Cabin, 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif",
+      "body": "Outfit, 'Helvetica Neue', Helvetica, Arial, sans-serif",
+      "rationale": "Name the real site font first — it renders in Apple Mail and iOS Mail, a large share of opens. Then fall back to the closest widely-installed face. Cabin is a humanist sans, so Trebuchet MS is the nearest universally-installed match and keeps some character in headings. Outfit is geometric with a tall x-height and has no true web-safe equivalent, so body falls to Helvetica/Arial, which is neutral and most legible at small sizes. Keeping different fallbacks preserves the heading/body distinction even when web fonts are stripped.",
+      "single_biggest_fix": "All 22 live emails currently lead with 'Georgia, serif'. Moving from a serif to any of these sans stacks is the largest single cohesion gain available, before any colour work."
+    }
+  },
+  "logo": {
+    "wordmark": "'real' in an italic high-contrast serif with a leaf-shaped counter replacing the stem terminal of the r, above 'SKIN CARE' in widely letterspaced sans caps",
+    "monogram": "the lowercase 'r' with its leaf terminal, used standalone",
+    "colorways_supplied": [
+      "black",
+      "white",
+      "sand",
+      "green",
+      "grey"
+    ],
+    "files_in_repo": true,
+    "expected_path": "data/brand/logo/ — see the README there for filenames",
+    "hosting_note": "Klaviyo templates reference images by URL, so these must be uploaded to Klaviyo or the Shopify CDN and the URLs recorded here before any template can use them.",
+    "open_question": "The supplied green colorway reads as a softer sage than palette green #C1DF6D. Sample the file and reconcile before use.",
+    "path": "data/brand/logo/",
+    "files": {
+      "wordmark_png": [
+        "rsc-logo-black.png",
+        "rsc-logo-white.png",
+        "rsc-logo-sand.png",
+        "rsc-logo-green.png",
+        "rsc-logo-grey.png"
+      ],
+      "wordmark_svg": [
+        "rsc-logo-black.svg",
+        "rsc-logo-white.svg",
+        "rsc-logo-sand.svg",
+        "rsc-logo-green.svg",
+        "rsc-logo-grey.svg"
+      ],
+      "monogram_png": [
+        "monogram_rsc_black.png",
+        "monogram_rsc_white.png",
+        "monogram_rsc_sand.png",
+        "monogram_rsc_green.png",
+        "monogram_rsc_grey.png"
+      ],
+      "monogram_svg": [
+        "monogram_rsc_black.svg",
+        "monogram_rsc_white.svg",
+        "monogram_rsc_sand.svg",
+        "monogram_rsc_green.svg",
+        "monogram_rsc_grey.svg"
+      ]
+    },
+    "colorway_hexes_as_supplied": {
+      "black": "no fill declared — relies on the SVG default (black). Inlining into a context that sets `fill` will recolour it.",
+      "white": "#FFFFFF",
+      "sand": "#ECE5D8",
+      "green": "#B0D9AC in the SVG, #AFD9AC in the PNG — both drifted from the #AEDEAC Illustrator source",
+      "grey": "#EDEDED"
+    },
+    "cleanup_applied": [
+      "Every supplied SVG wrapped its artwork in <a xlink:href=\"49.7243137254902\"> — an Illustrator export artifact. 55 anchors across 10 files. Inlined in HTML or email that makes the logo a link to a nonsense relative URL, i.e. a guaranteed 404. Stripped; artwork verified intact afterwards by alpha-channel variance.",
+      "rsc-logo.grey.svg renamed to rsc-logo-grey.svg (dot -> dash, matching every other file)."
+    ],
+    "cdn_urls": {
+      "rsc-logo-black.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-black.png?v=1785417244",
+      "monogram_rsc_black.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/monogram_rsc_black.png?v=1785417269",
+      "monogram_rsc_green.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/monogram_rsc_green.png?v=1785417272",
+      "monogram_rsc_grey.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/monogram_rsc_grey.png?v=1785417276",
+      "monogram_rsc_sand.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/monogram_rsc_sand.png?v=1785417280",
+      "monogram_rsc_white.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/monogram_rsc_white.png?v=1785417283",
+      "rsc-logo-green.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-green.png?v=1785417287",
+      "rsc-logo-grey.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-grey.png?v=1785417290",
+      "rsc-logo-sand.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-sand.png?v=1785417295",
+      "rsc-logo-white.png": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-white.png?v=1785417298"
+    },
+    "cdn_hosted": true,
+    "cdn_note": "PNG only. Klaviyo templates reference these by URL, and email clients do not render SVG — Gmail strips it, Outlook ignores it. The SVGs stay in the repo for web and print. Uploaded via scripts/upload-brand-logos.mjs; verified 10/10 serving 200 image/png, and the first upload confirmed pixel-identical to its local source."
+  },
+  "design_elements": [
+    "thin single hairline rule (black, hairline weight)",
+    "soft elliptical drop shadow",
+    "sand-filled circle",
+    "sand-filled rectangle block",
+    "white draped fabric / cloth cutout",
+    "soft diagonal light-and-shadow gradient overlay",
+    "green leaf shape (echoes the logo's r terminal)",
+    "wooden circular podium / riser for product shots"
+  ],
+  "email_rules": {
+    "_comment": "Not from the PDF — derived from the brand kit plus marketing-email-design-production. The PDF is a visual identity document and says nothing about email.",
+    "background": "#FFFFFF body, #EDE5D8 for alternating section blocks",
+    "headline": "Cabin (falling back to Trebuchet MS), #000000",
+    "accent_use": "#AEDEAC for one element per email maximum — a rule, a leaf, or a single highlighted phrase. Not for button fills or backgrounds.",
+    "primary_button": "#000000 fill, #FFFFFF label",
+    "divider": "#EDEDED or the black hairline rule",
+    "off_brand_signals": [
+      "any serif body stack — Georgia in particular, which all 22 live emails currently use",
+      "#C1DF6D — the retired green; its presence means something was built from the old PDF palette",
+      "purple or blue gradients",
+      "Inter, Roboto, or system-only font stacks",
+      "#AEDEAC used as a large background fill",
+      "more than one accent colour in a single email"
+    ],
+    "body_text": "Outfit (falling back to Helvetica/Arial), #000000",
+    "dark_mode": {
+      "problem": "Apple Mail, Outlook and Gmail invert light backgrounds in dark mode. A black logo on a white block then sits on a dark background — it either disappears or gets boxed in an auto-generated white patch. None of the 22 live emails handle this today.",
+      "rule": "Serve the black wordmark by default and swap to the white colorway under prefers-color-scheme: dark. Both are hosted, so this is a CSS block, not new artwork.",
+      "snippet": "<style>@media (prefers-color-scheme: dark){ .logo-light{display:none!important} .logo-dark{display:block!important} }</style>",
+      "light_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-black.png?v=1785417244",
+      "dark_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-white.png?v=1785417298",
+      "caveat": "Gmail ignores prefers-color-scheme and applies its own inversion, which it will not always apply to images. The sand block (#EDE5D8) is the safer default background for any section carrying the logo — it survives inversion better than pure white and keeps the black mark legible."
+    }
+  },
+  "gaps": [
+    "No transparent-background product images catalogued. Not blocking the eight live FLOWS, which pull product imagery dynamically through Klaviyo's Shopify blocks — it blocks designed promo campaigns only.",
+    "No layout exemplars; per marketing-email-design-production's own fit note, competitor reference emails substitute.",
+    "Sand is #ECE5D8 in the logo files vs #EDE5D8 in the palette. Imperceptible; fold in only if the files are ever re-exported for another reason.",
+    "Mont (identity PDF) vs Cabin/Outfit (live site). Resolved for email — the site wins — but the two documents still disagree."
+  ]
+}

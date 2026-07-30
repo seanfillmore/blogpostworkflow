@@ -1,0 +1,937 @@
+{
+  "generated": "2026-07-30",
+  "brandKit": [
+    "#000000",
+    "#EDE5D8",
+    "#AEDEAC",
+    "#EDEDED"
+  ],
+  "rows": [
+    {
+      "flow": "Abandoned Cart (RSC v2)",
+      "flowId": "QU9Z6q",
+      "message": "Abandoned Cart — 01 You Left Something",
+      "messageId": "Y5Rx8k",
+      "subject": "You left something behind, {{ first_name|default:\"there\" }} 🌿",
+      "preview": "We saved your cart — pick up right where you left off.",
+      "templateId": "S5yPYg",
+      "editorType": "CODE",
+      "htmlBytes": 3594,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Abandoned Cart (RSC v2)",
+      "flowId": "QU9Z6q",
+      "message": "Abandoned Cart — 02 Still Saved",
+      "messageId": "XsQuvH",
+      "subject": "Still saved for you",
+      "preview": "Your clean skincare is waiting — free shipping over $50.",
+      "templateId": "RsxMmD",
+      "editorType": "CODE",
+      "htmlBytes": 3664,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Abandoned Cart (RSC v2)",
+      "flowId": "QU9Z6q",
+      "message": "Abandoned Cart — 03 Last Call",
+      "messageId": "WPPrT6",
+      "subject": "Last call — your cart is about to expire",
+      "preview": "Grab your items before they're gone.",
+      "templateId": "QPwJK2",
+      "editorType": "CODE",
+      "htmlBytes": 3829,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Welcome Series (RSC v2)",
+      "flowId": "UUa3Qk",
+      "message": "Welcome — 01 Welcome + Free Shipping",
+      "messageId": "SuH7He",
+      "subject": "Welcome to Real Skin Care — free shipping inside 🌿",
+      "preview": "Here's a little welcome gift to get you started.",
+      "templateId": "W5ySJc",
+      "editorType": "CODE",
+      "htmlBytes": 3732,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Welcome Series (RSC v2)",
+      "flowId": "UUa3Qk",
+      "message": "Welcome — 02 Brand Story",
+      "messageId": "Sq5RmQ",
+      "subject": "We started this for a reason",
+      "preview": "The family story behind Real Skin Care.",
+      "templateId": "TzuGfG",
+      "editorType": "CODE",
+      "htmlBytes": 3306,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Welcome Series (RSC v2)",
+      "flowId": "UUa3Qk",
+      "message": "Welcome — 03 Best Sellers",
+      "messageId": "XaktgE",
+      "subject": "The ones everyone starts with",
+      "preview": "Our most-loved clean essentials — free shipping over $50.",
+      "templateId": "Ra3L8A",
+      "editorType": "CODE",
+      "htmlBytes": 4352,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Welcome Series (RSC v2)",
+      "flowId": "UUa3Qk",
+      "message": "Welcome — 04 Why Clean / USP",
+      "messageId": "SjsB2s",
+      "subject": "What makes ours different (in 30 seconds)",
+      "preview": "Few ingredients, handmade in the USA — here's why it matters.",
+      "templateId": "U7SuwV",
+      "editorType": "CODE",
+      "htmlBytes": 4249,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Welcome Series (RSC v2)",
+      "flowId": "UUa3Qk",
+      "message": "Welcome — 05 Last Chance Free Shipping",
+      "messageId": "VUin3q",
+      "subject": "Your free shipping is still waiting",
+      "preview": "Use it before it slips your mind — free shipping on your first order.",
+      "templateId": "XGJfxT",
+      "editorType": "CODE",
+      "htmlBytes": 3738,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Product Review / Cross-Sell (RSC v2)",
+      "flowId": "Ud6YUF",
+      "message": "Product Review — 01 Review + Cross-Sell",
+      "messageId": "RME4Mz",
+      "subject": "How's it treating you, {{ first_name|default:\"there\" }}?",
+      "preview": "A quick review helps more than you know — and helps others find clean products.",
+      "templateId": "TA5Wi4",
+      "editorType": "CODE",
+      "htmlBytes": 7220,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Replenishment (RSC v2)",
+      "flowId": "UxEXm9",
+      "message": "Replenishment — 01 Running Low",
+      "messageId": "Wk6QRC",
+      "subject": "Running low on {{ event.Items|first|default:\"your Real Skin Care favorites\" }}?",
+      "preview": "Most folks are getting low around now — the easy way to restock.",
+      "templateId": "Y8wJn7",
+      "editorType": "CODE",
+      "htmlBytes": 9884,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Replenishment (RSC v2)",
+      "flowId": "UxEXm9",
+      "message": "Replenishment — 02 Never Run Out",
+      "messageId": "RvcYBq",
+      "subject": "Never run out of {{ event.Items|first|default:\"your Real Skin Care favorites\" }} 🥥",
+      "preview": "Your favorite is probably empty by now — here are two easy ways to restock.",
+      "templateId": "ThCS7T",
+      "editorType": "CODE",
+      "htmlBytes": 10415,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Post-Purchase Flow (RSC v2)",
+      "flowId": "V4U4Qn",
+      "message": "Post-Purchase — 01 Thank You",
+      "messageId": "SDt8Hg",
+      "subject": "Thank you, {{ first_name|default:\"friend\" }} 🌿",
+      "preview": "Your order's on the way — here's how to get the most from it.",
+      "templateId": "UrT2dK",
+      "editorType": "CODE",
+      "htmlBytes": 3476,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Post-Purchase Flow (RSC v2)",
+      "flowId": "V4U4Qn",
+      "message": "Post-Purchase — 02 How To Use It (dynamic)",
+      "messageId": "TNRXB8",
+      "subject": "Getting the most from your order",
+      "preview": "A few quick tips for what you just bought.",
+      "templateId": "VBhR7B",
+      "editorType": "CODE",
+      "htmlBytes": 5480,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Post-Purchase Flow (RSC v2)",
+      "flowId": "V4U4Qn",
+      "message": "Post-Purchase — 03 Complete Your Routine (Set)",
+      "messageId": "TbQUYv",
+      "subject": "Complete your routine (and ship free)",
+      "preview": "The Sensitive Skin Set — everything you need, less than buying separately.",
+      "templateId": "UYgNuY",
+      "editorType": "CODE",
+      "htmlBytes": 4248,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Post-Purchase Flow (RSC v2)",
+      "flowId": "V4U4Qn",
+      "message": "Post-Purchase — 04 Review + Referral",
+      "messageId": "UmfKSm",
+      "subject": "How's it going, {{ first_name|default:\"there\" }}?",
+      "preview": "Checking in — and your friends get free shipping.",
+      "templateId": "XW7wTj",
+      "editorType": "CODE",
+      "htmlBytes": 3063,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Post-Purchase Flow (RSC v2)",
+      "flowId": "V4U4Qn",
+      "message": "Post-Purchase — 05 Restock Reorder",
+      "messageId": "Xj6ugG",
+      "subject": "Running low? Restock in one click 🔁",
+      "preview": "Stock up on your essentials — and cross $50 for free shipping.",
+      "templateId": "RiMM8C",
+      "editorType": "CODE",
+      "htmlBytes": 6155,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Browse Abandonment (RSC v2)",
+      "flowId": "Vfgjgg",
+      "message": "Browse Abandonment — 01 Still Looking",
+      "messageId": "SPPp9a",
+      "subject": "Still thinking it over, {{ first_name|default:\"there\" }}?",
+      "preview": "The clean skincare you were just looking at — plus why people switch.",
+      "templateId": "UCfgDD",
+      "editorType": "CODE",
+      "htmlBytes": 4566,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Browse Abandonment (RSC v2)",
+      "flowId": "Vfgjgg",
+      "message": "Browse Abandonment — 02 Best Sellers",
+      "messageId": "UxC2if",
+      "subject": "A few favorites before you go 🥥",
+      "preview": "Still on your mind? Here are our best sellers — free shipping over $50.",
+      "templateId": "Y8tMjd",
+      "editorType": "CODE",
+      "htmlBytes": 4581,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Coconut Reset — Digital Delivery v2 (RSC)",
+      "flowId": "XFdcu6",
+      "message": "Coconut Reset — Digital Delivery",
+      "messageId": "VfLgkY",
+      "subject": "Your 90-Day Reset guides are inside 🥥",
+      "preview": "Download your Routine & Tracker and Field Guide — plus what to do first.",
+      "templateId": "X4c9Rt",
+      "editorType": "CODE",
+      "htmlBytes": 4566,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Customer Winback (RSC v2)",
+      "flowId": "Yb63w6",
+      "message": "Winback — 01 We Miss You",
+      "messageId": "QUKf8L",
+      "subject": "It's not the same without you",
+      "preview": "A little while since your last order — here's what people are loving.",
+      "templateId": "SHb8Df",
+      "editorType": "CODE",
+      "htmlBytes": 4066,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#E6DED1",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #E6DED1, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Customer Winback (RSC v2)",
+      "flowId": "Yb63w6",
+      "message": "Winback — 02 Free Shipping",
+      "messageId": "VEZR3A",
+      "subject": "Come back — shipping's on us 🌿",
+      "preview": "Free shipping to pick up right where you left off.",
+      "templateId": "Rt93pZ",
+      "editorType": "CODE",
+      "htmlBytes": 3659,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    },
+    {
+      "flow": "Customer Winback (RSC v2)",
+      "flowId": "Yb63w6",
+      "message": "Winback — 03 Last Chance 25% Off",
+      "messageId": "QQ7YMn",
+      "subject": "Last chance: 25% off inside ❤️",
+      "preview": "Our best offer to welcome you back — don't let it slip away.",
+      "templateId": "SCxShR",
+      "editorType": "CODE",
+      "htmlBytes": 3790,
+      "hexes": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#FFFFFF",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "offBrand": [
+        "#F5F1EA",
+        "#2F5E3F",
+        "#2B2B2B",
+        "#3D3D3D",
+        "#6B6B6B",
+        "#9A9385"
+      ],
+      "fonts": [
+        "Georgia",
+        "serif",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "findings": [
+        "off-palette colours: #F5F1EA, #2F5E3F, #2B2B2B, #3D3D3D, #6B6B6B, #9A9385",
+        "site font absent (Cabin/Outfit missing, fallback only): Georgia, serif, Helvetica, Arial, sans-serif",
+        "leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break",
+        "neither brand neutral nor accent present — visually generic"
+      ]
+    }
+  ]
+}
