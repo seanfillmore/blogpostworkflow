@@ -500,6 +500,26 @@ await assert.rejects(
   assert.equal(calls, 1, 'truncation is not retried — it is deterministic, not transient');
 }
 
+// An unparseable response must carry its raw text out for inspection. The caller
+// persists err.offendingPayload; without it a parse failure discards a response
+// that was already paid for and leaves nothing to diagnose — which is exactly what
+// happened on part 3 of $100M Offers.
+{
+  const err = await extractTactics({
+    video: { ...VIDEO, videoId: null, sourceType: 'file', sourceId: '100m-offers' },
+    inventory: [],
+    client: fakeClient({ stop_reason: 'refusal', content: [] }),
+    chunk: { index: 2, total: 11, label: 'part 3 of 11', text: 'excerpt' },
+  }).then(() => null, (e) => e);
+
+  assert.ok(err, 'an empty response throws');
+  assert.equal(err.offendingPayload?.stop_reason, 'refusal', 'stop_reason is carried out for inspection');
+  assert.equal(typeof err.offendingPayload?.rawText, 'string', 'the raw text is carried out');
+  // "for null" is what this said before, on every file-source failure.
+  assert.match(err.message, /100m-offers/, 'the error names the source, not null');
+  assert.match(err.message, /part 3 of 11/, 'the error names the chunk that failed');
+}
+
 // unparseable output
 await assert.rejects(
   () => extractTactics({
