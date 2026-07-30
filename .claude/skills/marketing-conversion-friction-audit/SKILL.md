@@ -74,3 +74,13 @@ description: Use when a Shopify product page, Amazon listing, or checkout gets v
 **Fit here (6/10):** Durable CRO principle, zero cost, solo-executable. Scored mid because it sits in real tension with several adopted tactics that add page content (results timeline, guarantee, returns toggle, proof stack) — the useful form is 'order by decision-relevance and collapse the rest,' not 'delete,' and it overlaps conceptually with the one-job-per-asset and headline-hierarchy rules already in marketing-product-image-stack, though those govern single frames rather than page length.
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
+
+## An improvement the buyer never perceives creates no value — so spend on making the wait and the effort *feel* smaller, not only on actually shrinking them.
+
+**Why it works:** Value exists only in the prospect's mind, so a cheap perceptual intervention can beat an expensive operational one. The London Underground's dotted arrival map cost a few million and raised rider satisfaction more than making the trains faster would have for billions, because what hurt riders was not the wait but the uncertainty of the wait.
+
+**Evidence offered:** The London Underground dot-matrix map case, presented as the canonical illustration. Third-party example, no figures from the author's own accounts.
+
+**Fit here (8/10):** Unusually well matched. RSC cannot shorten the natural-deodorant transition period, but it can publish a dated week-by-week map of what happens and when — exactly the dot-matrix move, where the wait stays the same and the uncertainty disappears. Zero cost, solo-executable on the PDP, the Amazon A+ block, and post-purchase emails, and it attacks the 18–22.5% repeat rate. It is also the 'why' behind the results-timeline tactic and generalizes it: **any real reduction in effort or wait must be stated on the page, or it earns nothing.**
+
+*Source: Alex Hormozi — "$100M Offers" (book, part 5 of 11)*

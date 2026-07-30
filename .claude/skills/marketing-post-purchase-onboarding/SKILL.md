@@ -34,3 +34,13 @@ description: Use when building or fixing what a customer receives after they buy
 **Fit here (8/10):** The artifact already has a home — the packaging insert and post-purchase email sequence. Turning first-use instructions into a named multi-SKU routine (morning: deodorant plus this bar; night: this oral care step, in a stated order and cadence) does double duty: it removes the misuse that causes transition-period churn, the binding constraint, and cross-sells the adjacent SKUs of a 12-SKU catalog. Costs a print run and some copy, no traffic or attribution needed. The additive claim over the instruction-card tactic above is that the sheet is the *upsell vehicle*, not just education. Held below 9 because the AOV lift is a suggestion on a page rather than a live human removing the option to decline. On Amazon, keep it to usage guidance only — the policy limits above still apply.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
+
+## Engineer a visible win as close to the purchase as possible, and name the short-term benefits that appear along the way — buyers purchase the long-term dream but only stay long enough to reach it because of the early wins.
+
+**Why it works:** The gap between paying and receiving the promised outcome is where people quit. An early, visible victory reinforces the purchase decision, builds trust, and creates momentum; the interim benefits are what carry the buyer through a long ramp.
+
+**Evidence offered:** Asserted from service-business experience, with interim benefits (energy, social contact, small visible changes) given as the examples. No figures.
+
+**Fit here (8/10):** Retention is the binding constraint, repeat customers are 45–52% of revenue, and the known churn point is the transition period — weeks where the long-term outcome has not arrived and the buyer concludes the product failed. This gives the post-purchase flow a job no other entry names: define a concrete win observable in the first 48 hours (no irritation, scent holds through the evening, one swipe is enough) and list interim benefits so week two reads as progress rather than failure. Zero cost, no attribution. Not 9 because a consumable cannot manufacture a win as vividly as a service — **it has to be an honest early observation, not a manufactured one**, or it sets up the exact disappointment it is meant to prevent.
+
+*Source: Alex Hormozi — "$100M Offers" (book, part 5 of 11)*

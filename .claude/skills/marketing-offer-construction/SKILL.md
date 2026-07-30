@@ -145,3 +145,14 @@ description: Use when deciding what you actually sell or give away rather than h
 **Fit here (8/10):** Extends the buy-X-get-Y multipack already adopted with a naming layer nothing else covers. A 12-SKU catalog at a $50.46 AOV is exactly the case where a named 'Natural Switch Starter' or 'Full Routine' is a single ask that lifts AOV and forward-buys months of a consumable, suppressing churn with no new traffic. Zero cost, solo-executable on Shopify bundle and collection pages today and as a multipack ASIN on Amazon. Held at 8 because naming adds no value by itself and at ~54 orders/month the effect will never be measurable — apply by judgment and move on.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
+
+## Structure the guarantee by ticket size: a guarantee needs the 'or what' spelled out to have teeth, but at low-ticket B2C prices go broad and unconditional — save specific conditions for higher-ticket offers.
+
+**Why it works:** Without the 'or what', a guarantee is a vague reassurance nobody prices in; naming the result, the deadline, and the remedy shifts real risk onto the seller. But conditions are a cost-control device, and the cost they control scales with ticket size. On low-ticket consumer purchases most buyers never bother to claim, so a maximally generous promise buys a large conversion lift at a small realized refund cost. As ticket and fulfillment cost rise, that same promise gets expensive and conditions become necessary to keep it affordable.
+
+**Evidence offered:** Two rules stated separately in the source — that a guarantee only has teeth in conditional 'if you don't get X in Y, we will Z' form, and that broad unconditional satisfaction guarantees suit lower-ticket B2C while conditional ones suit higher-ticket or B2B. Practitioner assertion in both cases, no figures.
+
+**Fit here (8/10):** RSC is squarely the case the source says should go broadest — low-ticket B2C consumables at a $50.46 AOV, where the redemption cost of a no-questions 30-day promise is bounded and the CRO/Offer stage is reachable with zero spend. **The two rules pull in opposite directions for this business and are reconciled here rather than carried separately:** state the result and the window plainly ('get through the transition period, 30 days, or your money back') and skip the behavioural conditions, because over-engineering conditions on a $12 deodorant costs more in conversion than it saves in refunds. Keep the conditional form in reserve for anything higher-ticket, such as a multi-month prepay block. Neither rule was tested here and the reconciliation is ours. Not 9 because refund cost is real cash at this revenue level, and Amazon's own return policy partly duplicates the promise on the larger channel.
+
+*Source: Alex Hormozi — "$100M Offers" (book, part 9 of 11)*
+*Source: Alex Hormozi — "$100M Offers" (book, part 10 of 11)*
