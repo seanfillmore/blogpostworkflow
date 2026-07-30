@@ -16,11 +16,21 @@
  * HOW THE CONTENT IS REACHED — the non-obvious part:
  *   flows -> flow-actions (action_type SEND_EMAIL) -> flow-messages -> template
  * The email body is NOT on the flow-message. It lives on the template the message
- * points at, and that template is separately addressable and PATCHable. Verified
- * 2026-07-29 by round-tripping a scratch template: POST -> PATCH (200, html
- * replaced) -> DELETE. An older note in this project claimed flow email content
- * could not be edited via the API (405/404); that was the flow-message endpoint,
- * not the template, and it made the whole surface look read-only when it isn't.
+ * points at.
+ *
+ * THAT TEMPLATE IS READ-ONLY. Measured 2026-07-30 against a real flow template:
+ *   GET   /api/templates/{id}      -> 200, full html
+ *   PATCH /api/templates/{id}      -> 404 "Template ... does not exist"
+ *   PATCH /api/flow-messages/{id}  -> 405 method_not_allowed
+ * The PATCH 404 is identical across revisions 2024-10-15, 2025-01-15 and
+ * 2025-07-15, so it is not a versioning artifact — Klaviyo returns 404 rather than
+ * 403 to mean "not in the writable set".
+ *
+ * PATCH does work on templates you create yourself via POST /api/templates (proven
+ * by a scratch round-trip). That is what misled an earlier version of this comment
+ * into claiming flow emails were editable: a library template is writable, a
+ * flow-owned one is not. Rebuilt flow email HTML has to be pasted into Klaviyo's
+ * code editor by hand.
  *
  * Read-only. This script never writes to Klaviyo.
  */
@@ -172,7 +182,7 @@ const L = [];
 L.push(`# Klaviyo email audit — ${today}`, '');
 L.push(`${rows.length} emails across ${flows.length} flows. **${clean.length} on-brand, ${dirty.length} with findings**${errored.length ? `, ${errored.length} unreadable` : ''}.`, '');
 L.push(`Audited against \`data/brand/brand-kit.json\` — palette ${brand.palette_hexes.join(' ')}, type ${brand.typography.site.heading} / ${brand.typography.site.body} (per the live site).`, '');
-L.push(`**${codeEditable} of ${rows.length} templates are \`editor_type: CODE\`**, so their HTML can be replaced via \`PATCH /api/templates/{id}\`. Anything not CODE is a drag-and-drop template and must be rebuilt in the UI or replaced wholesale.`, '');
+L.push(`**${codeEditable} of ${rows.length} templates are \`editor_type: CODE\`**, so a rebuilt HTML body can be pasted straight into Klaviyo's code editor. Note the API will NOT write it for you — flow-owned templates are readable but not writable (PATCH returns 404; flow-messages returns 405). Anything not CODE is drag-and-drop and must be rebuilt block by block.`, '');
 if (allOff.length) L.push(`Off-palette colours in use across all emails: ${allOff.map((h) => `\`${h}\``).join(', ')}`, '');
 
 L.push('## Emails with findings', '');
@@ -201,6 +211,6 @@ writeFileSync(join(dir, `${today}.md`), L.join('\n'));
 writeFileSync(join(dir, `${today}.json`), JSON.stringify({ generated: today, brandKit: brand.palette_hexes, rows }, null, 2));
 
 console.log(`${rows.length} emails: ${clean.length} on-brand, ${dirty.length} with findings, ${errored.length} unreadable`);
-console.log(`${codeEditable}/${rows.length} templates are CODE (PATCHable)`);
+console.log(`${codeEditable}/${rows.length} templates are CODE (paste-able by hand; API cannot write them)`);
 if (allOff.length) console.log(`off-palette colours: ${allOff.join(', ')}`);
 console.log(`\nreport: data/reports/email-audit/${today}.md`);

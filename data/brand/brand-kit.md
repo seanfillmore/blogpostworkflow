@@ -138,9 +138,18 @@ All 22 also declare `Georgia, serif, Helvetica, Arial, sans-serif` — a serif-l
 carrying neither site font, so the type contradicts the website in every email, and none
 carries the brand neutral or accent at all.
 
-**All 22 templates are `editor_type: CODE`**, so every one can be corrected by
-`PATCH /api/templates/{id}`. See `scripts/klaviyo-email-audit.mjs` for how the content
-is reached and what was verified.
+**All 22 templates are `editor_type: CODE`**, which means a rebuilt HTML body can be
+pasted straight into Klaviyo's code editor — no block-by-block rebuilding.
+
+**But the API will not write them.** Measured 2026-07-30 against a real flow template:
+`GET /api/templates/{id}` returns 200 with the full HTML, `PATCH` on the identical URL
+returns **404**, and `PATCH /api/flow-messages/{id}` returns **405**. The 404 is the same
+across API revisions 2024-10-15, 2025-01-15 and 2025-07-15, so it is not a versioning
+artifact. PATCH *does* work on templates you create yourself via `POST /api/templates` —
+a library template is writable, a flow-owned one is not, and that distinction is what
+made an earlier version of this document wrongly claim flow emails were API-editable.
+
+So the redesign is: rebuild the HTML here, verify it here, paste it there.
 
 ## Known gaps in this kit
 
