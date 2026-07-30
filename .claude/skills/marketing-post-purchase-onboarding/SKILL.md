@@ -44,3 +44,15 @@ description: Use when building or fixing what a customer receives after they buy
 **Fit here (8/10):** Retention is the binding constraint, repeat customers are 45–52% of revenue, and the known churn point is the transition period — weeks where the long-term outcome has not arrived and the buyer concludes the product failed. This gives the post-purchase flow a job no other entry names: define a concrete win observable in the first 48 hours (no irritation, scent holds through the evening, one swipe is enough) and list interim benefits so week two reads as progress rather than failure. Zero cost, no attribution. Not 9 because a consumable cannot manufacture a win as vividly as a service — **it has to be an honest early observation, not a manufactured one**, or it sets up the exact disappointment it is meant to prevent.
 
 *Source: Alex Hormozi — "$100M Offers" (book, part 5 of 11)*
+
+## Give the insert a scannable destination that captures consent — the printed card is the only owned surface for a marketplace buyer, so route it to a page that asks for email/SMS opt-in, not just to a review form.
+
+**Why it works:** The buyer holds the product at the moment enthusiasm is highest and has no obvious path anywhere; a scannable code collapses the gap between 'I like this' and an action. And because they are already completing a form at a moment of goodwill, appending an opt-in costs no extra attention while converting a one-time purchaser into someone you can contact again.
+
+**Evidence offered:** Assertion that 'many customers use package inserts that have QR codes', plus a live demo of printable 4x6 inserts and an opt-in checkbox on the destination page. No response-rate or opt-in figures.
+
+**Fit here (7/10):** This is the highest-leverage version of the insert, because roughly two-thirds of revenue comes from Amazon buyers whose email addresses RSC does not own. A printed card routing to a consent-capturing page is the **only** mechanism available for moving those customers onto the owned email surface where win-back, reorder prompts and transition-period education live — every one of which targets the binding retention constraint. Zero recurring software cost is achievable with a static QR to a Shopify page.
+
+**The Amazon constraint decides the destination.** Amazon prohibits inserts that direct buyers to review or off-platform, so on the larger channel the QR must land on a genuine 'how to use this / how did we do' page, never a review solicitation. The capture also needs a real reason to opt in (see the lead-magnet rules in `marketing-offer-construction`) rather than a bare 'join our list'. Held at 7 because it carries per-unit print cost at a $50.46 AOV.
+
+*Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*
