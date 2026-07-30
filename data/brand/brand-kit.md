@@ -15,7 +15,7 @@ cause of the email incoherence measured below.
 |---|---|---|
 | Black | `#000000` | Logo, headlines, body text, primary button fill |
 | Sand | `#EDE5D8` | The only warm tone — section backgrounds, blocks, the leaf flourish beside headings |
-| Green | `#C1DF6D` | Accent only — leaf mark, sub-headings, a single highlighted phrase |
+| Green | `#AEDEAC` | Accent only — leaf mark, sub-headings, a single highlighted phrase |
 | Grey | `#EDEDED` | Dividers, subtle panels, shadow bases |
 
 The source document uses green sparingly: one accent word per page plus the leaf
@@ -75,13 +75,12 @@ all five colorways (20 files).
 | White | `#FFFFFF` | — | ✅ |
 | Grey | `#EDEDED` | `#EDEDED` | ✅ match |
 | Sand | `#ECE5D8` | `#EDE5D8` | ⚠️ one digit apart |
-| Green | `#B0D9AC` | `#C1DF6D` | ❌ **materially different** — soft sage vs yellow-green |
+| Green | `#B0D9AC` | `#AEDEAC` | accepted export drift — imperceptible, not being re-exported |
 
-The green is the one that matters: `#B0D9AC` and `#C1DF6D` are not the same colour and
-not a rounding difference. Either the palette gains the sage as the true brand green, or
-the logo is re-exported at `#C1DF6D`. **Do not ship both.** The sand difference is
-imperceptible, but it is exactly the class of near-miss the email audit exists to catch,
-so standardise it too.
+**Resolved 2026-07-30: `#AEDEAC` is the brand green.** It supersedes `#C1DF6D` from the
+PDF, which is retired and must not be used — if it turns up in an asset, that asset was
+built from the old palette. The logo files carry imperceptible export drift off `#AEDEAC`
+(`#AFD9AC` in PNG, `#B0D9AC` in SVG) and are deliberately **not** being re-exported.
 
 ### Two defects fixed on intake
 
@@ -112,13 +111,13 @@ Derived from the kit plus `marketing-email-design-production`:
 | Body background | `#FFFFFF`; `#EDE5D8` for alternating section blocks |
 | Body text | Outfit → Helvetica/Arial, `#000000` |
 | Headline | Cabin → Trebuchet MS, `#000000` |
-| Accent | `#C1DF6D` on **one** element per email maximum. Not button fills, not backgrounds. |
+| Accent | `#AEDEAC` on **one** element per email maximum. Not button fills, not backgrounds. |
 | Primary button | `#000000` fill, `#FFFFFF` label |
 | Divider | `#EDEDED`, or the black hairline rule |
 
 Off-brand signals to reject: **any serif body stack** (Georgia above all — it is what
 all 22 live emails use); purple or blue gradients; Inter/Roboto/system-only font stacks;
-`#C1DF6D` as a large background; more than one accent colour per email.
+`#AEDEAC` as a large background; more than one accent colour per email.
 
 ## Measured state of the live emails (2026-07-30)
 
@@ -131,7 +130,7 @@ reads as incoherent:
 | Brand | In use instead |
 |---|---|
 | Sand `#EDE5D8` | `#E6DED1`, `#F5F1EA` |
-| Green `#C1DF6D` | `#2F5E3F` (a dark forest green — a different colour entirely) |
+| Green `#AEDEAC` | `#2F5E3F` (a dark forest green — a different colour entirely) |
 | Black `#000000` | `#2B2B2B`, `#3D3D3D` |
 | Grey `#EDEDED` | `#6B6B6B`, `#9A9385` |
 
@@ -145,13 +144,8 @@ is reached and what was verified.
 
 ## Known gaps in this kit
 
-1. **Colour conflict — green.** Logo `#B0D9AC` vs palette `#C1DF6D`. Materially
-   different; needs a decision before any template uses green.
-2. **Colour conflict — sand.** Logo `#ECE5D8` vs palette `#EDE5D8`. Imperceptible, but
-   standardise it.
-3. **Logo files are not hosted.** Klaviyo references images by URL, so they need
-   uploading to Klaviyo or the Shopify CDN and the URLs recording here before any
-   template can use them.
+1. **Sand.** Logo `#ECE5D8` vs palette `#EDE5D8`. Imperceptible; fold in only if the
+   files are ever re-exported for another reason.
 4. **No transparent-background product images catalogued** — a required brand-kit input
    per the email skill.
 5. **No layout exemplars.** The skill's own fit note records that the "ten best

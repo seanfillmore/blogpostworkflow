@@ -105,7 +105,7 @@ function auditHtml(html) {
   else if (!hasSiteFont && !hasFallback) findings.push(`no site or fallback font: ${fonts.join(', ')}`);
   else if (!hasSiteFont) findings.push(`site font absent (Cabin/Outfit missing, fallback only): ${fonts.join(', ')}`);
   if (leadsWithSerif) findings.push('leads with a serif stack — the site is sans (Cabin/Outfit); this is the largest single cohesion break');
-  if (!/#EDE5D8/i.test(html) && !/#C1DF6D/i.test(html)) {
+  if (!/#EDE5D8/i.test(html) && !/#AEDEAC/i.test(html)) {
     findings.push('neither brand neutral nor accent present — visually generic');
   }
   return { hexes: [...hexes.keys()], offBrand, fonts, findings };

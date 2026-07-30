@@ -19,16 +19,19 @@
       "conflict": "The sand LOGO is #ECE5D8; the palette says #EDE5D8. One digit apart and visually identical, but it is exactly the class of near-miss the email audit flags. Standardise on one."
     },
     "green": {
-      "hex": "#C1DF6D",
+      "hex": "#AEDEAC",
       "role": "accent — the leaf mark, sub-headings, highlights",
-      "notes": "Used sparingly in the source document: one accent word per page plus the leaf shape. Treat as an accent, not a background.",
-      "intended_hex": "#AEDEAC",
-      "as_exported": {
-        "png": "#AFD9AC",
-        "svg": "#B0D9AC",
-        "pdf_palette": "#C1DF6D"
+      "notes": "Use sparingly: one accent element per email or page. Not a background fill.",
+      "decision": "#AEDEAC is THE brand green as of 2026-07-30. It supersedes #C1DF6D from the brand kit PDF, which is retired and must not be used. The supplied logo files carry export drift (#AFD9AC in PNG, #B0D9AC in SVG) off this value; the owner accepted that drift — do not re-export or re-upload for it.",
+      "superseded": {
+        "hex": "#C1DF6D",
+        "source": "Real Skin Care Brand Kit.pdf p3",
+        "status": "RETIRED 2026-07-30 — do not use"
       },
-      "decision": "Intended green is #AEDEAC (Illustrator source). The PNG (#AFD9AC) and SVG (#B0D9AC) carry export drift; the owner has accepted that drift as-is — do NOT re-export or re-upload for it. Still open: whether the PDF palette's #C1DF6D is superseded or is a second, separate brand green."
+      "export_drift_accepted": {
+        "png": "#AFD9AC",
+        "svg": "#B0D9AC"
+      }
     },
     "grey": {
       "hex": "#EDEDED",
@@ -38,7 +41,7 @@
   "palette_hexes": [
     "#000000",
     "#EDE5D8",
-    "#C1DF6D",
+    "#AEDEAC",
     "#EDEDED"
   ],
   "typography": {
@@ -150,14 +153,15 @@
     "_comment": "Not from the PDF — derived from the brand kit plus marketing-email-design-production. The PDF is a visual identity document and says nothing about email.",
     "background": "#FFFFFF body, #EDE5D8 for alternating section blocks",
     "headline": "Cabin (falling back to Trebuchet MS), #000000",
-    "accent_use": "#C1DF6D for one element per email maximum — a rule, a leaf, or a single highlighted phrase. Not for button fills or backgrounds.",
+    "accent_use": "#AEDEAC for one element per email maximum — a rule, a leaf, or a single highlighted phrase. Not for button fills or backgrounds.",
     "primary_button": "#000000 fill, #FFFFFF label",
     "divider": "#EDEDED or the black hairline rule",
     "off_brand_signals": [
       "any serif body stack — Georgia in particular, which all 22 live emails currently use",
+      "#C1DF6D — the retired green; its presence means something was built from the old PDF palette",
       "purple or blue gradients",
       "Inter, Roboto, or system-only font stacks",
-      "#C1DF6D used as a large background fill",
+      "#AEDEAC used as a large background fill",
       "more than one accent colour in a single email"
     ],
     "body_text": "Outfit (falling back to Helvetica/Arial), #000000",
@@ -171,10 +175,9 @@
     }
   },
   "gaps": [
-    "OPEN DECISION — the intended green is #AEDEAC but the brand kit PDF palette says #C1DF6D, a materially different colour. Until this is answered no template should use green, and palette_hexes stays untouched because changing it changes what the email audit flags.",
     "No transparent-background product images catalogued. Not blocking the eight live FLOWS, which pull product imagery dynamically through Klaviyo's Shopify blocks — it blocks designed promo campaigns only.",
     "No layout exemplars; per marketing-email-design-production's own fit note, competitor reference emails substitute.",
-    "Sand is #ECE5D8 in the logo files vs #EDE5D8 in the palette. Imperceptible and not worth acting on alone; fold it in if the files are ever re-exported for another reason.",
+    "Sand is #ECE5D8 in the logo files vs #EDE5D8 in the palette. Imperceptible; fold in only if the files are ever re-exported for another reason.",
     "Mont (identity PDF) vs Cabin/Outfit (live site). Resolved for email — the site wins — but the two documents still disagree."
   ]
 }
