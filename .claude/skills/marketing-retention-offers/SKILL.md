@@ -56,3 +56,15 @@ description: Use when the goal is a second or repeat purchase from someone who a
 **Fit here (7/10):** The subscribe-and-save discount depth on Shopify is exactly this dial, and it is one settings change with no budget or attribution required. Capped at 7 because **the specific ratios do not transfer** — they come from $199–$799 coaching offers, not a $12 deodorant. A 2x one-time-to-subscription gap (or the ~25% subscription discount implied by the 33% rule) is likely margin-negative on physical goods carrying real COGS and postage at a $50.46 AOV. Only the direction of the lever transfers; set the depth from landed cost, and expect that at ~54 orders/month the resulting mix shift cannot be measured cleanly.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 9 of 11)*
+
+## Identify the small group of highest-value repeat customers and cultivate them by hand — personal contact, priority service, and a standing code.
+
+**Why it works:** A minority of customers who order repeatedly and in volume drive a disproportionate share of revenue and referrals. Making them feel recognised keeps them ordering and turns them into a referral source — something a marketplace relationship cannot replicate.
+
+**Evidence offered:** Asserted from 18 years of operating history, with the observation that the best customer is often a different persona than the operator assumed. No figures.
+
+**Fit here (7/10):** The distribution described is almost exactly this business — **18–22.5% repeat driving 45–52% of revenue** — which aims it straight at the binding constraint. At ~54 orders/month a solo operator can literally know and personally email the top repeat buyers, so this works *because* of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves. Additive to the rest of this skill, which covers subscription cadence, milestone rates, win-back credit and store credit but nothing about identifying and cultivating a top-customer segment.
+
+Three limits. The standing discount code is **permanent margin** against a $50.46 AOV and must be sized from landed cost. Amazon buyers (~$1,800/mo, the larger channel) cannot be contacted this way at all. And the "your best customer is a different persona than you assumed" claim is a **prompt to check actual Shopify order history**, not a conclusion to act on — verify it against `personas.json` before rewriting anything.
+
+*Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
