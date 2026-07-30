@@ -89,7 +89,8 @@ async function verify(id) {
   // The wordmark legitimately moves from text to an <img alt>. Any other copy change
   // is a rewrite and breaks attribution.
   const norm = (t) => t.replace(/REAL SKIN CARE/gi, '').replace(/\s+/g, ' ').trim();
-  if (norm(textIn(b)) !== norm(textIn(a))) problems.push('copy changed — this should be a restyle only');
+  const copyChanged = norm(textIn(b)) !== norm(textIn(a));
+  if (copyChanged && !REDESIGN) problems.push('copy changed — a restyle must not touch copy (pass --redesign if intended)');
 
   const offPalette = hexesIn(a).filter((h) => !ALLOWED.has(h));
   if (offPalette.length) problems.push(`off-palette colours: ${offPalette.join(', ')}`);
@@ -105,6 +106,7 @@ async function verify(id) {
   console.log(`  tags     ${tb.length} → ${ta.length}${lostTags.length ? ' ✗' : ' ✓'}`);
   console.log(`  links    ${linksIn(b).length} → ${linksIn(a).length}${lostLinks.length ? ' ✗' : ' ✓'}`);
   console.log(`  colours  ${hexesIn(b).length} → ${hexesIn(a).length}${offPalette.length ? ' ✗' : ' ✓ all on-palette'}`);
+  console.log(`  copy     ${copyChanged ? (REDESIGN ? '⚠ changed (redesign — intended)' : '✗ changed') : '✓ unchanged'}`);
   console.log(`  live     ${live === null ? '(could not fetch)' : drifted ? '⚠ DRIFTED from .before — someone edited it in the UI' : '✓ matches .before'}`);
   for (const p of problems) console.log(`  ✗ ${p}`);
   if (!problems.length) console.log(`  → safe to paste${drifted ? ', BUT reconcile the drift first' : ''}`);
@@ -112,9 +114,16 @@ async function verify(id) {
 }
 
 const args = process.argv.slice(2);
-const ids = args.includes('--all')
-  ? [...new Set(readdirSync(DIR).filter((f) => f.endsWith('.after.html')).map((f) => f.replace('.after.html', '')))]
-  : args;
+// A restyle must not touch copy — that is what makes a performance change attributable
+// to design. A redesign deliberately changes copy (a first-glance payoff, a PS, a CTA
+// bridged to what was just read), so the check is downgraded to a warning rather than
+// bypassed: you still see exactly what moved.
+const REDESIGN = args.includes('--redesign');
+const ids = args.filter((a) => !a.startsWith('--')).length && !args.includes('--all')
+  ? args.filter((a) => !a.startsWith('--'))
+  : args.includes('--all')
+    ? [...new Set(readdirSync(DIR).filter((f) => f.endsWith('.after.html')).map((f) => f.replace('.after.html', '')))]
+    : [];
 
 if (!ids.length) {
   console.error('usage: verify-email-rebuild.mjs <templateId> | --all');
