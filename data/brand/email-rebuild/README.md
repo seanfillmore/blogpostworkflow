@@ -43,11 +43,28 @@ work.
 
 ## What the rebuild changes, and what it must not
 
-Restyle only — **copy is untouched**, so a change in performance is attributable to the
-design rather than the words. The single text difference is the wordmark, which moves
-from `REAL SKIN CARE` set in Georgia to the hosted logo image carrying
-`alt="Real Skin Care"`, so the accessible text survives.
+There are two modes, and they differ in what they are allowed to touch.
 
-Preserved exactly: every Klaviyo tag (`{% coupon_code %}`, `{% unsubscribe %}`), every
-link, and the CAN-SPAM postal address. `verify-rebuild.mjs` checks all of that
-mechanically — run it before pasting.
+**Restyle** (`verify-email-rebuild.mjs <id>`) — **copy is untouched**, so a change in
+performance is attributable to the design rather than the words. The single text
+difference is the wordmark, which moves from `REAL SKIN CARE` set in Georgia to the
+hosted logo image carrying `alt="Real Skin Care"`. Every link is preserved.
+
+**Redesign** (`--redesign`) — copy and link set are both in scope. This is the mode for
+the 21 templates that have no performance history: there is no baseline to protect, so
+they are rebuilt against `../email-format-matrix.md` rather than merely repainted.
+
+Preserved in **both** modes, and enforced as hard failures:
+
+- every Klaviyo tag — a dropped `{% coupon_code %}` ships a broken offer
+- the **compliance** links: unsubscribe, preference management, policy pages
+- the CAN-SPAM postal address
+- an on-palette colour set
+
+**Why the link rule is split.** The format matrix mandates one ask per objective and at
+most two destinations, but the live templates carry up to eleven links (`TA5Wi4` 11,
+`ThCS7T` 10, `Y8wJn7` 10). A correct redesign therefore *drops* most of them. Failing on
+that would have pressured every rebuild into keeping all eleven — the exact opposite of
+the rule — so under `--redesign` a dropped **marketing** link is reported as a warning
+you must eyeball, while a dropped **compliance** link still fails hard. The classifier
+lives in `lib/email-rebuild-checks.js` and is unit-tested.
