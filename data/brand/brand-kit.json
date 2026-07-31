@@ -181,5 +181,7 @@
     "Mont (identity PDF) vs Cabin/Outfit (live site). Resolved for email — the site wins — but the two documents still disagree."
   ],
   "postal_address": "1623 Central Ave STE 201, Cheyenne, WY 82001, United States",
-  "postal_address_note": "CAN-SPAM footer address. Not a manufacturing location — products are made in the USA and no city or state is ever named as the place of manufacture. Replaced 6212 FM 933, Blum, TX 76627 on 2026-07-31."
+  "postal_address_note": "CAN-SPAM footer address. Not a manufacturing location — products are made in the USA and no city or state is ever named as the place of manufacture. Replaced 6212 FM 933, Blum, TX 76627 on 2026-07-31.",
+  "free_shipping_threshold": 45,
+  "free_shipping_threshold_note": "Free-shipping order minimum, in USD. Appears in six emails' copy — always interpolate, never retype. Raised from 50 to 45 on 2026-07-31."
 }

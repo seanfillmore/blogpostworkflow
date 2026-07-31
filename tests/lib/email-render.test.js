@@ -133,3 +133,61 @@ const minimal = {
 }
 
 console.log('email-render: all assertions passed');
+
+// --- Free-shipping threshold. It appears in six emails' copy, so a change means six
+// --- chances to miss one. brand-kit.json owns the number and a stale one fails the build.
+{
+  const kit = JSON.parse(
+    readFileSync(new URL('../../data/brand/brand-kit.json', import.meta.url), 'utf8'),
+  );
+  assert.ok(kit.free_shipping_threshold, 'brand-kit.json must carry free_shipping_threshold');
+
+  // The current threshold renders fine.
+  const ok = renderEmail({
+    ...minimal,
+    blocks: [{ type: 'p', html: `Orders over $${kit.free_shipping_threshold} ship free.` }],
+  });
+  assert.match(ok, new RegExp(`over \\$${kit.free_shipping_threshold} ship free`));
+
+  // A superseded one does not.
+  assert.throws(
+    () => renderEmail({ ...minimal, blocks: [{ type: 'p', html: 'Orders over $50 ship free.' }] }),
+    /shipping threshold/i,
+  );
+  assert.throws(
+    () => renderEmail({ ...minimal, blocks: [{ type: 'p', html: 'Free shipping starts at $50.' }] }),
+    /shipping threshold/i,
+  );
+}
+
+// A product price that happens to contain digits is not a threshold and must not trip it.
+{
+  const html = renderEmail({
+    ...minimal,
+    blocks: [{ type: 'p', html: 'Sensitive Skin Set — $46.80, and the lip balm is $8.' }],
+  });
+  assert.match(html, /\$46\.80/);
+}
+
+console.log('email-render: threshold assertions passed');
+
+// A threshold rendered without its currency symbol — "orders over 45 ship free" — is what
+// a dropped escape in the interpolation actually produced. The stale-value check could not
+// see it, because it only matched a figure preceded by "$".
+{
+  assert.throws(
+    () => renderEmail({ ...minimal, blocks: [{ type: 'p', html: 'Orders over 45 ship free.' }] }),
+    /currency|missing \$|shipping threshold/i,
+  );
+}
+
+// Ordinary prose containing a number must not trip it.
+{
+  const html = renderEmail({
+    ...minimal,
+    blocks: [{ type: 'p', html: 'Julie started this over 20 years ago, and it takes 1–2 weeks.' }],
+  });
+  assert.match(html, /over 20 years ago/);
+}
+
+console.log('email-render: currency assertions passed');

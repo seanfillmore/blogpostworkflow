@@ -17,6 +17,14 @@
  *      instead, a different structure entirely.
  */
 
+import { readFileSync } from 'node:fs';
+
+// Free-shipping threshold. brand-kit.json owns it — it moved from $50 to $45 on
+// 2026-07-31 and appears in six of these emails, so it is interpolated, never retyped.
+const SHIP = JSON.parse(
+  readFileSync(new URL('../brand-kit.json', import.meta.url), 'utf8'),
+).free_shipping_threshold;
+
 const PDP = 'https://www.realskincare.com/products';
 const BEST = 'https://www.realskincare.com/collections/best-sellers';
 
@@ -160,7 +168,7 @@ export const specs = {
       { type: 'raw', html: boughtHero },
       {
         type: 'p',
-        html: 'Normally free shipping starts at $50, which is a real reason to put something off. This removes it.',
+        html: `Normally free shipping starts at $${SHIP}, which is a real reason to put something off. This removes it.`,
       },
       { type: 'raw', html: boughtLink('Use WELCOMEBACK on your last order →') },
       { type: 'signoff' },
@@ -187,7 +195,7 @@ export const specs = {
       { type: 'cta', text: 'Return to my cart', href: '{{ event.extra.checkout_url }}' },
       {
         type: 'p',
-        html: 'Orders over $50 ship free, if you were close to it.',
+        html: `Orders over $${SHIP} ship free, if you were close to it.`,
       },
     ],
   },
@@ -259,7 +267,7 @@ export const specs = {
       { type: 'cta', text: 'Shop best sellers', href: BEST },
       {
         type: 'p',
-        html: 'Use it at checkout. Orders over $50 ship free anyway.',
+        html: `Use it at checkout. Orders over $${SHIP} ship free anyway.`,
       },
       { type: 'signoff' },
       { type: 'ps', html: 'Reply to this email if you want a recommendation for your skin — a real person answers, usually me.' },
@@ -313,7 +321,7 @@ export const specs = {
         html: productRow('Sensitive Skin Set', '$46.80', 'The gentlest set we make, and cheaper than buying the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
       },
       { type: 'cta', text: 'Shop best sellers', href: BEST },
-      { type: 'p', html: 'Free shipping over $50.' },
+      { type: 'p', html: `Free shipping over $${SHIP}.` },
     ],
   },
 
@@ -512,7 +520,7 @@ export const specs = {
           `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="${BEST}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Shop best sellers</a></td></tr></table>`,
         ),
       },
-      { type: 'p', html: 'Free shipping over $50, if you are stocking up on more than one.' },
+      { type: 'p', html: `Free shipping over $${SHIP}, if you are stocking up on more than one.` },
     ],
   },
 
@@ -612,7 +620,7 @@ export const specs = {
         html: productRow('Coconut Oil Toothpaste', '$13', 'Fluoride-free and SLS-free. Foams less, because foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
       },
       { type: 'cta', text: 'Shop best sellers', href: BEST },
-      { type: 'p', html: 'Free shipping over $50.' },
+      { type: 'p', html: `Free shipping over $${SHIP}.` },
     ],
   },
 
