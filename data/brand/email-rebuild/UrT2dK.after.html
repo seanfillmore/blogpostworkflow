@@ -28,8 +28,13 @@
 <tr><td style="background-color:#FFFFFF;border-radius:12px;padding:36px 32px;" class="px">
 <h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">Thank you — and one thing to expect</h1>
 <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Hi {{ first_name|default:"there" }} — your order is being prepared and you will get tracking as soon as it ships.</p>
-<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">One thing worth knowing now rather than in week two: if you bought the deodorant, switching off antiperspirant takes about <strong>1–2 weeks</strong>. You may notice more moisture at first. That is your sweat glands doing what they always did, no longer blocked by aluminium — it settles.</p>
-<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Most people who give up on natural deodorant quit in that window, days before it would have worked. I will send a short note on using each thing you bought, and then leave you alone.</p>
+{% with items=event.Items|join:", " %}{% if "Deodorant" in items %}
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">One thing worth knowing now rather than in week two: switching off antiperspirant takes about <strong>1–2 weeks</strong>. You may notice more moisture at first — that is your sweat glands doing what they always did, no longer blocked by aluminium. It settles.</p>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Most people who give up on natural deodorant quit inside that window, days before it would have worked. Do not judge it before day 14.</p>
+{% else %}
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Everything is handmade in the USA from a short ingredient list, and the results come from using it consistently rather than heavily. Give it a couple of weeks.</p>
+{% endif %}{% endwith %}
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">I will send a short note on using what you bought, and then leave you alone.</p>
 <p style="margin:0 0 6px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Take care,<br/><strong>Sean</strong><br/><span style="font-size:14px;">Co-Founder, Real Skin Care</span></p>
 <p style="margin:20px 0 0;padding-top:18px;border-top:1px solid #EDEDED;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;line-height:23px;color:#000000;"><strong>PS —</strong> If anything arrives damaged or wrong, reply here and we will fix it. No form to fill in.</p>
 </td></tr>

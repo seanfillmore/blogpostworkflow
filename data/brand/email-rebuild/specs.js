@@ -25,6 +25,29 @@ const SHIP = JSON.parse(
   readFileSync(new URL('../brand-kit.json', import.meta.url), 'utf8'),
 ).free_shipping_threshold;
 
+const KIT_SUB = JSON.parse(
+  readFileSync(new URL('../brand-kit.json', import.meta.url), 'utf8'),
+).subscription;
+
+// Prices and variant IDs come from the live storefront via
+// scripts/build-product-catalog.mjs. A lip balm price of $8 was invented here and reached
+// a live email; it is $15. Variant IDs are worse — a wrong one adds the wrong product to
+// someone's cart. Never type either from memory.
+const CATALOG = JSON.parse(
+  readFileSync(new URL('../product-catalog.json', import.meta.url), 'utf8'),
+).products;
+
+const price = (handle) => {
+  const p = CATALOG[handle];
+  if (!p) throw new Error(`no catalog entry for ${handle} — run build-product-catalog.mjs`);
+  return `$${p.price}`;
+};
+const variant = (handle) => {
+  const p = CATALOG[handle];
+  if (!p) throw new Error(`no catalog entry for ${handle} — run build-product-catalog.mjs`);
+  return p.defaultVariantId;
+};
+
 const PDP = 'https://www.realskincare.com/products';
 const BEST = 'https://www.realskincare.com/collections/best-sellers';
 
@@ -108,14 +131,37 @@ const reviewLink = (name, handle) => `<table cellpadding="0" cellspacing="0" rol
  * link. That defeats the email: a replenishment nudge exists to make reordering *their*
  * item a single tap, and a collection page puts the search back on the customer.
  */
+/**
+ * Shows the two refill cadences side by side.
+ *
+ * The emails described a discount that varies by frequency but rendered one identical
+ * button either way, so the difference the copy promised was invisible. Recurpay has no
+ * per-cadence deep link, so the choice is made on the PDP — the email's job is to make
+ * the trade-off legible before they get there.
+ *
+ * Figures come from brand-kit.json and are flagged UNVERIFIED there.
+ */
+const cadenceTable = () => {
+  const tiers = KIT_SUB.tiers;
+  const cell = (t, emphasis) => `<td width="50%" style="padding:14px;border:1px solid #EDEDED;border-radius:8px;text-align:center;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;color:#000000;">
+<div style="font-size:22px;font-weight:700;">${t.discount_pct}% off</div>
+<div style="font-size:14px;margin-top:2px;">every ${t.weeks} weeks</div>
+<div style="font-size:12px;margin-top:6px;color:#000000;">${emphasis}</div>
+</td>`;
+  return `<table cellpadding="0" cellspacing="6" role="presentation" width="100%" style="margin:0 0 20px;"><tr>
+${cell(tiers[0], 'Best value')}
+${cell(tiers[1], 'If you use it slower')}
+</tr></table>`;
+};
+
 const subscribeLinks = () => byCategory(
   ['Deodorant:coconut-oil-deodorant', 'Toothpaste:coconut-oil-toothpaste', 'Soap:coconut-soap',
     'Moisturiz:coconut-moisturizer', 'Lotion:coconut-lotion', 'Lip:coconut-oil-lip-balm']
     .map((pair) => {
       const [key, handle] = pair.split(':');
-      return `{% if "${key}" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/${handle}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}`;
+      return `{% if "${key}" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/${handle}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or set up a refill</a></td></tr></table>{% endif %}`;
     }).join('\n'),
-  `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="${BEST}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save</a></td></tr></table>`,
+  `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="${BEST}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or set up a refill</a></td></tr></table>`,
 );
 
 const para = (html) =>
@@ -310,15 +356,15 @@ export const specs = {
       },
       {
         type: 'raw',
-        html: productRow('Coconut Oil Deodorant', '$15', 'Aluminium-free. Expect a 1–2 week adjustment when you switch off antiperspirant — that is the point, not a flaw.', `${PDP}/coconut-oil-deodorant`),
+        html: productRow('Coconut Oil Deodorant', price('coconut-oil-deodorant'), 'Aluminium-free. Expect a 1–2 week adjustment when you switch off antiperspirant — that is the point, not a flaw.', `${PDP}/coconut-oil-deodorant`),
       },
       {
         type: 'raw',
-        html: productRow('Coconut Oil Toothpaste', '$13', 'Fluoride-free and SLS-free. It foams less than conventional paste, because the foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
+        html: productRow('Coconut Oil Toothpaste', price('coconut-oil-toothpaste'), 'Fluoride-free and SLS-free. It foams less than conventional paste, because the foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
       },
       {
         type: 'raw',
-        html: productRow('Sensitive Skin Set', '$46.80', 'The gentlest set we make, and cheaper than buying the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
+        html: productRow('Sensitive Skin Set', price('sensitive-skin-starter-set'), 'The gentlest set we make, and cheaper than buying the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
       },
       { type: 'cta', text: 'Shop best sellers', href: BEST },
       { type: 'p', html: `Free shipping over $${SHIP}.` },
@@ -403,7 +449,7 @@ export const specs = {
       { type: 'signoff' },
       {
         type: 'raw',
-        html: productRow('Coconut Oil Lip Balm', '$8', 'The small one people add on and then reorder on its own.', `${PDP}/coconut-oil-lip-balm`),
+        html: productRow('Coconut Oil Lip Balm', price('coconut-oil-lip-balm'), 'The small one people add on and then reorder on its own.', `${PDP}/coconut-oil-lip-balm`),
       },
     ],
   },
@@ -424,14 +470,19 @@ export const specs = {
         type: 'p',
         html: 'Hi {{ first_name|default:"there" }} — your order is being prepared and you will get tracking as soon as it ships.',
       },
+      // The transition-period warning only belongs in front of someone who bought the
+      // deodorant. A first pass sent it to everyone, so a lotion buyer was told about
+      // antiperspirant withdrawal they will never experience.
       {
-        type: 'p',
-        html: 'One thing worth knowing now rather than in week two: if you bought the deodorant, switching off antiperspirant takes about <strong>1–2 weeks</strong>. You may notice more moisture at first. That is your sweat glands doing what they always did, no longer blocked by aluminium — it settles.',
+        type: 'raw',
+        html: `{% with items=event.Items|join:", " %}{% if "Deodorant" in items %}
+${para('One thing worth knowing now rather than in week two: switching off antiperspirant takes about <strong>1–2 weeks</strong>. You may notice more moisture at first — that is your sweat glands doing what they always did, no longer blocked by aluminium. It settles.')}
+${para('Most people who give up on natural deodorant quit inside that window, days before it would have worked. Do not judge it before day 14.')}
+{% else %}
+${para('Everything is handmade in the USA from a short ingredient list, and the results come from using it consistently rather than heavily. Give it a couple of weeks.')}
+{% endif %}{% endwith %}`,
       },
-      {
-        type: 'p',
-        html: 'Most people who give up on natural deodorant quit in that window, days before it would have worked. I will send a short note on using each thing you bought, and then leave you alone.',
-      },
+      { type: 'p', html: 'I will send a short note on using what you bought, and then leave you alone.' },
       { type: 'signoff' },
       { type: 'ps', html: 'If anything arrives damaged or wrong, reply here and we will fix it. No form to fill in.' },
     ],
@@ -471,7 +522,7 @@ export const specs = {
       },
       {
         type: 'raw',
-        html: productRow('Sensitive Skin Moisturizing Set', '$46.80', 'Our gentlest coconut-oil essentials, priced below the individual pieces.', `${PDP}/sensitive-skin-starter-set`),
+        html: productRow('Sensitive Skin Moisturizing Set', price('sensitive-skin-starter-set'), 'Our gentlest coconut-oil essentials, priced below the individual pieces.', `${PDP}/sensitive-skin-starter-set`),
       },
       { type: 'raw', html: codeBlock('Free shipping on your set', 'SETSHIP') },
       { type: 'cta', text: 'Shop the Set', href: `${PDP}/sensitive-skin-starter-set` },
@@ -511,14 +562,33 @@ export const specs = {
     blocks: [
       { type: 'h1', text: 'Running low?' },
       { type: 'p', html: 'Each button drops it straight into your cart — no hunting for it.' },
+      // Their own items first, as one-tap reorders.
       {
         type: 'raw',
         html: byCategory(
-          `{% if "Deodorant" in items %}${cartButton('Reorder Coconut Oil Deodorant — $15', '44179451052202')}{% endif %}
-{% if "Toothpaste" in items %}${cartButton('Reorder Coconut Oil Toothpaste — $13', '44179458162858')}{% endif %}
-{% if "Soap" in items %}${cartButton('Reorder Foaming Hand Soap — $13', '44179472187562')}{% endif %}`,
-          `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="${BEST}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Shop best sellers</a></td></tr></table>`,
+          `{% if "Deodorant" in items %}${cartButton(`Reorder Coconut Oil Deodorant — ${price('coconut-oil-deodorant')}`, variant('coconut-oil-deodorant'))}{% endif %}
+{% if "Toothpaste" in items %}${cartButton(`Reorder Coconut Oil Toothpaste — ${price('coconut-oil-toothpaste')}`, variant('coconut-oil-toothpaste'))}{% endif %}
+{% if "Soap" in items %}${cartButton(`Reorder Foaming Hand Soap — ${price('organic-foaming-hand-soap')}`, variant('organic-foaming-hand-soap'))}{% endif %}
+{% if "Lotion" in items %}${cartButton(`Reorder Body Lotion — ${price('coconut-lotion')}`, variant('coconut-lotion'))}{% endif %}
+{% if "Moisturiz" in items %}${cartButton(`Reorder Coconut Moisturizer — ${price('coconut-moisturizer')}`, variant('coconut-moisturizer'))}{% endif %}
+{% if "Lip" in items %}${cartButton(`Reorder Lip Balm — ${price('coconut-oil-lip-balm')}`, variant('coconut-oil-lip-balm'))}{% endif %}`,
+          cartButton(`Reorder Coconut Oil Deodorant — ${price('coconut-oil-deodorant')}`, variant('coconut-oil-deodorant')),
         ),
+      },
+      // The rest of the range, so the email is useful to someone restocking more than the
+      // one thing they last bought. A first pass showed only their own items, which made a
+      // reorder email a dead end for anyone wanting to add to the order.
+      { type: 'p', html: '<strong>Add to the same order</strong>' },
+      {
+        type: 'raw',
+        html: [
+          ['coconut-oil-deodorant', 'Coconut Oil Deodorant'],
+          ['coconut-oil-toothpaste', 'Coconut Oil Toothpaste'],
+          ['coconut-oil-lip-balm', 'Coconut Oil Lip Balm'],
+          ['coconut-soap', 'Moisturizing Coconut Soap'],
+          ['coconut-lotion', 'Non-Toxic Body Lotion'],
+          ['coconut-moisturizer', 'Coconut Moisturizer'],
+        ].map(([handle, label]) => productRow(label, price(handle), 'One tap adds it to your cart.', `https://www.realskincare.com/cart/${variant(handle)}:1`)).join('\n'),
       },
       { type: 'p', html: `Free shipping over $${SHIP}, if you are stocking up on more than one.` },
     ],
@@ -543,6 +613,7 @@ export const specs = {
         type: 'p',
         html: 'Subscribe &amp; Save is 15% off on a 6-week refill, or 10% every 8 weeks. Skip, pause, swap scent or cancel any time from your account — it is not a contract, and you do not have to call anyone.',
       },
+      { type: 'raw', html: cadenceTable() },
       { type: 'raw', html: subscribeLinks() },
       { type: 'signoff' },
       { type: 'ps', html: 'If six weeks is too fast for how you actually use it, pick the eight-week option. Running a subscription you keep skipping is worse than not having one.' },
@@ -563,6 +634,7 @@ export const specs = {
         type: 'p',
         html: 'Two options. Reorder when you notice, or put it on Subscribe &amp; Save — 15% off every 6 weeks, or 10% every 8. Skip, pause, swap or cancel any time from your account.',
       },
+      { type: 'raw', html: cadenceTable() },
       { type: 'raw', html: subscribeLinks() },
       { type: 'signoff' },
     ],
@@ -609,15 +681,15 @@ export const specs = {
       { type: 'p', html: 'No rush. If you are still deciding, these are the three people usually start with.' },
       {
         type: 'raw',
-        html: productRow('Coconut Oil Deodorant', '$15', 'Aluminium-free. Expect a 1–2 week adjustment off antiperspirant.', `${PDP}/coconut-oil-deodorant`),
+        html: productRow('Coconut Oil Deodorant', price('coconut-oil-deodorant'), 'Aluminium-free. Expect a 1–2 week adjustment off antiperspirant.', `${PDP}/coconut-oil-deodorant`),
       },
       {
         type: 'raw',
-        html: productRow('Sensitive Skin Set', '$46.80', 'The gentlest set, and cheaper than the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
+        html: productRow('Sensitive Skin Set', price('sensitive-skin-starter-set'), 'The gentlest set, and cheaper than the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
       },
       {
         type: 'raw',
-        html: productRow('Coconut Oil Toothpaste', '$13', 'Fluoride-free and SLS-free. Foams less, because foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
+        html: productRow('Coconut Oil Toothpaste', price('coconut-oil-toothpaste'), 'Fluoride-free and SLS-free. Foams less, because foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
       },
       { type: 'cta', text: 'Shop best sellers', href: BEST },
       { type: 'p', html: `Free shipping over $${SHIP}.` },

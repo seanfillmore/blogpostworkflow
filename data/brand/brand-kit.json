@@ -183,5 +183,19 @@
   "postal_address": "1623 Central Ave STE 201, Cheyenne, WY 82001, United States",
   "postal_address_note": "CAN-SPAM footer address. Not a manufacturing location — products are made in the USA and no city or state is ever named as the place of manufacture. Replaced 6212 FM 933, Blum, TX 76627 on 2026-07-31.",
   "free_shipping_threshold": 45,
-  "free_shipping_threshold_note": "Free-shipping order minimum, in USD. Appears in six emails' copy — always interpolate, never retype. Raised from 50 to 45 on 2026-07-31."
+  "free_shipping_threshold_note": "Free-shipping order minimum, in USD. Appears in six emails' copy — always interpolate, never retype. Raised from 50 to 45 on 2026-07-31.",
+  "subscription": {
+    "tiers": [
+      {
+        "weeks": 6,
+        "discount_pct": 15
+      },
+      {
+        "weeks": 8,
+        "discount_pct": 10
+      }
+    ],
+    "provider": "Recurpay",
+    "note": "UNVERIFIED as of 2026-07-31. These figures are inherited from the pre-rebuild Replenishment emails. Native Shopify selling_plan_groups is empty (subscriptions run through Recurpay, which renders client-side), and the only discount wording in the PDP HTML is SAVE 20% / SAVE 10%. Confirm against Recurpay before trusting these numbers."
+  }
 }
