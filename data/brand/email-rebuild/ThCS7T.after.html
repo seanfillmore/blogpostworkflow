@@ -28,17 +28,18 @@
 <tr><td style="background-color:#FFFFFF;border-radius:12px;padding:36px 32px;" class="px">
 <h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">Probably empty by now</h1>
 <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Hi {{ first_name|default:"there" }} — your {{ event.Items|first|default:"Real Skin Care favorite" }} is likely finished.</p>
-<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Two options. Reorder when you notice, or put it on Subscribe &amp; Save — 15% off every 6 weeks, or 10% every 8. Skip, pause, swap or cancel any time from your account.</p>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Two options. Reorder when you notice, or put it on Subscribe &amp; Save at 15% off — pick the interval that matches how fast you actually get through it. Skip, pause, swap or cancel any time from your account.</p>
+<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 10px;"><tr><td align="center" style="padding:12px;border:2px dashed #AEDEAC;border-radius:10px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:20px;font-weight:700;color:#000000;">
+15% off every refill, either way
+</td></tr></table>
 <table cellpadding="0" cellspacing="6" role="presentation" width="100%" style="margin:0 0 20px;"><tr>
 <td width="50%" style="padding:14px;border:1px solid #EDEDED;border-radius:8px;text-align:center;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;color:#000000;">
-<div style="font-size:22px;font-weight:700;">15% off</div>
-<div style="font-size:14px;margin-top:2px;">every 6 weeks</div>
-<div style="font-size:12px;margin-top:6px;color:#000000;">Best value</div>
+<div style="font-size:22px;font-weight:700;">Every 6 weeks</div>
+<div style="font-size:12px;margin-top:6px;">Most people</div>
 </td>
 <td width="50%" style="padding:14px;border:1px solid #EDEDED;border-radius:8px;text-align:center;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;color:#000000;">
-<div style="font-size:22px;font-weight:700;">10% off</div>
-<div style="font-size:14px;margin-top:2px;">every 8 weeks</div>
-<div style="font-size:12px;margin-top:6px;color:#000000;">If you use it slower</div>
+<div style="font-size:22px;font-weight:700;">Every 8 weeks</div>
+<div style="font-size:12px;margin-top:6px;">If it lasts you longer</div>
 </td>
 </tr></table>
 {% with items=event.Items|join:", " %}{% if "Deodorant" in items or "Toothpaste" in items or "Soap" in items or "Lotion" in items or "Coconut Moisturizer" in items or "Lip" in items %}

@@ -185,17 +185,13 @@
   "free_shipping_threshold": 45,
   "free_shipping_threshold_note": "Free-shipping order minimum, in USD. Appears in six emails' copy — always interpolate, never retype. Raised from 50 to 45 on 2026-07-31.",
   "subscription": {
-    "tiers": [
-      {
-        "weeks": 6,
-        "discount_pct": 15
-      },
-      {
-        "weeks": 8,
-        "discount_pct": 10
-      }
-    ],
     "provider": "Recurpay",
-    "note": "VERIFIED. Sean set these on 2026-07-21: monthly removed, 6 weeks = 15% off (default, matches the 49-day median runout), 8 weeks = 10%. Live via Recurpay. The BUY 2 SAVE 10% / BUY 3 SAVE 20% wording on the PDP is a QUANTITY discount, unrelated to subscriptions — do not confuse the two. Every subscription mention must include skip/pause/swap/cancel anytime, and promote a 6-8 week cadence, never monthly."
+    "discount_pct": 15,
+    "cadence_weeks": [
+      6,
+      8
+    ],
+    "default_cadence_weeks": 6,
+    "note": "VERIFIED with Sean 2026-07-31: EVERY Recurpay plan is 15% off regardless of frequency. There is no discount difference between cadences — the choice is timing only, matched to how fast the product runs out. This supersedes the 6wk=15%/8wk=10% figure recorded on 2026-07-21, which is wrong. Promote a 6-8 week cadence, never monthly, and always state skip/pause/swap/cancel anytime. The BUY 2 SAVE 10% / BUY 3 SAVE 20% wording on PDPs is a QUANTITY discount and unrelated."
   }
 }

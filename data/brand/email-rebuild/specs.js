@@ -144,15 +144,17 @@ const reviewLink = (name, handle) => `<table cellpadding="0" cellspacing="0" rol
  * Figures come from brand-kit.json and are flagged UNVERIFIED there.
  */
 const cadenceTable = () => {
-  const tiers = KIT_SUB.tiers;
-  const cell = (t, emphasis) => `<td width="50%" style="padding:14px;border:1px solid #EDEDED;border-radius:8px;text-align:center;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;color:#000000;">
-<div style="font-size:22px;font-weight:700;">${t.discount_pct}% off</div>
-<div style="font-size:14px;margin-top:2px;">every ${t.weeks} weeks</div>
-<div style="font-size:12px;margin-top:6px;color:#000000;">${emphasis}</div>
+  const [fast, slow] = KIT_SUB.cadence_weeks;
+  const cell = (weeks, who) => `<td width="50%" style="padding:14px;border:1px solid #EDEDED;border-radius:8px;text-align:center;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;color:#000000;">
+<div style="font-size:22px;font-weight:700;">Every ${weeks} weeks</div>
+<div style="font-size:12px;margin-top:6px;">${who}</div>
 </td>`;
-  return `<table cellpadding="0" cellspacing="6" role="presentation" width="100%" style="margin:0 0 20px;"><tr>
-${cell(tiers[0], 'Best value')}
-${cell(tiers[1], 'If you use it slower')}
+  return `<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 10px;"><tr><td align="center" style="padding:12px;border:2px dashed #AEDEAC;border-radius:10px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:20px;font-weight:700;color:#000000;">
+${KIT_SUB.discount_pct}% off every refill, either way
+</td></tr></table>
+<table cellpadding="0" cellspacing="6" role="presentation" width="100%" style="margin:0 0 20px;"><tr>
+${cell(fast, 'Most people')}
+${cell(slow, 'If it lasts you longer')}
 </tr></table>`;
 };
 
@@ -613,12 +615,12 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       },
       {
         type: 'p',
-        html: 'Subscribe &amp; Save is 15% off on a 6-week refill, or 10% every 8 weeks. Skip, pause, swap scent or cancel any time from your account — it is not a contract, and you do not have to call anyone.',
+        html: `Subscribe &amp; Save is ${KIT_SUB.discount_pct}% off every refill — the cadence only changes how often it turns up, not the price. Skip, pause, swap scent or cancel any time from your account; it is not a contract and you do not have to call anyone.`,
       },
       { type: 'raw', html: cadenceTable() },
       { type: 'raw', html: subscribeLinks() },
       { type: 'signoff' },
-      { type: 'ps', html: 'If six weeks is too fast for how you actually use it, pick the eight-week option. Running a subscription you keep skipping is worse than not having one.' },
+      { type: 'ps', html: 'If six weeks is too fast for how you actually use it, pick eight — same discount either way. Running a subscription you keep skipping is worse than not having one.' },
     ],
   },
 
@@ -634,7 +636,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       },
       {
         type: 'p',
-        html: 'Two options. Reorder when you notice, or put it on Subscribe &amp; Save — 15% off every 6 weeks, or 10% every 8. Skip, pause, swap or cancel any time from your account.',
+        html: `Two options. Reorder when you notice, or put it on Subscribe &amp; Save at ${KIT_SUB.discount_pct}% off — pick the interval that matches how fast you actually get through it. Skip, pause, swap or cancel any time from your account.`,
       },
       { type: 'raw', html: cadenceTable() },
       { type: 'raw', html: subscribeLinks() },
