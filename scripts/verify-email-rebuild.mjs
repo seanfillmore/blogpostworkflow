@@ -21,6 +21,10 @@
  *                                              to design, not new words
  *   4. every colour is on-palette
  *   5. the postal address survives           — CAN-SPAM
+ *   6. unsubscribe uses {% unsubscribe_link %} inside an href, never
+ *      {% unsubscribe %} — the latter expands to a whole <a> element, so nesting it in
+ *      an attribute leaks the rest of the footer markup into the email as visible text.
+ *      All 22 live templates shipped with the wrong tag.
  *
  * It also re-fetches the live template and warns if it has drifted from .before.html,
  * because these files are a snapshot: if someone edited the email in the UI since,
@@ -32,7 +36,13 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { linksIn, linkFindings } from '../lib/email-rebuild-checks.js';
+import {
+  linksIn,
+  linkFindings,
+  tagsIn,
+  tagFindings,
+  unsubscribeFindings,
+} from '../lib/email-rebuild-checks.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = join(ROOT, 'data/brand/email-rebuild');
@@ -50,7 +60,7 @@ function loadEnv() {
   return out;
 }
 
-const tagsIn = (s) => (s.match(/\{%[^%]*%\}|\{\{[^}]*\}\}/g) ?? []).sort();
+
 const hexesIn = (s) => [...new Set((s.match(/#[0-9a-fA-F]{6}\b/g) ?? []).map((h) => h.toUpperCase()))].sort();
 const textIn = (s) => s
   .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
@@ -86,12 +96,14 @@ async function verify(id) {
   const warnings = [];
 
   const [tb, ta] = [tagsIn(b), tagsIn(a)];
-  const lostTags = tb.filter((t) => !ta.includes(t));
-  if (lostTags.length) problems.push(`Klaviyo tags dropped: ${lostTags.join(', ')}`);
+  const tag = tagFindings(b, a);
+  problems.push(...tag.problems);
 
   const link = linkFindings(b, a, { redesign: REDESIGN });
   problems.push(...link.problems);
   warnings.push(...link.warnings);
+
+  problems.push(...unsubscribeFindings(a).problems);
 
   // The wordmark legitimately moves from text to an <img alt>. Any other copy change
   // is a rewrite and breaks attribution.
@@ -110,7 +122,7 @@ async function verify(id) {
   const drifted = live !== null && live !== b;
 
   console.log(`\n${id}`);
-  console.log(`  tags     ${tb.length} → ${ta.length}${lostTags.length ? ' ✗' : ' ✓'}`);
+  console.log(`  tags     ${tb.length} → ${ta.length}${tag.problems.length ? ' ✗' : ' ✓'}`);
   console.log(`  links    ${linksIn(b).length} → ${linksIn(a).length}${link.problems.length ? ' ✗' : link.warnings.length ? ' ⚠ dropped (redesign)' : ' ✓'}`);
   console.log(`  colours  ${hexesIn(b).length} → ${hexesIn(a).length}${offPalette.length ? ' ✗' : ' ✓ all on-palette'}`);
   console.log(`  copy     ${copyChanged ? (REDESIGN ? '⚠ changed (redesign — intended)' : '✗ changed') : '✓ unchanged'}`);

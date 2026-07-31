@@ -35,6 +35,29 @@ block-by-block rebuild.
    - dark mode swaps the logo — toggle your client's appearance
 4. Re-run `node scripts/klaviyo-email-audit.mjs` and confirm that row is on-brand.
 
+## The unsubscribe tag: all 22 shipped with the wrong one
+
+`{% unsubscribe %}` expands to a **complete `<a>` element**, not a URL. Put it in an
+href and the anchor nests inside an attribute, the browser closes the outer tag early,
+and the rest of the footer markup leaks into the email as visible text — readers see a
+stray `" style="font-family:Outfit…">Don't want these?…` after the link.
+
+Klaviyo's tag for the bare URL is **`{% unsubscribe_link %}`**, and that is what belongs
+inside `<a href="">`. ([docs](https://help.klaviyo.com/hc/en-us/articles/115006054267))
+
+Every one of the 22 live templates uses `href="{% unsubscribe %}"`, so this is inherited
+breakage, not something a rebuild introduced. No rebuild may carry it forward —
+`verify-email-rebuild.mjs` now fails on it, and both the tag and link checks treat the
+two spellings as the same destination so the repair doesn't read as a dropped link.
+
+## Copying a rebuild to the clipboard
+
+Use `LC_CTYPE=UTF-8 pbcopy < <id>.after.html`. Plain `pbcopy` under `LC_CTYPE=C` tags the
+pasteboard as Mac Roman, so every em dash and arrow arrives in Klaviyo as `‚Äî` / `‚Üí`.
+A `pbcopy | pbpaste` round-trip **cannot detect this** — both ends share the same wrong
+assumption and it looks clean. Check with `osascript -e 'the clipboard as text'`, which
+reads the pasteboard the way a GUI app does.
+
 ## Before pasting anything
 
 Diff the `.before.html` against what is live right now. These files are a snapshot; if
