@@ -102,7 +102,7 @@ const ITEMS_OPEN = '{% with items=event.Items|join:", " %}';
 const ITEMS_CLOSE = '{% endwith %}';
 
 const ANY_CATEGORY = '"Deodorant" in items or "Toothpaste" in items or "Soap" in items '
-  + 'or "Lotion" in items or "Moisturiz" in items or "Lip" in items';
+  + 'or "Lotion" in items or "Coconut Moisturizer" in items or "Lip" in items';
 
 /**
  * Per-category content with a mandatory fallback.
@@ -158,7 +158,7 @@ ${cell(tiers[1], 'If you use it slower')}
 
 const subscribeLinks = () => byCategory(
   ['Deodorant:coconut-oil-deodorant', 'Toothpaste:coconut-oil-toothpaste', 'Soap:coconut-soap',
-    'Moisturiz:coconut-moisturizer', 'Lotion:coconut-lotion', 'Lip:coconut-oil-lip-balm']
+    'Coconut Moisturizer:coconut-moisturizer', 'Lotion:coconut-lotion', 'Lip:coconut-oil-lip-balm']
     .map((pair) => {
       const [key, handle] = pair.split(':');
       return `{% if "${key}" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/${handle}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or set up a refill</a></td></tr></table>{% endif %}`;
@@ -443,7 +443,7 @@ export const specs = {
           `{% if "Deodorant" in items %}${reviewLink('Coconut Oil Deodorant', 'coconut-oil-deodorant')}{% endif %}
 {% if "Toothpaste" in items %}${reviewLink('Coconut Oil Toothpaste', 'coconut-oil-toothpaste')}{% endif %}
 {% if "Soap" in items %}${reviewLink('Foaming Hand Soap', 'organic-foaming-hand-soap')}{% endif %}
-{% if "Lotion" in items or "Moisturiz" in items %}${reviewLink('Body Lotion', 'coconut-lotion')}{% endif %}
+{% if "Lotion" in items or "Coconut Moisturizer" in items %}${reviewLink('Body Lotion', 'coconut-lotion')}{% endif %}
 {% if "Lip" in items %}${reviewLink('Lip Balm', 'coconut-oil-lip-balm')}{% endif %}`,
           `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%"><tr><td align="center"><a href="${BEST}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:underline;">Leave a review →</a></td></tr></table>`,
         ),
@@ -502,7 +502,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
         html: byCategory(
           `{% if "Deodorant" in items %}${para('<strong>Your deodorant.</strong> Two to three swipes on clean, dry skin each morning and after showering. The switch off antiperspirant takes 1–2 weeks and you may notice more moisture at first — that is normal and temporary. Do not judge it before day 14.')}{% endif %}
 {% if "Toothpaste" in items %}${para('<strong>Your toothpaste.</strong> A pea-sized amount, twice a day. It foams less than conventional paste — foam is SLS, not cleaning. Squeeze from the bottom; the coconut oil firms up in a cold bathroom and loosens in a warm one.')}{% endif %}
-{% if "Soap" in items or "Lotion" in items or "Moisturiz" in items %}${para('<strong>Your skin routine.</strong> Cleanse first, then moisturise while skin is still damp — that is what locks the water in. On dry skin you are just adding oil to a dry surface.')}{% endif %}
+{% if "Soap" in items or "Lotion" in items or "Coconut Moisturizer" in items %}${para('<strong>Your skin routine.</strong> Cleanse first, then moisturise while skin is still damp — that is what locks the water in. On dry skin you are just adding oil to a dry surface.')}{% endif %}
 {% if "Lip" in items %}${para('<strong>Your lip balm.</strong> No menthol or camphor, so no cooling tingle. That tingle is mild irritation, and it is why some balms leave you reapplying all day.')}{% endif %}`,
           para('Everything starts with cold-pressed virgin coconut oil and a short ingredient list. The results come from using it consistently — give it a couple of weeks before you judge it.'),
         ),
@@ -572,7 +572,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
 {% if "Toothpaste" in items %}${cartButton(`Reorder Coconut Oil Toothpaste — ${price('coconut-oil-toothpaste')}`, variant('coconut-oil-toothpaste'))}{% endif %}
 {% if "Soap" in items %}${cartButton(`Reorder Foaming Hand Soap — ${price('organic-foaming-hand-soap')}`, variant('organic-foaming-hand-soap'))}{% endif %}
 {% if "Lotion" in items %}${cartButton(`Reorder Body Lotion — ${price('coconut-lotion')}`, variant('coconut-lotion'))}{% endif %}
-{% if "Moisturiz" in items %}${cartButton(`Reorder Coconut Moisturizer — ${price('coconut-moisturizer')}`, variant('coconut-moisturizer'))}{% endif %}
+{% if "Coconut Moisturizer" in items %}${cartButton(`Reorder Coconut Moisturizer — ${price('coconut-moisturizer')}`, variant('coconut-moisturizer'))}{% endif %}
 {% if "Lip" in items %}${cartButton(`Reorder Lip Balm — ${price('coconut-oil-lip-balm')}`, variant('coconut-oil-lip-balm'))}{% endif %}`,
           cartButton(`Reorder Coconut Oil Deodorant — ${price('coconut-oil-deodorant')}`, variant('coconut-oil-deodorant')),
         ),

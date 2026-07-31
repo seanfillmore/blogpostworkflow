@@ -191,3 +191,33 @@ console.log('email-render: threshold assertions passed');
 }
 
 console.log('email-render: currency assertions passed');
+
+// --- Category matchers must not collide with each other's product titles.
+// "Moisturizing Coconut Soap" contains both "Soap" and "Moisturiz", so a soap buyer was
+// shown a "Reorder Coconut Moisturizer" button for a product they never bought. The
+// per-product conditionals are independent {% if %} blocks, not a chain, so both fired.
+{
+  const catalog = JSON.parse(
+    readFileSync(new URL('../../data/brand/product-catalog.json', import.meta.url), 'utf8'),
+  ).products;
+  const specs = readFileSync(
+    new URL('../../data/brand/email-rebuild/specs.js', import.meta.url), 'utf8',
+  );
+
+  // Every string used as a category matcher, as it appears in the specs.
+  const matchers = [...new Set(
+    [...specs.matchAll(/"([^"]+)" in items/g)].map((m) => m[1]),
+  )];
+  assert.ok(matchers.length > 0, 'expected to find category matchers in specs.js');
+
+  for (const title of Object.values(catalog).map((p) => p.title)) {
+    const hits = matchers.filter((k) => title.includes(k));
+    assert.ok(
+      hits.length <= 1,
+      `product "${title}" matches ${hits.length} category strings (${hits.join(', ')}) — `
+      + 'independent {% if %} blocks will all fire, offering products the customer never bought',
+    );
+  }
+}
+
+console.log('email-render: category-collision assertions passed');

@@ -196,6 +196,6 @@
       }
     ],
     "provider": "Recurpay",
-    "note": "UNVERIFIED as of 2026-07-31. These figures are inherited from the pre-rebuild Replenishment emails. Native Shopify selling_plan_groups is empty (subscriptions run through Recurpay, which renders client-side), and the only discount wording in the PDP HTML is SAVE 20% / SAVE 10%. Confirm against Recurpay before trusting these numbers."
+    "note": "VERIFIED. Sean set these on 2026-07-21: monthly removed, 6 weeks = 15% off (default, matches the 49-day median runout), 8 weeks = 10%. Live via Recurpay. The BUY 2 SAVE 10% / BUY 3 SAVE 20% wording on the PDP is a QUANTITY discount, unrelated to subscriptions — do not confuse the two. Every subscription mention must include skip/pause/swap/cancel anytime, and promote a 6-8 week cadence, never monthly."
   }
 }
