@@ -58,6 +58,20 @@ A `pbcopy | pbpaste` round-trip **cannot detect this** — both ends share the s
 assumption and it looks clean. Check with `osascript -e 'the clipboard as text'`, which
 reads the pasteboard the way a GUI app does.
 
+## What Klaviyo rewrites when you save
+
+Measured on the Winback 03 paste (8,313 bytes in, 8,583 out):
+
+- **CSS is pretty-printed** and single quotes become double. Harmless.
+- **CSS comments are stripped.** Never put load-bearing explanation in `/* … */`
+  inside `<style>` — it will not survive. HTML comments *do* survive.
+- Everything functional came through untouched: all template tags, the
+  `@media (prefers-color-scheme: dark)` block, `!important` rules, and the webfont
+  `@import`.
+
+So after pasting, refresh `.before.html` from live rather than assuming it matches what
+you pasted — otherwise every later run reports phantom drift.
+
 ## Before pasting anything
 
 Diff the `.before.html` against what is live right now. These files are a snapshot; if
