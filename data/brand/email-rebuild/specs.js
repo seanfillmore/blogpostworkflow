@@ -40,7 +40,9 @@ const CATALOG = JSON.parse(
 const price = (handle) => {
   const p = CATALOG[handle];
   if (!p) throw new Error(`no catalog entry for ${handle} — run build-product-catalog.mjs`);
-  return `$${p.price}`;
+  // priceLabel, not price — the raw number renders "$46.8" for a $46.80 product.
+  if (!p.priceLabel) throw new Error(`${handle} has no priceLabel — regenerate the catalog`);
+  return p.priceLabel;
 };
 const variant = (handle) => {
   const p = CATALOG[handle];
@@ -714,7 +716,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       },
       {
         type: 'textlink',
-        text: '1. Download the 90-Day Calm-Skin Routine & Tracker →',
+        text: '1. Download the 90-Day Calm-Skin Routine &amp; Tracker →',
         href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/90-Day-Calm-Skin-Routine-and-Tracker-v2.pdf?v=1785298286',
       },
       {

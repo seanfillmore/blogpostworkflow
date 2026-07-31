@@ -41,11 +41,15 @@ for (const handle of HANDLES) {
     const p = (await res.json()).product;
 
     const prices = [...new Set(p.variants.map((v) => Number(v.price)))].sort((a, b) => a - b);
+    // Store the display string, not just the number. Interpolating the raw value rendered
+    // "$46.8" for the $46.80 set — cents are not optional in a price.
+    const label = Number.isInteger(prices[0]) ? `$${prices[0]}` : `$${prices[0].toFixed(2)}`;
     catalog[handle] = {
       title: p.title,
       // Emails quote a single figure. Where variants differ, the lowest is the honest one
       // to quote — but flag it so nobody writes "just $X" about a range.
       price: prices[0],
+      priceLabel: label,
       priceVaries: prices.length > 1,
       defaultVariantId: String(p.variants[0].id),
       url: `https://www.realskincare.com/products/${handle}`,
