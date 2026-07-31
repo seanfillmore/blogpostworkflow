@@ -8,7 +8,7 @@ A fleet of AI agents that grow **Shopify revenue** for **Real Skin Care** (natur
 
 This reorders how every agent prioritizes:
 
-- **Commercial pages first.** Collections and PDPs convert; informational blog posts mostly don't (collections ≈80% of ecommerce SEO revenue). Prioritize creating/optimizing collection and product pages over publishing more top-of-funnel blog content.
+- **Commercial pages first, but do not multiply them.** Collections and PDPs convert; informational blog posts mostly don't. **A collection exists only where a category holds 2 or more distinct products — single-product categories are PDP-only, and a collection is never created to chase a keyword.** Chasing rankings with new collections produced 62 live collections for 9 products, which split ranking signal and earned 51 clicks on 93,785 impressions in 90 days. Optimize the pages that exist before creating another.
 - **Every page that earns traffic needs a conversion path** — a prominent above-the-fold link/CTA to the relevant collection or PDP, plus a working buy-box. A post with traffic and no buy path is a bug to fix, not a success.
 - **Measure in dollars, not clicks.** `agents/seo-impact` attributes Shopify revenue to pages/clusters. A cluster with high clicks and $0 revenue (e.g. toothpaste ≈268 clicks / $0) is a top priority to fix or stop investing in — not a ranking to celebrate.
 - **CTR and conversion are first-class.** Impressions without clicks (low CTR) and clicks without purchases (no conversion) are the two revenue leaks. Closing them beats chasing new keywords.

@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   expectedCtr,
   classifyAction,
@@ -120,7 +121,7 @@ test('analyzeOpportunities: collections are commercial WITHOUT needing a product
   assert.equal(coll.page_type, 'collection');
 });
 
-test('analyzeOpportunities: collection outscores an equivalent product (collections drive ~80% of SEO revenue)', () => {
+test('analyzeOpportunities: product now outscores an equivalent collection (collections no longer boosted)', () => {
   const base = { impressions: 1000, clicks: 2, ctr: 0.002, position: 14, volume: 1000 };
   const rows = [
     { ...base, keyword: 'a', page: '/collections/sellable-things' },
@@ -131,7 +132,7 @@ test('analyzeOpportunities: collection outscores an equivalent product (collecti
   const coll = opps.find((o) => o.page_type === 'collection');
   const prod = opps.find((o) => o.page_type === 'product');
   const info = opps.find((o) => o.page_type === 'content');
-  assert.ok(coll.score >= prod.score, 'collection should score >= product');
+  assert.ok(prod.score > coll.score, 'product should now score > collection (no longer boosted)');
   assert.ok(prod.score > info.score, 'product should score > non-commercial content');
 });
 
@@ -166,4 +167,20 @@ test('partitionLiveOpportunities: unknown/missing status is kept live (never dro
 test('partitionLiveOpportunities: empty/nullish input is safe', () => {
   assert.deepEqual(partitionLiveOpportunities(null, {}), { live: [], dead: [] });
   assert.deepEqual(partitionLiveOpportunities([], {}), { live: [], dead: [] });
+});
+
+// ── Task 5: Collection sprawl prevention ────────────────────────────────────
+test('collections are no longer boosted above products in opportunity scoring', () => {
+  const src = readFileSync(new URL('../../lib/seo-opportunities.js', import.meta.url), 'utf8');
+  const coll = Number(/const COLLECTION_BOOST = ([0-9.]+)/.exec(src)[1]);
+  const prod = Number(/const PRODUCT_BOOST = ([0-9.]+)/.exec(src)[1]);
+  assert.ok(coll < prod,
+    `COLLECTION_BOOST (${coll}) must be below PRODUCT_BOOST (${prod}) — collections are no longer the priority`);
+});
+
+test('the scheduler does not run collection-creator on a timer', () => {
+  const src = readFileSync(new URL('../../scheduler.js', import.meta.url), 'utf8');
+  const active = src.split('\n').filter((l) =>
+    l.includes('collection-creator') && l.includes('runStep') && !l.trim().startsWith('//'));
+  assert.deepEqual(active, [], `collection-creator must not be scheduled:\n${active.join('\n')}`);
 });

@@ -285,12 +285,19 @@ if (new Date().getDay() === 0) {
   // runStep('product-schema --auto', `"${NODE}" agents/product-schema/index.js --auto --apply${dryFlag}`, { indent: '    ' });
 
   // Step 7a: collection gap detection from GSC opportunities
-  runStep('collection-creator --from-opportunities', `"${NODE}" agents/collection-creator/index.js --from-opportunities --queue${dryFlag}`, { indent: '    ' });
+  // REMOVED FROM THE SCHEDULE 2026-07-27. Running it weekly produced 62 live
+  // collections for 9 distinct products — near-duplicate pages that split
+  // ranking signal and earned 51 clicks on 93,785 impressions in 90 days. The
+  // agent remains in the repo for deliberate manual use; it no longer runs on a
+  // timer. A collection is now created only where a category holds 2+ distinct
+  // products. See the 2026-07-27 collection-consolidation spec.
+  // runStep('collection-creator --from-opportunities', `"${NODE}" agents/collection-creator/index.js --from-opportunities --queue${dryFlag}`, { indent: '    ' });
 
   // Step 7b: publish approved new collections
-  if (!dryFlag) {
-    runStep('collection-creator --publish-approved', `"${NODE}" agents/collection-creator/index.js --publish-approved`, { indent: '    ' });
-  }
+  // REMOVED FROM THE SCHEDULE 2026-07-27 (see Step 7a comment).
+  // if (!dryFlag) {
+  //   runStep('collection-creator --publish-approved', `"${NODE}" agents/collection-creator/index.js --publish-approved`, { indent: '    ' });
+  // }
 
   // Step 7c: site crawl via DataForSEO On-Page API
   runStep('site-crawler', `"${NODE}" agents/site-crawler/index.js`, { indent: '    ' });
