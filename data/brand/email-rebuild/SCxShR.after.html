@@ -41,11 +41,17 @@
 <p style="margin:0 0 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">This is the biggest discount we offer, and the last email in this series. We won't sugarcoat it: we want you back.</p>
 </td></tr>
 
+<!-- The flow triggers on Placed Order, so $extra.line_items carries the product they
+     actually bought — image, title and handle. Verified against a live event payload.
+     Every field falls back to the deodorant hero, because this fires 6+ months later
+     and a discontinued product would otherwise render a broken image. -->
+{% with li=event.extra.line_items|first %}
 <tr><td style="background-color:#ffffff;padding:0;">
-<a href="https://www.realskincare.com/products/coconut-oil-deodorant" style="text-decoration:none;">
-<img alt="Real Skin Care coconut oil deodorant" src="https://cdn.shopify.com/s/files/1/0270/1911/6579/products/AMZ_RealSkin_Deodorant-Hero-WildcraftedFrankincense_JRA_2000x2000_002.jpg?v=1682353296" style="display:block;width:100%;max-width:600px;height:auto;border:0;" width="600"/>
+<a href="https://www.realskincare.com/products/{{ li.product.handle|default:'coconut-oil-deodorant' }}" style="text-decoration:none;">
+{% if li.product.images.0.src %}<img alt="{{ li.product.title }}" src="{{ li.product.images.0.src }}" style="display:block;width:100%;max-width:600px;height:auto;border:0;" width="600"/>{% else %}<img alt="Real Skin Care coconut oil deodorant" src="https://cdn.shopify.com/s/files/1/0270/1911/6579/products/AMZ_RealSkin_Deodorant-Hero-WildcraftedFrankincense_JRA_2000x2000_002.jpg?v=1682353296" style="display:block;width:100%;max-width:600px;height:auto;border:0;" width="600"/>{% endif %}
 </a>
 </td></tr>
+{% endwith %}
 
 <tr><td style="background-color:#ffffff;padding:28px 32px 36px;" class="px">
 
@@ -64,7 +70,12 @@
 <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">If you've been meaning to restock — the deodorant, the toothpaste, the body cream — now's the moment. Everything is made in small batches in Blum, Texas, and it hasn't changed since you last ordered.</p>
 
 <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;" width="100%"><tr><td align="center">
-<a href="https://www.realskincare.com/products/coconut-oil-deodorant" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:underline;">Start with the deodorant you bought before →</a>
+<!-- Was "the deodorant you bought before", which is wrong for anyone whose last order
+     was lotion or toothpaste. The product name itself is too long for a CTA (they are
+     SEO titles), so the link carries the personalisation and the words stay accurate. -->
+{% with li=event.extra.line_items|first %}
+<a href="https://www.realskincare.com/products/{{ li.product.handle|default:'coconut-oil-deodorant' }}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:underline;">Reorder what you bought last time →</a>
+{% endwith %}
 </td></tr></table>
 
 <p style="margin:0 0 6px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Take care,<br/><strong>Sean</strong><br/><span style="font-size:14px;">Co-Founder, Real Skin Care</span></p>
