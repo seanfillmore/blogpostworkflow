@@ -1,0 +1,69 @@
+{
+  "generated": "run scripts/build-product-catalog.mjs to refresh",
+  "products": {
+    "coconut-oil-deodorant": {
+      "title": "Best Coconut Oil Deodorant — All Natural Formula | 2oz",
+      "price": 15,
+      "priceLabel": "$15",
+      "priceVaries": false,
+      "defaultVariantId": "44179451052202",
+      "url": "https://www.realskincare.com/products/coconut-oil-deodorant"
+    },
+    "coconut-oil-toothpaste": {
+      "title": "Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free",
+      "price": 13,
+      "priceLabel": "$13",
+      "priceVaries": false,
+      "defaultVariantId": "44179458162858",
+      "url": "https://www.realskincare.com/products/coconut-oil-toothpaste"
+    },
+    "coconut-oil-lip-balm": {
+      "title": "Natural Coconut Oil Lip Balm | 0.15oz | Four Pack",
+      "price": 15,
+      "priceLabel": "$15",
+      "priceVaries": false,
+      "defaultVariantId": "44180191772842",
+      "url": "https://www.realskincare.com/products/coconut-oil-lip-balm"
+    },
+    "coconut-lotion": {
+      "title": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+      "price": 30,
+      "priceLabel": "$30",
+      "priceVaries": false,
+      "defaultVariantId": "45828179165354",
+      "url": "https://www.realskincare.com/products/coconut-lotion"
+    },
+    "coconut-soap": {
+      "title": "Moisturizing Coconut Soap | 3.4oz",
+      "price": 11,
+      "priceLabel": "$11",
+      "priceVaries": false,
+      "defaultVariantId": "44179485655210",
+      "url": "https://www.realskincare.com/products/coconut-soap"
+    },
+    "coconut-moisturizer": {
+      "title": "Coconut Moisturizer | 4oz",
+      "price": 28,
+      "priceLabel": "$28",
+      "priceVaries": false,
+      "defaultVariantId": "44179428475050",
+      "url": "https://www.realskincare.com/products/coconut-moisturizer"
+    },
+    "organic-foaming-hand-soap": {
+      "title": "Foaming Liquid Coconut Oil Soap | 8oz",
+      "price": 13,
+      "priceLabel": "$13",
+      "priceVaries": false,
+      "defaultVariantId": "44179472187562",
+      "url": "https://www.realskincare.com/products/organic-foaming-hand-soap"
+    },
+    "sensitive-skin-starter-set": {
+      "title": "Sensitive Skin Moisturizing Set",
+      "price": 46.8,
+      "priceLabel": "$46.80",
+      "priceVaries": false,
+      "defaultVariantId": "48075580539050",
+      "url": "https://www.realskincare.com/products/sensitive-skin-starter-set"
+    }
+  }
+}

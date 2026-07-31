@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 /**
  * Post-Purchase Flow — email HTML templates (RSC brand voice, founder Sean).
  *
@@ -10,7 +11,7 @@
  */
 
 const SITE = 'https://www.realskincare.com';
-const ADDRESS = '6212 FM 933, Blum, TX 76627, United States';
+const ADDRESS = JSON.parse(readFileSync(new URL('../../data/brand/brand-kit.json', import.meta.url), 'utf8')).postal_address;
 const SUPPORT = 'support@realskincare.com';
 
 // Verified-live product URLs + cart permalinks (variant ids) — see build.js

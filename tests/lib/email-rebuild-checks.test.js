@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
 import {
+  postalFindings,
   classifyLinks,
   linkFindings,
   tagFindings,
@@ -143,3 +144,76 @@ import {
 }
 
 console.log('email-rebuild-checks: all assertions passed');
+
+// --- Postal address. The old check required the BEFORE address to survive into the
+// --- AFTER, which breaks the moment the address legitimately changes — as it did on
+// --- 2026-07-31. Checking against the canonical address instead catches both omission
+// --- and staleness, which the before/after comparison never could.
+{
+  const CANON = '1623 Central Ave STE 201, Cheyenne, WY 82001, United States';
+
+  // Present and current — clean.
+  assert.deepEqual(postalFindings(`<p>Real Skin Care · ${CANON}</p>`, CANON).problems, []);
+
+  // Missing entirely — CAN-SPAM violation.
+  {
+    const { problems } = postalFindings('<p>no address here</p>', CANON);
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /postal address/i);
+  }
+
+  // Present but stale — the old Blum address must not silently survive a rebuild.
+  {
+    const { problems } = postalFindings('<p>6212 FM 933, Blum, TX 76627, United States</p>', CANON);
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /stale|outdated|current/i);
+  }
+}
+
+console.log('email-rebuild-checks: postal assertions passed');
+
+// --- Control flow vs data bindings.
+// A redesign legitimately rewrites conditional structure: broadening
+// {% if "Deodorant" in items or "Toothpaste" in items %} to include more categories is an
+// improvement, but a literal tag-string comparison reads it as a dropped tag. Meanwhile a
+// dropped {% coupon_code %} or {{ event.Items }} is never acceptable. So control-flow tags
+// soften to warnings under --redesign; data and compliance tags never do.
+{
+  const before = '{% if "A" in items %}x{% endif %}';
+  const after = '{% if "A" in items or "B" in items %}x{% endif %}';
+  const { problems, warnings } = tagFindings(before, after, { redesign: true });
+  assert.deepEqual(problems, []);
+  assert.equal(warnings.length, 1);
+}
+
+// The same rewrite in a restyle is still a failure — a restyle changes nothing but style.
+{
+  const before = '{% if "A" in items %}x{% endif %}';
+  const after = '{% if "A" in items or "B" in items %}x{% endif %}';
+  const { problems } = tagFindings(before, after, { redesign: false });
+  assert.equal(problems.length, 1);
+}
+
+// A dropped coupon tag fails even under --redesign — it ships a broken offer.
+{
+  const { problems } = tagFindings("{% coupon_code 'X' %}", '<p>gone</p>', { redesign: true });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /coupon_code/);
+}
+
+// Changing only a |default: fallback string is a copy edit, not a dropped binding —
+// the underlying variable is what must survive.
+{
+  const before = '{{ event.Items|first|default:"your favorites" }}';
+  const after = '{{ event.Items|first|default:"your favorite" }}';
+  assert.deepEqual(tagFindings(before, after, { redesign: true }).problems, []);
+}
+
+// But losing the variable itself still fails.
+{
+  const { problems } = tagFindings('{{ event.Items|first|default:"x" }}', '<p>nothing</p>', { redesign: true });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /event\.Items/);
+}
+
+console.log('email-rebuild-checks: tag-class assertions passed');

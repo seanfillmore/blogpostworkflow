@@ -179,5 +179,19 @@
     "No layout exemplars; per marketing-email-design-production's own fit note, competitor reference emails substitute.",
     "Sand is #ECE5D8 in the logo files vs #EDE5D8 in the palette. Imperceptible; fold in only if the files are ever re-exported for another reason.",
     "Mont (identity PDF) vs Cabin/Outfit (live site). Resolved for email — the site wins — but the two documents still disagree."
-  ]
+  ],
+  "postal_address": "1623 Central Ave STE 201, Cheyenne, WY 82001, United States",
+  "postal_address_note": "CAN-SPAM footer address. Not a manufacturing location — products are made in the USA and no city or state is ever named as the place of manufacture. Replaced 6212 FM 933, Blum, TX 76627 on 2026-07-31.",
+  "free_shipping_threshold": 45,
+  "free_shipping_threshold_note": "Free-shipping order minimum, in USD. Appears in six emails' copy — always interpolate, never retype. Raised from 50 to 45 on 2026-07-31.",
+  "subscription": {
+    "provider": "Recurpay",
+    "discount_pct": 15,
+    "cadence_weeks": [
+      6,
+      8
+    ],
+    "default_cadence_weeks": 6,
+    "note": "VERIFIED with Sean 2026-07-31: EVERY Recurpay plan is 15% off regardless of frequency. There is no discount difference between cadences — the choice is timing only, matched to how fast the product runs out. This supersedes the 6wk=15%/8wk=10% figure recorded on 2026-07-21, which is wrong. Promote a 6-8 week cadence, never monthly, and always state skip/pause/swap/cancel anytime. The BUY 2 SAVE 10% / BUY 3 SAVE 20% wording on PDPs is a QUANTITY discount and unrelated."
+  }
 }
