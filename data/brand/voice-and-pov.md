@@ -106,10 +106,22 @@ A specific vocabulary list. The agent should pattern-match against these phrases
 
 ---
 
+## Product origin — USA, never a place name
+
+**Products are made in the USA.** That is the whole claim. Never name a city, state, or facility as where a product is made, and never write "small batches in <place>".
+
+`6212 FM 933, Blum, TX 76627` is the **CAN-SPAM postal address** and was a **distribution** location. It has never been a manufacturing claim, and it is past tense besides. Because that town name appears legitimately in every email footer, scanning for the word alone will not catch a bad claim — what makes it wrong is a *manufacturing verb bound to a place*.
+
+Approved: "made in the USA", "handmade in the USA".
+Never: "made in Blum, Texas", "mixed by hand in Blum", "small batches in Texas".
+
+This is a factual-accuracy rule, not a stylistic one. A 2026-07-30 email redesign wrote "Everything is made in small batches in Blum, Texas" into a live winback email and it sent before anyone caught it. Enforced at build time for emails by `assertNoOriginClaim` in `lib/email-render.js`; blog, PDP and Amazon copy have no guard, so apply it by hand there.
+
 ## We don't say
 
 These are the phrases that would make our customer roll their eyes. Some are obvious; some are subtle.
 
+- "made in Blum, Texas" / any city or state as the place of manufacture — see the origin rule above
 - "all-natural" (vague — fluoride toothpaste can be "natural")
 - "100% natural"
 - "natural ingredients" (without specifics)

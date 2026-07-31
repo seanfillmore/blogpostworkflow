@@ -87,4 +87,31 @@ const minimal = {
   );
 }
 
+// --- Origin claims. Products are made in the USA; they are NOT made in Blum, Texas —
+// --- that address is distribution, not manufacturing. A redesign introduced the wrong
+// --- claim into a live email, so the renderer now refuses to emit one.
+{
+  assert.throws(
+    () => renderEmail({ ...minimal, blocks: [{ type: 'p', html: 'Mixed by hand in Blum, Texas.' }] }),
+    /origin claim|Blum/i,
+  );
+  assert.throws(
+    () => renderEmail({ ...minimal, blocks: [{ type: 'p', html: 'Made in small batches in Texas.' }] }),
+    /origin claim|Texas/i,
+  );
+}
+
+// The CAN-SPAM postal address is not an origin claim and must still render — it is the
+// same town name, so a naive ban would break every email.
+{
+  const html = renderEmail(minimal);
+  assert.match(html, /6212 FM 933, Blum, TX 76627/);
+}
+
+// The approved phrasing passes.
+{
+  const html = renderEmail({ ...minimal, blocks: [{ type: 'p', html: 'Handmade in the USA.' }] });
+  assert.match(html, /Handmade in the USA\./);
+}
+
 console.log('email-render: all assertions passed');

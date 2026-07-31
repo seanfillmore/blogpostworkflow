@@ -52,12 +52,12 @@ export const specs = {
   SHb8Df: {
     name: 'Winback — 01 We Miss You',
     format: 'designed',
-    preheader: 'Same six ingredients, same Blum kitchen — and your last order is one tap away.',
+    preheader: 'Same ingredients, same formula — and your last order is one tap away.',
     blocks: [
       { type: 'h1', text: "Nothing's changed, which is the point" },
       {
         type: 'p',
-        html: 'Hi {{ first_name|default:"there" }} — every batch is still mixed by hand in Blum, Texas, from the same short ingredient list you bought before. No reformulation, no new "improved" version that quietly swapped the coconut oil for something cheaper to ship.',
+        html: 'Hi {{ first_name|default:"there" }} — everything is still handmade in the USA from the same short ingredient list you bought before. No reformulation, no new "improved" version that quietly swapped the coconut oil for something cheaper to ship.',
       },
       { type: 'raw', html: boughtHero },
       {
