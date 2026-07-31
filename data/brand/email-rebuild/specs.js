@@ -122,6 +122,12 @@ const cartButton = (label, variantId) => `<table cellpadding="0" cellspacing="0"
 <a href="https://www.realskincare.com/cart/${variantId}:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">${label}</a>
 </td></tr></table>`;
 
+// Outlined rather than solid black. Six solid buttons would each shout as loudly as the
+// primary reorder above them, which is the opposite of the hierarchy this email needs.
+const secondaryButton = (label, variantId) => `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/${variantId}:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">${label}</a>
+</td></tr></table>`;
+
 const reviewLink = (name, handle) => `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%"><tr><td align="center">
 <a href="${'https://www.realskincare.com/products'}/${handle}#reviews" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:underline;">Review your ${name} →</a>
 </td></tr></table>`;
@@ -582,18 +588,32 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       // The rest of the range, so the email is useful to someone restocking more than the
       // one thing they last bought. A first pass showed only their own items, which made a
       // reorder email a dead end for anyone wanting to add to the order.
+      { type: 'raw', html: ITEMS_OPEN },
       { type: 'p', html: '<strong>Add to the same order</strong>' },
+      // Buttons, not text rows — this is a one-tap reorder email and a plain link does not
+      // read as tappable next to the primary button above.
+      //
+      // Each is suppressed when the customer already bought that product, so it does not
+      // appear twice: once as their reorder button and again here. Expressed as an empty
+      // {% if %} with the row in the {% else %} branch rather than "not in", because
+      // if/else is the construct the account already runs in production.
       {
         type: 'raw',
         html: [
-          ['coconut-oil-deodorant', 'Coconut Oil Deodorant'],
-          ['coconut-oil-toothpaste', 'Coconut Oil Toothpaste'],
-          ['coconut-oil-lip-balm', 'Coconut Oil Lip Balm'],
-          ['coconut-soap', 'Moisturizing Coconut Soap'],
-          ['coconut-lotion', 'Non-Toxic Body Lotion'],
-          ['coconut-moisturizer', 'Coconut Moisturizer'],
-        ].map(([handle, label]) => productRow(label, price(handle), 'One tap adds it to your cart.', `https://www.realskincare.com/cart/${variant(handle)}:1`)).join('\n'),
+          ['coconut-oil-deodorant', 'Coconut Oil Deodorant', 'Deodorant'],
+          ['coconut-oil-toothpaste', 'Coconut Oil Toothpaste', 'Toothpaste'],
+          ['coconut-oil-lip-balm', 'Coconut Oil Lip Balm', 'Lip'],
+          ['coconut-soap', 'Moisturizing Coconut Soap', 'Soap'],
+          ['coconut-lotion', 'Non-Toxic Body Lotion', 'Lotion'],
+          ['coconut-moisturizer', 'Coconut Moisturizer', 'Coconut Moisturizer'],
+        ].map(([handle, label, key]) =>
+          `{% if "${key}" in items %}{% else %}${secondaryButton(`Add ${label} — ${price(handle)}`, variant(handle))}{% endif %}`,
+        ).join('\n'),
       },
+      // `items` is scoped to its {% with %} block, and the one above is already closed —
+      // without reopening it here every condition reads as false and the dedupe silently
+      // does nothing.
+      { type: 'raw', html: ITEMS_CLOSE },
       { type: 'p', html: `Free shipping over $${SHIP}, if you are stocking up on more than one.` },
     ],
   },
