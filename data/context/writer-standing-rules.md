@@ -33,7 +33,7 @@
 
 ## Added 2026-07-31 — product origin: USA only, never a city or state
 
-**product origin** — Products are **made in the USA**. They are **not** made in Blum, Texas. `6212 FM 933, Blum, TX 76627` is the CAN-SPAM postal address and was a distribution location — it has never been a manufacturing claim, and it is past tense besides.
+**product origin** — Products are **made in the USA**. No city or state is ever named as the place of manufacture. The CAN-SPAM footer address (`1623 Central Ave STE 201, Cheyenne, WY 82001`, canonical in `data/brand/brand-kit.json` as `postal_address`) is a mailing address, **not** a manufacturing claim — and neither was the Blum, TX address it replaced on 2026-07-31, which was distribution.
 
 Approved phrasing: **"made in the USA"**, **"handmade in the USA"**. Never name a city, state, or facility as where a product is made, and never write "small batches in <place>".
 

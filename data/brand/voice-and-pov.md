@@ -110,7 +110,9 @@ A specific vocabulary list. The agent should pattern-match against these phrases
 
 **Products are made in the USA.** That is the whole claim. Never name a city, state, or facility as where a product is made, and never write "small batches in <place>".
 
-`6212 FM 933, Blum, TX 76627` is the **CAN-SPAM postal address** and was a **distribution** location. It has never been a manufacturing claim, and it is past tense besides. Because that town name appears legitimately in every email footer, scanning for the word alone will not catch a bad claim — what makes it wrong is a *manufacturing verb bound to a place*.
+The **CAN-SPAM postal address** is `1623 Central Ave STE 201, Cheyenne, WY 82001` (canonical copy: `postal_address` in `data/brand/brand-kit.json` — never retype it). It replaced `6212 FM 933, Blum, TX 76627` on 2026-07-31, which was a **distribution** location, not a manufacturing one.
+
+A footer address is not an origin claim. Because the address town appears legitimately in every email footer, scanning for the place name alone will not catch a bad claim — what makes it wrong is a *manufacturing verb bound to a place*. That applies to Cheyenne exactly as it did to Blum.
 
 Approved: "made in the USA", "handmade in the USA".
 Never: "made in Blum, Texas", "mixed by hand in Blum", "small batches in Texas".

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 /**
  * Shared code-based email components for all RSC Klaviyo flows.
  * Same design language as the Post-Purchase flow: warm cream canvas, white card,
@@ -6,7 +7,7 @@
  */
 
 export const SITE = 'https://www.realskincare.com';
-const ADDRESS = '6212 FM 933, Blum, TX 76627, United States';
+const ADDRESS = JSON.parse(readFileSync(new URL('../../data/brand/brand-kit.json', import.meta.url), 'utf8')).postal_address;
 const SUPPORT = 'support@realskincare.com';
 export const FREE_SHIP = '$50';
 

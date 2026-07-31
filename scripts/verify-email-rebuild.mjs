@@ -41,6 +41,7 @@ import {
   linkFindings,
   tagsIn,
   tagFindings,
+  postalFindings,
   unsubscribeFindings,
 } from '../lib/email-rebuild-checks.js';
 
@@ -114,9 +115,7 @@ async function verify(id) {
   const offPalette = hexesIn(a).filter((h) => !ALLOWED.has(h));
   if (offPalette.length) problems.push(`off-palette colours: ${offPalette.join(', ')}`);
 
-  const addr = b.match(/\d+\s+[A-Z]{2}\s*\d*[^<]*,\s*[A-Z]{2}\s+\d{5}/)?.[0]
-    ?? b.match(/[^<>]*\b[A-Z]{2}\s+\d{5}\b[^<>]*/)?.[0];
-  if (addr && !a.includes(addr.trim())) problems.push('postal address missing — CAN-SPAM requires it');
+  problems.push(...postalFindings(a, KIT.postal_address).problems);
 
   const live = await liveHtml(id);
   const drifted = live !== null && live !== b;

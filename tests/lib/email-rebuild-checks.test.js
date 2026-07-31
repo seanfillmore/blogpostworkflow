@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
 import {
+  postalFindings,
   classifyLinks,
   linkFindings,
   tagFindings,
@@ -143,3 +144,30 @@ import {
 }
 
 console.log('email-rebuild-checks: all assertions passed');
+
+// --- Postal address. The old check required the BEFORE address to survive into the
+// --- AFTER, which breaks the moment the address legitimately changes — as it did on
+// --- 2026-07-31. Checking against the canonical address instead catches both omission
+// --- and staleness, which the before/after comparison never could.
+{
+  const CANON = '1623 Central Ave STE 201, Cheyenne, WY 82001, United States';
+
+  // Present and current — clean.
+  assert.deepEqual(postalFindings(`<p>Real Skin Care · ${CANON}</p>`, CANON).problems, []);
+
+  // Missing entirely — CAN-SPAM violation.
+  {
+    const { problems } = postalFindings('<p>no address here</p>', CANON);
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /postal address/i);
+  }
+
+  // Present but stale — the old Blum address must not silently survive a rebuild.
+  {
+    const { problems } = postalFindings('<p>6212 FM 933, Blum, TX 76627, United States</p>', CANON);
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /stale|outdated|current/i);
+  }
+}
+
+console.log('email-rebuild-checks: postal assertions passed');

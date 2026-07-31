@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
 import { renderEmail } from '../../lib/email-render.js';
 
 const minimal = {
@@ -21,7 +22,7 @@ const minimal = {
 // CAN-SPAM requires the postal address, and it is hardcoded in these templates rather
 // than injected by Klaviyo.
 {
-  assert.match(renderEmail(minimal), /6212 FM 933, Blum, TX 76627/);
+  assert.match(renderEmail(minimal), /1623 Central Ave STE 201, Cheyenne, WY 82001/);
 }
 
 // --- Preheader. The skill's rule is that a defaulted preheader is never shipped, so an
@@ -101,11 +102,28 @@ const minimal = {
   );
 }
 
-// The CAN-SPAM postal address is not an origin claim and must still render — it is the
-// same town name, so a naive ban would break every email.
+// The CAN-SPAM postal address is not an origin claim and must still render.
 {
   const html = renderEmail(minimal);
-  assert.match(html, /6212 FM 933, Blum, TX 76627/);
+  assert.match(html, /1623 Central Ave STE 201, Cheyenne, WY 82001/);
+}
+
+// The address is read from brand-kit.json, not hardcoded — it lived as a duplicated
+// literal in four files and changed once already.
+{
+  const kit = JSON.parse(
+    readFileSync(new URL('../../data/brand/brand-kit.json', import.meta.url), 'utf8'),
+  );
+  assert.ok(kit.postal_address, 'brand-kit.json must carry postal_address');
+  assert.ok(renderEmail(minimal).includes(kit.postal_address));
+}
+
+// Cheyenne must not become the new false origin claim.
+{
+  assert.throws(
+    () => renderEmail({ ...minimal, blocks: [{ type: 'p', html: 'Handmade in Cheyenne, Wyoming.' }] }),
+    /origin claim/i,
+  );
 }
 
 // The approved phrasing passes.

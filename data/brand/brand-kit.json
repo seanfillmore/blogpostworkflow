@@ -179,5 +179,7 @@
     "No layout exemplars; per marketing-email-design-production's own fit note, competitor reference emails substitute.",
     "Sand is #ECE5D8 in the logo files vs #EDE5D8 in the palette. Imperceptible; fold in only if the files are ever re-exported for another reason.",
     "Mont (identity PDF) vs Cabin/Outfit (live site). Resolved for email — the site wins — but the two documents still disagree."
-  ]
+  ],
+  "postal_address": "1623 Central Ave STE 201, Cheyenne, WY 82001, United States",
+  "postal_address_note": "CAN-SPAM footer address. Not a manufacturing location — products are made in the USA and no city or state is ever named as the place of manufacture. Replaced 6212 FM 933, Blum, TX 76627 on 2026-07-31."
 }
