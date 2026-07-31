@@ -5,42 +5,100 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="light dark" name="color-scheme"/>
 <meta content="light dark" name="supported-color-schemes"/>
-<title>Real Skin Care</title>
-</head>
-<body style="margin:0;padding:0;background-color:#f5f1ea;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">The clean skincare you were just looking at — plus why people switch.</div>
-<table cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f5f1ea;" width="100%">
-<tr><td align="center" style="padding:24px 12px;">
+<title>
+      Real Skin Care
+    </title>
+<style>@import url("https://fonts.googleapis.com/css2?family=Cabin:wght@400;600;700&family=Outfit:wght@400;500;600&display=swap");
+.logo-dark {
+    display: none
+    }
+@media (prefers-color-scheme: dark) {
+    .logo-light {
+        display: none !important
+        }
+    .logo-dark {
+        display: inline-block !important
+        }
+    }
+@media only screen and (max-width: 480px) {
+    .px {
+        padding-left: 20px !important;
+        padding-right: 20px !important
+        }
+    .h1 {
+        font-size: 24px !important;
+        line-height: 30px !important
+        }
+    }</style></head>
+<body style="margin:0;padding:0;background-color:#EDE5D8;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+      The one you were looking at, and what it is actually for.
+    </div>
+<table cellpadding="0" cellspacing="0" role="presentation" style="background-color:#EDE5D8;" width="100%">
+<tr>
+<td align="center" style="padding:24px 12px;">
 <table cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;" width="600">
-<tr><td align="center" style="padding:8px 0 20px;">
-<a href="https://www.realskincare.com" style="font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:2px;color:#2f5e3f;text-decoration:none;font-weight:700;">REAL SKIN CARE</a>
-</td></tr>
-<tr><td style="background-color:#ffffff;border-radius:12px;padding:36px 32px;">
-<h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:24px;line-height:30px;color:#2b2b2b;">Still thinking it over?</h1><p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">Hi {{ first_name|default:"there" }}, we noticed you were checking this out — here it is again in case you want another look.</p>{% if event.ImageURL %}<table cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid #e6ded1;border-radius:10px;margin:14px 0;" width="100%"><tr>
-<td style="padding:12px;" width="140"><a href="{{ event.URL }}"><img alt="{{ event.Name }}" src="{{ event.ImageURL }}" style="width:120px;max-width:120px;height:auto;border-radius:6px;display:block;" width="120"/></a></td>
-<td style="padding:12px 16px 12px 0;font-family:Helvetica,Arial,sans-serif;vertical-align:middle;">
-<a href="{{ event.URL }}" style="font-size:16px;font-weight:600;color:#2b2b2b;text-decoration:none;">{{ event.Name }}</a>
-<div style="font-size:15px;color:#2f5e3f;margin:4px 0 8px;font-weight:600;">${{ event.Price }}</div>
-<a href="{{ event.URL }}" style="font-size:14px;color:#2f5e3f;font-weight:600;text-decoration:none;">Take another look →</a>
-</td></tr></table>{% else %}<table cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid #e6ded1;border-radius:8px;margin:10px 0;" width="100%"><tr>
-<td style="padding:16px 18px;font-family:Helvetica,Arial,sans-serif;">
-<a href="{{ event.URL|default:'https://www.realskincare.com/collections/all' }}" style="font-size:16px;font-weight:600;color:#2f5e3f;text-decoration:none;">{{ event.Name|default:'the item you were looking at' }}</a>
-<div style="font-size:14px;color:#6b6b6b;margin-top:4px;">Pick up where you left off.</div>
-</td></tr></table>{% endif %}<p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">Everything we make is handmade in the USA from a short list of clean, coconut-oil-based ingredients — no fillers, no synthetic fragrance. That's why people make the switch and stay.</p><table cellpadding="0" cellspacing="0" role="presentation" style="margin:24px 0;"><tr>
-<td align="center" bgcolor="#2f5e3f" style="border-radius:6px;">
-<a href="{{ event.URL|default:'https://www.realskincare.com/collections/all' }}" style="display:inline-block;padding:14px 30px;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:6px;">Take another look</a>
-</td></tr></table><p style="margin:8px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#6b6b6b;">Free shipping on orders over $50.</p>
-</td></tr>
-<tr><td align="center" style="padding:22px 16px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#9a9385;">
-        Real Skin Care · 6212 FM 933, Blum, TX 76627, United States<br/>
-        Questions? Just reply, or email <a href="mailto:support@realskincare.com" style="color:#9a9385;">support@realskincare.com</a>.<br/>
-<a href="https://x.com/realskincarecom" style="color:#9a9385;">X</a> ·
-        <a href="https://www.instagram.com/realskincare_com/" style="color:#9a9385;">Instagram</a> ·
-        <a href="https://www.facebook.com/real.skincare1" style="color:#9a9385;">Facebook</a><br/>
-<a href="{% unsubscribe %}" style="color:#9a9385;text-decoration:underline;">Unsubscribe</a>
-</td></tr>
+<tr>
+<td align="center" style="padding:8px 0 20px;"> <a href="https://www.realskincare.com" style="text-decoration:none;">
+<img alt="Real Skin Care" class="logo-light" src="https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-black.png?v=1785417244" style="display:inline-block;width:180px;max-width:180px;height:auto;border:0;" width="180"/>
+<img alt="Real Skin Care" class="logo-dark" src="https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-white.png?v=1785417298" style="display:none;width:180px;max-width:180px;height:auto;border:0;" width="180"/>
+</a>
+</td>
+</tr>
+<tr>
+<td class="px" style="background-color:#FFFFFF;border-radius:12px;padding:36px 32px;">
+<h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">
+                  Still deciding?
+                </h1>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">
+                  Hi {{ first_name|default:"there" }} — here it is again.
+                </p>
+                {% if event.ImageURL %}
+                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%">
+<tr>
+<td align="center"> <a href="{{ event.URL }}" style="text-decoration:none;"> <img alt="{{ event.Name }}" src="{{ event.ImageURL }}" style="display:block;width:100%;max-width:400px;height:auto;border:0;border-radius:8px;"/></a>
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;margin-top:12px;">
+                        {{ event.Name }} — ${{ event.Price }}
+                      </div>
+</td>
+</tr>
+</table>{% else %}
+                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%">
+<tr>
+<td align="center">
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;">
+                        {{ event.Name|default:'the item you were looking at' }}
+                      </div>
+</td>
+</tr>
+</table>{% endif %}
+                <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">
+                  If you have been let down by something labelled "clean" before, the useful thing to do is read our ingredient list against whatever you are comparing it to. That comparison is the whole argument.
+                </p>
+<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;" width="100%">
+<tr>
+<td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="{{ event.URL|default:'https://www.realskincare.com/collections/all' }}" style="display:inline-block;padding:15px 32px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Take another look</a>
+</td>
+</tr>
 </table>
-</td></tr>
+</td>
+</tr>
+<tr>
+<td align="center" style="padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;">
+                Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>
+                Questions? Just reply, or email
+                <a href="mailto:support@realskincare.com" style="color:#000000;">support@realskincare.com</a>.<br/>
+<a href="https://x.com/realskincarecom" style="color:#000000;">X</a> ·<a href="https://www.instagram.com/realskincare_com/" style="color:#000000;">Instagram</a> ·<a href="https://www.facebook.com/real.skincare1" style="color:#000000;">Facebook</a>
+</td>
+</tr>
+<tr>
+<td align="center" style="padding:0 16px 22px;"> <a href="{% unsubscribe_link %}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;">Don't want these? Unsubscribe here — no hard feelings.</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
 </table>
 </body>
 </html>
