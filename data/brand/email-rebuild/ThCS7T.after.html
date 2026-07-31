@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="light dark" name="color-scheme"/>
+<meta content="light dark" name="supported-color-schemes"/>
+<title>Real Skin Care</title>
+<style>
+  
+  
+  @media only screen and (max-width: 480px) {
+    .px { padding-left: 20px !important; padding-right: 20px !important; }
+    .h1 { font-size: 24px !important; line-height: 30px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#EDE5D8;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Probably empty by now — two ways to handle it.</div>
+<table cellpadding="0" cellspacing="0" role="presentation" style="background-color:#EDE5D8;" width="100%">
+<tr><td align="center" style="padding:24px 12px;">
+<table cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;" width="600">
+
+<tr><td align="center" style="padding:8px 0 20px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#000000;">
+<a href="https://www.realskincare.com" style="color:#000000;text-decoration:none;">Real Skin Care</a>
+</td></tr>
+
+<tr><td style="background-color:#FFFFFF;border-radius:12px;padding:36px 32px;" class="px">
+<h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">Probably empty by now</h1>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Hi {{ first_name|default:"there" }} — your {{ event.Items|first|default:"Real Skin Care favorite" }} is likely finished.</p>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Two options. Reorder when you notice, or put it on Subscribe &amp; Save — 15% off every 6 weeks, or 10% every 8. Skip, pause, swap or cancel any time from your account.</p>
+{% with items=event.Items|join:", " %}{% if "Deodorant" in items or "Toothpaste" in items or "Soap" in items or "Lotion" in items or "Moisturiz" in items or "Lip" in items %}
+{% if "Deodorant" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/coconut-oil-deodorant" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}
+{% if "Toothpaste" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/coconut-oil-toothpaste" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}
+{% if "Soap" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/coconut-soap" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}
+{% if "Moisturiz" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/coconut-moisturizer" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}
+{% if "Lotion" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/coconut-lotion" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}
+{% if "Lip" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/coconut-oil-lip-balm" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}
+{% else %}
+<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/collections/best-sellers" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save</a></td></tr></table>
+{% endif %}{% endwith %}
+<p style="margin:0 0 6px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Take care,<br/><strong>Sean</strong><br/><span style="font-size:14px;">Co-Founder, Real Skin Care</span></p>
+</td></tr>
+
+<tr><td align="center" style="padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;">
+Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>
+Questions? Just reply, or email <a href="mailto:support@realskincare.com" style="color:#000000;">support@realskincare.com</a>.<br/>
+<a href="https://x.com/realskincarecom" style="color:#000000;">X</a> ·
+<a href="https://www.instagram.com/realskincare_com/" style="color:#000000;">Instagram</a> ·
+<a href="https://www.facebook.com/real.skincare1" style="color:#000000;">Facebook</a>
+</td></tr>
+
+<tr><td align="center" style="padding:0 16px 22px;">
+<a href="{% unsubscribe_link %}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;">Don't want these? Unsubscribe here — no hard feelings.</a>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

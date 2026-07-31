@@ -97,7 +97,8 @@ async function verify(id) {
   const warnings = [];
 
   const [tb, ta] = [tagsIn(b), tagsIn(a)];
-  const tag = tagFindings(b, a);
+  const tag = tagFindings(b, a, { redesign: REDESIGN });
+  warnings.push(...tag.warnings);
   problems.push(...tag.problems);
 
   const link = linkFindings(b, a, { redesign: REDESIGN });

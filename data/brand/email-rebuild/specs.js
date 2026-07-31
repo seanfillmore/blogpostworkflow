@@ -42,6 +42,77 @@ const cartItems = `{% for item in event.extra.line_items %}
 </tr></table>
 {% endfor %}`;
 
+/**
+ * A product row: name, price, one line of why, and a link.
+ *
+ * Deliberately text-and-link rather than an image card. The only product image URLs we
+ * have verified are the deodorant hero and the lotion; inventing CDN paths for the rest
+ * would ship broken images, and a missing image in an email cannot be fixed after send.
+ * Where a real image is available it comes from the event payload instead.
+ */
+const productRow = (name, price, why, href) => `<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 14px;border-top:1px solid #EDEDED;padding-top:14px;"><tr><td>
+<a href="${href}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;text-decoration:none;">${name} — ${price}</a>
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;line-height:21px;color:#000000;margin-top:2px;">${why}</div>
+</td></tr></table>`;
+
+// A plain-text code block. These codes are hardcoded strings in the live templates, not
+// {% coupon_code %} tags — promoting them to tags would require the coupons to exist in
+// Klaviyo under those names, and they do not.
+const codeBlock = (label, code) => `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 24px;" width="100%"><tr><td align="center">
+<table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="border:2px dashed #AEDEAC;border-radius:10px;padding:14px 34px;text-align:center;">
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#000000;">${label}</div>
+<div style="font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:24px;letter-spacing:4px;color:#000000;font-weight:700;margin-top:4px;">${code}</div>
+</td></tr></table></td></tr></table>`;
+
+// Opens the per-category conditional used by the Post-Purchase and Replenishment flows.
+const ITEMS_OPEN = '{% with items=event.Items|join:", " %}';
+const ITEMS_CLOSE = '{% endwith %}';
+
+const ANY_CATEGORY = '"Deodorant" in items or "Toothpaste" in items or "Soap" in items '
+  + 'or "Lotion" in items or "Moisturiz" in items or "Lip" in items';
+
+/**
+ * Per-category content with a mandatory fallback.
+ *
+ * The outer if/else is not decoration. Without it, an order whose items match none of the
+ * category strings — a bundle named differently, a gift card, a new SKU — renders the
+ * section completely empty, and the customer gets an email with a hole in it. The live
+ * templates all had this guard; a first pass at these rebuilds dropped it, and the tag
+ * check is what caught it.
+ */
+const byCategory = (inner, fallback) =>
+  `${ITEMS_OPEN}{% if ${ANY_CATEGORY} %}\n${inner}\n{% else %}\n${fallback}\n{% endif %}${ITEMS_CLOSE}`;
+
+// Shopify add-to-cart permalink. The variant IDs are copied verbatim from the live
+// template — a wrong ID silently adds the wrong product to someone's cart.
+const cartButton = (label, variantId) => `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/${variantId}:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">${label}</a>
+</td></tr></table>`;
+
+const reviewLink = (name, handle) => `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%"><tr><td align="center">
+<a href="${'https://www.realskincare.com/products'}/${handle}#reviews" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:underline;">Review your ${name} →</a>
+</td></tr></table>`;
+
+/**
+ * Routes the reorder CTA to the product they actually bought.
+ *
+ * A first pass replaced this whole conditional with one generic "shop best sellers"
+ * link. That defeats the email: a replenishment nudge exists to make reordering *their*
+ * item a single tap, and a collection page puts the search back on the customer.
+ */
+const subscribeLinks = () => byCategory(
+  ['Deodorant:coconut-oil-deodorant', 'Toothpaste:coconut-oil-toothpaste', 'Soap:coconut-soap',
+    'Moisturiz:coconut-moisturizer', 'Lotion:coconut-lotion', 'Lip:coconut-oil-lip-balm']
+    .map((pair) => {
+      const [key, handle] = pair.split(':');
+      return `{% if "${key}" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="https://www.realskincare.com/products/${handle}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save 15%</a></td></tr></table>{% endif %}`;
+    }).join('\n'),
+  `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="${BEST}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder or subscribe &amp; save</a></td></tr></table>`,
+);
+
+const para = (html) =>
+  `<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">${html}</p>`;
+
 export const specs = {
   // ---------------------------------------------------------------- Customer Winback
   // Designed and image-led. The matrix argues this explicitly: a winback's two acceptable
@@ -157,6 +228,430 @@ export const specs = {
         html: 'Everything is made in small batches, so the occasional item does go out of stock for a week or two. That is the only real deadline here.',
       },
       { type: 'signoff' },
+    ],
+  },
+
+  // ------------------------------------------------------------------- Welcome Series
+  // 01 is plain-text lean and follows the resell-before-reward rule: tease what is
+  // coming, hand over the incentive last. Leading with the code spends the attention you
+  // needed. 02 and 04 are education — plain and link-light, because education styled as
+  // promo lands in the promotions tab. 03 and 05 sell, so they are designed.
+
+  W5ySJc: {
+    name: 'Welcome — 01 Welcome + Free Shipping',
+    format: 'plain',
+    preheader: 'Six ingredients, and a reason for each one. Your shipping is covered.',
+    blocks: [
+      { type: 'h1', text: 'What you just signed up for' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — here is the short version. Everything we make starts with cold-pressed virgin coconut oil and a list of ingredients short enough to read on one hand.',
+      },
+      {
+        type: 'p',
+        html: 'Cold-pressed virgin coconut oil keeps its lauric acid, which is the part that actually does the work. Refined coconut oil is cheaper, neutral and more shelf-stable — the deodorising process strips the lauric acid out. We buy the expensive one, and that is most of why this costs more than the drugstore version.',
+      },
+      {
+        type: 'p',
+        html: 'That is the whole pitch. No fillers to bulk out a tube, no synthetic fragrance, nothing added to make a label look better.',
+      },
+      { type: 'raw', html: codeBlock('Free shipping on your first order', 'SHIPFREE') },
+      { type: 'cta', text: 'Shop best sellers', href: BEST },
+      {
+        type: 'p',
+        html: 'Use it at checkout. Orders over $50 ship free anyway.',
+      },
+      { type: 'signoff' },
+      { type: 'ps', html: 'Reply to this email if you want a recommendation for your skin — a real person answers, usually me.' },
+    ],
+  },
+
+  TzuGfG: {
+    name: 'Welcome — 02 Brand Story',
+    format: 'plain',
+    preheader: 'Julie started this over 20 years ago, for a reason that still decides every formula.',
+    blocks: [
+      { type: 'h1', text: 'Why this exists' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — I am Sean, co-founder. My sister-in-law Julie started Real Skin Care over 20 years ago, after looking for skincare that was both organic and genuinely simple and finding that it mostly did not exist.',
+      },
+      {
+        type: 'p',
+        html: 'Twenty years later the test we apply to every formula is still hers: <em>if a cheaper substitute would do the same job, would we use it?</em> The answer is yes, honestly — if it would. The reason we do not is that the cheap substitutes do not.',
+      },
+      {
+        type: 'p',
+        html: 'Baking soda is softer than enamel and neutralises oral acid. Hydrated silica is harder than enamel and simply abrades. Silica is cheaper. We use baking soda. That decision repeats itself across every product we make.',
+      },
+      { type: 'cta', text: 'See what we make', href: 'https://www.realskincare.com/collections/all' },
+      { type: 'signoff' },
+      { type: 'ps', html: 'Handmade in the USA, in small enough batches that the texture shifts a little between runs. That is the coconut oil behaving like a real ingredient, not a defect.' },
+    ],
+  },
+
+  Ra3L8A: {
+    name: 'Welcome — 03 Best Sellers',
+    format: 'designed',
+    preheader: 'The three people start with, and who each one is actually for.',
+    blocks: [
+      { type: 'h1', text: 'Where most people start' },
+      {
+        type: 'p',
+        html: 'Not sure what to try first? These three cover most people, and they are not interchangeable — each one suits a different problem.',
+      },
+      {
+        type: 'raw',
+        html: productRow('Coconut Oil Deodorant', '$15', 'Aluminium-free. Expect a 1–2 week adjustment when you switch off antiperspirant — that is the point, not a flaw.', `${PDP}/coconut-oil-deodorant`),
+      },
+      {
+        type: 'raw',
+        html: productRow('Coconut Oil Toothpaste', '$13', 'Fluoride-free and SLS-free. It foams less than conventional paste, because the foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
+      },
+      {
+        type: 'raw',
+        html: productRow('Sensitive Skin Set', '$46.80', 'The gentlest set we make, and cheaper than buying the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
+      },
+      { type: 'cta', text: 'Shop best sellers', href: BEST },
+      { type: 'p', html: 'Free shipping over $50.' },
+    ],
+  },
+
+  U7SuwV: {
+    name: 'Welcome — 04 Why Clean / USP',
+    format: 'plain',
+    preheader: 'Tom\'s of Maine sells "natural" toothpaste with SLS in it. That is the problem.',
+    blocks: [
+      { type: 'h1', text: 'Why we never say "natural"' },
+      {
+        type: 'p',
+        html: 'The word is essentially unregulated in personal-care labelling. Tom\'s of Maine sells "natural" toothpaste containing sodium lauryl sulfate. Crest markets SKUs as natural. Burt\'s Bees uses the word alongside hydrogenated castor oil.',
+      },
+      {
+        type: 'p',
+        html: 'So the word tells you nothing, and if you have reacted badly to something labelled natural before, you already know that.',
+      },
+      {
+        type: 'p',
+        html: 'What we do instead is name what is absent and why. No SLS — it is a foaming agent linked to canker sores in people prone to them. No fluoride. No glycerin or sorbitol coating. No titanium dioxide. No synthetic sweeteners or fragrance. Each of those is verifiable by reading our ingredient list against any conventional alternative.',
+      },
+      { type: 'cta', text: 'Read the ingredient lists', href: 'https://www.realskincare.com/collections/all' },
+      { type: 'signoff' },
+      { type: 'ps', html: 'The trade-off is real: it costs more, tastes milder, and does not foam. Every one of those is a downstream effect of leaving something out.' },
+    ],
+  },
+
+  XGJfxT: {
+    name: 'Welcome — 05 Last Chance Free Shipping',
+    format: 'designed',
+    preheader: 'SHIPFREE is still good — this is the last time I mention it.',
+    blocks: [
+      { type: 'h1', text: 'Last time I mention this' },
+      {
+        type: 'p',
+        html: 'Your welcome code is still active. This is the last email in which I bring it up.',
+      },
+      { type: 'raw', html: codeBlock('Free shipping on your first order', 'SHIPFREE') },
+      { type: 'cta', text: 'Use it on a best seller', href: BEST },
+      {
+        type: 'p',
+        html: 'If something is stopping you — you are not sure which product suits your skin, or you have reacted badly to a "clean" brand before — just reply. A real person answers, usually me.',
+      },
+      { type: 'signoff' },
+    ],
+  },
+
+  // ------------------------------------------------------- Product Review / Cross-Sell
+  // Split format: the ask has to read as a person asking, so it is plain and comes first;
+  // the cross-sell is a separate designed block below it. Never gate a review request by
+  // rating and never incentivise it — that is review-fraud territory and against the
+  // platforms' terms.
+
+  TA5Wi4: {
+    name: 'Product Review — 01 Review + Cross-Sell',
+    format: 'plain',
+    preheader: 'Two weeks in — did it actually work for you?',
+    blocks: [
+      { type: 'h1', text: 'Did it work?' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — your order has had a couple of weeks to earn its place. Long enough to know.',
+      },
+      {
+        type: 'p',
+        html: 'If it worked, a review helps the next person with the same problem find it. If it did not, I would rather hear that directly — reply to this email and tell me what happened.',
+      },
+      {
+        type: 'raw',
+        html: byCategory(
+          `{% if "Deodorant" in items %}${reviewLink('Coconut Oil Deodorant', 'coconut-oil-deodorant')}{% endif %}
+{% if "Toothpaste" in items %}${reviewLink('Coconut Oil Toothpaste', 'coconut-oil-toothpaste')}{% endif %}
+{% if "Soap" in items %}${reviewLink('Foaming Hand Soap', 'organic-foaming-hand-soap')}{% endif %}
+{% if "Lotion" in items or "Moisturiz" in items %}${reviewLink('Body Lotion', 'coconut-lotion')}{% endif %}
+{% if "Lip" in items %}${reviewLink('Lip Balm', 'coconut-oil-lip-balm')}{% endif %}`,
+          `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%"><tr><td align="center"><a href="${BEST}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:underline;">Leave a review →</a></td></tr></table>`,
+        ),
+      },
+      { type: 'signoff' },
+      {
+        type: 'raw',
+        html: productRow('Coconut Oil Lip Balm', '$8', 'The small one people add on and then reorder on its own.', `${PDP}/coconut-oil-lip-balm`),
+      },
+    ],
+  },
+
+  // --------------------------------------------------------------------- Post-Purchase
+  // 01, 02 and 04 are the churn-prevention surface. Plain and link-light on purpose:
+  // primary-tab placement matters more than polish, because the transition-period
+  // explanation only prevents churn if it is actually read. 03 and 05 sell, so they are
+  // designed but light.
+
+  UrT2dK: {
+    name: 'Post-Purchase — 01 Thank You',
+    format: 'plain',
+    preheader: 'One thing to know before it arrives, especially for the deodorant.',
+    blocks: [
+      { type: 'h1', text: 'Thank you — and one thing to expect' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — your order is being prepared and you will get tracking as soon as it ships.',
+      },
+      {
+        type: 'p',
+        html: 'One thing worth knowing now rather than in week two: if you bought the deodorant, switching off antiperspirant takes about <strong>1–2 weeks</strong>. You may notice more moisture at first. That is your sweat glands doing what they always did, no longer blocked by aluminium — it settles.',
+      },
+      {
+        type: 'p',
+        html: 'Most people who give up on natural deodorant quit in that window, days before it would have worked. I will send a short note on using each thing you bought, and then leave you alone.',
+      },
+      { type: 'signoff' },
+      { type: 'ps', html: 'If anything arrives damaged or wrong, reply here and we will fix it. No form to fill in.' },
+    ],
+  },
+
+  VBhR7B: {
+    name: 'Post-Purchase — 02 How To Use It (dynamic)',
+    format: 'plain',
+    preheader: 'How to use what you bought — and what is normal in week one.',
+    blocks: [
+      { type: 'h1', text: 'How to use what you bought' },
+      { type: 'p', html: 'Hi {{ first_name|default:"there" }} — short and specific to your order.' },
+      {
+        type: 'raw',
+        html: byCategory(
+          `{% if "Deodorant" in items %}${para('<strong>Your deodorant.</strong> Two to three swipes on clean, dry skin each morning and after showering. The switch off antiperspirant takes 1–2 weeks and you may notice more moisture at first — that is normal and temporary. Do not judge it before day 14.')}{% endif %}
+{% if "Toothpaste" in items %}${para('<strong>Your toothpaste.</strong> A pea-sized amount, twice a day. It foams less than conventional paste — foam is SLS, not cleaning. Squeeze from the bottom; the coconut oil firms up in a cold bathroom and loosens in a warm one.')}{% endif %}
+{% if "Soap" in items or "Lotion" in items or "Moisturiz" in items %}${para('<strong>Your skin routine.</strong> Cleanse first, then moisturise while skin is still damp — that is what locks the water in. On dry skin you are just adding oil to a dry surface.')}{% endif %}
+{% if "Lip" in items %}${para('<strong>Your lip balm.</strong> No menthol or camphor, so no cooling tingle. That tingle is mild irritation, and it is why some balms leave you reapplying all day.')}{% endif %}`,
+          para('Everything starts with cold-pressed virgin coconut oil and a short ingredient list. The results come from using it consistently — give it a couple of weeks before you judge it.'),
+        ),
+      },
+      { type: 'signoff' },
+      { type: 'ps', html: 'Consistency matters more than quantity with all of it. Two weeks of daily use tells you more than a heavy first application.' },
+    ],
+  },
+
+  UYgNuY: {
+    name: 'Post-Purchase — 03 Complete Your Routine (Set)',
+    format: 'designed',
+    preheader: 'SETSHIP covers shipping on the Sensitive Skin Set.',
+    blocks: [
+      { type: 'h1', text: 'The set, if you want the rest of it' },
+      {
+        type: 'p',
+        html: 'If what you ordered is working, the Sensitive Skin Moisturizing Set is the gentlest group we make — and it costs less than buying the pieces separately.',
+      },
+      {
+        type: 'raw',
+        html: productRow('Sensitive Skin Moisturizing Set', '$46.80', 'Our gentlest coconut-oil essentials, priced below the individual pieces.', `${PDP}/sensitive-skin-starter-set`),
+      },
+      { type: 'raw', html: codeBlock('Free shipping on your set', 'SETSHIP') },
+      { type: 'cta', text: 'Shop the Set', href: `${PDP}/sensitive-skin-starter-set` },
+      { type: 'signoff' },
+    ],
+  },
+
+  XW7wTj: {
+    name: 'Post-Purchase — 04 Review + Referral',
+    format: 'plain',
+    preheader: 'If it is not right, I would rather fix it than have you quietly stop.',
+    blocks: [
+      { type: 'h1', text: 'How is it going?' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — a couple of weeks in, which is long enough to know whether it suits you.',
+      },
+      {
+        type: 'p',
+        html: 'If something is not right, reply to this email. We read every message, and most problems have a straightforward answer — the wrong amount, the wrong order of steps, or a transition period that has not finished yet.',
+      },
+      {
+        type: 'p',
+        html: 'If it is working and you know someone who has been let down by a "clean" brand before, send them to realskincare.com — <strong>NEWCUSTOMER</strong> gets them free shipping on their first order.',
+      },
+      { type: 'cta', text: 'Send a friend our way', href: 'https://www.realskincare.com' },
+      { type: 'signoff' },
+    ],
+  },
+
+  RiMM8C: {
+    name: 'Post-Purchase — 05 Restock Reorder',
+    format: 'designed',
+    // The add-to-cart permalinks carry Shopify variant IDs. They are copied exactly from
+    // the live template — a wrong variant ID silently adds the wrong product.
+    preheader: 'One tap adds your usual straight to the cart.',
+    blocks: [
+      { type: 'h1', text: 'Running low?' },
+      { type: 'p', html: 'Each button drops it straight into your cart — no hunting for it.' },
+      {
+        type: 'raw',
+        html: byCategory(
+          `{% if "Deodorant" in items %}${cartButton('Reorder Coconut Oil Deodorant — $15', '44179451052202')}{% endif %}
+{% if "Toothpaste" in items %}${cartButton('Reorder Coconut Oil Toothpaste — $13', '44179458162858')}{% endif %}
+{% if "Soap" in items %}${cartButton('Reorder Foaming Hand Soap — $13', '44179472187562')}{% endif %}`,
+          `<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;"><a href="${BEST}" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Shop best sellers</a></td></tr></table>`,
+        ),
+      },
+      { type: 'p', html: 'Free shipping over $50, if you are stocking up on more than one.' },
+    ],
+  },
+
+  // ---------------------------------------------------------------- Replenishment
+  // Plain and link-light — §6 names reorder nudges explicitly as the plain case. The
+  // cadence numbers below are the ones already live; measured reorder gaps differ per
+  // SKU, so treat 6/8 weeks as the current default rather than a finding.
+
+  Y8wJn7: {
+    name: 'Replenishment — 01 Running Low',
+    format: 'plain',
+    preheader: 'About five weeks in, which is when most people hit the bottom of it.',
+    blocks: [
+      { type: 'h1', text: 'About that time' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — you picked up {{ event.Items|first|default:"your Real Skin Care favorites" }} about five weeks ago, which is roughly when most people start scraping the bottom.',
+      },
+      {
+        type: 'p',
+        html: 'Subscribe &amp; Save is 15% off on a 6-week refill, or 10% every 8 weeks. Skip, pause, swap scent or cancel any time from your account — it is not a contract, and you do not have to call anyone.',
+      },
+      { type: 'raw', html: subscribeLinks() },
+      { type: 'signoff' },
+      { type: 'ps', html: 'If six weeks is too fast for how you actually use it, pick the eight-week option. Running a subscription you keep skipping is worse than not having one.' },
+    ],
+  },
+
+  ThCS7T: {
+    name: 'Replenishment — 02 Never Run Out',
+    format: 'plain',
+    preheader: 'Probably empty by now — two ways to handle it.',
+    blocks: [
+      { type: 'h1', text: 'Probably empty by now' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — your {{ event.Items|first|default:"Real Skin Care favorite" }} is likely finished.',
+      },
+      {
+        type: 'p',
+        html: 'Two options. Reorder when you notice, or put it on Subscribe &amp; Save — 15% off every 6 weeks, or 10% every 8. Skip, pause, swap or cancel any time from your account.',
+      },
+      { type: 'raw', html: subscribeLinks() },
+      { type: 'signoff' },
+    ],
+  },
+
+  // ----------------------------------------------------------- Browse Abandonment
+  // Designed and light, product imagery carrying it. Data shape here is different from
+  // the cart flows: this trigger carries event.ImageURL / Name / Price / URL, NOT
+  // $extra.line_items. Copied from the live template rather than assumed.
+
+  UCfgDD: {
+    name: 'Browse Abandonment — 01 Still Looking',
+    format: 'designed',
+    preheader: 'The one you were looking at, and what it is actually for.',
+    blocks: [
+      { type: 'h1', text: 'Still deciding?' },
+      { type: 'p', html: 'Hi {{ first_name|default:"there" }} — here it is again.' },
+      {
+        type: 'raw',
+        // The {% else %} branch is required: not every viewed product carries an image,
+        // and without it those recipients get an email that never names what they looked
+        // at. The live template had this; a first pass at the rebuild dropped it.
+        html: `{% if event.ImageURL %}<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 20px;"><tr><td align="center">
+<a href="{{ event.URL }}" style="text-decoration:none;"><img alt="{{ event.Name }}" src="{{ event.ImageURL }}" style="display:block;width:100%;max-width:400px;height:auto;border:0;border-radius:8px;"/></a>
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;margin-top:12px;">{{ event.Name }} — \${{ event.Price }}</div>
+</td></tr></table>{% else %}<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 20px;"><tr><td align="center">
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;">{{ event.Name|default:'the item you were looking at' }}</div>
+</td></tr></table>{% endif %}`,
+      },
+      {
+        type: 'p',
+        html: 'If you have been let down by something labelled "clean" before, the useful thing to do is read our ingredient list against whatever you are comparing it to. That comparison is the whole argument.',
+      },
+      { type: 'cta', text: 'Take another look', href: "{{ event.URL|default:'https://www.realskincare.com/collections/all' }}" },
+    ],
+  },
+
+  Y8tMjd: {
+    name: 'Browse Abandonment — 02 Best Sellers',
+    format: 'designed',
+    preheader: 'Three starting points, and who each one suits.',
+    blocks: [
+      { type: 'h1', text: 'Still on your mind?' },
+      { type: 'p', html: 'No rush. If you are still deciding, these are the three people usually start with.' },
+      {
+        type: 'raw',
+        html: productRow('Coconut Oil Deodorant', '$15', 'Aluminium-free. Expect a 1–2 week adjustment off antiperspirant.', `${PDP}/coconut-oil-deodorant`),
+      },
+      {
+        type: 'raw',
+        html: productRow('Sensitive Skin Set', '$46.80', 'The gentlest set, and cheaper than the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
+      },
+      {
+        type: 'raw',
+        html: productRow('Coconut Oil Toothpaste', '$13', 'Fluoride-free and SLS-free. Foams less, because foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
+      },
+      { type: 'cta', text: 'Shop best sellers', href: BEST },
+      { type: 'p', html: 'Free shipping over $50.' },
+    ],
+  },
+
+  // ------------------------------------------------- Coconut Reset — Digital Delivery
+  // TRANSACTIONAL. This one is treated with the most care on the list: a paying customer
+  // not receiving what they bought is the worst failure here. Plain and functional, the
+  // download links first and unmissable, no promotional styling that could push it to the
+  // promotions tab. The two PDF URLs are copied verbatim from the live template.
+
+  X4c9Rt: {
+    name: 'Coconut Reset — Digital Delivery',
+    format: 'plain',
+    preheader: 'Your two guides are ready to download — links inside.',
+    blocks: [
+      { type: 'h1', text: 'Your downloads are ready' },
+      {
+        type: 'p',
+        html: 'Hi {{ first_name|default:"there" }} — thank you for starting the 90-Day Coconut Reset. Your box is on its way, and both guides are ready now.',
+      },
+      {
+        type: 'textlink',
+        text: '1. Download the 90-Day Calm-Skin Routine & Tracker →',
+        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/90-Day-Calm-Skin-Routine-and-Tracker-v2.pdf?v=1785298286',
+      },
+      {
+        type: 'textlink',
+        text: '2. Download the Coconut Skincare Field Guide →',
+        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/Coconut-Skincare-Field-Guide-v2.pdf?v=1785298289',
+      },
+      {
+        type: 'p',
+        html: 'The Routine &amp; Tracker is the two-step plan plus a 12-week tracker. The Field Guide covers what helps sensitive skin and what quietly irritates it.',
+      },
+      {
+        type: 'p',
+        html: 'Save both to your device now — that way you have them even if this email gets buried.',
+      },
+      { type: 'signoff' },
+      { type: 'ps', html: 'If either link does not open, reply to this email and I will send the files directly. You paid for them; you should have them.' },
     ],
   },
 };
