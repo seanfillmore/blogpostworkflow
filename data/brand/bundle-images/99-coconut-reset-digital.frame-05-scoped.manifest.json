@@ -1,0 +1,8 @@
+{
+  "_comment": "The review frame, once per scent. Identical content: 4.84 from 135 reviews is true of both. Duplicated because the theme's gang_exist flag is sticky across the media loop — an unscoped media placed after a scoped one is hidden for every variant, so 'show for all' is not expressible once anything else is scoped.",
+  "product": "99-coconut-reset-digital",
+  "images": [
+    { "file": "data/brand/bundle-images/frame-05-reviews-coconut-breeze.jpg", "alt": "4.84 out of 5 stars from 135 customer reviews of the Body Lotion and Body Cream included in the 90-Day Coconut Reset." },
+    { "file": "data/brand/bundle-images/frame-05-reviews-pure-unscented.jpg", "alt": "4.84 out of 5 stars from 135 customer reviews of the Body Lotion and Body Cream included in the 90-Day Coconut Reset." }
+  ]
+}

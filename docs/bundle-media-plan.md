@@ -113,6 +113,52 @@ Every frame in this document carries a `Source`. There are four, and the boundar
 - **RENDER (`scripts/render-frame.mjs`)** — *added 2026-08-01.* Type over a brand field, laid out in HTML/CSS and screenshotted at 2048² in the real brand faces (Cabin/Outfit, vendored in `data/brand/fonts/`). Free, exact, and **reproducible**: the frame module reads its figures from live Shopify metafields at render time, so re-running after a data change regenerates a correct asset. Every frame module must export a `verify(ctx)` that throws when live data contradicts the frame — a wrong claim becomes a failed build instead of a confident JPEG.
 - **MUST-SHOOT** — requires a camera and the physical product.
 
+### ⚠️ Scoping gallery media to a variant — the alt-text `#` convention
+
+A variant holds one media, so variant *attachment* cannot scope a gallery of
+several frames. This theme does it through **alt text**, verified in the live
+theme on 2026-08-01 rather than assumed:
+
+```
+sections/main-product.liquid
+  if media.alt contains '#' and section.settings.hide_variants == false
+    gang_connect     = media.alt | split: '#' | last     → "scent_coconut-breeze"
+    gang_option_name = gang_connect | split: '_' | first → "scent"
+    ... compares against option.name|handleize and option.selected_value|handleize
+    match → class "gang__active"
+  alt = media.alt | escape | split: '#' | first          → the visible alt
+
+assets/section-main-product.css
+  [data-gang-option]              { display: none; }
+  [data-gang-option].gang__active { display: block; }
+```
+
+**Format:** `<real alt text>#<option-name-handle>_<option-value-handle>`
+e.g. `…three of each for three months.#scent_coconut-breeze`
+
+The suffix is stripped from the rendered alt, so accessibility and SEO are
+unaffected. `hide_variants` must be **false** on the section or the theme skips
+the branch entirely (it is false on `product.bundle-landing.json`).
+
+**🚨 `gang_exist` is sticky, and this bites.** In the media loop `gang_connect` is
+reset every iteration but `gang_exist` is not — it is assigned `false` once,
+before the loop, and only ever set true. So the moment one media is scoped, every
+media rendered *after* it also gets `data-gang-option`, with an empty connect it
+can never match, and the CSS hides it **for every variant**. It stays in the
+admin, returns 200 from the CDN, and simply never renders.
+
+This happened here: scoping the heroes and routine frames silently hid the
+review-proof frame on both scents. The fix is that **once anything is scoped,
+everything must be** — an asset that is genuinely true of all variants gets
+duplicated, one per option value. That is why the Reset carries two identical
+copies of frame 5.
+
+`scripts/set-media-variant-scope.mjs` applies the convention from a scope file,
+derives the suffix from the product's real options so it cannot name a value that
+does not exist, is idempotent, and refuses to run when it would strand a media.
+
+---
+
 ### ⚠️ A Shopify variant holds exactly ONE media — the hero owns that slot
 
 Learned the hard way on 2026-08-01, and it shapes how every bundle's stack gets installed. `ProductVariantAppendMediaInput` takes a **`mediaIds` list**, and the reference docs describe the mutation as *"appending"* media to variants — both of which say you can attach several. You cannot. The API refuses in two different ways:
