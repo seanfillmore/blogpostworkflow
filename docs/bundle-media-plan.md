@@ -8,7 +8,13 @@ Companion to `docs/bundle-marketing-plan.md` (positioning and channel) and `docs
 
 ## 0. Decisions needed before this is executed
 
-Three things in here are not mine to settle.
+> **All three resolved 2026-07-31 — do not re-raise them.**
+>
+> 1. **Ingredient claims — `config/ingredients.json` is correct and is the source of truth.** The copy was the wrong side and has been fixed: "no palm oil" now appears nowhere live, and the Gift Box lander discloses *"Contains beeswax in the lip balm, so this box is not vegan."* The Clean Swap's "Vegan and cruelty-free" is accurate because its four components carry no beeswax. **The table below stands and should be treated as the authority** — it is what the Reset's frame 6 note is derived from.
+> 2. **Head-to-Toe frame 3 — dissolved, not decided.** The bundle repriced to **$87** on 2026-07-31, so $105 ÷ 7 = $15.00 no longer holds ($12.43). The frame depended on that exact arithmetic; it is cut, and the stack leads on completeness like every other bundle.
+> 3. **Reset digital-goods frame — buildable.** Both PDFs are real: Routine & Tracker **5.2 MB**, Field Guide **9.1 MB**, live on the CDN and delivered by Klaviyo flow `XFdcu6`.
+
+The original text of the three, kept because the ingredient table is still the working reference:
 
 **1. ⚠️ Ingredient claims that contradict `config/ingredients.json` — blocks any on-image ingredient frame.**
 
@@ -49,7 +55,24 @@ This is the fourth instance of one pattern on this template: **a per-product val
 
 ## 2. What already exists
 
-Bundle galleries, as of 2026-07-28:
+> **Re-measured 2026-08-01.** The 2026-07-28 table below is **stale** — it predates a product rebuild and three repricings. Current state:
+>
+> | Bundle | Price | Images | Note |
+> |---|--:|--:|---|
+> | **90-Day Coconut Reset** | **$121** | **2** | Rebuilt as a new product (`8500970881194` → `8566372303018`); the old 3 images did not survive. The 2 present are real photography shipped 2026-07-31, one per variant. |
+> | Bar Soap 4-Pack | $39 | 5 | placeholder |
+> | Head-to-Toe | **$87** | 2 | placeholder |
+> | Sensitive Skin Set | $46.80 | 1 | placeholder; alt text missing |
+> | 90-Day Clean Swap | **$144** | 1 | placeholder |
+> | Hand Soap Set | $44/59/72 | **0** | 15 variants |
+> | The Clean Swap | $59 | **0** | |
+> | Gift Box | $62 | **0** | |
+> | Deodorant 4-Pack | $53 | **0** | |
+> | Toothpaste 3-Pack | $34 | **0** | |
+>
+> **Sean confirmed 2026-07-31 that the images on the four non-zero bundles are placeholders, not finished assets.** So all ten bundles need imagery designed — six from nothing, four by replacement. Do not treat the four as done and skip them. The Reset's 2 are the only finished assets in the roster.
+
+The original 2026-07-28 table, kept for the component counts below it:
 
 | Bundle | Price | Template | Images | Alt text |
 |---|--:|---|--:|---|
@@ -63,8 +86,6 @@ Bundle galleries, as of 2026-07-28:
 | Hand Soap Set | $44/59/72 | PDP | **0** | — |
 | Deodorant 4-Pack | $53 | PDP | **0** | — |
 | Toothpaste 3-Pack | $34 | PDP | **0** | — |
-
-**Five of ten bundles have no imagery at all.** Between them the ten bundles hold 12 photographs.
 
 The component SKUs, by contrast, hold **46**:
 
@@ -116,7 +137,7 @@ Everything that genuinely needs a camera, across all ten bundles. Seven items in
 | **B** | **Twelve-unit contents flat-lay**, overhead, three kit versions | 90-Day Clean Swap | Contents depiction must match what ships. Volume is the whole $159 argument and no composite is honest here. | Single session, three set changes |
 | **B** | **Shelf before/after**, locked-off tripod, two exposures | 90-Day Clean Swap | Needs a set of conventional products to stage the "before" — sourceable for under $60 | Same session as above |
 | **C** | **Hands before/after lotion**, one model, two exposures ~20 min apart | Hand Soap Set | Blocks the only frame that sells the $59/$72 step-up over the $44 base | One session |
-| **D** | **Supply still-life** — four full units vs. three genuine empties | 90-Day Coconut Reset | Blocked on having authentically emptied units; fake empties are a fabrication | Gated on real empties |
+| **D** | **Supply still-life** — six full units vs. six genuinely used (3 empty bottles, 3 spent jars) | 90-Day Coconut Reset | Blocked on having authentically emptied units; fake empties are a fabrication | Gated on real empties |
 | **—** | **Customer 90-day skin pairs** | 90-Day Coconut Reset | Not a photo session — a recruitment programme through the replenishment flow. Day-0 photos must be collected *before* anyone starts, so it can only ever start today | ⏳ 90 days from whenever it starts |
 | **—** | **Fresh-kit variant photography** *(contingent)* | Head-to-Toe | Only if the audit finds no primary images for Geranium Flower deodorant, Sweet Tangerine lip balm, Orange Zest hand soap, Tea Tree bar soap | Audit first — may be zero work |
 
@@ -138,7 +159,7 @@ Found while specifying the stacks. These are defects in the *existing* library t
 
 ## 6. Frame stacks
 
-<!-- Media fragment: Head-to-Toe ($105) and The 90-Day Coconut Reset ($99). Product-gallery image stacks. Frames are specced, not produced. -->
+<!-- Media fragment: Head-to-Toe (now $87) and The 90-Day Coconut Reset (now $121). Product-gallery image stacks. Frames are specced, not produced. -->
 
 ### Head-to-Toe — $105
 
@@ -177,32 +198,54 @@ The copy on this page can *say* "one of everything we make" but it cannot make t
 
 ---
 
-### The 90-Day Coconut Reset — $99
+### The 90-Day Coconut Reset — $121
 
-This page's imagery has one hard problem the copy has already solved in words and lost in pictures: **it contains four vessels of essentially two products, and it costs $99.** The copy explains the routine; a photograph of three identical lotion bottles beside a jar reads as "why am I buying three of the same thing" unless a frame assigns each bottle a job. The buyer is the lotion customer who has *already repurchased at least once* — they are past persuasion and squarely problem-aware. Their problem is not choosing, it is **running out**, and it is the one thing the current three-image gallery never depicts. Secondarily, $34 of the $158 stated value is two PDFs, and a PDF is invisible in a photograph unless a frame is built for it — right now the page asserts value the eye cannot find, which is the exact shape of a trust leak.
+> **Re-specced 2026-08-01.** This stack was written against a bundle of **3 lotions + 1 cream at $99**. The product ships **3 lotions + 3 creams at $121** (`config/bundles.json`, verified live). Frames 1, 2 and 3 were all built on the old 3+1 composition, and frame 2's headline — *"Three daily. One nightly."* — is now **false**. The composition-dependent frames below have been rewritten; the value stack is **$220**, not $158. Do not build from a cached copy of this section.
+
+This page's imagery has one hard problem the copy has already solved in words and lost in pictures: **it contains six vessels of essentially two products, and it costs $121.** The copy explains the routine; a photograph of three identical bottles beside three identical jars reads as "why am I buying three of the same thing, twice" unless a frame assigns the pair a job. The buyer is the lotion customer who has *already repurchased at least once* — they are past persuasion and squarely problem-aware. Their problem is not choosing, it is **running out**, and it is the one thing the gallery has never depicted. Secondarily, $34 of the $220 stated value is two PDFs, and a PDF is invisible in a photograph unless a frame is built for it — right now the page asserts value the eye cannot find, which is the exact shape of a trust leak.
+
+The six-unit composition is *better* material than the four-unit one, because the routine is genuinely a pair: the lander's own "How to Use" tab says **lotion in the morning and after showers, cream at night**, and `whats_in_it_note` says *"Three months of lotion, and three months of overnight cream."* Three matched pairs, one per month, is a system a single frame can teach. Three bottles and a lone jar never was.
 
 **Sequencing honesty — read this before costing the stack.** This lander has no traffic yet, but note *why*: the product was created 2026-07-28 and nothing links to it. It has not underperformed — it has not been given a chance. Its imagery is not the bottleneck; distribution is. Its real traffic is the Klaviyo replenishment (`TAfpnV`) and post-purchase (`VLQaYZ`) flows, not search. So frames are sequenced by whether they also work as flow creative: **frames 1, 4 and 5 pay off immediately** because they can be lifted straight into email. **Frames 2, 6 and 7 only pay off once the page has traffic** — they are gallery-depth assets that answer objections nobody is currently arriving with, and they should be built after the flows are placed, not before. Frame 3b is a 90-day-lead asset that must be *started* now precisely because it cannot be rushed later.
 
 | # | Format | One job | One persona | 1-second read | On-image headline | Source | Effort |
 |--:|---|---|---|---|---|---|---|
-| 1 | Headliner | Make a quarter's supply the unit of purchase | Repeat lotion buyer who lapses between bottles | "That's a whole quarter of lotion" | **Ninety days. Never run out.** | REUSE `coconut-lotion` + `coconut-moisturizer` | S |
-| 2 | Educational infographic | Explain why it's 3 + 1 and not 4 | Buyer who thinks they're being sold three duplicates | "Three for day, one for night" | **Three daily. One nightly. Ninety days.** | COMPOSITE `coconut-lotion` + `coconut-moisturizer` | M |
+| 1 | Headliner | Make a quarter's supply the unit of purchase | Repeat lotion buyer who lapses between bottles | "That's a whole quarter of lotion" | **Ninety days. Never run out.** | ✅ **SHIPPED 2026-07-31** — real photography, one per variant | — |
+| 2 | Educational infographic | Explain why it's three *pairs*, not six duplicates | Buyer who thinks they're being sold the same thing six times | "A bottle and a jar, three months running" | **Daily lotion. Overnight cream. Three months of both.** | COMPOSITE `coconut-lotion` + `coconut-moisturizer` | M |
 | 3 | Transformation (supply) | Show running out being solved, not described | Buyer whose real pain is the empty-bottle gap | "The box lasts the whole quarter" | **This is what ninety days looks like.** | MUST-SHOOT (product still-life, in-house) | M |
 | 3b | Transformation (skin) | Show the change instead of claiming the after-state | Dry-winter-skin sufferer wanting proof, not persuasion | "Her skin actually changed" | **Day 1. Day 90.** | MUST-SHOOT (customer-submitted, 90-day lead) | L |
-| 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$158 value" and can only see $118 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | GENERATE (Ad Builder) from the real PDFs | M |
+| 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$220 value" and can only see $186 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | GENERATE (Ad Builder) from the real PDFs | M |
 | 5 | Text-only | Transfer the components' proof to the bundle | Sceptic of a bundle with no reviews of its own | "Nearly five stars, lots of reviews" | **4.84 ★ — 135 reviews of the lotion and cream inside.** | GENERATE (Ad Builder) | S |
 | 6 | Us-vs-them comparison | Win on ingredient list length, not price | Switcher defaulting to a drugstore dermatologist pick | "Same job, far shorter list" | **Same job. Shorter list.** | GENERATE (Ad Builder) | M |
 | 7 | Educational infographic | Defuse the comedogenic objection without a claim | Shopper who believes coconut oil clogs pores | "This is for my body, not my face" | **Made for your body, not your face.** | COMPOSITE `coconut-lotion` | S |
 
-**Frame 1** spec: the four vessels — three lotion bottles and one cream jar — in a single row on a plain surface, one scent only per frame (shoot both Pure Unscented and Coconut Breeze), headline above. No calendar, no props, no second idea. The row itself is the argument: four is visibly a lot.
+**Frame 1** — **shipped.** Sean supplied two 2048² heroes, one per scent, each showing three lotions standing on three creams. Both are attached to their own variant, so a buyer choosing Pure Unscented sees the unscented kit. The original spec called for "the four vessels in a single row"; what shipped is six units stacked, which is both accurate to what ships and a stronger mass argument. Nothing further needed here.
 
-**Frame 2** spec: the same four laid on a horizontal 90-day strip divided into three month blocks — one lotion bottle sitting in each block, the cream jar below the strip spanning all three with the word "nightly". This is the frame that converts "three duplicates" into "a system", and it is the one the current gallery most obviously lacks.
+**Frame 2** spec *(rewritten for 3+3)*: a horizontal 90-day strip divided into three month blocks, and **each block holds one lotion bottle and one cream jar** — the same pair repeated three times. Small labels under the pair in block one only: *day* under the bottle, *night* under the jar. The repetition is the argument: the buyer is not being sold six duplicates, they are being sold the same two-step routine three times over. This is the frame the gallery most obviously lacks, and the 3+3 composition makes it a cleaner teach than the old 3+1 ever allowed. One scent per frame — never mix Coconut Breeze and Pure Unscented units in one strip.
 
-**Frame 3 (ships now)** spec: left half, four sealed full bottles; right half, the same four after 90 days of real use — three empties and a visibly used cream jar, same surface, same light, same angle. Caption line: *"One box, one quarter, actual use."* This is an honest transformation of **supply**, not of skin, and it makes the duration claim visible rather than asserted. It is shootable in-house within a week using genuinely emptied units — do not fake the empties by decanting; if the units must be run down honestly, that is a real lead time and should be scheduled.
+**Frame 3 (ships when empties exist)** spec: left half, six sealed full units — three bottles, three jars; right half, the same six after 90 days of real use — three empty bottles and three visibly used jars, same surface, same light, same angle. Caption line: *"One box, one quarter, actual use."* This is an honest transformation of **supply**, not of skin, and it makes the duration claim visible rather than asserted. Do not fake the empties by decanting; if the units must be run down honestly, that is a real lead time and should be scheduled. Note the cost changed with the composition — this now needs **six** genuinely emptied units, not four.
 
 **Frame 3b (start now, lands in ~90 days)** — the priority transformation, and the one the brief is right to want. It **cannot be shot truthfully today**, because there is no day-0 photograph of a customer who then used the box for 90 days. Build it as a process, not an asset: recruit 3–5 real customers through the replenishment flow, collect a day-0 photo of a fixed site (shin, forearm or hands) with a fixed angle, distance and light, re-shoot at day 90, ship no retouching and no cropping that changes scale. Hard constraints: **no eczema, psoriasis, dermatitis or any medical framing, no prescription/steroid comparison, no "healed" or "cured"** — these are moisturisers and the frame's claim is dry skin looking less dry. Ship whichever pairs are genuinely convincing; if none are, ship none. When it lands it takes slot 3 and the supply transformation moves to 4.
 
+**Frame 5** — numbers verified live 2026-08-01. The `bundle.rating_value` / `bundle.rating_count` metafields on the product read **4.84** and **135**, exactly as specced, so the headline *"4.84 ★ — 135 reviews of the lotion and cream inside"* is shippable as written. Two conditions on it: re-read the metafields at build time rather than trusting this line, and keep the "of the lotion and cream inside" clause — without it the frame implies 135 reviews *of the bundle*, which has none.
+
+⚠️ **Separately, the lander overstates this.** The `rating_caption` field on the lander metaobject says *"Rated 4.9 by Real Customers"*, but 4.84 rounds to **4.8**. That is a live review claim that is wrong in our favour, and it is a copy fix on the metaobject, not an imagery one. Frame 5 must use 4.84 and must not inherit the 4.9.
+
 **Frame 6** honesty note: both ingredient lists must be real — ours from `config/ingredients.json`, the comparison from an actual published INCI panel — and the comparison bottle must be unbranded and unnamed. Verify both counts before this ships; an invented number here would be the single most damaging frame in either stack.
+
+Our side of the count, read from `config/ingredients.json` on 2026-08-01, so the frame does not have to re-derive it:
+
+| | Pure Unscented | Coconut Breeze |
+|---|--:|--:|
+| Body Lotion | **6** | **7** (+ organic coconut oil extract) |
+| Body Cream | **7** | **8** (+ organic coconut oil extract) |
+
+**Two traps in this frame, and both are live claims, not style.** The lotion contains **organic red palm oil**; the cream adds **palm stearic** *and* **organic beeswax**. So:
+
+1. **Never imply palm-free.** Both formulas contain palm derivatives. A "clean/short list" frame that a reader completes as "and no palm oil" is a claim we cannot support.
+2. **The Reset is not vegan.** The cream contains beeswax. The Clean Swap's "Vegan and cruelty-free" line is accurate *because* it excludes the cream — the Reset includes it, so that line must never be ported across. The lander already handles this correctly (`buybox_bullets` says "beeswax barrier" as a *feature*); the imagery must not contradict it.
+
+What the frame may honestly claim is what the lander already claims: **no synthetic fragrance, no petrolatum, no dimethicone, no lanolin, no parabens, no mineral oil.** Lead with those absences and the count, not with an unqualified "clean".
 
 **Frame 7** works because it is true and narrow. It does not claim non-comedogenic, does not argue with the belief, and does not need to — it relocates the product. Body silhouette with the application zones marked, face excluded, one line of type.
 
@@ -210,26 +253,31 @@ This page's imagery has one hard problem the copy has already solved in words an
 
 ### Digital goods — how $34 of PDF stops looking like filler
 
-The failure mode is a stock document icon or a floating generic PDF badge: it reads as padding and it actively devalues the $99, because the shopper concludes the value stack was inflated to reach $158. Three rules for frame 4:
+The failure mode is a stock document icon or a floating generic PDF badge: it reads as padding and it actively devalues the $121, because the shopper concludes the value stack was inflated to reach $220. Three rules for frame 4:
 
 1. **Show the actual page content, not the container.** Render the 90-Day Routine & Tracker as its real interior spread — a visible 90-cell grid with dates and checkboxes, a few cells already ticked — and the Field Guide as a real interior page with a legible heading and body text. If a shopper can read three real words off it, it is a product; if they can only see a cover, it is a badge.
 2. **Give them physical presence.** Stage the tracker as a printed sheet lying beside one lotion bottle, and the Field Guide on a phone screen. Mixed physical/digital staging is what makes a PDF feel like an object. The four bottles do **not** appear in this frame — that is frame 1's job, and importing them splits the focal point.
-3. **Price the line items on-image, not the total.** Small labels: *90-Day Routine & Tracker — $19* and *Coconut Skincare Field Guide — $15*, plus the delivery promise in the headline. The $158 total already computes itself in the value-stack section of the template (`bundle-landing-architecture.md`); restating it on-image recreates exactly the literal-vs-data drift that produced the $158/$118 bug. **The frame's job is to make $34 believable, not to re-assert $158.**
+3. **Price the line items on-image, not the total.** Small labels: *90-Day Routine & Tracker — $19* and *Coconut Skincare Field Guide — $15*, plus the delivery promise in the headline. Both figures are live in the `bundle.value_stack` metafield and were re-verified 2026-08-01. The $220 total already computes itself in the value-stack section of the template (`bundle-landing-architecture.md`); restating it on-image recreates exactly the literal-vs-data drift that produced the earlier total bug. **The frame's job is to make $34 believable, not to re-assert $220.**
 
-**Precondition:** this frame is only buildable if both PDFs actually exist and are presentable — the playbook lists a pending test order to confirm the bonus email (flow `XEMgA7`) even fires. If either guide turns out to be unformatted or a stub, the honest move is to fix the guide before speccing the frame; photographing a stub as though it were a $19 product is fabrication, not art direction.
+**Precondition — CLEARED 2026-07-31.** Both PDFs are real, not stubs: the 90-Day Routine & Tracker is **5.2 MB** and the Coconut Skincare Field Guide **9.1 MB**, both live on the Shopify CDN and delivered by Klaviyo flow `XFdcu6`. Frame 4 is buildable. Render from the actual interiors — the tracker's real 90-cell grid and a real Field Guide page — never a cover or a badge.
 
 ### Gaps
 
 - **Grid/multi-SKU — deliberately omitted.** The Reset contains two distinct SKUs. A grid implies range, and using it here would misrepresent a depth bundle as a breadth bundle — the exact confusion with Head-to-Toe that the two pages need to avoid. Frame 1 gets the visual mass of four units without borrowing the wrong format's promise.
 - **No value-stack frame.** The template already renders the stack from `bundle.value_stack` with a computed total. Duplicating it as an image freezes numbers that are designed to move.
-- **No savings/anchor frame.** $118 → $99 stays in the buy box where Shopify shows it. Leading a frame with savings invites the per-unit comparison the whole bundle exists to escape.
+- **No savings/anchor frame.** $174 → $121 stays in the buy box where Shopify shows it. Leading a frame with savings invites the per-unit comparison the whole bundle exists to escape. This is also why no frame carries a price: the three bundles repriced on 2026-07-31, and a price baked into a JPEG is the one thing that cannot be corrected by editing a metafield.
 
 ### Blocked
 
 1. **BLOCKED-ON-THEME — per-bundle hero background.** Same shared-template constraint as Head-to-Toe (one `hero-desktop.webp` across all five landers). One Liquid change unblocks both bundles; count it once, not twice.
-2. **MUST-SHOOT — supply transformation (frame 3).** In-house still-life of four full units vs. three genuine empties plus a used cream jar. Blocked on having authentically emptied units; schedule the run-down rather than staging it.
+2. **MUST-SHOOT — supply transformation (frame 3).** In-house still-life of six full units vs. six genuinely used ones (three empty bottles, three spent jars). Blocked on having authentically emptied units; schedule the run-down rather than staging it. **Re-specced 2026-08-01: six units, not four** — the run-down is correspondingly bigger.
 3. **MUST-SHOOT — customer skin transformation (frame 3b).** A 90-day recruitment-and-collection programme through the replenishment flow, not a photo session. Discrete tasks: write the day-0 request, define the fixed-frame protocol, collect day-0 from 3–5 customers, re-collect at day 90. **Start the recruitment now; the asset cannot be pulled forward later.**
-4. **PRECONDITION — confirm both bonus PDFs exist, are formatted, and that flow `XEMgA7` delivers them.** Frame 4 is unbuildable and the $158 value stack is unsupportable until this is verified.
+4. ~~**PRECONDITION — confirm both bonus PDFs exist.**~~ **Cleared 2026-07-31** — both are real files on the CDN, delivered by flow `XFdcu6`. Frame 4 is buildable.
+5. **BLOCKED-ON-PIPELINE — the generator cannot currently make any of these frames.** Every remaining Reset frame (2, 4, 5, 6, 7) carries legible on-image type, and two independent things in `agents/creative-packager` prevent that:
+   - `config/creative-models.js` sets `imageGen: 'gemini-2.5-flash-image'`. §3 of this plan says to use `gemini-3-pro-image-preview` at 2K for any frame carrying legible text, **because Flash fails at text**. The configured model is the one the plan rules out.
+   - `agents/creative-packager/index.js` appends the literal string `No text, logos, or labels.` to every image prompt it sends. That is correct for the ad-background path it was written for, and it makes a typographic frame structurally impossible.
+
+   These are the real gate on frames 2, 4, 5, 6 and 7 — not art direction, and not the shoot list. Until a text-capable generate path exists, the only Reset frames that can move are the ones a camera or a compositor produces.
 
 ---
 
