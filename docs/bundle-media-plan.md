@@ -133,6 +133,16 @@ assets/section-main-product.css
   [data-gang-option].gang__active { display: block; }
 ```
 
+**⚠️ Scoping forces a section re-render, and that used to eat the scroll position.**
+`assets/product-info.js` computed `shouldSwapProduct` as *"different product OR any
+`li[data-gang-option]` exists"*, then derived `shouldFetchFullPage` from it. Adding
+scoped media therefore made every variant change replace the whole of `<main>`,
+which discards scroll: measured on the Reset, changing scent moved scrollY from
+**700 to 4485 — the exact bottom of the page**. Patched so only a genuinely
+different product fetches the full page; a scoped gallery re-renders just the
+`product-info` section, which is where all the media live anyway. Pristine vendor
+copy is in `theme/backup/assets/product-info.js`.
+
 **Format:** `<real alt text>#<option-name-handle>_<option-value-handle>`
 e.g. `…three of each for three months.#scent_coconut-breeze`
 
