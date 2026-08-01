@@ -1,30 +1,36 @@
 /**
- * Not a finished frame — a PLATE. The model relights and re-grounds the real
- * product photo; it is never asked to draw the product or any text.
+ * Source plate for frame 2 — cream jar row, Coconut Breeze.
  *
- * Two generation rounds established the reason: asked to lay out the whole
- * infographic, gemini-3-pro-image produced excellent composition and unusable
- * packaging — "6 fl. oz - 230ml" where the bottle says 8 fl oz / 236ml, jars at
- * 110ml where they are 118ml, and the ORGANIC COCONUT OIL seal rendered as
- * mirrored gibberish. Wrong volume on a cosmetic is an accuracy problem.
+ * Two things here are deliberate and were both learned the hard way:
  *
- * So the split is: model owns background, lighting and shadow; the photograph
- * owns the product; render-frame.mjs owns every glyph.
+ * 1. References EXCLUDE the bundle hero. Given it, the model reproduced its
+ *    stacked composition however explicitly the prompt asked for separated units.
+ *    A single-product reference leaves no stack to copy — and single-product
+ *    references are also what keep the label wording correct.
+ * 2. NO shadow is requested. The plate's own contact shadow is a darkened mint
+ *    that survives the chroma key as a teal smudge under each unit. Asking for a
+ *    flat, evenly lit backdrop keeps the matte clean; the grounding shadow is
+ *    added in CSS by routine-frame.mjs, where it can be tuned and cannot leave
+ *    residue.
  */
 export default {
   name: 'plate-creams-coconut-breeze',
   product: '99-coconut-reset-digital',
   aspectRatio: '16:9',
-  references: ['data/brand/bundle-images/90-day-reset-coconutbreeze.jpg'],
+  references: ['data/brand/reference/coconut-moisturizer-coconut-breeze.jpg'],
   prompt: [
-    'Take the three cream jars from this photo and place them on a plain, warm',
-    'sand-beige background (#EDE5D8), evenly spaced in a row, standing upright.',
+    'Photograph three identical units of this product side by side in a row,',
+    'against a plain flat mint-green backdrop of one single even colour.',
     '',
-    'Soft natural studio lighting from upper left, with a gentle contact shadow under',
-    'each jar. Generous empty space around them.',
+    'They stand upright, evenly spaced, with clear space between them — none of them',
+    'touch or overlap. Straight-on eye-level camera, flat even lighting.',
     '',
-    'Keep each jar exactly as photographed — identical label, identical wording,',
-    'identical proportions and lid. Do not redraw, restyle or re-letter the label.',
-    'Do not add any text, captions, logos or graphics to the image.',
+    'No shadows of any kind. No cast shadow, no contact shadow, no gradient, no',
+    'vignette, no reflection, no surface or table. The background is one uniform',
+    'flat colour edge to edge, as if for cutting out.',
+    '',
+    'Keep the product exactly as in the reference photo: identical label, identical',
+    'wording, identical proportions, identical cap. Do not re-letter anything.',
+    'No text, captions, graphics or props anywhere in the image.',
   ].join('\n'),
 };
