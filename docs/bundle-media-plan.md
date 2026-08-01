@@ -751,6 +751,24 @@ No rotation format is omitted — all seven are covered, with educational infogr
 
 ### Sensitive Skin Set — $46.80
 
+> **🚨 The one live image misrepresents the product. Read before building.** `v20.webp`
+> (2048², no alt) is AI-generated and was never audited. It shows a **hand & body soap
+> and four lip balms** alongside the lotion and cream — the set contains **two items**.
+> Both volumes are fabricated: the lotion reads `0 fl. oz · 300ml` against a real
+> 8 fl. oz · 236ml, the cream `4 fl. oz · 150ml` against a real 118ml. Replace it rather
+> than adding alt text to it, and never use it as a generation reference.
+>
+> **Corrections to the stack below**, from what shipped on the Reset 2026-08-01:
+> frame 1 is a **bottle and a jar**, not "two jars"; frame 4 must **not name CeraVe or
+> Vanicream** — we contrast against the lotion market in general, using the real 34-item
+> panel in `data/brand/reference/comparison-lotion.json` whose brand never reaches a
+> frame. Frame 4's "Nine ingredients" verifies against `config/ingredients.json`, but see
+> the grapefruit-seed-extract question in the handoff first.
+>
+> **One variant, so no alt-text scoping is needed here at all** — that convention only
+> applies where variants exist. Full brief: `docs/handoffs/2026-08-01-sensitive-skin-set.md`.
+
+
 **One photograph.** The store's designated hero offer, the only bundle that has sold a unit in three months, and the only bundle with any search presence at all (211 impressions, position 34.9) — and its gallery contains a single image with no alt text. Of everything in this document this is the largest gap between a product's importance and its imagery.
 
 Its buyer is problem-aware and cautious: fragrance-free is the one attribute they filter on, and they have been let down by products that claimed "gentle". The imagery's job is to remove doubt, not to excite. It sits on its own bespoke template with real conversion history, so frames go in the gallery and nothing here touches the shared lander.
