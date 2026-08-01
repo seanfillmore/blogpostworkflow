@@ -90,7 +90,8 @@
     "backup-snapshots-offsite": "bash scripts/backup-snapshots-offsite.sh",
     "recurpay-audit": "node scripts/recurpay-audit.mjs",
     "recurpay-solo-economics": "node scripts/recurpay-solo-economics.mjs",
-    "verify-bundle-contents": "node scripts/verify-bundle-contents.mjs"
+    "verify-bundle-contents": "node scripts/verify-bundle-contents.mjs",
+    "check-variant-picker": "node scripts/check-variant-picker.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
