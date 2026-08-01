@@ -299,7 +299,7 @@ The six-unit composition is *better* material than the four-unit one, because th
 | 3b | Transformation (skin) | Show the change instead of claiming the after-state | Dry-winter-skin sufferer wanting proof, not persuasion | "Her skin actually changed" | **Day 1. Day 90.** | MUST-SHOOT (customer-submitted, 90-day lead) | L |
 | 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$220 value" and can only see $186 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | ✅ **LIVE 2026-08-01** — RENDER over real PDF pages | — |
 | 5 | Text-only | Transfer the components' proof to the bundle | Sceptic of a bundle with no reviews of its own | "Nearly five stars, lots of reviews" | **4.84 ★ — 135 reviews of the lotion and cream inside.** | ✅ **BUILT 2026-08-01** — RENDER, not generated | — |
-| 6 | Us-vs-them comparison | Win on ingredient list length, not price | Switcher defaulting to a drugstore dermatologist pick | "Same job, far shorter list" | **Same job. Shorter list.** | GENERATE (Ad Builder) | M |
+| 6 | Us-vs-them comparison | Win on ingredient list length, not price | Switcher defaulting to a drugstore dermatologist pick | "Same job, far shorter list" | **Same job. Shorter list.** | ✅ **BUILT 2026-08-01** — RENDER, one per scent, awaiting review | — |
 | 7 | Educational infographic | Defuse the comedogenic objection without a claim | Shopper who believes coconut oil clogs pores | "This is for my body, not my face" | **Made for your body, not your face.** | ✅ **LIVE 2026-08-01** — GENERATE figure → key → RENDER | — |
 
 **Frame 1** — **shipped.** Sean supplied two 2048² heroes, generated with the stored product photography as references and reviewed by him before upload — labels verified correct (8 fl. oz · 236ml, 4 fl. oz · 118ml). one per scent, each showing three lotions standing on three creams. Both are attached to their own variant, so a buyer choosing Pure Unscented sees the unscented kit. The original spec called for "the four vessels in a single row"; what shipped is six units stacked, which is both accurate to what ships and a stronger mass argument. Nothing further needed here.
@@ -324,7 +324,34 @@ Provenance checked rather than assumed: 4.84/135 is reproducible from the Judge.
 
 ⚠️ **Separately, the lander overstates this.** The `rating_caption` field on the lander metaobject says *"Rated 4.9 by Real Customers"*, but 4.84 rounds to **4.8**. That is a live review claim that is wrong in our favour, and it is a copy fix on the metaobject, not an imagery one. Frame 5 must use 4.84 and must not inherit the 4.9.
 
-**Frame 6** honesty note: both ingredient lists must be real — ours from `config/ingredients.json`, the comparison from an actual published INCI panel — and the comparison bottle must be unbranded and unnamed. Verify both counts before this ships; an invented number here would be the single most damaging frame in either stack.
+**Frame 6 — built 2026-08-01, not yet uploaded.** `ingredients-frame.mjs` plus a thin
+module per scent.
+
+**Unblocked by a direction, not by research.** The plan required "the comparison from
+an actual published INCI panel", which is why this frame sat blocked. Sean's direction
+2026-08-01: **we are not posting us against a specific product, we are posting us
+against the lotion market in general.** A category comparison needs no competitor
+panel — and it is the safer frame, because it asserts nothing about what any
+particular product contains.
+
+What that leaves is honest on both sides:
+
+- **Our column is the complete real list**, imported from `config/ingredients.json`
+  rather than retyped, so the count cannot drift from the source of truth. Six in the
+  Pure Unscented lotion, seven in Coconut Breeze — hence one frame per scent.
+- **The other column is a claim about our own formula.** Every item is an absence the
+  live lander already states. Nothing is asserted about anyone else's product, no brand
+  is named and no packaging is depicted.
+
+**Both traps are walked past in the open rather than avoided.** `Organic red palm oil`
+is printed in the list, so the frame cannot be read as palm-free; the Body Cream count
+is shown rather than quietly dropped in favour of the shorter lotion, so the beeswax in
+it is not hidden. A "clean" version that omitted either would be the dishonest one.
+
+`verify()` blocks a duplicate absence, and blocks claiming anything absent that appears
+in our own list — exercised: adding "Coconut oil" to the absence column fails the build.
+
+**Frame 6** original honesty note: both ingredient lists must be real — ours from `config/ingredients.json`, the comparison from an actual published INCI panel — and the comparison bottle must be unbranded and unnamed. Verify both counts before this ships; an invented number here would be the single most damaging frame in either stack.
 
 Our side of the count, read from `config/ingredients.json` on 2026-08-01, so the frame does not have to re-derive it:
 
