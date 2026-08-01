@@ -1,7 +1,6 @@
 ---
 name: marketing-product-image-stack
-description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image, the lead-image lever list, one job and one buyer per frame, headline-first visual hierarchy, the 1-second comprehension check, Amazon image-compliance guardrails, and the AI generation workflow.
-
+description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one buyer per frame, headline-first hierarchy checked at phone size, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
 ---
 
 # Product Image Stack
@@ -40,25 +39,29 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 
-## Build a visual hierarchy where the headline is the focal point, then the product/key visual, then supporting elements — and kill any asset that fails a 1-second comprehension test.
+## Build a visual hierarchy where the headline is the focal point, then the product/key visual, then supporting elements — and kill any asset that fails a 1-second comprehension test **run at phone size**.
 
-**Why it works:** The eye lands on one thing first; if that thing is text that does the targeting, the viewer self-qualifies instantly. Clarity beats creativity because a confused viewer scrolls. The same 1-second test is what the main-image lever list is trying to pass — each lever exists to remove one comprehension failure at a glance.
+**Why it works:** The eye lands on one thing first; if that thing is text that does the targeting, the viewer self-qualifies instantly. Clarity beats creativity because a confused viewer scrolls. The same 1-second test is what the main-image lever list is trying to pass — each lever exists to remove one comprehension failure at a glance. And the viewport the test must be run at is a phone, not your desktop canvas: most Amazon traffic views the image stack at phone size, so a graphic laid out for desktop delivers no readable information at the moment of the decision. Oversize the text and the icons — that is what converts the slot from decoration into a message.
 
-**Evidence offered:** Shows a rejected client asset ('way too much going on, no focal point') versus a compliant one; also critiques the AI tool's own cluttered outputs by the same rule.
+**Evidence offered:** Denney shows a rejected client asset ('way too much going on, no focal point') versus a compliant one, and critiques the AI tool's own cluttered outputs by the same rule. Rawlings uses legibility-at-phone-size as the single criterion separating his rejected features graphic from his accepted one, and notes that a leading competitor's own features graphic has text 'way too small'. Assertion plus teardown in both cases; no conversion figures.
 
-**Fit here (8/10):** Durable design principle, no decay. Directly applicable to Amazon secondary images — which drive roughly two-thirds of revenue at ~$1,800/mo — and to PDP imagery. Solo-operator executable with no budget, no tools, no traffic. Note that headline-as-focal-point applies to secondary slots and ads; on the Amazon main image, text overlay is constrained by the compliance rule below.
+**Practical rule:** Before any slot ships, view it at actual phone dimensions. If the smallest label is not readable at a glance, the text and icons are too small — enlarge them and cut copy until they fit.
+
+**Fit here (8/10):** Durable design principle, no decay. Directly applicable to Amazon secondary images — which drive roughly two-thirds of revenue at ~$1,800/mo — and to PDP imagery. Purely editorial: solo-operator executable with no budget, no tools, no traffic. Note that headline-as-focal-point applies to secondary slots and ads; on the Amazon main image, text overlay is constrained by the compliance rule below.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+*Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
-## Always have these static formats in rotation: educational infographic, headliner, benefit callout, us-vs-them comparison, transformation, grid/multi-SKU, and text-only.
+## Always have these static formats in rotation: educational infographic, headliner, benefit callout, us-vs-them comparison, transformation, instructional/step-by-step, lifestyle/in-context, grid/multi-SKU, and text-only.
 
 **Why it works:** Each format carries a different job and reaches a different awareness stage; missing formats are literal gaps in who you can convert. Infographics and text-only borrow credibility from organic formats and don't read as ads.
 
-**Evidence offered:** Traces headliner and callout formats back to Ogilvy-era print, cites a Laura Geller grid top performer, and notes transformation formats are the most common gap she finds in ad accounts.
+**Evidence offered:** Denney traces headliner and callout formats back to Ogilvy-era print, cites a Laura Geller grid top performer, and notes transformation formats are the most common gap she finds in ad accounts. Rawlings enumerates roughly 22 Amazon image types in active use (features, benefits, instructional, step-by-step, breakout, size/scale comparison, competitor comparison), which is where the instructional and lifestyle entries come from.
 
-**Fit here (8/10):** Durable principle class. This maps almost one-to-one onto an Amazon image stack: infographic (ingredients / what's not in it), benefit callout, us-vs-them comparison chart against conventional aluminum deodorant, transformation, and a grid for a 12-SKU catalog or bundle. Zero cost, no traffic required, and it improves conversion on the surface that already produces most revenue.
+**Fit here (8/10):** Durable principle class. This maps almost one-to-one onto an Amazon image stack: infographic (ingredients / what's not in it), benefit callout, us-vs-them comparison chart against conventional aluminum deodorant, transformation, step-by-step transition instructions, a lifestyle frame, and a grid for a 12-SKU catalog or bundle. Zero cost, no traffic required, and it improves conversion on the surface that already produces most revenue. Note that Amazon caps the slot count, so when contexts and formats compete, favour the frames doing the heaviest objection work (comparison, infographic, step-by-step) over extra variations.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+*Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
 ## Show the transformation rather than describing the after-state — before/after visuals are the highest-leverage format for problem-aware and solution-aware buyers looking for proof.
 
@@ -69,6 +72,46 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 **Fit here (6/10):** Durable principle. Genuinely executable for natural deodorant (stained shirt vs. clean shirt, pit-stain agitation) and oral care, and it belongs on Amazon/PDP images, not just ads. Scored below the format library because honest before/afters are harder to produce solo for body care than for cosmetics, and category claims need care.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
+## Include a numbered step-by-step instructions graphic — steps plus icons — in the listing image set.
+
+**Why it works:** Making the product look trivially simple to use removes the unspoken 'will I be able to do this properly' hesitation before the buyer has to ask it. On a channel with no email relationship, this slot is also one of the few onboarding surfaces you have.
+
+**Evidence offered:** Asserted as 'a very powerful way to increase conversions', then demonstrated as a four-step graphic; sits inside his list of roughly 22 Amazon image types. No conversion data.
+
+**Fit here (8/10):** Durable principle class — a format in the image stack, not a platform mechanic. Unusually load-bearing for RSC: misuse during the natural-deodorant transition period is the named cause of the 18–22.5% repeat rate, so a numbered 'first two weeks' usage graphic does double duty as conversion asset and retention asset. Free, solo-executable, works both as an Amazon slot and a PDP image.
+
+*Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
+
+## Cap the us-vs-them graphic at three or four attributes you actually win on, chosen in advance from competitors' reviews — never let the tool pick the comparison points.
+
+**Why it works:** A comparison graphic makes the buyer's comparison shopping happen inside your own listing and resolves the 'why this one and not the cheaper one' question. Sourcing the compared attributes from competitor reviews means each row answers a complaint the market has already voiced, and pre-specifying them keeps the graphic to differences that are true and material rather than generic feature parity.
+
+**Evidence offered:** Assertion that 'sometimes just this one image alone can significantly increase conversions,' plus a worked example: he names wood base, non-BPA material, real ceramic body, and multicolor LED strip because he had already reviewed competitors' listing reviews to find the four things he had that they didn't. No conversion figures.
+
+**Fit here (7/10):** Durable principle class (asset content selection) on the Amazon image stack carrying the larger ~$1,800/mo channel — zero cost, no traffic, no attribution, squarely CRO-stage. Natural deodorant is one of the most comparison-shopped categories and the winnable attributes are concrete (aluminum-free, baking-soda-free option, no plastic applicator, made in USA). This refines the us-vs-them entry in the format rotation above rather than adding a format: the narrow rule is ~4 attributes max, sourced from competitor one-star reviews, which marketing-problem-solution-inventory already tells you to mine.
+
+*Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
+
+## In lifestyle imagery, specify the buyer avatar, the setting, and the emotional register — and pick the setting from the actual reason people buy the product.
+
+**Why it works:** A lifestyle image works by letting the target buyer see themselves using the product in a situation they recognize. Naming who is in the frame and what feeling the scene should carry ties the image to the purchase motive instead of producing generic decor photography. (The one-persona rule above governs how many people a frame speaks to; this governs how you choose them.)
+
+**Evidence offered:** Prompts specify 'a millennial mom' in 'a comfy home' and 'her cozy home office,' with the stated reasoning that cozy and comforting is 'the reason people buy this product.' He judges the final images good on the grounds that scale, setting, and avatar are all right. Assertion, no performance data.
+
+**Fit here (7/10):** Durable principle class and free. RSC's buy motive is concrete enough to specify (getting through a shift, switching off aluminum, sensitive skin), and personas.json already exists to source the avatar rather than guessing. Held at 7 because AI-generated humans holding a body-care product need the same accuracy audit applied to the packaging, and at ~54 orders/month the lift is judged, not measured.
+
+*Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
+
+## Cover each primary use context with its own lifestyle frame, and shoot the main one both with a person and product-only.
+
+**Why it works:** Buyers picture the product in their own situation; if the listing shows only one context, shoppers whose context differs have nothing to identify with. The person-free frame shows the object clearly while the person-present frame shows scale and use.
+
+**Evidence offered:** He enumerates the two main use cases for the diffuser (family room and office) and produces one image for each, noting he already has two living-room frames — one with the avatar and one without. Assertion from his own listing practice.
+
+**Fit here (6/10):** Durable principle, free, and applies to the image slots on the larger channel. Natural deodorant has enumerable contexts (morning routine at the sink, gym bag, long work shift, travel) and the problem/solution inventory already enumerates them. Held at 6 because it is closer to a coverage checklist than a mechanism, it partly overlaps the format-rotation rule above, and Amazon caps the slot count — so extra contexts compete with the comparison, infographic, and step-by-step frames that arguably do more work. Add contexts only after those slots exist.
+
+*Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
 ## Any metric or claim must live on the actual packaging or product in the photo — you cannot stamp it onto the image — and a generated render must match the real product exactly, or the listing gets taken down.
 
@@ -86,6 +129,6 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Live walkthrough: a first attempt got the button wrong, a prompt error ('no logos') was corrected, photo was switched to render, and the gibberish bottom-line text was fixed in Canva — whole loop asserted at 10–15 minutes. Side-by-side showing GPT Images 2.0 rendering minuscule text correctly where Nano Banana Pro produced AI gibberish. Single demonstration, no comparison against a designer.
 
-**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots and PDP heroes on both channels, at near-zero cost. Held at 6 because it is a production-speed lever rather than a revenue mechanism, the edit-vs-regenerate rule already exists in marketing-email-design-production for email assets, and it must be run under the compliance guardrail above.
+**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots and PDP heroes on both channels, at near-zero cost. Held at 6 because it is a production-speed lever rather than a revenue mechanism, and it must be run under the compliance guardrail above. The full reference-photo and correction workflow is owned by marketing-ai-product-imagery; the edit-vs-regenerate rule also exists in marketing-email-design-production for email assets.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
