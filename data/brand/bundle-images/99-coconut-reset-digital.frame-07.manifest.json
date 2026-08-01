@@ -1,0 +1,8 @@
+{
+  "_comment": "Frame 7, once per scent. The frame shows no product so its content is scent-agnostic, but an unscoped media in a scoped gallery is hidden for every variant — the theme's gang_exist flag is sticky. So it is duplicated rather than left unscoped.",
+  "product": "99-coconut-reset-digital",
+  "images": [
+    { "file": "data/brand/bundle-images/frame-07-body-not-face-coconut-breeze.jpg", "alt": "A diagram of where the 90-Day Coconut Reset is used: shoulders, chest and back, elbows, hands, legs and heels are marked on a body silhouette. The face is not marked. Made for your body, not your face." },
+    { "file": "data/brand/bundle-images/frame-07-body-not-face-pure-unscented.jpg", "alt": "A diagram of where the 90-Day Coconut Reset is used: shoulders, chest and back, elbows, hands, legs and heels are marked on a body silhouette. The face is not marked. Made for your body, not your face." }
+  ]
+}
