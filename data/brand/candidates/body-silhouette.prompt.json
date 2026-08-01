@@ -1,0 +1,9 @@
+{
+  "name": "body-silhouette",
+  "model": "gemini-3-pro-image",
+  "generative": true,
+  "imageSize": "2K",
+  "aspectRatio": "2:3",
+  "references": [],
+  "prompt": "A simple, elegant silhouette of a standing human figure, seen from the front.\n\nSolid dark charcoal, filled flat with no shading, gradient or outline, on a pure\nwhite background. No facial features, no hair detail, no clothing.\n\nNatural relaxed proportions. Arms hang down but are held clearly away from the\nsides so there is visible white space between each arm and the torso along their\nwhole length. Legs slightly apart with visible white space between them. Feet\nflat on the ground and fully visible.\n\nThe whole body from the top of the head to the soles of the feet is inside the\nframe, centred, with generous even margin. Nothing is cropped."
+}

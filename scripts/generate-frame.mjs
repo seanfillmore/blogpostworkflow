@@ -54,8 +54,16 @@ const spec = (await import(pathToFileURL(resolve(specPath)).href)).default;
 for (const k of ['name', 'prompt', 'references']) {
   if (!spec[k]) throw new Error(`${basename(specPath)}: spec must export "${k}"`);
 }
-if (!spec.references.length) {
-  throw new Error(`${spec.name}: at least one real reference photograph is required — an ungrounded render invents our packaging`);
+// Grounding is mandatory for anything showing the product, and the guard stays
+// strict for that. A generic diagram — a body outline, an icon — depicts nothing we
+// ship, so there is nothing to ground it in; those must say so explicitly rather
+// than simply omitting references, so the omission can never be an oversight.
+if (!spec.references.length && spec.depictsProduct !== false) {
+  throw new Error(`${spec.name}: at least one real reference photograph is required — an ungrounded `
+    + `render invents our packaging. If this frame depicts no product at all, set depictsProduct: false.`);
+}
+if (spec.depictsProduct === false && spec.references.length) {
+  throw new Error(`${spec.name}: depictsProduct is false but references were supplied — decide which it is`);
 }
 
 const { GoogleGenAI } = await import('@google/genai');

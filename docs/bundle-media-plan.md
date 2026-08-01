@@ -340,22 +340,31 @@ Our side of the count, read from `config/ingredients.json` on 2026-08-01, so the
 
 What the frame may honestly claim is what the lander already claims: **no synthetic fragrance, no petrolatum, no dimethicone, no lanolin, no parabens, no mineral oil.** Lead with those absences and the count, not with an unqualified "clean".
 
-**Frame 7 — built 2026-08-01, not yet uploaded.** `frame-07-body-not-face.mjs`. An SVG
-pictogram: limbs are round-capped strokes between named joint coordinates, so a zone
-marker sits exactly on the elbow or the heel. Drawn rather than generated because a
-generated figure cannot be annotated to a coordinate — the first pass used freehand
-béziers, the arms merged into the torso, and the "Hands" marker landed on what read
-as a hip.
+**Frame 7 — built 2026-08-01, not yet uploaded.** `frame-07-body-not-face.mjs`.
+
+**The figure is generated, not drawn.** Three hand-built SVG attempts failed the same
+way — bézier outlines, then round-capped strokes — the arms merged into the torso and
+the "Hands" marker landed on what read as a hip. It looked like a stick figure, not a
+diagram. `gen-body-silhouette.mjs` produces a real anatomical silhouette instead; it
+depicts no product, so §3 permits generating it, and `depictsProduct: false` records
+that the missing references are deliberate rather than an oversight.
+
+**The markers are measured, not eyeballed** — which is what generating cost us, and
+how it was paid back. The silhouette is keyed to alpha and its mask scanned row by
+row: at 37% of figure height it resolves into three runs (left arm, torso, right arm),
+which is where the elbows are; at 72% into two runs, the legs; at 97% into two feet.
+Each anchor is the centre of the relevant run, stored as a fraction of the bounding
+box so it holds at any display size.
 
 Two decisions worth keeping:
 
-- **The head is drawn unmarked, not crossed out.** A ✗ over a face argues the belief
-  and implies harm, which is the opposite of this frame's job. Absence of a marker is
-  the entire point.
-- **`verify()` refuses to build if the copy drifts into a defence.** It fails on
+- **The head is unmarked, not crossed out.** A ✗ over a face argues the belief and
+  implies harm, which inverts the frame's job. Absence of a marker is the point.
+- **`verify()` refuses to build if the copy drifts into a defence** — it fails on
   "comedogenic", "clog", "pore", "safe", "hypoallergenic", "acne" and similar.
   Exercised: "Non-comedogenic", "Safe for sensitive skin" and "Won't clog pores" all
-  block. The frame may only say where the product goes.
+  block. This is the frame most likely to attract a helpful edit that turns it into a
+  claim.
 
 Zone labels are the lander's own How to Use wording. The frame shows no product, so
 its content is scent-agnostic — but under the alt-text scoping convention it still
