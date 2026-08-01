@@ -79,6 +79,11 @@ Media plan §5b. These degrade the auto-rendered "what's in the box" cards:
 - `organic-foaming-hand-soap` — featured image is one fixed scent, mismatching most of the 15 Hand Soap Set variants
 - `coconut-oil-toothpaste` — thinnest library at 4 images, and the least familiar product in the range
 
+Found 2026-08-01 while fixing the "What's in the box" layout:
+
+- **`coconut-moisturizer` is 3000×1497 — a 2:1 frame, while `coconut-lotion` is 2000×2000 square.** In the card grid this rendered one card at exactly twice the other's height. Worked around in CSS (`aspect-ratio:4/3` + `object-fit:contain`, so every card is one box regardless of source shape), but the real fix is a square recrop. **Featured images for card use should be square.**
+- Both featured shots have content touching the frame edge — the lotion's "Made in the USA" badge bleeds off the right, the cream's wordmark runs to the edge. Contained in a card box they read as cropped. A recrop wants padding around the subject.
+
 ## Suggested order
 
 1. **90-Day Coconut Reset** — live, best margin, zero images, and its frame stack is already fully specced (§6)
