@@ -140,8 +140,21 @@ scoped media therefore made every variant change replace the whole of `<main>`,
 which discards scroll: measured on the Reset, changing scent moved scrollY from
 **700 to 4485 — the exact bottom of the page**. Patched so only a genuinely
 different product fetches the full page; a scoped gallery re-renders just the
-`product-info` section, which is where all the media live anyway. Pristine vendor
-copy is in `theme/backup/assets/product-info.js`.
+`product-info` section, which is where all the media live anyway.
+
+That fixed the jump-to-bottom but not a second, subtler jump. `HTMLUpdateUtility`
+does `insertBefore(newNode, oldNode)` and only hides the old node on the *next*
+statement, so for one frame the document holds both copies with the new one above.
+The browser's scroll anchoring compensates by scrolling down about the height of
+the inserted section and never undoes it — measured at **+1765px**, landing the
+visitor on "What's NOT in any bottle or jar". `handleSwapProduct` now pins
+`window.scrollY` across the swap. Verified held at scroll 300, 1150 and 2600, in
+both directions, with the gallery still showing 3 of 6.
+
+Both edits live in `assets/product-info.js` — a **shared** file, so a theme update
+will revert them and the jump returns on any product with a scoped gallery.
+Pristine vendor copy: `theme/backup/assets/product-info.js`; patched copy is
+vendored at `theme/assets/product-info.js`.
 
 **Format:** `<real alt text>#<option-name-handle>_<option-value-handle>`
 e.g. `…three of each for three months.#scent_coconut-breeze`

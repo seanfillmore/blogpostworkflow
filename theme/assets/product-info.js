@@ -106,6 +106,17 @@ if (!customElements.get('product-info')) {
           const variant = this.getSelectedVariant(html.querySelector(selector));
           this.updateURL(productUrl, variant?.id);
 
+          // HTMLUpdateUtility.viewTransition inserts the replacement BEFORE the old
+          // node and only hides the old one on the following statement, so for a
+          // moment the document contains both copies with the new one above. The
+          // browser's scroll anchoring compensates by scrolling down about the height
+          // of the inserted section, and never undoes it once the old copy is hidden.
+          // Measured on the 90-Day Coconut Reset: changing scent moved the visitor
+          // 1765px down, landing on the "What's NOT in any bottle or jar" band.
+          // Pin the offset across the swap.
+          const scrollBefore = window.scrollY;
+          const restoreScroll = () => window.scrollTo({ top: scrollBefore, behavior: 'instant' });
+
           if (updateFullPage) {
             document.querySelector('head title').innerHTML = html.querySelector('head title').innerHTML;
 
@@ -123,6 +134,9 @@ if (!customElements.get('product-info')) {
               this.postProcessHtmlCallbacks
             );
           }
+
+          restoreScroll();
+          requestAnimationFrame(restoreScroll);
         };
       }
 
