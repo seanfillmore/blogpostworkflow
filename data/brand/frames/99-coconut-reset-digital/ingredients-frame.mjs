@@ -1,32 +1,35 @@
 /**
  * 90-Day Coconut Reset — frame 6 (us-vs-them), shared builder.
  *
- * Media plan §6: "Win on ingredient list length, not price." Sean's direction
- * 2026-08-01: **this is not us against a named product, it is us against the lotion
- * market in general.** That resolves what had been blocking the frame — the plan
- * asked for "the comparison from an actual published INCI panel", which a
- * category-level comparison does not need — and it also makes the frame safer,
- * because it removes any assertion about what a particular competitor contains.
+ * Media plan §6: "Win on ingredient list length, not price." Headline: "Same job.
+ * Shorter list."
  *
- * The honest shape that leaves:
+ * ── Two corrections from Sean, 2026-08-01 ───────────────────────────────────
  *
- *  - **Our column is the complete, real list**, imported from config/ingredients.json
- *    rather than retyped. Six ingredients in the Pure Unscented lotion, seven in
- *    Coconut Breeze. The asymmetry does the arguing; nothing has to be claimed.
- *  - **The other column names what the category commonly adds, and is a claim about
- *    OUR formula, not theirs** — every item is an absence the live lander already
- *    states ("No synthetic fragrance, no petrolatum, no dimethicone, no lanolin" and
- *    "no fragrance, parabens, or mineral oil"). No brand is named, no packaging is
- *    depicted, and no specific product is said to contain anything.
+ * 1. **The first version contradicted its own headline.** It put our full list
+ *    against a column of six things we exclude — so the "shorter list" on the frame
+ *    was *ours*, six items against seven. The visual argument ran backwards.
  *
- * ⚠️ Two traps this frame walks past deliberately, both flagged in the plan:
- *  - It does **not** imply palm-free. The lotion contains organic red palm oil and
- *    the cream adds palm stearic — and both are printed on the frame, in the list.
- *  - It does **not** imply vegan. The cream contains beeswax, which is why the cream
- *    count is shown rather than quietly omitted in favour of the shorter lotion.
+ * 2. **We contrast list against list, and we do not name them.** The right column is
+ *    now a real published panel from a nationally sold coconut oil lotion — 34
+ *    ingredients against our 7. The brand is recorded in
+ *    `data/brand/reference/comparison-lotion.json` for traceability and is
+ *    deliberately absent from the frame: the point is the market, not one rival.
  *
- * Showing the full list including the palm and beeswax entries is the point. A
- * "clean" frame that hid them would be the dishonest version of this frame.
+ * Both lists are printed in full. That is the whole argument — the claim is not
+ * "theirs is bad", it is "ours is short enough to print, and here it is". The
+ * asymmetry does the work, so nothing has to be asserted about what their
+ * ingredients do.
+ *
+ * ⚠️ Two traps walked past in the open rather than avoided, both flagged in the plan:
+ *  - It does **not** imply palm-free. `organic red palm oil` is printed in our list.
+ *  - It does **not** imply vegan. The Body Cream count is shown rather than quietly
+ *    dropped in favour of the shorter lotion, so its beeswax is not hidden.
+ * A tidier frame that omitted either would be the dishonest one.
+ *
+ * The label on the comparison column is deliberately non-superlative. "Leading" or
+ * "best-selling" would be a claim we cannot support; "a conventional coconut oil
+ * lotion" is accurate and needs no support.
  */
 
 import { readFileSync } from 'node:fs';
@@ -36,31 +39,16 @@ import { fileURLToPath } from 'node:url';
 // this module sits at data/brand/frames/<product>/ — four levels below the repo root
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const INGREDIENTS = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+const COMPARISON = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'reference', 'comparison-lotion.json'), 'utf8'));
 
 const BLACK = '#000000';
 const SAND = '#EDE5D8';
 const GREEN = '#AEDEAC';
 const PANEL = '#F6F2EA';
 
-/**
- * Every item here is an absence the live lander already claims, so the frame states
- * nothing the product page does not. Sourced 2026-08-01 from the lander metaobject:
- *   bullets:        "no fragrance, parabens, or mineral oil"
- *   buybox_bullets: "No synthetic fragrance, no petrolatum, no dimethicone, no lanolin"
- * Do not add to this list without adding it to the lander first.
- */
-const COMMONLY_ADDED = [
-  'Mineral oil',
-  'Petrolatum',
-  'Dimethicone',
-  'Parabens',
-  'Synthetic fragrance',
-  'Lanolin',
-];
-
 const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** The full, real ingredient list for one product in one scent. */
+/** The full, real ingredient list for one of our products in one scent. */
 function listFor(productKey, variantName) {
   const p = INGREDIENTS[productKey];
   const v = p.variations.find((x) => x.name === variantName);
@@ -77,106 +65,104 @@ export function ingredientsFrame({ name, variant }) {
     reads: [],
 
     /**
-     * The frame prints an ingredient list and a count. Both come from
-     * config/ingredients.json, which the plan names as the source of truth, so the
-     * only way they go wrong is if that file changes shape — checked here. The plan
-     * calls an invented number on this frame "the single most damaging frame in
-     * either stack".
+     * The plan calls an invented number here "the single most damaging frame in
+     * either stack", so every figure is derived rather than typed, and the headline
+     * is made self-verifying: if our list is ever not the shorter one, the frame
+     * stops building instead of shipping a claim that reads backwards. That is
+     * exactly the failure the first version shipped past.
      */
     verify(ctx) {
-      for (const key of ['lotion', 'cream']) {
-        const list = listFor(key, variant);
-        if (list.length < 3) throw new Error(`${key} list looks truncated: ${JSON.stringify(list)}`);
-        if (list.some((i) => !i || !i.trim())) throw new Error(`${key} list has an empty entry`);
+      const ours = listFor('lotion', variant);
+      const theirs = COMPARISON.ingredients;
+
+      if (ours.length < 3) throw new Error(`our list looks truncated: ${JSON.stringify(ours)}`);
+      if (theirs.length < 3) throw new Error('comparison list looks truncated');
+      if (theirs.some((i) => !i || !i.trim())) throw new Error('comparison list has an empty entry');
+
+      if (!(ours.length < theirs.length)) {
+        throw new Error(`the headline says "Shorter list" but ours is ${ours.length} and the comparison `
+          + `is ${theirs.length}. Fix the frame, not the headline.`);
+      }
+      if (/leading|best.?selling|number one|#1/i.test(COMPARISON.labelOnFrame)) {
+        throw new Error(`comparison label "${COMPARISON.labelOnFrame}" makes a ranking claim we cannot support`);
       }
       if (!ctx.variants.some((v) => v.title === variant)) {
         throw new Error(`no variant titled "${variant}" — a frame must describe a kit somebody can buy`);
       }
-      // The right-hand column may only restate absences the lander already claims.
-      const allowed = new Set(COMMONLY_ADDED.map((s) => s.toLowerCase()));
-      if (allowed.size !== COMMONLY_ADDED.length) throw new Error('duplicate entry in COMMONLY_ADDED');
-      // Nothing in our own list may also appear as an absence — that would be a lie
-      // in both directions at once.
-      const ours = [...listFor('lotion', variant), ...listFor('cream', variant)].map((s) => s.toLowerCase());
-      for (const absent of allowed) {
-        if (ours.some((o) => o.includes(absent))) {
-          throw new Error(`"${absent}" is claimed as absent but appears in our own ingredient list`);
-        }
-      }
     },
 
     alt() {
-      const lotion = listFor('lotion', variant);
+      const ours = listFor('lotion', variant);
       const cream = listFor('cream', variant);
-      return `The ${variant} Body Lotion's complete ingredient list, ${lotion.length} ingredients: `
-        + `${lotion.join(', ')}. The Body Cream has ${cream.length}. Alongside, six ingredients commonly `
-        + `added to conventional lotions that are not in either: ${COMMONLY_ADDED.join(', ').toLowerCase()}.`;
+      return `An ingredient comparison. The ${variant} Body Lotion has ${ours.length} ingredients: `
+        + `${ours.join(', ')}. The Body Cream has ${cream.length}. Beside it, the published list of a `
+        + `conventional coconut oil lotion, which has ${COMPARISON.ingredients.length}.`;
     },
 
     html() {
-      const lotion = listFor('lotion', variant);
+      const ours = listFor('lotion', variant);
       const cream = listFor('cream', variant);
+      const theirs = COMPARISON.ingredients;
 
-      const row = (text) => `
-        <div style="display:flex;align-items:flex-start;gap:20px;margin-bottom:20px;">
-          <div style="width:14px;height:14px;border-radius:50%;background:${GREEN};
-                      border:2.5px solid ${BLACK};box-sizing:border-box;flex:0 0 auto;margin-top:14px;"></div>
-          <div style="font-family:Outfit;font-weight:400;font-size:42px;line-height:1.34;color:${BLACK};">${titleCase(text)}</div>
+      const ourRow = (text) => `
+        <div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:18px;">
+          <div style="width:13px;height:13px;border-radius:50%;background:${GREEN};
+                      border:2.5px solid ${BLACK};box-sizing:border-box;flex:0 0 auto;margin-top:13px;"></div>
+          <div style="font-family:Outfit;font-weight:400;font-size:38px;line-height:1.3;color:${BLACK};">${titleCase(text)}</div>
         </div>`;
 
-      const absent = (text) => `
-        <div style="display:flex;align-items:flex-start;gap:20px;margin-bottom:20px;">
-          <div style="font-family:Outfit;font-weight:400;font-size:38px;line-height:1.32;color:${BLACK};
-                      opacity:.34;flex:0 0 auto;margin-top:1px;">&#10005;</div>
-          <div style="font-family:Outfit;font-weight:400;font-size:42px;line-height:1.34;color:${BLACK};opacity:.55;">${text}</div>
-        </div>`;
+      // Their list is set smaller and in two sub-columns because it has to be — that
+      // is the argument made typographically rather than asserted.
+      const theirRow = (text) => `
+        <div style="font-family:Outfit;font-weight:400;font-size:21px;line-height:1.5;
+                    color:${BLACK};opacity:.62;margin-bottom:7px;break-inside:avoid;">${text}</div>`;
 
       return `<div style="
         width:100%;height:100%;background:${SAND};
         display:flex;flex-direction:column;align-items:center;justify-content:center;
-        padding:72px 92px;text-align:center;">
+        padding:70px 84px;text-align:center;">
 
         <div style="font-family:Outfit;font-weight:300;font-size:34px;letter-spacing:.34em;
-                    text-transform:uppercase;color:${BLACK};opacity:.45;margin-bottom:26px;">
+                    text-transform:uppercase;color:${BLACK};opacity:.45;margin-bottom:24px;">
           ${variant}
         </div>
 
-        <div style="font-family:Cabin;font-weight:700;font-size:110px;line-height:1.04;
-                    color:${BLACK};letter-spacing:-.022em;margin-bottom:16px;">
+        <div style="font-family:Cabin;font-weight:700;font-size:112px;line-height:1.04;
+                    color:${BLACK};letter-spacing:-.022em;">
           Same job.<br>Shorter list.
         </div>
 
         <div style="width:132px;height:6px;background:${GREEN};border-radius:3px;margin:28px 0 40px;"></div>
 
-        <div style="display:flex;gap:44px;width:100%;align-items:stretch;">
+        <div style="display:flex;gap:40px;width:100%;align-items:stretch;">
 
-          <div style="flex:1;background:${PANEL};border-radius:22px;padding:46px 44px;text-align:left;">
-            <div style="font-family:Cabin;font-weight:700;font-size:46px;color:${BLACK};margin-bottom:8px;">
-              Body Lotion — ${lotion.length} ingredients
+          <div style="flex:1;background:${PANEL};border-radius:22px;padding:42px 40px;text-align:left;">
+            <div style="font-family:Cabin;font-weight:700;font-size:92px;line-height:1;color:${BLACK};">${ours.length}</div>
+            <div style="font-family:Cabin;font-weight:700;font-size:40px;color:${BLACK};margin-top:6px;">
+              ingredients — our Body Lotion
             </div>
-            <div style="font-family:Outfit;font-weight:400;font-size:32px;color:${BLACK};opacity:.5;margin-bottom:30px;">
-              The whole list, in order
-            </div>
-            ${lotion.map(row).join('')}
-            <div style="font-family:Outfit;font-weight:400;font-size:34px;color:${BLACK};opacity:.55;
-                        margin-top:26px;padding-top:26px;border-top:2px solid rgba(0,0,0,.12);">
-              Body Cream: ${cream.length} ingredients
+            <div style="height:2px;background:rgba(0,0,0,.12);margin:26px 0 26px;"></div>
+            ${ours.map(ourRow).join('')}
+            <div style="font-family:Outfit;font-weight:400;font-size:32px;color:${BLACK};opacity:.55;
+                        margin-top:22px;padding-top:22px;border-top:2px solid rgba(0,0,0,.12);">
+              Our Body Cream: ${cream.length} ingredients
             </div>
           </div>
 
-          <div style="flex:1;background:rgba(246,242,234,.55);border-radius:22px;padding:46px 44px;text-align:left;">
-            <div style="font-family:Cabin;font-weight:700;font-size:46px;color:${BLACK};opacity:.75;margin-bottom:8px;">
-              Not in either one
+          <div style="flex:1;background:rgba(246,242,234,.5);border-radius:22px;padding:42px 40px;text-align:left;">
+            <div style="font-family:Cabin;font-weight:700;font-size:92px;line-height:1;color:${BLACK};opacity:.62;">${theirs.length}</div>
+            <div style="font-family:Cabin;font-weight:700;font-size:40px;color:${BLACK};opacity:.62;margin-top:6px;">
+              ingredients — ${COMPARISON.labelOnFrame.replace(/^A /, '')}
             </div>
-            <div style="font-family:Outfit;font-weight:400;font-size:32px;color:${BLACK};opacity:.5;margin-bottom:30px;">
-              Common in conventional lotions
+            <div style="height:2px;background:rgba(0,0,0,.1);margin:26px 0 26px;"></div>
+            <div style="column-count:2;column-gap:30px;">
+              ${theirs.map(theirRow).join('')}
             </div>
-            ${COMMONLY_ADDED.map(absent).join('')}
           </div>
         </div>
 
-        <div style="font-family:Outfit;font-weight:400;font-size:42px;color:${BLACK};opacity:.6;margin-top:44px;">
-          The whole formula, printed in order. Nothing held back for the small print.
+        <div style="font-family:Outfit;font-weight:400;font-size:38px;color:${BLACK};opacity:.6;margin-top:38px;">
+          Both lists in full. Ours fits on the label.
         </div>
       </div>`;
     },

@@ -327,31 +327,37 @@ Provenance checked rather than assumed: 4.84/135 is reproducible from the Judge.
 **Frame 6 — built 2026-08-01, not yet uploaded.** `ingredients-frame.mjs` plus a thin
 module per scent.
 
-**Unblocked by a direction, not by research.** The plan required "the comparison from
-an actual published INCI panel", which is why this frame sat blocked. Sean's direction
-2026-08-01: **we are not posting us against a specific product, we are posting us
-against the lotion market in general.** A category comparison needs no competitor
-panel — and it is the safer frame, because it asserts nothing about what any
-particular product contains.
+**Unblocked by a direction, then corrected twice.** The plan required "the comparison
+from an actual published INCI panel", which is what had it stuck. Sean, 2026-08-01:
+*we are not posting us against a specific product, we are posting us against the lotion
+market in general* — and separately supplied a real published panel to contrast against,
+with the instruction that **we do not name them**.
 
-What that leaves is honest on both sides:
+The first build got it backwards and is worth recording. It set our full list against a
+column of six things we exclude, so the "shorter list" on the frame was **ours** — six
+items against seven. The headline argued against the image. Sean caught it.
 
-- **Our column is the complete real list**, imported from `config/ingredients.json`
-  rather than retyped, so the count cannot drift from the source of truth. Six in the
-  Pure Unscented lotion, seven in Coconut Breeze — hence one frame per scent.
-- **The other column is a claim about our own formula.** Every item is an absence the
-  live lander already states. Nothing is asserted about anyone else's product, no brand
-  is named and no packaging is depicted.
+What ships instead: our real list against their real list, **7 against 34**, both
+printed in full, neither named as a brand. Their column needs smaller type in two
+sub-columns to fit, which makes the point typographically instead of asserting it. The
+claim is not "theirs is bad" — it is "ours is short enough to print, and here it is".
 
-**Both traps are walked past in the open rather than avoided.** `Organic red palm oil`
-is printed in the list, so the frame cannot be read as palm-free; the Body Cream count
-is shown rather than quietly dropped in favour of the shorter lotion, so the beeswax in
-it is not hidden. A "clean" version that omitted either would be the dishonest one.
+- Our list is imported from `config/ingredients.json`, never retyped.
+- Their list lives in `data/brand/reference/comparison-lotion.json`, which records the
+  real product for traceability. **Only the `ingredients` array is rendered**; the brand
+  name never reaches the frame.
+- The label is deliberately non-superlative. "Leading" or "best-selling" would be a
+  ranking claim we cannot support; "a conventional coconut oil lotion" needs no support.
 
-`verify()` blocks a duplicate absence, and blocks claiming anything absent that appears
-in our own list — exercised: adding "Coconut oil" to the absence column fails the build.
+**Both traps walked past in the open.** `organic red palm oil` is printed in our list, so
+the frame cannot be read as palm-free; the Body Cream count is shown rather than dropped
+in favour of the shorter lotion, so its beeswax is not hidden.
 
-**Frame 6** original honesty note: both ingredient lists must be real — ours from `config/ingredients.json`, the comparison from an actual published INCI panel — and the comparison bottle must be unbranded and unnamed. Verify both counts before this ships; an invented number here would be the single most damaging frame in either stack.
+`verify()` makes the headline self-verifying — **if our list is ever not the shorter one
+the frame stops building**, which is exactly the failure the first version shipped past.
+It also blocks a ranking claim in the label. Both exercised.
+
+**Frame 6** original honesty note:**Frame 6** original honesty note: both ingredient lists must be real — ours from `config/ingredients.json`, the comparison from an actual published INCI panel — and the comparison bottle must be unbranded and unnamed. Verify both counts before this ships; an invented number here would be the single most damaging frame in either stack.
 
 Our side of the count, read from `config/ingredients.json` on 2026-08-01, so the frame does not have to re-derive it:
 
