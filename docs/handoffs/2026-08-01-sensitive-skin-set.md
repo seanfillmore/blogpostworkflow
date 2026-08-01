@@ -82,27 +82,41 @@ Working examples to copy: `data/brand/frames/99-coconut-reset-digital/`. The ing
 comparison (`ingredients-frame.mjs`) is closest to this bundle's frame 4 and already
 carries the self-verifying headline guard.
 
-## Both earlier questions are answered — and one new one
+## The ingredient panel is settled
 
-Sean, 2026-08-01: the grapefruit seed extract is **organic in both products**, and the
-emulsifying wax **is certified organic**. `config/ingredients.json` updated accordingly —
-`plant-based emulsifying wax` → `organic plant-based emulsifying wax` across lotion,
-cream and deodorant, and the cream's grapefruit seed extract now reads organic.
+Sean, 2026-08-01, in two passes:
 
-Two consequences worth carrying forward:
+- The grapefruit seed extract is **organic in every product**.
+- The emulsifying wax **is certified organic**.
+- **Palm stearic is organic as well.**
+- The governing rule: *"We use the same ingredients throughout our product line — if one
+  is organic, they are all organic."* So an ingredient written organic in one product and
+  plain in another is an inconsistency in the file, not a real difference.
 
-- **The set has 8 unique ingredients, not 9.** See frame 4 above.
-- **The "100% Organic Ingredients" claim is now supportable for the lotion.** Every
-  entry is organic once water is set aside, and water is excluded from the
-  organic-percentage calculation outright (USDA NOP, 7 CFR 205.302). It is *not* yet
-  established for the cream: **`palm stearic`** is the one remaining entry not written
-  organic. One ingredient, one supplier question — same shape as the wax one, and worth
-  asking before any frame or PDF leans on that claim.
+`config/ingredients.json` now reads organic for the wax (lotion, cream, deodorant), the
+grapefruit seed extract (cream, deodorant) and palm stearic (cream).
 
-**One left open:** the **deodorant** still lists `grapefruit seed extract` without
-"organic". Sean's answer was about the lotion and cream, so it was not applied there.
-If it is the same supplier ingredient it should be corrected too — but that is a
-different product line and not mine to assume.
+**What that settles:** the Body Lotion and Body Cream are now entirely organic except
+purified spring water — and water is excluded from the organic-percentage calculation
+outright (USDA NOP, 7 CFR 205.302). **"100% Organic Ingredients" is therefore supportable
+for both**, which closes the Field Guide page 15 question raised during the Reset work.
+The frames deliberately do not lean on it; nothing needs to change, but the claim is no
+longer a liability.
+
+**What is still not written organic, and why it was left alone:**
+
+| Ingredient | Why |
+|---|---|
+| `purified spring water` (4 products) | Water cannot be certified organic |
+| `sodium bicarbonate (baking soda)` (deodorant), `baking soda` (toothpaste) | A mineral — not eligible for organic certification |
+| `xanthan gum`, `stevia` (toothpaste only) | **Open.** Both *can* be organic, but neither appears in another product, so the same-ingredient rule does not decide them and Sean did not name them |
+| `wildcrafted myrrh powder` (toothpaste) | "Wildcrafted" is a deliberate and different designation — wild-harvested rather than farmed. Almost certainly correct as written |
+
+Only the toothpaste has anything left to ask about, and it is outside this bundle.
+
+**Frame 4 must say EIGHT.** The set's unique list: purified spring water, organic virgin
+coconut oil, organic jojoba, organic plant-based emulsifying wax, organic grapefruit seed
+extract, organic red palm oil, organic palm stearic, organic beeswax.
 
 ## Suggested order
 
