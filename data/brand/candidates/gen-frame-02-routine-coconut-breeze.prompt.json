@@ -1,0 +1,13 @@
+{
+  "name": "gen-frame-02-routine-coconut-breeze",
+  "model": "gemini-3-pro-image",
+  "generative": true,
+  "imageSize": "2K",
+  "aspectRatio": "1:1",
+  "references": [
+    "data/brand/bundle-images/90-day-reset-coconutbreeze.jpg",
+    "data/brand/reference/coconut-lotion-coconut-breeze.jpg",
+    "data/brand/reference/coconut-moisturizer-coconut-breeze.jpg"
+  ],
+  "prompt": "Create a clean product infographic for this skincare bundle, for a Shopify product gallery.\n\nLayout, top to bottom:\n- Headline: \"Daily lotion. Overnight cream.\"\n- A row of the three lotion bottles, with the caption \"THREE LOTIONS · EVERY MORNING\"\n- A row of the three cream jars, with the caption \"THREE CREAMS · EVERY NIGHT\"\n- Closing line: \"One pair a month. Ninety days.\"\n\nWarm sand background (#EDE5D8), black text, soft natural studio lighting with a gentle\nshadow under each product. Simple, modern, clean style with generous white space.\nMobile optimized: the headline must stay legible at thumbnail size.\n\nUse the exact bottles and jars from the reference photos — same labels, same wordmark,\nsame proportions, same coconut artwork. Do not invent packaging or change any label text."
+}

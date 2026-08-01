@@ -1,0 +1,11 @@
+{
+  "name": "plate-lotions-coconut-breeze",
+  "model": "gemini-3-pro-image",
+  "generative": true,
+  "imageSize": "2K",
+  "aspectRatio": "16:9",
+  "references": [
+    "data/brand/bundle-images/90-day-reset-coconutbreeze.jpg"
+  ],
+  "prompt": "Take the three lotion bottles from this photo and place them on a plain, warm\nsand-beige background (#EDE5D8), evenly spaced in a row, standing upright.\n\nSoft natural studio lighting from upper left, with a gentle contact shadow under\neach bottle. Generous empty space around them.\n\nKeep each bottle exactly as photographed — identical label, identical wording,\nidentical proportions and cap. Do not redraw, restyle or re-letter the label.\nDo not add any text, captions, logos or graphics to the image."
+}
