@@ -60,19 +60,33 @@ for (const product of products) {
 
   try {
     await page.goto(product.onlineStoreUrl, { waitUntil: 'networkidle2', timeout: 45_000 });
-    const picker = await page.evaluate((title) => {
-      const sel = [...document.querySelectorAll('select')]
-        .find((s) => s.offsetHeight > 0 && [...s.options].some((o) => o.textContent.trim().startsWith(title)));
-      if (!sel) return null;
-      if (!sel.id) sel.id = 'variant-picker-probe';
-      return { id: sel.id, value: [...sel.options].find((o) => o.textContent.trim().startsWith(title)).value };
-    }, target.title);
+
+    // Multi-option products title their variants "3-Pack / Lavender", and no single
+    // select contains that string — an earlier version of this check reported
+    // NO_PICKER for them, which would have hidden a real fault behind a shrug.
+    // Drive each option separately instead.
+    const optionValues = target.title.split(' / ').map((s) => s.trim());
+    const picker = await page.evaluate((values) => {
+      const picked = [];
+      for (const value of values) {
+        const sel = [...document.querySelectorAll('select')]
+          .filter((s) => s.offsetHeight > 0 && !picked.some((p) => p.el === s))
+          .find((s) => [...s.options].some((o) => o.textContent.trim().startsWith(value)));
+        if (!sel) continue;
+        if (!sel.id || picked.some((p) => p.id === sel.id)) sel.id = `variant-picker-probe-${picked.length}`;
+        picked.push({ el: sel, id: sel.id, value: [...sel.options].find((o) => o.textContent.trim().startsWith(value)).value });
+      }
+      return picked.length === values.length ? picked.map(({ id, value }) => ({ id, value })) : null;
+    }, optionValues);
 
     if (!picker) {
       results.push({ handle: product.handle, template: product.templateSuffix ?? 'default', status: 'NO_PICKER' });
     } else {
-      await page.select(`#${picker.id}`, picker.value);
-      await new Promise((r) => setTimeout(r, 2600));
+      for (const step of picker) {
+        await page.select(`#${step.id}`, step.value);
+        await new Promise((r) => setTimeout(r, 1800));
+      }
+      await new Promise((r) => setTimeout(r, 1200));
       const submitted = await page.evaluate(
         () => document.querySelector('form[action*="/cart/add"] [name="id"]')?.value);
       results.push({
