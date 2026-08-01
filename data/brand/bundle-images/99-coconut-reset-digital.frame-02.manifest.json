@@ -1,0 +1,16 @@
+{
+  "_comment": "Frame 2 only — one manifest per upload batch, since upload-product-images.mjs re-uploads rather than reconciles. Variant-attached: each frame depicts a specific scent, and media plan §3 forbids showing a buyer a kit they are not receiving.",
+  "product": "99-coconut-reset-digital",
+  "images": [
+    {
+      "file": "data/brand/bundle-images/frame-02-routine-coconut-breeze.jpg",
+      "variant": "Coconut Breeze",
+      "alt": "Three Coconut Breeze Body Lotion bottles above three Coconut Breeze Body Cream jars: the 90-Day Coconut Reset routine, one lotion used daily and one cream overnight, with three of each for three months."
+    },
+    {
+      "file": "data/brand/bundle-images/frame-02-routine-pure-unscented.jpg",
+      "variant": "Pure Unscented",
+      "alt": "Three Pure Unscented Body Lotion bottles above three Pure Unscented Body Cream jars: the 90-Day Coconut Reset routine, one lotion used daily and one cream overnight, with three of each for three months."
+    }
+  ]
+}

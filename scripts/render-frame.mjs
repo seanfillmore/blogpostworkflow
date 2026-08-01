@@ -36,7 +36,7 @@
  * scripts/upload-product-images.mjs, which enforces alt text.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
@@ -109,6 +109,20 @@ const ctx = {
   need(key) {
     if (mf[key] === undefined) throw new Error(`${frame.name}: required metafield bundle.${key} is not set on ${frame.product}`);
     return mf[key];
+  },
+  /**
+   * Inline a repo asset as a data URI, so a composited frame carries real
+   * photography without the render depending on the network. Path is relative to
+   * the repo root. Only ever point this at a photograph of the actual product —
+   * media plan §3: anything depicting what arrives in the box must be real.
+   */
+  asset(relPath) {
+    const abs = join(ROOT, relPath);
+    if (!existsSync(abs)) throw new Error(`${frame.name}: asset not found: ${relPath}`);
+    const ext = relPath.split('.').pop().toLowerCase();
+    const mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }[ext];
+    if (!mime) throw new Error(`${frame.name}: unsupported asset type .${ext}`);
+    return `data:${mime};base64,${readFileSync(abs).toString('base64')}`;
   },
 };
 
