@@ -58,8 +58,11 @@ failure documented in the media plan's §3.
 | 4 | "Beat CeraVe/Vanicream", "Theirs has thirty" | **Do not name anyone.** Sean, 2026-08-01: we contrast against the lotion market in general. Use `data/brand/reference/comparison-lotion.json` — a real published panel, **34** items, brand recorded only in that file and never rendered |
 | 5 | "4.84 from 135 reviews" | Correct — `bundle.rating_value` / `rating_count` on this product read 4.84 / 135. Read them at render time anyway |
 
-**Frame 4's "Nine ingredients" checks out** — 9 unique across the set, verified against
-`config/ingredients.json`. But see the open question below before printing it.
+**Frame 4 must say EIGHT, not nine.** The spec's "Nine ingredients" was correct against
+the old `config/ingredients.json`, which listed the cream's grapefruit seed extract
+without "organic" and so counted it as a separate ingredient. Sean confirmed 2026-08-01
+that it is the organic one in both products; corrected in the config, and the set's
+unique count is now **8**.
 
 ## Use the pipeline, do not re-derive it
 
@@ -79,16 +82,27 @@ Working examples to copy: `data/brand/frames/99-coconut-reset-digital/`. The ing
 comparison (`ingredients-frame.mjs`) is closest to this bundle's frame 4 and already
 carries the self-verifying headline guard.
 
-## Open questions, both for Sean
+## Both earlier questions are answered — and one new one
 
-1. **`grapefruit seed extract` vs `organic grapefruit seed extract`.** The lotion's panel
-   says organic, the cream's does not. If they are the same ingredient the set has **8**
-   unique, not 9 — and frame 4 prints that number. Worth one check before it goes on an
-   image.
-2. **Emulsifying wax certification** (carried over from the Reset). The panel calls four
-   ingredients "organic" and the wax "plant-based". If the wax is certified organic the
-   list should say so; if not, the Field Guide's "100% Organic Ingredients" claim
-   overstates by that one item. Unresolved.
+Sean, 2026-08-01: the grapefruit seed extract is **organic in both products**, and the
+emulsifying wax **is certified organic**. `config/ingredients.json` updated accordingly —
+`plant-based emulsifying wax` → `organic plant-based emulsifying wax` across lotion,
+cream and deodorant, and the cream's grapefruit seed extract now reads organic.
+
+Two consequences worth carrying forward:
+
+- **The set has 8 unique ingredients, not 9.** See frame 4 above.
+- **The "100% Organic Ingredients" claim is now supportable for the lotion.** Every
+  entry is organic once water is set aside, and water is excluded from the
+  organic-percentage calculation outright (USDA NOP, 7 CFR 205.302). It is *not* yet
+  established for the cream: **`palm stearic`** is the one remaining entry not written
+  organic. One ingredient, one supplier question — same shape as the wax one, and worth
+  asking before any frame or PDF leans on that claim.
+
+**One left open:** the **deodorant** still lists `grapefruit seed extract` without
+"organic". Sean's answer was about the lotion and cream, so it was not applied there.
+If it is the same supplier ingredient it should be corrected too — but that is a
+different product line and not mine to assume.
 
 ## Suggested order
 
