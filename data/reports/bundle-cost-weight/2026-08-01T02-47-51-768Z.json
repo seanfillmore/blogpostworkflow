@@ -1,0 +1,24 @@
+[
+  {
+    "bundle": "99-coconut-reset-digital",
+    "variant": "Coconut Breeze",
+    "inventoryItemId": "gid://shopify/InventoryItem/51744021020842",
+    "curCost": null,
+    "curOz": 0,
+    "newCost": 32.01,
+    "newOz": 45,
+    "missing": [],
+    "changed": true
+  },
+  {
+    "bundle": "99-coconut-reset-digital",
+    "variant": "Pure Unscented",
+    "inventoryItemId": "gid://shopify/InventoryItem/51744022233258",
+    "curCost": null,
+    "curOz": 0,
+    "newCost": 29.07,
+    "newOz": 45,
+    "missing": [],
+    "changed": true
+  }
+]
