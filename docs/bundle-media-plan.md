@@ -300,7 +300,7 @@ The six-unit composition is *better* material than the four-unit one, because th
 | 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$220 value" and can only see $186 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | ✅ **LIVE 2026-08-01** — RENDER over real PDF pages | — |
 | 5 | Text-only | Transfer the components' proof to the bundle | Sceptic of a bundle with no reviews of its own | "Nearly five stars, lots of reviews" | **4.84 ★ — 135 reviews of the lotion and cream inside.** | ✅ **BUILT 2026-08-01** — RENDER, not generated | — |
 | 6 | Us-vs-them comparison | Win on ingredient list length, not price | Switcher defaulting to a drugstore dermatologist pick | "Same job, far shorter list" | **Same job. Shorter list.** | GENERATE (Ad Builder) | M |
-| 7 | Educational infographic | Defuse the comedogenic objection without a claim | Shopper who believes coconut oil clogs pores | "This is for my body, not my face" | **Made for your body, not your face.** | COMPOSITE `coconut-lotion` | S |
+| 7 | Educational infographic | Defuse the comedogenic objection without a claim | Shopper who believes coconut oil clogs pores | "This is for my body, not my face" | **Made for your body, not your face.** | ✅ **BUILT 2026-08-01** — RENDER, SVG diagram, awaiting review | — |
 
 **Frame 1** — **shipped.** Sean supplied two 2048² heroes, generated with the stored product photography as references and reviewed by him before upload — labels verified correct (8 fl. oz · 236ml, 4 fl. oz · 118ml). one per scent, each showing three lotions standing on three creams. Both are attached to their own variant, so a buyer choosing Pure Unscented sees the unscented kit. The original spec called for "the four vessels in a single row"; what shipped is six units stacked, which is both accurate to what ships and a stronger mass argument. Nothing further needed here.
 
@@ -339,6 +339,28 @@ Our side of the count, read from `config/ingredients.json` on 2026-08-01, so the
 2. **The Reset is not vegan.** The cream contains beeswax. The Clean Swap's "Vegan and cruelty-free" line is accurate *because* it excludes the cream — the Reset includes it, so that line must never be ported across. The lander already handles this correctly (`buybox_bullets` says "beeswax barrier" as a *feature*); the imagery must not contradict it.
 
 What the frame may honestly claim is what the lander already claims: **no synthetic fragrance, no petrolatum, no dimethicone, no lanolin, no parabens, no mineral oil.** Lead with those absences and the count, not with an unqualified "clean".
+
+**Frame 7 — built 2026-08-01, not yet uploaded.** `frame-07-body-not-face.mjs`. An SVG
+pictogram: limbs are round-capped strokes between named joint coordinates, so a zone
+marker sits exactly on the elbow or the heel. Drawn rather than generated because a
+generated figure cannot be annotated to a coordinate — the first pass used freehand
+béziers, the arms merged into the torso, and the "Hands" marker landed on what read
+as a hip.
+
+Two decisions worth keeping:
+
+- **The head is drawn unmarked, not crossed out.** A ✗ over a face argues the belief
+  and implies harm, which is the opposite of this frame's job. Absence of a marker is
+  the entire point.
+- **`verify()` refuses to build if the copy drifts into a defence.** It fails on
+  "comedogenic", "clog", "pore", "safe", "hypoallergenic", "acne" and similar.
+  Exercised: "Non-comedogenic", "Safe for sensitive skin" and "Won't clog pores" all
+  block. The frame may only say where the product goes.
+
+Zone labels are the lander's own How to Use wording. The frame shows no product, so
+its content is scent-agnostic — but under the alt-text scoping convention it still
+needs one copy per scent, since an unscoped media in a scoped gallery is hidden for
+everyone.
 
 **Frame 7** works because it is true and narrow. It does not claim non-comedogenic, does not argue with the belief, and does not need to — it relocates the product. Body silhouette with the application zones marked, face excluded, one line of type.
 
