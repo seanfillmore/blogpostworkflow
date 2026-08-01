@@ -1,0 +1,107 @@
+#!/usr/bin/env node
+/**
+ * Contribution and discount depth for every bundle, from live Shopify data.
+ *
+ *   node scripts/bundle-margin-report.mjs
+ *
+ * Reads price, compare-at, cost and weight straight off the bundle variants — the cost
+ * and weight set by scripts/sync-bundle-cost-weight.mjs. Deliberately NOT computed from
+ * the SKUS table in bundle-economics.mjs, which carries one cost per SKU and disagrees
+ * with Shopify's per-variant costs.
+ *
+ * Freight comes from lib/shipping-costs.js, the same model bundle-economics uses, so the
+ * two reports stay comparable.
+ *
+ * `floor` is the lowest price that still clears 2× CAC — the depth beyond which a
+ * discount stops being affordable.
+ */
+
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { getAccessToken } from '../lib/shopify.js';
+import { loadRoster } from '../lib/bundle-roster.js';
+import { estimateShipping, contribution } from '../lib/shipping-costs.js';
+
+const CAC = Number(process.env.CAC ?? 25);
+
+/**
+ * Freight is only OUR cost when the order clears the free-shipping threshold. Below it the
+ * customer pays, so charging the bundle for freight understates its contribution by the
+ * full box cost — which materially misreads every sub-threshold bundle.
+ *
+ * Those bundles sitting just under the threshold is deliberate: it nudges the customer to
+ * add an item to clear it, which lifts AOV. They are attach vehicles, not paid destinations.
+ */
+const THRESHOLD = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../data/brand/brand-kit.json'), 'utf8'),
+).free_shipping_threshold;
+const weBearFreight = (price) => price >= THRESHOLD;
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const env = Object.fromEntries(
+  readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
+    .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
+    .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }),
+);
+
+const token = await getAccessToken();
+const gql = async (query, variables) => {
+  const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/2025-01/graphql.json`, {
+    method: 'POST',
+    headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  const j = await r.json();
+  if (j.errors) throw new Error(JSON.stringify(j.errors).slice(0, 200));
+  return j.data;
+};
+
+const Q = `query($handle:String!){ productByHandle(handle:$handle){ title
+  variants(first:100){edges{node{ title price compareAtPrice
+    inventoryItem{ unitCost{amount} measurement{weight{value unit}} } }}} }}`;
+
+/** Lowest price clearing `target` contribution, solved for the 2.9% + $0.30 fee. */
+const priceFor = (target, cogs, ship) => Math.ceil(((target + cogs + ship + 0.30) / (1 - 0.029)) * 100) / 100;
+
+console.log(`CAC $${CAC} · 2× threshold $${CAC * 2} · freight from lib/shipping-costs.js\n`);
+console.log(`${'bundle'.padEnd(28)}${'price'.padEnd(9)}${'off'.padEnd(7)}${'cost'.padEnd(9)}${'frt'.padEnd(7)}${'contrib'.padEnd(10)}${'margin'.padEnd(8)}${'xCAC'.padEnd(7)}freight`);
+
+for (const b of loadRoster().bundles) {
+  const p = (await gql(Q, { handle: b.handle }))?.productByHandle;
+  if (!p) { console.log(`${b.handle.padEnd(28)}not found`); continue; }
+
+  // One row per distinct price/cost combination — variants of a bundle usually match.
+  const seen = new Set();
+  for (const { node: v } of p.variants.edges) {
+    const price = Number(v.price);
+    const cost = v.inventoryItem?.unitCost?.amount != null ? Number(v.inventoryItem.unitCost.amount) : null;
+    const oz = v.inventoryItem?.measurement?.weight?.value ?? null;
+    const key = `${price}|${cost}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    if (cost == null || oz == null) {
+      console.log(`${b.handle.padEnd(28)}$${String(price).padEnd(8)}${'—'.padEnd(7)}cost/weight unset`);
+      continue;
+    }
+
+    const rv = b.variants.find((x) => Object.values(x.options).join(' / ') === v.title) ?? b.variants[0];
+    const units = (rv.components ?? []).reduce((s, c) => s + (c.qty ?? 1), 0) || 1;
+    const box = estimateShipping({ units, pounds: oz / 16 });
+    const ship = weBearFreight(price) ? box : 0; // below the threshold the customer pays
+    const contrib = contribution({ price, cogs: cost, shipping: ship, packaging: b.packaging ?? 0 });
+    const cmp = v.compareAtPrice ? Number(v.compareAtPrice) : null;
+    const off = cmp ? `${Math.round((1 - price / cmp) * 100)}%` : '—';
+    const mult = contrib / CAC;
+    const flag = mult >= 2 ? '✅' : mult >= 1 ? '🟡' : '🔴';
+
+    console.log(
+      `${b.handle.padEnd(28)}$${String(price).padEnd(8)}${off.padEnd(7)}$${String(cost).padEnd(8)}$${String(ship).padEnd(6)}`
+      + `$${String(contrib).padEnd(9)}${(Math.round(contrib / price * 100) + '%').padEnd(8)}`
+      + `${(mult.toFixed(1) + 'x').padEnd(7)}${(weBearFreight(price) ? 'we pay' : 'cust pays').padEnd(10)}${flag}`,
+    );
+  }
+}
+
+console.log('\nBelow the free-shipping threshold the customer pays freight, so it is not our cost. Those bundles are attach vehicles: sitting just under the threshold nudges an add-on, which lifts AOV.');
