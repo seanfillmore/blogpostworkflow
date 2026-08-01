@@ -1,0 +1,8 @@
+{
+  "_comment": "Frame 4, once per scent. Identical content: the two guides are the same whichever scent is chosen. Duplicated because once any media in this gallery is scoped, ALL of it must be — the theme's gang_exist flag is sticky, so an unscoped image after a scoped one is hidden for every variant.",
+  "product": "99-coconut-reset-digital",
+  "images": [
+    { "file": "data/brand/bundle-images/frame-04-digital-goods-coconut-breeze.jpg", "alt": "Two digital guides included with the 90-Day Coconut Reset: the 90-Day Routine & Tracker, shown as a printed twelve-week tracking grid beside a bottle of Body Lotion, and the Coconut Skincare Field Guide, shown on a tablet open to its page on how to read an ingredient label. Both are emailed within minutes of ordering." },
+    { "file": "data/brand/bundle-images/frame-04-digital-goods-pure-unscented.jpg", "alt": "Two digital guides included with the 90-Day Coconut Reset: the 90-Day Routine & Tracker, shown as a printed twelve-week tracking grid beside a bottle of Body Lotion, and the Coconut Skincare Field Guide, shown on a tablet open to its page on how to read an ingredient label. Both are emailed within minutes of ordering." }
+  ]
+}

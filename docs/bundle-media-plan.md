@@ -297,7 +297,7 @@ The six-unit composition is *better* material than the four-unit one, because th
 | 2 | Educational infographic | Explain why it's three *pairs*, not six duplicates | Buyer who thinks they're being sold the same thing six times | "A bottle and a jar, three months running" | **Daily lotion. Overnight cream.** | ✅ **LIVE 2026-08-01** — GENERATE plate → cut-out → RENDER, one per scent | — |
 | 3 | Transformation (supply) | Show running out being solved, not described | Buyer whose real pain is the empty-bottle gap | "The box lasts the whole quarter" | **This is what ninety days looks like.** | MUST-SHOOT (product still-life, in-house) | M |
 | 3b | Transformation (skin) | Show the change instead of claiming the after-state | Dry-winter-skin sufferer wanting proof, not persuasion | "Her skin actually changed" | **Day 1. Day 90.** | MUST-SHOOT (customer-submitted, 90-day lead) | L |
-| 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$220 value" and can only see $186 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | ✅ **BUILT 2026-08-01** — RENDER over real PDF pages, awaiting review | — |
+| 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$220 value" and can only see $186 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | ✅ **LIVE 2026-08-01** — RENDER over real PDF pages | — |
 | 5 | Text-only | Transfer the components' proof to the bundle | Sceptic of a bundle with no reviews of its own | "Nearly five stars, lots of reviews" | **4.84 ★ — 135 reviews of the lotion and cream inside.** | ✅ **BUILT 2026-08-01** — RENDER, not generated | — |
 | 6 | Us-vs-them comparison | Win on ingredient list length, not price | Switcher defaulting to a drugstore dermatologist pick | "Same job, far shorter list" | **Same job. Shorter list.** | GENERATE (Ad Builder) | M |
 | 7 | Educational infographic | Defuse the comedogenic objection without a claim | Shopper who believes coconut oil clogs pores | "This is for my body, not my face" | **Made for your body, not your face.** | COMPOSITE `coconut-lotion` | S |
@@ -352,7 +352,7 @@ The failure mode is a stock document icon or a floating generic PDF badge: it re
 2. **Give them physical presence.** Stage the tracker as a printed sheet lying beside one lotion bottle, and the Field Guide on a phone screen. Mixed physical/digital staging is what makes a PDF feel like an object. The four bottles do **not** appear in this frame — that is frame 1's job, and importing them splits the focal point.
 3. **Price the line items on-image, not the total.** Small labels: *90-Day Routine & Tracker — $19* and *Coconut Skincare Field Guide — $15*, plus the delivery promise in the headline. Both figures are live in the `bundle.value_stack` metafield and were re-verified 2026-08-01. The $220 total already computes itself in the value-stack section of the template (`bundle-landing-architecture.md`); restating it on-image recreates exactly the literal-vs-data drift that produced the earlier total bug. **The frame's job is to make $34 believable, not to re-assert $220.**
 
-**Frame 4 — built 2026-08-01, not yet uploaded.** `frame-04-digital-goods.mjs`. Both
+**Frame 4 — live 2026-08-01, approved by Sean.** `frame-04-digital-goods.mjs`. Both
 documents turned out to be substantial: the Routine & Tracker is **16 letter pages**
 and the Field Guide **15**. The frame shows two of them at 200dpi, unmodified —
 tracker page 10 (its real twelve-week grid) staged as a printed sheet with one
@@ -369,12 +369,23 @@ Two deviations from the spec, both deliberate:
   real page ships empty, and drawing ticks into it would mean editing the product to
   flatter it.
 
-⚠️ **Do not use Field Guide page 15 in any frame.** Its comparison table claims
-**"100% Organic Ingredients"** for the lotion. `config/ingredients.json` lists
-purified spring water and plant-based emulsifying wax, neither organic, so the claim
-is false — and it is live in a PDF delivered to every Reset buyer, and in the Amazon
-listing images. Same class of problem as the frame 6 traps. Tracked separately; it is
-a document fix, not an imagery one.
+**Field Guide page 15 — "100% Organic Ingredients", corrected 2026-08-01.** I first
+flagged this as false on the grounds that the panel opens with purified spring water.
+**That was wrong, and Sean was right to push back:** water cannot be organic and is
+excluded from the organic-percentage calculation entirely (USDA NOP, 7 CFR 205.302,
+which excludes water and salt). Spring water sitting first on the list does not
+weaken the claim.
+
+What remains genuinely open is the **emulsifying wax**, and only because the panel
+itself draws the distinction: coconut oil, jojoba, grapefruit seed extract and red
+palm oil are each written *organic*, while the wax is written *plant-based*. Emulsifying
+wax is a processed ingredient, so plant-derived feedstock does not by itself make the
+finished wax certified organic — it depends on the process and the supplier's
+certification. One ingredient, one supplier question. If it is certified, the claim
+stands and the ingredient list should say "organic emulsifying wax"; if it is not, the
+claim overstates by that one item.
+
+Not a blocker for any frame, and page 15 is simply not needed — frame 4 uses page 6.
 
 **Precondition — CLEARED 2026-07-31.** Both PDFs are real, not stubs: the 90-Day Routine & Tracker is **5.2 MB** and the Coconut Skincare Field Guide **9.1 MB**, both live on the Shopify CDN and delivered by Klaviyo flow `XFdcu6`. Frame 4 is buildable. Render from the actual interiors — the tracker's real 90-cell grid and a real Field Guide page — never a cover or a badge.
 
