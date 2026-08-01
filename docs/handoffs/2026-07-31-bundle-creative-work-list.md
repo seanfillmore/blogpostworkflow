@@ -22,10 +22,10 @@ Measured live 2026-07-31. The media plan's "What already exists" table (§2) is 
 
 | Bundle | Images | Note |
 |---|--:|---|
-| Bar Soap 4-Pack | 5 | the only well-served bundle |
-| Head-to-Toe | 2 | |
-| Sensitive Skin Set | 1 | alt text missing on that one |
-| 90-Day Clean Swap | 1 | |
+| Bar Soap 4-Pack | 5 | placeholder |
+| Head-to-Toe | 2 | placeholder |
+| Sensitive Skin Set | 1 | placeholder; alt text missing |
+| 90-Day Clean Swap | 1 | placeholder |
 | **90-Day Coconut Reset** | **0** | ⚠️ **was 3.** See below |
 | Hand Soap Set | 0 | 15 variants |
 | The Clean Swap | 0 | |
@@ -33,7 +33,9 @@ Measured live 2026-07-31. The media plan's "What already exists" table (§2) is 
 | Deodorant 4-Pack | 0 | |
 | Toothpaste 3-Pack | 0 | |
 
-**Six of ten bundles have no imagery at all.** That is the creative gap in one line.
+**All ten bundles need new imagery designed.** Sean confirmed 2026-07-31 that the images on the four non-zero bundles are placeholders, not finished assets — so the count above is a measure of what exists, not of what is usable. Six bundles start from nothing; the other four start from something that has to be replaced.
+
+Do not treat the four as "done" and skip them.
 
 ### The Reset lost its images in a product rebuild
 
@@ -83,6 +85,17 @@ Media plan §5b. These degrade the auto-rendered "what's in the box" cards:
 2. **Start the customer-transformation recruitment** — the only irreversible clock
 3. **The three component recrops** — cheap, no shoot, improves cards on pages nobody otherwise touches
 4. Then the remaining five zero-image bundles
+5. Then replace the placeholders on the four that have some
+
+## The Reset's lander copy is now correct — do not "fix" it again
+
+Applied and verified live 2026-07-31, after Sean confirmed the box ships **3 lotions + 3 creams**:
+
+- `subheading` and the "What's Inside" tab now say three creams. Every singular-cream string is gone from the live page.
+- `bundle.value_stack` free-shipping line corrected **$6 → $12** (six items at that weight really would cost a customer ~$12), so total value is **$220**, not $214.
+- A savings line was added as the first `buybox_bullets` entry, written with the `[[TOTAL]]` / `[[PRICE]]` / `[[SAVINGS]]` tokens.
+
+The page now renders **$220 of value → $121 today, you save $99**. Those figures are computed from `bundle.value_stack` — change the metafield, not the copy. Previous values are in `data/reports/reset-copy-fix/before.json`.
 
 ## Tooling that exists
 
