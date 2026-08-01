@@ -113,6 +113,17 @@ Every frame in this document carries a `Source`. There are four, and the boundar
 - **RENDER (`scripts/render-frame.mjs`)** — *added 2026-08-01.* Type over a brand field, laid out in HTML/CSS and screenshotted at 2048² in the real brand faces (Cabin/Outfit, vendored in `data/brand/fonts/`). Free, exact, and **reproducible**: the frame module reads its figures from live Shopify metafields at render time, so re-running after a data change regenerates a correct asset. Every frame module must export a `verify(ctx)` that throws when live data contradicts the frame — a wrong claim becomes a failed build instead of a confident JPEG.
 - **MUST-SHOOT** — requires a camera and the physical product.
 
+### ⚠️ A Shopify variant holds exactly ONE media — the hero owns that slot
+
+Learned the hard way on 2026-08-01, and it shapes how every bundle's stack gets installed. `ProductVariantAppendMediaInput` takes a **`mediaIds` list**, and the reference docs describe the mutation as *"appending"* media to variants — both of which say you can attach several. You cannot. The API refuses in two different ways:
+
+- appending to a variant that already has an image → `The given variant already has attached media`
+- passing two ids in one call → `Only one mediaId is allowed per media input`
+
+**Detaching first is not the workaround.** A detach that succeeds followed by an append that fails leaves the variant with *no image at all* — that is a live regression on a product page, and it happened here before it was caught and restored.
+
+The rule that follows: **a bundle's hero takes the variant slot, and every later frame is attached at product level.** Per-scent frames stay honest by naming their scent on the image itself (the Reset's routine frames carry `COCONUT BREEZE` / `PURE UNSCENTED` as the eyebrow), which is what keeps a gallery containing both scents unambiguous rather than misleading. `scripts/upload-product-images.mjs` now preflights every named variant **before uploading a single byte** and refuses the batch with an instruction to drop the `variant` key.
+
 **RENDER vs GENERATE — prefer RENDER for anything typographic.** A generative model approximates the typeface, cannot be relied on to spell a figure like "4.84", and bakes the result in permanently. Three bundles repriced on 2026-07-31 and the Reset's review count moves every week; a number baked into a generated JPEG is the one thing a metafield edit cannot correct. So frames whose content is *type over a colour field* go to RENDER, and GENERATE is reserved for frames that need a photographic scene the compositor cannot assemble. This supersedes the original routing of Reset frame 5 (and the equivalent text-only frames on the other bundles) to the Ad Builder.
 
 **The line between GENERATE and MUST-SHOOT:** anything depicting *what arrives in the box* must be real. A customer who receives a physical gift box has to get the box in the photograph. Lifestyle context, texture, ingredient and scale frames may be generated or composited; the contents themselves may not. This is not a stylistic rule — a generated photograph of packaging that doesn't exist is a misrepresentation of the goods.
@@ -224,7 +235,7 @@ The six-unit composition is *better* material than the four-unit one, because th
 
 **Frame 1** — **shipped.** Sean supplied two 2048² heroes, one per scent, each showing three lotions standing on three creams. Both are attached to their own variant, so a buyer choosing Pure Unscented sees the unscented kit. The original spec called for "the four vessels in a single row"; what shipped is six units stacked, which is both accurate to what ships and a stronger mass argument. Nothing further needed here.
 
-**Frame 2 — built 2026-08-01, one per scent.** `frame-02-routine.coconut-breeze.mjs` and `frame-02-routine.pure-unscented.mjs`, both thin wrappers over `routine-frame.mjs`. Rendered from Sean's real hero photographs, so everything depicted is the actual product in the actual variant.
+**Frame 2 — built and live 2026-08-01, one per scent.** `frame-02-routine.coconut-breeze.mjs` and `frame-02-routine.pure-unscented.mjs`, both thin wrappers over `routine-frame.mjs`. Rendered from Sean's real hero photographs, so everything depicted is the actual product in the actual variant. Uploaded **product-level** — see the variant-media constraint below.
 
 The spec called for a horizontal 90-day strip cut into three month blocks, each holding one bottle and one jar. **That cut is not possible from the source photography and the frame splits the other way instead.** Measured on the hero: the three bottles have clean background gutters between them (x704–860, x1194–1353), but the three jars touch — one continuous mass from x295 to x1848. Any vertical cut into month columns slices through a jar. The photo cuts cleanly *horizontally*, and that turned out to be the better argument anyway: the rows **are** the routine, and the routine is what the frame has to teach. So it is two bands — the lotion row labelled *three lotions · every morning*, the cream row *three creams · every night* — under the headline **"Daily lotion. Overnight cream."**, closing on *"One pair a month. Ninety days."*
 
