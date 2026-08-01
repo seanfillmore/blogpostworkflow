@@ -1,0 +1,15 @@
+{
+  "product": "99-coconut-reset-digital",
+  "images": [
+    {
+      "file": "data/brand/bundle-images/90-day-reset-coconutbreeze.jpg",
+      "variant": "Coconut Breeze",
+      "alt": "The 90-Day Coconut Reset in Coconut Breeze: three 8 fl oz moisturizing body lotions standing on three 4 fl oz body cream jars"
+    },
+    {
+      "file": "data/brand/bundle-images/90-day-reset-unscented.jpg",
+      "variant": "Pure Unscented",
+      "alt": "The 90-Day Coconut Reset in Pure Unscented: three 8 fl oz moisturizing body lotions standing on three 4 fl oz body cream jars"
+    }
+  ]
+}

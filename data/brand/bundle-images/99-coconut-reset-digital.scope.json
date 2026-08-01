@@ -1,0 +1,19 @@
+{
+  "_comment": "Which gallery media show for which scent. Every media must appear here: the theme's gang_exist flag is sticky across the media loop, so an unscoped image sitting after a scoped one is hidden for EVERY variant. The review frame is therefore duplicated per scent rather than left unscoped \u2014 its content is identical because 4.84 from 135 reviews is true of both.",
+  "product": "99-coconut-reset-digital",
+  "option": "Scent",
+  "scope": {
+    "90-day-reset-coconutbreeze": "Coconut Breeze",
+    "90-day-reset-unscented": "Pure Unscented",
+    "frame-02-routine-coconut-breeze": "Coconut Breeze",
+    "frame-02-routine-pure-unscented": "Pure Unscented",
+    "frame-05-reviews-coconut-breeze": "Coconut Breeze",
+    "frame-05-reviews-pure-unscented": "Pure Unscented",
+    "frame-04-digital-goods-coconut-breeze": "Coconut Breeze",
+    "frame-04-digital-goods-pure-unscented": "Pure Unscented",
+    "frame-07-body-not-face-coconut-breeze": "Coconut Breeze",
+    "frame-07-body-not-face-pure-unscented": "Pure Unscented",
+    "frame-06-ingredients-coconut-breeze": "Coconut Breeze",
+    "frame-06-ingredients-pure-unscented": "Pure Unscented"
+  }
+}

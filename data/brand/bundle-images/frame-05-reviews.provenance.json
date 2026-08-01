@@ -1,0 +1,12 @@
+{
+  "frame": "frame-05-reviews",
+  "product": "99-coconut-reset-digital",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "4.84 out of 5 stars from 135 customer reviews of the Body Lotion and Body Cream included in the 90-Day Coconut Reset.",
+  "metafieldsRead": {
+    "rating_value": "4.84",
+    "rating_count": "135"
+  }
+}

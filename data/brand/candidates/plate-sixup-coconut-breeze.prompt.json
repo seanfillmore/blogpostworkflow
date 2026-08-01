@@ -1,0 +1,13 @@
+{
+  "name": "plate-sixup-coconut-breeze",
+  "model": "gemini-3-pro-image",
+  "generative": true,
+  "imageSize": "2K",
+  "aspectRatio": "1:1",
+  "references": [
+    "data/brand/bundle-images/90-day-reset-coconutbreeze.jpg",
+    "data/brand/reference/coconut-lotion-coconut-breeze.jpg",
+    "data/brand/reference/coconut-moisturizer-coconut-breeze.jpg"
+  ],
+  "prompt": "Photograph these six products against a plain, flat mint-green backdrop, exactly\nthe same green as the reference photo.\n\nArrangement: three lotion bottles standing in a row across the upper half, and\nthree cream jars standing in a row across the lower half. Nothing overlaps or\ntouches — every bottle and every jar is fully visible, separated by clear space,\nand each one stands on its own base.\n\nEven soft studio lighting, straight-on eye-level camera, no perspective tilt.\n\nKeep every product exactly as in the reference photos: identical labels, identical\nwording, identical proportions, identical caps and lids. Do not re-letter anything.\nNo text, captions, graphics or props anywhere in the image."
+}

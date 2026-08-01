@@ -24,6 +24,7 @@
 import { shopifyGraphQL } from '../lib/shopify.js';
 import { loadRoster, SKU_BY_HANDLE } from '../lib/bundle-roster.js';
 import { SKUS } from './bundle-economics.mjs';
+import { quantityFindings } from '../lib/bundle-contents-check.js';
 
 const only = process.argv[2];
 
@@ -191,13 +192,19 @@ for (const p of products) {
     const promised = [...copy.matchAll(/—\s*([^(\n]+?)\s*(?:\(|$)/gm)].map(m => m[1].trim());
     const phantom = promised.filter(t => t && !compTitles.includes(t.toLowerCase()));
 
-    if (!missing.length && !phantom.length) {
+    // Titles and phantoms are not enough: the Reset shipped 3 creams while its copy said
+    // 1, and passed both of those checks because the variant title was present and
+    // nothing phantom was promised. Quantities have to be compared explicitly.
+    const wrongQty = quantityFindings(copy, comps);
+
+    if (!missing.length && !phantom.length && !wrongQty.length) {
       console.log(`  ${v.title}: ok (${comps.length} components)`);
     } else {
       problems++;
       console.log(`  ${v.title}: MISMATCH`);
       for (const m of missing) console.log(`      ships but copy never mentions it:  ${m}`);
       for (const t of phantom) console.log(`      copy promises but does not ship:   ${t}`);
+      for (const q of wrongQty) console.log(`      wrong quantity:                    ${q}`);
     }
   }
 }

@@ -1,0 +1,10 @@
+{
+  "_comment": "Frame 5 only. Kept separate from the hero manifest because upload-product-images.mjs has no idempotency check — re-running a manifest uploads the images again rather than reconciling. One manifest per upload batch. Product-level, not variant-attached: the review proof is true of both scents.",
+  "product": "99-coconut-reset-digital",
+  "images": [
+    {
+      "file": "data/brand/bundle-images/frame-05-reviews.jpg",
+      "alt": "4.84 out of 5 stars from 135 customer reviews of the Body Lotion and Body Cream included in the 90-Day Coconut Reset."
+    }
+  ]
+}

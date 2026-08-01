@@ -1,0 +1,11 @@
+{
+  "name": "plate-creams-coconut-breeze",
+  "model": "gemini-3-pro-image",
+  "generative": true,
+  "imageSize": "2K",
+  "aspectRatio": "16:9",
+  "references": [
+    "data/brand/reference/coconut-moisturizer-coconut-breeze.jpg"
+  ],
+  "prompt": "Photograph three identical units of this product side by side in a row,\nagainst a plain flat mint-green backdrop of one single even colour.\n\nThey stand upright, evenly spaced, with clear space between them — none of them\ntouch or overlap. Straight-on eye-level camera, flat even lighting.\n\nNo shadows of any kind. No cast shadow, no contact shadow, no gradient, no\nvignette, no reflection, no surface or table. The background is one uniform\nflat colour edge to edge, as if for cutting out.\n\nKeep the product exactly as in the reference photo: identical label, identical\nwording, identical proportions, identical cap. Do not re-letter anything.\nNo text, captions, graphics or props anywhere in the image."
+}
