@@ -98,8 +98,11 @@ test('packaging defaults to zero so every other bundle is unchanged', () => {
 test('roster-derived bundles reproduce the known contributions', () => {
   const byName = Object.fromEntries(BUNDLES.map(b => [b.name, b]));
 
+  // $86.28 at the $144 price set 2026-07-31, when the three hero bundles were moved to
+  // 30% off MSRP. It was $100.85 at $159. The number is pinned to catch an accidental
+  // change to the derivation — so when a price moves deliberately, this moves with it.
   const cleanSwap90 = ev(byName['The 90-Day Clean Swap']);
-  assert.equal(cleanSwap90.contrib, 100.85, '90-Day Clean Swap must still be $100.85');
+  assert.equal(cleanSwap90.contrib, 86.28, '90-Day Clean Swap at $144');
 
   const giftBox = ev(byName['Gift Box']);
   assert.equal(giftBox.packaging, 1.0);
