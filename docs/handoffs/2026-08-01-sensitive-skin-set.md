@@ -110,7 +110,7 @@ different product line and not mine to assume.
    rather than a creative one.
 2. Frame 1 (what actually arrives), then 3 (day/night), both COMPOSITE from existing
    component photos.
-3. Frame 4 (ingredient comparison) — port from the Reset, swap in the 9-item union.
+3. Frame 4 (ingredient comparison) — port from the Reset, swap in the 8-item union.
 4. Frame 5 (review proof) — near-identical to the Reset's frame 5, different product.
 5. Frame 2 (fragrance-free infographic) — the only GENERATE in the stack.
 
