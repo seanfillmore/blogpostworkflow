@@ -297,7 +297,7 @@ The six-unit composition is *better* material than the four-unit one, because th
 | 2 | Educational infographic | Explain why it's three *pairs*, not six duplicates | Buyer who thinks they're being sold the same thing six times | "A bottle and a jar, three months running" | **Daily lotion. Overnight cream.** | ✅ **LIVE 2026-08-01** — GENERATE plate → cut-out → RENDER, one per scent | — |
 | 3 | Transformation (supply) | Show running out being solved, not described | Buyer whose real pain is the empty-bottle gap | "The box lasts the whole quarter" | **This is what ninety days looks like.** | MUST-SHOOT (product still-life, in-house) | M |
 | 3b | Transformation (skin) | Show the change instead of claiming the after-state | Dry-winter-skin sufferer wanting proof, not persuasion | "Her skin actually changed" | **Day 1. Day 90.** | MUST-SHOOT (customer-submitted, 90-day lead) | L |
-| 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$220 value" and can only see $186 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | GENERATE (Ad Builder) from the real PDFs | M |
+| 4 | Benefit callout | Make $34 of digital goods visible and specific | Buyer who read "$220 value" and can only see $186 of it | "Two real guides, arriving immediately" | **Both guides, in your inbox in five minutes.** | ✅ **BUILT 2026-08-01** — RENDER over real PDF pages, awaiting review | — |
 | 5 | Text-only | Transfer the components' proof to the bundle | Sceptic of a bundle with no reviews of its own | "Nearly five stars, lots of reviews" | **4.84 ★ — 135 reviews of the lotion and cream inside.** | ✅ **BUILT 2026-08-01** — RENDER, not generated | — |
 | 6 | Us-vs-them comparison | Win on ingredient list length, not price | Switcher defaulting to a drugstore dermatologist pick | "Same job, far shorter list" | **Same job. Shorter list.** | GENERATE (Ad Builder) | M |
 | 7 | Educational infographic | Defuse the comedogenic objection without a claim | Shopper who believes coconut oil clogs pores | "This is for my body, not my face" | **Made for your body, not your face.** | COMPOSITE `coconut-lotion` | S |
@@ -351,6 +351,30 @@ The failure mode is a stock document icon or a floating generic PDF badge: it re
 1. **Show the actual page content, not the container.** Render the 90-Day Routine & Tracker as its real interior spread — a visible 90-cell grid with dates and checkboxes, a few cells already ticked — and the Field Guide as a real interior page with a legible heading and body text. If a shopper can read three real words off it, it is a product; if they can only see a cover, it is a badge.
 2. **Give them physical presence.** Stage the tracker as a printed sheet lying beside one lotion bottle, and the Field Guide on a phone screen. Mixed physical/digital staging is what makes a PDF feel like an object. The four bottles do **not** appear in this frame — that is frame 1's job, and importing them splits the focal point.
 3. **Price the line items on-image, not the total.** Small labels: *90-Day Routine & Tracker — $19* and *Coconut Skincare Field Guide — $15*, plus the delivery promise in the headline. Both figures are live in the `bundle.value_stack` metafield and were re-verified 2026-08-01. The $220 total already computes itself in the value-stack section of the template (`bundle-landing-architecture.md`); restating it on-image recreates exactly the literal-vs-data drift that produced the earlier total bug. **The frame's job is to make $34 believable, not to re-assert $220.**
+
+**Frame 4 — built 2026-08-01, not yet uploaded.** `frame-04-digital-goods.mjs`. Both
+documents turned out to be substantial: the Routine & Tracker is **16 letter pages**
+and the Field Guide **15**. The frame shows two of them at 200dpi, unmodified —
+tracker page 10 (its real twelve-week grid) staged as a printed sheet with one
+lotion bottle, and Field Guide page 6 ("How to read any label in 30 seconds") on a
+tablet. Prices are read from `bundle.value_stack`, and `verify()` fails if the
+stack stops carrying exactly two digital rows with positive amounts.
+
+Two deviations from the spec, both deliberate:
+
+- **A tablet, not a phone.** Page 6's heading and lower paragraphs run the full page
+  width, so no narrow column exists to crop for a phone screen — every attempt
+  sheared the ends off the lines. A letter-format guide is read on a tablet anyway.
+- **The grid is shown blank.** The spec asked for "a few cells already ticked". The
+  real page ships empty, and drawing ticks into it would mean editing the product to
+  flatter it.
+
+⚠️ **Do not use Field Guide page 15 in any frame.** Its comparison table claims
+**"100% Organic Ingredients"** for the lotion. `config/ingredients.json` lists
+purified spring water and plant-based emulsifying wax, neither organic, so the claim
+is false — and it is live in a PDF delivered to every Reset buyer, and in the Amazon
+listing images. Same class of problem as the frame 6 traps. Tracked separately; it is
+a document fix, not an imagery one.
 
 **Precondition — CLEARED 2026-07-31.** Both PDFs are real, not stubs: the 90-Day Routine & Tracker is **5.2 MB** and the Coconut Skincare Field Guide **9.1 MB**, both live on the Shopify CDN and delivered by Klaviyo flow `XFdcu6`. Frame 4 is buildable. Render from the actual interiors — the tracker's real 90-cell grid and a real Field Guide page — never a cover or a badge.
 
