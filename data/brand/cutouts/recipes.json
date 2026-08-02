@@ -1,0 +1,95 @@
+{
+  "_why": [
+    "Every cutout in this directory is derived from a product's own PDP photograph, and the",
+    "derivation is not obvious: each product needs its own key tolerance and its own crop, and",
+    "getting either wrong is invisible until the asset is composited onto a coloured frame.",
+    "The first eight cutouts were cut by hand and took three rebuilds to get right (6fbe0c0 -",
+    "96b9185 - 6d48994), because the numbers lived in a shell history nobody kept.",
+    "",
+    "This file is those numbers. `node scripts/rebuild-cutouts.mjs` regenerates every entry",
+    "from its source photograph, so a cutout is reproducible rather than a one-off artefact.",
+    "",
+    "The original eight (lotion, deodorant, toothpaste, bar soap) are deliberately NOT listed:",
+    "they predate scripts/cut-component.mjs and re-cutting them would change the bytes of",
+    "assets already composited into five shipped galleries. The script reproduces the lotion",
+    "to within 3px of the hand-cut version, so bringing them in is safe whenever those frames",
+    "are next re-rendered anyway."
+  ],
+  "_fields": {
+    "fuzz": "Backdrop flood tolerance, % of full scale. White-on-white products need it LOW or the flood walks through the product's own body: the foaming hand soap keys its bottle out at 1.5% because the white foam behind it bridges to the white backdrop.",
+    "seed": "A pixel unambiguously ON the product. Selects which connected component to keep, which is what drops the MADE IN THE USA badge and the staged spare units.",
+    "band": "Rows proven to contain ONLY the product. Left/right are measured from these, never estimated.",
+    "x": "Explicit left,right, for photographs where no product-only row exists because the swoosh wraps the product at every height. Measured off the pixel where the tan swoosh gives way to the product edge.",
+    "taper": "Y,LEFT,RIGHT - above row Y, clip to LEFT..RIGHT. For products whose top is narrower than their body (a jar lid, a pump), where the rectangular crop would otherwise keep whatever sits in the notch beside it.",
+    "top": "Explicit top edge, where the swoosh crosses above the product's own top inside the x band.",
+    "bottom": "Explicit contact line, for photographs whose reflection fades out at constant width instead of opening back up - there is no waist to find and the scan correctly declines to invent one."
+  },
+  "cutouts": [
+    {
+      "out": "component-cream-pure-unscented.png",
+      "source": "data/brand/reference/coconut-moisturizer-pure-unscented.jpg",
+      "product": "coconut-moisturizer",
+      "variant": "Pure Unscented",
+      "fuzz": 3,
+      "seed": "970,1300",
+      "x": "426,1578",
+      "top": 480,
+      "taper": "690,432,1572",
+      "note": "Swoosh wraps the jar at every height, so x is stated, not measured from a band. Jar edge is x=425: the tan swoosh reads 248,235,216 out to x=424 and the jar's shaded edge takes over at 426."
+    },
+    {
+      "out": "component-cream-coconut-breeze.png",
+      "source": "data/brand/reference/coconut-moisturizer-coconut-breeze.jpg",
+      "product": "coconut-moisturizer",
+      "variant": "Coconut Breeze",
+      "fuzz": 3,
+      "seed": "970,1300",
+      "x": "426,1578",
+      "top": 480,
+      "taper": "690,432,1572",
+      "note": "Same staging and same jar position as the Pure Unscented shot."
+    },
+    {
+      "out": "component-lipbalm-pure-unscented.png",
+      "source": "data/brand/reference/coconut-oil-lip-balm-pure-unscented.jpg",
+      "product": "coconut-oil-lip-balm",
+      "variant": "Pure Unscented",
+      "fuzz": 2,
+      "seed": "950,300",
+      "band": "200,480",
+      "bottom": 1784,
+      "note": "Three more tubes are staged bottom-right; they are a separate component and the seed drops them. The reflection fades at constant width, so the contact line is stated."
+    },
+    {
+      "out": "component-lipbalm-sweet-tangerine.png",
+      "source": "data/brand/reference/coconut-oil-lip-balm-sweet-tangerine.jpg",
+      "product": "coconut-oil-lip-balm",
+      "variant": "Sweet Tangerine",
+      "fuzz": 2,
+      "seed": "950,300",
+      "band": "200,480",
+      "bottom": 1756,
+      "note": "Sits 28px higher in frame than the Pure Unscented shot, so its contact line differs. Do not copy one to the other."
+    },
+    {
+      "out": "component-handsoap-pure-unscented.png",
+      "source": "data/brand/reference/organic-foaming-hand-soap-pure-unscented.jpg",
+      "product": "organic-foaming-hand-soap",
+      "variant": "Pure Unscented",
+      "fuzz": 1,
+      "seed": "970,1600",
+      "band": "1500,1690",
+      "note": "The lowest fuzz in the library. White bottle, white foam behind it, white backdrop: at 1.5% the flood crosses the foam into the bottle and punches a hole through the body that a thumbnail does not show."
+    },
+    {
+      "out": "component-handsoap-orange-zest.png",
+      "source": "data/brand/reference/organic-foaming-hand-soap-orange-zest.jpg",
+      "product": "organic-foaming-hand-soap",
+      "variant": "Orange Zest",
+      "fuzz": 1.5,
+      "seed": "970,1600",
+      "band": "1500,1690",
+      "note": "Tolerates a little more fuzz than the unscented bottle because the orange label gives the key something to hold onto."
+    }
+  ]
+}

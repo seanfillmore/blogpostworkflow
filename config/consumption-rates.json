@@ -1,0 +1,25 @@
+{
+  "_what": "Median days between repeat purchases per RSC consumable, normalised per unit bought. The evidence base for any claim about how long a bundle lasts.",
+  "_derived": "2026-07-27, from a paginated pull of ~1,250 paid Shopify orders (all time), grouping line items by customer and product handle.",
+  "_these_are_upper_bounds": [
+    "A reorder gap is consumption time PLUS however long the customer waited, lapsed, or bought elsewhere.",
+    "True duration is <= these numbers, never more. So a supply claim at or under the binding rate is defensible;",
+    "a claim ABOVE it is not defensible by this data under any reading.",
+    "",
+    "The error is asymmetric in the same direction as the subscription-cadence rule: overstating supply costs the",
+    "customer and is the documented reason RSC subscribers churned. When uncertain, claim SHORT."
+  ],
+  "_how_to_use": "A bundle lasts as long as the FIRST thing in it runs out — the minimum over its components of (per-unit days x quantity), not the average and not the longest. lib/supply-duration.js does this; do not re-derive it by hand.",
+  "_rederive": "orders(first:250, query:\"financial_status:paid\") WITH pagination. lib/shopify.js getOrders() truncates at 250 silently and must not be used for this.",
+  "rates": {
+    "coconut-lotion": { "daysPerUnit": 38, "intervals": 76, "confidence": "solid" },
+    "coconut-moisturizer": { "daysPerUnit": 28, "intervals": 24, "confidence": "fair" },
+    "coconut-soap": { "daysPerUnit": 47, "intervals": 14, "confidence": "weak" },
+    "coconut-oil-toothpaste": { "daysPerUnit": 61, "intervals": 12, "confidence": "weak" },
+    "coconut-oil-deodorant": { "daysPerUnit": 90, "intervals": 8, "confidence": "very weak" }
+  },
+  "_no_data": {
+    "coconut-oil-lip-balm": "No repeat-purchase intervals. Sold as a four-pack, which further confuses per-unit rate.",
+    "organic-foaming-hand-soap": "No repeat-purchase intervals."
+  }
+}
