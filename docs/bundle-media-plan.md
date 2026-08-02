@@ -775,7 +775,7 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 
 ### Hand Soap Set
 
-> **✅ SHIPPED 2026-08-02.** Ten media, live and verified across all **15** variants. The
+> **✅ SHIPPED 2026-08-02.** Fourteen media, live and verified across all **15** variants. The
 > product had **zero** images and null SEO title/description before this.
 >
 > **The two-option problem, and the way out.** This is the only bundle with two options —
@@ -785,14 +785,40 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 >
 > | frames | scope | carries |
 > |---|---|---|
-> | `frame-01-range`, `frame-02-reviews` | **unscoped** | the four scents; catalogue proof |
-> | `frame-03-config-*` (3) | Configuration | the count **and the price** — type only |
-> | `frame-04-scent-*` (5) | Scent | the bottle and its real oil list |
+> | `frame-01-scent-*` (5) | Scent | the bottle and its real oil list — **leads** |
+> | `frame-02-config-*` (3) | Configuration | the count **and the price** — type only |
+> | `frame-03-range-*` (3) | Configuration | the four scents |
+> | `frame-04-reviews-*` (3) | Configuration | catalogue proof |
 >
-> A buyer who has chosen both sees four images: the range, the proof, their configuration's
-> count and price, and their scent's bottle. The configuration frames are deliberately
+> A buyer who has chosen both sees four images: their scent's bottle, their configuration's
+> count and price, the range, the proof. The configuration frames are deliberately
 > typographic — a Configuration-scoped frame is shown for all five of its scents, so drawing
 > a Pure Unscented pump there would show the wrong bottle to four buyers in five.
+>
+> ### ⚠️ Every media is scoped, and that is the second lesson
+>
+> The first version left the range and reviews frames **unscoped** and sorted them first —
+> the only safe place for an unscoped media, because `gang_exist` is sticky. It passed every
+> check: 15/15 variants showed exactly the right set.
+>
+> It was still wrong, and Sean caught it on the storefront: *"The main image does not change
+> no matter what scent or configuration you choose."*
+>
+> **The gallery shows the first media that is not hidden, and an unscoped media is never
+> hidden.** So an unscoped lead is the main image for every variant — the buyer changes their
+> selection and the big picture does not move. That is in direct tension with the ordering
+> guard, and the tension is real rather than a bug in either rule:
+>
+> - an unscoped media is only *safe* first (sticky `gang_exist`);
+> - a media that is first and unscoped *pins* the main image.
+>
+> On a multi-variant product you have to pick, and **scoping everything is almost always the
+> answer** — duplicating a universal frame once per option value costs three identical JPEGs.
+> `set-media-variant-scope.mjs` now warns when a multi-variant product has an unscoped lead.
+>
+> **A media scopes to one option, so the main image can track exactly one of the two.** Scent
+> leads, because Scent is the choice that changes what the product looks like; Configuration
+> changes the count and price, and frame 2 sits immediately behind it carrying both.
 >
 > **⚠️ It needed its own template, and that is the finding worth carrying.** The theme gates
 > the entire scoping branch on `main-product.hide_variants == false`. On `templates/product

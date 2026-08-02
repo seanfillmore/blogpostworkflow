@@ -1,38 +1,62 @@
 {
-  "_comment": "TWO options. A media scopes to exactly one option/value pair, so the count (Configuration) and the scent (Scent) are carried by different frames. frame-01 and frame-02 are deliberately unscoped and MUST sort first — gang_exist is sticky, so an unscoped media after a scoped one is hidden for every variant.",
+  "_comment": "EVERY media is scoped. The lead media is what the gallery shows as the main image, so it must be scoped or the main image never changes. Scent frames lead because Scent is what changes the product's appearance; the two universal frames are duplicated once per Configuration so nothing is left unscoped.",
   "product": "hand-soap-set",
   "scope": {
-    "frame-03-config-4pumps-hss": {
-      "option": "Configuration",
-      "value": "4 pumps"
-    },
-    "frame-03-config-3pumpsbodylotion-hss": {
-      "option": "Configuration",
-      "value": "3 pumps + body lotion"
-    },
-    "frame-03-config-4pumpsbodylotion-hss": {
-      "option": "Configuration",
-      "value": "4 pumps + body lotion"
-    },
-    "frame-04-scent-variety-hss": {
+    "frame-01-scent-variety-hss": {
       "option": "Scent",
       "value": "Variety"
     },
-    "frame-04-scent-calming-lavender-hss": {
+    "frame-01-scent-calming-lavender-hss": {
       "option": "Scent",
       "value": "Calming Lavender"
     },
-    "frame-04-scent-orange-zest-hss": {
+    "frame-01-scent-orange-zest-hss": {
       "option": "Scent",
       "value": "Orange Zest"
     },
-    "frame-04-scent-coconut-breeze-hss": {
+    "frame-01-scent-coconut-breeze-hss": {
       "option": "Scent",
       "value": "Coconut Breeze"
     },
-    "frame-04-scent-pure-unscented-hss": {
+    "frame-01-scent-pure-unscented-hss": {
       "option": "Scent",
       "value": "Pure Unscented"
+    },
+    "frame-02-config-4pumps-hss": {
+      "option": "Configuration",
+      "value": "4 pumps"
+    },
+    "frame-02-config-3pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "3 pumps + body lotion"
+    },
+    "frame-02-config-4pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "4 pumps + body lotion"
+    },
+    "frame-03-range-4pumps-hss": {
+      "option": "Configuration",
+      "value": "4 pumps"
+    },
+    "frame-03-range-3pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "3 pumps + body lotion"
+    },
+    "frame-03-range-4pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "4 pumps + body lotion"
+    },
+    "frame-04-reviews-4pumps-hss": {
+      "option": "Configuration",
+      "value": "4 pumps"
+    },
+    "frame-04-reviews-3pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "3 pumps + body lotion"
+    },
+    "frame-04-reviews-4pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "4 pumps + body lotion"
     }
   }
 }
