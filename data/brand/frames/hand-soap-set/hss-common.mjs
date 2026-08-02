@@ -3,7 +3,7 @@
  *
  * ── Why this bundle is the fiddliest in the roster ──────────────────────────
  * It has TWO options — Configuration (4 pumps / 3 pumps + body lotion / 4 pumps
- * + body lotion) and Scent (Variety + four scents) — and 15 variants. The
+ * + body lotion) and Scent (four scents) — and 12 variants. The
  * theme's gang convention scopes a media to exactly ONE option/value pair:
  * `gang_option_name` is parsed from that media's own alt suffix and matched
  * against whichever product option shares the name. There is no way to say "this
@@ -70,7 +70,7 @@ export function natural(slug) {
 const PRODUCT_SLUG = { 'organic-foaming-hand-soap': 'handsoap', 'coconut-lotion': 'lotion' };
 export const LABEL = { handsoap: 'Foaming Hand Soap', lotion: 'Body Lotion (8oz)' };
 
-/** The four scents, in the order the option lists them after Variety. */
+/** The four scents the Scent option offers. */
 export const SCENTS = ['Calming Lavender', 'Orange Zest', 'Coconut Breeze', 'Pure Unscented'];
 export const scentSlug = (s) => `handsoap-${s.toLowerCase().replace(/\s+/g, '-')}`;
 
@@ -101,12 +101,12 @@ export function configurations(handle = 'hand-soap-set') {
 
 /** Counts for one configuration, taken from a single-scent variant so quantities are unambiguous. */
 export function countsFor(config) {
-  const single = config.scents.find((s) => s !== 'Variety') ?? config.scents[0];
+  const single = config.scents[0];
   const comps = config.byScent.get(single);
   const pumps = comps.filter((c) => c.kind === 'handsoap').reduce((a, c) => a + c.qty, 0);
   const lotions = comps.filter((c) => c.kind === 'lotion').reduce((a, c) => a + c.qty, 0);
-  // Variety must hold the same TOTAL, or the configuration frame's count is only
-  // true for some of its variants.
+  // Every scent of a configuration must hold the same TOTAL, or the
+  // configuration frame's count is only true for some of its variants.
   for (const s of config.scents) {
     const cs = config.byScent.get(s);
     const p = cs.filter((c) => c.kind === 'handsoap').reduce((a, c) => a + c.qty, 0);
@@ -141,7 +141,7 @@ export function unit({ src, slug, pxPerCm, count = 1, overlap = 0, boxH }) {
 export function assertLivePrice(ctx, { configName, price, compareAt }) {
   // Shopify joins a multi-option variant title as "Option1 / Option2", so the
   // Configuration is the first segment and must be compared EXACTLY. startsWith
-  // is wrong and quietly so: "4 pumps + body lotion / Variety" starts with
+  // is wrong and quietly so: "4 pumps + body lotion / Orange Zest" starts with
   // "4 pumps", so the $44 frame matched the $72 variants and asserted itself
   // into a price mismatch. It failed loudly here only because the prices differ —
   // had they matched, it would have silently validated the wrong rows.

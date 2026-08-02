@@ -591,7 +591,6 @@
         {
           "name": "Scent",
           "values": [
-            "Variety",
             "Calming Lavender",
             "Orange Zest",
             "Coconut Breeze",
@@ -600,37 +599,6 @@
         }
       ],
       "variants": [
-        {
-          "options": {
-            "Configuration": "4 pumps",
-            "Scent": "Variety"
-          },
-          "price": 44,
-          "compareAtPrice": 52,
-          "contents": "1 × Orange Zest\n1 × Coconut Breeze\n1 × Calming Lavender\n1 × Pure Unscented",
-          "components": [
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Orange Zest",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Coconut Breeze",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Calming Lavender",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Pure Unscented",
-              "qty": 1
-            }
-          ]
-        },
         {
           "options": {
             "Configuration": "4 pumps",
@@ -692,37 +660,6 @@
               "product": "organic-foaming-hand-soap",
               "variant": "Pure Unscented",
               "qty": 4
-            }
-          ]
-        },
-        {
-          "options": {
-            "Configuration": "3 pumps + body lotion",
-            "Scent": "Variety"
-          },
-          "price": 59,
-          "compareAtPrice": 69,
-          "contents": "1 × Foaming Hand Soap — Orange Zest\n1 × Foaming Hand Soap — Coconut Breeze\n1 × Foaming Hand Soap — Calming Lavender\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
-          "components": [
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Orange Zest",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Coconut Breeze",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Calming Lavender",
-              "qty": 1
-            },
-            {
-              "product": "coconut-lotion",
-              "variant": "Pure Unscented",
-              "qty": 1
             }
           ]
         },
@@ -802,42 +739,6 @@
               "product": "organic-foaming-hand-soap",
               "variant": "Pure Unscented",
               "qty": 3
-            },
-            {
-              "product": "coconut-lotion",
-              "variant": "Pure Unscented",
-              "qty": 1
-            }
-          ]
-        },
-        {
-          "options": {
-            "Configuration": "4 pumps + body lotion",
-            "Scent": "Variety"
-          },
-          "price": 72,
-          "compareAtPrice": 82,
-          "contents": "1 × Foaming Hand Soap — Orange Zest\n1 × Foaming Hand Soap — Coconut Breeze\n1 × Foaming Hand Soap — Calming Lavender\n1 × Foaming Hand Soap — Pure Unscented\n1 × Body Lotion — Pure Unscented (no essential oils at all)",
-          "components": [
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Orange Zest",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Coconut Breeze",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Calming Lavender",
-              "qty": 1
-            },
-            {
-              "product": "organic-foaming-hand-soap",
-              "variant": "Pure Unscented",
-              "qty": 1
             },
             {
               "product": "coconut-lotion",
@@ -947,11 +848,11 @@
           "Full-size 8oz pumps for the kitchen, the bathrooms and wherever else there's a sink",
           "Real soap, not detergent — saponified organic virgin coconut oil, no SLS, no parabens, no synthetic fragrance",
           "Add an 8oz body lotion for hands that are in water all day, or take the pumps on their own",
-          "Free shipping on orders over $45"
+          "Free shipping on orders over $45",
+          "One scent throughout — a pump at every sink that matches"
         ],
         "buybox_bullets": [
           "Four 8oz pumps — or three or four pumps with an 8oz Body Lotion added",
-          "One scent throughout, or Variety for a different scent at each sink",
           "Free shipping on orders over $45",
           "30-day money-back guarantee"
         ],
@@ -960,10 +861,6 @@
           {
             "q": "How many pumps do I get?",
             "a": "Whichever configuration you pick: four pumps on their own, or three or four pumps with an 8oz body lotion added. The panel under the picker lists exactly what ships in the one you've selected."
-          },
-          {
-            "q": "Can I have a different scent at each sink?",
-            "a": "Yes — choose Variety and no two pumps are the same: Orange Zest, Coconut Breeze and Calming Lavender, plus Pure Unscented on the four-pump sets. Pick any single scent instead and every pump is that one."
           },
           {
             "q": "Does it leave your hands feeling stripped?",

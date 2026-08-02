@@ -1,11 +1,7 @@
 {
-  "_comment": "EVERY media is scoped. The lead media is what the gallery shows as the main image, so it must be scoped or the main image never changes. Scent frames lead because Scent is what changes the product's appearance; the two universal frames are duplicated once per Configuration so nothing is left unscoped.",
+  "_comment": "EVERY media is scoped — the lead media is the main image, so an unscoped lead would pin it for all variants. Scent frames lead because Scent changes how the product looks. Variety was removed as an option 2026-08-02.",
   "product": "hand-soap-set",
   "scope": {
-    "frame-01-scent-variety-hss": {
-      "option": "Scent",
-      "value": "Variety"
-    },
     "frame-01-scent-calming-lavender-hss": {
       "option": "Scent",
       "value": "Calming Lavender"
