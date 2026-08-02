@@ -794,7 +794,7 @@ Its buyer is problem-aware and cautious: fragrance-free is the one attribute the
 | 3 | Benefit callout | Separate the two jars' jobs — lotion daily, cream overnight | Buyer who doesn't know why they need both | Day / night split | *Day lotion. Night cream.* | COMPOSITE `coconut-lotion` + `coconut-moisturizer` | S |
 | 4 | Us-vs-them | Beat CeraVe/Vanicream on ingredient count, not on claims | Comparison shopper cross-checking three tabs | Two columns, ours shorter | *Nine ingredients. Theirs has thirty.* | GENERATE | M |
 | 5 | Text-only | Carry the real proof — 135 component reviews at 4.84 | Buyer wanting reassurance before checkout | A rating and a number | *4.84 from 135 reviews of the products inside* | GENERATE | S |
-| **6** | Grid/multi-SKU | Make the first-subscription gift visible instead of leaving it in an accordion | Buyer weighing one-time vs subscribe | Four items, two of them flagged free | *Subscribe: your first box adds $26 free.* | COMPOSITE — re-plate of `v20.webp`'s staging with honest labels | S |
+| **6** | Grid/multi-SKU | Make the first-subscription gift visible instead of leaving it in an accordion | Buyer weighing one-time vs subscribe | Four items, two of them flagged free | *Subscribe: your first box adds $26 free.* | COMPOSITE of real photos — cutouts of `coconut-lotion` + `coconut-moisturizer` + `coconut-soap` + `coconut-oil-lip-balm`, all Pure Unscented | S |
 
 ⚠️ **Frame 6 must state the condition on the image.** The gift is contingent on starting a
 subscription; a frame that shows four items without the word *subscribe* would misrepresent

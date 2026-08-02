@@ -93,7 +93,7 @@ stack is now **six** — the gift earns its own frame.
 | # | Spec says | Correction |
 |--:|---|---|
 | 1 | "two jars, nothing else" | It is a **bottle and a jar**, not two jars. "Nothing else" still stands **for this frame** — frame 1 answers "what does $46.80 buy me", and that is two items. The gift is a separate question, answered by the new frame 6 |
-| **6** | *(new)* | **The first-subscription gift.** Bottle + jar + bar soap + lip balm four-pack, with the two gift items visibly marked as the gift. Headline names the condition, e.g. *Subscribe: your first box adds $26 free.* COMPOSITE — this is a re-plate of `v20.webp`'s composition with honest labels |
+| **6** | *(new)* | **The first-subscription gift.** Bottle + jar + bar soap + lip balm four-pack, with the two gift items visibly marked as the gift. Headline names the condition, e.g. *Subscribe: your first box adds $26 free.* **COMPOSITE from real component photos** — `v20.webp` informs the staging only; not one pixel of its product labels survives (see production rule 1) |
 | 4 | "Beat CeraVe/Vanicream", "Theirs has thirty" | **Do not name anyone.** Sean, 2026-08-01: we contrast against the lotion market in general. Use `data/brand/reference/comparison-lotion.json` — a real published panel, **34** items, brand recorded only in that file and never rendered |
 | 5 | "4.84 from 135 reviews" | Correct — `bundle.rating_value` / `rating_count` on this product read 4.84 / 135. Read them at render time anyway |
 
@@ -102,6 +102,57 @@ the old `config/ingredients.json`, which listed the cream's grapefruit seed extr
 without "organic" and so counted it as a separate ingredient. Sean confirmed 2026-08-01
 that it is the organic one in both products; corrected in the config, and the set's
 unique count is now **8**.
+
+## Production rules — from `marketing-product-image-stack` + `marketing-ai-product-imagery`
+
+Consulted 2026-08-01 at Sean's direction. Both skills bear directly on why `v20.webp`
+failed and on how frame 6 gets built. What they change:
+
+**1. Frame 6 is a COMPOSITE of real photographs, not a re-plate via generation.**
+This is the substantive change. The defects in `v20.webp` are in *product label text* —
+baked into the plate — and `render-frame.mjs` cannot repair them, because it lays down
+overlay glyphs, not the printing on a jar. Re-generating the plate just re-rolls the same
+class of error. `marketing-ai-product-imagery` is explicit: *"prefer a real photo for the
+main image where one exists."* One exists for all four items:
+
+| Item | Real Pure Unscented asset |
+|---|---|
+| Body Lotion | `real_skin_care_body_lotion_unscented_4.png` |
+| Body Cream | `real_skin_care_body_cream_unscented.jpg` |
+| Bar Soap | `real_skin_care_bar_soap_unscented_1.jpg` |
+| Lip Balm four-pack | `AMZRealSkin-lipbalmheros_tomakelarger-show4pack…` |
+
+So: `cutout-product.mjs` on each, composite onto the staging, `render-frame.mjs` for the
+headline. **Zero generated product labels means zero label-fidelity risk.** This retires
+the whole defect class rather than auditing for it, and it makes the skills' "patch
+garbled small text in Canva" step unnecessary — our pipeline already beats that tactic.
+
+**2. One job, one persona per frame.** This is why frame 1 and frame 6 stay separate
+rather than merging into one "everything you get" image. Frame 1 answers *what does
+$46.80 buy*; frame 6 answers *what does subscribing add*. Merging them is the exact
+failure mode the skill names, and it would also blur the contingency the ⚠️ guard exists
+to protect.
+
+**3. The 1-second test is run at phone size, not on the desktop canvas.** Before any
+frame ships, view it at actual phone dimensions; if the smallest label is not readable at
+a glance, oversize the text and cut copy. Add this to the pre-upload check alongside
+`verify()`.
+
+**4. Audit every generated frame against the physical product.** Features the product
+does not have, the same product rendered at different proportions across panels, wrong
+scale. This is precisely the gate that was never run on `v20.webp`. It applies to frames
+2 and 4 (the GENERATEs); frames 1, 3 and 6 avoid it by construction under rule 1.
+
+**5. Frame 4 is within the us-vs-them cap.** The skill caps comparison graphics at 3–4
+attributes won on. Frame 4 currently carries one (ingredient count, 8 vs 34), so there is
+headroom — but any attribute added must be sourced from real competitor complaints, not
+invented, and must stay true for both products in the set.
+
+**Not adopted:** the skills' Amazon main-image compliance rule (no stamped-on claims) is a
+platform-policy constraint for Amazon listings. These frames are the **Shopify** gallery,
+where overlay headlines are normal and expected. Noted so nobody later "fixes" a compliant
+Shopify frame against a rule that does not govern it — but if any of these frames is ever
+reused on an Amazon listing, that rule starts applying and the headline must come off.
 
 ## Use the pipeline, do not re-derive it
 
