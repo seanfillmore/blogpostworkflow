@@ -74,12 +74,20 @@ export default {
     }
   },
 
+  /**
+   * Naming both lists in full came to 516 characters and Shopify rejects alt over
+   * 512 — at upload, after four images of the gallery were already live. So this
+   * names the union once instead of repeating the five shared ingredients, which
+   * says the same thing in about two thirds of the room. Still fully derived, so
+   * it cannot describe a formulation we no longer sell.
+   */
   alt() {
     const lotion = ingredientsFor('lotion');
     const cream = ingredientsFor('cream');
-    return `Every ingredient in the Sensitive Skin Set. The Pure Unscented Body Lotion has `
-      + `${lotion.length}: ${lotion.join(', ')}. The Pure Unscented Body Cream has ${cream.length}: `
-      + `${cream.join(', ')}. No fragrance, parfum or essential oils appear in either.`;
+    const union = setIngredientUnion();
+    return `Every ingredient in the Sensitive Skin Set: ${union.join(', ')}. `
+      + `${lotion.length} in the Pure Unscented Body Lotion, ${cream.length} in the Body Cream, `
+      + `${union.length} unique across both. No fragrance, parfum or essential oils in either.`;
   },
 
   html(ctx) {

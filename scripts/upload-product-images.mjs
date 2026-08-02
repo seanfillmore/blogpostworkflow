@@ -72,6 +72,11 @@ console.log(`  existing media: ${product.media.edges.length}`);
 
 for (const img of manifest.images) {
   if (!img.alt?.trim()) throw new Error(`${img.file}: alt text is required`);
+  // Checked for every image before any byte is uploaded. Shopify rejects >512 at
+  // the attach step, which on a multi-image manifest means a half-uploaded gallery.
+  if (img.alt.length > 512) {
+    throw new Error(`${img.file}: alt is ${img.alt.length} characters; Shopify's limit is 512`);
+  }
   const size = statSync(img.file).size;
   const v = img.variant
     ? product.variants.edges.map((e) => e.node).find((n) => n.title === img.variant)

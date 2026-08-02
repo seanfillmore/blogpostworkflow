@@ -228,6 +228,15 @@ await sharp(png).jpeg({ quality: 85, chromaSubsampling: '4:2:0', progressive: tr
 
 const alt = frame.alt(ctx);
 if (!alt?.trim()) throw new Error(`${frame.name}: alt() returned nothing`);
+// Shopify hard-rejects alt text over 512 characters, and it does so at upload —
+// i.e. after the frame is rendered, committed and queued, with part of a gallery
+// already live. A derived alt that lists ingredients drifts past the limit the
+// moment a formulation gains one, so the ceiling belongs here, at authoring time.
+if (alt.length > 512) {
+  throw new Error(
+    `${frame.name}: alt() is ${alt.length} characters; Shopify's limit is 512. `
+    + `Shorten it here rather than at upload — the uploader fails mid-gallery.`);
+}
 writeFileSync(join(outDir, `${frame.name}.provenance.json`), JSON.stringify({
   frame: frame.name,
   product: frame.product,

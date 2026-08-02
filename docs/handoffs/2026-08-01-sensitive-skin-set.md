@@ -1,5 +1,29 @@
 # Handoff — Sensitive Skin Set gallery
 
+## ✅ SHIPPED 2026-08-01 — the gallery is live
+
+Six frames uploaded, ordered, and verified on the storefront. `v20.webp` — the
+AI-generated image whose every printed figure was fabricated — is **deleted from
+the product**; a copy is kept at
+`data/backups/products/sensitive-skin-starter-set.v20-replaced-2026-08-01.webp`.
+
+Live gallery order: 1 what-arrives · 2 subscription-gift · 3 day-night ·
+4 reviews · 5 fragrance-free · 6 list-length. **All six carry alt text**; the set
+had none before. `og:image` now resolves to frame 1, so social shares no longer
+serve the broken image.
+
+Two things worth carrying forward:
+
+- **Shopify caches the product page.** The first post-upload fetch still showed
+  `og:image` as `v20.webp` and read like a failure. A cache-busting query param
+  showed the correct value. Re-check with `?cb=$(date +%s)` before diagnosing.
+- **Alt text is capped at 512 characters, and Shopify enforces it at upload** —
+  after the frames are rendered and committed, mid-gallery. Frame 2's derived alt
+  came to 516 and killed the run with four of six images already live. There is
+  now a ceiling in `render-frame.mjs` (authoring time, where it belongs) and a
+  second in the uploader's preflight.
+
+
 **Written:** 2026-08-01, straight after the Reset gallery shipped (PR #401, merged).
 **Worktree:** `.claude/worktrees/sensitive-set` on `feature/sensitive-skin-set-gallery`.
 **Prerequisite reading:** `docs/bundle-media-plan.md` §6 "Sensitive Skin Set — $46.80",
