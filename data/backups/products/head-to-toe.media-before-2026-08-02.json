@@ -1,0 +1,26 @@
+{
+  "id": "gid://shopify/Product/8563490422954",
+  "title": "Head-to-Toe",
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/36631052255402",
+        "alt": "Head-to-Toe — all seven Real Skin Care products (placeholder)",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/real_skin_care_body_lotion_coconut_breeze_a58b8010-6527-41df-82dc-40aa4eefbe0c.webp?v=1785108094",
+          "width": 2000,
+          "height": 2000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/36631053500586",
+        "alt": "Head-to-Toe — all seven Real Skin Care products (placeholder)",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/real_skin_care_body_lotion_coconut_breeze_79c83c87-34b8-43da-9578-88ce48f375cd.webp?v=1785108131",
+          "width": 2000,
+          "height": 2000
+        }
+      }
+    ]
+  }
+}

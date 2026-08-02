@@ -11,7 +11,7 @@ Companion to `docs/bundle-marketing-plan.md` (positioning and channel) and `docs
 > **All three resolved 2026-07-31 — do not re-raise them.**
 >
 > 1. **Ingredient claims — `config/ingredients.json` is correct and is the source of truth.** The copy was the wrong side and has been fixed: "no palm oil" now appears nowhere live, and the Gift Box lander discloses *"Contains beeswax in the lip balm, so this box is not vegan."* The Clean Swap's "Vegan and cruelty-free" is accurate because its four components carry no beeswax. **The table below stands and should be treated as the authority** — it is what the Reset's frame 6 note is derived from.
-> 2. **Head-to-Toe frame 3 — dissolved, not decided.** The bundle repriced to **$87** on 2026-07-31, so $105 ÷ 7 = $15.00 no longer holds ($12.43). The frame depended on that exact arithmetic; it is cut, and the stack leads on completeness like every other bundle.
+> 2. **Head-to-Toe frame 3 — dissolved, then rebuilt.** The bundle repriced to **$87** on 2026-07-31, so $105 ÷ 7 = $15.00 no longer holds ($12.43). The frame was cut on the grounds that it depended on that exact arithmetic. **Reversed 2026-08-02 and shipped:** the tension was never the division, it was landing *on* the $15 ceiling, and $12.43 is under it. Rebuilt as a RENDER that divides at render time and refuses to build at ≥$15. The stack still leads on completeness — the price frame sits at slot 3.
 > 3. **Reset digital-goods frame — buildable.** Both PDFs are real: Routine & Tracker **5.2 MB**, Field Guide **9.1 MB**, live on the CDN and delivered by Klaviyo flow `XFdcu6`.
 
 The original text of the three, kept because the ingredient table is still the working reference:
@@ -243,25 +243,58 @@ Found while specifying the stacks. These are defects in the *existing* library t
 
 <!-- Media fragment: Head-to-Toe (now $87) and The 90-Day Coconut Reset (now $121). Product-gallery image stacks. Frames are specced, not produced. -->
 
-### Head-to-Toe — $105
+### Head-to-Toe — $87
 
-The copy on this page can *say* "one of everything we make" but it cannot make the buyer **count to seven**, and counting to seven is the entire purchase decision. At $105 against a measured ~$15 lotion price ceiling, the shopper's first instinct is to divide — so the imagery either wins the division or loses the sale. This buyer is the discovery shopper who wants to find their favourite before committing to any one SKU, plus the non-Q4 gifter; both are choosing breadth on purpose, which means the stack is a range shot, not a routine shot. Two jobs dominate: **prove the seven products are real and distinct** (the page currently has 2 images, so breadth is asserted and never shown), and **reframe the unit of purchase** so $105 is compared against a shelf, not against a bottle. The 46 existing component photos make almost all of this a compositing job rather than a shoot.
+> **✅ SHIPPED 2026-08-02.** Six frames × two kits = **12 media**, live and verified on the
+> storefront: each kit shows exactly its own six and neither leaks into the other. The two
+> placeholder images are deleted (both were the same Coconut Breeze *body lotion*
+> photograph, captioned "all seven Real Skin Care products"); a record is in
+> `data/backups/products/head-to-toe.media-before-2026-08-02.json`.
+>
+> The stack that shipped is **1** contents · **2** head-to-toe routine · **3** per-product
+> price · **4** kit difference · **5** reviews · **6** duration — that is spec frames
+> 1, 2, 3, 4, 6 and 7 renumbered. **Spec frame 5 (us-vs-them, "seven swaps") did not
+> ship**: it is the only frame here that makes an ingredient claim, and §0's block on
+> ingredient claims is only partly lifted. "No aluminium / SLS / parabens / synthetic
+> fragrance" is checkable against `config/ingredients.json` and would build; "no palm oil"
+> and "vegan" remain **false** for this bundle, which contains the cream and the lip balm.
+> A frame one careless edit away from a false claim was not worth shipping for coverage.
+>
+> **Spec frame 2 shipped as type, not as a composite.** Seven products stacked vertically
+> at one honest scale puts the lip balm at ~60px, which fails the phone-size read; and
+> drawing the same seven again in a row would be frame 1 doing frame 2's job. The
+> body-part list carries the argument on its own.
+>
+> Also corrected on the live product: `global.title_tag` and `global.description_tag` both
+> still priced this bundle at **$105**, two days after it moved to $87. Nothing read those
+> figures from the price; they were typed. That is the same class of error as the media
+> plan telling people to print $159 on the 90-Day, and it is why every frame in
+> `data/brand/frames/head-to-toe/` derives its numbers at render time.
+
+The copy on this page can *say* "one of everything we make" but it cannot make the buyer **count to seven**, and counting to seven is the entire purchase decision. At $87 against a measured ~$15 lotion price ceiling, the shopper's first instinct is to divide — so the imagery either wins the division or loses the sale. This buyer is the discovery shopper who wants to find their favourite before committing to any one SKU, plus the non-Q4 gifter; both are choosing breadth on purpose, which means the stack is a range shot, not a routine shot. Two jobs dominate: **prove the seven products are real and distinct** (the page had 2 images, so breadth was asserted and never shown), and **reframe the unit of purchase** so $87 is compared against a shelf, not against a bottle. The 46 existing component photos make almost all of this a compositing job rather than a shoot.
 
 | # | Format | One job | One persona | 1-second read | On-image headline | Source | Effort |
 |--:|---|---|---|---|---|---|---|
 | 1 | Grid/multi-SKU | Prove seven distinct products exist | Discovery shopper who has never bought the brand | "Seven different things, one box" | **One of everything we make.** | COMPOSITE `coconut-lotion` + `coconut-moisturizer` + `coconut-oil-deodorant` + `coconut-oil-toothpaste` + `coconut-soap` + `coconut-oil-lip-balm` + `organic-foaming-hand-soap` | M |
 | 2 | Benefit callout | Prove the seven cover the whole routine with no gaps | Shopper mentally auditing their own bathroom shelf | "This replaces everything I already buy" | **Nothing else to buy.** | COMPOSITE (same seven) | M |
-| 3 | Headliner | Kill the per-unit price objection with a true number | Price-ceiling shopper ("$15 or less, but I want it to work") | "$15 a product — that's my number" | **$105. Seven products. $15 each.** | GENERATE (Ad Builder) over the frame-1 composite | S |
+| 3 | Headliner | Kill the per-unit price objection with a true number | Price-ceiling shopper ("$15 or less, but I want it to work") | "$12.43 a product — under my number" | **$87. Seven products. $12.43 each.** | RENDER `frame-03-per-product` | S |
 | 4 | Educational infographic | Make the Gentle vs Fresh choice decidable without scrolling | Buyer stalled at the variant picker | "Two kits, and here's how they differ" | **Gentle or Fresh. Here's the difference.** | COMPOSITE (per-variant shots — see Blocked) | M |
 | 5 | Us-vs-them comparison | Convert the clean-swap motive into a reason to buy all seven at once | Reduce-my-chemical-load switcher | "Seven swaps in one purchase" | **Seven swaps. No aluminium, no SLS, no parabens, no synthetic fragrance.** | GENERATE (Ad Builder) | M |
 | 6 | Text-only | Borrow the component catalogue's proof for an unreviewed bundle | Sceptic who sees a new bundle with no reviews of its own | "Lots of people have used these" | **4.64 ★ — 295 reviews of the seven products inside.** | GENERATE (Ad Builder) | S |
-| 7 | Benefit callout | Answer "how long does $105 actually last" | Buyer doing value math after the price has landed | "Two months of everything" | **Sixty days of everything.** | COMPOSITE `coconut-lotion` + `coconut-soap` | S |
+| 7 | Benefit callout | Answer "how long does $87 actually last" | Buyer doing value math after the price has landed | "Two months of everything" | **60 days of everything.** | RENDER `frame-06-duration` | S |
 
 **Frame 1** spec: all seven products stood in a single row on a plain bathroom shelf, tallest to shortest — hand soap pump, lotion bottle, cream jar, deodorant, toothpaste tube, bar soap, lip balm — even spacing, one light direction, no props. Headline sits above the row, product row is the second read. Every unit shown must be a real variant from one real kit (do not mix Gentle and Fresh in one frame — that ships something nobody receives).
 
-**Frame 2** spec: the same seven, but arranged head-to-toe down the frame with a one-word label beside each — teeth, lips, underarms, hands, body wash, body, overnight. The bundle's name made literal. This is the frame that earns $105, because it converts "seven products" into "my whole shelf."
+**Frame 2** spec: the same seven, but arranged head-to-toe down the frame with a one-word label beside each — teeth, lips, underarms, hands, body wash, body, overnight. The bundle's name made literal. This is the frame that earns $87, because it converts "seven products" into "my whole shelf."
 
-**Frame 3** carries a real tension worth naming: `bundle-marketing-plan.md` rule 1 says bundles lead with duration or completeness and **never** with savings-vs-single, precisely to avoid inviting per-unit comparison. Frame 3 deliberately invites it — because $105 ÷ 7 = exactly $15.00, which lands on the measured ceiling rather than above it. It only works at exactly this price, and it is placed at slot 3 so completeness still leads. If that trade is unacceptable, cut frame 3 rather than soften it; a hedged version does no job at all.
+**Frame 3** carried a real tension worth naming: `bundle-marketing-plan.md` rule 1 says bundles lead with duration or completeness and **never** with savings-vs-single, precisely to avoid inviting per-unit comparison. Frame 3 deliberately invites it — and at $105 it did so at exactly $15.00 a product, landing *on* the measured ceiling rather than under it. §0 cut the frame when the bundle repriced, on the grounds that the arithmetic it was written around had died.
+
+> **Reversed 2026-08-02, and the reversal is the point.** $87 ÷ 7 = **$12.43**, which is
+> comfortably *under* the ceiling — so the thing that made the frame uncomfortable is the
+> thing that repricing removed. Both Clean Swaps ship this exact frame. It is rebuilt as a
+> RENDER with the figure divided at render time rather than typed, and `verify()` fails the
+> build if the per-unit price ever reaches $15: a version of this frame printing $15.50
+> would argue against itself, and now it cannot be built at all.
 
 **Frame 5** honesty note: depict the "before" side as generic unbranded conventional packaging with ingredient *categories* named. Do not render CeraVe, Vanicream or Cetaphil packaging, and do not claim those brands contain anything — the four absences claimed are our own formulation facts and are the only claims the frame makes.
 
@@ -275,7 +308,7 @@ The copy on this page can *say* "one of everything we make" but it cannot make t
 
 ### Blocked
 
-1. **BLOCKED-ON-THEME — per-bundle hero background.** `bg_image_desktop` / `bg_image_mobile` are section settings on the shared `bundle-landing` template, so all five landers currently render one `hero-desktop.webp`. Head-to-Toe wants a seven-product hero and the Reset wants a four-bottle hero; neither is possible until the section reads a product metafield (e.g. `bundle.hero_image`) with the section setting as fallback. **Count this as a Liquid change, not art direction.** Until it ships, every frame above must work inside the gallery alone.
+1. **~~BLOCKED-ON-THEME~~ — per-bundle hero background. Unblocked, not done.** This read "impossible until the section reads a product metafield"; PR #406 shipped exactly that, so the theme now takes `bundle.hero_desktop` / `hero_mobile` per product with the section setting as fallback. **Nothing is set for Head-to-Toe**, so the lander still renders the shared `hero-desktop.webp`. It is now art direction — a seven-product hero — rather than a Liquid change. Every frame above still works inside the gallery alone.
 2. **MUST-SHOOT (contingent) — Fresh-kit variant photography.** Audit the 46 component photos for primary images of Geranium Flower deodorant, Sweet Tangerine lip balm, Orange Zest hand soap and Tea Tree bar soap. Any variant missing one blocks frame 4 and renders a wrong "what's in the box" card. Shoot only the misses.
 
 ---
