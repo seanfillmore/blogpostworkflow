@@ -1,0 +1,10 @@
+{
+  "frame": "frame-07-one-oil-cleanswap-calm",
+  "product": "clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "One oil across all four products: Toothpaste \u2014 organic virgin coconut oil, Bar Soap \u2014 saponified organic virgin coconut oil, Body Lotion \u2014 organic virgin coconut oil, Deodorant \u2014 organic virgin coconut oil.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme gang_exist flag is sticky across the media loop, so an unscoped image after a scoped one is hidden for EVERY variant \u2014 universal frames must exist once per kit."
+}

@@ -1,0 +1,10 @@
+{
+  "frame": "frame-05-swapping-out-cleanswap-calm",
+  "product": "clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "What the Clean Swap takes out of your bathroom: sodium lauryl sulfate, aluminium salts, fluoride, parabens and synthetic fragrance. None appears in any of the four products.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme gang_exist flag is sticky across the media loop, so an unscoped image after a scoped one is hidden for EVERY variant \u2014 universal frames must exist once per kit."
+}

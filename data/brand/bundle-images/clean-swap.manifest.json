@@ -1,0 +1,77 @@
+{
+  "product": "clean-swap",
+  "images": [
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-01-routine-cleanswap-gentle.jpg",
+      "alt": "The Gentle kit as one morning routine \u2014 Toothpaste first thing, Bar Soap in the shower, Body Lotion straight after, Deodorant before you dress."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-01-routine-cleanswap-calm.jpg",
+      "alt": "The Calm kit as one morning routine \u2014 Toothpaste first thing, Bar Soap in the shower, Body Lotion straight after, Deodorant before you dress."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-01-routine-cleanswap-fresh.jpg",
+      "alt": "The Fresh kit as one morning routine \u2014 Toothpaste first thing, Bar Soap in the shower, Body Lotion straight after, Deodorant before you dress."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-02-kit-contents-cleanswap-gentle.jpg",
+      "alt": "Everything in the Gentle kit \u2014 1 Pure Unscented Body Lotion, 1 Calming Lavender Deodorant, 1 Fresh Mint Toothpaste, 1 Pure Unscented Bar Soap \u2014 4 full-size products in one box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-02-kit-contents-cleanswap-calm.jpg",
+      "alt": "Everything in the Calm kit \u2014 1 Pure Unscented Body Lotion, 1 Calming Lavender Deodorant, 1 Fresh Mint Toothpaste, 1 Calming Lavender Bar Soap \u2014 4 full-size products in one box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-02-kit-contents-cleanswap-fresh.jpg",
+      "alt": "Everything in the Fresh kit \u2014 1 Coconut Breeze Body Lotion, 1 Geranium Flower Deodorant, 1 Fresh Mint Toothpaste, 1 Nourishing Tea Tree Bar Soap \u2014 4 full-size products in one box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-03-per-item-price-cleanswap-gentle.jpg",
+      "alt": "$69 of products for $59 \u2014 four full-size items at $14.75 each."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-03-per-item-price-cleanswap-calm.jpg",
+      "alt": "$69 of products for $59 \u2014 four full-size items at $14.75 each."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-03-per-item-price-cleanswap-fresh.jpg",
+      "alt": "$69 of products for $59 \u2014 four full-size items at $14.75 each."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-07-one-oil-cleanswap-gentle.jpg",
+      "alt": "One oil across all four products: Toothpaste \u2014 organic virgin coconut oil, Bar Soap \u2014 saponified organic virgin coconut oil, Body Lotion \u2014 organic virgin coconut oil, Deodorant \u2014 organic virgin coconut oil."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-07-one-oil-cleanswap-calm.jpg",
+      "alt": "One oil across all four products: Toothpaste \u2014 organic virgin coconut oil, Bar Soap \u2014 saponified organic virgin coconut oil, Body Lotion \u2014 organic virgin coconut oil, Deodorant \u2014 organic virgin coconut oil."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-07-one-oil-cleanswap-fresh.jpg",
+      "alt": "One oil across all four products: Toothpaste \u2014 organic virgin coconut oil, Bar Soap \u2014 saponified organic virgin coconut oil, Body Lotion \u2014 organic virgin coconut oil, Deodorant \u2014 organic virgin coconut oil."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-05-swapping-out-cleanswap-gentle.jpg",
+      "alt": "What the Clean Swap takes out of your bathroom: sodium lauryl sulfate, aluminium salts, fluoride, parabens and synthetic fragrance. None appears in any of the four products."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-05-swapping-out-cleanswap-calm.jpg",
+      "alt": "What the Clean Swap takes out of your bathroom: sodium lauryl sulfate, aluminium salts, fluoride, parabens and synthetic fragrance. None appears in any of the four products."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-05-swapping-out-cleanswap-fresh.jpg",
+      "alt": "What the Clean Swap takes out of your bathroom: sodium lauryl sulfate, aluminium salts, fluoride, parabens and synthetic fragrance. None appears in any of the four products."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-08-reviews-cleanswap-gentle.jpg",
+      "alt": "4.64 out of 5 stars from 205 customer reviews of the four products inside the Clean Swap."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-08-reviews-cleanswap-calm.jpg",
+      "alt": "4.64 out of 5 stars from 205 customer reviews of the four products inside the Clean Swap."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap-59/data/brand/bundle-images/frame-08-reviews-cleanswap-fresh.jpg",
+      "alt": "4.64 out of 5 stars from 205 customer reviews of the four products inside the Clean Swap."
+    }
+  ]
+}

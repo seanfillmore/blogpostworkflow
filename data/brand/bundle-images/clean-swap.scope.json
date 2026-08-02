@@ -1,0 +1,25 @@
+{
+  "_comment": "Every media must appear here: gang_exist is sticky across the theme media loop, so an unscoped image after a scoped one is hidden for EVERY variant. Frames identical across kits are duplicated per kit.",
+  "product": "clean-swap",
+  "option": "Kit",
+  "scope": {
+    "frame-01-routine-cleanswap-gentle": "Gentle",
+    "frame-01-routine-cleanswap-calm": "Calm",
+    "frame-01-routine-cleanswap-fresh": "Fresh",
+    "frame-02-kit-contents-cleanswap-gentle": "Gentle",
+    "frame-02-kit-contents-cleanswap-calm": "Calm",
+    "frame-02-kit-contents-cleanswap-fresh": "Fresh",
+    "frame-03-per-item-price-cleanswap-gentle": "Gentle",
+    "frame-03-per-item-price-cleanswap-calm": "Calm",
+    "frame-03-per-item-price-cleanswap-fresh": "Fresh",
+    "frame-07-one-oil-cleanswap-gentle": "Gentle",
+    "frame-07-one-oil-cleanswap-calm": "Calm",
+    "frame-07-one-oil-cleanswap-fresh": "Fresh",
+    "frame-05-swapping-out-cleanswap-gentle": "Gentle",
+    "frame-05-swapping-out-cleanswap-calm": "Calm",
+    "frame-05-swapping-out-cleanswap-fresh": "Fresh",
+    "frame-08-reviews-cleanswap-gentle": "Gentle",
+    "frame-08-reviews-cleanswap-calm": "Calm",
+    "frame-08-reviews-cleanswap-fresh": "Fresh"
+  }
+}
