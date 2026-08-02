@@ -7,6 +7,8 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -73,3 +75,18 @@ test('one purchased lip balm is still four tubes, per the SKU title', () => {
 });
 
 console.log('✓ gift-box claim tests pass');
+
+test('the packaging frames have a box to draw', () => {
+  // Frames 6 and 7 have no subject at all without these. They were built from a
+  // supplier 3D visualization, not a photograph — README.md in that directory
+  // records the distinction and the basis for using them.
+  const { existsSync } = require('node:fs');
+  for (const f of ['mailer-10x8x4-open.png', 'mailer-10x8x4-closed.png', 'mailer-10x8x4-3d-source.pdf', 'README.md']) {
+    assert.ok(existsSync(join(ROOT, 'data', 'brand', 'packaging', f)), `data/brand/packaging/${f} is missing`);
+  }
+  // The README is what stops the next person compositing products into an empty
+  // render and calling it a photograph. Its absence is a real regression.
+  const readme = readFileSync(join(ROOT, 'data', 'brand', 'packaging', 'README.md'), 'utf8');
+  assert.match(readme, /renderings, not photographs/i, 'the packaging README no longer states these are renderings');
+  assert.match(readme, /Do not composite products into the open box/i, 'the packaging README lost its compositing warning');
+});

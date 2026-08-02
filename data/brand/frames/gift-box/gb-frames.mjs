@@ -380,3 +380,100 @@ export function reviewsFrame(kitName) {
 //    3's "Full sizes, not travel minis" make the same point about OUR products
 //    only, which needs no shelf.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Frames 6 and 7 — the packaging, unblocked 2026-08-02.
+//
+// These are media plan spec #1 and #2, which this file previously recorded as
+// MUST-SHOOT and unbuildable. Sean supplied the supplier's 3D visualization of
+// the 10x8x4 mailer and confirmed "that is what the gift box looks like", so the
+// box can now be shown.
+//
+// What that does and does not settle:
+//   · It settles what the box LOOKS like — the printing, the seals, the interior
+//     pattern, the proportions. That is spec #1's core job and all of spec #2's.
+//   · It does not settle that a physical box ARRIVES undamaged, which is the
+//     objection the review corpus actually raises. Only a photograph of a real
+//     delivered box answers that.
+//   · Spec #1 also wanted "all four products nested inside". That part is still
+//     unbuilt and deliberately so: the render shows an empty interior at a fixed
+//     perspective, and compositing bottles into it would manufacture a photograph
+//     of an arrangement nobody has assembled. See data/brand/packaging/README.md.
+//
+// So the copy on both frames claims only what a rendering can support: this is
+// the box, it is printed, it is not a poly bag.
+// ─────────────────────────────────────────────────────────────────────────────
+const OPEN = 'data/brand/packaging/mailer-10x8x4-open.png';
+const CLOSED = 'data/brand/packaging/mailer-10x8x4-closed.png';
+
+function packagingFrame({ kitName, name, asset, headline, sub, altText, boxH }) {
+  return {
+    product: 'gift-box',
+    name: `${name}-${kitName.toLowerCase()}`,
+    width: 2048,
+    height: 2048,
+
+    verify(ctx) {
+      assertKit(ctx, kitName);
+      // The asset must exist; ctx.asset() throws if it does not, but calling it
+      // in verify() means a missing box fails the BUILD rather than rendering a
+      // frame whose entire subject is absent.
+      ctx.asset(asset);
+      assertNoUnscentedClaim(`${headline} ${sub} ${altText}`);
+      // Neither frame may imply the box is photographed or that it holds
+      // anything: the render is empty and is a render.
+      for (const word of ['photo', 'photograph', 'packed', 'nested', 'inside']) {
+        if (new RegExp(`\\b${word}`, 'i').test(`${headline} ${sub}`)) {
+          throw new Error(`packaging frame copy says "${word}" — the asset is an empty 3D render, not a photograph of a packed box`);
+        }
+      }
+    },
+
+    alt: () => altWithin512(altText),
+
+    html(ctx) {
+      return `<div style="width:100%;height:100%;background:${PAPER};
+        display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+        padding:104px 90px 96px;box-sizing:border-box;text-align:center;">
+        <div>
+          ${eyebrow('Every Gift Box')}
+          <div style="font-family:Cabin;font-weight:700;font-size:130px;line-height:1.03;
+                      color:${INK};letter-spacing:-.026em;margin-top:24px;">${headline}</div>
+        </div>
+        <div style="background:${WASH};border-radius:36px;padding:64px 72px;display:flex;
+                    align-items:center;justify-content:center;">
+          <img src="${ctx.asset(asset)}" style="height:${boxH}px;width:auto;display:block;
+            filter:drop-shadow(0 26px 40px rgba(26,27,24,.16)) drop-shadow(0 4px 8px rgba(26,27,24,.10));">
+        </div>
+        <div>
+          <div style="width:120px;height:6px;background:${GREEN};border-radius:3px;margin:0 auto 28px;"></div>
+          <div style="font-family:Cabin;font-weight:700;font-size:60px;color:${INK};">${sub}</div>
+          <div style="font-family:Outfit;font-weight:400;font-size:40px;color:${INK};opacity:.6;margin-top:14px;">
+            ${money(PRICE)}, shipped free
+          </div>
+        </div>
+      </div>`;
+    },
+  };
+}
+
+export const boxOpenFrame = (kitName) => packagingFrame({
+  kitName,
+  name: 'frame-06-box-open-gb',
+  asset: OPEN,
+  headline: 'Arrives in this.',
+  sub: 'A printed box, not a poly bag.',
+  altText: 'The Real Skin Care gift mailer shown open — printed inside and out, '
+    + 'with "Real Ingredients for real people" on the lid and realskincare.com on the front panel.',
+  boxH: 1180,
+});
+
+export const boxClosedFrame = (kitName) => packagingFrame({
+  kitName,
+  name: 'frame-07-box-closed-gb',
+  asset: CLOSED,
+  headline: "You don't have to wrap it.",
+  sub: 'The box is the wrapping.',
+  altText: 'The closed Real Skin Care gift mailer, branded on the lid — the Gift Box needs no further wrapping to be given.',
+  boxH: 1000,
+});

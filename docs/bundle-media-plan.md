@@ -568,15 +568,31 @@ Component photo library available to reuse or composite from: `coconut-lotion` (
 > stack must equal compare-at, and the price must clear the $45 free-shipping floor before the
 > copy may say "ships free").
 >
-> **⚠️ The two frames that carry this bundle's actual argument are still unbuilt.** Spec #1
-> ("Arrives in this.") and #2 ("You don't have to wrap it.") are MUST-SHOOT: the whole $62 rests
-> on the box arriving giftable, that is a photographic claim, and **no photograph of a production
-> Gift Box exists** in this repo or on the product. A composite of four cut-out products cannot
-> make it, and generating a box would invent packaging we would then have to ship.
+> **✅ UNBLOCKED the same day.** Sean supplied the supplier's 3D visualization of the
+> 10×8×4in mailer (`data/brand/packaging/mailer-10x8x4-3d-source.pdf`) and confirmed *"that
+> is what the gift box looks like."* Spec **#1 "Arrives in this."** and **#2 "You don't have
+> to wrap it."** are built and live as frames 6 and 7, and the open box now leads the gallery
+> and is the `og:image`. **This was the oldest blocker in this document; it is closed.**
 >
-> **This shoot is the critical path for Q4 gifting and it is now the oldest blocker in the plan.**
-> The gate below says mid-September. From 2026-08-02 that is about six weeks of lead time, and it
-> is the only item in this document that cannot be produced from existing assets. Book it.
+> Both boxes were lifted off the flat 216-grey backdrop with `scripts/cut-component.mjs` —
+> the same flood fill the product cutouts use, and for the same reason: the box's interior
+> pattern is 217 grey, one step from the backdrop, so no colour threshold separates them,
+> but the pattern is enclosed by the box and therefore unreachable from a corner. Nothing is
+> redrawn.
+>
+> **What it settles and what it does not.** It settles what the box *looks* like — printing,
+> seals, interior pattern, proportions. It does **not** settle that a physical box *arrives*
+> undamaged, which is the objection the review corpus actually raises ("wrapped in a thin
+> tissue paper which was torn in a few places", 5 mentions). A rendering cannot answer that.
+>
+> **Spec #1's "all four products nested inside" is still unbuilt, deliberately.** The render
+> shows an empty interior at a fixed perspective; compositing bottles into it would
+> manufacture a photograph of an arrangement nobody has assembled. Frame 6 therefore claims
+> only what a rendering supports — *"A printed box, not a poly bag"* — and `verify()` rejects
+> the words photo/photograph/packed/nested/inside in either packaging frame's copy.
+>
+> **The real shoot is no longer critical path, but it is still the upgrade**: a photograph of
+> a delivered box, contents nested, is the one asset that answers the damage objection.
 >
 > **Spec #6 ("Full-size. Not sample-size.") deliberately not built.** The plan's own note says to
 > "verify the mini-size premise on a shelf before shipping the frame," and that has not happened.
