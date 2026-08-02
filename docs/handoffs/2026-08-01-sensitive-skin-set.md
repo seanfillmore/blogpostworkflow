@@ -85,6 +85,33 @@ Retention is the documented constraint on this business (18% repeat rate), and t
 exists precisely to buy a subscription start. Surfacing it in the gallery is the highest
 revenue-per-effort item in this bundle, ahead of any frame in the specced stack.
 
+## 🚩 Blocker for frames 2 and 4 — the PDP names three ingredients that are not in the set
+
+Found 2026-08-01 while wiring frame 6's `verify()`. The live `descriptionHtml` for
+`sensitive-skin-starter-set` opens:
+
+> "Three ingredients — **aloe vera, oat extract, chamomile** — make this the most effective
+> moisturizer for dry skin that sensitive skin can actually tolerate."
+
+Against `config/ingredients.json`, the Body Lotion and Body Cream contain **none of the
+three**. The lotion's base is purified spring water, organic virgin coconut oil, organic
+jojoba, organic plant-based emulsifying wax, organic grapefruit seed extract and organic
+red palm oil. The only chamomile anywhere in the config is *organic essential oil of roman
+chamomile*, and it appears solely in the **Lavender & Rose** variation — a scented one.
+This set is **Pure Unscented**, which the config defines as having no essential oils at
+all, so that route makes the claim worse rather than better.
+
+**Why this blocks frames 2 and 4 specifically.** Frame 2 is specced to prove
+"fragrance-free means no masking fragrance either" and frame 4 to print an ingredient
+count. Both make an ingredient claim on a page whose own copy currently contradicts the
+ingredient file, and shipping a frame that says "eight ingredients" beside body copy
+naming three different ones would put the contradiction *inside the gallery*.
+
+It is the same class of failure as the media plan's §2 blocking issue ("no palm oil" /
+"vegan" on bundles that contain both) and probably wants resolving in one pass. **Someone
+has to decide which is right — the copy or the config — before frames 2 and 4 are built.**
+Frames 1, 3, 5 and 6 make no ingredient claim and are unaffected.
+
 ## The frame stack, with corrections
 
 §6 specs five frames. Three need amending in light of what shipped on the Reset, and the
