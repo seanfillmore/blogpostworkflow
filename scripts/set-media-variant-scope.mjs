@@ -227,6 +227,35 @@ if (firstScoped !== -1 && stranded.length) {
   process.exit(1);
 }
 
+// ── The lead media decides whether the MAIN image ever changes ──────────────
+// The gallery shows the first media that is not hidden. An unscoped media is
+// never hidden, so if the first media is unscoped it is the main image for every
+// variant — the buyer changes their selection and the big picture does not move.
+//
+// This is in direct tension with the guard above, and the tension is real rather
+// than a bug in either: an unscoped media is only SAFE first, but a media that is
+// first and unscoped PINS the main image. On a multi-variant product you
+// therefore have to choose, and scoping everything is almost always the answer —
+// duplicating a universal frame once per option value costs three identical
+// JPEGs.
+//
+// The Hand Soap Set shipped the other way round and Sean caught it on the
+// storefront: "the main image does not change no matter what scent or
+// configuration you choose." Warned rather than refused, because a fixed lead
+// image is legitimate on a single-variant product or where the lead is
+// deliberately universal.
+if (order.length && Object.keys(resolved).length) {
+  const firstName = decodeURIComponent(order[0].image.url.split('/').pop().split('?')[0]);
+  const firstIsScoped = Object.keys(resolved).some((frag) => firstName.includes(frag));
+  const variantCount = product.options.reduce((n, o) => n * o.values.length, 1);
+  if (!firstIsScoped && variantCount > 1) {
+    console.warn(`\n⚠️  The first media (${firstName}) is UNSCOPED, so it shows for all ${variantCount} variants`);
+    console.warn('   and is therefore the main image for all of them — the big picture will not change when');
+    console.warn('   the buyer picks an option. If it should, scope every media and lead with one scoped to');
+    console.warn('   whichever option changes how the product looks.');
+  }
+}
+
 if (!updates.length) { console.log('\nnothing to change.'); process.exit(0); }
 if (!APPLY) { console.log(`\n${updates.length} to update — dry run, pass --apply`); process.exit(0); }
 

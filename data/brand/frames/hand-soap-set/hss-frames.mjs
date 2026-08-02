@@ -5,10 +5,27 @@
  * two options, one scoping slot per media, so the count and the scent are
  * carried by different frames and the two unscoped frames must sort first.
  *
- *   frame-01-range      unscoped   the four scents, one shot
- *   frame-02-reviews    unscoped   catalogue proof
- *   frame-03-config-*   Configuration x3   what you get, and what it costs
- *   frame-04-scent-*    Scent x5           the bottle, and what is in it
+ *   frame-01-scent-*    Scent x5           the bottle, and what is in it
+ *   frame-02-config-*   Configuration x3   what you get, and what it costs
+ *   frame-03-range-*    Configuration x3   the four scents, one shot
+ *   frame-04-reviews-*  Configuration x3   catalogue proof
+ *
+ * EVERY media is scoped, and that is deliberate. The first version left range
+ * and reviews unscoped and sorted them first, which is the only safe place for
+ * an unscoped media — but it also meant the MAIN image was that same unscoped
+ * frame for all fifteen variants and never changed when the buyer chose. Sean
+ * caught it: "the main image does not change no matter what scent or
+ * configuration you choose."
+ *
+ * The lead media is what the gallery shows, so the lead media has to be scoped.
+ * Scoping everything removes the sticky-gang_exist hazard entirely, at the cost
+ * of duplicating the two universal frames once per Configuration — three copies
+ * of an identical JPEG, which is the cheapest thing in this trade.
+ *
+ * The scent frames lead because Scent is the choice that changes what the
+ * product LOOKS like. A media scopes to one option, so the main image can track
+ * exactly one of the two; Configuration changes the count and the price, and
+ * frame 2 sits immediately behind it carrying both.
  */
 
 import {
@@ -28,11 +45,11 @@ const eyebrow = (t) => `<div style="font-family:Outfit;font-weight:300;font-size
 // og:image, which is right — this product's page currently has no images at all,
 // so the first thing it needs to say is what the product physically is.
 // ─────────────────────────────────────────────────────────────────────────────
-export function rangeFrame() {
+export function rangeFrame(configName) {
   const PX_PER_CM = 30;
   return {
     product: 'hand-soap-set',
-    name: 'frame-01-range-hss',
+    name: `frame-03-range-${configName.toLowerCase().replace(/[^a-z0-9]+/g, '')}-hss`,
     width: 2048,
     height: 2048,
 
@@ -92,10 +109,10 @@ function star(i, pct) {
     <path d="${d}" fill="${INK}" opacity=".16"/><path d="${d}" fill="${INK}" clip-path="url(#hs${i})"/></svg>`;
 }
 
-export function reviewsFrame() {
+export function reviewsFrame(configName) {
   return {
     product: 'hand-soap-set',
-    name: 'frame-02-reviews-hss',
+    name: `frame-04-reviews-${configName.toLowerCase().replace(/[^a-z0-9]+/g, '')}-hss`,
     width: 2048,
     height: 2048,
 
@@ -148,7 +165,7 @@ export function configFrame(configName) {
 
   return {
     product: 'hand-soap-set',
-    name: `frame-03-config-${configName.toLowerCase().replace(/[^a-z0-9]+/g, '')}-hss`,
+    name: `frame-02-config-${configName.toLowerCase().replace(/[^a-z0-9]+/g, '')}-hss`,
     width: 2048,
     height: 2048,
 
@@ -209,7 +226,7 @@ export function scentFrame(scent) {
   const isVariety = scent === 'Variety';
   return {
     product: 'hand-soap-set',
-    name: `frame-04-scent-${scent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-hss`,
+    name: `frame-01-scent-${scent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-hss`,
     width: 2048,
     height: 2048,
 

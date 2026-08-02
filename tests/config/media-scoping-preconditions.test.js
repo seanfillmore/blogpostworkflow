@@ -50,3 +50,25 @@ test('the two-option scope form is still supported', () => {
 });
 
 console.log('✓ media-scoping precondition tests pass');
+
+test('the scope script warns when an unscoped lead media pins the main image', () => {
+  // The gallery shows the first media that is not hidden, and an unscoped media
+  // is never hidden — so an unscoped FIRST media is the main image for every
+  // variant. That is in tension with the ordering guard (unscoped is only safe
+  // first), and on a multi-variant product the resolution is to scope everything.
+  assert.match(script, /firstIsScoped/, 'the pinned-main-image warning is gone');
+  assert.match(script, /variantCount/, 'the warning must only fire on multi-variant products');
+});
+
+test('every Hand Soap Set media is scoped, and a Scent frame leads', () => {
+  const cfg = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'bundle-images', 'hand-soap-set.scope.json'), 'utf8'));
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'bundle-images', 'hand-soap-set.manifest.json'), 'utf8'));
+  const names = manifest.images.map((i) => i.file.split('/').pop().replace('.jpg', ''));
+  for (const n of names) {
+    assert.ok(Object.keys(cfg.scope).some((f) => n.includes(f)),
+      `${n} is unscoped — on a 15-variant product every media must be scoped or it shows for all of them`);
+  }
+  assert.match(names[0], /^frame-01-scent-/,
+    'the lead media must be Scent-scoped, or the main image stops tracking the buyer\'s choice');
+  assert.equal(cfg.scope[names[0]].option, 'Scent');
+});

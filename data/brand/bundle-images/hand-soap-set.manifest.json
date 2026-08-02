@@ -2,44 +2,60 @@
   "product": "hand-soap-set",
   "images": [
     {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-01-range-hss.jpg",
-      "alt": "The four Real Skin Care foaming hand soap scents shown together — Calming Lavender, Orange Zest, Coconut Breeze, Pure Unscented — available singly or as a Variety set."
-    },
-    {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-02-reviews-hss.jpg",
-      "alt": "4.81 out of 5 stars from 138 customer reviews of the foaming hand soap in this set."
-    },
-    {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-03-config-4pumps-hss.jpg",
-      "alt": "The 4 pumps Hand Soap Set — 4 full-size foaming hand soap pumps, $44 against $52 bought separately."
-    },
-    {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-03-config-3pumpsbodylotion-hss.jpg",
-      "alt": "The 3 pumps + body lotion Hand Soap Set — 3 full-size foaming hand soap pumps and 1 body lotion, $59 against $69 bought separately."
-    },
-    {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-03-config-4pumpsbodylotion-hss.jpg",
-      "alt": "The 4 pumps + body lotion Hand Soap Set — 4 full-size foaming hand soap pumps and 1 body lotion, $72 against $82 bought separately."
-    },
-    {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-04-scent-variety-hss.jpg",
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-01-scent-variety-hss.jpg",
       "alt": "The Variety Hand Soap Set — one pump of each scent: Calming Lavender, Orange Zest, Coconut Breeze, Pure Unscented."
     },
     {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-04-scent-calming-lavender-hss.jpg",
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-01-scent-calming-lavender-hss.jpg",
       "alt": "Real Skin Care Calming Lavender foaming hand soap — saponified organic virgin coconut oil, scented only with organic essential oil of lavender."
     },
     {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-04-scent-orange-zest-hss.jpg",
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-01-scent-orange-zest-hss.jpg",
       "alt": "Real Skin Care Orange Zest foaming hand soap — saponified organic virgin coconut oil, scented only with organic essential oil of orange, organic essential oil of bergamot, organic essential oil of spearmint, organic essential oil of lemon, organic essential oil of grapefruit."
     },
     {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-04-scent-coconut-breeze-hss.jpg",
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-01-scent-coconut-breeze-hss.jpg",
       "alt": "Real Skin Care Coconut Breeze foaming hand soap — saponified organic virgin coconut oil, scented only with organic coconut oil extract."
     },
     {
-      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hand-soap/data/brand/bundle-images/frame-04-scent-pure-unscented-hss.jpg",
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-01-scent-pure-unscented-hss.jpg",
       "alt": "Real Skin Care Pure Unscented foaming hand soap — saponified organic virgin coconut oil, and nothing else."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-02-config-4pumps-hss.jpg",
+      "alt": "The 4 pumps Hand Soap Set — 4 full-size foaming hand soap pumps, $44 against $52 bought separately."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-02-config-3pumpsbodylotion-hss.jpg",
+      "alt": "The 3 pumps + body lotion Hand Soap Set — 3 full-size foaming hand soap pumps and 1 body lotion, $59 against $69 bought separately."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-02-config-4pumpsbodylotion-hss.jpg",
+      "alt": "The 4 pumps + body lotion Hand Soap Set — 4 full-size foaming hand soap pumps and 1 body lotion, $72 against $82 bought separately."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-03-range-4pumps-hss.jpg",
+      "alt": "The four Real Skin Care foaming hand soap scents shown together — Calming Lavender, Orange Zest, Coconut Breeze, Pure Unscented — available singly or as a Variety set."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-03-range-3pumpsbodylotion-hss.jpg",
+      "alt": "The four Real Skin Care foaming hand soap scents shown together — Calming Lavender, Orange Zest, Coconut Breeze, Pure Unscented — available singly or as a Variety set."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-03-range-4pumpsbodylotion-hss.jpg",
+      "alt": "The four Real Skin Care foaming hand soap scents shown together — Calming Lavender, Orange Zest, Coconut Breeze, Pure Unscented — available singly or as a Variety set."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-04-reviews-4pumps-hss.jpg",
+      "alt": "4.81 out of 5 stars from 138 customer reviews of the foaming hand soap in this set."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-04-reviews-3pumpsbodylotion-hss.jpg",
+      "alt": "4.81 out of 5 stars from 138 customer reviews of the foaming hand soap in this set."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/hss-main/data/brand/bundle-images/frame-04-reviews-4pumpsbodylotion-hss.jpg",
+      "alt": "4.81 out of 5 stars from 138 customer reviews of the foaming hand soap in this set."
     }
   ]
 }
