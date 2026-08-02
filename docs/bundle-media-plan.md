@@ -775,7 +775,23 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 
 ### Hand Soap Set
 
-> **✅ SHIPPED 2026-08-02.** Thirteen media, live and verified across all **12** variants. The
+> **⏸️ SET TO DRAFT 2026-08-02.** Sean: *"Set the hand soap set to Draft as that page is not
+> built out."* The product now 404s and has dropped out of its five collections. No article,
+> page or menu linked to it, so nothing broke. Backup of the prior status is in
+> `data/backups/products/`.
+>
+> **What "built out" means here, concretely.** It is the only bundle on a plain PDP: no
+> per-variant value panel, no "What's in the box" grid, no lander copy. The gallery below is
+> the *only* thing on the page that says what you get, which is why its configuration frames
+> had to carry the price. Publishing it again should mean moving it to `bundle-landing` and
+> authoring the `bundle_lander` metaobject (heading, subheading, CTA, bullets, buybox
+> bullets, FAQ, tabs) — after which the lander's metafield-driven panel and grid handle all
+> 12 variants exactly, and the gang convention stops carrying the contents burden at all.
+>
+> The gallery work below is not wasted by the draft: the frames, the two-option scoping, the
+> cutouts and the template all survive and are what a relaunch starts from.
+>
+> **✅ Gallery SHIPPED 2026-08-02** (now on a draft product). Thirteen media, verified across all **12** variants. The
 > product had **zero** images and null SEO title/description before this.
 >
 > **The two-option problem, and the way out.** This is the only bundle with two options —
@@ -795,9 +811,13 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 > typographic — a Configuration-scoped frame is shown for all five of its scents, so drawing
 > a Pure Unscented pump there would show the wrong bottle to four buyers in five.
 >
-> ### Variety was removed, 2026-08-02
+> ### Variety was removed, 2026-08-02 — from THIS bundle only
 >
-> Sean: *"Actually, don't offer variety at all."* The three Variety variants are deleted
+> Sean: *"Actually, don't offer variety at all."* And on why it stays everywhere else:
+> *"Variety pack makes sense for the other products. When buying hand soap for your house,
+> you are most likely going to want the same scent in multiple rooms."* So the Bar Soap
+> 4-Pack, Deodorant 4-Pack and Toothpaste 3-Pack keep their "Variety — one of each" option;
+> hand soap is the one where a mixed pack fights the use case. The three Variety variants are deleted
 > (15 → 12) and Shopify dropped the value from the Scent option. Zero orders had ever
 > referenced them across 1,259 scanned, and the 104 units of notional inventory were
 > released with them.
