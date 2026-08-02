@@ -1,0 +1,9 @@
+{
+  "frame": "frame-03-per-product-price-90day",
+  "product": "90-day-clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "$207 of products for $144 — twelve full-size items at $12 each.",
+  "metafieldsRead": {}
+}
