@@ -24,7 +24,13 @@
  * Dry-run by default; pass --apply to push.
  */
 
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { shopifyGraphQL, getMainThemeId, getThemeAsset, updateThemeAsset } from '../lib/shopify.js';
+import { assertDurationClaim } from '../lib/supply-duration.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const handle = process.argv[2];
 const APPLY = process.argv.includes('--apply');
@@ -46,14 +52,28 @@ const mf = Object.fromEntries(p.metafields.nodes.map(m => [m.key, m.value]));
 if (!mf.value_stack) { console.error(`${handle} has no bundle.value_stack metafield — nothing to generate from`); process.exit(1); }
 
 const stack = JSON.parse(mf.value_stack);
-const days = Number(mf.duration_days || 90);
+// `|| 90` used to sit here, so a bundle with no duration data printed "duration
+// 90d" as confidently as one with. It never reached the page — the value is only
+// logged — but an operator-facing number that is invented is still how a wrong
+// figure enters the world: the Head-to-Toe frame that claimed 60 days was built
+// by trusting a stated duration nobody had checked. Absent data yields absent
+// output here for the same reason the template writes `{% if days %}`.
+const days = mf.duration_days === undefined ? null : Number(mf.duration_days);
 const price = Math.round(Number(p.priceRangeV2.minVariantPrice.amount));
 const total = stack.reduce((s, r) => s + Number(r.amount), 0);
 const savings = total - price;
 
 console.log(`${p.title}  (template: ${p.templateSuffix})`);
 console.log(`  stack: ${stack.map(r => r.label + ' $' + r.amount).join(' + ')}`);
-console.log(`  total $${total}  price $${price}  savings $${savings}  duration ${days}d\n`);
+console.log(`  total $${total}  price $${price}  savings $${savings}  duration ${days === null ? 'not set' : `${days}d`}\n`);
+
+// A stated duration is a claim about how long the box lasts, so it is checked
+// against measured consumption rather than taken at face value.
+if (days !== null) {
+  const bundle = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json'), 'utf8'))
+    .bundles.find((b) => b.handle === handle);
+  if (bundle?.variants?.[0]?.components) assertDurationClaim(days, bundle.variants[0].components, p.title);
+}
 
 // GUARD: these settings live in the TEMPLATE, so if more than one product uses
 // that template they cannot each hold their own prices. Writing here would push

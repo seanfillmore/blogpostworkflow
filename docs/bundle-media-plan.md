@@ -271,6 +271,22 @@ Found while specifying the stacks. These are defects in the *existing* library t
 > was 60. **A metafield is not evidence.** `lib/supply-duration.js` is now the evidence, and
 > it rejects the claim that shipped while still accepting the 90-Day's genuine 90.
 >
+> **The frame was not the only surface saying it, and not the first.** The lander's
+> value-stack panel renders `{% if days %}Everything in your {{ days }}-day box{% endif %}`,
+> so the page had been reading **"Everything in your 60-day box"** in body copy since
+> `duration_days` was first set — before any frame existed. Captured in the page HTML fetched
+> before the metafield was deleted; it now reads "Everything in your box", while the 90-Day
+> still correctly reads "Everything in your 90-day box". **The image amplified a claim the
+> page was already making**, which is worth knowing: an image is the loudest place a bad
+> figure lands, not the place it starts.
+>
+> One more input fixed while tracing it: `scripts/build-bundle-landing.mjs` read
+> `Number(mf.duration_days || 90)`, so a bundle with no duration data printed "duration 90d"
+> as confidently as one with. That value only ever reached a console line, never the page —
+> but an invented operator-facing number is exactly how a wrong figure gets trusted and
+> re-published, which is the whole mechanism above. It now prints "not set", and validates
+> against `lib/supply-duration.js` when a duration *is* set.
+>
 > It was **not rebuilt at 28 days**, because the honest number showed the frame was
 > answering the wrong question. This bundle's own personas here are the discovery shopper
 > and the gifter; neither buys on supply duration, and "$87 for four weeks" argues against a
