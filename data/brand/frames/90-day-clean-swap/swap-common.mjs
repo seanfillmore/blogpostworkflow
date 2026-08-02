@@ -38,13 +38,22 @@ export const money = (n) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`)
 export const APPARENT_CM = { lotion: 17.2, deodorant: 13.0, toothpaste: 15.5, soap: 8.9 };
 export const scaled = (key, pxPerCm) => Math.round(APPARENT_CM[key] * pxPerCm);
 
-/** Natural pixel dimensions of each cutout, so aspect is never guessed. */
+/**
+ * Natural pixel dimensions of each cutout, so aspect is never guessed.
+ *
+ * Each bottle is cut at its CONTACT LINE — the waist in the silhouette where the
+ * product meets its own reflection, found by scanning row widths from the base
+ * down: the outline narrows to a minimum there and widens again into the mirror
+ * image. Cutting at that row keeps the base's real curve and rounded corners.
+ * Cutting anywhere below it drags in the contact shadow, which renders as a flat
+ * grey band and reads as though the bottle were sliced off square.
+ */
 export const NATURAL = {
-  'lotion-pure-unscented': { w: 530, h: 1850 },
-  'lotion-coconut-breeze': { w: 530, h: 1850 },
-  'deodorant-calming-lavender': { w: 609, h: 1700 },
-  'deodorant-geranium-flower': { w: 609, h: 1700 },
-  'toothpaste-fresh-mint': { w: 501, h: 1865 },
+  'lotion-pure-unscented': { w: 530, h: 1815 },
+  'lotion-coconut-breeze': { w: 530, h: 1811 },
+  'deodorant-calming-lavender': { w: 609, h: 1716 },
+  'deodorant-geranium-flower': { w: 609, h: 1716 },
+  'toothpaste-fresh-mint': { w: 501, h: 1830 },
   'soap-pure-unscented': { w: 1401, h: 1401 },
   'soap-calming-lavender': { w: 1401, h: 1401 },
   'soap-nourishing-tea-tree': { w: 1401, h: 1401 },
