@@ -751,12 +751,26 @@ No rotation format is omitted — all seven are covered, with educational infogr
 
 ### Sensitive Skin Set — $46.80
 
-> **🚨 The one live image misrepresents the product. Read before building.** `v20.webp`
-> (2048², no alt) is AI-generated and was never audited. It shows a **hand & body soap
-> and four lip balms** alongside the lotion and cream — the set contains **two items**.
-> Both volumes are fabricated: the lotion reads `0 fl. oz · 300ml` against a real
-> 8 fl. oz · 236ml, the cream `4 fl. oz · 150ml` against a real 118ml. Replace it rather
-> than adding alt text to it, and never use it as a generation reference.
+> **🚨 The one live image has fabricated labels. Read before building.** `v20.webp`
+> (2048², no alt) is AI-generated and was never audited.
+>
+> **Its composition is right.** The **hand & body soap and lip balm four-pack** beside the
+> lotion and cream are the **free gift with a first subscription** — the PDP says
+> "Subscribe and your first order ships with a free Pure Unscented Lip Balm and a free
+> Unscented Bar Soap", and `coconut-oil-lip-balm` is itself a four-pack SKU, so four tubes
+> is one gift item. Confirmed by Sean 2026-08-01. An earlier draft of this note called
+> these "products not in the box"; that was wrong and is retracted.
+>
+> **Every printed figure on it is fabricated.** The lotion reads `0 fl. oz · 300ml`
+> against a real 8 fl. oz · 236ml; the cream `4 fl. oz · 150ml` against a real 118ml; the
+> soap's net weight is `2 Lin · 8.ia` against a real 3.4 oz · 84g, under a made-up
+> barcode; all four lip balms read **"moisturizing broom"**. Replace it rather than adding
+> alt text, and never use it as a reference **for label text** — its staging is fine to
+> reference.
+>
+> **The gift is a conversion finding, not just a caption.** It is $26 at retail on a
+> $46.80 order and appears on the PDP exactly once, inside a collapsed accordion. It gets
+> its own frame — see frame 6, added to the stack below.
 >
 > **Corrections to the stack below**, from what shipped on the Reset 2026-08-01:
 > frame 1 is a **bottle and a jar**, not "two jars"; frame 4 must **not name CeraVe or
@@ -780,6 +794,11 @@ Its buyer is problem-aware and cautious: fragrance-free is the one attribute the
 | 3 | Benefit callout | Separate the two jars' jobs — lotion daily, cream overnight | Buyer who doesn't know why they need both | Day / night split | *Day lotion. Night cream.* | COMPOSITE `coconut-lotion` + `coconut-moisturizer` | S |
 | 4 | Us-vs-them | Beat CeraVe/Vanicream on ingredient count, not on claims | Comparison shopper cross-checking three tabs | Two columns, ours shorter | *Nine ingredients. Theirs has thirty.* | GENERATE | M |
 | 5 | Text-only | Carry the real proof — 135 component reviews at 4.84 | Buyer wanting reassurance before checkout | A rating and a number | *4.84 from 135 reviews of the products inside* | GENERATE | S |
+| **6** | Grid/multi-SKU | Make the first-subscription gift visible instead of leaving it in an accordion | Buyer weighing one-time vs subscribe | Four items, two of them flagged free | *Subscribe: your first box adds $26 free.* | COMPOSITE — re-plate of `v20.webp`'s staging with honest labels | S |
+
+⚠️ **Frame 6 must state the condition on the image.** The gift is contingent on starting a
+subscription; a frame that shows four items without the word *subscribe* would misrepresent
+the $46.80 one-time purchase. `verify()` must fail the build if the headline omits it.
 
 **Gaps:** no transformation frame. A truthful before/after for a fragrance-free moisturiser needs real customer photography over weeks, and inventing one would imply a dermatological outcome these are not entitled to claim.
 
