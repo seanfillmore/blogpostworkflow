@@ -108,6 +108,56 @@ export function setComponents() {
 }
 
 /**
+ * The real, full ingredient list for one of the set's products, from
+ * config/ingredients.json. Both products in this set are Pure Unscented, whose
+ * `essential_oils` is an empty array — which is the fact frame 2 is built on.
+ */
+export function ingredientsFor(productKey, variantName = 'Pure Unscented') {
+  const ing = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+  const p = ing[productKey];
+  if (!p) throw new Error(`config/ingredients.json has no "${productKey}"`);
+  const v = p.variations.find((x) => x.name === variantName);
+  if (!v) throw new Error(`config/ingredients.json has no "${variantName}" variation of ${productKey}`);
+  return [...p.base_ingredients, ...(v.essential_oils ?? [])];
+}
+
+/**
+ * The unique ingredients across the whole set — the number frame 4 prints.
+ *
+ * It is EIGHT: the lotion's six and the cream's seven share five, the lotion
+ * alone brings jojoba, and the cream alone brings palm stearic and beeswax. The
+ * media plan originally specced "nine", from a stale config that listed the
+ * cream's grapefruit seed extract without "organic" and so counted it twice.
+ * Derived here rather than typed, so it cannot go stale the same way again.
+ */
+export function setIngredientUnion() {
+  const seen = new Set();
+  const out = [];
+  for (const key of ['lotion', 'cream']) {
+    for (const i of ingredientsFor(key)) {
+      const k = i.toLowerCase().trim();
+      if (!seen.has(k)) { seen.add(k); out.push(i); }
+    }
+  }
+  return out;
+}
+
+/**
+ * The essential oils declared for one variant. Pure Unscented is defined by this
+ * being empty, which is the fact frame 2's headline rests on — so it is read
+ * rather than assumed.
+ */
+export function essentialOilsFor(productKey, variantName = 'Pure Unscented') {
+  const ing = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+  const v = ing[productKey]?.variations?.find((x) => x.name === variantName);
+  if (!v) throw new Error(`config/ingredients.json has no "${variantName}" variation of ${productKey}`);
+  return v.essential_oils ?? [];
+}
+
+/** Anything that would make "fragrance-free" untrue if it appeared in a list. */
+export const FRAGRANCE_TERMS = /fragrance|parfum|perfume|aroma|essential oil/i;
+
+/**
  * Shared guard: the set still costs what the frames print, and still contains
  * exactly one lotion and one cream. A repack is the thing that would quietly
  * falsify every frame in this directory at once, so each one asserts it.

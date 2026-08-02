@@ -201,6 +201,26 @@ await browser.close();
 
 mkdirSync(outDir, { recursive: true });
 const outFile = join(outDir, `${frame.name}.jpg`);
+const outProvenance = join(outDir, `${frame.name}.provenance.json`);
+
+/**
+ * Frame names share one flat output directory, so two products can silently
+ * claim the same file. That is not hypothetical: the Sensitive Skin Set's review
+ * frame was first called `frame-05-reviews`, which is also the Reset's, and
+ * rendering it overwrote a shipped asset with no warning at all — it surfaced
+ * only because git reported the file as modified rather than added.
+ *
+ * A name is allowed to be reused across renders of the SAME product (that is how
+ * a frame is re-rendered); it is never allowed to cross products.
+ */
+if (existsSync(outProvenance)) {
+  const prior = JSON.parse(readFileSync(outProvenance, 'utf8'));
+  if (prior.product && prior.product !== frame.product) {
+    throw new Error(
+      `${frame.name}.jpg already belongs to "${prior.product}" — this frame is for "${frame.product}". `
+      + `Two frames cannot share an output name. Rename this frame before rendering.`);
+  }
+}
 // Same treatment as the shipped heroes: quality 85, full resolution. Shopify
 // derives its own responsive sizes and WebP/AVIF from the original, so
 // downscaling here would only discard zoom detail.
