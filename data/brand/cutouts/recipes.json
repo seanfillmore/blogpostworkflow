@@ -83,6 +83,26 @@
       "note": "Gift Box Calm kit. Same staging as Sweet Tangerine and its contact line sits within 2px of it, but measured rather than copied — the Pure Unscented tube of the same SKU sits 28px lower."
     },
     {
+      "out": "component-handsoap-calming-lavender.png",
+      "source": "data/brand/reference/organic-foaming-hand-soap-calming-lavender.jpg",
+      "product": "organic-foaming-hand-soap",
+      "variant": "Calming Lavender",
+      "fuzz": 1,
+      "seed": "970,1600",
+      "band": "1500,1690",
+      "note": "Same 1% ceiling as the unscented bottle. White product, white foam, white backdrop: above 1% the flood crosses the foam into the body and holes it."
+    },
+    {
+      "out": "component-handsoap-coconut-breeze.png",
+      "source": "data/brand/reference/organic-foaming-hand-soap-coconut-breeze.jpg",
+      "product": "organic-foaming-hand-soap",
+      "variant": "Coconut Breeze",
+      "fuzz": 1,
+      "seed": "970,1600",
+      "band": "1500,1690",
+      "note": "At 1.5% this one keys out entirely below the band — the foam bridge is wider on this shot than on Orange Zest."
+    },
+    {
       "out": "component-handsoap-pure-unscented.png",
       "source": "data/brand/reference/organic-foaming-hand-soap-pure-unscented.jpg",
       "product": "organic-foaming-hand-soap",

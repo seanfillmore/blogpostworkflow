@@ -95,7 +95,12 @@ const gql = async (query, variables) => {
 };
 
 // ── live data ────────────────────────────────────────────────────────────────
+// `options` is fetched because a frame scoped to one option of a multi-option
+// product needs to assert that the option and value it names still exist. Without
+// it, `ctx.product.options` is undefined and any such guard silently passes —
+// which is how the Hand Soap Set's Scent checks did nothing on their first run.
 const PRODUCT_Q = `id title handle status descriptionHtml
+     options { name values }
      variants(first:50){edges{node{ id title price compareAtPrice }}}
      metafields(first:50,namespace:"bundle"){edges{node{key value}}}`;
 

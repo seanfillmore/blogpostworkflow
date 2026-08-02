@@ -38,9 +38,19 @@
  * Scope file:
  *   {
  *     "product": "99-coconut-reset-digital",
- *     "option": "Scent",
- *     "scope": { "<filename fragment>": "<variant option value>", ... }
+ *     "option": "Scent",                                  // default for bare strings
+ *     "scope": {
+ *       "<filename fragment>": "<option value>",          // uses the default option
+ *       "<fragment>": { "option": "Configuration", "value": "4 pumps" }   // or its own
+ *     }
  *   }
+ *
+ * The second form exists for products with more than one option. A media can be
+ * scoped to exactly ONE option/value pair — the theme parses `gang_option_name`
+ * from that media's own suffix — so on the Hand Soap Set (Configuration x Scent)
+ * the count and the scent are carried by DIFFERENT frames, each scoped to its own
+ * option. Both must live in ONE scope file: a media absent from `scope` has its
+ * suffix stripped, so a second run would silently unscope the first run's work.
  *
  * Keyed on a fragment of the image filename because that is stable, readable in a
  * diff, and survives re-uploads in a way media IDs do not. Anything not listed is
@@ -50,7 +60,7 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getAccessToken } from '../lib/shopify.js';
+import { getAccessToken, getMainThemeId, getThemeAsset } from '../lib/shopify.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = Object.fromEntries(
@@ -82,41 +92,103 @@ const gql = async (query, variables) => {
 const handleize = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 const product = (await gql(
-  `query($h:String!){ productByHandle(handle:$h){ id title
+  `query($h:String!){ productByHandle(handle:$h){ id title templateSuffix
      options { name values }
      media(first:100){edges{node{ id ... on MediaImage { alt image { url } } }}} } }`,
   { h: cfg.product },
 )).productByHandle;
 if (!product) throw new Error(`no product with handle ${cfg.product}`);
 
-const option = product.options.find((o) => o.name === cfg.option);
-if (!option) {
-  throw new Error(`product has no option named "${cfg.option}" — it has: ${product.options.map((o) => o.name).join(', ')}`);
-}
-const optionHandle = handleize(option.name).replace(/_/g, '-');
-
-// Every configured value must be a real option value. A suffix naming a value
-// that does not exist matches no variant, and the theme's CSS then hides that
-// image for ALL of them — a silent disappearance rather than a visible error.
-for (const value of new Set(Object.values(cfg.scope))) {
-  if (!option.values.includes(value)) {
-    throw new Error(`"${value}" is not a value of option "${option.name}" — it has: ${option.values.join(', ')}`);
+// ── The precondition this file has documented since it was written, and never
+// ── actually checked.
+//
+// sections/main-product.liquid gates the ENTIRE gang branch on
+// `section.settings.hide_variants == false`. Where it is true the theme never
+// looks at the '#' suffix, so scoping is inert: every media shows for every
+// variant and nothing anywhere reports a problem.
+//
+// That is not hypothetical. The Hand Soap Set sits on the default PDP template,
+// where hide_variants is TRUE, and this script cheerfully wrote eight scope
+// suffixes that could never take effect — a $72 frame showing to someone buying
+// the $44 configuration. Settings are per TEMPLATE, so the check has to follow
+// the product's own templateSuffix rather than assume bundle-landing.
+{
+  const key = `templates/product${product.templateSuffix ? `.${product.templateSuffix}` : ''}.json`;
+  const themeId = await getMainThemeId();
+  let tpl;
+  try {
+    tpl = JSON.parse(await getThemeAsset(themeId, key));
+  } catch (e) {
+    throw new Error(`could not read ${key} to check hide_variants: ${e.message}`);
   }
+  const main = Object.values(tpl.sections ?? {}).find((s) => s.type === 'main-product');
+  if (!main) throw new Error(`${key} has no main-product section — cannot verify hide_variants`);
+  if (main.settings?.hide_variants !== false) {
+    console.error(`Refusing: ${key} has main-product hide_variants = ${JSON.stringify(main.settings?.hide_variants)}.`);
+    console.error('The theme gates the whole variant-scoping branch on that being false, so every suffix');
+    console.error('written here would be inert — each image would show for EVERY variant, silently.');
+    console.error(`\nEither set hide_variants:false on that template, or give ${cfg.product} its own template.`);
+    process.exit(1);
+  }
+  console.log(`${key}: hide_variants = false ✓`);
 }
+
+/**
+ * A scope entry is either a bare value string, which uses the file-level
+ * `option`, or `{ "option": "...", "value": "..." }` for products with more than
+ * one option.
+ *
+ * The Hand Soap Set is why the second form exists. It has TWO options —
+ * Configuration (4 pumps / 3 pumps + body lotion / 4 pumps + body lotion) and
+ * Scent (Variety + four scents) — and the theme's convention scopes a media to
+ * exactly ONE option/value pair: `gang_option_name` is parsed from that media's
+ * own alt suffix and matched against whichever product option shares the name.
+ * There is no way to say "this image is for 4 pumps AND Orange Zest".
+ *
+ * Two runs of this script cannot substitute, because a media absent from `scope`
+ * has its suffix STRIPPED (`wanted = baseAlt`) — so a second pass scoping the
+ * Scent frames would silently unscope the Configuration ones. One file has to
+ * describe every scoped media, which means entries need their own option.
+ */
+function resolveEntry(raw) {
+  const value = typeof raw === 'string' ? raw : raw?.value;
+  const optionName = typeof raw === 'string' ? cfg.option : (raw?.option ?? cfg.option);
+  if (!value) throw new Error(`scope entry ${JSON.stringify(raw)} has no value`);
+  if (!optionName) throw new Error(`scope entry ${JSON.stringify(raw)} names no option, and the file sets no default "option"`);
+  const opt = product.options.find((o) => o.name === optionName);
+  if (!opt) {
+    throw new Error(`product has no option named "${optionName}" — it has: ${product.options.map((o) => o.name).join(', ')}`);
+  }
+  // A suffix naming a value that does not exist matches no variant, and the
+  // theme's CSS then hides that image for ALL of them — a silent disappearance
+  // rather than a visible error.
+  if (!opt.values.includes(value)) {
+    throw new Error(`"${value}" is not a value of option "${opt.name}" — it has: ${opt.values.join(', ')}`);
+  }
+  return { optionHandle: handleize(opt.name).replace(/_/g, '-'), value, optionName: opt.name };
+}
+
+const resolved = Object.fromEntries(Object.entries(cfg.scope).map(([frag, raw]) => [frag, resolveEntry(raw)]));
 
 console.log(`${product.title}  (${cfg.product})`);
-console.log(`option "${option.name}" → handle "${optionHandle}", values: ${option.values.join(', ')}\n`);
+for (const o of product.options) {
+  const used = Object.values(resolved).filter((r) => r.optionName === o.name).length;
+  if (used) console.log(`option "${o.name}" → handle "${handleize(o.name).replace(/_/g, '-')}", scoping ${used} media, values: ${o.values.join(', ')}`);
+}
+console.log();
 
 const updates = [];
 for (const edge of product.media.edges) {
   const node = edge.node;
   if (!node.image) continue;
   const filename = decodeURIComponent(node.image.url.split('/').pop().split('?')[0]);
-  const match = Object.keys(cfg.scope).find((frag) => filename.includes(frag));
+  const match = Object.keys(resolved).find((frag) => filename.includes(frag));
   const baseAlt = (node.alt ?? '').split('#')[0];
-  const wanted = match ? `${baseAlt}#${optionHandle}_${handleize(cfg.scope[match])}` : baseAlt;
+  const wanted = match
+    ? `${baseAlt}#${resolved[match].optionHandle}_${handleize(resolved[match].value)}`
+    : baseAlt;
 
-  const state = match ? cfg.scope[match] : 'all variants';
+  const state = match ? `${resolved[match].optionName} = ${resolved[match].value}` : 'all variants';
   if ((node.alt ?? '') === wanted) {
     console.log(`  ✓ ${filename.padEnd(42)} ${state}  (already correct)`);
     continue;
@@ -140,11 +212,11 @@ for (const edge of product.media.edges) {
 const order = product.media.edges.map((e) => e.node).filter((n) => n.image);
 const firstScoped = order.findIndex((n) => {
   const f = decodeURIComponent(n.image.url.split('/').pop().split('?')[0]);
-  return Object.keys(cfg.scope).some((frag) => f.includes(frag));
+  return Object.keys(resolved).some((frag) => f.includes(frag));
 });
 const stranded = order.slice(firstScoped + 1).filter((n) => {
   const f = decodeURIComponent(n.image.url.split('/').pop().split('?')[0]);
-  return !Object.keys(cfg.scope).some((frag) => f.includes(frag));
+  return !Object.keys(resolved).some((frag) => f.includes(frag));
 });
 if (firstScoped !== -1 && stranded.length) {
   console.error('\nRefusing: these media are unscoped but sit after a scoped one, so the theme');

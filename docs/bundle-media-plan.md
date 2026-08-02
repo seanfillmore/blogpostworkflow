@@ -775,6 +775,47 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 
 ### Hand Soap Set
 
+> **✅ SHIPPED 2026-08-02.** Ten media, live and verified across all **15** variants. The
+> product had **zero** images and null SEO title/description before this.
+>
+> **The two-option problem, and the way out.** This is the only bundle with two options —
+> Configuration (3 values) × Scent (5) — and the theme's gang convention scopes a media to
+> exactly ONE option/value pair. Fifteen fully-specific contents frames cannot exist. So the
+> two facts are carried by different frames:
+>
+> | frames | scope | carries |
+> |---|---|---|
+> | `frame-01-range`, `frame-02-reviews` | **unscoped** | the four scents; catalogue proof |
+> | `frame-03-config-*` (3) | Configuration | the count **and the price** — type only |
+> | `frame-04-scent-*` (5) | Scent | the bottle and its real oil list |
+>
+> A buyer who has chosen both sees four images: the range, the proof, their configuration's
+> count and price, and their scent's bottle. The configuration frames are deliberately
+> typographic — a Configuration-scoped frame is shown for all five of its scents, so drawing
+> a Pure Unscented pump there would show the wrong bottle to four buyers in five.
+>
+> **⚠️ It needed its own template, and that is the finding worth carrying.** The theme gates
+> the entire scoping branch on `main-product.hide_variants == false`. On `templates/product
+> .json` — the default PDP, which this product used — it is **true**, so the suffixes were
+> written and were completely inert: all ten images showed for every variant, including a
+> $72 frame to a $44 buyer. Nothing reported it.
+>
+> `scripts/set-media-variant-scope.mjs` documented that precondition from the day it was
+> written and **never actually checked it**. It does now, following the product's own
+> `templateSuffix` because settings are per template. `templates/product.hand-soap-set.json`
+> is a copy of the default PDP differing in that one setting — safe here only because this
+> product has no variant-attached media, which the creation script verifies.
+>
+> **Follow-up: move it to `bundle-landing`.** That is the better home — it is a bundle, and
+> the lander's per-variant value panel and "What's in the box" grid are metafield-driven,
+> so they would handle all 15 combinations exactly without the gang convention at all. It
+> needs a `bundle_lander` metaobject this product does not have (heading, subheading, CTA,
+> bullets, buybox bullets, FAQ, tabs) — customer-facing positioning copy, not a mechanical
+> migration.
+>
+> **This page may not say "ships free".** The cheapest configuration is **$44** against a
+> **$45** free-shipping floor. No frame claims it and the SEO description asserts against it.
+
 The copy can name the three configurations but it cannot make the buyer *feel* which one is theirs — a `Configuration` × `Scent` matrix with 15 cells reads as homework in text, and this page currently has zero images to soften it. What the imagery has to do is convert a pricing table into a choice: show that this is one product sold in three sizes, show the scent axis as a menu rather than a dropdown, and make the +lotion step-up feel like a reason rather than an upsell. The buyer is a household stocker — someone who has decided their hand soap should stop being a grocery-aisle afterthought and is now buying for every sink at once, usually a homeowner, often also the person in the house whose hands are wrecked from washing. Because a 15-cell matrix cannot be served by per-variant gallery images, every frame here is deliberately variant-agnostic or explicitly configuration-labelled; the gallery sells the *system*, and the "What's in the box" cards handle the specific basket.
 
 | # | Format | One job | One persona | 1-second read | On-image headline | Source | Effort |
