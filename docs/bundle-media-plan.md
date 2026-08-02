@@ -37,6 +37,48 @@ Either the copy is wrong or the config is stale. **Until that is resolved, no fr
 
 ---
 
+## 0a. Roster status — 2026-08-02, end of the gallery push
+
+| Bundle | Price | Status | Gallery |
+|---|--:|---|---|
+| Sensitive Skin Set | $46.80 | **live** | 6 frames |
+| 90-Day Coconut Reset | $121 | **live** | 6 × 2 scents |
+| 90-Day Clean Swap | $144 | **live** | 8 × 3 kits |
+| The Clean Swap | $59 | **live** | 6 × 3 kits |
+| Head-to-Toe | $87 | **live** | 5 × 2 kits |
+| Gift Box | $62 | **live** | 7 × 3 kits |
+| Hand Soap Set | $44–72 | ⏸ **draft** | 13 media, built — page not built out |
+| Deodorant 4-Pack | $53 | ⏸ **draft** | 10 media, built |
+| Toothpaste 3-Pack | $34 | ⏸ **draft** | none — never started |
+| Bar Soap 4-Pack | $39 | ⏸ **draft** | 5 placeholders |
+
+**Six bundles live with real galleries. Four drafted.** Sean, 2026-08-02, on the last three:
+*"Set the deodorant four-pack, toothpaste 3-pack, and bar soap four-pack to draft and leave
+them as is. I don't know how they would work into the site."* That is a merchandising
+question, not an imagery one, and no amount of gallery work answers it — so the work stops
+here rather than continuing down the roster.
+
+Nothing broke on the way out: across 212 articles and 38 pages there was **not one inbound
+link** to any of the four drafted products. Their only appearance was the `sets-and-bundles`
+collection, which they leave automatically. Prior statuses are backed up in
+`data/backups/products/`.
+
+**What survives for whoever relaunches them:** the cutout library and its reproducible
+recipe manifest, `scripts/cut-component.mjs`, the frame modules with their `verify()` guards,
+`templates/product.scoped-gallery.json`, and the two-option scoping pattern. A relaunch is a
+merchandising decision followed by an upload, not a rebuild.
+
+### ⚠️ Found while drafting: a selling plan group with no app
+
+All three carry a selling plan group named **"Subscription Plans" with `appId: null`** — a
+group created through the Admin API rather than by a subscription app. `reference_recurpay_api`
+records exactly this shape as the one that **sells but never bills**: the customer checks out
+on a subscription, and no recurring charge is ever raised.
+
+Drafting hides the products, so nothing new can be sold on those plans, which lowers the
+urgency — but it does not resolve it, and the same group name may exist on products that are
+still live. **This deserves its own look, independent of any gallery work.**
+
 ## 1. Read this first — the three surfaces
 
 Images on a bundle lander come from three different places, and they behave differently. Specifying a frame without knowing which surface it lands on is how you end up with art nobody can install.
