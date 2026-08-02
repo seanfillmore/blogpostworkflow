@@ -1,0 +1,11 @@
+{
+  "frame": "frame-04-digital-goods",
+  "product": "99-coconut-reset-digital",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "Two digital guides included with the 90-Day Coconut Reset: the 90-Day Routine & Tracker, shown as a printed twelve-week tracking grid beside a bottle of Body Lotion, and the Coconut Skincare Field Guide, shown on a tablet open to its page on how to read an ingredient label. Both are emailed within minutes of ordering.",
+  "metafieldsRead": {
+    "value_stack": "[{\"label\":\"3 Body Lotions + 3 Body Creams\",\"amount\":174,\"digital\":false},{\"label\":\"90-Day Routine & Tracker\",\"amount\":19,\"digital\":true},{\"label\":\"Coconut Skincare Field Guide\",\"amount\":15,\"digital\":true},{\"label\":\"Free shipping\",\"amount\":12,\"digital\":false}]"
+  }
+}

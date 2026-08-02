@@ -1,0 +1,11 @@
+{
+  "frame": "frame-02-routine-pure-unscented",
+  "product": "99-coconut-reset-digital",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "Three Pure Unscented Body Lotion bottles and three Pure Unscented Body Cream jars from the 90-Day Coconut Reset, shown as a daily lotion and an overnight cream, three of each for three months.",
+  "metafieldsRead": {
+    "component_qty": "[3,3]"
+  }
+}

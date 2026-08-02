@@ -21,6 +21,8 @@
  *   {
  *     product: 'shopify-handle',      // metafields + variants are fetched and passed in
  *     name:    'frame-05-reviews',
+ *     related: ['handle', ...],       // optional; other products this frame makes a claim about,
+ *                                     // reachable as ctx.related[handle].priceOf('Variant')
  *     width, height,                  // px; 2048² matches the shipped heroes
  *     alt(ctx):  string,              // REQUIRED — the uploader refuses to ship without it
  *     html(ctx): string,              // full <body> content; fonts are injected
@@ -45,6 +47,7 @@ import { getAccessToken } from '../lib/shopify.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const FONT_DIR = join(ROOT, 'data', 'brand', 'fonts');
+const site = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
 const env = Object.fromEntries(
   readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
@@ -92,18 +95,68 @@ const gql = async (query, variables) => {
 };
 
 // ── live data ────────────────────────────────────────────────────────────────
-const product = (await gql(
-  `query($h:String!){ productByHandle(handle:$h){ id title handle status
+const PRODUCT_Q = `id title handle status descriptionHtml
      variants(first:50){edges{node{ id title price }}}
-     metafields(first:50,namespace:"bundle"){edges{node{key value}}} } }`,
+     metafields(first:50,namespace:"bundle"){edges{node{key value}}}`;
+
+const product = (await gql(
+  `query($h:String!){ productByHandle(handle:$h){ ${PRODUCT_Q} } }`,
   { h: frame.product },
 )).productByHandle;
 if (!product) throw new Error(`no product with handle ${frame.product}`);
+
+/**
+ * A frame may declare `related: ['handle', ...]` when it states a fact about a
+ * product other than the one it hangs on — a component's price, or a gift the
+ * bundle does not itself contain. Without this a frame can only assert what is
+ * on its own product, which is how a claim about someone else's price ends up
+ * hard-coded and unverified. Fetched with the same shape so verify() reads them
+ * identically.
+ */
+const related = {};
+for (const handle of frame.related ?? []) {
+  const p = (await gql(`query($h:String!){ productByHandle(handle:$h){ ${PRODUCT_Q} } }`, { h: handle })).productByHandle;
+  if (!p) throw new Error(`${frame.name}: related product "${handle}" does not exist`);
+  related[handle] = {
+    ...p,
+    variants: p.variants.edges.map((e) => e.node),
+    mf: Object.fromEntries(p.metafields.edges.map((e) => [e.node.key, e.node.value])),
+    /** Price of one named variant, as a Number. Throws rather than returning NaN. */
+    priceOf(variantTitle) {
+      const v = this.variants.find((x) => x.title === variantTitle);
+      if (!v) throw new Error(`${frame.name}: ${handle} has no variant "${variantTitle}"`);
+      return Number(v.price);
+    },
+  };
+}
 
 const mf = Object.fromEntries(product.metafields.edges.map((e) => [e.node.key, e.node.value]));
 const ctx = {
   product,
   mf,
+  related,
+  /** Plain-text product description, for frames whose claim is made in the PDP copy. */
+  description: product.descriptionHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+  /**
+   * The rendered storefront page for this product, as plain text.
+   *
+   * Not every claim lives in product data. An offer written into a theme section
+   * — the Sensitive Skin Set's first-subscription gift is one — appears nowhere
+   * in descriptionHtml or in a metafield, so a frame that states it can only be
+   * checked against the page itself. That is also the stronger check: it asserts
+   * against the surface the buyer actually reads, not against a field that may
+   * have stopped driving the template. Fetched at most once per render.
+   */
+  async livePage() {
+    if (!this._page) {
+      const url = `${site.url}/products/${product.handle}`;
+      const r = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+      if (!r.ok) throw new Error(`${frame.name}: ${url} returned HTTP ${r.status} — cannot verify against the live page`);
+      this._page = (await r.text()).replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+    }
+    return this._page;
+  },
   variants: product.variants.edges.map((e) => e.node),
   /** Read a metafield that MUST exist. Frames state facts; a missing fact is a build failure. */
   need(key) {
@@ -127,7 +180,7 @@ const ctx = {
 };
 
 console.log(`${product.title}  (${product.handle}, ${product.status})`);
-frame.verify(ctx);
+await frame.verify(ctx);
 console.log(`  verify: ok`);
 
 // ── render ───────────────────────────────────────────────────────────────────
@@ -148,6 +201,26 @@ await browser.close();
 
 mkdirSync(outDir, { recursive: true });
 const outFile = join(outDir, `${frame.name}.jpg`);
+const outProvenance = join(outDir, `${frame.name}.provenance.json`);
+
+/**
+ * Frame names share one flat output directory, so two products can silently
+ * claim the same file. That is not hypothetical: the Sensitive Skin Set's review
+ * frame was first called `frame-05-reviews`, which is also the Reset's, and
+ * rendering it overwrote a shipped asset with no warning at all — it surfaced
+ * only because git reported the file as modified rather than added.
+ *
+ * A name is allowed to be reused across renders of the SAME product (that is how
+ * a frame is re-rendered); it is never allowed to cross products.
+ */
+if (existsSync(outProvenance)) {
+  const prior = JSON.parse(readFileSync(outProvenance, 'utf8'));
+  if (prior.product && prior.product !== frame.product) {
+    throw new Error(
+      `${frame.name}.jpg already belongs to "${prior.product}" — this frame is for "${frame.product}". `
+      + `Two frames cannot share an output name. Rename this frame before rendering.`);
+  }
+}
 // Same treatment as the shipped heroes: quality 85, full resolution. Shopify
 // derives its own responsive sizes and WebP/AVIF from the original, so
 // downscaling here would only discard zoom detail.
@@ -155,6 +228,15 @@ await sharp(png).jpeg({ quality: 85, chromaSubsampling: '4:2:0', progressive: tr
 
 const alt = frame.alt(ctx);
 if (!alt?.trim()) throw new Error(`${frame.name}: alt() returned nothing`);
+// Shopify hard-rejects alt text over 512 characters, and it does so at upload —
+// i.e. after the frame is rendered, committed and queued, with part of a gallery
+// already live. A derived alt that lists ingredients drifts past the limit the
+// moment a formulation gains one, so the ceiling belongs here, at authoring time.
+if (alt.length > 512) {
+  throw new Error(
+    `${frame.name}: alt() is ${alt.length} characters; Shopify's limit is 512. `
+    + `Shorten it here rather than at upload — the uploader fails mid-gallery.`);
+}
 writeFileSync(join(outDir, `${frame.name}.provenance.json`), JSON.stringify({
   frame: frame.name,
   product: frame.product,
