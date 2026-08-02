@@ -85,7 +85,48 @@ Retention is the documented constraint on this business (18% repeat rate), and t
 exists precisely to buy a subscription start. Surfacing it in the gallery is the highest
 revenue-per-effort item in this bundle, ahead of any frame in the specced stack.
 
-## 🚩 Blocker for frames 2 and 4 — the PDP names three ingredients that are not in the set
+## ✅ RESOLVED 2026-08-01 — the phantom ingredients are off the live page
+
+Sean confirmed: *"none of those ingredients are in any of our products."* Both the
+product description and the SEO meta description have been rewritten from
+`config/ingredients.json` and applied to Shopify. **Frames 2 and 4 are unblocked.**
+
+What changed, and what it took to be sure it was really gone:
+
+| Surface | Was | Now |
+|---|---|---|
+| `descriptionHtml` | "Three ingredients — aloe vera, oat extract, chamomile…", plus a *"gentle cleanser"* the set does not contain and an unqualified "most effective" | Rewritten from the real formulations; both products' ingredients named |
+| `global.description_tag` (meta description, og:, twitter:) | "Aloe vera, oat extract & coconut oil — a complete moisturizer…" | "Coconut oil, jojoba & beeswax — a two-step moisturizer…" |
+
+**The meta description was nearly missed.** The first verification pass stripped
+tags with `<[^>]+>` before searching, which deletes a `<meta>` tag *including its
+`content` attribute* — so the phantom ingredients read as "gone" while they were
+still live in the meta description, og:description and twitter:description, i.e.
+in exactly what Google and every social share display. **When checking whether a
+claim is off a page, search the raw HTML, not the stripped text.**
+
+Backups of both states are in `data/backups/products/`.
+
+**Catalog-wide scan: clean.** Every product's description, meta description and
+meta title was checked against `config/ingredients.json` for ingredients no RSC
+product contains — no other product names one. One limit worth knowing: the scan
+only flags ingredients absent from the *whole* catalog, so it would not catch a
+product naming a real ingredient that is absent from *that variant* — which is
+precisely the chamomile case here (real, but only as an essential oil in Lavender
+& Rose, and this set is Pure Unscented). A variant-aware check does not exist yet.
+
+**Confirmed for frame 4: the union is EIGHT.** Lotion 6 + cream 7, sharing five —
+purified spring water, organic virgin coconut oil, organic plant-based
+emulsifying wax, organic grapefruit seed extract, organic red palm oil — with
+jojoba only in the lotion and palm stearic + beeswax only in the cream.
+
+**Still open, flagged not fixed:** *"handmade in small batches at Real Skin Care"*
+survives in the rewritten copy because it was pre-existing and Sean has not been
+asked about it — but it is **not** documented in `data/brand/brand-kit.json`,
+which records only "made in the USA" and Cheyenne. Worth confirming before it is
+repeated in a frame.
+
+## The original finding, kept for the record
 
 Found 2026-08-01 while wiring frame 6's `verify()`. The live `descriptionHtml` for
 `sensitive-skin-starter-set` opens:

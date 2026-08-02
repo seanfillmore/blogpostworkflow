@@ -37,10 +37,21 @@
 
 import { INK, GREEN, PAPER, RULE, money, item, CUTOUT, assertSetIntact, PRICE } from './set-common.mjs';
 
-/** The gift is contingent on starting a subscription. A frame that shows four
- *  items without saying so misrepresents the $46.80 one-time purchase, so the
- *  word is a build-time requirement rather than a copy preference. */
-const HEADLINE = 'Subscribe and your first box adds $26 free.';
+/**
+ * The gift is contingent on starting a subscription. A frame that shows four
+ * items without saying so misrepresents the $46.80 one-time purchase, so stating
+ * the condition is a build-time requirement rather than a copy preference.
+ *
+ * Both strings below are checked, not just the headline. The first version of
+ * this guard tested only HEADLINE, and against /subscrib/ — which passes
+ * "subscribe" and fails "subscription", because the stem is subscrip-. Sean's
+ * chosen headline tripped it on the "p", not on anything being wrong. Two
+ * lessons kept here: match the stem, and let the condition live anywhere in the
+ * frame, since the green rule states it just as plainly as the headline does.
+ */
+const HEADLINE = 'Free with your first subscription: $26 of extras.';
+const CONDITION_RULE = '+ free when you subscribe';
+const STATES_CONDITION = /subscri(be|bing|ption|ber)/i;
 
 /** Four products to fit, so a tighter scale than frames 1 and 3. Shared basis. */
 const PX_PER_CM = 30;
@@ -90,10 +101,10 @@ export default {
     // Price, contents, quantities and variant, shared with frames 1 and 3.
     assertSetIntact(ctx);
 
-    if (!/subscrib/i.test(HEADLINE)) {
+    if (!STATES_CONDITION.test(HEADLINE) && !STATES_CONDITION.test(CONDITION_RULE)) {
       throw new Error(
-        'the headline no longer names the subscription condition. The gift is contingent — '
-        + 'a frame showing four items without it misrepresents the one-time purchase.');
+        'neither the headline nor the divider names the subscription condition. The gift is '
+        + 'contingent — a frame showing four items without it misrepresents the one-time purchase.');
     }
   },
 
@@ -140,7 +151,7 @@ export default {
       <div style="display:flex;align-items:center;gap:30px;width:100%;">
         <div style="flex:1;height:2px;background:${RULE};"></div>
         <div style="font-family:Cabin;font-weight:700;font-size:54px;color:${GREEN};white-space:nowrap;">
-          + free when you subscribe
+          ${CONDITION_RULE}
         </div>
         <div style="flex:1;height:2px;background:${RULE};"></div>
       </div>
