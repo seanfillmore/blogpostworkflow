@@ -35,49 +35,15 @@
  * the verify() guard below exists to protect.
  */
 
-const INK = '#1a1b18';
-const GREEN = '#4a8b3c';
-const PAPER = '#ffffff';
-const RULE = '#e4e8e0';
+import { INK, GREEN, PAPER, RULE, money, item, CUTOUT, assertSetIntact, PRICE } from './set-common.mjs';
 
 /** The gift is contingent on starting a subscription. A frame that shows four
  *  items without saying so misrepresents the $46.80 one-time purchase, so the
  *  word is a build-time requirement rather than a copy preference. */
 const HEADLINE = 'Subscribe and your first box adds $26 free.';
 
-const money = (n) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
-
-/**
- * Every product is drawn to ONE scale, so the frame is honest about relative size.
- *
- * This is not cosmetic. marketing-ai-product-imagery lists wrong physical scale as
- * a defect to reject an asset over — a buyer who reads a 0.15 oz lip balm as the
- * size of a 3.4 oz soap bar has been misled, and "smaller than expected" is a
- * return driver. The four cutouts come from four different shoots at four
- * different pixel densities, so their native sizes say nothing about each other;
- * the Reset's routine-frame hit the same problem and notes it in its own header.
- *
- * So the sizing basis is the real object, measured as the apparent height of what
- * each cutout actually depicts (the cream jar and the soap bar are both shot at a
- * slight top angle, so their apparent height exceeds their true height).
- */
+/** Four products to fit, so a tighter scale than frames 1 and 3. Shared basis. */
 const PX_PER_CM = 30;
-const APPARENT_CM = { lotion: 17.2, cream: 6.4, soap: 8.0, balm: 6.8 };
-const scaled = (key) => Math.round(APPARENT_CM[key] * PX_PER_CM);
-
-function item({ src, w, h, cm, name, note, count = 1 }) {
-  const targetH = scaled(cm);
-  const width = Math.round((w / h) * targetH);
-  const img = `<img src="${src}" style="width:${width}px;height:${targetH}px;display:block;
-    filter:drop-shadow(0 14px 20px rgba(26,27,24,.16)) drop-shadow(0 2px 3px rgba(26,27,24,.12));">`;
-  return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;">
-    <div style="height:${targetH}px;display:flex;align-items:flex-end;gap:${count > 1 ? 14 : 0}px;">
-      ${img.repeat(count)}
-    </div>
-    <div style="font-family:Cabin;font-weight:700;font-size:48px;color:${INK};margin-top:28px;text-align:center;">${name}</div>
-    <div style="font-family:Outfit;font-weight:400;font-size:38px;color:${INK};opacity:.6;margin-top:10px;text-align:center;">${note}</div>
-  </div>`;
-}
 
 export default {
   product: 'sensitive-skin-starter-set',
@@ -121,10 +87,8 @@ export default {
         + `+ bar soap (${money(soap.priceOf('Pure Unscented'))}) now totals ${money(gift)}. Re-spec the headline.`);
     }
 
-    const price = Number(ctx.variants.find((v) => v.title === 'Default Title')?.price);
-    if (price !== 46.8) {
-      throw new Error(`this frame prints $46.80, but the set now sells for ${money(price)}.`);
-    }
+    // Price, contents, quantities and variant, shared with frames 1 and 3.
+    assertSetIntact(ctx);
 
     if (!/subscrib/i.test(HEADLINE)) {
       throw new Error(
@@ -161,15 +125,15 @@ export default {
 
       <div>
         <div style="display:flex;align-items:flex-end;justify-content:center;gap:84px;">
-          ${item({ src: A('data/brand/cutouts/sensitive-set-lotion.png'), w: 360, h: 1240, cm: 'lotion',
+          ${item({ src: A(CUTOUT.lotion), cm: 'lotion', pxPerCm: PX_PER_CM,
             name: 'Body Lotion', note: '8 fl. oz · 236ml' })}
-          ${item({ src: A('data/brand/cutouts/sensitive-set-cream.png'), w: 735, h: 670, cm: 'cream',
+          ${item({ src: A(CUTOUT.cream), cm: 'cream', pxPerCm: PX_PER_CM,
             name: 'Body Cream', note: '4 fl. oz · 118ml' })}
         </div>
 
         <div style="font-family:Outfit;font-weight:600;font-size:46px;letter-spacing:.14em;
                     text-transform:uppercase;color:${INK};opacity:.62;margin-top:44px;">
-          The set · ${money(46.8)}
+          The set · ${money(PRICE)}
         </div>
       </div>
 
@@ -182,9 +146,9 @@ export default {
       </div>
 
       <div style="display:flex;align-items:flex-end;justify-content:center;gap:110px;">
-        ${item({ src: A('data/brand/cutouts/sensitive-set-lip-balm.png'), w: 368, h: 1680, cm: 'balm', count: 4,
+        ${item({ src: A(CUTOUT.balm), cm: 'balm', count: 4, pxPerCm: PX_PER_CM,
           name: 'Lip Balm 4-Pack', note: money(balm.priceOf('Pure Unscented')) })}
-        ${item({ src: A('data/brand/cutouts/sensitive-set-bar-soap.png'), w: 1491, h: 1491, cm: 'soap',
+        ${item({ src: A(CUTOUT.soap), cm: 'soap', pxPerCm: PX_PER_CM,
           name: 'Bar Soap', note: money(soap.priceOf('Pure Unscented')) })}
       </div>
     </div>`;
