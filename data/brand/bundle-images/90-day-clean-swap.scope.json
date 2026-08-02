@@ -1,0 +1,31 @@
+{
+  "_comment": "Every media must appear here: the theme gang_exist flag is sticky across the media loop, so an unscoped image sitting after a scoped one is hidden for EVERY variant. The seven frames whose content is identical across kits are therefore duplicated per kit rather than left unscoped.",
+  "product": "90-day-clean-swap",
+  "option": "Kit",
+  "scope": {
+    "frame-01-contents-90day-gentle": "Gentle",
+    "frame-01-contents-90day-calm": "Calm",
+    "frame-01-contents-90day-fresh": "Fresh",
+    "frame-03-per-product-price-90day-gentle": "Gentle",
+    "frame-03-per-product-price-90day-calm": "Calm",
+    "frame-03-per-product-price-90day-fresh": "Fresh",
+    "frame-02-whole-routine-90day-gentle": "Gentle",
+    "frame-02-whole-routine-90day-calm": "Calm",
+    "frame-02-whole-routine-90day-fresh": "Fresh",
+    "frame-07-kit-differences-90day-gentle": "Gentle",
+    "frame-07-kit-differences-90day-calm": "Calm",
+    "frame-07-kit-differences-90day-fresh": "Fresh",
+    "frame-08-reviews-90day-gentle": "Gentle",
+    "frame-08-reviews-90day-calm": "Calm",
+    "frame-08-reviews-90day-fresh": "Fresh",
+    "frame-06-ingredients-90day-gentle": "Gentle",
+    "frame-06-ingredients-90day-calm": "Calm",
+    "frame-06-ingredients-90day-fresh": "Fresh",
+    "frame-05-nothing-to-reorder-90day-gentle": "Gentle",
+    "frame-05-nothing-to-reorder-90day-calm": "Calm",
+    "frame-05-nothing-to-reorder-90day-fresh": "Fresh",
+    "frame-04-what-to-expect-90day-gentle": "Gentle",
+    "frame-04-what-to-expect-90day-calm": "Calm",
+    "frame-04-what-to-expect-90day-fresh": "Fresh"
+  }
+}

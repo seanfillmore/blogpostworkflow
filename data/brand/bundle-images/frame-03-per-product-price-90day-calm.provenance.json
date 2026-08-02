@@ -1,0 +1,10 @@
+{
+  "frame": "frame-03-per-product-price-90day-calm",
+  "product": "90-day-clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "$207 of products for $144 \u2014 twelve full-size items at $12 each.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme scopes gallery media by alt-text suffix and its gang_exist flag is sticky across the media loop, so an unscoped image sitting after a scoped one is hidden for EVERY variant. Universal frames must therefore exist once per kit."
+}

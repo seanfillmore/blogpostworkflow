@@ -1,0 +1,10 @@
+{
+  "frame": "frame-05-nothing-to-reorder-90day-calm",
+  "product": "90-day-clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "Three of each product \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 so there is nothing to reorder for months.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme scopes gallery media by alt-text suffix and its gang_exist flag is sticky across the media loop, so an unscoped image sitting after a scoped one is hidden for EVERY variant. Universal frames must therefore exist once per kit."
+}
