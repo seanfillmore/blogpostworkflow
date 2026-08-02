@@ -1,0 +1,10 @@
+{
+  "frame": "frame-08-reviews-cleanswap-calm",
+  "product": "clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "4.64 out of 5 stars from 205 customer reviews of the four products inside the Clean Swap.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme gang_exist flag is sticky across the media loop, so an unscoped image after a scoped one is hidden for EVERY variant \u2014 universal frames must exist once per kit."
+}
