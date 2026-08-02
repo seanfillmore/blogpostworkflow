@@ -75,7 +75,12 @@ test('every component of every live bundle variant has a cutout', () => {
     'coconut-oil-lip-balm': 'lipbalm',
     'organic-foaming-hand-soap': 'handsoap',
   };
-  const WITH_COMPOSITED_GALLERIES = ['head-to-toe'];
+  // Every bundle-landing product, not just the one with a gallery. Since
+  // 2026-08-02 the lander's "What's in the box" grid renders these cutouts by
+  // name, so a component without one is a broken image on a live commercial
+  // page — the grid used to fall back to the component product's primary photo,
+  // which is exactly the variant-blind behaviour that was removed.
+  const WITH_COMPOSITED_GALLERIES = ['head-to-toe', '90-day-clean-swap', 'clean-swap', 'gift-box', '99-coconut-reset-digital'];
 
   for (const handle of WITH_COMPOSITED_GALLERIES) {
     const b = bundles.find((x) => x.handle === handle);

@@ -40,7 +40,7 @@
  * compare-at. That is the documented $34 gap, not an error.
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAccessToken } from '../lib/shopify.js';
@@ -84,6 +84,26 @@ const LABEL = {
   'organic-foaming-hand-soap': 'Foaming Hand Soap',
 };
 
+/**
+ * Cutout naming, matching data/brand/cutouts/component-<slug>.png.
+ *
+ * The row carries the slug so the "What's in the box" grid can show the unit the
+ * buyer actually receives. It used to render `component.featured_image` — the
+ * component PRODUCT's primary image — which is variant-blind: the Head-to-Toe
+ * grid showed a Coconut Breeze lotion in the Pure Unscented kit, and a
+ * Wildcrafted Frankincense deodorant that ships in neither kit.
+ */
+const KIND = {
+  'coconut-lotion': 'lotion',
+  'coconut-moisturizer': 'cream',
+  'coconut-oil-deodorant': 'deodorant',
+  'coconut-oil-toothpaste': 'toothpaste',
+  'coconut-soap': 'soap',
+  'coconut-oil-lip-balm': 'lipbalm',
+  'organic-foaming-hand-soap': 'handsoap',
+};
+const slugOf = (c) => `${KIND[c.product]}-${c.variant.toLowerCase().replace(/\s+/g, '-')}`;
+
 const { bundles } = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json'), 'utf8'));
 
 const all = (await gql(`{ products(first:250){ nodes{ id handle title templateSuffix
@@ -124,7 +144,22 @@ for (const p of landers) {
       if (unit === undefined) { console.error(`  no live price for ${c.product} / ${c.variant}`); problems++; continue; }
       const amount = unit * c.qty;
       sum += amount;
-      rows.push({ label: c.qty > 1 ? `${c.qty} × ${label}` : label, scent: c.variant, amount });
+      // `label` is qty-free and `qty` is its own field, so the two surfaces that
+      // render these rows can compose the prefix differently: the value panel
+      // shows it only above 1, the grid always shows it. Baking "3 × " into the
+      // label would force one of them to string-parse it back out.
+      // The row names the THEME ASSET (.webp, written by
+      // scripts/upload-cutouts-to-theme.mjs), but existence is checked against the
+      // repo master (.png) — that is the file a human can add, and the one whose
+      // absence means the cutout was never made rather than never uploaded.
+      const master = `component-${slugOf(c)}.png`;
+      if (!existsSync(join(ROOT, 'data', 'brand', 'cutouts', master))) {
+        console.error(`  no cutout for ${c.product} / ${c.variant} — expected data/brand/cutouts/${master}. `
+          + 'Add a recipe to data/brand/cutouts/recipes.json and run scripts/rebuild-cutouts.mjs.');
+        problems++;
+        continue;
+      }
+      rows.push({ label, qty: c.qty, scent: c.variant, amount, img: `${master.slice(0, -4)}.webp` });
     }
 
     const compare = Number(live.compareAtPrice);
@@ -142,7 +177,11 @@ for (const p of landers) {
     const total = stack.reduce((a, r) => a + Number(r.amount), 0);
     console.log(`  ${name.padEnd(16)} ${rows.length} physical $${sum} = compare-at ✓`
       + `${digital.length ? ` + ${digital.length} digital $${total - sum}` : ''}  → total $${total}, price $${Math.round(live.price)}`);
-    for (const r of stack) console.log(`      ${String(r.label).padEnd(26)} ${(r.scent || (r.digital ? '(digital)' : '')).padEnd(20)} $${r.amount}`);
+    for (const r of stack) {
+      const qty = r.qty > 1 ? `${r.qty} × ` : '';
+      console.log(`      ${(qty + String(r.label)).padEnd(28)} ${(r.scent || (r.digital ? '(digital)' : '')).padEnd(20)} `
+        + `$${String(r.amount).padEnd(4)} ${r.img || ''}`);
+    }
   }
 }
 
