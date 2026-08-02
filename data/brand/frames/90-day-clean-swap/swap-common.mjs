@@ -40,14 +40,14 @@ export const scaled = (key, pxPerCm) => Math.round(APPARENT_CM[key] * pxPerCm);
 
 /** Natural pixel dimensions of each cutout, so aspect is never guessed. */
 export const NATURAL = {
-  'lotion-pure-unscented': { w: 530, h: 1700 },
-  'lotion-coconut-breeze': { w: 530, h: 1700 },
-  'deodorant-calming-lavender': { w: 607, h: 1655 },
-  'deodorant-geranium-flower': { w: 607, h: 1655 },
-  'toothpaste-fresh-mint': { w: 501, h: 1690 },
-  'soap-pure-unscented': { w: 1491, h: 1491 },
-  'soap-calming-lavender': { w: 1497, h: 1497 },
-  'soap-nourishing-tea-tree': { w: 1501, h: 1501 },
+  'lotion-pure-unscented': { w: 530, h: 1850 },
+  'lotion-coconut-breeze': { w: 530, h: 1850 },
+  'deodorant-calming-lavender': { w: 609, h: 1700 },
+  'deodorant-geranium-flower': { w: 609, h: 1700 },
+  'toothpaste-fresh-mint': { w: 501, h: 1865 },
+  'soap-pure-unscented': { w: 1401, h: 1401 },
+  'soap-calming-lavender': { w: 1401, h: 1401 },
+  'soap-nourishing-tea-tree': { w: 1401, h: 1401 },
 };
 
 export const cutout = (slug) => `data/brand/cutouts/component-${slug}.png`;

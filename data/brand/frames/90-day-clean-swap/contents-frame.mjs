@@ -32,7 +32,7 @@ import {
   kitsFor, assertBundle, scaled,
 } from './swap-common.mjs';
 
-const PX_PER_CM = 34;
+const PX_PER_CM = 35;
 
 export function contentsFrame({ handle, name, kitName, price, qtyEach, headline, subline }) {
   return {
@@ -81,7 +81,7 @@ export function contentsFrame({ handle, name, kitName, price, qtyEach, headline,
 
       return `<div style="width:100%;height:100%;background:${PAPER};
         display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-        padding:92px 76px 84px;box-sizing:border-box;text-align:center;">
+        padding:84px 64px 76px;box-sizing:border-box;text-align:center;">
 
         <div>
           <div style="font-family:Outfit;font-weight:300;font-size:34px;letter-spacing:.34em;
@@ -91,7 +91,7 @@ export function contentsFrame({ handle, name, kitName, price, qtyEach, headline,
         </div>
 
         <div style="display:flex;align-items:flex-end;justify-content:center;gap:44px;
-                    background:${WASH};border-radius:30px;padding:56px 48px 44px;">
+                    background:${WASH};border-radius:34px;padding:76px 56px 60px;">
           ${kit.components.map(column).join('')}
         </div>
 
