@@ -72,6 +72,17 @@
       "note": "Sits 28px higher in frame than the Pure Unscented shot, so its contact line differs. Do not copy one to the other."
     },
     {
+      "out": "component-lipbalm-vanilla-dream.png",
+      "source": "data/brand/reference/coconut-oil-lip-balm-vanilla-dream.jpg",
+      "product": "coconut-oil-lip-balm",
+      "variant": "Vanilla Dream",
+      "fuzz": 2,
+      "seed": "950,300",
+      "band": "200,480",
+      "bottom": 1758,
+      "note": "Gift Box Calm kit. Same staging as Sweet Tangerine and its contact line sits within 2px of it, but measured rather than copied — the Pure Unscented tube of the same SKU sits 28px lower."
+    },
+    {
       "out": "component-handsoap-pure-unscented.png",
       "source": "data/brand/reference/organic-foaming-hand-soap-pure-unscented.jpg",
       "product": "organic-foaming-hand-soap",
