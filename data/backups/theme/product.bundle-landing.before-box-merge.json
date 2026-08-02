@@ -1,0 +1,315 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-landing-section",
+      "blocks": {
+        "bullet-1": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>3 full-size Body Lotions + 1 Body Cream — a complete 90-day routine<\/p>"
+          }
+        },
+        "bullet-2": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>A complete $[[TOTAL]] routine — everything you need in one box — yours for $[[PRICE]]<\/p>"
+          }
+        },
+        "bullet-3": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>Cold-pressed coconut oil + organic jojoba — no fragrance, parabens, or mineral oil<\/p>"
+          }
+        },
+        "guarantee-1": {
+          "type": "guarantee",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "truck",
+            "text": "Free shipping included"
+          }
+        },
+        "guarantee-2": {
+          "type": "guarantee",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "shield",
+            "text": "30-day no-questions-asked money-back guarantee"
+          }
+        }
+      },
+      "block_order": [
+        "bullet-1",
+        "bullet-2",
+        "bullet-3",
+        "guarantee-1",
+        "guarantee-2"
+      ],
+      "name": "Hero",
+      "settings": {
+        "heading_level": "h1",
+        "heading_rte": "<p>The 90-Day Coconut Skin Reset<\/p>",
+        "subheading_rte": "<p>The complete routine in one box — three daily lotions and an overnight cream — for skin that finally stays soft. Ninety days. Never run out.<\/p>",
+        "subheading_bg_opacity": 0,
+        "show_rating": true,
+        "rating_value": "4.9",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "cta_label": "Start My 90-Day Reset",
+        "cta_anchor": "#buy-box",
+        "bg_image_desktop": "shopify:\/\/shop_images\/hero-desktop.webp",
+        "bg_image_mobile": "shopify:\/\/shop_images\/solid-sage.webp",
+        "bg_color": "#eef3e8",
+        "overlay_color": "#000000",
+        "overlay_opacity": 0,
+        "flip_layout": false,
+        "text_align_center_mobile": false,
+        "content_max_width": 1240,
+        "padding_top": 64,
+        "padding_bottom": 64,
+        "height_mode": "auto",
+        "min_height_desktop": 600,
+        "compact_spacing": false,
+        "cta_full_width_mobile": true,
+        "cta_full_width_desktop": false,
+        "gap_sub_to_bullets": 16,
+        "gap_between_bullets": 10,
+        "bullets_center": false
+      }
+    },
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "buy-box-anchor": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<span id=\"buy-box\" style=\"display:block;\"><\/span>"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {
+            "title_size": "h2",
+            "show_price": false,
+            "price_size": "medium"
+          }
+        },
+        "price": {
+          "type": "price",
+          "settings": {
+            "price_size": "medium",
+            "show_badges": true
+          }
+        },
+        "discount-callout": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.product__text svg, .product__text svg path { color: #4a8b3c; fill: #4a8b3c; } .multicolumn-card strong { color: #FFB503; letter-spacing: 2px; font-size: 1.15em; } .product__tax { display: none !important; } shopify-payment-terms, .shopify-payment-terms, [data-shopify=\"payment-terms\"] { display: none !important; } .rich-text { position: relative; } .rich-text::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: rgb(var(--color-background)); z-index: -1; } [id*=\"hero-ingredient-cards\"] { background-color: #faf7f0; position: relative; } [id*=\"hero-ingredient-cards\"]::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: #faf7f0; z-index: -1; } [id*=\"free-from\"] .rte ul, [id*=\"free-from\"] ul { list-style: none; padding: 0; margin: 0; } [id*=\"free-from\"] li { font-size: 17px; line-height: 1.35; padding: 1px 0; font-weight: 500; color: #1a1b18; } [id*=\"free-from\"] li::before { content: \"✗\"; color: #4a8b3c; margin-right: 10px; font-weight: 700; }<\/style>"
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "show_variant_labels": true,
+            "picker_type": "dropdown",
+            "swatch_type": "round",
+            "size_chart": ""
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_quantity_selector": false,
+            "show_dynamic_checkout": true
+          }
+        },
+        "sticky_cart": {
+          "type": "sticky_cart",
+          "settings": {
+            "show_quantity_selector": false
+          }
+        },
+        "vqr-combo": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>\n.vqr-row{display:flex;gap:12px;align-items:flex-end;justify-content:flex-start;margin:14px 0}\n.vqr-col{display:flex;flex-direction:column}\n.vqr-col--variant{flex:0 0 32%;min-width:140px}\n.vqr-col--qty{flex:0 0 auto;width:130px}\n.vqr-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px 0;font-weight:500;color:#1a1b18}\n.vqr-select{padding:11px 12px;border:1px solid #d3d3d3;border-radius:6px;background:#fff;font-size:14px;color:#1a1b18;height:42px}\n.vqr-stepper{display:flex;align-items:stretch;border:1px solid #d3d3d3;border-radius:6px;overflow:hidden;background:#fff;height:42px}\n.vqr-stepper button{background:#fff;border:none;padding:0 10px;font-size:18px;cursor:pointer;color:#1a1b18;line-height:1}\n.vqr-stepper button:hover{background:#f5f5f5}\n.vqr-stepper input{flex:1;text-align:center;border:none;padding:0 2px;font-size:14px;font-weight:500;-moz-appearance:textfield;min-width:0;background:#fff}\n.vqr-stepper input::-webkit-outer-spin-button,.vqr-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}\n.product-form__input--variant-picker,.product-form__input.variant-input-wrapper,variant-selects:not([data-vqr-skip]){display:none !important}\n<\/style>\n<div class=\"vqr-row\">\n  {%- if product.variants.size > 1 -%}\n  <div class=\"vqr-col vqr-col--variant\">\n    <label class=\"vqr-label\" for=\"vqr-variant-{{ product.id }}\">{{ product.options[0] | default: 'Scent' }}<\/label>\n    <select class=\"vqr-select\" id=\"vqr-variant-{{ product.id }}\" data-vqr-variant>\n      {%- for v in product.variants -%}\n        <option value=\"{{ v.id }}\"{% if v == product.selected_or_first_available_variant %} selected{% endif %}{% unless v.available %} disabled{% endunless %}>\n          {{- v.title }}{% unless v.available %} - Sold out{% endunless -%}\n        <\/option>\n      {%- endfor -%}\n    <\/select>\n  <\/div>\n  {%- endif -%}\n  <div class=\"vqr-col vqr-col--qty\">\n    <label class=\"vqr-label\" for=\"vqr-qty-{{ product.id }}\">Quantity<\/label>\n    <div class=\"vqr-stepper\">\n      <button type=\"button\" data-vqr-qty-minus aria-label=\"Decrease quantity\">&minus;<\/button>\n      <input id=\"vqr-qty-{{ product.id }}\" type=\"number\" name=\"quantity\" value=\"1\" min=\"1\" data-vqr-qty form=\"product-form-{{ section.id }}\">\n      <button type=\"button\" data-vqr-qty-plus aria-label=\"Increase quantity\">+<\/button>\n    <\/div>\n  <\/div>\n<\/div>\n<script>\n(function(){\n  \/\/ Bound once. Dawn replaces the product info container on every variant change, so the\n  \/\/ picker and stepper are new DOM nodes each time — listeners bound to the elements\n  \/\/ themselves die after the first switch. Inline scripts in replaced markup do not run,\n  \/\/ so nothing re-binds. Delegation on document is what makes this survive.\n  if(window.__vqrDelegated){ return; }\n  window.__vqrDelegated = true;\n\n  \/\/ variant id -> its option values. Covers multi-option bundles (Configuration + Scent),\n  \/\/ not just the first select.\n  var VQR_OPTION_VALUES = {\n    {%- for v in product.variants -%}\n    \"{{ v.id }}\": [{% for o in v.options %}{{ o | json }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}\n    {%- endfor -%}\n  };\n\n  document.addEventListener('change', function(e){\n    var pick = e.target;\n    if(!pick || !pick.matches || !pick.matches('select[data-vqr-variant]')){ return; }\n    var opts = VQR_OPTION_VALUES[pick.value];\n    if(!opts){ return; }\n\n    var root = document.querySelector('variant-selects:not([data-vqr-skip])');\n    var selects = root ? root.querySelectorAll('select') : [];\n    if(selects.length){\n      \/\/ Assign the OPTION VALUE, never the variant id — an id matches no option, so the\n      \/\/ select silently empties and the gallery never updates.\n      for(var i = 0; i < selects.length; i++){\n        if(opts[i] != null){ selects[i].value = opts[i]; }\n      }\n      selects[selects.length - 1].dispatchEvent(new Event('change', { bubbles: true }));\n      return;\n    }\n    var radios = document.querySelectorAll('variant-radios input[type=\"radio\"]');\n    radios.forEach(function(r){\n      if(opts.indexOf(r.value) !== -1){ r.checked = true; r.dispatchEvent(new Event('change',{bubbles:true})); }\n    });\n  });\n\n  document.addEventListener('click', function(e){\n    var btn = e.target.closest && e.target.closest('[data-vqr-qty-minus], [data-vqr-qty-plus]');\n    if(!btn){ return; }\n    var wrap = btn.closest('.vqr-stepper') || btn.parentElement;\n    var qty = wrap && wrap.querySelector('input');\n    if(!qty){ return; }\n    var v = parseInt(qty.value, 10) || 1;\n    var next = btn.hasAttribute('data-vqr-qty-minus') ? Math.max(1, v - 1) : v + 1;\n    if(next !== v){ qty.value = next; qty.dispatchEvent(new Event('change',{bubbles:true})); }\n  });\n})();\n<\/script>"
+          }
+        },
+        "judgeme_preview_badge": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/preview_badge\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {}
+        },
+        "value-stack": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.crx-vs{border:1px solid #cbd8c0;background:#f4f8ee;border-radius:12px;padding:18px 20px 16px;margin:18px 0;}.crx-vs *{box-sizing:border-box;}.crx-vs__title{font-weight:700;font-size:15px;color:#1a1b18;margin:0 0 12px;letter-spacing:-0.01em;font-family:inherit;}.crx-vs__row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:8px 0;border-bottom:1px solid #e2ead9;}.crx-vs__row:last-of-type{border-bottom:0;}.crx-vs__label{font-size:14.5px;color:#33352f;line-height:1.35;font-family:inherit;}.crx-vs__label small{color:#7c8a72;font-size:12.5px;}.crx-vs__price{font-size:14.5px;font-weight:600;color:#1a1b18;white-space:nowrap;}.crx-vs__total{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:2px solid #cbd8c0;}.crx-vs__tl{font-weight:700;font-size:16px;color:#1a1b18;}.crx-vs__was{color:#9aa593;text-decoration:line-through;font-weight:500;margin-right:8px;font-size:15px;}.crx-vs__now{color:#4a8b3c;font-weight:700;font-size:17px;}.crx-vs__save{margin-top:12px;background:#4a8b3c;color:#fff;text-align:center;font-weight:700;font-size:14px;letter-spacing:0.3px;padding:9px 12px;border-radius:8px;}<\/style>{%- liquid\n  assign stack = product.metafields.bundle.value_stack.value\n  assign days = product.metafields.bundle.duration_days.value\n  assign total = 0\n  for row in stack\n    assign total = total | plus: row.amount\n  endfor\n  assign price_dollars = product.price | divided_by: 100\n  assign savings = total | minus: price_dollars\n-%}\n{%- if stack and stack.size > 0 -%}\n<div class=\"crx-vs\">\n  <p class=\"crx-vs__title\">{% if days %}Everything in your {{ days }}-day box{% else %}Everything in your box{% endif %}<\/p>\n  {%- for row in stack -%}\n  <div class=\"crx-vs__row\"><span class=\"crx-vs__label\">{{ row.label }}{% if row.digital %} <small>(digital)<\/small>{% endif %}<\/span><span class=\"crx-vs__price\">${{ row.amount }}<\/span><\/div>\n  {%- endfor -%}\n  <div class=\"crx-vs__total\"><span class=\"crx-vs__tl\">Total value<\/span><span><span class=\"crx-vs__was\">${{ total }}<\/span><span class=\"crx-vs__now\">{{ product.price | money }} today<\/span><\/span><\/div>\n  <div class=\"crx-vs__save\">You save ${{ savings }} today<\/div>\n<\/div>\n{%- endif -%}"
+          }
+        },
+        "bundle-savings": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "{%- liquid\n  assign stack = product.metafields.bundle.value_stack.value\n  assign days = product.metafields.bundle.duration_days.value\n  assign total = 0\n  for row in stack\n    assign total = total | plus: row.amount\n  endfor\n  assign price_dollars = product.price | divided_by: 100\n  assign savings = total | minus: price_dollars\n-%}\n<div style=\"margin:8px 0 4px 0;font-size:1em;font-weight:700;color:#4a8b3c;line-height:1.35;\">${{ total }} of value &mdash; yours today for {{ product.price | money }}<\/div>\n<div style=\"font-size:0.85em;color:#6d7175;margin:4px 0 12px 0;line-height:1.45;\">That&rsquo;s <strong>${{ savings }} in savings<\/strong>{% if days %} for a full {{ days }}-day routine &mdash; about {{ product.price | divided_by: days | money }} a day{% endif %}.<\/div>"
+          }
+        },
+        "trust-row": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.lander-trust-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px 0 4px 0;border-top:1px solid #e5e5e5;margin-top:18px}.lander-trust-row__item{display:flex;gap:10px;align-items:center;justify-content:center;text-align:center}.lander-trust-row__icon{font-size:1.4em;line-height:1;flex-shrink:0}.lander-trust-row__title{font-weight:700;font-size:0.9em;line-height:1.3;color:#1a1b18}@media(max-width:600px){.lander-trust-row{grid-template-columns:1fr;gap:10px}}<\/style><div class=\"lander-trust-row\"><div class=\"lander-trust-row__item\"><span class=\"lander-trust-row__icon\">🛡️<\/span><div class=\"lander-trust-row__title\">30-Day Money-Back Guarantee<\/div><\/div><div class=\"lander-trust-row__item\"><span class=\"lander-trust-row__icon\">📦<\/span><div class=\"lander-trust-row__title\">Shipped in 2 Business Days<\/div><\/div><div class=\"lander-trust-row__item\"><span class=\"lander-trust-row__icon\">🌱<\/span><div class=\"lander-trust-row__title\">Certified Organic Ingredients<\/div><\/div><\/div>"
+          }
+        },
+        "scent-request": {
+          "type": "line_item_property",
+          "settings": {
+            "type": "text",
+            "label": "Prefer different scents? Tell us here (optional)",
+            "required": false
+          }
+        },
+        "kit-contents": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style id=\"line-item-radius\">\n.product-form__input .field__input,\n.product-form__input textarea.field__input{border-radius:6px;border:1px solid #d3d3d3;padding:11px 12px;font-size:14px}\n.product-form__input .form__label{font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:500;color:#1a1b18;margin-bottom:6px;display:block}\n<\/style>\n<style>\n.kitc{border:1px solid #cbd8c0;background:#f8faf4;border-radius:10px;padding:12px 14px;margin:-4px 0 16px;font-size:13.5px;line-height:1.5;color:#1a1b18}\n.kitc__h{font-weight:700;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:#4a6b3c;margin:0 0 7px}\n.kitc ul{margin:0;padding:0;list-style:none}\n.kitc li{padding:2px 0 2px 16px;position:relative}\n.kitc li:before{content:\"\";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:#7da86a}\n.kitc__note{margin:8px 0 0;font-size:12px;color:#6d7175}\n<\/style>\n{%- assign has_contents = false -%}\n{%- for v in product.variants -%}{% if v.metafields.bundle.contents != blank %}{% assign has_contents = true %}{% endif %}{%- endfor -%}\n{%- if has_contents -%}\n{%- for v in product.variants -%}\n  {%- if v.metafields.bundle.contents != blank -%}\n  <div class=\"kitc\" data-kit-contents=\"{{ v.id }}\"{% unless v == product.selected_or_first_available_variant %} style=\"display:none\"{% endunless %}>\n    <p class=\"kitc__h\">What's in the {{ v.title }} box<\/p>\n    <ul>\n      {%- assign rows = v.metafields.bundle.contents | split: '\n' -%}\n      {%- for r in rows -%}{% if r != blank %}<li>{{ r | strip }}<\/li>{% endif %}{%- endfor -%}\n    <\/ul>\n    {%- if product.variants.size > 1 -%}\n    <p class=\"kitc__note\">Want different scents? Add a note below and we'll swap them.<\/p>\n    {%- endif -%}\n  <\/div>\n  {%- endif -%}\n{%- endfor -%}\n<script>\n(function(){\n  var sel = document.getElementById('vqr-variant-{{ product.id }}');\n  if(!sel) return;\n  sel.addEventListener('change', function(){\n    document.querySelectorAll('[data-kit-contents]').forEach(function(el){\n      el.style.display = (el.getAttribute('data-kit-contents') === sel.value) ? '' : 'none';\n    });\n  });\n})();\n<\/script>\n{%- endif -%}"
+          }
+        },
+        "benefits": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>\n.bb__list{list-style:none;margin:14px 0 4px;padding:0}\n.bb__item{display:flex;gap:10px;align-items:flex-start;padding:5px 0;font-size:15px;line-height:1.45;color:#1a1b18}\n.bb__tick{flex:0 0 20px;height:20px;border:1.5px solid #7da86a;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-top:1px}\n.bb__tick svg{width:12px;height:12px;stroke:#4a8b3c;stroke-width:2.5;fill:none}\n<\/style>\n{%- liquid\n  assign lander = product.metafields.bundle.lander.value\n  assign lines = lander.buybox_bullets.value\n  assign stack = product.metafields.bundle.value_stack.value\n  assign total = 0\n  for row in stack\n    assign total = total | plus: row.amount\n  endfor\n  assign price_dollars = product.price | divided_by: 100\n  assign savings = total | minus: price_dollars\n-%}\n{%- if lines != blank and lines.size > 0 -%}\n<ul class=\"bb__list\">\n  {%- for l in lines -%}\n  <li class=\"bb__item\">\n    <span class=\"bb__tick\"><svg viewBox=\"0 0 24 24\"><polyline points=\"20 6 9 17 4 12\"\/><\/svg><\/span>\n    <span>{{ l | replace: '[[TOTAL]]', total | replace: '[[PRICE]]', price_dollars | replace: '[[SAVINGS]]', savings }}<\/span>\n  <\/li>\n  {%- endfor -%}\n<\/ul>\n{%- endif -%}"
+          }
+        },
+        "tabs": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>\n.bt{margin:20px 0 8px;border-top:1px solid #e3e3e3}\n.bt__item{border-bottom:1px solid #e3e3e3}\n.bt__item summary{list-style:none;cursor:pointer;padding:14px 2px;font-weight:600;font-size:15px;color:#1a1b18;display:flex;justify-content:space-between;align-items:center}\n.bt__item summary::-webkit-details-marker{display:none}\n.bt__item summary:after{content:\"+\";font-weight:400;font-size:20px;color:#6d7175}\n.bt__item[open] summary:after{content:\"\\2212\"}\n.bt__body{padding:0 2px 16px;font-size:14.5px;line-height:1.6;color:#4a4a4a}\n<\/style>\n{%- assign tabs = product.metafields.bundle.lander.value.tabs.value -%}\n{%- if tabs != blank and tabs.size > 0 -%}\n<div class=\"bt\">\n  {%- for t in tabs -%}\n  <details class=\"bt__item\"><summary>{{ t.heading }}<\/summary><div class=\"bt__body\">{{ t.body }}<\/div><\/details>\n  {%- endfor -%}\n<\/div>\n{%- endif -%}"
+          }
+        }
+      },
+      "block_order": [
+        "buy-box-anchor",
+        "judgeme_preview_badge",
+        "title",
+        "price",
+        "bundle-savings",
+        "benefits",
+        "variant_picker",
+        "vqr-combo",
+        "kit-contents",
+        "discount-callout",
+        "value-stack",
+        "scent-request",
+        "buy_buttons",
+        "trust-row",
+        "tabs",
+        "sticky_cart"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "media_position": "left",
+        "media_size": "medium",
+        "gallery_layout": "thumbnail_slider",
+        "image_ratio": "adapt",
+        "show_thumbnails": true,
+        "hide_variants": false,
+        "enable_image_zoom": false,
+        "enable_video_looping": false,
+        "mobile_image_ratio": "adapt_first",
+        "show_mobile_thumbnails": true,
+        "padding_top": 20,
+        "padding_bottom": 24
+      }
+    },
+    "judgeme_section_review_widget_f881": {
+      "type": "apps",
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 12,
+        "padding_bottom": 12
+      }
+    },
+    "free-from-block": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.free-from-band{background:#eef3e8;padding:72px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw}.free-from-band__inner{max-width:1180px;margin:0 auto;padding:0 32px}.free-from-band__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#1a1b18;margin:0 0 48px 0;letter-spacing:-0.01em}.free-from-band__list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px 32px;list-style:none;padding:0;margin:0;max-width:1100px;margin-left:auto;margin-right:auto}.free-from-band__list li{display:flex;align-items:center;justify-content:flex-start;gap:14px;font-size:1.2rem;line-height:1.25;font-weight:600;color:#1a1b18;text-align:left}.free-from-band__list li::before{content:\"✗\";color:#4a8b3c;font-size:1.7em;font-weight:800;line-height:1;flex-shrink:0}@media(max-width:900px){.free-from-band__list{grid-template-columns:repeat(2,1fr);gap:18px 24px;max-width:520px}}@media(max-width:480px){.free-from-band__list{grid-template-columns:1fr;gap:14px;max-width:280px}.free-from-band{padding:48px 0}.free-from-band__heading{font-size:1.625rem;margin-bottom:32px}}<\/style><div class=\"free-from-band\"><div class=\"free-from-band__inner\"><h2 class=\"free-from-band__heading\">What's NOT in any bottle or jar<\/h2><ul class=\"free-from-band__list\"><li>Mineral oil<\/li><li>Petrolatum<\/li><li>Dimethicone<\/li><li>Lanolin<\/li><li>Parabens<\/li><li>Phenoxyethanol<\/li><li>Synthetic fragrance<\/li><li>SLS \/ sulfates<\/li><\/ul><\/div><\/div>",
+        "full_width": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "collapsible-content": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>\n.bfaq{max-width:760px;margin:0 auto;padding:52px 18px}\n.bfaq__h{text-align:center;font-size:clamp(22px,3vw,30px);font-weight:700;margin:0 0 22px;color:#1a1b18}\n.bfaq__item{border-bottom:1px solid #e3e3e3}\n.bfaq__item summary{list-style:none;cursor:pointer;padding:16px 2px;font-weight:600;font-size:16px;color:#1a1b18;display:flex;justify-content:space-between;gap:16px;align-items:center}\n.bfaq__item summary::-webkit-details-marker{display:none}\n.bfaq__item summary:after{content:\"+\";font-weight:400;font-size:22px;color:#6d7175}\n.bfaq__item[open] summary:after{content:\"\\2212\"}\n.bfaq__a{padding:0 2px 18px;font-size:15px;line-height:1.65;color:#4a4a4a}\n<\/style>\n{%- assign faq = product.metafields.bundle.lander.value.faq.value -%}\n{%- if faq != blank and faq.size > 0 -%}\n<div class=\"bfaq\">\n  <h2 class=\"bfaq__h\">FAQs<\/h2>\n  {%- for f in faq -%}\n  <details class=\"bfaq__item\"><summary>{{ f.q }}<\/summary><div class=\"bfaq__a\">{{ f.a }}<\/div><\/details>\n  {%- endfor -%}\n<\/div>\n{%- endif -%}"
+      }
+    },
+    "final-cta-strip": {
+      "type": "rich-text",
+      "blocks": {
+        "fc-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "[[CTA]].",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "fc-text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Everything you need in one box, plus a 30-day no-questions-asked money-back guarantee. $[[TOTAL]] value, $[[PRICE]] today — you save $[[SAVINGS]].<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        },
+        "fc-button": {
+          "type": "button",
+          "settings": {
+            "button_label": "[[CTA]]",
+            "button_link": "#buy-box",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "fc-heading",
+        "fc-text",
+        "fc-button"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#1a1b18",
+        "colors_button_background": "#AEDEAC",
+        "colors_text": "#ffffff",
+        "colors_background": "#1a1b18",
+        "padding_top": 64,
+        "padding_bottom": 64
+      }
+    },
+    "whats-in-it": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>\n.wib{padding:48px 0}\n.wib__h{text-align:center;font-size:clamp(22px,3vw,30px);font-weight:700;margin:0 0 6px;color:#1a1b18}\n.wib__sub{text-align:center;color:#6d7175;margin:0 0 28px;font-size:15px}\n.wib__grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));max-width:1100px;margin:0 auto;padding:0 18px}\n.wib__card{text-align:center}\n.wib__card img{width:100%;height:auto;aspect-ratio:4\/3;object-fit:contain;border-radius:12px;display:block;background:transparent}\n.wib__qty{font-weight:700;font-size:15px;margin:10px 0 2px;color:#1a1b18}\n.wib__name{font-size:13.5px;color:#6d7175;line-height:1.4;margin:0}\n<\/style>\n{%- assign comps = product.metafields.bundle.components.value -%}\n{%- assign qtys  = product.metafields.bundle.component_qty.value -%}\n{%- if comps != blank and comps.size > 0 -%}\n<div class=\"wib\">\n  <h2 class=\"wib__h\">What's in the box<\/h2>\n  {%- assign wib_note = product.metafields.bundle.lander.value.whats_in_it_note -%}\n  {%- if wib_note != blank -%}<p class=\"wib__sub\">{{ wib_note }}<\/p>{%- endif -%}\n  <div class=\"wib__grid\">\n    {%- for c in comps -%}\n      {%- liquid\n        assign qty = 0\n        if qtys != blank\n          assign qty = qtys[forloop.index0]\n        endif\n        assign label = c.metafields.bundle.short_name | default: c.title\n      -%}\n      <div class=\"wib__card\">\n        {%- if c.featured_image != blank -%}\n          {{ c.featured_image | image_url: width: 500 | image_tag: loading: 'lazy', alt: label }}\n        {%- endif -%}\n        <p class=\"wib__qty\">{% if qty > 0 %}{{ qty }} &times; {% endif %}{{ label }}<\/p>\n      <\/div>\n    {%- endfor -%}\n  <\/div>\n<\/div>\n{%- endif -%}"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "main",
+    "whats-in-it",
+    "free-from-block",
+    "judgeme_section_review_widget_f881",
+    "collapsible-content",
+    "final-cta-strip"
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "90-day-clean-swap": {
+    "productValueStack": [
+      {
+        "label": "3 Body Lotions (8oz)",
+        "amount": 90,
+        "digital": false
+      },
+      {
+        "label": "3 Natural Deodorants",
+        "amount": 45,
+        "digital": false
+      },
+      {
+        "label": "3 Coconut Toothpastes",
+        "amount": 39,
+        "digital": false
+      },
+      {
+        "label": "3 Coconut Bar Soaps",
+        "amount": 33,
+        "digital": false
+      }
+    ],
+    "variants": {
+      "Gentle": {
+        "id": "gid://shopify/ProductVariant/48936030208170",
+        "previousContents": null
+      },
+      "Calm": {
+        "id": "gid://shopify/ProductVariant/48936030240938",
+        "previousContents": null
+      },
+      "Fresh": {
+        "id": "gid://shopify/ProductVariant/48936030273706",
+        "previousContents": null
+      }
+    }
+  },
+  "head-to-toe": {
+    "productValueStack": [
+      {
+        "label": "Body Lotion (8oz)",
+        "amount": 30,
+        "digital": false
+      },
+      {
+        "label": "Body Cream (4oz)",
+        "amount": 28,
+        "digital": false
+      },
+      {
+        "label": "Natural Deodorant",
+        "amount": 15,
+        "digital": false
+      },
+      {
+        "label": "Coconut Toothpaste",
+        "amount": 13,
+        "digital": false
+      },
+      {
+        "label": "Coconut Bar Soap",
+        "amount": 11,
+        "digital": false
+      },
+      {
+        "label": "Lip Balm",
+        "amount": 15,
+        "digital": false
+      },
+      {
+        "label": "Foaming Hand Soap",
+        "amount": 13,
+        "digital": false
+      }
+    ],
+    "variants": {
+      "Gentle": {
+        "id": "gid://shopify/ProductVariant/48936066777258",
+        "previousContents": null
+      },
+      "Fresh": {
+        "id": "gid://shopify/ProductVariant/48936066810026",
+        "previousContents": null
+      }
+    }
+  },
+  "clean-swap": {
+    "productValueStack": [
+      {
+        "label": "Body Lotion (8oz)",
+        "amount": 30,
+        "digital": false
+      },
+      {
+        "label": "Natural Deodorant",
+        "amount": 15,
+        "digital": false
+      },
+      {
+        "label": "Coconut Toothpaste",
+        "amount": 13,
+        "digital": false
+      },
+      {
+        "label": "Coconut Bar Soap",
+        "amount": 11,
+        "digital": false
+      }
+    ],
+    "variants": {
+      "Gentle": {
+        "id": "gid://shopify/ProductVariant/48937845653674",
+        "previousContents": null
+      },
+      "Calm": {
+        "id": "gid://shopify/ProductVariant/48937845686442",
+        "previousContents": null
+      },
+      "Fresh": {
+        "id": "gid://shopify/ProductVariant/48937845719210",
+        "previousContents": null
+      }
+    }
+  },
+  "gift-box": {
+    "productValueStack": [
+      {
+        "label": "Body Lotion (8oz)",
+        "amount": 30,
+        "digital": false
+      },
+      {
+        "label": "Lip Balm 4-pack",
+        "amount": 15,
+        "digital": false
+      },
+      {
+        "label": "Natural Deodorant",
+        "amount": 15,
+        "digital": false
+      },
+      {
+        "label": "Coconut Bar Soap",
+        "amount": 11,
+        "digital": false
+      }
+    ],
+    "variants": {
+      "Gentle": {
+        "id": "gid://shopify/ProductVariant/48939260608682",
+        "previousContents": null
+      },
+      "Calm": {
+        "id": "gid://shopify/ProductVariant/48939260641450",
+        "previousContents": null
+      },
+      "Fresh": {
+        "id": "gid://shopify/ProductVariant/48939260674218",
+        "previousContents": null
+      }
+    }
+  },
+  "99-coconut-reset-digital": {
+    "productValueStack": [
+      {
+        "label": "3 Body Lotions + 3 Body Creams",
+        "amount": 174,
+        "digital": false
+      },
+      {
+        "label": "90-Day Routine & Tracker",
+        "amount": 19,
+        "digital": true
+      },
+      {
+        "label": "Coconut Skincare Field Guide",
+        "amount": 15,
+        "digital": true
+      }
+    ],
+    "variants": {
+      "Coconut Breeze": {
+        "id": "gid://shopify/ProductVariant/48955068121258",
+        "previousContents": null
+      },
+      "Pure Unscented": {
+        "id": "gid://shopify/ProductVariant/48955069333674",
+        "previousContents": null
+      }
+    }
+  }
+}
