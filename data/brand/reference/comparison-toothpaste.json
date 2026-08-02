@@ -1,0 +1,22 @@
+{
+  "_comment": "Published ingredient panel of a conventional fluoride toothpaste, supplied by Sean 2026-08-02 for the Clean Swap's frame 6. THE FRAME DOES NOT NAME THE BRAND — same rule as comparison-lotion.json: we contrast against the category, not a named competitor. Sean supplied the list without naming the product, so `product` is deliberately null rather than guessed. If the brand is ever needed for re-verification it must be asked for, not inferred from the formula.",
+  "product": null,
+  "labelOnFrame": "A conventional toothpaste",
+  "source": "published ingredient list, supplied by Sean 2026-08-02",
+  "note": "Deliberately non-superlative on the frame. 'Leading' or 'best-selling' would be a claim we cannot support; 'a conventional toothpaste' is accurate and needs no support. Count alone is a weaker argument here than it is for lotion — 13 against our 8 is a narrower gap than 34 against 6 — so the frame leans on which ingredients differ rather than on how many there are.",
+  "ingredients": [
+    "Sodium Fluoride",
+    "Sorbitol",
+    "Water",
+    "Hydrated Silica",
+    "Sodium Lauryl Sulfate",
+    "Trisodium Phosphate",
+    "Flavor",
+    "Cellulose Gum",
+    "Sodium Phosphate",
+    "Carbomer",
+    "Sodium Saccharin",
+    "Titanium Dioxide",
+    "Blue 1"
+  ]
+}
