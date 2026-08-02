@@ -558,6 +558,39 @@ Component photo library available to reuse or composite from: `coconut-lotion` (
 
 ### Gift Box
 
+> **✅ PARTLY SHIPPED 2026-08-02.** Five frames × three kits = **15 media**, live and verified:
+> each kit shows exactly its own five. Stack: **1** contents · **2** value · **3** they'll finish
+> it · **4** nothing to react to · **5** reviews — spec frames 3, 7, 4, 5 and a review frame
+> renumbered. The product had **zero** images before this.
+>
+> Also fixed: `seo.title` and `seo.description` were **null** — the page had no meta title or
+> description at all. Both now derived from live data and asserted before writing (the value
+> stack must equal compare-at, and the price must clear the $45 free-shipping floor before the
+> copy may say "ships free").
+>
+> **⚠️ The two frames that carry this bundle's actual argument are still unbuilt.** Spec #1
+> ("Arrives in this.") and #2 ("You don't have to wrap it.") are MUST-SHOOT: the whole $62 rests
+> on the box arriving giftable, that is a photographic claim, and **no photograph of a production
+> Gift Box exists** in this repo or on the product. A composite of four cut-out products cannot
+> make it, and generating a box would invent packaging we would then have to ship.
+>
+> **This shoot is the critical path for Q4 gifting and it is now the oldest blocker in the plan.**
+> The gate below says mid-September. From 2026-08-02 that is about six weeks of lead time, and it
+> is the only item in this document that cannot be produced from existing assets. Book it.
+>
+> **Spec #6 ("Full-size. Not sample-size.") deliberately not built.** The plan's own note says to
+> "verify the mini-size premise on a shelf before shipping the frame," and that has not happened.
+> A comparison frame whose opposing column is an assumption about someone else's product is the
+> exact class of claim this pipeline exists to stop. Frame 1's "Nothing in here is a sample" and
+> frame 3's "Full sizes, not travel minis" make the same point about **our** products only, which
+> needs no shelf.
+>
+> Two claims are now enforced in code rather than left to the next author
+> (`data/brand/frames/gift-box/gb-common.mjs`): the word **"unscented"** can never reach a Gift
+> Box frame outside a component's own variant name — two of three kits ship a Calming Lavender
+> deodorant — and **"vegan" / "no palm oil"** are simply never claimed, because the lip balm
+> carries organic beeswax and organic red palm oil.
+
 **What the imagery has to do that the copy can't.** The copy sells the *idea* of a gift that gets used up; it cannot
 prove a physical box exists. Every other bundle on this template is a shipment — this one is an object someone hands
 to another person, and the entire $62 price rests on it arriving giftable. That is a photographic claim and nothing

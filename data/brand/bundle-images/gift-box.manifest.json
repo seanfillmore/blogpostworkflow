@@ -1,0 +1,65 @@
+{
+  "product": "gift-box",
+  "images": [
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-01-contents-gb-gentle.jpg",
+      "alt": "Everything in the Gentle Gift Box, shown to scale: Body Lotion in Pure Unscented, Deodorant in Calming Lavender, Bar Soap in Pure Unscented, Lip Balm in Pure Unscented (4-pack). Four full-size products, $62."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-02-value-gb-gentle.jpg",
+      "alt": "$71 of full-size Real Skin Care product in the Gentle Gift Box, sold for $62 and shipped free."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-03-finish-gb-gentle.jpg",
+      "alt": "The Gentle Gift Box holds four things that get used up — body lotion, deodorant, bar soap, lip balm — rather than an ornament that gets displayed."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-04-gentle-gb-gentle.jpg",
+      "alt": "The Gentle Gift Box is built from 9 base ingredients across its four products, with no SLS, no parabens, no phthalates and no synthetic fragrance — scent, where there is any, is essential oil."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-05-reviews-gb-gentle.jpg",
+      "alt": "4.78 out of 5 stars from 175 customer reviews of the four products inside the Gift Box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-01-contents-gb-calm.jpg",
+      "alt": "Everything in the Calm Gift Box, shown to scale: Body Lotion in Pure Unscented, Deodorant in Calming Lavender, Bar Soap in Calming Lavender, Lip Balm in Vanilla Dream (4-pack). Four full-size products, $62."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-02-value-gb-calm.jpg",
+      "alt": "$71 of full-size Real Skin Care product in the Calm Gift Box, sold for $62 and shipped free."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-03-finish-gb-calm.jpg",
+      "alt": "The Calm Gift Box holds four things that get used up — body lotion, deodorant, bar soap, lip balm — rather than an ornament that gets displayed."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-04-gentle-gb-calm.jpg",
+      "alt": "The Calm Gift Box is built from 9 base ingredients across its four products, with no SLS, no parabens, no phthalates and no synthetic fragrance — scent, where there is any, is essential oil."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-05-reviews-gb-calm.jpg",
+      "alt": "4.78 out of 5 stars from 175 customer reviews of the four products inside the Gift Box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-01-contents-gb-fresh.jpg",
+      "alt": "Everything in the Fresh Gift Box, shown to scale: Body Lotion in Coconut Breeze, Deodorant in Geranium Flower, Bar Soap in Nourishing Tea Tree, Lip Balm in Sweet Tangerine (4-pack). Four full-size products, $62."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-02-value-gb-fresh.jpg",
+      "alt": "$71 of full-size Real Skin Care product in the Fresh Gift Box, sold for $62 and shipped free."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-03-finish-gb-fresh.jpg",
+      "alt": "The Fresh Gift Box holds four things that get used up — body lotion, deodorant, bar soap, lip balm — rather than an ornament that gets displayed."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-04-gentle-gb-fresh.jpg",
+      "alt": "The Fresh Gift Box is built from 9 base ingredients across its four products, with no SLS, no parabens, no phthalates and no synthetic fragrance — scent, where there is any, is essential oil."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/gift-box/data/brand/bundle-images/frame-05-reviews-gb-fresh.jpg",
+      "alt": "4.78 out of 5 stars from 175 customer reviews of the four products inside the Gift Box."
+    }
+  ]
+}
