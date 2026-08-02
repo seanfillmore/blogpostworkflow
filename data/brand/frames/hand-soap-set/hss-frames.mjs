@@ -41,7 +41,7 @@ const eyebrow = (t) => `<div style="font-family:Outfit;font-weight:300;font-size
 //
 // Shown for all fifteen variants, and honest for all fifteen because it depicts
 // the OPTION SET rather than anyone's box: the Scent option really does offer
-// these four, individually or as Variety. It leads the gallery and is the
+// these four. It leads the gallery and is the
 // og:image, which is right — this product's page currently has no images at all,
 // so the first thing it needs to say is what the product physically is.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ export function rangeFrame(configName) {
     },
 
     alt: () => altWithin512(`The four Real Skin Care foaming hand soap scents shown together — ${SCENTS.join(', ')} — `
-      + `available singly or as a Variety set.`),
+      + `sold one scent at a time.`),
 
     html(ctx) {
       const shelf = scaled('handsoap', PX_PER_CM);
@@ -88,7 +88,7 @@ export function rangeFrame(configName) {
           <div style="width:120px;height:6px;background:${GREEN};border-radius:3px;margin:0 auto 28px;"></div>
           <div style="font-family:Cabin;font-weight:700;font-size:62px;color:${INK};">One for every sink.</div>
           <div style="font-family:Outfit;font-weight:400;font-size:40px;color:${INK};opacity:.6;margin-top:14px;">
-            Pick one scent, or one of each.
+            Pick the one you want at every sink.
           </div>
         </div>
       </div>`;
@@ -223,7 +223,6 @@ export function configFrame(configName) {
 // stating exactly rather than approximately.
 // ─────────────────────────────────────────────────────────────────────────────
 export function scentFrame(scent) {
-  const isVariety = scent === 'Variety';
   return {
     product: 'hand-soap-set',
     name: `frame-01-scent-${scent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-hss`,
@@ -233,8 +232,6 @@ export function scentFrame(scent) {
     verify(ctx) {
       const opt = ctx.product.options?.find?.((o) => o.name === 'Scent');
       if (opt && !opt.values.includes(scent)) throw new Error(`"${scent}" is not a Scent option value — it has: ${opt.values.join(', ')}`);
-      if (isVariety) { SCENTS.forEach((s) => natural(scentSlug(s))); return; }
-      natural(scentSlug(scent));
       const { base, oils } = oilsFor(scent);
       if (base.length !== 1) throw new Error(`the soap base is now ${base.length} ingredients — this frame states it as one`);
       if (/unscented/i.test(scent) && oils.length) throw new Error(`"${scent}" now lists essential oils: ${oils.join(', ')}`);
@@ -242,40 +239,12 @@ export function scentFrame(scent) {
     },
 
     alt() {
-      if (isVariety) return altWithin512(`The Variety Hand Soap Set — one pump of each scent: ${SCENTS.join(', ')}.`);
       const { base, oils } = oilsFor(scent);
       return altWithin512(`Real Skin Care ${scent} foaming hand soap — ${base[0]}`
         + `${oils.length ? `, scented only with ${oils.join(', ')}` : ', and nothing else'}.`);
     },
 
     html(ctx) {
-      if (isVariety) {
-        const PX = 30;
-        const shelf = scaled('handsoap', PX);
-        return `<div style="width:100%;height:100%;background:${PAPER};
-          display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-          padding:110px 60px 100px;box-sizing:border-box;text-align:center;">
-          <div>
-            ${eyebrow('Variety')}
-            <div style="font-family:Cabin;font-weight:700;font-size:136px;line-height:1.03;
-                        color:${INK};letter-spacing:-.026em;margin-top:24px;">One of each.</div>
-          </div>
-          <div style="display:flex;align-items:flex-start;justify-content:center;gap:16px;
-                      background:${WASH};border-radius:34px;padding:72px 36px 56px;">
-            ${SCENTS.map((s) => `<div style="display:flex;flex-direction:column;align-items:center;width:330px;">
-              ${unit({ src: ctx.asset(cutout(scentSlug(s))), slug: scentSlug(s), pxPerCm: PX, boxH: shelf })}
-              <div style="font-family:Cabin;font-weight:700;font-size:44px;color:${INK};margin-top:30px;line-height:1.15;">${s}</div>
-            </div>`).join('')}
-          </div>
-          <div>
-            <div style="width:120px;height:6px;background:${GREEN};border-radius:3px;margin:0 auto 28px;"></div>
-            <div style="font-family:Outfit;font-weight:400;font-size:44px;color:${INK};opacity:.62;">
-              A different scent at every sink.
-            </div>
-          </div>
-        </div>`;
-      }
-
       const { base, oils } = oilsFor(scent);
       const PX = 58;
       return `<div style="width:100%;height:100%;background:${PAPER};

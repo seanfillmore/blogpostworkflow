@@ -72,3 +72,27 @@ test('every Hand Soap Set media is scoped, and a Scent frame leads', () => {
     'the lead media must be Scent-scoped, or the main image stops tracking the buyer\'s choice');
   assert.equal(cfg.scope[names[0]].option, 'Scent');
 });
+
+test('the Hand Soap Set offers no Variety, and nothing promises one', () => {
+  // Removed 2026-08-02. The risk is not the option — it is the COPY that
+  // outlived it: "pick one scent, or one of each" and the SEO description's
+  // "one scent or one of each" were both false the moment the variants went.
+  const { bundles } = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json'), 'utf8'));
+  const b = bundles.find((x) => x.handle === 'hand-soap-set');
+  const scent = b.options.find((o) => o.name === 'Scent');
+  assert.ok(!scent.values.some((v) => /variety/i.test(v)), 'Variety is back on the Scent option');
+  assert.equal(b.variants.length, scent.values.length * b.options.find((o) => o.name === 'Configuration').values.length,
+    'variant count no longer equals Configuration × Scent');
+  for (const v of b.variants) {
+    assert.ok(!/variety/i.test(JSON.stringify(v.options)), `variant ${JSON.stringify(v.options)} is on Variety`);
+  }
+  // No frame or manifest may still offer a mixed set.
+  for (const f of ['hss-frames.mjs', 'hss-common.mjs']) {
+    const src = readFileSync(join(ROOT, 'data', 'brand', 'frames', 'hand-soap-set', f), 'utf8');
+    assert.ok(!/one of each/i.test(src), `${f} still says "one of each"`);
+  }
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'bundle-images', 'hand-soap-set.manifest.json'), 'utf8'));
+  for (const img of manifest.images) {
+    assert.ok(!/variety|one of each/i.test(img.alt), `alt text still promises a mixed set: ${img.alt}`);
+  }
+});

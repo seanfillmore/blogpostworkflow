@@ -775,7 +775,7 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 
 ### Hand Soap Set
 
-> **✅ SHIPPED 2026-08-02.** Fourteen media, live and verified across all **15** variants. The
+> **✅ SHIPPED 2026-08-02.** Thirteen media, live and verified across all **12** variants. The
 > product had **zero** images and null SEO title/description before this.
 >
 > **The two-option problem, and the way out.** This is the only bundle with two options —
@@ -785,7 +785,7 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 >
 > | frames | scope | carries |
 > |---|---|---|
-> | `frame-01-scent-*` (5) | Scent | the bottle and its real oil list — **leads** |
+> | `frame-01-scent-*` (4) | Scent | the bottle and its real oil list — **leads** |
 > | `frame-02-config-*` (3) | Configuration | the count **and the price** — type only |
 > | `frame-03-range-*` (3) | Configuration | the four scents |
 > | `frame-04-reviews-*` (3) | Configuration | catalogue proof |
@@ -794,6 +794,23 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 > count and price, the range, the proof. The configuration frames are deliberately
 > typographic — a Configuration-scoped frame is shown for all five of its scents, so drawing
 > a Pure Unscented pump there would show the wrong bottle to four buyers in five.
+>
+> ### Variety was removed, 2026-08-02
+>
+> Sean: *"Actually, don't offer variety at all."* The three Variety variants are deleted
+> (15 → 12) and Shopify dropped the value from the Scent option. Zero orders had ever
+> referenced them across 1,259 scanned, and the 104 units of notional inventory were
+> released with them.
+>
+> **The variants were the easy part. The copy that outlived them was the risk** — three
+> surfaces promised a mixed set the moment the option stopped existing:
+>
+> - the range frame's footer, *"Pick one scent, or one of each"*
+> - its alt text, *"available singly or as a Variety set"*
+> - the SEO meta description, *"One scent or one of each"*
+>
+> All three are rewritten, and a test now asserts that no frame source, no alt text and no
+> roster entry offers a mixed set. Removing an option is never just removing the option.
 >
 > ### ⚠️ Every media is scoped, and that is the second lesson
 >
