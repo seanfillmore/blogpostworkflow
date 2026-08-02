@@ -435,59 +435,29 @@ export function reviewsFrame(kitName) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Frame 6 — benefit callout. Answer "how long does $87 actually last".
+// There is no frame 6, and the reason is worth keeping.
 //
-// Read from bundle.duration_days, never typed. The Sensitive Skin Set's lander
-// invented a 90-day supply claim on 2026-07-27 precisely because a template
-// filled in a duration the data did not carry; here an absent or implausible
-// value fails the build instead.
+// The spec's frame 7 answered "how long does $87 actually last", and it shipped
+// on 2026-08-02 reading "60 DAYS of everything". Sean caught it the same day:
+// the 90-Day Clean Swap sells THREE of each product for 90 days, so one of each
+// is thirty. The store's own arithmetic contradicted the frame by 2x.
+//
+// The measured position is worse. config/consumption-rates.json puts the body
+// cream at ~28 days per unit, and a box lasts as long as the FIRST thing in it
+// runs out — so Head-to-Toe stops being "everything" after about four weeks,
+// while its deodorant (~90 days) is still nearly full. Every one of those rates
+// is a reorder gap, so every one is an upper bound; the true figure is lower.
+//
+// The frame's verify() had checked that duration_days was a positive integer. It
+// was: it was 60. A metafield is not evidence, and asserting a typed number is
+// well-formed is not the same as asserting it is true. lib/supply-duration.js is
+// now the evidence, and any future duration claim goes through it.
+//
+// The frame was not rebuilt at 28 days, because the honest number showed the
+// frame was answering the wrong question. This is the discovery-and-gifting
+// bundle — the media plan's own personas for it are "the shopper who wants to
+// find their favourite before committing to any one SKU" and "the non-Q4
+// gifter". Neither buys on supply duration, and $87 for four weeks argues
+// against a box whose actual argument is breadth. Duration belongs to the Clean
+// Swaps, where three of each genuinely is a season.
 // ─────────────────────────────────────────────────────────────────────────────
-export function durationFrame(kitName) {
-  return {
-    product: 'head-to-toe',
-    name: `frame-06-duration-h2t-${kitName.toLowerCase()}`,
-    width: 2048,
-    height: 2048,
-
-    verify(ctx) {
-      assertKit(ctx, kitName);
-      const days = Number(ctx.need('duration_days'));
-      if (!Number.isInteger(days) || days <= 0) throw new Error(`bundle.duration_days is not a positive integer: ${days}`);
-      if (days > 365) throw new Error(`bundle.duration_days is ${days} — a supply claim that long needs evidence this frame does not have`);
-    },
-
-    alt(ctx) {
-      const days = Number(ctx.need('duration_days'));
-      return altWithin512(`The Head-to-Toe box is about ${days} days of a complete routine — toothpaste, lip balm, `
-        + `deodorant, hand soap, bar soap, body lotion and body cream — for ${money(PRICE)}.`);
-    },
-
-    html(ctx) {
-      const days = Number(ctx.need('duration_days'));
-      const per = (PRICE / days).toFixed(2);
-
-      return `<div style="width:100%;height:100%;background:${PAPER};
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        padding:150px 130px;box-sizing:border-box;text-align:center;">
-
-        ${eyebrow(`${kitName} kit`)}
-
-        <div style="font-family:Cabin;font-weight:700;font-size:420px;line-height:.9;
-                    color:${INK};letter-spacing:-.035em;margin-top:40px;">${days}</div>
-        <div style="font-family:Outfit;font-weight:300;font-size:66px;letter-spacing:.3em;
-                    text-transform:uppercase;color:${INK};opacity:.5;margin-top:24px;">days</div>
-
-        <div style="width:190px;height:9px;background:${GREEN};margin:70px 0 56px;border-radius:5px;"></div>
-
-        <div style="font-family:Cabin;font-weight:700;font-size:118px;line-height:1.1;color:${INK};max-width:1650px;">
-          of everything,<br>not one of anything.
-        </div>
-
-        <div style="font-family:Outfit;font-weight:400;font-size:44px;line-height:1.5;
-                    color:${INK};opacity:.62;margin-top:56px;max-width:1400px;">
-          Seven products, ${money(PRICE)} — about $${per} a day for the whole routine.
-        </div>
-      </div>`;
-    },
-  };
-}

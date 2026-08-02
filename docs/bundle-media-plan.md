@@ -245,20 +245,43 @@ Found while specifying the stacks. These are defects in the *existing* library t
 
 ### Head-to-Toe — $87
 
-> **✅ SHIPPED 2026-08-02.** Six frames × two kits = **12 media**, live and verified on the
-> storefront: each kit shows exactly its own six and neither leaks into the other. The two
+> **✅ SHIPPED 2026-08-02.** Five frames × two kits = **10 media**, live and verified on the
+> storefront: each kit shows exactly its own five and neither leaks into the other. The two
 > placeholder images are deleted (both were the same Coconut Breeze *body lotion*
 > photograph, captioned "all seven Real Skin Care products"); a record is in
 > `data/backups/products/head-to-toe.media-before-2026-08-02.json`.
 >
 > The stack that shipped is **1** contents · **2** head-to-toe routine · **3** per-product
-> price · **4** kit difference · **5** reviews · **6** duration — that is spec frames
-> 1, 2, 3, 4, 6 and 7 renumbered. **Spec frame 5 (us-vs-them, "seven swaps") did not
-> ship**: it is the only frame here that makes an ingredient claim, and §0's block on
-> ingredient claims is only partly lifted. "No aluminium / SLS / parabens / synthetic
-> fragrance" is checkable against `config/ingredients.json` and would build; "no palm oil"
-> and "vegan" remain **false** for this bundle, which contains the cream and the lip balm.
-> A frame one careless edit away from a false claim was not worth shipping for coverage.
+> price · **4** kit difference · **5** reviews — spec frames 1, 2, 3, 4 and 6 renumbered.
+>
+> ### 🚨 Frame 7 shipped wrong and was pulled the same day
+>
+> It went live reading **"60 DAYS of everything"**. Sean caught it immediately: *"How is
+> that 60 days if we sell 3 of each for 90 days? This is a one month supply."* He is right,
+> and the store's own catalogue says so — the 90-Day Clean Swap is three of each for ninety,
+> so one of each is thirty.
+>
+> The measured position is worse than the arithmetic. **A box lasts as long as the first
+> thing in it runs out**, and `config/consumption-rates.json` puts the body cream at ~28
+> days per unit — so this box stops being "everything" after about four weeks while its
+> deodorant (~90 days) is still nearly full. Those rates are reorder gaps, so each is an
+> *upper* bound; the true figure is lower still.
+>
+> The frame's `verify()` had asserted `duration_days` was a positive integer. It was — it
+> was 60. **A metafield is not evidence.** `lib/supply-duration.js` is now the evidence, and
+> it rejects the claim that shipped while still accepting the 90-Day's genuine 90.
+>
+> It was **not rebuilt at 28 days**, because the honest number showed the frame was
+> answering the wrong question. This bundle's own personas here are the discovery shopper
+> and the gifter; neither buys on supply duration, and "$87 for four weeks" argues against a
+> box whose actual argument is breadth. **Duration belongs to the Clean Swaps.**
+>
+> **Spec frame 5 (us-vs-them, "seven swaps") also did not ship**: it is the only frame here
+> that makes an ingredient claim, and §0's block on ingredient claims is only partly lifted.
+> "No aluminium / SLS / parabens / synthetic fragrance" is checkable against
+> `config/ingredients.json` and would build; "no palm oil" and "vegan" remain **false** for
+> this bundle, which contains the cream and the lip balm. A frame one careless edit away
+> from a false claim was not worth shipping for coverage.
 >
 > **Spec frame 2 shipped as type, not as a composite.** Seven products stacked vertically
 > at one honest scale puts the lip balm at ~60px, which fails the phone-size read; and
@@ -281,7 +304,7 @@ The copy on this page can *say* "one of everything we make" but it cannot make t
 | 4 | Educational infographic | Make the Gentle vs Fresh choice decidable without scrolling | Buyer stalled at the variant picker | "Two kits, and here's how they differ" | **Gentle or Fresh. Here's the difference.** | COMPOSITE (per-variant shots — see Blocked) | M |
 | 5 | Us-vs-them comparison | Convert the clean-swap motive into a reason to buy all seven at once | Reduce-my-chemical-load switcher | "Seven swaps in one purchase" | **Seven swaps. No aluminium, no SLS, no parabens, no synthetic fragrance.** | GENERATE (Ad Builder) | M |
 | 6 | Text-only | Borrow the component catalogue's proof for an unreviewed bundle | Sceptic who sees a new bundle with no reviews of its own | "Lots of people have used these" | **4.64 ★ — 295 reviews of the seven products inside.** | GENERATE (Ad Builder) | S |
-| 7 | Benefit callout | Answer "how long does $87 actually last" | Buyer doing value math after the price has landed | "Two months of everything" | **60 days of everything.** | RENDER `frame-06-duration` | S |
+| ~~7~~ | ~~Benefit callout~~ | ~~Answer "how long does $87 actually last"~~ | — | — | ~~**Sixty days of everything.**~~ **CUT** — the honest answer is ~28 days (the body cream binds), and this bundle's buyers do not buy on duration. See the banner above. | — | — |
 
 **Frame 1** spec: all seven products stood in a single row on a plain bathroom shelf, tallest to shortest — hand soap pump, lotion bottle, cream jar, deodorant, toothpaste tube, bar soap, lip balm — even spacing, one light direction, no props. Headline sits above the row, product row is the second read. Every unit shown must be a real variant from one real kit (do not mix Gentle and Fresh in one frame — that ships something nobody receives).
 
