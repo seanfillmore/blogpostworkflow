@@ -78,8 +78,8 @@ The original 2026-07-28 table, kept for the component counts below it:
 |---|--:|---|--:|---|
 | 90-Day Coconut Reset | $99 | lander | 3 | ✅ 3/3 |
 | Bar Soap 4-Pack | $39 | PDP | 5 | ✅ 5/5 |
-| Head-to-Toe | $105 | lander | 2 | ✅ 2/2 |
-| 90-Day Clean Swap | $159 | lander | 1 | ✅ 1/1 |
+| Head-to-Toe | $87 | lander | 2 | ✅ 2/2 |
+| 90-Day Clean Swap | $144 | lander | 1 | ✅ 1/1 |
 | Sensitive Skin Set | $46.80 | bespoke | 1 | ❌ 0/1 |
 | The Clean Swap | $59 | lander | **0** | — |
 | Gift Box | $62 | lander | **0** | — |
@@ -217,8 +217,7 @@ Everything that genuinely needs a camera, across all ten bundles. Seven items in
 | Session | Subject | For | Why it can't be composited | Lead time |
 |---|---|---|---|---|
 | **A** | **The packed Gift Box** — two setups: open with contents nested, and closed | Gift Box | The buyer receives a physical box. A generated one would depict goods that may not match what ships. There is also a live review complaining the tissue wrapping arrived torn, so there is negative evidence to overwrite. | ⚠️ **Q4 — mid-September.** The long pole, and the only calendar-bound item here |
-| **B** | **Twelve-unit contents flat-lay**, overhead, three kit versions | 90-Day Clean Swap | Contents depiction must match what ships. Volume is the whole $159 argument and no composite is honest here. | Single session, three set changes |
-| **B** | **Shelf before/after**, locked-off tripod, two exposures | 90-Day Clean Swap | Needs a set of conventional products to stage the "before" — sourceable for under $60 | Same session as above |
+| **B** | **Twelve-unit contents flat-lay**, overhead, three kit versions | 90-Day Clean Swap | Upgrade, no longer a blocker — frame 1 ships as a real-photo composite (2026-08-02). Volume is the whole $144 argument and a shoot still beats a composite. | Single session, three set changes |
 | **C** | **Hands before/after lotion**, one model, two exposures ~20 min apart | Hand Soap Set | Blocks the only frame that sells the $59/$72 step-up over the $44 base | One session |
 | **D** | **Supply still-life** — six full units vs. six genuinely used (3 empty bottles, 3 spent jars) | 90-Day Coconut Reset | Blocked on having authentically emptied units; fake empties are a fabrication | Gated on real empties |
 | **—** | **Customer 90-day skin pairs** | 90-Day Coconut Reset | Not a photo session — a recruitment programme through the replenishment flow. Day-0 photos must be collected *before* anyone starts, so it can only ever start today | ⏳ 90 days from whenever it starts |
@@ -615,7 +614,7 @@ on the bundle SKU itself and an unqualified "4.64 (205)" on-image would misrepre
   benefit callout (#6), us-vs-them (#5), transformation (#4), grid/multi-SKU (#2), text-only (#3). This is the bundle
   that carries the transformation slot for the pair, because the counter-clutter change is real and shootable where a
   gift-box transformation is not.
-- **Deliberately not shown: the step up to the 90-Day Clean Swap ($159).** It belongs in page copy and the FAQ, not in
+- **Deliberately not shown: the step up to the 90-Day Clean Swap ($144).** It belongs in page copy and the FAQ, not in
   the gallery. A frame selling the bigger box would violate one-job-per-frame and would argue against the purchase the
   visitor is on the page to make.
 
@@ -709,14 +708,43 @@ Net effect: there is no variant among the 15 for which any frame in this gallery
 
 ### The 90-Day Clean Swap
 
-At $159 against a ~$47 store AOV this is the largest single ask in the catalogue, and the copy has already said everything it can — "three months of all four" is an accurate sentence that does nothing to the gut. Twelve full-size products photographed together is arithmetic the eye does in under a second, and it is the one argument that cannot be made in text. The imagery has two jobs the copy cannot reach: make the volume visible, and break the perceived ~$15 ceiling by reframing $159 as twelve purchases rather than one. The buyer is someone already mid-switch — they have replaced one or two products, their shelf is half clean and half drugstore, and they are tired of doing it one bottle at a time. They are not price-shopping a lotion; they are buying the end of a project. That is why the shelf, not the skin, is where the transformation lives.
+> **🚨 Repriced. Every $159 below is stale — the live price is $144.** Verified against
+> Shopify 2026-08-02: all three variants are **$144**, compare-at **$207**. The spec's
+> own frame-3 note calls its figures "drift-bound to `price: 159`" and asks for a flag if
+> either changes; the price changed and nothing flagged it, which is the argument for
+> frames deriving their numbers rather than being audited for them.
+>
+> What that changes:
+> - Frame 3's headline is **"$207 of products. $144."**, not $159.
+> - Frame 3's secondary is **"12 products — $12.00 each"**, not $13.25. ($144 ÷ 12 = exactly $12.00.)
+> - The $12.00 figure now sits *below* the ~$15 ceiling the VOC file documents rather
+>   than near it, so the price-framing argument is stronger than when this was written.
+>
+> Verified and unchanged: `rating_value` 4.64 and `rating_count` 205 for frame 8, and
+> `component_qty` [3,3,3,3]. Compare-at is product-only and honest — the `value_stack`
+> product lines sum to exactly $207.
+>
+> **Shipping in the value stack was raised $6 → $12 on 2026-08-02** (Sean: twelve
+> full-size units do not ship for $6, and the 6-unit Coconut Reset already claimed $12 —
+> the heaviest bundle in the range was claiming the lowest shipping value). The lander
+> templates its figures from the metafield, so this propagated on its own and is verified
+> live: **total value $219** (was $213) and **"You save $75"** (was $69).
+>
+> Frame 3 is unaffected — it prints $207 (product-only compare-at) against $144, not the
+> value-stack total. **Do not build any frame on $213.**
+>
+> **Frame 1 is not blocked.** See the frame notes below — the Sensitive Skin Set shipped
+> its contents frame as a composite of real component photography on 2026-08-01, and that
+> approach applies here.
+
+At $144 against a ~$47 store AOV this is the largest single ask in the catalogue, and the copy has already said everything it can — "three months of all four" is an accurate sentence that does nothing to the gut. Twelve full-size products photographed together is arithmetic the eye does in under a second, and it is the one argument that cannot be made in text. The imagery has two jobs the copy cannot reach: make the volume visible, and break the perceived ~$15 ceiling by reframing $144 as twelve purchases rather than one. The buyer is someone already mid-switch — they have replaced one or two products, their shelf is half clean and half drugstore, and they are tired of doing it one bottle at a time. They are not price-shopping a lotion; they are buying the end of a project. That is why the shelf, not the skin, is where the transformation lives.
 
 | # | Format | One job | One persona | 1-second read | On-image headline | Source | Effort |
 |---|---|---|---|---|---|---|---|
-| 1 | Grid/multi-SKU | Make twelve units visible at once — the volume argument | Sticker-shocked visitor deciding whether $159 is a lot or a little | "That is a genuinely large amount of product" | **12 full-size products. One box.** | MUST-SHOOT | L |
+| 1 | Grid/multi-SKU | Make twelve units visible at once — the volume argument | Sticker-shocked visitor deciding whether $144 is a lot or a little | "That is a genuinely large amount of product" | **12 full-size products. One box.** | COMPOSITE (was MUST-SHOOT) | M |
 | 2 | Headliner | Frame the purchase as finishing the switch, not buying a box | Someone who has been swapping products one at a time for months | "I can do the whole routine in one order" | **Swap your whole routine at once.** | COMPOSITE `coconut-lotion` + `coconut-oil-deodorant` + `coconut-oil-toothpaste` + `coconut-soap` | M |
-| 3 | Educational infographic | Break the ~$15 ceiling by pricing per product instead of per box | Buyer who balks at $30 for a lotion | "Each thing costs less than buying it alone" | **$207 of products. $159.** | COMPOSITE `coconut-lotion` + `coconut-soap` | M |
-| 4 | Transformation | Show the change honestly — the shelf, not the body | Half-switched buyer looking at their own mixed shelf | "That is my bathroom, before and after" | **Before. After. Same shelf.** | MUST-SHOOT | L |
+| 3 | Educational infographic | Break the ~$15 ceiling by pricing per product instead of per box | Buyer who balks at $30 for a lotion | "Each thing costs less than buying it alone" | **$207 of products. $144.** | COMPOSITE `coconut-lotion` + `coconut-soap` | M |
+| 4 | Instructional / step-by-step | Set expectations for the switch so the adjustment period does not read as failure | Buyer worried about swapping four products at once | "There is a rough patch, it is short, and they told me up front" | **Switching everything at once? Here is what to expect.** | RENDER | S |
 | 5 | Benefit callout | Sell the absence of reordering as the real product | The person who runs out of deodorant on a Tuesday | "I stop thinking about this for a while" | **Nothing to reorder for months.** | GENERATE (Ad Builder) | M |
 | 6 | Us-vs-them comparison | Win the ingredient argument against the drugstore "gentle" default | Cross-shopping CeraVe / Vanicream / Cetaphil on ingredients | "Theirs is petrolatum, mine is coconut oil" | **Coconut oil, not petrolatum.** | GENERATE (Ad Builder) | M |
 | 7 | Educational infographic | Resolve Gentle vs. Calm vs. Fresh so the variant choice stops being a coin flip | Buyer already sold, stuck on which kit | "Three kits, and here is the scent difference" | **Gentle, Calm or Fresh — here's what changes.** | GENERATE (Ad Builder) | M |
@@ -725,27 +753,35 @@ At $159 against a ~$47 store AOV this is the largest single ask in the catalogue
 ### Frame notes (build-critical)
 
 - **#1 is the whole page.** Overhead, three rows of four or four rows of three, one clean surface, product-only, no props competing for the focal point. Shoot **three versions** — Gentle, Calm and Fresh differ in lotion, deodorant and soap variants — and assign them as Shopify variant images. Unlike the Hand Soap Set, three variants is a tractable number, so this gallery *can* and *should* be variant-accurate at the contents frame.
-- **#1 is MUST-SHOOT, not composite.** Contents depiction must match what ships; compositing is reserved for lifestyle, texture, ingredient and scale frames.
-- **#3 dollar figures are drift-bound** to `price: 159` / `compareAtPrice: 207` in `config/bundles.json`. If either changes, this frame is stale and must be regenerated — flag it in whatever tracks bundle price changes. Secondary line on the frame: "12 products — $13.25 each." That is division of two stated numbers, not a duration or per-day claim.
-- **#4 is the honest transformation for body care.** Left: a real shelf of conventional products with labels defocused or turned. Right: the same shelf, same camera position, same light, holding the twelve units. No skin claim, no model, nothing that needs a dermatologist to defend. Shoot both exposures in one session without moving the tripod.
+- **#1 is a COMPOSITE of real component photography** — revised 2026-08-02. The original rule ("contents depiction must match what ships; compositing is reserved for lifestyle, texture, ingredient and scale") was written against *generated* composites, which redraw labels and cannot be trusted. A composite of keyed, unretouched product photographs at one true physical scale does not have that failure mode: no label is redrawn, so what is depicted is exactly what ships. The Sensitive Skin Set shipped on this basis 2026-08-01. A real flat-lay is still better and remains on the shoot list; it is no longer a blocker.
+- **#3 dollar figures are read from live Shopify at render time**, not bound to a config value and audited. The original note bound them to `price: 159` and asked for a flag if it changed; it changed to $144 and nothing flagged it. The frame now derives both numbers and its `verify()` fails the build if `price × 12` no longer equals the per-unit figure it prints. Secondary line: "12 products — $12.00 each." That is division of two stated numbers, not a duration or per-day claim.
+- **#4 replaced the shelf before/after, 2026-08-02.** Sean: no transformation frames for now. What went in instead is the format the rotation was actually missing — instructional/step-by-step — grounded entirely in copy already on the lander rather than in anything new:
+
+  > *"Do I have to switch everything at once?"* — "No, but most people find it easier. **Swapping one product at a time drags the adjustment out.**"
+  > *"Is there an adjustment period with natural deodorant?"* — "Often yes — **usually one to two weeks** as your body adapts. It passes."
+
+  Those two answers are the whole frame. It says the switch has a rough patch, that it is one to two weeks, and that doing all four at once shortens it rather than multiplying it — which turns the bundle's biggest objection ("four changes at once sounds worse") into its argument.
+
+  This is the one frame in the stack that pays twice. `marketing-product-image-stack` rates a numbered step-by-step at 8/10 here specifically because misuse during the deodorant transition is a named driver of the 18-22.5% repeat rate: a buyer who quits in week one never reorders, and no amount of gallery work downstream recovers them. Conversion asset and retention asset in one slot.
+
+  WARNING: no day count beyond "one to two weeks", and no promise about outcome. The FAQ says "often yes" and "it passes"; the frame may not upgrade either into a guarantee.
 - **#5** may say "months" — three units each of lotion, deodorant, toothpaste and bar soap clears a quarter against measured reorder gaps with room to spare. Do **not** put a specific day count on the frame; "months" is defensible, "90 days of everything" invites the same audit that killed the claim on two other pages.
 - **#6** describes the comparison target as "conventional drugstore 'gentle' lotion" in-frame. Name no brand on the image; the brands belong in the page copy where they can be discussed, not in a raster that circulates.
 - **#7** must show only what actually differs between kits — toothpaste is Fresh Mint in all three, so it appears once as a constant. Do not imply Gentle is unscented; it ships a lavender deodorant, and the page FAQ already says so.
 
 ### Gaps
 
-No rotation format is omitted — all seven are covered, with educational infographic used twice (#3, #7) because this product has two distinct comprehension problems, a price-framing one and a variant-selection one, and collapsing them into one frame would put two jobs in one image. What is deliberately absent:
+Every rotation format except transformation is covered, with educational infographic used twice (#3, #7) because this product has two distinct comprehension problems, a price-framing one and a variant-selection one, and collapsing them into one frame would put two jobs in one image. What is deliberately absent:
 
-- **No skin before/after.** There is no truthful, reproducible skin transformation to shoot for a four-product routine box, and the shelf swap in #4 does the transformation job with evidence that is actually verifiable.
+- **No transformation frame of any kind.** Sean, 2026-08-02: not doing before/after right now. The shelf swap that used to occupy slot 4 is cut, not deferred into a blocker. There is also no truthful, reproducible *skin* transformation to shoot for a four-product routine box, so the format stays out on both counts.
 - **No unboxing or packaging-beauty frame.** `packaging: 0` — there is no custom box, and imagery implying one would misrepresent what arrives.
 - **No lifestyle-model frame.** Twelve products is the argument; a person holding one bottle actively undercuts the volume read that #1 exists to deliver.
 
 ### Blocked
 
-1. **MUST-SHOOT — frame #1, twelve-unit contents flat-lay, three kit versions.** Single session, overhead rig, three set changes. Blocks the highest-value frame on the highest-value SKU. Requires physical stock of all three kits' variants on hand.
-2. **MUST-SHOOT — frame #4, shelf before/after.** Same session, locked-off tripod, two exposures. Needs a set of conventional products to stage the "before" — sourceable for under $60.
-3. **BLOCKED-ON-THEME — per-bundle hero background** (same task as the Hand Soap Set entry; one Liquid change unblocks both, plus the other three landers on `bundle-landing`). Without it, the 90-Day Clean Swap's hero is the shared `hero-desktop.webp` regardless of what this stack specifies. This stack requests a distinct hero — frame #1's flat-lay, cropped wide — and until the Liquid change lands, that request is engineering work, not an art request.
-4. **Component card check — `coconut-oil-toothpaste`.** Four images on file, the thinnest library of any component in this box, and it is the SKU most likely to have a weak featured image standing in as a "What's in the box" card on a $159 page. Verify the featured image reads at card size before launch; if not, it is a recrop, not a shoot. `coconut-lotion` (11), `coconut-oil-deodorant` (5) and `coconut-soap` (5) are adequate.
+1. **Nothing blocks the stack.** Every frame is buildable today. The only former blocker, frame #1's twelve-unit flat-lay, ships as a composite of real component photography (see frame notes); a real overhead shoot stays a worthwhile *upgrade* on the session-B list, but it is not gating. Frame #4's shelf before/after was cut outright on 2026-08-02, not deferred.
+2. **BLOCKED-ON-THEME — per-bundle hero background** (same task as the Hand Soap Set entry; one Liquid change unblocks both, plus the other three landers on `bundle-landing`). Without it, the 90-Day Clean Swap's hero is the shared `hero-desktop.webp` regardless of what this stack specifies. This stack requests a distinct hero — frame #1's flat-lay, cropped wide — and until the Liquid change lands, that request is engineering work, not an art request.
+3. **Component card check — `coconut-oil-toothpaste`.** Four images on file, the thinnest library of any component in this box, and it is the SKU most likely to have a weak featured image standing in as a "What's in the box" card on a $144 page. Verify the featured image reads at card size before launch; if not, it is a recrop, not a shoot. `coconut-lotion` (11), `coconut-oil-deodorant` (5) and `coconut-soap` (5) are adequate.
 
 ---
 
@@ -849,7 +885,7 @@ Ranked by return per unit of effort. The frame-level "build first" picks from ea
 | 3 | **Collection-tile frame ×10**, one composite each | Cheapest work here and a *prerequisite* for the distribution work that gets these pages an audience. |
 | 4 | **Head-to-Toe frame 1** — seven-product grid | Page asserts breadth with 2 images; 46 component photos make it a composite, not a shoot. At 2.6× CAC it is paid-eligible the moment tracking clears. |
 | 5 | **Hand Soap Set frame 1** — three-configuration ladder | Fastest fix on a page rendering zero images, and the gallery is its entire visual argument (`templateSuffix: null`, so no hero at all). |
-| 6 | **90-Day Clean Swap frame 1** — twelve-unit flat-lay (session B) | Biggest single argument in the range: the whole $159 case in one image, on the page with one photo. |
+| 6 | **90-Day Clean Swap frame 1** — twelve-unit flat-lay (session B) | Biggest single argument in the range: the whole $144 case in one image, on the page with one photo. |
 | 7 | **The per-bundle hero Liquid change** | One change unblocks all five landers. Engineering, not art. |
 | 8 | Everything else, per bundle, in stack order | |
 

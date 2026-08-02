@@ -96,7 +96,7 @@ const gql = async (query, variables) => {
 
 // ── live data ────────────────────────────────────────────────────────────────
 const PRODUCT_Q = `id title handle status descriptionHtml
-     variants(first:50){edges{node{ id title price }}}
+     variants(first:50){edges{node{ id title price compareAtPrice }}}
      metafields(first:50,namespace:"bundle"){edges{node{key value}}}`;
 
 const product = (await gql(

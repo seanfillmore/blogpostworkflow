@@ -1,0 +1,101 @@
+{
+  "product": "90-day-clean-swap",
+  "images": [
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-01-contents-90day-gentle.jpg",
+      "alt": "Everything in the Gentle kit \u2014 3 Pure Unscented Body Lotion, 3 Calming Lavender Deodorant, 3 Fresh Mint Toothpaste, 3 Pure Unscented Bar Soap \u2014 12 full-size products in one box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-01-contents-90day-calm.jpg",
+      "alt": "Everything in the Calm kit \u2014 3 Pure Unscented Body Lotion, 3 Calming Lavender Deodorant, 3 Fresh Mint Toothpaste, 3 Calming Lavender Bar Soap \u2014 12 full-size products in one box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-01-contents-90day-fresh.jpg",
+      "alt": "Everything in the Fresh kit \u2014 3 Coconut Breeze Body Lotion, 3 Geranium Flower Deodorant, 3 Fresh Mint Toothpaste, 3 Nourishing Tea Tree Bar Soap \u2014 12 full-size products in one box."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-03-per-product-price-90day-gentle.jpg",
+      "alt": "$207 of products for $144 \u2014 twelve full-size items at $12 each."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-03-per-product-price-90day-calm.jpg",
+      "alt": "$207 of products for $144 \u2014 twelve full-size items at $12 each."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-03-per-product-price-90day-fresh.jpg",
+      "alt": "$207 of products for $144 \u2014 twelve full-size items at $12 each."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-02-whole-routine-90day-gentle.jpg",
+      "alt": "The four daily products in the 90-Day Clean Swap \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 the whole routine swapped in one order."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-02-whole-routine-90day-calm.jpg",
+      "alt": "The four daily products in the 90-Day Clean Swap \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 the whole routine swapped in one order."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-02-whole-routine-90day-fresh.jpg",
+      "alt": "The four daily products in the 90-Day Clean Swap \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 the whole routine swapped in one order."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-07-kit-differences-90day-gentle.jpg",
+      "alt": "Gentle: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Pure Unscented. Calm: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Calming Lavender. Fresh: Body Lotion Coconut Breeze, Deodorant Geranium Flower, Toothpaste Fresh Mint, Bar Soap Nourishing Tea Tree. Toothpaste is Fresh Mint in every kit."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-07-kit-differences-90day-calm.jpg",
+      "alt": "Gentle: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Pure Unscented. Calm: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Calming Lavender. Fresh: Body Lotion Coconut Breeze, Deodorant Geranium Flower, Toothpaste Fresh Mint, Bar Soap Nourishing Tea Tree. Toothpaste is Fresh Mint in every kit."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-07-kit-differences-90day-fresh.jpg",
+      "alt": "Gentle: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Pure Unscented. Calm: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Calming Lavender. Fresh: Body Lotion Coconut Breeze, Deodorant Geranium Flower, Toothpaste Fresh Mint, Bar Soap Nourishing Tea Tree. Toothpaste is Fresh Mint in every kit."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-08-reviews-90day-gentle.jpg",
+      "alt": "4.64 out of 5 stars from 205 customer reviews of the four products included in the 90-Day Clean Swap."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-08-reviews-90day-calm.jpg",
+      "alt": "4.64 out of 5 stars from 205 customer reviews of the four products included in the 90-Day Clean Swap."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-08-reviews-90day-fresh.jpg",
+      "alt": "4.64 out of 5 stars from 205 customer reviews of the four products included in the 90-Day Clean Swap."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-06-ingredients-90day-gentle.jpg",
+      "alt": "Ingredient comparison. Our body lotion has 6 ingredients against 34 in a conventional coconut oil lotion; our Fresh Mint toothpaste has 8 against 13 in a conventional toothpaste."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-06-ingredients-90day-calm.jpg",
+      "alt": "Ingredient comparison. Our body lotion has 6 ingredients against 34 in a conventional coconut oil lotion; our Fresh Mint toothpaste has 8 against 13 in a conventional toothpaste."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-06-ingredients-90day-fresh.jpg",
+      "alt": "Ingredient comparison. Our body lotion has 6 ingredients against 34 in a conventional coconut oil lotion; our Fresh Mint toothpaste has 8 against 13 in a conventional toothpaste."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-05-nothing-to-reorder-90day-gentle.jpg",
+      "alt": "Three of each product \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 so there is nothing to reorder for months."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-05-nothing-to-reorder-90day-calm.jpg",
+      "alt": "Three of each product \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 so there is nothing to reorder for months."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-05-nothing-to-reorder-90day-fresh.jpg",
+      "alt": "Three of each product \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 so there is nothing to reorder for months."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-04-what-to-expect-90day-gentle.jpg",
+      "alt": "What to expect when switching to the 90-Day Clean Swap: change all four products at once, expect a short adjustment period with natural deodorant, then it passes."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-04-what-to-expect-90day-calm.jpg",
+      "alt": "What to expect when switching to the 90-Day Clean Swap: change all four products at once, expect a short adjustment period with natural deodorant, then it passes."
+    },
+    {
+      "file": "/Users/seanfillmore/Code/Claude/.claude/worktrees/clean-swap/data/brand/bundle-images/frame-04-what-to-expect-90day-fresh.jpg",
+      "alt": "What to expect when switching to the 90-Day Clean Swap: change all four products at once, expect a short adjustment period with natural deodorant, then it passes."
+    }
+  ]
+}

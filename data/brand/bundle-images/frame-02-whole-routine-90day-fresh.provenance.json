@@ -1,0 +1,10 @@
+{
+  "frame": "frame-02-whole-routine-90day-fresh",
+  "product": "90-day-clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "The four daily products in the 90-Day Clean Swap \u2014 body lotion, deodorant, toothpaste and bar soap \u2014 the whole routine swapped in one order.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme scopes gallery media by alt-text suffix and its gang_exist flag is sticky across the media loop, so an unscoped image sitting after a scoped one is hidden for EVERY variant. Universal frames must therefore exist once per kit."
+}

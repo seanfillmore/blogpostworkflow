@@ -1,0 +1,10 @@
+{
+  "frame": "frame-06-ingredients-90day-gentle",
+  "product": "90-day-clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "Ingredient comparison. Our body lotion has 6 ingredients against 34 in a conventional coconut oil lotion; our Fresh Mint toothpaste has 8 against 13 in a conventional toothpaste.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme scopes gallery media by alt-text suffix and its gang_exist flag is sticky across the media loop, so an unscoped image sitting after a scoped one is hidden for EVERY variant. Universal frames must therefore exist once per kit."
+}

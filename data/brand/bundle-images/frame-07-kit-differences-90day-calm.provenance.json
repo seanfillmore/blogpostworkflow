@@ -1,0 +1,10 @@
+{
+  "frame": "frame-07-kit-differences-90day-calm",
+  "product": "90-day-clean-swap",
+  "renderedBy": "scripts/render-frame.mjs",
+  "generative": false,
+  "dimensions": "2048x2048",
+  "alt": "Gentle: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Pure Unscented. Calm: Body Lotion Pure Unscented, Deodorant Calming Lavender, Toothpaste Fresh Mint, Bar Soap Calming Lavender. Fresh: Body Lotion Coconut Breeze, Deodorant Geranium Flower, Toothpaste Fresh Mint, Bar Soap Nourishing Tea Tree. Toothpaste is Fresh Mint in every kit.",
+  "metafieldsRead": {},
+  "note": "Byte-identical copy of the unscoped render. The theme scopes gallery media by alt-text suffix and its gang_exist flag is sticky across the media loop, so an unscoped image sitting after a scoped one is hidden for EVERY variant. Universal frames must therefore exist once per kit."
+}
