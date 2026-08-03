@@ -1,6 +1,6 @@
 ---
 name: marketing-awareness-level-messaging
-description: Use when deciding what a page, email, or listing should actually say — mapping product page hero copy, Amazon titles and bullets, welcome and post-purchase email flows, and landing pages to whether the reader is unaware, problem-aware, solution-aware, or product-aware, turning that diagnosis into concrete headline stems, and deriving extra assets by re-entering one proven angle at a different awareness level.
+description: Use when deciding what a page, email, or listing should actually say — mapping product page hero copy, Amazon titles and bullets, welcome and post-purchase email flows, and landing pages to whether the reader is unaware, problem-aware, solution-aware, or product-aware, checking that against how sophisticated (saturated) the category already is, turning that diagnosis into concrete headline stems, and deriving extra assets by re-entering one proven angle at a different awareness level.
 ---
 
 # Awareness Level Messaging
@@ -15,9 +15,24 @@ description: Use when deciding what a page, email, or listing should actually sa
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 
+## Check the second axis: match the message to the category's sophistication level, not just the reader's awareness.
+
+Awareness is about the individual reader; sophistication is about how much the *category* has already heard. A mature category has burned through plain benefit claims and moved on to improved-mechanism and identification angles — so a newer brand cannot lift the messaging of an incumbent, because the incumbent is playing a different game with a different level of earned attention.
+
+- **Early category** → the plain benefit claim still lands.
+- **Mature category** → lead with a *named mechanism* (why this specific formula works) or an *identity* the buyer can see themselves in.
+
+**Why it works:** As a category matures, buyers have heard every basic claim, so the same benefit line that worked earlier no longer registers. What still moves people is a specific mechanism explaining why *this* one works, or an identity they recognize as theirs.
+
+**Evidence offered:** Thin. She reads a market-sophistication section out of an AI-generated audit ("this is where the market is now — improved mechanism and identification") and repeatedly notes that Dr. Squatch is "playing a much different game than a newer brand." Observation, no data.
+
+**Fit here (6/10):** Durable principle class (positioning), age irrelevant, and it owns an axis the awareness-level sections only gestured at. It matters unusually here because natural deodorant is a saturated category where "aluminum-free" is table stakes — Native and Dr. Squatch have already exhausted it — so Real Skin Care's PDP and Amazon copy has to lead with a named mechanism (the specific formula, the baking-soda-free variant, why it survives the transition period) or an identity angle rather than the category claim. Free, editorial, no traffic or budget. Held at 6 because the creator asserts it in passing rather than teaching it, and because its second half is a *constraint* on competitor teardowns (don't copy incumbent messaging) rather than a mechanism of its own.
+
+*Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
 ## Operationalize the framework with three how-to sentence stems, one per awareness stage.
 
-This is the concrete execution layer for the principle above — instead of abstractly "matching awareness," write the literal headline:
+This is the concrete execution layer for the awareness-level diagnosis above — instead of abstractly "matching awareness," write the literal headline:
 
 - **"How to know if..."** → problem-aware. The reader suspects something is wrong but hasn't named it.
 - **"How do I pick / how to choose..."** → solution-aware, in comparison mode. The reader accepts the category and is choosing between options.
@@ -27,7 +42,7 @@ This is the concrete execution layer for the principle above — instead of abst
 
 **Evidence offered:** "How do I pick" was the top performer for six months for both a home decor and an apparel client; the rest is practitioner assertion, with an explicit admission that this framing makes bad YouTube content but keeps working in ads.
 
-**Fit here (7/10):** Durable principle class and the cleanest operationalization of awareness levels — it converts an abstract framework into three literal sentence stems. Executable solo at zero cost: "how to know if your deodorant is the problem" for top-of-funnel content and problem-aware PDP copy; "how to choose a natural deodorant that actually works" as a comparison section or Amazon A+ block; "how to start" for the transition-period onboarding email that directly serves the 18–22.5% repeat rate.
+**Fit here (7/10):** Durable principle class and the cleanest operationalization of awareness levels — it converts an abstract framework into three literal sentence stems. Executable solo at zero cost: "how to know if your deodorant is the problem" for top-of-funnel content and problem-aware PDP copy; "how to choose a natural deodorant that actually works" as a comparison section or Amazon A+ block; "how to start" for the transition-period onboarding email that directly serves the 18–22.5% repeat rate. In a saturated category, fill the body of each stem with the named mechanism rather than the category claim.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
@@ -39,7 +54,7 @@ Once an angle converts, don't rewrite it — swap only the hook and the bridge s
 
 **Evidence offered:** Side-by-side of the direct "if your dog eats grass, do this" hook versus the unaware "our dogs can't talk to us" hook leading into the identical script; both described as winners. Practitioner assertion, no numbers.
 
-**Fit here (6/10):** Durable principle class, age irrelevant. This is the derivation move that sits on top of the diagnosis above: the earlier sections tell you which awareness level a surface serves; this one tells you how to generate a variant for a *different* surface without starting from scratch. Free and solo-executable across an Amazon title vs. an A+ block vs. a PDP hero vs. an email subject line — one natural-deodorant angle, four entry points. Pair it with the how-to stems: keep the body, swap the stem ("how to know if..." → "how do I pick...") to slide the same argument up or down the awareness ladder. Capped at 6 because Real Skin Care cannot measure which variant wins — it can only reason about coverage, not test it.
+**Fit here (6/10):** Durable principle class, age irrelevant. This is the derivation move that sits on top of the diagnosis above: the earlier sections tell you which awareness level a surface serves; this one tells you how to generate a variant for a *different* surface without starting from scratch. Free and solo-executable across an Amazon title vs. an A+ block vs. a PDP hero vs. an email subject line — one natural-deodorant angle, four entry points. Pair it with the how-to stems: keep the body, swap the stem ("how to know if..." → "how do I pick...") to slide the same argument up or down the awareness ladder. Note that only the *entry point* varies — the mechanism-led body stays fixed, because sophistication is a property of the category and doesn't change between surfaces. Capped at 6 because Real Skin Care cannot measure which variant wins — it can only reason about coverage, not test it.
 
 *Source: Spencer Pawliw — "We 38x'd Meta Spend in 4 Months. Here's What Actually Did It" (goedDlD00T0)*
 
@@ -51,6 +66,6 @@ Take your single biggest value prop and answer the unasked "why does that actual
 
 **Evidence offered:** Cited as a top performer for Pax over the last year (per their chief digital officer) and pressure-tested at the agency with "amazing results." No numbers given.
 
-**Fit here (7/10):** Durable principle class — an educational framing device, not a platform mechanic. Directly usable as an Amazon bullet lead-in, a PDP section header, and a post-purchase/education email subject line. Natural deodorant and oral care are exactly the categories where "why does aluminum-free matter" / "why does the transition period happen" is a real unasked objection, and answering it is zero-cost CRO-stage work. Pairs naturally with the how-to stems above: the how-to stem sets the awareness stage, the why-is-it-important body supplies the reason to act — and because the body stays fixed, it is exactly the kind of proven copy worth re-entering from a different hook.
+**Fit here (7/10):** Durable principle class — an educational framing device, not a platform mechanic. Directly usable as an Amazon bullet lead-in, a PDP section header, and a post-purchase/education email subject line. Natural deodorant and oral care are exactly the categories where "why does aluminum-free matter" / "why does the transition period happen" is a real unasked objection, and answering it is zero-cost CRO-stage work. Pairs naturally with the how-to stems above: the how-to stem sets the awareness stage, the why-is-it-important body supplies the reason to act — and it is also the natural home for the named mechanism a saturated category demands, since "why it matters" forces you past the table-stakes claim. Because the body stays fixed, it is exactly the kind of proven copy worth re-entering from a different hook.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*

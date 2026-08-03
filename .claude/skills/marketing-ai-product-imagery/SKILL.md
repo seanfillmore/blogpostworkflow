@@ -1,6 +1,6 @@
 ---
 name: marketing-ai-product-imagery
-description: Workflow for producing listing and PDP imagery with AI image models grounded in real product reference photos.
+description: Workflow for producing listing and PDP imagery with AI image models grounded in real product reference photos, including the QA passes (hallucination audit, text proofreading) that make renders safe to ship.
 ---
 
 # Ai Product Imagery
@@ -81,9 +81,19 @@ description: Workflow for producing listing and PDP imagery with AI image models
 
 **Evidence offered:** Worked through live: he rejects a lifestyle shot for wrong scale and 'too perfect' feel, rejects an otherwise-good instructions graphic because the same diffuser renders tall in one panel and wide in another, and twice corrects an invented orange glow with 'remove the orange glow from the body of the product — only the thin line between the ceramic and the wooden base actually glows.' Judgement calls and demonstrated fixes, no data on buyer reaction.
 
-**Fit here (8/10):** Durable-principle class (asset QA), and the stakes are higher for Real Skin Care than in the source. These are cosmetics on Amazon: an image showing a texture, colour, applicator or label that does not match the shipped product is an accuracy violation on the ~$1,800/mo channel and a driver of the 'this isn't what I bought' disappointment behind the 18–22.5% repeat rate. Free, purely editorial, no traffic or budget needed, and nothing in the existing image or copy skills owns hallucination review. Practical rule: AI renders are safe for infographic, comparison and instructional slots; for the main image, verify the render matches the real label, cap and colour exactly, or use a real photo.
+**Fit here (8/10):** Durable-principle class (asset QA), and the stakes are higher for Real Skin Care than in the source. These are cosmetics on Amazon: an image showing a texture, colour, applicator or label that does not match the shipped product is an accuracy violation on the ~$1,800/mo channel and a driver of the 'this isn't what I bought' disappointment behind the 18–22.5% repeat rate. Free, purely editorial, no traffic or budget needed, and nothing in the existing image or copy skills owns hallucination review. Practical rule: AI renders are safe for infographic, comparison and instructional slots; for the main image, verify the render matches the real label, cap and colour exactly, or use a real photo. This audit covers the *rendered product*; the companion rule below covers the *rendered text* on the frame — run both before anything uploads.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
+
+## Proofread the copy on every generated frame as its own pass — misspelled product words, stray em dashes and other typography artifacts — and fix each with a named correction prompt ('deodorant is spelled wrong, please spell it correctly').
+
+**Why it works:** Generators produce plausible-looking but wrong text at full size, not only in tiny illegible type, so the defect survives a glance at the layout — the eye reads the shape of the word rather than its letters. A misspelling of the product category on a listing image reads as a counterfeit or a careless seller, undermining the exact trust the image was built to create. A named, located edit fixes only the broken string and leaves the approved design intact.
+
+**Evidence offered:** Two live catches in the demo: 'Dio Durant' rendered instead of deodorant (attributed to the tool's German origin) and an unwanted em dash in a headline, both fixed with one-line named edits. Anecdotal, no data on buyer reaction.
+
+**Fit here (6/10):** Durable QA principle (asset review), age irrelevant. Additive in a narrow direction: the hallucination audit above owns invented product features, scale and cross-panel inconsistency, and marketing-product-image-stack covers garbled *small* text patched in Canva — but nothing owned proofreading legible, full-size copy on a generated frame. Stakes are real here: this catalogue literally sells deodorant, and a misspelled 'deodorant' on a secondary slot is a credibility problem on the larger ~$1,800/mo Amazon channel. Free, purely editorial, solo-executable. Capped at 6 because it is a checklist item close in spirit to the hallucination audit rather than a revenue mechanism — read the words letter by letter, out loud if needed, on every frame before upload.
+
+*Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 
 ## Generate the primary white-background hero render and the lifestyle-in-a-room shot with the AI model instead of hiring a photographer or 3D rendering artist.
 

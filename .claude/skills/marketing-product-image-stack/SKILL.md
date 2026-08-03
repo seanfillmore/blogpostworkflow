@@ -1,6 +1,6 @@
 ---
 name: marketing-product-image-stack
-description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one buyer per frame, headline-first hierarchy checked at phone size, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
+description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
 ---
 
 # Product Image Stack
@@ -27,15 +27,17 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
-## Every creative asset should have exactly one goal and one persona — never try to do two jobs or speak to two people in one image.
+## Every creative asset should have exactly one goal and one persona — and that persona must be specified narrowly, not as a category.
 
-**Why it works:** A single job lets the headline, proof, and objection handling all pull the same direction; two jobs split the focal point and the message reaches nobody clearly.
+**Why it works:** A single job lets the headline, proof, and objection handling all pull the same direction; two jobs split the focal point and the message reaches nobody clearly. Narrowness does the second half of the work: the persona determines the vocabulary, the proof you must supply, and the objections the asset has to answer, and all three are persona-dependent. A broad persona ('small business owners', 'natural deodorant buyer') gives you no basis for choosing any of the three, so the copy defaults to generic language that identifies nobody and answers nothing. Specify which type, at what stage, with what objection.
 
-**Evidence offered:** Assertion from practice; she cites this as the most common failure mode she sees in statics.
+**Evidence offered:** Assertion from practice; she cites one-goal-one-persona as the most common failure mode she sees in statics, and presents narrow persona specification as the second of four strategic prerequisites. No data for either.
 
 **Fit here (7/10):** Durable principle class, so age is irrelevant. Real Skin Care has 12 SKUs and its highest-leverage single-frame surfaces are Amazon listing image slots and Shopify PDP imagery — each slot is exactly the kind of asset that fails when it tries to say five things. Costs nothing and needs no traffic.
 
-**Applied to the main image:** treat this as the tie-breaker against the lever list above — change one lever at a time rather than merging several hypotheses into a single frame, even where the source does merge them.
+**The narrowness discipline separately (6/10):** additive to the count rule — it says how narrowly to specify the one persona, not how many. Concretely usable and free: 'someone who already switched off aluminum and had a natural deodorant quit by noon' produces different Amazon bullets and PDP copy than 'natural deodorant buyer' — different vocabulary, different proof, different objection. personas.json already exists to draw from rather than guessing. Not higher because it is a specification discipline layered on a rule already adopted, and at ~54 orders/month the resulting choice is made by judgment, never measured.
+
+**Applied to the main image:** treat the one-goal rule as the tie-breaker against the lever list above — change one lever at a time rather than merging several hypotheses into a single frame, even where the source does merge them.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 
@@ -95,7 +97,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 ## In lifestyle imagery, specify the buyer avatar, the setting, and the emotional register — and pick the setting from the actual reason people buy the product.
 
-**Why it works:** A lifestyle image works by letting the target buyer see themselves using the product in a situation they recognize. Naming who is in the frame and what feeling the scene should carry ties the image to the purchase motive instead of producing generic decor photography. (The one-persona rule above governs how many people a frame speaks to; this governs how you choose them.)
+**Why it works:** A lifestyle image works by letting the target buyer see themselves using the product in a situation they recognize. Naming who is in the frame and what feeling the scene should carry ties the image to the purchase motive instead of producing generic decor photography. (The one-persona rule above governs how many people a frame speaks to and how narrowly you must pin that person down; this governs how you stage them.)
 
 **Evidence offered:** Prompts specify 'a millennial mom' in 'a comfy home' and 'her cozy home office,' with the stated reasoning that cozy and comforting is 'the reason people buy this product.' He judges the final images good on the grounds that scale, setting, and avatar are all right. Assertion, no performance data.
 
