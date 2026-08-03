@@ -1,5 +1,41 @@
 # Handoff — bundle galleries, after the two Clean Swaps
 
+> ## ⚠️ SUPERSEDED the same day it was written — 2026-08-02
+>
+> Everything this document says to do next has been done, and its roster table is wrong in
+> every row. It is kept as the record of what was known at the time, and because the four
+> traps in it were each real. **For current state read `docs/bundle-media-plan.md` §0a.**
+>
+> **Where the roster actually landed:** six bundles live with real galleries — Sensitive Skin
+> Set, Coconut Reset, 90-Day Clean Swap, The Clean Swap, **Head-to-Toe** (5 frames × 2 kits)
+> and **Gift Box** (7 × 3, including the packaging frames). Four are **drafted**: Hand Soap
+> Set (13 media built, page not built out), Deodorant 4-Pack (10 built), Toothpaste 3-Pack
+> (never started), Bar Soap 4-Pack (placeholders). Sean drafted them because how they fit the
+> site is a merchandising question, not an imagery one.
+>
+> **Three things this document got wrong, corrected where they were learned:**
+>
+> - *"six of its seven components are in the cutout library… only lip balm and foaming hand
+>   soap need cutting"* — the body cream had no `component-*` cutout either, and none of the
+>   three existed in **either** scent. **Six** cuts were needed, not two.
+> - *"A cross-check script does not exist"* — still true of a general one, but the specific
+>   failures it named are now guarded in code: `verify()` in every frame module,
+>   `lib/supply-duration.js`, and the `hide_variants` / unscoped-lead checks in
+>   `set-media-variant-scope.mjs`.
+> - The cutting method described here as prose is now `scripts/cut-component.mjs` plus
+>   `data/brand/cutouts/recipes.json`, and reproduces the hand-cut lotion to within 3px.
+>
+> **Two things it flagged that turned out to matter more than it knew:**
+>
+> - *"Per-bundle hero images… nothing is set yet"* — still nothing set.
+> - *"No transformation frames"* — still none, and still deliberate.
+>
+> **What it could not have known**, each caught by Sean on the live site rather than by any
+> check: a 60-day supply claim on a ~28-day box; a "What's in the box" grid showing a
+> deodorant that ships in neither kit; and a gallery whose main image never changed. All
+> three are fixed and guarded.
+
+
 **Written:** 2026-08-02, after PR #405 (Sensitive Skin Set), #406 (90-Day Clean Swap)
 and #407 (The Clean Swap) all merged and deployed.
 **Prerequisite reading:** `docs/bundle-media-plan.md` for the bundle you are building,
