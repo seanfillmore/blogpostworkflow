@@ -520,6 +520,26 @@ await assert.rejects(
   assert.match(err.message, /part 3 of 11/, 'the error names the chunk that failed');
 }
 
+// A trailing comma before } or ] is the single most common way the model's JSON
+// comes back invalid — the Dara Denney statics video failed twice in a row on it
+// (17 of them in part 1, 4 in part 2), each failure discarding a paid extraction.
+// The repair must not touch commas that live inside string values.
+{
+  const withTrailingCommas = JSON.stringify(GOOD, null, 2)
+    .replace(/"rscFit": \{/g, '"note": "a, b, c ] } trap,", "rscFit": {')
+    .replace(/\n(\s*)\}/g, ',\n$1}')
+    .replace(/\n(\s*)\]/g, ',\n$1]');
+  assert.throws(() => JSON.parse(withTrailingCommas), 'the fixture really is invalid JSON');
+
+  const out = await extractTactics({
+    video: VIDEO,
+    inventory: [],
+    client: fakeClient({ stop_reason: 'end_turn', content: [{ type: 'text', text: withTrailingCommas }] }),
+  });
+  assert.equal(out.tactics.length, 2, 'trailing commas are repaired rather than discarding the response');
+  assert.equal(out.tactics[0].claim, GOOD.tactics[0].claim, 'string values survive the repair intact');
+}
+
 // unparseable output
 await assert.rejects(
   () => extractTactics({
