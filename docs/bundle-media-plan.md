@@ -11,7 +11,7 @@ Companion to `docs/bundle-marketing-plan.md` (positioning and channel) and `docs
 > **All three resolved 2026-07-31 — do not re-raise them.**
 >
 > 1. **Ingredient claims — `config/ingredients.json` is correct and is the source of truth.** The copy was the wrong side and has been fixed: "no palm oil" now appears nowhere live, and the Gift Box lander discloses *"Contains beeswax in the lip balm, so this box is not vegan."* The Clean Swap's "Vegan and cruelty-free" is accurate because its four components carry no beeswax. **The table below stands and should be treated as the authority** — it is what the Reset's frame 6 note is derived from.
-> 2. **Head-to-Toe frame 3 — dissolved, not decided.** The bundle repriced to **$87** on 2026-07-31, so $105 ÷ 7 = $15.00 no longer holds ($12.43). The frame depended on that exact arithmetic; it is cut, and the stack leads on completeness like every other bundle.
+> 2. **Head-to-Toe frame 3 — dissolved, then rebuilt.** The bundle repriced to **$87** on 2026-07-31, so $105 ÷ 7 = $15.00 no longer holds ($12.43). The frame was cut on the grounds that it depended on that exact arithmetic. **Reversed 2026-08-02 and shipped:** the tension was never the division, it was landing *on* the $15 ceiling, and $12.43 is under it. Rebuilt as a RENDER that divides at render time and refuses to build at ≥$15. The stack still leads on completeness — the price frame sits at slot 3.
 > 3. **Reset digital-goods frame — buildable.** Both PDFs are real: Routine & Tracker **5.2 MB**, Field Guide **9.1 MB**, live on the CDN and delivered by Klaviyo flow `XFdcu6`.
 
 The original text of the three, kept because the ingredient table is still the working reference:
@@ -36,6 +36,48 @@ Either the copy is wrong or the config is stale. **Until that is resolved, no fr
 **3. The Coconut Reset's digital-goods frame may be unbuildable.** Its value stack counts a $19 90-Day Routine & Tracker and a $15 Field Guide. If those PDFs are stubs, photographing them as $34 of value is fabrication — and the playbook still lists an unconfirmed test order for the flow that delivers them. The fix in that case is the guide, not the frame.
 
 ---
+
+## 0a. Roster status — 2026-08-02, end of the gallery push
+
+| Bundle | Price | Status | Gallery |
+|---|--:|---|---|
+| Sensitive Skin Set | $46.80 | **live** | 6 frames |
+| 90-Day Coconut Reset | $121 | **live** | 6 × 2 scents |
+| 90-Day Clean Swap | $144 | **live** | 8 × 3 kits |
+| The Clean Swap | $59 | **live** | 6 × 3 kits |
+| Head-to-Toe | $87 | **live** | 5 × 2 kits |
+| Gift Box | $62 | **live** | 7 × 3 kits |
+| Hand Soap Set | $44–72 | ⏸ **draft** | 13 media, built — page not built out |
+| Deodorant 4-Pack | $53 | ⏸ **draft** | 10 media, built |
+| Toothpaste 3-Pack | $34 | ⏸ **draft** | none — never started |
+| Bar Soap 4-Pack | $39 | ⏸ **draft** | 5 placeholders |
+
+**Six bundles live with real galleries. Four drafted.** Sean, 2026-08-02, on the last three:
+*"Set the deodorant four-pack, toothpaste 3-pack, and bar soap four-pack to draft and leave
+them as is. I don't know how they would work into the site."* That is a merchandising
+question, not an imagery one, and no amount of gallery work answers it — so the work stops
+here rather than continuing down the roster.
+
+Nothing broke on the way out: across 212 articles and 38 pages there was **not one inbound
+link** to any of the four drafted products. Their only appearance was the `sets-and-bundles`
+collection, which they leave automatically. Prior statuses are backed up in
+`data/backups/products/`.
+
+**What survives for whoever relaunches them:** the cutout library and its reproducible
+recipe manifest, `scripts/cut-component.mjs`, the frame modules with their `verify()` guards,
+`templates/product.scoped-gallery.json`, and the two-option scoping pattern. A relaunch is a
+merchandising decision followed by an upload, not a rebuild.
+
+### ⚠️ Found while drafting: a selling plan group with no app
+
+All three carry a selling plan group named **"Subscription Plans" with `appId: null`** — a
+group created through the Admin API rather than by a subscription app. `reference_recurpay_api`
+records exactly this shape as the one that **sells but never bills**: the customer checks out
+on a subscription, and no recurring charge is ever raised.
+
+Drafting hides the products, so nothing new can be sold on those plans, which lowers the
+urgency — but it does not resolve it, and the same group name may exist on products that are
+still live. **This deserves its own look, independent of any gallery work.**
 
 ## 1. Read this first — the three surfaces
 
@@ -243,25 +285,97 @@ Found while specifying the stacks. These are defects in the *existing* library t
 
 <!-- Media fragment: Head-to-Toe (now $87) and The 90-Day Coconut Reset (now $121). Product-gallery image stacks. Frames are specced, not produced. -->
 
-### Head-to-Toe — $105
+### Head-to-Toe — $87
 
-The copy on this page can *say* "one of everything we make" but it cannot make the buyer **count to seven**, and counting to seven is the entire purchase decision. At $105 against a measured ~$15 lotion price ceiling, the shopper's first instinct is to divide — so the imagery either wins the division or loses the sale. This buyer is the discovery shopper who wants to find their favourite before committing to any one SKU, plus the non-Q4 gifter; both are choosing breadth on purpose, which means the stack is a range shot, not a routine shot. Two jobs dominate: **prove the seven products are real and distinct** (the page currently has 2 images, so breadth is asserted and never shown), and **reframe the unit of purchase** so $105 is compared against a shelf, not against a bottle. The 46 existing component photos make almost all of this a compositing job rather than a shoot.
+> **✅ SHIPPED 2026-08-02.** Five frames × two kits = **10 media**, live and verified on the
+> storefront: each kit shows exactly its own five and neither leaks into the other. The two
+> placeholder images are deleted (both were the same Coconut Breeze *body lotion*
+> photograph, captioned "all seven Real Skin Care products"); a record is in
+> `data/backups/products/head-to-toe.media-before-2026-08-02.json`.
+>
+> The stack that shipped is **1** contents · **2** head-to-toe routine · **3** per-product
+> price · **4** kit difference · **5** reviews — spec frames 1, 2, 3, 4 and 6 renumbered.
+>
+> ### 🚨 Frame 7 shipped wrong and was pulled the same day
+>
+> It went live reading **"60 DAYS of everything"**. Sean caught it immediately: *"How is
+> that 60 days if we sell 3 of each for 90 days? This is a one month supply."* He is right,
+> and the store's own catalogue says so — the 90-Day Clean Swap is three of each for ninety,
+> so one of each is thirty.
+>
+> The measured position is worse than the arithmetic. **A box lasts as long as the first
+> thing in it runs out**, and `config/consumption-rates.json` puts the body cream at ~28
+> days per unit — so this box stops being "everything" after about four weeks while its
+> deodorant (~90 days) is still nearly full. Those rates are reorder gaps, so each is an
+> *upper* bound; the true figure is lower still.
+>
+> The frame's `verify()` had asserted `duration_days` was a positive integer. It was — it
+> was 60. **A metafield is not evidence.** `lib/supply-duration.js` is now the evidence, and
+> it rejects the claim that shipped while still accepting the 90-Day's genuine 90.
+>
+> **The frame was not the only surface saying it, and not the first.** The lander's
+> value-stack panel renders `{% if days %}Everything in your {{ days }}-day box{% endif %}`,
+> so the page had been reading **"Everything in your 60-day box"** in body copy since
+> `duration_days` was first set — before any frame existed. Captured in the page HTML fetched
+> before the metafield was deleted; it now reads "Everything in your box", while the 90-Day
+> still correctly reads "Everything in your 90-day box". **The image amplified a claim the
+> page was already making**, which is worth knowing: an image is the loudest place a bad
+> figure lands, not the place it starts.
+>
+> One more input fixed while tracing it: `scripts/build-bundle-landing.mjs` read
+> `Number(mf.duration_days || 90)`, so a bundle with no duration data printed "duration 90d"
+> as confidently as one with. That value only ever reached a console line, never the page —
+> but an invented operator-facing number is exactly how a wrong figure gets trusted and
+> re-published, which is the whole mechanism above. It now prints "not set", and validates
+> against `lib/supply-duration.js` when a duration *is* set.
+>
+> It was **not rebuilt at 28 days**, because the honest number showed the frame was
+> answering the wrong question. This bundle's own personas here are the discovery shopper
+> and the gifter; neither buys on supply duration, and "$87 for four weeks" argues against a
+> box whose actual argument is breadth. **Duration belongs to the Clean Swaps.**
+>
+> **Spec frame 5 (us-vs-them, "seven swaps") also did not ship**: it is the only frame here
+> that makes an ingredient claim, and §0's block on ingredient claims is only partly lifted.
+> "No aluminium / SLS / parabens / synthetic fragrance" is checkable against
+> `config/ingredients.json` and would build; "no palm oil" and "vegan" remain **false** for
+> this bundle, which contains the cream and the lip balm. A frame one careless edit away
+> from a false claim was not worth shipping for coverage.
+>
+> **Spec frame 2 shipped as type, not as a composite.** Seven products stacked vertically
+> at one honest scale puts the lip balm at ~60px, which fails the phone-size read; and
+> drawing the same seven again in a row would be frame 1 doing frame 2's job. The
+> body-part list carries the argument on its own.
+>
+> Also corrected on the live product: `global.title_tag` and `global.description_tag` both
+> still priced this bundle at **$105**, two days after it moved to $87. Nothing read those
+> figures from the price; they were typed. That is the same class of error as the media
+> plan telling people to print $159 on the 90-Day, and it is why every frame in
+> `data/brand/frames/head-to-toe/` derives its numbers at render time.
+
+The copy on this page can *say* "one of everything we make" but it cannot make the buyer **count to seven**, and counting to seven is the entire purchase decision. At $87 against a measured ~$15 lotion price ceiling, the shopper's first instinct is to divide — so the imagery either wins the division or loses the sale. This buyer is the discovery shopper who wants to find their favourite before committing to any one SKU, plus the non-Q4 gifter; both are choosing breadth on purpose, which means the stack is a range shot, not a routine shot. Two jobs dominate: **prove the seven products are real and distinct** (the page had 2 images, so breadth was asserted and never shown), and **reframe the unit of purchase** so $87 is compared against a shelf, not against a bottle. The 46 existing component photos make almost all of this a compositing job rather than a shoot.
 
 | # | Format | One job | One persona | 1-second read | On-image headline | Source | Effort |
 |--:|---|---|---|---|---|---|---|
 | 1 | Grid/multi-SKU | Prove seven distinct products exist | Discovery shopper who has never bought the brand | "Seven different things, one box" | **One of everything we make.** | COMPOSITE `coconut-lotion` + `coconut-moisturizer` + `coconut-oil-deodorant` + `coconut-oil-toothpaste` + `coconut-soap` + `coconut-oil-lip-balm` + `organic-foaming-hand-soap` | M |
 | 2 | Benefit callout | Prove the seven cover the whole routine with no gaps | Shopper mentally auditing their own bathroom shelf | "This replaces everything I already buy" | **Nothing else to buy.** | COMPOSITE (same seven) | M |
-| 3 | Headliner | Kill the per-unit price objection with a true number | Price-ceiling shopper ("$15 or less, but I want it to work") | "$15 a product — that's my number" | **$105. Seven products. $15 each.** | GENERATE (Ad Builder) over the frame-1 composite | S |
+| 3 | Headliner | Kill the per-unit price objection with a true number | Price-ceiling shopper ("$15 or less, but I want it to work") | "$12.43 a product — under my number" | **$87. Seven products. $12.43 each.** | RENDER `frame-03-per-product` | S |
 | 4 | Educational infographic | Make the Gentle vs Fresh choice decidable without scrolling | Buyer stalled at the variant picker | "Two kits, and here's how they differ" | **Gentle or Fresh. Here's the difference.** | COMPOSITE (per-variant shots — see Blocked) | M |
 | 5 | Us-vs-them comparison | Convert the clean-swap motive into a reason to buy all seven at once | Reduce-my-chemical-load switcher | "Seven swaps in one purchase" | **Seven swaps. No aluminium, no SLS, no parabens, no synthetic fragrance.** | GENERATE (Ad Builder) | M |
 | 6 | Text-only | Borrow the component catalogue's proof for an unreviewed bundle | Sceptic who sees a new bundle with no reviews of its own | "Lots of people have used these" | **4.64 ★ — 295 reviews of the seven products inside.** | GENERATE (Ad Builder) | S |
-| 7 | Benefit callout | Answer "how long does $105 actually last" | Buyer doing value math after the price has landed | "Two months of everything" | **Sixty days of everything.** | COMPOSITE `coconut-lotion` + `coconut-soap` | S |
+| ~~7~~ | ~~Benefit callout~~ | ~~Answer "how long does $87 actually last"~~ | — | — | ~~**Sixty days of everything.**~~ **CUT** — the honest answer is ~28 days (the body cream binds), and this bundle's buyers do not buy on duration. See the banner above. | — | — |
 
 **Frame 1** spec: all seven products stood in a single row on a plain bathroom shelf, tallest to shortest — hand soap pump, lotion bottle, cream jar, deodorant, toothpaste tube, bar soap, lip balm — even spacing, one light direction, no props. Headline sits above the row, product row is the second read. Every unit shown must be a real variant from one real kit (do not mix Gentle and Fresh in one frame — that ships something nobody receives).
 
-**Frame 2** spec: the same seven, but arranged head-to-toe down the frame with a one-word label beside each — teeth, lips, underarms, hands, body wash, body, overnight. The bundle's name made literal. This is the frame that earns $105, because it converts "seven products" into "my whole shelf."
+**Frame 2** spec: the same seven, but arranged head-to-toe down the frame with a one-word label beside each — teeth, lips, underarms, hands, body wash, body, overnight. The bundle's name made literal. This is the frame that earns $87, because it converts "seven products" into "my whole shelf."
 
-**Frame 3** carries a real tension worth naming: `bundle-marketing-plan.md` rule 1 says bundles lead with duration or completeness and **never** with savings-vs-single, precisely to avoid inviting per-unit comparison. Frame 3 deliberately invites it — because $105 ÷ 7 = exactly $15.00, which lands on the measured ceiling rather than above it. It only works at exactly this price, and it is placed at slot 3 so completeness still leads. If that trade is unacceptable, cut frame 3 rather than soften it; a hedged version does no job at all.
+**Frame 3** carried a real tension worth naming: `bundle-marketing-plan.md` rule 1 says bundles lead with duration or completeness and **never** with savings-vs-single, precisely to avoid inviting per-unit comparison. Frame 3 deliberately invites it — and at $105 it did so at exactly $15.00 a product, landing *on* the measured ceiling rather than under it. §0 cut the frame when the bundle repriced, on the grounds that the arithmetic it was written around had died.
+
+> **Reversed 2026-08-02, and the reversal is the point.** $87 ÷ 7 = **$12.43**, which is
+> comfortably *under* the ceiling — so the thing that made the frame uncomfortable is the
+> thing that repricing removed. Both Clean Swaps ship this exact frame. It is rebuilt as a
+> RENDER with the figure divided at render time rather than typed, and `verify()` fails the
+> build if the per-unit price ever reaches $15: a version of this frame printing $15.50
+> would argue against itself, and now it cannot be built at all.
 
 **Frame 5** honesty note: depict the "before" side as generic unbranded conventional packaging with ingredient *categories* named. Do not render CeraVe, Vanicream or Cetaphil packaging, and do not claim those brands contain anything — the four absences claimed are our own formulation facts and are the only claims the frame makes.
 
@@ -275,7 +389,7 @@ The copy on this page can *say* "one of everything we make" but it cannot make t
 
 ### Blocked
 
-1. **BLOCKED-ON-THEME — per-bundle hero background.** `bg_image_desktop` / `bg_image_mobile` are section settings on the shared `bundle-landing` template, so all five landers currently render one `hero-desktop.webp`. Head-to-Toe wants a seven-product hero and the Reset wants a four-bottle hero; neither is possible until the section reads a product metafield (e.g. `bundle.hero_image`) with the section setting as fallback. **Count this as a Liquid change, not art direction.** Until it ships, every frame above must work inside the gallery alone.
+1. **~~BLOCKED-ON-THEME~~ — per-bundle hero background. Unblocked, not done.** This read "impossible until the section reads a product metafield"; PR #406 shipped exactly that, so the theme now takes `bundle.hero_desktop` / `hero_mobile` per product with the section setting as fallback. **Nothing is set for Head-to-Toe**, so the lander still renders the shared `hero-desktop.webp`. It is now art direction — a seven-product hero — rather than a Liquid change. Every frame above still works inside the gallery alone.
 2. **MUST-SHOOT (contingent) — Fresh-kit variant photography.** Audit the 46 component photos for primary images of Geranium Flower deodorant, Sweet Tangerine lip balm, Orange Zest hand soap and Tea Tree bar soap. Any variant missing one blocks frame 4 and renders a wrong "what's in the box" card. Shoot only the misses.
 
 ---
@@ -486,6 +600,55 @@ Component photo library available to reuse or composite from: `coconut-lotion` (
 
 ### Gift Box
 
+> **✅ PARTLY SHIPPED 2026-08-02.** Five frames × three kits = **15 media**, live and verified:
+> each kit shows exactly its own five. Stack: **1** contents · **2** value · **3** they'll finish
+> it · **4** nothing to react to · **5** reviews — spec frames 3, 7, 4, 5 and a review frame
+> renumbered. The product had **zero** images before this.
+>
+> Also fixed: `seo.title` and `seo.description` were **null** — the page had no meta title or
+> description at all. Both now derived from live data and asserted before writing (the value
+> stack must equal compare-at, and the price must clear the $45 free-shipping floor before the
+> copy may say "ships free").
+>
+> **✅ UNBLOCKED the same day.** Sean supplied the supplier's 3D visualization of the
+> 10×8×4in mailer (`data/brand/packaging/mailer-10x8x4-3d-source.pdf`) and confirmed *"that
+> is what the gift box looks like."* Spec **#1 "Arrives in this."** and **#2 "You don't have
+> to wrap it."** are built and live as frames 6 and 7, and the open box now leads the gallery
+> and is the `og:image`. **This was the oldest blocker in this document; it is closed.**
+>
+> Both boxes were lifted off the flat 216-grey backdrop with `scripts/cut-component.mjs` —
+> the same flood fill the product cutouts use, and for the same reason: the box's interior
+> pattern is 217 grey, one step from the backdrop, so no colour threshold separates them,
+> but the pattern is enclosed by the box and therefore unreachable from a corner. Nothing is
+> redrawn.
+>
+> **What it settles and what it does not.** It settles what the box *looks* like — printing,
+> seals, interior pattern, proportions. It does **not** settle that a physical box *arrives*
+> undamaged, which is the objection the review corpus actually raises ("wrapped in a thin
+> tissue paper which was torn in a few places", 5 mentions). A rendering cannot answer that.
+>
+> **Spec #1's "all four products nested inside" is still unbuilt, deliberately.** The render
+> shows an empty interior at a fixed perspective; compositing bottles into it would
+> manufacture a photograph of an arrangement nobody has assembled. Frame 6 therefore claims
+> only what a rendering supports — *"A printed box, not a poly bag"* — and `verify()` rejects
+> the words photo/photograph/packed/nested/inside in either packaging frame's copy.
+>
+> **The real shoot is no longer critical path, but it is still the upgrade**: a photograph of
+> a delivered box, contents nested, is the one asset that answers the damage objection.
+>
+> **Spec #6 ("Full-size. Not sample-size.") deliberately not built.** The plan's own note says to
+> "verify the mini-size premise on a shelf before shipping the frame," and that has not happened.
+> A comparison frame whose opposing column is an assumption about someone else's product is the
+> exact class of claim this pipeline exists to stop. Frame 1's "Nothing in here is a sample" and
+> frame 3's "Full sizes, not travel minis" make the same point about **our** products only, which
+> needs no shelf.
+>
+> Two claims are now enforced in code rather than left to the next author
+> (`data/brand/frames/gift-box/gb-common.mjs`): the word **"unscented"** can never reach a Gift
+> Box frame outside a component's own variant name — two of three kits ship a Calming Lavender
+> deodorant — and **"vegan" / "no palm oil"** are simply never claimed, because the lip balm
+> carries organic beeswax and organic red palm oil.
+
 **What the imagery has to do that the copy can't.** The copy sells the *idea* of a gift that gets used up; it cannot
 prove a physical box exists. Every other bundle on this template is a shipment — this one is an object someone hands
 to another person, and the entire $62 price rests on it arriving giftable. That is a photographic claim and nothing
@@ -653,6 +816,110 @@ Doctrine applied: one job + one persona per frame, headline-first hierarchy, 1-s
 ---
 
 ### Hand Soap Set
+
+> **⏸️ SET TO DRAFT 2026-08-02.** Sean: *"Set the hand soap set to Draft as that page is not
+> built out."* The product now 404s and has dropped out of its five collections. No article,
+> page or menu linked to it, so nothing broke. Backup of the prior status is in
+> `data/backups/products/`.
+>
+> **What "built out" means here, concretely.** It is the only bundle on a plain PDP: no
+> per-variant value panel, no "What's in the box" grid, no lander copy. The gallery below is
+> the *only* thing on the page that says what you get, which is why its configuration frames
+> had to carry the price. Publishing it again should mean moving it to `bundle-landing` and
+> authoring the `bundle_lander` metaobject (heading, subheading, CTA, bullets, buybox
+> bullets, FAQ, tabs) — after which the lander's metafield-driven panel and grid handle all
+> 12 variants exactly, and the gang convention stops carrying the contents burden at all.
+>
+> The gallery work below is not wasted by the draft: the frames, the two-option scoping, the
+> cutouts and the template all survive and are what a relaunch starts from.
+>
+> **✅ Gallery SHIPPED 2026-08-02** (now on a draft product). Thirteen media, verified across all **12** variants. The
+> product had **zero** images and null SEO title/description before this.
+>
+> **The two-option problem, and the way out.** This is the only bundle with two options —
+> Configuration (3 values) × Scent (5) — and the theme's gang convention scopes a media to
+> exactly ONE option/value pair. Fifteen fully-specific contents frames cannot exist. So the
+> two facts are carried by different frames:
+>
+> | frames | scope | carries |
+> |---|---|---|
+> | `frame-01-scent-*` (4) | Scent | the bottle and its real oil list — **leads** |
+> | `frame-02-config-*` (3) | Configuration | the count **and the price** — type only |
+> | `frame-03-range-*` (3) | Configuration | the four scents |
+> | `frame-04-reviews-*` (3) | Configuration | catalogue proof |
+>
+> A buyer who has chosen both sees four images: their scent's bottle, their configuration's
+> count and price, the range, the proof. The configuration frames are deliberately
+> typographic — a Configuration-scoped frame is shown for all five of its scents, so drawing
+> a Pure Unscented pump there would show the wrong bottle to four buyers in five.
+>
+> ### Variety was removed, 2026-08-02 — from THIS bundle only
+>
+> Sean: *"Actually, don't offer variety at all."* And on why it stays everywhere else:
+> *"Variety pack makes sense for the other products. When buying hand soap for your house,
+> you are most likely going to want the same scent in multiple rooms."* So the Bar Soap
+> 4-Pack, Deodorant 4-Pack and Toothpaste 3-Pack keep their "Variety — one of each" option;
+> hand soap is the one where a mixed pack fights the use case. The three Variety variants are deleted
+> (15 → 12) and Shopify dropped the value from the Scent option. Zero orders had ever
+> referenced them across 1,259 scanned, and the 104 units of notional inventory were
+> released with them.
+>
+> **The variants were the easy part. The copy that outlived them was the risk** — three
+> surfaces promised a mixed set the moment the option stopped existing:
+>
+> - the range frame's footer, *"Pick one scent, or one of each"*
+> - its alt text, *"available singly or as a Variety set"*
+> - the SEO meta description, *"One scent or one of each"*
+>
+> All three are rewritten, and a test now asserts that no frame source, no alt text and no
+> roster entry offers a mixed set. Removing an option is never just removing the option.
+>
+> ### ⚠️ Every media is scoped, and that is the second lesson
+>
+> The first version left the range and reviews frames **unscoped** and sorted them first —
+> the only safe place for an unscoped media, because `gang_exist` is sticky. It passed every
+> check: 15/15 variants showed exactly the right set.
+>
+> It was still wrong, and Sean caught it on the storefront: *"The main image does not change
+> no matter what scent or configuration you choose."*
+>
+> **The gallery shows the first media that is not hidden, and an unscoped media is never
+> hidden.** So an unscoped lead is the main image for every variant — the buyer changes their
+> selection and the big picture does not move. That is in direct tension with the ordering
+> guard, and the tension is real rather than a bug in either rule:
+>
+> - an unscoped media is only *safe* first (sticky `gang_exist`);
+> - a media that is first and unscoped *pins* the main image.
+>
+> On a multi-variant product you have to pick, and **scoping everything is almost always the
+> answer** — duplicating a universal frame once per option value costs three identical JPEGs.
+> `set-media-variant-scope.mjs` now warns when a multi-variant product has an unscoped lead.
+>
+> **A media scopes to one option, so the main image can track exactly one of the two.** Scent
+> leads, because Scent is the choice that changes what the product looks like; Configuration
+> changes the count and price, and frame 2 sits immediately behind it carrying both.
+>
+> **⚠️ It needed its own template, and that is the finding worth carrying.** The theme gates
+> the entire scoping branch on `main-product.hide_variants == false`. On `templates/product
+> .json` — the default PDP, which this product used — it is **true**, so the suffixes were
+> written and were completely inert: all ten images showed for every variant, including a
+> $72 frame to a $44 buyer. Nothing reported it.
+>
+> `scripts/set-media-variant-scope.mjs` documented that precondition from the day it was
+> written and **never actually checked it**. It does now, following the product's own
+> `templateSuffix` because settings are per template. `templates/product.hand-soap-set.json`
+> is a copy of the default PDP differing in that one setting — safe here only because this
+> product has no variant-attached media, which the creation script verifies.
+>
+> **Follow-up: move it to `bundle-landing`.** That is the better home — it is a bundle, and
+> the lander's per-variant value panel and "What's in the box" grid are metafield-driven,
+> so they would handle all 15 combinations exactly without the gang convention at all. It
+> needs a `bundle_lander` metaobject this product does not have (heading, subheading, CTA,
+> bullets, buybox bullets, FAQ, tabs) — customer-facing positioning copy, not a mechanical
+> migration.
+>
+> **This page may not say "ships free".** The cheapest configuration is **$44** against a
+> **$45** free-shipping floor. No frame claims it and the SEO description asserts against it.
 
 The copy can name the three configurations but it cannot make the buyer *feel* which one is theirs — a `Configuration` × `Scent` matrix with 15 cells reads as homework in text, and this page currently has zero images to soften it. What the imagery has to do is convert a pricing table into a choice: show that this is one product sold in three sizes, show the scent axis as a menu rather than a dropdown, and make the +lotion step-up feel like a reason rather than an upsell. The buyer is a household stocker — someone who has decided their hand soap should stop being a grocery-aisle afterthought and is now buying for every sink at once, usually a homeowner, often also the person in the house whose hands are wrecked from washing. Because a 15-cell matrix cannot be served by per-variant gallery images, every frame here is deliberately variant-agnostic or explicitly configuration-labelled; the gallery sells the *system*, and the "What's in the box" cards handle the specific basket.
 

@@ -1,0 +1,58 @@
+{
+  "_comment": "EVERY media is scoped — the lead media is the main image, so an unscoped lead would pin it for all variants. Scent frames lead because Scent changes how the product looks. Variety was removed as an option 2026-08-02.",
+  "product": "hand-soap-set",
+  "scope": {
+    "frame-01-scent-calming-lavender-hss": {
+      "option": "Scent",
+      "value": "Calming Lavender"
+    },
+    "frame-01-scent-orange-zest-hss": {
+      "option": "Scent",
+      "value": "Orange Zest"
+    },
+    "frame-01-scent-coconut-breeze-hss": {
+      "option": "Scent",
+      "value": "Coconut Breeze"
+    },
+    "frame-01-scent-pure-unscented-hss": {
+      "option": "Scent",
+      "value": "Pure Unscented"
+    },
+    "frame-02-config-4pumps-hss": {
+      "option": "Configuration",
+      "value": "4 pumps"
+    },
+    "frame-02-config-3pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "3 pumps + body lotion"
+    },
+    "frame-02-config-4pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "4 pumps + body lotion"
+    },
+    "frame-03-range-4pumps-hss": {
+      "option": "Configuration",
+      "value": "4 pumps"
+    },
+    "frame-03-range-3pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "3 pumps + body lotion"
+    },
+    "frame-03-range-4pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "4 pumps + body lotion"
+    },
+    "frame-04-reviews-4pumps-hss": {
+      "option": "Configuration",
+      "value": "4 pumps"
+    },
+    "frame-04-reviews-3pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "3 pumps + body lotion"
+    },
+    "frame-04-reviews-4pumpsbodylotion-hss": {
+      "option": "Configuration",
+      "value": "4 pumps + body lotion"
+    }
+  }
+}

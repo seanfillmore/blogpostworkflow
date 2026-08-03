@@ -1,0 +1,17 @@
+{
+  "_comment": "Single option. EVERY media is scoped: an unscoped media is only safe first, and a first-and-unscoped media pins the main image for all variants. Pack frames lead so the main image follows the Scent dropdown.",
+  "product": "coconut-deodorant-4-pack",
+  "option": "Scent",
+  "scope": {
+    "frame-01-pack-d4-variety--one-of-each": "Variety — one of each",
+    "frame-01-pack-d4-4x-geranium-flower": "4x Geranium Flower",
+    "frame-01-pack-d4-4x-calming-lavender": "4x Calming Lavender",
+    "frame-01-pack-d4-4x-mountain-cedarwood": "4x Mountain Cedarwood",
+    "frame-01-pack-d4-4x-wildcrafted-frankincence": "4x Wildcrafted Frankincence",
+    "frame-02-value-d4-variety--one-of-each": "Variety — one of each",
+    "frame-02-value-d4-4x-geranium-flower": "4x Geranium Flower",
+    "frame-02-value-d4-4x-calming-lavender": "4x Calming Lavender",
+    "frame-02-value-d4-4x-mountain-cedarwood": "4x Mountain Cedarwood",
+    "frame-02-value-d4-4x-wildcrafted-frankincence": "4x Wildcrafted Frankincence"
+  }
+}

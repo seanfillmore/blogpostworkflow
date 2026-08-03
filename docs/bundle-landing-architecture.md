@@ -21,10 +21,32 @@ The plan calls for **seven more bundles**. On this pattern each needs its own 48
 
 ## Schema — namespace `bundle`
 
-| Key | Type | Purpose |
-|---|---|---|
-| `value_stack` | `json` | Line items. **The total is computed from this, never written down.** |
-| `duration_days` | `number_integer` | Drives the per-day figure (90 for the Reset). |
+| Key | Type | Owner | Purpose |
+|---|---|---|---|
+| `value_stack` | `json` | **VARIANT** (since 2026-08-02) | Line items, with the scent each one ships in. **The total is computed from this, never written down.** Product-level copies are legacy — the template reads the variant's. |
+| `duration_days` | `number_integer` | product | Per-day figure. **Set it only where the box really is that supply** — validated by `lib/supply-duration.js`; see the Head-to-Toe incident in `bundle-media-plan.md` §6. |
+
+### `value_stack` moved to the variant, and is derived
+
+The lander used to carry **two** panels listing the same box: `kit-contents` (per
+variant, with scents, from `variant.metafields.bundle.contents`) and `value-stack`
+(product-level, with prices). Two hand-authored lists of the same thing, with
+nothing keying one to the other. They lined up on four of the five landers; on the
+Coconut Reset they did not, and both still had three rows — so a positional merge
+would have printed $174 against the lotion alone and $19 against the cream, with
+the counts matching and nothing to flag it.
+
+They are now one panel, and its rows are **derived** rather than authored:
+`scripts/build-variant-value-stacks.mjs` reads which component and which scent each
+variant ships from `config/bundles.json`, prices each row from the component's own
+live Shopify price, and refuses to write unless **`sum(physical rows)` equals that
+variant's `compareAtPrice` exactly**. Digital rows have no component and no scent,
+are carried over from the legacy product-level stack, and sit *on top* of compare-at
+— that is the Reset's documented $34 gap, not a discrepancy.
+
+Re-run it after any component reprice. `scripts/merge-lander-contents-box.mjs` owns
+the template side and refuses to write if any lander sharing the template lacks a
+per-variant stack, since the merged block would render an empty box on it.
 | `hero_promise` | `single_line_text_field` | The one-line positioning. Duration/completeness, never savings-vs-single. |
 | `guarantee` | `single_line_text_field` | e.g. "30-day no-questions-asked money-back guarantee". |
 | `bonus_delivery` | `single_line_text_field` | How digital goods arrive, e.g. "Emailed within 5 minutes". |

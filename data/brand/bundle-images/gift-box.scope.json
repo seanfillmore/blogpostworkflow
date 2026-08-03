@@ -1,0 +1,28 @@
+{
+  "_comment": "Every media must appear here: gang_exist is sticky, so an unscoped image after a scoped one is hidden for EVERY variant.",
+  "product": "gift-box",
+  "option": "Kit",
+  "scope": {
+    "frame-06-box-open-gb-gentle": "Gentle",
+    "frame-01-contents-gb-gentle": "Gentle",
+    "frame-07-box-closed-gb-gentle": "Gentle",
+    "frame-02-value-gb-gentle": "Gentle",
+    "frame-03-finish-gb-gentle": "Gentle",
+    "frame-04-gentle-gb-gentle": "Gentle",
+    "frame-05-reviews-gb-gentle": "Gentle",
+    "frame-06-box-open-gb-calm": "Calm",
+    "frame-01-contents-gb-calm": "Calm",
+    "frame-07-box-closed-gb-calm": "Calm",
+    "frame-02-value-gb-calm": "Calm",
+    "frame-03-finish-gb-calm": "Calm",
+    "frame-04-gentle-gb-calm": "Calm",
+    "frame-05-reviews-gb-calm": "Calm",
+    "frame-06-box-open-gb-fresh": "Fresh",
+    "frame-01-contents-gb-fresh": "Fresh",
+    "frame-07-box-closed-gb-fresh": "Fresh",
+    "frame-02-value-gb-fresh": "Fresh",
+    "frame-03-finish-gb-fresh": "Fresh",
+    "frame-04-gentle-gb-fresh": "Fresh",
+    "frame-05-reviews-gb-fresh": "Fresh"
+  }
+}

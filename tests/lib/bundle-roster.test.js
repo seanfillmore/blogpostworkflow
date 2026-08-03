@@ -130,7 +130,17 @@ test('the real roster has all eight bundles', () => {
 
 test('the Hand Soap Set grid is complete and lotion is paired correctly', () => {
   const b = loadRoster().bundles.find(x => x.handle === 'hand-soap-set');
-  assert.equal(b.variants.length, 15, 'three configurations by five scents');
+  // Derived, not literal. This read 15 until Variety was dropped on 2026-08-02,
+  // and a hardcoded count fails on a deliberate merchandising change while
+  // saying nothing about the thing that matters — that the grid is COMPLETE.
+  const configs = b.options.find(o => o.name === 'Configuration').values;
+  const scents = b.options.find(o => o.name === 'Scent').values;
+  assert.equal(b.variants.length, configs.length * scents.length,
+    `the grid must be complete: ${configs.length} configurations × ${scents.length} scents`);
+  for (const c of configs) for (const s of scents) {
+    assert.ok(b.variants.some(v => v.options.Configuration === c && v.options.Scent === s),
+      `no variant for ${c} / ${s}`);
+  }
 
   for (const v of b.variants) {
     const config = v.options.Configuration;

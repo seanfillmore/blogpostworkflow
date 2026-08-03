@@ -1,0 +1,17 @@
+{
+  "_comment": "Every media must appear here: gang_exist is sticky across the theme media loop, so an unscoped image after a scoped one is hidden for EVERY variant. The four frames identical across kits are duplicated per kit for that reason.",
+  "product": "head-to-toe",
+  "option": "Kit",
+  "scope": {
+    "frame-01-contents-h2t-gentle": "Gentle",
+    "frame-02-routine-h2t-gentle": "Gentle",
+    "frame-03-per-product-h2t-gentle": "Gentle",
+    "frame-04-kits-h2t-gentle": "Gentle",
+    "frame-05-reviews-h2t-gentle": "Gentle",
+    "frame-01-contents-h2t-fresh": "Fresh",
+    "frame-02-routine-h2t-fresh": "Fresh",
+    "frame-03-per-product-h2t-fresh": "Fresh",
+    "frame-04-kits-h2t-fresh": "Fresh",
+    "frame-05-reviews-h2t-fresh": "Fresh"
+  }
+}

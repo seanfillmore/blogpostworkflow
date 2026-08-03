@@ -1,0 +1,98 @@
+// tests/config/media-scoping-preconditions.test.js
+//
+// The theme gates ALL variant-scoping on `main-product.hide_variants == false`.
+// Where it is true the '#' suffix is never read, so scoping is inert and silent:
+// every image shows for every variant and nothing reports a problem. That is
+// exactly what happened to the Hand Soap Set — eight suffixes written against
+// the default PDP, where the setting is true, putting a $72 frame in front of a
+// $44 buyer.
+//
+// scripts/set-media-variant-scope.mjs now refuses in that case. These assertions
+// guard the refusal itself, because a check that is deleted is worse than one
+// that never existed.
+import { strict as assert } from 'node:assert';
+import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const script = readFileSync(join(ROOT, 'scripts', 'set-media-variant-scope.mjs'), 'utf8');
+
+test('the scope script still enforces hide_variants, not just documents it', () => {
+  assert.match(script, /hide_variants\s*!==\s*false/,
+    'the hide_variants refusal is gone — scoping can silently no-op again');
+  assert.match(script, /templateSuffix/,
+    'the check must follow the product\'s own templateSuffix; settings are per template');
+  assert.match(script, /process\.exit\(1\)/, 'the check must refuse, not warn');
+});
+
+test('the scope script still enforces unscoped-before-scoped ordering', () => {
+  // gang_exist is assigned once before the media loop and only ever set true, so
+  // an unscoped media after a scoped one is hidden for every variant.
+  assert.match(script, /stranded/, 'the sticky-gang_exist ordering guard is gone');
+});
+
+test('the two-option scope form is still supported', () => {
+  // The Hand Soap Set carries the count and the scent on different frames,
+  // scoped to different options. One file must describe every scoped media —
+  // a media absent from `scope` has its suffix stripped.
+  assert.match(script, /function resolveEntry/, 'per-entry option resolution is gone');
+  const cfg = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'bundle-images', 'hand-soap-set.scope.json'), 'utf8'));
+  const opts = new Set(Object.values(cfg.scope).map((v) => (typeof v === 'string' ? '(default)' : v.option)));
+  assert.deepEqual([...opts].sort(), ['Configuration', 'Scent'],
+    'the Hand Soap Set scope file must scope on both options');
+  // No fragment may be a substring of another: matching is filename.includes().
+  const frags = Object.keys(cfg.scope);
+  for (const a of frags) for (const b of frags) {
+    if (a !== b) assert.ok(!b.includes(a), `scope fragment "${a}" is a substring of "${b}"`);
+  }
+});
+
+console.log('✓ media-scoping precondition tests pass');
+
+test('the scope script warns when an unscoped lead media pins the main image', () => {
+  // The gallery shows the first media that is not hidden, and an unscoped media
+  // is never hidden — so an unscoped FIRST media is the main image for every
+  // variant. That is in tension with the ordering guard (unscoped is only safe
+  // first), and on a multi-variant product the resolution is to scope everything.
+  assert.match(script, /firstIsScoped/, 'the pinned-main-image warning is gone');
+  assert.match(script, /variantCount/, 'the warning must only fire on multi-variant products');
+});
+
+test('every Hand Soap Set media is scoped, and a Scent frame leads', () => {
+  const cfg = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'bundle-images', 'hand-soap-set.scope.json'), 'utf8'));
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'bundle-images', 'hand-soap-set.manifest.json'), 'utf8'));
+  const names = manifest.images.map((i) => i.file.split('/').pop().replace('.jpg', ''));
+  for (const n of names) {
+    assert.ok(Object.keys(cfg.scope).some((f) => n.includes(f)),
+      `${n} is unscoped — on a 15-variant product every media must be scoped or it shows for all of them`);
+  }
+  assert.match(names[0], /^frame-01-scent-/,
+    'the lead media must be Scent-scoped, or the main image stops tracking the buyer\'s choice');
+  assert.equal(cfg.scope[names[0]].option, 'Scent');
+});
+
+test('the Hand Soap Set offers no Variety, and nothing promises one', () => {
+  // Removed 2026-08-02. The risk is not the option — it is the COPY that
+  // outlived it: "pick one scent, or one of each" and the SEO description's
+  // "one scent or one of each" were both false the moment the variants went.
+  const { bundles } = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json'), 'utf8'));
+  const b = bundles.find((x) => x.handle === 'hand-soap-set');
+  const scent = b.options.find((o) => o.name === 'Scent');
+  assert.ok(!scent.values.some((v) => /variety/i.test(v)), 'Variety is back on the Scent option');
+  assert.equal(b.variants.length, scent.values.length * b.options.find((o) => o.name === 'Configuration').values.length,
+    'variant count no longer equals Configuration × Scent');
+  for (const v of b.variants) {
+    assert.ok(!/variety/i.test(JSON.stringify(v.options)), `variant ${JSON.stringify(v.options)} is on Variety`);
+  }
+  // No frame or manifest may still offer a mixed set.
+  for (const f of ['hss-frames.mjs', 'hss-common.mjs']) {
+    const src = readFileSync(join(ROOT, 'data', 'brand', 'frames', 'hand-soap-set', f), 'utf8');
+    assert.ok(!/one of each/i.test(src), `${f} still says "one of each"`);
+  }
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'bundle-images', 'hand-soap-set.manifest.json'), 'utf8'));
+  for (const img of manifest.images) {
+    assert.ok(!/variety|one of each/i.test(img.alt), `alt text still promises a mixed set: ${img.alt}`);
+  }
+});

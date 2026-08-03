@@ -1,0 +1,408 @@
+{
+  "product": {
+    "id": "gid://shopify/Product/8563958513834",
+    "title": "Hand Soap Set",
+    "options": [
+      {
+        "id": "gid://shopify/ProductOption/10863136506026",
+        "name": "Configuration",
+        "values": [
+          "4 pumps",
+          "3 pumps + body lotion",
+          "4 pumps + body lotion"
+        ]
+      },
+      {
+        "id": "gid://shopify/ProductOption/10863136538794",
+        "name": "Scent",
+        "values": [
+          "Variety",
+          "Calming Lavender",
+          "Orange Zest",
+          "Coconut Breeze",
+          "Pure Unscented"
+        ]
+      }
+    ],
+    "variants": {
+      "nodes": [
+        {
+          "id": "gid://shopify/ProductVariant/48939262083242",
+          "title": "4 pumps / Variety",
+          "price": "44.00",
+          "compareAtPrice": "52.00",
+          "inventoryQuantity": 40,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps"
+            },
+            {
+              "name": "Scent",
+              "value": "Variety"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "1 × Orange Zest\n1 × Coconut Breeze\n1 × Calming Lavender\n1 × Pure Unscented"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262640298",
+          "title": "4 pumps / Calming Lavender",
+          "price": "44.00",
+          "compareAtPrice": "52.00",
+          "inventoryQuantity": 57,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps"
+            },
+            {
+              "name": "Scent",
+              "value": "Calming Lavender"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Calming Lavender"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262673066",
+          "title": "4 pumps / Orange Zest",
+          "price": "44.00",
+          "compareAtPrice": "52.00",
+          "inventoryQuantity": 19,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps"
+            },
+            {
+              "name": "Scent",
+              "value": "Orange Zest"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Orange Zest"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262705834",
+          "title": "4 pumps / Coconut Breeze",
+          "price": "44.00",
+          "compareAtPrice": "52.00",
+          "inventoryQuantity": 10,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps"
+            },
+            {
+              "name": "Scent",
+              "value": "Coconut Breeze"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Coconut Breeze"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262738602",
+          "title": "4 pumps / Pure Unscented",
+          "price": "44.00",
+          "compareAtPrice": "52.00",
+          "inventoryQuantity": 25,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps"
+            },
+            {
+              "name": "Scent",
+              "value": "Pure Unscented"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Pure Unscented"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262771370",
+          "title": "3 pumps + body lotion / Variety",
+          "price": "59.00",
+          "compareAtPrice": "69.00",
+          "inventoryQuantity": 32,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "3 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Variety"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "1 × Foaming Hand Soap — Orange Zest\n1 × Foaming Hand Soap — Coconut Breeze\n1 × Foaming Hand Soap — Calming Lavender\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262804138",
+          "title": "3 pumps + body lotion / Calming Lavender",
+          "price": "59.00",
+          "compareAtPrice": "69.00",
+          "inventoryQuantity": 32,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "3 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Calming Lavender"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "3 × Foaming Hand Soap — Calming Lavender\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262836906",
+          "title": "3 pumps + body lotion / Orange Zest",
+          "price": "59.00",
+          "compareAtPrice": "69.00",
+          "inventoryQuantity": 26,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "3 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Orange Zest"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "3 × Foaming Hand Soap — Orange Zest\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262869674",
+          "title": "3 pumps + body lotion / Coconut Breeze",
+          "price": "59.00",
+          "compareAtPrice": "69.00",
+          "inventoryQuantity": 13,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "3 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Coconut Breeze"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "3 × Foaming Hand Soap — Coconut Breeze\n1 × Body Lotion — Coconut Breeze (coconut oil extract)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262902442",
+          "title": "3 pumps + body lotion / Pure Unscented",
+          "price": "59.00",
+          "compareAtPrice": "69.00",
+          "inventoryQuantity": 32,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "3 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Pure Unscented"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "3 × Foaming Hand Soap — Pure Unscented\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262935210",
+          "title": "4 pumps + body lotion / Variety",
+          "price": "72.00",
+          "compareAtPrice": "82.00",
+          "inventoryQuantity": 32,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Variety"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "1 × Foaming Hand Soap — Orange Zest\n1 × Foaming Hand Soap — Coconut Breeze\n1 × Foaming Hand Soap — Calming Lavender\n1 × Foaming Hand Soap — Pure Unscented\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939262967978",
+          "title": "4 pumps + body lotion / Calming Lavender",
+          "price": "72.00",
+          "compareAtPrice": "82.00",
+          "inventoryQuantity": 32,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Calming Lavender"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Foaming Hand Soap — Calming Lavender\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939263000746",
+          "title": "4 pumps + body lotion / Orange Zest",
+          "price": "72.00",
+          "compareAtPrice": "82.00",
+          "inventoryQuantity": 19,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Orange Zest"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Foaming Hand Soap — Orange Zest\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939263033514",
+          "title": "4 pumps + body lotion / Coconut Breeze",
+          "price": "72.00",
+          "compareAtPrice": "82.00",
+          "inventoryQuantity": 10,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Coconut Breeze"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Foaming Hand Soap — Coconut Breeze\n1 × Body Lotion — Coconut Breeze (coconut oil extract)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "gid://shopify/ProductVariant/48939263066282",
+          "title": "4 pumps + body lotion / Pure Unscented",
+          "price": "72.00",
+          "compareAtPrice": "82.00",
+          "inventoryQuantity": 25,
+          "selectedOptions": [
+            {
+              "name": "Configuration",
+              "value": "4 pumps + body lotion"
+            },
+            {
+              "name": "Scent",
+              "value": "Pure Unscented"
+            }
+          ],
+          "metafields": {
+            "nodes": [
+              {
+                "key": "contents",
+                "value": "4 × Foaming Hand Soap — Pure Unscented\n1 × Body Lotion — Pure Unscented (no essential oils at all)"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "orderHits": []
+}
