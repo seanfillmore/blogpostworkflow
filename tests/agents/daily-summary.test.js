@@ -1,5 +1,8 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { previewBody, formatBodyHtml, buildDigestHtml, log } from '../../agents/daily-summary/index.js';
 
 // ── buildDigestHtml: lean, revenue-first digest (only needle-movers) ──────────
@@ -29,11 +32,36 @@ test('buildDigestHtml: surfaces revenue + failures, drops the routine listing', 
   assert.ok(html.includes('1 error'), 'footer shows error count');
 });
 
+// buildDigestHtml takes 13 injected arguments but ALSO read five paths off disk
+// under the repo root. That made it machine-dependent: this test passed on a laptop
+// with no data/reports and failed on the server, where those files exist — the same
+// inputs producing different HTML. dataRoot makes the last five inputs injectable
+// like the other thirteen, so both directions below are pinned on any machine.
+const emptyRoot = mkdtempSync(join(tmpdir(), 'digest-empty-'));
+
 test('buildDigestHtml: quiet day collapses to a single "nothing moved" line', () => {
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null);
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: emptyRoot });
   assert.ok(html.includes('Nothing moved the needle'), 'quiet-day message shown');
   assert.ok(/1 task ran/.test(html), 'activity line still present');
+});
+
+// The counterpart. This is exactly the server's state — data/meta-tests holds 9
+// active tests, so abTestSection renders and the day is never quiet there. Pinning
+// it stops the quiet-day assertion above from silently becoming unreachable.
+test('buildDigestHtml: an active A/B test makes the day non-quiet', () => {
+  const root = mkdtempSync(join(tmpdir(), 'digest-active-'));
+  mkdirSync(join(root, 'data', 'meta-tests'), { recursive: true });
+  writeFileSync(join(root, 'data', 'meta-tests', 'sls-free-toothpaste.json'), JSON.stringify({
+    slug: 'sls-free-toothpaste', status: 'active', variantA: 'A', variantB: 'B',
+  }));
+
+  const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: root });
+
+  assert.ok(html.includes('Meta A/B Tests'), 'the on-disk test renders its section');
+  assert.ok(/1 active test\b/.test(html), 'the active count comes from disk');
+  assert.ok(!html.includes('Nothing moved the needle'), 'a day with a running test is not quiet');
 });
 
 test('previewBody: empty or missing body returns empty string', () => {

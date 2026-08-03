@@ -296,7 +296,14 @@ export function formatBodyHtml(text) {
   }).join('\n');
 }
 
-export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null) {
+/**
+ * `dataRoot` exists because this function reads five paths off disk in addition to
+ * its thirteen injected arguments. That made its output machine-dependent: the same
+ * inputs produced a "quiet day" digest on a laptop with no data/reports and a full
+ * one on the server, so a test asserting the quiet path passed locally and failed in
+ * production. Defaulting to ROOT keeps every caller unchanged.
+ */
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT } = {}) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -411,7 +418,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // AI Citation summary (weekly — show if report exists and < 8 days old)
   let aiCitationSection = '';
   try {
-    const citPath = join(ROOT, 'data', 'reports', 'ai-citations', 'latest.json');
+    const citPath = join(dataRoot, 'data', 'reports', 'ai-citations', 'latest.json');
     if (existsSync(citPath)) {
       const cit = JSON.parse(readFileSync(citPath, 'utf8'));
       const age = (Date.now() - new Date(cit.date).getTime()) / (1000 * 60 * 60 * 24);
@@ -615,7 +622,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
 
   // Reviews section — surfaces new reviews from review-monitor
   let reviewSection = '';
-  const reviewPath = join(ROOT, 'data', 'reports', 'reviews', 'latest.json');
+  const reviewPath = join(dataRoot, 'data', 'reports', 'reviews', 'latest.json');
   if (existsSync(reviewPath)) {
     try {
       const reviewData = JSON.parse(readFileSync(reviewPath, 'utf8'));
@@ -638,7 +645,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
 
   // Blocked images section — posts where CD rejected all image attempts
   let blockedImagesSection = '';
-  const rejectedDir = join(ROOT, 'data', 'images', 'rejected');
+  const rejectedDir = join(dataRoot, 'data', 'images', 'rejected');
   if (existsSync(rejectedDir)) {
     try {
       const rejections = [];
@@ -662,7 +669,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
 
   // Backlinks section
   let backlinksSection = '';
-  const backlinksDir = join(ROOT, 'data', 'reports', 'backlinks');
+  const backlinksDir = join(dataRoot, 'data', 'reports', 'backlinks');
   if (existsSync(backlinksDir)) {
     try {
       const files = readdirSync(backlinksDir).filter(f => f.endsWith('.json') || f.endsWith('.md')).sort();
@@ -691,7 +698,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
 
   // A/B Test Results section
   let abTestSection = '';
-  const metaTestsDir = join(ROOT, 'data', 'meta-tests');
+  const metaTestsDir = join(dataRoot, 'data', 'meta-tests');
   const allTests = [];
 
   // Read new-format tests from data/meta-tests/*.json
@@ -706,7 +713,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   }
 
   // Read legacy tests from data/reports/meta-ab/meta-ab-tracker.json
-  const legacyTrackerPath = join(ROOT, 'data', 'reports', 'meta-ab', 'meta-ab-tracker.json');
+  const legacyTrackerPath = join(dataRoot, 'data', 'reports', 'meta-ab', 'meta-ab-tracker.json');
   if (existsSync(legacyTrackerPath)) {
     try {
       const legacyEntries = JSON.parse(readFileSync(legacyTrackerPath, 'utf8'));
@@ -796,7 +803,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // Rank movers — biggest position gains/drops on tracked queries (rank-alerter).
   let rankMoversSection = '';
   try {
-    const raPath = join(ROOT, 'data', 'reports', 'rank-alerter', 'latest.json');
+    const raPath = join(dataRoot, 'data', 'reports', 'rank-alerter', 'latest.json');
     if (existsSync(raPath)) {
       const ra = JSON.parse(readFileSync(raPath, 'utf8'));
       const moverRow = (m, up) =>
