@@ -64,6 +64,11 @@ const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
 // ── args ──────────────────────────────────────────────────────────────────────
 
+// Declared here rather than beside main() because the usage/validation checks below
+// call process.exit(1), and those run at module scope — so an import of this module
+// (for a helper, or by a test) would take the host process down before reaching main.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+
 const args = process.argv.slice(2);
 
 function getArg(flag) {
@@ -79,14 +84,14 @@ const targetCount = parseInt(getArg('--count') ?? '10', 10);
 const urlArg = getArg('--url');
 const keywordArg = getArg('--keyword');
 
-if (!topTargets && !urlArg) {
+if (isDirectRun && !topTargets && !urlArg) {
   console.error('Usage:');
   console.error('  node agents/collection-linker/index.js --top-targets [--count N] [--apply]');
   console.error('  node agents/collection-linker/index.js --url <url> --keyword <kw> [--apply]');
   process.exit(1);
 }
 
-if (urlArg && !keywordArg) {
+if (isDirectRun && urlArg && !keywordArg) {
   console.error('--url requires --keyword');
   process.exit(1);
 }
@@ -507,9 +512,13 @@ async function main() {
   console.log(`  Total links ${apply ? 'applied' : 'identified'}: ${grandTotal}`);
 }
 
-main().then(() => {
-  console.log('\nCollection linking complete.');
-}).catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// isDirectRun is declared up with the arg parsing — the usage checks there exit the
+// process, so the guard has to exist before them.
+if (isDirectRun) {
+  main().then(() => {
+    console.log('\nCollection linking complete.');
+  }).catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

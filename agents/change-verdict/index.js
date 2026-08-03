@@ -248,8 +248,14 @@ async function main() {
   console.log('\n' + lines.join('\n'));
 }
 
-main().catch((err) => {
-  notify({ subject: 'Change Verdict failed', body: err.message || String(err), status: 'error' });
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Only run when invoked directly. Without this guard, any import of this module
+// (tests import helpers from it) executes the whole agent — hitting live APIs and
+// taking the host process down with it on any error.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main().catch((err) => {
+    notify({ subject: 'Change Verdict failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

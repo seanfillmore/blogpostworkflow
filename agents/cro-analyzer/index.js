@@ -153,12 +153,18 @@ CATEGORY/HANDLE tag rules:
   console.log(`  Brief saved: ${outPath}`);
 }
 
-main()
-  .then(async () => {
-    await notify({ subject: 'CRO Analyzer completed', body: 'Weekly CRO brief generated.', status: 'success' }).catch(() => {});
-  })
-  .catch(async err => {
-    await notify({ subject: 'CRO Analyzer failed', body: err.message || String(err), status: 'error' }).catch(() => {});
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Only run when invoked directly. Without this guard, any import of this module
+// (tests import helpers from it) executes the whole agent — hitting live APIs and
+// taking the host process down with it on any error.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main()
+    .then(async () => {
+      await notify({ subject: 'CRO Analyzer completed', body: 'Weekly CRO brief generated.', status: 'success' }).catch(() => {});
+    })
+    .catch(async err => {
+      await notify({ subject: 'CRO Analyzer failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}
