@@ -435,4 +435,31 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
   assert.ok(/youtube\.com\/watch\?v=abc12345678/.test(vid), 'video reports keep their URL');
 }
 
+// ── --staged: the query that answers "what does reaching this phase unlock?" ──
+// A read-only listing mode. It exists so parked tactics are retrievable without
+// re-reading 16 per-video JSON reports, which was the whole reason rejecting
+// stage-blocked tactics lost them.
+{
+  const all = parseArgs(['--staged']);
+  assert.equal(all.staged, 'all', 'bare --staged lists every parked tactic');
+
+  const one = parseArgs(['--staged', 'traffic']);
+  assert.equal(one.staged, 'traffic', 'a gate name narrows the listing');
+
+  assert.throws(() => parseArgs(['--staged', 'someday']), /traffic/, 'an unknown gate names the valid ones');
+
+  // It reads skills and prints. Combining it with a run would imply it filters or
+  // mutates that run, which it does not.
+  assert.throws(
+    () => parseArgs(['--staged', 'https://youtu.be/aaaaaaaaaaa']),
+    /traffic/,
+    'a URL after --staged is read as a gate name, not a source',
+  );
+  assert.throws(
+    () => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--staged']),
+    /cannot be combined/,
+    '--staged is a separate mode, like --falsify',
+  );
+}
+
 console.log('✓ marketing-learner CLI tests pass');

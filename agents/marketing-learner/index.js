@@ -14,6 +14,14 @@
  *     --no-pr                   Write into the working tree. No branch, no PR.
  *     --refetch                 Ignore the transcript cache (costs a credit).
  *
+ *   node agents/marketing-learner/index.js --staged [<gate>]
+ *     Read-only listing of every tactic parked behind a stage gate, grouped by gate
+ *     in operating-sequence order. A tactic that is sound here but blocked by timing
+ *     is adopted into its skill with a `**Stage:**` marker rather than rejected, and
+ *     hidden from the fleet projection until that gate opens; this is how you find
+ *     them again. Pass a gate (tracking, cro, offer-aov, traffic) to ask what
+ *     reaching that phase unlocks. No network, no LLM call, no credential.
+ *
  *   node agents/marketing-learner/index.js --falsify <skill-name> --claim "<substring
  *       of the tactic's heading>" --reason "<what happened when you tested it>"
  *     A separate mode — cannot be combined with URLs or any of the flags above. Marks
@@ -52,6 +60,10 @@ import {
   renderReport,
   falsifyTactic,
   renderContextMirror,
+  extractStagedTactics,
+  isStageActive,
+  STAGES,
+  CURRENT_STAGE,
   chunkText,
   consolidateTactics,
   buildConstraintBlock,
@@ -90,11 +102,18 @@ const VALUE_FLAGS = {
 export function parseArgs(argv) {
   const out = {
     urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
-    falsify: null, claim: null, reason: null,
+    falsify: null, claim: null, reason: null, staged: null,
     file: null, author: null, title: null, chunkWords: 4500, splitOn: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    // Optional-value flag, so it cannot go in VALUE_FLAGS (which requires one) or
+    // FLAGS (which forbids one). Bare `--staged` lists everything parked.
+    if (a === '--staged') {
+      const v = argv[i + 1];
+      if (v && !v.startsWith('--')) { out.staged = v; i++; } else out.staged = 'all';
+      continue;
+    }
     if (VALUE_FLAGS[a]) {
       const v = argv[++i];
       if (!v || v.startsWith('--')) {
@@ -111,6 +130,16 @@ export function parseArgs(argv) {
     } else {
       out.urls.push(a);
     }
+  }
+
+  if (out.staged) {
+    if (out.staged !== 'all' && !STAGES.includes(out.staged)) {
+      throw new Error(`--staged takes one of: ${STAGES.join(', ')} (or no value for all). Got "${out.staged}".`);
+    }
+    if (out.urls.length || out.file || out.falsify) {
+      throw new Error('--staged cannot be combined with URLs, --file, or --falsify — it is a read-only listing mode.');
+    }
+    return out;
   }
 
   if (out.falsify) {
@@ -326,6 +355,46 @@ export function runFalsify(
   console.log(`✓ falsified in ${relative(ROOT, skill.path)}`);
   console.log(`✓ mirror updated: ${relative(ROOT, syncContextMirror(skillsDir, mirrorPath))}`);
   return { skillPath: skill.path, mirrorPath };
+}
+
+/**
+ * List what is parked, and behind which gate. Read-only, no network, no LLM call.
+ *
+ * This is the retrieval path that stage-blocked tactics used to lack: they were
+ * rejected into per-video JSON reports that nothing ever read again, so reaching
+ * the gate meant re-deriving them from scratch. Reads the skills themselves, so it
+ * stays correct no matter which video a tactic originally came from.
+ */
+export function runStaged({ staged }, { skillsDir = SKILLS_DIR } = {}) {
+  const wanted = staged === 'all' ? null : staged;
+  const rows = [];
+  for (const s of scanSkillInventory(skillsDir)) {
+    for (const t of extractStagedTactics(s.content)) {
+      if (wanted && t.stage !== wanted) continue;
+      rows.push({ skill: s.name, ...t });
+    }
+  }
+
+  if (!rows.length) {
+    console.log(wanted ? `Nothing parked behind "${wanted}".` : 'Nothing parked.');
+    return rows;
+  }
+
+  const byStage = new Map();
+  for (const r of rows) {
+    if (!byStage.has(r.stage)) byStage.set(r.stage, []);
+    byStage.get(r.stage).push(r);
+  }
+  // Sequence order, not insertion order — the list reads as a roadmap.
+  for (const stage of STAGES) {
+    const group = byStage.get(stage);
+    if (!group) continue;
+    const live = isStageActive(stage, CURRENT_STAGE);
+    console.log(`\n${stage}${live ? ' (gate already open — these are live)' : ''} — ${group.length} tactic${group.length === 1 ? '' : 's'}`);
+    for (const r of group) console.log(`  • [${r.skill}] ${r.claim}`);
+  }
+  console.log(`\n${rows.length} parked total. Current phase: ${CURRENT_STAGE}.`);
+  return rows;
 }
 
 async function processVideo(item, { client, apiKey, args }) {
@@ -658,6 +727,11 @@ function openPullRequest(results) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  if (args.staged) {
+    runStaged(args);
+    return;
+  }
 
   if (args.falsify) {
     runFalsify(args);

@@ -520,6 +520,26 @@ await assert.rejects(
   assert.match(err.message, /part 3 of 11/, 'the error names the chunk that failed');
 }
 
+// A trailing comma before } or ] is the single most common way the model's JSON
+// comes back invalid — the Dara Denney statics video failed twice in a row on it
+// (17 of them in part 1, 4 in part 2), each failure discarding a paid extraction.
+// The repair must not touch commas that live inside string values.
+{
+  const withTrailingCommas = JSON.stringify(GOOD, null, 2)
+    .replace(/"rscFit": \{/g, '"note": "a, b, c ] } trap,", "rscFit": {')
+    .replace(/\n(\s*)\}/g, ',\n$1}')
+    .replace(/\n(\s*)\]/g, ',\n$1]');
+  assert.throws(() => JSON.parse(withTrailingCommas), 'the fixture really is invalid JSON');
+
+  const out = await extractTactics({
+    video: VIDEO,
+    inventory: [],
+    client: fakeClient({ stop_reason: 'end_turn', content: [{ type: 'text', text: withTrailingCommas }] }),
+  });
+  assert.equal(out.tactics.length, 2, 'trailing commas are repaired rather than discarding the response');
+  assert.equal(out.tactics[0].claim, GOOD.tactics[0].claim, 'string values survive the repair intact');
+}
+
 // unparseable output
 await assert.rejects(
   () => extractTactics({
@@ -1738,3 +1758,223 @@ Body.`,
 }
 
 console.log('✓ marketing-learner date + constraint tests pass');
+
+// ── staged tactics ──────────────────────────────────────────────────────────
+// A tactic that is right for this business but blocked by the operating sequence
+// (Tracking -> CRO -> Offer/AOV -> Traffic) used to be rejected outright, which
+// left it in a per-video JSON report nothing ever reads again. It is now adopted
+// into the skill with a stage tag, so the knowledge is on the record and
+// discoverable, while the fleet-facing projection hides it until that gate opens.
+import {
+  STAGES,
+  extractStagedTactics,
+  isStageActive,
+} from '../../lib/marketing-learner.js';
+
+// The enum is written into reports, so it is a compatibility surface.
+{
+  assert.deepEqual(
+    [...STAGES],
+    ['tracking', 'cro', 'offer-aov', 'traffic'],
+    'stage names are the operating sequence, in order',
+  );
+}
+
+// validateExtraction: stage is optional, constrained, and adopt-only.
+{
+  const withStage = structuredClone(GOOD);
+  withStage.tactics[0].stage = 'traffic';
+  assert.doesNotThrow(() => validateExtraction(withStage), 'a valid stage on an adopted tactic passes');
+
+  const bogus = structuredClone(GOOD);
+  bogus.tactics[0].stage = 'someday';
+  assert.throws(() => validateExtraction(bogus), /stage/, 'an unknown stage is rejected');
+
+  // A rejected tactic is dead, not parked. Allowing stage there would create a
+  // second, invisible parking lot with no skill entry behind it — the exact
+  // failure this feature exists to remove.
+  const onReject = structuredClone(GOOD);
+  onReject.tactics[1].stage = 'traffic';
+  assert.throws(() => validateExtraction(onReject), /stage/, 'stage on a rejected tactic is rejected');
+}
+
+// renderSkillMarkdown emits a parseable marker, and only for staged tactics.
+{
+  const md = renderSkillMarkdown({
+    name: 'marketing-paid-media',
+    description: 'Paid media economics.',
+    tactics: [
+      {
+        claim: 'Break even on the first purchase from paid',
+        mechanism: 'LTV pays for the second order',
+        evidence: 'assertion',
+        rscFit: { score: 4, reasoning: 'Right idea, no ad account yet' },
+        stage: 'traffic',
+        source: { creator: 'X', title: 'Y', locator: 'z' },
+      },
+      {
+        claim: 'Answer the unasked why',
+        mechanism: 'Removes the silent objection',
+        evidence: 'assertion',
+        rscFit: { score: 7, reasoning: 'Free and editorial' },
+        source: { creator: 'X', title: 'Y', locator: 'z' },
+      },
+    ],
+  });
+
+  assert.match(md, /\*\*Stage:\*\* traffic\b/, 'the staged tactic carries its gate in the file');
+  assert.equal((md.match(/\*\*Stage:\*\*/g) || []).length, 1, 'an active tactic carries no stage marker');
+}
+
+// extractStagedTactics reads the markers back out — this is what answers
+// "what does the Traffic phase unlock?" without an LLM call.
+{
+  const content = [
+    '---', 'name: marketing-paid-media', 'description: Paid.', '---', '',
+    '# Paid Media', '',
+    '## Break even on the first purchase', '',
+    '**Stage:** traffic — activates when the Traffic phase opens.', '',
+    '**Why it works:** LTV pays for the second order.', '',
+    '## Answer the unasked why', '',
+    '**Why it works:** Removes the silent objection.', '',
+    '## Falsified', '',
+    '### Some dead thing', '',
+    '**Falsified 2026-08-01:** did not work.', '',
+  ].join('\n');
+
+  const staged = extractStagedTactics(content);
+  assert.equal(staged.length, 1, 'only the marked section is staged');
+  assert.equal(staged[0].stage, 'traffic');
+  assert.match(staged[0].claim, /Break even/);
+
+  // A staged tactic is live knowledge, not a failed experiment. If it leaked into
+  // the graveyard parser it would land on the "Do not propose" blocklist and be
+  // permanently unusable — the opposite of parking it.
+  assert.deepEqual(extractFalsifiedClaims(content), ['Some dead thing'], 'staging does not falsify');
+}
+
+// isStageActive is the single place the current phase is decided.
+{
+  assert.equal(isStageActive(null, 'cro'), true, 'an untagged tactic is always active');
+  assert.equal(isStageActive('tracking', 'cro'), true, 'a gate already passed is active');
+  assert.equal(isStageActive('cro', 'cro'), true, 'the current gate is active');
+  assert.equal(isStageActive('traffic', 'cro'), false, 'a gate not yet reached is parked');
+}
+
+// renderContextMirror hides parked tactics from the fleet. This is the whole
+// point of the split: creative-packager is told "draw an angle from the live
+// tactics above", so a parked tactic in the mirror becomes ad copy for an offer
+// this business does not run.
+{
+  const content = [
+    '---', 'name: marketing-paid-media', 'description: Paid media economics.', '---', '',
+    '# Paid Media', '',
+    '## Run a giveaway as a front-end attraction offer', '',
+    '**Stage:** traffic — activates when the Traffic phase opens.', '',
+    '**Why it works:** Cheap list growth.', '',
+    '## Answer the unasked why', '',
+    '**Why it works:** Removes the silent objection.', '',
+  ].join('\n');
+
+  const md = renderContextMirror([
+    { name: 'marketing-paid-media', description: 'Paid media economics.', path: '/tmp/a/SKILL.md', content },
+  ], { stage: 'cro' });
+
+  assert.ok(!md.includes('Run a giveaway'), 'a parked tactic is absent from the fleet projection');
+  assert.ok(md.includes('Answer the unasked why'), 'active tactics still project');
+  assert.ok(md.includes('marketing-paid-media'), 'the skill itself still appears');
+
+  const later = renderContextMirror([
+    { name: 'marketing-paid-media', description: 'Paid media economics.', path: '/tmp/a/SKILL.md', content },
+  ], { stage: 'traffic' });
+  assert.ok(later.includes('Run a giveaway'), 'the same tactic projects once its gate opens');
+}
+
+// A skill whose every tactic is parked must not project as an empty shell — an
+// empty "## marketing-x" block with a description invites the model to invent
+// content under a heading that promises tactics.
+{
+  const content = [
+    '---', 'name: marketing-paid-media', 'description: Paid media economics.', '---', '',
+    '# Paid Media', '',
+    '## Run a giveaway', '',
+    '**Stage:** traffic — later.', '',
+    '**Why it works:** Cheap list growth.', '',
+  ].join('\n');
+
+  const md = renderContextMirror([
+    { name: 'marketing-paid-media', description: 'Paid media economics.', path: '/tmp/a/SKILL.md', content },
+  ], { stage: 'cro' });
+
+  assert.ok(!md.includes('marketing-paid-media'), 'a fully-parked skill is omitted entirely');
+}
+
+// Default stage: callers that pass no options get the configured current phase
+// rather than "everything", so an un-updated caller cannot leak parked tactics.
+{
+  const content = [
+    '---', 'name: marketing-paid-media', 'description: Paid.', '---', '',
+    '# Paid', '',
+    '## Parked thing', '',
+    '**Stage:** traffic — later.', '',
+    '**Why it works:** Later.', '',
+    '## Active thing', '',
+    '**Why it works:** Now.', '',
+  ].join('\n');
+
+  const md = renderContextMirror([
+    { name: 'marketing-paid-media', description: 'Paid.', path: '/tmp/a/SKILL.md', content },
+  ]);
+  assert.ok(!md.includes('Parked thing'), 'the default projection is gated, not permissive');
+  assert.ok(md.includes('Active thing'));
+}
+
+// The extraction prompt must tell the model to park rather than reject, or the
+// model keeps discarding stage-blocked tactics and none of the above ever fires.
+{
+  const b = buildConstraintBlock({ sourceType: 'video' });
+  assert.match(b, /stage/i, 'the constraint block explains staging');
+  assert.match(b, /"traffic"/, 'the stage values are named for the model');
+  assert.ok(
+    !/Requires ad budget materially above current spend\.\n/.test(b) ||
+      /do not reject/i.test(b),
+    'budget-gated tactics are no longer an outright-reject rule',
+  );
+}
+
+// The merge model rewrites whole files, so it can drop a **Stage:** line while
+// otherwise growing the file — invisible to the shrink guard. The consequence is
+// not cosmetic: an unmarked tactic immediately enters the fleet projection, which
+// is the one thing parking exists to prevent. Same class as the falsified guard,
+// and likewise code rather than persuasion.
+{
+  const staged = [
+    '---', 'name: marketing-paid-media', 'description: Paid.', '---', '',
+    '# Paid Media', '',
+    '## Break even on the first purchase', '',
+    '**Stage:** traffic — parked.', '',
+    '**Why it works:** LTV pays for the second order.', '',
+  ].join('\n');
+
+  const unmarked = staged.replace('**Stage:** traffic — parked.\n\n', '') + '\n\nExtra padding so the file grows rather than shrinks, defeating the size guard.\n';
+
+  assert.throws(
+    () => validateSkillEdit(staged, unmarked),
+    /[Ss]tage/,
+    'dropping a stage marker is refused',
+  );
+
+  // Re-staging to a DIFFERENT gate is a legitimate edit — a tactic can turn out to
+  // be blocked by CRO rather than Traffic. Only losing the marker entirely is damage.
+  const restaged = staged.replace('**Stage:** traffic', '**Stage:** cro');
+  assert.doesNotThrow(() => validateSkillEdit(staged, restaged), 'changing which gate applies is allowed');
+
+  // Unparking is how a tactic goes live, but it must be declared, not silent.
+  const unparked = staged.replace('**Stage:** traffic — parked.\n\n', '');
+  assert.doesNotThrow(
+    () => validateSkillEdit(staged, unparked, { supersedes: 'traffic phase opened; tactic is now live' }),
+    'an explicit supersedes reason unparks it',
+  );
+}
+
+console.log('✓ marketing-learner staged-tactic tests pass');
