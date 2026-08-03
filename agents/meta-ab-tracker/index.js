@@ -81,6 +81,21 @@ function mean(arr) {
 
 // ── Shopify helper ─────────────────────────────────────────────────────────
 
+/**
+ * The REST path segment that owns a resource's metafields.
+ *
+ * Collections deliberately resolve to the type-agnostic `collections`, NOT
+ * `custom_collections`. Shopify splits collections into custom and smart, and
+ * `/custom_collections/<id>/metafields.json` returns 404 for a smart collection —
+ * which is what silently broke every revert on the 6 of 9 active A/B tests that
+ * target smart collections, leaving losing title variants live past their conclude
+ * dates. `/collections/<id>/metafields.json` serves both types for GET, POST and
+ * PUT (verified against the live store), so there is no need to look the type up.
+ */
+export function metafieldResource(resourceType) {
+  return { product: 'products', collection: 'collections', page: 'pages' }[resourceType] ?? null;
+}
+
 async function revertMetafield(test) {
   const { resourceType, resourceId, blogId, variantA } = test;
   if (!resourceId) { console.warn('  Skipping revert: no resourceId'); return; }
@@ -99,8 +114,7 @@ async function revertMetafield(test) {
     });
     if (!res.ok) console.warn(`  Article revert failed: ${res.status}`);
   } else {
-    const resourceMap = { product: 'products', collection: 'custom_collections', page: 'pages' };
-    const resource = resourceMap[resourceType];
+    const resource = metafieldResource(resourceType);
     if (!resource) { console.warn(`  Unknown resourceType: ${resourceType}`); return; }
     await upsertMetafield(resource, resourceId, 'global', 'title_tag', variantA);
   }
@@ -221,4 +235,10 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(e.message); process.exit(1); });
+// Only run when invoked directly. Without this guard, importing anything from this
+// module (tests import computeCTRDelta) executed the whole agent — writing to live
+// Shopify and exiting the host process on any API error.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main().catch(e => { console.error(e.message); process.exit(1); });
+}
