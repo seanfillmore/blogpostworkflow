@@ -1,6 +1,6 @@
 ---
 name: marketing-retention-offers
-description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, placing a reward just past the churn point, winning back customers who lapsed months ago, and answering a refund request with store credit instead of cash.
+description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, placing a reward just past the churn point, keeping recurring billing from failing on expired or declined cards, winning back customers who lapsed months ago, cultivating the top repeat buyers by hand, and answering a refund request with store credit instead of cash.
 ---
 
 # Retention Offers
@@ -16,6 +16,18 @@ description: Use when the goal is a second or repeat purchase from someone who a
 **Do not implement via Shopify's Admin API.** Creating a selling plan group that way produces a plan that sells but never bills. Use the installed subscription app.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 9 of 11)*
+
+## Once refills ship, stop leaking subscribers to failed payments: time charges to paycheck dates, retry a declined card several times the same day, and hold a backup payment method.
+
+**Stage:** offer-aov — parked until the offer-aov phase opens.
+
+**Why it works:** Cards are likeliest to clear when the account has just been funded, and deposit timing varies within the day, so same-day retries capture charges that failed only on timing rather than on funds. Separately, a large share of recurring revenue is lost to customers who never chose to cancel at all — their card expired or maxed out — so a second stored method recovers revenue that was never actually at risk of refusal. This is involuntary churn: retention lost without a retention decision.
+
+**Evidence offered:** Attributed to an early mentor plus the claim of recouping about a third of declined payments, and a scripted objection-handle for the second payment method ('it costs us man hours to get new payment information'). No dataset or recovery-rate figures.
+
+**Fit here (6/10):** A durable operational mechanic aimed straight at the binding constraint. The only true blocker is that no recurring-billing base exists yet — a refill/subscription structure is precisely an offer-structure gate, which is why this is parked. The non-default parts are real, configurable settings in any Shopify subscription app rather than card-updater defaults: schedule charge dates near common paycheck dates (1st/15th), set the dunning schedule to retry a decline several times within the same day, and capture a backup payment method. **Drop the conversational ACH ask and the 3% discount trade** — a 3% permanent give against a $50.46 AOV is not worth it, and ACH is not a practical consumer flow here. What remains is executable and worth configuring the moment refills ship. Scored 6 rather than higher because recoverable dollars stay modest until the subscriber base is meaningful, and Amazon Subscribe & Save billing is platform-controlled and untouchable.
+
+*Source: unknown — "untitled" (100m-money-models)*
 
 ## Advertise a permanently lower rate the customer earns by staying past your single most common churn point, and remind them as the milestone approaches.
 
@@ -63,7 +75,7 @@ description: Use when the goal is a second or repeat purchase from someone who a
 
 **Evidence offered:** Asserted from 18 years of operating history, with the observation that the best customer is often a different persona than the operator assumed. No figures.
 
-**Fit here (7/10):** The distribution described is almost exactly this business — **18–22.5% repeat driving 45–52% of revenue** — which aims it straight at the binding constraint. At ~54 orders/month a solo operator can literally know and personally email the top repeat buyers, so this works *because* of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves. Additive to the rest of this skill, which covers subscription cadence, milestone rates, win-back credit and store credit but nothing about identifying and cultivating a top-customer segment.
+**Fit here (7/10):** The distribution described is almost exactly this business — **18–22.5% repeat driving 45–52% of revenue** — which aims it straight at the binding constraint. At ~54 orders/month a solo operator can literally know and personally email the top repeat buyers, so this works *because* of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves. Additive to the rest of this skill, which covers subscription cadence, billing recovery, milestone rates, win-back credit and store credit but nothing about identifying and cultivating a top-customer segment.
 
 Three limits. The standing discount code is **permanent margin** against a $50.46 AOV and must be sized from landed cost. Amazon buyers (~$1,800/mo, the larger channel) cannot be contacted this way at all. And the "your best customer is a different persona than you assumed" claim is a **prompt to check actual Shopify order history**, not a conclusion to act on — verify it against `personas.json` before rewriting anything.
 

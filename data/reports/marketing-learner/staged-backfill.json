@@ -1,0 +1,62 @@
+{
+  "scanned": 37,
+  "scored": 37,
+  "parked": [
+    {
+      "sourceId": "SOaXUiLyx2M",
+      "creator": "Chris Rawlings",
+      "title": "Using Claude to Make my Amazon Product Images (2026 Tutorial)",
+      "claim": "Validate every image change with a continuously running Amazon Experiments A/B test (version A vs version B, scheduled, read the metric delta), and keep iterating so you always have a new variant in test.",
+      "mechanism": "Continuous data-backed iteration compounds: each proven winner becomes the new control, so a seller running experiments constantly pulls permanently ahead of competitors who set an image once and leave it.",
+      "evidence": "All the portfolio before/afters are asserted to be Amazon Experiments results; a setup graphic is shown. No eligibility, duration, or significance detail given.",
+      "score": 3,
+      "reasoning": "Depends on scale that does not exist here. Amazon Experiments needs enough sessions per variant to reach any read at all, and this listing set produces roughly 36 orders a month — a CTR or CVR difference of the size described would take many months to separate from noise, if the ASINs are even eligible. This is also platform-mechanics class, so the specific tool and thresholds are the fastest-decaying part of the video. The honest posture for RSC is to apply the image levers by judgement, ship, and move on rather than build a testing cadence it cannot read.",
+      "rejectReason": "Requires traffic volume RSC does not have — at ~36 Amazon orders/month no image A/B test reaches a readable result, so a continuous experiment cadence produces noise, not decisions.",
+      "stage": "traffic",
+      "revisedScore": 7,
+      "verdictReasoning": "The only defect is session volume: at ~36 Amazon orders/month no variant reaches a readable delta. The mechanism itself is sound and durable — promote proven winners to control and always keep one variant in test — and Amazon Experiments is a live, current tool available to brand-registered sellers, so this is not a stale platform-mechanics artifact. Once traffic volume exists, a standing image-test cadence on a 12-SKU catalog is genuinely worth running. Parked at traffic; worth 7 on its merits, not the 3 it got for being unreadable today."
+    },
+    {
+      "sourceId": "bOXEtdZliH8",
+      "creator": "MyWifeQuitHerJob Ecommerce Channel",
+      "title": "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)",
+      "claim": "Aim to break even on the first purchase from paid ads rather than turn a profit, because the email and SMS backend converts that customer into profit later — win on day 30, not day 1.",
+      "mechanism": "If the backend flows reliably generate repeat purchases, a break-even first order means the customer was acquired for free and all subsequent lifetime value is margin.",
+      "evidence": "Framed as a mindset shift; supported only by the claim that email is ~30% of his revenue.",
+      "score": 3,
+      "reasoning": "Durable-principle class (CAC against lifetime value), so age is not the issue — the issue is that it presupposes exactly what does not exist: ad spend, working attribution to know whether you broke even, and a proven repeat engine. With repeat at 18–22.5% the backend does not yet reliably return the acquisition cost, so applying this framing would license spending into a leaking bucket. It also inverts the stated sequence: the correct reading here is to fix retention first, then revisit.",
+      "rejectReason": "Assumes ad budget and working attribution, both gated; and the repeat rate that would justify break-even acquisition is precisely the constraint that has not been fixed yet.",
+      "stage": "traffic",
+      "revisedScore": 7,
+      "verdictReasoning": "Durable-principle class (CAC judged against lifetime value, not first-order margin), so age is irrelevant. Every objection raised is a precondition the sequence is designed to supply: attribution to know whether break-even was hit, a repeat engine that returns the acquisition cost, and ad budget to spend. Once traffic opens — with tracking and retention already fixed upstream — this is the correct frame for setting an acquisition ceiling and prevents underspending on profitable cohorts. Parked at traffic; a legitimate 7 on merit."
+    },
+    {
+      "sourceId": "100m-money-models",
+      "creator": null,
+      "title": null,
+      "claim": "Reduce involuntary churn on recurring billing: schedule charges on customers' paycheck dates, re-run a declined card several times on the same day, and collect a second form of payment (ideally ACH) by trading it for a 3% discount.",
+      "mechanism": "Cards are likeliest to clear when the account has just been funded and deposit timing varies within the day, so retries capture charges that failed only on timing. A large share of recurring revenue is also lost to customers who never chose to cancel but whose card expired or maxed out, so a backup method recovers revenue never actually at risk of refusal.",
+      "evidence": "Attributed to an early mentor plus the claim of recouping about a third of declined payments, and a scripted objection-handle for the second payment method ('it costs us man hours to get new payment information'). No dataset or recovery-rate figures.",
+      "score": 3,
+      "reasoning": "Durable operational mechanic and involuntary churn is real, but there is essentially no recurring-billing base here for it to act on — a refill program is a proposed structure, not a live one. The stated mechanism (asking a customer for a second card and ACH details in conversation) has no form in a self-serve $50 checkout, and the transferable residue (enable card-updater and dunning retries in the subscription app) is a default setting rather than a taught tactic. At ~54 orders/month the recovered amount would be negligible and unmeasurable, and this is billing operations rather than marketing.",
+      "rejectReason": "No meaningful recurring-billing base to act on; the conversational ask has no self-serve form and the residual (card-updater plus retries) is a default app setting, not a tactic.",
+      "stage": "offer-aov",
+      "revisedScore": 6,
+      "verdictReasoning": "Durable operational mechanic that attacks the binding constraint directly — involuntary churn is retention revenue lost from customers who never chose to leave. The only true blocker is that no recurring-billing base exists yet; a refill/subscription structure is precisely an offer-structure gate. The non-default parts (schedule charges near paycheck dates, retry a decline several times within the same day, capture a backup payment method) are real, configurable mechanics in any Shopify subscription app, not just card-updater defaults. Drop the conversational ACH ask and the 3% trade, and what remains is executable and worth doing the moment refills ship. Scored 6 rather than higher because the recoverable dollars stay modest until the subscriber base is meaningful."
+    },
+    {
+      "sourceId": "goedDlD00T0",
+      "creator": "Spencer Pawliw",
+      "title": "We 38x'd Meta Spend in 4 Months. Here's What Actually Did It",
+      "claim": "When you find a breakthrough ad, dissect it into components to understand exactly why it works, then produce many deliberate iterations of it instead of testing new concepts.",
+      "mechanism": "An angle that works has a finite audience per execution; once you know which component is doing the work, you can multiply reach by re-delivering the same working logic in new wrappers rather than gambling on fresh concepts.",
+      "evidence": "Walkthrough of four Pet Lab Co. ads built on the same 'dog eats grass' angle, plus the creator's own account going from $1,700/day to $65,000/day after taking iteration 'way more seriously'. No isolated test of iteration vs. new-concept testing.",
+      "score": 3,
+      "reasoning": "The premise is that you already have a statistically identifiable winner. Real Skin Care does ~$2,700/mo combined with no working attribution and traffic too thin to declare any asset a winner — and paid is gated behind Tracking -> CRO -> Offer/AOV. Durable-principle class, so age is not the issue; the issue is that the input to the process (a measured winner at volume) does not exist here.",
+      "rejectReason": "Depends on scale that does not exist: requires an ad account with enough spend and volume to identify a winning ad and read the results of dozens of variations.",
+      "stage": "traffic",
+      "revisedScore": 6,
+      "verdictReasoning": "Durable-principle class — decompose a proven winner into its working component and multiply executions of that component rather than gambling on new concepts. The sole blocker is that the input, a statistically identifiable winner, requires spend and volume that do not exist yet; that is exactly the traffic gate. Capped at 6 rather than higher because a solo operator with no designer is constrained on iteration throughput even after budget exists, but it is worth doing then."
+    }
+  ]
+}

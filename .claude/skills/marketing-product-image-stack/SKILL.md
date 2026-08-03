@@ -11,7 +11,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** A financial model (1.0%→1.3% CTR, 10%→13% CVR at flat 1.2M impressions = ~60% revenue lift) plus roughly six portfolio before/afters with claimed lifts (CTR doubled with +8% CVR; +30% CTR/+40% CVR; +40%/+50%; 0.9%→1.4% CTR). Real Amazon Experiments results claimed but no account screenshots, spend, or sample sizes shown.
 
-**Fit here (7/10):** Durable principle class (asset prioritisation and why relevance-matched imagery converts), so age is not the limiter. It points at the surface that already produces the larger share of revenue — Amazon at ~$1,800/mo — and rewriting a main image is free, solo-executable, needs no ad budget, and sits squarely in the CRO stage of the gated sequence. Capped at 7 because the compounding arithmetic assumes 1.2M impressions; at roughly 36 Amazon orders/month the lift is real but unmeasurable, so this is a judgement-led change-and-move-on, not a test.
+**Fit here (7/10):** Durable principle class (asset prioritisation and why relevance-matched imagery converts), so age is not the limiter. It points at the surface that already produces the larger share of revenue — Amazon at ~$1,800/mo — and rewriting a main image is free, solo-executable, needs no ad budget, and sits squarely in the CRO stage of the gated sequence. Capped at 7 because the compounding arithmetic assumes 1.2M impressions; at roughly 36 Amazon orders/month the lift is real but unmeasurable, so today this is a judgement-led change-and-move-on, not a test.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -24,6 +24,19 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 **Fit here (8/10):** Durable design principle, no decay, and the most directly usable item in this skill: 12 SKUs across deodorant, body, oral and lip care, each with a main image and a PDP hero, and every lever is zero-cost editorial work needing no traffic or attribution. Scent variations, ingredient visuals, packaging-alongside and a hand-for-scale shot are all honest for this catalog. Additive to the secondary-slot format library and hierarchy rules below, which do not cover the lead image.
 
 **Tension to reconcile:** the source stacks two or three levers into one frame, which pulls against the one-job-per-asset rule below. For RSC, pick one lever per test frame so you can reason about what changed.
+
+*Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
+
+## Validate every image change with a continuously running Amazon Experiments A/B test — version A vs version B, scheduled, read the metric delta — and always keep one new variant in test.
+**Stage:** traffic — parked until the traffic phase opens.
+
+**Why it works:** Continuous data-backed iteration compounds: each proven winner becomes the new control, so a seller running experiments constantly pulls permanently ahead of competitors who set an image once and leave it. The cadence is the mechanism, not any single winning frame.
+
+**Evidence offered:** All the portfolio before/afters are asserted to be Amazon Experiments results; a setup graphic is shown. No eligibility, duration, or significance detail given.
+
+**Fit here (7/10):** The only defect is session volume: at ~36 Amazon orders/month no variant reaches a readable delta, which is why this is parked rather than dropped. The mechanism itself is sound and durable — promote proven winners to control and always keep one variant in test — and Amazon Experiments is a live, current tool available to brand-registered sellers, so this is not a stale platform-mechanics artifact. Once traffic volume exists, a standing image-test cadence on a 12-SKU catalog is genuinely worth running. Worth 7 on its merits, not the 3 it would get for being unreadable today.
+
+**How it meshes with the rules above:** the one-lever-per-frame discipline is what makes this cadence readable — a variant that changes three levers at once produces a delta you cannot attribute. Until the gate opens, main-image and secondary-slot changes here are judgement-led: change one lever, ship, move on, and keep a written record of what changed so the same frames can be re-run as proper A/B pairs when sessions support it.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -121,7 +134,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Stated flatly as a rule ('you can't just stamp it on the image, you'll get banned'), plus a live catch where GPT Images 2.0 rendered a screen the product does not have and he corrected it back to the reference image. Assertion from practice, no policy citation.
 
-**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. Free to observe, and it protects the revenue-producing channel.
+**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. Free to observe, and it protects the revenue-producing channel. A non-compliant frame is never a winner, however well it performs.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
