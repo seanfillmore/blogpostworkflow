@@ -37,6 +37,7 @@ import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getMetaPath, getPostMeta, getRefreshedPath, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
+import { optimizationScopeTerms, isKeywordSelling } from '../../lib/selling-products.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-refresher');
@@ -364,11 +365,31 @@ async function main() {
     // Auto-select from GSC — pages 21–50 with meaningful impressions
     process.stdout.write('  Fetching refresh candidates from GSC (positions 21–50)... ');
     const gscPages = await gsc.getQuickWinPages(200, 90);
-    const candidates = gscPages
+    const ranked = gscPages
       .filter((p) => p.position >= 21 && p.position <= 50)
       .filter((p) => p.impressions >= minImpressions)
       .filter((p) => p.url.includes('/blogs/'));
-    console.log(`${candidates.length} candidates`);
+
+    // Only optimize pages tied to a product that actually sells. Impressions and
+    // position say a page could rank better; they say nothing about whether a
+    // better ranking can produce a sale. A refresh costs real output tokens
+    // (~$0.05 each, and content-refresher's spend is ~73% output), so a page with
+    // no selling product behind it is spend with no path to revenue.
+    const { terms: scopeTerms, unsold, config: scopeConfig } = optimizationScopeTerms();
+    let candidates = ranked;
+    if (scopeTerms === null) {
+      console.log('\n  ⚠ No Shopify revenue data — skipping the product-scope filter (failing open).');
+    } else {
+      const inScope = (p) => isKeywordSelling(p.keyword, scopeTerms) || isKeywordSelling(p.url, scopeTerms);
+      candidates = ranked.filter(inScope);
+      const skipped = ranked.length - candidates.length;
+      console.log(`\n  Product scope: ${[...scopeTerms].join(', ')}${scopeConfig?.reviewAfter ? ` (review after ${scopeConfig.reviewAfter})` : ''}`);
+      if (skipped) console.log(`  Skipped ${skipped} ranked page(s) with no selling product behind them.`);
+      if (unsold.length) {
+        console.warn(`  ⚠ In scope but no recorded revenue in the window: ${unsold.join(', ')} — worth re-reviewing.`);
+      }
+    }
+    console.log(`  ${candidates.length} candidates`);
 
     for (const candidate of candidates.slice(0, count)) {
       const handle = candidate.url.split('/').filter(Boolean).pop();

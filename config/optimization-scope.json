@@ -1,0 +1,7 @@
+{
+  "_comment": "Which product categories are worth spending optimization budget on. Set 2026-08-03: narrowed to lotion only. Lotion is $1,801 of $2,919 trailing-90d product revenue (62%) — the rest of the catalogue splits the remaining 38% thinly, and every refresh costs real output tokens. Terms are matched as substrings against a page's target keyword using the vocabulary in lib/product-scope.js. Set \"terms\" to null to fall back to \"every category with any recorded revenue\".",
+  "terms": ["lotion"],
+  "setOn": "2026-08-03",
+  "reviewAfter": "2026-10-02",
+  "reviewNote": "60-day trial. At review, re-run the trailing-90d revenue-by-term breakdown and decide whether to widen (coconut oil $589, soap $473, moisturizer $276 were next) or hold."
+}
