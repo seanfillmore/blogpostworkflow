@@ -1,6 +1,6 @@
 ---
 name: marketing-offer-construction
-description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, choosing discount depth (or deciding not to discount at all), how to state the same savings (percent off vs dollars off vs a free portion), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
+description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, creating a premium version of something you already sell, scoring which existing SKU should anchor a bundle or act as the cheap entry offer, choosing discount depth (or deciding not to discount at all), finding a price by stepping it upward against a fixed sample of orders, how to state the same savings (percent off vs dollars off vs a free portion), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
 ---
 
 # Offer Construction
@@ -36,15 +36,16 @@ description: Use when deciding what you actually sell or give away rather than h
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
-## Fund the premium (speed, guarantee, white-glove ease) by raising your price to reflect it, not by absorbing it into margin — a de-commoditized product can carry a higher price.
+## Fund the premium (speed, guarantee, white-glove ease) by raising your price to reflect it, not by absorbing it into margin — and find that price by stepping it upward in committed increments, never dropping it to save a sale mid-test.
 
-**Why it works:** Once you are no longer directly comparable, the price anchor moves with you; buyers who value the vector will pay for it, so the added cost is recovered at the point of sale rather than eaten.
+**Why it works:** Once you are no longer directly comparable, the price anchor moves with you; buyers who value the vector will pay for it, so the added cost is recovered at the point of sale rather than eaten. Most sellers guess a price once, usually low, and never revisit it — so the procedural half matters: fix a sample size (for every N sales that close without resistance, raise the price a step) and keep escalating until buying stops, then settle at the price where gross profit × conversion rate is highest, not where units sold is highest. Committing to the stated sample is what makes it a test at all; discounting mid-test destroys the only signal it was meant to produce and trains buyers to wait.
 
-**Evidence offered:** Assertion, plus the fallback logic that if the market won't pay, you move up market.
+**Evidence offered:** Assertion, plus the fallback logic that if the market won't pay, you move up market. Procedure supported by worked arithmetic only — $5 gum stepped to $6, then $7.20, with the instruction to keep going and 'do the math'; the source prescribes five sales per step and 20% increments, with no case data and no account of how conversion rate is observed at small volumes.
 
-**Fit here (6/10):** Durable pricing logic, age irrelevant, and revenue is the prime directive — with roughly 54 orders/month, price is one of only two multiplicands available without new traffic. Scored mid rather than high because order volume this low makes a clean price test slow to read, so it should be applied as the funding mechanism for a specific added guarantee or bundle rather than as a standalone across-the-board increase.
+**Fit here (6/10):** Durable pricing logic, age irrelevant, and revenue is the prime directive — with roughly 54 orders/month, price is one of only two multiplicands available without new traffic. The sample unit is unusually workable at this scale: five Shopify orders is a matter of days. Two real limits cap it at 6. First, the prescribed 20% step is far too coarse for a $12 deodorant in a saturated category where Native and Dr. Squatch set the visible comparison price — take small steps here. Second, on Amazon (~$1,800/mo, the larger channel) price moves interact with Buy Box and ranking, so run the escalation on Shopify first. At this order volume a clean read is slow either way, so prefer applying it as the funding mechanism for a specific added guarantee or bundle rather than as a standalone across-the-board increase.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
 ## Improve ease by doing pre-work for the customer — intake, onboarding, and preparation done on your side before they have to act — because almost nobody does it and customers notice.
 
@@ -106,15 +107,37 @@ description: Use when deciding what you actually sell or give away rather than h
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
 
-## Don't add products, add ways to offer the products you already have — it is less about 100 products than 100 ways to offer one.
+## Don't add products, add ways to offer the products you already have — and when auditing which way, run the eight levers for making a customer worth more, starting with the three that require nothing new from you.
 
-**Why it works:** Every new product adds sourcing, inventory, listing and support load, while a new configuration of an existing product (different quantity, cadence, pairing, or payment structure) adds revenue with no new operational surface. Revenue growth comes from offer permutations, not SKU count.
+**Why it works:** Every new product adds sourcing, inventory, listing and support load, while a new configuration of an existing product (different quantity, cadence, pairing, or payment structure) adds revenue with no new operational surface. Revenue growth comes from offer permutations, not SKU count. Lifetime value is not one number either — it is a set of independently movable inputs, and naming all eight stops the default reflex of inventing a new product when an existing one has unexploited configurations:
 
-**Evidence offered:** Assertion plus the personal-training example (one, two, three, four sessions per week turns one product into many offers).
+1. Raise the price.
+2. Get them to buy again over time.
+3. Get them to buy more today.
+4. Sell a higher-quality version.
+5. Cut your own cost per unit.
+6. Cross-sell a complement.
+7. Sell a smaller quantity as a downsell.
+8. Sell a lower-quality economy version.
 
-**Fit here (8/10):** The most load-bearing framing available for this business. A solo operator with 12 SKUs at $2,700/mo whose constraint is retention has no business launching SKU 13; the leverage is in quantity packs, refill cadences, mixed-SKU routines, prepay tiers and subscription configurations built from what already exists. Zero cost, no team, no traffic, no attribution needed, and it is a direct corrective to the most common growth reflex at this size. Treat it as the gate on any proposal to expand the catalog.
+As a beginner, work levers 1–3 — charge more, sell more today, get them to buy again — because they need no new product, no new supplier and no new operational surface, so they convert into revenue immediately. The other five all add product or negotiation work and are therefore later moves.
+
+**Evidence offered:** Assertion plus the personal-training example (one, two, three, four sessions per week turns one product into many offers). The eight-lever taxonomy is asserted and then applied twice as a worked demonstration — gum priced up in 20% steps, and a whiteboard walked through all eight levers (more whiteboards over time, five today, wood instead of metal, no logo, cheaper manufacturing, paper rolls, one instead of five, flimsier metal). No conversion or revenue data.
+
+**Fit here (8/10):** The most load-bearing framing available for this business. A solo operator with 12 SKUs at $2,700/mo whose constraint is retention has no business launching SKU 13; the leverage is in quantity packs, refill cadences, mixed-SKU routines, prepay tiers and subscription configurations built from what already exists. Zero cost, no team, no traffic, no attribution needed, and it is a direct corrective to the most common growth reflex at this size. Treat it as the gate on any proposal to expand the catalog. The eight-lever list earns its place as a prioritization checklist under that gate rather than as a mechanism of its own — its additive value is that price and repurchase frequency sit in the same list as bundling, so a price change gets considered alongside a bundle instead of forgotten. Discount the list itself to about a 7 in isolation: five of the eight are owned elsewhere (cross-sell and downsell by marketing-upsell-offer-design, repurchase cadence by marketing-retention-offers) or are operational rather than marketing (cost per unit).
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 11 of 11)*
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
+
+## Score the products you already sell against four properties — unique (nobody else can sell it), expensive relative to cost, sticky (bought again and again), and 'air' (cheap to deliver) — and let the scores decide which SKU plays which role.
+
+**Why it works:** Uniqueness removes price comparison, high price relative to cost creates margin per unit, stickiness multiplies that margin across repeat purchases, and low delivery cost keeps the margin intact — so the four together are the arithmetic of gross profit rather than four separate nice-to-haves.
+
+**Evidence offered:** Coca-Cola worked as an illustration (secret recipe, pennies of cost, lifelong repeat consumption) plus the claim that a one-person service business also satisfies all four. Assertion with one canonical brand example, no figures.
+
+**Fit here (5/10):** Durable principle class, age irrelevant, but it cannot be used as intended: the no-new-products rule above gates catalog expansion, and a solo operator at $2,700/mo should not be launching product 13. It translates honestly as a scoring lens on the 12 SKUs that already exist — which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (the baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer, and which carries the subscribe-and-save cadence. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules above — the additive part is only the four-way scoring frame.
+
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
 ## Explain why the small or cheap option physically cannot produce the outcome the buyer wants, using a concrete analogy, so the larger option becomes the obvious one.
 
@@ -145,6 +168,16 @@ description: Use when deciding what you actually sell or give away rather than h
 **Fit here (8/10):** Extends the buy-X-get-Y multipack already adopted with a naming layer nothing else covers. A 12-SKU catalog at a $50.46 AOV is exactly the case where a named 'Natural Switch Starter' or 'Full Routine' is a single ask that lifts AOV and forward-buys months of a consumable, suppressing churn with no new traffic. Zero cost, solo-executable on Shopify bundle and collection pages today and as a multipack ASIN on Amazon. Held at 8 because naming adds no value by itself and at ~54 orders/month the effect will never be measurable — apply by judgment and move on.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
+
+## Build the tier you are naming by raising a quality dimension on something you already sell — bigger size, stronger dose, priority handling, exclusivity touches — not by formulating a new product.
+
+**Why it works:** Buyers differ in willingness to pay, not just in what they want. Every component of an offer sits on a quality dimension that can be raised, and a visibly better version captures the buyers who would have paid more, so each raised attribute becomes a reason the same buyer pays more for essentially the same job to be done.
+
+**Evidence offered:** Illustrative only: 2mg versus 4mg nicotine gum, plastic versus Kevlar or metal iPhone cases, wood instead of metal whiteboards, and service equivalents (priority support, extended hours, senior reps). No data.
+
+**Fit here (5/10):** Durable pricing/offer logic, and it does add a lever the surrounding rules do not name — they cover quantity bundles, buy-X-get-Y and how to name tiers, but presuppose the tiers exist rather than telling you to create one along a quality axis. Honest forms exist here without new sourcing: a larger-size or extra-strength deodorant as the premium tier, or a priority-handling / gift-wrapped configuration. Capped at 5 because it sits in real tension with the strongest rule above — 'don't add products, add ways to offer the products you already have' — since a genuinely new premium formulation means new inventory and cash a $2,700/mo solo operation should not spend, and the neighbouring rules ('win on faster / less risky / easier' and funding the premium by raising price) already cover much of the intent. Use the size and configuration axis, not new formulations, and treat SKU 13 as off-limits.
+
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
 ## Structure the guarantee by ticket size: a guarantee needs the 'or what' spelled out to have teeth, but at low-ticket B2C prices go broad and unconditional — save specific conditions for higher-ticket offers.
 

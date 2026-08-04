@@ -1,6 +1,6 @@
 ---
 name: marketing-post-purchase-onboarding
-description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, packaging inserts, first-use instructions, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order.
+description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, the promise-and-timeline schedule in the first 48 hours after checkout, packaging inserts, first-use instructions, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order.
 ---
 
 # Post Purchase Onboarding
@@ -14,6 +14,16 @@ description: Use when building or fixing what a customer receives after they buy
 **Fit here (8/10):** Durable retention principle, age irrelevant, and it names the exact causal chain that binds here: retention is the constraint, repeat customers are 45–52% of revenue, and the known churn cause in natural deodorant is a misunderstood transition period. Shopify post-purchase email flows are already a live, zero-cost surface for a solo operator. Distinct from existing coverage — the awareness skill supplies the 'how to start' headline stem and offer-construction mentions onboarding as an ease vector, but nothing owns the sequence-and-artifact layer (what emails, in what order, containing what).
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
+
+## In the first 24–48 hours after checkout, make as many small specific promises as you can and keep every one — state exactly what happens next and when, because cancellations come from unset expectations, not from the product.
+
+**Why it works:** A buyer left with a vague sense of what happens next fills the gap with their own invented timeline; when reality misses that timeline they conclude the seller is not on top of it and reverse the decision. A dense sequence of small promises kept in the window immediately after payment reinforces the purchase instead, converting buyer's remorse into confidence — and confidence is what makes them buy again. This is the scheduling layer under the education content above: the pre-arrival series tells them *what to do*, this tells them *when each thing will reach them*.
+
+**Evidence offered:** Practitioner assertion from onboarding thousands of gym and agency customers: 'the reason a lot of customers cancel is because you said someone's going to reach out and they thought it was going to take 30 minutes, you didn't set the expectation, it takes two days.' No cancellation or retention figures.
+
+**Fit here (7/10):** Durable retention principle, age irrelevant, and it names a mechanism no other entry owns — the rest of this skill covers *what* to teach (transition period, routine, early win) but nothing covers the expectation-setting schedule in the hours right after checkout. Direct fit because retention is the binding constraint and repeat customers are 45–52% of revenue. The honest ecommerce translation is an order-confirmation and pre-arrival sequence that states exactly when the order ships, when it arrives, when the first email lands and what week two will feel like — and then actually delivers each. Free, solo-executable in existing Klaviyo flows, no traffic or attribution needed. Not higher because every promise must be genuinely keepable by one person with FBA and third-party shipping — **only promise what the fulfilment reality can hit** — and at ~54 orders/month the effect on repeat rate will never be cleanly measurable.
+
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
 ## Put printed instructions or a getting-started insert in the box instead of shipping a bare product, because customers left to figure it out on their own don't reorder.
 
