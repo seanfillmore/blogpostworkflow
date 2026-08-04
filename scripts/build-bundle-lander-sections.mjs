@@ -139,7 +139,43 @@ const SECTION_LIQUID_FILES = [
   'sections/rich-text.liquid',
 ];
 
+const HOME_KEY = 'templates/index.json';
+const BANNER_KEY = 'reset-banner';
+const BANNER = {
+  type: 'custom-liquid',
+  settings: {
+    custom_liquid:
+      '<style>.rbn{background:#f6f8f3;border-top:1px solid #e2ead9;border-bottom:1px solid #e2ead9;padding:26px 18px}' +
+      '.rbn__i{max-width:900px;margin:0 auto;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}' +
+      '.rbn__t{margin:0;font-size:clamp(17px,2.2vw,21px);font-weight:700;color:#1a1b18;line-height:1.35}' +
+      '.rbn__s{margin:5px 0 0;font-size:14px;color:#4a4a4a}' +
+      '.rbn__c{background:#4a8b3c;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 22px;border-radius:8px;white-space:nowrap}</style>' +
+      '<div class="rbn"><div class="rbn__i"><div>' +
+      '<p class="rbn__t">Tired of running out? Get ninety days of both formulas.</p>' +
+      '<p class="rbn__s">3 Body Lotions + 3 Body Creams — about $1.34 a day.</p></div>' +
+      '<a class="rbn__c" href="/products/99-coconut-reset-digital">See the 90-Day Reset</a>' +
+      '</div></div>',
+  },
+};
+
 async function main() {
+  if (process.argv.includes('--homepage')) {
+    const themeId = await getMainThemeId();
+    const rawH = await getThemeAsset(themeId, HOME_KEY);
+    const h = JSON.parse(rawH);
+    if (h.sections[BANNER_KEY]) { console.log('banner already present.'); return; }
+    const at = h.order.indexOf('thesis');
+    if (at === -1) throw new Error('homepage "thesis" section not found — inspect index.json');
+    h.sections[BANNER_KEY] = BANNER;
+    h.order.splice(at, 0, BANNER_KEY);
+    console.log(`inserted ${BANNER_KEY} before "thesis"`);
+    console.log(`order: ${h.order.join(' → ')}`);
+    if (!APPLY) { console.log('\ndry run — re-run with --apply to push.'); return; }
+    await updateThemeAsset(themeId, HOME_KEY, JSON.stringify(h, null, 2));
+    console.log(`pushed ${HOME_KEY}`);
+    return;
+  }
+
   if (process.argv.includes('--sections-liquid')) {
     const themeId = await getMainThemeId();
     let anyChanged = false;
@@ -218,7 +254,7 @@ async function main() {
     return;
   }
 
-  console.error('specify --value-stack, --sections, or --sections-liquid');
+  console.error('specify --value-stack, --sections, --sections-liquid, or --homepage');
   process.exit(1);
 }
 
