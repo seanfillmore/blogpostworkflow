@@ -34,10 +34,24 @@ const ORDER = [
   'free-from-block', 'collapsible-content', 'final-cta-strip',
 ];
 
-function injectSections(j) {
+/**
+ * `--sections` adds missing sections and never touches existing ones, so a
+ * re-run cannot clobber edits made in the theme editor. `--sections --update`
+ * is the deliberate opt-in that rewrites their settings from SECTIONS — used
+ * when the design itself changes, which the theme editor cannot express.
+ */
+function injectSections(j, update = false) {
   let added = 0;
   for (const s of SECTIONS) {
-    if (j.sections[s.key]) { console.log(`  ok    ${s.key} already present`); continue; }
+    if (j.sections[s.key]) {
+      if (!update) { console.log(`  ok    ${s.key} already present`); continue; }
+      const before = JSON.stringify(j.sections[s.key].settings);
+      if (before === JSON.stringify(s.settings)) { console.log(`  ok    ${s.key} unchanged`); continue; }
+      j.sections[s.key] = { type: s.type, settings: s.settings };
+      console.log(`  UPD   ${s.key}`);
+      added++;
+      continue;
+    }
     j.sections[s.key] = { type: s.type, settings: s.settings };
     console.log(`  ADD   ${s.key}`);
     added++;
@@ -245,9 +259,9 @@ async function main() {
   }
 
   if (process.argv.includes('--sections')) {
-    const added = injectSections(j);
+    const added = injectSections(j, process.argv.includes('--update'));
     console.log(`\norder: ${j.order.join(' → ')}`);
-    if (!added) { console.log('nothing to add.'); return; }
+    if (!added) { console.log('nothing to change.'); return; }
     if (!APPLY) { console.log('\ndry run — re-run with --apply to push.'); return; }
     await updateThemeAsset(themeId, KEY, JSON.stringify(j, null, 2));
     console.log(`pushed ${KEY} to theme ${themeId}`);
