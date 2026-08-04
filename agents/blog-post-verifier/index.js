@@ -22,6 +22,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle } from '../../lib/shopify.js';
+import { slugFromMetaPath } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -53,7 +54,12 @@ const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 // ── args ──────────────────────────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
-const slugArg = args.find((a) => !a.startsWith('--'));
+// Normalized because callers have passed a meta.json path here where a bare slug
+// was expected, and the mismatch surfaced only as "No article found matching slug".
+const slugArg = (() => {
+  const raw = args.find((a) => !a.startsWith('--'));
+  return raw ? slugFromMetaPath(raw, null) : raw;
+})();
 const limitIdx = args.indexOf('--limit');
 const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : null;
 
