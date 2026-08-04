@@ -777,11 +777,14 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // LLM cost — passive spend monitoring (best-effort; never breaks the digest).
   let costSection = '';
   try {
-    const dayRecs = readUsage(targetDate);
+    // Injected like every other read in this function — otherwise the cost section
+    // resolves the real repo's usage dir and the digest stops being deterministic.
+    const usageDir = join(dataRoot, 'data', 'reports', 'llm-usage');
+    const dayRecs = readUsage(targetDate, usageDir);
     if (dayRecs.length) {
       const day = summarizeRecords(dayRecs);
-      const weekDates = listUsageDates().slice(-7);
-      const week = summarizeRecords(weekDates.flatMap(readUsage));
+      const weekDates = listUsageDates(usageDir).slice(-7);
+      const week = summarizeRecords(weekDates.flatMap((d) => readUsage(d, usageDir)));
       const runRate = weekDates.length ? (week.totalCost / weekDates.length) * 7 : 0;
       const overBudget = runRate > 20;
       const topAgents = day.byAgent.slice(0, 3).map((a) => `${esc(a.key)} $${a.cost.toFixed(2)}`).join(' &middot; ');
