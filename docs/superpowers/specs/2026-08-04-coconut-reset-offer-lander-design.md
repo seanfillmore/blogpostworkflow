@@ -1,175 +1,205 @@
-# 90-Day Coconut Reset — offer reframe and lander restoration
+# 90-Day Coconut Reset — offer reframe and bundle-lander enrichment
 
 **Date:** 2026-08-04
-**Status:** approved design, pending implementation plan
-**Related:** `docs/superpowers/specs/2026-07-22-rsc-1m-growth-plan-design.md` (the $1M plan this offer serves)
+**Status:** approved design (rev 2), pending implementation plan
+**Related:**
+- `docs/bundle-landing-architecture.md` — the data-not-literals rule this spec obeys
+- `docs/superpowers/specs/2026-07-22-rsc-1m-growth-plan-design.md` — the $1M plan this offer serves
+
+> **Revision note.** Rev 1 proposed re-pointing the Reset at its old 49KB
+> single-product template. That was wrong: `docs/bundle-landing-architecture.md`
+> identifies that template as the anti-pattern this system was built to replace,
+> and re-pointing would have reintroduced the literal-price drift that produced
+> "A complete $158 routine" beside a $118 strikethrough. Rev 2 keeps the
+> data-driven architecture and enriches it instead.
 
 ## Problem
 
-The 90-Day Coconut Reset launched 2026-07-29 and has taken zero orders. Two
-causes, neither of which is the one the launch notes assume.
+The Reset launched 2026-07-29 and has taken zero orders.
 
-**The lander lost 10 of its 17 sections.** The product was re-pointed at the
-shared `product.bundle-landing.json` template (7 sections), abandoning the
-purpose-built 17-section lander that was written for it. The missing sections
-are the entire selling apparatus: the opening hook, ingredient cards, the stat
-row, the mechanism explainer, the review carousel, customer photos, the
-us-vs-them comparison table, the founder block, and an 8-block FAQ replaced by a
-stub. The buy box lost 8 blocks alongside them, including the value stack.
+**The bundle lander is structurally thin.** `product.bundle-landing.json` renders
+7 sections. The bespoke landers it replaced render 17. Missing: the opening
+hook, ingredient cards, the stat row, the mechanism explainer, a review
+carousel, customer photos, the us-vs-them comparison table, and the founder
+block. The FAQ survives only as a stub. This affects **all five bundles** on the
+template, not just the Reset.
 
-**The page has never been measured.** GA4 stopped collecting on 2026-07-26 and
-resumed 2026-08-03; the product's entire life to date sits inside that hole. Its
-zero orders are therefore uninterpretable — we do not know whether anyone
-reached the page. It also has no homepage placement (the Sensitive Skin Set has
-three) and no nav link, and the live Shopping campaign lands on the lotion PDP
-rather than here.
+**The page has never been measured.** GA4 stopped collecting 2026-07-26 and
+resumed 2026-08-03; the product's entire life sits inside that hole. Zero orders
+is therefore uninterpretable — we do not know whether anyone reached the page.
+It has no homepage placement (the Sensitive Skin Set has three) and no nav link,
+and the live Shopping campaign lands on the lotion PDP.
 
-The offer itself has already been revised away from what the $1M plan describes.
-Live contents are **3 lotions + 3 creams at $121 against a $174 compare-at**, not
-the 3+1 at $99 the plan specifies. The $174 anchor is exact and honest:
-3 × $30 lotion + 3 × $28 cream.
+## Architecture (existing, and why it stays)
+
+`product.bundle-landing.json` is shared by five active bundles **by design**.
+Per-product copy comes from a `bundle_lander` metaobject referenced by the
+`bundle.lander` metafield; numbers come from `bundle.value_stack` and are
+summed at render, never asserted. `[[TOTAL]]`, `[[PRICE]]` and `[[SAVINGS]]`
+tokens in metaobject text are substituted at render.
+
+The governing rule, quoted from the architecture doc:
+
+> Only `product.price` and `compareAtPrice` come from Shopify commerce data.
+> Everything else comes from metafields. **Nothing is a literal, and no total is
+> ever asserted — it is summed.**
+
+**Critical platform constraint.** Shopify evaluates Liquid *only* inside
+`custom_liquid` settings. Native sections — `rich-text`, `multicolumn`,
+`image-with-text`, `collapsible-content` — render their settings verbatim, so
+`{{ ... }}` in them prints rather than computes. Every data-driven module
+therefore must be either a `custom_liquid` section or a purpose-built theme
+section that reads metafields directly. This is why `whats-in-it`,
+`free-from-block` and `collapsible-content` in the current template are all
+`custom-liquid`. New modules follow the same rule.
+
+`scripts/build-bundle-landing.mjs` regenerates the three literal-price settings
+that survive in bespoke templates, and **refuses to run against a shared
+template** — a guard that must keep passing.
 
 ## Decisions
 
-**Price stays $121.** Presentation changes; nothing in Shopify does.
+### Offer framing
 
-**Framing becomes gain-framed rather than percent-off**, per
-`marketing-offer-construction`, which rates free-portion and add-on framings
-above an equivalent discount:
+**Price stays $121. Nothing in Shopify commerce data changes.**
 
+`bundle.value_stack` becomes product rows only, so the total computes to the
+product-only figure:
+
+```json
+[
+  { "label": "3 Body Lotions (8oz)", "amount": 90, "digital": false },
+  { "label": "3 Body Creams (4oz)",  "amount": 84, "digital": false }
+]
 ```
-90 days of lotion  ·  3 × 8 fl oz ........... $90
-+ 3 Body Creams    ·  worth $84 ............. $31
-────────────────────────────────────────────────
-You pay ..................................... $121
-                    $174 of product — save $53
-```
 
-A literal "buy 3, get 3 free" was considered and rejected. It would require
-either pricing the bundle at $90 (giving up ~$31 of contribution per order) or
-listing lotion at $40.33 inside the bundle against $30 everywhere else on the
-site — a discrepancy any buyer can check in two clicks.
+→ total **$174**, price **$121**, savings **$53** — all computed, none written down.
 
-**The digital guides stay out of the headline value number.** The archived
-lander stacked $19 + $15 + $6 shipping onto the product value to reach $158.
-Carrying that forward would produce a $214 claim. Product-only value is
-defensible against the live PDPs; the guides are listed as included at no
-charge, without a dollar figure.
+The two digital guides come **out of the summed stack** and are presented as
+included at no charge, without a dollar figure. Rev 1 reached this by judgment;
+here it is enforced by the data. Leaving them in would compute a $208 total and
+an $87 savings claim against a $174 compare-at that any buyer can check.
 
-## Architecture
+Buy-box copy carries the add-on framing, which `marketing-offer-construction`
+rates above an equivalent percent-off:
 
-### Template ownership
+> 90 days of lotion — $90. Add all three body creams, worth $84, for $31.
 
-`product.bundle-landing.json` is shared by **five active bundles** — 90-Day Clean
-Swap, Head-to-Toe, Clean Swap, Gift Box, and the Reset. It must not be edited.
+A literal "buy 3, get 3 free" was considered and rejected: it would require
+either pricing the bundle at $90 (giving up ~$31 contribution per order) or
+listing lotion at $40.33 inside the bundle against $30 elsewhere on the site.
 
-The purpose-built lander still exists in the theme as
-`templates/product.landing-page-99-coconut-reset.json` (49KB, 17 sections);
-it was orphaned rather than deleted. The work is therefore a **re-point plus a
-copy pass**, not a rebuild:
+### Module enrichment
 
-1. Copy the orphaned template to `product.landing-page-coconut-reset.json`
-   (dropping the dead `99-` price from the key).
-2. Apply the copy changes below.
-3. Re-point the product's `templateSuffix` to the new template.
+Missing modules are added to the **shared** template as data-driven sections, so
+all five bundles gain them. Each renders only when its backing field is
+populated, degrading to nothing rather than to an empty box.
 
-The orphaned `...99-coconut-reset.json` key is left in place; removing it is not
-required and risks nothing else.
-
-The archived template was checked for hardcoded product references — product
-IDs, `gid://` handles, or `/products/` links that would make it render another
-product's content. **There are none**; the four matches are the phrase
-"sensitive-skin" appearing in legitimate prose. The template is product-agnostic
-and re-pointing is safe. It also predates the variant cull, but carries no
-references to the three removed scents; the FAQ names only Pure Unscented.
-
-### Copy changes
-
-Eight strings in the archived template carry stale figures. One of them —
-`hero-ingredient-cards.ingredient-card-1.title` ("Daytime: 3 Lotions") — is
-**still correct** and must not be changed.
-
-| Path | Current | Becomes |
+| Module | Mechanism | Backing data |
 |---|---|---|
-| `hero.blocks.bullet-2.settings.text_rte` | "A complete $158 routine … yours for $99" | $174 of lotion & cream, 90 days of both, $121 |
-| `main.blocks.value-stack.settings.custom_liquid` | $118 / $19 / $15 / $6 → $158 → $99, "save $59" | the four-row stack above |
-| `main.blocks.bundle-savings.settings.custom_liquid` | "$158 … for $99 … $59 in savings" | $174 / $121 / save $53 |
-| `hero-ingredient-cards.…card-2.settings.title` | "Overnight: 1 Cream" | "Overnight: 3 Creams" |
-| `founder-block.blocks.founder-body.settings.text` | "three lotions and a cream" | "three lotions and three creams" |
-| `stats-row.blocks.stat-3.settings.title` | "$158" | "$174" |
-| `final-cta-strip.blocks.fc-text.settings.text` | "Three lotions, one cream … $158 value, $99 today" | three creams; $174 value, $121 today |
+| `hook-rich-text` | `custom_liquid` | new field `hook` |
+| `hero-ingredient-cards` | `custom_liquid` | new field `ingredient_cards` (json) |
+| `stats-row` | `custom_liquid` | new field `stats` (json) |
+| `why-it-works` | `custom_liquid` | new field `mechanism` (json) |
+| `compare-table` | existing `landing-compare-table` section | new metafield `bundle.comparison_rows` (json) — already named in the architecture doc's schema |
+| `founder-block` | `custom_liquid` | new field `founder_note` |
+| `collapsible-content` | replace stub with full render | existing `faq` field, already populated on all six landers |
+| review carousel | `apps` section, Judge.me | none |
 
-The `.crx-vs` value-stack CSS and markup structure already exist in the archived
-template and are reused; only the rows change.
+`ugc-photos` is **excluded**: it needs per-bundle photography that does not
+exist, and an empty photo grid is worse than no section.
 
-`bundle-savings` computes a per-day figure via
-`{{ product.price | divided_by: 90 }}`. It is dynamic and stays — at $121 it
-reads $1.34/day.
+The Loox section carried by the bespoke landers is **excluded**. Judge.me is the
+review system of record; a second review app is clutter.
 
 ### Copy angles
 
-One tactic per module rather than scattering them across the page:
+One tactic per module rather than scattering them:
 
 | Module | Tactic | Source skill |
 |---|---|---|
-| `hero`, `hook-rich-text` | Dose argument — one bottle does not reset anything; the product is named 90-Day, so this is native | `marketing-offer-construction` |
-| `stats-row` | Specificity — 6 ingredients, 90 days, review count and rating | `marketing-conversion-copy-angles` |
-| `why-it-works` | Mechanism — lotion daily, cream overnight | — |
-| `compare-table` | Us-vs-them | `marketing-product-image-stack` |
-| `founder-block` | Authority, honest version only — real formulation story, no invented credentials | `marketing-conversion-copy-angles` |
-| `collapsible-content` | Problem articulation as proof substitute; 8 blocks restored over the stub | `marketing-conversion-copy-angles` |
-| Buy box | Guarantee moves adjacent to add-to-cart, out of the footer | `marketing-offer-construction` |
+| hook | Dose argument — one bottle does not reset anything; the product is named 90-Day, so this is native | `marketing-offer-construction` |
+| stats | Specificity — hard numbers only | `marketing-conversion-copy-angles` |
+| mechanism | Why lotion daily and cream overnight | — |
+| compare table | Us-vs-them | `marketing-product-image-stack` |
+| founder note | Authority, honest version only — real formulation story, no invented credentials | `marketing-conversion-copy-angles` |
+| FAQ | Problem articulation as proof substitute | `marketing-conversion-copy-angles` |
+| Buy box | Guarantee adjacent to add-to-cart, out of the footer | `marketing-offer-construction` |
 
-The Loox review section carried by the Sensitive Set lander is **dropped**.
-Judge.me is the review system of record and a second review app is clutter.
+### Content authoring
+
+New fields are authored for **the Reset** in this work. The other four bundles
+get the sections but leave the new fields empty, so their pages are unchanged
+until someone writes their copy. This keeps the blast radius at one page while
+the capability lands for all five.
+
+**One deliberate exception.** The FAQ upgrade is backed by the existing `faq`
+field, which is already populated on all six landers. Replacing the stub
+therefore changes the other four bundle pages too — the FAQ they were always
+meant to render starts rendering. This is intended, and it is the *only* diff
+those four pages may show.
+
+### Data corrections
+
+- `rating_caption` on the Reset reads "Rated 4.9 by Real Customers" against a
+  live `rating_value` of 4.84 and 135 reviews. Corrected to match.
+- `product.description` is empty, so nothing syndicates to the Shopping feed,
+  the app ecosystem, or AI-search crawlers. Populated from the metaobject copy.
+- A `bundle_lander` metaobject `reset-90-day` exists alongside the one actually
+  referenced (`99-coconut-reset-digital`). Identified as an orphan; flagged, not
+  deleted, since nothing reads it.
 
 ### Homepage banner
 
-A new `custom-liquid` section between `hero` and `thesis` in
+New `custom-liquid` section between `hero` and `thesis` in
 `templates/index.json`, matching the pattern the homepage already uses in five
 places. Leads with the add-on framing and links to the lander.
 
 ## Verification
 
-This theme has two known failure modes on bundle landers, both of which report
-success from the API while rendering the wrong thing. Both get an explicit
-check against the **rendered page**, not the API response:
+This theme has known failure modes on bundle landers that report success from
+the API while rendering something else. Every check runs against the **rendered
+page**, not the API response.
 
-1. Fetch `/products/99-coconut-reset-digital` and assert the new figures
-   ($121, $174, $53, "3 Body Creams") are present and the old ones
-   ($99, $118, $158, $59, "1 Cream") are absent.
-2. Assert all 17 sections render, by section key.
-3. Fetch the other four `bundle-landing` products and assert they are
-   byte-identical to a pre-change capture — the shared template must be
-   untouched.
-4. Assert the homepage links to the lander.
-
-The review count and star rating used in `stats-row` must be read from the live
-Judge.me group at implementation time, not copied from notes — the product's
-image alt text says 135 reviews while earlier project notes say 131. Whichever
-is live is the one that ships.
+1. Capture all five bundle product pages **before** any change.
+2. After: fetch the Reset and assert $174, $121, $53 and "3 Body Creams" are
+   present, and $99, $118, $158, $59, "1 Cream" absent.
+3. Assert each new section renders on the Reset, by section key.
+4. Assert the other four bundle pages differ from their pre-capture **only** by
+   the newly-rendering FAQ. Every other new section must self-suppress on empty
+   data. Any other diff is a regression and blocks the change.
+5. Run `node scripts/build-bundle-landing.mjs 99-coconut-reset-digital` and
+   assert it still refuses (shared-template guard intact).
+6. Assert the homepage links to the lander.
+7. Assert `product.description` is non-empty.
 
 ## Out of scope
 
 **Meta static ads.** `FACEBOOK_ACCESS_TOKEN` expired 2026-06-21, so
 `meta-ads-collector`, `meta-ads-analyzer` and `campaign-ad-fixer` are dead and
-the ad account is unreachable until re-auth. The image work is governed by
-`marketing-product-image-stack` and needs its own spec. Noted here so it is not
-lost: the Meta pixel itself **is** live (id `1948396628850834`, via the Shopify
-web pixel), but its `metaapp_system_user_token` is `"-"`, suggesting the
-Conversions API is not configured — client-side only.
+the ad account is unreachable until re-auth. Image work is governed by
+`marketing-product-image-stack` and needs its own spec. Recorded here so it is
+not lost: the Meta pixel **is** live (id `1948396628850834`, via the Shopify web
+pixel), but its `metaapp_system_user_token` is `"-"`, suggesting the Conversions
+API is not configured — client-side only.
 
-**Distribution beyond the homepage banner.** Whether to re-point the Shopping
-campaign at this lander is a separate call.
+**Copy for the other four bundles' new fields.** The sections ship; the words do
+not.
+
+**Re-pointing the Shopping campaign** at this lander is a separate call.
 
 ## Mechanics
 
 Two repos, worktree off `origin/main` in each, PR in each:
 
-- `Claude` — this spec. Worktree `.claude/worktrees/coconut-reset-offer`,
-  branch `feature/coconut-reset-offer`.
-- `realskincare-theme` — templates. Must branch from `origin/main`, **not** from
-  `feat/coconut-reset-lander`, where the checkout is currently sitting.
+- `Claude` — this spec, any script changes. Worktree
+  `.claude/worktrees/coconut-reset-offer`, branch `feature/coconut-reset-offer`.
+- `realskincare-theme` — template and section files. Must branch from
+  `origin/main`, **not** from `feat/coconut-reset-lander`, where the checkout is
+  currently sitting.
 
-Theme edits go live via the Admin API against the live theme; the repo commit is
-the record. Verification runs against the live storefront after push.
+The **live theme is the source of truth** for template JSON: `origin/main` in
+the theme repo does not contain `product.bundle-landing.json` at all. Pull each
+asset from the live theme via the Admin API, modify, push back, and commit the
+same content to the repo as the record. Never push a repo copy over a live asset
+without pulling first.
