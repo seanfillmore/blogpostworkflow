@@ -52,3 +52,36 @@ test('missing or malformed stack does not throw', () => {
     priced: [], included: [], total: 0, price: 0, savings: 0,
   });
 });
+
+import { SECTIONS } from '../../lib/bundle-lander.js';
+
+test('every new section is custom-liquid — native sections cannot evaluate Liquid', () => {
+  for (const s of SECTIONS) assert.equal(s.type, 'custom-liquid', `${s.key} must be custom-liquid`);
+});
+
+test('every new section self-suppresses on a blank field', () => {
+  for (const s of SECTIONS) {
+    const l = s.settings.custom_liquid;
+    assert.match(l, /!= blank|\.size > 0/, `${s.key} has no blank guard — would render an empty box`);
+  }
+});
+
+test('every new section reads the bundle_lander metaobject, never a literal', () => {
+  for (const s of SECTIONS) {
+    assert.match(s.settings.custom_liquid, /product\.metafields\.bundle\./,
+      `${s.key} must read product data`);
+  }
+});
+
+test('sections are in the decision-relevance order the spec fixes', () => {
+  assert.deepEqual(SECTIONS.map((s) => s.key), [
+    'hook', 'timeline', 'mechanism', 'ingredient-cards', 'stats', 'compare-rows', 'founder-note',
+  ]);
+});
+
+test('no section hides decision-relevant content behind an accordion', () => {
+  for (const s of SECTIONS) {
+    assert.doesNotMatch(s.settings.custom_liquid, /<details/,
+      `${s.key} uses <details> — skimmers do not open accordions`);
+  }
+});
