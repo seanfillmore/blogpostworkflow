@@ -120,6 +120,7 @@ populated, degrading to nothing rather than to an empty box.
 | `stats-row` | `custom_liquid` | new field `stats` (json) |
 | `why-it-works` | `custom_liquid` | new field `mechanism` (json) |
 | `compare-table` | existing `landing-compare-table` section | new metafield `bundle.comparison_rows` (json) — already named in the architecture doc's schema |
+| `timeline` | `custom_liquid` | new field `timeline` (json) |
 | `founder-block` | `custom_liquid` | new field `founder_note` |
 | review carousel | `apps` section, Judge.me | none |
 
@@ -129,19 +130,101 @@ exist, and an empty photo grid is worse than no section.
 The Loox section carried by the bespoke landers is **excluded**. Judge.me is the
 review system of record; a second review app is clutter.
 
+### Hero angle — and the message-match contract
+
+All copy derives from `data/context/voice-of-customer.md` (skin cluster, written
+by `agents/voice-of-customer` 2026-07-26), not from invention.
+
+Two entries in it decide the angle:
+
+- **"Bottle size feels short for a premium natural lotion; people run out faster
+  than they expect"** — 4 mentions. This is the bundle's reason to exist. A
+  90-day supply answers the most common structural complaint in the file.
+- **"Shoppers have a hard budget ceiling around $15 for body lotion and are
+  skeptical of anything above it"** — 4 mentions. A $121 order is eight times
+  that ceiling. This is the single largest objection to *this* offer and it must
+  be answered above the fold, not buried in an FAQ.
+
+Reinforced by the trigger **"sunk-cost fatigue after spending hundreds trying
+organic lotions that all failed"** (3 mentions).
+
+**The hero angle is therefore: you keep running out, and you have already spent
+more than this on lotions that did not work.** Not "save $53" — savings is the
+supporting line, not the lead. The price objection is answered in the same
+breath, with per-day math the template already computes ($1.34/day at $121 over
+90 days).
+
+**Message-match contract.** Meta statics are built in a later spec, but the
+angle is fixed here and the ads must enter on it. A cold click that arrives on a
+different promise is a conversion lost after it was paid for. Any ad leading on
+a discount, a scent, or a generic "clean ingredients" claim breaks this contract
+and should not ship. Recorded here so the ad spec inherits it rather than
+inventing its own angle.
+
 ### Copy angles
 
-One tactic per module rather than scattering them:
+One tactic per module, each answering a named objection from the research file:
 
-| Module | Tactic | Source skill |
+| Module | Objection it answers (mentions) | Tactic |
 |---|---|---|
-| hook | Dose argument — one bottle does not reset anything; the product is named 90-Day, so this is native | `marketing-offer-construction` |
-| stats | Specificity — hard numbers only | `marketing-conversion-copy-angles` |
-| mechanism | Why lotion daily and cream overnight | — |
-| compare table | Us-vs-them | `marketing-product-image-stack` |
-| founder note | Authority, honest version only — real formulation story, no invented credentials | `marketing-conversion-copy-angles` |
-| FAQ | Problem articulation as proof substitute | `marketing-conversion-copy-angles` |
-| Buy box | Guarantee adjacent to add-to-cart, out of the footer | `marketing-offer-construction` |
+| hook | runs out too fast (4) + $15 ceiling (4) | Dose argument, per-day math |
+| ingredient cards | "reading the actual ingredient list is what closes the sale" (5) | Specificity |
+| stats | — | Hard numbers only: 6 ingredients, 90 days, 4.84★, 135 reviews |
+| mechanism | "natural oils don't absorb — greasy baked good" (5); "skeptical a natural lotion moisturizes at all" (3) | Why lotion daily, cream overnight |
+| timeline | runs out mid-way; uncertainty about when it works | Expectation map (see below) |
+| compare table | "CeraVe, Vanicream, Cetaphil are the default recommendation" (6) | Us-vs-them |
+| founder note | — | Authority, honest version only; no invented credentials |
+| buy box | perceived risk | Guarantee, star rating, and one verbatim quote adjacent to add-to-cart |
+
+**Coconut-oil comedogenicity** (6 mentions — the largest single objection in the
+file) is answered by the existing body-map media asset, which already states
+"Made for your body, not your face." No new module needed; it must simply not be
+buried.
+
+Verbatim proof is pulled from the file's golden-nugget phrases rather than
+paraphrased — e.g. *"dude as soon as you put it on it just ABSORBS"* against the
+absorption objection. Per `marketing-conversion-copy-angles`, reviewer-volunteered
+context is kept and never invented.
+
+### Timeline module — format constraint
+
+There is **no photographic documentation of results**, so this is not a
+before/after proof artifact and must not imply one. It is an illustrated
+expectation map — CSS/SVG, typographic, no photography — covering what the buyer
+uses and what to expect across months 1–3, and how the supply maps to them.
+
+This keeps it inside what `marketing-problem-solution-inventory` warns about:
+reversed problem statements drift into unsupportable claims in body care. The
+module removes uncertainty about the *wait*, which is the mechanism
+`marketing-conversion-friction-audit` credits (8/10), without asserting a
+clinical result we cannot evidence.
+
+### Page order and the skim rule
+
+Buyers skim and decide. **Collapsing content behind accordions to fight page
+length is rejected** — a skimmer does not open accordions, so collapsing
+decision-relevant material simply hides it. This departs from the
+"collapse the rest" reconciliation in `marketing-conversion-friction-audit` and
+`marketing-problem-solution-inventory`, deliberately.
+
+The rule instead: **order by decision-relevance and make every section legible
+at a skim** — one idea per section, a headline that carries the point on its
+own, and scannable supporting detail. Only reference material stays collapsed:
+the full ingredient list, shipping and returns terms — which the existing FAQ
+and tabs already handle.
+
+Resulting order:
+
+1. `hero` — the angle, per-day math, add-to-cart in view
+2. `hook` — runs-out / already-spent-more
+3. `main` (buy box) — value stack, guarantee, star rating, verbatim quote
+4. `whats-in-it` — what physically arrives
+5. `timeline` — months 1–3 expectation map
+6. `mechanism` — why two formulas
+7. `ingredient cards` — the ingredient list that closes the sale
+8. `stats` — hard numbers
+9. `compare-table` — versus CeraVe / Vanicream / Cetaphil
+10. review carousel, `founder-note`, `free-from`, FAQ + tabs, `final-cta-strip`
 
 ### Content authoring
 
@@ -190,7 +273,9 @@ page**, not the API response.
 
 ## Out of scope
 
-**Meta static ads.** `FACEBOOK_ACCESS_TOKEN` expired 2026-06-21, so
+**Meta static ads** — the assets, not the angle. The hero angle and the
+message-match contract above are fixed by this spec and binding on that work.
+`FACEBOOK_ACCESS_TOKEN` expired 2026-06-21, so
 `meta-ads-collector`, `meta-ads-analyzer` and `campaign-ad-fixer` are dead and
 the ad account is unreachable until re-auth. Image work is governed by
 `marketing-product-image-stack` and needs its own spec. Recorded here so it is
