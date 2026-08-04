@@ -1,13 +1,23 @@
 /**
  * Edit the shared bundle landing template.
  *
- *   node scripts/build-bundle-lander-sections.mjs --value-stack [--apply]
- *   node scripts/build-bundle-lander-sections.mjs --sections    [--apply]
+ *   node scripts/build-bundle-lander-sections.mjs --value-stack     [--apply]
+ *   node scripts/build-bundle-lander-sections.mjs --sections        [--apply]
+ *   node scripts/build-bundle-lander-sections.mjs --sections-liquid [--apply]
  *
  * FIVE bundles share templates/product.bundle-landing.json. Everything written
  * here must be per-product data-driven, or it leaks one bundle's content onto
  * the other four. Sections self-suppress on blank fields for exactly that
  * reason.
+ *
+ * --sections-liquid patches three site-wide section files that ALSO compute a
+ * bundle value total (independently of the template blocks above) whenever
+ * they render on a product with a bundle.value_stack metafield:
+ *   sections/hero-landing-section.liquid
+ *   sections/multicolumn.liquid
+ *   sections/rich-text.liquid
+ * They loop over `bt_row`, not `row`, so they were missed by --value-stack.
+ * Same digital-exclusion fix, same idempotency contract.
  *
  * The live theme is the source of truth: pull, modify, push. Dry-run default.
  */
@@ -79,7 +89,60 @@ function patchTotalOnly(liquid, label) {
   return liquid.replace(NAIVE_TOTAL_LOOP, DIGITAL_AWARE_TOTAL_LOOP);
 }
 
+// The three site-wide sections loop over `bt_row` (not `row`) and sum with
+// no digital exclusion at all. Same fix as patchTotalOnly, different loop var.
+const NAIVE_BT_ROW_LOOP =
+  '    for bt_row in product.metafields.bundle.value_stack.value\n'
+  + '      assign bundle_total = bundle_total | plus: bt_row.amount\n'
+  + '    endfor';
+const DIGITAL_AWARE_BT_ROW_LOOP =
+  '    for bt_row in product.metafields.bundle.value_stack.value\n'
+  + '      unless bt_row.digital\n'
+  + '        assign bundle_total = bundle_total | plus: bt_row.amount\n'
+  + '      endunless\n'
+  + '    endfor';
+
+function patchBtRowLoop(liquid, label) {
+  if (liquid.includes(DIGITAL_AWARE_BT_ROW_LOOP)) return liquid; // already patched
+  if (!liquid.includes(NAIVE_BT_ROW_LOOP)) {
+    throw new Error(`${label}: expected naive bt_row loop not found — inspect before proceeding`);
+  }
+  return liquid.replace(NAIVE_BT_ROW_LOOP, DIGITAL_AWARE_BT_ROW_LOOP);
+}
+
+const SECTION_LIQUID_FILES = [
+  'sections/hero-landing-section.liquid',
+  'sections/multicolumn.liquid',
+  'sections/rich-text.liquid',
+];
+
 async function main() {
+  if (process.argv.includes('--sections-liquid')) {
+    const themeId = await getMainThemeId();
+    let anyChanged = false;
+
+    for (const key of SECTION_LIQUID_FILES) {
+      const before = await getThemeAsset(themeId, key);
+      if (before == null) throw new Error(`${key} not found on theme ${themeId}`);
+      const after = patchBtRowLoop(before, key);
+      if (before === after) {
+        console.log(`${key}: ok (already patched)`);
+        continue;
+      }
+      anyChanged = true;
+      if (!APPLY) {
+        console.log(`${key}: would patch (dry run)`);
+        continue;
+      }
+      await updateThemeAsset(themeId, key, after);
+      console.log(`${key}: patched and pushed to theme ${themeId}`);
+    }
+
+    if (!anyChanged) { console.log('\nall three section files already patched — nothing to do.'); return; }
+    if (!APPLY) { console.log('\ndry run — re-run with --apply to push.'); return; }
+    return;
+  }
+
   const themeId = await getMainThemeId();
   const raw = await getThemeAsset(themeId, KEY);
   if (!raw) throw new Error(`${KEY} not found on theme ${themeId}`);
@@ -122,7 +185,7 @@ async function main() {
     return;
   }
 
-  console.error('specify --value-stack or --sections');
+  console.error('specify --value-stack, --sections, or --sections-liquid');
   process.exit(1);
 }
 
