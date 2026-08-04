@@ -155,6 +155,16 @@ if (new Date().getDay() === 1) {
   log('  collection-linker: skipped (weekly, Mondays only)');
 }
 
+// Step 5a.9: GA4 collection check — runs BEFORE the monitors and attribution
+// steps below, because every one of them is downstream of GA4 actually
+// collecting. A Shopify app disconnect trashed the property on 2026-07-26 and
+// nothing noticed for 8 days: /g/collect answers 204 for a trashed property and
+// the Admin API still reads it, so empty reports look identical to a quiet week.
+// This asserts the property is not in the trash and that a real page load comes
+// back out of the Realtime API. Emails immediately on failure — paid spend and
+// every CVR number depend on it.
+runStep('verify-ga4-collect', `"${NODE}" scripts/verify-ga4-collect.mjs`);
+
 // Step 5b: rank alerter — flag sudden position changes
 runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 
