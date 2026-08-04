@@ -21,8 +21,13 @@ The Reset launched 2026-07-29 and has taken zero orders.
 7 sections. The bespoke landers it replaced render 17. Missing: the opening
 hook, ingredient cards, the stat row, the mechanism explainer, a review
 carousel, customer photos, the us-vs-them comparison table, and the founder
-block. The FAQ survives only as a stub. This affects **all five bundles** on the
-template, not just the Reset.
+block. This affects **all five bundles** on the template, not just the Reset.
+
+The FAQ is **not** missing. Comparing section *types* suggested the bespoke
+lander's 8-block `collapsible-content` had been reduced to a stub, but the
+rendered page disproves it: the `custom-liquid` version reads the metaobject
+`faq` and `tabs` fields and renders all of them. It is the better
+implementation, and it stays as-is.
 
 **The page has never been measured.** GA4 stopped collecting 2026-07-26 and
 resumed 2026-08-03; the product's entire life sits inside that hole. Zero orders
@@ -63,22 +68,35 @@ template** — a guard that must keep passing.
 
 **Price stays $121. Nothing in Shopify commerce data changes.**
 
-`bundle.value_stack` becomes product rows only, so the total computes to the
-product-only figure:
+**What renders today.** The buy box reads the **variant-level**
+`bundle.value_stack` (the product-level metafield is a stale near-duplicate that
+renders nothing). Both variants carry four rows:
 
 ```json
 [
-  { "label": "3 Body Lotions (8oz)", "amount": 90, "digital": false },
-  { "label": "3 Body Creams (4oz)",  "amount": 84, "digital": false }
+  { "label": "Body Lotion (8oz)", "qty": 3, "amount": 90, "img": "…" },
+  { "label": "Body Cream (4oz)",  "qty": 3, "amount": 84, "img": "…" },
+  { "label": "90-Day Routine & Tracker",   "amount": 19, "digital": true },
+  { "label": "Coconut Skincare Field Guide","amount": 15, "digital": true }
 ]
 ```
 
-→ total **$174**, price **$121**, savings **$53** — all computed, none written down.
+Summed, that is $208, so the live page asserts **"Total value $208 / You save
+$87 today"** beside a **$174** compare-at strikethrough. Two different totals on
+one screen, one of them checkable against the PDPs. This is the drift the
+architecture doc was written to prevent, reappearing through the digital rows.
 
-The two digital guides come **out of the summed stack** and are presented as
-included at no charge, without a dollar figure. Rev 1 reached this by judgment;
-here it is enforced by the data. Leaving them in would compute a $208 total and
-an $87 savings claim against a $174 compare-at that any buyer can check.
+**The fix is in the template, not the data.** Digital rows stay in
+`value_stack` — `whats-in-it` renders them as box contents and they should keep
+appearing — but the value stack **excludes `digital: true` rows from the sum**
+and renders them in a separate "also included, free" group carrying no price.
+
+→ total **$174**, price **$121**, savings **$53** — matching the compare-at
+exactly, all computed, none written down.
+
+Placing the rule in the template rather than in each bundle's data means it
+holds for every future bundle automatically. The other four bundles carry no
+`digital: true` rows, so their pages are unaffected.
 
 Buy-box copy carries the add-on framing, which `marketing-offer-construction`
 rates above an equivalent percent-off:
@@ -103,7 +121,6 @@ populated, degrading to nothing rather than to an empty box.
 | `why-it-works` | `custom_liquid` | new field `mechanism` (json) |
 | `compare-table` | existing `landing-compare-table` section | new metafield `bundle.comparison_rows` (json) — already named in the architecture doc's schema |
 | `founder-block` | `custom_liquid` | new field `founder_note` |
-| `collapsible-content` | replace stub with full render | existing `faq` field, already populated on all six landers |
 | review carousel | `apps` section, Judge.me | none |
 
 `ugc-photos` is **excluded**: it needs per-bundle photography that does not
@@ -133,11 +150,9 @@ get the sections but leave the new fields empty, so their pages are unchanged
 until someone writes their copy. This keeps the blast radius at one page while
 the capability lands for all five.
 
-**One deliberate exception.** The FAQ upgrade is backed by the existing `faq`
-field, which is already populated on all six landers. Replacing the stub
-therefore changes the other four bundle pages too — the FAQ they were always
-meant to render starts rendering. This is intended, and it is the *only* diff
-those four pages may show.
+Every new section self-suppresses on empty data, and the digital-row change
+affects only bundles carrying `digital: true` rows — the Reset alone. So the
+other four bundle pages must render **byte-identical** to their pre-capture.
 
 ### Data corrections
 
@@ -162,12 +177,12 @@ the API while rendering something else. Every check runs against the **rendered
 page**, not the API response.
 
 1. Capture all five bundle product pages **before** any change.
-2. After: fetch the Reset and assert $174, $121, $53 and "3 Body Creams" are
-   present, and $99, $118, $158, $59, "1 Cream" absent.
+2. After: fetch the Reset and assert the page renders "Total value $174" and
+   "You save $53", and that **$208 and $87 appear zero times** — the two
+   figures the live page asserts today.
 3. Assert each new section renders on the Reset, by section key.
-4. Assert the other four bundle pages differ from their pre-capture **only** by
-   the newly-rendering FAQ. Every other new section must self-suppress on empty
-   data. Any other diff is a regression and blocks the change.
+4. Assert the other four bundle pages render byte-identical to their
+   pre-capture. Any diff is a regression and blocks the change.
 5. Run `node scripts/build-bundle-landing.mjs 99-coconut-reset-digital` and
    assert it still refuses (shared-template guard intact).
 6. Assert the homepage links to the lander.
@@ -185,6 +200,14 @@ API is not configured — client-side only.
 
 **Copy for the other four bundles' new fields.** The sections ship; the words do
 not.
+
+**The same empty-description gap on Clean Swap and Gift Box.** Both carry a
+zero-length `product.description`, as the Reset does. Confirmed not deliberate —
+the five bundles are inconsistent (90-Day Clean Swap 934 chars, Head-to-Toe 273,
+the other three zero) while all nine non-bundle products carry one, and no
+lander template renders `product.description` at all, so it is a pure
+syndication field with no on-page effect. Deferred to its own pass to keep this
+change scoped to one product.
 
 **Re-pointing the Shopping campaign** at this lander is a separate call.
 
