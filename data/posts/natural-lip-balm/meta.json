@@ -31,5 +31,8 @@
     "google_canonical": "https://www.realskincare.com/blogs/news/natural-lip-balm-best-ingredients-how-to-choose",
     "canonical_mismatch": false,
     "page_fetch_state": "SUCCESSFUL"
-  }
+  },
+  "legacy_bucket": "flop",
+  "legacy_triage_reason": "Position 90. Not competitive.",
+  "legacy_triaged_at": "2026-08-04T03:55:46.878Z"
 }

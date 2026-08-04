@@ -111,11 +111,29 @@ async function loadGscPerformance(url) {
 // States that require manual investigation (true technical misconfigurations).
 // not_found and crawled_not_indexed are handled automatically by indexing-fixer
 // and refresh-runner respectively — they are NOT broken.
-const BROKEN_STATES = new Set(['excluded_noindex', 'excluded_robots', 'excluded_canonical']);
+export const BROKEN_STATES = new Set(['excluded_noindex', 'excluded_robots', 'excluded_canonical']);
 
-function classify({ meta, indexState, rankEntry, gscMetrics, words }) {
-  if (BROKEN_STATES.has(indexState) || meta.indexing_blocked) {
-    return { bucket: 'broken', reason: `Indexing state: ${indexState || 'blocked'}. Technical fix required.` };
+/**
+ * Live indexing states that settle the question on their own, so a cached
+ * `meta.indexing_blocked` flag must not override them.
+ *
+ * `indexing_blocked` is stamped by indexing-fixer after repeated submission
+ * failures, and cleared only when it RETRIES the post — an indexed post stops
+ * being retried, so the flag outlives the problem. A dry run found 46 posts in the
+ * broken bucket, every one of them from this flag and none from a genuine broken
+ * state; 32 were reported `indexed` by GSC. legacy-rebuilder skips broken posts
+ * permanently, so honouring the stale flag would have parked a quarter of the
+ * catalogue behind a "technical fix" that no longer exists.
+ */
+const LIVE_STATE_WINS = new Set(['indexed', 'not_found', 'crawled_not_indexed', 'discovered_not_crawled']);
+
+export function classify({ meta, indexState, rankEntry, gscMetrics, words }) {
+  if (BROKEN_STATES.has(indexState)) {
+    return { bucket: 'broken', reason: `Indexing state: ${indexState}. Technical fix required.` };
+  }
+  // Only trust the cached flag when live data has nothing to say.
+  if (meta.indexing_blocked && !LIVE_STATE_WINS.has(indexState)) {
+    return { bucket: 'broken', reason: `Marked indexing-blocked (${meta.indexing_blocked_reason || 'no reason recorded'}); no live indexing signal to contradict it. Technical fix required.` };
   }
 
   // not_found → indexing-fixer handles via sitemap ping / Indexing API submission
@@ -282,7 +300,13 @@ async function main() {
   console.log('\nLegacy triage complete.');
 }
 
-main().catch(err => {
-  console.error('Legacy triage failed:', err);
-  process.exit(1);
-});
+// Only run when invoked directly. Without this guard, importing anything from this
+// module runs a full triage pass — which stamps legacy_bucket onto every post's
+// meta.json — and its process.exit(1) takes the host process down on error.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main().catch(err => {
+    console.error('Legacy triage failed:', err);
+    process.exit(1);
+  });
+}

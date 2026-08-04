@@ -22,5 +22,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-05-15T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/how-to-dry-brush_07bb7595-2024-48a7-861a-e8d3c009c433.webp?v=1775619043",
-  "uploaded_at": "2026-04-08T03:30:46.933Z"
+  "uploaded_at": "2026-04-08T03:30:46.933Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 26, 281 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:45.739Z"
 }

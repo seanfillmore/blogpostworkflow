@@ -16,5 +16,8 @@
     "reasons": [
       "8 internal link issue(s)"
     ]
-  }
+  },
+  "legacy_bucket": "flop",
+  "legacy_triage_reason": "Not indexed (state: unknown). Needs rewrite or technical investigation.",
+  "legacy_triaged_at": "2026-08-04T03:55:43.192Z"
 }

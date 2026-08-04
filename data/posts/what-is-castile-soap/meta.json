@@ -24,5 +24,9 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-04-22T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/what-is-castile-soap.webp?v=1775321879",
-  "uploaded_at": "2026-04-04T16:58:02.738Z"
+  "uploaded_at": "2026-04-04T16:58:02.738Z",
+  "legacy_bucket": "winner",
+  "legacy_triage_reason": "Position 10, 165 impressions. Page 1 — auto-locked.",
+  "legacy_locked": true,
+  "legacy_triaged_at": "2026-08-04T03:55:48.274Z"
 }

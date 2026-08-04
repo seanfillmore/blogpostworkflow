@@ -13,5 +13,8 @@
   "shopify_handle": "embrace-natural-beauty-with-real-skin-cares-organic-products",
   "shopify_publish_at": "2023-05-17T11:44:00-06:00",
   "legacy_synced_at": "2026-04-09T23:17:12.627Z",
-  "legacy_source": "sync-legacy-posts.js"
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "flop",
+  "legacy_triage_reason": "Thin content (777 words). Full rewrite needed.",
+  "legacy_triaged_at": "2026-08-04T03:55:44.978Z"
 }

@@ -13,5 +13,8 @@
   "shopify_handle": "why-use-unscented-skincare-products",
   "shopify_publish_at": "2023-01-17T01:03:29-07:00",
   "legacy_synced_at": "2026-04-09T23:17:12.625Z",
-  "legacy_source": "sync-legacy-posts.js"
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 18, 350 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:49.337Z"
 }

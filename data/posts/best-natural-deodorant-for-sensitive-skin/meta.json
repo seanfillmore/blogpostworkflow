@@ -32,5 +32,8 @@
     "google_canonical": null,
     "canonical_mismatch": false,
     "page_fetch_state": "PAGE_FETCH_STATE_UNSPECIFIED"
-  }
+  },
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 14, 1209 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:42.136Z"
 }

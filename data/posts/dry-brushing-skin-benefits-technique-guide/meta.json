@@ -22,5 +22,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-05-15T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/dry-brushing-skin-benefits-technique-guide_ae012f96-2491-4e8b-835e-9cdbf1b78323.webp?v=1775619049",
-  "uploaded_at": "2026-04-08T03:30:52.289Z"
+  "uploaded_at": "2026-04-08T03:30:52.289Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 22, 733 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:44.877Z"
 }

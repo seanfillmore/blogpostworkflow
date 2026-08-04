@@ -22,5 +22,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-04-10T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/how-to-remove-sweat-stains_51e9c1c6-9b2b-4b1a-bde0-1dc1ff63145e.webp?v=1775322815",
-  "uploaded_at": "2026-04-04T17:13:38.285Z"
+  "uploaded_at": "2026-04-04T17:13:38.285Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 10, 118 impressions. Default: meta-only.",
+  "legacy_triaged_at": "2026-08-04T03:55:45.937Z"
 }

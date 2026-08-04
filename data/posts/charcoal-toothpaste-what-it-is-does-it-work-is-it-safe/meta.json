@@ -24,5 +24,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-05-18T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/charcoal-toothpaste-what-it-is-does-it-work-is-it-safe_2a140248-a42c-4d6e-bc64-e6d109254a2e.webp?v=1775331017",
-  "uploaded_at": "2026-04-04T19:30:20.397Z"
+  "uploaded_at": "2026-04-04T19:30:20.397Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 13, 34 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:43.546Z"
 }

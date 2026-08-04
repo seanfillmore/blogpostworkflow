@@ -10,5 +10,8 @@
   "shopify_handle": "best-toothpaste-without-sls-2025",
   "shopify_publish_at": "2026-03-09T17:04:42-06:00",
   "legacy_synced_at": "2026-04-09T23:17:12.638Z",
-  "legacy_source": "sync-legacy-posts.js"
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 11, 54339 impressions. Default: meta-only.",
+  "legacy_triaged_at": "2026-08-04T03:55:43.285Z"
 }

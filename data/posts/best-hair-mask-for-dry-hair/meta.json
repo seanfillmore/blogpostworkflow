@@ -22,5 +22,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-05-13T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-hair-mask-for-dry-hair_4b259b52-7dae-4e45-a7e7-f0ec25a5033c.webp?v=1775331027",
-  "uploaded_at": "2026-04-04T19:30:30.677Z"
+  "uploaded_at": "2026-04-04T19:30:30.677Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 21, 1516 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:41.627Z"
 }

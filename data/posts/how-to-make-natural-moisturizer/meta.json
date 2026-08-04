@@ -24,5 +24,9 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-05-20T15:00:00.000Z",
   "uploaded_at": "2026-04-08T03:27:08.422Z",
-  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/how-to-make-natural-moisturizer.webp?v=1775618825"
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/how-to-make-natural-moisturizer.webp?v=1775618825",
+  "legacy_bucket": "winner",
+  "legacy_triage_reason": "Position 9, 996 impressions. Page 1 — auto-locked.",
+  "legacy_locked": true,
+  "legacy_triaged_at": "2026-08-04T03:55:45.842Z"
 }

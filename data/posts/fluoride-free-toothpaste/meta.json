@@ -46,5 +46,8 @@
       "submitted_at": "2026-04-09T13:30:03.025Z",
       "result": "ok"
     }
-  ]
+  ],
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 47, 209 impressions. Default: meta-only.",
+  "legacy_triaged_at": "2026-08-04T03:55:45.088Z"
 }

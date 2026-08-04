@@ -24,5 +24,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-04-20T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/what-is-natural-lotion.webp?v=1775661118",
-  "uploaded_at": "2026-04-08T15:12:01.424Z"
+  "uploaded_at": "2026-04-08T15:12:01.424Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 12, 241 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:48.386Z"
 }

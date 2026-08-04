@@ -23,5 +23,9 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-05-08T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/what-is-organic-coconut-oil-uses-benefits-types_e15bbcbd-1d57-452f-81b7-6b1a7b3403d4.webp?v=1775747143",
-  "uploaded_at": "2026-04-09T15:05:46.571Z"
+  "uploaded_at": "2026-04-09T15:05:46.571Z",
+  "legacy_bucket": "winner",
+  "legacy_triage_reason": "Position 9, 84 impressions. Page 1 — auto-locked.",
+  "legacy_locked": true,
+  "legacy_triaged_at": "2026-08-04T03:55:48.605Z"
 }

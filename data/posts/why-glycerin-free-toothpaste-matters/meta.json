@@ -16,5 +16,8 @@
   "legacy_source": "sync-legacy-posts.js",
   "image_path": "data/posts/why-glycerin-free-toothpaste-matters/image.webp",
   "image_prompt": "Product photography, a small unlabeled frosted glass jar of toothpaste with a clean white lid sits at the center of a white quartz bathroom counter, open lid resting beside it with a small amount of pale paste visible on the rim, accompanied by a white ceramic cup holding a bamboo-handled toothbrush and a small open dish of baking soda as a contextual prop, surface is a tight-cropped white quartz bathroom counter with no sink or plumbing visible, background is a soft blurred white tile wall, warm diffused morning light from a frosted window to the left casting gentle even illumination across the scene, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
-  "image_generated_at": "2026-04-13T14:14:45.201Z"
+  "image_generated_at": "2026-04-13T14:14:45.201Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 12, 2605 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:49.022Z"
 }

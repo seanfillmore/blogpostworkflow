@@ -93,6 +93,23 @@ function loadPostMeta(slug) {
   try { return JSON.parse(readFileSync(getMetaPath(slug), 'utf8')); } catch { return null; }
 }
 
+/**
+ * Slugs whose indexing problem has resolved but still carry indexing_blocked.
+ *
+ * Exported for test: this is the sweep that was missing, and its absence is what
+ * let a cached flag outlive the condition it described.
+ */
+export function staleBlockedSlugs(results, getMeta) {
+  const out = [];
+  for (const r of results || []) {
+    if (!r?.slug) continue;
+    if (r.verdict?.severity !== 'ok') continue;
+    const meta = getMeta(r.slug);
+    if (meta?.indexing_blocked) out.push(r.slug);
+  }
+  return out;
+}
+
 function stampPostMeta(slug, patch) {
   const meta = loadPostMeta(slug);
   if (!meta) return;
@@ -140,7 +157,31 @@ async function processNormalRun() {
   }
 
   const report = JSON.parse(readFileSync(latestPath, 'utf8'));
-  const actionable = (report.results || []).filter((r) => r.verdict && r.verdict.severity !== 'ok');
+  const allResults = report.results || [];
+
+  // Clear indexing_blocked on posts that have since been indexed.
+  //
+  // The flag was only ever cleared when a post got RETRIED, and a post whose
+  // verdict is now 'ok' is filtered out of `actionable` below — so it stopped
+  // being retried and the flag outlived the problem. That left 46 posts wearing a
+  // permanent "technical fix required" label, 32 of them indexed by Google, and
+  // legacy-triage bucketed all 46 as broken (which legacy-rebuilder skips forever).
+  const resolved = staleBlockedSlugs(allResults, loadPostMeta);
+  if (resolved.length) {
+    console.log(`  Clearing stale indexing_blocked on ${resolved.length} now-indexed post(s):`);
+    for (const slug of resolved) {
+      console.log(`    - ${slug}`);
+      if (!DRY_RUN) {
+        stampPostMeta(slug, {
+          indexing_blocked: false,
+          indexing_blocked_reason: null,
+          indexing_unblocked_at: new Date().toISOString(),
+        });
+      }
+    }
+  }
+
+  const actionable = allResults.filter((r) => r.verdict && r.verdict.severity !== 'ok');
   console.log(`  Actionable items from latest report: ${actionable.length}`);
 
   if (actionable.length === 0) {
@@ -411,7 +452,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Indexing fixer failed:', err);
-  process.exit(1);
-});
+// Only run when invoked directly. Without this guard, importing anything from this
+// module submits URLs to the Google Indexing API, stamps post metadata, and fires
+// notifications — an import of it during testing did exactly that.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error('Indexing fixer failed:', err);
+    process.exit(1);
+  });
+}

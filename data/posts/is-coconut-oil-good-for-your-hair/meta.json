@@ -23,5 +23,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-05-06T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/is-coconut-oil-good-for-your-hair_6894eb73-21a2-422b-8da0-08958f1d2c12.webp?v=1775331032",
-  "uploaded_at": "2026-04-04T19:30:35.871Z"
+  "uploaded_at": "2026-04-04T19:30:35.871Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 11, 87 impressions. Default: meta-only.",
+  "legacy_triaged_at": "2026-08-04T03:55:46.350Z"
 }
