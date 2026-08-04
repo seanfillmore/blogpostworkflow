@@ -22,9 +22,32 @@
  * The live theme is the source of truth: pull, modify, push. Dry-run default.
  */
 import { getMainThemeId, getThemeAsset, updateThemeAsset } from '../lib/shopify.js';
+import { SECTIONS } from '../lib/bundle-lander.js';
 
 const KEY = 'templates/product.bundle-landing.json';
 const APPLY = process.argv.includes('--apply');
+
+const ORDER = [
+  'hero', 'hook', 'main', 'whats-in-it', 'timeline', 'mechanism',
+  'ingredient-cards', 'stats', 'compare-rows',
+  'judgeme_section_review_widget_f881', 'founder-note',
+  'free-from-block', 'collapsible-content', 'final-cta-strip',
+];
+
+function injectSections(j) {
+  let added = 0;
+  for (const s of SECTIONS) {
+    if (j.sections[s.key]) { console.log(`  ok    ${s.key} already present`); continue; }
+    j.sections[s.key] = { type: s.type, settings: s.settings };
+    console.log(`  ADD   ${s.key}`);
+    added++;
+  }
+  const present = ORDER.filter((k) => j.sections[k]);
+  const extras = Object.keys(j.sections).filter((k) => !present.includes(k));
+  if (extras.length) throw new Error(`unexpected sections not in ORDER: ${extras.join(', ')}`);
+  j.order = present;
+  return added;
+}
 
 // Mirrors computeStackTotals() in lib/bundle-lander.js. Change both together.
 const VALUE_STACK_LOGIC = `{%- liquid
@@ -179,6 +202,16 @@ async function main() {
     }
 
     if (!changed) { console.log('\nall three blocks already patched — nothing to do.'); return; }
+    if (!APPLY) { console.log('\ndry run — re-run with --apply to push.'); return; }
+    await updateThemeAsset(themeId, KEY, JSON.stringify(j, null, 2));
+    console.log(`pushed ${KEY} to theme ${themeId}`);
+    return;
+  }
+
+  if (process.argv.includes('--sections')) {
+    const added = injectSections(j);
+    console.log(`\norder: ${j.order.join(' → ')}`);
+    if (!added) { console.log('nothing to add.'); return; }
     if (!APPLY) { console.log('\ndry run — re-run with --apply to push.'); return; }
     await updateThemeAsset(themeId, KEY, JSON.stringify(j, null, 2));
     console.log(`pushed ${KEY} to theme ${themeId}`);
