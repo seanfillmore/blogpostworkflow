@@ -14,6 +14,7 @@ import { writeFileSync, readFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { notify } from '../../lib/notify.js';
+import { compactJson, headArray, fitSections } from '../../lib/prompt-budget.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -23,6 +24,11 @@ const GSC_DIR      = join(ROOT, 'data', 'snapshots', 'gsc');
 const GA4_DIR      = join(ROOT, 'data', 'snapshots', 'ga4');
 const GOOGLE_ADS_DIR = join(ROOT, 'data', 'snapshots', 'google-ads');
 const REPORTS_DIR  = join(ROOT, 'data', 'reports', 'cro');
+
+// ~150k tokens of data. Well inside the 1M context window, and far more headroom
+// than a conversion brief needs — the failure this guards against was 1,917,307
+// tokens, so the useful ceiling is nowhere near the API's.
+const PROMPT_CHAR_CAP = 600_000;
 
 function loadRecentSnapshots(dir, days = 7) {
   if (!existsSync(dir)) return [];
@@ -120,17 +126,43 @@ CATEGORY/HANDLE tag rules:
   const aovBarrierFile = join(ROOT, 'data', 'campaigns', 'aov-barrier.json');
   const aovBarrier = existsSync(aovBarrierFile) ? (() => { try { return JSON.parse(readFileSync(aovBarrierFile, 'utf8')); } catch { return null; } })() : null;
 
-  const parts = [
-    `Here is the available CRO data (most recent first):`,
-    claritySnaps.length ? `### Clarity Snapshots (${claritySnaps.length} days)\n${JSON.stringify(claritySnaps, null, 2)}` : '',
-    shopifySnaps.length ? `### Shopify Snapshots (${shopifySnaps.length} days)\n${JSON.stringify(shopifySnaps, null, 2)}` : '',
-    gscSnaps.length     ? `### GSC Snapshots (${gscSnaps.length} days)\n${JSON.stringify(gscSnaps, null, 2)}`     : '',
-    ga4Snaps.length     ? `### GA4 Snapshots (${ga4Snaps.length} days)\n${JSON.stringify(ga4Snaps, null, 2)}`     : '',
-    adsSnaps.length ? `### Google Ads Performance (${adsSnaps.length} days)\n${JSON.stringify(adsSnaps, null, 2)}` : '',
-    aovBarrier ? `### Paid Search Readiness\nThe campaign analyzer was unable to find viable Google Ads campaigns because the store's AOV is too low to support profitable search spend at typical keyword CPCs.\n${JSON.stringify(aovBarrier, null, 2)}\nInclude a "Paid Search Readiness" section in the brief recommending specific actions to increase AOV (e.g. product bundles, upsells, cross-sells) that would unlock search advertising. State the target AOV needed and which campaign types become viable at that level.` : '',
-    `Write the CRO brief now.`,
-  ].filter(Boolean);
-  const userMessage = parts.join('\n\n');
+  // GSC snapshots are ~700 KB/day — 1,000 topQueries + 188 topPages + 1,997
+  // queriesByPage rows each. Seven days pretty-printed came to ~2.5M tokens on
+  // their own and took the whole request past the 1M context limit, failing every
+  // run. A CRO brief needs the head of each list, not the full query x page cross
+  // product, so trim at the source rather than blind-truncating a JSON blob into
+  // something the model cannot parse.
+  const slimGsc = gscSnaps.map((s) => ({
+    date: s.date,
+    summary: s.summary,
+    topQueries: headArray(s.topQueries, 50),
+    topPages: headArray(s.topPages, 50),
+    // Dropped entirely: it is the cross product of the two lists above and adds
+    // no signal a conversion brief acts on.
+    queriesByPage: Array.isArray(s.queriesByPage)
+      ? [{ _omitted: `${s.queriesByPage.length} query-by-page rows omitted — see topQueries and topPages` }]
+      : undefined,
+  }));
+
+  const { text: dataBlock, trimmed } = fitSections([
+    { label: `Clarity Snapshots (${claritySnaps.length} days)`, body: claritySnaps.length ? compactJson(claritySnaps) : '' },
+    { label: `Shopify Snapshots (${shopifySnaps.length} days)`, body: shopifySnaps.length ? compactJson(shopifySnaps) : '' },
+    { label: `GSC Snapshots (${gscSnaps.length} days)`,         body: gscSnaps.length ? compactJson(slimGsc) : '' },
+    { label: `GA4 Snapshots (${ga4Snaps.length} days)`,         body: ga4Snaps.length ? compactJson(ga4Snaps) : '' },
+    { label: `Google Ads Performance (${adsSnaps.length} days)`, body: adsSnaps.length ? compactJson(adsSnaps) : '' },
+    { label: 'Paid Search Readiness', body: aovBarrier
+      ? `The campaign analyzer was unable to find viable Google Ads campaigns because the store's AOV is too low to support profitable search spend at typical keyword CPCs.\n${compactJson(aovBarrier)}\nInclude a "Paid Search Readiness" section in the brief recommending specific actions to increase AOV (e.g. product bundles, upsells, cross-sells) that would unlock search advertising. State the target AOV needed and which campaign types become viable at that level.`
+      : '' },
+  ], { totalCap: PROMPT_CHAR_CAP });
+
+  if (trimmed.length) console.log(`\n  Trimmed to fit the prompt budget: ${trimmed.join(', ')}`);
+  console.log(`  Prompt data block: ~${Math.round(dataBlock.length / 4).toLocaleString()} tokens`);
+
+  const userMessage = [
+    'Here is the available CRO data (most recent first):',
+    dataBlock,
+    'Write the CRO brief now.',
+  ].join('\n\n');
 
   process.stdout.write('  Running AI analysis... ');
   const response = await client.messages.create({
