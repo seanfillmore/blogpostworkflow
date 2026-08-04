@@ -10,5 +10,8 @@
   "shopify_handle": "best-natural-toothpaste-2026",
   "shopify_publish_at": "2026-03-26T08:00:03-06:00",
   "legacy_synced_at": "2026-04-09T23:17:12.643Z",
-  "legacy_source": "sync-legacy-posts.js"
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "flop",
+  "legacy_triage_reason": "Not indexed (state: unknown). Needs rewrite or technical investigation.",
+  "legacy_triaged_at": "2026-08-04T03:55:42.549Z"
 }

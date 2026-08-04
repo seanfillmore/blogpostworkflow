@@ -43,5 +43,8 @@
       "notification_time": null,
       "result": "ok"
     }
-  ]
+  ],
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 30, 116 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:47.867Z"
 }

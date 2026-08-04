@@ -24,5 +24,9 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-04-14T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/natural-soap-bar_8f51177f-4bbb-49e6-b35f-a0b812445dec.webp?v=1775376087",
-  "uploaded_at": "2026-04-05T08:01:30.902Z"
+  "uploaded_at": "2026-04-05T08:01:30.902Z",
+  "legacy_bucket": "winner",
+  "legacy_triage_reason": "Position 10, 149 impressions. Page 1 — auto-locked.",
+  "legacy_locked": true,
+  "legacy_triaged_at": "2026-08-04T03:55:46.994Z"
 }

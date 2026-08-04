@@ -1,12 +1,12 @@
-# Editor Report — Why Use Natural Deodorant? Benefits & Reasons to Switch
-**Post:** data/posts/why-use-natural-deodorant/content.html
-**Target keyword:** why use natural deodorant
+# Editor Report — why-use-natural-deodorants
+**Post:** data/posts/why-use-natural-deodorants/content.html
+**Target keyword:** —
 **Reviewed:** August 3, 2026
 
 ---
 ## 1. Link Health
 
-**12 links OK** | **0 broken/unreachable**
+**3 links OK** | **0 broken/unreachable**
 
 All links returned a valid HTTP response.
 
@@ -15,14 +15,17 @@ All links returned a valid HTTP response.
 
 The following internal links could not be verified against the sitemap or blog index:
 
-- **Blog URL not in blog index:** `https://www.realskincare.com/blogs/news/best-natural-deodorant-for-men-in-2026-that-works` (anchor: "Best Natural Deodorant for Men in 2026 (That Works)")
-- **Blog URL not in blog index:** `https://www.realskincare.com/blogs/news/best-natural-deodorant-for-women-in-2026` (anchor: "Best Natural Deodorant for Women in 2026")
-- **Blog URL not in blog index:** `https://www.realskincare.com/blogs/news/best-natural-roll-on-deodorant` (anchor: "Best Natural Roll-On Deodorant: Clean Picks That Work")
+- **URL not in sitemap:** `https://www.realskincare.com/collections/deodorant` (anchor: "Real Skin Care's coconut oil natural deodorant roll-on")
+- **URL not in sitemap:** `https://www.realskincare.com/collections/deodorant` (anchor: "Shop Natural Deodorant")
+- **URL not in sitemap:** `https://www.realskincare.com/collections/deodorant` (anchor: "coconut oil roll-on deodorant")
+- **URL not in sitemap:** `https://www.realskincare.com/collections/deodorant` (anchor: "Add to Cart")
+- **URL not in sitemap:** `https://www.realskincare.com/collections/deodorant` (anchor: "Real Skin Care natural deodorant collection")
+- **URL not in sitemap:** `https://www.realskincare.com/collections/deodorant` (anchor: "Shop Now")
 
 ---
 ## 2b. CTA & Formatting Check
 
-**Pass** — Product/collection CTA links found: [coconut oil natural deodorant roll-on](https://www.realskincare.com/products/coconut-oil-deodorant), [Shop Natural Deodorant](https://www.realskincare.com/products/coconut-oil-deodorant), [coconut oil deodorant roll-on](https://www.realskincare.com/products/coconut-oil-deodorant), [Add to Cart](https://www.realskincare.com/products/coconut-oil-deodorant), [coconut oil deodorant](https://www.realskincare.com/products/coconut-oil-deodorant), [natural deodorant collection](https://www.realskincare.com/collections/natural-deodorant), [vegan deodorant options](https://www.realskincare.com/collections/vegan-deodorant), [natural deodorant collection](https://www.realskincare.com/collections/natural-deodorant), [Shop Now](https://www.realskincare.com/collections/natural-deodorant)
+**Pass** — Product/collection CTA links found: [Real Skin Care's coconut oil natural deodorant roll-on](https://www.realskincare.com/collections/deodorant), [Shop Natural Deodorant](https://www.realskincare.com/collections/deodorant), [coconut oil roll-on deodorant](https://www.realskincare.com/collections/deodorant), [Add to Cart](https://www.realskincare.com/collections/deodorant), [Real Skin Care natural deodorant collection](https://www.realskincare.com/collections/deodorant), [Shop Now](https://www.realskincare.com/collections/deodorant)
 
 ---
 ## 2c. Uncited Claims
@@ -97,7 +100,6 @@ The following posts are in the same topical cluster and should be linked from th
 - **[Fluoride Free Toothpaste: Benefits, How It Works & Best Picks](https://www.realskincare.com/blogs/news/fluoride-free-toothpaste-benefits-how-it-works-best-picks)** *(0 inbound links)*
 - **[Best Aluminum Free Deodorant in 2026 (That Actually Works)](https://www.realskincare.com/blogs/news/best-aluminum-free-deodorant-in-2026-that-actually-works)** *(0 inbound links)*
 - **[Best Natural Roll On Deodorant: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-roll-on-deodorant-clean-picks-that-work)** *(0 inbound links)*
-- **[Best Natural Deodorant for Men in 2026 (That Works)](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-men-in-2025-that-works)** *(0 inbound links)*
 - **[Best Natural Deodorant for Women: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-women-clean-picks-that-work)** *(0 inbound links)*
 - **[What Is Castile Soap? Uses, Benefits & Ingredients](https://www.realskincare.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients-1)** *(0 inbound links)*
 - **[Unscented Deodorant: What It Is & Why It Works](https://www.realskincare.com/blogs/news/unscented-deodorant-what-it-is-why-it-works-1)** *(0 inbound links)*
@@ -157,7 +159,6 @@ The following posts are in the same topical cluster and should be linked from th
 - **[Fluoride Free Toothpaste: Benefits, How It Works & Best Picks](https://www.realskincare.com/blogs/news/fluoride-free-toothpaste-benefits-how-it-works-best-picks)** *(0 inbound links)*
 - **[Best Aluminum Free Deodorant in 2026 (That Actually Works)](https://www.realskincare.com/blogs/news/best-aluminum-free-deodorant-in-2026-that-actually-works)** *(0 inbound links)*
 - **[Best Natural Roll On Deodorant: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-roll-on-deodorant-clean-picks-that-work)** *(0 inbound links)*
-- **[Best Natural Deodorant for Men in 2026 (That Works)](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-men-in-2025-that-works)** *(0 inbound links)*
 - **[Best Natural Deodorant for Women: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-women-clean-picks-that-work)** *(0 inbound links)*
 - **[Unscented Deodorant: What It Is & Why It Works](https://www.realskincare.com/blogs/news/unscented-deodorant-what-it-is-why-it-works-1)** *(0 inbound links)*
 - **[Coconut Oil Deodorant: Benefits, DIY Recipes & What to Know](https://www.realskincare.com/blogs/news/coconut-oil-deodorant-benefits-diy-recipes-what-to-know)** *(0 inbound links)*
@@ -167,8 +168,8 @@ The following posts are in the same topical cluster and should be linked from th
 - **[Best Natural Deodorant for Kids: Safe & Effective Picks](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-kids-safe-effective-picks)** *(0 inbound links)*
 - **[Best Aluminum Free Deodorant in 2026 (That Actually Works)](https://www.realskincare.com/blogs/news/best-aluminum-free-deodorant-in-2026-that-actually-works)** *(0 inbound links)*
 - **[Best Natural Roll On Deodorant: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-roll-on-deodorant-clean-picks-that-work)** *(0 inbound links)*
-- **[Best Natural Deodorant for Men in 2026 (That Works)](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-men-in-2025-that-works)** *(0 inbound links)*
 - **[Best Natural Deodorant for Women: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-women-clean-picks-that-work)** *(0 inbound links)*
+- **[Coconut Oil as Deodorant: What Actually Works](https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free)** *(orphan — no inbound links yet)*
 - **[Unscented Deodorant: What It Is & Why It Works](https://www.realskincare.com/blogs/news/unscented-deodorant-what-it-is-why-it-works-1)** *(0 inbound links)*
 - **[Coconut Oil Deodorant: Benefits, DIY Recipes & What to Know](https://www.realskincare.com/blogs/news/coconut-oil-deodorant-benefits-diy-recipes-what-to-know)** *(0 inbound links)*
 - **[Unscented Deodorant: What It Is & Why It Works](https://www.realskincare.com/blogs/news/unscented-deodorant-what-it-is-why-it-works)** *(0 inbound links)*
@@ -177,7 +178,6 @@ The following posts are in the same topical cluster and should be linked from th
 - **[Best Natural Deodorant for Kids: Safe & Effective Picks](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-kids-safe-effective-picks)** *(0 inbound links)*
 - **[Best Aluminum Free Deodorant in 2026 (That Actually Works)](https://www.realskincare.com/blogs/news/best-aluminum-free-deodorant-in-2026-that-actually-works)** *(0 inbound links)*
 - **[Best Natural Roll On Deodorant: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-roll-on-deodorant-clean-picks-that-work)** *(0 inbound links)*
-- **[Best Natural Deodorant for Men in 2026 (That Works)](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-men-in-2025-that-works)** *(0 inbound links)*
 - **[Best Natural Deodorant for Women: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-deodorant-for-women-clean-picks-that-work)** *(0 inbound links)*
 
 > Note: As new deodorant posts are published, revisit this post to add cross-links to the growing cluster.
@@ -186,20 +186,20 @@ The following posts are in the same topical cluster and should be linked from th
 ## 5. Editorial Review
 
 ## 1. TOPICAL RELEVANCE
-VERDICT: Pass
-NOTES: Post tightly aligns with target keyword "why use natural deodorant" throughout. Opening section frames the exact question, body sections deliver direct answers (benefits, effectiveness, ingredient science, transition period, who benefits), and FAQ reinforces the core question. No off-topic tangents; all content serves the keyword intent. Minor note: one internal link to "why use unscented skincare products" is adjacent but contextually justified (fragrance-sensitivity clarification within the deodorant discussion).
+**VERDICT:** Pass  
+**NOTES:** Post is tightly focused on natural deodorant benefits, efficacy, and transition guidance. No off-topic tangents. Content aligns with target keyword (natural deodorant) and supports product positioning throughout.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
-VERDICT: Pass
-NOTES: Conversational, warm, and accessible throughout. Sentences are short and punchy ("Yes — but it's worth being honest about what 'working' means in this context"). Heavy use of second-person voice ("You're standing in the deodorant aisle"; "Here's the simple science behind it"). Paragraph lengths are well-controlled — no paragraphs exceed 4 sentences in the opening sections. Plain-language explanations follow any technical terms (e.g., "antiperspirants physically block your sweat ducts," followed by accessible context). Tone balances credibility with approachability; no clinical jargon left unglossed.
+**VERDICT:** Pass  
+**NOTES:** Warm, conversational tone with plain language ("sweat glands," "bacteria," "adjust"). Short sentences dominate. Good use of "you/your" framing. One paragraph under "Does Natural Deodorant Actually Work?" runs 4 sentences but remains digestible. Formatting with bullet points breaks up longer sections effectively.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-VERDICT: Pass
-NOTES: Post correctly identifies all key ingredients from the product spec (coconut oil, jojoba, baking soda, tea tree, cedarwood, geranium, patchouli, lavender, lemon, rosemary, frankincense, sandalwood, grapefruit seed extract, plant-based emulsifying wax, purified spring water). Product format (roll-on) is accurately referenced throughout. Claims about ingredient efficacy (lauric acid in coconut oil, antimicrobial properties of tea tree) are grounded and substantiated. No mischaracterization of formula or conflation with other product types. Internal links to "coconut oil deodorant" and collection pages are contextually appropriate.
+**VERDICT:** Pass  
+**NOTES:** Post accurately describes Real Skin Care's Natural Deodorant roll-on ingredients: coconut oil (lauric acid, antimicrobial), jojoba oil (non-comedogenic), baking soda (pH neutralization), tea tree and other essential oils (antimicrobial), and grapefruit seed extract (natural preservative). Format correctly identified as roll-on. No misattribution or incorrect ingredient descriptions.
 
 ---
 
@@ -220,14 +220,14 @@ NOTES: Post correctly identifies all key ingredients from the product spec (coco
 ---
 
 ## 6. CTA QUALITY
-VERDICT: Pass
-NOTES: Multiple CTAs are naturally embedded and well-placed. First CTA ("Shop Natural Deodorant") appears in the introductory section (above-the-fold). Mid-body CTA ("Add to Cart") appears after the "Does Natural Deodorant Actually Work?" section (~40% through). Final CTA ("Shop Now") closes the post with clear action language. All CTAs link to verified Real Skin Care product and collection pages (coconut oil deodorant roll-on, natural deodorant collection, vegan deodorant collection). CTAs feel organic to context, not forced; they follow value delivery (benefits explained, ingredients detailed, transition period clarified).
+**VERDICT:** Pass  
+**NOTES:** Multiple CTAs present and well-placed: opening "Shop Natural Deodorant" link; mid-body "Add to Cart" call-out in the "Ready to Try It?" section; closing "Shop Now" in "Make the Switch Today." All link to Real Skin Care deodorant collection. CTAs feel natural within narrative flow, not forced. Link health pre-check verified all URLs return 200 OK.
 
 ---
 
 ## 7. FORMATTING
-VERDICT: Pass
-NOTES: Heading hierarchy is clean (all H2s, no H1 in body). Orphaned sections are minimal — each section flows logically into the next. Bulleted lists break up longer sections effectively and improve scannability (e.g., antiperspirant vs. deodorant comparison, real benefits checklist, ingredient guide). No long unbroken paragraphs; opening sections have short, snappy sentences. Visual white space is generous. One subheading (###) appears under "Does Natural Deodorant Actually Work?" to introduce the CTA, which is appropriate. FAQ section uses bold Q&A format, easy to scan. Overall structure supports low-scroll-depth recovery per standing instructions.
+**VERDICT:** Pass  
+**NOTES:** Clean H2 hierarchy (no H1 in body per pre-check). Subheadings (H3) used appropriately under main sections. Bullet lists break up dense paragraphs and improve scannability. No orphaned sections. Section spacing supports readability and scroll depth.
 
 ---
 
@@ -240,10 +240,9 @@ NOTES: Heading hierarchy is clean (all H2s, no H1 in body). Orphaned sections ar
 ---
 
 ## 9. OVERALL QUALITY
-VERDICT: Excellent
-NOTES: Post delivers on all core dimensions. It educates (science of antiperspirant vs. deodorant), manages expectations (honest about transition period), highlights product and brand philosophy, and includes credible sourcing. Voice is warm and accessible without sacrificing authority. Product ingredient accuracy is flawless, CTAs are natural and multiple, and the post addresses the target keyword comprehensively. No BLOCKER-level issues. The post reads as expertise-driven and customer-first — a strong fit for Real Skin Care's brand positioning. Standing feedback items (year in title ✓, CTAs present ✓, H2 headers throughout ✓) are all satisfied.
+**VERDICT:** Excellent  
+**NOTES:** Post is well-structured, informative, and commercially sound. All dimensions pass; writing is accessible and on-brand. Product features are authentically integrated into educational content. CTAs are natural and well-distributed. This is publication-ready.
 
 ---
 
-### RECOMMENDATION
-**Approve for publication.** This post meets or exceeds all editorial standards. It is ready to go live.
+**APPROVAL RECOMMENDED:** Yes. Post meets all editorial standards and standing feedback requirements. Ready to publish.

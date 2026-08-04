@@ -24,5 +24,8 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-04-24T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/how-does-soap-work.webp?v=1775322360",
-  "uploaded_at": "2026-04-04T17:06:03.677Z"
+  "uploaded_at": "2026-04-04T17:06:03.677Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 14, 59 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T03:55:45.310Z"
 }

@@ -41,5 +41,8 @@
       "notification_time": null,
       "result": "ok"
     }
-  ]
+  ],
+  "legacy_bucket": "flop",
+  "legacy_triage_reason": "Position 61. Not competitive.",
+  "legacy_triaged_at": "2026-08-04T03:55:47.185Z"
 }

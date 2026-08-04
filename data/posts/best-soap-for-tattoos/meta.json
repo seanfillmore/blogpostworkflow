@@ -24,5 +24,9 @@
   "shopify_status": "scheduled",
   "shopify_publish_at": "2026-04-24T15:00:00.000Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-soap-for-tattoos_b59d341f-edd2-4d32-82ba-8c47e07ece3f.webp?v=1775324352",
-  "uploaded_at": "2026-04-04T17:39:16.091Z"
+  "uploaded_at": "2026-04-04T17:39:16.091Z",
+  "legacy_bucket": "winner",
+  "legacy_triage_reason": "Position 9, 36354 impressions. Page 1 — auto-locked.",
+  "legacy_locked": true,
+  "legacy_triaged_at": "2026-08-04T03:55:43.000Z"
 }
