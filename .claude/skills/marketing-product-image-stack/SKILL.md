@@ -1,6 +1,6 @@
 ---
 name: marketing-product-image-stack
-description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
+description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, how much production polish an asset needs for its price point, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
 ---
 
 # Product Image Stack
@@ -128,6 +128,18 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
+## Match production value to the product's price point — high-AOV products need elevated, higher-production creative to earn trust; lower-priced products are served fine by raw, phone-shot, plainly-lit frames.
+
+**Why it works:** Polish is a trust signal that scales with the size of the ask. When a buyer is spending a lot, visible production value signals a legitimate brand worth the money; when the ask is small, raw and unpolished reads as authentic rather than cheap, so the extra spend buys nothing. Over-polished, generic-looking frames on a small body-care brand actively read as stock.
+
+**Evidence offered:** Observation that Caraway retains creators with 'alternative production value' beyond 'yapping out an iPhone' specifically because their AOV is high. Single named example, no conversion data.
+
+**Fit here (5/10):** Durable-principle class (trust psychology and positioning), so age is irrelevant. It resolves a real decision for a solo operator with no photographer and no designer: at a $50.46 AOV, phone-shot and plainly-lit imagery is the correct register, and money or time spent chasing studio polish is misallocated. Held to 5 because it is a calibration judgment rather than a revenue mechanism, the evidence is a single observed brand, and it partly overlaps the raw-phone-reference discipline already in marketing-ai-product-imagery. Additive only in giving a price-point rule for how much polish an asset needs.
+
+**How it meshes with the rules above:** this sets the ceiling on effort per frame, not the standard for clarity. Legibility at phone size, one job per frame, and the compliance guardrail below are non-negotiable at every price point — 'raw is fine' licenses plain lighting and simple backgrounds, never small text, cluttered layouts, or a frame that fails the 1-second read.
+
+*Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
+
 ## Any metric or claim must live on the actual packaging or product in the photo — you cannot stamp it onto the image — and a generated render must match the real product exactly, or the listing gets taken down.
 
 **Why it works:** Amazon's image policy requires the main image to accurately depict the product being sold; overlay graphics and invented product features (the creator's example: an AI-added OLED screen that does not exist on the unit) are misrepresentation, so a lift that came from a non-compliant image is a suspension risk rather than a win.
@@ -144,6 +156,6 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Live walkthrough: a first attempt got the button wrong, a prompt error ('no logos') was corrected, photo was switched to render, and the gibberish bottom-line text was fixed in Canva — whole loop asserted at 10–15 minutes. Side-by-side showing GPT Images 2.0 rendering minuscule text correctly where Nano Banana Pro produced AI gibberish. Single demonstration, no comparison against a designer.
 
-**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots and PDP heroes on both channels, at near-zero cost. Held at 6 because it is a production-speed lever rather than a revenue mechanism, and it must be run under the compliance guardrail above. The full reference-photo and correction workflow is owned by marketing-ai-product-imagery; the edit-vs-regenerate rule also exists in marketing-email-design-production for email assets.
+**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots and PDP heroes on both channels, at near-zero cost. Held at 6 because it is a production-speed lever rather than a revenue mechanism, and it must be run under the compliance guardrail above, at the polish level the price-point rule above calls for. The full reference-photo and correction workflow is owned by marketing-ai-product-imagery; the edit-vs-regenerate rule also exists in marketing-email-design-production for email assets.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*

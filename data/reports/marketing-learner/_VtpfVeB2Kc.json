@@ -1,0 +1,382 @@
+{
+  "tactics": [
+    {
+      "claim": "Activate creator content through Meta partnership ads because the delivery starts with the creator's own seed audience and expands from there, reaching net-new people your pixel keeps missing.",
+      "mechanism": "A partnership ad is served first to the creator's engaged followers and then to lookalikes of them, so it escapes the audience rut an account develops after years of optimizing against its own pixel — and Meta's persona-based Andromeda targeting rewards content that maps to new personas.",
+      "evidence": "Assertion plus secondhand claims: a performance summit statement that creator content is the future of selling, and named brand interviews (Pacted, Caraway said small creators/UGC performed best on partnership ads; Jones Road said bigger influencer and celebrity deals performed better for them). No spend, CPA, or incrementality figures.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Platform-mechanics class — published fresh (2026-08) so no decay discount today, but it is exactly the kind of claim (Andromeda behavior, partnership-ad delivery, in-Reels affiliate links) that will likely be obsolete by the time this business reaches the traffic gate, which is what caps it at 4. It also needs three things RSC lacks simultaneously: an ad budget, a media buyer, and cash to pay a creator. The mechanism is real and worth recording so it is not re-derived, but it is a long park on a fast-decaying claim."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "create",
+        "description": "How a solo operator sources, screens, briefs and deploys on-camera creator/customer content, including the partnership-ad delivery mechanism that makes such content reach net-new audiences."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 0,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Classify creators as UGC creator, creator, influencer, or celebrity based on how they cultivate community (readable in their comments), not on micro/nano/macro follower tiers.",
+      "mechanism": "Follower count no longer predicts reach under persona-based targeting, but the type of community a person has built predicts whether their audience will actually respond to a brand message.",
+      "evidence": "Assertion from ten years of practice plus definitional examples (a 50K-follower account hitting 100K views with emphatic comments is an influencer; Love Island alumni are celebrities because their notoriety originated off-platform).",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "A taxonomy for choosing between four tiers of paid creator relationships. Real Skin Care will never be choosing among those tiers — at $2,700/mo with no media buyer and no creator budget, the only realistic on-camera source is its own repeat customers."
+      },
+      "verdict": "reject",
+      "rejectReason": "There is no honest translation of this four-tier paid-creator classification to a solo-operator catalog with no creator budget and no media buyer.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 1,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Match creator tier to how competitive your category is — in saturated categories you have to buy additional trust at scale with a bigger influencer or celebrity.",
+      "mechanism": "In crowded markets the brand claim alone is not believed, so borrowed authority from a large-audience figure is what supplies the missing trust.",
+      "evidence": "Contrast between two interviewees: Pacted and Caraway found small creators outperformed on partnership ads, while Jones Road Beauty (a more competitive beauty category) found higher-level influencer and celebrity deals performed better. Two anecdotes, no figures.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Natural deodorant is genuinely a saturated category, so the diagnosis is right — but the prescribed remedy is an influencer or celebrity deal, which is agency-retainer territory and has no honest version at $2,700/mo revenue, at any stage of the gate sequence."
+      },
+      "verdict": "reject",
+      "rejectReason": "The remedy requires funded influencer or celebrity deals; the usable 'borrow authority' insight (credentialed attribution on copy) is already owned by marketing-conversion-copy-angles.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 2,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Judge whether a person can carry a video within the first 2-3 seconds of a clip, on delivery rather than looks: energy and vocal variety (speeding up and slowing down), eye contact and magnetism, opening mid-conversation rather than on product features — and rule out anyone whose cadence reveals they are reading a script.",
+      "mechanism": "Delivery is what holds attention; a monotone script-read registers as an ad and gets skipped, while vocal variety and direct eye contact pull the viewer in regardless of production quality. Leading with product features before establishing any story loses the viewer before the claim lands.",
+      "evidence": "Six teardowns of real clips, including two of her own — a gummy creator praised for vocal variety and 'girl talk' vibe, Emily D'Angelo for eye contact and magnetism, two 'good but not great' clips flagged for scripted intonation, one apparel clip criticized for cutting straight to product features, and a side-by-side of her own flat versus high-energy videos. Practitioner judgment, no view or conversion data.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable principle class (on-camera delivery), age irrelevant. Executable today and free: the only realistic on-camera source here is repeat customers or the founder, and this gives concrete accept/reject criteria for a video before it goes onto a Shopify PDP or an Amazon listing video slot — the surface that carries the larger ~$1,800/mo channel. Capped at 5 because it is a selection filter, not a revenue mechanism, and the 'reject anyone who reads a script' bar is harsh when your candidate pool is a handful of willing customers rather than a paid roster; the practical version is to prompt for conversational answers rather than to reject the person."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "create",
+        "description": "How a solo operator sources, screens, briefs and deploys on-camera creator/customer content, including delivery-based screening criteria for whether a clip can carry attention."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 3,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Before paying a creator whose rate is based on follower count, run them through a tool (Modash) to check what percentage of their followers are fake, and use the same tool to manage the inbox, tagging, campaign tracking and global payouts of the creator program.",
+      "mechanism": "Creators price on follower count, so a high fake-follower percentage means you are paying for reach that does not exist; centralizing tracking removes the need to chase creators for performance screenshots.",
+      "evidence": "Sponsored segment. Assertion that she has repeatedly walked away from creators after seeing significant fake-follower percentages; no data, and the recommendation is a paid vendor placement.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Sponsored tool plug whose entire premise is that you are paying creators by follower count and running enough of them to need an inbox, tagging and multi-currency payouts. No team, no agency, no creator budget, and a subscription cost that is non-trivial against $2,700/mo."
+      },
+      "verdict": "reject",
+      "rejectReason": "Sponsored vendor placement with no scaled-down version: it presumes paid follower-count-priced creators and a program large enough to need inbox, tagging and multi-currency payouts.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 4,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Reserve 5-15% of every influencer campaign budget for creators who deliberately break your best practices — a different demographic, an older or younger person, someone outside your niche.",
+      "mechanism": "The best-performing creator in a campaign is often the one who did not fit the brief pattern, so a standing off-pattern allocation keeps discovering winners the best-practice filter would have excluded.",
+      "evidence": "Secondhand — relayed as something the Modash team told her they observe across their brands' campaigns. No figures.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Requires a campaign budget large enough that 5-15% funds a meaningful number of additional creators, and readable per-creator performance to identify the off-pattern winner. Neither exists here at any gate — at ~54 orders/month no creator-level result would ever be distinguishable."
+      },
+      "verdict": "reject",
+      "rejectReason": "No campaign budget and no per-creator signal at ~54 orders/month; the general 'keep one off-pattern variant in test' idea is already covered by the standing image-test cadence in marketing-product-image-stack.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 5,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Source creators by browsing TikTok and Reels inside your niche looking for hyper-viral posts from accounts that did not already have millions of followers.",
+      "mechanism": "A post that outperformed its account's follower base is evidence the person can make content that travels, which is the trait you are actually buying.",
+      "evidence": "Described as where her team starts, with the caveat that sourcing this way alone 'is going to be a tough go'. Assertion.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Free to do, but the output is a shortlist of strangers you then have to pay — and Real Skin Care has no creator budget, no ad account to run the resulting content through, and no presence on either platform to make an outreach credible. The creator's own caveat is that this channel alone rarely works even for a funded agency."
+      },
+      "verdict": "reject",
+      "rejectReason": "Produces a shortlist of strangers who must then be paid; no creator budget, no ad account, and no platform presence to make outreach credible.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 6,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Use performance-pay UGC platforms (Tribe, Influy) where creators produce content for free and are compensated on backend performance, especially if you are just starting out or want volume without strict brand guidelines.",
+      "mechanism": "Shifting creator compensation to the back end removes the upfront cash barrier, so a low-budget brand can accumulate content volume it could not otherwise afford.",
+      "evidence": "Assertion that she has used essentially all the UGC platforms and finds the performance-pay model 'really interesting' for brands starting off. No take-up rates, content-quality comparison, or results.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Superficially the best fit in the video for a cash-poor brand, but it fails on three preconditions at once, not one timing gate: creators self-select onto brands with enough order volume to earn from, paying on performance requires attribution that does not work yet, and the resulting content needs a paid channel to run in. At ~54 orders/month no performance-pay creator would earn enough to participate."
+      },
+      "verdict": "reject",
+      "rejectReason": "Fails three preconditions simultaneously — order volume creators can earn from, working attribution, and a paid channel for the content — and the named platforms are fast-decaying specifics.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 7,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Recruit from actor networks such as Backstage when UGC creators and influencers keep underdelivering, because trained actors know how to emote.",
+      "mechanism": "The scarce skill in on-camera content is performance, and actors are selected and trained for exactly that, so casting for it directly beats hoping a creator has it.",
+      "evidence": "Anecdote from managing a Brooklyn studio where they routinely hired actors to shoot UGC. No performance comparison.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Casting and paying actors, with a studio and a shoot to run them through, is a production operation a solo operator with no team and $2,700/mo in revenue cannot staff or fund at any stage."
+      },
+      "verdict": "reject",
+      "rejectReason": "Requires casting budget, a studio and a shoot to run — a production operation unfundable and unstaffable at $2,700/mo with no team.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 8,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Post an open call on Twitter and LinkedIn to let UGC creators opt in, because large UGC communities live on both platforms and the posts circulate well.",
+      "mechanism": "An inbound opt-in inverts the sourcing effort — interested creators self-identify instead of you cold-outreaching one by one.",
+      "evidence": "Assertion that her team does this routinely and has found a few creators they now work with regularly.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Depends on having an audience on Twitter or LinkedIn for the post to circulate from, which this brand does not have, and on being able to pay the creators who respond. Both are missing."
+      },
+      "verdict": "reject",
+      "rejectReason": "No existing Twitter/LinkedIn audience for the open call to circulate from, and no budget to pay responders.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 9,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Use your own customers as creators — they will often do it in exchange for product alone, and the result is either your best-performing ad or a flop, because VIP customers frequently cannot show up on camera.",
+      "mechanism": "A real customer carries credibility no hired creator can fake; the cost is only product, and the risk is purely delivery quality, which you can screen for before using the footage.",
+      "evidence": "Assertion with an explicit caveat that she is nervous recommending it because outcomes are bimodal. She reports having seen it work and having seen customers accept product as the only compensation. No figures.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable principle class, and the one item in this video with a genuine solo-operator translation. Repeat customers are 45-52% of revenue and at ~54 orders/month the operator can personally identify and email the handful of enthusiastic repeat buyers — the same top-customer cultivation already in marketing-retention-offers, extended to asking for a short video. Compensation is a stick of deodorant, not a fee, so it clears the budget constraint entirely, and the output has real homes: the Shopify PDP, the Amazon listing video slot on the larger ~$1,800/mo channel, and post-purchase email. Held at 6 because delivery quality is a coin flip, the video still has to be edited by a solo operator with no designer, and there are hard compliance limits: product-for-content is a material connection that must be disclosed under FTC rules, and it must never be routed into an Amazon review, which is a TOS violation."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "create",
+        "description": "How a solo operator sources, screens, briefs and deploys on-camera creator/customer content, centered on recruiting enthusiastic repeat customers for product-only compensation."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 10,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Scale brief depth inversely to the creator's experience: give UGC and small creators a fully prescriptive storyboard with the script written out line by line; give established influencers only campaign context plus content pillars, shooting guidelines and explicit dos and don'ts so they write and send back their own script for approval; and with celebrities and high-caliber talent write the script yourself close to verbatim.",
+      "mechanism": "Inexperienced creators do not know what converts, so leaving the script open produces weak content; experienced creators know their own audience's voice better than you do, so guardrails constrain the strategy without flattening the native delivery that makes UGC read as authentic; with celebrity talent the brand needs to control message and hook while borrowing the face, and talent will follow a well-written script closely.",
+      "evidence": "Teardown of her agency's own brief for a top-performing video (full clip-by-clip storyboard) contrasted with the briefs she personally receives as an influencer (campaign context only, she returns POV and script), plus a Jones Road Beauty brief with content pillars, shooting guidelines and dos/don'ts but no script. Notes she personally scripted celebrity ads verbatim at a nine-figure beauty brand and most followed them 'to a T'. No test or performance data.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable principle class (briefing), age irrelevant, and it resolves directly into the customer-as-creator path adopted above: a repeat customer filming a testimonial is the least experienced case on the scale, so the brief must be fully prescriptive — the exact question to answer, the sentences to open on, the length. Free and executable today. Capped at 5 because only the fully-prescriptive end of the scale will ever apply here — the influencer-guardrail and celebrity-verbatim ends presuppose paid talent that is unreachable at ~$2,700/mo — and it is a production-quality lever rather than a revenue mechanism."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "create",
+        "description": "How a solo operator sources, screens, briefs and deploys on-camera creator/customer content, including scaling brief prescriptiveness to the filmer's experience level."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 11,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 15,
+          "label": "part 2 of 2"
+        },
+        {
+          "candidateIndex": 16,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Build every brief from the same fixed set of components: a description of the video type wanted, the product linked and already shipped, a reference ad, the setting and wardrobe/style guidelines, a storyboard table of clips with the script and the visual for each, upload instructions, and recording guidelines.",
+      "mechanism": "A fixed component list removes the decisions the creator would otherwise make badly and eliminates the round trips caused by missing information — the reference ad in particular communicates the target faster than description does.",
+      "evidence": "Walkthrough of a real brief her agency used to produce a recent top-performing video, section by section. Single example, no comparison against a looser brief.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable principle class (asset briefing), free, and it is the concrete artifact that makes the customer-testimonial path produce usable footage instead of a shaky one-take. The reference-example component is the highest-value part and echoes the exemplar rule already in marketing-email-design-production and the reference-photo rule in marketing-ai-product-imagery, so it transfers with a known mechanism. Held at 5 because the wardrobe/setting and camera-spec sections are agency overkill for a customer filming on a phone, and this is a production checklist, not a revenue mechanism."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "create",
+        "description": "How a solo operator sources, screens, briefs and deploys on-camera creator/customer content, including the fixed component checklist for a usable brief."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 12,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Stop doing one-off 'churn and burn' creator deals: work with multiple creators simultaneously and move to long-term partnerships — creators on monthly retainer, given internal email addresses, titles, and standing deliverables.",
+      "mechanism": "On-camera performance varies within the same person, so a roster averages out the variance and a longer relationship lets you capture a creator's best work rather than one bad session; a creator embedded in the brand over time also produces more knowledgeable content and represents the brand publicly, compounding trust in a way a single sponsored post cannot.",
+      "evidence": "Side-by-side of two of her own videos, one flat and one high-energy, as proof that the same creator varies, plus named examples: her own Motion chief-evangelist arrangement, Caraway's retained creator roster, and Hype 10's full-time creators. No roster-size, partnership-length, revenue or performance figures.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Presumes an ongoing paid roster and recurring per-creator commitments — effectively a retainer structure and recurring creative headcount. A solo operator at ~$2,700/mo cannot fund or manage multiple concurrent creator relationships at any point in the gate sequence, and the variance insight adds nothing once you have already adopted the rule to screen delivery before using footage."
+      },
+      "verdict": "reject",
+      "rejectReason": "Recurring creator retainers are fixed creative headcount against ~$2,700/mo total revenue with no team to manage them; not a stage problem but a structural one.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 13,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 17,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Give yourself a consistent visual signature that appears in all your content — Hormozi's nose feature is the example — so audiences instantly recognize whose content it is.",
+      "mechanism": "A repeated through-line acts as a recognition cue across a feed, so accumulated familiarity attaches to each new piece of content.",
+      "evidence": "One observation about Alex Hormozi's branding, plus a comment that his confident tone reads as self-assurance. Assertion only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "This is personal-brand advice for someone building a recurring on-camera presence in a feed. Real Skin Care has no founder content channel and no plan for one, so there is no surface on which repeated recognition could accumulate — and the tactic states no mechanism that touches a product page, listing, or email."
+      },
+      "verdict": "reject",
+      "rejectReason": "No founder content channel or feed presence for a recognition cue to accumulate on, and no stated mechanism touching a PDP, listing or email.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 14,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Match production value to the product's price point — high-AOV products need elevated, higher-production creative to earn consumer trust, while lower-priced products can be served by raw phone-shot content.",
+      "mechanism": "Polish is a trust signal that scales with the size of the ask: when a buyer is spending a lot, visible production value signals a legitimate brand; when the ask is small, raw and unpolished reads as authentic rather than cheap, so the extra spend buys nothing.",
+      "evidence": "Observation that Caraway retains creators with 'alternative production value' beyond 'yapping out an iPhone' specifically because their AOV is high. Single named example, no conversion data.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable-principle class (trust psychology and positioning), so age is irrelevant. It resolves a real decision for a solo operator with no photographer and no designer: at a $50.46 AOV, phone-shot and plainly-lit imagery is the correct register, and money or time spent chasing studio polish is misallocated — while over-polished, generic-looking frames actively read as stock on a small body-care brand. Held to 5 because it is a calibration judgment rather than a revenue mechanism, the evidence is a single observed brand, and it partly overlaps the raw-phone-reference discipline already in marketing-ai-product-imagery. Additive only in giving a price-point rule for how much polish an asset needs."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-product-image-stack",
+        "action": "edit",
+        "description": "Add a price-point calibration rule for how much production polish an asset needs, so a low-AOV catalog stays in the raw phone-shot register instead of chasing studio polish."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 18,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Keep the creative strategist and the creator project manager as separate roles with clear SOPs — brands that combine them get bad results.",
+      "mechanism": "Sourcing, negotiating, scheduling, and shipping is administrative throughput work; strategy is creative judgment. One person doing both starves the strategy, so splitting the roles protects the thinking.",
+      "evidence": "Assertion from her agency and from a nine-figure beauty brand that operated the same way; 'sometimes I see brands try to combine those roles and that really doesn't work.' No data.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Real Skin Care is a solo operator with no team. A tactic whose entire content is how to divide work between two headcounts has no executable form here at any stage of the sequence."
+      },
+      "verdict": "reject",
+      "rejectReason": "Entire content is dividing work between two headcounts; a solo operator has no executable form of it at any stage.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 19,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Gate creator payment on approval — both the creator manager and the creative strategist review the returned raw content against the brief, and only after sign-off does the creator get paid.",
+      "mechanism": "Payment is the only leverage over an external supplier, so holding it until the deliverable is verified against the brief prevents paying for unusable footage.",
+      "evidence": "Described as her agency's standing workflow. Assertion, no data.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "A vendor-management control that only has meaning when there is a paid external content supplier and two reviewers. Real Skin Care has neither, and commissioning content at $250–$1,000 per asset is not reachable at ~$2,700/mo."
+      },
+      "verdict": "reject",
+      "rejectReason": "Requires a paid external supplier and two reviewers; the equivalent QA discipline for self-produced assets is already owned by marketing-ai-product-imagery and marketing-product-image-stack.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 20,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Source creators continuously rather than only when a brief exists — maintain an always-on pipeline, and when you spot a creator you want, write a brief retroactively to fit them.",
+      "mechanism": "Keeping a standing pipeline means you are never blocked waiting to cast a specific strategy, and occasionally a strong creator is worth building a concept around rather than the reverse.",
+      "evidence": "Description of her agency's own practice. Assertion only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Ongoing creator sourcing is dedicated labor a solo operator does not have, in service of a paid creative supply chain that does not exist and cannot be funded at ~$2,700/mo with paid spend still gated behind tracking, CRO and offer work."
+      },
+      "verdict": "reject",
+      "rejectReason": "Always-on sourcing is dedicated labor a solo operator lacks, serving a paid creative supply chain that does not exist and cannot be funded at ~$2,700/mo.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 21,
+          "label": "part 2 of 2"
+        }
+      ]
+    }
+  ]
+}
