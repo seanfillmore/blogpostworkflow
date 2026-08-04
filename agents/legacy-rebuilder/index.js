@@ -21,6 +21,23 @@ import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../li
 import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 
+/**
+ * The digest body. Previously this was counts only — "4 rebuilt, 1 failed" — while
+ * the actual slug and reason went to console.error and were lost with the log. A
+ * failure the operator cannot name is a failure nobody acts on, which is how one
+ * post sat broken across runs without anyone knowing which post it was.
+ */
+export function renderRebuildSummary({ succeeded, failures = [], remaining }) {
+  const lines = [`Rebuilt ${succeeded} post(s). ${remaining} legacy posts remain.`];
+  if (failures.length) {
+    lines.push('', `Failed (${failures.length}):`);
+    for (const f of failures) {
+      lines.push(`- ${f.slug}: ${f.reason || 'no reason captured (rebuild reported failure without an error)'}`);
+    }
+  }
+  return lines.join('\n');
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const BACKUPS_DIR = join(ROOT, 'data', 'backups', 'legacy-rebuild');
@@ -208,29 +225,38 @@ async function main() {
   console.log(`\nRebuilding ${toRebuild.length} post(s)...`);
 
   let succeeded = 0;
-  let failed = 0;
+  const failures = [];
   for (const p of toRebuild) {
     try {
       const ok = await rebuildPost(p.slug);
       if (ok) succeeded++;
-      else failed++;
+      // rebuildPost returns false after already logging its own reason, so there
+      // is no error object to carry here — record the slug so the digest can at
+      // least name it.
+      else failures.push({ slug: p.slug, reason: null });
     } catch (err) {
       console.error(`  ✗ ${p.slug}: ${err.message}`);
-      failed++;
+      failures.push({ slug: p.slug, reason: err.message });
     }
   }
 
   await notify({
-    subject: `Legacy Rebuilder: ${succeeded} rebuilt, ${failed} failed`,
-    body: `Rebuilt ${succeeded} post(s), ${failed} failed. ${legacy.length - succeeded} legacy posts remain.`,
-    status: failed > 0 ? 'warning' : 'success',
+    subject: `Legacy Rebuilder: ${succeeded} rebuilt, ${failures.length} failed`,
+    body: renderRebuildSummary({ succeeded, failures, remaining: legacy.length - succeeded }),
+    status: failures.length > 0 ? 'warning' : 'success',
   });
 
   console.log(`\nDone. ${succeeded} succeeded, ${failed} failed.`);
 }
 
-main().catch((err) => {
-  notify({ subject: 'Legacy Rebuilder failed', body: err.message, status: 'error' });
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Only run when invoked directly. Without this guard, importing anything from
+// this module starts a live rebuild — Shopify writes included — and its
+// process.exit(1) takes the host process down with it.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main().catch((err) => {
+    notify({ subject: 'Legacy Rebuilder failed', body: err.message, status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

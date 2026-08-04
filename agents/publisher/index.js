@@ -38,6 +38,29 @@ try {
 
 // ── args ──────────────────────────────────────────────────────────────────────
 
+/**
+ * The post slug for a given meta.json path.
+ *
+ * The old fallback was `basename(metaPath, '.json')`, written for the flat layout
+ * (`data/posts/<slug>.json`). Under the per-directory layout the fallback evaluates
+ * to the literal string "meta", so the agent went looking for
+ * `data/posts/meta/content.html` and failed. 6 of 192 posts carry no `slug` field
+ * and hit this the moment they are published by path.
+ *
+ * Both layouts are still supported: a `meta.json` filename means the slug is the
+ * parent directory, anything else means the filename itself is the slug.
+ */
+export function slugFromMetaPath(metaPath, meta) {
+  if (meta?.slug) return meta.slug;
+  const base = basename(metaPath, '.json');
+  return base === 'meta' ? basename(dirname(metaPath)) : base;
+}
+
+// Declared here rather than beside main(): the usage check below calls
+// process.exit(1) at module scope, so an import would take the host process down
+// before reaching main.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+
 const args = process.argv.slice(2);
 const metaArg = args.find((a) => !a.startsWith('--'));
 const publishAtArg = (() => {
@@ -48,13 +71,15 @@ const isDraft = args.includes('--draft');
 const forcePublish = args.includes('--force');
 const skipVerify = args.includes('--no-verify');
 
-if (!metaArg) {
+if (isDirectRun && !metaArg) {
   console.error('Usage: node agents/publisher/index.js data/posts/<slug>.json [--publish-at "ISO8601"] [--draft]');
   process.exit(1);
 }
 
-const metaPath = metaArg.startsWith('/') ? metaArg : join(ROOT, metaArg);
-if (!existsSync(metaPath)) {
+// Guarded on metaArg as well as isDirectRun: on an import there are no CLI args at
+// all, and dereferencing undefined here would throw before the guard below matters.
+const metaPath = metaArg ? (metaArg.startsWith('/') ? metaArg : join(ROOT, metaArg)) : null;
+if (isDirectRun && !existsSync(metaPath)) {
   console.error(`Post metadata not found: ${metaPath}`);
   process.exit(1);
 }
@@ -127,7 +152,7 @@ async function main() {
     console.error(`Failed to parse post metadata ${metaPath}: ${e.message}`);
     process.exit(1);
   }
-  const slug = meta.slug || basename(metaPath, '.json');
+  const slug = slugFromMetaPath(metaPath, meta);
   const htmlPath = getContentPath(slug);
 
   if (!existsSync(htmlPath)) {
@@ -324,9 +349,13 @@ async function main() {
   }
 }
 
-main().then(() => {
-  console.log('\nPublish complete.');
-}).catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// isDirectRun is declared up with the arg parsing — the usage check there exits
+// the process, so the guard has to exist before it.
+if (isDirectRun) {
+  main().then(() => {
+    console.log('\nPublish complete.');
+  }).catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}
