@@ -1,0 +1,778 @@
+{
+  "tactics": [
+    {
+      "claim": "Evaluate any product against four properties — unique (nobody else can sell it), expensive relative to cost, sticky (bought again and again), and 'air' (cheap to deliver) — because that combination is what produces gross profit.",
+      "mechanism": "Uniqueness removes price comparison, high price relative to cost creates margin per unit, stickiness multiplies that margin across repeat purchases, and low delivery cost keeps the margin intact — so the four together are the arithmetic of gross profit rather than four separate nice-to-haves.",
+      "evidence": "Coca-Cola worked as an illustration (secret recipe, pennies of cost, lifelong repeat consumption) plus the claim that a one-person service business also satisfies all four. Assertion with one canonical brand example, no figures.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable principle class (offer/product economics), so age is irrelevant. It cannot be used as intended — marketing-offer-construction explicitly gates adding SKUs, and a solo operator at $2,700/mo should not be launching product 13 — but it translates honestly as a scoring lens on the 12 SKUs that already exist: which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer, and which carries the subscribe-and-save cadence. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules in offer-construction — the additive part is only the four-way scoring frame."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-offer-construction",
+        "action": "edit",
+        "description": "Add a four-property scoring lens (unique / high price relative to cost / sticky / cheap to deliver) for ranking existing SKUs to decide which anchors a bundle, which becomes the low-COGS entry offer, and which carries the subscription cadence."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 0,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Sell 100 people something at $10,000 rather than 10,000 people something at $1,000, and split the price into monthly payments so the entry figure is small.",
+      "mechanism": "Fewer customers at a higher price is less operationally demanding than mass volume, and breaking a large total into a small monthly number lowers the perceived entry barrier so more people say yes.",
+      "evidence": "Arithmetic walkthrough (100 × $10,000 = $1M, split over four years = $200/mo, two sales a week) with an assertion that 100 buyers are far easier to find than 10,000. No data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "High-ticket service arithmetic with no honest translation to a physical body-care catalog at a $50.46 AOV."
+      },
+      "verdict": "reject",
+      "rejectReason": "No honest translation to a 12-SKU body-care catalog at a $50.46 AOV — there is no $10,000 version of natural deodorant, and the high-ticket arithmetic collapses on physical goods with real COGS and postage. The one transferable half (a lower per-period price converts more people onto a recurring cadence) is already fully owned by marketing-retention-offers, including the warning that the ratios do not transfer to a $12 consumable.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 1,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Pick who to serve from three sources — a pain you personally overcame, a passion you hold, or a professional skill you already have — and choose the niche accordingly.",
+      "mechanism": "Lived experience with the problem means you already know the prospect's vocabulary, fears, and dreams, so you skip years of market study.",
+      "evidence": "Personal history (gym vs SAT prep vs frozen yogurt) plus a secondhand claim that a16z and Y Combinator now only back founders who have lived with the problem for 5+ years. Anecdote.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Market-selection advice for a pre-start founder; the decision is already made and irreversible here."
+      },
+      "verdict": "reject",
+      "rejectReason": "Real Skin Care already has a market, 12 SKUs, and a revenue history, so this decision has been made and is not reversible. The one residual idea — speak the buyer's actual vocabulary — is already owned by marketing-review-mining and the voice-of-customer agent, which source that language empirically rather than from founder intuition.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 2,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Filter your chosen audience on four criteria: they have the problem, they have urgency to solve it now, they have the money, and they have the authority to spend it.",
+      "mechanism": "A prospect missing any one of the four cannot convert — no problem means no need, no urgency means indefinite deferral, no money means a nonprofit, no authority means the decision sits with someone else.",
+      "evidence": "Presented as a thought exercise with a cancer-treatment urgency analogy. Assertion only.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "A B2B qualification framework; two of the four criteria have no referent in a $12 B2C consumable purchase."
+      },
+      "verdict": "reject",
+      "rejectReason": "'Authority to spend' has no referent for someone buying a $12 deodorant for themselves and 'has money' is trivially satisfied at this price point. The remaining two criteria are already covered more concretely by marketing-problem-solution-inventory and marketing-awareness-level-messaging.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 3,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Enter at the narrowest, most specific, highest-priced end of the market first and only broaden down-market as resources accumulate, the way Tesla went Roadster → Model S → Model 3.",
+      "mechanism": "Serving the smallest, highest-value segment is cheaper to operate with no resources and simultaneously positions you at the top of the market, so later down-market moves inherit that premium positioning.",
+      "evidence": "The Tesla product sequence, cited from public history. No figures from his own accounts.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable positioning principle in class, but it prescribes a market-entry sequence for a business that has already entered and cannot reposition upward."
+      },
+      "verdict": "reject",
+      "rejectReason": "Prescribes an entry sequence for a business already in-market with no capital to reposition, and collides with the actual binding constraint (retention, not market breadth). The only live residue — specify one narrow buyer per asset — is already owned by marketing-product-image-stack.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 4,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Treat charisma, confidence and salesmanship not as traits but as bundles of learnable subskills, and stack sales, then marketing, then acquisition, because each stacked skill makes the earlier ones retroactively more valuable.",
+      "mechanism": "Decomposing a supposed trait into subskills makes it trainable, and skills compound because sales one-to-one becomes marketing one-to-many, which together constitute the ability to acquire customers at will.",
+      "evidence": "Enumeration of sales subskills (active listening, eye contact, handshake, voice projection) and marketing subskills (media, headlines, web pages, conversion). Assertion, personal history.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Career skill-development framing with no mechanism touching a page, listing, email, or offer."
+      },
+      "verdict": "reject",
+      "rejectReason": "Nothing here is testable against revenue and nothing changes what the operator would ship this week.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 5,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Engineer motivation by changing your environment and constructing a higher-earning reference group, since motivation comes from deprivation and behaviour is set by environment.",
+      "mechanism": "Motivation is driven by what you lack, so comparing yourself upward manufactures deprivation; environment acts as friction or lubricant on behaviour, so removing distractions is more effective than willpower.",
+      "evidence": "Personal history (moving to California, entering a 'season of no', 5-to-9 work either side of a job) plus the locked-hot-room thought experiment. Anecdote.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Personal productivity and mindset advice with no marketing mechanism or artifact."
+      },
+      "verdict": "reject",
+      "rejectReason": "No marketing mechanism, no artifact, nothing measurable against the $2,700/mo revenue baseline or the retention constraint.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 6,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Make sure the market you pick is at least flat or growing, and never enter a shrinking one.",
+      "mechanism": "A shrinking market shrinks your revenue regardless of execution quality, so category trend caps your ceiling independently of your own work.",
+      "evidence": "Retirement homes vs print newspapers as illustrative examples. Assertion only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Market-selection screen with no action attached for a business already committed to natural body care."
+      },
+      "verdict": "reject",
+      "rejectReason": "Generates no artifact, no page change, no offer, and no test — no realistic decision here turns on it.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 7,
+          "label": "part 1 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Choose a business whose incremental cost of adding one more customer is near zero (software, networks, media) because those scale most easily — and judge scalability as a spectrum measured by that marginal cost, noting the most scalable businesses tend to be demand-constrained rather than supply-constrained.",
+      "mechanism": "If serving an extra customer costs nothing, revenue growth is not throttled by delivery capacity or hiring, so the only limit becomes demand; high-service businesses like law and accounting scale badly because quality depends on scarce expert labour.",
+      "evidence": "Cell carriers, Facebook, and his own Skool platform as low-marginal-cost examples; law and accounting firms as counterexamples. Assertion, no figures.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Business-model taxonomy, not a marketing tactic. Physical body care has unavoidable per-unit COGS plus postage, so the spectrum position is fixed and unactionable, and the demand-constrained observation restates what is already encoded here — the sequence puts traffic last and names retention, not capacity, as the binding constraint."
+      },
+      "verdict": "reject",
+      "rejectReason": "Business-model selection advice with no marketing mechanism and no honest translation for an existing 12-SKU physical-products catalog; acting on it would mean changing what the business sells. Nothing here is testable on a product page, listing, or email.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 8,
+          "label": "part 1 of 4"
+        },
+        {
+          "candidateIndex": 16,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "There are only four things one person can do to make people aware of what they sell — warm outreach, cold outreach, content, and paid ads — and until you are at seven figures you should run just one or two, ideally content plus warm outreach because they are the cheapest.",
+      "mechanism": "Nobody can buy from you unless they know you exist, and the four channels exhaust the ways a single operator can create that awareness; concentrating on the cheapest one or two avoids spreading a solo operator's finite hours across eight half-run channels.",
+      "evidence": "His own sequence as a beginner: a year of warm outreach producing ~13 customers, then his first content post ('the free training project') publishing those results, then later paid ads and cold outbound. Anecdotal, no figures.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable principle class (channel taxonomy and focus discipline), so age is irrelevant. Its real value here is the focus rule, not the taxonomy: paid is explicitly gated behind Tracking → CRO → Offer/AOV, and retention — not traffic — is the binding constraint, so the correct read is that organic content plus warm outreach to people who already know the brand are the only two acquisition channels worth any hours at $2,700/mo. Capped at 5 because cold outbound has no honest form for a $12 consumer deodorant, warm outreach for a solo operator is a handful of people rather than 25 customers at $10k/yr, and the whole worked example is a high-ticket service model. It is a coverage-and-focus checklist, not a revenue mechanism."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-acquisition-channel-selection",
+        "action": "create",
+        "description": "Enumerate the four awareness channels available to a solo operator (warm outreach, cold outreach, content, paid ads) and enforce running only the cheapest one or two until scale justifies more, consistent with the paid-traffic gate."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 9,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Strike a reciprocal deal with a non-competing business that already has your customers, so each of you routes buyers to the other (his example: a gym and a chiropractor trading referrals).",
+      "mechanism": "Another business has already paid to acquire the exact people you want and has their trust; a reciprocal arrangement borrows that audience at no media cost, and because it is mutual the partner has a standing incentive to keep sending people.",
+      "evidence": "Stated as one of the four 'lead getters' with the gym/chiropractor example. Assertion only, no partnership economics or conversion figures.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable principle class (distribution partnership), age irrelevant, and it is one of the very few acquisition moves that needs no ad budget, no media buyer and no attribution — a solo operator can cold-email ten small non-competing brands (natural soap, sensitive-skin, zero-waste) and propose a co-marketing bundle or an insert swap. Honest translation exists for a physical catalog, unlike the agency and employee variants in the same list. Held to 5 because RSC brings very little to a swap: a sub-1,000 subscriber list and ~54 orders/month make it a weak trading partner, the outcome depends entirely on someone else agreeing, and none of the referred revenue will be attributable at this volume."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-acquisition-channel-selection",
+        "action": "edit",
+        "description": "Add reciprocal co-marketing with non-competing brands that share the buyer (insert swaps, bundle collaborations, list mentions) as a zero-media-cost acquisition move for a solo operator."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 10,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "In the first 24–48 hours after purchase, make as many small specific promises as you can and keep every one — tell them exactly what happens next and when ('in the next 30 minutes you'll get an email, then this happens') — because cancellations come from unset expectations, not from the product.",
+      "mechanism": "A buyer left with a vague sense of what happens next fills the gap with their own timeline; when reality misses that invented timeline they conclude the seller is not on top of it and reverse the decision. A dense sequence of small promises kept in the window immediately after payment reinforces the purchase instead, converting buyer's remorse into confidence — and confidence is what makes them buy again.",
+      "evidence": "Practitioner assertion from onboarding thousands of gym and agency customers: 'the reason a lot of customers cancel is because you said someone's going to reach out and they thought it was going to take 30 minutes, you didn't set the expectation, it takes two days.' No cancellation or retention figures.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Durable retention principle, age irrelevant, and it names a mechanism no existing entry owns: marketing-post-purchase-onboarding covers what to teach (transition period, routine, early win) but nothing covers the expectation-setting schedule in the hours right after checkout. Direct fit because retention is the binding constraint and repeat customers are 45–52% of revenue — the honest ecommerce translation is an order-confirmation and pre-arrival sequence that states exactly when the order ships, when it arrives, when the first email lands and what week two will feel like, and then actually delivers each. Free, solo-executable in existing Klaviyo flows, no traffic or attribution needed. Not higher because the promises must be genuinely keepable by one person with FBA and third-party shipping, and at ~54 orders/month the effect on repeat rate will never be cleanly measurable."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-post-purchase-onboarding",
+        "action": "edit",
+        "description": "Add a 24–48 hour expectation-setting schedule: make specific, keepable promises about what arrives when (ship notice, delivery window, first email, week-two check-in) and deliver each on time to prevent post-purchase regret."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 11,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Never make a customer repeat themselves — take notes on every conversation, pass them forward, and open the next contact by referencing what they already told you.",
+      "mechanism": "Recapping a customer's own stated situation back to them signals that the business is organised and paying attention, which raises satisfaction and the odds they buy again; making them re-explain signals the opposite and costs goodwill at the moment they are already frustrated.",
+      "evidence": "Assertion plus a described handoff chain (setter → sales → onboarding 1 → onboarding 2), with the explicit note that a beginner is taking all the calls and should at least keep and review their own notes. No data.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable retention/service principle, free, and the solo-operator version is exactly the one the creator names: keep a note per customer and open every support reply referencing their prior order, scent, and the issue they raised last time. At ~54 orders/month a single person can genuinely do this, and repeat customers are 45–52% of revenue, so goodwill in a support thread lands directly on the binding constraint. It fits alongside the existing hand-cultivation of top repeat buyers in marketing-retention-offers. Capped at 5 because it is a service habit rather than a revenue mechanism, it has no effect on the ~$1,800/mo Amazon channel where buyer identity is largely hidden, and the multi-person handoff half of the tactic is irrelevant with no team."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-retention-offers",
+        "action": "edit",
+        "description": "Add the rule that a customer should never have to repeat themselves: keep a per-customer note of prior orders, scents, and issues, and open every support or follow-up message by referencing it."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 12,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Walk the buyer through what they have already tried and how it went — then explicitly associate the parts they liked with your solution and the parts they disliked with the specific reason it failed and why yours is different.",
+      "mechanism": "Prior failed attempts are where the buyer's frustration already lives, so surfacing them widens the felt gap between where they are and where they want to be, which is the motivation to act. Splitting the prior attempt into 'the part that was right' and 'the part that broke' lets you inherit the credibility of the category while attributing the failure to a named cause your product removes — so you are not asking them to abandon the belief that got them here, only the product that let them down.",
+      "evidence": "Described as the 'pain cycle' step of his CLOSER framework, refined over 4,000+ consults: 'what have you done before, how'd that work out for you' repeated to keep expanding the gap. Assertion, no data.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable persuasion principle, age irrelevant, and it has an unusually exact form here: the natural-deodorant buyer has almost always tried another natural deodorant that quit by noon or burned with baking soda. Copy that says 'you were right to get off aluminium — the problem was X, and here is what we do instead' does both jobs at once and is free to write on the PDP, in Amazon bullets and in the non-buyer nurture flow. In a saturated category this is also the natural vehicle for the named mechanism the sophistication rule demands. Held at 6 because it partially overlaps negative framing and transformation-first ordering already in marketing-conversion-copy-angles, and because attributing a competitor's failure to a specific cause in body care must stay to defensible formulation facts, not invented ones."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-conversion-copy-angles",
+        "action": "edit",
+        "description": "Add the prior-failed-attempt angle: validate what the buyer got right about their earlier attempt, name the specific defensible reason it failed, and attach your differentiating mechanism to that named cause."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 13,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Pitch exactly three differentiating pillars, each stated in one or two sentences and then explained with an analogy or metaphor comparing something the buyer already understands to the thing they don't — and keep the pitch about their destination, not the product's internals.",
+      "mechanism": "A long monologue about product detail loses the sale because the buyer cares about their own problem, not your mechanism. Capping it at three pillars keeps the argument holdable, and an analogy transfers understanding by mapping the unfamiliar onto something familiar, so a mechanism claim becomes believable without a technical explanation the buyer has to work through.",
+      "evidence": "Worked examples — SEO explained as a paycheck versus an investment account that compounds, and a mortgage-broker lead script built on exactly three pillars (exclusive, timely, qualified). Practitioner assertion from his own scripts, no conversion data.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable copy-construction principle, age irrelevant, and free to apply to PDP body copy, Amazon A+ blocks and the non-buyer nurture emails. The three-pillar cap fits how much a shopper actually reads and lines up with the existing 'cap the us-vs-them graphic at three or four attributes you win on' rule, so it reinforces rather than contradicts. The analogy device is the additive part — nothing in the existing copy skills covers explaining a mechanism by comparison, and natural deodorant needs exactly that for the transition period and for why an aluminium-free formula works differently. Held at 6 because analogies in body care slide easily into implied physiological claims, so each one has to be paired with the existing specificity rule and kept descriptive, and at ~54 orders/month the choice of three pillars is judged rather than tested."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-conversion-copy-angles",
+        "action": "edit",
+        "description": "Add the three-pillar pitch structure with an analogy per pillar: cap differentiators at three, state each in one or two sentences, and explain the mechanism by comparison to something the buyer already understands."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 14,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Create a higher-quality version of what you already sell to upsell — stronger dose, better materials, premium ingredients, faster or priority service, exclusivity touches — because every component of an offer sits on a quality dimension that can be raised.",
+      "mechanism": "Buyers differ in willingness to pay, not just in what they want. A visibly better version captures the ones who would have paid more, so each raised attribute becomes a reason the same buyer pays more for essentially the same job to be done.",
+      "evidence": "Illustrative only: 2mg versus 4mg nicotine gum, plastic versus Kevlar or metal iPhone cases, wood instead of metal whiteboards, and service equivalents (priority support, extended hours, senior reps). No data.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable pricing/offer logic, age irrelevant, and it does add a lever the existing offer skill does not name — that skill covers quantity bundles, buy-X-get-Y, and how to name tiers, but presupposes the tiers exist rather than telling you to create them along a quality axis. Honest forms exist here without new sourcing: a larger-size or extra-strength deodorant as the premium tier. Capped at 5 because it sits in real tension with the strongest rule already in marketing-offer-construction — 'don't add products, add ways to offer the products you already have' — a genuinely new premium formulation means new inventory and cash a $2,700/mo solo operation should not spend, and the neighbouring rules ('win on faster / less risky / easier' and 'fund the premium by raising your price') already cover much of it. Use the size and configuration axis, not new formulations, and treat SKU 13 as off-limits."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-offer-construction",
+        "action": "edit",
+        "description": "Add the quality-axis premium tier: enumerate offer components and raise one (size, strength, speed, packaging) to create an upsell tier from existing SKUs, funded by price, without adding a new formulation."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 15,
+          "label": "part 2 of 4"
+        },
+        {
+          "candidateIndex": 31,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Open with warm outreach by offering three to five hours of free help to people who already know you, then make a paid offer at the end of it.",
+      "mechanism": "A large, concrete gift of time is easy for people to accept, generates goodwill and a real outcome, and lets a first-time seller practise closing on friendly prospects before facing strangers.",
+      "evidence": "His own beginning: roughly a year of warm outreach producing ~13 customers before his first content post. Anecdote from a high-ticket coaching context.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "High-ticket service acquisition play with no form at a $50.46 AOV; its nearest ecommerce analogue is already owned."
+      },
+      "verdict": "reject",
+      "rejectReason": "Hours of consulting traded for a $10,000/yr contract has no version for a deodorant catalogue, and the nearest analogue (a free sample or lead magnet for an email) is already fully owned by marketing-offer-construction's lead-magnet rules, so importing it would duplicate an existing skill while dragging in service-business framing.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 17,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Run the CLOSER framework on every sales call — clarify why they came, label them with the gap between where they are and where they want to be, then position your product as the sword that kills the obstacle.",
+      "mechanism": "You cannot sell without an established gap, so surfacing the current state, the desired state, and the blocking obstacle creates the tension the offer resolves; because the prospect reached out, they will tell you the gap themselves if you ask.",
+      "evidence": "Framework distilled from 4,000+ consults over ten years, plus the story of an employee closing their first deal. Practitioner assertion, no close-rate data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Depends on a live two-way sales conversation that this business never has."
+      },
+      "verdict": "reject",
+      "rejectReason": "RSC has no sales calls, consults, or chat staffing, so the mechanism has no surface. The transferable residue — current-state/desired-state/obstacle framing in copy — is already covered by transformation-first ordering and primal-desire copy in marketing-conversion-copy-angles and by the objection enumeration in marketing-problem-solution-inventory.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 18,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Handle objections against six named categories — no time, no money, someone else decides, not a fit for me, burned by a previous provider, and stalling for time — grouped under blaming circumstances, blaming others, or avoiding the decision.",
+      "mechanism": "Objections are finite and recurring, so a fixed taxonomy means you always know which one you are facing and can prepare a response in advance rather than improvising.",
+      "evidence": "Presented as the theory behind 'a hundred other closes' he teaches. Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable principle class but a near-duplicate of an existing, better-tuned taxonomy."
+      },
+      "verdict": "reject",
+      "rejectReason": "Near-duplicate of the four value drivers already in marketing-problem-solution-inventory (not worth it, won't work for me, too hard, takes too long), which is tuned to page and listing copy. Two of the six categories have no form for a $12 consumable, and 'burned by a previous provider' is captured by the prior-failed-attempt angle adopted separately. A second overlapping taxonomy would degrade skill triggering.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 19,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Recruit lead getters who advertise on your behalf — customers who post reviews and content, employees who do outreach and make ads, and agencies that specialise in one channel.",
+      "mechanism": "Each of these actors can run the same four awareness channels you can, so recruiting them multiplies reach far beyond what one operator's hours allow.",
+      "evidence": "Enumerated as a taxonomy with brief descriptions of what each type does. Assertion only.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Three of four branches are out of scope for a solo operator with no budget, and the fourth is already owned twice."
+      },
+      "verdict": "reject",
+      "rejectReason": "No team to make employees, and agency retainers are disqualified at $2,700/mo. The one usable branch — customers producing reviews and content — is already owned by marketing-review-mining and marketing-creator-content-sourcing, so adopting it would create a near-duplicate and degrade triggering.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 20,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Raise your price and reduce your unit cost through vendor negotiation, bulk inventory buys, supplier advances and economies of scale, because both widen the margin on an identical transaction.",
+      "mechanism": "A dollar more on the same gum box or fifty cents less to make it are both a direct profit gain with no extra work, and cost per unit is one of the eight inputs into what a customer is worth.",
+      "evidence": "Arithmetic on a hypothetical $5 gum box, plus an acknowledgement that vendor negotiation takes time. Illustrative only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable pricing logic on the price half, but procurement on the cost half, and both are already better handled elsewhere or unactionable at this scale."
+      },
+      "verdict": "reject",
+      "rejectReason": "The price half duplicates the existing marketing-offer-construction rule to fund an added premium by raising price rather than absorbing it — a strictly better framing because it gives the buyer a reason for the increase. The cost half is procurement, not marketing, offers nothing testable beyond 'negotiate', and there is no volume to negotiate with at ~54 orders/month.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 21,
+          "label": "part 2 of 4"
+        },
+        {
+          "candidateIndex": 32,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Get customers to buy more times by putting the product on a subscription instead of selling it one box at a time.",
+      "mechanism": "A consumable is repurchased anyway; a standing subscription captures those repurchases automatically instead of requiring a fresh decision each cycle.",
+      "evidence": "Illustrative gum-subscription example. No data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Correct for this business and aimed at the binding constraint, which is exactly why it is already owned in far more detail."
+      },
+      "verdict": "reject",
+      "rejectReason": "marketing-retention-offers already covers recurring cadence conversion, the price gap that steers the one-time/subscription mix, milestone rates past the churn point, failed-payment recovery, and the operational warning about Shopify selling plans. This excerpt adds a one-line assertion on top of that and would blur the skill's description.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 22,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Cross-sell the complementary product the purchase implies — paper rolls with the whiteboard, toys with the dog food, a helmet with the bicycle, patches with the gum — and note you often make more profit on the complement than on the core item.",
+      "mechanism": "Every core purchase creates an adjacent need, and you are the seller present at the moment that need appears, so the attach sale costs no additional acquisition.",
+      "evidence": "Category analogies only (gum and patches, burger and fries, iPhone and case). No data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable principle already carried in stronger form by an existing skill."
+      },
+      "verdict": "reject",
+      "rejectReason": "marketing-upsell-offer-design already carries this at 8/10 ('the core offer solves one problem and immediately creates the next one') with surface selection, timing (cart vs. post-purchase vs. week-three email), the wrong-thing/wrong-time/wrong-way diagnosis, and the constraint that Amazon gives no post-purchase surface. Re-adding the generic version would duplicate and degrade triggering.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 23,
+          "label": "part 2 of 4"
+        },
+        {
+          "candidateIndex": 33,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Increase the quantity bought in a single transaction — sell three boxes instead of one — to raise revenue per order.",
+      "mechanism": "Bulk purchase raises the value of one transaction without any additional selling event, and is distinct from raising purchase frequency over time.",
+      "evidence": "Illustrative gum example. No data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Bare lever already owned, with the persuasion layer that makes it work here."
+      },
+      "verdict": "reject",
+      "rejectReason": "marketing-offer-construction already owns the buy-X-get-Y multipack structure at 8/10, the named-package tier rule, and the 'turkey talk' argument for why a single unit cannot get a natural-deodorant buyer through the transition period. This excerpt states only the bare lever.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 24,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Create a downsell by reducing the quantity — 20 pieces instead of 160, one instead of five — so a small no becomes a small yes, raising revenue per person you talk to and starting a relationship you can upsell later.",
+      "mechanism": "A buyer who declines the main offer is not declining the category, only the size of the commitment, so a smaller, cheaper version converts that decline into a transaction and preserves a customer to sell to again.",
+      "evidence": "Assertion with the gum and whiteboard illustrations. No data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable principle class but duplicated twice over, and in more calibrated form, by an existing skill."
+      },
+      "verdict": "reject",
+      "rejectReason": "marketing-upsell-offer-design already names the downsell in its four-offer-type audit (single unit when the bundle is declined) and specifies the decline trigger plus the ~15%-of-order-value price ratio calibrated to a $50.46 AOV. This excerpt is the same idea with no calibration.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 25,
+          "label": "part 2 of 4"
+        },
+        {
+          "candidateIndex": 29,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Sell the vacation, not the airport — talk about the destination and what life looks like at the goal, not the product's steps, features, or the unpleasant parts of the process.",
+      "mechanism": "Buyers care about their own problems and their end state, not your product; they only care about the product insofar as they are convinced it delivers the outcome, so dwelling on process detail spends attention on the thing they least want.",
+      "evidence": "Extended Maui-versus-TSA metaphor plus the claim that this is where salespeople lose deals by monologuing. Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable positioning principle, but duplicative and partly counterproductive in a saturated category."
+      },
+      "verdict": "reject",
+      "rejectReason": "Restates two entries already in marketing-conversion-copy-angles (write to a primal desire with the product as mechanism; lead with the transformation/after-state). Worse, in a saturated natural-deodorant category the named mechanism is what differentiates and marketing-awareness-level-messaging already flags that plain benefit claims no longer land, so a 'don't explain the product' rule would work against what this business needs.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 26,
+          "label": "part 2 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Audit any product against eight distinct levers for making a customer worth more — raise the price, get them to buy again over time, get them to buy more today, sell a higher-quality version, cut your own cost per unit, cross-sell a complement, sell a smaller quantity as a downsell, sell a lower-quality economy version — and as a beginner work the three that require nothing new from you: charge more, sell more today, get them to buy again.",
+      "mechanism": "Lifetime value is not one number but a set of independently movable inputs. Three of the eight (price, quantity today, repurchase) require no new product, no new supplier and no new operational surface, so they convert into revenue immediately; the other five all add product or negotiation work and are therefore later moves. Naming all eight prevents the default reflex of inventing a new product when an existing one has unexploited configurations.",
+      "evidence": "Taxonomy asserted and then applied twice as a worked demonstration — gum priced up in 20% steps, and a whiteboard walked through all eight levers (more whiteboards over time, five today, wood instead of metal, no logo, cheaper manufacturing, paper rolls, one instead of five, flimsier metal). No conversion or revenue data.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Durable principle class (offer and pricing logic), so age is irrelevant despite the 2024 recording. Genuinely useful here as a prioritization filter rather than a new mechanism: with ~54 orders/month, no ad budget and no team, the three no-new-product levers are exactly what the Offer/AOV stage of the gated sequence can reach, and the enumeration is a direct corrective to launching SKU 13. It overlaps 'don't add products, add ways to offer' in marketing-offer-construction, which is why it belongs there as an eight-item checklist under that existing rule rather than as its own skill; the additive part is that price and repurchase frequency sit in the same list as bundling, so a price change is considered alongside a bundle instead of forgotten. Held at 7 because five of the eight levers are already owned elsewhere (cross-sell and downsell by marketing-upsell-offer-design, repurchase cadence by marketing-retention-offers) or are operational rather than marketing (cost per unit)."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-offer-construction",
+        "action": "edit",
+        "description": "Add an eight-lever LTV audit checklist under the existing 'don't add products' rule, flagging the three levers (price, quantity today, repurchase frequency) that require nothing new from the operator as the ones to work first."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 27,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Test price upward in small committed increments — for every five sales that close without resistance, raise the price 20% and keep going until buying stops, then pick the price where gross profit times conversion rate is highest — and never drop the price to save a sale mid-test.",
+      "mechanism": "Most sellers guess a price once and never revisit it, usually low. Stepping upward in fixed increments against a fixed sample size turns pricing into a series of cheap, bounded experiments where the downside per step is five orders, and evaluating on gross profit times conversion rate (not units sold) stops the operator from mistaking volume for money. Committing to the stated sample matters because discounting mid-test destroys the only signal the test was supposed to produce and trains buyers to wait.",
+      "evidence": "Worked arithmetic only — $5 gum stepped to $6, then $7.20, with the instruction to keep going and 'do the math'. Practitioner assertion, no case data, no mention of how conversion rate is actually observed at small volumes.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable pricing logic, so age is not the limiter. Unusually workable at this scale: five Shopify orders is a matter of days at ~54 orders/month, so the sample unit is small enough to actually run, and revenue is the prime directive with price as one of only two multiplicands available without new traffic. It also reinforces the existing 'fund the premium by raising price' rule with a concrete procedure. Capped at 6 for two real limits: the 20% step is far too coarse for a $12 deodorant in a saturated category where Native and Dr. Squatch set the visible comparison price, so steps here should be small; and on Amazon (~$1,800/mo, the larger channel) price moves interact with Buy Box and ranking, so the escalation belongs on Shopify first. The 'never discount to save a sale' half also partly restates the anti-discount framing already in this skill."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-offer-construction",
+        "action": "edit",
+        "description": "Add a stepped price-escalation procedure: raise price in small fixed increments after every N frictionless orders on Shopify, judge on gross profit × conversion rate rather than units, and never discount mid-test."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 28,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Build a deliberately lower-quality economy version of the product — cheaper ingredients, an older model, a stripped-down service tier — as another way to capture buyers who won't pay full price.",
+      "mechanism": "Enumerating every component and standard in the offer reveals attributes that can be dialled down to hit a lower price point without discounting the flagship, so the lower price is earned by a real reduction rather than given away.",
+      "evidence": "Assertion with service examples (junior reps, chat-only support, no live calls) and physical-product examples (cheaper ingredients, older model). No data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "No honest translation for this catalog; it attacks the one thing differentiating the brand."
+      },
+      "verdict": "reject",
+      "rejectReason": "Real Skin Care's positioning in a saturated category rests on the formula — the mechanism-led angle a mature category demands — so a cheaper-ingredient variant attacks its only differentiator, and a 12-SKU solo operation cannot absorb a second formulation, packaging run and listing set. The only legitimate low-price entry here is a smaller size or single unit, which is a quantity move already covered elsewhere.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 30,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Fix the leaky bucket before pouring in more customers — plug retention first, then acquisition compounds instead of draining out.",
+      "mechanism": "New customers cannot accumulate in a business that loses them, so acquisition spend on an unfixed retention problem buys volume that immediately leaves; fixing retention first makes every subsequent acquisition dollar compound.",
+      "evidence": "Physical bucket demonstration with water; assertion, no figures.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable principle and correct here, but it is literally the already-encoded operating reality."
+      },
+      "verdict": "reject",
+      "rejectReason": "'Retention is the binding constraint, not traffic' and the Tracking → CRO → Offer/AOV → Traffic gate are already encoded, and the mechanisms that act on retention live in marketing-retention-offers, marketing-post-purchase-onboarding and marketing-lifecycle-email-flows. Recording it again adds a metaphor and no mechanism.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 34,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "When someone doesn't do what you asked, diagnose against the Management Diamond — they didn't know that you wanted it, didn't know how, didn't know when by, didn't know why, or something was blocking them — and solve the specific gap rather than blaming the person.",
+      "mechanism": "Reframing non-performance as a missing input rather than a character flaw makes the conversation productive and surfaces solvable constraints (the Google Fiber anecdote: the editors were willing and able but the office internet was too slow).",
+      "evidence": "Framework asserted from years of practice, plus two anecdotes — the slow-internet editors and a sales rep who simply disliked the job.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "People management with nobody to manage."
+      },
+      "verdict": "reject",
+      "rejectReason": "Real Skin Care is a solo operator with no team, agency or contractors, so there is no one this framework applies to, and it has no honest translation to an ecommerce catalog.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 35,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Transfer any skill to a hire with the three Ds — document the process as a step-by-step checklist, demonstrate it in front of them using the document, then have them duplicate it in front of you using the same document.",
+      "mechanism": "Founders are unconsciously competent, so the failure to delegate is a documentation deficit on their side; a checklist that visibly produces the result builds trust in the document rather than in the founder, which is what makes the skill transferable.",
+      "evidence": "Asserted from practice; no data or named case.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Presupposes a hire to train."
+      },
+      "verdict": "reject",
+      "rejectReason": "No team, agency or media buyer to document for, and the tactic says nothing about what to put on a product page, listing or email.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 36,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Balance the business across three pillars — acquisition, delivery, and operations — and only take on a partner who supplies a leg you lack (a skill, time, or capital), because two people who love the same function tip the tripod over.",
+      "mechanism": "A company's capacity is bounded by the cumulative knowledge inside it, so hiring or partnering for functions you lack raises the ceiling; over-indexing two people on the same pillar leaves the other two unsupported and the structure collapses.",
+      "evidence": "Tripod and mannequin props, the Steve Jobs 'built the team that built the iPhone' assertion, and general observation about buddy partnerships. No data.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Org design and equity allocation for a company with staff; none exists here."
+      },
+      "verdict": "reject",
+      "rejectReason": "A solo operator at $2,700/mo has no partner search, functional directors, or hiring budget, and nothing here translates to a product page, listing, or email flow.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 37,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Build brand and product differentiation as leverage — a printed, branded t-shirt sells at $30 where a blank one sells at $5, so the same ad and the same ad dollars produce more clicks, more sales, and tolerance for a much higher price.",
+      "mechanism": "Recognition, trust and visual distinctiveness act as a multiplier on every acquisition dollar: more people click an identical impression, more of those clickers convert, and they accept a higher price, so the same spend returns more.",
+      "evidence": "Side-by-side prop comparison of a blank shirt and a branded/printed shirt with hypothetical $5 vs $30 prices, plus an assertion that his own business is built on brand. No spend, CTR, or conversion figures.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable principle class, so age is not the issue — the problem is that no executable mechanism is stated and the additive part needs capital and a designer."
+      },
+      "verdict": "reject",
+      "rejectReason": "Describes brand equity as an outcome without naming a single action a solo operator could execute this week, and its measurement surface (ad CTR and CVR) sits behind the traffic gate. The transferable half — be non-comparable so you can charge more — is already owned by marketing-offer-construction's de-commoditization and 'fund the premium by raising price' rules; the genuinely additive part (redesign product and packaging to be visually distinctive) is a capital-and-designer ask that is out of reach at ~$2,700/mo and rests on one hypothetical t-shirt.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 38,
+          "label": "part 3 of 4"
+        },
+        {
+          "candidateIndex": 41,
+          "label": "part 4 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Prefer forms of leverage where work is done once and consumed many times — write code once and millions use it, write a book once and it keeps selling.",
+      "mechanism": "Leverage is output per unit of input; assets decouple the two, so effort spent building a reusable asset returns indefinitely while effort spent on one-off labour returns once.",
+      "evidence": "Assertion with a physical lever prop and the code/book examples; the excerpt is cut off mid-example.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable principle class but no artifact, surface, or test is named."
+      },
+      "verdict": "reject",
+      "rejectReason": "No mechanism specific enough to act on, it collides with the operating reality that revenue rather than asset-building is the prime directive, and the closest usable version (build reusable templates and flows once) is already the explicit logic of marketing-email-design-production's persisted brand kit and reusable email skeleton.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 39,
+          "label": "part 3 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Run a common factors analysis: put your top 10% and bottom 10% of comparable assets side by side — content pieces, ads, customers, sales call recordings — and name the discrepancies between them, because those discrepancies are the transferable skill.",
+      "mechanism": "Doing volume produces data; the data only becomes skill when you close the feedback loop by contrasting winners against losers. The differences between the best and worst performers isolate the variable that is actually doing the work, so you can deliberately make more of what wins and less of what doesn't, instead of averaging across everything.",
+      "evidence": "Assertion from personal practice — he says it is how he learns things nobody teaches, and applies it to content, ads, customer avatars, and sales scripts. No worked example, no numbers, no controlled comparison.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable-principle class (a learning/feedback loop, not a platform mechanic), so age is irrelevant. Executable today at zero cost on two surfaces a solo operator actually has: Klaviyo campaign history (which sends earned opens and clicks vs. which died) and Shopify order history (what the repeat buyers who drove 45–52% of revenue have in common versus one-and-done buyers). Capped at 5 because the deciles are tiny here — ~54 orders/month, 12 SKUs, a small list, and no working attribution — so every conclusion is directional judgement rather than a finding, and the ad-and-content version of the exercise needs volume this business does not have. It also partly overlaps the top-customer identification already in marketing-retention-offers and the winner-dissection rule parked in marketing-paid-acquisition-scaling; the additive part is the explicit bottom-decile contrast, which neither owns."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-performance-pattern-analysis",
+        "action": "create",
+        "description": "Contrast the top and bottom deciles of comparable assets (email campaigns, product pages, repeat vs. one-and-done buyers) and name the discrepancies to isolate which variable is doing the work, treating conclusions at low volume as directional."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 40,
+          "label": "part 4 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Work = volume × leverage, and beginners have no leverage, so compensate with raw volume — a thousand cold calls, a thousand cold emails, a thousand pieces of content — because volume is what builds the skill that later becomes leverage.",
+      "mechanism": "Reps improve skill, skill increases output per unit of effort, higher output makes the work more enjoyable, which produces more reps — a virtuous cycle. You cannot work smart until you have worked hard enough to know what smart looks like.",
+      "evidence": "Analogy (a cold caller with 10 years of practice beats a beginner on the same 100 calls) and a physical-effort analogy. Assertion only, no data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Effort framing with no stated marketing mechanism, and actively wrong for this constraint order."
+      },
+      "verdict": "reject",
+      "rejectReason": "Names no artifact, surface, or test, and 'do a thousand of them' is wrong guidance for a business whose binding constraint is retention rather than traffic and whose paid spend is gated behind tracking, CRO and offer work — more volume on an unconverting page or untracked channel produces cost, not learning.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 42,
+          "label": "part 4 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Stay ruthlessly focused on one business and refuse the 'woman in the red dress' — ignore the 'average millionaire has seven income streams' advice and keep doubling down on the thing already working, because diversification lowers returns and restarting destroys compounding.",
+      "mechanism": "Progress compounds only if uninterrupted; restarting resets you to year one of a new curve while the abandoned curve would have kept accelerating, and going from $10M to $15M is far easier than 0 to $5M. The seven-streams statistic confuses sequence with cause: diversification is what wealthy people do after concentration made them wealthy.",
+      "evidence": "Charlie Munger paraphrase, a Steve Jobs anecdote, a five-stage 'valley of despair' diagram, a hand-drawn compounding chart, and a Bill Gates vs. Steve Ballmer share-retention comparison with no sourced figures. Assertion.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Durable-principle class, and the honest ecommerce translation — don't launch SKU 13, don't open a new channel, keep working the existing catalog — is exactly the tactic already adopted at 8/10 in marketing-offer-construction as an explicit gate on catalog expansion. Everything beyond that translation is career-choice and wealth-allocation mindset with no marketing surface attached."
+      },
+      "verdict": "reject",
+      "rejectReason": "The usable translation duplicates the existing 8/10 rule 'don't add products, add ways to offer the products you already have', which already states the catalog-expansion gate; the remainder is personal focus and wealth-allocation framing with no surface, asset, or buyer behaviour attached.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 43,
+          "label": "part 4 of 4"
+        },
+        {
+          "candidateIndex": 44,
+          "label": "part 4 of 4"
+        }
+      ]
+    },
+    {
+      "claim": "Define your relationship with your goals by what you are willing to sacrifice to keep them — filter people and commitments by whether they make goal achievement more or less likely — and play infinite games, because the point of business is to stay in business.",
+      "mechanism": "Outsized returns come from outsized sacrifice; treating growth as an endless learning game rather than a finish line keeps you improving indefinitely.",
+      "evidence": "Personal narrative about his own $1M / $100M / $1B goals and a conversation with his wife. Assertion only.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Pure motivational framing with no mechanism, artifact, or surface."
+      },
+      "verdict": "reject",
+      "rejectReason": "Cannot be executed, measured, or applied to a product page, listing, email flow, or offer.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 45,
+          "label": "part 4 of 4"
+        }
+      ]
+    }
+  ]
+}

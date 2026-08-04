@@ -1,6 +1,6 @@
 ---
 name: marketing-retention-offers
-description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, placing a reward just past the churn point, keeping recurring billing from failing on expired or declined cards, winning back customers who lapsed months ago, cultivating the top repeat buyers by hand, and answering a refund request with store credit instead of cash.
+description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, placing a reward just past the churn point, winning back customers who lapsed months ago, cultivating the top repeat buyers by hand, keeping a note on every customer so support never makes them repeat themselves, and answering a refund request with store credit instead of cash.
 ---
 
 # Retention Offers
@@ -80,3 +80,13 @@ description: Use when the goal is a second or repeat purchase from someone who a
 Three limits. The standing discount code is **permanent margin** against a $50.46 AOV and must be sized from landed cost. Amazon buyers (~$1,800/mo, the larger channel) cannot be contacted this way at all. And the "your best customer is a different persona than you assumed" claim is a **prompt to check actual Shopify order history**, not a conclusion to act on — verify it against `personas.json` before rewriting anything.
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
+
+## Never make a customer repeat themselves — keep a note per customer and open every reply by referencing what they already told you.
+
+**Why it works:** Recapping a customer's own stated situation back to them signals that the business is organised and paying attention, which raises satisfaction and the odds they buy again. Making them re-explain signals the opposite, and it costs goodwill at precisely the moment they are already frustrated. In a multi-person shop this means notes travel down the handoff chain (setter → sales → onboarding 1 → onboarding 2); solo, it means keeping and re-reading your own notes before you answer.
+
+**Evidence offered:** Assertion plus the described handoff chain, with the explicit note that a beginner taking all the calls himself should at least keep and review his own notes. No data.
+
+**Fit here (5/10):** The solo-operator version is exactly the one the creator names, and it is free: one note per customer recording their prior order, scent, skin reaction and the issue they raised last time, and every support reply opening by referencing it. At ~54 orders/month a single person can genuinely maintain this, and with repeat customers at 45–52% of revenue, goodwill inside a support thread lands directly on the binding constraint. It is the service-layer complement to hand-cultivating the top repeat buyers, and it makes the store-credit save far more convincing — "you told me the switch got worse around week two" beats a generic canned reply. Capped at 5 because it is a service habit rather than a revenue mechanism, it has no effect on the ~$1,800/mo Amazon channel where buyer identity is largely hidden, and the multi-person handoff half of the tactic is irrelevant with no team.
+
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*

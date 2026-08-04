@@ -1,6 +1,6 @@
 ---
 name: marketing-conversion-copy-angles
-description: Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, one-thing simplicity promises, curiosity setups that pay off on the page, and who the claim is attributed to.
+description: Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, walking the buyer through what they already tried and why it failed, three-pillar pitches explained by analogy, one-thing simplicity promises, curiosity setups that pay off on the page, and who the claim is attributed to.
 ---
 
 # Conversion Copy Angles
@@ -61,7 +61,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Evidence offered:** Points to Brex's ad account as the exemplar across multiple formats; otherwise assertion.
 
-**Fit here (6/10):** Durable positioning principle, free to apply to PDP hero copy, Amazon bullets, and email subject lines. Real Skin Care's buyer is often someone whose previous natural deodorant failed, so 'a day where you stop checking your shirt' is a legitimate lead. Scored mid rather than high because the existing product-image-stack skill already covers transformation as a visual format — this is the copy-order variant, which is why it lives here rather than in its own skill. Note the tension with negative framing below: fear-first and after-state-first are competing openings, so pick by audience — negative framing for buyers still unaware of the stakes, transformation-first for buyers already burned by a previous attempt.
+**Fit here (6/10):** Durable positioning principle, free to apply to PDP hero copy, Amazon bullets, and email subject lines. Real Skin Care's buyer is often someone whose previous natural deodorant failed, so 'a day where you stop checking your shirt' is a legitimate lead. Scored mid rather than high because the existing product-image-stack skill already covers transformation as a visual format — this is the copy-order variant, which is why it lives here rather than in its own skill. Note the tension with negative framing below: fear-first and after-state-first are competing openings, so pick by audience — negative framing for buyers still unaware of the stakes, transformation-first for buyers already burned by a previous attempt. When you pick transformation-first for a burned buyer, the prior-attempt walkthrough below is the body copy that follows the headline.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
@@ -71,9 +71,29 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Evidence offered:** Assertion only.
 
-**Fit here (6/10):** Durable copy principle, zero cost. Fits the category (aluminum, ruined shirts, natural deodorant that quits by noon) and is testable on Amazon bullets and PDP copy without any ad spend or traffic. Treat as the alternative opening to transformation-first, not a companion to it — running both in one headline dilutes each.
+**Fit here (6/10):** Durable copy principle, zero cost. Fits the category (aluminum, ruined shirts, natural deodorant that quits by noon) and is testable on Amazon bullets and PDP copy without any ad spend or traffic. Treat as the alternative opening to transformation-first, not a companion to it — running both in one headline dilutes each. Note also that this names a *feared future* outcome; the prior-attempt walkthrough below names an *already-experienced* failure, which is the version to reach for once the buyer has tried and been let down.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
+## Walk the buyer through what they have already tried and how it went — then associate the parts they liked with your solution and the parts they disliked with the specific reason it failed and why yours is different.
+
+**Why it works:** Prior failed attempts are where the buyer's frustration already lives, so surfacing them widens the felt gap between where they are and where they want to be, which is the motivation to act. Splitting the prior attempt into 'the part that was right' and 'the part that broke' lets you inherit the credibility of the category while attributing the failure to a named cause your product removes — so you are not asking them to abandon the belief that got them here, only the product that let them down.
+
+**Evidence offered:** Described as the 'pain cycle' step of his CLOSER framework, refined over 4,000+ consults: 'what have you done before, how'd that work out for you' repeated to keep expanding the gap. Assertion, no data.
+
+**Fit here (6/10):** Durable persuasion principle, age irrelevant, and it has an unusually exact form here: the natural-deodorant buyer has almost always tried another natural deodorant that quit by noon or burned with baking soda. Copy that says 'you were right to get off aluminium — the problem was X, and here is what we do instead' does both jobs at once and is free to write on the PDP, in Amazon bullets and in the non-buyer nurture flow. In a saturated category this is also the natural vehicle for the named mechanism the sophistication rule demands. Held at 6 because it partially overlaps negative framing and transformation-first ordering above — treat it as the body-copy expansion of whichever opening you chose, not a third competing headline — and because attributing a competitor's failure to a specific cause in body care must stay to defensible formulation facts, not invented ones.
+
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
+
+## Pitch exactly three differentiating pillars, each one or two sentences, each explained by an analogy to something the buyer already understands — and keep the pitch about their destination, not the product's internals.
+
+**Why it works:** A long monologue about product detail loses the sale because the buyer cares about their own problem, not your mechanism. Capping it at three pillars keeps the argument holdable, and an analogy transfers understanding by mapping the unfamiliar onto something familiar, so a mechanism claim becomes believable without a technical explanation the buyer has to work through.
+
+**Evidence offered:** Worked examples — SEO explained as a paycheck versus an investment account that compounds, and a mortgage-broker lead script built on exactly three pillars (exclusive, timely, qualified). Practitioner assertion from his own scripts, no conversion data.
+
+**Fit here (6/10):** Durable copy-construction principle, age irrelevant, and free to apply to PDP body copy, Amazon A+ blocks and the non-buyer nurture emails. The three-pillar cap fits how much a shopper actually reads and lines up with the existing 'cap the us-vs-them graphic at three or four attributes you win on' rule, so it reinforces rather than contradicts. The analogy device is the additive part — nothing else in the copy skills covers explaining a mechanism by comparison, and natural deodorant needs exactly that for the transition period and for why an aluminium-free formula works differently. Held at 6 because analogies in body care slide easily into implied physiological claims, so each one has to be paired with the specificity rule above and kept descriptive, and at ~54 orders/month the choice of three pillars is judged rather than tested.
+
+*Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
 ## Use the 'this one thing' hook — promise that a single change or product resolves the problem.
 
@@ -87,7 +107,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 ## Raise the authority behind the same message — attribute the claim to a credentialed source and place it in a context that itself signals authority.
 
-**Why it works:** The identical sentence carries different weight depending on who says it and where. A credential plus an authority-signaling setting answers the 'why should I trust this person' objection that the message itself can never answer on its own. This is the attribution lever, orthogonal to every angle above: after you have chosen the angle (taboo, negative framing, one-thing) and tightened the numbers, decide whose mouth the line comes out of.
+**Why it works:** The identical sentence carries different weight depending on who says it and where. A credential plus an authority-signaling setting answers the 'why should I trust this person' objection that the message itself can never answer on its own. This is the attribution lever, orthogonal to every angle above: after you have chosen the angle (taboo, negative framing, prior-attempt walkthrough, one-thing) and tightened the numbers, decide whose mouth the line comes out of.
 
 **Evidence offered:** Two Pet Lab Co. iterations of the same grass-eating angle — one with a vet filmed in a podcast room, one with a dog trainer — both described as winners. Assertion; no spend or rate breakdown.
 
@@ -121,6 +141,6 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Evidence offered:** Worked example of an accountancy firm positioning for early-stage startups seeking investment, plus a palm-reader analogy. Assertion, no data.
 
-**Fit here (7/10):** Fills a real gap: the rules here already cover calling the buyer out by name and attributing a claim to an authority, but not the idea that problem articulation itself **substitutes** for proof — which matters for a brand with dozens rather than thousands of reviews, and for any new SKU or scent with no reviews at all. The natural-deodorant switch has an unusually detailed, nameable problem sequence (the two-week transition, the mid-afternoon check, residue on a dark shirt), and `marketing-problem-solution-inventory` is where that sequence gets enumerated. Writing it out on the PDP and in Amazon bullets is free and needs no traffic.
+**Fit here (7/10):** Fills a real gap: the rules here already cover calling the buyer out by name and attributing a claim to an authority, but not the idea that problem articulation itself **substitutes** for proof — which matters for a brand with dozens rather than thousands of reviews, and for any new SKU or scent with no reviews at all. The natural-deodorant switch has an unusually detailed, nameable problem sequence (the two-week transition, the mid-afternoon check, residue on a dark shirt), and `marketing-problem-solution-inventory` is where that sequence gets enumerated. The prior-attempt walkthrough above is the sharpest form of this articulation, since the failed previous product is the most specific detail the buyer owns. Writing it out on the PDP and in Amazon bullets is free and needs no traffic.
 
 *Source: Exposure Ninja — "COMPLETE Revenue-increasing Conversion Rate Optimisation (CRO) Course" (rfdkMStaBW0)*
