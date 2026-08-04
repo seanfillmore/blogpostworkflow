@@ -3,7 +3,10 @@ import { test } from 'node:test';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { slugFromMetaPath } from '../../agents/publisher/index.js';
+// Lives in lib/posts.js rather than the agent: it is a posts-layout concern, and
+// two agents got it wrong independently — publisher derived the slug as "meta",
+// and blog-post-verifier was then handed that same path where it wanted a slug.
+import { slugFromMetaPath } from '../../lib/posts.js';
 
 const AGENT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'agents', 'publisher', 'index.js');
 
@@ -48,6 +51,15 @@ test('slugFromMetaPath handles an absolute path', () => {
 
 test('slugFromMetaPath tolerates a null meta', () => {
   assert.equal(slugFromMetaPath('data/posts/my-post/meta.json', null), 'my-post');
+});
+
+// blog-post-verifier documents a bare <slug> and matches on article handle. It was
+// handed data/posts/<slug>/meta.json and reported "No article found matching slug:
+// data/posts/.../meta.json". Normalizing here means either shape works.
+test('slugFromMetaPath passes a bare slug straight through', () => {
+  assert.equal(slugFromMetaPath('benefits-of-using-coconut-oil-lotion', null), 'benefits-of-using-coconut-oil-lotion');
+  assert.equal(slugFromMetaPath('', null), '');
+  assert.equal(slugFromMetaPath(null, null), '');
 });
 
 test('importing the module does not execute the agent', () => {

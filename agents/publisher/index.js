@@ -23,7 +23,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
-import { getContentPath, getMetaPath, getEditorReportPath } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath } from '../../lib/posts.js';
 import { isPassing } from '../../lib/editor-remediation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,23 +38,6 @@ try {
 
 // ── args ──────────────────────────────────────────────────────────────────────
 
-/**
- * The post slug for a given meta.json path.
- *
- * The old fallback was `basename(metaPath, '.json')`, written for the flat layout
- * (`data/posts/<slug>.json`). Under the per-directory layout the fallback evaluates
- * to the literal string "meta", so the agent went looking for
- * `data/posts/meta/content.html` and failed. 6 of 192 posts carry no `slug` field
- * and hit this the moment they are published by path.
- *
- * Both layouts are still supported: a `meta.json` filename means the slug is the
- * parent directory, anything else means the filename itself is the slug.
- */
-export function slugFromMetaPath(metaPath, meta) {
-  if (meta?.slug) return meta.slug;
-  const base = basename(metaPath, '.json');
-  return base === 'meta' ? basename(dirname(metaPath)) : base;
-}
 
 // Declared here rather than beside main(): the usage check below calls
 // process.exit(1) at module scope, so an import would take the host process down
@@ -334,7 +317,7 @@ async function main() {
     const { spawnSync } = await import('node:child_process');
     const result = spawnSync(
       process.execPath,
-      [join(ROOT, 'agents', 'blog-post-verifier', 'index.js'), `data/posts/${slug}/meta.json`],
+      [join(ROOT, 'agents', 'blog-post-verifier', 'index.js'), slug],
       { stdio: 'inherit', cwd: ROOT }
     );
     if (result.status !== 0) {
