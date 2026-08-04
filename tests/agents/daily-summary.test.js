@@ -46,6 +46,30 @@ test('buildDigestHtml: quiet day collapses to a single "nothing moved" line', ()
   assert.ok(/1 task ran/.test(html), 'activity line still present');
 });
 
+// LLM spend was the last read escaping dataRoot: readUsage/listUsageDates resolve a
+// module-level USAGE_DIR, so the cost section rendered from the real repo no matter
+// what root was passed. On the server that section fires (spend is over the $20/wk
+// target), which kept the quiet-day assertion above failing there even after the
+// other seven reads were injectable.
+test('buildDigestHtml: LLM cost is read from the injected root, and only shows over budget', () => {
+  const root = mkdtempSync(join(tmpdir(), 'digest-cost-'));
+  const usage = join(root, 'data', 'reports', 'llm-usage');
+  mkdirSync(usage, { recursive: true });
+  // Token fields are deliberately omitted. recordCost recomputes cost from tokens
+  // whenever any token field is present and only falls back to est_cost_usd when
+  // none are — so a record carrying both would price off the model table and make
+  // this fixture's total depend on pricing data that changes.
+  const rec = (cost) => JSON.stringify({ ts: '2026-07-20T10:00:00Z', agent: 'spendy', model: 'claude-opus-5', est_cost_usd: cost });
+  // $30 in one day → a run-rate far above the $20/wk target.
+  writeFileSync(join(usage, '2026-07-20.jsonl'), [rec(30)].join('\n') + '\n');
+
+  const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: root });
+
+  assert.ok(html.includes('LLM Cost'), 'over-budget spend from the injected root renders');
+  assert.ok(!html.includes('Nothing moved the needle'), 'over-budget spend is a needle-mover');
+});
+
 // The counterpart. This is exactly the server's state — data/meta-tests holds 9
 // active tests, so abTestSection renders and the day is never quiet there. Pinning
 // it stops the quiet-day assertion above from silently becoming unreachable.
