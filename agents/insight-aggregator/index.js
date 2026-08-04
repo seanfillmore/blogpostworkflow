@@ -253,6 +253,63 @@ const AGENT_SECTIONS = [
 
 // ── prompt ────────────────────────────────────────────────────────────────────
 
+/**
+ * Input budget. This agent was the fleet's largest LLM line item — ~370,000 input
+ * tokens per call, 41% of every input token the fleet spent, $9.72 of a $26.74
+ * week — because it read every changed report in full and the only guard was a
+ * console warning that printed and then sent the request anyway.
+ *
+ * Chars rather than tokens because the loader has no tokenizer and a 4-chars-per-
+ * token estimate is what the agent already used. TOTAL is the old 150k-token
+ * warning threshold expressed in chars; PER_REPORT keeps one runaway file from
+ * consuming the whole budget.
+ */
+export const PER_REPORT_CHAR_CAP = 12_000;   // ~3k tokens
+export const TOTAL_CHAR_CAP = 600_000;       // ~150k tokens
+
+/**
+ * Fit reports inside the budget: truncate any single oversized report, then drop
+ * whole reports oldest-first until the total fits. Returns what was dropped and
+ * how many were truncated so the caller can log it — a silent cap would read as
+ * "the model saw everything" when it did not.
+ *
+ * Newest-first is the right eviction order here: recurring patterns are what this
+ * agent extracts, and a pattern still live shows up in recent reports.
+ */
+export function capReports(reports) {
+  const dropped = [];
+  let truncated = 0;
+
+  const sized = reports.map((r) => {
+    if (r.content.length <= PER_REPORT_CHAR_CAP) return r;
+    truncated += 1;
+    const omitted = r.content.length - PER_REPORT_CHAR_CAP;
+    return {
+      ...r,
+      content: `${r.content.slice(0, PER_REPORT_CHAR_CAP)}\n\n[truncated — ${omitted.toLocaleString()} further characters omitted]`,
+    };
+  });
+
+  const total = sized.reduce((n, r) => n + r.content.length, 0);
+  if (total <= TOTAL_CHAR_CAP) return { reports: sized, dropped, truncated };
+
+  // Walk newest-first, keeping what fits; anything that doesn't is dropped.
+  const keep = new Set();
+  let used = 0;
+  for (const r of [...sized].sort((a, b) => (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0))) {
+    if (used + r.content.length <= TOTAL_CHAR_CAP) {
+      keep.add(r);
+      used += r.content.length;
+    } else {
+      dropped.push(r.path);
+    }
+  }
+
+  // Re-emit in the caller's original order — eviction order is an implementation
+  // detail and should not reshuffle the prompt.
+  return { reports: sized.filter((r) => keep.has(r)), dropped, truncated };
+}
+
 function buildPrompt(reports) {
   const reportSections = reports.map((r) =>
     `### Report: ${r.path}\n\n${r.content}`
@@ -338,16 +395,20 @@ async function run() {
   }
   console.log(`  Loaded ${reports.length} new/changed report(s) from ${[...new Set(reports.map((r) => r.agentDir))].join(', ')}`);
 
-  // Rough token estimate (4 chars ≈ 1 token) — warn if very large
-  const totalChars = reports.reduce((sum, r) => sum + r.content.length, 0);
-  const estTokens = Math.round(totalChars / 4);
-  console.log(`  Estimated input size: ~${estTokens.toLocaleString()} tokens`);
-  if (estTokens > 150000) {
-    console.warn('  Warning: large input — consider trimming older reports if this times out');
+  // Enforce the input budget. This used to be a warning that printed and then
+  // sent the request regardless, which is how a single call reached ~370k tokens.
+  const rawChars = reports.reduce((sum, r) => sum + r.content.length, 0);
+  const { reports: budgeted, dropped, truncated } = capReports(reports);
+  const totalChars = budgeted.reduce((sum, r) => sum + r.content.length, 0);
+  console.log(`  Estimated input size: ~${Math.round(totalChars / 4).toLocaleString()} tokens (raw ~${Math.round(rawChars / 4).toLocaleString()})`);
+  if (truncated) console.log(`  Truncated ${truncated} oversized report(s) to ${PER_REPORT_CHAR_CAP.toLocaleString()} chars each.`);
+  if (dropped.length) {
+    console.log(`  Dropped ${dropped.length} report(s) to stay inside the input budget (oldest first):`);
+    for (const p of dropped) console.log(`    - ${p}`);
   }
 
   console.log('\nAsking Claude to analyze patterns...');
-  const prompt = buildPrompt(reports);
+  const prompt = buildPrompt(budgeted);
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -365,7 +426,10 @@ async function run() {
   writeFileSync(FEEDBACK_PATH, header + feedback, 'utf8');
 
   // Save manifest so next run skips unchanged reports
-  saveManifest(reports);
+  // Only the reports that actually reached the model. Marking a dropped report
+  // processed would retire it permanently — the mtime check would skip it on every
+  // later run, so a report evicted for budget would never be analyzed at all.
+  saveManifest(budgeted);
 
   console.log(`\nFeedback written to: ${relative(ROOT, FEEDBACK_PATH)}`);
 
@@ -378,7 +442,13 @@ async function run() {
   console.log('\nDone.');
 }
 
-run().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Only run when invoked directly. Without this guard, importing anything from
+// this module executes the whole agent against live reports and the Anthropic
+// API, and its process.exit(1) takes the host process down with it.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  run().catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

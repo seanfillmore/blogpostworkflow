@@ -630,7 +630,14 @@ NOTES: [2-4 sentences]${fb ? `\n\nSTANDING FEEDBACK — apply in addition to abo
     () => client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1800,
-      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+      // No cache_control. This carried `{ type: 'ephemeral' }` for a long time and
+      // it never once cached: the minimum cacheable prefix on Haiku 4.5 is 4,096
+      // tokens and this system prompt is ~1,210. Below the minimum the API caches
+      // nothing and reports nothing — no error, just cache_creation_input_tokens: 0
+      // on every call, which is exactly what the usage log showed across 194 calls.
+      // Padding the prompt to clear the floor would cost more than it saves, and
+      // the per-post user turn is unique anyway, so there is no prefix to reuse.
+      system: [{ type: 'text', text: systemPrompt }],
       messages: [{
         role: 'user',
         content: `POST TITLE: ${meta?.title ?? 'Unknown'}

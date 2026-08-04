@@ -207,8 +207,12 @@ if (new Date().getDay() === 0) {
   log('  shopping-calibrator: skipped (weekly, Sundays only)');
 }
 
-// Step 5c: insight aggregator — refresh writer standing rules
-runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`);
+// Step 5c: insight-aggregator moved to the Sunday block below. It was the single
+// largest line item in the fleet's LLM bill — ~370k input tokens per call, 41% of
+// all input tokens, $9.72 of a $26.74 week — because it re-reads every changed
+// report and runs daily. Its output is standing guidance other agents load at
+// startup, and guidance synthesized from a week of reports is steadier than
+// guidance that churns every morning under the writer.
 
 // Step 5c.1: keep the Winback 25% dynamic-coupon pool topped up (Klaviyo skips
 // the email at 0 codes). Cheap daily check; auto-refills + alerts when low.
@@ -277,6 +281,11 @@ if (_dow === 0 || _dow === 1 || _dow === 3 || _dow === 5) {
 // ── Weekly jobs (Sundays only) ───────────────────────────────────────────────
 if (new Date().getDay() === 0) {
   log('  Weekly jobs (Sunday):');
+
+  // Refresh the writer's standing rules once a week (moved from the daily block —
+  // see Step 5c above for why). Runs first among the weekly jobs so the rest of
+  // Sunday's work reads freshly-synthesized guidance.
+  runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`, { indent: '    ' });
 
   // Amazon explore scripts — feed the keyword-index-builder's Stage 1.
   // These run weekly because BA is multi-GB and SQP is rate-limited.
