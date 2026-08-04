@@ -56,7 +56,7 @@ const PRODUCT_ID = 'gid://shopify/Product/8566372303018';
 // "sunk-cost fatigue after spending hundreds" (3).
 const CONTENT = {
   hook:
-    "You have bought the small bottle before. It ran out in a few weeks, right about the time your skin " +
+    "You have bought one bottle before. It lasted about a month — right about the time your skin " +
     "started behaving.\nThis is ninety days of both formulas — about $1.34 a day — so you find out what " +
     "your skin does when it never runs out.",
 
@@ -64,7 +64,7 @@ const CONTENT = {
     { when: 'Month 1', title: 'Twice a day, every day',
       body: 'Lotion in the morning, cream at night. The first month is about not skipping — dry skin comes back fastest when the routine is occasional.' },
     { when: 'Month 2', title: 'You stop thinking about it',
-      body: 'Most people are through their second lotion here. This is usually where the small bottle would have run out.' },
+      body: 'Most people are into their second bottle here — past the point where a single one would have run out.' },
     { when: 'Month 3', title: 'The part you never reach',
       body: 'Third lotion, third jar. Ninety days is long enough to know whether something works, rather than guessing after two weeks.' },
   ]),
@@ -93,8 +93,8 @@ const CONTENT = {
   ]),
 
   founder_note:
-    "I made this because my own family kept running out. The small bottle is the one everybody buys first, " +
-    "and it is the one that ends before you know whether it worked.\nThree of each is what ninety days " +
+    "I made this because my own family kept running out. One bottle is what everybody buys first, " +
+    "and it ends before you know whether it worked.\nThree of each is what ninety days " +
     "actually takes. Nothing else changed — same six ingredients, same batch sizes.",
 
   rating_caption: 'Rated 4.84 from 135 reviews',
@@ -114,8 +114,9 @@ const DESCRIPTION = `<p>Ninety days of the two formulas that do the work: three 
 every day, and three 4oz Body Creams for overnight. Both are made from the same six ingredients —
 organic virgin coconut oil, organic jojoba, purified spring water, plant-based emulsifying wax,
 grapefruit seed extract and beeswax.</p>
-<p>Most people buy the small bottle, run out in a few weeks, and never find out what their skin does
-with a routine it can rely on. This is the size that answers that. Works out to about $1.34 a day.</p>
+<p>Most people buy a single bottle, run out in about a month, and never find out what their skin does
+with a routine it can rely on. Three of each is what ninety days actually takes. Works out to about
+$1.34 a day.</p>
 <p>Made for your body, not your face. Includes the 90-Day Routine &amp; Tracker and the Coconut
 Skincare Field Guide, emailed within minutes of ordering. 30-day no-questions-asked money-back
 guarantee.</p>`;
