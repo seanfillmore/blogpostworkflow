@@ -71,7 +71,7 @@ const CONTENT = {
 
   mechanism: JSON.stringify([
     { title: 'Lotion — daily, absorbs fast',
-      body: 'Lighter, for everyday use over large areas. "Dude as soon as you put it on it just ABSORBS." Answers the "natural oils sit on top like a greasy baked good" objection (5 mentions).' },
+      body: 'Lighter, for everyday use over large areas. "dude as soon as you put it on it just ABSORBS." Answers the "natural oils sit on top like a greasy baked good" objection (5 mentions).' },
     { title: 'Cream — overnight, concentrated',
       body: 'Thicker, for heels, elbows and cracked hands while you sleep. "It may be a tiny 4oz jar but has the power of a big bottle of lotion."' },
   ]),
