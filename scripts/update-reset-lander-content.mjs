@@ -88,7 +88,10 @@ const CONTENT = {
   stats: JSON.stringify([
     { value: '6', label: 'ingredients you can pronounce' },
     { value: '90', label: 'days of both formulas' },
-    { value: '4.84★', label: 'from 135 reviews' },
+    // Deliberately NOT a review stat. Judge.me already renders stars and the
+    // live count at the top of the page; restating it here created a second
+    // source that immediately drifted (ours said 135, Judge.me said 131).
+    { value: '30', label: 'day money-back guarantee' },
     { value: '$1.34', label: 'per day' },
   ]),
 
@@ -97,7 +100,9 @@ const CONTENT = {
     "and it ends before you know whether it worked.\nThree of each is what ninety days " +
     "actually takes. Nothing else changed — same six ingredients, same batch sizes.",
 
-  rating_caption: 'Rated 4.84 from 135 reviews',
+  // No number here either. Judge.me owns the count; this caption only labels
+  // the stars the hero already draws.
+  rating_caption: 'Verified buyer reviews',
 };
 
 // Objection: "CeraVe, Vanicream, Cetaphil are the default recommendation
