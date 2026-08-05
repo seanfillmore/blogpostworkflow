@@ -77,16 +77,18 @@ const CONTENT = {
   ]),
 
   ingredient_cards: JSON.stringify([
-    { name: 'Organic virgin coconut oil', role: 'Cold-pressed. The base of both formulas.' },
-    { name: 'Organic jojoba', role: 'Closest plant oil to skin\'s own sebum.' },
     { name: 'Purified spring water', role: 'What makes the lotion a lotion, not an oil.' },
-    { name: 'Plant-based emulsifying wax', role: 'Holds oil and water together. No petroleum.' },
-    { name: 'Grapefruit seed extract', role: 'The preservative — instead of parabens or phenoxyethanol.' },
-    { name: 'Beeswax', role: 'The barrier that keeps moisture in overnight.' },
+    { name: 'Organic virgin coconut oil', role: 'Cold-pressed. The base of both formulas.' },
+    { name: 'Organic jojoba', role: "Closest plant oil to skin's own sebum. In the lotion." },
+    { name: 'Organic plant-based emulsifying wax', role: 'Holds oil and water together. No petroleum.' },
+    { name: 'Organic grapefruit seed extract', role: 'The preservative — instead of parabens or phenoxyethanol.' },
+    { name: 'Organic red palm oil', role: 'In both. This is not a palm-free product, and we would rather say so.' },
+    { name: 'Organic palm stearic', role: 'Gives the cream its body. In the cream.' },
+    { name: 'Organic beeswax', role: 'The barrier that holds moisture overnight. In the cream — so not vegan.' },
   ]),
 
   stats: JSON.stringify([
-    { value: '6', label: 'ingredients you can pronounce' },
+    { value: '8', label: 'ingredients across both formulas' },
     { value: '90', label: 'days of both formulas' },
     // Deliberately NOT a review stat. Judge.me already renders stars and the
     // live count at the top of the page; restating it here created a second
@@ -98,7 +100,7 @@ const CONTENT = {
   founder_note:
     "I made this because my own family kept running out. One bottle is what everybody buys first, " +
     "and it ends before you know whether it worked.\nThree of each is what ninety days " +
-    "actually takes. Nothing else changed — same six ingredients, same batch sizes.",
+    "actually takes. Nothing else changed — same formulas, same batch sizes.",
 
   // No number here either. Judge.me owns the count; this caption only labels
   // the stars the hero already draws.
@@ -108,7 +110,7 @@ const CONTENT = {
 // Objection: "CeraVe, Vanicream, Cetaphil are the default recommendation
 // for sensitive and eczema skin" — 6 mentions, the entrenched habit to displace.
 const COMPARISON_ROWS = JSON.stringify([
-  { attribute: 'Ingredient count', us: '6', them: '20+' },
+  { attribute: 'Ingredient count', us: '8', them: '34' },
   { attribute: 'Preservative', us: 'Grapefruit seed', them: 'Parabens / phenoxyethanol' },
   { attribute: 'Fragrance', us: 'Essential oil or none', them: 'Synthetic "fragrance"' },
   { attribute: 'Mineral oil', us: 'None', them: 'Common' },
@@ -116,9 +118,10 @@ const COMPARISON_ROWS = JSON.stringify([
 ]);
 
 const DESCRIPTION = `<p>Ninety days of the two formulas that do the work: three 8oz Body Lotions for
-every day, and three 4oz Body Creams for overnight. Both are made from the same six ingredients —
-organic virgin coconut oil, organic jojoba, purified spring water, plant-based emulsifying wax,
-grapefruit seed extract and beeswax.</p>
+every day, and three 4oz Body Creams for overnight. Eight ingredients across the two
+formulas: purified spring water, organic virgin coconut oil, organic jojoba, organic plant-based
+emulsifying wax, organic grapefruit seed extract, organic red palm oil, organic palm stearic and
+organic beeswax. Not palm-free, and not vegan — the beeswax is in the cream.</p>
 <p>Most people buy a single bottle, run out in about a month, and never find out what their skin does
 with a routine it can rely on. Three of each is what ninety days actually takes. Works out to about
 $1.34 a day.</p>
