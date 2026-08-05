@@ -63,6 +63,48 @@ function injectSections(j, update = false) {
   return added;
 }
 
+/**
+ * Remove the hero's own star row.
+ *
+ * It drew 5 stars filled to `bundle.rating_value` and captioned them with
+ * `bundle.rating_count` — hand-maintained numbers that drift the moment a
+ * review lands. Judge.me's badge already renders a live rating on the same
+ * page, so this was a second, staler renderer of the same fact: the API says
+ * the lotion+cream group is 135 @ 4.84 while the badge shows 131, and our
+ * metafields had been asserting whichever was last copied by hand.
+ *
+ * Judge.me is now the only thing on the page that states a rating.
+ */
+const HERO_RATING_START =
+  '{% if section.settings.show_rating and rating_count > 0 and rating_value != blank %}';
+const HERO_RATING_ASSIGNS =
+  "assign rating_count = product.metafields.bundle.rating_count.value | plus: 0\n" +
+  '  assign rating_value = product.metafields.bundle.rating_value.value\n' +
+  '  if rating_count > 0 and rating_value != blank\n' +
+  "    assign hero_rating = rating_value | append: ' from ' | append: rating_count" +
+  " | append: ' reviews of the products inside'\n" +
+  '  endif\n';
+
+export function dropHeroRating(liquid) {
+  if (!liquid.includes(HERO_RATING_START) && !liquid.includes(HERO_RATING_ASSIGNS)) return liquid;
+
+  let out = liquid;
+  const s0 = out.indexOf(HERO_RATING_START);
+  if (s0 === -1) throw new Error('hero rating: assigns found but markup missing — inspect before proceeding');
+  const divIdx = out.indexOf('</div>', s0);
+  const endIdx = out.indexOf('{% endif %}', divIdx);
+  if (divIdx === -1 || endIdx === -1) throw new Error('hero rating: could not find the block close');
+  out = out.slice(0, s0) + out.slice(endIdx + '{% endif %}'.length);
+
+  if (!out.includes(HERO_RATING_ASSIGNS)) throw new Error('hero rating: assign block not found verbatim');
+  out = out.replace(HERO_RATING_ASSIGNS, '');
+
+  if (/bundle\.rating_(value|count)/.test(out)) {
+    throw new Error('hero rating: a reference to the rating metafields survived the edit');
+  }
+  return out;
+}
+
 // Mirrors computeStackTotals() in lib/bundle-lander.js. Change both together.
 const VALUE_STACK_LOGIC = `{%- liquid
   assign total = 0
@@ -268,7 +310,21 @@ async function main() {
     return;
   }
 
-  console.error('specify --value-stack, --sections, --sections-liquid, or --homepage');
+  if (process.argv.includes('--drop-hero-rating')) {
+    const key = 'sections/hero-landing-section.liquid';
+    const before = await getThemeAsset(themeId, key);
+    if (!before) throw new Error(`${key} not found on theme ${themeId}`);
+    const after = dropHeroRating(before);
+    if (before === after) { console.log('hero rating already removed.'); return; }
+    console.log(`${key}: ${before.length} → ${after.length} bytes`);
+    console.log('  removed the metafield-driven star row; Judge.me is now the only rating on the page');
+    if (!APPLY) { console.log('\ndry run — re-run with --apply to push.'); return; }
+    await updateThemeAsset(themeId, key, after);
+    console.log(`pushed ${key} to theme ${themeId}`);
+    return;
+  }
+
+  console.error('specify --value-stack, --sections, --sections-liquid, --homepage, or --drop-hero-rating');
   process.exit(1);
 }
 
