@@ -636,7 +636,7 @@ export async function listSubscribedProfiles(listId) {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/lib/klaviyo-profiles.test.js`
-Expected: PASS, 4 tests. Confirm `# cancelled 0`.
+Expected: PASS, 5 tests. Confirm `# cancelled 0`.
 
 - [ ] **Step 5: Write the list setup script**
 
@@ -1812,7 +1812,7 @@ export function summarizeEntrants(profiles) {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/lib/giveaway-summarize.test.js`
-Expected: PASS, 4 tests. Confirm `# cancelled 0`.
+Expected: PASS, 5 tests. Confirm `# cancelled 0`.
 
 - [ ] **Step 5: Write the report runner**
 
