@@ -1,0 +1,58 @@
+{%- comment -%}
+  Giveaway lander entry form.
+
+  Posts to a first-party subdomain, matching theme/snippets/rsc-rum.liquid. An
+  ad-blocker-filtered host would silently drop entries we paid ~$2.50 each for,
+  which is the same mistake the RUM collector already learned once.
+
+  Three fields only. Every extra field on a cold lander costs opt-in rate; the
+  survey happens on the next page, after the entry is safely recorded.
+{%- endcomment -%}
+
+{%- liquid
+  assign endpoint = 'https://entries.realskincare.com/api/giveaway'
+-%}
+
+<section class="gv-entry" id="gv-entry">
+  <h1>{{ section.settings.headline }}</h1>
+  <p class="gv-sub">{{ section.settings.subhead }}</p>
+
+  <ul class="gv-stack">
+    <li><strong>36 free bars</strong> of Pure Unscented soap, over 3 years</li>
+    <li><strong>3 Sensitive Skin Moisturizing Sets</strong></li>
+    <li>A <strong>$536</strong> prize. Entering is free.</li>
+  </ul>
+
+  <form class="gv-form" novalidate>
+    <label for="gv-email">Email</label>
+    <input id="gv-email" name="email" type="email" required autocomplete="email">
+
+    <label for="gv-first">First name</label>
+    <input id="gv-first" name="firstName" type="text" required autocomplete="given-name">
+
+    <label for="gv-ref">Referred by a friend? Their email <span>(optional)</span></label>
+    <input id="gv-ref" name="referredBy" type="email" autocomplete="off">
+
+    <button type="submit">Enter free</button>
+    <p class="gv-error" hidden role="alert"></p>
+    <p class="gv-fine">
+      No purchase necessary. Purchases do not earn entries.
+      <a href="/pages/giveaway-official-rules">Official rules</a>.
+      This promotion is not sponsored, endorsed, or administered by Meta.
+    </p>
+  </form>
+</section>
+
+<script>window.RSC_GIVEAWAY_ENDPOINT = {{ endpoint | json }};</script>
+<script src="{{ 'giveaway.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Giveaway entry",
+  "settings": [
+    { "id": "headline", "type": "text", "label": "Headline", "default": "Most 'unscented' soap isn't. Ours is." },
+    { "id": "subhead", "type": "text", "label": "Subhead", "default": "We're giving away 36 free bars. Entering takes 10 seconds." }
+  ],
+  "presets": [{ "name": "Giveaway entry" }]
+}
+{% endschema %}
