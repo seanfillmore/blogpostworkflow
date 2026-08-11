@@ -2088,6 +2088,11 @@ check(!/\$99|\$66|months free|SOAP6MO|SOAP4MO/.test(entered), 'entered page cont
 
 // 4. Rules contain the clauses that bound our liability.
 const rules = await (await fetch('https://www.realskincare.com/pages/giveaway-official-rules', { headers: UA })).text();
+// These assert what the storefront SERVES, not what the Admin API stored.
+// On 2026-08-11 the corrected rules were saved and confirmed byte-identical via
+// the Admin API while the storefront kept serving the previous version from
+// edge cache — including the double-payout wording it was corrected to remove.
+// Saved is not served, and only served matters to an entrant.
 for (const [re, label] of [
   [/void in rhode island/i, 'rules: void in Rhode Island'],
   [/purchases do not earn entries/i, 'rules: purchases do not earn entries'],
@@ -2095,6 +2100,9 @@ for (const [re, label] of [
   [/536\.40/, 'rules: ARV $536.40 stated'],
   [/confirmed entrant/i, 'rules: referrer must be a confirmed entrant'],
   [/cash equivalent|terminated/i, 'rules: liability cap on the 3-year obligation'],
+  [/no second prize/i, 'rules: self-referral earns NO SECOND PRIZE (double-payout guard)'],
+  [/independently void/i, 'rules: self-referral voided for prize eligibility, separately from crediting'],
+  [/base entry per email/i, 'rules: one-base-entry carve-out reconciles §4 with the bonus ladder'],
 ]) check(re.test(rules), label);
 
 // 5. The Meta pixel is present (installed via the sales channel app).
