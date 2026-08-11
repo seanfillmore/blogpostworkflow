@@ -45,6 +45,7 @@ import postsKillRoutes from './routes/posts-kill.js';
 import cannibalizationRoutes from './routes/cannibalization.js';
 import ideasRoutes from './routes/ideas.js';
 import rumRoutes from './routes/rum.js';
+import giveawayRoutes from './routes/giveaway.js';
 
 const {
   ROOT, PUBLIC_DIR,
@@ -109,6 +110,7 @@ const ROUTES = [
   ...cannibalizationRoutes,
   ...ideasRoutes,
   ...rumRoutes,
+  ...giveawayRoutes,
 ];
 
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key
@@ -167,12 +169,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // The RUM collector is reached by storefront browsers, which cannot send
-  // basic-auth credentials — and dashboard credentials must never appear in
-  // public theme JS. This is the one deliberately unauthenticated route.
-  // Abuse is bounded in routes/rum.js: 8KB body cap, strict metric validation,
-  // and a hard ceiling on the daily file so it cannot fill the disk.
-  if (urlPath === '/api/rum') {
+  // Storefront-reachable routes. Browsers on realskincare.com cannot send
+  // dashboard basic-auth, and those credentials must never appear in theme JS.
+  // Abuse is bounded inside each route module: capped bodies, strict enum
+  // validation, and no unbounded writes.
+  if (urlPath === '/api/rum' || urlPath.startsWith('/api/giveaway/')) {
     if (dispatch(ROUTES, req, res, ctx)) return;
   }
 
