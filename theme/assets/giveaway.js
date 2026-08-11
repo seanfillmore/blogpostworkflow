@@ -48,24 +48,62 @@
   var root = document.querySelector('[data-gv-entered]');
   if (!root || !endpoint) return;
 
+  // Identity, in priority order:
+  //   1. ?e= on the URL — this is how a nurture email brings someone back.
+  //      sessionStorage is TAB-SCOPED and does not survive an email-client ->
+  //      browser jump, so for return visitors it is almost always empty. That
+  //      is the dominant return path, so without this param the ladder would
+  //      show a wrong count to exactly the people the campaign drove back.
+  //   2. sessionStorage, set by the lander on first entry.
   var email = null;
-  try { email = window.sessionStorage.getItem('gv_email'); } catch (e) { /* private mode */ }
+  try {
+    var qp = new URLSearchParams(window.location.search);
+    email = qp.get('e') || window.sessionStorage.getItem('gv_email');
+    if (email) window.sessionStorage.setItem('gv_email', email);
+  } catch (e) { /* private mode, or no URLSearchParams */ }
 
   var survey = root.querySelector('.gv-survey');
   var ladder = root.querySelector('[data-gv-ladder]');
   var count = root.querySelector('[data-gv-count]');
+  var errorEl = survey.querySelector('.gv-error');
+  var submitButton = survey.querySelector('button[type="submit"]');
 
+  function fail(msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    submitButton.disabled = false;
+    submitButton.textContent = 'Save — and get 3 bonus entries';
+  }
+
+  // Never display a number we do not know. The markup ships a placeholder of 1;
+  // showing that to someone who actually has 11 entries makes the ladder — the
+  // campaign's whole engagement mechanic — actively misleading. If we cannot
+  // establish the real total, hide the count instead of inventing one.
   function showLadder(entries) {
-    if (typeof entries === 'number') count.textContent = String(entries);
+    if (typeof entries === 'number') {
+      count.textContent = String(entries);
+      count.parentNode.hidden = false;
+    } else {
+      count.parentNode.hidden = true;
+    }
     ladder.hidden = false;
   }
 
-  // Without an email we cannot attribute answers. Skip straight to the ladder
-  // rather than silently posting orphaned data.
+  // Without an email we cannot attribute answers. Show the ladder's actions so
+  // the page is still useful, but post nothing and claim no count.
   if (!email) { survey.hidden = true; showLadder(null); return; }
+
+  // We know who they are, so fetch the authoritative total. A 404 means they
+  // have not entered yet; anything else is a transient failure. In both cases
+  // fall back to hiding the count rather than showing a fabricated one.
+  fetch(endpoint + '/entries?email=' + encodeURIComponent(email))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (body) { showLadder(body && typeof body.entries === 'number' ? body.entries : null); })
+    .catch(function () { showLadder(null); });
 
   survey.addEventListener('submit', function (e) {
     e.preventDefault();
+    errorEl.hidden = true;
     var data = new FormData(survey);
     var payload = {
       email: email,
@@ -75,9 +113,8 @@
     };
     if (!payload.household || !payload.frustration || !payload.currentBrand) return;
 
-    var button = survey.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.textContent = 'Saving…';
+    submitButton.disabled = true;
+    submitButton.textContent = 'Saving…';
 
     fetch(endpoint + '/answers', {
       method: 'POST',
@@ -89,9 +126,6 @@
         survey.hidden = true;
         showLadder(body && body.entries);
       })
-      .catch(function () {
-        button.disabled = false;
-        button.textContent = 'Save — and get 3 bonus entries';
-      });
+      .catch(function () { fail('Network error. Please try again.'); });
   });
 })();
