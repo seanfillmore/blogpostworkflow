@@ -41,3 +41,57 @@
       .catch(function () { fail('Network error. Please try again.'); });
   });
 })();
+
+// --- entered page: survey submit + ladder ---
+(function () {
+  var endpoint = window.RSC_GIVEAWAY_ENDPOINT;
+  var root = document.querySelector('[data-gv-entered]');
+  if (!root || !endpoint) return;
+
+  var email = null;
+  try { email = window.sessionStorage.getItem('gv_email'); } catch (e) { /* private mode */ }
+
+  var survey = root.querySelector('.gv-survey');
+  var ladder = root.querySelector('[data-gv-ladder]');
+  var count = root.querySelector('[data-gv-count]');
+
+  function showLadder(entries) {
+    if (typeof entries === 'number') count.textContent = String(entries);
+    ladder.hidden = false;
+  }
+
+  // Without an email we cannot attribute answers. Skip straight to the ladder
+  // rather than silently posting orphaned data.
+  if (!email) { survey.hidden = true; showLadder(null); return; }
+
+  survey.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = new FormData(survey);
+    var payload = {
+      email: email,
+      household: data.get('household'),
+      frustration: data.get('frustration'),
+      currentBrand: data.get('currentBrand')
+    };
+    if (!payload.household || !payload.frustration || !payload.currentBrand) return;
+
+    var button = survey.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.textContent = 'Saving…';
+
+    fetch(endpoint + '/answers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (body) {
+        survey.hidden = true;
+        showLadder(body && body.entries);
+      })
+      .catch(function () {
+        button.disabled = false;
+        button.textContent = 'Save — and get 3 bonus entries';
+      });
+  });
+})();
