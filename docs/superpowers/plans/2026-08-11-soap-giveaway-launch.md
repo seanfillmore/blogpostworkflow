@@ -891,15 +891,20 @@ const json = (res, req, status, body) => {
   res.end(JSON.stringify(body));
 };
 
+// Route objects are matched by `dispatch()` in agents/dashboard/lib/router.js,
+// which reads `route.match` — NOT `route.path`. And when `match` is a string it
+// compares against the full `req.url`, query string included, so an exact-string
+// match breaks any route that takes query params. Both reasons to use a function
+// that strips the query, exactly as routes/rum.js does.
 export default [
   {
     method: 'OPTIONS',
-    path: /^\/api\/giveaway\//,
+    match: (url) => url.split('?')[0].startsWith('/api/giveaway/'),
     handler: (req, res) => { res.writeHead(204, corsHeaders(req)); res.end(); },
   },
   {
     method: 'POST',
-    path: '/api/giveaway/enter',
+    match: (url) => url.split('?')[0] === '/api/giveaway/enter',
     handler: async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
@@ -930,7 +935,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/api/giveaway/answers',
+    match: (url) => url.split('?')[0] === '/api/giveaway/answers',
     handler: async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
@@ -950,7 +955,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/api/giveaway/entries',
+    match: (url) => url.split('?')[0] === '/api/giveaway/entries',
     handler: async (req, res) => {
       const url = new URL(req.url, 'http://localhost');
       let email;
@@ -2230,7 +2235,7 @@ Add this route to the exported array:
 ```javascript
   {
     method: 'POST',
-    path: '/api/giveaway/upload',
+    match: (url) => url.split('?')[0] === '/api/giveaway/upload',
     handler: async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
