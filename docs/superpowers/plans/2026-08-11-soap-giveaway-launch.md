@@ -1327,8 +1327,13 @@ Create `data/giveaway/official-rules.html` containing, as plain HTML, all eight 
 - "**NO PURCHASE NECESSARY. A purchase will not improve your chances of winning.**"
 - "**Purchases do not earn entries.**"
 - Every entry method and its value: entry 1, confirming your email +2, answering the optional questions +3, each referred friend who confirms +5 up to a maximum of 10 friends, posting and tagging us on Instagram +3, uploading a photo or video +10.
+- **A definition of "confirmed entrant"**, stated explicitly, because it gates a $536.40 payout decision: an entrant who has completed the email-confirmation step. Do not leave it to inference.
+- **A carve-out reconciling one-entry-per-email with the bonus ladder.** "One entry per email address" read literally contradicts a ladder that stacks up to 69 entries on one address. Word it as one *base* entry per email address, except as provided by the bonus methods.
+- Describe only mechanics that actually exist. There is **no unique referral link** — referral is a single optional email field on the entry form. Do not document a link.
 - "**Void in Rhode Island** and where otherwise prohibited." (Total ARV $1,072.80 exceeds Rhode Island's $500 retail-sweepstakes registration threshold.)
-- Referral prize: the winner's named referrer wins the same prize **only if that referrer is themselves a confirmed entrant**; self-referral is void.
+- Referral prize: the winner's named referrer wins the same prize **only if that referrer is themselves a confirmed entrant**.
+- **Self-referral must be voided TWICE, in two separate statements: once for entry-crediting, and once for prize eligibility.** Voiding it only for crediting leaves a double-payout hole — a winner who named their own address trivially satisfies "is themselves a confirmed entrant" and could claim two prizes, $1,072.80 instead of $536.40. State plainly that where the named referrer is the winner, no second prize is awarded.
+- The Sensitive Skin Set shipments need a stated schedule, like the soap's 3-per-year. Without one, the liability cap's per-shipment language has nothing to attach to.
 - Prize: 36 bars of Pure Unscented Moisturizing Coconut Soap over 3 years (3 shipments per year of 4 bars) plus 3 Sensitive Skin Moisturizing Sets. ARV **$536.40** per winner. If Pure Unscented is unavailable at the time of any shipment the sponsor may substitute a comparable bar of equal or greater retail value.
 - Liability cap: if the sponsor ceases operations, remaining shipments may be fulfilled as a cash equivalent or terminated.
 - "**Unsubscribing from our emails does not forfeit your entry.**"
