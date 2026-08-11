@@ -6,7 +6,7 @@
 
 ## 1. What this is, and what it is not
 
-A 30-day Meta ads campaign that gives away bar soap to build the Klaviyo list, monetising entrants immediately with a buy-X-get-X-free soap offer.
+A 30-day Meta ads campaign that gives away **Pure Unscented** bar soap to build the Klaviyo list, monetising entrants immediately with a buy-X-get-X-free soap offer. Single variant, single angle: **fragrance-free for reactive skin.**
 
 **It is a lead-generation play. It will not pay for itself in 30 days.** Total cost is $1,895 ($1,500 ad spend + $395 prize). Breakeven needs 47–76 orders depending on tier mix — roughly a 9–10% entrant-to-buyer take rate. A realistic take rate for an on-message consolation offer with a deadline is 3–8%, so the expected outcome is **$600–1,100 underwater at day 30**, with ~600 confirmed, segmented subscribers and a first-party survey corpus as the residual asset.
 
@@ -22,7 +22,9 @@ The standing sequencing rule is Tracking → CRO → Offer/AOV → Traffic, and 
 |---|---|---|
 | Prize term | **3 years** | Per-winner ARV $536.40, under the $600 1099-MISC threshold. No W-9 paperwork. |
 | Prize contents | 36 bars + 3 Sensitive Skin Sets | Soap hook for reach; the Sets put the $25-contribution product in the winner's hands as a review/UGC source. |
-| Ad hook | **"Win 36 Free Bars of Soap"** | 12 bars/year covers only 8–10 months, so "3 Years of Free Soap" overstates supply. A count and a schedule are both exactly true, and hard numbers outperform vague claims. |
+| Product | **Pure Unscented only** (variant `45828179951786`) | 1,200-bar unscented production run is in progress; all effort focuses there. |
+| Angle | **Fragrance-free / reactive skin** — persona 3, `p3a1` | Review-proofed for this exact SKU, and it attracts the Sensitive Skin Set buyer rather than a generic soap-seeker. |
+| Ad hook | **"Most 'unscented' soap isn't. Ours is — and we're giving away 36 bars."** | Leads with the differentiating objection rather than the prize. Stated as a category callout, not a claim about the viewer's skin, which keeps it clear of Meta's personal-attributes rule. 12 bars/year covers only 8–10 months, so "3 Years of Free Soap" is not used. |
 | Referral prize | Winner's referrer also wins | Bounded at 2 winners. Emotionally shareable: "if you win, your friend wins too." |
 | Consolation offer | Two tiers, $99 hero | $99 is the only tier where "6 months free" is literally true, and it cuts breakeven from a 12.7% take rate to 7.8%. |
 | Ad budget | $1,500 / $50/day flat | Enough Lead volume to exit learning; small enough that a failed test costs ~2 months of Shopify revenue. |
@@ -38,7 +40,9 @@ Everything below was pulled live or from `origin/main` on 2026-08-11, not assume
 |---|---|---|
 | Bar soap price / COGS | $11 / ~$2.40 | `products/coconut-soap.js`; COGS from the 1M growth-plan spec |
 | **Soap consumption** | **25 days/bar, range 20–30** | `config/consumption-rates.json` — merchant estimate, supersedes the old 47-day reorder gap |
-| Soap variants | Calming Lavender, Nourishing Tea Tree, Pure Unscented in stock; **Refreshing Lemongrass out of stock** | live `.js` endpoint |
+| **Pure Unscented variant ID** | **`45828179951786`** | live `.js` endpoint |
+| ⚠️ **Default variant trap** | The product's `defaultVariantId` is `44179485655210` = **Calming Lavender**, not unscented. A cart permalink built from the default ships the wrong soap to every buyer. | live `.js` endpoint |
+| Unscented production run | **1,200 bars**, in progress as of 2026-08-11. A second run is planned; size and timing not yet supplied. | Sean, 2026-08-11 |
 | Sensitive Skin Set | $46.80 (reg $58), ~$25 contribution, 131 reviews | `config/bundles.json`, growth-plan spec |
 | Set sales | **1 order in 90 days** | growth-plan roadmap status, 2026-08-03 |
 | Free shipping threshold | **$45** | live announcement bar |
@@ -54,8 +58,10 @@ Everything below was pulled live or from `origin/main` on 2026-08-11, not assume
 
 ### Grand prize (×2 winners: drawn entrant + their referrer)
 
-- 36 bars of Moisturizing Coconut Soap over 3 years — 3 shipments/year of 4 bars
-- 3 Sensitive Skin Moisturizing Sets
+- 36 bars of **Pure Unscented** Moisturizing Coconut Soap over 3 years — 3 shipments/year of 4 bars
+- 3 Sensitive Skin Moisturizing Sets (both components are already Pure Unscented per `config/bundles.json`)
+
+**The entire prize is one coherent fragrance-free proposition** — 36 unscented bars plus 3 unscented sets — rather than a soap hook with skincare bolted on. This is what makes the stack read as a single thing on the lander.
 - **ARV $536.40/winner** ($396 soap + $140.40 sets)
 - **Cost ~$197/winner:** soap COGS $86.40 + 9 shipments ≈ $54 + sets COGS $33 + 3 shipments ≈ $24
 - **Total prize cost ≈ $395. Total ARV across both winners $1,072.80.**
@@ -71,12 +77,28 @@ At 20 days/bar (the conservative end of the merchant range), 9 free bars = 180 d
 
 The floor tier's $24.99 contribution ties the Sensitive Skin Set — from a SKU whose single-unit contribution is $2.40. This is not a violation of the "soap is never a cold-paid front end" rule; that rule prices one bar. Eighteen bars is a different offer on the same SKU.
 
+### Inventory is the binding constraint, and it binds near breakeven
+
+Each redemption consumes 12 or 18 bars, so the offer is rate-limited by the unscented run in a way no previous campaign has been.
+
+| Consumer | Bars |
+|---|--:|
+| Prize, year 1 (12 bars × 2 winners) | 24 |
+| Normal retail sell-through during the window | **input needed** |
+| Remainder available to the offer | balance of 1,200 |
+
+Against the full 1,200 less a 24-bar prize reserve, ~1,026 bars supports roughly **57 redemptions at all-$99, 85 at all-$66, ~66 at a 60/40 mix** — against a breakeven of 47–76 orders. **Inventory therefore binds at almost exactly the point where the campaign starts working.** An offer that converts better than breakeven produces a stockout, mid-campaign, while ads are still spending.
+
+A second production run is planned, so **no scarcity claim ships** — an "only N left" line that a second run falsifies is the same class of error as an overstated duration. What ships instead is the internal bars-remaining gate in §11, which is correct under either outcome: it never trips if the second run lands early, and it stops the spend if it lands late.
+
+**With bars as the scarce input, the correct ranking metric is contribution per bar, and it confirms the tier choice:** $99/18 bars = **$2.26/bar** vs $66/12 bars = $2.08/bar. The $99 hero survives the constraint check.
+
 ## 5. Funnel
 
 ```
 Meta ad — "Win 36 Free Bars of Soap"
   → /pages/free-soap-giveaway    lander: hook, prize value stack, entry form, rules, draw countdown
-  → /pages/giveaway-entered      3 required questions → offer reveal → scent pick → one-tap cart
+  → /pages/giveaway-entered      3 required questions → offer reveal → one-tap cart
                                  → entry-ladder widget ("your entries: N")
   → Klaviyo confirmed opt-in     tease → resell the list → THEN confirm entry + hand over the offer
   → segmented nurture            6 sends over 30 days, branched on gv_frustration
@@ -100,7 +122,7 @@ Single-tap, no typing, ~15 seconds.
 | # | Question | Options | What it decides |
 |---|---|---|---|
 | 1 | Who's the soap for? | just me / me + partner / family of 3+ / a gift | Sizes the offer and **gates the duration claim** |
-| 2 | Your #1 skin frustration? | dry & flaky / sensitive & reactive / avoiding certain ingredients / no issues, just want clean soap | Nurture routing — only the first three get pushed lotion/cream |
+| 2 | Your #1 skin frustration? | dry & flaky / itchy & reactive / fragrance sets me off / ingredient concerns | Nurture routing. Tightened to the fragrance-free angle — every option now maps to a product, so there is no "just here for the soap" escape hatch |
 | 3 | What are you using now? | CeraVe / Cetaphil / Dove / Dr. Squatch or Native / a natural brand / whatever's on sale | Competitor displacement map |
 
 These go **before** the offer because the answers change what the offer says. A bar lasts 20–30 days for one person and materially less shared across four, so:
@@ -112,13 +134,15 @@ The questions make the offer more accurate and more persuasive, and they qualify
 
 Q3 is the highest-value question in the campaign. The rival set (CeraVe / Vanicream / Cetaphil) currently rests on qualitative Judge.me and Reddit mining; this tests it against n≈600 first-party answers.
 
+**The fragrance-free angle largely dissolves the lead-quality risk.** The original concern was that a soap giveaway attracts prize-seekers rather than the buyer whose contribution is $25. A fragrance-free / reactive-skin angle attracts precisely the Sensitive Skin Set buyer, and both Set components are already Pure Unscented — so the cross-sell in §7 is coherent rather than bolted on. Q2's options were tightened accordingly: every answer now maps to a product, with no "just here for the soap" escape hatch.
+
 ### Step 3 — three optional questions, revealed after the offer and repeated in email
 
 | # | Question | What it decides |
 |---|---|---|
 | 4 | What stopped you switching to natural before? | Objection inventory → PDP copy, FAQ, ad angles |
 | 5 | What else do you buy? *(multi-select)* | Cross-sell map — could settle the toothpaste cluster (32 pages, ~$0) with demand data instead of GSC impressions |
-| 6 | Scent preference? | Prize fulfilment, which variant to feature, inventory planning |
+| 6 | **Have you ever reacted to something labelled "unscented"?** *yes, more than once / yes, once / no / not sure* | **Validates or kills `p3a1` as the lead objection at n≈600.** Scent preference is moot on a single-variant campaign; this replaces it and is worth far more |
 
 Plus an optional phone field: *"Want a text the moment we draw the winner?"* SMS sits at 0 subscribers and the draw is a genuine reason-why.
 
@@ -152,7 +176,9 @@ Everything adds value; nothing discounts the Set.
 > ⭐ **Buy 9 bars, get 9 free — $99** · 18 bars · $198 value · **6 months free**
 > Buy 6 bars, get 6 free — $66 · 12 bars · $132 value · 4 months free
 >
-> Free shipping · 30-day no-questions guarantee
+> Fragrance-free · Free shipping · 30-day no-questions guarantee
+
+**No scent picker.** Pure Unscented is the only variant offered, which removes a UI element, the out-of-stock-variant handling, and a whole class of wrong-product bug. One variant ID, one tap.
 
 **Cross-sell, not a competing offer** — one add-on line inside the cart, not a second decision on the page: *"Add the Sensitive Skin Set for $46.80 — 131 reviews ★★★★★."* Shown only to entrants who answered dry / sensitive / ingredients on Q2. This keeps the Set in the path without betting the campaign on a page that has sold 1 unit in 90 days.
 
@@ -182,7 +208,7 @@ Standard scaffolding (sponsor name/postal address, entry period with timezone, o
 2. **Every entry method and its entry value listed explicitly**, with the referral cap stated. **Purchases do not earn entries.**
 3. **Void in Rhode Island** and void where prohibited. Total ARV $1,072.80 exceeds RI's $500 retail-sweepstakes registration threshold. NY and FL bond at $5,000 — clear of both.
 4. **Referral prize:** the winner's named referrer wins the same prize **only if they are themselves a confirmed entrant.** Self-referral void. Mailing a $536 prize to someone who never accepted the rules is not defensible.
-5. **Prize scent selection is limited to scents available at the time of each shipment.** Lemongrass is out of stock today; without this clause a stockout in 2029 breaks the prize promise.
+5. **The prize is Pure Unscented soap.** If that variant is unavailable at the time of any shipment, the sponsor may substitute a comparable bar of equal or greater retail value. Without a substitution clause, a stockout in 2029 breaks the prize promise.
 6. **Liability cap:** if the business ceases operations, remaining shipments may be fulfilled as a cash equivalent or terminated. This is what bounds a 3-year obligation.
 7. **Unsubscribing does not forfeit an entry** — otherwise the promotion is coercive. **This means the draw reads from the committed entrant snapshot, not the live subscribed list.**
 8. **Meta release:** "This promotion is in no way sponsored, endorsed, administered by, or associated with Meta, Facebook, or Instagram."
@@ -205,7 +231,7 @@ Then, in Meta Business Manager:
 | Page | Template asset | Content |
 |---|---|---|
 | `/pages/free-soap-giveaway` | `templates/page.giveaway.json` | Hook, prize value stack ($536), entry form, rules link, draw countdown |
-| `/pages/giveaway-entered` | `templates/page.giveaway-entered.json` | 3 questions → offer → scent picker → one-tap cart → entry-ladder widget |
+| `/pages/giveaway-entered` | `templates/page.giveaway-entered.json` | 3 questions → offer reveal → one-tap cart → entry-ladder widget |
 
 Built with `createPage` + `updateThemeAsset` against live theme `145536778410`, following the existing `landing-page-*` pattern. New sections `theme/sections/giveaway-entry.liquid` and `giveaway-offer.liquid`.
 
@@ -220,13 +246,15 @@ Two gotchas already paid for: the theme's sticky variant-scoping rule, and JSON-
 - `SOAP4MO` — buy 6 get 6 ($66, 12 bars)
 - `SOAP6MO` — buy 9 get 9 ($99, 18 bars)
 
-Delivered as a one-tap cart permalink with the scent prefilled, so nobody types a code:
+Delivered as a one-tap cart permalink, so nobody types a code:
 
 ```
-/cart/{variantId}:18?discount=SOAP6MO
+/cart/45828179951786:18?discount=SOAP6MO
 ```
 
-Lemongrass renders **disabled, not missing**, so the page never offers a variant that cannot ship. Mixed-scent orders work via `id1:9,id2:9` but are v2; v1 is one scent, one tap.
+**That variant ID is Pure Unscented and must be hard-coded, not read from `defaultVariantId`** — the default is Calming Lavender. A test asserting the permalink resolves to `45828179951786` is cheap insurance against shipping the wrong soap to every buyer.
+
+**Stockout guard.** Both codes carry a Shopify total-usage limit sized from the available bar budget. Shopify caps usage per code, not across codes, so the two limits are set conservatively and reconciled daily against bars committed (see §11). This is an operational safeguard, not a scarcity claim — **no "only N left" copy ships**, because a second production run is planned and a scarcity claim that isn't true is the same class of error as an overstated duration.
 
 ### 9.4 Entries, referral, and the draw
 
@@ -261,7 +289,7 @@ Anti-fraud: referral cap 10, dedupe on normalised email, one entry per email, sp
 
 ### 9.6 Testing gates
 
-Nothing goes live on Meta until a **real end-to-end test entry** passes: enter → 3 questions → offer page → scent tap → cart shows 18 bars with 9 free at $99 → real order → confirmation email lands. Then refund it. Success logs lie; the live page is the evidence.
+Nothing goes live on Meta until a **real end-to-end test entry** passes: enter → 3 questions → offer page → cart shows **18 bars of Pure Unscented** with 9 free at $99 → real order → confirmation email lands. Then refund it. Success logs lie; the live page is the evidence. **Confirm the line item reads Pure Unscented, not Calming Lavender** — that is the default-variant trap in §3.
 
 - **`assertDurationClaim()` wraps every duration string on both pages.** "6 months free" fails the assertion at any quantity below 9 free bars — the guardrail that would have caught this two rebuilds ago.
 - Unit tests: referral resolution (valid / non-entrant / self-referral), weighted draw, entry-count increments, duration assertions.
@@ -278,25 +306,37 @@ Nothing goes live on Meta until a **real end-to-end test entry** passes: enter �
 - 3–4 creatives in the single ad set; let Meta allocate
 - **No retargeting ad set** — no pixel history on day 1, and splitting $50 means neither ad set exits learning. Retargeting happens free, in Klaviyo.
 
-Creative is grounded in `data/context/personas.json`, persona 2 *"The Ingredient-Label Reader"*, angle `p2a1` — *"One ingredient: saponified coconut oil"*.
+Creative is grounded in `data/context/personas.json`, persona 3 **"The Fragrance-Sensitive / Reactive Skin Buyer"** — the only persona with review proof for this exact SKU:
+
+> `p3a1` — **"Truly unscented, not 'lightly fragranced'"**
+> Objection: *"Everything labelled unscented still has a masking fragrance that sets me off."*
+> Proof: *a self-described sensitive nose calls the unscented bar as close to scent-free as possible; another buyer bought it for a friend who can't have any scented products at all.*
+>
+> `p3a2` — **"The first lotion that didn't react"**
+> Objection: *"Every lotion I try breaks me out or makes me itch — I've stopped trusting new products."*
+> Proof: *multiple sensitive-skin buyers report zero reaction, no breakouts, no irritation, including on their children after bath time.*
 
 | # | Format | Angle |
 |---|---|---|
-| 1 | Static — 36 bars stacked | *"36 free bars. One winner. Entering is free."* |
-| 2 | Founder video, Sean on camera | *"I make soap with one ingredient. I'm giving away three years of it."* — authority/education is the founder's lane, since he is not the target demo |
-| 3 | Us-vs-them label shot | Our label vs a drugstore bar's 20-ingredient list (`p2a1`) |
-| 4 | UGC / review-led | Customer quote over product — puts the 131-review asset to work in the demo's own voice |
+| 1 | Static — 36 bars stacked | *"Most 'unscented' soap isn't. Ours is. 36 free bars, one winner."* (`p3a1`) |
+| 2 | Founder video, Sean on camera | *"Here's what goes in it, and here's what doesn't. I'm giving away 36 bars."* — authority/education is the founder's lane, since he is not the target demo |
+| 3 | Us-vs-them label shot | Our label vs a drugstore "unscented" bar that lists fragrance/parfum (`p3a1`) — the format's strongest possible use, because the comparison is factual |
+| 4 | UGC / review-led | The "bought it for a friend who can't have any scented products" review over product — puts the 131-review asset to work in the demo's own voice (`p3a2`) |
+
+**Meta personal-attributes constraint applies to every one of these.** The objection must be framed as a fact about the *category*, never an assertion about the viewer. *"Most 'unscented' soap isn't"* is fine. *"Does unscented soap still make you itch?"* is a rejection.
 
 Submit 3 creatives 4 days early. Sweepstakes ads get flagged; expect one rejection.
 
 ## 11. Measurement and kill criteria
 
-`data/reports/giveaway/latest.json` written daily, surfaced as a dashboard panel: spend, CPL, entrants, Q2 answer mix, entry-ladder completion, take rate, revenue, contribution.
+`data/reports/giveaway/latest.json` written daily, surfaced as a dashboard panel: spend, CPL, entrants, Q2 answer mix, Q6 reaction-rate, entry-ladder completion, take rate, revenue, contribution, **and bars committed vs bars available**.
+
+**Standing operational gate — bars remaining.** Every redemption commits 12 or 18 bars. When bars committed crosses the available budget minus a one-week buffer, **pause the ads**. Paying $50/day to drive traffic to an offer that cannot be fulfilled is the worst available outcome, and it is the failure mode a successful offer produces. This runs from day 1, independent of the performance gates below.
 
 **Day 5 — three gates:**
 - **CPL > $6** → pause and rework creative. At $6, $1,500 buys 250 entrants and breakeven is arithmetically out of reach.
 - **Lander opt-in < 15%** → lander problem, not traffic. Do not touch the ads.
-- **"Just here for the soap" > 60% of Q2** → audience is wrong. Shift budget to creative #3.
+- **Q2 skewing away from reactive/fragrance answers** → the fragrance-free angle is not landing and the audience is generic soap-seekers. Shift budget to creative #3.
 
 **Day 10:** take rate < 2% → the offer page is the problem, not the traffic. Fix the page before spending another dollar.
 
@@ -317,7 +357,7 @@ Day 6-9  Sean: Meta ad review (submit 3 creatives, expect one rejection)
 Day 10   Launch the 30 days
 ```
 
-The bonus ladder adds ~2 days over a plain single-entry design, principally the weighted draw, the server-side entry counter, the nightly referral reconciliation, and the upload path.
+The bonus ladder adds ~2 days over a plain single-entry design, principally the weighted draw, the server-side entry counter, the nightly referral reconciliation, and the upload path. Single-variant focus gives ~half a day back: no scent picker, no out-of-stock-variant handling, one hard-coded variant ID.
 
 ## 13. Sean-gated items
 
@@ -325,6 +365,7 @@ The bonus ladder adds ~2 days over a plain single-entry design, principally the 
 2. Cloudflare DNS TXT record for domain verification
 3. Creative assets for #2 (founder video) and #1 (36-bar product shot)
 4. Approval of the official rules text before the lander goes live
+5. **OPEN INPUT — second production run size and timing**, plus expected normal retail sell-through of unscented soap during the window. These two numbers size the bars-remaining gate in §11. Until supplied, the gate is provisioned against 1,026 bars, which is the conservative reading and is safe: it may pause ads earlier than necessary, but it cannot oversell.
 
 Everything else is buildable and verifiable from this repo.
 
@@ -332,5 +373,6 @@ Everything else is buildable and verifiable from this repo.
 
 - ~600 confirmed subscribers tagged with household size, primary skin problem, current brand, switching objection, and adjacent-category interest, feeding seven built-but-under-fed revenue flows
 - A first-party competitor-displacement map at n≈600, against a rival set currently resting on qualitative review mining
+- **`p3a1` either validated or killed at n≈600.** Q6 asks whether the entrant has reacted to something labelled "unscented". That answer decides whether "truly unscented, not lightly fragranced" is the lead objection across every PDP, listing and email — a positioning decision currently resting on two reviews
 - **The $99 tier itself** — the first offer in the catalog that turns a $2.40-contribution SKU into a $40 order. That structure is repeatable independently of this giveaway.
 - Licensed target-demo UGC from the upload rung
