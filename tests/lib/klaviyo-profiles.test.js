@@ -49,23 +49,45 @@ test('subscribeToList sends a subscription job with the profile inline and conse
   assert.equal(body.data.relationships.list.data.id, 'ABC123');
 });
 
-test('listSubscribedProfiles returns only confirmed profiles and follows pagination', async () => {
+test('listSubscribedProfiles excludes unconfirmed profiles and follows pagination', async () => {
+  // Membership of the SUBSCRIBED set is what later tasks treat as proof of a
+  // double-opt-in click, so an UNCONFIRMED profile leaking through would credit
+  // bonus entries nobody earned.
+  const sub = (consent) => ({ email: { marketing: { consent } } });
   let page = 0;
-  stubFetch(({ url }) => {
-    if (url.includes('/lists/')) {
-      page += 1;
-      return page === 1
-        ? { json: { data: [{ id: 'p1', attributes: { email: 'a@b.com', properties: { gv_entries: 3 } } }], links: { next: 'https://a.klaviyo.com/api/next-page' } } }
-        : { json: { data: [{ id: 'p2', attributes: { email: 'c@d.com', properties: {} } }], links: {} } };
-    }
-    return { json: { data: [{ id: 'p2', attributes: { email: 'c@d.com', properties: {} } }], links: {} } };
+  stubFetch(() => {
+    page += 1;
+    return page === 1
+      ? { json: {
+          data: [
+            { id: 'p1', attributes: { email: 'confirmed@b.com', properties: { gv_entries: 3 }, subscriptions: sub('SUBSCRIBED') } },
+            { id: 'p2', attributes: { email: 'pending@b.com', properties: {}, subscriptions: sub('UNCONFIRMED') } },
+          ],
+          links: { next: 'https://a.klaviyo.com/api/next-page' },
+        } }
+      : { json: {
+          data: [{ id: 'p3', attributes: { email: 'page2@b.com', properties: {}, subscriptions: sub('SUBSCRIBED') } }],
+          links: {},
+        } };
   });
   const { listSubscribedProfiles } = await import('../../lib/klaviyo-profiles.js');
 
   const out = await listSubscribedProfiles('ABC123');
-  assert.equal(out.length, 2, 'both pages must be returned');
-  assert.deepEqual(out.map((p) => p.email), ['a@b.com', 'c@d.com']);
-  assert.match(calls[0].url, /filter=.*SUBSCRIBED/, 'the request must filter to confirmed consent');
+  assert.deepEqual(
+    out.map((p) => p.email),
+    ['confirmed@b.com', 'page2@b.com'],
+    'UNCONFIRMED must be dropped and page 2 must be included',
+  );
+  assert.match(decodeURIComponent(calls[0].url), /additional-fields\[profile\]=subscriptions/);
+  // Verified live 2026-08-11: this endpoint 400s on a consent filter.
+  assert.doesNotMatch(calls[0].url, /filter=/, 'must not send a filter this endpoint rejects');
+});
+
+test('findListByName tolerates case and whitespace so it cannot create a duplicate list', async () => {
+  stubFetch(() => ({ json: { data: [{ id: 'L1', attributes: { name: 'Giveaway 2026-09 — Entrants' } }], links: {} } }));
+  const { findListByName } = await import('../../lib/klaviyo-profiles.js');
+  const hit = await findListByName('  giveaway 2026-09 — entrants ');
+  assert.equal(hit?.id, 'L1');
 });
 
 test('updateProfileProperties PATCHes by id after resolving the email', async () => {
