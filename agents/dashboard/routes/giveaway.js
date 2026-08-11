@@ -130,6 +130,11 @@ const json = (res, req, status, body) => {
   res.end(JSON.stringify(body));
 };
 
+// Route objects are matched by `dispatch()` in agents/dashboard/lib/router.js,
+// which reads `route.match` — NOT `route.path`. And when `match` is a string it
+// compares against the full `req.url`, query string included, so an exact-string
+// match breaks any route that takes query params. Both reasons to use a function
+// that strips the query, exactly as routes/rum.js does.
 export default [
   {
     method: 'OPTIONS',
@@ -148,19 +153,31 @@ export default [
       if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });
 
       const { email, firstName, referredBy } = v.value;
-      // confirmed starts false and is owned solely by the nightly reconciler,
-      // which reads the SUBSCRIBED set — the only authority on who actually
-      // clicked the double-opt-in link. Nothing in a request may set it.
-      const properties = {
-        gv_entrant: true,
-        gv_entries: 1,
-        gv_breakdown: { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false },
-      };
-      if (referredBy) properties.gv_referred_by = referredBy;
-
       try {
+        // A resubmit must never reset earned progress. Klaviyo replaces the
+        // value at a top-level property key rather than deep-merging it, so
+        // writing the zeroed gv_breakdown again would wipe a confirmed,
+        // surveyed, referred entrant back to a single entry. Double-submits and
+        // back-button resubmissions are routine on a cold lander.
+        const existing = await getProfileByEmail(email);
+        const first = !existing?.properties?.gv_breakdown;
+
+        const properties = { gv_entrant: true };
+        if (first) {
+          // confirmed starts false and is owned solely by the nightly
+          // reconciler, which reads the SUBSCRIBED set — the only authority on
+          // who actually clicked the double-opt-in link. No request may set it.
+          properties.gv_breakdown = { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false };
+          properties.gv_entries = 1;
+        }
+        // First referrer wins. Without this guard, re-entering lets someone
+        // swap in a different referrer after the fact.
+        if (referredBy && !existing?.properties?.gv_referred_by) {
+          properties.gv_referred_by = referredBy;
+        }
+
         await subscribeToList(listId(), { email, firstName, properties });
-        return json(res, req, 201, { ok: true, entries: 1 });
+        return json(res, req, 201, { ok: true, entries: existing?.properties?.gv_entries ?? 1 });
       } catch (e) {
         console.error('[giveaway] enter failed', e.message);
         return json(res, req, 502, { ok: false, error: 'could not record entry' });
@@ -190,18 +207,38 @@ export default [
   {
     method: 'GET',
     match: (url) => url.split('?')[0] === '/api/giveaway/entries',
-    handler: async (req, res) => {
-      const url = new URL(req.url, 'http://localhost');
-      let email;
-      try { email = normalizeEmail(url.searchParams.get('email')); }
-      catch { return json(res, req, 400, { ok: false, error: 'a valid email is required' }); }
-      const profile = await getProfileByEmail(email);
+    handler: createEntriesHandler(),
+  },
+];
+
+// Factory rather than an inline handler so the test suite can inject a
+// stubbed `getProfileByEmail` and exercise the crash path directly, without
+// a real network call to Klaviyo. The route array above uses the default
+// (real) dependency, so production behaviour is unchanged.
+export function createEntriesHandler({ getProfileByEmail: getProfile = getProfileByEmail } = {}) {
+  return async (req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    let email;
+    try { email = normalizeEmail(url.searchParams.get('email')); }
+    catch { return json(res, req, 400, { ok: false, error: 'a valid email is required' }); }
+    // MUST be wrapped. dispatch() in agents/dashboard/lib/router.js calls the
+    // handler without awaiting it, and this codebase installs no
+    // unhandledRejection hook — so an un-caught throw here terminates the
+    // whole PM2 process under Node 22's defaults, taking every other
+    // dashboard function down with it. This route is public and
+    // unauthenticated, and klaviyoRequest throws on any non-2xx, so a routine
+    // Klaviyo 5xx or rate-limit would be enough to do it.
+    try {
+      const profile = await getProfile(email);
       if (!profile) return json(res, req, 404, { ok: false, error: 'not found' });
       return json(res, req, 200, {
         ok: true,
         entries: profile.properties.gv_entries ?? 1,
         breakdown: profile.properties.gv_breakdown ?? {},
       });
-    },
-  },
-];
+    } catch (e) {
+      console.error('[giveaway] entries lookup failed', e.message);
+      return json(res, req, 502, { ok: false, error: 'could not read entries' });
+    }
+  };
+}
