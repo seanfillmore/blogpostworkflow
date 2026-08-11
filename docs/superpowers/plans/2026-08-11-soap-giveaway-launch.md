@@ -19,6 +19,8 @@
 - **Product is Pure Unscented only.** Variant ID **`45828179951786`**, hard-coded, never read from `defaultVariantId`. (The live product was reordered on 2026-08-11 so Unscented is position 1, but the hard-coded ID plus its assertion stay.)
 - **Every duration claim routes through `assertDurationClaim()`** from `lib/supply-duration.js`. Bar soap is **25 days/unit** (range 20–30). "6 months free" is valid only at ≥9 free bars.
 - **Entry counts are incremented server-side only.** Never trust a client-supplied entry total.
+- **`breakdown.confirmed` is owned solely by the nightly reconciler** (Task 5), which reads the `SUBSCRIBED` set — the only authority on who actually clicked the double-opt-in link. No request handler may set it.
+- **Idempotency by state comparison, not counters.** The reconciler compares stored state to desired state. Do not add a second field tracking the same fact.
 - **Purchases never earn entries.** No code path may increment `gv_entries` from an order.
 - **No scarcity copy.** A second production run is planned, so no "only N left" line ships anywhere.
 - **Meta ad copy must never assert the viewer's health condition.** "Most 'unscented' soap isn't" is fine; "Does unscented soap make you itch?" is a policy rejection.
@@ -33,7 +35,6 @@
 | `gv_entries` | integer | server-computed total |
 | `gv_breakdown` | object | `{confirmed, survey, referrals, instagram, upload}` |
 | `gv_referred_by` | string | normalised email of the referrer |
-| `gv_referral_credits` | integer | how many confirmed referrals this profile has been credited for |
 | `gv_household` | string | `solo` \| `couple` \| `family` \| `gift` |
 | `gv_frustration` | string | `dry` \| `reactive` \| `fragrance` \| `ingredients` |
 | `gv_current_brand` | string | `cerave` \| `cetaphil` \| `dove` \| `natural_competitor` \| `natural_brand` \| `whatever` |
@@ -873,11 +874,13 @@ export default [
       if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });
 
       const { email, firstName, referredBy } = v.value;
+      // confirmed starts false and is owned solely by the nightly reconciler,
+      // which reads the SUBSCRIBED set — the only authority on who actually
+      // clicked the double-opt-in link. Nothing in a request may set it.
       const properties = {
         gv_entrant: true,
         gv_entries: 1,
         gv_breakdown: { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false },
-        gv_referral_credits: 0,
       };
       if (referredBy) properties.gv_referred_by = referredBy;
 
@@ -985,9 +988,15 @@ git commit -m "feat(giveaway): public entry endpoint with server-authoritative e
 
 ---
 
-### Task 5: Nightly referral reconciliation
+### Task 5: Nightly reconciliation — confirmation and referral rungs
 
-The +5 referral credit lands on the **referrer's** profile only once the friend they referred completes double opt-in. That is asynchronous, so it is a nightly reconciliation rather than a webhook — no endpoint to host, and a 24-hour credit delay is acceptable.
+This task owns the two rungs that no request can credit, because both depend on facts only Klaviyo knows.
+
+**The `confirmed` rung (+2).** Nothing in a request can know whether someone clicked the double-opt-in link. `listSubscribedProfiles` filters to `SUBSCRIBED` consent, so **every profile it returns is confirmed by definition** — that set is the only authority. The reconciler is therefore the sole writer of `breakdown.confirmed`.
+
+**The `referral` rung (+5).** Lands on the **referrer's** profile only once the friend they referred confirms. Asynchronous, so it reconciles nightly rather than via a hosted webhook; a 24-hour credit delay is acceptable.
+
+Idempotency comes from comparing stored state to desired state — there is deliberately no separate credit counter, because two fields tracking one number is two things to get out of sync.
 
 **Files:**
 - Create: `scripts/giveaway/reconcile-referrals.mjs`
@@ -995,8 +1004,8 @@ The +5 referral credit lands on the **referrer's** profile only once the friend 
 - Test: `tests/lib/giveaway-reconcile.test.js`
 
 **Interfaces:**
-- Consumes: `validateReferral`, `REFERRAL_CAP`, `normalizeEmail` from `lib/giveaway/entries.js`; `listSubscribedProfiles`, `updateProfileProperties` from `lib/klaviyo-profiles.js`; `entryTotal` from `lib/giveaway/entries.js`.
-- Produces: `planReferralCredits(confirmedProfiles) -> Array<{ referrer, newCredits, entries, breakdown }>` — a pure function so the whole rule set is testable without Klaviyo.
+- Consumes: `validateReferral`, `REFERRAL_CAP`, `normalizeEmail`, `entryTotal` from `lib/giveaway/entries.js`; `listSubscribedProfiles`, `updateProfileProperties` from `lib/klaviyo-profiles.js`.
+- Produces: `planEntryUpdates(confirmedProfiles) -> Array<{ email, entries, breakdown }>` — pure, so every rule is testable without Klaviyo. Returns one row per profile whose stored breakdown disagrees with reality, and nothing for profiles already correct.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1004,67 +1013,87 @@ The +5 referral credit lands on the **referrer's** profile only once the friend 
 // tests/lib/giveaway-reconcile.test.js
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { planReferralCredits } from '../../lib/giveaway/reconcile.js';
+import { planEntryUpdates } from '../../lib/giveaway/reconcile.js';
+import { REFERRAL_CAP } from '../../lib/giveaway/entries.js';
 
+// Every profile passed to planEntryUpdates came from listSubscribedProfiles, so
+// it is double-opt-in confirmed. The fixtures below therefore represent the
+// state AS STORED, which starts with confirmed:false straight from entry.
 const profile = (email, props = {}) => ({
   id: `id-${email}`,
   email,
   properties: {
     gv_entrant: true,
-    gv_referral_credits: 0,
-    gv_breakdown: { confirmed: true, survey: false, referrals: 0, instagram: false, upload: false },
+    gv_breakdown: { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false },
     ...props,
   },
 });
+const forEmail = (updates, email) => updates.find((u) => u.email === email);
+
+test('REGRESSION: confirmation is credited — being in the SUBSCRIBED set IS the confirmation', () => {
+  // Nothing in a request can know someone clicked the opt-in link, so if this
+  // function does not credit it, the advertised +2 rung never pays and the
+  // ladder shown on the entered page is a lie.
+  const updates = planEntryUpdates([profile('a@x.com')]);
+  const u = forEmail(updates, 'a@x.com');
+  assert.ok(u, 'a profile stored as unconfirmed must produce an update');
+  assert.equal(u.breakdown.confirmed, true);
+  assert.equal(u.entries, 3, 'base 1 + confirm 2');
+});
 
 test('a confirmed entrant credits the referrer they named', () => {
-  const plan = planReferralCredits([
+  const updates = planEntryUpdates([
     profile('referrer@x.com'),
     profile('friend@x.com', { gv_referred_by: 'referrer@x.com' }),
   ]);
-  assert.equal(plan.length, 1);
-  assert.equal(plan[0].referrer, 'referrer@x.com');
-  assert.equal(plan[0].newCredits, 1);
-  // base 1 + confirm 2 + one referral 5 = 8
-  assert.equal(plan[0].entries, 8);
+  const r = forEmail(updates, 'referrer@x.com');
+  assert.equal(r.breakdown.referrals, 1);
+  assert.equal(r.entries, 8, 'base 1 + confirm 2 + one referral 5');
 });
 
 test('a referrer who is not a confirmed entrant is never credited', () => {
-  const plan = planReferralCredits([
-    profile('friend@x.com', { gv_referred_by: 'ghost@x.com' }),
-  ]);
-  assert.deepEqual(plan, [], 'ghost@x.com is not in the confirmed set');
+  const updates = planEntryUpdates([profile('friend@x.com', { gv_referred_by: 'ghost@x.com' })]);
+  assert.equal(forEmail(updates, 'ghost@x.com'), undefined, 'ghost is not in the confirmed set');
+  assert.equal(forEmail(updates, 'friend@x.com').breakdown.referrals, 0);
 });
 
 test('self-referral credits nobody', () => {
-  const plan = planReferralCredits([
-    profile('solo@x.com', { gv_referred_by: 'solo@x.com' }),
-  ]);
-  assert.deepEqual(plan, []);
+  const updates = planEntryUpdates([profile('solo@x.com', { gv_referred_by: 'solo@x.com' })]);
+  assert.equal(forEmail(updates, 'solo@x.com').breakdown.referrals, 0);
 });
 
 test('credits stop at the cap even with more confirmed referees', () => {
   const referees = Array.from({ length: 14 }, (_, i) => profile(`f${i}@x.com`, { gv_referred_by: 'r@x.com' }));
-  const plan = planReferralCredits([profile('r@x.com'), ...referees]);
-  assert.equal(plan[0].newCredits, 10, 'capped at REFERRAL_CAP');
-  assert.equal(plan[0].entries, 1 + 2 + 50);
+  const updates = planEntryUpdates([profile('r@x.com'), ...referees]);
+  const r = forEmail(updates, 'r@x.com');
+  assert.equal(r.breakdown.referrals, REFERRAL_CAP, 'capped');
+  assert.equal(r.entries, 1 + 2 + 50);
 });
 
-test('the run is idempotent — already-credited referrals are not paid twice', () => {
-  const plan = planReferralCredits([
-    profile('r@x.com', { gv_referral_credits: 1 }),
-    profile('f1@x.com', { gv_referred_by: 'r@x.com' }),
+test('the run is idempotent — a profile already in its final state produces no update', () => {
+  const updates = planEntryUpdates([
+    profile('r@x.com', { gv_breakdown: { confirmed: true, survey: false, referrals: 1, instagram: false, upload: false } }),
+    profile('f1@x.com', { gv_breakdown: { confirmed: true, survey: false, referrals: 0, instagram: false, upload: false }, gv_referred_by: 'r@x.com' }),
   ]);
-  assert.deepEqual(plan, [], 'one confirmed referee and one credit already booked means nothing to do');
+  assert.deepEqual(updates, [], 'nothing left to change means no writes');
+});
+
+test('other rungs already earned are preserved, not reset', () => {
+  const updates = planEntryUpdates([
+    profile('a@x.com', { gv_breakdown: { confirmed: false, survey: true, referrals: 0, instagram: true, upload: true } }),
+  ]);
+  const u = forEmail(updates, 'a@x.com');
+  assert.equal(u.breakdown.survey, true);
+  assert.equal(u.breakdown.upload, true);
+  assert.equal(u.entries, 1 + 2 + 3 + 3 + 10, 'crediting confirmation must not clobber survey/instagram/upload');
 });
 
 test('matching is case-insensitive, so a mixed-case referral field still pays', () => {
-  const plan = planReferralCredits([
+  const updates = planEntryUpdates([
     profile('referrer@x.com'),
     profile('friend@x.com', { gv_referred_by: 'ReFerrer@X.com' }),
   ]);
-  assert.equal(plan.length, 1);
-  assert.equal(plan[0].referrer, 'referrer@x.com');
+  assert.equal(forEmail(updates, 'referrer@x.com').breakdown.referrals, 1);
 });
 ```
 
@@ -1078,22 +1107,32 @@ Expected: FAIL — `Cannot find module '.../lib/giveaway/reconcile.js'`
 ```javascript
 // lib/giveaway/reconcile.js
 /**
- * Work out which referrers are owed credit, given the current set of confirmed
- * entrants. Pure: no Klaviyo, no clock, no randomness — so every rule below is
- * covered by tests rather than discovered in production.
+ * Reconcile stored entry state against what Klaviyo actually knows.
  *
- * Credit direction is easy to invert, so state it once: the ENTRANT names their
- * referrer in gv_referred_by; the +5 lands on the REFERRER's profile.
+ * Owns the two rungs no HTTP request can credit:
+ *
+ *   confirmed (+2) — every profile passed in came from listSubscribedProfiles,
+ *     which filters to SUBSCRIBED consent. Being in that set IS the
+ *     double-opt-in confirmation, and it is the only authority on it. Nothing
+ *     in a request may set this flag.
+ *   referral (+5) — lands on the REFERRER's profile once the friend they
+ *     referred confirms. Direction is easy to invert, so state it once: the
+ *     ENTRANT names their referrer in gv_referred_by; the credit goes the
+ *     other way.
+ *
+ * Pure: no Klaviyo, no clock, no randomness — every rule is covered by tests
+ * rather than discovered in production. Idempotency comes from comparing stored
+ * state to desired state, so a re-run after a partial failure is safe.
  */
 import { validateReferral, REFERRAL_CAP, normalizeEmail, entryTotal } from './entries.js';
 
-export function planReferralCredits(confirmedProfiles) {
+export function planEntryUpdates(confirmedProfiles) {
   const byEmail = new Map();
   for (const p of confirmedProfiles) {
     try { byEmail.set(normalizeEmail(p.email), p); } catch { /* skip unusable rows */ }
   }
 
-  // Count confirmed referees per referrer, applying every eligibility rule.
+  // Count eligible confirmed referees per referrer.
   const earned = new Map();
   for (const p of confirmedProfiles) {
     const raw = p.properties?.gv_referred_by;
@@ -1105,34 +1144,39 @@ export function planReferralCredits(confirmedProfiles) {
       referrerEmail: referrer,
       entrantEmail: p.email,
       referrerIsConfirmedEntrant: byEmail.has(referrer),
-      referrerReferralCredits: 0, // cap applied against the total below
+      referrerReferralCredits: 0, // the cap is applied to the total below
     });
     if (!check.ok) continue;
     earned.set(referrer, (earned.get(referrer) || 0) + 1);
   }
 
-  const plan = [];
-  for (const [referrer, count] of earned) {
-    const profile = byEmail.get(referrer);
-    const already = Number(profile.properties?.gv_referral_credits ?? 0);
-    const target = Math.min(count, REFERRAL_CAP);
-    if (target <= already) continue; // idempotent
+  const updates = [];
+  for (const [email, profile] of byEmail) {
+    const stored = profile.properties?.gv_breakdown || {};
+    const storedReferrals = Number(stored.referrals ?? 0);
+    // Never decrease: a referee who unsubscribes must not claw back a credit
+    // already earned, and that also makes re-runs stable.
+    const referrals = Math.max(Math.min(earned.get(email) ?? 0, REFERRAL_CAP), storedReferrals);
+
+    if (stored.confirmed === true && referrals === storedReferrals) continue;
 
     const breakdown = {
-      confirmed: true, survey: false, referrals: 0, instagram: false, upload: false,
-      ...(profile.properties?.gv_breakdown || {}),
-      referrals: target,
+      survey: stored.survey === true,
+      instagram: stored.instagram === true,
+      upload: stored.upload === true,
+      confirmed: true,
+      referrals,
     };
-    plan.push({ referrer, newCredits: target, entries: entryTotal(breakdown), breakdown });
+    updates.push({ email, entries: entryTotal(breakdown), breakdown });
   }
-  return plan;
+  return updates;
 }
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/lib/giveaway-reconcile.test.js`
-Expected: PASS, 6 tests. Confirm `# cancelled 0`.
+Expected: PASS, 8 tests. Confirm `# cancelled 0`.
 
 - [ ] **Step 5: Write the runner script**
 
@@ -1149,7 +1193,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listSubscribedProfiles, updateProfileProperties } from '../../lib/klaviyo-profiles.js';
-import { planReferralCredits } from '../../lib/giveaway/reconcile.js';
+import { planEntryUpdates } from '../../lib/giveaway/reconcile.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const { listId } = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -1158,32 +1202,41 @@ const apply = process.argv.includes('--apply');
 const confirmed = await listSubscribedProfiles(listId);
 console.log(`${confirmed.length} confirmed entrants`);
 
-const plan = planReferralCredits(confirmed);
-if (!plan.length) { console.log('Nothing to credit.'); process.exit(0); }
+const updates = planEntryUpdates(confirmed);
+if (!updates.length) { console.log('Everything already reconciled.'); process.exit(0); }
 
-for (const row of plan) {
-  console.log(`${row.referrer}: ${row.newCredits} referral(s) -> ${row.entries} entries`);
-  if (apply) {
-    await updateProfileProperties(row.referrer, {
-      gv_referral_credits: row.newCredits,
+let failures = 0;
+for (const row of updates) {
+  console.log(`${row.email}: confirmed=${row.breakdown.confirmed} referrals=${row.breakdown.referrals} -> ${row.entries} entries`);
+  if (!apply) continue;
+  try {
+    await updateProfileProperties(row.email, {
       gv_breakdown: row.breakdown,
       gv_entries: row.entries,
     });
+  } catch (e) {
+    // One bad profile must not abandon the rest of the run. The next run
+    // retries it, because the plan is recomputed from stored state.
+    failures += 1;
+    console.error(`  FAILED ${row.email}: ${e.message}`);
   }
 }
-console.log(apply ? `Credited ${plan.length} referrer(s).` : 'Dry run — pass --apply to write.');
+console.log(apply
+  ? `Updated ${updates.length - failures}/${updates.length} profile(s).`
+  : 'Dry run — pass --apply to write.');
+if (failures) process.exitCode = 1;
 ```
 
 - [ ] **Step 6: Verify the dry run is genuinely read-only**
 
 Run: `node scripts/giveaway/reconcile-referrals.mjs`
-Expected: prints the confirmed count and either `Nothing to credit.` or a plan ending in `Dry run`. No Klaviyo writes.
+Expected: prints the confirmed count and either `Everything already reconciled.` or a plan ending in `Dry run`. No Klaviyo writes.
 
 - [ ] **Step 7: Commit**
 
 ```bash
 git add lib/giveaway/reconcile.js scripts/giveaway/reconcile-referrals.mjs tests/lib/giveaway-reconcile.test.js
-git commit -m "feat(giveaway): idempotent nightly referral reconciliation"
+git commit -m "feat(giveaway): nightly reconciliation of confirmation and referral rungs"
 ```
 
 ---
@@ -1355,55 +1408,67 @@ Note: schema `label` values must stay ≤70 characters.
  * Verifies each page returns 200 afterwards -- success logs lie, the live page
  * is the evidence.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getMainThemeId, updateThemeAsset, getPages, createPage, updatePage } from '../../lib/shopify.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (...p) => readFileSync(join(ROOT, ...p), 'utf8');
+const abs = (...p) => join(ROOT, ...p);
 
+// Source path -> theme asset key. Sources that do not exist yet are SKIPPED
+// with a log line rather than throwing, so this script runs green while the
+// giveaway pages are still being built out across tasks. A silent skip would be
+// worse than a throw, so each one is announced.
 const ASSETS = [
-  ['sections/giveaway-entry.liquid', read('theme', 'sections', 'giveaway-entry.liquid')],
-  ['sections/giveaway-entered.liquid', read('theme', 'sections', 'giveaway-entered.liquid')],
-  ['assets/giveaway.js', read('theme', 'assets', 'giveaway.js')],
-  ['templates/page.giveaway.json', read('theme', 'templates', 'page.giveaway.json')],
-  ['templates/page.giveaway-entered.json', read('theme', 'templates', 'page.giveaway-entered.json')],
+  [abs('theme', 'sections', 'giveaway-entry.liquid'), 'sections/giveaway-entry.liquid'],
+  [abs('theme', 'sections', 'giveaway-entered.liquid'), 'sections/giveaway-entered.liquid'],
+  [abs('theme', 'assets', 'giveaway.js'), 'assets/giveaway.js'],
+  [abs('theme', 'templates', 'page.giveaway.json'), 'templates/page.giveaway.json'],
+  [abs('theme', 'templates', 'page.giveaway-entered.json'), 'templates/page.giveaway-entered.json'],
 ];
 
 const PAGES = [
-  { handle: 'free-soap-giveaway', title: 'Win 36 Free Bars of Unscented Soap', template_suffix: 'giveaway', body_html: '' },
-  { handle: 'giveaway-entered', title: "You're entered", template_suffix: 'giveaway-entered', body_html: '' },
-  { handle: 'giveaway-official-rules', title: 'Giveaway Official Rules', template_suffix: null, body_html: read('data', 'giveaway', 'official-rules.html') },
+  { handle: 'free-soap-giveaway', title: 'Win 36 Free Bars of Unscented Soap', template_suffix: 'giveaway', body_html: '', requires: abs('theme', 'sections', 'giveaway-entry.liquid') },
+  { handle: 'giveaway-entered', title: "You're entered", template_suffix: 'giveaway-entered', body_html: '', requires: abs('theme', 'sections', 'giveaway-entered.liquid') },
+  { handle: 'giveaway-official-rules', title: 'Giveaway Official Rules', template_suffix: null, bodyFrom: abs('data', 'giveaway', 'official-rules.html'), requires: abs('data', 'giveaway', 'official-rules.html') },
 ];
 
 const themeId = await getMainThemeId();
 console.log(`Theme ${themeId}`);
-for (const [key, value] of ASSETS) {
-  await updateThemeAsset(themeId, key, value);
+for (const [source, key] of ASSETS) {
+  if (!existsSync(source)) { console.log(`  SKIP ${key} — not built yet`); continue; }
+  await updateThemeAsset(themeId, key, readFileSync(source, 'utf8'));
   console.log(`  pushed ${key}`);
 }
 
 const existing = await getPages();
-for (const page of PAGES) {
+const live = [];
+for (const { requires, bodyFrom, ...page } of PAGES) {
+  if (!existsSync(requires)) { console.log(`  SKIP /pages/${page.handle} — not built yet`); continue; }
+  if (bodyFrom) page.body_html = readFileSync(bodyFrom, 'utf8');
   const hit = existing.find((p) => p.handle === page.handle);
   const saved = hit ? await updatePage(hit.id, page) : await createPage(page);
   console.log(`  ${hit ? 'updated' : 'created'} /pages/${saved.handle} (${saved.id})`);
+  live.push(page.handle);
 }
 
-for (const page of PAGES) {
-  const url = `https://www.realskincare.com/pages/${page.handle}`;
+// Success logs lie; the live page is the evidence.
+for (const handle of live) {
+  const url = `https://www.realskincare.com/pages/${handle}`;
   const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
   console.log(`  ${res.status} ${url}`);
   if (!res.ok) throw new Error(`${url} returned ${res.status}`);
 }
-console.log('All pages live.');
+console.log(`Verified ${live.length} page(s) live.`);
 ```
 
 - [ ] **Step 5: Run it and verify all three pages return 200**
 
 Run: `node scripts/giveaway/build-pages.mjs`
-Expected: five `pushed`, three `created`/`updated`, then three `200` lines and `All pages live.` (Task 7 creates `giveaway-entered.liquid` and its template — run this again after that task; until then, temporarily comment those two `ASSETS` rows and the `giveaway-entered` page.)
+Expected: three `pushed` lines, two `SKIP … not built yet` lines for the entered-page section and template (Task 7 creates those), two `created`/`updated` pages, one `SKIP /pages/giveaway-entered`, then two `200` lines and `Verified 2 page(s) live.`
+
+The skips are why this task stands on its own — Task 7 adds the missing sources and the same script then pushes all five and verifies all three.
 
 - [ ] **Step 6: Commit**
 
@@ -1584,8 +1649,8 @@ The page an entrant lands on after submitting. **No offer appears here** — the
 
 - [ ] **Step 4: Push and verify both pages render**
 
-Run: `node scripts/giveaway/build-pages.mjs` (with all `ASSETS` rows and pages restored)
-Expected: three `200` lines. Then confirm the entered page has no offer copy:
+Run: `node scripts/giveaway/build-pages.mjs`
+Expected: now that Task 7's sources exist, five `pushed` lines with no skips, three pages, three `200` lines, `Verified 3 page(s) live.` Then confirm the entered page has no offer copy:
 
 ```bash
 curl -s -A 'Mozilla/5.0' https://www.realskincare.com/pages/giveaway-entered | grep -c -iE '\$99|\$66|months free' || echo "0 — correct, no offer on this page"
