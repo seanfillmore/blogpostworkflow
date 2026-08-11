@@ -463,23 +463,45 @@ test('subscribeToList sends a subscription job with the profile inline and conse
   assert.equal(body.data.relationships.list.data.id, 'ABC123');
 });
 
-test('listSubscribedProfiles returns only confirmed profiles and follows pagination', async () => {
+test('listSubscribedProfiles excludes unconfirmed profiles and follows pagination', async () => {
+  // Membership of the SUBSCRIBED set is what later tasks treat as proof of a
+  // double-opt-in click, so an UNCONFIRMED profile leaking through would credit
+  // bonus entries nobody earned.
+  const sub = (consent) => ({ email: { marketing: { consent } } });
   let page = 0;
-  stubFetch(({ url }) => {
-    if (url.includes('/lists/')) {
-      page += 1;
-      return page === 1
-        ? { json: { data: [{ id: 'p1', attributes: { email: 'a@b.com', properties: { gv_entries: 3 } } }], links: { next: 'https://a.klaviyo.com/api/next-page' } } }
-        : { json: { data: [{ id: 'p2', attributes: { email: 'c@d.com', properties: {} } }], links: {} } };
-    }
-    return { json: { data: [{ id: 'p2', attributes: { email: 'c@d.com', properties: {} } }], links: {} } };
+  stubFetch(() => {
+    page += 1;
+    return page === 1
+      ? { json: {
+          data: [
+            { id: 'p1', attributes: { email: 'confirmed@b.com', properties: { gv_entries: 3 }, subscriptions: sub('SUBSCRIBED') } },
+            { id: 'p2', attributes: { email: 'pending@b.com', properties: {}, subscriptions: sub('UNCONFIRMED') } },
+          ],
+          links: { next: 'https://a.klaviyo.com/api/next-page' },
+        } }
+      : { json: {
+          data: [{ id: 'p3', attributes: { email: 'page2@b.com', properties: {}, subscriptions: sub('SUBSCRIBED') } }],
+          links: {},
+        } };
   });
   const { listSubscribedProfiles } = await import('../../lib/klaviyo-profiles.js');
 
   const out = await listSubscribedProfiles('ABC123');
-  assert.equal(out.length, 2, 'both pages must be returned');
-  assert.deepEqual(out.map((p) => p.email), ['a@b.com', 'c@d.com']);
-  assert.match(calls[0].url, /filter=.*SUBSCRIBED/, 'the request must filter to confirmed consent');
+  assert.deepEqual(
+    out.map((p) => p.email),
+    ['confirmed@b.com', 'page2@b.com'],
+    'UNCONFIRMED must be dropped and page 2 must be included',
+  );
+  assert.match(decodeURIComponent(calls[0].url), /additional-fields\[profile\]=subscriptions/);
+  // Verified live 2026-08-11: this endpoint 400s on a consent filter.
+  assert.doesNotMatch(calls[0].url, /filter=/, 'must not send a filter this endpoint rejects');
+});
+
+test('findListByName tolerates case and whitespace so it cannot create a duplicate list', async () => {
+  stubFetch(() => ({ json: { data: [{ id: 'L1', attributes: { name: 'Giveaway 2026-09 — Entrants' } }], links: {} } }));
+  const { findListByName } = await import('../../lib/klaviyo-profiles.js');
+  const hit = await findListByName('  giveaway 2026-09 — entrants ');
+  assert.equal(hit?.id, 'L1');
 });
 
 test('updateProfileProperties PATCHes by id after resolving the email', async () => {
@@ -528,11 +550,16 @@ Expected: FAIL — `Cannot find module '.../lib/klaviyo-profiles.js'`
 import { klaviyoRequest } from './klaviyo.js';
 import { normalizeEmail } from './giveaway/entries.js';
 
+// Compared trimmed and case-folded so a stray space, a case change, or an
+// em-dash/hyphen edit to the list name does not silently create a duplicate
+// list instead of reusing the existing one.
+const sameName = (a, b) => String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+
 export async function findListByName(name) {
   let url = '/lists/?fields%5Blist%5D=name';
   while (url) {
     const d = await klaviyoRequest('GET', url);
-    const hit = (d.data || []).find((l) => l.attributes?.name === name);
+    const hit = (d.data || []).find((l) => sameName(l.attributes?.name, name));
     if (hit) return { id: hit.id, name: hit.attributes.name };
     url = d.links?.next || null;
   }
@@ -584,12 +611,20 @@ export async function updateProfileProperties(email, properties) {
 }
 
 export async function listSubscribedProfiles(listId) {
-  const filter = encodeURIComponent('equals(subscriptions.email.marketing.consent,"SUBSCRIBED")');
-  let url = `/lists/${listId}/profiles/?filter=${filter}&page%5Bsize%5D=100`;
+  // The list-profiles endpoint does NOT support filtering on
+  // subscriptions.email.marketing.consent. Verified live 2026-08-11:
+  //   400: "'subscriptions.email.marketing.consent' is not a filterable field
+  //   for this resource. The filterable fields on this resource are: _kx,
+  //   email, joined_group_at, phone_number, push_token"
+  // So request the subscriptions block and filter client-side. Membership of
+  // the SUBSCRIBED set is what later tasks treat as double-opt-in confirmation,
+  // so this filter must not be dropped.
+  let url = `/lists/${listId}/profiles/?additional-fields%5Bprofile%5D=subscriptions&page%5Bsize%5D=100`;
   const out = [];
   while (url) {
     const d = await klaviyoRequest('GET', url);
     for (const p of d.data || []) {
+      if (p.attributes?.subscriptions?.email?.marketing?.consent !== 'SUBSCRIBED') continue;
       out.push({ id: p.id, email: p.attributes.email, properties: p.attributes.properties || {} });
     }
     url = d.links?.next || null;
