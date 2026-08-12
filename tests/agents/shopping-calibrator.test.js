@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { negativeBlocks, findConflicts, findMissingDemand, buildMarkdown } from '../../agents/shopping-calibrator/index.js';
+import { negativeBlocks, findConflicts, findMissingDemand, buildMarkdown, deadSpendQueries } from '../../agents/shopping-calibrator/index.js';
 
 test('negativeBlocks mirrors Google match semantics', () => {
   assert.equal(negativeBlocks('natural lotion for stretch marks', 'stretch marks', 'PHRASE'), true);
@@ -91,4 +91,40 @@ test('a PHRASE negative must not be added when it would block a longer convertin
   // A candidate with no such overlap is safe.
   const safeCandidate = 'weleda body lotion';
   assert.equal(sellers.filter((s) => negativeBlocks(s.query, safeCandidate, 'PHRASE')).length, 0);
+});
+
+// --- Dead-spend negation ------------------------------------------------------------
+// Added 2026-08-12. The calibrator negated only on Amazon SQP *price mismatch*, so it
+// never caught a query that simply burns money without converting. The real case: the
+// bare head term "lotion" took $43.32 across 71 clicks with 0 conversions over three
+// weeks and survived every pass. This rule was impossible before conversion tracking
+// was fixed — every query read 0 conversions for structural reasons, so the rule would
+// have negated the entire account.
+
+test('deadSpendQueries flags a high-spend zero-conversion head term', () => {
+  const terms = [
+    { query: 'lotion', clicks: 71, cost: 43.32, conversions: 0 },
+    { query: 'coconut lotion', clicks: 30, cost: 18.00, conversions: 2 },  // converts — keep
+    { query: 'body lotion', clicks: 8, cost: 4.37, conversions: 0 },       // too few clicks
+    { query: 'niche term', clicks: 40, cost: 3.00, conversions: 0 },       // cheap, not worth it
+  ];
+  const out = deadSpendQueries(terms, { minClicks: 25, minSpend: 15 });
+  assert.deepEqual(out.map((r) => r.query), ['lotion']);
+});
+
+test('deadSpendQueries never negates a query that sold on Amazon', () => {
+  const terms = [{ query: 'coconut body lotion', clicks: 90, cost: 55.00, conversions: 0 }];
+  const protectedSet = new Set(['coconut body lotion']);
+  assert.deepEqual(deadSpendQueries(terms, { minClicks: 25, minSpend: 15, protectedSet }), []);
+});
+
+test('deadSpendQueries uses EXACT match so qualified variants survive', () => {
+  // This is the whole point: PHRASE "lotion" would kill "coconut lotion" and
+  // "body lotion" too, taking the converting long-tail with it. EXACT kills only
+  // the bare browsing query.
+  const out = deadSpendQueries([{ query: 'lotion', clicks: 71, cost: 43.32, conversions: 0 }],
+    { minClicks: 25, minSpend: 15 });
+  assert.equal(out[0].matchType, 'EXACT');
+  assert.equal(negativeBlocks('coconut lotion', out[0].query, out[0].matchType), false);
+  assert.equal(negativeBlocks('lotion', out[0].query, out[0].matchType), true);
 });

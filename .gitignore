@@ -125,3 +125,6 @@ data/reports/giveaway/
 
 # Google Ads offline conversion upload run reports (per-run, server-generated)
 data/reports/ads-conversions/
+
+# Shopping calibrator run reports (per-run, server-generated)
+data/reports/shopping-calibrator/
