@@ -102,9 +102,29 @@ export function createRateLimiter({
  *    requests still get *some* shared limit instead of an unbounded
  *    exemption.
  */
+/**
+ * Derive the visitor's IP.
+ *
+ * X-Real-IP is NOT a fallback here, it is the one that actually fires in
+ * production. The first-party subdomains that reach this app are A records
+ * straight to the origin, deliberately NOT proxied through Cloudflare (routing
+ * them through the zone would drag this origin into the SSL/TLS mode shared
+ * with the Shopify storefront). nginx then proxies from 127.0.0.1 setting
+ * `X-Real-IP $remote_addr` and no X-Forwarded-For.
+ *
+ * So on this server: cf-connecting-ip absent, x-forwarded-for absent, socket
+ * address 127.0.0.1 for EVERY request. Without the X-Real-IP hop, every visitor
+ * shares one rate-limit bucket and the sixth entrant of any hour gets a 429 —
+ * which reads as "the campaign isn't converting", not as a bug.
+ *
+ * cf-connecting-ip is kept first in case a host is ever put behind the proxy.
+ */
 export function getClientIp(req) {
   const cf = req.headers['cf-connecting-ip'];
   if (cf) return String(cf).trim();
+
+  const real = req.headers['x-real-ip'];
+  if (real) return String(real).trim();
 
   const xff = req.headers['x-forwarded-for'];
   if (xff) return String(xff).split(',')[0].trim();

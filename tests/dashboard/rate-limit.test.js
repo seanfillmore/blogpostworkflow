@@ -97,3 +97,29 @@ test('getClientIp buckets under a fixed key when nothing usable is available, in
   const req = { headers: {}, socket: {} };
   assert.equal(getClientIp(req), 'unknown');
 });
+
+test('REGRESSION: getClientIp reads X-Real-IP, which is what this server actually sends', () => {
+  // The production nginx vhost for the first-party subdomains sets
+  // `X-Real-IP $remote_addr` and NO X-Forwarded-For, and the hostname is an A
+  // record straight to the origin rather than a Cloudflare-proxied one. So a
+  // real request arrives with no cf-connecting-ip, no x-forwarded-for, and a
+  // socket address of 127.0.0.1 because nginx proxies from localhost.
+  //
+  // Without the X-Real-IP hop every visitor buckets under 127.0.0.1 and shares
+  // ONE budget — the sixth entrant of any hour gets a 429, which reads as "the
+  // campaign isn't converting" rather than as a bug.
+  const asNginxSendsIt = {
+    headers: { 'x-real-ip': '203.0.113.42' },
+    socket: { remoteAddress: '127.0.0.1' },
+  };
+  assert.equal(getClientIp(asNginxSendsIt), '203.0.113.42');
+  assert.notEqual(getClientIp(asNginxSendsIt), '127.0.0.1', 'must not collapse every visitor into one bucket');
+});
+
+test('getClientIp still prefers CF-Connecting-IP over X-Real-IP if a host is ever proxied', () => {
+  const req = {
+    headers: { 'cf-connecting-ip': '203.0.113.9', 'x-real-ip': '10.0.0.7' },
+    socket: { remoteAddress: '127.0.0.1' },
+  };
+  assert.equal(getClientIp(req), '203.0.113.9');
+});

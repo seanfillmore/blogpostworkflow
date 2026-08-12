@@ -86,8 +86,28 @@ for (const [re, label] of [
 check(rules.includes('Cheyenne, WY 82001'), 'rules: sponsor address is the corrected Cheyenne, WY address');
 check(!!rulesFetch.res && !rules.includes('Blum'), 'rules: superseded Blum, TX address is NOT present');
 
-// 5. The Meta pixel is present (installed via the sales channel app).
-check(/connect\.facebook\.net|fbevents|fbq\(/.test(lander), 'Meta pixel fires on the lander');
+// 5. The Meta pixel is present, AND it is the pixel we mean to use.
+//
+// Do NOT grep for connect.facebook.net / fbevents / fbq( — the Facebook &
+// Instagram sales channel registers the pixel inside Shopify's sandboxed
+// web-pixels runtime, so none of those classic markers appear in page HTML even
+// when the pixel is correctly installed and firing. Checking for them produced a
+// false FAIL against a working install on 2026-08-11.
+//
+// What the page actually contains is the web-pixels-manager config, with quotes
+// backslash-escaped inside a JS string:
+//   {\"pixel_id\":\"1948396628850834\",\"pixel_type\":\"facebook_pixel\",...}
+const landerUnescaped = lander.replace(/\\"/g, '"');
+check(
+  !!landerFetch.res && /"pixel_type"\s*:\s*"facebook_pixel"/.test(landerUnescaped),
+  'a Meta pixel is registered in the Shopify web-pixels config',
+);
+// Assert the ID too: a pixel firing into the wrong dataset is worse than none,
+// because it looks like it works.
+check(
+  !!landerFetch.res && landerUnescaped.includes(`"pixel_id":"${config.metaPixelId}"`),
+  `the registered pixel is the expected one (${config.metaPixelId})`,
+);
 
 // 6. The entry endpoint is reachable and first-party.
 const endpointMatch = lander.match(/https:\/\/[a-z0-9.-]+\/api\/giveaway/);
