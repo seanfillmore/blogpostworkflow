@@ -2286,6 +2286,26 @@ git commit -m "feat(giveaway): Gate A launch verification and runbook"
 
 ---
 
+### Task 11a: Per-IP rate limiting on the public write routes
+
+`POST /api/giveaway/enter` is public and unauthenticated by necessity, and every accepted request creates a real profile in a production Klaviyo account. In-memory limiter, no new dependency; spam damping, not a security boundary, so resetting on a PM2 restart is acceptable.
+
+**Two separate budgets, because the two route groups have different abuse value.** A single shared budget was tried first at 5/hour and was wrong: the legitimate funnel is FOUR write requests (`/enter`, then `/answers`, then the Instagram handle, then `/upload`), so one clean pass consumed 4 of 5 and a single double-tap 429'd a real entrant out of the +10 upload rung — the ladder's most valuable action.
+
+| Route group | Budget | Why |
+|---|---|---|
+| `/enter` | **5 per IP per hour** | This is the only route that CREATES a Klaviyo profile, so it is the whole abuse surface. 5 new entrants from one IP per hour is generous for a household and tight for bulk abuse. |
+| `/answers`, `/upload` | **30 per IP per hour**, shared | These mutate a profile that already exists and cannot create one. Weak abuse vector, and they carry the multi-step funnel plus any retries. |
+| `GET /entries` | **not limited** | The entered page calls it on every pageview; limiting it would break the entry-ladder display. |
+
+Deliberately loose in both cases — households, offices and mobile-carrier NAT share IPs, and blocking a real entrant costs more than the spam prevented.
+
+**Bounded memory.** Prune expired buckets on each check and cap tracked keys with LRU eviction. This box's 24 GB disk filled once and took down every cron job for four days; unbounded in-memory growth is the same class of mistake.
+
+**Client IP behind Cloudflare:** prefer `CF-Connecting-IP`, then the first `X-Forwarded-For` hop, then the socket address, then a fixed bucket. Fail CLOSED — an undeterminable IP shares one budget rather than being exempted.
+
+**⚠️ Launch verification, because the failure mode is severe:** if a proxy between Cloudflare and Node strips `CF-Connecting-IP` and no `X-Forwarded-For` survives, EVERY visitor buckets under the proxy's socket address — one shared budget for all traffic, which would 429 essentially every entrant after the first few. Before ads run, confirm the derived IP varies across two requests from different networks. This belongs in the launch runbook.
+
 ### Task 11: Upload and Instagram rungs
 
 The last two ladder rungs. Both are priced in `ENTRY_VALUES` and promoted by nurture email 04 (day 12), so they must exist before that email sends — but neither is a launch blocker, so this task can land during the campaign's first week.
