@@ -19,6 +19,29 @@
  * This creates REAL profiles on the PRODUCTION list. Cleanup is not optional;
  * Gate A refuses launch while any gv_test profile remains.
  *
+ * ---------------------------------------------------------------------------
+ * PICK THE BASE INBOX CAREFULLY. IT GETS BURNED. (learned the hard way, 2026-08-12)
+ * ---------------------------------------------------------------------------
+ * Seeding five plus-aliases of ONE inbox against the production list tripped
+ * Klaviyo's anti-abuse handling. It reads as list-bombing, because that is what
+ * list-bombing looks like. The consequences were permanent for that inbox:
+ *
+ *   - every NEW alias of that root is now stamped USER_SUPPRESSED the instant it
+ *     subscribes — verified with a fresh alias sent ALONE after 90s of quiet,
+ *     while a different domain in the same run was untouched
+ *   - a suppressed address will never be sent a confirmation again
+ *   - a profile already sitting in the pending state is not sent a second
+ *     confirmation either, so re-subscribing cannot rescue a botched run
+ *
+ * So: the run is not retryable on the same inbox, and --run <newid> does NOT
+ * help, because the suppression follows the ROOT address, not the alias.
+ *
+ * Klaviyo account sending was NOT harmed — real customer flows kept delivering
+ * throughout. The damage is scoped to the base inbox you choose here.
+ *
+ * Use an inbox you are willing to lose, never the operator's main address, and
+ * never one a real customer or the support desk relies on.
+ *
  * RATE LIMITER: POST /enter allows 5 per IP per hour and `seed` spends exactly
  * all five, so `negative` (which re-enters A) and `limits` (which needs a fresh
  * budget) each REQUIRE a PM2 restart first — the limiter is an in-memory map
@@ -130,8 +153,30 @@ async function preflight() {
   assert(!!config.metaPixelId, 'config.metaPixelId is set', config.metaPixelId || '');
 }
 
+/**
+ * Seed the five identities, PACED.
+ *
+ * The first version fired all five subscribes inside one second. Klaviyo's
+ * anti-abuse handling suppressed the last three outright (`USER_SUPPRESSED`,
+ * stamped the same second the profile was created) and silently dropped the
+ * opt-in emails for the first two. Verified against the account's suppression
+ * list on 2026-08-12: livecheck subscribed alone at 5:47 got its email; A-E
+ * subscribed together at 5:48 got nothing and C/D/E were suppressed.
+ *
+ * A suppressed alias is BURNED — Klaviyo will not send it a confirmation again,
+ * and a profile already sitting in the pending state will not be sent a second
+ * one either, so a re-subscribe cannot rescue a botched run. Use a new --run id.
+ *
+ * --delay controls the gap. Do not set it to 0 outside a dry run.
+ */
 async function seed() {
-  for (const id of Object.values(ids)) {
+  const delayMs = Number(arg('delay', '150')) * 1000;
+  const list = Object.values(ids);
+  for (const [i, id] of list.entries()) {
+    if (i > 0) {
+      console.log(`  …waiting ${delayMs / 1000}s before ${id.key.toUpperCase()} (Klaviyo suppresses bursts)`);
+      await sleep(delayMs);
+    }
     const body = { email: id.email, firstName: id.firstName };
     if (id.referredBy) body.referredBy = id.referredBy;
     const { status, json } = await post('/enter', body);
