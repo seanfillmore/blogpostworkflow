@@ -257,19 +257,53 @@ function corsHeaders(req) {
   };
 }
 
-/** Read the body with a hard byte cap, destroying the socket if exceeded. */
+/**
+ * Read the body with a hard byte cap.
+ *
+ * Rejects with code BODY_TOO_LARGE once the cap is passed, and deliberately
+ * does NOT destroy the socket here. Destroying it at this point reset the
+ * connection before the error response could flush, so nginx logged
+ *   recv() failed (104: Connection reset by peer) while reading response
+ *   header from upstream ... POST /api/giveaway/upload
+ * and served the entrant a bare 502 with no message. Teardown belongs after
+ * the response is written — see refuseBody.
+ *
+ * Further chunks are dropped rather than buffered, so an oversized body costs
+ * bounded memory even though we stop reading it.
+ */
 function readCappedBody(req, cap = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let size = 0;
+    let overflowed = false;
     const chunks = [];
     req.on('data', (c) => {
+      if (overflowed) return;
       size += c.length;
-      if (size > cap) { reject(new Error('body too large')); req.destroy(); return; }
+      if (size > cap) {
+        overflowed = true;
+        const e = new Error('body too large');
+        e.code = 'BODY_TOO_LARGE';
+        reject(e);
+        return;
+      }
       chunks.push(c);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('end', () => { if (!overflowed) resolve(Buffer.concat(chunks).toString('utf8')); });
     req.on('error', reject);
   });
+}
+
+/**
+ * Turn a body-read failure into a response.
+ *
+ * An oversized body is 413 with a message the entrant can act on, not a
+ * generic 400 and never a reset. The 'finish' listener is attached BEFORE the
+ * response is written so the socket is torn down only once the bytes are out.
+ */
+function refuseBody(req, res, e, tooLargeMessage) {
+  if (e?.code !== 'BODY_TOO_LARGE') return json(res, req, 400, { ok: false, error: 'bad body' });
+  if (typeof res.on === 'function') res.on('finish', () => req.destroy());
+  return json(res, req, 413, { ok: false, error: tooLargeMessage });
 }
 
 const json = (res, req, status, body) => {
@@ -294,7 +328,7 @@ export default [
     handler: withRateLimit(enterLimiter, async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
-      catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
+      catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
 
       const v = validateEntryPayload(parsed);
       if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });
@@ -319,7 +353,7 @@ export default [
     handler: withRateLimit(mutateLimiter, async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
-      catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
+      catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
       let email;
       try { email = normalizeEmail(parsed.email); }
       catch { return json(res, req, 400, { ok: false, error: 'a valid email is required' }); }
@@ -357,7 +391,7 @@ export function createUploadHandler({
   return async (req, res) => {
     let parsed;
     try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
-    catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
+    catch (e) { return refuseBody(req, res, e, 'that file is too large (6MB max)'); }
 
     const v = validateUpload(parsed);
     if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });

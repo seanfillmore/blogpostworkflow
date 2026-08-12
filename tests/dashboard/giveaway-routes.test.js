@@ -178,3 +178,56 @@ test('a Klaviyo failure on GET /entries responds 502 instead of crashing the pro
   assert.equal(res.statusCode, 502);
   assert.equal(JSON.parse(res.body).ok, false);
 });
+
+test('an oversized upload answers 413 instead of resetting the connection into a 502', async () => {
+  // The body cap used to call req.destroy() the moment it was exceeded, which
+  // reset the socket BEFORE the error response could flush. nginx logged
+  //   recv() failed (104: Connection reset by peer) while reading response
+  //   header from upstream ... POST /api/giveaway/upload
+  // and served the entrant a bare 502. This is not a rare path: the cap is
+  // ~6MB of file, and a modern phone photo clears that routinely — so the
+  // ladder's most valuable rung (+10, licensed creative) failed with no
+  // message at all. The response must be written first; only then may the
+  // socket be closed.
+  const { createUploadHandler } = await import('../../agents/dashboard/routes/giveaway.js');
+  const { EventEmitter } = await import('node:events');
+
+  const req = new EventEmitter();
+  req.url = '/api/giveaway/upload';
+  req.headers = {};
+  let destroyedAt = null;
+  let responseAt = null;
+  let tick = 0;
+  req.destroy = () => { if (destroyedAt === null) destroyedAt = (tick += 1); };
+
+  // An EventEmitter, not a plain object: 'finish' is what the fix hangs the
+  // socket teardown on, so the stub has to emit it or the ordering assertion
+  // below proves nothing.
+  const res = new EventEmitter();
+  res.statusCode = null;
+  res.body = null;
+  res.writeHead = (status) => { res.statusCode = status; if (responseAt === null) responseAt = (tick += 1); };
+  res.end = (body) => { res.body = body; res.emit('finish'); };
+
+  const handler = createUploadHandler({
+    getProfileByEmail: async () => { throw new Error('must never be reached — the body was refused'); },
+    uploadImageToShopifyCDN: async () => { throw new Error('must never reach the Shopify CDN'); },
+    computeAndPersistEntries: async () => { throw new Error('must never credit an entry'); },
+    updateProfileProperties: async () => { throw new Error('must never write to Klaviyo'); },
+  });
+
+  const done = handler(req, res);
+  // 9MB, past the ~8MB+2KB cap.
+  const chunk = Buffer.alloc(1024 * 1024, 0x41);
+  for (let i = 0; i < 9; i += 1) req.emit('data', chunk);
+  req.emit('end');
+  await done;
+
+  assert.equal(res.statusCode, 413, 'an oversized body is 413 Payload Too Large, not a generic 400 and certainly not a reset');
+  assert.match(String(res.body), /too large/i, 'the entrant must be told what went wrong');
+  assert.ok(responseAt !== null, 'a response must actually be written');
+  assert.ok(
+    destroyedAt === null || destroyedAt > responseAt,
+    `the socket must not be destroyed before the response is written (destroyed at ${destroyedAt}, responded at ${responseAt})`,
+  );
+});
