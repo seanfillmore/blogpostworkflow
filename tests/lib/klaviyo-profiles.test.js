@@ -25,8 +25,18 @@ function stubFetch(responder) {
 beforeEach(() => { calls = []; });
 afterEach(() => { globalThis.fetch = realFetch; });
 
-test('subscribeToList sends a subscription job with the profile inline and consent requested', async () => {
-  stubFetch(() => ({ status: 202, json: {} }));
+// These four tests replace one that asserted the payload Klaviyo actually
+// REJECTS. It stubbed a 202 and asserted `profile.attributes.properties`, so it
+// passed forever while every live POST /enter 502'd:
+//   400: 'first_name' is not a valid field for the resource 'profile'.
+//        @ /data/attributes/profiles/data/0/attributes/first_name
+//        'properties' is not a valid field for the resource 'profile'.
+// Bulk-subscribe permits ONLY email, phone_number, subscriptions and
+// age_gated_date_of_birth. Profile data belongs on POST /profile-import/, which
+// upserts. A stubbed 2xx can never surface that 400, so the shape assertions
+// below are the only thing standing between us and a repeat.
+test('subscribeToList upserts the profile BEFORE requesting consent', async () => {
+  stubFetch(() => ({ status: 200, json: { data: { id: 'P1' } } }));
   const { subscribeToList } = await import('../../lib/klaviyo-profiles.js');
 
   await subscribeToList('ABC123', {
@@ -35,18 +45,62 @@ test('subscribeToList sends a subscription job with the profile inline and conse
     properties: { gv_entrant: true, gv_entries: 1 },
   });
 
-  assert.equal(calls.length, 1);
-  const { url, body } = calls[0];
-  assert.match(url, /profile-subscription-bulk-create-jobs/);
-  const profile = body.data.attributes.profiles.data[0];
-  assert.equal(profile.attributes.email, 'sean@example.com', 'email must be normalised before it reaches Klaviyo');
-  assert.equal(profile.attributes.properties.gv_entrant, true);
+  assert.equal(calls.length, 2, 'an upsert and a subscribe — profile data cannot ride along on the subscribe');
+  assert.match(calls[0].url, /profile-import/, 'the upsert must come first: consent triggers the opt-in email, and it must not go out before first_name exists');
+  assert.match(calls[1].url, /profile-subscription-bulk-create-jobs/);
+});
+
+test('the upsert carries first_name and properties, normalised', async () => {
+  stubFetch(() => ({ status: 200, json: { data: { id: 'P1' } } }));
+  const { subscribeToList } = await import('../../lib/klaviyo-profiles.js');
+
+  await subscribeToList('ABC123', {
+    email: '  Sean@Example.COM ',
+    firstName: 'Sean',
+    properties: { gv_entrant: true, gv_entries: 1 },
+  });
+
+  const { attributes } = calls[0].body.data;
+  assert.equal(calls[0].body.data.type, 'profile');
+  assert.equal(attributes.email, 'sean@example.com', 'email must be normalised before it reaches Klaviyo');
+  assert.equal(attributes.first_name, 'Sean');
+  assert.equal(attributes.properties.gv_entrant, true);
+  assert.equal(attributes.properties.gv_entries, 1);
+});
+
+test('the subscribe job carries NOTHING Klaviyo rejects — this is the assertion that would have caught the 502', async () => {
+  stubFetch(() => ({ status: 200, json: { data: { id: 'P1' } } }));
+  const { subscribeToList } = await import('../../lib/klaviyo-profiles.js');
+
+  await subscribeToList('ABC123', {
+    email: 'sean@example.com',
+    firstName: 'Sean',
+    properties: { gv_entrant: true },
+  });
+
+  const profile = calls[1].body.data.attributes.profiles.data[0];
+  assert.deepEqual(
+    Object.keys(profile.attributes).sort(),
+    ['email', 'subscriptions'],
+    'ONLY email and subscriptions. first_name or properties here is a hard 400 from Klaviyo.',
+  );
+  assert.equal(profile.attributes.email, 'sean@example.com');
   assert.equal(
     profile.attributes.subscriptions.email.marketing.consent,
     'SUBSCRIBED',
     'consent must be requested so the list double-opt-in flow fires',
   );
-  assert.equal(body.data.relationships.list.data.id, 'ABC123');
+  assert.equal(calls[1].body.data.relationships.list.data.id, 'ABC123');
+});
+
+test('a profile with no firstName still upserts, without sending a null first_name', async () => {
+  stubFetch(() => ({ status: 200, json: { data: { id: 'P1' } } }));
+  const { subscribeToList } = await import('../../lib/klaviyo-profiles.js');
+
+  await subscribeToList('ABC123', { email: 'sean@example.com' });
+
+  assert.equal(calls.length, 2);
+  assert.ok(!('first_name' in calls[0].body.data.attributes), 'a null first_name would overwrite a real one on a resubmit');
 });
 
 test('listSubscribedProfiles excludes unconfirmed profiles and follows pagination', async () => {
