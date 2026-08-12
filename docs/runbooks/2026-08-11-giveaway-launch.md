@@ -1,10 +1,13 @@
 # Giveaway launch runbook — 2026-08-11
 
-Status as of this writing: **NOT LAUNCHED. Gate A fails.** That is the correct,
-expected state — three of the six Sean-gated setup items below are still
-outstanding, and this gate exists to make it impossible to spend an ad dollar
-until they're done. Do not weaken or skip a check to get a green run; get the
-prerequisites done instead.
+Status: **NOT LAUNCHED — but Gate A now PASSES** (updated 2026-08-12).
+
+Entry Period is set: **Aug 15 → Sept 14 2026, draw Sept 16.** All six
+entry-earning methods are verified end-to-end against production (see
+`2026-08-12-giveaway-entry-verification.md` — A=24, B=3, C=D=E=1). Gate A
+passing is necessary, not sufficient: it checks mechanics, not readiness. The
+remaining blockers are in the deploy checklist at the bottom. Do not weaken or
+skip a check to get a green run; get the prerequisites done instead.
 
 ## Step 1 — Sean-gated setup (cannot be automated)
 
@@ -14,16 +17,17 @@ before re-running the gate.
 
 | # | Item | State |
 |---|------|-------|
-| 1 | Meta Business Manager + ad account + payment method | **Outstanding** |
-| 2 | DNS, batch in one Cloudflare visit: Meta domain-verification `TXT` on `realskincare.com`, and a `CNAME` for `entries.realskincare.com` pointing at the same origin as `rum.realskincare.com` | **Outstanding** — `entries.realskincare.com` does not resolve (`getaddrinfo ENOTFOUND entries.realskincare.com`, confirmed live 2026-08-11) |
-| 3 | Install the official Facebook & Instagram sales channel app (pixel + CAPI). Do **not** hand-add a pixel to `theme.liquid` — that's how the orphaned `twq` pixel once pushed Clarity's script-error rate to 12.4% | **Outstanding** — no `connect.facebook.net` / `fbevents` / `fbq(` on the live lander |
-| 4 | Aggregated Event Measurement: rank `Lead` at priority #1 (if `Purchase` outranks it, iOS lead conversions are silently dropped) | **Outstanding** — blocked on item 3 (no ad account/pixel yet to configure AEM against) |
+| 1 | Meta Business Manager + ad account + payment method | **Done — verified via Graph API 2026-08-12.** Four ACTIVE ad accounts, all with valid funding. **Use `RSC Ad Account` (`act_946015593265647`)** — most history ($1,832.70 lifetime) and carries the configured pixel. Decided 2026-08-12. |
+| 2 | DNS, batch in one Cloudflare visit: Meta domain-verification `TXT` on `realskincare.com`, and a `CNAME` for `entries.realskincare.com` pointing at the same origin as `rum.realskincare.com` | **CNAME done** — `entries.realskincare.com` resolves to `137.184.119.230` and the endpoint answers `400` pre-auth (verified 2026-08-12). **Domain verification NOT confirmed** — needs `business_management` scope, which the stored token lacks; check Business Settings by hand. |
+| 3 | Install the official Facebook & Instagram sales channel app (pixel + CAPI). Do **not** hand-add a pixel to `theme.liquid` — that's how the orphaned `twq` pixel once pushed Clarity's script-error rate to 12.4% | **Done.** Gate A asserts the pixel is registered in the Shopify web-pixels config AND that the id matches `config.metaPixelId`. Graph API confirms pixel `1948396628850834` is attached to three ad accounts and **last fired 2026-08-11** — it is live and receiving. |
+| 4 | Aggregated Event Measurement: rank `Lead` at priority #1 (if `Purchase` outranks it, iOS lead conversions are silently dropped) | **Outstanding — unblocked, and NOT API-checkable at any scope.** AEM ranking is Events Manager UI only. Must be eyeballed before ads run. |
 | 5 | Klaviyo list `Y2ukbE` set to **double opt-in** (List Settings → Opt-in Process) | **Done — and now asserted by Gate A.** The setting can only be *changed* in the UI, but it IS readable: `GET /api/lists/{id}/` returns `attributes.opt_in_process`. Verified live 2026-08-11: `Y2ukbE` is `double_opt_in`, so this check PASSES today. Keep it as a gate anyway — the account is not uniform (`S6hKFq "Email List"` is `single_opt_in`), so a re-created or re-pointed list can silently land single, which would pay the +2 rung to everyone for doing nothing and strip the deliverability screen the existing 481 real subscribers depend on. |
-| 6 | Welcome flow `UUa3Qk` filtered to exclude `gv_entrant` profiles | **Outstanding** |
+| 6 | Welcome flow `UUa3Qk` filtered to exclude `gv_entrant` profiles | **Outstanding — re-verified 2026-08-12.** `UUa3Qk` is **live** and its `profile_filter` is a metric-count condition; `gv_entrant` appears nowhere in the definition. Every entrant currently drops into the standard welcome sequence *on top of* the giveaway nurture. |
 | 7 | Confirm the derived client IP actually varies between visitors (see below) | **Outstanding — do this last, once `entries.realskincare.com` resolves through Cloudflare** |
 
-Items 2, 3 and 5 are the three that Gate A (below) can and does check. Items 1,
-4, 6, and 7 have no live surface a script can observe from outside the
+Items 2, 3 and 5 are the three that Gate A (below) can and does check. Item 1
+turned out to be confirmable via the Graph API after all (see above). Items 4, 6
+and 7 have no live surface a script can observe from outside the
 respective admin UIs (or, for item 7, the live network path), so they stay
 human-confirmed checklist items — do not check any of them off without doing
 them.
@@ -232,14 +236,22 @@ gate would ever have been read. It now goes through `lib/notify.js` like every
 other agent in this fleet; `NOTIFY_DEFERRED=1` is what routes it into the digest
 rather than sending its own email.
 
-Do not install these cron lines until Gate A passes and the real test entry
-(Step 4) has been confirmed end to end — running them against a giveaway that
+✅ **INSTALLED 2026-08-12** (both lines, 08:30 and 08:45 UTC — server is UTC, so
+both land well before the 13:00 UTC digest). Both were executed once by hand
+exactly as cron runs them: exit 0, logs written, report correctly deferred into
+the daily-summary JSONL. Logs go to `data/reports/scheduler/giveaway-*.log`
+rather than `/var/log/` — a deliberate deviation from the block above, for
+consistency with every other job in this crontab. Prior crontab backed up to
+`/root/crontab.backup-giveaway-*`.
+
+The original caution, kept for the record: do not install these until Gate A
+passes and the real test entry (Step 4) has been confirmed end to end — running them against a giveaway that
 hasn't actually launched is harmless (a no-op with 0 confirmed entrants) but is a
 signal worth waiting on so the first real run has real data to act on.
 
 ## Nurture flow — deliberately DRAFT
 
-Klaviyo flow `WtDX2F` (`config.nurtureFlowId`, 6 messages, cadence day
+Klaviyo flow `Tbqnvu` (`config.nurtureFlowId`, 6 messages, cadence day
 0.5h/2/6/12/20/28) is **draft** and must stay that way until launch. Set it
 live (Klaviyo UI or the flow-status endpoint) **only** at the moment ads go
 live — not before. Turning it on early would nurture zero real entrants
@@ -271,12 +283,25 @@ flow cannot express this from inside the definition, so
 reminder on `golive` and documents it in its header comment. Do not set the flow
 live without it.
 
-## Date placeholders still needing a human
+## Date placeholders — ✅ DONE 2026-08-12
 
-None of these have real dates yet. All four must be filled with the same
-Entry Period dates, consistently, before launch — a mismatch between the
-official rules and the final-call email is a direct legal/trust liability
-(entrants told two different deadlines).
+**Entry Period: 12:00 AM CT Aug 15 2026 → 11:59 PM CT Sept 14 2026. Draw: Sept 16 2026.**
+
+Filled, republished, and **verified on the live storefront** (the rules page
+serves the real dates; zero placeholders remain in the served HTML).
+
+> ### ⚠️ The close date has THREE homes, not two
+>
+> The table below lists two files. There is a third, and it is the one that bites:
+> a message's **preheader** is `preview_text` on the flow's send-email action,
+> built from the `MESSAGES` map in `scripts/giveaway/build-nurture-flow.mjs` —
+> **not** from the HTML. Filling in `06-final-call.html` alone left the flow's
+> preheader reading the literal `[ENTRY CLOSE DATE]` in every inbox, and it
+> survived the first `flow`-mode rebuild. Caught 2026-08-12 only by re-reading
+> the rebuilt flow's messages back out of the API.
+>
+> **If the dates ever change, all three must change together**, and you must
+> verify by reading `preview_text` back off the flow — not by trusting the build.
 
 | File | Placeholder(s) |
 |------|----------------|
@@ -289,7 +314,7 @@ via `scripts/giveaway/build-pages.mjs`. After filling them in
 `templates` mode (it upserts by name, so the same template id `WJ8J9J` is
 updated in place).
 
-### A `flow`-mode rebuild is ALSO required before golive
+### A `flow`-mode rebuild — ✅ DONE 2026-08-12 (flow is now `Tbqnvu`)
 
 A message's `preview_text` (the preheader Klaviyo actually sends) lives on the
 flow's send-email action, **not** on the template, and there is no template-only
@@ -303,8 +328,10 @@ still carries the old strings:
 | `04-ugc` | "**Send a photo or video**…" | "**Upload a photo**…" — replies are not processed and video is not accepted |
 
 The email BODIES (and their hidden preheader divs) are already corrected and
-uploaded. Run `node scripts/giveaway/build-nurture-flow.mjs flow` before golive
-to bring the flow's `preview_text` into line — the same rebuild the
+uploaded. **Done 2026-08-12.** All six preheaders were read back off the rebuilt flow and
+confirmed correct, including the `06-final-call` date. Run
+`node scripts/giveaway/build-nurture-flow.mjs flow` again only if copy changes;
+it brings `preview_text` into line — the same rebuild the
 `06-final-call` date placeholder needs. It deletes and recreates the flow, so
 `config.nurtureFlowId` changes and the new flow starts as a **draft**; re-apply
 the end boundary (above) on the rebuilt flow, and update the flow id referenced
@@ -326,25 +353,48 @@ second step costs on a page whose whole job is the +3 rung? Until that is
 answered, the entered page asks the three REQUIRED questions only, which is what
 the daily report's answer mix is actually built from.
 
-## Deploy checklist (do in order)
+## Deploy checklist — live status as of 2026-08-12
 
-1. Complete Step 1 items 2 and 3 (DNS + Meta pixel app) at minimum —
-   `verify-launch.mjs` blocks on nothing else right now.
-2. Complete items 1, 4, 6 (not script-checkable, confirm by hand). Item 5
-   (double opt-in) is already done and is now asserted by Gate A.
-3. Fill in the four date placeholders above; republish rules page + templates,
-   then run `build-nurture-flow.mjs flow` — required for the corrected
-   `02-referral` / `04-ugc` preheaders and the `06-final-call` date, none of
-   which a `templates`-mode run can reach. Note the new flow id.
-4. Give the (rebuilt) nurture flow an **end boundary** at the Entry Period close (see
-   "Nurture flow — deliberately DRAFT" above). Non-negotiable: without it, late
-   entrants get post-draw emails quoting a deadline that has passed.
-5. Re-run `node scripts/giveaway/verify-launch.mjs` — must print `Gate A passed.`
-6. Run the real test entry (Step 4) end to end — **with an address that has never
-   existed in this Klaviyo account**, or the test cannot detect a broken
-   confirmation rung.
-7. Complete item 7 — confirm the derived client IP varies between two
-   different networks (see Step 1 above). Do not turn on ads if it doesn't.
-8. Set flow `WtDX2F` live.
-9. Install both nightly cron lines (reconciler + daily report).
-10. Turn on the Meta campaign.
+Target launch: **Aug 15 2026.**
+
+### ✅ Done
+- Entry endpoint deployed; answers `400` pre-auth, not `401`
+- `entries.realskincare.com` resolves; Meta pixel live, id-matched, last fired 2026-08-11
+- Klaviyo list `Y2ukbE` confirmed `double_opt_in` (asserted by Gate A)
+- Meta ad accounts ACTIVE with funding — **use `RSC Ad Account` (`act_946015593265647`)**
+- Entry Period dates filled everywhere and verified live
+- Nurture flow rebuilt as **`Tbqnvu`**; all six preheaders verified correct
+- Nightly cron installed (reconciler 08:30 UTC, report 08:45 UTC), both smoke-run
+- **All six entry-earning methods verified end-to-end** (A=24, B=3, C=D=E=1)
+- Three production bugs found and fixed: `/enter` 502 on every entry (#436),
+  oversized upload 502→413 (#437), unpaced harness seed (#438/#440)
+
+### ☐ Remaining — none of these can be done from this codebase
+
+1. **Give flow `Tbqnvu` an end boundary** at the Entry Period close (Sept 14).
+   Klaviyo UI. Non-negotiable — without it a day-20 entrant gets `06-final-call`
+   on day 48, quoting a deadline that passed a week earlier.
+2. **Exclude `gv_entrant` from live welcome flow `UUa3Qk`.** Re-verified still
+   open; entrants currently receive both sequences.
+3. **AEM: rank `Lead` at priority #1.** Events Manager UI; not readable at any
+   API scope. If `Purchase` outranks `Lead`, iOS lead conversions vanish silently.
+4. **Confirm Meta domain verification** for `realskincare.com` (needs
+   `business_management`, which the stored token lacks).
+5. **Build the campaign.** There is *no* giveaway campaign and no lead campaign
+   anywhere — every campaign on all four accounts is PAUSED and either
+   `OUTCOME_SALES` or `OUTCOME_TRAFFIC`. The giveaway needs **`OUTCOME_LEADS`**
+   to fire the `Lead` event the whole measurement design assumes.
+6. **Run the browser pass** — the 10 checks in
+   `2026-08-12-giveaway-entry-verification.md`. Never yet run. Items 4, 5, 7 and
+   8 are regressions for defects found in review.
+7. **Confirm the derived client IP varies across two real networks.** If it does
+   not, one visitor's rate limit throttles everyone. Do not turn on ads if it fails.
+8. **One real test entry** from a **fresh root address** — not a plus-alias, and
+   never one this Klaviyo account has seen. (Both prior test inboxes are burned;
+   see the entry-verification runbook.)
+9. `node scripts/giveaway/verify-launch.mjs` → must print **Gate A passed.**
+10. **Set flow `Tbqnvu` live** — at the moment ads go live, not before.
+11. **Turn on the Meta campaign.**
+
+Order matters only in that 1 must precede 10, and 6-9 should be the last things
+before 10-11.

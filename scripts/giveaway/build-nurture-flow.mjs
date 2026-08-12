@@ -99,7 +99,12 @@ const MESSAGES = {
   },
   '06-final-call': {
     subject: 'Entries close soon — 2 days to the drawing',
-    preview: 'Entries close [ENTRY CLOSE DATE] — the drawing is 2 days later.',
+    // The Entry Period close. This is a SECOND home for that date — the body's
+    // copy lives in data/giveaway/nurture/06-final-call.html, but a message's
+    // preheader lives on the flow's send-email action and is built from here,
+    // so filling in the HTML alone leaves the preheader reading the literal
+    // "[ENTRY CLOSE DATE]" in every inbox. Both must be changed together.
+    preview: 'Entries close September 14, 2026 — the drawing is 2 days later.',
     name: 'Giveaway Nurture 06 — Final Call',
   },
 };
