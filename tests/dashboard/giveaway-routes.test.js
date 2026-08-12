@@ -3,7 +3,7 @@
 // spend. These tests pin the validation and the server-authority rule.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { validateEntryPayload, mergeBreakdown, createEntriesHandler } from '../../agents/dashboard/routes/giveaway.js';
+import { validateEntryPayload, mergeBreakdown, answerProperties, createEntriesHandler } from '../../agents/dashboard/routes/giveaway.js';
 
 /** Minimal http.ServerResponse stand-in: captures status + body, nothing else. */
 function makeRes() {
@@ -44,12 +44,32 @@ test('a self-referral in the entry payload is stripped rather than rejecting the
 });
 
 test('answer values outside the allowed enum are dropped, not stored', () => {
-  const merged = mergeBreakdown(
+  const props = answerProperties({ household: 'martian', frustration: 'reactive' });
+  assert.equal(props.gv_household, undefined, 'an unknown enum value must not reach the profile');
+  assert.equal(props.gv_frustration, 'reactive');
+});
+
+test('survey answers are top-level gv_* properties, NOT keys inside the breakdown', () => {
+  // A Klaviyo flow filter and a Klaviyo segment can only read a TOP-LEVEL
+  // property. The nurture flow branches on gv_frustration and the daily report
+  // reads gv_household / gv_frustration / gv_current_brand. Storing these inside
+  // gv_breakdown made every one of those reads return empty forever, while the
+  // unit tests on both sides still passed — this test pins the contract.
+  const patch = { household: 'family', frustration: 'fragrance', currentBrand: 'cerave', survey: true };
+  const props = answerProperties(patch);
+  assert.deepEqual(props, {
+    gv_household: 'family',
+    gv_frustration: 'fragrance',
+    gv_current_brand: 'cerave',
+  });
+  const breakdown = mergeBreakdown(
     { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false },
-    { household: 'martian', frustration: 'reactive' },
+    patch,
   );
-  assert.equal(merged.household, undefined, 'an unknown enum value must not reach the profile');
-  assert.equal(merged.frustration, 'reactive');
+  assert.equal(breakdown.survey, true, 'the ladder rung still lands in the breakdown');
+  for (const k of ['household', 'frustration', 'currentBrand', 'gv_household', 'gv_frustration']) {
+    assert.equal(breakdown[k], undefined, `${k} must not be in the breakdown`);
+  }
 });
 
 test('a Klaviyo failure on GET /entries responds 502 instead of crashing the process', async () => {

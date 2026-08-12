@@ -65,26 +65,50 @@ export function validateEntryPayload(body = {}) {
   return { ok: true, value: { email, firstName: firstName.slice(0, 80), referredBy } };
 }
 
-/** Merge a client-declared patch into a breakdown, dropping anything unauthorised. */
+/**
+ * Merge a client-declared patch into the entry-ladder breakdown.
+ *
+ * The breakdown holds LADDER STATE ONLY — the booleans and counts that
+ * entryTotal() prices. Survey answers are deliberately NOT stored here: they go
+ * out as top-level gv_* profile properties instead (see answerProperties below),
+ * because a Klaviyo flow filter and a Klaviyo segment both need a top-level
+ * property. The nurture flow branches on gv_frustration, and the daily report
+ * reads gv_household / gv_frustration / gv_current_brand. Neither can see a key
+ * buried inside a JSON-object property.
+ */
 export function mergeBreakdown(current, patch = {}) {
   const out = { ...current };
   if (patch.survey === true) out.survey = true;
   if (patch.instagram === true) out.instagram = true;
   if (patch.upload === true) out.upload = true;
+  // referrals and confirmed are owned by the nightly reconciler; a client-supplied
+  // total is never honoured.
+  delete out.gv_entries;
+  return out;
+}
+
+/** Enum answer name -> the top-level Klaviyo property it is stored as. */
+const ANSWER_PROPERTY = {
+  household: 'gv_household',
+  frustration: 'gv_frustration',
+  currentBrand: 'gv_current_brand',
+  switchBlocker: 'gv_switch_blocker',
+  unscentedReaction: 'gv_unscented_reaction',
+};
+
+/** Extract validated survey answers as top-level gv_* properties. Unknown enum values are dropped. */
+export function answerProperties(patch = {}) {
+  const out = {};
   for (const [key, allowed] of Object.entries(ENUMS)) {
-    if (patch[key] !== undefined && allowed.has(patch[key])) out[key] = patch[key];
+    if (patch[key] !== undefined && allowed.has(patch[key])) out[ANSWER_PROPERTY[key]] = patch[key];
   }
   if (Array.isArray(patch.alsoBuys)) {
     const clean = patch.alsoBuys.filter((v) => ALSO_BUYS.has(v));
-    if (clean.length) out.alsoBuys = clean;
+    if (clean.length) out.gv_also_buys = clean;
   }
   if (typeof patch.igHandle === 'string' && patch.igHandle.trim()) {
-    out.igHandle = patch.igHandle.trim().replace(/^@/, '').slice(0, 40);
+    out.gv_ig_handle = patch.igHandle.trim().replace(/^@/, '').slice(0, 40);
   }
-  // `confirmed` and `referrals` have no write path above — they can only ever
-  // come from `current` (i.e. from what the reconciler already persisted).
-  // Any client-supplied total is never honoured either.
-  delete out.gv_entries;
   return out;
 }
 
@@ -94,7 +118,11 @@ export async function computeAndPersistEntries(email, patch = {}) {
     ?? { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false };
   const breakdown = mergeBreakdown(current, patch);
   const entries = entryTotal(breakdown);
-  await updateProfileProperties(email, { gv_breakdown: breakdown, gv_entries: entries });
+  await updateProfileProperties(email, {
+    gv_breakdown: breakdown,
+    gv_entries: entries,
+    ...answerProperties(patch),
+  });
   return { entries, breakdown };
 }
 
