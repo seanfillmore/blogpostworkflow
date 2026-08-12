@@ -24,6 +24,7 @@ const ASSETS = [
   [abs('theme', 'sections', 'giveaway-entry.liquid'), 'sections/giveaway-entry.liquid'],
   [abs('theme', 'sections', 'giveaway-entered.liquid'), 'sections/giveaway-entered.liquid'],
   [abs('theme', 'assets', 'giveaway.js'), 'assets/giveaway.js'],
+  [abs('theme', 'assets', 'giveaway.css'), 'assets/giveaway.css'],
   [abs('theme', 'templates', 'page.giveaway.json'), 'templates/page.giveaway.json'],
   [abs('theme', 'templates', 'page.giveaway-entered.json'), 'templates/page.giveaway-entered.json'],
 ];
