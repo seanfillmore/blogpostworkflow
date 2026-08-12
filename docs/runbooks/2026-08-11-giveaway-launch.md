@@ -67,6 +67,34 @@ one shared budget for the entire campaign, and the fix is upstream of this
 code (the proxy config between Cloudflare and Node), not in
 `rate-limit.js` itself.
 
+## STATUS UPDATE — 2026-08-12: infrastructure is DONE
+
+Two of the three Step-1 prerequisites are complete. What remains is a merge and a deploy.
+
+### Meta pixel — DONE
+Pixel `1948396628850834` ("Real Skin Care's Pixel") is installed via the Shopify Facebook & Instagram sales channel with **Maximum** data sharing (Meta Pixel + advanced matching + Conversions API), connected to 3 ad accounts.
+
+Gate A originally reported a FALSE FAIL against this working install, because it grepped for `connect.facebook.net` / `fbevents` / `fbq(`. The sales channel registers the pixel inside Shopify's sandboxed web-pixels runtime, so none of those classic markers appear in page HTML. The check now asserts `"pixel_type":"facebook_pixel"` in the web-pixels config **and** that the id equals `config.metaPixelId` — a pixel firing into the wrong dataset is worse than none, because it looks like it works.
+
+### DNS + TLS + nginx — DONE
+- **DNS:** `entries.realskincare.com` → A → `137.184.119.230`, **DNS-only (grey cloud)**, created via the Cloudflare API. Verified against the authoritative Cloudflare NS and against 1.1.1.1 / 8.8.8.8 / 9.9.9.9.
+- **TLS:** Let's Encrypt cert issued, expires **2026-11-10**, certbot auto-renew scheduled.
+- **nginx:** `/etc/nginx/sites-available/entries`, enabled. Narrow like the `rum` vhost — only `/api/giveaway/`, everything else a flat 404, HTTP→HTTPS 301, `client_max_body_size 12m` for the base64 upload. A pre-cert port-80-only stage was used so the reload could never reference a missing certificate; `nginx -t` passed before every reload and `rum` + the dashboard stayed up throughout.
+
+**`X-Real-IP` in that vhost is load-bearing, not decoration.** These subdomains are A records straight to the origin and deliberately not Cloudflare-proxied, so `CF-Connecting-IP` never exists, the vhost sets no `X-Forwarded-For`, and nginx proxies from `127.0.0.1`. Without the `X-Real-IP` hop every visitor collapses into one rate-limit bucket and the sixth entrant of any hour gets a 429 — which reads as "the campaign isn't converting", not as a bug. `agents/dashboard/lib/rate-limit.js` reads it, with a regression test built from the headers this nginx actually sends.
+
+### The one remaining step: merge PR #434, then deploy
+
+`https://entries.realskincare.com/api/giveaway/entries?email=bad` currently returns **401**, because the deployed dashboard does not yet contain `routes/giveaway.js` — so the request falls through to the basic-auth wall instead of hitting the pre-auth allowlist. It will return **400** once the code ships.
+
+```bash
+ssh root@137.184.119.230 'cd ~/seo-claude && git pull && pm2 restart seo-dashboard'
+```
+
+Then re-run Gate A. **Run it from the server, or from a machine whose resolver has the new record** — a local resolver that cached the NXDOMAIN from before the record existed will report `ENOTFOUND` and produce a misleading FAIL. Gate A prints the actual cause alongside the failure, so check whether it says `ENOTFOUND` (stale local DNS) or a status code (a real problem).
+
+Remaining after that: the date placeholders, the `flow`-mode rebuild, the flow end boundary, and the rate-limiter per-visitor IP check in Item 7 — which the `X-Real-IP` fix above makes much more likely to pass, but still worth confirming with two real networks.
+
 ## Step 2 — the verification script
 
 `scripts/giveaway/verify-launch.mjs` re-derives Gate A from the live storefront
