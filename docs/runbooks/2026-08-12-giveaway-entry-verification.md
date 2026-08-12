@@ -23,6 +23,28 @@ You also need:
 
 ---
 
+## ☠️ The base inbox gets burned — choose a throwaway
+
+**Learned the hard way on 2026-08-12. Read this before picking `--email`.**
+
+Seeding five plus-aliases of one inbox against the production list tripped Klaviyo's anti-abuse handling — it looks exactly like list-bombing. The effect on that inbox is **permanent**:
+
+- Every **new** alias of that root is stamped `USER_SUPPRESSED` the moment it subscribes. Verified with a fresh alias sent **alone** after 90s of quiet; a different domain in the same run was untouched.
+- A suppressed address is never sent a confirmation again.
+- A profile already in the pending state is not sent a second confirmation either — **re-subscribing cannot rescue a botched run**.
+- A new `--run` id does **not** help. The suppression follows the **root** address, not the alias.
+
+Klaviyo account sending was not harmed — real customer flows kept delivering throughout. The damage is confined to whichever inbox you name here.
+
+**Rules:**
+
+1. Use an inbox you are willing to lose. Never the operator's main address, never one support or a customer depends on.
+2. Keep `--delay` at its default (150s). It exists to avoid tripping the same detector.
+3. If the run goes wrong, you need a **different inbox**, not a different run id.
+4. Only **A and B** ever need to receive mail. C, D and E must never confirm, so if they end up suppressed the test is unaffected — that is the state they are supposed to be in.
+
+---
+
 ## ⚠️ Read before you start
 
 **This creates REAL profiles on the PRODUCTION Klaviyo list `Y2ukbE`.** Every profile is a genuine list member.
