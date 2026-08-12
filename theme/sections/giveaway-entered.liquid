@@ -57,6 +57,23 @@
       <li data-rung="instagram">Post and tag @realskincare — <strong>+3</strong></li>
       <li data-rung="upload">Send us a photo or video — <strong>+10</strong></li>
     </ul>
+
+    <form class="gv-bonus" data-gv-bonus>
+      <label for="gv-ig">Posted about us? Your Instagram handle <span>(+3)</span></label>
+      <input id="gv-ig" name="igHandle" type="text" placeholder="@yourhandle" autocomplete="off">
+
+      <label for="gv-file">Send us a photo or video <span>(+10)</span></label>
+      <input id="gv-file" name="file" type="file" accept="image/jpeg,image/png,image/webp">
+
+      <label class="gv-rights">
+        <input type="checkbox" name="rightsGranted" value="1">
+        I'm happy for Real Skin Care to use my photo in its marketing.
+      </label>
+
+      <button type="submit">Claim my bonus entries</button>
+      <p class="gv-bonus-error" hidden role="alert"></p>
+    </form>
+
     <p class="gv-fine">Purchases do not earn entries.
       <a href="/pages/giveaway-official-rules">Official rules</a>.</p>
   </div>

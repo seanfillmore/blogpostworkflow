@@ -128,4 +128,50 @@
       })
       .catch(function () { fail('Network error. Please try again.'); });
   });
+
+  var bonus = root.querySelector('[data-gv-bonus]');
+  if (bonus) {
+    bonus.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = bonus.querySelector('.gv-bonus-error');
+      err.hidden = true;
+      var handle = bonus.querySelector('[name="igHandle"]').value.trim();
+      var fileInput = bonus.querySelector('[name="file"]');
+      var rights = bonus.querySelector('[name="rightsGranted"]').checked;
+      var file = fileInput.files && fileInput.files[0];
+
+      function showError(msg) { err.textContent = msg; err.hidden = false; }
+
+      if (handle) {
+        fetch(endpoint + '/answers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, igHandle: handle, instagram: true })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (b) { if (b && b.entries) count.textContent = String(b.entries); })
+          .catch(function () { /* best-effort -- the upload below still runs */ });
+      }
+
+      if (!file) return;
+      if (!rights) return showError('Please tick the box so we can use your photo.');
+
+      var reader = new FileReader();
+      reader.onload = function () {
+        var base64 = String(reader.result).split(',')[1];
+        fetch(endpoint + '/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, filename: file.name, dataBase64: base64, rightsGranted: true })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (b) {
+            if (!b || !b.ok) return showError((b && b.error) || 'Upload failed. Please try again.');
+            count.textContent = String(b.entries);
+          })
+          .catch(function () { showError('Upload failed. Please try again.'); });
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 })();

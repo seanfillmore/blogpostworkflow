@@ -17,15 +17,38 @@
  * double-opt-in confirms — never from a request. mergeBreakdown below has no
  * write path for either field, by construction.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { join, basename, extname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { ROOT } from '../lib/paths.js';
+import { createRateLimiter, getClientIp } from '../lib/rate-limit.js';
 import { entryTotal, normalizeEmail } from '../../../lib/giveaway/entries.js';
+import { uploadImageToShopifyCDN } from '../../../lib/shopify.js';
 import {
   subscribeToList, getProfileByEmail, updateProfileProperties,
 } from '../../../lib/klaviyo-profiles.js';
 
 const MAX_BODY_BYTES = 4 * 1024;
+const UPLOAD_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+const MAX_UPLOAD_BASE64 = 8 * 1024 * 1024; // ~6MB file
+
+// Per-IP write budget, shared across /enter, /answers and /upload. Not a
+// security boundary -- see agents/dashboard/lib/rate-limit.js. Deliberately
+// loose: 5/hour absorbs a normal entrant's enter + answers + upload + a
+// retry or two, while still damping a runaway script. GET /entries is
+// intentionally NOT limited -- the entered page polls it on every load and
+// limiting it would break the ladder display for real visitors.
+const writeLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 5 });
+
+function withRateLimit(handler) {
+  return async (req, res) => {
+    const ip = getClientIp(req);
+    if (!writeLimiter.check(ip)) {
+      return json(res, req, 429, { ok: false, error: 'too many requests — please try again in a bit' });
+    }
+    return handler(req, res);
+  };
+}
 
 const ALLOWED_ORIGINS = new Set([
   'https://www.realskincare.com',
@@ -63,6 +86,36 @@ export function validateEntryPayload(body = {}) {
     } catch { referredBy = null; }
   }
   return { ok: true, value: { email, firstName: firstName.slice(0, 80), referredBy } };
+}
+
+/**
+ * Upload rung (+10): a photo/video with a granted usage-rights checkbox.
+ * Worth more than the Instagram rung because a tagged post gives reach but
+ * NO licence to use the asset -- this produces licensed creative instead.
+ * The rights checkbox is not optional decoration: an upload without it is
+ * rejected outright, before the file is even decoded.
+ */
+export function validateUpload(body = {}) {
+  let email;
+  try { email = normalizeEmail(body.email); }
+  catch { return { ok: false, error: 'a valid email is required' }; }
+
+  if (body.rightsGranted !== true) {
+    return { ok: false, error: 'usage rights must be granted for us to use your photo' };
+  }
+  const data = String(body.dataBase64 ?? '');
+  if (!data) return { ok: false, error: 'no file supplied' };
+  if (data.length > MAX_UPLOAD_BASE64) return { ok: false, error: 'file is too large (6MB max)' };
+
+  // basename() strips any traversal before we ever touch the filesystem.
+  const filename = basename(String(body.filename ?? '')).slice(-80);
+  const ext = extname(filename).toLowerCase();
+  if (!UPLOAD_EXTS.has(ext)) {
+    // The test's regex checks the literal substring "jpg, jpeg, png, webp"
+    // (no "or") -- keep this phrasing exact if it is ever reworded.
+    return { ok: false, error: 'please send a jpg, jpeg, png, webp file' };
+  }
+  return { ok: true, value: { email, filename, dataBase64: data } };
 }
 
 /**
@@ -139,13 +192,13 @@ function corsHeaders(req) {
 }
 
 /** Read the body with a hard byte cap, destroying the socket if exceeded. */
-function readCappedBody(req) {
+function readCappedBody(req, cap = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks = [];
     req.on('data', (c) => {
       size += c.length;
-      if (size > MAX_BODY_BYTES) { reject(new Error('body too large')); req.destroy(); return; }
+      if (size > cap) { reject(new Error('body too large')); req.destroy(); return; }
       chunks.push(c);
     });
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
@@ -172,7 +225,7 @@ export default [
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/enter',
-    handler: async (req, res) => {
+    handler: withRateLimit(async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
       catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
@@ -210,12 +263,12 @@ export default [
         console.error('[giveaway] enter failed', e.message);
         return json(res, req, 502, { ok: false, error: 'could not record entry' });
       }
-    },
+    }),
   },
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/answers',
-    handler: async (req, res) => {
+    handler: withRateLimit(async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
       catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
@@ -230,7 +283,35 @@ export default [
         console.error('[giveaway] answers failed', e.message);
         return json(res, req, 502, { ok: false, error: 'could not save answers' });
       }
-    },
+    }),
+  },
+  {
+    method: 'POST',
+    match: (url) => url.split('?')[0] === '/api/giveaway/upload',
+    handler: withRateLimit(async (req, res) => {
+      let parsed;
+      try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
+      catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
+
+      const v = validateUpload(parsed);
+      if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });
+
+      const tmp = join(tmpdir(), `gv-${Date.now()}-${v.value.filename}`);
+      try {
+        writeFileSync(tmp, Buffer.from(v.value.dataBase64, 'base64'));
+        const url = await uploadImageToShopifyCDN(tmp, 'Giveaway entrant submission');
+        const out = await computeAndPersistEntries(v.value.email, { upload: true });
+        await updateProfileProperties(v.value.email, { gv_upload_url: url });
+        return json(res, req, 200, { ok: true, url, ...out });
+      } catch (e) {
+        console.error('[giveaway] upload failed', e.message);
+        return json(res, req, 502, { ok: false, error: 'could not save your photo' });
+      } finally {
+        // This box's 24GB disk has already taken down every cron job once by
+        // filling up. The temp file goes, success or failure.
+        try { unlinkSync(tmp); } catch { /* already gone */ }
+      }
+    }),
   },
   {
     method: 'GET',
