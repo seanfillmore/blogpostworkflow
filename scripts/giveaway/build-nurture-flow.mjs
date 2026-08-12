@@ -8,16 +8,13 @@
  * Trigger: added to the giveaway list. Every CTA is a ladder action; nothing in
  * this flow sells. The consolation offer is a separate day-30 campaign.
  *
- * Definition shape: this repo has no PROVEN example of a hand-authored "list"
- * trigger (every list-triggered flow here was built in the Klaviyo UI and is
- * cloned via getFlowDefinition, never hand-written). The action/link/data
- * envelope below (temporary_id, links.next, time-delay + send-email data
- * shapes) IS proven live in scripts/flows/build-reset-delivery.mjs (a metric
- * trigger) and scripts/flows/klaviyo-graph.js's send()/delay() helpers, reused
- * as-is here. Only the trigger's `{ type: 'list', list_id }` shape is a
- * best-effort match of the public Klaviyo Flows API — if `flow` mode 400s,
- * read the error detail (klaviyoRequest surfaces `detail @ source.pointer`)
- * and adjust the trigger object; the action graph should not need to change.
+ * Definition shape: `{ type: 'list', id: <listId> }` for the trigger — NOT
+ * `list_id`, which the resource 'ListTrigger' rejects live (verified 2026-08-11).
+ * The action/link/data envelope (temporary_id, links.next, time-delay +
+ * send-email data shapes) is proven live in
+ * scripts/flows/build-reset-delivery.mjs (git history only — deleted from the
+ * working tree, recovered via `git show fccdd89:scripts/flows/build-reset-delivery.mjs`)
+ * and scripts/flows/klaviyo-graph.js's send()/delay() helpers, reused as-is here.
  *
  * NOTE: entrants must be suppressed from the Welcome flow (UUa3Qk) or FIRST20
  * stacks on the day-30 offer and silently costs ~$20 of a $40 contribution.
@@ -26,14 +23,21 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { upsertTemplateByName, createFlow, updateFlowStatus } from '../../lib/klaviyo.js';
+import { upsertTemplateByName, createFlow, updateFlowStatus, deleteFlow } from '../../lib/klaviyo.js';
 import { send, delay } from '../flows/klaviyo-graph.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CONFIG_PATH = join(ROOT, 'config', 'giveaway.json');
 const config = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 const NURTURE_DIR = join(ROOT, 'data', 'giveaway', 'nurture');
-const DELAYS_HOURS = [0, 48, 144, 288, 480, 672]; // 0, d2, d6, d12, d20, d28
+// 01-confirm fires 0.5h (30min) after entry, not 0h: with double opt-in on,
+// Klaviyo sends its OWN confirmation email immediately at list-add, and a
+// simultaneous send-of-ours read as two emails landing at once. 30 minutes is
+// enough separation that 01-confirm lands after Klaviyo's email, so its copy
+// can reference that email as already-received rather than something to expect.
+// Remaining five entries are unchanged, still absolute hours-from-entry: d2,
+// d6, d12, d20, d28.
+const DELAYS_HOURS = [0.5, 48, 144, 288, 480, 672];
 const mode = process.argv[2] || 'templates';
 
 // Subject/preview copy for each send-email action. Keys match the nurture file
@@ -99,25 +103,45 @@ if (mode === 'templates' || mode === 'flow') {
 
 if (mode === 'flow') {
   // Delta hours BETWEEN consecutive sends, derived from the absolute-from-entry
-  // schedule in DELAYS_HOURS (0, 48, 144, 288, 480, 672).
+  // schedule in DELAYS_HOURS (0.5, 48, 144, 288, 480, 672).
   const deltas = DELAYS_HOURS.slice(1).map((h, i) => h - DELAYS_HOURS[i]);
 
+  // Klaviyo's time-delay `value` must be an integer (verified live 2026-08-11:
+  // 400 "An invalid field type was passed in" on both a 0.5 and a 47.5 hours
+  // value). The 30-minute lead-in makes both the lead delay and the first
+  // inter-send delta fractional in hours, so express those two in minutes
+  // instead — every other delta is already a whole number of hours.
+  const asDelayArgs = (hours) => (Number.isInteger(hours) ? [hours, 'hours'] : [hours * 60, 'minutes']);
+
   const actions = [];
+  const leadHours = DELAYS_HOURS[0];
+  // Entry -> optional leading delay (currently 30min) -> send1 -> delay -> send2 -> ...
+  const entryActionId = leadHours > 0 ? 'delay0' : 'send1';
+  if (leadHours > 0) actions.push(delay('delay0', ...asDelayArgs(leadHours), 'send1'));
+
   files.forEach((file, i) => {
     const key = file.replace(/\.html$/, '');
     const sendId = `send${i + 1}`;
     const nextDelayId = `delay${i + 1}`;
     const isLast = i === files.length - 1;
     actions.push(send(sendId, { ...MESSAGES[key], template_id: config.nurtureTemplates[file] }, isLast ? null : nextDelayId));
-    if (!isLast) actions.push(delay(nextDelayId, deltas[i], 'hours', `send${i + 2}`));
+    if (!isLast) actions.push(delay(nextDelayId, ...asDelayArgs(deltas[i]), `send${i + 2}`));
   });
 
   const definition = {
     triggers: [{ type: 'list', id: config.listId }],
     profile_filter: null,
-    entry_action_id: 'send1',
+    entry_action_id: entryActionId,
     actions,
   };
+
+  // Flow definitions can't be PATCHed (lib/klaviyo.js has no update-definition
+  // endpoint) — rebuilding means delete-then-recreate. Idempotent: reruns after
+  // a content or timing fix don't leave orphan draft flows behind.
+  if (config.nurtureFlowId) {
+    await deleteFlow(config.nurtureFlowId).catch(() => {});
+    console.log(`  removed prior draft flow ${config.nurtureFlowId}`);
+  }
 
   const flow = await createFlow({ name: 'Giveaway — Entry & Nurture', definition });
   config.nurtureFlowId = flow.id;
