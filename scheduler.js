@@ -168,6 +168,16 @@ runStep('verify-ga4-collect', `"${NODE}" scripts/verify-ga4-collect.mjs`);
 // Step 5b: rank alerter — flag sudden position changes
 runStep('rank-alerter', `"${NODE}" agents/rank-alerter/index.js`);
 
+// Step 5b.0a: Google Ads conversion upload — MUST run before shopping-test-monitor,
+// which reports the ROAS these conversions feed. Uploads Shopify purchases carrying a
+// Google click id to Ads as offline conversions (Data Manager API).
+// Google Ads counted 0 conversions Apr–Aug 2026 because its only counted purchase
+// action was a GA4 import and GA4 missed most of the data (264 ad clicks → 85 GA4
+// sessions; 7 orders → 4 GA4 transactions). Uploading from the order book is immune to
+// that client-side loss. Idempotent — Google dedupes on the Shopify order number, so
+// re-scanning the same window daily cannot double-count.
+runStep('ads-conversion-uploader', `"${NODE}" agents/ads-conversion-uploader/index.js`);
+
 // Step 5b.1: shopping-test monitor — spend/clicks/conv/ROAS for the paid Shopping
 // test campaigns. Cheap (2 GAQL queries, no LLM). Reports into the daily digest;
 // flags only genuinely dead spend (gate: ~1× ROAS is a win, no auto-pause).
