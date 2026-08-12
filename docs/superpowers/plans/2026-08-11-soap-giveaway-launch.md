@@ -1390,6 +1390,8 @@ Create `data/giveaway/official-rules.html` containing, as plain HTML, all eight 
 - "This promotion is in no way sponsored, endorsed, administered by, or associated with Meta, Facebook, or Instagram."
 - Sponsor name and postal address, entry period with timezone, one entry per email, odds depend on number of entries, winner drawn at random and notified by email within 48 hours with 7 days to respond, taxes are the winner's responsibility, and a link to the privacy policy.
 
+**The sponsor postal address MUST be read from `data/brand/brand-kit.json` → `postal_address`.** It is currently `1623 Central Ave STE 201, Cheyenne, WY 82001, United States`. Do not take it from the live privacy policy or any other page — that copy is stale. `brand-kit.json` records that this address **replaced `6212 FM 933, Blum, TX 76627` on 2026-07-31**, and the superseded one was written into both the rules page and six email footers on this branch before the error was caught. The same field's note carries the standing constraint: it is a CAN-SPAM postal address and **never** a manufacturing location — products are "made in the USA" and no city or state is ever named as the place of manufacture.
+
 - [ ] **Step 2: Write the entry section**
 
 ```liquid
