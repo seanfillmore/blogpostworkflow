@@ -19,6 +19,25 @@
  * NOTE: entrants must be suppressed from the Welcome flow (UUa3Qk) or FIRST20
  * stacks on the day-30 offer and silently costs ~$20 of a $40 contribution.
  * That is a one-time manual filter in the Klaviyo UI, printed as a reminder below.
+ *
+ * ============================================================================
+ * REQUIRED LAUNCH STEP — THE TAIL OF THIS FLOW OUTLIVES THE ENTRY PERIOD
+ * ============================================================================
+ * Every delay below is RELATIVE TO ENTRY (list-add), and `profile_filter` is
+ * null, but the Entry Period is a FIXED 30-day window with one shared close
+ * date. Those two facts do not compose: someone who enters on day 20 reaches
+ * 05-reminder ("the drawing is getting closer") on day 40 and 06-final-call
+ * ("entries close [ENTRY CLOSE DATE], the drawing is two days later") on day 48
+ * — a week and a half AFTER the draw, stating a deadline that has already passed
+ * as though it were upcoming, and soliciting referrals, Instagram posts and
+ * uploads that can no longer be credited to anything.
+ *
+ * A relative-delay flow cannot fix this from inside the definition. When the
+ * Entry Period dates are set, the flow needs an END BOUNDARY: either a flow end
+ * date, or a date-based `profile_filter` / message-level filter that stops any
+ * send once entries have closed. See the runbook
+ * (docs/runbooks/2026-08-11-giveaway-launch.md, "Nurture flow — deliberately
+ * DRAFT") for the required step. Do NOT set this flow live without it.
  */
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -51,7 +70,11 @@ const MESSAGES = {
   },
   '02-referral': {
     subject: 'Refer a friend, get +5 entries',
-    preview: 'Every friend who enters and names you is worth +5 entries — up to 10 friends.',
+    // "enters AND CONFIRMS" — the +5 lands only once the friend clicks their own
+    // double-opt-in link. That is what the rules say (§6) and what
+    // lib/giveaway/reconcile.js enforces; promising it on "enters" alone
+    // advertises a credit that never arrives.
+    preview: 'Every friend who enters and confirms their entry is worth +5 entries — up to 10 friends.',
     name: 'Giveaway Nurture 02 — Referral',
   },
   '03-angle': {
@@ -61,7 +84,12 @@ const MESSAGES = {
   },
   '04-ugc': {
     subject: 'Show us your soap moment (+10 entries)',
-    preview: 'Send a photo or video for +10 entries, or tag us on Instagram for +3.',
+    // "Upload", not "reply": there is no inbound-mail processor anywhere in this
+    // codebase, so a photo sent as an email reply grants usage rights and earns
+    // nothing. The only path that credits the +10 rung is POST /api/giveaway/upload,
+    // driven by the form on /pages/giveaway-entered. And "photo", not "photo or
+    // video": validateUpload accepts jpg/jpeg/png/webp only.
+    preview: 'Upload a photo for +10 entries, or tag us on Instagram for +3.',
     name: 'Giveaway Nurture 04 — UGC',
   },
   '05-reminder': {
@@ -158,4 +186,8 @@ if (mode === 'golive') {
   console.log(`Flow ${config.nurtureFlowId} is live.`);
   console.log('\n>>> MANUAL STEP: add a suppression filter excluding gv_entrant profiles');
   console.log('    from the Welcome flow (UUa3Qk), or FIRST20 will stack on the day-30 offer. <<<');
+  console.log('\n>>> MANUAL STEP: give this flow an END DATE (or a date-based filter) at the');
+  console.log('    Entry Period close. Delays here are relative to entry, so without one a');
+  console.log('    day-20 entrant receives 05-reminder and 06-final-call AFTER the draw,');
+  console.log('    quoting a deadline that has already passed. See the header comment. <<<');
 }

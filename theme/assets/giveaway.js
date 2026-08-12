@@ -121,10 +121,18 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-      .then(function (r) { return r.json(); })
-      .then(function (body) {
+      // A .catch alone covers only a NETWORK failure. On a 400, a 429 or a 502
+      // the promise resolves normally with {ok:false}, so hiding the form here
+      // unconditionally made the survey silently vanish, lose the +3 rung, and
+      // show no error at all -- the entrant has no way to know they were not
+      // credited and no way to retry. Only hide the form on a real success.
+      .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.body || !res.body.ok) {
+          return fail((res.body && res.body.error) || 'We could not save your answers. Please try again.');
+        }
         survey.hidden = true;
-        showLadder(body && body.entries);
+        showLadder(res.body.entries);
       })
       .catch(function () { fail('Network error. Please try again.'); });
   });

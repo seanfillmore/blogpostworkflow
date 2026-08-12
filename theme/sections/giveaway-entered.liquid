@@ -53,16 +53,22 @@
     <ul>
       <li data-rung="confirm">Confirm your email — <strong>+2</strong></li>
       <li data-rung="survey">Answer 3 quick questions — <strong>+3</strong></li>
-      <li data-rung="referral">Each friend who enters and names you — <strong>+5</strong> (up to 10)</li>
+      <li data-rung="referral">Each friend who enters, names you, and confirms their own entry — <strong>+5</strong> (up to 10)</li>
       <li data-rung="instagram">Post and tag @realskincare — <strong>+3</strong></li>
-      <li data-rung="upload">Send us a photo or video — <strong>+10</strong></li>
+      <li data-rung="upload">Upload a photo — <strong>+10</strong></li>
     </ul>
 
     <form class="gv-bonus" data-gv-bonus>
       <label for="gv-ig">Posted about us? Your Instagram handle <span>(+3)</span></label>
       <input id="gv-ig" name="igHandle" type="text" placeholder="@yourhandle" autocomplete="off">
 
-      <label for="gv-file">Send us a photo or video <span>(+10)</span></label>
+      {%- comment -%}
+        "photo", not "photo or video": validateUpload in
+        agents/dashboard/routes/giveaway.js accepts jpg/jpeg/png/webp only, and
+        uploadImageToShopifyCDN is image-only. Promising video would take the
+        entrant's rights grant and then reject the file.
+      {%- endcomment -%}
+      <label for="gv-file">Upload a photo <span>(+10)</span></label>
       <input id="gv-file" name="file" type="file" accept="image/jpeg,image/png,image/webp">
 
       <label class="gv-rights">
