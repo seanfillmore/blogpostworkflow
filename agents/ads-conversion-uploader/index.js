@@ -37,8 +37,8 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getOrders } from '../../lib/shopify.js';
-import { ingestConversionEvents } from '../../lib/google-ads.js';
-import { selectUploadableOrders, buildIngestRequest, extractClickId } from '../../lib/ads-conversions.js';
+import { ingestConversionEvents, getIngestStatus, gaqlQuery } from '../../lib/google-ads.js';
+import { selectUploadableOrders, buildIngestRequest, extractClickId, summarizeIngestStatus } from '../../lib/ads-conversions.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -92,11 +92,58 @@ async function main() {
 
   const result = await ingestConversionEvents(request);
 
-  if (result.errors.length) {
-    console.log(`  ${result.errors.length} event(s) rejected:`);
-    for (const e of result.errors) console.log(`    - ${e.message}`);
+  for (const w of result.fieldWarnings) console.log(`  field warning: ${JSON.stringify(w)}`);
+  console.log(`  ${result.submitted} event(s) submitted${dryRun ? ' (validate-only, nothing written)' : ''}`
+    + (result.requestId ? ` — requestId ${result.requestId}` : ''));
+
+  // Ingestion is ASYNCHRONOUS. The submit response proves nothing about acceptance, so
+  // poll for a terminal status rather than reporting a number we made up. Validate-only
+  // request ids ("v-" prefix) are not retrievable, so skip polling for a dry run.
+  let ingestStatus = { status: dryRun ? 'VALIDATE_ONLY' : 'NOT_POLLED', terminal: false, confirmed: false };
+  if (!dryRun && result.requestId) {
+    for (const waitMs of [15_000, 30_000, 60_000, 60_000]) {
+      await new Promise((r) => setTimeout(r, waitMs));
+      try {
+        ingestStatus = summarizeIngestStatus(await getIngestStatus(result.requestId));
+      } catch (e) {
+        ingestStatus = { status: `ERROR: ${e.message.slice(0, 120)}`, terminal: true, confirmed: false };
+      }
+      console.log(`  ingest status: ${ingestStatus.status}`);
+      if (ingestStatus.terminal) break;
+    }
   }
-  console.log(`  ${result.accepted}/${conversions.length} accepted${dryRun ? ' (validated, not written)' : ''}`);
+  // Three outcomes, and only one of them is a problem:
+  //   confirmed            → Google accepted every destination.
+  //   terminal, not SUCCESS → a real failure, alert loudly.
+  //   still PROCESSING      → normal; this API stays PROCESSING for minutes. Alerting
+  //                           here would fire a false alarm every single day, and an
+  //                           alert that cries wolf daily is worse than no alert.
+  const pending = !dryRun && !ingestStatus.terminal;
+  const failed = !dryRun && ingestStatus.terminal && !ingestStatus.confirmed;
+  if (failed) {
+    console.log('  ⚠️ REJECTED by Google — conversions will not appear. Check the conversion '
+      + 'action and the click-id lookback window.');
+  } else if (pending) {
+    console.log('  still processing at Google (normal). Verified against Ads reporting below.');
+  }
+
+  // The real closed loop: ask Google Ads reporting whether the action has ANY conversions
+  // yet. This is what actually matters and is immune to however the ingest API words its
+  // status. Cheap (one GAQL query) and it is the check that would have caught the
+  // original "2/2 accepted but nothing landed" silently.
+  let reportedConversions = null;
+  if (!dryRun) {
+    try {
+      const rows = await gaqlQuery(`SELECT metrics.all_conversions FROM conversion_action
+        WHERE conversion_action.id = ${CONVERSION_ACTION_ID}
+        AND segments.date BETWEEN '${from.toISOString().slice(0, 10)}' AND '${now.toISOString().slice(0, 10)}'`);
+      reportedConversions = rows.reduce((s, r) => s + Number(r.metrics?.allConversions || 0), 0);
+      console.log(`  Ads reporting shows ${reportedConversions} conversion(s) on this action so far `
+        + '(offline conversions can take up to 24h to surface).');
+    } catch (e) {
+      console.log(`  could not read back Ads reporting: ${e.message.slice(0, 120)}`);
+    }
+  }
 
   const value = conversions.reduce((s, c) => s + c.conversionValue, 0);
   const report = {
@@ -106,10 +153,14 @@ async function main() {
     ordersInWindow: rawOrders.length,
     paidOrders: paidOrders.length,
     uploadable: conversions.length,
-    accepted: result.accepted,
+    submitted: result.submitted,
+    requestId: result.requestId,
+    ingestStatus: ingestStatus.status,
+    confirmedByGoogle: ingestStatus.confirmed,
+    reportedConversions,
     skippedNoClickId: skipped.length,
     conversionValue: Math.round(value * 100) / 100,
-    errors: result.errors.map((e) => e.message),
+    fieldWarnings: result.fieldWarnings,
     orders: conversions.map((c) => ({
       orderId: c.transactionId, value: c.conversionValue, at: c.eventTimestamp,
       idType: Object.keys(c.adIdentifiers)[0],
@@ -122,11 +173,12 @@ async function main() {
 
   if (!dryRun) {
     await notify({
-      subject: `Google Ads: ${result.accepted} conversion(s) uploaded ($${report.conversionValue})`,
-      body: `${result.accepted}/${conversions.length} accepted from ${paidOrders.length} paid orders `
-          + `in the last ${days} days. ${skipped.length} had no Google click id.`
-          + (result.errors.length ? `\n\nRejected:\n${report.errors.join('\n')}` : ''),
-      status: result.errors.length ? 'error' : 'info',
+      subject: `Google Ads: ${result.submitted} conversion(s) submitted${failed ? ' — REJECTED' : ''} ($${report.conversionValue})`,
+      body: `${result.submitted} conversion(s) submitted from ${paidOrders.length} paid orders in the last ${days} days; `
+          + `${skipped.length} had no Google click id.\n\nGoogle ingest status: ${ingestStatus.status}.`
+          + (reportedConversions !== null ? `\nAds reporting currently shows ${reportedConversions} conversion(s) on this action.` : '')
+          + (failed ? '\n\n⚠️ REJECTED by Google — these conversions will not appear.' : ''),
+      status: failed ? 'error' : 'info',
     });
   }
 
