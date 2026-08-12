@@ -121,3 +121,4 @@ data/digital-assets/
 
 # runtime health-check artifact — regenerated every run, never reviewed in a diff
 data/reports/ga4-health/
+data/reports/giveaway/

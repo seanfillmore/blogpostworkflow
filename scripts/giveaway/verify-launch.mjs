@@ -11,7 +11,8 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getListOptInProcess } from '../../lib/klaviyo-profiles.js';
+import { getListOptInProcess, listProfilesWithConsent } from '../../lib/klaviyo-profiles.js';
+import { isTestProfile } from '../../lib/giveaway/test-identity.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -147,6 +148,26 @@ if (config.listId) {
     optIn === 'double_opt_in',
     `Klaviyo list ${config.listId} is double opt-in (got ${optInError ? `error: ${optInError}` : optIn})`,
   );
+}
+
+// 9. No test identities may remain in the entrant pool.
+//
+// The verification harness creates real profiles on the production list. Cleanup
+// deletes them, but cleanup can be forgotten — and a forgotten test profile sits
+// in the draw pool with a real chance of winning a $536.40 prize. A gate cannot
+// be forgotten. This also finally covers the single real test entry the launch
+// runbook has always mandated, which nothing previously excluded.
+if (config.listId) {
+  try {
+    const members = await listProfilesWithConsent(config.listId);
+    const leftovers = members.filter((p) => isTestProfile(p.properties));
+    check(
+      leftovers.length === 0,
+      `no gv_test profiles remain on the entrant list (found ${leftovers.length}${leftovers.length ? ': ' + leftovers.map((p) => p.email).join(', ') : ''})`,
+    );
+  } catch (e) {
+    check(false, `could not enumerate the entrant list to check for test profiles: ${e.message}`);
+  }
 }
 
 console.log('');

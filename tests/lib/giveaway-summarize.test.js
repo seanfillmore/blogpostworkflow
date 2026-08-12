@@ -64,3 +64,26 @@ test('INTEGRATION: a profile shaped the way the endpoint actually writes it yiel
   assert.equal(s.answers.currentBrand.cerave, 1);
   assert.equal(s.ladder.survey, 1, 'and the ladder rung still comes from the breakdown');
 });
+
+test('test profiles are excluded from every count, so they cannot skew the day-5 gate', () => {
+  const real = { id: 'r', email: 'real@x.com', properties: {
+    gv_entries: 8, gv_frustration: 'reactive',
+    gv_breakdown: { confirmed: true, survey: true, referrals: 1, instagram: false, upload: false },
+  } };
+  const fake = { id: 't', email: 'test@x.com', properties: {
+    gv_test: true, gv_entries: 24, gv_frustration: 'dry',
+    gv_breakdown: { confirmed: true, survey: true, referrals: 1, instagram: true, upload: true },
+  } };
+  const s = summarizeEntrants([real, fake]);
+  assert.equal(s.total, 1, 'only the real entrant counts');
+  assert.equal(s.entriesTotal, 8, 'the fake 24 must not be summed');
+  assert.equal(s.answers.frustration.dry, undefined, 'the fake answer must not enter the mix');
+  assert.equal(s.answers.frustration.reactive, 1);
+  assert.equal(s.ladder.upload, 0, 'the fake upload must not be counted');
+  assert.equal(s.excludedTestProfiles, 1, 'and the exclusion is reported, not silent');
+});
+
+test('with no test profiles present the exclusion count is zero rather than absent', () => {
+  const s = summarizeEntrants([{ id: 'r', email: 'r@x.com', properties: { gv_entries: 1 } }]);
+  assert.equal(s.excludedTestProfiles, 0);
+});
