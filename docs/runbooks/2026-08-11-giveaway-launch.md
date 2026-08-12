@@ -18,15 +18,15 @@ before re-running the gate.
 | 2 | DNS, batch in one Cloudflare visit: Meta domain-verification `TXT` on `realskincare.com`, and a `CNAME` for `entries.realskincare.com` pointing at the same origin as `rum.realskincare.com` | **Outstanding** — `entries.realskincare.com` does not resolve (`getaddrinfo ENOTFOUND entries.realskincare.com`, confirmed live 2026-08-11) |
 | 3 | Install the official Facebook & Instagram sales channel app (pixel + CAPI). Do **not** hand-add a pixel to `theme.liquid` — that's how the orphaned `twq` pixel once pushed Clarity's script-error rate to 12.4% | **Outstanding** — no `connect.facebook.net` / `fbevents` / `fbq(` on the live lander |
 | 4 | Aggregated Event Measurement: rank `Lead` at priority #1 (if `Purchase` outranks it, iOS lead conversions are silently dropped) | **Outstanding** — blocked on item 3 (no ad account/pixel yet to configure AEM against) |
-| 5 | Klaviyo list `Y2ukbE` set to **double opt-in** (List Settings → Opt-in Process) | **Outstanding**. Not scriptable — `lib/klaviyo-profiles.js` documents that double opt-in is a list *setting*, not an API field, so `verify-launch.mjs` cannot check it programmatically. Confirm by hand in the Klaviyo UI before launch. |
+| 5 | Klaviyo list `Y2ukbE` set to **double opt-in** (List Settings → Opt-in Process) | **Done — and now asserted by Gate A.** The setting can only be *changed* in the UI, but it IS readable: `GET /api/lists/{id}/` returns `attributes.opt_in_process`. Verified live 2026-08-11: `Y2ukbE` is `double_opt_in`, so this check PASSES today. Keep it as a gate anyway — the account is not uniform (`S6hKFq "Email List"` is `single_opt_in`), so a re-created or re-pointed list can silently land single, which would pay the +2 rung to everyone for doing nothing and strip the deliverability screen the existing 481 real subscribers depend on. |
 | 6 | Welcome flow `UUa3Qk` filtered to exclude `gv_entrant` profiles | **Outstanding** |
 | 7 | Confirm the derived client IP actually varies between visitors (see below) | **Outstanding — do this last, once `entries.realskincare.com` resolves through Cloudflare** |
 
-Items 2 and 3 are the two that Gate A (below) can and does detect and fail on.
-Items 1, 4, 5, 6, and 7 have no live surface a script can observe from
-outside the respective admin UIs (or, for item 7, the live network path),
-so they stay human-confirmed checklist items — do not check any of them off
-without doing them.
+Items 2, 3 and 5 are the three that Gate A (below) can and does check. Items 1,
+4, 6, and 7 have no live surface a script can observe from outside the
+respective admin UIs (or, for item 7, the live network path), so they stay
+human-confirmed checklist items — do not check any of them off without doing
+them.
 
 ### Item 7 — confirm the rate limiter is actually seeing per-visitor IPs
 
@@ -79,9 +79,16 @@ fetches the public URL.
 Run:
 
 ```bash
-nvm use && npm test        # expect: pass 1213, fail 0, cancelled 0
+nvm use && npm test        # expect: fail 0, cancelled 0 (do NOT check the pass count)
 node scripts/giveaway/verify-launch.mjs
 ```
+
+Read **`# cancelled`**, not just `# fail`. On Node 22 a test that never settles is
+reported `cancelled`, which prints alongside `# fail 0` and reads like a pass —
+that exact combination hid a dead test in this repo for months. Do not assert an
+exact `pass` count: the suite grows with every change, so a hardcoded number is
+guaranteed to be wrong within a week and teaches whoever reads it to ignore the
+line that matters.
 
 ### Actual Gate A output (2026-08-11, Node v22.23.1)
 
@@ -110,34 +117,55 @@ PASS  endpoint is first-party (entries.realskincare.com)
 FAIL  endpoint answers without auth (got getaddrinfo ENOTFOUND entries.realskincare.com)
 PASS  config.listId is set
 PASS  config.nurtureFlowId is set
+PASS  Klaviyo list Y2ukbE is double opt-in (got double_opt_in)
 
 2 failure(s). DO NOT launch.
 ```
 
-Exit code: **1**. 22 PASS / 2 FAIL.
+Exit code: **1**. 23 PASS / 2 FAIL.
 
 The two failures map directly to Step 1 items 2 and 3 (DNS, pixel install) —
-both expected and both blocking, by design. Item 5 (Klaviyo double opt-in) is
-**not** one of the two script failures: as noted above, it is not
-API-observable, so it is a Step 1 checklist item only, not a `verify-launch.mjs`
-check. Re-run the gate after each of items 2 and 3 is completed; do not
-proceed to Step 4 (real test entry) until it prints `Gate A passed.`
+both expected and both blocking, by design. Item 5 (Klaviyo double opt-in) IS
+now asserted — the last line — and passes: it was previously documented as
+un-assertable on the false premise that the API does not expose
+`opt_in_process`. It does. Re-run the gate after each of items 2 and 3 is
+completed; do not proceed to Step 4 (real test entry) until it prints
+`Gate A passed.`
 
 ## Step 4 — real test entry (do this once Gate A passes)
 
 Not yet performed — Gate A hasn't passed. When it does:
 
-1. Open `/pages/free-soap-giveaway` in a browser, enter a real address you
-   control, land on `/pages/giveaway-entered`.
+**Use an address that has NEVER existed in this Klaviyo account.** Not your main
+address, not an alias that has ever been on the list, not one that has ever
+bought. This is the whole point of the test and it is easy to get wrong: any
+address already in Klaviyo carries `SUBSCRIBED` consent *before* it enters, so
+the reconciler credits the +2 confirmation rung whether or not the double opt-in
+email was ever sent or clicked. The step would print 6 and prove nothing. A
+brand-new address starts at `UNCONFIRMED`, so the count only reaches 6 if the
+confirmation click genuinely worked. A `+tag` on Gmail (`you+gv1@gmail.com`) is a
+distinct Klaviyo profile and works, provided you have never used that exact tag.
+
+1. Open `/pages/free-soap-giveaway` in a browser, enter the never-before-seen
+   address, land on `/pages/giveaway-entered`.
 2. Answer the three survey questions, confirm the entry count reads **4**
    (base 1 + survey 3).
-3. Click the confirmation email, re-check the count reads **6** (+2 confirm).
-4. Verify server-side:
+3. Click the confirmation link in the Klaviyo opt-in email.
+4. Run the reconciler by hand — the +2 is written ONLY by the nightly reconciler,
+   and its cron line is not installed until step 8 of the deploy checklist, so
+   without this the count stays at 4 and looks like a broken confirmation rung:
+   ```bash
+   node scripts/giveaway/reconcile-referrals.mjs --apply
+   ```
+5. Reload `/pages/giveaway-entered?e=YOUR@EMAIL` and re-check the count reads
+   **6** (+2 confirm).
+6. Verify server-side:
    ```bash
    node -e "import('./lib/klaviyo-profiles.js').then(async m => console.log(await m.getProfileByEmail('YOUR@EMAIL')))"
    ```
-   Expected: `gv_entrant: true`, `gv_entries: 6`, and `gv_household` /
-   `gv_frustration` / `gv_current_brand` all populated.
+   Expected: `gv_entrant: true`, `gv_entries: 6`, `gv_confirmed_at` set to an ISO
+   timestamp, and `gv_household` / `gv_frustration` / `gv_current_brand` all
+   populated.
 
 ## CNAME fallback
 
@@ -154,20 +182,32 @@ path, redeploy the theme, then re-run `verify-launch.mjs` — the endpoint
 first-party check (`host.endsWith('realskincare.com')`) still passes against
 `rum.realskincare.com` since that's the same apex domain.
 
-## Nightly reconciler (referral credit)
+## Nightly cron — reconciler + daily report
 
-Once live, schedule the referral reconciler on the server crontab. Idempotent
-— safe to re-run after a failure, safe to leave running indefinitely:
+Once live, schedule BOTH on the server crontab. Both are idempotent — safe to
+re-run after a failure, safe to leave running indefinitely:
 
 ```
-# Credit referrers whose referred friends have confirmed. Idempotent.
+# Credit the confirmation (+2) and referral (+5) rungs. Idempotent.
 30 8 * * * cd /root/seo-claude && /usr/bin/node scripts/giveaway/reconcile-referrals.mjs --apply >> /var/log/giveaway-reconcile.log 2>&1
+# Daily giveaway report + day-5/day-10 spend gates. Writes latest.json and
+# notifies via lib/notify.js, so the gates land in the 5 AM digest (13 UTC) --
+# run it BEFORE that, and after the reconciler, so the digest reads fresh numbers.
+45 8 * * * cd /root/seo-claude && NOTIFY_DEFERRED=1 /usr/bin/node scripts/giveaway/report.mjs >> /var/log/giveaway-report.log 2>&1
 ```
 
-Do not install this cron line until Gate A passes and the real test entry
-(Step 4) has been confirmed end to end — running it against a giveaway that
-hasn't actually launched is harmless (it's a no-op with 0 confirmed entrants)
-but is a signal worth waiting on so the first real run has real data to act on.
+The report is the campaign's **only** in-flight signal — the offer is deferred to
+day 30, so there is no revenue number to read until then, and the answer mix plus
+ladder participation are what the day-5 and day-10 budget decisions are made from.
+It used to print those gates to stdout with nothing scheduling it, which meant no
+gate would ever have been read. It now goes through `lib/notify.js` like every
+other agent in this fleet; `NOTIFY_DEFERRED=1` is what routes it into the digest
+rather than sending its own email.
+
+Do not install these cron lines until Gate A passes and the real test entry
+(Step 4) has been confirmed end to end — running them against a giveaway that
+hasn't actually launched is harmless (a no-op with 0 confirmed entrants) but is a
+signal worth waiting on so the first real run has real data to act on.
 
 ## Nurture flow — deliberately DRAFT
 
@@ -177,6 +217,31 @@ live (Klaviyo UI or the flow-status endpoint) **only** at the moment ads go
 live — not before. Turning it on early would nurture zero real entrants
 against a flow whose date placeholders (below) aren't filled in yet, and
 would race the double opt-in setting change (item 5) if that hasn't landed.
+
+### REQUIRED before this flow goes live — give it an end boundary
+
+**Every delay in this flow is relative to ENTRY, but the Entry Period is a fixed
+30-day window with one shared close date.** Those two facts do not compose. The
+delays are 0.5h / 48 / 144 / 288 / 480 / 672 hours from list-add and
+`profile_filter` is `null`, so someone who enters on day 20 receives:
+
+- `05-reminder` ("the drawing is getting closer") on **day 40**, and
+- `06-final-call` ("entries close [ENTRY CLOSE DATE] — the drawing is 2 days
+  later") on **day 48** — a week and a half *after* the draw has happened,
+
+stating a deadline that has already passed as though it were upcoming, and
+soliciting referrals, Instagram posts and photo uploads that can no longer be
+credited to anything. Late entrants are exactly the cohort a 30-day paid campaign
+produces most of, so this is not an edge case.
+
+**When the Entry Period dates are set (see the placeholder table below), give the
+flow an end boundary in the same sitting:** either a flow end date at the Entry
+Period close, or a date-based filter on the flow (or at minimum on `05-reminder`
+and `06-final-call`) that stops any send after entries close. A relative-delay
+flow cannot express this from inside the definition, so
+`scripts/giveaway/build-nurture-flow.mjs` cannot do it for you — it prints the
+reminder on `golive` and documents it in its header comment. Do not set the flow
+live without it.
 
 ## Date placeholders still needing a human
 
@@ -194,21 +259,64 @@ After filling these in `data/giveaway/official-rules.html`, republish the page
 via `scripts/giveaway/build-pages.mjs`. After filling them in
 `06-final-call.html`, re-run `scripts/giveaway/build-nurture-flow.mjs` in
 `templates` mode (it upserts by name, so the same template id `WJ8J9J` is
-updated in place) — note the flow's `preview_text` for this message is a
-separate field with no template-only update path (see Task 9's report), so if
-the preheader date also needs to change there, the `flow` mode rebuild is
-required too.
+updated in place).
+
+### A `flow`-mode rebuild is ALSO required before golive
+
+A message's `preview_text` (the preheader Klaviyo actually sends) lives on the
+flow's send-email action, **not** on the template, and there is no template-only
+update path for it (see Task 9's report). Two preheaders were corrected in
+`scripts/giveaway/build-nurture-flow.mjs` after the flow was built, and the flow
+still carries the old strings:
+
+| Message | Stale `preview_text` on the flow | Corrected in the builder |
+|---|---|---|
+| `02-referral` | "Every friend who **enters and names you**…" | "…who **enters, names you, and confirms**…" — the +5 requires the friend's own confirmation (rules §6) |
+| `04-ugc` | "**Send a photo or video**…" | "**Upload a photo**…" — replies are not processed and video is not accepted |
+
+The email BODIES (and their hidden preheader divs) are already corrected and
+uploaded. Run `node scripts/giveaway/build-nurture-flow.mjs flow` before golive
+to bring the flow's `preview_text` into line — the same rebuild the
+`06-final-call` date placeholder needs. It deletes and recreates the flow, so
+`config.nurtureFlowId` changes and the new flow starts as a **draft**; re-apply
+the end boundary (above) on the rebuilt flow, and update the flow id referenced
+in this runbook.
+
+## Open decisions (not blockers, but don't let them rot)
+
+**The three optional survey questions were never built.** `gv_switch_blocker`,
+`gv_unscented_reaction` and `gv_also_buys` are fully wired — enum-validated in
+`agents/dashboard/routes/giveaway.js` (`ENUMS` / `ALSO_BUYS`), mapped to top-level
+`gv_*` properties, and bucketed by `lib/giveaway/summarize.js` (`ANSWER_KEYS`) into
+the daily report — but **no UI or email asks for them**, so those three report
+buckets are always empty in production. An empty bucket means "nobody was asked",
+NOT "nobody picked that answer"; do not read a zero there as a finding.
+
+Left wired rather than deleted so adding a second survey step is a one-file
+change. The decision to make: is the extra answer data worth the drop-off a
+second step costs on a page whose whole job is the +3 rung? Until that is
+answered, the entered page asks the three REQUIRED questions only, which is what
+the daily report's answer mix is actually built from.
 
 ## Deploy checklist (do in order)
 
 1. Complete Step 1 items 2 and 3 (DNS + Meta pixel app) at minimum —
    `verify-launch.mjs` blocks on nothing else right now.
-2. Complete items 1, 4, 5, 6 (not script-checkable, confirm by hand).
-3. Fill in the four date placeholders above; republish rules page + templates.
-4. Re-run `node scripts/giveaway/verify-launch.mjs` — must print `Gate A passed.`
-5. Run the real test entry (Step 4) end to end.
-6. Complete item 7 — confirm the derived client IP varies between two
+2. Complete items 1, 4, 6 (not script-checkable, confirm by hand). Item 5
+   (double opt-in) is already done and is now asserted by Gate A.
+3. Fill in the four date placeholders above; republish rules page + templates,
+   then run `build-nurture-flow.mjs flow` — required for the corrected
+   `02-referral` / `04-ugc` preheaders and the `06-final-call` date, none of
+   which a `templates`-mode run can reach. Note the new flow id.
+4. Give the (rebuilt) nurture flow an **end boundary** at the Entry Period close (see
+   "Nurture flow — deliberately DRAFT" above). Non-negotiable: without it, late
+   entrants get post-draw emails quoting a deadline that has passed.
+5. Re-run `node scripts/giveaway/verify-launch.mjs` — must print `Gate A passed.`
+6. Run the real test entry (Step 4) end to end — **with an address that has never
+   existed in this Klaviyo account**, or the test cannot detect a broken
+   confirmation rung.
+7. Complete item 7 — confirm the derived client IP varies between two
    different networks (see Step 1 above). Do not turn on ads if it doesn't.
-7. Set flow `WtDX2F` live.
-8. Install the nightly reconciler cron line.
-9. Turn on the Meta campaign.
+8. Set flow `WtDX2F` live.
+9. Install both nightly cron lines (reconciler + daily report).
+10. Turn on the Meta campaign.
