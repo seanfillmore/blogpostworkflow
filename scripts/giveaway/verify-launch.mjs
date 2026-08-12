@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getListOptInProcess } from '../../lib/klaviyo-profiles.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -102,6 +103,31 @@ if (endpointMatch) {
 // 7. Config is complete.
 check(!!config.listId, 'config.listId is set');
 check(!!config.nurtureFlowId, 'config.nurtureFlowId is set');
+
+// 8. The giveaway list is DOUBLE opt-in.
+//
+// This was long documented as unassertable ("the API does not expose this
+// field"), which was simply false: GET /api/lists/{id}/ returns
+// attributes.opt_in_process. Verified live 2026-08-11 — Y2ukbE is
+// `double_opt_in`, and `S6hKFq "Email List"` is `single_opt_in`, so the account
+// is NOT uniform and a re-created list can land single without anyone noticing.
+//
+// It matters twice over. Single opt-in marks every entrant SUBSCRIBED at
+// list-add, which (a) makes the advertised +2 confirmation rung pay out to
+// everyone for doing nothing, and (b) removes the deliverability screen the
+// existing 481 real subscribers depend on, on a list built from cold paid
+// traffic. The setting can only be CHANGED in the Klaviyo UI, so asserting the
+// read value is the only guard there is.
+if (config.listId) {
+  let optIn = null;
+  let optInError = null;
+  try { optIn = await getListOptInProcess(config.listId); }
+  catch (error) { optInError = error.message; }
+  check(
+    optIn === 'double_opt_in',
+    `Klaviyo list ${config.listId} is double opt-in (got ${optInError ? `error: ${optInError}` : optIn})`,
+  );
+}
 
 console.log('');
 if (failures.length) { console.error(`${failures.length} failure(s). DO NOT launch.`); process.exit(1); }

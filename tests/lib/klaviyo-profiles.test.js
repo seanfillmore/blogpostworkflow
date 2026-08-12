@@ -83,6 +83,55 @@ test('listSubscribedProfiles excludes unconfirmed profiles and follows paginatio
   assert.doesNotMatch(calls[0].url, /filter=/, 'must not send a filter this endpoint rejects');
 });
 
+test('listProfilesWithConsent returns EVERY member tagged with its consent, and follows pagination', async () => {
+  // Confirmation must survive an unsubscribe (official rules §12), so the
+  // reconciler needs the unsubscribed members too — with enough information to
+  // tell who is NEWLY confirmed. Dropping them here is what left a confirm-then-
+  // unsubscribe entrant uncredited forever.
+  const sub = (consent) => ({ email: { marketing: { consent } } });
+  let page = 0;
+  stubFetch(() => {
+    page += 1;
+    return page === 1
+      ? { json: {
+          data: [
+            { id: 'p1', attributes: { email: 'in@b.com', properties: { gv_entries: 3 }, subscriptions: sub('SUBSCRIBED') } },
+            { id: 'p2', attributes: { email: 'out@b.com', properties: {}, subscriptions: sub('UNSUBSCRIBED') } },
+          ],
+          links: { next: 'https://a.klaviyo.com/api/next-page' },
+        } }
+      : { json: {
+          data: [{ id: 'p3', attributes: { email: 'pending@b.com', properties: {}, subscriptions: sub('UNCONFIRMED') } }],
+          links: {},
+        } };
+  });
+  const { listProfilesWithConsent } = await import('../../lib/klaviyo-profiles.js');
+
+  const out = await listProfilesWithConsent('ABC123');
+  assert.deepEqual(
+    out.map((p) => [p.email, p.subscribed]),
+    [['in@b.com', true], ['out@b.com', false], ['pending@b.com', false]],
+    'every member is returned, with consent reduced to a boolean',
+  );
+});
+
+test('getListOptInProcess reads the setting the API was long claimed not to expose', async () => {
+  // The claim "the API does not expose this field" was false: GET /lists/{id}/
+  // returns attributes.opt_in_process. Verified live 2026-08-11 — Y2ukbE is
+  // double_opt_in while S6hKFq is single_opt_in, so the account is not uniform
+  // and Gate A has to assert it rather than trust a checklist tick.
+  stubFetch(() => ({ json: { data: { id: 'Y2ukbE', attributes: { opt_in_process: 'double_opt_in' } } } }));
+  const { getListOptInProcess } = await import('../../lib/klaviyo-profiles.js');
+  assert.equal(await getListOptInProcess('Y2ukbE'), 'double_opt_in');
+  assert.match(decodeURIComponent(calls[0].url), /\/lists\/Y2ukbE\/\?fields\[list\]=opt_in_process/);
+});
+
+test('a missing opt_in_process reads as null, never as a pass', async () => {
+  stubFetch(() => ({ json: { data: { id: 'Y2ukbE', attributes: {} } } }));
+  const { getListOptInProcess } = await import('../../lib/klaviyo-profiles.js');
+  assert.equal(await getListOptInProcess('Y2ukbE'), null, 'an absent field must fail the gate, not satisfy it');
+});
+
 test('findListByName tolerates case and whitespace so it cannot create a duplicate list', async () => {
   stubFetch(() => ({ json: { data: [{ id: 'L1', attributes: { name: 'Giveaway 2026-09 — Entrants' } }], links: {} } }));
   const { findListByName } = await import('../../lib/klaviyo-profiles.js');

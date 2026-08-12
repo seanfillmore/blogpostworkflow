@@ -4,7 +4,8 @@
  *
  * POST /api/giveaway/enter    — create the entry (the Meta `Lead` conversion)
  * POST /api/giveaway/answers  — store survey answers, credit the +3 rung
- * GET  /api/giveaway/entries  — read a profile's current entry total
+ * POST /api/giveaway/upload   — licensed photo, credit the +10 rung
+ * GET  /api/giveaway/entries  — read an ENTRANT's current entry total
  *
  * PUBLIC and unauthenticated, exactly like /api/rum, because storefront
  * browsers cannot send dashboard basic-auth and those credentials must never
@@ -45,11 +46,18 @@ const MAX_UPLOAD_BASE64 = 8 * 1024 * 1024; // ~6MB file
 // and keeps the tight 5/hour budget. /answers and /upload only mutate a
 // profile that already exists -- they cannot create one -- so they share a
 // much looser 30/hour budget that comfortably covers the full funnel plus
-// retries. GET /entries is intentionally NOT limited at all -- the entered
-// page polls it on every load and limiting it would break the ladder
-// display for real visitors.
+// retries.
+//
+// GET /entries gets its OWN, deliberately LOOSE 120/hour budget. It was
+// previously unlimited, which made it an unmetered proxy onto Klaviyo's
+// account-wide API quota -- the same quota the live customer flows share --
+// and an unlimited-rate probe of who is an entrant. It must stay loose
+// because the entered page calls it on every single pageview; 120/hour per IP
+// is roughly two pageloads a minute sustained, far above any real visitor and
+// far below a useful scraping rate.
 const enterLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 5 });
 const mutateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 30 });
+const entriesLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 120 });
 
 function withRateLimit(limiter, handler) {
   return async (req, res) => {
@@ -66,14 +74,22 @@ const ALLOWED_ORIGINS = new Set([
   'https://realskincare.com',
 ]);
 
+// NOT YET COLLECTED, deliberately kept: `switchBlocker` and `unscentedReaction`
+// (and `alsoBuys` below) are validated, mapped to gv_* properties and bucketed by
+// lib/giveaway/summarize.js, but NO surface asks for them -- the spec's three
+// OPTIONAL questions were never built into the entered page or any email, so
+// these three properties are always empty in production today. Left wired rather
+// than deleted so adding the UI is a one-file change, pending a product decision
+// on whether a second survey step is worth the drop-off. Do not read a report
+// bucket for these as "nobody picked that answer"; nobody was asked.
 const ENUMS = {
   household: new Set(['solo', 'couple', 'family', 'gift']),
   frustration: new Set(['dry', 'reactive', 'fragrance', 'ingredients']),
   currentBrand: new Set(['cerave', 'cetaphil', 'dove', 'natural_competitor', 'natural_brand', 'whatever']),
-  switchBlocker: new Set(['price', 'didnt_work', 'confused', 'ingredients', 'first_time']),
-  unscentedReaction: new Set(['multiple', 'once', 'no', 'unsure']),
+  switchBlocker: new Set(['price', 'didnt_work', 'confused', 'ingredients', 'first_time']), // not yet collected
+  unscentedReaction: new Set(['multiple', 'once', 'no', 'unsure']), // not yet collected
 };
-const ALSO_BUYS = new Set(['deodorant', 'toothpaste', 'lotion', 'lipbalm', 'hair']);
+const ALSO_BUYS = new Set(['deodorant', 'toothpaste', 'lotion', 'lipbalm', 'hair']); // not yet collected
 
 const listId = () => JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8')).listId;
 
@@ -143,7 +159,14 @@ export function validateUpload(body = {}) {
 export function mergeBreakdown(current, patch = {}) {
   const out = { ...current };
   if (patch.survey === true) out.survey = true;
-  if (patch.instagram === true) out.instagram = true;
+  // The Instagram rung (+3) requires the HANDLE, not just the claim. The rung
+  // pays for a public tagged post, and the handle is the only way to spot-check
+  // that one exists; crediting `instagram: true` with no handle banks 3 entries
+  // against nothing anyone can verify. The storefront never sends one without
+  // the other, so this only ever rejects a hand-crafted request.
+  if (patch.instagram === true && typeof patch.igHandle === 'string' && patch.igHandle.trim()) {
+    out.instagram = true;
+  }
   if (patch.upload === true) out.upload = true;
   // referrals and confirmed are owned by the nightly reconciler; a client-supplied
   // total is never honoured.
@@ -174,6 +197,38 @@ export function answerProperties(patch = {}) {
     out.gv_ig_handle = patch.igHandle.trim().replace(/^@/, '').slice(0, 40);
   }
   return out;
+}
+
+/**
+ * The Klaviyo properties a POST /enter should write, given the profile that
+ * already exists (or null) and the validated payload.
+ *
+ * Pure and exported so the resubmit invariant is TESTABLE. It is not a
+ * hypothetical: writing the zeroed gv_breakdown on a repeat entry wiped a
+ * confirmed, surveyed, referred entrant back to a single entry, because Klaviyo
+ * REPLACES the value at a top-level property key rather than deep-merging it.
+ * Double-submits and back-button resubmissions are routine on a cold lander, so
+ * this is the difference between an entrant keeping 11 entries and keeping 1.
+ *
+ * @param {{properties?: object}|null} existing profile as returned by getProfileByEmail
+ * @param {{referredBy?: string|null}} value validated entry payload
+ */
+export function entryProperties(existing, value = {}) {
+  const properties = { gv_entrant: true };
+  const first = !existing?.properties?.gv_breakdown;
+  if (first) {
+    // confirmed starts false and is owned solely by the nightly reconciler,
+    // which reads the SUBSCRIBED set — the only authority on who actually
+    // clicked the double-opt-in link. No request may set it.
+    properties.gv_breakdown = { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false };
+    properties.gv_entries = 1;
+  }
+  // First referrer wins. Without this guard, re-entering lets someone swap in a
+  // different referrer after the fact.
+  if (value.referredBy && !existing?.properties?.gv_referred_by) {
+    properties.gv_referred_by = value.referredBy;
+  }
+  return properties;
 }
 
 export async function computeAndPersistEntries(email, patch = {}) {
@@ -244,29 +299,11 @@ export default [
       const v = validateEntryPayload(parsed);
       if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });
 
-      const { email, firstName, referredBy } = v.value;
+      const { email, firstName } = v.value;
       try {
-        // A resubmit must never reset earned progress. Klaviyo replaces the
-        // value at a top-level property key rather than deep-merging it, so
-        // writing the zeroed gv_breakdown again would wipe a confirmed,
-        // surveyed, referred entrant back to a single entry. Double-submits and
-        // back-button resubmissions are routine on a cold lander.
+        // A resubmit must never reset earned progress — see entryProperties.
         const existing = await getProfileByEmail(email);
-        const first = !existing?.properties?.gv_breakdown;
-
-        const properties = { gv_entrant: true };
-        if (first) {
-          // confirmed starts false and is owned solely by the nightly
-          // reconciler, which reads the SUBSCRIBED set — the only authority on
-          // who actually clicked the double-opt-in link. No request may set it.
-          properties.gv_breakdown = { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false };
-          properties.gv_entries = 1;
-        }
-        // First referrer wins. Without this guard, re-entering lets someone
-        // swap in a different referrer after the fact.
-        if (referredBy && !existing?.properties?.gv_referred_by) {
-          properties.gv_referred_by = referredBy;
-        }
+        const properties = entryProperties(existing, v.value);
 
         await subscribeToList(listId(), { email, firstName, properties });
         return json(res, req, 201, { ok: true, entries: existing?.properties?.gv_entries ?? 1 });
@@ -299,37 +336,63 @@ export default [
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/upload',
-    handler: withRateLimit(mutateLimiter, async (req, res) => {
-      let parsed;
-      try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
-      catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
-
-      const v = validateUpload(parsed);
-      if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });
-
-      const tmp = join(tmpdir(), `gv-${Date.now()}-${v.value.filename}`);
-      try {
-        writeFileSync(tmp, Buffer.from(v.value.dataBase64, 'base64'));
-        const url = await uploadImageToShopifyCDN(tmp, 'Giveaway entrant submission');
-        const out = await computeAndPersistEntries(v.value.email, { upload: true });
-        await updateProfileProperties(v.value.email, { gv_upload_url: url });
-        return json(res, req, 200, { ok: true, url, ...out });
-      } catch (e) {
-        console.error('[giveaway] upload failed', e.message);
-        return json(res, req, 502, { ok: false, error: 'could not save your photo' });
-      } finally {
-        // This box's 24GB disk has already taken down every cron job once by
-        // filling up. The temp file goes, success or failure.
-        try { unlinkSync(tmp); } catch { /* already gone */ }
-      }
-    }),
+    handler: withRateLimit(mutateLimiter, createUploadHandler()),
   },
   {
     method: 'GET',
     match: (url) => url.split('?')[0] === '/api/giveaway/entries',
-    handler: createEntriesHandler(),
+    handler: withRateLimit(entriesLimiter, createEntriesHandler()),
   },
 ];
+
+// Factory for the same reason as createEntriesHandler below: the ORDER of the
+// two side effects here is the thing worth testing, and it cannot be observed
+// without stubbing both boundaries.
+export function createUploadHandler({
+  getProfileByEmail: getProfile = getProfileByEmail,
+  uploadImageToShopifyCDN: uploadToCDN = uploadImageToShopifyCDN,
+  computeAndPersistEntries: persist = computeAndPersistEntries,
+  updateProfileProperties: updateProps = updateProfileProperties,
+} = {}) {
+  return async (req, res) => {
+    let parsed;
+    try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
+    catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
+
+    const v = validateUpload(parsed);
+    if (!v.ok) return json(res, req, 400, { ok: false, error: v.error });
+
+    const tmp = join(tmpdir(), `gv-${Date.now()}-${v.value.filename}`);
+    try {
+      // Resolve the entrant BEFORE anything is written to the store's Files
+      // library. uploadImageToShopifyCDN is PERMANENT and unauthenticated
+      // callers reach this route, so uploading first meant any address — one
+      // that had never entered, one that does not exist in Klaviyo at all —
+      // could push arbitrary images into production Files, and only then get a
+      // 502 when computeAndPersistEntries threw "no Klaviyo profile". The file
+      // stayed. Requiring a gv_breakdown (not merely a Klaviyo profile) also
+      // keeps the store's Files library closed to the 481 existing newsletter
+      // subscribers who never entered the giveaway.
+      const profile = await getProfile(v.value.email);
+      if (!profile?.properties?.gv_breakdown) {
+        return json(res, req, 404, { ok: false, error: 'we could not find your entry — please enter the giveaway first' });
+      }
+
+      writeFileSync(tmp, Buffer.from(v.value.dataBase64, 'base64'));
+      const url = await uploadToCDN(tmp, 'Giveaway entrant submission');
+      const out = await persist(v.value.email, { upload: true });
+      await updateProps(v.value.email, { gv_upload_url: url });
+      return json(res, req, 200, { ok: true, url, ...out });
+    } catch (e) {
+      console.error('[giveaway] upload failed', e.message);
+      return json(res, req, 502, { ok: false, error: 'could not save your photo' });
+    } finally {
+      // This box's 24GB disk has already taken down every cron job once by
+      // filling up. The temp file goes, success or failure.
+      try { unlinkSync(tmp); } catch { /* already gone */ }
+    }
+  };
+}
 
 // Factory rather than an inline handler so the test suite can inject a
 // stubbed `getProfileByEmail` and exercise the crash path directly, without
@@ -350,11 +413,20 @@ export function createEntriesHandler({ getProfileByEmail: getProfile = getProfil
     // Klaviyo 5xx or rate-limit would be enough to do it.
     try {
       const profile = await getProfile(email);
-      if (!profile) return json(res, req, 404, { ok: false, error: 'not found' });
+      // Answer only for GIVEAWAY ENTRANTS, not for "any address Klaviyo knows".
+      // getProfileByEmail searches the whole account, so a bare
+      // profile-exists check turned this public, unauthenticated route into a
+      // subscriber-enumeration oracle: 200 meant "this address is in Real Skin
+      // Care's Klaviyo", 404 meant it is not, at whatever rate the caller liked.
+      // gv_breakdown is written on first entry and by nothing else, so it is the
+      // narrowest available test for "this person entered".
+      if (!profile?.properties?.gv_breakdown) {
+        return json(res, req, 404, { ok: false, error: 'not found' });
+      }
       return json(res, req, 200, {
         ok: true,
         entries: profile.properties.gv_entries ?? 1,
-        breakdown: profile.properties.gv_breakdown ?? {},
+        breakdown: profile.properties.gv_breakdown,
       });
     } catch (e) {
       console.error('[giveaway] entries lookup failed', e.message);

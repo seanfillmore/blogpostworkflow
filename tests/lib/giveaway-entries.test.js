@@ -20,6 +20,25 @@ test('referrals are capped, so an 11th referral pays nothing', () => {
   assert.equal(at, over, 'past the cap the total must not move');
 });
 
+test('REGRESSION: a corrupt referrals value never poisons the total into NaN', () => {
+  // Math.max(0, NaN) is NaN, NaN * 5 is NaN, and the sum is NaN — which the
+  // reconciler would write straight to Klaviyo as `gv_entries: NaN`. Klaviyo
+  // serialises that to null, so the entrant's ladder shows no count at all and
+  // the daily report's entriesTotal is broken for everyone. The READ side
+  // (lib/giveaway/summarize.js) already guarded this; the WRITER has to as well,
+  // or the corrupt value is what gets stored in the first place.
+  for (const bad of [undefined, null, NaN, 'three', {}, [], Infinity, -Infinity]) {
+    const total = entryTotal({ confirmed: true, survey: false, referrals: bad, instagram: false, upload: false });
+    assert.ok(Number.isFinite(total), `referrals=${String(bad)} produced ${total}`);
+    assert.equal(total, 3, 'an unusable referral count is worth zero referrals, not NaN');
+  }
+  // A numeric string is still a number's worth of referrals, not a zero.
+  assert.equal(entryTotal({ confirmed: false, referrals: '2' }), 1 + 10);
+  // Negatives and fractions clamp as before.
+  assert.equal(entryTotal({ confirmed: false, referrals: -5 }), 1);
+  assert.equal(entryTotal({ confirmed: false, referrals: 1.9 }), 1 + 5);
+});
+
 test('emails are normalised so referral matching cannot miss on case or whitespace', () => {
   assert.equal(normalizeEmail('  Sean@Example.COM '), 'sean@example.com');
   assert.throws(() => normalizeEmail('not-an-email'), /invalid email/i);

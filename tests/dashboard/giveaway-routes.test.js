@@ -3,7 +3,9 @@
 // spend. These tests pin the validation and the server-authority rule.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { validateEntryPayload, mergeBreakdown, answerProperties, createEntriesHandler } from '../../agents/dashboard/routes/giveaway.js';
+import {
+  validateEntryPayload, mergeBreakdown, answerProperties, createEntriesHandler, entryProperties,
+} from '../../agents/dashboard/routes/giveaway.js';
 
 /** Minimal http.ServerResponse stand-in: captures status + body, nothing else. */
 function makeRes() {
@@ -70,6 +72,88 @@ test('survey answers are top-level gv_* properties, NOT keys inside the breakdow
   for (const k of ['household', 'frustration', 'currentBrand', 'gv_household', 'gv_frustration']) {
     assert.equal(breakdown[k], undefined, `${k} must not be in the breakdown`);
   }
+});
+
+test('the Instagram rung is NOT credited without a handle — +3 must be spot-checkable', () => {
+  // The rung pays for a public tagged post and the handle is the only way to
+  // verify one exists. `instagram: true` with no handle banks 3 entries against
+  // nothing anyone can check.
+  const base = { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false };
+  assert.equal(mergeBreakdown(base, { instagram: true }).instagram, false, 'no handle, no credit');
+  assert.equal(mergeBreakdown(base, { instagram: true, igHandle: '   ' }).instagram, false, 'whitespace is not a handle');
+  assert.equal(mergeBreakdown(base, { instagram: true, igHandle: '@sean' }).instagram, true);
+  // The handle itself is still stored (stripped of the @) as a top-level property.
+  assert.equal(answerProperties({ igHandle: '@sean' }).gv_ig_handle, 'sean');
+});
+
+// --- POST /enter property building (the resubmit invariant) ---
+
+test('a FIRST entry gets the zeroed baseline and one entry', () => {
+  const props = entryProperties(null, { email: 'a@b.com', firstName: 'A', referredBy: null });
+  assert.equal(props.gv_entrant, true);
+  assert.deepEqual(props.gv_breakdown, { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false });
+  assert.equal(props.gv_entries, 1);
+  assert.equal(props.gv_referred_by, undefined);
+});
+
+test('REGRESSION: a REPEAT entry writes neither gv_breakdown nor gv_entries', () => {
+  // Klaviyo REPLACES the value at a top-level property key rather than
+  // deep-merging it, so re-writing the zeroed baseline wipes a confirmed,
+  // surveyed, referred entrant from 11 entries back to 1. Double-submits and
+  // back-button resubmissions are routine on a cold lander, so this is the
+  // difference between an entrant keeping their ladder and losing it.
+  const existing = { properties: {
+    gv_entrant: true,
+    gv_entries: 11,
+    gv_breakdown: { confirmed: true, survey: true, referrals: 1, instagram: false, upload: false },
+  } };
+  const props = entryProperties(existing, { email: 'a@b.com', firstName: 'A', referredBy: null });
+  assert.deepEqual(props, { gv_entrant: true }, 'a resubmit must touch nothing but the entrant flag');
+});
+
+test('the FIRST referrer wins — a resubmit cannot swap in a different one', () => {
+  const first = entryProperties(null, { referredBy: 'one@x.com' });
+  assert.equal(first.gv_referred_by, 'one@x.com');
+
+  const existing = { properties: {
+    gv_breakdown: { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false },
+    gv_referred_by: 'one@x.com',
+  } };
+  const second = entryProperties(existing, { referredBy: 'two@x.com' });
+  assert.equal(second.gv_referred_by, undefined, 'the stored referrer must not be overwritten after the fact');
+
+  // A profile that exists but named nobody can still pick up a referrer on a
+  // later entry — the guard is "already set", not "already entered".
+  const noReferrer = { properties: { gv_breakdown: { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false } } };
+  assert.equal(entryProperties(noReferrer, { referredBy: 'two@x.com' }).gv_referred_by, 'two@x.com');
+});
+
+test('GET /entries answers only for actual entrants, not for anyone in Klaviyo', async () => {
+  // getProfileByEmail searches the WHOLE account, so a bare profile-exists check
+  // made this public, unauthenticated route an enumeration oracle: 200 meant
+  // "this address is in Real Skin Care's Klaviyo", 404 meant it is not, at
+  // whatever rate the caller liked, each hit proxied onto the account-wide
+  // Klaviyo quota that the live customer flows share.
+  const req = { url: '/api/giveaway/entries?email=test@example.com', headers: {} };
+
+  const nonEntrant = createEntriesHandler({
+    getProfileByEmail: async () => ({ id: 'P1', email: 'test@example.com', properties: { first_name: 'Sub' } }),
+  });
+  const res404 = makeRes();
+  await nonEntrant(req, res404);
+  assert.equal(res404.statusCode, 404, 'a newsletter subscriber who never entered must be indistinguishable from an unknown address');
+
+  const entrant = createEntriesHandler({
+    getProfileByEmail: async () => ({
+      id: 'P2',
+      email: 'test@example.com',
+      properties: { gv_entries: 6, gv_breakdown: { confirmed: true, survey: true, referrals: 0, instagram: false, upload: false } },
+    }),
+  });
+  const res200 = makeRes();
+  await entrant(req, res200);
+  assert.equal(res200.statusCode, 200);
+  assert.equal(JSON.parse(res200.body).entries, 6);
 });
 
 test('a Klaviyo failure on GET /entries responds 502 instead of crashing the process', async () => {

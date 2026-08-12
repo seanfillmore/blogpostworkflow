@@ -109,6 +109,34 @@ test('the /answers + /upload budget (30/hour, shared) 429s past its limit and do
   assert.equal(enterRes.statusCode, 400, '/enter must still be reachable -- exhausting the mutate budget must not block new entrants');
 });
 
+test('GET /entries is metered but LOOSE — 120/hour, its own budget, and never in the funnel\'s way', async () => {
+  // It was previously unlimited, which made a public route an unmetered proxy
+  // onto Klaviyo's account-wide quota (shared with the live customer flows) and
+  // an unlimited-rate enumeration probe. But the entered page calls it on every
+  // pageview, so a tight budget would break the ladder for real visitors: 120/hour
+  // is ~2 pageloads a minute sustained, far above a person and far below a scraper.
+  const entries = routes.find((r) => r.method === 'GET' && r.match('/api/giveaway/entries?email=bad'));
+  assert.ok(entries, 'no GET route matched /api/giveaway/entries');
+  const ip = 'test-5.5.5.5';
+  // `email=bad` 400s in validation, before any Klaviyo call — cheap way to spend budget.
+  const req = () => ({ url: '/api/giveaway/entries?email=bad', headers: { 'cf-connecting-ip': ip }, socket: { remoteAddress: '127.0.0.1' } });
+
+  for (let i = 0; i < 120; i += 1) {
+    const res = makeRes();
+    await entries.handler(req(), res);
+    assert.equal(res.statusCode, 400, `read ${i + 1} of 120 must not be rate-limited`);
+  }
+  const over = makeRes();
+  await entries.handler(req(), over);
+  assert.equal(over.statusCode, 429, 'the 121st read in the window is refused');
+
+  // A separate budget: exhausting reads must never block a new entrant.
+  const enter = findRoute('POST', '/api/giveaway/enter');
+  const enterRes = makeRes();
+  await enter.handler(makeReq(ip), enterRes);
+  assert.equal(enterRes.statusCode, 400, '/enter is unaffected by an exhausted read budget');
+});
+
 test('the full real funnel (enter, survey, Instagram, upload) never trips a 429', async () => {
   // This is the exact scenario Finding 1 was about: a single clean pass
   // through the real funnel used to consume 4 of the old shared 5/hour
