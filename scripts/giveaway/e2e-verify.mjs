@@ -31,8 +31,13 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { lookup } from 'node:dns/promises';
-import { buildIdentities, isTestProfile } from '../../lib/giveaway/test-identity.js';
-import { getProfileByEmail, updateProfileProperties } from '../../lib/klaviyo-profiles.js';
+import { execFileSync } from 'node:child_process';
+import { buildIdentities, isTestProfile, TEST_MARKER } from '../../lib/giveaway/test-identity.js';
+import {
+  getProfileByEmail, listProfilesWithConsent, updateProfileProperties,
+} from '../../lib/klaviyo-profiles.js';
+import { klaviyoRequest } from '../../lib/klaviyo.js';
+import { summarizeEntrants } from '../../lib/giveaway/summarize.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -230,7 +235,114 @@ async function negative() {
   assert(!/order|checkout|purchase|webhook/i.test(code), 'no purchase, order or webhook path exists in the giveaway routes');
 }
 
-const PHASES = { preflight, seed, positive, negative };
+async function reconcile() {
+  // The reconciler is the ONLY writer of the confirm and referral rungs, and it
+  // reads Klaviyo's confirmed set. It deliberately does NOT skip gv_test
+  // profiles — excluding them there would make this phase unable to verify the
+  // two rungs it exists to verify.
+  console.log('running the reconciler…');
+  const out = execFileSync('node', [join(ROOT, 'scripts', 'giveaway', 'reconcile-referrals.mjs'), '--apply'], { encoding: 'utf8' });
+  console.log(out.trim());
+
+  for (const id of Object.values(ids)) {
+    const { entries, breakdown } = await entriesOf(id.email);
+    assert(entries === id.expected, `${id.key.toUpperCase()} totals ${id.expected}`, `got ${entries}`);
+    assert(
+      breakdown?.confirmed === id.confirms,
+      `${id.key.toUpperCase()} confirmed === ${id.confirms}`,
+      `got ${breakdown?.confirmed}`,
+    );
+  }
+
+  const a = await entriesOf(ids.a.email);
+  assert(a.breakdown?.referrals === 1, 'A was credited for exactly ONE referral — B confirmed, C did not', `got ${a.breakdown?.referrals}`);
+  const d = await entriesOf(ids.d.email);
+  assert((d.breakdown?.referrals ?? 0) === 0, 'D earned nothing from naming itself');
+  const e = await entriesOf(ids.e.email);
+  assert((e.breakdown?.referrals ?? 0) === 0, 'E earned nothing from naming a non-entrant');
+}
+
+async function limits() {
+  // MUST run last, and MUST run on a FRESH limiter — restart PM2 immediately
+  // before this phase as well as after. The budgets are per-IP and this harness
+  // is one IP, so `seed` (5 /enter) and `positive`+`negative` (10 mutations)
+  // have already spent part of both budgets; without a restart the boundary
+  // assertions below measure the leftovers, not the limits.
+  const burn = (n, path, bodyFor) => (async () => {
+    const seen = [];
+    for (let i = 0; i < n; i += 1) seen.push((await post(path, bodyFor(i))).status);
+    return seen;
+  })();
+
+  const limEmail = (i) => ids.a.email.replace('@', `+lim${i}@`);
+  const enterStatuses = await burn(7, '/enter', (i) => ({ email: limEmail(i), firstName: 'Lim' }));
+  assert(enterStatuses.slice(0, 5).every((s) => s === 201), '/enter accepts the first 5 from one IP',
+    `${enterStatuses.join(',')}${enterStatuses[0] === 429 ? ` — the limiter was NOT fresh; restart and re-run: ${RESTART}` : ''}`);
+  assert(enterStatuses[5] === 429, '/enter 429s on the 6th', `got ${enterStatuses[5]}`);
+
+  // Those first five calls created five REAL profiles on the production list.
+  // They carry gv_entrant and nothing else, so without a marker they are
+  // indistinguishable from genuine entrants: cleanup would not find them, Gate A
+  // would not flag them, and they would sit in the draw pool holding a live
+  // chance at a $536.40 prize. Mark them before asserting anything else.
+  let marked = 0;
+  for (let i = 0; i < 5; i += 1) {
+    if (enterStatuses[i] !== 201) continue;
+    try {
+      await markTestProfile(limEmail(i), { [TEST_MARKER]: true, gv_test_run: runId });
+      marked += 1;
+    } catch (err) {
+      console.error(`  COULD NOT MARK ${limEmail(i)}: ${err.message}`);
+    }
+  }
+  const created = enterStatuses.slice(0, 5).filter((s) => s === 201).length;
+  assert(marked === created, 'every profile this phase created is marked gv_test and so is cleanable',
+    `marked ${marked} of ${created} — an unmarked profile is a live entrant in the draw pool; mark or delete it by hand before launch`);
+
+  const mutateStatuses = await burn(32, '/answers', () => ({ email: ids.a.email, survey: true }));
+  const firstRefusal = mutateStatuses.indexOf(429);
+  assert(firstRefusal === 30, 'the mutation budget 429s on the 31st', `first 429 at index ${firstRefusal}`);
+
+  console.log('\nNOW RESET THE LIMITER before any further phase:');
+  console.log(`  ${RESTART}`);
+}
+
+async function exclusion() {
+  const members = await listProfilesWithConsent(config.listId);
+  const testCount = members.filter((p) => isTestProfile(p.properties)).length;
+  assert(testCount > 0, 'there are test profiles on the list to exclude', `found ${testCount}`);
+  const s = summarizeEntrants(members);
+  assert(s.excludedTestProfiles === testCount, 'the report excludes every test profile', `excluded ${s.excludedTestProfiles} of ${testCount}`);
+  assert(s.total === members.length - testCount, 'and its total counts only real entrants', `${s.total} of ${members.length}`);
+}
+
+async function cleanup() {
+  // Deletion is asynchronous in Klaviyo. This asserts the request was accepted,
+  // then re-enumerates so a silent failure cannot pass as success.
+  const members = await listProfilesWithConsent(config.listId);
+  const testProfiles = members.filter((p) => isTestProfile(p.properties));
+  console.log(`${testProfiles.length} test profile(s) to delete`);
+  for (const p of testProfiles) {
+    await klaviyoRequest('POST', '/data-privacy-deletion-jobs/', {
+      data: { type: 'data-privacy-deletion-job', attributes: { profile: { data: { type: 'profile', attributes: { email: p.email } } } } },
+    });
+    console.log(`  deletion requested: ${p.email}`);
+  }
+  console.log('\nDeletion is asynchronous. Re-run `status` in a few minutes, and confirm Gate A');
+  console.log('reports `no gv_test profiles remain` before launching.');
+}
+
+async function status() {
+  const members = await listProfilesWithConsent(config.listId);
+  const testProfiles = members.filter((p) => isTestProfile(p.properties));
+  console.log(`list members: ${members.length}   test profiles: ${testProfiles.length}`);
+  for (const p of testProfiles) {
+    console.log(`  ${String(p.properties?.gv_entries ?? '?').padStart(3)}  ${p.email}  run=${p.properties?.gv_test_run ?? '?'}`);
+  }
+  assert(true, 'status read completed');
+}
+
+const PHASES = { preflight, seed, positive, negative, reconcile, limits, exclusion, cleanup, status };
 
 const fn = PHASES[phase];
 if (!fn) {
