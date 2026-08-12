@@ -32,18 +32,29 @@ const MAX_BODY_BYTES = 4 * 1024;
 const UPLOAD_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 const MAX_UPLOAD_BASE64 = 8 * 1024 * 1024; // ~6MB file
 
-// Per-IP write budget, shared across /enter, /answers and /upload. Not a
-// security boundary -- see agents/dashboard/lib/rate-limit.js. Deliberately
-// loose: 5/hour absorbs a normal entrant's enter + answers + upload + a
-// retry or two, while still damping a runaway script. GET /entries is
-// intentionally NOT limited -- the entered page polls it on every load and
-// limiting it would break the ladder display for real visitors.
-const writeLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 5 });
+// Two independent per-IP budgets, not one shared one. Not a security boundary
+// -- see agents/dashboard/lib/rate-limit.js. A single shared 5/hour budget
+// was tried first and was wrong: the legitimate funnel is FOUR write
+// requests (enter, answers/survey, answers/Instagram, upload), so one clean
+// pass already consumes 4 of 5 and a single accidental double-tap 429s a
+// genuine, rights-granting entrant out of the +10 upload rung -- the
+// ladder's single most valuable action.
+//
+// The right split follows the actual abuse surface: /enter is the ONLY
+// route that CREATES a Klaviyo profile, so it is the entire abuse surface
+// and keeps the tight 5/hour budget. /answers and /upload only mutate a
+// profile that already exists -- they cannot create one -- so they share a
+// much looser 30/hour budget that comfortably covers the full funnel plus
+// retries. GET /entries is intentionally NOT limited at all -- the entered
+// page polls it on every load and limiting it would break the ladder
+// display for real visitors.
+const enterLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 5 });
+const mutateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 30 });
 
-function withRateLimit(handler) {
+function withRateLimit(limiter, handler) {
   return async (req, res) => {
     const ip = getClientIp(req);
-    if (!writeLimiter.check(ip)) {
+    if (!limiter.check(ip)) {
       return json(res, req, 429, { ok: false, error: 'too many requests — please try again in a bit' });
     }
     return handler(req, res);
@@ -225,7 +236,7 @@ export default [
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/enter',
-    handler: withRateLimit(async (req, res) => {
+    handler: withRateLimit(enterLimiter, async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
       catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
@@ -268,7 +279,7 @@ export default [
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/answers',
-    handler: withRateLimit(async (req, res) => {
+    handler: withRateLimit(mutateLimiter, async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req)); }
       catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }
@@ -288,7 +299,7 @@ export default [
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/upload',
-    handler: withRateLimit(async (req, res) => {
+    handler: withRateLimit(mutateLimiter, async (req, res) => {
       let parsed;
       try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
       catch { return json(res, req, 400, { ok: false, error: 'bad body' }); }

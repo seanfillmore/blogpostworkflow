@@ -20,11 +20,52 @@ before re-running the gate.
 | 4 | Aggregated Event Measurement: rank `Lead` at priority #1 (if `Purchase` outranks it, iOS lead conversions are silently dropped) | **Outstanding** — blocked on item 3 (no ad account/pixel yet to configure AEM against) |
 | 5 | Klaviyo list `Y2ukbE` set to **double opt-in** (List Settings → Opt-in Process) | **Outstanding**. Not scriptable — `lib/klaviyo-profiles.js` documents that double opt-in is a list *setting*, not an API field, so `verify-launch.mjs` cannot check it programmatically. Confirm by hand in the Klaviyo UI before launch. |
 | 6 | Welcome flow `UUa3Qk` filtered to exclude `gv_entrant` profiles | **Outstanding** |
+| 7 | Confirm the derived client IP actually varies between visitors (see below) | **Outstanding — do this last, once `entries.realskincare.com` resolves through Cloudflare** |
 
 Items 2 and 3 are the two that Gate A (below) can and does detect and fail on.
-Items 1, 4, 5, and 6 have no live surface a script can observe from outside
-the respective admin UIs, so they stay human-confirmed checklist items — do
-not check any of them off without doing them.
+Items 1, 4, 5, 6, and 7 have no live surface a script can observe from
+outside the respective admin UIs (or, for item 7, the live network path),
+so they stay human-confirmed checklist items — do not check any of them off
+without doing them.
+
+### Item 7 — confirm the rate limiter is actually seeing per-visitor IPs
+
+`agents/dashboard/lib/rate-limit.js` keys the `/enter`, `/answers`, and
+`/upload` budgets off `req.headers['cf-connecting-ip']`, because this domain
+is fronted by Cloudflare and that header is what Cloudflare sets at its edge
+per visitor. **This is unverifiable from the diff alone** — it depends on
+what actually reaches the Node process in production, not on the code.
+
+The failure mode if it's wrong is severe and silent: if anything between
+Cloudflare and this Node process (a load balancer, a misconfigured proxy, a
+missing `trust proxy`-equivalent setting) strips `CF-Connecting-IP` and no
+`X-Forwarded-For` survives either, `getClientIp()` falls back to
+`req.socket.remoteAddress` — which in that scenario is the *proxy's* address,
+identical for every visitor. Every entrant would then share ONE 5/hour
+`/enter` budget and one 30/hour `/answers`+`/upload` budget between all of
+them, and the giveaway would start silently 429-ing real entrants within
+minutes of the first few visits, with no error in the logs beyond a stream
+of 429s that look like abuse rather than a misconfiguration.
+
+**Before turning on the Meta campaign, confirm the derived IP actually
+varies between two different networks** (e.g. your home connection and your
+phone on cellular, or two different people hitting the lander at the same
+time). Simplest method: temporarily add one log line at the top of
+`getClientIp()` in `agents/dashboard/lib/rate-limit.js` —
+
+```js
+console.log('[giveaway] client ip:', req.headers['cf-connecting-ip'], req.socket?.remoteAddress);
+```
+
+— redeploy, hit `/pages/free-soap-giveaway` from two different networks,
+`pm2 logs seo-dashboard --lines 50 --nostream` on the server, and confirm the
+two `cf-connecting-ip` values are different real IPs (not both empty, not
+both equal to each other, not both equal to a Cloudflare/DigitalOcean
+internal address). Remove the log line and redeploy once confirmed. If the
+two values come back identical, do NOT launch ads — the limiter would be
+one shared budget for the entire campaign, and the fix is upstream of this
+code (the proxy config between Cloudflare and Node), not in
+`rate-limit.js` itself.
 
 ## Step 2 — the verification script
 
@@ -166,6 +207,8 @@ required too.
 3. Fill in the four date placeholders above; republish rules page + templates.
 4. Re-run `node scripts/giveaway/verify-launch.mjs` — must print `Gate A passed.`
 5. Run the real test entry (Step 4) end to end.
-6. Set flow `WtDX2F` live.
-7. Install the nightly reconciler cron line.
-8. Turn on the Meta campaign.
+6. Complete item 7 — confirm the derived client IP varies between two
+   different networks (see Step 1 above). Do not turn on ads if it doesn't.
+7. Set flow `WtDX2F` live.
+8. Install the nightly reconciler cron line.
+9. Turn on the Meta campaign.

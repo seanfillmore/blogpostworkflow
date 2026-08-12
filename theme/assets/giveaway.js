@@ -131,6 +131,8 @@
 
   var bonus = root.querySelector('[data-gv-bonus]');
   if (bonus) {
+    var bonusButton = bonus.querySelector('button[type="submit"]');
+
     bonus.addEventListener('submit', function (e) {
       e.preventDefault();
       var err = bonus.querySelector('.gv-bonus-error');
@@ -142,6 +144,29 @@
 
       function showError(msg) { err.textContent = msg; err.hidden = false; }
 
+      // A file without granted rights never reaches /upload, but an
+      // Instagram handle submitted alongside it is still credited below --
+      // the rights gate applies to the photo only, not to the whole form.
+      var willUpload = !!file && rights;
+      if (file && !rights) showError('Please tick the box so we can use your photo.');
+      if (!handle && !willUpload) return; // nothing is actually going to be sent
+
+      // Disabled for the whole submission, not per-fetch: a double-click or
+      // a slow-connection double-tap must not fire two overlapping
+      // /answers + /upload pairs. Mirrors the entry form (button state at
+      // the top of this file) and the survey form above.
+      bonusButton.disabled = true;
+      bonusButton.textContent = 'Saving…';
+
+      var inFlight = (handle ? 1 : 0) + (willUpload ? 1 : 0);
+      function requestSettled() {
+        inFlight -= 1;
+        if (inFlight <= 0) {
+          bonusButton.disabled = false;
+          bonusButton.textContent = 'Claim my bonus entries';
+        }
+      }
+
       if (handle) {
         fetch(endpoint + '/answers', {
           method: 'POST',
@@ -150,28 +175,29 @@
         })
           .then(function (r) { return r.json(); })
           .then(function (b) { if (b && b.entries) count.textContent = String(b.entries); })
-          .catch(function () { /* best-effort -- the upload below still runs */ });
+          .catch(function () { /* best-effort -- the upload below still runs */ })
+          .then(requestSettled);
       }
 
-      if (!file) return;
-      if (!rights) return showError('Please tick the box so we can use your photo.');
-
-      var reader = new FileReader();
-      reader.onload = function () {
-        var base64 = String(reader.result).split(',')[1];
-        fetch(endpoint + '/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email, filename: file.name, dataBase64: base64, rightsGranted: true })
-        })
-          .then(function (r) { return r.json(); })
-          .then(function (b) {
-            if (!b || !b.ok) return showError((b && b.error) || 'Upload failed. Please try again.');
-            count.textContent = String(b.entries);
+      if (willUpload) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var base64 = String(reader.result).split(',')[1];
+          fetch(endpoint + '/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, filename: file.name, dataBase64: base64, rightsGranted: true })
           })
-          .catch(function () { showError('Upload failed. Please try again.'); });
-      };
-      reader.readAsDataURL(file);
+            .then(function (r) { return r.json(); })
+            .then(function (b) {
+              if (!b || !b.ok) { showError((b && b.error) || 'Upload failed. Please try again.'); return; }
+              count.textContent = String(b.entries);
+            })
+            .catch(function () { showError('Upload failed. Please try again.'); })
+            .then(requestSettled);
+        };
+        reader.readAsDataURL(file);
+      }
     });
   }
 })();
