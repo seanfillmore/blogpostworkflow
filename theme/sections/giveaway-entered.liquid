@@ -13,9 +13,11 @@
   assign endpoint = 'https://entries.realskincare.com/api/giveaway'
 -%}
 
+{{ 'giveaway.css' | asset_url | stylesheet_tag }}
+
 <section class="gv-entered" data-gv-entered>
   <h1>You're in.</h1>
-  <p>We'll email you to confirm — <strong>click that link</strong> and you get 2 bonus entries.</p>
+  <p class="gv-lead">We'll email you to confirm — <strong>click that link</strong> and you get 2 bonus entries.</p>
 
   <form class="gv-survey" data-step="required">
     <fieldset>

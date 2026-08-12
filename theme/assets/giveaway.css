@@ -1,0 +1,310 @@
+/* theme/assets/giveaway.css
+ *
+ * Shared styling for the giveaway lander and the entered page. One file so the
+ * two pages cannot drift apart — they are one flow and an entrant sees both
+ * inside ten seconds of each other.
+ *
+ * Palette and type come from data/brand/brand-kit.json: black #000000, sand
+ * #EDE5D8, green #AEDEAC, grey #EDEDED. Cabin and Outfit are inherited from the
+ * theme's own --font-heading-family / --font-body-family, so these pages load no
+ * additional fonts. The kit allows ONE accent element per page: it is spent on
+ * the primary button's hover/focus state and nothing else.
+ *
+ * ── THIS STYLESHEET HIDES THE THEME CHROME ───────────────────────────────────
+ * Both templates are paid-traffic surfaces with exactly one job each. The site
+ * nav offered eight ways to leave, and the announcement bar advertises "Free
+ * Shipping on Orders Over $45" — a purchase promotion on pages whose legal basis
+ * is NO PURCHASE NECESSARY, and whose own copy says purchases do not earn
+ * entries. Sections are matched by id SUFFIX because Shopify regenerates the
+ * numeric portion; hard-coding a full id silently breaks the page.
+ */
+
+[id$="__header"],
+[id$="__announcement-bar"],
+[id$="__footer"],
+[id$="__mobile-dock"],
+#shopify-section-similar-products { display: none !important; }
+
+.gv-entry,
+.gv-entered {
+  --gv-ink: #000000;
+  --gv-sand: #EDE5D8;
+  --gv-green: #AEDEAC;
+  --gv-line: #EDEDED;
+  --gv-muted: #5b5b5b;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+  font-family: var(--font-body-family, 'Outfit', sans-serif);
+  color: var(--gv-ink);
+}
+.gv-entered { max-width: 640px; }
+
+/* ── Shared type ─────────────────────────────────────────────────────────── */
+
+.gv-entry h1,
+.gv-entered h1 {
+  font-family: var(--font-heading-family, 'Cabin', sans-serif);
+  font-size: clamp(2rem, 7vw, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.gv-entered h2 {
+  font-family: var(--font-heading-family, 'Cabin', sans-serif);
+  font-size: 1.25rem;
+  margin: 0 0 14px;
+}
+
+.gv-sub,
+.gv-lead {
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--gv-muted);
+  margin: 0;
+  max-width: 42ch;
+}
+.gv-lead { margin: 0 0 28px; }
+
+.gv-fine { font-size: 0.8125rem; line-height: 1.55; color: var(--gv-muted); margin: 0; }
+.gv-fine a { color: var(--gv-ink); }
+
+/* ── Shared controls ─────────────────────────────────────────────────────── */
+
+.gv-entry input[type="email"],
+.gv-entry input[type="text"],
+.gv-entered input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 14px;
+  border: 1px solid var(--gv-line);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--gv-ink);
+}
+.gv-entry input:focus-visible,
+.gv-entered input:focus-visible {
+  outline: 2px solid var(--gv-ink);
+  outline-offset: 1px;
+  border-color: var(--gv-ink);
+}
+
+.gv-entry button,
+.gv-entered button {
+  font-family: var(--font-heading-family, 'Cabin', sans-serif);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 17px 20px;
+  width: 100%;
+  border: 0;
+  border-radius: 3px;
+  background: var(--gv-ink);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.gv-entry button:hover, .gv-entry button:focus-visible,
+.gv-entered button:hover, .gv-entered button:focus-visible {
+  background: var(--gv-green);
+  color: var(--gv-ink);
+}
+.gv-entry button:focus-visible,
+.gv-entered button:focus-visible { outline: 2px solid var(--gv-ink); outline-offset: 2px; }
+.gv-entry button[disabled],
+.gv-entered button[disabled] { opacity: 0.55; cursor: default; }
+
+.gv-error,
+.gv-bonus-error {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--gv-ink);
+  background: var(--gv-line);
+  font-size: 0.9375rem;
+}
+
+/* ── Lander ──────────────────────────────────────────────────────────────── */
+
+.gv-brand { text-align: center; padding: 4px 0 22px; }
+
+.gv-grid { display: grid; gap: 22px; }
+
+.gv-shot {
+  background: var(--gv-sand);
+  border-radius: 4px;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.gv-shot img { width: 86%; height: auto; mix-blend-mode: multiply; }
+
+.gv-form { display: grid; gap: 14px; margin: 0 0 24px; }
+.gv-form label,
+.gv-bonus > label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+.gv-form label span,
+.gv-bonus > label span {
+  font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--gv-muted);
+}
+
+.gv-stack {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 22px;
+  background: var(--gv-sand);
+  border-radius: 4px;
+  display: grid;
+  gap: 12px;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+.gv-stack li { display: grid; grid-template-columns: 2.6rem 1fr; gap: 14px; align-items: baseline; }
+.gv-stack b {
+  font-family: var(--font-heading-family, 'Cabin', sans-serif);
+  font-size: 1.5rem; font-weight: 700; line-height: 1;
+}
+
+/* ── Entered page ────────────────────────────────────────────────────────── */
+
+/* The survey IS the +3 rung. Each option is a full-width tappable row rather
+   than a bare radio — a 12px native radio is a miss target on a phone, and a
+   missed tap here costs three entries. */
+.gv-survey { display: grid; gap: 26px; margin: 0 0 34px; }
+.gv-survey fieldset { border: 0; margin: 0; padding: 0; }
+.gv-survey legend {
+  font-family: var(--font-heading-family, 'Cabin', sans-serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.gv-survey fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  margin: 0 0 8px;
+  border: 1px solid var(--gv-line);
+  border-radius: 3px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.gv-survey fieldset label:hover { border-color: var(--gv-ink); }
+.gv-survey fieldset label:has(input:checked) {
+  border-color: var(--gv-ink);
+  background: var(--gv-sand);
+}
+.gv-survey input[type="radio"] { accent-color: #000; width: 18px; height: 18px; margin: 0; flex: none; }
+.gv-survey fieldset label:focus-within { outline: 2px solid var(--gv-ink); outline-offset: 2px; }
+
+.gv-ladder { margin: 0 0 30px; }
+.gv-ladder h2 [data-gv-count] {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+.gv-ladder ul {
+  list-style: none;
+  margin: 0 0 26px;
+  padding: 20px;
+  background: var(--gv-sand);
+  border-radius: 4px;
+  display: grid;
+  gap: 11px;
+  font-size: 0.9875rem;
+  line-height: 1.4;
+}
+/* NOTE: there is deliberately no "rung already earned" style here. GET /entries
+   returns `breakdown` alongside `entries`, so striking through banked rungs and
+   making the remaining ones salient is a few lines away — but giveaway.js does
+   not read breakdown today, and shipping CSS for an attribute nothing sets is
+   just dead code. Worth doing as its own change. */
+
+.gv-bonus { display: grid; gap: 8px; margin: 0 0 22px; }
+.gv-bonus input[type="file"] {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  padding: 12px;
+  border: 1px dashed #c9c9c9;
+  border-radius: 3px;
+  background: #fff;
+}
+.gv-bonus input[type="file"]::file-selector-button {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-right: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--gv-ink);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--gv-ink);
+  cursor: pointer;
+}
+/* The rights grant is what makes an upload usable creative. It gets a real
+   target and normal sentence case — shouting it in caps like the other labels
+   would read as a consent dark pattern. */
+.gv-bonus .gv-rights {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 6px 0 4px;
+  padding: 13px 15px;
+  border: 1px solid var(--gv-line);
+  border-radius: 3px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+.gv-bonus .gv-rights input { accent-color: #000; width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
+
+.gv-shop {
+  margin: 26px 0 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--gv-line);
+  font-size: 0.9375rem;
+  color: var(--gv-muted);
+}
+.gv-shop a { color: var(--gv-ink); }
+
+/* ── Desktop ─────────────────────────────────────────────────────────────── */
+
+@media (min-width: 900px) {
+  .gv-entry { padding-top: 40px; }
+  .gv-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "shot head" "shot copy";
+    grid-template-rows: auto 1fr;
+    column-gap: 56px;
+    row-gap: 0;
+    align-items: start;
+  }
+  .gv-head { grid-area: head; }
+  .gv-shot { grid-area: shot; aspect-ratio: 1 / 1; position: sticky; top: 32px; }
+  /* row-gap is 0 so the sticky image aligns to the headline; the breathing room
+     between subhead and the first field is restored here instead. */
+  .gv-copy { grid-area: copy; margin-top: 24px; }
+
+  .gv-entry button, .gv-entered button { width: auto; min-width: 260px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-entry button, .gv-entered button,
+  .gv-survey fieldset label { transition: none; }
+}
