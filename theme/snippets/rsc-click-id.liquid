@@ -1,0 +1,17 @@
+{%- comment -%}
+  Google click-id capture.
+
+  Included from layout/theme.liquid, immediately before </body>.
+
+  Shopify caps order.landing_site at 255 characters and Google Shopping puts gclid LAST
+  in the query string, so server-side the gclid always arrives as a 4-character stump
+  ("CjwK") while gbraid survives. A stump is worse than nothing — Google accepts it and
+  attributes it to no click. Cart attributes have no such cap and become order
+  note_attributes, which is the only route by which a complete gclid can reach
+  agents/ads-conversion-uploader.
+
+  Loaded `defer` and off the critical path: this exists to measure paid traffic and must
+  not cost the page speed that traffic is paying for. On any page that is not an ad
+  landing it does nothing and issues no request.
+{%- endcomment -%}
+<script src="{{ 'rsc-click-id.js' | asset_url }}" defer></script>
