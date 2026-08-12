@@ -12,7 +12,10 @@
  * deeply unprofitable spend after a real conversion base — so Sean can evolve the
  * campaign manually. Everything else is reported as informational.
  *
- * Targets every campaign whose name starts with "RSC | Shopping Test".
+ * Targets every campaign whose name starts with "RSC | " that is currently ENABLED or
+ * spent money in the window (see selectCampaigns). Widened from "RSC | Shopping Test"
+ * on 2026-08-12 — "RSC | Brand | Search" was unpaused and was invisible to this report,
+ * which was the campaign being watched most closely.
  *
  * Usage:
  *   node agents/shopping-test-monitor/index.js            # 14-day window
@@ -33,7 +36,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'shopping-test-monitor');
 
-const NAME_PREFIX = 'RSC | Shopping Test';
+// Every RSC-managed campaign, not just the Shopping tests. Widened 2026-08-12: when
+// 'RSC | Brand | Search' was unpaused it was invisible to this report, which is the
+// campaign we had just been asked to watch most closely.
+const NAME_PREFIX = 'RSC | ';
+
+// Label stripping in the report still wants the old, longer prefix where it applies.
+const SHOPPING_TEST_PREFIX = 'RSC | Shopping Test';
 
 // Gate thresholds — deliberately permissive per the "~1× is a win" directive.
 export const DEFAULTS = {
@@ -49,6 +58,18 @@ export const DEFAULTS = {
 };
 
 // ── pure helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Which campaigns belong in the report.
+ *
+ * Matching every 'RSC | ' campaign would drag in a dozen long-dead paused ones and
+ * bury the two or three that matter. Keep a campaign if it is currently ENABLED, or
+ * if it spent money in the window — spend after a pause is still real money and must
+ * stay visible until it stops.
+ */
+export function selectCampaigns(rows) {
+  return rows.filter((r) => r.status === 'ENABLED' || Number(r.spend) > 0);
+}
 
 export function computeMetrics(row) {
   const m = row.metrics || {};
@@ -138,6 +159,10 @@ export function buildMarkdown({ rows, totals, lifetime, flags }, { start, end, d
   const pct = v => v === 0 ? '0%' : `${(v * 100).toFixed(1)}%`;
   const roas = v => v === null ? '—' : `${v}×`;
   const money = v => `$${v.toFixed(2)}`;
+  // Every RSC campaign name contains "|" as a separator, which is also the markdown
+  // table delimiter — unescaped, "RSC | Brand | Search" renders as three extra columns
+  // and collapses the table in the digest email.
+  const label = name => String(name || '').replace(SHOPPING_TEST_PREFIX + ' | ', '').replace(/\|/g, '\\|');
   let md = `# Shopping Test Monitor — ${end}\n\n`;
   md += `Window: last ${days} days (${start} → ${end}). Gate: ~1× ROAS is a win; flag only dead spend.\n\n`;
   md += `## Combined (last ${days}d)\n`;
@@ -148,12 +173,12 @@ export function buildMarkdown({ rows, totals, lifetime, flags }, { start, end, d
   md += `| Campaign | Status | Spend | Clicks | CPC | Conv | Revenue | ROAS | Verdict |\n`;
   md += `|---|---|--:|--:|--:|--:|--:|--:|---|\n`;
   for (const r of rows) {
-    md += `| ${r.name.replace(NAME_PREFIX + ' | ', '')} | ${r.status} | ${money(r.spend)} | ${r.clicks} | ${money(r.avgCpc)} | ${r.conversions} | ${money(r.revenue)} | ${roas(r.roas)} | ${r.verdict} |\n`;
+    md += `| ${label(r.name)} | ${r.status} | ${money(r.spend)} | ${r.clicks} | ${money(r.avgCpc)} | ${r.conversions} | ${money(r.revenue)} | ${roas(r.roas)} | ${r.verdict} |\n`;
   }
   md += `\n`;
   if (flags.length) {
     md += `## ⚠️ Needs attention\n`;
-    for (const f of flags) md += `- **${f.name.replace(NAME_PREFIX + ' | ', '')}**: ${f.reason}\n`;
+    for (const f of flags) md += `- **${label(f.name)}**: ${f.reason}\n`;
   } else {
     md += `_No dead spend flagged — everything either producing sales or still gathering data._\n`;
   }
@@ -171,7 +196,7 @@ async function fetchWindow(dateClause) {
     WHERE campaign.name LIKE '${NAME_PREFIX}%' AND campaign.status != 'REMOVED'
       ${dateClause}
   `;
-  return (await gaqlQuery(q)).map(computeMetrics);
+  return selectCampaigns((await gaqlQuery(q)).map(computeMetrics));
 }
 
 async function main() {

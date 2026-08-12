@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import test from 'node:test';
 import {
   computeMetrics,
+  selectCampaigns,
   classifyCampaign,
   summarize,
   buildMarkdown,
@@ -79,4 +80,52 @@ test('summarize aggregates totals and collects only real flags', () => {
 test('DEFAULTS are permissive per the 1x directive', () => {
   assert.equal(DEFAULTS.watchRoas, 1.0);
   assert.ok(DEFAULTS.deadClicks >= 150, 'zero-conversion results need a real statistical floor');
+});
+
+// --- Campaign scope -----------------------------------------------------------------
+// Added 2026-08-12. The monitor watched only 'RSC | Shopping Test%', so when
+// 'RSC | Brand | Search' was unpaused it was invisible to the daily spend report —
+// the one campaign we had just been asked to watch closely. Widening the net to all
+// RSC campaigns would drag in a dozen long-dead paused campaigns, so selection is:
+// currently ENABLED, or spent money in the window.
+
+test('selectCampaigns includes every enabled RSC campaign, not just Shopping Test', () => {
+  const rows = [
+    { name: 'RSC | Shopping Test | Lotion - Coconut Breeze', status: 'ENABLED', spend: 2.5 },
+    { name: 'RSC | Brand | Search', status: 'ENABLED', spend: 0 },
+  ];
+  assert.deepEqual(selectCampaigns(rows).map((r) => r.name),
+    ['RSC | Shopping Test | Lotion - Coconut Breeze', 'RSC | Brand | Search']);
+});
+
+test('selectCampaigns keeps a paused campaign that still spent in the window', () => {
+  // Spend after a pause is real money and must stay visible until it stops.
+  const rows = [{ name: 'RSC | Brand | Search', status: 'PAUSED', spend: 12.4 }];
+  assert.deepEqual(selectCampaigns(rows).map((r) => r.name), ['RSC | Brand | Search']);
+});
+
+test('selectCampaigns drops long-dead paused campaigns with no spend', () => {
+  const rows = [
+    { name: 'RSC | Sensitive Skin Set | Search | Validation', status: 'PAUSED', spend: 0 },
+    { name: 'RSC | Coconut Oil Lotion Dry Skin | Search', status: 'PAUSED', spend: 0 },
+  ];
+  assert.deepEqual(selectCampaigns(rows), []);
+});
+
+// A campaign name containing "|" (every RSC campaign does) must not blow apart the
+// markdown table. Before escaping, "RSC | Brand | Search" rendered as three extra
+// columns and the digest table collapsed.
+test('buildMarkdown escapes pipes in campaign names', () => {
+  const rows = [{
+    name: 'RSC | Brand | Search', status: 'ENABLED', spend: 51.16, clicks: 46,
+    avgCpc: 1.11, conversions: 0, revenue: 0, roas: 0, ctr: 0.05, impressions: 900,
+    verdict: 'learning', reason: 'early',
+  }];
+  const totals = { spend: 51.16, revenue: 0, roas: 0, clicks: 46, ctr: 0.05, avgCpc: 1.11, conversions: 0, impressions: 900 };
+  const md = buildMarkdown({ rows, totals, lifetime: totals, flags: [] },
+    { start: '2026-07-22', end: '2026-08-11', days: 21 });
+  const row = md.split('\n').find((l) => l.includes('Brand'));
+  assert.ok(row.includes('RSC \\| Brand \\| Search'), `pipes not escaped: ${row}`);
+  // 9 data columns => 10 pipe-delimited segments; unescaped pipes would inflate this.
+  assert.equal(row.split(/(?<!\\)\|/).length - 2, 9, `wrong column count: ${row}`);
 });
