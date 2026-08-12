@@ -714,7 +714,7 @@ The storefront has no server, and entry totals must never be client-supplied. Th
 // spend. These tests pin the validation and the server-authority rule.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { validateEntryPayload, mergeBreakdown } from '../../agents/dashboard/routes/giveaway.js';
+import { validateEntryPayload, mergeBreakdown, answerProperties } from '../../agents/dashboard/routes/giveaway.js';
 
 test('a client-supplied entry total is ignored — the server is the only authority', () => {
   const merged = mergeBreakdown(
@@ -747,12 +747,32 @@ test('a self-referral in the entry payload is stripped rather than rejecting the
 });
 
 test('answer values outside the allowed enum are dropped, not stored', () => {
-  const merged = mergeBreakdown(
+  const props = answerProperties({ household: 'martian', frustration: 'reactive' });
+  assert.equal(props.gv_household, undefined, 'an unknown enum value must not reach the profile');
+  assert.equal(props.gv_frustration, 'reactive');
+});
+
+test('survey answers are top-level gv_* properties, NOT keys inside the breakdown', () => {
+  // A Klaviyo flow filter and a Klaviyo segment can only read a TOP-LEVEL
+  // property. The nurture flow branches on gv_frustration and the daily report
+  // reads gv_household / gv_frustration / gv_current_brand. Storing these inside
+  // gv_breakdown made every one of those reads return empty forever, while the
+  // unit tests on both sides still passed — this test pins the contract.
+  const patch = { household: 'family', frustration: 'fragrance', currentBrand: 'cerave', survey: true };
+  const props = answerProperties(patch);
+  assert.deepEqual(props, {
+    gv_household: 'family',
+    gv_frustration: 'fragrance',
+    gv_current_brand: 'cerave',
+  });
+  const breakdown = mergeBreakdown(
     { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false },
-    { household: 'martian', frustration: 'reactive' },
+    patch,
   );
-  assert.equal(merged.household, undefined, 'an unknown enum value must not reach the profile');
-  assert.equal(merged.frustration, 'reactive');
+  assert.equal(breakdown.survey, true, 'the ladder rung still lands in the breakdown');
+  for (const k of ['household', 'frustration', 'currentBrand', 'gv_household', 'gv_frustration']) {
+    assert.equal(breakdown[k], undefined, `${k} must not be in the breakdown`);
+  }
 });
 ```
 
@@ -829,24 +849,50 @@ export function validateEntryPayload(body = {}) {
   return { ok: true, value: { email, firstName: firstName.slice(0, 80), referredBy } };
 }
 
-/** Merge a client-declared patch into a breakdown, dropping anything unauthorised. */
+/**
+ * Merge a client-declared patch into the entry-ladder breakdown.
+ *
+ * The breakdown holds LADDER STATE ONLY — the booleans and counts that
+ * entryTotal() prices. Survey answers are deliberately NOT stored here: they go
+ * out as top-level gv_* profile properties instead (see answerProperties below),
+ * because a Klaviyo flow filter and a Klaviyo segment both need a top-level
+ * property. The nurture flow branches on gv_frustration, and the daily report
+ * reads gv_household / gv_frustration / gv_current_brand. Neither can see a key
+ * buried inside a JSON-object property.
+ */
 export function mergeBreakdown(current, patch = {}) {
   const out = { ...current };
   if (patch.survey === true) out.survey = true;
   if (patch.instagram === true) out.instagram = true;
   if (patch.upload === true) out.upload = true;
+  // referrals and confirmed are owned by the nightly reconciler; a client-supplied
+  // total is never honoured.
+  delete out.gv_entries;
+  return out;
+}
+
+/** Enum answer name -> the top-level Klaviyo property it is stored as. */
+const ANSWER_PROPERTY = {
+  household: 'gv_household',
+  frustration: 'gv_frustration',
+  currentBrand: 'gv_current_brand',
+  switchBlocker: 'gv_switch_blocker',
+  unscentedReaction: 'gv_unscented_reaction',
+};
+
+/** Extract validated survey answers as top-level gv_* properties. Unknown enum values are dropped. */
+export function answerProperties(patch = {}) {
+  const out = {};
   for (const [key, allowed] of Object.entries(ENUMS)) {
-    if (patch[key] !== undefined && allowed.has(patch[key])) out[key] = patch[key];
+    if (patch[key] !== undefined && allowed.has(patch[key])) out[ANSWER_PROPERTY[key]] = patch[key];
   }
   if (Array.isArray(patch.alsoBuys)) {
     const clean = patch.alsoBuys.filter((v) => ALSO_BUYS.has(v));
-    if (clean.length) out.alsoBuys = clean;
+    if (clean.length) out.gv_also_buys = clean;
   }
   if (typeof patch.igHandle === 'string' && patch.igHandle.trim()) {
-    out.igHandle = patch.igHandle.trim().replace(/^@/, '').slice(0, 40);
+    out.gv_ig_handle = patch.igHandle.trim().replace(/^@/, '').slice(0, 40);
   }
-  // referrals and any client-supplied total are never honoured here.
-  delete out.gv_entries;
   return out;
 }
 
@@ -856,7 +902,11 @@ export async function computeAndPersistEntries(email, patch = {}) {
     ?? { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false };
   const breakdown = mergeBreakdown(current, patch);
   const entries = entryTotal(breakdown);
-  await updateProfileProperties(email, { gv_breakdown: breakdown, gv_entries: entries });
+  await updateProfileProperties(email, {
+    gv_breakdown: breakdown,
+    gv_entries: entries,
+    ...answerProperties(patch),
+  });
   return { entries, breakdown };
 }
 
@@ -1774,7 +1824,7 @@ The only in-flight signals are cost and lead quality, because deferring the offe
 
 **Interfaces:**
 - Consumes: `listSubscribedProfiles` from `lib/klaviyo-profiles.js`.
-- Produces: `summarizeEntrants(profiles) -> { total, confirmed, entriesTotal, ladder: {...}, answers: { household, frustration, currentBrand, ... }, barsCommitted }`; writes `data/reports/giveaway/latest.json`.
+- Produces: `summarizeEntrants(profiles) -> { total, entriesTotal, ladder: {...}, answers: { household, frustration, currentBrand, switchBlocker, unscentedReaction } }` — no `barsCommitted`: bars are committed by ORDERS, and no order can exist until the offer opens on day 30, so that belongs to the Phase 2 report; writes `data/reports/giveaway/latest.json`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1818,6 +1868,34 @@ test('a missing gv_entries falls back to 1 rather than NaN', () => {
   const s = summarizeEntrants([p({})]);
   assert.equal(s.entriesTotal, 1);
 });
+
+test('a corrupt gv_entries falls back to 1 instead of poisoning the whole total', () => {
+  // NaN + x is NaN for every later addition, so one bad row would blank the
+  // entire report -- and the day-5 spend decision is made from this number.
+  const s = summarizeEntrants([p({ gv_entries: 'unknown' }), p({ gv_entries: 5 })]);
+  assert.equal(s.entriesTotal, 6);
+});
+
+test('INTEGRATION: a profile shaped the way the endpoint actually writes it yields a populated answer mix', () => {
+  // This is the test whose absence let a real defect ship. summarizeEntrants
+  // reads TOP-LEVEL gv_* properties; an earlier version of the endpoint stored
+  // survey answers inside gv_breakdown instead. Both sides' unit tests passed
+  // while answers.* was permanently empty in production, which would have made
+  // the day-5 answer-mix gate fire a false alarm on every single run.
+  const asEndpointWrites = {
+    gv_entrant: true,
+    gv_entries: 4,
+    gv_breakdown: { confirmed: false, survey: true, referrals: 0, instagram: false, upload: false },
+    gv_household: 'family',
+    gv_frustration: 'fragrance',
+    gv_current_brand: 'cerave',
+  };
+  const s = summarizeEntrants([{ id: 'x', email: 'a@x.com', properties: asEndpointWrites }]);
+  assert.equal(s.answers.frustration.fragrance, 1, 'the report must see the answers the endpoint wrote');
+  assert.equal(s.answers.household.family, 1);
+  assert.equal(s.answers.currentBrand.cerave, 1);
+  assert.equal(s.ladder.survey, 1, 'and the ladder rung still comes from the breakdown');
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1849,7 +1927,11 @@ export function summarizeEntrants(profiles) {
 
   for (const profile of profiles) {
     const props = profile.properties || {};
-    entriesTotal += Number(props.gv_entries ?? 1);
+    // A corrupt gv_entries must not silently poison the total -- NaN + x is NaN
+    // for every later addition, and the day-5 spend decision is made from this
+    // number. Fall back to 1 rather than propagating NaN.
+    const n = Number(props.gv_entries ?? 1);
+    entriesTotal += Number.isFinite(n) ? n : 1;
 
     const b = props.gv_breakdown || {};
     if (b.confirmed) ladder.confirmed += 1;
@@ -1867,7 +1949,7 @@ export function summarizeEntrants(profiles) {
     }
   }
 
-  return { total: profiles.length, confirmed: ladder.confirmed, entriesTotal, ladder, answers };
+  return { total: profiles.length, entriesTotal, ladder, answers };
 }
 ```
 
@@ -1905,13 +1987,16 @@ mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(join(OUT_DIR, 'latest.json'), `${JSON.stringify(report, null, 2)}\n`);
 
 const f = summary.answers.frustration || {};
-const reactiveShare = summary.total
-  ? ((f.reactive || 0) + (f.fragrance || 0)) / summary.total
-  : 0;
+// Denominator is survey RESPONDENTS, not all entrants. Dividing by every
+// entrant counts people who have not reached the survey step as if they had
+// answered "not reactive", mechanically deflating the share and firing a false
+// drift alarm early in the campaign.
+const answered = Object.values(f).reduce((a, b) => a + b, 0);
+const reactiveShare = answered ? ((f.reactive || 0) + (f.fragrance || 0)) / answered : 0;
 
 console.log(`Entrants: ${summary.total}  Entries: ${summary.entriesTotal}`);
 console.log(`Reactive/fragrance share: ${(reactiveShare * 100).toFixed(0)}%`);
-if (summary.total >= 50 && reactiveShare < 0.5) {
+if (answered >= 50 && reactiveShare < 0.5) {
   console.log('GATE: answer mix is drifting off the fragrance-free angle — shift budget to creative #3.');
 }
 if (summary.total >= 50 && summary.ladder.entrantsWithReferrals === 0) {
