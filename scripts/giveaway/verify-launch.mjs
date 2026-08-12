@@ -56,7 +56,7 @@ check(/official-rules/.test(lander), 'lander links the official rules');
 const enteredFetch = await safeFetch('https://www.realskincare.com/pages/giveaway-entered', { headers: UA });
 if (!enteredFetch.res) check(false, `entered page is reachable (${fetchFailureReason(enteredFetch.error)})`);
 const entered = enteredFetch.res ? await enteredFetch.res.text() : '';
-check(!/\$99|\$66|months free|SOAP6MO|SOAP4MO/.test(entered), 'entered page contains NO offer copy');
+check(!!enteredFetch.res && !/\$99|\$66|months free|SOAP6MO|SOAP4MO/.test(entered), 'entered page contains NO offer copy');
 
 // 4. Rules contain the clauses that bound our liability.
 const rulesFetch = await safeFetch('https://www.realskincare.com/pages/giveaway-official-rules', { headers: UA });
@@ -83,7 +83,7 @@ for (const [re, label] of [
 // postal_address). The superseded Blum, TX address was a real live-site defect once
 // (Task 9 addendum) — assert both directions so a regression can't slip back in silently.
 check(rules.includes('Cheyenne, WY 82001'), 'rules: sponsor address is the corrected Cheyenne, WY address');
-check(!rules.includes('Blum'), 'rules: superseded Blum, TX address is NOT present');
+check(!!rulesFetch.res && !rules.includes('Blum'), 'rules: superseded Blum, TX address is NOT present');
 
 // 5. The Meta pixel is present (installed via the sales channel app).
 check(/connect\.facebook\.net|fbevents|fbq\(/.test(lander), 'Meta pixel fires on the lander');
@@ -93,7 +93,8 @@ const endpointMatch = lander.match(/https:\/\/[a-z0-9.-]+\/api\/giveaway/);
 check(!!endpointMatch, 'lander declares an entry endpoint');
 if (endpointMatch) {
   const host = new URL(endpointMatch[0]).host;
-  check(host.endsWith('realskincare.com'), `endpoint is first-party (${host})`);
+  const firstParty = host === 'realskincare.com' || host.endsWith('.realskincare.com');
+  check(firstParty, `endpoint is first-party (${host})`);
   const { res, error } = await safeFetch(`${endpointMatch[0]}/entries?email=bad`, { headers: UA });
   check(!!res && res.status === 400, `endpoint answers without auth (got ${res ? res.status : fetchFailureReason(error)})`);
 }
