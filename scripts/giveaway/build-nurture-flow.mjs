@@ -71,7 +71,7 @@ const MESSAGES = {
   },
   '06-final-call': {
     subject: 'Entries close soon — 2 days to the drawing',
-    preview: 'Entries close [DRAW DATE] — the drawing is 2 days later.',
+    preview: 'Entries close [ENTRY CLOSE DATE] — the drawing is 2 days later.',
     name: 'Giveaway Nurture 06 — Final Call',
   },
 };
@@ -139,8 +139,12 @@ if (mode === 'flow') {
   // endpoint) — rebuilding means delete-then-recreate. Idempotent: reruns after
   // a content or timing fix don't leave orphan draft flows behind.
   if (config.nurtureFlowId) {
-    await deleteFlow(config.nurtureFlowId).catch(() => {});
-    console.log(`  removed prior draft flow ${config.nurtureFlowId}`);
+    try {
+      await deleteFlow(config.nurtureFlowId);
+      console.log(`  removed prior draft flow ${config.nurtureFlowId}`);
+    } catch (err) {
+      console.error(`  WARNING: delete of prior draft flow ${config.nurtureFlowId} failed — proceeding to create a new flow anyway (may leave an orphaned duplicate): ${err.message}`);
+    }
   }
 
   const flow = await createFlow({ name: 'Giveaway — Entry & Nurture', definition });
