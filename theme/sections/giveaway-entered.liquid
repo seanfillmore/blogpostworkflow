@@ -1,0 +1,102 @@
+{%- comment -%}
+  Post-entry page: three required questions, then the entry-ladder widget.
+
+  Deliberately contains NO OFFER. The BOGO is released once, on draw day, as the
+  consolation prize for not winning (spec 7.1). A full-price store link stays
+  here so an entrant who wants to buy on day 3 is never blocked.
+
+  Q1 (household) gates the duration claim on the day-30 offer: a shared bar does
+  not last 25 days, so a family answer suppresses the months claim entirely.
+{%- endcomment -%}
+
+{%- liquid
+  assign endpoint = 'https://entries.realskincare.com/api/giveaway'
+-%}
+
+<section class="gv-entered" data-gv-entered>
+  <h1>You're in.</h1>
+  <p>We'll email you to confirm — <strong>click that link</strong> and you get 2 bonus entries.</p>
+
+  <form class="gv-survey" data-step="required">
+    <fieldset>
+      <legend>Who's the soap for?</legend>
+      <label><input type="radio" name="household" value="solo" required> Just me</label>
+      <label><input type="radio" name="household" value="couple"> Me and my partner</label>
+      <label><input type="radio" name="household" value="family"> My whole family</label>
+      <label><input type="radio" name="household" value="gift"> It's a gift</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>What's your #1 skin frustration?</legend>
+      <label><input type="radio" name="frustration" value="dry" required> Dry and flaky</label>
+      <label><input type="radio" name="frustration" value="reactive"> Itchy and reactive</label>
+      <label><input type="radio" name="frustration" value="fragrance"> Fragrance sets me off</label>
+      <label><input type="radio" name="frustration" value="ingredients"> Ingredient concerns</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>What are you using now?</legend>
+      <label><input type="radio" name="currentBrand" value="cerave" required> CeraVe</label>
+      <label><input type="radio" name="currentBrand" value="cetaphil"> Cetaphil</label>
+      <label><input type="radio" name="currentBrand" value="dove"> Dove</label>
+      <label><input type="radio" name="currentBrand" value="natural_competitor"> Dr. Squatch or Native</label>
+      <label><input type="radio" name="currentBrand" value="natural_brand"> Another natural brand</label>
+      <label><input type="radio" name="currentBrand" value="whatever"> Whatever's on sale</label>
+    </fieldset>
+
+    <button type="submit">Save — and get 3 bonus entries</button>
+    <p class="gv-error" hidden role="alert"></p>
+  </form>
+
+  <div class="gv-ladder" data-gv-ladder hidden>
+    <h2>Your entries: <span data-gv-count>1</span></h2>
+    <ul>
+      <li data-rung="confirm">Confirm your email — <strong>+2</strong></li>
+      <li data-rung="survey">Answer 3 quick questions — <strong>+3</strong></li>
+      <li data-rung="referral">Each friend who enters, names you, and confirms their own entry — <strong>+5</strong> (up to 10)</li>
+      <li data-rung="instagram">Post and tag @realskincare — <strong>+3</strong></li>
+      <li data-rung="upload">Upload a photo — <strong>+10</strong></li>
+    </ul>
+
+    <form class="gv-bonus" data-gv-bonus>
+      <label for="gv-ig">Posted about us? Your Instagram handle <span>(+3)</span></label>
+      <input id="gv-ig" name="igHandle" type="text" placeholder="@yourhandle" autocomplete="off">
+
+      {%- comment -%}
+        "photo", not "photo or video": validateUpload in
+        agents/dashboard/routes/giveaway.js accepts jpg/jpeg/png/webp only, and
+        uploadImageToShopifyCDN is image-only. Promising video would take the
+        entrant's rights grant and then reject the file.
+      {%- endcomment -%}
+      <label for="gv-file">Upload a photo <span>(+10)</span></label>
+      <input id="gv-file" name="file" type="file" accept="image/jpeg,image/png,image/webp">
+
+      <label class="gv-rights">
+        <input type="checkbox" name="rightsGranted" value="1">
+        I'm happy for Real Skin Care to use my photo in its marketing.
+      </label>
+
+      <button type="submit">Claim my bonus entries</button>
+      <p class="gv-bonus-error" hidden role="alert"></p>
+    </form>
+
+    <p class="gv-fine">Purchases do not earn entries.
+      <a href="/pages/giveaway-official-rules">Official rules</a>.</p>
+  </div>
+
+  <p class="gv-shop">
+    Not waiting for the draw? <a href="/products/coconut-soap">Shop the unscented bar</a>
+    or the <a href="/products/sensitive-skin-starter-set">Sensitive Skin Set</a>.
+  </p>
+</section>
+
+<script>window.RSC_GIVEAWAY_ENDPOINT = {{ endpoint | json }};</script>
+<script src="{{ 'giveaway.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Giveaway entered",
+  "settings": [],
+  "presets": [{ "name": "Giveaway entered" }]
+}
+{% endschema %}

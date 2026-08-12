@@ -1,0 +1,15 @@
+{
+  "listId": "Y2ukbE",
+  "listName": "Giveaway 2026-09 \u2014 Entrants",
+  "nurtureTemplates": {
+    "01-confirm.html": "RFn6ZR",
+    "02-referral.html": "RAJQEt",
+    "03-angle.html": "Rw7Aj5",
+    "04-ugc.html": "V2k6YD",
+    "05-reminder.html": "Xm9LLm",
+    "06-final-call.html": "WJ8J9J"
+  },
+  "nurtureFlowId": "WtDX2F",
+  "metaPixelId": "1948396628850834",
+  "_metaPixelNote": "Real Skin Care pixel, installed via the Shopify Facebook & Instagram sales channel with Maximum data sharing (Pixel + advanced matching + Conversions API). Asserted by scripts/giveaway/verify-launch.mjs."
+}
