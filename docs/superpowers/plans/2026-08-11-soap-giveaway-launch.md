@@ -2205,6 +2205,10 @@ check(!/\$99|\$66|months free|SOAP6MO|SOAP4MO/.test(entered), 'entered page cont
 
 // 4. Rules contain the clauses that bound our liability.
 const rules = await (await fetch('https://www.realskincare.com/pages/giveaway-official-rules', { headers: UA })).text();
+// A NEGATED assertion must never run against an unfetched page. If a fetch
+// fails and the body falls back to '', then `!/offer/.test('')` and
+// `!''.includes('Blum')` are both trivially true and print PASS for a page that
+// was never retrieved. Gate every negated check on the fetch having succeeded.
 // These assert what the storefront SERVES, not what the Admin API stored.
 // On 2026-08-11 the corrected rules were saved and confirmed byte-identical via
 // the Admin API while the storefront kept serving the previous version from
@@ -2230,7 +2234,10 @@ const endpointMatch = lander.match(/https:\/\/[a-z0-9.-]+\/api\/giveaway/);
 check(!!endpointMatch, 'lander declares an entry endpoint');
 if (endpointMatch) {
   const host = new URL(endpointMatch[0]).host;
-  check(host.endsWith('realskincare.com'), `endpoint is first-party (${host})`);
+  // Domain-boundary check, not a suffix check: endsWith('realskincare.com')
+  // alone would accept evilrealskincare.com as first-party.
+  const firstParty = host === 'realskincare.com' || host.endsWith('.realskincare.com');
+  check(firstParty, `endpoint is first-party (${host})`);
   const res = await fetch(`${endpointMatch[0]}/entries?email=bad`, { headers: UA });
   check(res.status === 400, `endpoint answers without auth (got ${res.status})`);
 }
