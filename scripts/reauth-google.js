@@ -9,6 +9,7 @@
  *   - indexing               (Google Indexing API — needed for URL submission)
  *   - analytics.readonly     (GA4 reporting API)
  *   - adwords                (Google Ads API)
+ *   - datamanager            (Data Manager API — offline conversion upload)
  *
  * Prerequisites: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET must be in .env
  *
@@ -34,6 +35,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/indexing',             // Indexing API (write)
   'https://www.googleapis.com/auth/analytics.readonly',   // GA4 reporting
   'https://www.googleapis.com/auth/adwords',              // Google Ads API
+  'https://www.googleapis.com/auth/datamanager',          // Data Manager API (offline conversion upload)
 ].join(' ');
 
 function loadEnv() {
