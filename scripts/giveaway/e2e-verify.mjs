@@ -36,6 +36,15 @@
  * So: the run is not retryable on the same inbox, and --run <newid> does NOT
  * help, because the suppression follows the ROOT address, not the alias.
  *
+ * PACING DOES NOT PREVENT IT. The 2026-08-12 r3 run seeded 150s apart and C, D
+ * and E were suppressed anyway while A and B stayed clean — the trigger is the
+ * COUNT of plus-aliases per root, roughly the third onward, not the rate.
+ *
+ * What makes the run survivable is the ORDER below: A and B are seeded FIRST and
+ * are the only two that ever need to receive mail. By the time the detector
+ * trips it is hitting C, D and E, which must never confirm anyway — suppressed
+ * is exactly the state they are supposed to end in. DO NOT REORDER.
+ *
  * Klaviyo account sending was NOT harmed — real customer flows kept delivering
  * throughout. The damage is scoped to the base inbox you choose here.
  *

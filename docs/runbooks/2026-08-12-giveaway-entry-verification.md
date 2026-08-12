@@ -36,12 +36,16 @@ Seeding five plus-aliases of one inbox against the production list tripped Klavi
 
 Klaviyo account sending was not harmed — real customer flows kept delivering throughout. The damage is confined to whichever inbox you name here.
 
+**Pacing does NOT prevent this.** An earlier version of this runbook claimed `--delay` avoided the detector. That was wrong, and the r3 run disproved it: seeded 150s apart, A and B stayed clean and **C, D and E were suppressed anyway**. The trigger is the *number of plus-aliases per root*, not their rate — roughly the third onward, regardless of spacing.
+
+**What actually makes the run survivable is the seed ORDER.** A and B are seeded first, and they are the only two that ever need to receive mail. By the time the detector trips it is hitting C, D and E — which must never confirm, so suppressed is precisely the state they are supposed to end in. Do not reorder the identities.
+
 **Rules:**
 
 1. Use an inbox you are willing to lose. Never the operator's main address, never one support or a customer depends on.
-2. Keep `--delay` at its default (150s). It exists to avoid tripping the same detector.
-3. If the run goes wrong, you need a **different inbox**, not a different run id.
-4. Only **A and B** ever need to receive mail. C, D and E must never confirm, so if they end up suppressed the test is unaffected — that is the state they are supposed to be in.
+2. Keep `--delay` at its default (150s). It does not prevent suppression, but it keeps the account's event log readable and avoids hammering the endpoint.
+3. If the run goes wrong, you need a **different inbox**, not a different run id. The suppression follows the root.
+4. Expect **A and B to arrive, C/D/E to be suppressed.** That is a passing run, not a failure.
 
 ---
 
