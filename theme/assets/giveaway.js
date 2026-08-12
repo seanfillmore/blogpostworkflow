@@ -196,7 +196,24 @@
             .catch(function () { showError('Upload failed. Please try again.'); })
             .then(requestSettled);
         };
-        reader.readAsDataURL(file);
+        // Without this, a failed local file read (corrupt file, permission
+        // issue, a file that vanished between selection and read) never
+        // fires onload, so requestSettled() is never called for this leg --
+        // inFlight never returns to 0 and the button is stuck on "Saving…"
+        // forever, with no explanation, for exactly the +10 rung.
+        reader.onerror = function () {
+          showError('Could not read that file. Please try again.');
+          requestSettled();
+        };
+        try {
+          reader.readAsDataURL(file);
+        } catch (readErr) {
+          // readAsDataURL can throw synchronously (e.g. InvalidStateError)
+          // rather than firing onerror, depending on the browser and why it
+          // failed -- same stuck-button risk, same fix.
+          showError('Could not read that file. Please try again.');
+          requestSettled();
+        }
       }
     });
   }
