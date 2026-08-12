@@ -23,13 +23,16 @@ mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(join(OUT_DIR, 'latest.json'), `${JSON.stringify(report, null, 2)}\n`);
 
 const f = summary.answers.frustration || {};
-const reactiveShare = summary.total
-  ? ((f.reactive || 0) + (f.fragrance || 0)) / summary.total
-  : 0;
+// Denominator is survey RESPONDENTS, not all entrants. Dividing by every
+// entrant counts people who have not reached the survey step as if they had
+// answered "not reactive", mechanically deflating the share and firing a false
+// drift alarm early in the campaign.
+const answered = Object.values(f).reduce((a, b) => a + b, 0);
+const reactiveShare = answered ? ((f.reactive || 0) + (f.fragrance || 0)) / answered : 0;
 
 console.log(`Entrants: ${summary.total}  Entries: ${summary.entriesTotal}`);
 console.log(`Reactive/fragrance share: ${(reactiveShare * 100).toFixed(0)}%`);
-if (summary.total >= 50 && reactiveShare < 0.5) {
+if (answered >= 50 && reactiveShare < 0.5) {
   console.log('GATE: answer mix is drifting off the fragrance-free angle — shift budget to creative #3.');
 }
 if (summary.total >= 50 && summary.ladder.entrantsWithReferrals === 0) {

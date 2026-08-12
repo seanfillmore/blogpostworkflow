@@ -36,3 +36,31 @@ test('a missing gv_entries falls back to 1 rather than NaN', () => {
   const s = summarizeEntrants([p({})]);
   assert.equal(s.entriesTotal, 1);
 });
+
+test('a corrupt gv_entries falls back to 1 instead of poisoning the whole total', () => {
+  // NaN + x is NaN for every later addition, so one bad row would blank the
+  // entire report -- and the day-5 spend decision is made from this number.
+  const s = summarizeEntrants([p({ gv_entries: 'unknown' }), p({ gv_entries: 5 })]);
+  assert.equal(s.entriesTotal, 6);
+});
+
+test('INTEGRATION: a profile shaped the way the endpoint actually writes it yields a populated answer mix', () => {
+  // This is the test whose absence let a real defect ship. summarizeEntrants
+  // reads TOP-LEVEL gv_* properties; an earlier version of the endpoint stored
+  // survey answers inside gv_breakdown instead. Both sides' unit tests passed
+  // while answers.* was permanently empty in production, which would have made
+  // the day-5 answer-mix gate fire a false alarm on every single run.
+  const asEndpointWrites = {
+    gv_entrant: true,
+    gv_entries: 4,
+    gv_breakdown: { confirmed: false, survey: true, referrals: 0, instagram: false, upload: false },
+    gv_household: 'family',
+    gv_frustration: 'fragrance',
+    gv_current_brand: 'cerave',
+  };
+  const s = summarizeEntrants([{ id: 'x', email: 'a@x.com', properties: asEndpointWrites }]);
+  assert.equal(s.answers.frustration.fragrance, 1, 'the report must see the answers the endpoint wrote');
+  assert.equal(s.answers.household.family, 1);
+  assert.equal(s.answers.currentBrand.cerave, 1);
+  assert.equal(s.ladder.survey, 1, 'and the ladder rung still comes from the breakdown');
+});
