@@ -74,6 +74,33 @@ export function findConflicts(sqpRows, negatives) {
  * Amazon-converting queries we are not present for on Shopping. `seenQueries`
  * is the set of Google search terms that produced impressions.
  */
+/**
+ * Queries that burn money without ever converting.
+ *
+ * The calibrator's original waste rule only fired on Amazon SQP *price mismatch* — a
+ * query where the market clears far below our price. That misses the simpler failure:
+ * a query nobody buys from us at any price. The bare head term "lotion" took $43.32
+ * across 71 clicks with 0 conversions over three weeks and survived every pass.
+ *
+ * ⚠️ This rule REQUIRES working conversion tracking. Before 2026-08-12 every query read
+ * 0 conversions for structural reasons (see project_ads_conversion_tracking_rebuilt) and
+ * this rule would have negated the entire account. If conversions ever go globally flat
+ * again, this must not run — the caller checks that before invoking it.
+ *
+ * Negates as EXACT, deliberately: a PHRASE negative on "lotion" would also kill
+ * "coconut lotion" and "body lotion", taking the converting long-tail with it. EXACT
+ * kills only the bare browsing query.
+ */
+export function deadSpendQueries(termRows, { minClicks = 25, minSpend = 15, protectedSet = new Set() } = {}) {
+  return termRows
+    .filter((r) => Number(r.conversions) === 0)
+    .filter((r) => Number(r.clicks) >= minClicks)
+    .filter((r) => Number(r.cost) >= minSpend)
+    .filter((r) => !protectedSet.has(norm(r.query)))
+    .map((r) => ({ query: r.query, clicks: Number(r.clicks), cost: Number(r.cost), matchType: 'EXACT' }))
+    .sort((a, b) => b.cost - a.cost);
+}
+
 export function findMissingDemand(sqpRows, seenQueries, { minSales = 1 } = {}) {
   const seen = new Set([...seenQueries].map(norm));
   return sqpRows
@@ -142,11 +169,13 @@ async function main() {
   const ourPrice = priceArg !== -1 ? Number(args[priceArg + 1]) : DEFAULT_PRICE;
 
   const { rows, weeks } = loadSqp();
-  if (!rows.length) {
-    console.log('No Amazon SQP data available — nothing to calibrate against.');
-    return;
-  }
-  console.log(`Loaded ${rows.length} queries from ${weeks} SQP weeks.`);
+  // The price-gap, missing-demand and conflict checks all need Amazon SQP. The
+  // dead-spend check does NOT — it reads Google click data only. Bailing out here (the
+  // original behaviour) meant a stale Amazon feed silently disabled a rule that never
+  // depended on it, which is exactly how this codebase has lost coverage before.
+  const haveSqp = rows.length > 0;
+  if (haveSqp) console.log(`Loaded ${rows.length} queries from ${weeks} SQP weeks.`);
+  else console.log('No Amazon SQP data — skipping price calibration, still running the Google-only dead-spend check.');
 
   // Live Google state
   const negRows = await gaqlQuery(`
@@ -155,19 +184,52 @@ async function main() {
   const negatives = negRows.map((r) => [r.sharedCriterion.keyword.text, r.sharedCriterion.keyword.matchType]);
 
   const termRows = await gaqlQuery(`
-    SELECT search_term_view.search_term FROM search_term_view
+    SELECT search_term_view.search_term, metrics.clicks, metrics.cost_micros, metrics.conversions
+    FROM search_term_view
     WHERE campaign.name LIKE '${CAMPAIGN_PREFIX}%' AND segments.date DURING LAST_30_DAYS`);
   const seenQueries = new Set(termRows.map((r) => r.searchTermView.searchTerm));
 
-  const protectedSet = protectedQueries(rows);
-  const waste = priceMismatchedQueries(rows, { ourPrice })
-    // never negate something already covered by an existing negative
-    .filter((r) => !negatives.some(([t, m]) => negativeBlocks(r.query, t, m)));
-  const missing = findMissingDemand(rows, seenQueries);
-  const conflicts = findConflicts(rows, negatives);
-  const converting = convertingQueries(rows);
+  // Fold to one row per query — search_term_view returns a row per query × day.
+  const byQuery = new Map();
+  for (const r of termRows) {
+    const q = r.searchTermView.searchTerm;
+    const acc = byQuery.get(q) || { query: q, clicks: 0, cost: 0, conversions: 0 };
+    acc.clicks += Number(r.metrics.clicks || 0);
+    acc.cost += Number(r.metrics.costMicros || 0) / 1e6;
+    acc.conversions += Number(r.metrics.conversions || 0);
+    byQuery.set(q, acc);
+  }
+  const terms = [...byQuery.values()];
 
-  console.log(`  ${waste.length} price-mismatched · ${missing.length} missing demand · ${conflicts.length} conflicts · ${protectedSet.size} protected`);
+  const protectedSet = haveSqp ? protectedQueries(rows) : new Set();
+  const waste = haveSqp
+    ? priceMismatchedQueries(rows, { ourPrice })
+      // never negate something already covered by an existing negative
+      .filter((r) => !negatives.some(([t, m]) => negativeBlocks(r.query, t, m)))
+    : [];
+  const missing = haveSqp ? findMissingDemand(rows, seenQueries) : [];
+  const conflicts = haveSqp ? findConflicts(rows, negatives) : [];
+  const converting = haveSqp ? convertingQueries(rows) : [];
+
+  // Dead spend: queries that burn money and never convert.
+  //
+  // GUARD — this rule is only safe when conversion tracking is actually working. If the
+  // account records zero conversions across EVERY query, that is the signature of a
+  // broken pipeline (it happened Apr–Aug 2026: the only counted purchase action was a
+  // lossy GA4 import), and the rule would negate every query we have. Skip loudly rather
+  // than act on data that cannot be true.
+  const totalConversions = terms.reduce((s, t) => s + t.conversions, 0);
+  const trackingLooksAlive = totalConversions > 0;
+  const deadSpend = trackingLooksAlive
+    ? deadSpendQueries(terms, { protectedSet }).filter(
+        (d) => !negatives.some(([t, m]) => negativeBlocks(d.query, t, m)))
+    : [];
+  if (!trackingLooksAlive) {
+    console.log('  dead-spend rule SKIPPED — 0 conversions across all search terms, which means '
+      + 'broken conversion tracking, not universally bad queries. Check the ads-conversion-uploader.');
+  }
+
+  console.log(`  ${waste.length} price-mismatched · ${deadSpend.length} dead-spend · ${missing.length} missing demand · ${conflicts.length} conflicts · ${protectedSet.size} protected`);
 
   let applied = false;
   if (APPLY && waste.length) {
@@ -197,19 +259,48 @@ async function main() {
       })));
     }
     applied = true;
-    console.log(`  applied ${safe.length} negatives`);
+    console.log(`  applied ${safe.length} price-mismatch negatives`);
+  }
+
+  // Dead-spend negatives go on as EXACT (see deadSpendQueries) and need their own
+  // apply pass — they are found from Google click data, not Amazon price data.
+  let appliedDead = 0;
+  if (APPLY && deadSpend.length) {
+    const sets = await gaqlQuery(`
+      SELECT shared_set.resource_name, shared_set.name FROM shared_set
+      WHERE shared_set.type = 'NEGATIVE_KEYWORDS' AND shared_set.status = 'ENABLED'`);
+    const sharedSet = sets.find((s) => s.sharedSet.name === SHARED_SET_NAME)?.sharedSet.resourceName;
+    if (!sharedSet) throw new Error(`Shared set "${SHARED_SET_NAME}" not found`);
+    for (let i = 0; i < deadSpend.length; i += 100) {
+      await mutate(deadSpend.slice(i, i + 100).map((r) => ({
+        sharedCriterionOperation: { create: { sharedSet, keyword: { text: r.query, matchType: r.matchType } } },
+      })));
+    }
+    appliedDead = deadSpend.length;
+    for (const d of deadSpend) console.log(`  negated EXACT "${d.query}" — ${d.clicks} clicks, $${d.cost.toFixed(2)}, 0 conversions`);
   }
 
   const date = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-  const md = buildMarkdown({ waste, missing, conflicts, converting, weeks, ourPrice, applied }, date);
+  const md = buildMarkdown({ waste, missing, conflicts, converting, weeks, ourPrice, applied }, date)
+    + (deadSpend.length
+      ? `\n## Dead spend (0 conversions)\n\n| Query | Clicks | Cost | Action |\n|---|---:|---:|---|\n`
+        + deadSpend.map((d) => `| ${d.query} | ${d.clicks} | $${d.cost.toFixed(2)} | ${appliedDead ? 'negated EXACT' : 'proposed'} |`).join('\n') + '\n'
+      : '')
+    + (!trackingLooksAlive
+      ? '\n## ⚠️ Dead-spend rule skipped\n\n0 conversions across every search term. That is the signature of broken '
+        + 'conversion tracking, not universally bad queries — check `agents/ads-conversion-uploader`.\n'
+      : '');
   mkdirSync(REPORTS_DIR, { recursive: true });
   writeFileSync(join(REPORTS_DIR, `${date}.md`), md);
-  writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify({ date, weeks, ourPrice, waste, missing, conflicts, applied }, null, 2));
+  writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify(
+    { date, weeks, ourPrice, waste, deadSpend, missing, conflicts, applied, appliedDead, trackingLooksAlive }, null, 2));
   console.log(md);
 
   const parts = [];
   if (conflicts.length) parts.push(`${conflicts.length} negative(s) blocking converting queries`);
   if (waste.length) parts.push(`${waste.length} price-mismatched quer${waste.length === 1 ? 'y' : 'ies'}${applied ? ' (negated)' : ''}`);
+  if (deadSpend.length) parts.push(`${deadSpend.length} dead-spend quer${deadSpend.length === 1 ? 'y' : 'ies'}${appliedDead ? ' (negated)' : ''}`);
+  if (!trackingLooksAlive) parts.push('dead-spend rule SKIPPED (conversion tracking looks broken)');
   if (missing.length) parts.push(`${missing.length} converting quer${missing.length === 1 ? 'y' : 'ies'} we are absent for`);
   notify({
     subject: `Shopping calibrator: ${parts.join(' · ') || 'no changes needed'}`,
