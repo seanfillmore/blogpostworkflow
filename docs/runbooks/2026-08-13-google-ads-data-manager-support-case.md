@@ -1,7 +1,24 @@
 # Google Ads support case — Data Manager offline conversions never process
 
-**Status:** ready to file. Sean must file it — it needs the Google Ads account login.
-**Where:** Google Ads UI → Help (?) → Contact us → *Conversion tracking* → chat or email.
+**Status: ⏸️ HOLD — do not file yet.** A decisive test is in flight; see "The gclid test" below. If it succeeds there is nothing to escalate.
+**Where (when needed):** Google Ads UI → Help (?) → Contact us → *Conversion tracking* → chat or email.
+
+---
+
+## ⚠️ The gclid test — read this before filing
+
+**The root cause is Shopify truncation, not Google.** Shopify caps `order.landing_site` at 255 characters, which cut the gclid in half and forced every upload onto `gbraid` — and gbraid is what was not attaching. Order **#2332** (2026-08-13, $37.49, campaign 24050427048) is the proof:
+
+| Source | gclid |
+|---|---|
+| Shopify `landing_site` | 46 chars — **truncated** |
+| Cart-attribute capture (PR #450, live 2026-08-12) | **92 chars — complete** |
+
+That order was uploaded with its **full gclid** at 2026-08-13 ~18:15 UTC as request `082b8231-dad7-49db-82b5-b654287ebf85`. **If that conversion lands, the pipeline is fixed and this ticket is unnecessary** — every future paid order carries a full gclid automatically.
+
+Only file the ticket below if the full-gclid upload *also* fails to attach after ~24h. At that point the identifier has been ruled out as the cause and the problem genuinely is account-side.
+
+Note for the ticket if it comes to that: the two older orders (#2322, #2329) predate the capture and carry `gbraid` only. Their gbraid values were verified **complete**, not truncated (they end at char 244 of 255, with `&gclid=` following) — so "gbraid was malformed" is not an available explanation for those.
 
 **Evidence is now conclusive (2026-08-13 16:46 UTC).** Both independent watchers came back negative: no ingest request has ever reached a terminal status (12h+ of polling), and the destination action has recorded **0 conversions** ~19h after the first submission. The daily cron job runs correctly and reports the failure honestly — `data/reports/ads-conversions/2026-08-13.json` shows `submitted: 2, ingestStatus: "PROCESSING", confirmedByGoogle: false, reportedConversions: 0, fieldWarnings: []`. This is not a lag artifact and not a payload defect.
 
