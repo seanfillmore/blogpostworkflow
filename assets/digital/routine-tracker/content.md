@@ -94,7 +94,7 @@ The job in this phase is not results. It is attendance. Get to day 14 without mi
 
 What normally happens: the first two or three days feel noticeably better. Skin stops feeling tight after showers, hands feel less papery. Then around day six or seven, that improvement stops advancing and simply sits there.
 
-:::image product=coconut-lotion index=7 size=half caption="Pure Unscented. No essential oils at all — the version people buy when scent is the thing that reacts."
+:::image product=coconut-lotion index=1 size=half caption="Pure Unscented. No essential oils at all — the version people buy when scent is the thing that reacts."
 
 ### What week 2 actually feels like
 
