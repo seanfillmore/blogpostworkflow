@@ -80,6 +80,11 @@
 
       <button type="submit">Claim my bonus entries</button>
       <p class="gv-bonus-error" hidden role="alert"></p>
+      {%- comment -%}
+        role="status" not role="alert": a success confirmation should be
+        announced politely, without interrupting a screen reader mid-sentence.
+      {%- endcomment -%}
+      <p class="gv-bonus-ok" hidden role="status"></p>
     </form>
 
     <p class="gv-fine">Purchases do not earn entries.

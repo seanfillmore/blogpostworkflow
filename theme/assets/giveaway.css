@@ -25,6 +25,17 @@
 [id$="__mobile-dock"],
 #shopify-section-similar-products { display: none !important; }
 
+/* The `hidden` attribute is styled `display: none` by the UA stylesheet, which
+ * ANY author `display` rule beats. .gv-survey and .gv-bonus are both
+ * `display: grid`, so `survey.hidden = true` in giveaway.js silently did
+ * nothing: the survey stayed on screen with its button frozen at "Saving…"
+ * while the entry count updated behind it. The +3 had been credited, but it
+ * read as a failure and invited a resubmit. Restore the attribute's meaning
+ * wherever it is used on these pages — do not remove this rule when adding a
+ * new `display` to anything that gets toggled with `hidden`. */
+.gv-entry [hidden],
+.gv-entered [hidden] { display: none !important; }
+
 .gv-entry,
 .gv-entered {
   --gv-ink: #000000;
@@ -307,4 +318,15 @@
 @media (prefers-reduced-motion: reduce) {
   .gv-entry button, .gv-entered button,
   .gv-survey fieldset label { transition: none; }
+}
+
+/* Success confirmation for the bonus rungs. The count sits ABOVE the form, so
+   on a phone a claim could update it entirely off-screen while the handle and
+   file stayed in place — indistinguishable from nothing having happened. */
+.gv-bonus-ok {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--gv-ink);
+  background: var(--gv-sand);
+  font-size: 0.9375rem;
 }
