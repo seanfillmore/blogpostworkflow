@@ -22,7 +22,9 @@
  *   data/digital-assets/<slug>.pdf        output
  *
  * Content directives (see renderBlock) keep these from becoming walls of text:
- *   :::image product=coconut-lotion index=0 caption="..." size=full|half|inset
+ *   :::image product=coconut-lotion image=body_lotion_unscented.webp caption="..." size=full|half|inset
+ *       Images are addressed by FILENAME, not gallery position — a PDP reorder must
+ *       never silently swap the picture under a caption. index= is a hard error.
  *   :::callout title="..."            … :::
  *   :::ingredients product=lotion     renders the real list from config
  *   :::tracker weeks=12               generates the fillable grid
@@ -95,7 +97,18 @@ function renderTracker(attrs) {
 }
 
 function renderImage(attrs, images) {
-  const key = `${attrs.product}:${attrs.index || 0}`;
+  // Images are addressed by filename, never by gallery position. Position is not
+  // stable: reordering a PDP or deleting one image silently re-points every later
+  // index at a different picture, and the build still succeeds with a caption
+  // describing something the reader cannot see. A filename that goes away throws.
+  if (attrs.index !== undefined) {
+    throw new Error(
+      `:::image for "${attrs.product}" uses index=${attrs.index}. Positional references are no longer ` +
+      `supported — use image=<filename> (see assets/digital/image-map.json for the filenames).`
+    );
+  }
+  if (!attrs.image) throw new Error(`:::image for "${attrs.product}" is missing image=<filename>`);
+  const key = `${attrs.product}:${attrs.image}`;
   const url = images[key];
   if (!url) throw new Error(`:::image has no resolved URL for "${key}" — run with --refresh-images`);
   const cap = attrs.caption ? `<figcaption>${inline(attrs.caption)}</figcaption>` : '';
@@ -240,8 +253,19 @@ async function refreshImageMap() {
   const { getProducts } = await import('../lib/shopify.js');
   const products = await getProducts({ limit: 250 });
   const map = {};
+  const collisions = [];
   for (const p of products) {
-    (p.images || []).forEach((img, i) => { map[`${p.handle}:${i}`] = String(img.src).split('?')[0]; });
+    for (const img of p.images || []) {
+      const url = String(img.src).split('?')[0];
+      const key = `${p.handle}:${url.split('/').pop()}`;
+      // two images sharing a basename would make the key ambiguous and silently
+      // resolve to whichever was seen last — fail instead of guessing
+      if (map[key] && map[key] !== url) collisions.push(key);
+      map[key] = url;
+    }
+  }
+  if (collisions.length) {
+    throw new Error(`duplicate image filenames within a product: ${[...new Set(collisions)].join(', ')}`);
   }
   writeFileSync(IMAGE_MAP, JSON.stringify(map, null, 2) + '\n');
   console.log(`image map refreshed — ${Object.keys(map).length} images across ${products.length} products`);

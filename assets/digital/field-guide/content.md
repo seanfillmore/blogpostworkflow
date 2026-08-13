@@ -12,7 +12,7 @@ Buy oil that has not been refined. Read the first five ingredients and the last 
 
 Not all coconut oil is equal. The difference comes down to one word: refining.
 
-:::image product=coconut-moisturizer index=0 size=full caption="Cold-pressed and virgin — a real, whole ingredient, with the faint coconut scent to prove it."
+:::image product=coconut-moisturizer image=AMZ-RealSkinCare-BodyCreamHeroImages_IB_3000x1497_01.jpg size=full caption="Cold-pressed and virgin — a real, whole ingredient, with the faint coconut scent to prove it."
 
 Cold-pressed and virgin oil is pressed from fresh coconut without heat or solvents, keeping its lauric acid, vitamin E and antioxidants intact. Refined or fractionated oil is bleached, deodorised or chemically split for shelf life — cheaper and more stable, but stripped of most of what made it worth putting on skin.
 
@@ -73,7 +73,7 @@ We make no safety claim about any of them. Most are common, legal and fine for m
 
 Being straight about this matters more than the rest of the page.
 
-:::image product=coconut-oil-deodorant index=1 size=half caption="A deodorant, not an antiperspirant. It contains no aluminium salts, because that is the ingredient class that stops sweat."
+:::image product=coconut-oil-deodorant image=real_skin_care_deodorant_geranium_flower.jpg size=half caption="A deodorant, not an antiperspirant. It contains no aluminium salts, because that is the ingredient class that stops sweat."
 
 **Sodium bicarbonate is in our deodorant.** Baking soda is what makes a natural deodorant work — it shifts underarm pH so odor-causing bacteria are less comfortable. It is also the most common reason people react to natural deodorants, usually as redness or stinging in the first two weeks, and more often on freshly shaved skin. If baking soda is on your avoid list, our deodorant is not for you, and we would rather you learned that here than from your armpit.
 
@@ -85,7 +85,7 @@ Being straight about this matters more than the rest of the page.
 
 Not a list to memorise. A method, ordered so the most information comes for the least reading.
 
-:::image product=coconut-lotion index=2 size=half caption="Everything a label can tell you is on the back. The front is advertising."
+:::image product=coconut-lotion image=body_lotion_rose_petal.webp size=half caption="Everything a label can tell you is on the back. The front is advertising."
 
 **1. Read the first five ingredients only.** Ingredients are listed in descending order of how much is in the product, so the first five are effectively the formula. If what the front of the pack is selling — shea, aloe, coconut, oat — is not in the first five, it is a garnish.
 
@@ -123,7 +123,7 @@ Coconut oil melts around 76F, unusually close to room temperature. Almost every 
 
 ### Below 76F
 
-:::image product=coconut-moisturizer index=3 size=half caption="The jar in summer is soft and scoops easily. The same jar in January will want a moment between your palms first."
+:::image product=coconut-moisturizer image=real_skin_care_body_cream_lavender.jpg size=half caption="The jar in summer is soft and scoops easily. The same jar in January will want a moment between your palms first."
 
 The oil in your lotion and cream firms up. In a jar this is obvious; the cream stiffens and you have to dig at it. In a bottle it shows up as the lotion pouring slowly and feeling denser going on. Nothing has gone wrong and nothing has separated. Work a small amount between your palms for five to ten seconds and it will loosen.
 
@@ -134,7 +134,7 @@ The oil in your lotion and cream firms up. In a jar this is obvious; the cream s
 
 ### Above 76F
 
-:::image product=coconut-oil-lip-balm index=2 size=half caption="Lip balm is the one heat catches out. Stand a softened tube upright and let it set before twisting it up again."
+:::image product=coconut-oil-lip-balm image=real_skin_care_lip_balm_coconut.jpg size=half caption="Lip balm is the one heat catches out. Stand a softened tube upright and let it set before twisting it up again."
 
 The oil is fully liquid. The lotion pours faster and sinks in more quickly, and the cream softens noticeably. In a hot car it can go completely liquid — reversible, though the surface may set unevenly as it cools.
 
@@ -179,17 +179,17 @@ The most common complaint about the bar is that it disappears quickly, and the u
 
 ### The two soaps
 
-:::image product=coconut-soap index=1 size=half caption="Bar Soap, Pure Unscented — one ingredient, saponified coconut oil."
+:::image product=coconut-soap image=real_skin_care_bar_soap_lavender.jpg size=half caption="Bar Soap, Pure Unscented — one ingredient, saponified coconut oil."
 
 Both soaps are the same material: coconut oil turned into soap, with the essential oil, if any, added afterwards. They differ only in dilution. The bar is for the shower; the pump is for a sink where hands are washed constantly and a bar would sit in water all day.
 
-:::image product=organic-foaming-hand-soap index=1 size=half caption="Foaming Liquid Soap — the same soap, diluted and aerated."
+:::image product=organic-foaming-hand-soap image=real_skin_care_hand_soap_orange_zest.jpg size=half caption="Foaming Liquid Soap — the same soap, diluted and aerated."
 
 Neither contains SLS, cocamidopropyl betaine or an isothiazolinone preservative — most of what people avoid in a hand wash. Both clean thoroughly rather than gently, so if your hands are splitting, follow with the cream rather than expecting soap to moisturize.
 
 ### The toothpaste
 
-:::image product=coconut-oil-toothpaste index=1 size=half caption="Coconut oil, baking soda and myrrh. No SLS, and no fluoride."
+:::image product=coconut-oil-toothpaste image=real_skin_care_toothpaste_mint.jpg size=half caption="Coconut oil, baking soda and myrrh. No SLS, and no fluoride."
 
 The odd one out in the range, and the one most people do not know exists. Coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder and stevia, flavored with essential oils. It is fluoride-free.
 
@@ -255,7 +255,7 @@ Parents do use it across the household, and we will not make a claim about any p
 
 It is formulated without it. That is a statement about what is in the tube, not a position on fluoride, and your dentist is the right person to ask about your own teeth.
 
-:::image product=coconut-lotion index=5 size=full caption="Water first, cold-pressed coconut oil second. The whole formula is six ingredients before the scent."
+:::image product=coconut-lotion image=lotion-mechanism.png size=full caption="Water first, cold-pressed coconut oil second. The whole formula is six ingredients before the scent."
 
 ## One last thing
 
