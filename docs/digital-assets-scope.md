@@ -4,22 +4,40 @@ Scoping document, 2026-07-28. The 90-Day Coconut Reset's value stack claims **$3
 
 ---
 
-## 1. What exists today
+## Status — DELIVERED (updated 2026-08-12)
 
-Both assets are **real and live** — this is not a build from zero, and the earlier suspicion that they were stubs was wrong.
+**The build described below shipped, and both §4 targets were met.** Sections 1–7 are kept as the reasoning record; the current state is here.
+
+| Asset | Claimed | §4 target | Actual now | Source |
+|---|--:|---|---|---|
+| The 90-Day Calm-Skin Routine & Tracker | **$19** | 16–20pp, 2,500–3,500w | **16pp, ~3,528w** | `assets/digital/routine-tracker/` |
+| The Coconut Skincare Field Guide | **$15** | 12–16pp, 2,000–3,000w | **15pp, ~2,999w** | `assets/digital/field-guide/` |
+
+- **Built** by `scripts/build-digital-assets.mjs` from markdown in the repo — no more unversioned one-off exports.
+- **Published** by `scripts/upload-digital-assets.mjs --apply`. Currently **v3** (2026-08-12), rebuilt after the PDP imagery was reworked. Filenames are hand-versioned; older versions stay live so links in past sends keep working.
+- **Delivered** by Klaviyo flow **`XFdcu6`** — *Coconut Reset — Digital Delivery v2 (RSC)*, send-email action `113141417`, flow-message `VfLgkY`. Verified 2026-08-12: both template links are v3 and return 200.
+- **Image claims** are addressed by filename (`image=<filename>`), not gallery position, so a PDP reorder cannot silently swap the picture under a caption.
+
+> ⚠️ **The flow ID `XEMgA7` used in §1 and §6 below is dead** — it was the v1 flow and now 404s. It is left in place as a record of what was true in July. Always resolve the live flow by name via `GET /flows/`, never by an ID copied from a doc.
+
+---
+
+## 1. What existed when this was written (2026-07-28)
+
+Both assets were **real and live** — this was not a build from zero, and the earlier suspicion that they were stubs was wrong.
 
 | Asset | Claimed | Actual | Delivery |
 |---|--:|---|---|
-| The 90-Day Calm-Skin Routine & Tracker | **$19** | 4 pages, ~646 words | Klaviyo flow `XEMgA7` (live) |
+| The 90-Day Calm-Skin Routine & Tracker | **$19** | 4 pages, ~646 words | Klaviyo flow `XEMgA7` (since replaced by `XFdcu6`) |
 | The Coconut Skincare Field Guide | **$15** | 4 pages, ~696 words | same flow |
 
-Delivered by *Coconut Reset — Digital Delivery*, subject "Your 90-Day Reset guides are inside 🥥", linking two PDFs on the Shopify CDN. The flow is live and the links resolve.
+Delivered by *Coconut Reset — Digital Delivery*, subject "Your 90-Day Reset guides are inside 🥥", linking two PDFs on the Shopify CDN. The flow was live and the links resolved.
 
 **What's in them now.** The Tracker covers *Why 90 days* (28-day renewal cycle, 6–12 week judgement window), a two-step daily routine, the damp-skin rule, and a three-phase plan (Reset / Rebuild / …). The Field Guide covers cold-pressed vs refined coconut oil, what the ingredients do, and an in/out irritant table. The writing is good and on-brand.
 
 **The gap is scale, not quality.** Four pages and ~650 words is a well-made leaflet. It is not what a customer pictures when a value stack says $19 — and the value stack is the argument for a $99 price against $118 of physical goods, so the digital line is load-bearing.
 
-**No source in the repo.** Both were produced by Chrome print-to-PDF (`Skia/PDF m146`) as one-off artifacts. There is no HTML, no template, and no way to regenerate them. That is the real problem — see §3.
+**No source in the repo.** Both were produced by Chrome print-to-PDF (`Skia/PDF m146`) as one-off artifacts. There is no HTML, no template, and no way to regenerate them. That is the real problem — see §3. *(Resolved: source now lives in `assets/digital/<slug>/`.)*
 
 ---
 
@@ -97,14 +115,14 @@ Non-negotiable, given the day this scope was written on:
 
 ## 6. Effort and sequencing
 
-| # | Step | Effort |
-|--:|---|---|
-| 1 | `scripts/build-digital-assets.mjs` + HTML/CSS template, print-stylesheet, rendering one existing PDF as a fidelity check | M |
-| 2 | Tracker content — the 12-week grid is the bulk | L |
-| 3 | Field Guide content | L |
-| 4 | Wire ingredient/consumption data into the templates | S |
-| 5 | Upload, repoint flow `XEMgA7`, verify both links from a real send | S |
-| 6 | Attach to the other three bundles' value stacks | S |
+| # | Step | Effort | Status |
+|--:|---|---|---|
+| 1 | `scripts/build-digital-assets.mjs` + HTML/CSS template, print-stylesheet, rendering one existing PDF as a fidelity check | M | ✅ done |
+| 2 | Tracker content — the 12-week grid is the bulk | L | ✅ done — 16pp |
+| 3 | Field Guide content | L | ✅ done — 15pp |
+| 4 | Wire ingredient/consumption data into the templates | S | ✅ done — `:::ingredients` reads `config/ingredients.json` |
+| 5 | Upload, repoint the delivery flow, verify both links | S | ✅ done 2026-08-12 — v3 live in flow `XFdcu6` (**not** `XEMgA7`, which is dead) |
+| 6 | Attach to the other three bundles' value stacks | S | ⬜ open |
 
 **Step 1 first, and alone if nothing else gets done.** Once the pipeline exists, content can land incrementally and every future edit is a commit rather than a re-export. Doing content first repeats the current situation with more words in it.
 
