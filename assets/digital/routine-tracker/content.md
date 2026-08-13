@@ -4,7 +4,7 @@ Inside your box: three 8 oz bottles of Body Lotion and three 4 oz jars of Body C
 
 What this guide adds is smaller and more useful than a routine. It tells you what each stretch of the 90 days is supposed to feel like, including — the part most guides skip — what it feels like when it is working slowly. That last one matters, because slow is what people mistake for failure.
 
-:::image product=coconut-lotion index=0 size=half caption="Three bottles of Body Lotion. Sized so you never have to ration it."
+:::image product=coconut-lotion image=real_skin_care_body_lotion_coconut_breeze_0695fe28-c662-4efd-9abe-ddb8146b34fd.webp size=half caption="Three bottles of Body Lotion. Sized so you never have to ration it."
 
 | What you have | How much | Where it goes | When |
 |---|---|---|---|
@@ -46,7 +46,7 @@ This is a moisturizer. It is not doing anything clever or medical. What it is do
 
 Two steps. Consistency beats complexity every time.
 
-:::image product=coconut-moisturizer index=0 size=full caption="Body Cream, 4 oz. Denser than the lotion, and meant for the places that need more than the lotion gives."
+:::image product=coconut-moisturizer image=AMZ-RealSkinCare-BodyCreamHeroImages_IB_3000x1497_01.jpg size=full caption="Body Cream, 4 oz. Denser than the lotion, and meant for the places that need more than the lotion gives."
 
 ### Every morning — Body Lotion
 
@@ -94,7 +94,7 @@ The job in this phase is not results. It is attendance. Get to day 14 without mi
 
 What normally happens: the first two or three days feel noticeably better. Skin stops feeling tight after showers, hands feel less papery. Then around day six or seven, that improvement stops advancing and simply sits there.
 
-:::image product=coconut-lotion index=1 size=half caption="Pure Unscented. No essential oils at all — the version people buy when scent is the thing that reacts."
+:::image product=coconut-lotion image=body_lotion_unscented.webp size=half caption="Pure Unscented. No essential oils at all — the version people buy when scent is the thing that reacts."
 
 ### What week 2 actually feels like
 
@@ -155,7 +155,7 @@ The value is entirely in the *comparable* part. A better-lit photo on day 90 pro
 
 Then take the same photo at day 30, day 60 and day 90. Four in total. Put them in one named album on your phone now — the day-60 photo does not get taken if you have to hunt for the day-0 one to remember the angle.
 
-:::image product=coconut-moisturizer index=5 size=half caption="Body Cream, Pure Unscented. The night step, and the one people photograph the results of."
+:::image product=coconut-moisturizer image=real_skin_care_body_cream_unscented.jpg size=half caption="Body Cream, Pure Unscented. The night step, and the one people photograph the results of."
 
 :::callout title="If your before-and-after is worth seeing, we would like to see it"
 We would rather show real customer photos than stock imagery, and we currently have almost none — partly because nobody takes the day-0 shot. If you get to day 90 with a comparison you are happy with, send it to us. There is no obligation and no catch; you can send it and change your mind later.
@@ -229,7 +229,7 @@ If it smells slightly different between bottles, that is a real-plant ingredient
 
 ## What's actually in the bottle
 
-:::image product=coconut-lotion index=2 size=full caption="The same base in every scent. The scent is one line on the label, not a different formula."
+:::image product=coconut-lotion image=body_lotion_rose_petal.webp size=full caption="The same base in every scent. The scent is one line on the label, not a different formula."
 
 Both lists below are generated from the product record, not typed here. If a formula changes, this page changes.
 
