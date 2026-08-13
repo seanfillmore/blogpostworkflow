@@ -3,6 +3,8 @@
 **Status:** ready to file. Sean must file it — it needs the Google Ads account login.
 **Where:** Google Ads UI → Help (?) → Contact us → *Conversion tracking* → chat or email.
 
+**Evidence is now conclusive (2026-08-13 16:46 UTC).** Both independent watchers came back negative: no ingest request has ever reached a terminal status (12h+ of polling), and the destination action has recorded **0 conversions** ~19h after the first submission. The daily cron job runs correctly and reports the failure honestly — `data/reports/ads-conversions/2026-08-13.json` shows `submitted: 2, ingestStatus: "PROCESSING", confirmedByGoogle: false, reportedConversions: 0, fieldWarnings: []`. This is not a lag artifact and not a payload defect.
+
 ---
 
 ## Paste this into the support ticket
@@ -13,9 +15,12 @@
 > **Conversion action:** `RSC Shopify Purchase (server)`, ID **7718887636**
 > — type `UPLOAD_CLICKS`, category `PURCHASE`, status `ENABLED`, primary for goal, `include_in_conversions_metric = true`, click-through lookback 90 days.
 >
-> **Example request IDs, all still `PROCESSING` 12+ hours after submission:**
-> - `922f7ebf-e7d4-43b0-975c-3f741a473da8`
-> - `7a31c35d-04f1-41c2-9f63-0f4f283a711b`
+> **Request IDs — all still `PROCESSING`, none has ever reached a terminal status:**
+> - `922f7ebf-e7d4-43b0-975c-3f741a473da8` (submitted 2026-08-12 ~21:59 UTC — still `PROCESSING` 19h later)
+> - `7a31c35d-04f1-41c2-9f63-0f4f283a711b` (submitted with an explicit `loginAccount` — no difference)
+> - `98b18b2e-a872-4c8c-b462-441b43661e3e` (automated daily run, 2026-08-13 15:05 UTC)
+>
+> As of **2026-08-13 16:46 UTC**, conversion action 7718887636 reports **0 conversions** — roughly **19 hours** after the first submission and ~22h after the first attempt overall. No request has returned a single `fieldWarning` at any point.
 >
 > `GET /v1/requestStatus:retrieve?requestId=<id>` returns:
 > ```json
