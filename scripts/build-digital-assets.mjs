@@ -2,7 +2,19 @@
 /**
  * Render the bundle digital assets (Routine & Tracker, Field Guide) to branded PDFs.
  *
- *   node scripts/build-digital-assets.mjs [slug|--all] [--refresh-images] [--upload]
+ *   node scripts/build-digital-assets.mjs [slug|--all] [--refresh-images]
+ *
+ * Building and publishing are deliberately two steps. Upload lives in
+ * scripts/upload-digital-assets.mjs because remote filenames are versioned by
+ * hand — Shopify will not overwrite a file of the same name, it creates a second
+ * one with a suffix, so an automatic upload on every build would quietly litter
+ * the Files library with ambiguous duplicates. To publish:
+ *
+ *   node scripts/build-digital-assets.mjs --all          # build
+ *   # bump the `remote` filenames in upload-digital-assets.mjs to the next version
+ *   node scripts/upload-digital-assets.mjs --apply       # publish, prints URLs
+ *   # then repoint Klaviyo flow XEMgA7 by hand — flow email bodies are
+ *   # read-only over the API (GET 200 / PATCH 404), so this cannot be scripted
  *
  * Why this exists rather than a hand-made PDF: the previous guides were Chrome
  * print-to-PDF one-offs with no source in the repo — unversioned binaries on a CDN
@@ -305,6 +317,17 @@ async function build(slug, images, ingredients, browser) {
 async function main() {
   const args = process.argv.slice(2);
   const refresh = args.includes('--refresh-images');
+
+  // --upload was documented in this file's usage for months but never implemented,
+  // so it silently did nothing and the caller believed the PDFs had been published.
+  // Fail instead of no-op'ing.
+  if (args.includes('--upload')) {
+    throw new Error(
+      'build-digital-assets.mjs does not upload. Build here, then publish with:\n' +
+      '  node scripts/upload-digital-assets.mjs --apply\n' +
+      '(bump the `remote` filenames in that script first — Shopify does not overwrite by name)'
+    );
+  }
   const targets = args.filter((a) => !a.startsWith('--'));
 
   const ingredients = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
