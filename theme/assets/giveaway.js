@@ -131,6 +131,8 @@
         if (!res.ok || !res.body || !res.body.ok) {
           return fail((res.body && res.body.error) || 'We could not save your answers. Please try again.');
         }
+        submitButton.disabled = false;
+        submitButton.textContent = 'Save — and get 3 bonus entries';
         survey.hidden = true;
         showLadder(res.body.entries);
       })
@@ -144,13 +146,19 @@
     bonus.addEventListener('submit', function (e) {
       e.preventDefault();
       var err = bonus.querySelector('.gv-bonus-error');
+      var ok = bonus.querySelector('.gv-bonus-ok');
       err.hidden = true;
+      if (ok) ok.hidden = true;
+      // Any failed leg suppresses the success confirmation. The Instagram and
+      // upload legs settle independently, so "handle credited, upload failed"
+      // is a real outcome — reporting it as claimed would be a lie.
+      var hadError = false;
       var handle = bonus.querySelector('[name="igHandle"]').value.trim();
       var fileInput = bonus.querySelector('[name="file"]');
       var rights = bonus.querySelector('[name="rightsGranted"]').checked;
       var file = fileInput.files && fileInput.files[0];
 
-      function showError(msg) { err.textContent = msg; err.hidden = false; }
+      function showError(msg) { err.textContent = msg; err.hidden = false; hadError = true; }
 
       // A file without granted rights never reaches /upload, but an
       // Instagram handle submitted alongside it is still credited below --
@@ -169,10 +177,23 @@
       var inFlight = (handle ? 1 : 0) + (willUpload ? 1 : 0);
       function requestSettled() {
         inFlight -= 1;
-        if (inFlight <= 0) {
-          bonusButton.disabled = false;
-          bonusButton.textContent = 'Claim my bonus entries';
+        if (inFlight > 0) return;
+        bonusButton.disabled = false;
+        bonusButton.textContent = 'Claim my bonus entries';
+        if (hadError) return;
+        // The count lives ABOVE this form, so on a phone it can update entirely
+        // off-screen. Without a confirmation next to the button, a successful
+        // claim is indistinguishable from nothing happening.
+        if (ok) {
+          ok.textContent = 'Claimed. You\u2019re at ' + count.textContent + ' entries.';
+          ok.hidden = false;
         }
+        // Clear the inputs so a second tap cannot re-send the same photo.
+        var handleField = bonus.querySelector('[name="igHandle"]');
+        var rightsField = bonus.querySelector('[name="rightsGranted"]');
+        if (handleField) handleField.value = '';
+        if (rightsField) rightsField.checked = false;
+        fileInput.value = '';
       }
 
       if (handle) {
