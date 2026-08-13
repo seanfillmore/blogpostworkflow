@@ -66,7 +66,7 @@ CAC target is $25. ✅ = ≥2× CAC (scalable on paid once tracking clears), �
 - **Buyer** — The lotion customer who has already repurchased at least once. They've demonstrated the product works for them and their real problem is running out, not choosing. Today they buy a $30 lotion three times a year and lapse in between.
 - **Angle** — *A quarter of coconut, handled.* Duration is the entire pitch. The $118 anchor sits on the PDP; it never leads.
 - **Channels** — Primary: Klaviyo replenishment flow (`TAfpnV`) and post-purchase flow (`VLQaYZ`), targeted at buyers with ≥1 prior lotion order. Secondary: the existing lander, plus a slot in the coconut collection. Paid: eligible, held for tracking.
-- **Offer mechanics** — $99 against a $118 anchor. Ships free unaided. Digital bonus PDFs delivered by Klaviyo flow `XEMgA7`. Two scents.
+- **Offer mechanics** — $99 against a $118 anchor. Ships free unaided. Digital bonus PDFs delivered by Klaviyo flow `XFdcu6` (*Coconut Reset — Digital Delivery v2*; the older `XEMgA7` is dead). Two scents.
 - **Assets** — Lander is done and the delivery flow is live. Needs: prune variants to Pure Unscented + Coconut Breeze, flip draft → active, port the Set's 131 Judge.me reviews as social proof, one test order to confirm the bonus email fires.
 - **Gate** — Build only, roughly an hour. The three-zero-stock blocker in the handoff is dissolved by the two-scent rule: Pure Unscented and Coconut Breeze are precisely the two that were buyable.
 - **Success metric** — Contribution per order $68. Primary read is the repeat-rate delta between lotion buyers who take the Reset and those who don't — this bundle is a retention instrument first and an AOV instrument second.

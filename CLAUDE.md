@@ -72,8 +72,10 @@ Agents that have the data to make a decision should make it and apply the change
 - `data/context/feedback.md` and `data/context/writer-standing-rules.md` — agent guidance (see closed-loop feedback above).
 - `data/context/voice-of-customer.md`, `data/context/personas.md`, `data/context/personas.json` — voice-of-customer research for the skin cluster, written monthly by `agents/voice-of-customer`. Headings are stable so the files stay greppable; every entry carries an evidence count and a verbatim quote. `personas.json` is rank-ordered — `creative-packager` reads `personas[0].angles[0]` as its default angle instead of the competitor reference ad's `messagingAngle`.
 - `.claude/skills/marketing-*/SKILL.md` — marketing tactics mined from video by `agents/marketing-learner`, each with provenance and a `## Falsified` section for tactics tested here that failed. **This is the source of truth.** `creative-packager` builds its ad-copy tactic menu and "Do not propose" blocklist by generating a projection from these files in memory at read time (`renderContextMirror(scanSkillInventory(...))`) — it does not read a committed copy. `data/context/marketing-tactics.md` is written locally for human browsing and is **gitignored**: committing a generated file made every pair of concurrent learner PRs conflict on it, and let git 3-way-merge it into content the generator would never emit.
-- `data/keyword-index.json` — intended single source of truth for which queries optimizers should target. **Currently anemic (~30 keywords) and not yet consumed by most optimizer agents — extending it to merge GSC commercial intent + Amazon BA + Amazon SQP and wiring optimizers to read from it is the next architectural priority.**
+- `data/keyword-index.json` — single source of truth for which queries optimizers should target. Built by `agents/keyword-index-builder` (dispatched daily, self-paces to biweekly via `built_at`), merging GSC commercial intent + Amazon BA + Amazon SQP into `by_validation_source`. **~2,215 keywords across 9 clusters as of 2026-08-10, read by 15 agents.** **Gitignored — built on the server.** A local copy is usually months stale; check the server, not your checkout.
 - `config/{site,competitors,ingredients,specificity-flags,ai-citation-prompts}.json` — durable site/business config.
+- `data/archive/` — product imagery that cannot be recovered from anywhere else (destroyed originals, replaced PDP frames, non-reproducible AI-generated frames). Committed on purpose; see its README before adding or removing.
+- `assets/digital/<slug>/` — source for the bundle PDFs. **Building and publishing are two scripts:** `build-digital-assets.mjs` renders, `upload-digital-assets.mjs --apply` publishes with hand-versioned filenames (Shopify creates a suffixed duplicate rather than overwriting). Images are addressed `image=<filename>`, never by gallery index — positional refs silently re-pointed at a different picture whenever a PDP was reordered.
 - `.env` — credentials (excluded from git). Never commit.
 
 ## Code Review Checklist — Blog Post Writer (`agents/blog-post-writer/index.js`)
@@ -84,6 +86,17 @@ These checks must throw (not warn) before saving the HTML:
 2. **Unclosed `href` attribute** — regex `/href="[^"]*$/` on the HTML. Output truncated mid-link. **Throw, do not save.** Shopify auto-closes the broken tag into a malformed URL (e.g. `https://domain.com/blogs/news/best`) that 404s.
 
 Both must be fatal — truncated HTML on Shopify creates broken links that take a manual audit cycle to find.
+
+## Product Imagery — two rules that have already cost real work
+
+**Deleting a Shopify product image destroys the CDN file.** `DELETE /products/{id}/images/{id}.json` removes the underlying file, not just the product association — even for a `/files/` path. On 2026-08-12 three bundle photos were deleted from the foaming soap PDP and are unrecoverable (absent from the Files library, 404 on the CDN, no Wayback capture). **Download full-resolution to `data/archive/` before any destructive image call, and grep the repo first** — product images turn out to be embedded in live blog posts, Klaviyo flow scripts, and `assets/digital/image-map.json`. Prefer reordering or reattaching, which are reversible. A detached image can still return 200 for a while with its original `?v=` param; that is CDN lag, not survival.
+
+**The theme scopes gallery images to variants two mutually exclusive ways.** In `sections/main-product.liquid`:
+
+1. **Variant attachment** — set `hide_variants: true` on the template's `main` section. Attached media renders only for the selected variant; unattached media renders for all (this is how shared marketing frames work).
+2. **alt-text `#` "gang" scoping** — images whose `alt` contains `#<token>`. **This path only runs when `hide_variants` is false.**
+
+Before flipping `hide_variants` on any template, check whether that product's images carry `#` in their alt text. If they do it is already gang-scoped and the flag will break it. `scoped-gallery` and `bundle-landing` templates use the gang mechanism; the `landing-page-*` templates use variant attachment.
 
 ## Code Review Checklist — Technical SEO Agent (`agents/technical-seo/index.js`)
 
