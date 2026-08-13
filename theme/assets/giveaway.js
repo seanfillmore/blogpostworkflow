@@ -135,6 +135,10 @@
         submitButton.textContent = 'Save — and get 3 bonus entries';
         survey.hidden = true;
         showLadder(res.body.entries);
+        // The buy path appears only now. Before the survey saves, the +3 rung
+        // should be the single ask on the page.
+        var next = root.querySelector('[data-gv-next]');
+        if (next) next.hidden = false;
       })
       .catch(function () { fail('Network error. Please try again.'); });
   });
