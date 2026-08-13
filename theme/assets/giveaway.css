@@ -10,6 +10,17 @@
  * additional fonts. The kit allows ONE accent element per page: it is spent on
  * the primary button's hover/focus state and nothing else.
  *
+ * ── 1rem IS ~11px HERE, NOT 16px ─────────────────────────────────────────────
+ * The theme is Dawn-based and sets `html { font-size: calc(var(--font-body-scale)
+ * * 62.5%) }`, which resolves to 11px (62.5% of 16, times a 1.1 body scale).
+ * Dawn's own convention follows from that: its body copy is `1.6rem`, i.e. the
+ * usual 16px. Sizes here were originally written as though 1rem were 16px, so
+ * the whole sheet rendered at roughly 69% of intended size — least noticeably on
+ * a phone, glaringly on a desktop, which is how it was finally caught.
+ *
+ * So: to get Npx, write (N/10)rem. Body copy is 1.6rem. If you find yourself
+ * typing a font-size below 1.2rem, you have almost certainly made this mistake.
+ *
  * ── THIS STYLESHEET HIDES THE THEME CHROME ───────────────────────────────────
  * Both templates are paid-traffic surfaces with exactly one job each. The site
  * nav offered eight ways to leave, and the announcement bar advertises "Free
@@ -56,7 +67,7 @@
 .gv-entry h1,
 .gv-entered h1 {
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: clamp(2rem, 7vw, 3.25rem);
+  font-size: clamp(3.2rem, 7vw, 5.2rem);
   line-height: 1.04;
   letter-spacing: -0.02em;
   margin: 0 0 14px;
@@ -64,13 +75,13 @@
 }
 .gv-entered h2 {
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.25rem;
+  font-size: 2rem;
   margin: 0 0 14px;
 }
 
 .gv-sub,
 .gv-lead {
-  font-size: 1.0625rem;
+  font-size: 1.7rem;
   line-height: 1.5;
   color: var(--gv-muted);
   margin: 0;
@@ -78,7 +89,7 @@
 }
 .gv-lead { margin: 0 0 28px; }
 
-.gv-fine { font-size: 0.8125rem; line-height: 1.55; color: var(--gv-muted); margin: 0; }
+.gv-fine { font-size: 1.3rem; line-height: 1.55; color: var(--gv-muted); margin: 0; }
 .gv-fine a { color: var(--gv-ink); }
 
 /* ── Shared controls ─────────────────────────────────────────────────────── */
@@ -89,7 +100,7 @@
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 1.6rem;
   padding: 14px;
   border: 1px solid var(--gv-line);
   border-radius: 3px;
@@ -106,7 +117,7 @@
 .gv-entry button,
 .gv-entered button {
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.0625rem;
+  font-size: 1.7rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   padding: 17px 20px;
@@ -134,7 +145,7 @@
   padding: 12px 14px;
   border-left: 3px solid var(--gv-ink);
   background: var(--gv-line);
-  font-size: 0.9375rem;
+  font-size: 1.5rem;
 }
 
 /* ── Lander ──────────────────────────────────────────────────────────────── */
@@ -158,7 +169,7 @@
 .gv-form label,
 .gv-bonus > label {
   display: block;
-  font-size: 0.8125rem;
+  font-size: 1.3rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -177,13 +188,13 @@
   border-radius: 4px;
   display: grid;
   gap: 12px;
-  font-size: 1rem;
+  font-size: 1.6rem;
   line-height: 1.45;
 }
-.gv-stack li { display: grid; grid-template-columns: 2.6rem 1fr; gap: 14px; align-items: baseline; }
+.gv-stack li { display: grid; grid-template-columns: 4.16rem 1fr; gap: 14px; align-items: baseline; }
 .gv-stack b {
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.5rem; font-weight: 700; line-height: 1;
+  font-size: 2.4rem; font-weight: 700; line-height: 1;
 }
 
 /* ── Entered page ────────────────────────────────────────────────────────── */
@@ -195,7 +206,7 @@
 .gv-survey fieldset { border: 0; margin: 0; padding: 0; }
 .gv-survey legend {
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.125rem;
+  font-size: 1.8rem;
   font-weight: 700;
   padding: 0;
   margin: 0 0 12px;
@@ -208,7 +219,7 @@
   margin: 0 0 8px;
   border: 1px solid var(--gv-line);
   border-radius: 3px;
-  font-size: 1rem;
+  font-size: 1.6rem;
   cursor: pointer;
   transition: border-color 120ms ease, background-color 120ms ease;
 }
@@ -222,7 +233,7 @@
 
 .gv-ladder { margin: 0 0 30px; }
 .gv-ladder h2 [data-gv-count] {
-  font-size: 1.75rem;
+  font-size: 2.8rem;
   font-weight: 700;
 }
 .gv-ladder ul {
@@ -233,7 +244,7 @@
   border-radius: 4px;
   display: grid;
   gap: 11px;
-  font-size: 0.9875rem;
+  font-size: 1.58rem;
   line-height: 1.4;
 }
 /* NOTE: there is deliberately no "rung already earned" style here. GET /entries
@@ -247,7 +258,7 @@
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 1.5rem;
   padding: 12px;
   border: 1px dashed #c9c9c9;
   border-radius: 3px;
@@ -255,7 +266,7 @@
 }
 .gv-bonus input[type="file"]::file-selector-button {
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 1.4rem;
   font-weight: 600;
   margin-right: 12px;
   padding: 8px 12px;
@@ -276,7 +287,7 @@
   padding: 13px 15px;
   border: 1px solid var(--gv-line);
   border-radius: 3px;
-  font-size: 0.9375rem;
+  font-size: 1.5rem;
   line-height: 1.45;
   text-transform: none;
   letter-spacing: 0;
@@ -289,7 +300,7 @@
   margin: 26px 0 0;
   padding-top: 22px;
   border-top: 1px solid var(--gv-line);
-  font-size: 0.9375rem;
+  font-size: 1.5rem;
   color: var(--gv-muted);
 }
 .gv-shop a { color: var(--gv-ink); }
@@ -328,7 +339,7 @@
   padding: 12px 14px;
   border-left: 3px solid var(--gv-ink);
   background: var(--gv-sand);
-  font-size: 0.9375rem;
+  font-size: 1.5rem;
 }
 
 /* ── Post-survey: the buy path ───────────────────────────────────────────────
@@ -356,7 +367,7 @@
 .gv-next-shot img { width: 92%; height: auto; }
 .gv-next-eyebrow {
   margin: 0 0 8px;
-  font-size: 0.75rem;
+  font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -364,14 +375,14 @@
 }
 .gv-next h2 {
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.375rem;
+  font-size: 2.2rem;
   line-height: 1.15;
   margin: 0 0 10px;
 }
-.gv-next-body { margin: 0 0 14px; font-size: 0.9875rem; line-height: 1.5; }
+.gv-next-body { margin: 0 0 14px; font-size: 1.58rem; line-height: 1.5; }
 .gv-next-price {
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.5rem;
+  font-size: 2.4rem;
   font-weight: 700;
   margin: 0 0 16px;
 }
@@ -382,7 +393,7 @@
   text-align: center;
   text-decoration: none;
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.0625rem;
+  font-size: 1.7rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   padding: 17px 20px;
@@ -393,7 +404,7 @@
 }
 .gv-next-cta:hover, .gv-next-cta:focus-visible { background: var(--gv-green); color: var(--gv-ink); }
 .gv-next-cta:focus-visible { outline: 2px solid var(--gv-ink); outline-offset: 2px; }
-.gv-next-fine { margin: 12px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--gv-muted); }
+.gv-next-fine { margin: 12px 0 0; font-size: 1.3rem; line-height: 1.5; color: var(--gv-muted); }
 
 @media (min-width: 700px) {
   .gv-next { grid-template-columns: 260px 1fr; gap: 26px; align-items: center; padding: 26px; }
@@ -401,3 +412,58 @@
 }
 
 @media (prefers-reduced-motion: reduce) { .gv-next-cta { transition: none; } }
+
+/* ── Desktop type scale ──────────────────────────────────────────────────────
+ * Every size above is set mobile-first and never grew, so on a laptop both
+ * pages rendered as a narrow column of phone-sized text — the entered page is
+ * capped at 640px, which made it worse there than on the lander.
+ *
+ * Roughly a 1.1x bump on body copy and controls, a little more on the numerals
+ * that carry meaning (the entry count, the prize stack, the price). The h1
+ * already scales on its own via clamp(), so it is deliberately untouched.
+ *
+ * THIS BLOCK MUST STAY LAST IN THE FILE. The .gv-next-* base rules are declared
+ * after the layout @media block above, so a desktop override placed up there
+ * loses the specificity tie to them and silently does nothing.
+ */
+@media (min-width: 900px) {
+  .gv-sub,
+  .gv-lead { font-size: 1.9rem; }
+
+  .gv-entered h2 { font-size: 2.4rem; }
+  .gv-ladder h2 [data-gv-count] { font-size: 3.2rem; }
+
+  .gv-entry input[type="email"],
+  .gv-entry input[type="text"],
+  .gv-entered input[type="text"] { font-size: 1.7rem; }
+
+  .gv-entry button,
+  .gv-entered button { font-size: 1.8rem; }
+
+  .gv-form label,
+  .gv-bonus > label { font-size: 1.4rem; }
+
+  .gv-stack { font-size: 1.7rem; }
+  .gv-stack b { font-size: 2.8rem; }
+
+  .gv-survey legend { font-size: 2rem; }
+  .gv-survey fieldset label { font-size: 1.7rem; }
+
+  .gv-ladder ul { font-size: 1.7rem; }
+
+  .gv-bonus input[type="file"] { font-size: 1.6rem; }
+  .gv-bonus .gv-rights { font-size: 1.6rem; }
+
+  .gv-error,
+  .gv-bonus-error,
+  .gv-bonus-ok { font-size: 1.6rem; }
+
+  .gv-shop { font-size: 1.6rem; }
+  .gv-fine { font-size: 1.4rem; }
+
+  .gv-next h2 { font-size: 2.4rem; }
+  .gv-next-body { font-size: 1.7rem; }
+  .gv-next-price { font-size: 2.8rem; }
+  .gv-next-cta { font-size: 1.8rem; }
+  .gv-next-fine { font-size: 1.4rem; }
+}
