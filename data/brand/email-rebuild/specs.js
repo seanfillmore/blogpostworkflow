@@ -739,12 +739,12 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       {
         type: 'textlink',
         text: '1. Download the 90-Day Calm-Skin Routine &amp; Tracker →',
-        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/90-Day-Calm-Skin-Routine-and-Tracker-v2.pdf?v=1785298286',
+        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/90-Day-Calm-Skin-Routine-and-Tracker-v3.pdf?v=1786591629',
       },
       {
         type: 'textlink',
         text: '2. Download the Coconut Skincare Field Guide →',
-        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/Coconut-Skincare-Field-Guide-v2.pdf?v=1785298289',
+        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/Coconut-Skincare-Field-Guide-v3.pdf?v=1786591634',
       },
       {
         type: 'p',

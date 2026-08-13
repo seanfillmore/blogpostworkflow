@@ -24,8 +24,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const APPLY = process.argv.includes('--apply');
 
 const ASSETS = [
-  { slug: 'routine-tracker', remote: '90-Day-Calm-Skin-Routine-and-Tracker-v2.pdf', alt: 'The 90-Day Calm-Skin Routine & Tracker' },
-  { slug: 'field-guide', remote: 'Coconut-Skincare-Field-Guide-v2.pdf', alt: 'The Coconut Skincare Field Guide' },
+  { slug: 'routine-tracker', remote: '90-Day-Calm-Skin-Routine-and-Tracker-v3.pdf', alt: 'The 90-Day Calm-Skin Routine & Tracker' },
+  { slug: 'field-guide', remote: 'Coconut-Skincare-Field-Guide-v3.pdf', alt: 'The Coconut Skincare Field Guide' },
 ];
 
 async function stageUpload(filename, fileSize) {
