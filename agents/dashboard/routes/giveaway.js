@@ -19,6 +19,7 @@
  * write path for either field, by construction.
  */
 import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, basename, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { ROOT } from '../lib/paths.js';
@@ -28,6 +29,7 @@ import { uploadImageToShopifyCDN } from '../../../lib/shopify.js';
 import {
   subscribeToList, getProfileByEmail, updateProfileProperties,
 } from '../../../lib/klaviyo-profiles.js';
+import { sendLeadEvent } from '../../../lib/meta-capi.js';
 
 const MAX_BODY_BYTES = 4 * 1024;
 const UPLOAD_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
@@ -92,6 +94,7 @@ const ENUMS = {
 const ALSO_BUYS = new Set(['deodorant', 'toothpaste', 'lotion', 'lipbalm', 'hair']); // not yet collected
 
 const listId = () => JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8')).listId;
+const metaPixelId = () => JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8')).metaPixelId;
 
 export function validateEntryPayload(body = {}) {
   let email;
@@ -340,6 +343,30 @@ export default [
         const properties = entryProperties(existing, v.value);
 
         await subscribeToList(listId(), { email, firstName, properties });
+
+        // Tell Meta a Lead happened. NOT awaited: the entrant's response must
+        // not wait on a third party, and sendLeadEvent never throws or rejects,
+        // so a floating promise here cannot surface as an unhandled rejection.
+        //
+        // Fired only for a FIRST entry. A resubmit — routine on a cold lander,
+        // back button or double tap — is the same lead, and counting it twice
+        // would inflate the conversion Meta optimises on and corrupt CAC.
+        if (!existing?.properties?.gv_breakdown) {
+          sendLeadEvent({
+            email,
+            pixelId: metaPixelId(),
+            accessToken: process.env.FACEBOOK_ACCESS_TOKEN,
+            // Deterministic from the address, so a browser-side Lead added later
+            // deduplicates against this one instead of double counting.
+            eventId: `gv-lead-${createHash('sha256').update(email).digest('hex').slice(0, 24)}`,
+            fbc: typeof parsed.fbc === 'string' ? parsed.fbc.slice(0, 255) : null,
+            fbp: typeof parsed.fbp === 'string' ? parsed.fbp.slice(0, 255) : null,
+            clientIp: getClientIp(req),
+            userAgent: req.headers['user-agent'] || null,
+            sourceUrl: 'https://www.realskincare.com/pages/free-soap-giveaway',
+          });
+        }
+
         return json(res, req, 201, { ok: true, entries: existing?.properties?.gv_entries ?? 1 });
       } catch (e) {
         console.error('[giveaway] enter failed', e.message);
