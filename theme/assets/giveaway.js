@@ -27,10 +27,28 @@
     button.disabled = true;
     button.textContent = 'Entering…';
 
+    // Meta match signals. _fbp is set by the pixel; _fbc only exists once a
+    // click has carried an fbclid, so construct it in Meta's documented
+    // fb.1.<ts>.<fbclid> form when the cookie has not been written yet —
+    // otherwise every click-through lead loses its click id and lands at a
+    // materially lower match quality.
+    function cookie(name) {
+      var m = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
+      return m ? decodeURIComponent(m[2]) : null;
+    }
+    var fbc = cookie('_fbc');
+    if (!fbc) {
+      var clickId = new URLSearchParams(window.location.search).get('fbclid');
+      if (clickId) fbc = 'fb.1.' + Date.now() + '.' + clickId;
+    }
+
     fetch(endpoint + '/enter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, firstName: firstName, referredBy: data.get('referredBy') || null })
+      body: JSON.stringify({
+        email: email, firstName: firstName, referredBy: data.get('referredBy') || null,
+        fbc: fbc, fbp: cookie('_fbp')
+      })
     })
       .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
       .then(function (res) {
