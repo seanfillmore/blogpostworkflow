@@ -1,7 +1,24 @@
 # Google Ads support case — Data Manager offline conversions never process
 
-**Status: ⏸️ HOLD — do not file yet.** A decisive test is in flight; see "The gclid test" below. If it succeeds there is nothing to escalate.
-**Where (when needed):** Google Ads UI → Help (?) → Contact us → *Conversion tracking* → chat or email.
+**Status: ✅ RESOLVED 2026-08-13 — DO NOT FILE. Kept only as the record of what was wrong.**
+
+The full-gclid test succeeded. Conversion tracking works.
+
+```
+=== by conversion action ===
+  2026-08-13  RSC Shopify Purchase (server)  all=1  COUNTED=1  $37.49
+  2026-08-12  purchase (GA4 import)          all=1  COUNTED=0  $30      <- demoted, no double-count
+=== by campaign ===
+  RSC | Shopping Test | Lotion - Coconut Breeze  clicks 3  $1.92  conv 1  rev $37.49
+```
+
+**Root cause, finally:** Shopify caps `order.landing_site` at 255 characters, which halved the gclid and forced every upload onto `gbraid`. **`gbraid`-only offline conversions do not attach; a full `gclid` does.** Both older orders (#2322, #2329) carried verified-complete gbraid values and never attached; #2332 carried a full 92-char gclid and attached within hours.
+
+**Why the ticket was never sent:** the evidence looked conclusively account-side — three requests stuck in `PROCESSING` for 20h+ with no warnings — but that was a symptom of unmatched identifiers, not a provisioning failure. `PROCESSING` is simply how this API reads; it is **not** a health signal and must not be treated as one.
+
+**The lesson worth keeping:** when an upload silently fails to attach, verify the identifier survived the *source* system before escalating to the destination. A day was spent building fallbacks (hashed email) and drafting an escalation against a Google-side fault that did not exist.
+
+Everything below is the unsent ticket, preserved as the diagnostic record.
 
 ---
 
