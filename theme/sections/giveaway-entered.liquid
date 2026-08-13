@@ -11,6 +11,8 @@
 
 {%- liquid
   assign endpoint = 'https://entries.realskincare.com/api/giveaway'
+  assign set_handle = 'sensitive-skin-starter-set'
+  assign set_image = 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/frame-01-what-arrives.jpg?v=1785635169'
 -%}
 
 {{ 'giveaway.css' | asset_url | stylesheet_tag }}
@@ -91,10 +93,39 @@
       <a href="/pages/giveaway-official-rules">Official rules</a>.</p>
   </div>
 
-  <p class="gv-shop">
-    Not waiting for the draw? <a href="/products/coconut-soap">Shop the unscented bar</a>
-    or the <a href="/products/sensitive-skin-starter-set">Sensitive Skin Set</a>.
-  </p>
+  {%- comment -%}
+    Shown only after the survey is saved — the moment of highest engagement, and
+    holding it back keeps the +3 rung as the single ask on arrival.
+
+    Full price, no code, no urgency. The BOGO is the day-30 consolation prize
+    (spec 7.1), and a discount shown beside a sweepstakes entry invites the
+    "buying improves my odds" reading the Official Rules explicitly deny. The
+    line under the button is not decoration — it is that denial, restated where
+    the buying decision actually happens.
+  {%- endcomment -%}
+  <aside class="gv-next" data-gv-next hidden>
+    <div class="gv-next-shot">
+      <img src="{{ set_image }}&width=600" alt="The Sensitive Skin Moisturizing Set" width="600" height="600" loading="lazy">
+    </div>
+    <div class="gv-next-copy">
+      <p class="gv-next-eyebrow">Don't want to wait for the draw?</p>
+      <h2>The Sensitive Skin Moisturizing Set</h2>
+      {%- comment -%}
+        The Set is the Body Lotion + Body Cream — "eight ingredients across two
+        products". It does NOT contain soap; the 36 bars are a separate prize
+        component. An earlier draft here said the Set included the soap, which
+        was simply false. Check the product description before editing this.
+      {%- endcomment -%}
+      <p class="gv-next-body">
+        Three of these ship with the prize, one a year. Two products, eight
+        ingredients, no fragrance — the body lotion and body cream that go
+        alongside the soap you just entered for.
+      </p>
+      <p class="gv-next-price">$46.80</p>
+      <a class="gv-next-cta" href="/products/{{ set_handle }}">See the Set</a>
+      <p class="gv-next-fine">Buying doesn't change your entries.</p>
+    </div>
+  </aside>
 </section>
 
 <script>window.RSC_GIVEAWAY_ENDPOINT = {{ endpoint | json }};</script>
