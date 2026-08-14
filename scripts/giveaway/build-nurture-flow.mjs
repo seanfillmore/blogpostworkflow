@@ -22,6 +22,23 @@
  * That is a one-time manual filter in the Klaviyo UI, printed as a reminder below.
  *
  * ============================================================================
+ * KLAVIYO CLONES TEMPLATES INTO A FLOW — `templates` MODE ALONE IS NOT ENOUGH
+ * ============================================================================
+ * Creating a flow with `template_id` does NOT make the flow reference that
+ * template; Klaviyo copies it and the flow's send actions point at the copies.
+ * Verified 2026-08-13: config held RFn6ZR/RAJQEt/Rw7Aj5/V2k6YD while the flow's
+ * four sends pointed at TNFMGh/XpxyHf/WLww6C/SyDGt3.
+ *
+ * So editing a nurture HTML file and running `templates` updates the source
+ * templates and changes NOTHING about a flow that already exists — the emails
+ * keep sending the old copy, with no error anywhere. After any content change
+ * to 01-04, re-run `flow` as well. (This costs a new flow id each time, since
+ * definitions cannot be PATCHed.)
+ *
+ * The same applies to the deadline campaigns: `campaigns` mode re-assigns the
+ * template on every run, so re-run it after any content change to 05-06.
+ *
+ * ============================================================================
  * TWO CLOCKS — WHY THIS IS NOT ONE SIX-EMAIL FLOW
  * ============================================================================
  * Every delay here is RELATIVE TO ENTRY (list-add), but the Entry Period is a
