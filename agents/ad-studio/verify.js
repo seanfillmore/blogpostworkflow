@@ -57,10 +57,32 @@ export function parseVerifyResponse(raw) {
 /**
  * Every expected string must appear somewhere in the transcript. Extra rendered text is
  * not a failure; missing or corrupted expected text is.
+ *
+ * The transcript is checked against TWO joins of the same normalized runs, and either
+ * one satisfies a match:
+ *
+ *   1. joined by ' | ' — preserves run boundaries (the original behaviour)
+ *   2. joined by a single space — lets one expected string span *consecutive* runs
+ *
+ * (2) exists because the vision model reports a visual lockup as separate runs: the
+ * label "real SKIN CARE" comes back as ["real", "SKIN CARE"], and "Organic Coconut Oil
+ * + Essential Oils" as two runs, even though the image is correct. A live run rejected
+ * 6/6 correct renders on that formatting alone.
+ *
+ * This relaxes run-boundary whitespace and NOTHING else. Each expected string must
+ * still appear as one contiguous, correctly-spelled, correctly-ordered sequence of
+ * characters. Deliberately not per-word matching and not a similarity score: the gate's
+ * value is that it caught a bottom bar the model had silently rewritten, and either of
+ * those would let that through.
  */
 export function diffTranscript(expected, transcript) {
-  const haystack = (transcript || []).map(normalizeForMatch).join(' | ');
-  const missing = (expected || []).filter(e => !haystack.includes(normalizeForMatch(e)));
+  const runs = (transcript || []).map(normalizeForMatch).filter(Boolean);
+  const byRun = runs.join(' | ');
+  const flowed = runs.join(' ');
+  const missing = (expected || []).filter(e => {
+    const needle = normalizeForMatch(e);
+    return !byRun.includes(needle) && !flowed.includes(needle);
+  });
   return { ok: missing.length === 0, missing };
 }
 

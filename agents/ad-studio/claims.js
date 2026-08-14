@@ -12,13 +12,31 @@
 /**
  * Fold case, whitespace and curly punctuation so evidence matching survives the
  * cosmetic differences between PDP copy and ad copy.
+ *
+ * The apostrophe class carries three code points on purpose: U+2018, U+2019 and
+ * U+02BC (MODIFIER LETTER APOSTROPHE, which some renderers emit for a typographic
+ * apostrophe). Dropping any of them makes "that’s" and "that's" different strings.
+ *
+ * Separator glyphs — U+2022 bullet, U+00B7 middle dot, U+007C pipe — fold to a
+ * space, not to nothing: the bottle prints "8 fl. oz. • 236ml" where the manifest
+ * prose writes "8 fl. oz. (236ml)". They separate tokens, so they must become the
+ * same whitespace the prose already uses, then collapse below. Word-joining
+ * hyphens (U+002D) are deliberately NOT folded — "cold-pressed" must stay one
+ * token — and the en/em dash fold to "-" is unchanged.
+ *
+ * "+" is folded ONLY where it joins two things ("Organic Coconut Oil + Essential
+ * Oils", which the label sets as separate runs on a curved badge). A "+" attached
+ * to the token on its left is left alone, because there it means "or more" and is
+ * load-bearing: "20+ years" must never match a source that says "20 years".
  */
 export function normalizeForMatch(s) {
   return String(s || '')
-    .replace(/[‘’]/g, "'")
+    .replace(/[‘’ʼ]/g, "'")
     .replace(/[“”]/g, '"')
     .replace(/[–—]/g, '-')
+    .replace(/[•·|]/g, ' ')
     .toLowerCase()
+    .replace(/(^|[^a-z0-9])\+/g, '$1 ')
     .replace(/[.,;:!?"'()\[\]]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -59,7 +77,19 @@ export function validateClaims(claims, index) {
       violations.push({ zone: c.zone, text: c.text, reason: 'factual claim with no evidence quote' });
       continue;
     }
-    if (!body.includes(normalizeForMatch(c.evidence))) {
+    // An evidence quote made only of punctuation or separator glyphs normalizes to the
+    // empty string, and `''` is a substring of every source — it would pass the gate
+    // while proving nothing. Reject it before the substring test, not after.
+    const needle = normalizeForMatch(c.evidence);
+    if (!needle) {
+      violations.push({
+        zone: c.zone,
+        text: c.text,
+        reason: `evidence quote contains no matchable text: "${c.evidence}"`,
+      });
+      continue;
+    }
+    if (!body.includes(needle)) {
       violations.push({
         zone: c.zone,
         text: c.text,

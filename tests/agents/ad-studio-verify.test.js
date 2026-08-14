@@ -40,6 +40,47 @@ const corrupted = diffTranscript(['THE REAL WAY', 'Lauric acid kills odor bacter
 assert.equal(corrupted.ok, false);
 assert.equal(corrupted.missing.length, 2);
 
+// A silently REWRITTEN bottom-bar string must still fail. Every glyph is spelled
+// correctly and the layout looks right; the words are simply not the ones that were
+// claim-gated. This is the defect the gate exists for — the run-boundary relaxation
+// below must not reach it.
+assert.equal(diffTranscript(['No parabens'], ['No sulfates']).ok, false);
+assert.deepEqual(diffTranscript(['No parabens'], ['No sulfates']).missing, ['No parabens']);
+
+// Run-boundary relaxation. The vision model reports a single visual lockup as separate
+// runs; the text IS present and correct, so this must PASS.
+assert.equal(diffTranscript(['real SKIN CARE'], ['real', 'SKIN CARE']).ok, true);
+assert.equal(
+  diffTranscript(['Organic Coconut Oil + Essential Oils'], ['ORGANIC COCONUT OIL', '+', 'ESSENTIAL OILS']).ok,
+  true,
+);
+// The real live case: the badge's "+" sits on a curved arc and the transcriber drops it
+// entirely, reporting only the two ingredient runs. The label is correct; this must pass.
+assert.equal(
+  diffTranscript(['Organic Coconut Oil + Essential Oils'], ['ORGANIC COCONUT OIL', 'ESSENTIAL OILS']).ok,
+  true,
+);
+// A duplicated word is a REAL render defect (the 9x16 frame of the live run stuttered
+// "sink sink") and must still fail — the relaxations must not reach it.
+assert.equal(
+  diffTranscript(['Cold-pressed coconut and jojoba that sink into skin.'],
+                 ['Cold-pressed coconut and jojoba that sink sink into skin.']).ok,
+  false,
+);
+
+// Separator glyphs fold: the bottle prints "•", the manifest prose writes "( )".
+assert.equal(diffTranscript(['8 fl. oz. (236ml)'], ['8 fl. oz. • 236ml']).ok, true);
+// ...and the same string split across runs on that separator.
+assert.equal(diffTranscript(['8 fl. oz. (236ml)'], ['8 fl. oz.', '•', '236ml']).ok, true);
+
+// Relaxing run boundaries must NOT relax ordering: reversed runs are still missing.
+assert.equal(diffTranscript(['real SKIN CARE'], ['SKIN CARE', 'real']).ok, false);
+// Nor may it bridge NON-consecutive runs — an expected string cannot be assembled out
+// of fragments that have other text between them.
+assert.equal(diffTranscript(['real SKIN CARE'], ['real', 'BODY LOTION', 'SKIN CARE']).ok, false);
+// Nor may it accept a partially-corrupted lockup.
+assert.equal(diffTranscript(['real SKIN CARE'], ['real', 'SKN CARE']).ok, false);
+
 // Extra text in the render does not fail the diff — only missing expected strings do.
 assert.equal(diffTranscript(['A'], ['A', 'SOMETHING EXTRA']).ok, true);
 
@@ -67,6 +108,18 @@ const misPaired = verdictFor({
 assert.equal(misPaired.ok, false);
 assert.equal(misPaired.mismatchedPairs.length, 2);
 assert.ok(misPaired.reasons.some(r => /pairing/i.test(r)));
+
+// The pairing check is independent of the run-boundary relaxation: a transcript whose
+// text now passes the diff BECAUSE it was split across runs must still fail on pairing.
+const misPairedSplitRuns = verdictFor({
+  expected: ['ORGANIC JOJOBA', 'COLD-PRESSED VIRGIN COCONUT OIL'],
+  transcript: ['ORGANIC', 'JOJOBA', 'COLD-PRESSED', 'VIRGIN COCONUT OIL'],
+  pairings: [{ label: 'ORGANIC JOJOBA', depicts: 'a spoon of red palm oil', matches: false }],
+  format: pairingFormat,
+});
+assert.deepEqual(misPairedSplitRuns.missing, [], 'split runs must not be reported missing');
+assert.equal(misPairedSplitRuns.ok, false);
+assert.equal(misPairedSplitRuns.mismatchedPairs.length, 1);
 
 // A pairing format that reports no pairings at all cannot silently pass.
 const noPairings = verdictFor({
