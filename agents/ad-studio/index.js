@@ -19,7 +19,7 @@ import { renderVariation, buildRenderPrompt, selectReferencePhotos } from './ren
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor } from './verify.js';
 import { selectFormats } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced } from './claims.js';
-import { buildCopyPrompt, parseCopyResponse, expectedStrings } from './copy.js';
+import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
 import { PLATFORM_TARGETS, variationDir, artifactName, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { notify } from '../../lib/notify.js';
 
@@ -421,10 +421,23 @@ async function main() {
       max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }],
     });
-    const { zones, claims } = parseCopyResponse(textOf(msg));
+    const { zones: rawZones, claims: rawClaims } = parseCopyResponse(textOf(msg));
+
+    // Hard cap — a backstop for when the model ignores buildCopyPrompt's capacity
+    // hint (or the capacity hint doesn't apply, e.g. no zoneCapacity declared). Must
+    // run BEFORE the claim gate: the gate has to see the copy that will actually
+    // render, not the pre-truncation draft.
+    const { zones, dropped } = enforceZoneCapacity(rawZones, format);
+
+    // A claim whose text was just truncated away must not reach the gate either — it
+    // will never render, so sourcing it (or failing to) proves nothing, and running
+    // the gate against text that no longer exists is exactly the "validate a claim we
+    // then dropped" bug this fix exists to close.
+    const droppedTexts = new Set(dropped.flatMap(d => d.items));
+    const claims = droppedTexts.size ? rawClaims.filter(c => !droppedTexts.has(c.text)) : rawClaims;
 
     // Hard stop — never wrapped in try/catch, no override flag. An unsourced factual
-    // claim must not reach the render stage.
+    // claim must not reach the render stage. Runs on the TRUNCATED copy above.
     assertClaimsSourced(claims, sourceIndex);
 
     concepts.push({ format, zones, claims });

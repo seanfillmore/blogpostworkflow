@@ -9,6 +9,14 @@
 // pairsImagesWithLabels drives the verification gate: layouts that sit a picture
 // beside a word can render every word correctly and still caption jojoba oil as
 // coconut oil, so those get a semantic pairing check on top of the text diff.
+//
+// zoneCapacity (optional) caps how many strings an array-valued zone may carry,
+// keyed by the layoutBrief's own physical description of that zone — a "vertical
+// list running down one side" or "cells split by thin vertical rules" only has room
+// for so many rows/cells before the image model silently drops or rewrites the
+// overflow. copy.js's buildCopyPrompt surfaces the cap as an instruction and
+// enforceZoneCapacity truncates to it as a backstop. Formats with no list-shaped
+// zone omit the key entirely.
 
 const SAND = '#EDE5D8';
 const BLACK = '#000000';
@@ -22,6 +30,11 @@ export const FORMATS = [
     awareness: 'solution',
     pairsImagesWithLabels: true,
     zones: ['headline', 'leftHeader', 'leftItems', 'rightHeader', 'rightItems', 'bottomBar'],
+    // leftItems/rightItems are paired rows (X icon vs check icon) — a phone-width two-
+    // column comparison reads cleanly up to about 4 rows per side before it either
+    // overflows the frame or crowds the centered product hero. bottomBar here is a
+    // single letterspaced line, not a list, so it takes no cap.
+    zoneCapacity: { leftItems: 4, rightItems: 4 },
     layoutBrief: [
       `A big two-line headline across the top third, black on a warm sand ${SAND} background.`,
       'Beneath it a two-column comparison with the product standing centered between the columns as the hero,',
@@ -38,6 +51,14 @@ export const FORMATS = [
     awareness: 'solution',
     pairsImagesWithLabels: true,
     zones: ['headline', 'subhead', 'listItems', 'bottomBar'],
+    // This is the format the real incident happened on. listItems is a vertical list
+    // running down HALF the frame opposite the hero product — 4 image+label rows is
+    // what that half actually has room for (a 6-item ask was asked for and only 4
+    // rendered, silently). bottomBar is a strip split into equal cells by vertical
+    // rules — at phone width, more than 3 short phrases makes the cells too narrow to
+    // set cleanly, which is what made the model rewrite/drop cells rather than render
+    // the requested 4.
+    zoneCapacity: { listItems: 4, bottomBar: 3 },
     layoutBrief: [
       `A bold two-line headline at the top, the first line black and the second in a warm gold, on a soft ${SAND} gradient.`,
       'A thin black rule under the headline.',
@@ -53,6 +74,13 @@ export const FORMATS = [
     awareness: 'problem',
     pairsImagesWithLabels: false,
     zones: ['headline', 'subhead', 'rows', 'closer'],
+    // rows are full-width typographic lines separated by rules on a poster-style
+    // layout — each one is visually heavy (label + a large phrase), so the format
+    // reads as a manifesto rather than a list only while it stays short. 4 rows is
+    // about what a single poster frame can hold before it stops feeling like a
+    // manifesto and starts feeling like a spec sheet. closer is one line in a box, not
+    // a list, so it takes no cap.
+    zoneCapacity: { rows: 4 },
     layoutBrief: [
       `An almost entirely typographic letterpress-style poster on ${SAND}, modern and clean rather than rustic.`,
       'A very large stacked headline, then a smaller line beneath it.',
@@ -67,6 +95,8 @@ export const FORMATS = [
     name: 'Problem-aware educational',
     awareness: 'problem',
     pairsImagesWithLabels: false,
+    // No list-shaped zone — bottomBar is "a single restrained line of caps", so
+    // zoneCapacity is omitted.
     zones: ['headline', 'subhead', 'bottomBar'],
     layoutBrief: [
       'An editorial, educational-feeling composition that reads as information rather than promotion.',
@@ -82,6 +112,8 @@ export const FORMATS = [
     name: 'Top-X / third-party review',
     awareness: 'solution',
     pairsImagesWithLabels: false,
+    // No list-shaped zone — bottomBar is "a restrained line of caps", so
+    // zoneCapacity is omitted.
     zones: ['headline', 'subhead', 'bottomBar'],
     layoutBrief: [
       'A magazine-style editorial product layout that reads like a roundup or review rather than an ad.',
@@ -97,6 +129,8 @@ export const FORMATS = [
     name: 'Offer-focused',
     awareness: 'product',
     pairsImagesWithLabels: false,
+    // No list-shaped zone — offerBadge is a single badge/ribbon string and bottomBar
+    // is "one line of letterspaced caps", so zoneCapacity is omitted.
     zones: ['headline', 'subhead', 'offerBadge', 'bottomBar'],
     layoutBrief: [
       `The product on a clean ${SAND} background, lit like premium CPG product photography with a soft contact shadow.`,

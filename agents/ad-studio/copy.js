@@ -8,7 +8,12 @@
  * @returns {string}
  */
 export function buildCopyPrompt({ format, product, pdpBody, persona, tactics }) {
-  const zoneList = format.zones.map(z => `  - ${z}`).join('\n');
+  const zoneList = format.zones
+    .map(z => {
+      const cap = format.zoneCapacity?.[z];
+      return cap ? `  - ${z} (maximum ${cap} items — the layout cannot carry more)` : `  - ${z}`;
+    })
+    .join('\n');
   return `You are writing the copy for a single static ad for Real Skin Care.
 
 FORMAT: ${format.key} — ${format.name}
@@ -75,6 +80,51 @@ export function parseCopyResponse(raw) {
   if (!obj.zones || typeof obj.zones !== 'object') throw new Error('ad-studio: copy response missing "zones"');
   if (!Array.isArray(obj.claims)) throw new Error('ad-studio: copy response missing "claims"');
   return { zones: obj.zones, claims: obj.claims };
+}
+
+/**
+ * Hard cap on array-valued zones, applied AFTER the copy call as a backstop to the
+ * capacity hint buildCopyPrompt already puts in front of the model. The prompt is a
+ * request; this is the enforcement — a model that ignores the instruction (or asks
+ * for more anyway) must not be able to push an over-long list into a paid render.
+ *
+ * Real incident this fixes: a format asked for 6 listItems and 4 bottomBar items:
+ * the layout only had room for 4 and 3 respectively, so the image model rendered a
+ * short list and silently rewrote the bottom bar, dropping several factual strings
+ * that had already cleared the claim gate. The verification gate correctly rejected
+ * every attempt — three paid renders burned per target for copy the layout could
+ * never have carried in the first place.
+ *
+ * String-valued zones and zones with no declared capacity are returned unchanged.
+ * Every truncation is logged — a silent one reads as full coverage when it isn't.
+ *
+ * @param {Record<string,string|string[]>} zones
+ * @param {{key:string, zoneCapacity?:Record<string,number>}} format
+ * @returns {{zones:Record<string,string|string[]>, dropped:{zone:string, items:string[]}[]}}
+ */
+export function enforceZoneCapacity(zones, format) {
+  const capacities = format?.zoneCapacity;
+  if (!capacities) return { zones, dropped: [] };
+
+  const outZones = { ...zones };
+  const dropped = [];
+
+  for (const [zone, cap] of Object.entries(capacities)) {
+    const value = outZones[zone];
+    if (!Array.isArray(value) || value.length <= cap) continue;
+
+    const kept = value.slice(0, cap);
+    const removed = value.slice(cap);
+    outZones[zone] = kept;
+    dropped.push({ zone, items: removed });
+
+    console.warn(
+      `ad-studio: truncated zone "${zone}" for format "${format.key}" from ${value.length} ` +
+      `to ${cap} item(s) — the layout cannot carry more. Dropped: ${JSON.stringify(removed)}`
+    );
+  }
+
+  return { zones: outZones, dropped };
 }
 
 /**
