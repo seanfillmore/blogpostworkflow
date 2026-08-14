@@ -17,6 +17,12 @@ assert.ok(p1.includes('ORGANIC JOJOBA'));
 assert.ok(/pairings/.test(p1), 'pairing format must request pairings');
 const p2 = buildVerifyPrompt({ expected: ['OUR LOTION'], format: plainFormat });
 assert.ok(!/pairings/.test(p2), 'non-pairing format must not request pairings');
+// A PLATE is text-free by construction, so it carries no labels — asking a pairing
+// format's plate for pairings can only produce noise.
+const p3 = buildVerifyPrompt({ expected: ['8 fl. oz. (236ml)'], format: pairingFormat, mode: 'plate' });
+assert.ok(!/pairings/.test(p3), 'a plate must not be asked for pairings even on a pairing format');
+const p4 = buildVerifyPrompt({ expected: ['SIX INGREDIENTS.'], format: pairingFormat, mode: 'finished' });
+assert.ok(/pairings/.test(p4), 'a finished frame of a pairing format must still request pairings');
 
 // parseVerifyResponse handles fenced JSON and defaults pairings to an empty array.
 const raw = '```json\n' + JSON.stringify({
@@ -84,6 +90,38 @@ assert.equal(diffTranscript(['real SKIN CARE'], ['real', 'SKN CARE']).ok, false)
 // Extra text in the render does not fail the diff — only missing expected strings do.
 assert.equal(diffTranscript(['A'], ['A', 'SOMETHING EXTRA']).ok, true);
 
+// ── Token-boundary anchoring ────────────────────────────────────────────────────
+// An unanchored String.includes accepted a SUPERSTRING, which is the worst false pass
+// this gate can produce: a render printing "18 fl. oz." on the 8 fl oz bottle shipped a
+// false spec through the one gate that exists to stop invented specs.
+assert.equal(
+  diffTranscript(['8 fl. oz. (236ml)'], ['18 fl. oz. • 236ml']).ok,
+  false,
+  'an invented volume that CONTAINS the expected one must fail',
+);
+assert.equal(
+  diffTranscript(['2 fl oz (60ml)'], ['12 fl oz 60ml']).ok,
+  false,
+  '"12 fl oz 60ml" is not "2 fl oz (60ml)"',
+);
+assert.equal(
+  diffTranscript(['real SKIN CARE'], ['unreal SKIN CARE']).ok,
+  false,
+  'a prefixed token is a different word, not a match',
+);
+// ...and the same anchoring must hold when the superstring is assembled across runs.
+assert.equal(diffTranscript(['8 fl. oz. (236ml)'], ['18 fl. oz.', '236ml']).ok, false);
+
+// Anchoring must NOT cost any of the relaxations the gate needs to accept correct
+// renders. Each of these still passes.
+assert.equal(diffTranscript(['real SKIN CARE'], ['real', 'SKIN CARE']).ok, true);
+assert.equal(diffTranscript(['8 fl. oz. (236ml)'], ['8 fl. oz. • 236ml']).ok, true);
+assert.equal(diffTranscript(['8 fl. oz. (236ml)'], ['8 FL. OZ.', '(236ML)']).ok, true);
+assert.equal(diffTranscript(["THAT'S IT"], ['that’s   it']).ok, true);
+// Dropped and substituted words must still fail — this is not per-word or fuzzy matching.
+assert.equal(diffTranscript(['No parabens'], ['No sulfates']).ok, false);
+assert.equal(diffTranscript(['THE REAL WAY'], ['THE RLALVJAY']).ok, false);
+
 // verdictFor: all good.
 const good = verdictFor({
   expected: ['SIX INGREDIENTS.', 'ORGANIC JOJOBA'],
@@ -130,6 +168,59 @@ const noPairings = verdictFor({
 });
 assert.equal(noPairings.ok, false);
 assert.ok(noPairings.reasons.some(r => /no pairings reported/i.test(r)));
+
+// ── Pairing applies to FINISHED frames only ─────────────────────────────────────
+// A PLATE of a pairing format has no labels at all (buildRenderPrompt's plate branch
+// forbids every glyph except the product's own label), so `pairings: []` is the CORRECT
+// answer and must pass. Before this, every Demand Gen plate of us-vs-them and
+// ingredient-callout was an unavoidable hard fail: 54 renders (~$7) on a default run
+// that could not succeed, with both concepts reported as fully failed.
+const plateOfPairingFormat = verdictFor({
+  expected: ['8 fl. oz. (236ml)'],
+  transcript: ['8 fl. oz. (236ml)'],
+  pairings: [],
+  format: pairingFormat,
+  mode: 'plate',
+});
+assert.equal(plateOfPairingFormat.ok, true, 'a plate cannot be required to report pairings');
+assert.deepEqual(plateOfPairingFormat.reasons, []);
+
+// The finished frame of that same format is unchanged — still a hard fail with no pairings.
+const finishedNoPairings = verdictFor({
+  expected: ['ORGANIC JOJOBA'],
+  transcript: ['ORGANIC JOJOBA'],
+  pairings: [],
+  format: pairingFormat,
+  mode: 'finished',
+});
+assert.equal(finishedNoPairings.ok, false);
+assert.ok(finishedNoPairings.reasons.some(r => /no pairings reported/i.test(r)));
+
+// ...and a finished frame with MISMATCHED pairings still fails, mode or no mode.
+const finishedMismatched = verdictFor({
+  expected: ['ORGANIC JOJOBA'],
+  transcript: ['ORGANIC JOJOBA'],
+  pairings: [{ label: 'ORGANIC JOJOBA', depicts: 'a spoon of red palm oil', matches: false }],
+  format: pairingFormat,
+  mode: 'finished',
+});
+assert.equal(finishedMismatched.ok, false);
+assert.equal(finishedMismatched.mismatchedPairs.length, 1);
+
+// Omitting mode entirely keeps the STRICT behaviour — a caller that forgets to thread
+// it must never fall through to the looser gate.
+assert.equal(
+  verdictFor({ expected: ['A'], transcript: ['A'], pairings: [], format: pairingFormat }).ok,
+  false,
+  'mode defaults to finished, the strict side',
+);
+
+// Text is still checked on a plate: the product's own label must be right.
+assert.equal(
+  verdictFor({ expected: ['8 fl. oz. (236ml)'], transcript: ['18 fl. oz. • 236ml'], pairings: [], format: pairingFormat, mode: 'plate' }).ok,
+  false,
+  'dropping the pairing requirement must not drop the text diff',
+);
 
 // A non-pairing format ignores pairings entirely.
 const plain = verdictFor({ expected: ['A'], transcript: ['A'], pairings: [], format: plainFormat });

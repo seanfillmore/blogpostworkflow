@@ -4,7 +4,11 @@
 //
 // Usage:
 //   node agents/ad-studio/index.js --product coconut-lotion [--variant coconut-breeze]
-//                                 [--formats us-vs-them,manifesto] [--variations 3] [--dry-run]
+//                                 [--formats us-vs-them,manifesto] [--variations 3]
+//                                 [--max-renders 120] [--dry-run]
+//
+// A default run (6 formats × 3 variations × 6 platform targets) is 108 renders ≈ $14
+// before retries; --max-renders is the hard ceiling. See the README's Cost section.
 //
 // Stages: angle → copy (+ claim gate) → single-pass render → verify → package.
 // See docs/superpowers/specs/2026-08-14-ad-studio-design.md
@@ -25,12 +29,42 @@ import { notify } from '../../lib/notify.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-export function slugify(s) {
-  return String(s || '')
-    .replace(/[‘’]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+// (There is deliberately no slugify() here: the concept slug is the format key, which
+// formats.js already guarantees is a slug. An exported-but-uncalled helper with a test
+// of its own reads as covered code that nothing uses.)
+
+// Gemini 3 Pro image, 2K. The single number every cost figure in the README and the
+// design spec is derived from — keep them in step if it changes.
+export const ESTIMATED_COST_PER_RENDER_USD = 0.13;
+
+// A default run is 6 concepts × 3 variations × 6 platform targets = 108 renders before
+// a single retry (~$14), and 324 (~$42) if every artifact needs all 3 attempts. Nothing
+// in the pipeline bounded that. 120 leaves a dozen retries on a default run and stops
+// the pathological case cold; override with --max-renders.
+export const DEFAULT_MAX_RENDERS = 120;
+
+// The number of --variations above which the flag is almost certainly a typo. 10
+// variations of one concept is already 60 renders (~$8).
+export const MAX_VARIATIONS = 10;
+
+/**
+ * Counts every render ATTEMPT, retries included — retries are what make the worst case
+ * 3x the nominal cost, so a ceiling that only counted artifacts would not be a ceiling.
+ * `take()` is called immediately before each paid call and returns false once the
+ * budget is spent; callers stop and record the skip rather than truncating silently.
+ */
+export function createRenderBudget(max) {
+  let used = 0;
+  return {
+    max,
+    used: () => used,
+    exhausted: () => used >= max,
+    take() {
+      if (used >= max) return false;
+      used += 1;
+      return true;
+    },
+  };
 }
 
 function textOf(msg) {
@@ -60,16 +94,29 @@ export function sniffImageMediaType(buf) {
 }
 
 /**
- * Render one variation, verifying after each attempt. Stops at maxAttempts.
- * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, proof:object}>}
+ * Render one variation, verifying after each attempt. Stops at maxAttempts, or earlier
+ * if the run-wide render budget is exhausted (see createRenderBudget) — a budget stop
+ * is reported, never silently swallowed.
+ * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, budgetStopped:boolean, proof:object}>}
  */
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, maxAttempts = 3 }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, mode = 'finished', maxAttempts = 3, budget = null }) {
   let attempts = 0;
   let lastProof = { ok: false, reasons: ['no attempt made'], missing: [], mismatchedPairs: [] };
   let lastBuffer = null;
   let lastMediaType = null;
+  let budgetStopped = false;
 
   while (attempts < maxAttempts) {
+    if (budget && !budget.take()) {
+      budgetStopped = true;
+      lastProof = {
+        ok: false,
+        reasons: [`render budget exhausted after ${budget.max} render(s) — stopped before attempt ${attempts + 1}`],
+        missing: lastProof.missing || [],
+        mismatchedPairs: lastProof.mismatchedPairs || [],
+      };
+      break;
+    }
     attempts += 1;
     lastBuffer = await renderVariation(gemini, { prompt, photoPaths, ratio });
     // Sniff on every attempt — nothing guarantees Gemini returns the same format twice.
@@ -82,21 +129,30 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: lastMediaType, data: lastBuffer.toString('base64') } },
-          { type: 'text', text: buildVerifyPrompt({ expected, format }) },
+          { type: 'text', text: buildVerifyPrompt({ expected, format, mode }) },
         ],
       }],
     });
 
     const { transcript, pairings } = parseVerifyResponse(textOf(msg));
-    lastProof = verdictFor({ expected, transcript, pairings, format });
+    lastProof = verdictFor({ expected, transcript, pairings, format, mode });
     lastProof.transcript = transcript;
-    if (lastProof.ok) return { ok: true, buffer: lastBuffer, mediaType: lastMediaType, attempts, proof: lastProof };
+    if (lastProof.ok) return { ok: true, buffer: lastBuffer, mediaType: lastMediaType, attempts, budgetStopped: false, proof: lastProof };
   }
 
-  return { ok: false, buffer: lastBuffer, mediaType: lastMediaType, attempts, proof: lastProof };
+  return { ok: false, buffer: lastBuffer, mediaType: lastMediaType, attempts, budgetStopped, proof: lastProof };
 }
 
-export function buildRunReport({ runId, product, results }) {
+/**
+ * @param {{runId:string, product:object, results:object[], renders?:number, budget?:{maxRenders:number, stopped:boolean, skipped:string[]}}} args
+ *
+ * `renders` and `cost` are here because a run that spends money and reports only
+ * accept/reject counts hides its own cost — the design spec's output-layout section
+ * always said run.json carries costs. `budget` records a budget stop and names every
+ * artifact that was dropped because of it, so a short run can never be mistaken for a
+ * complete one.
+ */
+export function buildRunReport({ runId, product, results, renders = 0, budget = null }) {
   let accepted = 0;
   let rejected = 0;
   const conceptsWithNoAcceptedVariation = [];
@@ -114,6 +170,19 @@ export function buildRunReport({ runId, product, results }) {
     product: { handle: product.handle, title: product.title },
     models: CREATIVE_MODELS.adStudio,
     totals: { accepted, rejected, concepts: results.length },
+    cost: {
+      renders,
+      perRenderUsd: ESTIMATED_COST_PER_RENDER_USD,
+      estimatedUsd: Number((renders * ESTIMATED_COST_PER_RENDER_USD).toFixed(2)),
+    },
+    budget: budget
+      ? {
+          maxRenders: budget.maxRenders,
+          stopped: Boolean(budget.stopped),
+          skipped: budget.skipped || [],
+          skippedCount: (budget.skipped || []).length,
+        }
+      : null,
     conceptsWithNoAcceptedVariation,
     results,
   };
@@ -136,8 +205,23 @@ export function parseArgs(argv) {
   if (!Number.isInteger(variations) || variations < 1) {
     throw new Error(`ad-studio: --variations must be a positive integer, got "${variationsRaw}"`);
   }
+  // Upper bound: --variations multiplies by 6 platform targets and 6 formats. An
+  // unbounded flag is an unbounded bill.
+  if (variations > MAX_VARIATIONS) {
+    throw new Error(
+      `ad-studio: --variations must be ${MAX_VARIATIONS} or fewer, got ${variations}. ` +
+      `Each variation is ${PLATFORM_TARGETS.length} renders per concept ` +
+      `(~$${(PLATFORM_TARGETS.length * ESTIMATED_COST_PER_RENDER_USD).toFixed(2)}); ` +
+      `raise --max-renders deliberately if you really mean it.`
+    );
+  }
+  const maxRendersRaw = getFlag('--max-renders');
+  const maxRenders = maxRendersRaw === undefined ? DEFAULT_MAX_RENDERS : parseInt(maxRendersRaw, 10);
+  if (!Number.isInteger(maxRenders) || maxRenders < 1) {
+    throw new Error(`ad-studio: --max-renders must be a positive integer, got "${maxRendersRaw}"`);
+  }
   const dryRun = argv.includes('--dry-run');
-  return { product, variant, formats, variations, dryRun };
+  return { product, variant, formats, variations, maxRenders, dryRun };
 }
 
 function loadEnv() {
@@ -189,14 +273,36 @@ function artifactFilename(baseName, mediaType) {
  * plates at all. Fails the whole run immediately instead, before anything is spent.
  * @returns {Promise<{ok:boolean, artifact:string, buffer:Buffer|null, proofEntry:object}>}
  */
-export async function renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate }) {
+export async function renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate, budget = null }) {
   const { requestRatio, needsCrop } = renderRatioFor(target.ratio);
   const artifactBase = artifactName(target.platform, target.ratio, target.mode);
 
   try {
     const prompt = buildRenderPrompt({ format, zones, product, brandKit, mode: target.mode });
     const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
-    const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format });
+    // mode is threaded all the way to verdictFor: a plate has no labels, so the
+    // image/label pairing requirement must not be applied to it.
+    const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format, mode: target.mode, budget });
+
+    // A budget stop before the first attempt produces no bytes at all.
+    if (!r.buffer) {
+      return {
+        ok: false,
+        artifact: artifactBase,
+        buffer: null,
+        proofEntry: {
+          platform: target.platform,
+          ratio: target.ratio,
+          requestRatio,
+          cropped: needsCrop,
+          mode: target.mode,
+          attempts: r.attempts,
+          budgetStopped: Boolean(r.budgetStopped),
+          ok: false,
+          reasons: r.proof.reasons,
+        },
+      };
+    }
 
     const buffer = needsCrop ? await cropToRatio(r.buffer, target.ratio) : r.buffer;
     const artifact = artifactFilename(artifactBase, r.mediaType);
@@ -213,6 +319,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
         mode: target.mode,
         mediaType: r.mediaType,
         attempts: r.attempts,
+        budgetStopped: Boolean(r.budgetStopped),
         ok: r.proof.ok,
         reasons: r.proof.reasons,
         missing: r.proof.missing,
@@ -237,6 +344,94 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
       },
     };
   }
+}
+
+/**
+ * Render every platform target for ONE variation.
+ *
+ * Extracted from main() so the render budget's stop behaviour is testable end to end
+ * with stubs — the ceiling that only exists inside main() is a ceiling nothing proves.
+ * Writes nothing: returns the buffers for the caller to write, so tests need no disk.
+ *
+ * @returns {Promise<{proofByArtifact:object, artifacts:{name:string, buffer:Buffer}[], ok:boolean, skipped:string[]}>}
+ */
+export async function renderVariationTargets({
+  gemini, anthropic, targets, format, zones, product, brandKit, photoPaths,
+  expectedFinished, expectedPlate, budget = null, onProgress = () => {},
+}) {
+  const proofByArtifact = {};
+  const artifacts = [];
+  const skipped = [];
+  let allOk = true;
+
+  for (const target of targets) {
+    const base = artifactName(target.platform, target.ratio, target.mode);
+
+    // Budget spent: stop cleanly and NAME what was dropped. Never silently truncate —
+    // a short run that looks like a complete one is how $14 becomes an unexplained $42.
+    if (budget && budget.exhausted()) {
+      skipped.push(base);
+      allOk = false;
+      proofByArtifact[base] = {
+        platform: target.platform,
+        ratio: target.ratio,
+        mode: target.mode,
+        ok: false,
+        skipped: true,
+        budgetStopped: true,
+        reasons: [`skipped — render budget of ${budget.max} exhausted`],
+      };
+      onProgress({ artifact: base, skipped: true });
+      continue;
+    }
+
+    // renderTarget never throws for a render/verify failure — a failure on ONE target
+    // (an Anthropic error, an unsupported-ratio 400, a corrupt image) must not discard
+    // the rest of the run, because earlier targets/variations/concepts already cost
+    // money. Reuses buildRunReport's existing rejected-variation path via ok=false.
+    const result = await renderTarget({
+      gemini, anthropic, target, format, zones, product, brandKit, photoPaths,
+      expectedFinished, expectedPlate, budget,
+    });
+
+    if (result.buffer) artifacts.push({ name: result.artifact, buffer: result.buffer });
+    proofByArtifact[result.artifact] = result.proofEntry;
+    if (!result.ok) allOk = false;
+    if (result.proofEntry.budgetStopped) skipped.push(result.artifact);
+    onProgress({ artifact: result.artifact, result });
+  }
+
+  return { proofByArtifact, artifacts, ok: allOk, skipped };
+}
+
+/**
+ * A claim whose text was truncated out of its zone must not reach the claim gate — it
+ * will never render, so sourcing it proves nothing.
+ *
+ * Matched on ZONE AND TEXT, never text alone. Keying on text alone silently filtered a
+ * claim on a STRING zone (bottomBar) whose wording happened to match an item truncated
+ * out of a different, ARRAY zone (listItems) — the bottomBar still renders, so an
+ * unsourced claim would have reached a paid render with the gate none the wiser.
+ */
+export function filterDroppedClaims(claims, dropped) {
+  if (!dropped || dropped.length === 0) return claims;
+  return (claims || []).filter(c => !dropped.some(d => d.zone === c.zone && d.items.includes(c.text)));
+}
+
+/**
+ * The verify gate's expected-text list for each mode.
+ *
+ * labelStrings ("8 fl. oz. (236ml)") are only demanded back on formats that render the
+ * product large enough to read — see formats.js's productProminent. On manifesto and
+ * problem-aware the product is deliberately tiny, and requiring a vision model to
+ * transcribe a 6pt volume marking off it fails every attempt and burns the retries.
+ */
+export function expectedForFormat({ zones, format, product }) {
+  const labelStrings = format.productProminent ? [...(product.labelStrings || [])] : [];
+  return {
+    finished: [...expectedStrings(zones), ...labelStrings],
+    plate: labelStrings,
+  };
 }
 
 function stripHtml(html) {
@@ -432,9 +627,8 @@ async function main() {
     // A claim whose text was just truncated away must not reach the gate either — it
     // will never render, so sourcing it (or failing to) proves nothing, and running
     // the gate against text that no longer exists is exactly the "validate a claim we
-    // then dropped" bug this fix exists to close.
-    const droppedTexts = new Set(dropped.flatMap(d => d.items));
-    const claims = droppedTexts.size ? rawClaims.filter(c => !droppedTexts.has(c.text)) : rawClaims;
+    // then dropped" bug this fix exists to close. Zone-aware — see filterDroppedClaims.
+    const claims = filterDroppedClaims(rawClaims, dropped);
 
     // Hard stop — never wrapped in try/catch, no override flag. An unsourced factual
     // claim must not reach the render stage. Runs on the TRUNCATED copy above.
@@ -480,6 +674,9 @@ async function main() {
     console.warn(`ad-studio: no reference photos found under ${photoDir} — rendering with zero product photos.`);
   }
 
+  const budget = createRenderBudget(args.maxRenders);
+  const skippedArtifacts = [];
+
   const results = [];
   for (const concept of concepts) {
     const { format, zones, claims } = concept;
@@ -489,50 +686,57 @@ async function main() {
     writeFileSync(join(conceptDir, 'copy.json'), JSON.stringify({ zones, claims }, null, 2));
     writeFileSync(join(conceptDir, 'demand-gen-assets.json'), JSON.stringify(buildDemandGenAssets(zones), null, 2));
 
-    // Finished (Meta) frames must reproduce the ad copy AND the product's real label —
-    // this is where the labelStrings guard actually pays off: an invented volume shows
-    // up as a "missing expected string" the same way a misspelled headline would.
+    // Finished (Meta) frames must reproduce the ad copy AND — where the layout renders
+    // the product large enough to read — the product's real label: an invented volume
+    // shows up as a "missing expected string" the same way a misspelled headline would.
     // Plates (Demand Gen) carry no ad copy at all, only the product's own label.
-    const expectedFinished = [...expectedStrings(zones), ...product.labelStrings];
-    const expectedPlate = [...product.labelStrings];
+    const { finished: expectedFinished, plate: expectedPlate } = expectedForFormat({ zones, format, product });
 
     const variationsOut = [];
     for (let n = 1; n <= args.variations; n++) {
       const dir = variationDir(ROOT, runId, conceptSlug, n);
       mkdirSync(dir, { recursive: true });
 
-      const proofByArtifact = {};
-      let allOk = true;
+      const { proofByArtifact, artifacts, ok: allOk, skipped } = await renderVariationTargets({
+        gemini, anthropic, targets: PLATFORM_TARGETS, format, zones, product, brandKit, photoPaths,
+        expectedFinished, expectedPlate, budget,
+        onProgress: ({ artifact, result, skipped: wasSkipped }) => {
+          if (wasSkipped) {
+            console.log(`  ${conceptSlug} v${n} ${artifact}: SKIPPED — render budget of ${budget.max} exhausted`);
+            return;
+          }
+          console.log(
+            result.buffer
+              ? `  ${conceptSlug} v${n} ${artifact}: ${result.ok ? 'OK' : 'FAILED'} (${result.proofEntry.attempts} attempt(s))`
+              : `  ${conceptSlug} v${n} ${artifact}: ERROR — ${result.proofEntry.error || result.proofEntry.reasons?.join('; ')}`
+          );
+        },
+      });
 
-      for (const target of PLATFORM_TARGETS) {
-        // renderTarget never throws — a render/verify failure on ONE target (an
-        // Anthropic error, an unsupported-ratio 400, a corrupt image) must not
-        // discard the rest of the run, because earlier targets/variations/concepts
-        // already cost money. Reuses buildRunReport's existing rejected-variation
-        // path via allOk=false below rather than adding a new one.
-        const result = await renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate });
-
-        if (result.buffer) writeFileSync(join(dir, result.artifact), result.buffer);
-        proofByArtifact[result.artifact] = result.proofEntry;
-        if (!result.ok) allOk = false;
-
-        console.log(
-          result.buffer
-            ? `  ${conceptSlug} v${n} ${result.artifact}: ${result.ok ? 'OK' : 'FAILED'} (${result.proofEntry.attempts} attempt(s))`
-            : `  ${conceptSlug} v${n} ${result.artifact}: ERROR — ${result.proofEntry.error}`
-        );
-      }
-
+      for (const a of artifacts) writeFileSync(join(dir, a.name), a.buffer);
       writeFileSync(join(dir, 'proof.json'), JSON.stringify(proofByArtifact, null, 2));
+      for (const s of skipped) skippedArtifacts.push(`${conceptSlug}/v${n}/${s}`);
       variationsOut.push({ n, ok: allOk });
     }
 
     results.push({ conceptSlug, format: format.key, variations: variationsOut });
   }
 
-  const report = buildRunReport({ runId, product, results });
+  const report = buildRunReport({
+    runId,
+    product,
+    results,
+    renders: budget.used(),
+    budget: { maxRenders: budget.max, stopped: skippedArtifacts.length > 0, skipped: skippedArtifacts },
+  });
   writeFileSync(join(runDir, 'run.json'), JSON.stringify(report, null, 2));
-  console.log(`\nRun complete: ${report.totals.accepted} accepted / ${report.totals.rejected} rejected. Output: data/creatives/ad-studio/${runId}/`);
+  console.log(`\nRun complete: ${report.totals.accepted} accepted / ${report.totals.rejected} rejected. ${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}. Output: data/creatives/ad-studio/${runId}/`);
+  if (report.budget?.stopped) {
+    console.log(
+      `BUDGET STOP — the --max-renders ceiling of ${report.budget.maxRenders} was reached. ` +
+      `${report.budget.skippedCount} artifact(s) were not rendered:\n  ${report.budget.skipped.join('\n  ')}`
+    );
+  }
 
   return { report };
 }
@@ -543,10 +747,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     .then(async (result) => {
       if (result?.dryRun) return; // a proving run, not a production run — no digest noise
       const { report } = result || {};
-      const hasGaps = (report?.conceptsWithNoAcceptedVariation?.length || 0) > 0;
+      const budgetStopped = Boolean(report?.budget?.stopped);
+      const hasGaps = (report?.conceptsWithNoAcceptedVariation?.length || 0) > 0 || budgetStopped;
       const body = report
         ? `${report.totals.accepted} accepted / ${report.totals.rejected} rejected across ${report.totals.concepts} concept(s).` +
-          (hasGaps ? `\nNo accepted variation: ${report.conceptsWithNoAcceptedVariation.join(', ')}` : '') +
+          `\n${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}.` +
+          (budgetStopped
+            ? `\nBUDGET STOP at --max-renders ${report.budget.maxRenders} — ${report.budget.skippedCount} artifact(s) skipped.`
+            : '') +
+          (report.conceptsWithNoAcceptedVariation.length ? `\nNo accepted variation: ${report.conceptsWithNoAcceptedVariation.join(', ')}` : '') +
           `\nOutput: data/creatives/ad-studio/${report.runId}/`
         : 'Ad Studio run complete.';
       await notify({

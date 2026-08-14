@@ -10,6 +10,23 @@
 // beside a word can render every word correctly and still caption jojoba oil as
 // coconut oil, so those get a semantic pairing check on top of the text diff.
 //
+// productProminent answers ONE question: does this layout render the product large
+// enough that a vision model can read the text printed on its label?
+//
+// It is a LEGIBILITY declaration, not a statement about how much the product matters.
+// index.js folds product.labelStrings ("8 fl. oz. (236ml)", the brand mark) into the
+// verify gate's expected-text list, and the gate fails — and retries, at ~$0.13 a
+// render — whenever an expected string cannot be transcribed. Two of these layouts put
+// the product on screen deliberately tiny: manifesto renders it "small and understated
+// at the bottom center, sitting on the surface like a signature", problem-aware
+// "present but not dominant". Requiring a 6pt volume marking to be read back off those
+// is the same unsatisfiable expectation as the badge arc micro-copy, which cost five
+// fix rounds and three burned renders per target before it was removed.
+//
+// The render prompt still names labelStrings for EVERY format (render.js's fidelity
+// block) — the model is always told exactly what the label says, so it still cannot
+// invent a volume. This flag only decides whether the gate demands to read it back.
+//
 // zoneCapacity (optional) caps how many strings an array-valued zone may carry,
 // keyed by the layoutBrief's own physical description of that zone — a "vertical
 // list running down one side" or "cells split by thin vertical rules" only has room
@@ -29,6 +46,8 @@ export const FORMATS = [
     name: 'Us vs them',
     awareness: 'solution',
     pairsImagesWithLabels: true,
+    // "the product standing centered between the columns as the hero" — full-size.
+    productProminent: true,
     zones: ['headline', 'leftHeader', 'leftItems', 'rightHeader', 'rightItems', 'bottomBar'],
     // leftItems/rightItems are paired rows (X icon vs check icon) — a phone-width two-
     // column comparison reads cleanly up to about 4 rows per side before it either
@@ -50,6 +69,8 @@ export const FORMATS = [
     name: 'Ingredient callout',
     awareness: 'solution',
     pairsImagesWithLabels: true,
+    // "The product stands large on the opposite side as the hero" — full-size.
+    productProminent: true,
     zones: ['headline', 'subhead', 'listItems', 'bottomBar'],
     // This is the format the real incident happened on. listItems is a vertical list
     // running down HALF the frame opposite the hero product — 4 image+label rows is
@@ -73,6 +94,9 @@ export const FORMATS = [
     name: 'Manifesto / negative framing',
     awareness: 'problem',
     pairsImagesWithLabels: false,
+    // "small and understated at the bottom center, sitting on the surface like a
+    // signature" — the label is not legible at that size, so it is not gated.
+    productProminent: false,
     zones: ['headline', 'subhead', 'rows', 'closer'],
     // rows are full-width typographic lines separated by rules on a poster-style
     // layout — each one is visually heavy (label + a large phrase), so the format
@@ -95,6 +119,8 @@ export const FORMATS = [
     name: 'Problem-aware educational',
     awareness: 'problem',
     pairsImagesWithLabels: false,
+    // "the product present but not dominant" in a lifestyle scene — not label-legible.
+    productProminent: false,
     // No list-shaped zone — bottomBar is "a single restrained line of caps", so
     // zoneCapacity is omitted.
     zones: ['headline', 'subhead', 'bottomBar'],
@@ -112,6 +138,9 @@ export const FORMATS = [
     name: 'Top-X / third-party review',
     awareness: 'solution',
     pairsImagesWithLabels: false,
+    // "presented as the standout pick, clearly the hero" on a generous flat-lay — the
+    // label is the point of a roundup frame and is rendered legibly.
+    productProminent: true,
     // No list-shaped zone — bottomBar is "a restrained line of caps", so
     // zoneCapacity is omitted.
     zones: ['headline', 'subhead', 'bottomBar'],
@@ -129,6 +158,9 @@ export const FORMATS = [
     name: 'Offer-focused',
     awareness: 'product',
     pairsImagesWithLabels: false,
+    // "The product on a clean background, lit like premium CPG product photography" —
+    // it is the frame's largest element after the offer badge.
+    productProminent: true,
     // No list-shaped zone — offerBadge is a single badge/ribbon string and bottomBar
     // is "one line of letterspaced caps", so zoneCapacity is omitted.
     zones: ['headline', 'subhead', 'offerBadge', 'bottomBar'],

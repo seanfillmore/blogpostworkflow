@@ -211,6 +211,26 @@ photographs available and the PDP carries strong mechanism copy plus a live, sou
 
 ## Cost
 
-~$0.13 per 2K render. 3 variations across 3 ratios ≈ $1.20 per concept before retries.
+~$0.13 per 2K render. **Every platform target is an independent render — the three
+Demand Gen plates are not free copies of the Meta frames**, which an earlier version of
+this section missed, understating the true cost by roughly 2x.
+
+Per concept: 6 platform targets × 3 variations = **18 renders ≈ $2.34** before retries,
+up to $7.02 if every artifact needs all 3 attempts.
+
+A default invocation (`--product <handle>` with no other flags) runs the full six-format
+rotation:
+
+| | renders | ≈ cost |
+|---|---|---|
+| Default run, no retries | 6 formats × 3 variations × 6 targets = **108** | **$14.04** |
+| Default run, worst case (3 attempts everywhere) | 324 | $42.12 |
+| Ceiling — `--max-renders`, default 120 | 120 | $15.60 |
+
+`--max-renders` counts every render attempt, retries included. When the ceiling is
+reached the run stops rendering, still writes `run.json`, and records the stop plus the
+name of every skipped artifact under `budget` — it never truncates silently.
+`--variations` is capped at 10 for the same reason.
+
 Verification adds a Haiku vision call per render. Metered through the existing
 `lib/llm-usage` path so it lands in `scripts/llm-cost.mjs --week`.

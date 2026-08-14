@@ -11,9 +11,21 @@
 
 import { normalizeForMatch } from './claims.js';
 
-export function buildVerifyPrompt({ expected, format }) {
-  const list = expected.map(s => `  - "${s}"`).join('\n');
-  const wantsPairings = format.pairsImagesWithLabels;
+/**
+ * `mode` is 'finished' (Meta baked frame) or 'plate' (Demand Gen, text-free).
+ *
+ * A PLATE carries no ad copy by construction — buildRenderPrompt's plate branch says
+ * "ABSOLUTELY NO TEXT ... anywhere in the image, except the product's own printed
+ * label". So a plate has no labels to pair pictures with, and asking for pairings on
+ * one can only produce noise. Both this prompt and verdictFor gate the pairing check
+ * on mode for that reason; see verdictFor.
+ *
+ * Defaults to 'finished' — the strict side — so a caller that forgets to thread mode
+ * through gets the tighter gate, never the looser one.
+ */
+export function buildVerifyPrompt({ expected, format, mode = 'finished' }) {
+  const list = (expected || []).map(s => `  - "${s}"`).join('\n');
+  const wantsPairings = format.pairsImagesWithLabels && mode === 'finished';
 
   return `You are proofreading a finished advertisement image before it goes live.
 
@@ -74,19 +86,63 @@ export function parseVerifyResponse(raw) {
  * characters. Deliberately not per-word matching and not a similarity score: the gate's
  * value is that it caught a bottom bar the model had silently rewritten, and either of
  * those would let that through.
+ *
+ * The match is ANCHORED AT TOKEN BOUNDARIES. A plain String.includes accepts a
+ * superstring, which is the single worst false pass this gate can produce:
+ *
+ *   expected "8 fl. oz. (236ml)"  vs rendered "18 fl. oz. • 236ml"   → passed
+ *   expected "2 fl oz (60ml)"     vs rendered "12 fl oz 60ml"        → passed
+ *   expected "real SKIN CARE"     vs rendered "unreal SKIN CARE"     → passed
+ *
+ * i.e. a render printing an invented volume on the bottle sailed through the one gate
+ * that exists to stop invented specs. A match may therefore neither start nor end
+ * mid-token. Whitespace is the only boundary: the hyphen is NOT one, because
+ * normalizeForMatch keeps "cold-pressed" as a single token on purpose.
  */
+function includesAtTokenBoundary(haystack, needle) {
+  if (!needle) return false;
+  let from = 0;
+  for (;;) {
+    const i = haystack.indexOf(needle, from);
+    if (i === -1) return false;
+    const end = i + needle.length;
+    const startsClean = i === 0 || haystack[i - 1] === ' ';
+    const endsClean = end === haystack.length || haystack[end] === ' ';
+    if (startsClean && endsClean) return true;
+    from = i + 1;
+  }
+}
+
 export function diffTranscript(expected, transcript) {
   const runs = (transcript || []).map(normalizeForMatch).filter(Boolean);
   const byRun = runs.join(' | ');
   const flowed = runs.join(' ');
   const missing = (expected || []).filter(e => {
     const needle = normalizeForMatch(e);
-    return !byRun.includes(needle) && !flowed.includes(needle);
+    // An expected string with no matchable text (pure punctuation) is unverifiable
+    // either way; it was never a failure before the anchoring and must not become one,
+    // or a stray glyph in a zone would burn three paid renders proving nothing.
+    if (!needle) return false;
+    return !includesAtTokenBoundary(byRun, needle) && !includesAtTokenBoundary(flowed, needle);
   });
   return { ok: missing.length === 0, missing };
 }
 
-export function verdictFor({ expected, transcript, pairings, format }) {
+/**
+ * The pairing requirement applies to FINISHED frames only.
+ *
+ * A plate is text-free by construction, so it carries no labels, so the vision model
+ * correctly reports `pairings: []` — and requiring pairings there made every Demand Gen
+ * plate of a pairing format a guaranteed hard fail: 2 formats × 3 plate targets ×
+ * 3 variations × 3 attempts = 54 renders (~$7) that could not succeed, with both
+ * concepts reported as fully failed even though their Meta frames were fine.
+ *
+ * For finished frames the check is unchanged and stays exactly as strict — it is the
+ * design's centrepiece, the one thing that catches an ad where every word is spelled
+ * correctly and jojoba oil is captioned as coconut oil. `mode` defaults to 'finished'
+ * so a caller that omits it gets the strict path.
+ */
+export function verdictFor({ expected, transcript, pairings, format, mode = 'finished' }) {
   const reasons = [];
   const { missing } = diffTranscript(expected, transcript);
   if (missing.length) {
@@ -94,7 +150,7 @@ export function verdictFor({ expected, transcript, pairings, format }) {
   }
 
   let mismatchedPairs = [];
-  if (format.pairsImagesWithLabels) {
+  if (format.pairsImagesWithLabels && mode === 'finished') {
     if (!pairings || pairings.length === 0) {
       reasons.push('no pairings reported for a layout that pairs images with labels');
     } else {

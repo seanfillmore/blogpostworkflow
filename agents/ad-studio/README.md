@@ -17,7 +17,7 @@ Plan: `docs/superpowers/plans/2026-08-14-ad-studio.md`
 
 ```bash
 node agents/ad-studio/index.js --product <handle> [--variant <name>] \
-  [--formats <key1,key2,...>] [--variations <n>] [--dry-run]
+  [--formats <key1,key2,...>] [--variations <n>] [--max-renders <n>] [--dry-run]
 ```
 
 | Flag | Required | Meaning |
@@ -25,8 +25,12 @@ node agents/ad-studio/index.js --product <handle> [--variant <name>] \
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`. |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
 | `--formats` | no | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). Omitted or empty → the full six-format rotation. |
-| `--variations` | no | Renders per concept. Default `3`. |
+| `--variations` | no | Variations per concept — each is 6 renders. Default `3`, maximum `10`. |
+| `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
 | `--dry-run` | no | Generates copy and runs the claim gate, prints the result, and exits before any image is rendered. See below. |
+
+**Read the Cost section before running without `--dry-run`.** A default invocation is
+108 renders ≈ $14.
 
 Example — the one-concept proving run used before any batch:
 
@@ -52,8 +56,14 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    per variation per platform target, conditioned on up to 4 real reference
    photographs. The product is generated in-scene, never composited.
 5. **Verify** (`verify.js`, model: `claude-haiku-4-5`) — transcribes every visible
-   string and, for formats that pair a picture with a label, checks the pairing too.
-   `renderWithRetry` retries up to 3 attempts total before accepting the failure.
+   string and, on **finished frames** of formats that pair a picture with a label,
+   checks the pairing too. The pairing check does not apply to Demand Gen plates: a
+   plate is text-free by construction, so it has no labels to pair anything with, and
+   demanding pairings there made every plate of a pairing format an unavoidable hard
+   fail. Text matching is anchored at token boundaries — an unanchored substring match
+   accepted `18 fl. oz.` for an expected `8 fl. oz.`, the exact false spec this gate
+   exists to stop. `renderWithRetry` retries up to 3 attempts total before accepting
+   the failure.
 6. **Package** (`packaging.js`) — writes the six platform artifacts (3 Meta finished
    frames + 3 Demand Gen text-free plates) and buckets the concept's copy into Demand
    Gen's headline/long-headline/description fields.
@@ -78,6 +88,31 @@ data/creatives/ad-studio/<run-id>/
     v3/ ...
 ```
 
+`run.json` also carries `cost` (`renders`, `perRenderUsd`, `estimatedUsd`) and `budget`
+(`maxRenders`, `stopped`, `skipped[]`).
+
+**Known limitation — no retention policy.** `data/creatives/ad-studio/` is gitignored
+(one default run is ~137 MB of 2K renders) and nothing prunes it. Delete old run
+directories by hand; the production box has a 24 GB disk and a full one has already cost
+this project four days of cron.
+
+## Cost
+
+Every platform target is an **independent render** — the three Demand Gen plates are not
+free crops of the Meta frames.
+
+| | renders | ≈ cost |
+|---|---|---|
+| One variation of one concept (6 targets) | 6 | $0.78 |
+| One concept, `--variations 3` | 18 | $2.34 |
+| **Default run** — 6 formats × 3 variations × 6 targets | **108** | **$14.04** |
+| Default run, worst case (3 verify attempts everywhere) | 324 | $42.12 |
+| `--max-renders` default ceiling | 120 | $15.60 |
+
+At ~$0.13 per Gemini 3 Pro 2K render, plus one Haiku vision call per render for the
+verify gate. `--dry-run` costs one Opus copy call per format and renders nothing.
+Scope a run with `--formats` and `--variations` rather than relying on the ceiling.
+
 ## Global constraints (non-obvious, do not relax)
 
 - **Single-pass render only.** A rendered image (finished or plate) is never fed back
@@ -91,8 +126,14 @@ data/creatives/ad-studio/<run-id>/
 - **Exact label strings, every time.** `product.labelStrings` (built by
   `buildLabelStrings` in `index.js` from quoted label text and the volume marking in
   the manifest's `productDescription`, plus `--variant`) is named literally in every
-  render prompt and is also folded into the verification gate's expected-text list
-  for finished frames. **`main()` aborts if this list comes back empty** — an empty
+  render prompt — every format, both modes — and is additionally folded into the
+  verification gate's expected-text list for formats that declare
+  `productProminent: true`. That flag is a **legibility** judgement, not a priority
+  one: `manifesto` renders the product "small and understated at the bottom center"
+  and `problem-aware` "present but not dominant", and no vision model can read a 6pt
+  volume marking off those, so demanding it back would fail every attempt and burn the
+  retries. The model is still told exactly what the label says on those formats, so it
+  still cannot invent a volume. **`main()` aborts if this list comes back empty** — an empty
   list is exactly how the image model invents a volume that was never on the bottle
   (a design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text
   wasn't named). There is no flag to skip this check.

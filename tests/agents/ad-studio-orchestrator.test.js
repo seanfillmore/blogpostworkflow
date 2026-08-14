@@ -3,8 +3,24 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { renderWithRetry, renderTarget, buildRunReport, slugify, buildLabelStrings, sniffImageMediaType } from '../../agents/ad-studio/index.js';
+import {
+  renderWithRetry,
+  renderTarget,
+  renderVariationTargets,
+  buildRunReport,
+  buildLabelStrings,
+  sniffImageMediaType,
+  createRenderBudget,
+  filterDroppedClaims,
+  expectedForFormat,
+  parseArgs,
+  DEFAULT_MAX_RENDERS,
+  MAX_VARIATIONS,
+  ESTIMATED_COST_PER_RENDER_USD,
+} from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
+import { assertClaimsSourced } from '../../agents/ad-studio/claims.js';
+import { PLATFORM_TARGETS } from '../../agents/ad-studio/packaging.js';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -144,10 +160,6 @@ const expected = ['OUR LOTION IS SIX INGREDIENTS'];
   assert.ok(r.proof.reasons.length > 0);
   assert.deepEqual(r.proof.missing, expected);
 }
-
-// slugify
-assert.equal(slugify('SIX INGREDIENTS. That’s the whole list!'), 'six-ingredients-thats-the-whole-list');
-assert.equal(slugify('  Multiple   Spaces  '), 'multiple-spaces');
 
 // buildRunReport summarises accepted vs rejected and never hides a rejection.
 const report = buildRunReport({
@@ -388,4 +400,214 @@ const expectedPlate = [...product.labelStrings];
     }),
     /no render-ratio mapping/i
   );
+}
+
+// ── mode is threaded from the platform target all the way to verdictFor ─────────
+// A PLATE of a format that pairs images with labels carries no labels, so the vision
+// model reports no pairings — and a verdict that demands pairings there can NEVER pass.
+// On a default run that was us-vs-them + ingredient-callout × 3 plate targets × 3
+// variations × 3 attempts = 54 renders (~$7) that could not succeed, with both concepts
+// reported as fully failed even though their Meta frames were fine.
+const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabels: true
+{
+  const target = { platform: 'demand-gen', ratio: '1:1', mode: 'plate' };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    // Returns a transcript and NO pairings — exactly what a text-free plate produces.
+    anthropic: anthropicFailing(0, expectedPlate),
+    target, format: pairingFormat, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate,
+  });
+  assert.equal(result.ok, true, 'a plate of a pairing format must be able to pass');
+  assert.equal(result.proofEntry.attempts, 1, 'and must not burn the retry budget getting there');
+}
+
+// The finished frame of that same format is unchanged: no pairings is still a hard fail.
+{
+  const target = { platform: 'meta', ratio: '1:1', mode: 'finished' };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicFailing(0, expectedFinished),
+    target, format: pairingFormat, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate,
+  });
+  assert.equal(result.ok, false, 'a finished pairing frame with no pairings must still fail');
+  assert.equal(result.proofEntry.attempts, 3, 'and must exhaust its attempts trying');
+  assert.ok(result.proofEntry.reasons.some(r => /no pairings reported/i.test(r)));
+}
+
+// ── Render budget ───────────────────────────────────────────────────────────────
+// createRenderBudget counts ATTEMPTS, retries included.
+{
+  const b = createRenderBudget(2);
+  assert.equal(b.exhausted(), false);
+  assert.equal(b.take(), true);
+  assert.equal(b.take(), true);
+  assert.equal(b.take(), false, 'the ceiling is hard');
+  assert.equal(b.used(), 2, 'a refused take must not be counted');
+  assert.equal(b.exhausted(), true);
+}
+
+// renderWithRetry stops mid-retry when the budget runs out instead of spending 3
+// attempts, and says so rather than reporting a plain verification failure.
+{
+  const g = geminiReturning();
+  const a = anthropicFailing(99, expected);
+  const budget = createRenderBudget(1);
+  const r = await renderWithRetry({
+    gemini: g, anthropic: a, prompt: 'P', photoPaths: [], ratio: '1:1',
+    expected, format, maxAttempts: 3, budget,
+  });
+  assert.equal(r.attempts, 1, 'the budget, not maxAttempts, decided when to stop');
+  assert.equal(g.calls(), 1, 'no render may happen after the ceiling is hit');
+  assert.equal(r.ok, false);
+  assert.equal(r.budgetStopped, true);
+  assert.ok(r.proof.reasons.some(x => /budget exhausted/i.test(x)));
+  assert.equal(budget.used(), 1);
+}
+
+// A budget already spent means the render never happens at all — and renderTarget
+// reports that as a budget stop with no bytes, not as a verification failure.
+{
+  const g = geminiReturning();
+  const budget = createRenderBudget(0);
+  const result = await renderTarget({
+    gemini: g,
+    anthropic: anthropicFailing(0, expectedFinished),
+    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    format, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate, budget,
+  });
+  assert.equal(g.calls(), 0, 'not one paid call past the ceiling');
+  assert.equal(result.ok, false);
+  assert.equal(result.buffer, null);
+  assert.equal(result.proofEntry.budgetStopped, true);
+}
+
+// renderVariationTargets: the ceiling stops further renders and NAMES what was dropped.
+{
+  const g = geminiReturning();
+  const budget = createRenderBudget(2);
+  const out = await renderVariationTargets({
+    gemini: g,
+    anthropic: anthropicFailing(0, expectedFinished),
+    targets: PLATFORM_TARGETS,
+    format, zones, product, brandKit, photoPaths: [],
+    // Both modes expect the same strings here so the stub verifier passes either way.
+    expectedFinished, expectedPlate: expectedFinished,
+    budget,
+  });
+  assert.equal(g.calls(), 2, 'exactly the budget was spent, no more');
+  assert.equal(out.artifacts.length, 2, 'only the funded targets produced bytes');
+  assert.equal(out.ok, false, 'a budget-stopped variation is not an accepted one');
+  assert.equal(out.skipped.length, PLATFORM_TARGETS.length - 2, 'every dropped artifact is named');
+  assert.deepEqual(
+    out.skipped,
+    ['finished-9x16.png', 'plate-1_91x1.png', 'plate-1x1.png', 'plate-4x5.png'],
+  );
+  assert.equal(
+    Object.keys(out.proofByArtifact).length,
+    PLATFORM_TARGETS.length,
+    'proof.json must still account for every target, skipped ones included',
+  );
+  assert.equal(out.proofByArtifact['plate-4x5.png'].skipped, true);
+  assert.ok(out.proofByArtifact['plate-4x5.png'].reasons.some(r => /budget/i.test(r)));
+}
+
+// With no budget the same call renders every target — proves the assertions above are
+// about the ceiling and not about some unrelated early exit.
+{
+  const g = geminiReturning();
+  const out = await renderVariationTargets({
+    gemini: g,
+    anthropic: anthropicFailing(0, expectedFinished),
+    targets: PLATFORM_TARGETS.filter(t => t.ratio !== '1.91:1'), // the crop path needs a real image
+    format, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate: expectedFinished,
+  });
+  assert.equal(out.skipped.length, 0);
+  assert.equal(out.ok, true);
+  assert.equal(g.calls(), PLATFORM_TARGETS.length - 1);
+}
+
+// ── parseArgs: cost flags ───────────────────────────────────────────────────────
+{
+  const a = parseArgs(['--product', 'coconut-lotion']);
+  assert.equal(a.variations, 3);
+  assert.equal(a.maxRenders, DEFAULT_MAX_RENDERS, 'a run always has a ceiling, flag or no flag');
+
+  assert.equal(parseArgs(['--product', 'x', '--max-renders', '12']).maxRenders, 12);
+  assert.throws(() => parseArgs(['--product', 'x', '--max-renders', '0']), /--max-renders must be a positive integer/);
+  assert.throws(() => parseArgs(['--product', 'x', '--max-renders', 'lots']), /--max-renders must be a positive integer/);
+
+  // --variations multiplies by 6 targets and 6 formats; unbounded is an unbounded bill.
+  assert.throws(() => parseArgs(['--product', 'x', '--variations', '100']), new RegExp(`--variations must be ${MAX_VARIATIONS} or fewer`));
+  assert.equal(parseArgs(['--product', 'x', '--variations', String(MAX_VARIATIONS)]).variations, MAX_VARIATIONS);
+  assert.throws(() => parseArgs(['--product', 'x', '--variations', '0']), /positive integer/);
+}
+
+// ── run.json carries the run's cost and any budget stop ─────────────────────────
+{
+  const r = buildRunReport({
+    runId: 'run-2',
+    product: { handle: 'coconut-lotion', title: 'Lotion' },
+    results: [{ conceptSlug: 'a', format: 'manifesto', variations: [{ n: 1, ok: true }] }],
+    renders: 54,
+    budget: { maxRenders: 54, stopped: true, skipped: ['a/v3/plate-4x5.png', 'b/v1/finished-1x1.png'] },
+  });
+  assert.equal(r.cost.renders, 54);
+  assert.equal(r.cost.perRenderUsd, ESTIMATED_COST_PER_RENDER_USD);
+  assert.equal(r.cost.estimatedUsd, 7.02, '54 renders at $0.13');
+  assert.equal(r.budget.stopped, true, 'a truncated run must never read as a complete one');
+  assert.equal(r.budget.skippedCount, 2);
+  assert.deepEqual(r.budget.skipped, ['a/v3/plate-4x5.png', 'b/v1/finished-1x1.png']);
+
+  const clean = buildRunReport({
+    runId: 'run-3',
+    product: { handle: 'coconut-lotion', title: 'Lotion' },
+    results: [{ conceptSlug: 'a', format: 'manifesto', variations: [{ n: 1, ok: true }] }],
+    renders: 6,
+  });
+  assert.equal(clean.cost.estimatedUsd, 0.78);
+  assert.equal(clean.budget, null);
+}
+
+// ── The dropped-copy claim filter is zone-aware ─────────────────────────────────
+// Keying on claim TEXT alone filtered a claim on a STRING zone whose wording happened to
+// match an item truncated out of a different ARRAY zone. That zone still renders, so an
+// unsourced claim would have reached a paid render with the gate none the wiser.
+{
+  const dropped = [{ zone: 'listItems', items: ['Kills odor bacteria'] }];
+  const claims = [{ zone: 'bottomBar', text: 'Kills odor bacteria', factual: true, sourceId: 'pdp', evidence: 'nothing like this in the source' }];
+
+  const kept = filterDroppedClaims(claims, dropped);
+  assert.equal(kept.length, 1, 'a claim on a zone that still renders must stay gated');
+  assert.throws(
+    () => assertClaimsSourced(kept, { pdp: 'cold-pressed coconut oil and jojoba' }),
+    /Claim gate failed/,
+  );
+
+  // The claim actually truncated away is still filtered out — it will never render.
+  const sameZone = filterDroppedClaims(
+    [{ zone: 'listItems', text: 'Kills odor bacteria', factual: true }],
+    dropped,
+  );
+  assert.deepEqual(sameZone, []);
+
+  // No truncation at all → claims pass through untouched.
+  assert.equal(filterDroppedClaims(claims, []).length, 1);
+}
+
+// ── labelStrings are only demanded back where the product is legible ────────────
+// manifesto renders the product "small and understated at the bottom center"; requiring
+// a vision model to read "8 fl. oz. (236ml)" off it is unsatisfiable, and every attempt
+// costs a render.
+{
+  const nonProminent = expectedForFormat({ zones: { headline: 'Six Ingredients.' }, format: formatByKey('manifesto'), product });
+  assert.deepEqual(nonProminent.finished, ['Six Ingredients.'], 'no labelStrings on a non-prominent layout');
+  assert.deepEqual(nonProminent.plate, []);
+
+  const prominent = expectedForFormat({ zones: { headline: 'Six Ingredients.' }, format: formatByKey('us-vs-them'), product });
+  assert.deepEqual(prominent.finished, ['Six Ingredients.', ...product.labelStrings], 'a hero-sized product must still prove its label');
+  assert.deepEqual(prominent.plate, [...product.labelStrings]);
 }

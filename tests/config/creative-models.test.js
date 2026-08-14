@@ -2,6 +2,13 @@ import { strict as assert } from 'node:assert';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { GEMINI_MODELS } from '../../agents/dashboard/lib/creatives-store.js';
 
+// The shared imageGen ID — the one agents/creative-packager renders with. Pinned to its
+// EXACT value, not just "no -preview suffix": this key was moved from
+// gemini-2.5-flash-image to the Pro model in the Ad Studio branch, which silently put
+// the packager on a pricier endpoint with nothing in the suite to notice. A change here
+// must be a deliberate edit to this line.
+assert.equal(CREATIVE_MODELS.imageGen, 'gemini-3-pro-image');
+
 // Ad Studio block exists and uses the GA Pro image model.
 assert.ok(CREATIVE_MODELS.adStudio, 'adStudio block must exist');
 assert.equal(CREATIVE_MODELS.adStudio.imageGen, 'gemini-3-pro-image');
