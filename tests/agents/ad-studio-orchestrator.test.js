@@ -1,8 +1,20 @@
 import { strict as assert } from 'node:assert';
-import { renderWithRetry, buildRunReport, slugify, buildLabelStrings } from '../../agents/ad-studio/index.js';
+import { renderWithRetry, buildRunReport, slugify, buildLabelStrings, sniffImageMediaType } from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 
 const format = formatByKey('manifesto'); // pairsImagesWithLabels: false
+
+// Real magic bytes, not opaque text — the stubbed fakes returning an arbitrary
+// Buffer are exactly what let the hardcoded 'image/png' media_type ship: nothing
+// in the test suite exercised bytes that actually needed sniffing. Each buffer
+// carries a per-call marker AFTER the signature so individual renders stay
+// distinguishable without breaking the magic bytes sniffImageMediaType reads.
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const JPEG_SIGNATURE = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+
+function pngBufferForCall(n) {
+  return Buffer.concat([PNG_SIGNATURE, Buffer.from(`-call-${n}`)]);
+}
 
 function geminiReturning() {
   let calls = 0;
@@ -11,8 +23,21 @@ function geminiReturning() {
     models: {
       generateContent: async () => {
         calls += 1;
-        return { candidates: [{ content: { parts: [{ inlineData: { data: Buffer.from('IMG' + calls).toString('base64') } }] } }] };
+        return { candidates: [{ content: { parts: [{ inlineData: { data: pngBufferForCall(calls).toString('base64') } }] } }] };
       },
+    },
+  };
+}
+
+// Always returns valid JPEG-signature bytes — used to prove renderWithRetry sends
+// the media_type it actually sniffed, not a hardcoded assumption.
+function geminiReturningJpeg() {
+  const bytes = Buffer.concat([JPEG_SIGNATURE, Buffer.from([0, 0, 0, 0, 1, 2, 3, 4])]);
+  return {
+    models: {
+      generateContent: async () => ({
+        candidates: [{ content: { parts: [{ inlineData: { data: bytes.toString('base64') } }] } }],
+      }),
     },
   };
 }
@@ -32,6 +57,22 @@ function anthropicFailing(failFor, expected) {
   };
 }
 
+// A verifier that captures every request it receives, so the caller can inspect
+// exactly what was sent (e.g. the image block's media_type) instead of only the
+// parsed reply.
+function anthropicCapturing(expected) {
+  const requests = [];
+  return {
+    requests,
+    messages: {
+      create: async (params) => {
+        requests.push(params);
+        return { content: [{ type: 'text', text: JSON.stringify({ transcript: expected }) }] };
+      },
+    },
+  };
+}
+
 const expected = ['OUR LOTION IS SIX INGREDIENTS'];
 
 // Passes on the first attempt: one render, one verify.
@@ -43,7 +84,22 @@ const expected = ['OUR LOTION IS SIX INGREDIENTS'];
   assert.equal(r.attempts, 1);
   assert.equal(g.calls(), 1);
   assert.equal(a.calls(), 1);
-  assert.equal(r.buffer.toString(), 'IMG1');
+  assert.equal(r.buffer.toString('latin1').slice(PNG_SIGNATURE.length), '-call-1');
+  assert.equal(r.mediaType, 'image/png');
+}
+
+// renderWithRetry must sniff the real media_type off the render bytes rather than
+// assume PNG — the live run's Anthropic 400 ("image was specified using the
+// image/png media type, but the image appears to be a image/jpeg image") happened
+// because nothing upstream of this test caught that assumption.
+{
+  const g = geminiReturningJpeg();
+  const a = anthropicCapturing(expected);
+  const r = await renderWithRetry({ gemini: g, anthropic: a, prompt: 'P', photoPaths: [], ratio: '1:1', expected, format, maxAttempts: 3 });
+  assert.equal(r.ok, true);
+  assert.equal(r.mediaType, 'image/jpeg');
+  const imageBlock = a.requests[0].messages[0].content.find(b => b.type === 'image');
+  assert.equal(imageBlock.source.media_type, 'image/jpeg', 'must send the sniffed type, not a hardcoded image/png');
 }
 
 // Fails twice then passes: 3 renders, 3 verifies, ok.
@@ -125,3 +181,26 @@ assert.deepEqual(report.conceptsWithNoAcceptedVariation, ['b']);
   });
   assert.deepEqual([...withCatalog].sort(), [...withoutCatalog].sort(), 'catalogEntry must be irrelevant to the result');
 }
+
+// sniffImageMediaType: the fix for the live 400. No silent default — an
+// unrecognized signature must throw, never fall back to a guess.
+assert.equal(
+  sniffImageMediaType(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])),
+  'image/png'
+);
+assert.equal(
+  sniffImageMediaType(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0])),
+  'image/jpeg'
+);
+assert.equal(
+  sniffImageMediaType(Buffer.from([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50])), // RIFF....WEBP
+  'image/webp'
+);
+assert.throws(
+  () => sniffImageMediaType(Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])),
+  /unrecognized image type/i
+);
+assert.throws(
+  () => sniffImageMediaType(Buffer.from([0x89, 0x50, 0x4e, 0x47])), // too short even though it starts like a PNG
+  /too short/i
+);

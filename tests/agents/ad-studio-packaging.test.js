@@ -45,3 +45,59 @@ assert.equal(assets.dropped[0].limit, 90);
 const dupes = buildDemandGenAssets({ a: 'SAME', b: 'SAME', c: '', d: '   ' });
 assert.deepEqual(dupes.headlines, ['SAME']);
 assert.deepEqual(buildDemandGenAssets({}).headlines, []);
+
+// Demand Gen text fields are single-line. A zone value may carry a newline for the
+// two-line IMAGE headline (that's legitimate and must not change) — the text-field
+// projection must collapse it to one line, not pass it straight through. Live run
+// wrote "Six Ingredients.\nNothing To Hide." straight into a headline field.
+{
+  const multiline = buildDemandGenAssets({ headline: 'Six Ingredients.\nNothing To Hide.' });
+  assert.deepEqual(multiline.headlines, ['Six Ingredients. Nothing To Hide.'], 'newline collapses to a single space');
+}
+
+// No \n, \r or \t survives into any emitted field, across all three buckets.
+{
+  const messy = buildDemandGenAssets({
+    a: 'Short\nHeadline',
+    b: 'A'.repeat(30) + '\r\n' + 'B'.repeat(30), // lands in longHeadlines once collapsed
+    c: 'C'.repeat(30) + '\t\t' + 'D'.repeat(30),
+  });
+  const all = [...messy.headlines, ...messy.longHeadlines, ...messy.descriptions];
+  assert.ok(all.length > 0, 'sanity: something was emitted');
+  for (const s of all) {
+    assert.doesNotMatch(s, /[\n\r\t]/, `emitted asset must be single-line: ${JSON.stringify(s)}`);
+  }
+}
+
+// Length checks run against the NORMALIZED string. A headline whose raw length
+// exceeds HEADLINE_MAX only because of a newline (1 char) must still be bucketed by
+// its collapsed length once the newline becomes a space — collapsing never shortens
+// length here (newline -> space is 1-for-1), so this pins that the check reads the
+// same string that gets emitted, not the original.
+{
+  const raw = 'A'.repeat(39) + '\n' + 'B'; // 41 raw chars, but a \n -> ' ' collapse keeps it at 41 normalized too
+  const short = 'A'.repeat(19) + '\n' + 'B'.repeat(19); // 39 raw chars including \n; normalized also 39
+  const result = buildDemandGenAssets({ raw, short });
+  // "short" (39 normalized chars) fits the 40-char headline field.
+  assert.ok(result.headlines.includes('A'.repeat(19) + ' ' + 'B'.repeat(19)));
+  // "raw" (41 normalized chars) does not fit headlines but does fit longHeadlines.
+  assert.ok(!result.headlines.some(h => h.startsWith('A'.repeat(39))));
+  assert.ok(result.longHeadlines.some(h => h.startsWith('A'.repeat(39))));
+}
+
+// Two inputs differing only by a line break de-duplicate to a single asset once
+// normalized — otherwise the same copy with cosmetically different whitespace would
+// ship as two near-identical Demand Gen assets.
+{
+  const collapsedDupes = buildDemandGenAssets({
+    a: 'Only Six Ingredients',
+    b: 'Only Six\nIngredients'.replace('\n', ' '), // same normalized value, different literal source
+  });
+  // Use a real \n on one side to match the addendum's exact scenario.
+  const realDupes = buildDemandGenAssets({
+    x: 'Clean Ingredients Only',
+    y: 'Clean Ingredients\nOnly',
+  });
+  assert.equal(collapsedDupes.headlines.filter(h => h === 'Only Six Ingredients').length, 1);
+  assert.deepEqual(realDupes.headlines, ['Clean Ingredients Only'], 'newline-only difference must de-duplicate to one asset');
+}

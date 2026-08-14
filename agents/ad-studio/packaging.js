@@ -34,6 +34,13 @@ export function artifactName(platform, ratio, mode) {
 /**
  * Bucket the concept's copy into Demand Gen's text fields. Strings too long for every
  * field are reported in `dropped` — a silently truncated asset reads as full coverage.
+ *
+ * Demand Gen's headline/long-headline/description fields are single-line; a zone
+ * value may legitimately contain a newline for the IMAGE layout (a two-line headline
+ * baked into the render is fine there — buildRenderPrompt/expectedStrings read the
+ * zone value directly and are untouched by this function). Normalizing here, once,
+ * before de-dup/bucketing/length-checking, keeps that newline out of the uploaded
+ * text field without changing what gets rendered.
  */
 export function buildDemandGenAssets(zones) {
   const seen = new Set();
@@ -42,7 +49,10 @@ export function buildDemandGenAssets(zones) {
     const items = Array.isArray(value) ? value : [value];
     for (const item of items) {
       if (typeof item !== 'string') continue;
-      const t = item.trim();
+      // Collapse every whitespace run — \n, \r, \t, repeated spaces — to a single
+      // space before anything downstream sees this string, so length checks and
+      // de-dup both operate on the same normalized value that gets emitted.
+      const t = item.replace(/\s+/g, ' ').trim();
       if (!t || seen.has(t)) continue;
       seen.add(t);
       flat.push(t);

@@ -37,18 +37,43 @@ function textOf(msg) {
   return (msg?.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 }
 
+// Magic-byte signatures. Gemini's response carries no reliable content-type of its
+// own (renderVariation only ever reads the base64 payload), and it returns JPEG on
+// some calls and PNG on others — assuming PNG produced a live 400 from the
+// Anthropic API ("the image was specified using the image/png media type, but the
+// image appears to be a image/jpeg image"). Every verify call failed until this was
+// fixed, which means every render was paid for and then thrown away. No silent
+// default: an unrecognized signature throws rather than guessing.
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const JPEG_SIGNATURE = [0xff, 0xd8, 0xff];
+
+export function sniffImageMediaType(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 12) {
+    throw new Error(`ad-studio: image buffer too short to identify a type (${buf?.length ?? 0} byte(s))`);
+  }
+  if (PNG_SIGNATURE.every((byte, i) => buf[i] === byte)) return 'image/png';
+  if (JPEG_SIGNATURE.every((byte, i) => buf[i] === byte)) return 'image/jpeg';
+  if (buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+
+  const hex = [...buf.subarray(0, 8)].map(b => b.toString(16).padStart(2, '0')).join(' ');
+  throw new Error(`ad-studio: unrecognized image type — first 8 bytes: ${hex}`);
+}
+
 /**
  * Render one variation, verifying after each attempt. Stops at maxAttempts.
- * @returns {Promise<{ok:boolean, buffer:Buffer|null, attempts:number, proof:object}>}
+ * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, proof:object}>}
  */
 export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, maxAttempts = 3 }) {
   let attempts = 0;
   let lastProof = { ok: false, reasons: ['no attempt made'], missing: [], mismatchedPairs: [] };
   let lastBuffer = null;
+  let lastMediaType = null;
 
   while (attempts < maxAttempts) {
     attempts += 1;
     lastBuffer = await renderVariation(gemini, { prompt, photoPaths, ratio });
+    // Sniff on every attempt — nothing guarantees Gemini returns the same format twice.
+    lastMediaType = sniffImageMediaType(lastBuffer);
 
     const msg = await anthropic.messages.create({
       model: CREATIVE_MODELS.adStudio.verify,
@@ -56,7 +81,7 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
       messages: [{
         role: 'user',
         content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/png', data: lastBuffer.toString('base64') } },
+          { type: 'image', source: { type: 'base64', media_type: lastMediaType, data: lastBuffer.toString('base64') } },
           { type: 'text', text: buildVerifyPrompt({ expected, format }) },
         ],
       }],
@@ -65,10 +90,10 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
     const { transcript, pairings } = parseVerifyResponse(textOf(msg));
     lastProof = verdictFor({ expected, transcript, pairings, format });
     lastProof.transcript = transcript;
-    if (lastProof.ok) return { ok: true, buffer: lastBuffer, attempts, proof: lastProof };
+    if (lastProof.ok) return { ok: true, buffer: lastBuffer, mediaType: lastMediaType, attempts, proof: lastProof };
   }
 
-  return { ok: false, buffer: lastBuffer, attempts, proof: lastProof };
+  return { ok: false, buffer: lastBuffer, mediaType: lastMediaType, attempts, proof: lastProof };
 }
 
 export function buildRunReport({ runId, product, results }) {
@@ -132,6 +157,18 @@ function loadEnv() {
 
 function loadJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
+}
+
+// artifactName() (packaging.js) always ends in ".png" — that suffix is pinned by
+// Task 7's tests and is a placement-format label, not a promise about file bytes.
+// Gemini can return JPEG, so the artifact actually written to disk must carry the
+// real extension or we ship JPEG bytes inside a file named "*.png".
+const EXTENSION_BY_MEDIA_TYPE = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
+
+function artifactFilename(baseName, mediaType) {
+  const ext = EXTENSION_BY_MEDIA_TYPE[mediaType];
+  if (!ext) throw new Error(`ad-studio: no known file extension for media type "${mediaType}"`);
+  return baseName.replace(/\.png$/, ext);
 }
 
 function stripHtml(html) {
@@ -352,12 +389,16 @@ async function main() {
         const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
         const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: target.ratio, expected, format });
 
-        const artifact = artifactName(target.platform, target.ratio, target.mode);
+        // artifactName() always returns a ".png" suffix (pinned by Task 7's tests);
+        // rename to the format renderWithRetry actually sniffed off the bytes so we
+        // never write JPEG data into a file claiming to be a PNG.
+        const artifact = artifactFilename(artifactName(target.platform, target.ratio, target.mode), r.mediaType);
         writeFileSync(join(dir, artifact), r.buffer);
         proofByArtifact[artifact] = {
           platform: target.platform,
           ratio: target.ratio,
           mode: target.mode,
+          mediaType: r.mediaType,
           attempts: r.attempts,
           ok: r.proof.ok,
           reasons: r.proof.reasons,
