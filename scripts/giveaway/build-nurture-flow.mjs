@@ -111,7 +111,7 @@ const MESSAGES = {
     // nothing. The only path that credits the +10 rung is POST /api/giveaway/upload,
     // driven by the form on /pages/giveaway-entered. And "photo", not "photo or
     // video": validateUpload accepts jpg/jpeg/png/webp only.
-    preview: 'Upload a photo for +10 entries, or tag us on Instagram for +3.',
+    preview: 'Your entries so far, and what is still open to you.',
     name: 'Giveaway Nurture 04 — UGC',
   },
   '05-reminder': {

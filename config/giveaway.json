@@ -9,7 +9,7 @@
     "05-reminder.html": "Xm9LLm",
     "06-final-call.html": "WJ8J9J"
   },
-  "nurtureFlowId": "WHeJdi",
+  "nurtureFlowId": "XnD2WQ",
   "entryOpensAt": "2026-08-15T00:00:00-06:00",
   "entryClosesAt": "2026-09-14T23:59:59-06:00",
   "drawAt": "2026-09-16T12:00:00-06:00",
@@ -18,13 +18,13 @@
   "_metaPixelNote": "Real Skin Care pixel, installed via the Shopify Facebook & Instagram sales channel with Maximum data sharing (Pixel + advanced matching + Conversions API). Asserted by scripts/giveaway/verify-launch.mjs.",
   "deadlineCampaigns": {
     "05-reminder.html": {
-      "id": "01M00281TJ9QCT9NRRV17F3QSC",
-      "messageId": "01M00281TVT336AQVMS0WFK6TN",
+      "id": "01M002YCXHW8R58ZAHC3BFAMFY",
+      "messageId": "01M002YCXWJZNSM63V6W9N1TSW",
       "sendAt": "2026-09-11T14:00:00.000Z"
     },
     "06-final-call.html": {
-      "id": "01M00284A2EA17TMHQ738HYE6J",
-      "messageId": "01M00284AD7K51QSD9J7BVTQHB",
+      "id": "01M002YFF4TTKKSTWB4F069T0P",
+      "messageId": "01M002YFFDCQ21CF26TWQWY233",
       "sendAt": "2026-09-13T14:00:00.000Z"
     }
   }

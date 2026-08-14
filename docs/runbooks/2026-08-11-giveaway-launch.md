@@ -251,7 +251,7 @@ signal worth waiting on so the first real run has real data to act on.
 
 ## Nurture flow — deliberately DRAFT
 
-Klaviyo flow `WHeJdi` (`config.nurtureFlowId`, **4** messages, cadence
+Klaviyo flow `XnD2WQ` (`config.nurtureFlowId`, **4** messages, cadence
 0.5h/d2/d6/d12) is **draft** and must stay that way until launch. Set it
 live (Klaviyo UI or the flow-status endpoint) **only** at the moment ads go
 live — not before. Turning it on early would nurture zero real entrants
@@ -314,7 +314,7 @@ via `scripts/giveaway/build-pages.mjs`. After filling them in
 `templates` mode (it upserts by name, so the same template id `WJ8J9J` is
 updated in place).
 
-### A `flow`-mode rebuild — ✅ DONE 2026-08-12, redone 2026-08-13 (flow is now `WHeJdi`)
+### A `flow`-mode rebuild — ✅ DONE 2026-08-12, redone 2026-08-13 (flow is now `XnD2WQ`)
 
 A message's `preview_text` (the preheader Klaviyo actually sends) lives on the
 flow's send-email action, **not** on the template, and there is no template-only
@@ -363,7 +363,7 @@ Target launch: **Aug 15 2026.**
 - Klaviyo list `Y2ukbE` confirmed `double_opt_in` (asserted by Gate A)
 - Meta ad accounts ACTIVE with funding — **use `RSC Ad Account` (`act_946015593265647`)**
 - Entry Period dates filled everywhere and verified live
-- Nurture flow rebuilt as **`WHeJdi`**; all preheaders verified correct
+- Nurture flow rebuilt as **`XnD2WQ`**; all preheaders verified correct
 - **Deadline emails personalised 2026-08-14.** Both campaigns now show the
   recipient's own entry count and only the rungs they have *not* yet earned,
   driven by `person.gv_entries` and `person.gv_breakdown`. Rendered against five
@@ -377,7 +377,7 @@ Target launch: **Aug 15 2026.**
 - **Nurture split onto two clocks 2026-08-13.** The four onboarding emails stay
   in the flow (relative to entry); `05-reminder` and `06-final-call` became
   fixed-date campaigns computed from `config.entryClosesAt`
-  (`01M00281TJ9QCT9NRRV17F3QSC` sends Sept 11, `01M00284A2EA17TMHQ738HYE6J`
+  (`01M002YCXHW8R58ZAHC3BFAMFY` sends Sept 11, `01M002YFF4TTKKSTWB4F069T0P`
   sends Sept 13). Both **Draft** — they must be scheduled in the Klaviyo UI;
   creating a campaign via the API does not queue a send job.
 - Nightly cron installed (reconciler 08:30 UTC, report 08:45 UTC), both smoke-run
@@ -411,7 +411,7 @@ Target launch: **Aug 15 2026.**
    never one this Klaviyo account has seen. (Both prior test inboxes are burned;
    see the entry-verification runbook.)
 9. `node scripts/giveaway/verify-launch.mjs` → must print **Gate A passed.**
-10. **Set flow `WHeJdi` live** — at the moment ads go live, not before.
+10. **Set flow `XnD2WQ` live** — at the moment ads go live, not before.
 11. **Turn on the Meta campaign.**
 
 Order matters only in that 1 must precede 10, and 6-9 should be the last things
