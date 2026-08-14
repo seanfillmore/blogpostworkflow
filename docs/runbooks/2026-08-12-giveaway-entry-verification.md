@@ -156,6 +156,13 @@ During `positive`, A should step **1 → 4 → 7 → 17**. The last +5 and +2 ar
 
 Ten checks curl cannot see. **Items 4, 5, 7 and 8 are regression checks for defects found in review** — treat a failure there as a returning bug, not a new one.
 
+**RUN 2026-08-14 — 10/10 PASS**, driven headless with Puppeteer against the live pages. Two assertions had to be corrected before the run could be trusted:
+
+- **Item 5** first read `[data-gv-count]`'s `textContent`, which is the literal `1` baked into the Liquid and is present in the DOM whether or not it is displayed. The real assertion is that its **parent is off-screen** — `showLadder(null)` sets `count.parentNode.hidden = true`. Measured properly: `headingOnScreen=false`. Reading the text alone would have passed a page that *was* showing a fabricated count.
+- **Item 7** sampled the button 250ms after click, by which time the request had already returned, so the disable was never observed. Re-run with CDP network throttling (2500ms latency): disabled on all 12 samples during the submit, re-enabled after.
+
+The pass creates one real entry, so it ends by stripping `gv_*` and removing it from the list; Gate A is re-run afterwards and must report `found 0`.
+
 | # | Do this | Expect |
 |---|---|---|
 | 1 | Lander: submit with no first name | Visible error, **no navigation** |
