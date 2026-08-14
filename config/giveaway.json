@@ -9,7 +9,23 @@
     "05-reminder.html": "Xm9LLm",
     "06-final-call.html": "WJ8J9J"
   },
-  "nurtureFlowId": "Tbqnvu",
+  "nurtureFlowId": "We8HPp",
+  "entryOpensAt": "2026-08-15T00:00:00-06:00",
+  "entryClosesAt": "2026-09-14T23:59:59-06:00",
+  "drawAt": "2026-09-16T12:00:00-06:00",
+  "_datesNote": "Store-local (-06:00) and the single source of truth for timing. The deadline campaigns (05-reminder, 06-final-call) are computed from entryClosesAt by lib/giveaway/nurture-schedule.js, and close-entry-period.mjs disables the nurture flow the morning after it. The same dates appear in prose in data/giveaway/official-rules.html and in the 06-final-call preheader — change all three together.",
   "metaPixelId": "1948396628850834",
-  "_metaPixelNote": "Real Skin Care pixel, installed via the Shopify Facebook & Instagram sales channel with Maximum data sharing (Pixel + advanced matching + Conversions API). Asserted by scripts/giveaway/verify-launch.mjs."
+  "_metaPixelNote": "Real Skin Care pixel, installed via the Shopify Facebook & Instagram sales channel with Maximum data sharing (Pixel + advanced matching + Conversions API). Asserted by scripts/giveaway/verify-launch.mjs.",
+  "deadlineCampaigns": {
+    "05-reminder.html": {
+      "id": "01KZZ8CN7E5Q982HS0Q3K8P7PT",
+      "messageId": "01KZZ8CN7RM9GPX77P23YHHP7X",
+      "sendAt": "2026-09-11T14:00:00.000Z"
+    },
+    "06-final-call.html": {
+      "id": "01KZZ8CPZWJB86RRQPB5P53HNQ",
+      "messageId": "01KZZ8CQ04F56583ZT8D8N8M2D",
+      "sendAt": "2026-09-13T14:00:00.000Z"
+    }
+  }
 }
