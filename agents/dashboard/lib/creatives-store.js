@@ -5,8 +5,8 @@ import { CREATIVE_SESSIONS_DIR, CREATIVES_DIR } from './paths.js';
 import { ensureDir } from './fs-helpers.js';
 
 export const GEMINI_MODELS = [
-  { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash', maxReferenceImages: 16, resolutions: ['512', '1K', '2K', '4K'] },
-  { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro', maxReferenceImages: 16, resolutions: ['1K', '2K', '4K'] },
+  { id: 'gemini-3.1-flash-image', name: 'Gemini 3.1 Flash', maxReferenceImages: 16, resolutions: ['512', '1K', '2K', '4K'] },
+  { id: 'gemini-3-pro-image', name: 'Gemini 3 Pro', maxReferenceImages: 16, resolutions: ['1K', '2K', '4K'] },
   { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash', maxReferenceImages: 10, resolutions: ['1K'] },
 ];
 

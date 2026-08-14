@@ -3,7 +3,7 @@
  *
  * Generates a hero image for a blog post using Gemini image generation.
  * Uses Claude to craft a brand-appropriate image prompt from the post metadata,
- * then calls Gemini (gemini-3.1-flash-image-preview) to generate the image.
+ * then calls Gemini (gemini-3.1-flash-image) to generate the image.
  *
  * When product reference images are available (via --sync-products), the actual
  * product photo is passed as a reference image so Gemini can faithfully render
@@ -878,7 +878,7 @@ async function generateImage(metaPath) {
         }
 
         const geminiResponse = await gemini.models.generateContent({
-          model: 'gemini-3.1-flash-image-preview',
+          model: 'gemini-3.1-flash-image',
           contents: geminiContents,
           config: {
             responseModalities: ['TEXT', 'IMAGE'],
