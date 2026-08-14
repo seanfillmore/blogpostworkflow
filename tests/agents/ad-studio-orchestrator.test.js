@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
-import { renderWithRetry, buildRunReport, slugify, buildLabelStrings, sniffImageMediaType } from '../../agents/ad-studio/index.js';
+import sharp from 'sharp';
+import { renderWithRetry, renderTarget, buildRunReport, slugify, buildLabelStrings, sniffImageMediaType } from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 
 const format = formatByKey('manifesto'); // pairsImagesWithLabels: false
@@ -69,6 +70,21 @@ function anthropicCapturing(expected) {
         requests.push(params);
         return { content: [{ type: 'text', text: JSON.stringify({ transcript: expected }) }] };
       },
+    },
+  };
+}
+
+// Simulates the live 400: the verify call itself throws.
+function anthropicThrowing(message) {
+  return { messages: { create: async () => { throw new Error(message); } } };
+}
+
+function geminiReturningRealImage(buf) {
+  return {
+    models: {
+      generateContent: async () => ({
+        candidates: [{ content: { parts: [{ inlineData: { data: buf.toString('base64') } }] } }],
+      }),
     },
   };
 }
@@ -204,3 +220,95 @@ assert.throws(
   () => sniffImageMediaType(Buffer.from([0x89, 0x50, 0x4e, 0x47])), // too short even though it starts like a PNG
   /too short/i
 );
+
+// renderTarget — round 3's fix for "a render failure for ONE target must not abort
+// the whole run." Fixtures shared across the block below.
+const product = {
+  handle: 'coconut-lotion',
+  title: 'Lotion',
+  priceLabel: '$30',
+  labelStrings: ['real SKIN CARE', '8 fl. oz. (236ml)'],
+};
+const brandKit = { palette_hexes: ['#000000', '#EDE5D8'] };
+const zones = { headline: 'Six Ingredients.' };
+const expectedFinished = ['Six Ingredients.', ...product.labelStrings];
+const expectedPlate = [...product.labelStrings];
+
+// Success path WITH a crop: a demand-gen 1.91:1 plate is requested from Gemini as
+// 16:9 (the only thing Gemini will accept) and must come back center-cropped to
+// within a pixel of the real 1.91:1 delivery ratio.
+{
+  const source = await sharp({
+    create: { width: 1600, height: 900, channels: 3, background: { r: 10, g: 20, b: 30 } },
+  }).png().toBuffer();
+  const target = { platform: 'demand-gen', ratio: '1.91:1', mode: 'plate' };
+
+  const result = await renderTarget({
+    gemini: geminiReturningRealImage(source),
+    anthropic: anthropicFailing(0, expectedPlate),
+    target, format, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate,
+  });
+
+  assert.equal(result.ok, true);
+  assert.ok(result.buffer, 'a successful render must produce a buffer to write');
+  assert.equal(result.artifact, 'plate-1_91x1.png');
+  assert.equal(result.proofEntry.requestRatio, '16:9', 'must request a ratio Gemini actually supports, not 1.91:1 directly');
+  assert.equal(result.proofEntry.cropped, true);
+
+  const meta = await sharp(result.buffer).metadata();
+  const deliveredRatio = meta.width / meta.height;
+  assert.ok(Math.abs(deliveredRatio - 1.91) < 0.01, `delivered ratio ${deliveredRatio} must be within a pixel of 1.91:1`);
+}
+
+// Success path with NO crop: a native ratio (1:1) is requested and delivered as-is.
+{
+  const target = { platform: 'meta', ratio: '1:1', mode: 'finished' };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicFailing(0, expectedFinished),
+    target, format, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate,
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.proofEntry.requestRatio, '1:1');
+  assert.equal(result.proofEntry.cropped, false);
+  assert.equal(result.artifact, 'finished-1x1.png');
+}
+
+// Failure path: the verify call itself throws (this is exactly what happened live —
+// an Anthropic 400 on the media_type mismatch). renderTarget must resolve, not
+// reject, with ok:false, buffer:null and the error message recorded — this is the
+// assertion that proves one target's failure can be recorded and the caller can
+// move on to the next target instead of the whole run dying.
+{
+  const target = { platform: 'meta', ratio: '4:5', mode: 'finished' };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicThrowing('mock 400: media type mismatch'),
+    target, format, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.buffer, null, 'a failed target must not produce bytes to write');
+  assert.equal(result.artifact, 'finished-4x5.png', 'falls back to the un-renamed base artifact name when no mediaType was ever sniffed');
+  assert.match(result.proofEntry.error, /mock 400: media type mismatch/);
+  assert.equal(result.proofEntry.ok, false);
+}
+
+// A ratio with no RENDER_RATIO_MAP entry is a config bug, not a transient render
+// failure — every future call with that same ratio would fail identically, so this
+// is the one case that's allowed to reject the whole run rather than being caught
+// and recorded per-target.
+{
+  const target = { platform: 'demand-gen', ratio: '21:9', mode: 'plate' };
+  await assert.rejects(
+    () => renderTarget({
+      gemini: geminiReturning(),
+      anthropic: anthropicFailing(0, expectedPlate),
+      target, format, zones, product, brandKit, photoPaths: [],
+      expectedFinished, expectedPlate,
+    }),
+    /no render-ratio mapping/i
+  );
+}

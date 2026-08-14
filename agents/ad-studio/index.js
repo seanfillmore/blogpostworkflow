@@ -20,7 +20,7 @@ import { buildVerifyPrompt, parseVerifyResponse, verdictFor } from './verify.js'
 import { selectFormats } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced } from './claims.js';
 import { buildCopyPrompt, parseCopyResponse, expectedStrings } from './copy.js';
-import { PLATFORM_TARGETS, variationDir, artifactName, buildDemandGenAssets } from './packaging.js';
+import { PLATFORM_TARGETS, variationDir, artifactName, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { notify } from '../../lib/notify.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -169,6 +169,74 @@ function artifactFilename(baseName, mediaType) {
   const ext = EXTENSION_BY_MEDIA_TYPE[mediaType];
   if (!ext) throw new Error(`ad-studio: no known file extension for media type "${mediaType}"`);
   return baseName.replace(/\.png$/, ext);
+}
+
+/**
+ * Render, crop and package ONE platform target.
+ *
+ * Everything that spends money — renderWithRetry and cropToRatio — is caught: a
+ * render/verify failure on a single target (Anthropic error, a corrupt image,
+ * anything) must not abort the rest of the run, because earlier targets, variations
+ * and concepts already cost money. Callers write `buffer` to disk (null on failure)
+ * and merge `proofEntry` into that variation's proof.json under `artifact`.
+ *
+ * renderRatioFor is the one exception and is deliberately called OUTSIDE the
+ * try/catch: an unmapped delivery ratio is a code/config bug in RENDER_RATIO_MAP,
+ * not a transient render failure. It's pure, free, and identical on every call for
+ * a given ratio — every remaining target/variation/concept that shares that ratio
+ * would fail the exact same way, so swallowing it as "one target failed, keep
+ * going" would just mean paying for every other target while quietly producing no
+ * plates at all. Fails the whole run immediately instead, before anything is spent.
+ * @returns {Promise<{ok:boolean, artifact:string, buffer:Buffer|null, proofEntry:object}>}
+ */
+export async function renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate }) {
+  const { requestRatio, needsCrop } = renderRatioFor(target.ratio);
+  const artifactBase = artifactName(target.platform, target.ratio, target.mode);
+
+  try {
+    const prompt = buildRenderPrompt({ format, zones, product, brandKit, mode: target.mode });
+    const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
+    const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format });
+
+    const buffer = needsCrop ? await cropToRatio(r.buffer, target.ratio) : r.buffer;
+    const artifact = artifactFilename(artifactBase, r.mediaType);
+
+    return {
+      ok: r.ok,
+      artifact,
+      buffer,
+      proofEntry: {
+        platform: target.platform,
+        ratio: target.ratio,
+        requestRatio,
+        cropped: needsCrop,
+        mode: target.mode,
+        mediaType: r.mediaType,
+        attempts: r.attempts,
+        ok: r.proof.ok,
+        reasons: r.proof.reasons,
+        missing: r.proof.missing,
+        mismatchedPairs: r.proof.mismatchedPairs,
+        transcript: r.proof.transcript,
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      artifact: artifactBase,
+      buffer: null,
+      proofEntry: {
+        platform: target.platform,
+        ratio: target.ratio,
+        requestRatio,
+        cropped: needsCrop,
+        mode: target.mode,
+        ok: false,
+        error: err.message,
+        attempts: null,
+      },
+    };
+  }
 }
 
 function stripHtml(html) {
@@ -385,29 +453,22 @@ async function main() {
       let allOk = true;
 
       for (const target of PLATFORM_TARGETS) {
-        const prompt = buildRenderPrompt({ format, zones, product, brandKit, mode: target.mode });
-        const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
-        const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: target.ratio, expected, format });
+        // renderTarget never throws — a render/verify failure on ONE target (an
+        // Anthropic error, an unsupported-ratio 400, a corrupt image) must not
+        // discard the rest of the run, because earlier targets/variations/concepts
+        // already cost money. Reuses buildRunReport's existing rejected-variation
+        // path via allOk=false below rather than adding a new one.
+        const result = await renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate });
 
-        // artifactName() always returns a ".png" suffix (pinned by Task 7's tests);
-        // rename to the format renderWithRetry actually sniffed off the bytes so we
-        // never write JPEG data into a file claiming to be a PNG.
-        const artifact = artifactFilename(artifactName(target.platform, target.ratio, target.mode), r.mediaType);
-        writeFileSync(join(dir, artifact), r.buffer);
-        proofByArtifact[artifact] = {
-          platform: target.platform,
-          ratio: target.ratio,
-          mode: target.mode,
-          mediaType: r.mediaType,
-          attempts: r.attempts,
-          ok: r.proof.ok,
-          reasons: r.proof.reasons,
-          missing: r.proof.missing,
-          mismatchedPairs: r.proof.mismatchedPairs,
-          transcript: r.proof.transcript,
-        };
-        if (!r.ok) allOk = false;
-        console.log(`  ${conceptSlug} v${n} ${artifact}: ${r.ok ? 'OK' : 'FAILED'} (${r.attempts} attempt(s))`);
+        if (result.buffer) writeFileSync(join(dir, result.artifact), result.buffer);
+        proofByArtifact[result.artifact] = result.proofEntry;
+        if (!result.ok) allOk = false;
+
+        console.log(
+          result.buffer
+            ? `  ${conceptSlug} v${n} ${result.artifact}: ${result.ok ? 'OK' : 'FAILED'} (${result.proofEntry.attempts} attempt(s))`
+            : `  ${conceptSlug} v${n} ${result.artifact}: ERROR — ${result.proofEntry.error}`
+        );
       }
 
       writeFileSync(join(dir, 'proof.json'), JSON.stringify(proofByArtifact, null, 2));

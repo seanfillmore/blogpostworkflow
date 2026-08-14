@@ -1,9 +1,13 @@
 import { strict as assert } from 'node:assert';
+import sharp from 'sharp';
 import {
   PLATFORM_TARGETS,
   variationDir,
   artifactName,
   buildDemandGenAssets,
+  renderRatioFor,
+  cropToRatio,
+  GEMINI_SUPPORTED_ASPECT_RATIOS,
 } from '../../agents/ad-studio/packaging.js';
 
 // Meta bakes text; Demand Gen takes a text-free plate.
@@ -100,4 +104,62 @@ assert.deepEqual(buildDemandGenAssets({}).headlines, []);
   });
   assert.equal(collapsedDupes.headlines.filter(h => h === 'Only Six Ingredients').length, 1);
   assert.deepEqual(realDupes.headlines, ['Clean Ingredients Only'], 'newline-only difference must de-duplicate to one asset');
+}
+
+// renderRatioFor — the fix for the live 400 ("aspect_ratio must be one of ...").
+// Gemini rejects 1.91:1 outright; this is the mapping that resolves what to
+// actually request instead, and it must never let an unsupported ratio through.
+assert.deepEqual(renderRatioFor('1:1'), { requestRatio: '1:1', needsCrop: false });
+assert.deepEqual(renderRatioFor('4:5'), { requestRatio: '4:5', needsCrop: false });
+assert.deepEqual(renderRatioFor('9:16'), { requestRatio: '9:16', needsCrop: false });
+assert.deepEqual(renderRatioFor('1.91:1'), { requestRatio: '16:9', needsCrop: true });
+assert.throws(() => renderRatioFor('21:9'), /no render-ratio mapping/i, 'an unmapped ratio must throw, never pass through to Gemini unvalidated');
+
+// The real fix, per the controller: not the mapping alone, but proof that every
+// ratio PLATFORM_TARGETS will ever ask Gemini for is one Gemini actually supports.
+// A future PLATFORM_TARGETS entry added without a matching RENDER_RATIO_MAP entry
+// fails HERE, in a free test, instead of on a paid live call.
+for (const target of PLATFORM_TARGETS) {
+  const { requestRatio } = renderRatioFor(target.ratio);
+  assert.ok(
+    GEMINI_SUPPORTED_ASPECT_RATIOS.includes(requestRatio),
+    `PLATFORM_TARGETS entry ${target.platform}/${target.ratio}/${target.mode} resolves to request ratio ` +
+      `"${requestRatio}", which is not in GEMINI_SUPPORTED_ASPECT_RATIOS`
+  );
+}
+
+// cropToRatio — 16:9 (≈1.778) is NARROWER than 1.91:1 (1.91), so reaching 1.91:1
+// means trimming HEIGHT while holding the full WIDTH — the opposite of "trimming
+// width" (impossible here: it would require the output to be wider than the
+// source's actual pixels). Verified against a synthetic fixture built with sharp
+// itself, then re-read with sharp metadata rather than trusting our own math twice.
+{
+  const source = await sharp({
+    create: { width: 1920, height: 1080, channels: 3, background: { r: 200, g: 100, b: 50 } },
+  }).png().toBuffer();
+
+  const cropped = await cropToRatio(source, '1.91:1');
+  const meta = await sharp(cropped).metadata();
+
+  assert.equal(meta.width, 1920, 'full width must be preserved when the target is wider than the source');
+  assert.ok(meta.height < 1080, 'height must be trimmed, not the width, to go from 16:9 to a wider 1.91:1');
+  const ratio = meta.width / meta.height;
+  assert.ok(Math.abs(ratio - 1.91) < 0.01, `cropped ratio ${ratio} must land within a pixel of 1.91:1`);
+  assert.equal(meta.format, 'png', 'crop must preserve the source encoding');
+}
+
+// The reverse direction also has to work correctly (target NARROWER than source —
+// e.g. cropping a 1:1 source down to 4:5 trims width, preserves height) so the
+// branch that isn't exercised by 1.91:1 is still proven correct, not just untested.
+{
+  const square = await sharp({
+    create: { width: 1000, height: 1000, channels: 3, background: { r: 0, g: 0, b: 0 } },
+  }).png().toBuffer();
+
+  const cropped = await cropToRatio(square, '4:5'); // 4:5 = 0.8, narrower than 1:1
+  const meta = await sharp(cropped).metadata();
+
+  assert.equal(meta.height, 1000, 'full height must be preserved when the target is narrower than the source');
+  assert.ok(meta.width < 1000, 'width must be trimmed to go from 1:1 to a narrower 4:5');
+  assert.ok(Math.abs(meta.width / meta.height - 0.8) < 0.01);
 }
