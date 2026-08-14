@@ -20,25 +20,45 @@ before re-running the gate.
 | 1 | Meta Business Manager + ad account + payment method | **Done — verified via Graph API 2026-08-12.** Four ACTIVE ad accounts, all with valid funding. **Use `RSC Ad Account` (`act_946015593265647`)** — most history ($1,832.70 lifetime) and carries the configured pixel. Decided 2026-08-12. |
 | 2 | DNS, batch in one Cloudflare visit: Meta domain-verification `TXT` on `realskincare.com`, and a `CNAME` for `entries.realskincare.com` pointing at the same origin as `rum.realskincare.com` | **CNAME done** — `entries.realskincare.com` resolves to `137.184.119.230` and the endpoint answers `400` pre-auth (verified 2026-08-12). **Domain verification DONE** — confirmed in Business Settings 2026-08-12: `realskincare.com` (ID `1084285435769951`) is **Verified** and owned by the *Real Skin Care* portfolio, the same one that holds RSC Ad Account. |
 | 3 | Install the official Facebook & Instagram sales channel app (pixel + CAPI). Do **not** hand-add a pixel to `theme.liquid` — that's how the orphaned `twq` pixel once pushed Clarity's script-error rate to 12.4% | **Done.** Gate A asserts the pixel is registered in the Shopify web-pixels config AND that the id matches `config.metaPixelId`. Graph API confirms pixel `1948396628850834` is attached to three ad accounts and **last fired 2026-08-11** — it is live and receiving. |
-| 4 | Aggregated Event Measurement: rank `Lead` at priority #1 (if `Purchase` outranks it, iOS lead conversions are silently dropped) | **Outstanding — domain verification landed 2026-08-12, so this is unblocked.** NOT API-checkable at any scope; Events Manager UI only. **Blocked in practice until a `Lead` event has actually fired** — Meta will not offer an unseen event for ranking, and the pixel's event list currently has no `Lead`. Do the real test entry FIRST. Ranking then takes ~72h to apply. |
+| 4 | Aggregated Event Measurement: rank `Lead` at priority #1 (if `Purchase` outranks it, iOS lead conversions are silently dropped) | **Outstanding — domain verification landed 2026-08-12, so this is unblocked.** NOT API-checkable at any scope; Events Manager UI only. **No longer blocked.** Meta will not offer an unseen event for ranking, and the pixel had no `Lead` — but two `Lead` events were sent and processed 2026-08-12 (visible in the 20:00 PDT bucket of `/stats?aggregation=event`), so the event is now available to rank. Ranking takes ~72h to apply. |
 | 5 | Klaviyo list `Y2ukbE` set to **double opt-in** (List Settings → Opt-in Process) | **Done — and now asserted by Gate A.** The setting can only be *changed* in the UI, but it IS readable: `GET /api/lists/{id}/` returns `attributes.opt_in_process`. Verified live 2026-08-11: `Y2ukbE` is `double_opt_in`, so this check PASSES today. Keep it as a gate anyway — the account is not uniform (`S6hKFq "Email List"` is `single_opt_in`), so a re-created or re-pointed list can silently land single, which would pay the +2 rung to everyone for doing nothing and strip the deliverability screen the existing 481 real subscribers depend on. |
-| 6 | Welcome flow `UUa3Qk` filtered to exclude `gv_entrant` profiles | **Outstanding — re-verified 2026-08-12.** `UUa3Qk` is **live** and its `profile_filter` is a metric-count condition; `gv_entrant` appears nowhere in the definition. Every entrant currently drops into the standard welcome sequence *on top of* the giveaway nurture. |
-| 7 | Confirm the derived client IP actually varies between visitors (see below) | **Outstanding — do this last, once `entries.realskincare.com` resolves through Cloudflare** |
+| 6 | Welcome flow `UUa3Qk` filtered to exclude `gv_entrant` profiles | **DONE — verified via API 2026-08-14.** `profile_filter` now carries a fourth condition group: `properties['gv_entrant']` / existence / `not-set`. It is its own group, so Klaviyo ANDs it with the three metric gates (Placed Order, Added to Cart, Checkout Started, each count = 0) rather than ORing it away. Belt and braces: the welcome flow triggers on list `S6hKFq`, while entrants are added to `Y2ukbE`, so it would not fire for them even without the filter. |
+| 7 | Confirm the derived client IP actually varies between visitors (see below) | **DONE — verified 2026-08-14, and the premise was wrong.** `CF-Connecting-IP` is never set on this host: `entries.realskincare.com` is deliberately **grey-clouded** (proxying it would inherit the storefront zone's SSL mode and cause a redirect loop — see the comment in `/etc/nginx/sites-enabled/entries`). The load-bearing header is `X-Real-IP`, and the chain is verified at every link: nginx's access log shows distinct real client IPs with nothing collapsed to `127.0.0.1`; the vhost sets `proxy_set_header X-Real-IP $remote_addr`; and `getClientIp` reads `x-real-ip` (rate-limit.js:126) immediately after the absent `cf-connecting-ip`. Nothing sits between nginx and Node — it proxies straight to `127.0.0.1`. |
 
-Items 2, 3 and 5 are the three that Gate A (below) can and does check. Item 1
-turned out to be confirmable via the Graph API after all (see above). Items 4, 6
-and 7 have no live surface a script can observe from outside the
-respective admin UIs (or, for item 7, the live network path), so they stay
-human-confirmed checklist items — do not check any of them off without doing
-them.
+Items 2, 3 and 5 are the three that Gate A (below) can and does check. Items 1,
+6 and 7 all turned out to be confirmable after all — 1 and 6 via the Graph and
+Klaviyo APIs, 7 by inspecting the nginx vhost and access log against
+getClientIp. Only item 4 (AEM ranking) has no surface a script can observe; it
+stays a human-confirmed checklist item — do not check it off without doing it.
 
 ### Item 7 — confirm the rate limiter is actually seeing per-visitor IPs
 
-`agents/dashboard/lib/rate-limit.js` keys the `/enter`, `/answers`, and
-`/upload` budgets off `req.headers['cf-connecting-ip']`, because this domain
-is fronted by Cloudflare and that header is what Cloudflare sets at its edge
-per visitor. **This is unverifiable from the diff alone** — it depends on
-what actually reaches the Node process in production, not on the code.
+**RESOLVED 2026-08-14 — and the original premise below was wrong.** Keeping the
+reasoning because the failure mode it describes is real and worth understanding;
+only the mechanism differs.
+
+`getClientIp()` tries `cf-connecting-ip`, then `x-real-ip`, then
+`x-forwarded-for`, then the socket. This host **never sets the first one**:
+`entries.realskincare.com` is deliberately DNS-only / grey-clouded, because
+proxying it would inherit the storefront zone's SSL mode (Flexible loops,
+Full-strict needs an origin cert). So the load-bearing header is `X-Real-IP`,
+which the vhost sets from `$remote_addr`, and nginx proxies straight to
+`127.0.0.1` with nothing in between.
+
+Verified at every link on 2026-08-14, without a deploy:
+
+- **client → nginx:** the access log shows distinct real client IPs
+  (`150.241.71.157`, `31.132.90.3`, `66.114.144.160`, …) and nothing collapsed
+  to `127.0.0.1`
+- **nginx → Node:** `proxy_set_header X-Real-IP $remote_addr` in
+  `/etc/nginx/sites-enabled/entries`
+- **Node:** `getClientIp` reads `x-real-ip` at rate-limit.js:126
+
+If you ever move this host behind Cloudflare's proxy, re-check: `CF-Connecting-IP`
+would start being set and would take precedence, which is fine — but the SSL-mode
+problem above is the reason it is not proxied today.
+
+--- original reasoning, retained ---
 
 The failure mode if it's wrong is severe and silent: if anything between
 Cloudflare and this Node process (a load balancer, a misconfigured proxy, a
@@ -51,25 +71,23 @@ them, and the giveaway would start silently 429-ing real entrants within
 minutes of the first few visits, with no error in the logs beyond a stream
 of 429s that look like abuse rather than a misconfiguration.
 
-**Before turning on the Meta campaign, confirm the derived IP actually
-varies between two different networks** (e.g. your home connection and your
-phone on cellular, or two different people hitting the lander at the same
-time). Simplest method: temporarily add one log line at the top of
-`getClientIp()` in `agents/dashboard/lib/rate-limit.js` —
+**How to re-test this if the proxy setup ever changes.** The chain-inspection
+above is cheaper and needs no deploy, so do that first:
 
-```js
-console.log('[giveaway] client ip:', req.headers['cf-connecting-ip'], req.socket?.remoteAddress);
+```bash
+ssh root@137.184.119.230 'grep proxy_set_header /etc/nginx/sites-enabled/entries'
+ssh root@137.184.119.230 'tail -500 /var/log/nginx/access.log | awk "{print \$1}" | sort | uniq -c | sort -rn | head'
 ```
 
-— redeploy, hit `/pages/free-soap-giveaway` from two different networks,
-`pm2 logs seo-dashboard --lines 50 --nostream` on the server, and confirm the
-two `cf-connecting-ip` values are different real IPs (not both empty, not
-both equal to each other, not both equal to a Cloudflare/DigitalOcean
-internal address). Remove the log line and redeploy once confirmed. If the
-two values come back identical, do NOT launch ads — the limiter would be
-one shared budget for the entire campaign, and the fix is upstream of this
-code (the proxy config between Cloudflare and Node), not in
-`rate-limit.js` itself.
+Distinct client IPs in that histogram, plus `X-Real-IP $remote_addr` in the
+vhost, plus `getClientIp` reading `x-real-ip`, is the whole chain.
+
+If you want runtime proof from inside Node rather than by inspection, the
+two-network test still works: exhaust the 5/hour `/enter` budget from one
+network, then hit the lander from a phone on cellular. If the second network
+still enters, the buckets are per-visitor. Do this rather than adding a
+temporary log line — a log line needs two deploys and prints the visitor IPs
+into `pm2` output.
 
 ## STATUS UPDATE — 2026-08-12: infrastructure is DONE
 
@@ -394,22 +412,29 @@ Target launch: **Aug 15 2026.**
    which flips the flow to `draft` the morning after entries close. No Klaviyo-UI
    end date is needed, and no date-based `profile_filter`.
    **New manual step:** schedule both campaigns in the Klaviyo UI.
-2. **Exclude `gv_entrant` from live welcome flow `UUa3Qk`.** Re-verified still
-   open; entrants currently receive both sequences.
+2. ~~**Exclude `gv_entrant` from live welcome flow `UUa3Qk`.**~~ ✅ **DONE —
+   verified via API 2026-08-14.** `profile_filter` carries a fourth condition
+   group, `properties['gv_entrant']` / existence / `not-set`, ANDed with the
+   three metric gates. Doubly safe: welcome triggers on `S6hKFq`, entrants land
+   on `Y2ukbE`.
 3. **AEM: rank `Lead` at priority #1.** Events Manager UI; not readable at any
    API scope. If `Purchase` outranks `Lead`, iOS lead conversions vanish silently.
-5. **Build the campaign.** There is *no* giveaway campaign and no lead campaign
-   anywhere — every campaign on all four accounts is PAUSED and either
-   `OUTCOME_SALES` or `OUTCOME_TRAFFIC`. The giveaway needs **`OUTCOME_LEADS`**
-   to fire the `Lead` event the whole measurement design assumes.
+   **Now unblocked** — `Lead` fired and was processed 2026-08-12 (2 events in the
+   20:00 PDT bucket), so Meta will offer it for ranking.
+5. ~~**Build the campaign.**~~ ✅ **BUILT** — `Soap Giveaway 2026-09 | Leads | US`
+   exists in `act_946015593265647`, currently **PAUSED**. Turning it on is step 11.
+   Creatives are the remaining input.
 6. **Run the browser pass** — the 10 checks in
    `2026-08-12-giveaway-entry-verification.md`. Never yet run. Items 4, 5, 7 and
    8 are regressions for defects found in review.
-7. **Confirm the derived client IP varies across two real networks.** If it does
-   not, one visitor's rate limit throttles everyone. Do not turn on ads if it fails.
-8. **One real test entry** from a **fresh root address** — not a plus-alias, and
-   never one this Klaviyo account has seen. (Both prior test inboxes are burned;
-   see the entry-verification runbook.)
+7. ~~**Confirm the derived client IP varies across two real networks.**~~ ✅ **DONE
+   2026-08-14** by chain inspection — see Item 7 above. `X-Real-IP`, not
+   `CF-Connecting-IP`, is what carries it on this grey-clouded host.
+8. ~~**One real test entry** from a fresh root address.~~ ✅ **DONE 2026-08-12/13.**
+   `sean@realskincare.com` completed every rung (19 entries); `sfillm07@yahoo.com`
+   exercised the pre-existing-customer path. Both have since been stripped of
+   `gv_*` and removed from the entrant list, and Gate A passes clean.
+   **Three prior inboxes are now burned** — see the entry-verification runbook.
 9. `node scripts/giveaway/verify-launch.mjs` → must print **Gate A passed.**
 10. **Set flow `XnD2WQ` live** — at the moment ads go live, not before.
 11. **Turn on the Meta campaign.**
