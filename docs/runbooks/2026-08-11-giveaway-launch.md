@@ -20,7 +20,7 @@ before re-running the gate.
 | 1 | Meta Business Manager + ad account + payment method | **Done — verified via Graph API 2026-08-12.** Four ACTIVE ad accounts, all with valid funding. **Use `RSC Ad Account` (`act_946015593265647`)** — most history ($1,832.70 lifetime) and carries the configured pixel. Decided 2026-08-12. |
 | 2 | DNS, batch in one Cloudflare visit: Meta domain-verification `TXT` on `realskincare.com`, and a `CNAME` for `entries.realskincare.com` pointing at the same origin as `rum.realskincare.com` | **CNAME done** — `entries.realskincare.com` resolves to `137.184.119.230` and the endpoint answers `400` pre-auth (verified 2026-08-12). **Domain verification DONE** — confirmed in Business Settings 2026-08-12: `realskincare.com` (ID `1084285435769951`) is **Verified** and owned by the *Real Skin Care* portfolio, the same one that holds RSC Ad Account. |
 | 3 | Install the official Facebook & Instagram sales channel app (pixel + CAPI). Do **not** hand-add a pixel to `theme.liquid` — that's how the orphaned `twq` pixel once pushed Clarity's script-error rate to 12.4% | **Done.** Gate A asserts the pixel is registered in the Shopify web-pixels config AND that the id matches `config.metaPixelId`. Graph API confirms pixel `1948396628850834` is attached to three ad accounts and **last fired 2026-08-11** — it is live and receiving. |
-| 4 | Aggregated Event Measurement: rank `Lead` at priority #1 (if `Purchase` outranks it, iOS lead conversions are silently dropped) | **Outstanding — domain verification landed 2026-08-12, so this is unblocked.** NOT API-checkable at any scope; Events Manager UI only. **No longer blocked.** Meta will not offer an unseen event for ranking, and the pixel had no `Lead` — but two `Lead` events were sent and processed 2026-08-12 (visible in the 20:00 PDT bucket of `/stats?aggregation=event`), so the event is now available to rank. Ranking takes ~72h to apply. |
+| 4 | ~~Aggregated Event Measurement: rank `Lead` at priority #1~~ | **NOT APPLICABLE — Meta removed this, confirmed 2026-08-14.** Per Meta's own docs (facebook.com/business/help/721422165168355): "there are no steps you need to take for your events to be processed through Aggregated Event Measurement… The Aggregated Event Measurement tab in Meta Events Manager has been removed because you no longer need to configure your web events." No 8-event prioritisation, no value sets, no conversion domain at campaign creation, and domain verification is no longer required *for event configuration* (it is still done here, and still useful for other purposes). This account has the change — the tab is absent in Events Manager. AEM still runs; it is just no longer configurable. |
 | 5 | Klaviyo list `Y2ukbE` set to **double opt-in** (List Settings → Opt-in Process) | **Done — and now asserted by Gate A.** The setting can only be *changed* in the UI, but it IS readable: `GET /api/lists/{id}/` returns `attributes.opt_in_process`. Verified live 2026-08-11: `Y2ukbE` is `double_opt_in`, so this check PASSES today. Keep it as a gate anyway — the account is not uniform (`S6hKFq "Email List"` is `single_opt_in`), so a re-created or re-pointed list can silently land single, which would pay the +2 rung to everyone for doing nothing and strip the deliverability screen the existing 481 real subscribers depend on. |
 | 6 | Welcome flow `UUa3Qk` filtered to exclude `gv_entrant` profiles | **DONE — verified via API 2026-08-14.** `profile_filter` now carries a fourth condition group: `properties['gv_entrant']` / existence / `not-set`. It is its own group, so Klaviyo ANDs it with the three metric gates (Placed Order, Added to Cart, Checkout Started, each count = 0) rather than ORing it away. Belt and braces: the welcome flow triggers on list `S6hKFq`, while entrants are added to `Y2ukbE`, so it would not fire for them even without the filter. |
 | 7 | Confirm the derived client IP actually varies between visitors (see below) | **DONE — verified 2026-08-14, and the premise was wrong.** `CF-Connecting-IP` is never set on this host: `entries.realskincare.com` is deliberately **grey-clouded** (proxying it would inherit the storefront zone's SSL mode and cause a redirect loop — see the comment in `/etc/nginx/sites-enabled/entries`). The load-bearing header is `X-Real-IP`, and the chain is verified at every link: nginx's access log shows distinct real client IPs with nothing collapsed to `127.0.0.1`; the vhost sets `proxy_set_header X-Real-IP $remote_addr`; and `getClientIp` reads `x-real-ip` (rate-limit.js:126) immediately after the absent `cf-connecting-ip`. Nothing sits between nginx and Node — it proxies straight to `127.0.0.1`. |
@@ -28,8 +28,8 @@ before re-running the gate.
 Items 2, 3 and 5 are the three that Gate A (below) can and does check. Items 1,
 6 and 7 all turned out to be confirmable after all — 1 and 6 via the Graph and
 Klaviyo APIs, 7 by inspecting the nginx vhost and access log against
-getClientIp. Only item 4 (AEM ranking) has no surface a script can observe; it
-stays a human-confirmed checklist item — do not check it off without doing it.
+getClientIp. Item 4 turned out not to exist at all — Meta removed AEM
+configuration. Every item in this table is now closed.
 
 ### Item 7 — confirm the rate limiter is actually seeing per-visitor IPs
 
@@ -417,10 +417,10 @@ Target launch: **Aug 15 2026.**
    group, `properties['gv_entrant']` / existence / `not-set`, ANDed with the
    three metric gates. Doubly safe: welcome triggers on `S6hKFq`, entrants land
    on `Y2ukbE`.
-3. **AEM: rank `Lead` at priority #1.** Events Manager UI; not readable at any
-   API scope. If `Purchase` outranks `Lead`, iOS lead conversions vanish silently.
-   **Now unblocked** — `Lead` fired and was processed 2026-08-12 (2 events in the
-   20:00 PDT bucket), so Meta will offer it for ranking.
+3. ~~**AEM: rank `Lead` at priority #1.**~~ ❌ **NOT APPLICABLE — Meta removed
+   AEM configuration.** There is no tab and no ranking to set; events are
+   processed through AEM automatically. See item 4 above. This was carried as a
+   blocker with a 72-hour lead time for three days and was never real.
 5. ~~**Build the campaign.**~~ ✅ **BUILT** — `Soap Giveaway 2026-09 | Leads | US`
    exists in `act_946015593265647`, currently **PAUSED**. Turning it on is step 11.
    Creatives are the remaining input.
