@@ -1,7 +1,12 @@
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { renderWithRetry, renderTarget, buildRunReport, slugify, buildLabelStrings, sniffImageMediaType } from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const format = formatByKey('manifesto'); // pairsImagesWithLabels: false
 
@@ -181,6 +186,78 @@ assert.deepEqual(report.conceptsWithNoAcceptedVariation, ['b']);
     'the catalog marketing title is NOT printed on the bottle and must never enter labelStrings'
   );
   assert.ok(ls.length > 0, 'empty labelStrings must never be produced for a well-formed entry');
+}
+
+// buildLabelStrings: badge arc micro-copy is excluded (fix round 5). It is decorative,
+// carries no falsifiable spec, and the verify gate's vision model cannot transcribe 8px
+// curved text reliably — requiring it burned three paid renders per target.
+//
+// Run against the REAL manifest entry, not a hand-written fixture: a fixture would prove
+// only that the regex matches the sentence someone wrote for the test.
+{
+  const manifest = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'data', 'product-images', 'manifest.json'), 'utf8')
+  );
+  const lotion = manifest.find(p => p.handle === 'coconut-lotion');
+  const ls = buildLabelStrings({ manifestEntry: lotion, variant: 'coconut-breeze' });
+
+  // THE GUARD. If a future widening of the badge exclusion swallows either of these,
+  // labelStrings stops doing the one job it exists for — stopping the image model
+  // inventing a product spec (design probe: "6 fl. oz." rendered on a 2 fl oz bottle).
+  assert.ok(ls.includes('8 fl. oz. (236ml)'), 'VOLUME MARKING must survive the badge exclusion');
+  assert.ok(ls.includes('coconut breeze'), 'VARIANT NAME must survive the badge exclusion');
+  assert.ok(ls.includes('real SKIN CARE'), 'brand mark must survive the badge exclusion');
+  assert.ok(ls.includes('moisturizing body lotion'), 'product type must survive the badge exclusion');
+
+  assert.ok(
+    !ls.some(s => /essential oils/i.test(s)),
+    'the circular badge inscription must NOT enter labelStrings'
+  );
+  assert.deepEqual(ls, ['real SKIN CARE', 'moisturizing body lotion', '8 fl. oz. (236ml)', 'coconut breeze']);
+}
+
+// The exclusion is keyed on the badge NOUN sitting against the quote, on either side —
+// the manifest writes it both ways. Anything else quoted is kept.
+{
+  const before = buildLabelStrings({
+    manifestEntry: { productDescription: 'A label with a small circular badge noting "Organic Coconut Oil + Essential Oils," and "moisturizing body lotion" beneath, 8 fl. oz. (236ml).' },
+    variant: null,
+  });
+  assert.deepEqual(before, ['moisturizing body lotion', '8 fl. oz. (236ml)']);
+
+  const after = buildLabelStrings({
+    manifestEntry: { productDescription: 'A label with the brand name "real SKIN CARE", a small circular "Organic Coconut Oil & Essential Oils" badge, and "hand soap" in smaller type.' },
+    variant: null,
+  });
+  assert.deepEqual(after, ['real SKIN CARE', 'hand soap']);
+}
+
+// Regression: an earlier, looser version of this rule matched the badge noun ANYWHERE in
+// the preceding text, so the noun sitting just after one quote reached forward and ate the
+// NEXT quoted string — silently dropping "hand soap" and "toothpaste", which are product
+// types and very much spec-bearing. Assert the reach is bounded.
+{
+  const ls = buildLabelStrings({
+    manifestEntry: { productDescription: 'A tube with a small "REAL" badge in the center, a botanical illustration, and the product name text above the word "toothpaste" near the crimp seal.' },
+    variant: null,
+  });
+  assert.ok(ls.includes('toothpaste'), 'a badge earlier in the sentence must not suppress a later, unrelated string');
+  assert.ok(!ls.includes('REAL'), 'the badge inscription itself is still excluded');
+}
+
+// Every manifest entry that produced label strings before the exclusion must still
+// produce some — an empty list aborts the run, so an over-broad rule would take a
+// product offline rather than merely lose a string.
+{
+  const manifest = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'data', 'product-images', 'manifest.json'), 'utf8')
+  );
+  const rscWithLabels = manifest.filter(p => /"/.test(p.productDescription || ''));
+  assert.ok(rscWithLabels.length >= 10, 'sanity: the manifest should have many labelled entries');
+  for (const entry of rscWithLabels) {
+    const ls = buildLabelStrings({ manifestEntry: entry, variant: null });
+    assert.ok(ls.length > 0, `badge exclusion must not empty labelStrings for ${entry.handle}`);
+  }
 }
 
 // A catalogEntry with no title, or no catalogEntry at all, must not throw and must

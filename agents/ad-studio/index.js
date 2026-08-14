@@ -261,10 +261,46 @@ async function fetchPdpBody(siteUrl, handle) {
   return stripHtml(data?.product?.body_html);
 }
 
+// Quoted label text the manifest prose attributes to a BADGE (a seal/emblem/roundel) is
+// excluded. Badge inscriptions are decorative micro-copy set on a curved arc at roughly
+// 8px — they carry no product spec, so nothing about them is falsifiable, and the verify
+// gate's vision model cannot transcribe them reliably at plate resolution (it read the
+// coconut-lotion badge as ["ORGANIC","COCONUT","ESSENTIAL OIL"], dropping a word and
+// singularising another, on a plate that was in fact correct). Requiring text that cannot
+// be read back is a gate that burns three paid renders per target and buys nothing.
+//
+// Scoped to the badge CUE in the prose, not to the string's content or length: a rule
+// keyed on either of those could swallow the volume marking or the variant name, which
+// are the whole reason labelStrings exists.
+// The manifest names the element on one side of the quote or the other, consistently:
+//   coconut-lotion            ...a small circular badge noting "Organic Coconut Oil + ..."
+//   foam-soap-*, coconut-soap ...a small circular "Organic Coconut Oil & ..." badge, a...
+// so both sides are checked. No spec-bearing string in any manifest entry sits next to
+// one of these nouns — verified across all 21 entries.
+// BOTH patterns are anchored hard against the quote. An earlier, looser version matched
+// the noun anywhere in the preceding segment and silently ate "hand soap" and
+// "toothpaste" — product-type strings, which ARE spec-bearing — because a segment starts
+// immediately after the *previous* quote, so a badge named there reached forward into the
+// next string. Keep these anchored; widening them is how this guard gets gutted.
+const BADGE_NOUNS = 'badge|seal|emblem|roundel|medallion';
+// noun directly precedes the quote: ...a small circular badge noting "..."
+const BADGE_BEFORE_RE = new RegExp(`\\b(?:${BADGE_NOUNS})\\b(?:\\s+(?:noting|reading|stating|saying|that reads))?[\\s,]*$`, 'i');
+// noun directly follows the quote: ..."..." badge, a botanical illustration...
+const BADGE_AFTER_RE = new RegExp(`^[\\s,]*\\b(?:${BADGE_NOUNS})\\b`, 'i');
+
 function extractQuotedLabelText(text) {
-  return [...String(text || '').matchAll(/"([^"]+)"/g)]
-    .map(m => m[1].replace(/,\s*$/, '').trim())
-    .filter(Boolean);
+  const prose = String(text || '');
+  const out = [];
+  for (const m of prose.matchAll(/"([^"]+)"/g)) {
+    // Only the prose since the previous quote closed / until the next one opens, so a
+    // badge mentioned elsewhere in the sentence cannot suppress an unrelated string.
+    const lead = prose.slice(0, m.index).split('"').pop();
+    const trail = prose.slice(m.index + m[0].length).split('"')[0];
+    if (BADGE_BEFORE_RE.test(lead) || BADGE_AFTER_RE.test(trail)) continue;
+    const s = m[1].replace(/,\s*$/, '').trim();
+    if (s) out.push(s);
+  }
+  return out;
 }
 
 // "2 fl oz (60ml)" / "8 fl. oz. (236ml)" / "4 fl. oz • 118ml" — the manifest's prose
@@ -277,8 +313,11 @@ function extractVolumeMarkings(text) {
 }
 
 /**
- * Every string physically printed on the product's label, pulled from two sources:
- *   - quoted label text inside the manifest's productDescription
+ * Every SPEC-BEARING string physically printed on the product's label, pulled from two
+ * sources:
+ *   - quoted label text inside the manifest's productDescription, EXCEPT badge
+ *     inscriptions — see BADGE_CUE_RE above for why decorative arc micro-copy is
+ *     excluded (Task 9 fix round 5, controller ruling)
  *   - the volume marking in that same prose, in or out of quotes
  *   - the --variant name, humanized — productDescription is written generically across
  *     a product's scents/variants and does not name the specific one being rendered,

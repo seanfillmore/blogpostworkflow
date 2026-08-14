@@ -88,18 +88,35 @@ data/creatives/ad-studio/<run-id>/
 - **No cutout compositing.** `data/brand/cutouts/` is never read by this agent. The
   product is generated in-scene, conditioned on real reference photographs, so
   lighting, contact shadow and perspective match the rest of the frame.
-- **Exact label strings, every time.** `product.labelStrings` (built in `index.js`
-  from quoted label text and the volume marking in the manifest's
-  `productDescription`, plus `--variant`) is named literally in every render prompt
-  and is also folded into the verification gate's expected-text list for finished
-  frames. **`main()` aborts if this list comes back empty** — an empty list is
-  exactly how the image model invents a volume that was never on the bottle (a
-  design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text wasn't
-  named). There is no flag to skip this check. `product.labelStrings` deliberately
-  excludes the catalog title (`data/brand/product-catalog.json`) — that's
-  marketing/SEO copy, not text printed on the physical label, and feeding it in
-  both told the image model to print it on the bottle and made the verify gate
-  require it to appear.
+- **Exact label strings, every time.** `product.labelStrings` (built by
+  `buildLabelStrings` in `index.js` from quoted label text and the volume marking in
+  the manifest's `productDescription`, plus `--variant`) is named literally in every
+  render prompt and is also folded into the verification gate's expected-text list
+  for finished frames. **`main()` aborts if this list comes back empty** — an empty
+  list is exactly how the image model invents a volume that was never on the bottle
+  (a design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text
+  wasn't named). There is no flag to skip this check.
+
+  It holds only **spec-bearing** label text — brand mark, product type, variant name
+  and above all the volume marking. Two things are deliberately excluded:
+
+  - **The catalog title** (`data/brand/product-catalog.json`) — marketing/SEO copy,
+    not text printed on the physical label. Feeding it in both told the image model
+    to print it on the bottle and made the verify gate require it to appear.
+  - **Badge inscriptions** — the "Organic Coconut Oil + Essential Oils" style
+    micro-copy set on a curved arc inside a small circular badge. It is decorative,
+    no product spec is falsifiable through it, and at roughly 8px on a curve the
+    verify gate's vision model cannot transcribe it reliably (on a plate that was in
+    fact correct it read `["ORGANIC","COCONUT","ESSENTIAL OIL"]` — a dropped word
+    and a lost plural). Requiring text that cannot be read back rejects good renders
+    and burns three paid attempts per target.
+
+  The badge rule keys on the manifest naming the element next to the quote — either
+  `...circular badge noting "..."` or `..."..." badge, ...` — and is anchored tight
+  on both sides. **Do not loosen it.** An earlier unanchored version reached past the
+  previous quote and silently ate `"hand soap"` and `"toothpaste"`, which are product
+  types and very much spec-bearing; `tests/agents/ad-studio-orchestrator.test.js`
+  now pins the volume marking and the variant name against exactly that.
 - **The claim gate hard-blocks, with no override.** `assertClaimsSourced` is never
   wrapped in try/catch. An unsourced factual claim stops the entire run before
   anything is rendered — money is never spent on a concept with an unverifiable
