@@ -424,9 +424,10 @@ Target launch: **Aug 15 2026.**
 5. ~~**Build the campaign.**~~ ✅ **BUILT** — `Soap Giveaway 2026-09 | Leads | US`
    exists in `act_946015593265647`, currently **PAUSED**. Turning it on is step 11.
    Creatives are the remaining input.
-6. **Run the browser pass** — the 10 checks in
-   `2026-08-12-giveaway-entry-verification.md`. Never yet run. Items 4, 5, 7 and
-   8 are regressions for defects found in review.
+6. ~~**Run the browser pass** — the 10 checks.~~ ✅ **10/10 PASS 2026-08-14**,
+   headless via Puppeteer. Two assertions were wrong and were corrected first
+   (item 5 read a hidden element's text; item 7 sampled after the request had
+   already returned) — see the entry-verification runbook.
 7. ~~**Confirm the derived client IP varies across two real networks.**~~ ✅ **DONE
    2026-08-14** by chain inspection — see Item 7 above. `X-Real-IP`, not
    `CF-Connecting-IP`, is what carries it on this grey-clouded host.
