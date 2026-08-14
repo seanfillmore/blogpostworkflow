@@ -62,6 +62,8 @@ Agents that have the data to make a decision should make it and apply the change
 
 **Dashboard.** `agents/dashboard/` is a Node app (PM2 process `seo-dashboard`, port 4242). Browser HTML/CSS/JS lives in `agents/dashboard/public/` — edited directly, no template literal escaping rules apply.
 
+**Ad creative pipeline — two agents, two jobs.** `agents/ad-studio/` produces **finished, publish-ready static ads** end to end — copy generated and baked into the image, single generative pass, product rendered in-scene from real reference photos, nothing composited. `agents/creative-packager/` produces **placement crops from an already-approved master** (Studio one-off, or Ad Builder reference-ad-driven variations) and deliberately ships text-free images with a Photoshop-guide overlay for hand-finishing — that job is unchanged. Ad Studio's claim gate (`agents/ad-studio/claims.js`) hard-blocks any factual ad claim that doesn't quote verbatim evidence from a named source (PDP, catalog, brand kit, reviews) — no override flag, by design. See `agents/ad-studio/README.md`. The fleet's image-generation model IDs in `config/creative-models.js` are the **GA** releases, `gemini-3-pro-image` and `gemini-3.1-flash-image` — verified against the models endpoint 2026-08-14. Do not reintroduce the `-preview` suffixes; those are older, separately-billed endpoints.
+
 ## Data Layout Conventions
 
 - `agents/<name>/index.js` — one agent per directory. Read the header docstring for usage.
