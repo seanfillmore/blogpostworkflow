@@ -1,0 +1,128 @@
+// agents/ad-studio/formats.js
+//
+// The v1 ad-format rotation. A batch renders one concept per format so it cannot
+// collapse into six variants of one idea.
+//
+// This table is DATA. Adding a seventh format is a new entry plus its layoutBrief —
+// never a code change anywhere else.
+//
+// pairsImagesWithLabels drives the verification gate: layouts that sit a picture
+// beside a word can render every word correctly and still caption jojoba oil as
+// coconut oil, so those get a semantic pairing check on top of the text diff.
+
+const SAND = '#EDE5D8';
+const BLACK = '#000000';
+const GREEN = '#AEDEAC';
+const GREY = '#EDEDED';
+
+export const FORMATS = [
+  {
+    key: 'us-vs-them',
+    name: 'Us vs them',
+    awareness: 'solution',
+    pairsImagesWithLabels: true,
+    zones: ['headline', 'leftHeader', 'leftItems', 'rightHeader', 'rightItems', 'bottomBar'],
+    layoutBrief: [
+      `A big two-line headline across the top third, black on a warm sand ${SAND} background.`,
+      'Beneath it a two-column comparison with the product standing centered between the columns as the hero,',
+      'lit like premium product photography with a soft contact shadow.',
+      `The left column lists what conventional products do, each row led by a bold ${BLACK} X icon.`,
+      `The right column lists what this product does, each row closed by a soft green ${GREEN} check icon.`,
+      'Above each column sits a solid black rounded pill holding that column header in reversed type.',
+      'A solid black bar runs across the very bottom holding one line of letterspaced caps.',
+    ].join(' '),
+  },
+  {
+    key: 'ingredient-callout',
+    name: 'Ingredient callout',
+    awareness: 'solution',
+    pairsImagesWithLabels: true,
+    zones: ['headline', 'subhead', 'listItems', 'bottomBar'],
+    layoutBrief: [
+      `A bold two-line headline at the top, the first line black and the second in a warm gold, on a soft ${SAND} gradient.`,
+      'A thin black rule under the headline.',
+      'Below it a vertical list of ingredients running down one side, each row pairing a small photorealistic',
+      'cut-out image of that ingredient with its label.',
+      'The product stands large on the opposite side as the hero, lit to match, with a soft contact shadow.',
+      `A ${GREY} strip across the bottom split by thin vertical rules into equal cells, one short phrase per cell.`,
+    ].join(' '),
+  },
+  {
+    key: 'manifesto',
+    name: 'Manifesto / negative framing',
+    awareness: 'problem',
+    pairsImagesWithLabels: false,
+    zones: ['headline', 'subhead', 'rows', 'closer'],
+    layoutBrief: [
+      `An almost entirely typographic letterpress-style poster on ${SAND}, modern and clean rather than rustic.`,
+      'A very large stacked headline, then a smaller line beneath it.',
+      'Then a series of rows separated by thin horizontal rules, each row pairing a small label on the left',
+      'with a large phrase on the right set in a deep warm brick red.',
+      'A closing line sits inside a thin rectangular box near the bottom.',
+      'The product appears small and understated at the bottom center, sitting on the surface like a signature.',
+    ].join(' '),
+  },
+  {
+    key: 'problem-aware',
+    name: 'Problem-aware educational',
+    awareness: 'problem',
+    pairsImagesWithLabels: false,
+    zones: ['headline', 'subhead', 'bottomBar'],
+    layoutBrief: [
+      'An editorial, educational-feeling composition that reads as information rather than promotion.',
+      `A curiosity-driven headline occupies the upper third on a ${SAND} background, with a supporting line beneath it.`,
+      'The scene shows the everyday moment where the problem shows up, shot like clean lifestyle photography,',
+      'with the product present but not dominant.',
+      'A single restrained line of caps runs across the bottom.',
+      'No before/after split and no depiction of a skin condition — those are restricted in health and beauty.',
+    ].join(' '),
+  },
+  {
+    key: 'top-x-review',
+    name: 'Top-X / third-party review',
+    awareness: 'solution',
+    pairsImagesWithLabels: false,
+    zones: ['headline', 'subhead', 'bottomBar'],
+    layoutBrief: [
+      'A magazine-style editorial product layout that reads like a roundup or review rather than an ad.',
+      `Clean flat-lay styling on ${SAND}, generous negative space, an evaluative rather than promotional tone.`,
+      'A ranking-flavoured headline sits at the top with a credibility line beneath it.',
+      'The product is presented as the standout pick, clearly the hero, without any competitor branding,',
+      'lookalike packaging, or invented third-party logos, badges or award marks.',
+      'A restrained line of caps runs across the bottom.',
+    ].join(' '),
+  },
+  {
+    key: 'offer-focused',
+    name: 'Offer-focused',
+    awareness: 'product',
+    pairsImagesWithLabels: false,
+    zones: ['headline', 'subhead', 'offerBadge', 'bottomBar'],
+    layoutBrief: [
+      `The product on a clean ${SAND} background, lit like premium CPG product photography with a soft contact shadow.`,
+      'A benefit-driven headline sits top-left with a short supporting line beneath it.',
+      'The offer is the loudest element after the product: a bold badge or ribbon carrying the offer text,',
+      'placed so it reads within a second at phone size.',
+      'A solid black bar across the bottom carries one line of letterspaced caps.',
+    ].join(' '),
+  },
+];
+
+const BY_KEY = new Map(FORMATS.map(f => [f.key, f]));
+
+export function formatByKey(key) {
+  return BY_KEY.get(key);
+}
+
+/**
+ * @param {string[]} [keys] format keys, in the order wanted. Falsy/empty → the full rotation.
+ * @returns {typeof FORMATS}
+ */
+export function selectFormats(keys) {
+  if (!keys || keys.length === 0) return [...FORMATS];
+  return keys.map(k => {
+    const f = BY_KEY.get(k);
+    if (!f) throw new Error(`unknown format: ${k}`);
+    return f;
+  });
+}
