@@ -3020,7 +3020,7 @@ async function generateVariations() {
     // Ad Builder needs legible product-label text, so force the highest-fidelity
     // image model (Gemini 3 Pro) at 2K regardless of the Studio selector — the
     // flash models render label text poorly.
-    fd.append('model', 'gemini-3-pro-image-preview');
+    fd.append('model', 'gemini-3-pro-image');
     fd.append('imageSize', '2K');
     if (ab.products.length) fd.append('productImagePaths', JSON.stringify(ab.products));
     try {

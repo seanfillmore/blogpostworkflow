@@ -1,0 +1,169 @@
+# Ad Studio
+
+Generates publish-ready **static ad creatives** for Real Skin Care — headline, body
+copy, comparison columns and the product itself baked into one finished frame — for
+Meta (feed/Stories/Reels) and Google Demand Gen.
+
+This is not the same job as `agents/creative-packager`. The packager turns an
+**approved master** into placement-sized crops for Ad Builder / Studio, and
+deliberately produces text-free images with a Photoshop-guide overlay. Ad Studio
+produces the finished ad itself, copy included, end to end, with no manual
+finishing step.
+
+Spec: `docs/superpowers/specs/2026-08-14-ad-studio-design.md`
+Plan: `docs/superpowers/plans/2026-08-14-ad-studio.md`
+
+## Usage
+
+```bash
+node agents/ad-studio/index.js --product <handle> [--variant <name>] \
+  [--formats <key1,key2,...>] [--variations <n>] [--max-renders <n>] [--dry-run]
+```
+
+| Flag | Required | Meaning |
+|---|---|---|
+| `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`. |
+| `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
+| `--formats` | no | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). Omitted or empty → the full six-format rotation. |
+| `--variations` | no | Variations per concept — each is 6 renders. Default `3`, maximum `10`. |
+| `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
+| `--dry-run` | no | Generates copy and runs the claim gate, prints the result, and exits before any image is rendered. See below. |
+
+**Read the Cost section before running without `--dry-run`.** A default invocation is
+108 renders ≈ $14.
+
+Example — the one-concept proving run used before any batch:
+
+```bash
+node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze \
+  --formats ingredient-callout --dry-run
+```
+
+## The five stages
+
+1. **Format rotation** (`formats.js`, `selectFormats`) — a forced rotation over data,
+   not an LLM call. One concept per selected format so a batch cannot collapse into
+   six variants of one idea. Each format also declares `pairsImagesWithLabels`, which
+   the verification stage reads.
+2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
+   `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
+   `brandKit`, `reviews`) and quote its evidence verbatim.
+3. **Claim gate** (`claims.js`, `assertClaimsSourced`) — checks every factual claim's
+   evidence actually appears in its named source and **throws, stopping the whole
+   run**, if any claim is unsourced or its evidence doesn't match. Runs after every
+   copy call, `--dry-run` or not.
+4. **Render** (`render.js`, model: `gemini-3-pro-image` @2K) — **one generative pass**
+   per variation per platform target, conditioned on up to 4 real reference
+   photographs. The product is generated in-scene, never composited.
+5. **Verify** (`verify.js`, model: `claude-haiku-4-5`) — transcribes every visible
+   string and, on **finished frames** of formats that pair a picture with a label,
+   checks the pairing too. The pairing check does not apply to Demand Gen plates: a
+   plate is text-free by construction, so it has no labels to pair anything with, and
+   demanding pairings there made every plate of a pairing format an unavoidable hard
+   fail. Text matching is anchored at token boundaries — an unanchored substring match
+   accepted `18 fl. oz.` for an expected `8 fl. oz.`, the exact false spec this gate
+   exists to stop. `renderWithRetry` retries up to 3 attempts total before accepting
+   the failure.
+6. **Package** (`packaging.js`) — writes the six platform artifacts (3 Meta finished
+   frames + 3 Demand Gen text-free plates) and buckets the concept's copy into Demand
+   Gen's headline/long-headline/description fields.
+
+## Output layout
+
+```
+data/creatives/ad-studio/<run-id>/
+  run.json                        # totals, models, per-concept/variation results
+  <concept-slug>/                 # concept-slug is the format key, e.g. ingredient-callout
+    copy.json                     # { zones, claims } for this concept
+    demand-gen-assets.json        # headlines/longHeadlines/descriptions/dropped
+    v1/
+      finished-1x1.png            # Meta, baked copy
+      finished-4x5.png
+      finished-9x16.png
+      plate-1_91x1.png            # Demand Gen, text-free except the product's own label
+      plate-1x1.png
+      plate-4x5.png
+      proof.json                  # per-artifact { ok, attempts, reasons, missing, transcript, ... }
+    v2/ ...
+    v3/ ...
+```
+
+`run.json` also carries `cost` (`renders`, `perRenderUsd`, `estimatedUsd`) and `budget`
+(`maxRenders`, `stopped`, `skipped[]`).
+
+**Known limitation — no retention policy.** `data/creatives/ad-studio/` is gitignored
+(one default run is ~137 MB of 2K renders) and nothing prunes it. Delete old run
+directories by hand; the production box has a 24 GB disk and a full one has already cost
+this project four days of cron.
+
+## Cost
+
+Every platform target is an **independent render** — the three Demand Gen plates are not
+free crops of the Meta frames.
+
+| | renders | ≈ cost |
+|---|---|---|
+| One variation of one concept (6 targets) | 6 | $0.78 |
+| One concept, `--variations 3` | 18 | $2.34 |
+| **Default run** — 6 formats × 3 variations × 6 targets | **108** | **$14.04** |
+| Default run, worst case (3 verify attempts everywhere) | 324 | $42.12 |
+| `--max-renders` default ceiling | 120 | $15.60 |
+
+At ~$0.13 per Gemini 3 Pro 2K render, plus one Haiku vision call per render for the
+verify gate. `--dry-run` costs one Opus copy call per format and renders nothing.
+Scope a run with `--formats` and `--variations` rather than relying on the ceiling.
+
+## Global constraints (non-obvious, do not relax)
+
+- **Single-pass render only.** A rendered image (finished or plate) is never fed back
+  into a second generative pass. Design-probe evidence: a second pass over a
+  text-free plate spelled every word correctly while shifting the supporting
+  ingredient photos one row against their labels — jojoba captioned as coconut oil.
+  A text-only gate would have shipped that ad.
+- **No cutout compositing.** `data/brand/cutouts/` is never read by this agent. The
+  product is generated in-scene, conditioned on real reference photographs, so
+  lighting, contact shadow and perspective match the rest of the frame.
+- **Exact label strings, every time.** `product.labelStrings` (built by
+  `buildLabelStrings` in `index.js` from quoted label text and the volume marking in
+  the manifest's `productDescription`, plus `--variant`) is named literally in every
+  render prompt — every format, both modes — and is additionally folded into the
+  verification gate's expected-text list for formats that declare
+  `productProminent: true`. That flag is a **legibility** judgement, not a priority
+  one: `manifesto` renders the product "small and understated at the bottom center"
+  and `problem-aware` "present but not dominant", and no vision model can read a 6pt
+  volume marking off those, so demanding it back would fail every attempt and burn the
+  retries. The model is still told exactly what the label says on those formats, so it
+  still cannot invent a volume. **`main()` aborts if this list comes back empty** — an empty
+  list is exactly how the image model invents a volume that was never on the bottle
+  (a design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text
+  wasn't named). There is no flag to skip this check.
+
+  It holds only **spec-bearing** label text — brand mark, product type, variant name
+  and above all the volume marking. Two things are deliberately excluded:
+
+  - **The catalog title** (`data/brand/product-catalog.json`) — marketing/SEO copy,
+    not text printed on the physical label. Feeding it in both told the image model
+    to print it on the bottle and made the verify gate require it to appear.
+  - **Badge inscriptions** — the "Organic Coconut Oil + Essential Oils" style
+    micro-copy set on a curved arc inside a small circular badge. It is decorative,
+    no product spec is falsifiable through it, and at roughly 8px on a curve the
+    verify gate's vision model cannot transcribe it reliably (on a plate that was in
+    fact correct it read `["ORGANIC","COCONUT","ESSENTIAL OIL"]` — a dropped word
+    and a lost plural). Requiring text that cannot be read back rejects good renders
+    and burns three paid attempts per target.
+
+  The badge rule keys on the manifest naming the element next to the quote — either
+  `...circular badge noting "..."` or `..."..." badge, ...` — and is anchored tight
+  on both sides. **Do not loosen it.** An earlier unanchored version reached past the
+  previous quote and silently ate `"hand soap"` and `"toothpaste"`, which are product
+  types and very much spec-bearing; `tests/agents/ad-studio-orchestrator.test.js`
+  now pins the volume marking and the variant name against exactly that.
+- **The claim gate hard-blocks, with no override.** `assertClaimsSourced` is never
+  wrapped in try/catch. An unsourced factual claim stops the entire run before
+  anything is rendered — money is never spent on a concept with an unverifiable
+  claim in it.
+
+## Requires
+
+`ANTHROPIC_API_KEY` in `.env` always (copy + claim gate run even under `--dry-run`).
+`GEMINI_API_KEY` only when not running `--dry-run`.
