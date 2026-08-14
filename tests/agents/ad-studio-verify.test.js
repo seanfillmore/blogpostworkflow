@@ -33,7 +33,7 @@ assert.throws(() => parseVerifyResponse('junk'), /ad-studio.*verify/i);
 assert.deepEqual(diffTranscript(['A', 'B'], ['A', 'B']), { ok: true, missing: [] });
 
 // Case, whitespace and curly punctuation differences do NOT count as failures.
-assert.equal(diffTranscript(["THAT'S IT"], ["that's   it"]).ok, true);
+assert.equal(diffTranscript(["THAT'S IT"], ['that’s   it']).ok, true);
 
 // A corrupted glyph run is missing.
 const corrupted = diffTranscript(['THE REAL WAY', 'Lauric acid kills odor bacteria'], ['THE RLALVJAY', 'Lauric acid klls odor bactera']);
