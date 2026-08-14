@@ -89,12 +89,17 @@ data/creatives/ad-studio/<run-id>/
   product is generated in-scene, conditioned on real reference photographs, so
   lighting, contact shadow and perspective match the rest of the frame.
 - **Exact label strings, every time.** `product.labelStrings` (built in `index.js`
-  from the manifest's `productDescription`, the catalog title, and `--variant`) is
-  named literally in every render prompt and is also folded into the verification
-  gate's expected-text list for finished frames. **`main()` aborts if this list comes
-  back empty** — an empty list is exactly how the image model invents a volume that
-  was never on the bottle (a design probe rendered `6 fl. oz.` on a 2 fl oz bottle
-  when the label text wasn't named). There is no flag to skip this check.
+  from quoted label text and the volume marking in the manifest's
+  `productDescription`, plus `--variant`) is named literally in every render prompt
+  and is also folded into the verification gate's expected-text list for finished
+  frames. **`main()` aborts if this list comes back empty** — an empty list is
+  exactly how the image model invents a volume that was never on the bottle (a
+  design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text wasn't
+  named). There is no flag to skip this check. `product.labelStrings` deliberately
+  excludes the catalog title (`data/brand/product-catalog.json`) — that's
+  marketing/SEO copy, not text printed on the physical label, and feeding it in
+  both told the image model to print it on the bottle and made the verify gate
+  require it to appear.
 - **The claim gate hard-blocks, with no override.** `assertClaimsSourced` is never
   wrapped in try/catch. An unsourced factual claim stops the entire run before
   anything is rendered — money is never spent on a concept with an unverifiable

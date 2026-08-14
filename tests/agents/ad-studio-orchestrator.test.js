@@ -1,5 +1,5 @@
 import { strict as assert } from 'node:assert';
-import { renderWithRetry, buildRunReport, slugify } from '../../agents/ad-studio/index.js';
+import { renderWithRetry, buildRunReport, slugify, buildLabelStrings } from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 
 const format = formatByKey('manifesto'); // pairsImagesWithLabels: false
@@ -86,3 +86,42 @@ assert.equal(report.product.handle, 'coconut-lotion');
 assert.equal(report.totals.accepted, 1);
 assert.equal(report.totals.rejected, 2);
 assert.deepEqual(report.conceptsWithNoAcceptedVariation, ['b']);
+
+// buildLabelStrings: the catalog title is marketing/SEO copy, not label text — it
+// must never enter labelStrings, even though a caller might still pass a
+// catalogEntry around for other purposes (product.title, priceLabel, claim
+// sourcing). Fix round 1: this was a Critical finding — the title was leaking in,
+// which both told the render prompt to print it on the bottle AND made the verify
+// gate require it to appear, rejecting a correctly-rendered bottle every time.
+{
+  const ls = buildLabelStrings({
+    manifestEntry: {
+      productDescription: 'An 8 fl. oz. (236ml) bottle with "real SKIN CARE" near the top and "moisturizing body lotion" beneath.',
+    },
+    catalogEntry: { title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' },
+    variant: 'coconut-breeze',
+  });
+  assert.ok(ls.includes('8 fl. oz. (236ml)'), 'volume marking must be captured');
+  assert.ok(ls.includes('real SKIN CARE'), 'quoted label text must be captured');
+  assert.ok(ls.includes('coconut breeze'), 'variant name is on the label');
+  assert.ok(
+    !ls.some(s => /Non-Toxic Body Lotion Made With Only/.test(s)),
+    'the catalog marketing title is NOT printed on the bottle and must never enter labelStrings'
+  );
+  assert.ok(ls.length > 0, 'empty labelStrings must never be produced for a well-formed entry');
+}
+
+// A catalogEntry with no title, or no catalogEntry at all, must not throw and must
+// not change behavior — buildLabelStrings never reads catalogEntry any more.
+{
+  const withCatalog = buildLabelStrings({
+    manifestEntry: { productDescription: 'A "real SKIN CARE" 2 fl oz (60ml) bottle.' },
+    catalogEntry: { title: 'Some Marketing Title' },
+    variant: 'unscented',
+  });
+  const withoutCatalog = buildLabelStrings({
+    manifestEntry: { productDescription: 'A "real SKIN CARE" 2 fl oz (60ml) bottle.' },
+    variant: 'unscented',
+  });
+  assert.deepEqual([...withCatalog].sort(), [...withoutCatalog].sort(), 'catalogEntry must be irrelevant to the result');
+}

@@ -172,24 +172,32 @@ function extractVolumeMarkings(text) {
 }
 
 /**
- * Every string physically printed on the product's label, pulled from three sources:
+ * Every string physically printed on the product's label, pulled from two sources:
  *   - quoted label text inside the manifest's productDescription
  *   - the volume marking in that same prose, in or out of quotes
- *   - the catalog title (many titles carry the volume as a "| 4oz" suffix, so this
- *     doubles as a second source for exactly the string this guard exists to protect)
  *   - the --variant name, humanized — productDescription is written generically across
  *     a product's scents/variants and does not name the specific one being rendered,
  *     so without this the scent name would never appear here at all
+ *
+ * Deliberately does NOT include the catalog title (data/brand/product-catalog.json).
+ * That title is marketing/SEO copy, not label text — for coconut-lotion it's
+ * "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients", never printed on the
+ * bottle. Including it broke in two directions at once: render.js's fidelity block
+ * tells the image model "the label carries exactly these strings and no others", so
+ * it would try to print that sentence on the bottle; and main() folds labelStrings
+ * into the verify gate's expected text for finished frames, so the gate would then
+ * REQUIRE that sentence to appear, rejecting a correctly-rendered bottle and burning
+ * every retry attempt. (Task 9 fix round 1 — controller review caught this from the
+ * dry-run output before any paid render ran.)
  *
  * Load-bearing, not defensive boilerplate: main() aborts if this comes back empty,
  * because an empty list is exactly how the image model invents a volume that was
  * never on the bottle (design probe: "6 fl. oz." rendered on a 2 fl oz bottle).
  */
-export function buildLabelStrings({ manifestEntry, catalogEntry, variant }) {
+export function buildLabelStrings({ manifestEntry, variant }) {
   const set = new Set();
   for (const s of extractQuotedLabelText(manifestEntry?.productDescription)) set.add(s);
   for (const s of extractVolumeMarkings(manifestEntry?.productDescription)) set.add(s);
-  if (catalogEntry?.title) set.add(catalogEntry.title);
   if (variant) set.add(variant.replace(/-/g, ' '));
   return [...set];
 }
@@ -235,7 +243,7 @@ async function main() {
   const site = loadJson(join(ROOT, 'config', 'site.json'));
   const pdpBody = await fetchPdpBody(site.url, handle);
 
-  const labelStrings = buildLabelStrings({ manifestEntry, catalogEntry, variant: args.variant });
+  const labelStrings = buildLabelStrings({ manifestEntry, variant: args.variant });
   // ABORT — see buildLabelStrings' docstring. Not recoverable, no override flag.
   if (labelStrings.length === 0) {
     throw new Error(
