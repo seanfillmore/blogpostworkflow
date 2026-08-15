@@ -11,6 +11,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
+import { SAFE_ZONE_RATIOS } from './critique.js';
 
 const IMAGE_EXT = /\.(jpe?g|png|webp)$/i;
 const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
@@ -34,7 +35,7 @@ export function selectReferencePhotos(dir, max = 4) {
  * @param {{format:object, zones:object, product:object, brandKit:object, mode:'finished'|'plate'}} args
  * @returns {string}
  */
-export function buildRenderPrompt({ format, zones, product, brandKit, mode }) {
+export function buildRenderPrompt({ format, zones, product, brandKit, mode, ratio = '' }) {
   if (mode !== 'finished' && mode !== 'plate') throw new Error(`unknown mode: ${mode}`);
 
   const palette = (brandKit?.palette_hexes || []).join(', ');
@@ -69,6 +70,27 @@ naturally on the surface. Do not paste it in flat. No human hands or faces.`;
   const brand = `Brand palette: ${palette}. Premium natural personal-care; clean grocery-modern,
 not clinical, not crunchy. Bold geometric sans headlines.`;
 
+  // The platform draws its own UI over a vertical frame, so copy placed in those bands is
+  // invisible where it ships. critique.js hard-fails that — and on the first live run it
+  // did so three times in a row on ingredient-callout, whose brief mandates a bottom bar,
+  // because nothing had told the RENDERER the bottom fifth was unusable. A check the
+  // layout cannot satisfy is not a gate, it is a tax on every attempt.
+  //
+  // Only for gated ratios (SAFE_ZONE_RATIOS, currently 9:16) and only for finished frames:
+  // a plate carries no copy to place, and a feed image has nothing drawn over it, so the
+  // instruction would just shrink the usable area for nothing.
+  const safe = mode === 'finished' ? SAFE_ZONE_RATIOS[ratio] : null;
+  const safeZoneBlock = safe ? `
+SAFE ZONE — this is a vertical ${ratio} frame for Instagram/Facebook Stories and Reels. The
+platform covers the ${safe.topFraction} of the frame with the account name and "Ad" label,
+and the ${safe.bottomFraction} with its like/comment/share controls.
+Keep ALL text — headline, body copy, any bottom bar, any price or offer badge — inside the
+middle band, clear of both. The background, and the product itself, may extend to the edges;
+it is only text that must stay out. If the layout described above calls for a bar or a strip
+at the bottom, inset it so it sits ABOVE the ${safe.bottomFraction}, with clean background
+below it.
+` : '';
+
   if (mode === 'plate') {
     return `${format.layoutBrief}
 
@@ -91,7 +113,7 @@ would sit completely empty and clean, generously sized, so text can be set into 
   return `${format.layoutBrief}
 
 ${brand}
-
+${safeZoneBlock}
 EXACT TEXT TO RENDER — reproduce every string below character for character, spelled
 correctly and perfectly legible. Do not add any text that is not listed here.
 ${copyBlock}

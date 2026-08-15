@@ -579,18 +579,21 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
 
 // ── parseArgs: cost flags ───────────────────────────────────────────────────────
 {
-  const a = parseArgs(['--product', 'coconut-lotion']);
-  assert.equal(a.variations, 3);
+  // --formats is now REQUIRED, so every invocation below names one. Omitting it used to
+  // mean the whole six-format rotation — 108 renders, ~$14, from an untouched flag.
+  const F = ['--formats', 'ingredient-callout'];
+  const a = parseArgs(['--product', 'coconut-lotion', ...F]);
+  assert.equal(a.variations, 1, 'the default run is one variation, not three');
   assert.equal(a.maxRenders, DEFAULT_MAX_RENDERS, 'a run always has a ceiling, flag or no flag');
 
-  assert.equal(parseArgs(['--product', 'x', '--max-renders', '12']).maxRenders, 12);
-  assert.throws(() => parseArgs(['--product', 'x', '--max-renders', '0']), /--max-renders must be a positive integer/);
-  assert.throws(() => parseArgs(['--product', 'x', '--max-renders', 'lots']), /--max-renders must be a positive integer/);
+  assert.equal(parseArgs(['--product', 'x', ...F, '--max-renders', '12']).maxRenders, 12);
+  assert.throws(() => parseArgs(['--product', 'x', ...F, '--max-renders', '0']), /--max-renders must be a positive integer/);
+  assert.throws(() => parseArgs(['--product', 'x', ...F, '--max-renders', 'lots']), /--max-renders must be a positive integer/);
 
-  // --variations multiplies by 6 targets and 6 formats; unbounded is an unbounded bill.
-  assert.throws(() => parseArgs(['--product', 'x', '--variations', '100']), new RegExp(`--variations must be ${MAX_VARIATIONS} or fewer`));
-  assert.equal(parseArgs(['--product', 'x', '--variations', String(MAX_VARIATIONS)]).variations, MAX_VARIATIONS);
-  assert.throws(() => parseArgs(['--product', 'x', '--variations', '0']), /positive integer/);
+  // --variations multiplies by the selected targets; unbounded is an unbounded bill.
+  assert.throws(() => parseArgs(['--product', 'x', ...F, '--variations', '100']), new RegExp(`--variations must be ${MAX_VARIATIONS} or fewer`));
+  assert.equal(parseArgs(['--product', 'x', ...F, '--variations', String(MAX_VARIATIONS)]).variations, MAX_VARIATIONS);
+  assert.throws(() => parseArgs(['--product', 'x', ...F, '--variations', '0']), /positive integer/);
 }
 
 // ── run.json carries the run's cost and any budget stop ─────────────────────────

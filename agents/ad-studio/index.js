@@ -15,17 +15,18 @@
 
 import { GoogleGenAI } from '@google/genai';
 import Anthropic from '../../lib/anthropic.js';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, appendFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { renderVariation, buildRenderPrompt, selectReferencePhotos } from './render.js';
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings } from './verify.js';
 import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './critique.js';
-import { selectFormats } from './formats.js';
+import { selectFormats, FORMATS } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
-import { PLATFORM_TARGETS, variationDir, artifactName, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
+import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
+import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { notify } from '../../lib/notify.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -47,6 +48,31 @@ export const DEFAULT_MAX_RENDERS = 120;
 // The number of --variations above which the flag is almost certainly a typo. 10
 // variations of one concept is already 60 renders (~$8).
 export const MAX_VARIATIONS = 10;
+
+// One. The cheapest useful run is one style, one variation, Meta only — 3 renders
+// (~$0.39). It was 3, which multiplied by 6 forced platform targets into 18 renders
+// (~$2.34) before the operator had decided they even liked the style. Ask for more
+// variations when you want a choice; do not pay for one by default.
+export const DEFAULT_VARIATIONS = 1;
+
+// Meta feed only — 1:1 and 4:5.
+//
+// Two exclusions, both evidence-based:
+//
+//   The three Demand Gen plates are independent renders, not free crops, so they are half
+//   the cost of every run, and they are useful only if a Demand Gen campaign is actually
+//   running. `--targets all` when it is.
+//
+//   9:16 is excluded because THESE FORMATS CANNOT CURRENTLY SATISFY IT. Meta draws its UI
+//   over the top ~14% and bottom ~20% of a Stories/Reels frame; critique.js hard-fails
+//   copy placed there, correctly. But every one of these six layoutBriefs runs a headline
+//   to the top edge and a bar to the bottom edge, and the image model keeps doing so even
+//   when the render prompt explicitly names the bands (buildRenderPrompt's SAFE ZONE
+//   block). Measured: 6 of 6 attempts across two live runs failed, at 3 paid attempts
+//   each. Until a format is laid out for vertical, `--targets meta=9:16` spends $0.39 to
+//   produce a frame the gate will reject. It stays reachable, deliberately, not by
+//   default. `--targets meta` is still all three.
+export const DEFAULT_TARGETS = 'meta=1:1,meta=4:5';
 
 /**
  * Counts every render ATTEMPT, retries included — retries are what make the worst case
@@ -332,7 +358,7 @@ export async function buildConcepts({ anthropic, formats, product, pdpBody, pers
  * for. `totals.requested` is results.length + rejectedConcepts.length: the count of
  * concepts asked for, independent of how many actually rendered.
  */
-export function buildRunReport({ runId, product, results, renders = 0, budget = null, rejectedConcepts = [] }) {
+export function buildRunReport({ runId, product, results, renders = 0, budget = null, rejectedConcepts = [], scoreSummary = null }) {
   let accepted = 0;
   let rejected = 0;
   const conceptsWithNoAcceptedVariation = [];
@@ -365,6 +391,10 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
       : null,
     conceptsWithNoAcceptedVariation,
     rejectedConcepts,
+    // Accepted frames, best critique score first. The frame worth looking at is now the
+    // first line of run.json rather than something found by opening every PNG.
+    ranking: rankArtifacts(results),
+    scoreSummary,
     results,
   };
 }
@@ -387,9 +417,25 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
  * it's reported in run.json and the daily-summary notification, same as a budget
  * stop or an accepted-zero-variations concept already are.
  */
-export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts }) {
-  const report = buildRunReport({ runId, product, results, renders, budget, rejectedConcepts });
+export const SCORES_PATH = join('data', 'reports', 'ad-studio', 'scores.jsonl');
+
+export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts, root = ROOT }) {
+  // The rolling baseline is READ before this run's rows are appended, so a run is never
+  // compared against a baseline that already contains it.
+  const scoresFile = join(root, SCORES_PATH);
+  const baseline = readBaselineFrom(existsSync(scoresFile) ? readFileSync(scoresFile, 'utf8') : '');
+  const rows = scoreRows({ runId, product, results });
+  const scoreSummary = summariseRun(rows, baseline);
+
+  const report = buildRunReport({ runId, product, results, renders, budget, rejectedConcepts, scoreSummary });
   writeFileSync(join(runDir, 'run.json'), JSON.stringify(report, null, 2));
+
+  // Append-only, and a few bytes per frame — this file is the score history and must
+  // outlive the images, which prune-ad-studio deletes on a 90-day window.
+  if (rows.length) {
+    mkdirSync(dirname(scoresFile), { recursive: true });
+    appendFileSync(scoresFile, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  }
 
   if (concepts.length === 0 && rejectedConcepts.length > 0) {
     throw new Error(
@@ -412,10 +458,31 @@ export function parseArgs(argv) {
   const product = getFlag('--product');
   if (!product) throw new Error('ad-studio: --product is required, e.g. --product coconut-lotion');
   const variant = getFlag('--variant') || null;
+  // --formats is REQUIRED. Omitting it used to mean the entire six-format rotation:
+  // 108 renders, ~$14, from a flag the operator never touched. The cheapest action has to
+  // be the one you get by accident — the same reasoning that makes dry-run the default on
+  // scripts/prune-ad-studio.mjs. The error names the keys so the fix does not require
+  // opening formats.js.
   const formatsRaw = getFlag('--formats');
   const formats = formatsRaw ? formatsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (formats.length === 0) {
+    throw new Error(
+      `ad-studio: --formats is required. Pick one or more of: ${FORMATS.map(f => f.key).join(', ')}. ` +
+      `(Pass them all deliberately if you really want the full rotation.)`
+    );
+  }
+  const unknownFormats = formats.filter(k => !FORMATS.some(f => f.key === k));
+  if (unknownFormats.length) {
+    throw new Error(
+      `ad-studio: unknown --formats value(s): ${unknownFormats.join(', ')}. ` +
+      `Valid: ${FORMATS.map(f => f.key).join(', ')}`
+    );
+  }
+
+  const targets = selectTargets(getFlag('--targets') || DEFAULT_TARGETS);
+
   const variationsRaw = getFlag('--variations');
-  const variations = variationsRaw === undefined ? 3 : parseInt(variationsRaw, 10);
+  const variations = variationsRaw === undefined ? DEFAULT_VARIATIONS : parseInt(variationsRaw, 10);
   if (!Number.isInteger(variations) || variations < 1) {
     throw new Error(`ad-studio: --variations must be a positive integer, got "${variationsRaw}"`);
   }
@@ -424,8 +491,8 @@ export function parseArgs(argv) {
   if (variations > MAX_VARIATIONS) {
     throw new Error(
       `ad-studio: --variations must be ${MAX_VARIATIONS} or fewer, got ${variations}. ` +
-      `Each variation is ${PLATFORM_TARGETS.length} renders per concept ` +
-      `(~$${(PLATFORM_TARGETS.length * ESTIMATED_COST_PER_RENDER_USD).toFixed(2)}); ` +
+      `Each variation is ${targets.length} render(s) per concept ` +
+      `(~$${(targets.length * ESTIMATED_COST_PER_RENDER_USD).toFixed(2)}); ` +
       `raise --max-renders deliberately if you really mean it.`
     );
   }
@@ -435,7 +502,7 @@ export function parseArgs(argv) {
     throw new Error(`ad-studio: --max-renders must be a positive integer, got "${maxRendersRaw}"`);
   }
   const dryRun = argv.includes('--dry-run');
-  return { product, variant, formats, variations, maxRenders, dryRun };
+  return { product, variant, formats, targets, variations, maxRenders, dryRun };
 }
 
 function loadEnv() {
@@ -492,7 +559,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
   const artifactBase = artifactName(target.platform, target.ratio, target.mode);
 
   try {
-    const prompt = buildRenderPrompt({ format, zones, product, brandKit, mode: target.mode });
+    const prompt = buildRenderPrompt({ format, zones, product, brandKit, mode: target.mode, ratio: target.ratio });
     const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
     // mode is threaded all the way to verdictFor: a plate has no labels, so the
     // image/label pairing requirement must not be applied to it.
@@ -968,16 +1035,18 @@ async function main() {
       mkdirSync(dir, { recursive: true });
 
       const { proofByArtifact, artifacts, ok: allOk, skipped } = await renderVariationTargets({
-        gemini, anthropic, targets: PLATFORM_TARGETS, format, zones, product, brandKit, photoPaths,
+        gemini, anthropic, targets: args.targets, format, zones, product, brandKit, photoPaths,
         expectedFinished, expectedPlate, volumeStrings, budget,
         onProgress: ({ artifact, result, skipped: wasSkipped }) => {
           if (wasSkipped) {
             console.log(`  ${conceptSlug} v${n} ${artifact}: SKIPPED — render budget of ${budget.max} exhausted`);
             return;
           }
+          const score = result.proofEntry?.critique?.score;
+          const scoreLabel = typeof score === 'number' ? ` — ${score}/5` : '';
           console.log(
             result.buffer
-              ? `  ${conceptSlug} v${n} ${artifact}: ${result.ok ? 'OK' : 'FAILED'} (${result.proofEntry.attempts} attempt(s))`
+              ? `  ${conceptSlug} v${n} ${artifact}: ${result.ok ? 'OK' : 'FAILED'} (${result.proofEntry.attempts} attempt(s))${scoreLabel}`
               : `  ${conceptSlug} v${n} ${artifact}: ERROR — ${result.proofEntry.error || result.proofEntry.reasons?.join('; ')}`
           );
         },
@@ -986,7 +1055,18 @@ async function main() {
       for (const a of artifacts) writeFileSync(join(dir, a.name), a.buffer);
       writeFileSync(join(dir, 'proof.json'), JSON.stringify(proofByArtifact, null, 2));
       for (const s of skipped) skippedArtifacts.push(`${conceptSlug}/v${n}/${s}`);
-      variationsOut.push({ n, ok: allOk });
+      // Artifact-level results, so the run can rank frames and feed the score baseline.
+      // Without this, run.json knew a variation passed but not which of its frames an art
+      // director would actually reach for.
+      variationsOut.push({
+        n,
+        ok: allOk,
+        artifacts: Object.entries(proofByArtifact).map(([artifact, p]) => ({
+          artifact,
+          ok: Boolean(p.ok),
+          score: typeof p.critique?.score === 'number' ? p.critique.score : null,
+        })),
+      });
     }
 
     results.push({ conceptSlug, format: format.key, variations: variationsOut });
@@ -998,6 +1078,22 @@ async function main() {
     rejectedConcepts, concepts,
   });
   console.log(`\nRun complete: ${report.totals.accepted} accepted / ${report.totals.rejected} rejected. ${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}. Output: data/creatives/ad-studio/${runId}/`);
+
+  if (report.ranking.length) {
+    console.log('\nBest frames first:');
+    for (const r of report.ranking.slice(0, 10)) {
+      console.log(`  ${r.score === null ? '  -' : `${r.score}/5`}  ${r.conceptSlug} v${r.variation} ${r.artifact}`);
+    }
+  }
+  const sum = report.scoreSummary;
+  if (sum?.mean !== null && sum?.mean !== undefined) {
+    console.log(
+      `\nQuality: this run ${sum.mean}/5 across ${sum.n} scored frame(s). ` +
+      (sum.baselineThin
+        ? `Baseline is thin (${sum.baselineN} frame(s) on file) — not yet a trend.`
+        : `Baseline ${sum.baselineMean}/5 across ${sum.baselineN}; delta ${sum.delta > 0 ? '+' : ''}${sum.delta}.`)
+    );
+  }
   if (report.budget?.stopped) {
     console.log(
       `BUDGET STOP — the --max-renders ceiling of ${report.budget.maxRenders} was reached. ` +
