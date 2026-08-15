@@ -68,6 +68,24 @@ function geminiReturningJpeg() {
   };
 }
 
+// A clean verify response: every requested string answered "found", quoted back
+// verbatim, the true volume read off the label, no defects. This is the shape the
+// verify gate scores — the transcript is diagnostic and decides nothing.
+function verifyReply(expected, { volume = '8 fl. oz. (236ml)', garbled = false, extra = {} } = {}) {
+  const checks = (expected || []).map(e => ({
+    expected: e,
+    found: !garbled,
+    rendered: garbled ? 'GARBLED' : e,
+  }));
+  return JSON.stringify({
+    checks,
+    productVolume: volume,
+    defects: [],
+    transcript: garbled ? ['GARBLED'] : expected,
+    ...extra,
+  });
+}
+
 // A verifier that fails the first `failFor` attempts, then passes.
 function anthropicFailing(failFor, expected) {
   let calls = 0;
@@ -76,8 +94,7 @@ function anthropicFailing(failFor, expected) {
     messages: {
       create: async () => {
         calls += 1;
-        const transcript = calls <= failFor ? ['GARBLED'] : expected;
-        return { content: [{ type: 'text', text: JSON.stringify({ transcript }) }] };
+        return { content: [{ type: 'text', text: verifyReply(expected, { garbled: calls <= failFor }) }] };
       },
     },
   };
@@ -93,7 +110,7 @@ function anthropicCapturing(expected) {
     messages: {
       create: async (params) => {
         requests.push(params);
-        return { content: [{ type: 'text', text: JSON.stringify({ transcript: expected }) }] };
+        return { content: [{ type: 'text', text: verifyReply(expected) }] };
       },
     },
   };
@@ -614,6 +631,141 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   const prominent = expectedForFormat({ zones: { headline: 'Six Ingredients.' }, format: formatByKey('us-vs-them'), product });
   assert.deepEqual(prominent.finished, ['Six Ingredients.', ...product.labelStrings], 'a hero-sized product must still prove its label');
   assert.deepEqual(prominent.plate, [...product.labelStrings]);
+
+  // ...but the VOLUME is now surfaced for EVERY format, prominent or not. This is the
+  // R2 fix: productProminent:false used to strip labelStrings wholesale, so a wrong
+  // volume on a small product was not merely un-demanded, it was un-checked — which is
+  // how a manifesto frame shipped "4 FL oz / 118ml" on an 8 fl. oz. bottle. Reverting
+  // expectedForFormat to gate volumeStrings behind the flag fails here.
+  const volumes = product.labelStrings.filter(s => /fl\.?\s*oz/i.test(s));
+  assert.ok(volumes.length > 0, 'the fixture must carry a volume marking for this to prove anything');
+  assert.deepEqual(nonProminent.volumeStrings, volumes, 'a small-product format must still get the true volume');
+  assert.deepEqual(prominent.volumeStrings, volumes);
+  // Only volume-shaped strings — the brand mark is not a volume claim.
+  assert.ok(!nonProminent.volumeStrings.includes('real SKIN CARE'));
+}
+
+// ── The volume is threaded all the way to the verdict, and a WRONG one fails ─────
+// End-to-end proof that R2 is wired, not just implemented: a manifesto (productProminent
+// false) finished frame whose ad copy is perfect but whose bottle reads 4 fl oz must be
+// rejected, and must burn its retries trying rather than shipping.
+{
+  const manifestoProduct = { ...product, labelStrings: ['real SKIN CARE', '8 fl. oz. (236ml)'] };
+  const { finished: mFinished, plate: mPlate, volumeStrings } = expectedForFormat({
+    zones: { headline: 'Six Ingredients.' }, format, product: manifestoProduct,
+  });
+  assert.deepEqual(mFinished, ['Six Ingredients.'], 'manifesto demands no label strings back');
+
+  const anthropicWrongVolume = {
+    messages: {
+      create: async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          checks: mFinished.map(e => ({ expected: e, found: true, rendered: e })),
+          productVolume: '4 FL oz / 118ml',
+          defects: [],
+          transcript: mFinished,
+        }) }],
+      }),
+    },
+  };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicWrongVolume,
+    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    format, zones, product: manifestoProduct, brandKit, photoPaths: [],
+    expectedFinished: mFinished, expectedPlate: mPlate, volumeStrings,
+  });
+  assert.equal(result.ok, false, 'a contradicted volume must fail even where the label is not demanded back');
+  assert.equal(result.proofEntry.volume.status, 'mismatch');
+  assert.ok(result.proofEntry.reasons.some(r => /volume marking is WRONG/i.test(r)));
+  assert.equal(result.proofEntry.attempts, 3, 'and must spend its retries trying to get a correct one');
+}
+
+// ...and an ILLEGIBLE volume on that same format passes, which is the legitimate case
+// productProminent was created for. A gate that fails everything is as useless as one
+// that passes everything.
+{
+  const manifestoProduct = { ...product, labelStrings: ['real SKIN CARE', '8 fl. oz. (236ml)'] };
+  const { finished: mFinished, plate: mPlate, volumeStrings } = expectedForFormat({
+    zones: { headline: 'Six Ingredients.' }, format, product: manifestoProduct,
+  });
+  const anthropicIllegible = {
+    messages: {
+      create: async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          checks: mFinished.map(e => ({ expected: e, found: true, rendered: e })),
+          productVolume: 'ILLEGIBLE',
+          defects: [],
+          transcript: mFinished,
+        }) }],
+      }),
+    },
+  };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicIllegible,
+    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    format, zones, product: manifestoProduct, brandKit, photoPaths: [],
+    expectedFinished: mFinished, expectedPlate: mPlate, volumeStrings,
+  });
+  assert.equal(result.ok, true, 'a product rendered too small to read must still be able to pass');
+  assert.equal(result.proofEntry.attempts, 1);
+}
+
+// ── R3 is wired: reported occlusion fails the target and reaches proof.json ──────
+{
+  const anthropicOccluded = {
+    messages: {
+      create: async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          checks: expectedFinished.map(e => ({ expected: e, found: true, rendered: e })),
+          productVolume: 'ILLEGIBLE',
+          defects: [{ text: 'actually', issue: 'obscured', detail: 'the bottle sits on top of this word' }],
+          transcript: expectedFinished,
+        }) }],
+      }),
+    },
+  };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicOccluded,
+    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    format, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate,
+  });
+  assert.equal(result.ok, false, 'text covered by the product must fail the render');
+  assert.deepEqual(result.proofEntry.defects, [
+    { text: 'actually', issue: 'obscured', detail: 'the bottle sits on top of this word' },
+  ]);
+}
+
+// ── R1 is wired: proof.json records what each region ACTUALLY reads ──────────────
+// v1's proof.json held only an auto-corrected transcript, so a human reading a failure
+// could not see the corruption. checkDetails is what makes a rejection actionable.
+{
+  const anthropicCorrupted = {
+    messages: {
+      create: async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          // The live shape: the model claims the string is present while quoting text
+          // that proves it is not. The quoted text falsifies the claim.
+          checks: expectedFinished.map(e => ({ expected: e, found: true, rendered: 'TTHAN THE FORMLA' })),
+          productVolume: 'ILLEGIBLE',
+          defects: [],
+          transcript: expectedFinished,   // <- the auto-corrected transcript v1 trusted
+        }) }],
+      }),
+    },
+  };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicCorrupted,
+    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    format, zones, product, brandKit, photoPaths: [],
+    expectedFinished, expectedPlate,
+  });
+  assert.equal(result.ok, false, 'a clean transcript must not overturn a falsified per-string check');
+  assert.ok(result.proofEntry.checkDetails.some(d => /TTHAN THE FORMLA/.test(d.reason)));
 }
 
 // ── Claim-gate failure isolation ─────────────────────────────────────────────────

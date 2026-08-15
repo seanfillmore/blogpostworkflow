@@ -2,12 +2,55 @@
 //
 // Stage 4. Nothing ships unread.
 //
-// Two checks, both required for formats that pair pictures with words:
-//   1. text diff   — catches corrupted glyph runs (THE RLALVJAY, bactera)
-//   2. pairing     — catches an ad where every word is spelled correctly but the
-//                    supporting images sit against the wrong labels
+// Four checks, all required:
+//   1. per-string checks — for each requested string, a POINTED yes/no about that exact
+//                          character sequence, plus the literal text of that region
+//   2. product volume     — read-or-ILLEGIBLE; illegible passes, WRONG fails
+//   3. defects            — text obscured, cut off at the frame edge, or garbled
+//   4. pairing            — an ad whose words are all spelled correctly but whose
+//                           pictures sit against the wrong labels
 //
-// Check 2 exists because a text-only gate demonstrably passes a broken ad.
+// ── Why this file was rebuilt (2026-08-14) ──────────────────────────────────────
+//
+// v1 asked the model to TRANSCRIBE every string and then looked for the expected text
+// inside that transcript. A `manifesto` ad was accepted on attempt 1 whose rendered
+// headline read "THE MOISTURIZING CLAIM DOES MORE WORK TTHAN THE FORMLA" and whose
+// bottle carried a garbled "CERAMIO OCOCONUT OIL" badge over a "4 FL oz / 118ml"
+// volume (the product is 8 fl. oz. / 236ml). The proof.json reported a perfect
+// transcript, `missing: []`, `ok: true`.
+//
+// Three independent defects produced that pass, and each is fixed here:
+//
+//   R1. Open transcription invites auto-correction. A vision model reading text
+//       SEMANTICALLY repairs misspellings on the way out — it reported FORMULA where
+//       the pixels said FORMLA, and reconstructed the word "actually" that the bottle
+//       was physically sitting on top of. The prompt already said "Do not correct
+//       spelling"; it did not help, because the request itself ("transcribe this") is
+//       a reading task and reading is where the repair happens.
+//
+//       So the verdict is no longer driven by a transcript. Each expected string gets
+//       its own pointed question — does THIS exact character sequence appear, yes or
+//       no, and what does that region actually say — and the model's own quoted
+//       `rendered` text is then re-checked mechanically by diffTranscript. That is two
+//       independent shots at the same defect: the model has to both answer "yes" AND
+//       quote text that survives the token-boundary match. A transcript is still
+//       collected, but purely as diagnostic output for proof.json.
+//
+//   R2. `productProminent: false` removed labelStrings from the expected set WHOLESALE,
+//       so a garbled or outright wrong label went completely unchecked. That flag now
+//       gates only the non-volume label strings (brand mark, product type, variant
+//       name), which genuinely cannot be read off a product rendered "small and
+//       understated at the bottom center". The VOLUME is checked on every format, in a
+//       shape that tolerates illegibility but not falsehood: ILLEGIBLE passes, a value
+//       matching the true volume passes, a value that contradicts it FAILS.
+//
+//   R3. Nothing looked for occlusion or truncation. The product physically covered the
+//       word "actually" in the closing line and the verifier silently reconstructed it.
+//       A human would reject an ad whose product sits on top of its own copy; the gate
+//       now does too, along with text running off the frame edge and garbled glyph runs.
+//
+// The model was also raised from Haiku to Sonnet (config/creative-models.js). This is
+// one vision call guarding a ~$0.13 render that a human would otherwise have to read.
 
 import { normalizeForMatch } from './claims.js';
 
@@ -22,27 +65,88 @@ import { normalizeForMatch } from './claims.js';
  *
  * Defaults to 'finished' — the strict side — so a caller that forgets to thread mode
  * through gets the tighter gate, never the looser one.
+ *
+ * @param {{expected:string[], format:object, mode?:string, volumeStrings?:string[]}} args
  */
-export function buildVerifyPrompt({ expected, format, mode = 'finished' }) {
+export function buildVerifyPrompt({ expected, format, mode = 'finished', volumeStrings = [] }) {
   const list = (expected || []).map(s => `  - "${s}"`).join('\n');
   const wantsPairings = format.pairsImagesWithLabels && mode === 'finished';
 
-  return `You are proofreading a finished advertisement image before it goes live.
+  return `You are proofreading a finished advertisement image before it goes live. This image
+was produced by a generative image model. Those models corrupt text constantly: doubled
+letters ("TTHAN"), dropped letters ("FORMLA"), invented words ("CERAMIO"), and text that
+ends up underneath another object.
 
-Transcribe EVERY piece of text visible in the image, exactly as rendered — including any
-text printed on the product itself. Do not correct spelling; report what is actually there.
+Your job is to READ THE PIXELS, glyph by glyph, and report what is physically there.
+You are NOT reading for meaning. Do not repair, complete, normalize or auto-correct
+anything: if the image says "FORMLA", your answer is "FORMLA". If an object covers part
+of a word, report the covered word as covered — never infer what it must have said.
 
-For reference, the copy that was requested is:
+1. STRING CHECKS — for EACH requested string below, answer separately.
+
 ${list}
+
+   For each one report:
+     "expected"  — the requested string, copied exactly as written above
+     "found"     — true only if that exact character sequence is physically present in
+                   the image, every character, in order, correctly spelled
+     "rendered"  — the literal text of the region where that string appears, or where it
+                   was supposed to appear, transcribed glyph by glyph from the pixels.
+                   ALWAYS fill this in, even when "found" is true. Use "" only if that
+                   region contains no text whatsoever.
+
+   Ignore ONLY these differences when deciding "found": letter case, line breaks and
+   spacing, and separator punctuation (a bullet where the request has parentheses).
+   Everything else means found: false — a different word, a missing word, an extra word,
+   a doubled letter, a dropped letter, a transposed letter.
+
+2. PRODUCT VOLUME — read the volume marking printed on the product itself (the
+   "8 fl. oz. (236ml)" style text on the label). Report the literal text you can see in
+   "productVolume". If the product is too small, too blurred, angled away, cropped out
+   or simply absent, answer exactly "ILLEGIBLE". Never guess it, never infer it from the
+   product's proportions, and never copy it from this prompt.
+
+3. DEFECTS — list every piece of the AD'S OWN TYPESET COPY that is not fully legible
+   and correct, in "defects". Report a defect when such text is:
+     - overlapped, covered or obscured by another element (including the product itself)
+     - running off the edge of the frame, cropped, or cut off
+     - garbled: doubled letters, dropped letters, transposed letters, nonsense letter
+       runs, or a word that is not correctly spelled
+   For each defect give "text" (as rendered, not as you think it was meant) and "issue"
+   (one of "obscured", "cut-off", "garbled") and a short "detail".
+
+   NOT defects, do not report them:
+     - text printed on the PRODUCT'S OWN LABEL — the brand mark, the arc-set badge
+       micro-copy, the variant name, the volume. That label renders small by design and
+       its curved micro-copy cannot be read reliably at any render size; the one part of
+       it that carries a falsifiable spec is the volume, and section 2 already covers it.
+       (This exclusion is about text physically printed on the bottle. Type that belongs
+       to the ad's layout — headlines, rules, bottom bars, price/offer badges set on the
+       background — is IN scope even when it sits near the product.)
+     - text that is merely small, soft or low-resolution but not actually wrong. An
+       overlap, a crop or a wrong glyph is a defect; "I cannot fully confirm this" is not.
+     - correctly-spelled brand names, deliberate stylistic capitalisation, letterspacing
+       and intentional line breaks.
+   Return [] if there are none.
+
+4. TRANSCRIPT — every piece of text visible in the image, as rendered. Diagnostic only.
 ${wantsPairings ? `
-This layout pairs a picture with each label. For every such pair, report the label text, a
-short description of what the picture actually depicts, and whether they match.` : ''}
+5. PAIRINGS — this layout pairs a picture with each label. For every such pair, report the
+   label text, a short description of what the picture actually depicts, and whether they
+   match.` : ''}
 
 Respond with JSON only:
 {
+  "checks": [{ "expected": "...", "found": true, "rendered": "..." }],
+  "productVolume": "...",
+  "defects": [{ "text": "...", "issue": "obscured", "detail": "..." }],
   "transcript": ["...", "..."]${wantsPairings ? `,
   "pairings": [{ "label": "...", "depicts": "...", "matches": true }]` : ''}
-}`;
+}${volumeStrings.length ? `
+
+(The product's true volume is on file and your "productVolume" answer will be compared
+against it. Answering "ILLEGIBLE" when you genuinely cannot read it is correct and is
+not a failure — guessing is.)` : ''}`;
 }
 
 function extractJson(raw) {
@@ -58,35 +162,27 @@ function extractJson(raw) {
   return null;
 }
 
+/**
+ * `checks` is the verdict driver and is REQUIRED — a response without it cannot be
+ * scored, and defaulting it to [] would silently score every render as "everything
+ * missing" while looking like a parse success. `transcript` is diagnostic and is
+ * allowed to be absent (v1 required it; it no longer decides anything).
+ */
 export function parseVerifyResponse(raw) {
   const obj = extractJson(raw);
-  if (!obj || !Array.isArray(obj.transcript)) {
-    throw new Error('ad-studio: could not parse verify response as JSON with a transcript');
+  if (!obj || !Array.isArray(obj.checks)) {
+    throw new Error('ad-studio: could not parse verify response as JSON with a checks array');
   }
-  return { transcript: obj.transcript, pairings: Array.isArray(obj.pairings) ? obj.pairings : [] };
+  return {
+    checks: obj.checks,
+    productVolume: typeof obj.productVolume === 'string' ? obj.productVolume : '',
+    defects: Array.isArray(obj.defects) ? obj.defects : [],
+    transcript: Array.isArray(obj.transcript) ? obj.transcript : [],
+    pairings: Array.isArray(obj.pairings) ? obj.pairings : [],
+  };
 }
 
 /**
- * Every expected string must appear somewhere in the transcript. Extra rendered text is
- * not a failure; missing or corrupted expected text is.
- *
- * The transcript is checked against TWO joins of the same normalized runs, and either
- * one satisfies a match:
- *
- *   1. joined by ' | ' — preserves run boundaries (the original behaviour)
- *   2. joined by a single space — lets one expected string span *consecutive* runs
- *
- * (2) exists because the vision model reports a visual lockup as separate runs: the
- * label "real SKIN CARE" comes back as ["real", "SKIN CARE"], and "Organic Coconut Oil
- * + Essential Oils" as two runs, even though the image is correct. A live run rejected
- * 6/6 correct renders on that formatting alone.
- *
- * This relaxes run-boundary whitespace and NOTHING else. Each expected string must
- * still appear as one contiguous, correctly-spelled, correctly-ordered sequence of
- * characters. Deliberately not per-word matching and not a similarity score: the gate's
- * value is that it caught a bottom bar the model had silently rewritten, and either of
- * those would let that through.
- *
  * The match is ANCHORED AT TOKEN BOUNDARIES. A plain String.includes accepts a
  * superstring, which is the single worst false pass this gate can produce:
  *
@@ -113,6 +209,31 @@ function includesAtTokenBoundary(haystack, needle) {
   }
 }
 
+/**
+ * Mechanical containment test: does every expected string appear in `runs`?
+ *
+ * No longer the primary gate (see the R1 note at the top of this file) — it is now the
+ * VERIFIER of the model's own quoted `rendered` text inside evaluateChecks, and the
+ * diagnostic diff against the secondary transcript. Its matching rules are unchanged
+ * and must stay unchanged; every relaxation and every anchor in here was paid for.
+ *
+ * `runs` is checked against TWO joins of the same normalized strings, and either one
+ * satisfies a match:
+ *
+ *   1. joined by ' | ' — preserves run boundaries (the original behaviour)
+ *   2. joined by a single space — lets one expected string span *consecutive* runs
+ *
+ * (2) exists because the vision model reports a visual lockup as separate runs: the
+ * label "real SKIN CARE" comes back as ["real", "SKIN CARE"], and "Organic Coconut Oil
+ * + Essential Oils" as two runs, even though the image is correct. A live run rejected
+ * 6/6 correct renders on that formatting alone.
+ *
+ * This relaxes run-boundary whitespace and NOTHING else. Each expected string must
+ * still appear as one contiguous, correctly-spelled, correctly-ordered sequence of
+ * characters. Deliberately not per-word matching and not a similarity score: the gate's
+ * value is that it caught a bottom bar the model had silently rewritten, and either of
+ * those would let that through.
+ */
 export function diffTranscript(expected, transcript) {
   const runs = (transcript || []).map(normalizeForMatch).filter(Boolean);
   const byRun = runs.join(' | ');
@@ -129,6 +250,195 @@ export function diffTranscript(expected, transcript) {
 }
 
 /**
+ * Score the per-string checks. THIS is the verdict driver.
+ *
+ * A pointed "does this exact sequence appear, yes or no" is much harder to auto-correct
+ * through than "transcribe everything", but it is still one model answer. So the
+ * model's "yes" is not taken on trust: the `rendered` text it quotes for that region is
+ * re-run through diffTranscript's token-anchored match, and a "yes" whose own quoted
+ * text does not contain the expected string is treated as a NO. The model has to get
+ * both halves wrong in the same direction for a corrupted string to survive.
+ *
+ * Fail-closed, three ways, all of them cheap to recover from (a retry is one render):
+ *   - an expected string with no check at all → missing. A model that skips the awkward
+ *     string must not thereby pass it.
+ *   - found:true with an empty `rendered` → missing, "quoted no rendered text". There is
+ *     nothing to falsify the claim against, and an unfalsifiable pass is what this whole
+ *     rebuild exists to remove.
+ *   - found:true whose `rendered` fails the token-anchored match → missing.
+ *
+ * Checks are matched to expected strings by NORMALIZED expected text first, then
+ * positionally when the model returned exactly one check per expected string in order.
+ * Keying on the raw string would break on any punctuation the model re-typed.
+ *
+ * @returns {{missing:string[], details:{expected:string, rendered:string, reason:string}[]}}
+ */
+export function evaluateChecks(expected, checks) {
+  const list = Array.isArray(checks) ? checks : [];
+  const byExpected = new Map();
+  for (const c of list) {
+    const key = normalizeForMatch(c?.expected);
+    if (key && !byExpected.has(key)) byExpected.set(key, c);
+  }
+  const positional = list.length === (expected || []).length;
+
+  const missing = [];
+  const details = [];
+
+  (expected || []).forEach((e, i) => {
+    const needle = normalizeForMatch(e);
+    // Pure-punctuation expectations are unverifiable either way — same carve-out
+    // diffTranscript makes, for the same reason.
+    if (!needle) return;
+
+    const check = byExpected.get(needle) || (positional ? list[i] : null);
+    const rendered = typeof check?.rendered === 'string' ? check.rendered : '';
+
+    if (!check) {
+      missing.push(e);
+      details.push({ expected: e, rendered: '', reason: 'the verifier returned no check for this string' });
+      return;
+    }
+    if (check.found !== true) {
+      missing.push(e);
+      details.push({
+        expected: e,
+        rendered,
+        reason: rendered
+          ? `not present — that region reads "${rendered}"`
+          : 'not present — the verifier reported no text in that region',
+      });
+      return;
+    }
+    if (!normalizeForMatch(rendered)) {
+      missing.push(e);
+      details.push({ expected: e, rendered, reason: 'reported present but the verifier quoted no rendered text' });
+      return;
+    }
+    if (!diffTranscript([e], [rendered]).ok) {
+      missing.push(e);
+      details.push({
+        expected: e,
+        rendered,
+        reason: `reported present, but the text quoted from that region is "${rendered}"`,
+      });
+    }
+  });
+
+  return { missing, details };
+}
+
+// "8 fl. oz. (236ml)" / "2 fl oz (60ml)" / "4 FL oz / 118ml" — the volume marking is
+// stated with wildly inconsistent punctuation in the manifest prose, on the physical
+// label, and in whatever the vision model types back. Compare the NUMBERS, not the
+// string: separator and abbreviation differences must never fail a render, and a
+// wrong number must always fail one.
+const OZ_RE = /(\d+(?:\.\d+)?)\s*fl\.?\s*oz/i;
+const ML_RE = /(\d+(?:\.\d+)?)\s*m\s*l\b/i;
+
+// Answers that mean "I could not read it". The prompt asks for exactly "ILLEGIBLE";
+// the synonyms are here because a model that types "not visible" has still told us it
+// could not read the label, and punishing the wording rather than the answer would
+// burn three paid renders on a product that is small BY DESIGN.
+const ILLEGIBLE_RE = /^(illegible|unreadable|not\s*(visible|legible|readable|present)|none|absent|n\/?a|unknown)\.?$/i;
+
+export function readVolume(text) {
+  const s = String(text || '');
+  const oz = s.match(OZ_RE);
+  const ml = s.match(ML_RE);
+  return {
+    oz: oz ? Number(oz[1]) : null,
+    ml: ml ? Number(ml[1]) : null,
+  };
+}
+
+/**
+ * Volume markings out of a product's labelStrings, so index.js does not have to know
+ * the shape of a volume string in two places.
+ */
+export function selectVolumeStrings(labelStrings) {
+  return (labelStrings || []).filter(s => {
+    const v = readVolume(s);
+    return v.oz !== null || v.ml !== null;
+  });
+}
+
+/**
+ * Tolerant of ILLEGIBLE, intolerant of WRONG. See R2 at the top of this file.
+ *
+ * `productProminent: false` used to strip labelStrings out of the expected set
+ * entirely, which is how "4 FL oz / 118ml" shipped on an 8 fl. oz. bottle. The reason
+ * that flag existed is real — no vision model can read a 6pt volume marking off a
+ * product rendered "small and understated at the bottom center", and demanding it back
+ * fails every attempt and burns the retries — but the response to "cannot read it" is
+ * to accept "cannot read it", not to stop asking.
+ *
+ *   ILLEGIBLE / no digits readable        → pass  (the legitimate small-product case)
+ *   a number that agrees with the truth   → pass
+ *   a number that contradicts the truth   → FAIL
+ *
+ * Only the dimensions the model actually reported are compared: reading "8 fl. oz."
+ * off a bottle whose ml marking is turned away is a correct read, not a mismatch.
+ *
+ * @returns {{ok:boolean, status:string, read:string, expected:string[]}}
+ */
+export function volumeVerdict(productVolume, volumeStrings) {
+  const read = String(productVolume || '').trim();
+  const truths = (volumeStrings || []).map(readVolume).filter(v => v.oz !== null || v.ml !== null);
+
+  // Nothing on file to compare against — this product's manifest entry carries no
+  // volume marking, so there is no claim to falsify. (index.js already aborts a run
+  // whose labelStrings come back empty for the separate, stronger reason that an
+  // unnamed label is how the image model invents a volume in the first place.)
+  if (truths.length === 0) return { ok: true, status: 'no-volume-on-file', read, expected: [] };
+
+  const expectedList = (volumeStrings || []).filter(s => {
+    const v = readVolume(s);
+    return v.oz !== null || v.ml !== null;
+  });
+
+  if (!read || ILLEGIBLE_RE.test(read)) return { ok: true, status: 'illegible', read, expected: expectedList };
+
+  const got = readVolume(read);
+  // The model typed something, but no volume number can be pulled out of it. That is
+  // not a contradicted spec — it is another flavour of "could not read it".
+  if (got.oz === null && got.ml === null) return { ok: true, status: 'illegible', read, expected: expectedList };
+
+  const agrees = truths.some(t =>
+    (got.oz === null || t.oz === null || got.oz === t.oz) &&
+    (got.ml === null || t.ml === null || got.ml === t.ml)
+  );
+
+  return {
+    ok: agrees,
+    status: agrees ? 'match' : 'mismatch',
+    read,
+    expected: expectedList,
+  };
+}
+
+const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled']);
+
+/**
+ * Any reported defect fails the render. A human would reject an ad whose product sits
+ * on top of its own closing line — the live manifesto frame did exactly that and the
+ * verifier reconstructed the covered word instead of reporting it.
+ *
+ * Entries with no `text` at all are dropped: an empty object carries nothing a human
+ * could act on from the proof file, and treating it as a failure would make a model
+ * formatting slip indistinguishable from a real occlusion.
+ */
+export function normalizeDefects(defects) {
+  return (defects || [])
+    .filter(d => d && typeof d.text === 'string' && d.text.trim())
+    .map(d => ({
+      text: d.text.trim(),
+      issue: DEFECT_ISSUES.has(String(d.issue || '').toLowerCase()) ? String(d.issue).toLowerCase() : 'unspecified',
+      detail: typeof d.detail === 'string' ? d.detail : '',
+    }));
+}
+
+/**
  * The pairing requirement applies to FINISHED frames only.
  *
  * A plate is text-free by construction, so it carries no labels, so the vision model
@@ -141,14 +451,41 @@ export function diffTranscript(expected, transcript) {
  * design's centrepiece, the one thing that catches an ad where every word is spelled
  * correctly and jojoba oil is captioned as coconut oil. `mode` defaults to 'finished'
  * so a caller that omits it gets the strict path.
+ *
+ * @param {{expected:string[], checks:object[], productVolume?:string, defects?:object[],
+ *          transcript?:string[], pairings?:object[], format:object, mode?:string,
+ *          volumeStrings?:string[]}} args
  */
-export function verdictFor({ expected, transcript, pairings, format, mode = 'finished' }) {
+export function verdictFor({
+  expected, checks, productVolume = '', defects = [], transcript = [],
+  pairings, format, mode = 'finished', volumeStrings = [],
+}) {
   const reasons = [];
-  const { missing } = diffTranscript(expected, transcript);
+
+  // 1. Per-string checks — the verdict driver (R1).
+  const { missing, details } = evaluateChecks(expected, checks);
   if (missing.length) {
     reasons.push(`${missing.length} expected string(s) missing or corrupted in the render`);
+    for (const d of details) reasons.push(`  "${d.expected}" — ${d.reason}`);
   }
 
+  // 2. Product volume — illegible passes, wrong fails, on EVERY format (R2).
+  const volume = volumeVerdict(productVolume, volumeStrings);
+  if (!volume.ok) {
+    reasons.push(
+      `product volume marking is WRONG — the render shows "${volume.read}", ` +
+      `the product is ${volume.expected.join(' / ')}`
+    );
+  }
+
+  // 3. Occlusion / truncation / garbling (R3).
+  const reportedDefects = normalizeDefects(defects);
+  if (reportedDefects.length) {
+    reasons.push(`${reportedDefects.length} text defect(s) — obscured, cut off, or garbled text`);
+    for (const d of reportedDefects) reasons.push(`  [${d.issue}] "${d.text}"${d.detail ? ` — ${d.detail}` : ''}`);
+  }
+
+  // 4. Image/label pairing — unchanged, still the design's centrepiece.
   let mismatchedPairs = [];
   if (format.pairsImagesWithLabels && mode === 'finished') {
     if (!pairings || pairings.length === 0) {
@@ -161,5 +498,16 @@ export function verdictFor({ expected, transcript, pairings, format, mode = 'fin
     }
   }
 
-  return { ok: reasons.length === 0, reasons, missing, mismatchedPairs };
+  return {
+    ok: reasons.length === 0,
+    reasons,
+    missing,
+    checkDetails: details,
+    volume,
+    defects: reportedDefects,
+    mismatchedPairs,
+    // Secondary diagnostic only — see R1. Recorded in proof.json so a human reading a
+    // failure can see what the model thought the frame said, but it decides nothing.
+    transcriptDiff: diffTranscript(expected, transcript),
+  };
 }

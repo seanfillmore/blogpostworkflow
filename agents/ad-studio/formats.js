@@ -14,18 +14,28 @@
 // enough that a vision model can read the text printed on its label?
 //
 // It is a LEGIBILITY declaration, not a statement about how much the product matters.
-// index.js folds product.labelStrings ("8 fl. oz. (236ml)", the brand mark) into the
-// verify gate's expected-text list, and the gate fails — and retries, at ~$0.13 a
-// render — whenever an expected string cannot be transcribed. Two of these layouts put
-// the product on screen deliberately tiny: manifesto renders it "small and understated
-// at the bottom center, sitting on the surface like a signature", problem-aware
-// "present but not dominant". Requiring a 6pt volume marking to be read back off those
-// is the same unsatisfiable expectation as the badge arc micro-copy, which cost five
-// fix rounds and three burned renders per target before it was removed.
+// index.js folds product.labelStrings (the brand mark, the product type, the variant
+// name) into the verify gate's expected-text list, and the gate fails — and retries, at
+// ~$0.13 a render — whenever an expected string cannot be transcribed. Two of these
+// layouts put the product on screen deliberately tiny: manifesto renders it "small and
+// understated at the bottom center, sitting on the surface like a signature",
+// problem-aware "present but not dominant". Requiring a 6pt brand mark to be read back
+// off those is the same unsatisfiable expectation as the badge arc micro-copy, which
+// cost five fix rounds and three burned renders per target before it was removed.
 //
 // The render prompt still names labelStrings for EVERY format (render.js's fidelity
 // block) — the model is always told exactly what the label says, so it still cannot
 // invent a volume. This flag only decides whether the gate demands to read it back.
+//
+// NARROWED 2026-08-14. This flag used to switch the label check OFF ENTIRELY, which is
+// how a manifesto frame shipped with "4 FL oz / 118ml" printed on an 8 fl. oz. bottle:
+// the volume was not merely un-demanded, it was un-checked. The VOLUME MARKING is now
+// verified on every format regardless of this flag, in a shape that tolerates
+// illegibility but not falsehood — the verifier answers with the volume it can read or
+// with ILLEGIBLE, and only a value that CONTRADICTS the real one fails (see
+// verify.js's volumeVerdict and index.js's expectedForFormat). The flag survives
+// because the rest of the label genuinely cannot be read at signature size; do not
+// widen it back into an off switch for the volume.
 //
 // zoneCapacity (optional) caps how many strings an array-valued zone may carry,
 // keyed by the layoutBrief's own physical description of that zone — a "vertical
