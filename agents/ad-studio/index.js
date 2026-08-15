@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { renderVariation, buildRenderPrompt, selectReferencePhotos } from './render.js';
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings } from './verify.js';
+import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './critique.js';
 import { selectFormats } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
@@ -78,14 +79,14 @@ function textOf(msg) {
 // image appears to be a image/jpeg image"). Every verify call failed until this was
 // fixed, which means every render was paid for and then thrown away. No silent
 // default: an unrecognized signature throws rather than guessing.
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const JPEG_SIGNATURE = [0xff, 0xd8, 0xff];
+
 // R4. How many reference photographs the VERIFY call gets. The renderer gets up to 4
 // (selectReferencePhotos' own cap); the verifier gets fewer because its call is made once
 // per attempt and every photograph is input tokens on it. Two angles are enough to judge
 // silhouette, cap and label element order — the attributes in FIDELITY_ATTRIBUTES.
 const VERIFY_REFERENCE_MAX = 2;
-
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-const JPEG_SIGNATURE = [0xff, 0xd8, 0xff];
 
 export function sniffImageMediaType(buf) {
   if (!Buffer.isBuffer(buf) || buf.length < 12) {
@@ -100,12 +101,52 @@ export function sniffImageMediaType(buf) {
 }
 
 /**
+ * Stage 5b. One art-direction call over a frame that has already passed verify.
+ *
+ * SEPARATE from the verify call on purpose — buildVerifyPrompt's framing is a literal,
+ * "do not interpret anything" pixel read, and holistic judgement is the opposite
+ * instruction. See critique.js's header.
+ *
+ * The `ratio` here is the DELIVERY ratio, not the request ratio. It matters only for
+ * 9:16, which RENDER_RATIO_MAP renders natively (`needsCrop: false`) — so the frame this
+ * call judges is the frame that ships. The one ratio that IS cropped afterwards, 1.91:1,
+ * is a plate, and critiqueVerdict returns not-applicable for plates.
+ *
+ * A failure here is a defect in the frame, not an error: on a malformed response the
+ * frame is not silently accepted, because parseCritiqueResponse throws and renderTarget's
+ * try/catch records the target as errored.
+ */
+export async function critiqueArtifact({ anthropic, buffer, mediaType, format, zones, mode, ratio }) {
+  // A plate has no typeset copy to place or set, so there is nothing to ask. Skip the
+  // call entirely rather than pay for a question with no answerable content.
+  if (mode === 'plate') return critiqueVerdict({ mode, ratio });
+
+  const msg = await anthropic.messages.create({
+    model: CREATIVE_MODELS.adStudio.verify,
+    max_tokens: 1500,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: buffer.toString('base64') } },
+        { type: 'text', text: buildCritiquePrompt({ ratio, format, zones }) },
+      ],
+    }],
+  });
+
+  if (msg.stop_reason === 'max_tokens') {
+    throw new Error('ad-studio: the critique response was cut off at the token limit. Raise max_tokens in critiqueArtifact.');
+  }
+
+  return critiqueVerdict({ ...parseCritiqueResponse(textOf(msg)), mode, ratio });
+}
+
+/**
  * Render one variation, verifying after each attempt. Stops at maxAttempts, or earlier
  * if the run-wide render budget is exhausted (see createRenderBudget) — a budget stop
  * is reported, never silently swallowed.
  * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, budgetStopped:boolean, proof:object}>}
  */
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, mode = 'finished', volumeStrings = [], physicalDescription = '', maxAttempts = 3, budget = null }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', maxAttempts = 3, budget = null }) {
   // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
   // can compare the product it got against the product it asked for. Capped below what
   // the renderer gets: two angles are enough to judge silhouette, cap and label order,
@@ -183,6 +224,21 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
       fidelity, hasReference: referencePhotos.length > 0,
     });
     lastProof.transcript = transcript;
+
+    // Stage 5b — the layout critique, and ONLY on a frame that already passed verify.
+    // Art-directing a frame that is about to be rejected for a corrupted headline buys
+    // nothing and costs a vision call. A Part A defect (copy under the platform UI, copy
+    // unreadable at thumb size) feeds THIS retry loop rather than inventing a second one;
+    // the Part B quality score is recorded either way and never blocks. See critique.js.
+    if (lastProof.ok) {
+      const crit = await critiqueArtifact({ anthropic, buffer: lastBuffer, mediaType: lastMediaType, format, zones, mode, ratio: deliveryRatio });
+      lastProof.critique = crit;
+      if (!crit.ok) {
+        lastProof.ok = false;
+        lastProof.reasons = [...lastProof.reasons, ...crit.reasons];
+      }
+    }
+
     if (lastProof.ok) return { ok: true, buffer: lastBuffer, mediaType: lastMediaType, attempts, budgetStopped: false, proof: lastProof };
   }
 
@@ -442,6 +498,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
     // image/label pairing requirement must not be applied to it.
     const r = await renderWithRetry({
       gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format,
+      zones, deliveryRatio: target.ratio,
       mode: target.mode, volumeStrings, physicalDescription: product.physicalDescription, budget,
     });
 
@@ -493,6 +550,9 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
         // accepted frame's proof needs to see which attributes were actually judged and
         // which came back CANNOT_TELL, or "accepted" reads as "checked" when it wasn't.
         fidelity: r.proof.fidelity,
+        // Stage 5b. Carries the 1-5 quality score even on an ACCEPTED frame — the score
+        // exists to rank accepted frames for whoever chooses between them.
+        critique: r.proof.critique,
         defects: r.proof.defects,
         mismatchedPairs: r.proof.mismatchedPairs,
         transcript: r.proof.transcript,
