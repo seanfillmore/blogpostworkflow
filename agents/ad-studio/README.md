@@ -117,10 +117,39 @@ data/creatives/ad-studio/<run-id>/
 `run.json` also carries `cost` (`renders`, `perRenderUsd`, `estimatedUsd`) and `budget`
 (`maxRenders`, `stopped`, `skipped[]`).
 
-**Known limitation — no retention policy.** `data/creatives/ad-studio/` is gitignored
-(one default run is ~137 MB of 2K renders) and nothing prunes it. Delete old run
-directories by hand; the production box has a 24 GB disk and a full one has already cost
-this project four days of cron.
+## Housekeeping
+
+`data/creatives/ad-studio/` is gitignored (one default run is ~137 MB of 2K renders) and
+accumulates with every run. The production box has a 24 GB disk and a full one has
+already cost this project four days of cron (see CLAUDE.md's Server Deployment notes) —
+`scripts/prune-ad-studio.mjs` exists so this directory doesn't do that again.
+
+Policy — "keep what we need, ditch the rest":
+
+- **Keep forever, any age:** every JSON file (`run.json`, `copy.json`, `proof.json`,
+  `demand-gen-assets.json`). A few KB each, and the permanent record of what happened —
+  a run stays auditable at a few KB even after its images are gone.
+- **Delete, after a grace period (default 7 days):** image artifacts belonging to a
+  **rejected** variation. Inspect a failure the day it happens, not a month later — the
+  rejected frame's `proof.json` survives regardless, so the reason is never lost.
+- **Delete, unconditionally (default 90 days):** image artifacts from runs older than
+  the retention window, accepted or not.
+
+Accepted vs. rejected is read from `run.json`'s `results[].variations[].ok`, never
+inferred from filenames. A run with no readable `run.json` (aborted mid-run) has its
+images treated as rejected and subject to the grace period — never treated as accepted,
+never skipped.
+
+```bash
+node scripts/prune-ad-studio.mjs                                    # dry run (default) — prints the plan, deletes nothing
+node scripts/prune-ad-studio.mjs --apply                            # actually delete
+node scripts/prune-ad-studio.mjs --rejected-days 3 --run-days 60 --apply
+```
+
+**Dry-run is the default, not `--apply`.** This inverts the repo's usual
+apply-by-default agent convention (see CLAUDE.md's Autonomy Principle) on purpose — the
+directory is gitignored, so deleted bytes are gone for good, and the safe mode has to be
+the one you get by accident.
 
 ## Cost
 
