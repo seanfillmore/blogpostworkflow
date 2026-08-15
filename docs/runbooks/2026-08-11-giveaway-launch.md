@@ -371,9 +371,34 @@ second step costs on a page whose whole job is the +3 rung? Until that is
 answered, the entered page asks the three REQUIRED questions only, which is what
 the daily report's answer mix is actually built from.
 
-## Deploy checklist — live status as of 2026-08-12
+## Deploy checklist — live status as of 2026-08-14
 
-Target launch: **Aug 15 2026.**
+**Ad launch: Aug 18 2026** (Sean, 2026-08-14). The Entry Period stays **Aug 15 →
+Sept 14, draw Sept 16** as published — entries opening three days before the ads
+run is harmless, and re-editing live legal copy is the riskier move.
+
+### ⚠️ The three-day gap this creates — decide before Aug 15
+
+The lander is **already publicly reachable** (`/pages/free-soap-giveaway`,
+`/pages/giveaway-entered`, `/pages/giveaway-official-rules` all 200 on
+2026-08-14), and the Entry Period opens Aug 15. But nurture flow `XnD2WQ` is
+`draft` and the checklist says to set it live only when ads go live on the 18th.
+
+Anyone entering **Aug 14–17** would therefore get the Klaviyo double-opt-in
+confirmation (list-level, works today) but **never receive onboarding emails
+01–04**. Klaviyo flows do not backfill: the trigger is *Added to List*, so
+setting the flow live on the 18th will not reach a profile added on the 16th.
+They would be silently short-changed for the whole giveaway.
+
+**Recommended: set `XnD2WQ` live now rather than on the 18th.** It is safe —
+the entrant list `Y2ukbE` is verified **empty (profile_count = 0)** and the
+trigger only fires on new additions, so nothing retroactive can go out. The
+"not before ads" instruction was written when test entries were still moving
+through the list; Gate A now confirms zero `gv_test` profiles remain.
+
+The alternative is to keep the flow draft and accept that any organic entrant
+before the 18th gets no sequence. That is only defensible if the lander is
+unlinked and unindexed — it is neither guaranteed to stay that way.
 
 ### ✅ Done
 - Entry endpoint deployed; answers `400` pre-auth, not `401`
@@ -437,8 +462,20 @@ Target launch: **Aug 15 2026.**
    `gv_*` and removed from the entrant list, and Gate A passes clean.
    **Three prior inboxes are now burned** — see the entry-verification runbook.
 9. `node scripts/giveaway/verify-launch.mjs` → must print **Gate A passed.**
-10. **Set flow `XnD2WQ` live** — at the moment ads go live, not before.
-11. **Turn on the Meta campaign.**
+   ✅ Re-verified 2026-08-14: **10/10 PASS.**
+10. **Set flow `XnD2WQ` live.** ⚠️ See the three-day-gap note above — the case for
+    doing this on **Aug 15** (when entries open) rather than Aug 18 (when ads
+    start) is that a flow set live on the 18th never reaches anyone who entered
+    on the 16th. Verified `draft` on 2026-08-14.
+11. **Turn on the Meta campaign.** Verified `PAUSED` on 2026-08-14
+    (`Soap Giveaway 2026-09 | Leads | US`, `act_946015593265647`). Blocked on
+    creatives — the brief is `data/giveaway/creative-briefs.md`; Sean is bringing
+    `agents/ad-studio` up to speed to render them.
+12. **Schedule both deadline campaigns in the Klaviyo UI.** Verified 2026-08-14:
+    `Giveaway — Reminder (2026-09-11)` and `Giveaway — Final Call (2026-09-13)`
+    are both **Draft with no send time**. The API can create a campaign but
+    cannot queue a send job, so this is UI-only and is the easiest item on this
+    list to forget — they look finished from the API.
 
 Order matters only in that 1 must precede 10, and 6-9 should be the last things
 before 10-11.
