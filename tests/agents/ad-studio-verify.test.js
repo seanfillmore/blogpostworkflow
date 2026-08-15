@@ -298,9 +298,9 @@ assert.deepEqual(evaluateChecks(['...'], []).missing, []);
 }
 
 // ── Volume: illegible passes, wrong FAILS (R2) ──────────────────────────────────
-assert.deepEqual(readVolume('8 fl. oz. (236ml)'), { oz: 8, ml: 236 });
-assert.deepEqual(readVolume('4 FL oz / 118ml'), { oz: 4, ml: 118 });
-assert.deepEqual(readVolume('real SKIN CARE'), { oz: null, ml: null });
+assert.deepEqual(readVolume('8 fl. oz. (236ml)'), { oz: 8, ml: 236, wtOz: null, g: null });
+assert.deepEqual(readVolume('4 FL oz / 118ml'), { oz: 4, ml: 118, wtOz: null, g: null });
+assert.deepEqual(readVolume('real SKIN CARE'), { oz: null, ml: null, wtOz: null, g: null });
 assert.deepEqual(selectVolumeStrings(['real SKIN CARE', '8 fl. oz. (236ml)', 'coconut breeze']), ['8 fl. oz. (236ml)']);
 
 const TRUE_VOLUME = ['8 fl. oz. (236ml)'];
@@ -359,7 +359,7 @@ for (const read of ['18 fl. oz. • 236ml', '4 fl. oz (118ml)', '0 fl. oz. • 2
 // per-string check happened to catch that; it no longer looks at the volume at all, so
 // volumeVerdict falls back to the response's own transcript when it has no direct
 // reading. Note "0" must not be treated as absent: readVolume returns 0, not null.
-assert.deepEqual(readVolume('0 fl. oz. • 236ml'), { oz: 0, ml: 236 });
+assert.deepEqual(readVolume('0 fl. oz. • 236ml'), { oz: 0, ml: 236, wtOz: null, g: null });
 {
   const v = volumeVerdict('ILLEGIBLE', TRUE_VOLUME, [
     'real', 'SKIN CARE', 'ORGANIC', 'pure unscented', 'moisturizing body lotion', '0 fl. oz. • 236ml',
@@ -1031,3 +1031,53 @@ assert.ok(
 const colour = FIDELITY_ATTRIBUTES.find(a => a.key === 'containerColour');
 assert.ok(colour, 'the colour attribute must be base-colour only, not finish');
 assert.ok(/base colour only/i.test(colour.ask));
+
+// ── R2c: NET WEIGHT is a volume marking too ─────────────────────────────────────────
+//
+// readVolume understood fluid ounces and millilitres and nothing else, so every product
+// marked by WEIGHT was invisible to the volume gate. Found by auditing what the pipeline
+// actually extracts for each product in data/product-images/manifest.json:
+//
+//   coconut-oil-lip-balm  labelStrings: ["real SKIN CARE", "0.15 oz • 4.25g"]  volume: 0
+//   coconut-soap          the bar prints "3.4 oz • 84g"                        volume: 0
+//
+// Two failures came out of that, not one:
+//
+//   1. volumeVerdict had nothing on file, returned "no-volume-on-file", and PASSED any
+//      weight the image model cared to invent.
+//   2. Worse, because expectedForFormat only subtracts recognised volume markings from
+//      the expected set, "0.15 oz • 4.25g" stayed in it — so the lip balm's weight was
+//      checked by the STRICT literal per-string matcher instead. That is the exact
+//      mechanism R2b removed for the lotion after it rejected three correct renders over
+//      "8 fl. oz. (236ml)" vs "8 fl. oz - 236ml". A product marked by weight was getting
+//      the strictness the design had already rejected.
+assert.deepEqual(readVolume('0.15 oz • 4.25g'), { oz: null, ml: null, wtOz: 0.15, g: 4.25 });
+assert.deepEqual(readVolume('3.4 oz • 84g'), { oz: null, ml: null, wtOz: 3.4, g: 84 });
+assert.deepEqual(readVolume('NET WT 3.4 OZ'), { oz: null, ml: null, wtOz: 3.4, g: null });
+
+// FLUID ounces must never be read as weight ounces. "8 fl. oz." has "fl." between the
+// number and "oz", which the weight pattern cannot cross — if it ever could, every lotion
+// would carry a phantom weight reading that nothing on the label supports.
+assert.equal(readVolume('8 fl. oz. (236ml)').wtOz, null);
+assert.equal(readVolume('4 FL oz / 118ml').wtOz, null);
+// ...and millilitres must never be read as grams.
+assert.equal(readVolume('8 fl. oz. (236ml)').g, null);
+
+// A weight marking now reaches selectVolumeStrings, so it is gated by volumeVerdict
+// (numeric, punctuation-tolerant) and subtracted from the literal expected set.
+assert.deepEqual(selectVolumeStrings(['real SKIN CARE', '0.15 oz • 4.25g']), ['0.15 oz • 4.25g']);
+assert.deepEqual(selectVolumeStrings(['real SKIN CARE', 'hand & body soap', '3.4 oz • 84g']), ['3.4 oz • 84g']);
+
+// And it is judged with the same tolerance: illegible passes, wrong fails, punctuation
+// never decides. The lip balm bottle prints "0.15 oz - 4.25g"; the manifest writes a
+// bullet. Same numbers, so it must pass.
+const LIP = ['0.15 oz • 4.25g'];
+assert.equal(volumeVerdict('0.15 oz - 4.25g', LIP).ok, true, 'punctuation must not fail a correct weight');
+assert.equal(volumeVerdict('ILLEGIBLE', LIP).ok, true, 'an unreadable weight still passes');
+const wrongWeight = volumeVerdict('0.5 oz • 14g', LIP);
+assert.equal(wrongWeight.ok, false, 'a weight that contradicts the label must fail');
+assert.equal(wrongWeight.status, 'mismatch');
+// Only the dimensions actually reported are compared — reading the ounces off a tube
+// whose gram marking is turned away is a correct read, not a mismatch.
+assert.equal(volumeVerdict('0.15 oz', LIP).ok, true);
+assert.equal(volumeVerdict('0.9 oz', LIP).ok, false);

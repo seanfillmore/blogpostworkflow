@@ -558,6 +558,22 @@ export function evaluateChecks(expected, checks) {
 // wrong number must always fail one.
 const OZ_RE = /(\d+(?:\.\d+)?)\s*fl\.?\s*oz/i;
 const ML_RE = /(\d+(?:\.\d+)?)\s*m\s*l\b/i;
+// R2c. Products marked by NET WEIGHT rather than fluid volume — the lip balm
+// ("0.15 oz • 4.25g") and the bar soap ("3.4 oz • 84g"). Without these two patterns the
+// whole volume gate was blind to them: nothing on file meant nothing to falsify, AND the
+// marking stayed in the literal expected set, which is the strictness R2b removed.
+//
+// WT_OZ_RE cannot match a FLUID ounce marking: "8 fl. oz." puts "fl." between the number
+// and "oz", and \s* cannot cross it. That separation is the whole reason this is safe to
+// run alongside OZ_RE — if it ever loosened, every lotion would carry a phantom weight
+// reading that nothing on its label supports.
+const WT_OZ_RE = /(\d+(?:\.\d+)?)\s*oz/i;
+const G_RE = /(\d+(?:\.\d+)?)\s*g\b/i;
+
+/** Does this parse carry any readable marking at all? */
+function hasVolumeReading(v) {
+  return v.oz !== null || v.ml !== null || v.wtOz !== null || v.g !== null;
+}
 
 // Answers that mean "I could not read it". The prompt asks for exactly "ILLEGIBLE";
 // the synonyms are here because a model that types "not visible" has still told us it
@@ -569,9 +585,13 @@ export function readVolume(text) {
   const s = String(text || '');
   const oz = s.match(OZ_RE);
   const ml = s.match(ML_RE);
+  const wtOz = s.match(WT_OZ_RE);
+  const g = s.match(G_RE);
   return {
     oz: oz ? Number(oz[1]) : null,
     ml: ml ? Number(ml[1]) : null,
+    wtOz: wtOz ? Number(wtOz[1]) : null,
+    g: g ? Number(g[1]) : null,
   };
 }
 
@@ -580,10 +600,7 @@ export function readVolume(text) {
  * the shape of a volume string in two places.
  */
 export function selectVolumeStrings(labelStrings) {
-  return (labelStrings || []).filter(s => {
-    const v = readVolume(s);
-    return v.oz !== null || v.ml !== null;
-  });
+  return (labelStrings || []).filter(s => hasVolumeReading(readVolume(s)));
 }
 
 /**
@@ -616,7 +633,7 @@ export function selectVolumeStrings(labelStrings) {
  */
 export function volumeVerdict(productVolume, volumeStrings, transcript = []) {
   const read = String(productVolume || '').trim();
-  const truths = (volumeStrings || []).map(readVolume).filter(v => v.oz !== null || v.ml !== null);
+  const truths = (volumeStrings || []).map(readVolume).filter(hasVolumeReading);
 
   // Nothing on file to compare against — this product's manifest entry carries no
   // volume marking, so there is no claim to falsify. (index.js already aborts a run
@@ -624,23 +641,24 @@ export function volumeVerdict(productVolume, volumeStrings, transcript = []) {
   // unnamed label is how the image model invents a volume in the first place.)
   if (truths.length === 0) return { ok: true, status: 'no-volume-on-file', read, source: 'reported', expected: [] };
 
-  const expectedList = (volumeStrings || []).filter(s => {
-    const v = readVolume(s);
-    return v.oz !== null || v.ml !== null;
-  });
+  const expectedList = (volumeStrings || []).filter(s => hasVolumeReading(readVolume(s)));
 
   // Only the dimensions actually reported are compared: reading "8 fl. oz." off a
   // bottle whose ml marking is turned away is a correct read, not a mismatch.
   const agreesWithTruth = got => truths.some(t =>
     (got.oz === null || t.oz === null || got.oz === t.oz) &&
-    (got.ml === null || t.ml === null || got.ml === t.ml)
+    (got.ml === null || t.ml === null || got.ml === t.ml) &&
+    (got.wtOz === null || t.wtOz === null || got.wtOz === t.wtOz) &&
+    (got.g === null || t.g === null || got.g === t.g)
   );
 
-  const direct = (!read || ILLEGIBLE_RE.test(read)) ? { oz: null, ml: null } : readVolume(read);
+  const direct = (!read || ILLEGIBLE_RE.test(read))
+    ? { oz: null, ml: null, wtOz: null, g: null }
+    : readVolume(read);
 
   // A direct reading beats everything else — it is the answer to the question that was
   // asked about exactly this marking.
-  if (direct.oz !== null || direct.ml !== null) {
+  if (hasVolumeReading(direct)) {
     const ok = agreesWithTruth(direct);
     return { ok, status: ok ? 'match' : 'mismatch', read, source: 'reported', expected: expectedList };
   }
@@ -663,7 +681,7 @@ export function volumeVerdict(productVolume, volumeStrings, transcript = []) {
   // run this was derived from, it fires on exactly that one frame.
   for (const run of transcript || []) {
     const got = readVolume(run);
-    if (got.oz === null && got.ml === null) continue;
+    if (!hasVolumeReading(got)) continue;
     if (!agreesWithTruth(got)) {
       return { ok: false, status: 'mismatch', read: String(run).trim(), source: 'transcript', expected: expectedList };
     }
