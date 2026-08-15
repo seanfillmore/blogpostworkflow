@@ -28,9 +28,9 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 
 | Flag | Required | Meaning |
 |---|---|---|
-| `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`. |
+| `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`, and its manifest entry must carry a `unitCount` (see below). |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). **Required.** It used to be optional, and omitting it meant the whole six-format rotation — 108 renders ≈ $14 from a flag nobody typed. An unknown key is rejected with the valid list. |
+| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`). **Required.** It used to be optional, and omitting it meant the whole six-format rotation — 108 renders ≈ $14 from a flag nobody typed. An unknown key is rejected with the valid list. |
 | `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta=1:1,meta=4:5`** — see below. |
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
@@ -61,6 +61,53 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    not an LLM call. One concept per selected format so a batch cannot collapse into
    six variants of one idea. Each format also declares `pairsImagesWithLabels`, which
    the verification stage reads.
+
+   **Each format carries TWO briefs, and they are not interchangeable.** `layoutBrief`
+   describes the finished advertisement — its columns, rules, pills, bars and ingredient
+   cut-outs. `plateBrief` describes the ad base: the ground the product stands on, and the
+   size and position it occupies. Nothing else. The plate used to be rendered from
+   `layoutBrief` with the furniture negated underneath ("leave that area EMPTY"), and on
+   2026-08-15 that produced a 1:1 plate carrying wood slices, greenery, a coconut and a
+   second half-faded bottle — because `ingredient-callout`'s layout brief asks in so many
+   words for "a small photorealistic cut-out image of that ingredient", and a vivid
+   positive instruction beats a negation sitting below it. Both `formats.js` (at load) and
+   `buildRenderPrompt` throw on a missing brief, so there is no path back to the fallback.
+
+   **A plate may have a scene where one meshes** (`plateSetting`, per format). The first
+   cut of this forbade every setting on every format, which flattened `problem-aware` and
+   `top-x-review` into the same studio shot as the rest and threw away the one thing those
+   two formats are for. That was an over-correction: what put a coconut and a wood slice on
+   the bad plate was the finished ad's **ingredient row**, not the existence of a room.
+
+   | setting | formats | what may share the frame |
+   |---|---|---|
+   | `studio` | `us-vs-them`, `ingredient-callout`, `manifesto`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast` | nothing — a plain even ground and the product |
+   | `scene` | `problem-aware`, `top-x-review` | a coherent real place, with incidental objects |
+
+   In **both** settings a plate brief may never name ad furniture (columns, rules, pills,
+   bars, badges, icons, checklists, headlines), ingredient or botanical styling (a coconut,
+   a sprig, scattered seeds — that is artwork the operator places, and it is literally what
+   went wrong), or a unit count. **A scene is a PLACE, not ingredient styling:**
+   `problem-aware` may have a bathroom counter and still may not have a coconut on it.
+   `formats.js` throws at load if a format has no `plateSetting` — no default, because
+   `studio` would silently strip a setting off a format that wants one and `scene` would
+   silently license props on one that does not.
+   **Three formats added 2026-08-15 from reference creatives that are running** — Bonafide
+   (quote-led), Magic Spoon / MUD\WTR (stats radiating off a centred hero), and a kids'
+   supplement before/after. All three were added as **data only**: no zone name is
+   hard-coded anywhere downstream, so nine formats cost the same logic as six.
+
+   *Style only.* Several of those references carry visibly garbled machine-generated label
+   text — `Zaro Sugar`, `Het Flash Relief`, and `tummy discomrfort` in a live Para Guard
+   ad. We read their layout and their angle, never their copy, and that garbling is itself
+   the argument for plate-first: they baked type into the render and it broke.
+
+   | key | shape | notes |
+   |---|---|---|
+   | `testimonial` | big customer quote, attribution, product small beneath, star/credibility line | The quote **must be a verbatim review** — `claims.js` enforces it via the `reviews` source. An invented testimonial is the worst thing this pipeline could emit. A supplement disclaimer is required in the finished ad and is set by hand. |
+   | `stat-stack` | centred hero with four stats in the corners, joined by hand-drawn arrows | `zoneCapacity: { stats: 4 }` — the references run 4–6 and six crowds a phone-width frame into the product. |
+   | `state-contrast` | illustrated before → after with the product between | **Compliance-shaped.** Meta prohibits before-and-after imagery in health and beauty, and `problem-aware`'s brief already encodes that. The reference only gets away with the shape because its states are cartoons. So both states are flat illustration of the *experience* — never a photograph of skin, a body, a face, or a depiction of a condition — and because illustrations are artwork, the operator draws them; the plate is just the product with both state areas empty. |
+
 2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
    `brandKit`, `reviews`) and quote its evidence verbatim.
@@ -72,7 +119,17 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    per variation per platform target, conditioned on up to 4 real reference
    photographs **and the manifest's prose description of the physical product**
    (`PHYSICAL FORM` in the prompt). The product is generated in-scene, never composited.
-5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — four checks, all required:
+
+   **How many units belong in the frame is per-product data, not a constant.** Every
+   manifest entry carries `unitCount`, and the plate prompt demands exactly that many and
+   forbids any extra — including a faded, ghosted or partially cropped duplicate. It has
+   to be data because four of the eleven RSC products are genuinely multi-unit
+   (`foam-soap-bundle` 3, `coconut-oil-lip-balm` 4, `sensitive-skin-starter-set` 3,
+   `skincare-starter-set` 2); a hard-coded "exactly one" would reject every correct render
+   of those. A missing or invalid `unitCount` **aborts the run** rather than defaulting to
+   1 — the same posture as empty `labelStrings`, and for the same reason: a silent default
+   is how a wrong assumption ships without anyone deciding it.
+5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — five checks, all required:
 
    - **Per-string checks.** For each requested string, a *pointed* question — does this
      exact character sequence appear, yes or no, and what does that region actually
@@ -86,7 +143,14 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    - **Product volume.** Read-or-`ILLEGIBLE`, on **every** format. `ILLEGIBLE` passes
      (the legitimate small-product case), a value agreeing with the real volume passes,
      a value that contradicts it **fails**. Numbers are compared, not strings, so
-     punctuation never fails a render and a wrong number always does.
+     punctuation never fails a render and a wrong number always does. The response's own
+     transcript is **also** scanned for a contradicting volume, on every call — not only
+     when the direct reading is missing. That gate is how the 2026-08-15 plate passed: the
+     response carried both `8 fl. oz • 236ml` (correct, off the hero bottle) and
+     `8 fl. oz . 230ml` (wrong, printed on a ghost second bottle), and because the direct
+     answer was right the scan never ran. The old justification for gating it — that the
+     scan "can only ever FAIL a render, never pass one" — was always the argument for
+     running it unconditionally.
    - **Defects — the question is inverted per mode.** On a **finished frame**, any of the
      ad's own typeset copy that is obscured, cut off at the frame edge, or garbled fails
      the render; a live frame had the product bottle sitting on top of the word "actually"
@@ -133,6 +197,69 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
      missing, moved or reshaped, and explicitly not whether extra elements appeared,
      because every false positive found was an "extra" that turned out to be a highlight.
      Do not widen either one back.
+
+     **A third narrowing, 2026-08-15: `labelGraphics` judges SHAPE AND PLACEMENT ONLY,
+     never micro-copy.** The badge carries arc-set text no vision model reads reliably at
+     render size. Both live rejects were eyeballed: the 9:16 badge "looks fine" — a false
+     positive that cost three paid attempts — and the 4:5 badge was "definitely garbled",
+     but that frame was independently rejected for stray `"HOIXIM HEADLINE"` text baked
+     into a plate. So the narrowing loses no true positive. It is the same exclusion
+     `buildLabelStrings` already applies, for the same reason, and the same lesson as
+     `productProminent`: when a check demands something unreadable, accept "cannot read
+     it" rather than burning the retries.
+   - **Scene inventory — plates only.** The verifier lists **every** distinct object in the
+     frame and classifies each as `product-unit`, `surface` or `other`. The count of
+     product units must equal the product's `unitCount`, and there must be no `other`
+     objects at all. An empty inventory on a plate **fails** as unreported.
+
+     **Two live-run corrections, both paid for with false positives (2026-08-15).** The
+   first cut asked an OPEN "list every object, including anything faint, blurred or
+   ghosted" and added "if there is a second bottle you are unsure about, list it". On the
+   9:16 plate — a tall frame that is mostly empty gradient by design — that produced a
+   confabulated second bottle in **9 of 9 vision calls across three prompt wordings**,
+   burning the full retry budget on a frame that pixel inspection proved was correct. The
+   1:1 and 4:5 of the same run passed 3/3. De-biasing the wording did not fix it, and
+   majority voting cannot: the confabulation is *consistent*, so N calls buy the same
+   wrong answer N times. Two changes did fix it, and they are R1's lesson again — pointed
+   beats open, and never ask a vision model to strain:
+
+   - a unit counts only if the model can resolve **both a closure and a body** on it;
+   - an object the model itself describes as blurred, out-of-focus, faint or possible is
+     **background, in every bucket** (`isUnresolvedObject`) — filtered in code, the same
+     shape and justification as `isAbsenceReport`. Filtered entries are returned as
+     `unresolved` and written to `proof.json`, never silently dropped.
+
+   The real 2026-08-15 ghost carried a *readable* wrong volume (`8 fl. oz . 230ml`), so it
+   clears the resolution bar comfortably; and the unconditional transcript volume scan
+   catches that frame independently. The second correction: the leaf illustration **printed
+   on the bottle's label** was classified as a stray object in 4 of 6 calls, which would
+   have failed every studio plate of a product whose label has artwork on it. Label artwork
+   is part of the product and is now excluded explicitly.
+
+   **The stray rule follows `plateSetting`; the unit count never does.** On a `scene`
+   plate an `other` object is the deliverable, so strays are recorded in `proof.json` but
+   do not fail the frame — a human can still see if it drifted into a prop pile. The unit
+   count is absolute in every setting: a ghost second bottle is wrong in a bathroom too.
+   `setting` defaults to `studio`, the strict side, so a caller that forgets to thread it
+   gets the tighter gate.
+
+   Why it exists: the 2026-08-15 plate carried a ghost second bottle, a wood slice,
+     greenery and a coconut, and passed everything above. Each check had a reason not to
+     see it — `FIDELITY_ATTRIBUTES` are phrased about *the* product, singular, so the
+     verifier silently picked one unit and judged that; the volume transcript scan was
+     gated; and the stray-text rule correctly exempts text on the product's own label,
+     which exempted the ghost bottle's wrong volume twice over. **The generalisable shape:
+     every check assumed exactly one product in the frame. When adding a check here, ask
+     what it assumes about how many of something is present.**
+
+     It is an inventory, not a unit count, and that is the point: a hard-coded "exactly
+     one" would fail every genuine multi-unit product, while an inventory handles bundles
+     naturally *and* still catches a ghost bottle. Its output — "a wood slice, a coconut, a
+     second partially-rendered bottle" — is actionable where "count: 2" is not. The
+     verifier is **never told how many units to expect**: that would be R1's exact failure
+     mode, an open question answered towards the number in the prompt. `inventoryVerdict`
+     does the comparison in code. Finished frames are not inventoried — their `layoutBrief`
+     asks for the furniture, so "does this belong" has no answer there.
 
    - **Pairing**, on **finished frames** of formats that pair a picture with a label.
      Not applied to Demand Gen plates: a plate is text-free by construction, so it has
@@ -233,6 +360,15 @@ This file is a few bytes per frame and must outlive the images, which
 `scripts/prune-ad-studio.mjs` deletes on a 90-day window.
 
 ## Housekeeping
+
+**Every run auto-archives its output.** At the end of a run `archiveRunOutput` copies
+`data/creatives/ad-studio/<runId>/` to the same path under the **main checkout**, found via
+git's common dir. Run output is gitignored, which inside a worktree means untracked — and
+`git worktree remove --force` deletes untracked files. That is how a set of sample plates
+was destroyed before anyone had seen them. Set `AD_STUDIO_ARCHIVE_DIR` to send it somewhere
+else; running in the main checkout no-ops, because the destination is already the source.
+A failed copy warns and never fails the run — the images are on disk by then, and turning a
+successful paid run into a crash over a backup is strictly worse.
 
 `data/creatives/ad-studio/` is gitignored (one default run is ~137 MB of 2K renders) and
 accumulates with every run. The production box has a 24 GB disk and a full one has

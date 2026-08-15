@@ -38,6 +38,14 @@ export function selectReferencePhotos(dir, max = 4) {
 export function buildRenderPrompt({ format, zones, product, brandKit, mode, ratio = '' }) {
   if (mode !== 'finished' && mode !== 'plate') throw new Error(`unknown mode: ${mode}`);
 
+  // Template literals stringify undefined rather than failing, so a format missing its
+  // brief would ship the word "undefined" to a paid image call and render whatever the
+  // model made of it. formats.js validates the real table at load; this catches a caller
+  // that hand-builds a format object.
+  const briefField = mode === 'plate' ? 'plateBrief' : 'layoutBrief';
+  const brief = String(format?.[briefField] || '').trim();
+  if (!brief) throw new Error(`ad-studio: format "${format?.key}" has no ${briefField}`);
+
   const palette = (brandKit?.palette_hexes || []).join(', ');
   const labels = (product.labelStrings || []).map(s => `  - "${s}"`).join('\n');
 
@@ -91,27 +99,77 @@ at the bottom, inset it so it sits ABOVE the ${safe.bottomFraction}, with clean 
 below it.
 ` : '';
 
+  // How many units belong in the frame. Driven by product.unitCount, never by a constant:
+  // four of eleven RSC products are genuinely multi-unit, and "exactly one" would reject
+  // every correct render of the foam soap bundle, the lip balm four-pack and both starter
+  // sets. The ghost-second-bottle case and the bundle case are the same question asked
+  // from opposite sides, so one number answers both.
+  // Validated only where it is used. `Number(undefined)` is NaN, and NaN !== 1, so an
+  // unvalidated missing count would fall through to the plural branch and ship the literal
+  // string "EXACTLY NaN UNITS" to a paid render — the same silent-stringify hole as a
+  // missing brief, one line further down.
+  const units = Number(product?.unitCount);
+  if (mode === 'plate' && (!Number.isInteger(units) || units < 1)) {
+    throw new Error(`ad-studio: product "${product?.handle}" has no valid unitCount (got ${JSON.stringify(product?.unitCount)})`);
+  }
+  const unitClause = units === 1
+    ? `EXACTLY ONE UNIT OF THE PRODUCT, and nothing else in the frame. No second bottle, tube
+or jar, not even a faded, blurred, ghosted, reflected or partially cropped one.`
+    : `EXACTLY ${units} UNITS — this product IS a set of ${units} pieces, described under
+PHYSICAL FORM above. Render those ${units} and nothing else: no extra unit beyond them, and
+no faded, blurred, ghosted, reflected or partially cropped duplicate of any of them.`;
+
+  // What may share the frame with the product. Driven by format.plateSetting, because the
+  // first cut of this forbade every setting on every format and flattened `problem-aware`
+  // and `top-x-review` into the same studio shot as the rest — throwing away the one thing
+  // those two formats are for. What put a coconut and a wood slice on the 2026-08-15 plate
+  // was the finished ad's INGREDIENT ROW, not the existence of a room.
+  //
+  // Both branches forbid the same two things, and they are the things that actually went
+  // wrong: ad furniture the operator sets by hand, and ingredient/botanical styling.
+  const settingClause = format.plateSetting === 'scene'
+    ? `THIS IS A REAL SETTING, NOT A STYLED SET. Ordinary things that genuinely belong in the
+place described above may appear, softly and out of focus, well away from the product. Do
+NOT dress the scene: no ingredients, no fruit, nuts, seeds, leaves, sprigs or greenery, no
+wood slices, no arranged flat-lay of objects around the product, and nothing chosen to
+signal what the product is made of. Those are artwork, and they are placed by hand later.
+Anything in the frame must read as incidental, never as arranged.`
+    : `NO PROPS AND NO SCENE DRESSING of any kind: no ingredients, no fruit or nuts, no leaves
+or greenery, no wood slices, boards, trays, bowls, cloths, stones, water, splashes, towels
+or bathroom fittings. The ground is a plain, even surface and nothing rests on it but the
+product.`;
+
   if (mode === 'plate') {
-    return `${format.layoutBrief}
+    // format.plateBrief, NEVER format.layoutBrief. layoutBrief describes the finished ad —
+    // its columns, rules, ingredient cut-outs and lifestyle scene — and feeding it here is
+    // what put wood slices, a coconut and a second half-faded bottle on a plate that then
+    // passed the gate (2026-08-15). The negations below did not save it: they were arguing
+    // with a positive instruction sitting directly above them. formats.js throws at load
+    // if a plateBrief is missing, so there is no fallback path back to layoutBrief.
+    return `${brief}
 
 ${brand}
 
 ${fidelity}
 
-THIS IS AN AD BASE, NOT A BACKGROUND. Compose it exactly as the layout above describes:
-put the product at the SIZE and in the POSITION that layout calls for, so the frame reads
-as a real advertisement with its copy not yet set. Do not centre the product or shrink it
-to be safe.
+THIS IS AN AD BASE, NOT A FINISHED ADVERTISEMENT AND NOT A BACKGROUND. Compose it exactly
+as described above: put the product at the SIZE and in the POSITION called for, so the
+frame reads as a real advertisement with its copy not yet set. Do not re-centre the product
+and do not shrink it to be safe.
+
+${unitClause}
+
+${settingClause}
 
 ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS and NO NUMBERS anywhere in the image, except the
 product's own printed label, which must be complete and correct.
 
-NO ICONS, NO ILLUSTRATIONS, NO PICTOGRAMS, NO INGREDIENT IMAGES, NO BADGES and NO LOGOS
-anywhere except those printed on the product's own label. Where the layout calls for a row
-of ingredient photographs, a checklist, a comparison column or a seal, leave that area
-EMPTY and clean — those elements are placed by hand afterwards.
+NO ICONS, NO ILLUSTRATIONS, NO PICTOGRAMS, NO BADGES, NO SEALS and NO LOGOS anywhere except
+those printed on the product's own label. The headline, the ingredient row, the checklist,
+the comparison columns and the offer badge are all set by hand afterwards — leave every one
+of those areas as empty ground.
 
-Every area where copy or an icon would sit must be clean, uncluttered and generously
+Every area where copy or an icon would later sit must be clean, uncluttered and generously
 sized, with an even surface that type can be set onto legibly.`;
   }
 
@@ -122,7 +180,7 @@ sized, with an even surface that type can be set onto legibly.`;
     })
     .join('\n');
 
-  return `${format.layoutBrief}
+  return `${brief}
 
 ${brand}
 ${safeZoneBlock}

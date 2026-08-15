@@ -9,6 +9,9 @@ import {
   volumeVerdict,
   normalizeDefects,
   verdictFor,
+  normalizeInventoryKind,
+  inventoryVerdict,
+  isUnresolvedObject,
 } from '../../agents/ad-studio/verify.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
@@ -20,6 +23,15 @@ const plainFormat = formatByKey('manifesto');              // pairsImagesWithLab
 function cleanChecks(expected) {
   return expected.map(e => ({ expected: e, found: true, rendered: e }));
 }
+
+// A clean scene inventory for a single-unit product: the product, and the ground it
+// stands on. Plate-mode assertions carry it so each one still tests the thing it names —
+// inventoryVerdict fails an EMPTY inventory on a plate as "unreported", so leaving it off
+// would make every plate assertion below pass or fail for the wrong reason.
+const CLEAN_INVENTORY = [
+  { object: 'a white lotion bottle, centre right', kind: 'product-unit' },
+  { object: 'a flat sand-coloured surface', kind: 'surface' },
+];
 
 // ── buildVerifyPrompt ───────────────────────────────────────────────────────────
 // Lists every expected string and only asks about pairing when it applies.
@@ -370,8 +382,8 @@ assert.deepEqual(readVolume('0 fl. oz. • 236ml'), { oz: 0, ml: 236, wtOz: null
   assert.equal(v.read, '0 fl. oz. • 236ml');
 }
 
-// The fallback can only FAIL a render, never pass one, and only where there is no
-// direct reading — these are the frames from the same live run that must be unaffected.
+// The transcript scan can only FAIL a render, never pass one — these are the frames from
+// the same live run that must be unaffected.
 {
   // Genuinely illegible, nothing volume-shaped anywhere in the frame (manifesto plate).
   const v = volumeVerdict('ILLEGIBLE', TRUE_VOLUME, ['real', 'SKIN CARE', 'pure unscented', 'moisturizing body lotion']);
@@ -385,13 +397,39 @@ assert.deepEqual(readVolume('0 fl. oz. • 236ml'), { oz: 0, ml: 236, wtOz: null
   assert.equal(v.ok, true, 'a transcript that agrees must never fail a render');
   assert.equal(v.status, 'illegible');
 }
+// ── The transcript scan is UNCONDITIONAL (2026-08-15) ────────────────────────────────
+//
+// This block previously asserted the opposite: that a correct direct reading was never
+// overturned by the transcript. That assertion encoded the bug. It is exactly the shape
+// of the plate that passed on 2026-08-15 — the response carried BOTH "8 fl. oz • 236ml"
+// (correct, read off the hero bottle) and "8 fl. oz . 230ml" (wrong, printed on a ghost
+// second bottle), and because the direct answer was right the scan never ran.
+//
+// The old justification for gating it was that the scan "can only ever FAIL a render,
+// never pass one" — which is an argument for always running it. One unit in the frame
+// reading correctly says nothing about the others.
 {
-  // A DIRECT reading is the answer to the question that was asked and always wins —
-  // the fallback must not become a second opinion on top of a first.
-  const v = volumeVerdict('8 fl. oz. • 236ml', TRUE_VOLUME, ['0 fl. oz. • 236ml']);
-  assert.equal(v.ok, true, 'a direct reading that matches is not overturned by the transcript');
+  const v = volumeVerdict('8 fl. oz. • 236ml', TRUE_VOLUME, ['8 fl. oz . 230ml']);
+  assert.equal(v.ok, false, 'a contradicting transcript must fail even when the direct reading is correct');
+  assert.equal(v.status, 'mismatch');
+  assert.equal(v.source, 'transcript');
+  assert.equal(v.read, '8 fl. oz . 230ml');
+}
+{
+  // A correct direct reading with a transcript that agrees is still a clean pass — the
+  // scan must not have become noisy in the process.
+  const v = volumeVerdict('8 fl. oz. • 236ml', TRUE_VOLUME, ['8 fl. oz. • 236ml', 'real SKIN CARE']);
+  assert.equal(v.ok, true, 'an agreeing transcript must not fail a correct render');
   assert.equal(v.status, 'match');
   assert.equal(v.source, 'reported');
+}
+{
+  // A WRONG direct reading is still reported as itself, not attributed to the transcript
+  // — it is the more actionable line for a human triaging the reject.
+  const v = volumeVerdict('4 fl. oz. • 118ml', TRUE_VOLUME, ['4 fl. oz. • 118ml']);
+  assert.equal(v.ok, false);
+  assert.equal(v.source, 'reported', 'a wrong direct reading is reported as the direct reading');
+  assert.equal(v.read, '4 fl. oz. • 118ml');
 }
 
 // The prompt must not invite the ILLEGIBLE-vs-transcribed contradiction in the first
@@ -563,7 +601,7 @@ const plateOfPairingFormat = verdictFor({
   volumeStrings: TRUE_VOLUME,
   pairings: [],
   format: pairingFormat,
-  mode: 'plate',
+  mode: 'plate', sceneInventory: CLEAN_INVENTORY,
 });
 assert.equal(plateOfPairingFormat.ok, true, 'a plate cannot be required to report pairings');
 assert.deepEqual(plateOfPairingFormat.reasons, []);
@@ -603,7 +641,7 @@ assert.equal(
   verdictFor({
     expected: ['8 fl. oz. (236ml)'],
     checks: [{ expected: '8 fl. oz. (236ml)', found: true, rendered: '18 fl. oz. • 236ml' }],
-    pairings: [], format: pairingFormat, mode: 'plate',
+    pairings: [], format: pairingFormat, mode: 'plate', sceneInventory: CLEAN_INVENTORY,
   }).ok,
   false,
   'dropping the pairing requirement must not drop the text check',
@@ -719,7 +757,7 @@ assert.equal(normalizeDefects(LIVE_PLATE_FALSE_POSITIVES).length, 4, 'mode defau
     defects: LIVE_PLATE_FALSE_POSITIVES,
     pairings: [],
     format: pairingFormat,
-    mode: 'plate',
+    mode: 'plate', sceneInventory: CLEAN_INVENTORY,
   });
   assert.equal(v.ok, true, 'a plate\'s deliberately-empty copy zones are not defects');
   assert.deepEqual(v.reasons, []);
@@ -741,7 +779,7 @@ assert.equal(normalizeDefects(LIVE_PLATE_FALSE_POSITIVES).length, 4, 'mode defau
     }],
     pairings: [],
     format: pairingFormat,
-    mode: 'plate',
+    mode: 'plate', sceneInventory: CLEAN_INVENTORY,
   });
   assert.equal(v.ok, false, 'text rendered into a text-free plate must fail');
   assert.equal(v.defects.length, 1);
@@ -753,7 +791,7 @@ assert.equal(normalizeDefects(LIVE_PLATE_FALSE_POSITIVES).length, 4, 'mode defau
 assert.equal(
   verdictFor({
     expected: ['8 fl. oz. (236ml)'], checks: cleanChecks(['8 fl. oz. (236ml)']),
-    volumeStrings: TRUE_VOLUME, pairings: [], format: pairingFormat, mode: 'plate',
+    volumeStrings: TRUE_VOLUME, pairings: [], format: pairingFormat, mode: 'plate', sceneInventory: CLEAN_INVENTORY,
     defects: [{ text: 'HEADLINE TEXT HERE', issue: 'stray-text', detail: 'top left bar' }],
   }).ok,
   false,
@@ -801,6 +839,7 @@ for (const mode of ['plate', 'finished']) {
     verdictFor({
       expected: ['A'], checks: cleanChecks(['A']), productVolume: 'ILLEGIBLE',
       volumeStrings: TRUE_VOLUME, format: plainFormat, mode,
+      sceneInventory: CLEAN_INVENTORY,
     }).ok,
     true,
     `an illegible volume passes in ${mode} mode`,
@@ -947,7 +986,7 @@ assert.equal(fidOdd.ok, false);
 for (const mode of ['finished', 'plate']) {
   const good = verdictFor({
     expected: ['A'], checks: cleanChecks(['A']), format: plainFormat, mode,
-    fidelity: allMatch(), hasReference: true,
+    fidelity: allMatch(), hasReference: true, sceneInventory: CLEAN_INVENTORY,
   });
   assert.equal(good.ok, true, `a faithful product passes in ${mode} mode`);
   assert.equal(good.fidelity.status, 'match');
@@ -1081,3 +1120,338 @@ assert.equal(wrongWeight.status, 'mismatch');
 // whose gram marking is turned away is a correct read, not a mismatch.
 assert.equal(volumeVerdict('0.15 oz', LIP).ok, true);
 assert.equal(volumeVerdict('0.9 oz', LIP).ok, false);
+
+// ── R5. SCENE INVENTORY ─────────────────────────────────────────────────────────────
+//
+// The 2026-08-15 plate carried a ghost second bottle, a wood slice, greenery and a
+// coconut, and passed every check in this file. Each had a reason not to see it:
+// FIDELITY_ATTRIBUTES are phrased about *the* product, singular, so the verifier silently
+// picked one unit and judged that; the volume transcript scan was gated behind "no direct
+// reading"; and the stray-text rule correctly exempts text on the product's own label,
+// which exempted the ghost bottle's wrong volume twice over.
+//
+// The generalisable shape: EVERY CHECK ASSUMED EXACTLY ONE PRODUCT IN THE FRAME.
+
+// normalizeInventoryKind — the asymmetry is the OPPOSITE of the fidelity verdict's, on
+// purpose. There, an unrecognised word is read as cannot-tell. Here it is read as
+// "other", because the model has already told us an object exists and the only question
+// is which bucket it lands in — reading "prop" or "garnish" as surface would silently
+// drop it from the gate, which is how the ghost bottle got through.
+assert.equal(normalizeInventoryKind('product-unit'), 'product-unit');
+assert.equal(normalizeInventoryKind('product unit'), 'product-unit');
+assert.equal(normalizeInventoryKind('bottle'), 'product-unit');
+assert.equal(normalizeInventoryKind('surface'), 'surface');
+assert.equal(normalizeInventoryKind('background'), 'surface');
+assert.equal(normalizeInventoryKind('other'), 'other');
+assert.equal(normalizeInventoryKind('prop'), 'other', 'an unanticipated word is a stray, not a surface');
+assert.equal(normalizeInventoryKind('garnish'), 'other');
+assert.equal(normalizeInventoryKind(''), 'other');
+assert.equal(normalizeInventoryKind(undefined), 'other');
+
+const ONE_UNIT = [
+  { object: 'a white lotion bottle, centre', kind: 'product-unit' },
+  { object: 'a flat sand surface', kind: 'surface' },
+];
+
+// A clean single-unit plate.
+{
+  const v = inventoryVerdict(ONE_UNIT, { expectedUnits: 1, mode: 'plate' });
+  assert.equal(v.ok, true);
+  assert.equal(v.status, 'clean');
+  assert.equal(v.units.length, 1);
+}
+
+// THE INCIDENT: a ghost second bottle. This is what nothing was counting.
+{
+  const v = inventoryVerdict([
+    ...ONE_UNIT,
+    { object: 'a second, half-faded bottle behind the first', kind: 'product-unit' },
+  ], { expectedUnits: 1, mode: 'plate' });
+  assert.equal(v.ok, false, 'a ghost second bottle must fail');
+  assert.equal(v.status, 'wrong-unit-count');
+  assert.equal(v.units.length, 2);
+}
+
+// THE INCIDENT, other half: props and scene dressing.
+{
+  const v = inventoryVerdict([
+    ...ONE_UNIT,
+    { object: 'a slice of wood under the bottle', kind: 'other' },
+    { object: 'a coconut, left', kind: 'other' },
+    { object: 'sprigs of greenery', kind: 'other' },
+  ], { expectedUnits: 1, mode: 'plate' });
+  assert.equal(v.ok, false, 'props on a plate must fail');
+  assert.equal(v.status, 'stray-objects');
+  assert.equal(v.strays.length, 3);
+  assert.ok(v.strays.some(s => /wood/.test(s.object)), 'the stray must be named, not just counted');
+}
+
+// A GENUINE MULTI-UNIT PRODUCT. foam-soap-bundle is three bottles, both starter sets are
+// multi-item and the lip balm is a four-pack: a hard-coded "exactly one" would reject
+// every correct render of them. This is the ghost-bottle assumption read from the other
+// side, and one number answers both.
+{
+  const threeBottles = [
+    { object: 'an 8 oz foaming pump bottle, left', kind: 'product-unit' },
+    { object: 'a 32 oz refill bottle, centre', kind: 'product-unit' },
+    { object: 'an 8 oz foaming pump bottle, right', kind: 'product-unit' },
+    { object: 'a flat sand surface', kind: 'surface' },
+  ];
+  assert.equal(inventoryVerdict(threeBottles, { expectedUnits: 3, mode: 'plate' }).ok, true,
+    'a three-piece bundle rendered as three pieces must pass');
+  assert.equal(inventoryVerdict(threeBottles, { expectedUnits: 1, mode: 'plate' }).ok, false,
+    'and would have been rejected by a hard-coded "exactly one"');
+  // Too FEW is a defect as well — a bundle rendered short is not the product.
+  const v = inventoryVerdict(ONE_UNIT, { expectedUnits: 3, mode: 'plate' });
+  assert.equal(v.ok, false, 'a bundle rendered with one bottle must fail');
+  assert.equal(v.status, 'wrong-unit-count');
+}
+
+// An EMPTY inventory on a plate is unreported, not clean. Scoring an unanswered question
+// as a pass is how a gate becomes decorative — same posture as fidelityVerdict.
+{
+  const v = inventoryVerdict([], { expectedUnits: 1, mode: 'plate' });
+  assert.equal(v.ok, false);
+  assert.equal(v.status, 'unreported');
+}
+// Entries with no object text carry nothing a human could act on and are dropped, which
+// leaves an all-junk inventory reading as unreported rather than as clean.
+assert.equal(inventoryVerdict([{ kind: 'product-unit' }], { expectedUnits: 1, mode: 'plate' }).status, 'unreported');
+
+// FINISHED frames are not inventoried. Their layoutBrief asks for columns, rules,
+// ingredient cut-outs and a styled scene, so "does this object belong" has no answer.
+for (const inv of [[], ONE_UNIT, [{ object: 'a coconut', kind: 'other' }]]) {
+  const v = inventoryVerdict(inv, { expectedUnits: 1, mode: 'finished' });
+  assert.equal(v.ok, true, 'a finished frame is never failed by the inventory');
+  assert.equal(v.status, 'not-applicable');
+}
+
+// Wired through verdictFor, and the reason names the object.
+{
+  const v = verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), format: plainFormat, mode: 'plate',
+    volumeStrings: TRUE_VOLUME, productVolume: 'ILLEGIBLE', unitCount: 1,
+    sceneInventory: [...ONE_UNIT, { object: 'a slice of wood', kind: 'other' }],
+  });
+  assert.equal(v.ok, false);
+  assert.ok(v.reasons.some(r => /a plate must not contain/i.test(r)));
+  assert.ok(v.reasons.some(r => /slice of wood/.test(r)), 'the stray object must appear in the reasons');
+  assert.equal(v.inventory.status, 'stray-objects');
+}
+{
+  const v = verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), format: plainFormat, mode: 'plate',
+    volumeStrings: TRUE_VOLUME, productVolume: 'ILLEGIBLE', unitCount: 1,
+    sceneInventory: [...ONE_UNIT, { object: 'a faded duplicate bottle', kind: 'product-unit' }],
+  });
+  assert.equal(v.ok, false);
+  assert.ok(v.reasons.some(r => /shows 2 unit\(s\).*expected 1/.test(r)));
+  assert.ok(v.reasons.some(r => /faded duplicate/.test(r)));
+}
+// unitCount defaults to 1 in verdictFor, so a caller that forgets to thread it gets the
+// single-unit gate rather than no gate — the same posture as `mode` defaulting to
+// 'finished'.
+{
+  const v = verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), format: plainFormat, mode: 'plate',
+    volumeStrings: TRUE_VOLUME, productVolume: 'ILLEGIBLE',
+    sceneInventory: [...ONE_UNIT, { object: 'a second bottle', kind: 'product-unit' }],
+  });
+  assert.equal(v.ok, false, 'a missing unitCount must not switch the inventory gate off');
+}
+
+// The prompt asks for it on plates and not on finished frames, and never tells the
+// verifier how many units to expect — that would be R1's exact failure mode, an open
+// question answered towards the number in the prompt. The comparison lives in code.
+{
+  const platePrompt = buildVerifyPrompt({ expected: ['A'], format: plainFormat, mode: 'plate', unitCount: 3 });
+  assert.ok(/SCENE INVENTORY/.test(platePrompt), 'a plate must be asked for a scene inventory');
+  assert.ok(/sceneInventory/.test(platePrompt), 'and the response shape must name the field');
+  assert.ok(/product-unit/.test(platePrompt) && /"other"/.test(platePrompt), 'the kinds must be enumerated');
+  // A unit must be RESOLVED to be counted — closure and body both made out. The first
+  // live run showed why: an open "list everything, including anything faint or ghosted"
+  // question confabulated a second bottle on the empty 9:16 gradient in 9 of 9 vision
+  // calls. See the note above UNRESOLVED_RE.
+  assert.ok(/closure \(cap, pump or lid\)/i.test(platePrompt), 'a counted unit needs a resolvable closure');
+  assert.ok(/does not\s+meet that bar/i.test(platePrompt), 'an unresolvable shape must be excluded, not counted');
+  assert.ok(/shadows/i.test(platePrompt), 'shadows must be explicitly out of scope');
+  assert.ok(/PRINTED ON the product's own label/i.test(platePrompt),
+    'label artwork must be out of scope — it was classified as a stray in 4 of 6 live calls');
+  assert.ok(!/\b3\b/.test(platePrompt.split('SCENE INVENTORY')[1] || ''),
+    'the prompt must never disclose the expected unit count');
+
+  const finishedPrompt = buildVerifyPrompt({ expected: ['A'], format: plainFormat, mode: 'finished' });
+  assert.ok(!/SCENE INVENTORY/.test(finishedPrompt), 'a finished frame is not inventoried');
+}
+
+// parseVerifyResponse carries it through, and absent → [] so inventoryVerdict decides
+// what empty means rather than the parser.
+{
+  const parsed = parseVerifyResponse(JSON.stringify({
+    checks: [], sceneInventory: [{ object: 'a bottle', kind: 'product-unit' }],
+  }));
+  assert.deepEqual(parsed.sceneInventory, [{ object: 'a bottle', kind: 'product-unit' }]);
+  assert.deepEqual(parseVerifyResponse(JSON.stringify({ checks: [] })).sceneInventory, []);
+}
+
+// ── labelGraphics is narrowed to shape and placement ────────────────────────────────
+//
+// It used to invite a judgement on the badge as a whole, and the badge carries arc-set
+// micro-copy no vision model reads reliably at render size. Sean eyeballed both live
+// rejects 2026-08-15: the 9:16 badge "looks fine" — a FALSE POSITIVE costing three paid
+// attempts — and the 4:5 badge was "definitely garbled", but that frame was independently
+// rejected for stray "HOIXIM HEADLINE" text baked into a plate. Narrowing loses no true
+// positive. Same exclusion buildLabelStrings already applies, for the same reason.
+{
+  const lg = FIDELITY_ATTRIBUTES.find(a => a.key === 'labelGraphics');
+  assert.ok(lg, 'labelGraphics must still exist');
+  assert.ok(/SHAPE AND POSITION ONLY/i.test(lg.ask), 'labelGraphics must be scoped to shape and position');
+  assert.ok(/never whether the small text/i.test(lg.ask), 'and must explicitly exclude micro-copy spelling');
+  assert.ok(/illegible at render size/i.test(lg.ask), 'and say why');
+  assert.ok(/shape/i.test(lg.label) && /placement/i.test(lg.label), 'the label shown to the model must say so too');
+}
+
+// ── The stray rule follows plateSetting; the unit count never does ───────────────────
+//
+// The first cut of the inventory failed ANY `other` object on any plate. That is right
+// for a studio plate and wrong for a scene one: `problem-aware` is specified as an
+// everyday moment and `top-x-review` as an editorial still life, so a counter edge or a
+// soft background object is the deliverable. Sean, 2026-08-15: "there should be a scene
+// when it is appropriate and everything meshes together."
+//
+// What does NOT relax is the unit count. A ghost second bottle is wrong in a bathroom too.
+{
+  const sceneish = [
+    { object: 'a white lotion bottle on the counter', kind: 'product-unit' },
+    { object: 'a bathroom counter', kind: 'surface' },
+    { object: 'a folded towel, far left', kind: 'other' },
+  ];
+
+  const studio = inventoryVerdict(sceneish, { expectedUnits: 1, mode: 'plate', setting: 'studio' });
+  assert.equal(studio.ok, false, 'a stray object fails a STUDIO plate');
+  assert.equal(studio.status, 'stray-objects');
+
+  const scene = inventoryVerdict(sceneish, { expectedUnits: 1, mode: 'plate', setting: 'scene' });
+  assert.equal(scene.ok, true, 'the same object is the deliverable on a SCENE plate');
+  assert.equal(scene.status, 'clean-with-scene');
+  assert.equal(scene.strays.length, 1, 'and is still RECORDED, so a prop pile is visible in proof.json');
+
+  // The unit count is absolute in both settings.
+  const ghostInAScene = inventoryVerdict([
+    ...sceneish,
+    { object: 'a second, faded bottle behind the first', kind: 'product-unit' },
+  ], { expectedUnits: 1, mode: 'plate', setting: 'scene' });
+  assert.equal(ghostInAScene.ok, false, 'a ghost bottle fails even where props are allowed');
+  assert.equal(ghostInAScene.status, 'wrong-unit-count');
+
+  // setting defaults to 'studio', the strict side — a caller that forgets to thread it
+  // gets the tighter gate, never the looser one. Same posture as `mode`.
+  assert.equal(
+    inventoryVerdict(sceneish, { expectedUnits: 1, mode: 'plate' }).ok,
+    false,
+    'setting defaults to studio, the strict side',
+  );
+}
+
+// Wired through verdictFor from format.plateSetting, not from a parameter the caller
+// has to remember.
+{
+  const sceneFormat = formatByKey('problem-aware');   // plateSetting: 'scene'
+  const studioFormat = formatByKey('manifesto');      // plateSetting: 'studio'
+  const withProp = [
+    { object: 'a white lotion bottle', kind: 'product-unit' },
+    { object: 'a bedside table', kind: 'surface' },
+    { object: 'a ceramic lamp base at the edge of the table', kind: 'other' },
+  ];
+  const args = {
+    expected: ['A'], checks: cleanChecks(['A']), mode: 'plate',
+    volumeStrings: TRUE_VOLUME, productVolume: 'ILLEGIBLE', unitCount: 1,
+    sceneInventory: withProp,
+  };
+  assert.equal(verdictFor({ ...args, format: sceneFormat }).ok, true, 'problem-aware may have a lamp in shot');
+  assert.equal(verdictFor({ ...args, format: studioFormat }).ok, false, 'manifesto may not');
+}
+
+// The render prompt says the right thing for each setting — a scene format must not be
+// handed the blanket "NO PROPS AND NO SCENE DRESSING" that flattened it the first time.
+{
+  const p = buildVerifyPrompt({ expected: ['A'], format: formatByKey('problem-aware'), mode: 'plate' });
+  assert.ok(/SCENE INVENTORY/.test(p), 'a scene plate is still inventoried — the unit count still matters');
+}
+
+// ── The resolution bar applies to EVERY bucket (first live run, 2026-08-15) ──────────
+//
+// The 9:16 plate's large empty gradient produced a confabulated second bottle in 9 of 9
+// vision calls across three prompt wordings. Direct pixel inspection — the upper 45% of
+// the frame, greyscaled and contrast-stretched — showed only gradient and the main
+// bottle's cap. There was nothing there.
+//
+// Two things that did NOT work, and are worth not re-attempting:
+//   - de-biasing the wording. Removing "if there is a second bottle you are unsure about,
+//     list it" left it at 3/3. The bias was not the mechanism.
+//   - majority voting. The confabulation is CONSISTENT, not random, so N calls buy the
+//     same wrong answer N times.
+//
+// Making the count pointed moved it out of 'product-unit' and straight into 'other',
+// where the stray rule would have failed the same correct frame for a different reason.
+// What the model does do reliably is SAY it cannot resolve the thing — so that is what
+// is filtered, in code, in every bucket. Same shape and justification as isAbsenceReport.
+assert.equal(isUnresolvedObject('a blurred, out-of-focus second bottle in the upper background'), true);
+assert.equal(isUnresolvedObject('second, blurred/out-of-focus white bottle, upper portion of frame'), true);
+assert.equal(isUnresolvedObject('a faint shape near the top edge'), true);
+assert.equal(isUnresolvedObject('possibly a second bottle'), true);
+assert.equal(isUnresolvedObject('a white lotion bottle with black cap, centre right'), false);
+assert.equal(isUnresolvedObject('a slice of wood under the bottle'), false);
+assert.equal(isUnresolvedObject(''), false);
+
+{
+  // The exact live inventory that failed a correct 9:16 frame. It must now pass, and the
+  // hedged entry must survive in `unresolved` so a human reading proof.json still sees it.
+  const live = [
+    { object: 'white lotion bottle with black cap, centered lower-right, front label visible', kind: 'product-unit' },
+    { object: 'blurred, out-of-focus second bottle shape in upper background, no distinct cap/body separation', kind: 'other' },
+    { object: 'beige/tan gradient background surface', kind: 'surface' },
+  ];
+  const v = inventoryVerdict(live, { expectedUnits: 1, mode: 'plate', setting: 'studio' });
+  assert.equal(v.ok, true, 'a correct frame must not be failed by a shape the model could not resolve');
+  assert.equal(v.status, 'clean');
+  assert.equal(v.units.length, 1);
+  assert.equal(v.strays.length, 0, 'the hedged object must not count as a stray');
+  assert.equal(v.unresolved.length, 1, 'but it must be RECORDED, never silently dropped');
+}
+
+{
+  // A RESOLVED second unit still fails — the filter must not have swallowed the bug the
+  // inventory exists for. The real 2026-08-15 ghost carried a readable wrong volume
+  // ("8 fl. oz . 230ml"), so it was substantial enough to describe without hedging.
+  const realGhost = [
+    { object: 'white lotion bottle with black cap and label, centre', kind: 'product-unit' },
+    { object: 'a second bottle behind and right of the first, its own cap and label visible', kind: 'product-unit' },
+    { object: 'a flat sand surface', kind: 'surface' },
+  ];
+  const v = inventoryVerdict(realGhost, { expectedUnits: 1, mode: 'plate', setting: 'studio' });
+  assert.equal(v.ok, false, 'a resolved second unit must still fail');
+  assert.equal(v.status, 'wrong-unit-count');
+}
+// A resolved PROP still fails a studio plate too — the wood slice and the coconut were
+// never hedged descriptions.
+assert.equal(
+  inventoryVerdict([
+    { object: 'a white lotion bottle with black cap', kind: 'product-unit' },
+    { object: 'a slice of wood under the bottle', kind: 'other' },
+  ], { expectedUnits: 1, mode: 'plate', setting: 'studio' }).ok,
+  false,
+  'a resolved prop must still fail a studio plate',
+);
+// An inventory of NOTHING BUT hedged entries is unreported, not clean — the model did not
+// answer the question, and scoring an unanswered question as a pass is how a gate goes
+// quiet.
+{
+  const v = inventoryVerdict(
+    [{ object: 'a faint blurred shape, possibly a bottle', kind: 'product-unit' }],
+    { expectedUnits: 1, mode: 'plate', setting: 'studio' },
+  );
+  assert.equal(v.ok, false);
+  assert.equal(v.status, 'unreported');
+  assert.equal(v.unresolved.length, 1);
+}

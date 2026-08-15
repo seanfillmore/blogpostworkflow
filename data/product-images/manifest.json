@@ -2,6 +2,7 @@
   {
     "handle": "coconut-oil-deodorant",
     "title": "All Natural Coconut Oil Deodorant | 2oz",
+    "unitCount": 1,
     "tags": [
       "aluminum-free deodorant",
       "coconut oil deodorant",
@@ -15,6 +16,7 @@
   {
     "handle": "coconut-moisturizer",
     "title": "Coconut Moisturizer | 4oz",
+    "unitCount": 1,
     "tags": [
       "coconut oil body cream",
       "eco-friendly body lotion",
@@ -29,6 +31,7 @@
   {
     "handle": "coconut-oil-toothpaste",
     "title": "Coconut Oil Toothpaste | Fluoride Free | 4oz",
+    "unitCount": 1,
     "tags": [
       "coconut mint toothpaste",
       "coconut oil toothpaste",
@@ -42,6 +45,7 @@
   {
     "handle": "foam-soap-bundle",
     "title": "Foam Soap Bundle",
+    "unitCount": 3,
     "tags": [],
     "imageDir": "foam-soap-bundle",
     "productDescription": "A bundle of three bottles: two smaller 8 fl. oz. foaming pump bottles flanking one larger 32 fl. oz. refill bottle in the center. All bottles are translucent/frosted white plastic with a semi-glossy finish; the two smaller bottles have dark charcoal-gray foam pump dispensers, while the larger refill bottle has a simple black screw-on cap. Each bottle features a clean white label with the brand name \"real SKIN CARE\" in minimalist lowercase serif typography at the top, a circular \"Organic Coconut Oil + Essential Oils\" badge, a realistic fruit or botanical illustration (varying by scent), and the scent name in large bold lowercase text above \"hand soap\" in a lighter weight. The overall aesthetic is modern, minimal, and clean with a white-dominant color palette accented only by the dark pump tops and the natural-colored botanical imagery on the labels."
@@ -49,6 +53,7 @@
   {
     "handle": "foam-soap-refill-32oz",
     "title": "Foam Soap Refill | 32oz",
+    "unitCount": 1,
     "tags": [],
     "imageDir": "foam-soap-refill-32oz",
     "productDescription": "A tall, cylindrical 32oz white plastic refill bottle with a flat black screw-on cap and smooth, glossy finish. The bottle has a clean, minimalist white label centered on the front featuring the brand name \"real SKIN CARE\" in a rounded lowercase sans-serif wordmark, a small circular badge noting \"Organic Coconut Oil + Essential Oils\", a botanical/fruit illustration specific to the scent variant, the scent name in bold lowercase type, \"hand soap\" in lighter text below, the volume marking \"32 fl. oz. • 950ml\" in small type beneath that, and \"refill bottle\" in a small outlined box near the bottom. The bottle has a slightly squared-off cylindrical shape with subtle vertical panel ridges visible on the sides, and the overall aesthetic is clean, modern, and pharmacy-minimal with a predominantly white-on-white color scheme."
@@ -56,6 +61,7 @@
   {
     "handle": "organic-foaming-hand-soap",
     "title": "Foaming Liquid Coconut Oil Soap | 8oz",
+    "unitCount": 1,
     "tags": [
       "eco-friendly soap",
       "organic coconut soap",
@@ -67,6 +73,7 @@
   {
     "handle": "coconut-soap",
     "title": "Moisturizing Coconut Soap | 3.4oz",
+    "unitCount": 1,
     "tags": [
       "hydrating coconut bar",
       "moisturizing soap bar",
@@ -80,6 +87,7 @@
   {
     "handle": "coconut-oil-lip-balm",
     "title": "Natural Coconut Oil Lip Balm | 0.15oz | Four Pack",
+    "unitCount": 4,
     "tags": [
       "hydrating coconut lip balm",
       "natural lip moisturizer",
@@ -93,6 +101,7 @@
   {
     "handle": "coconut-lotion",
     "title": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+    "unitCount": 1,
     "tags": [
       "hydrating coconut body lotion",
       "natural body moisturizer",
@@ -107,6 +116,7 @@
   {
     "handle": "sensitive-skin-starter-set",
     "title": "Sensitive Skin Starter Set",
+    "unitCount": 3,
     "tags": [],
     "imageDir": "sensitive-skin-starter-set",
     "productDescription": "**Sensitive Skin Starter Set by Real Skin Care — Pure Unscented:**\n\nThe set consists of three items: a tall, slim cylindrical squeeze bottle (8 fl oz) of moisturizing body lotion with a black flip-top cap; a short, wide cylindrical jar (4 fl oz) of moisturizing body cream with a black screw-on lid; and a round, flat disc-shaped hand & body soap bar wrapped in white packaging. All containers are white with a clean, minimalist matte-finish label featuring the \"real SKIN CARE\" brand name in lowercase black serif/sans-serif typography, a small green leaf illustration with a water droplet, and a dark charcoal-gray banner strip across the middle reading \"pure unscented\" in white text. The overall aesthetic is clinical yet natural, with smooth white plastic containers that convey a fragrance-free, sensitive-skin focus."
@@ -114,6 +124,7 @@
   {
     "handle": "skincare-starter-set",
     "title": "Two-Step Dry Skin Starter Set",
+    "unitCount": 2,
     "tags": [],
     "imageDir": "skincare-starter-set",
     "productDescription": "The set includes two products: a tall, slim cylindrical squeeze bottle (8 fl. oz / 236ml) of moisturizing body lotion with a black flip-top cap, and a shorter, wide-mouth round jar (4 fl. oz / 118ml) of moisturizing body cream with a black ribbed screw-on lid. Both containers are white/translucent plastic with a clean, minimalist label design featuring the \"real SKIN CARE\" brand in black script and sans-serif font, the product name \"coconut breeze\" in lowercase black text, a black horizontal stripe accent, and realistic coconut imagery with green leaves. The overall aesthetic is modern and minimal with a monochromatic black-and-white color scheme, matte-finish containers, and a cohesive visual identity across both pieces."
@@ -121,6 +132,7 @@
   {
     "handle": "culina-brush",
     "title": "Culina Cast Iron Cleaning Brush",
+    "unitCount": 1,
     "tags": ["cast iron", "cleaning", "brush", "culina"],
     "imageDir": "culina-products/brush",
     "productDescription": "The cast iron cleaning brush is a small bamboo handled brush with sisal bristles"
@@ -128,6 +140,7 @@
   {
     "handle": "culina-cast-iron-oil",
     "title": "Culina Cast Iron Oil",
+    "unitCount": 1,
     "tags": ["cast iron", "seasoning", "oil", "culina"],
     "imageDir": "culina-products/cast-iron-oil",
     "productDescription": "The cast iron oil bottle is white plastic with a black disk top cap lid. The label is black and the text on the label is white. The text says culina, Cast Iron Oil, Seasons and Protects Cast Iron Cookwear, 8 fl oz 240ml"
@@ -135,6 +148,7 @@
   {
     "handle": "culina-cast-iron-soap",
     "title": "Culina Cast Iron Soap",
+    "unitCount": 1,
     "tags": ["cast iron", "cleaning", "soap", "culina"],
     "imageDir": "culina-products/cast-iron-soap",
     "productDescription": "The cast iron soap bottle is white plastic with a black disk top cap lid. The label is black and the text on the label is white. The text says culina, Cast Iron Soap, Seasons and Protects Cast Iron Cookwear, 8 fl oz 240ml"
@@ -142,6 +156,7 @@
   {
     "handle": "culina-handle-black",
     "title": "Culina Cast Iron Handle Cover (Black)",
+    "unitCount": 1,
     "tags": ["cast iron", "handle", "silicone", "culina"],
     "imageDir": "culina-products/handle-black",
     "productDescription": "The cast iron handle cover (black) is a silicone handle cover designed to insulate your hand from the hot handle"
@@ -149,6 +164,7 @@
   {
     "handle": "culina-handle-red",
     "title": "Culina Cast Iron Handle Cover (Red)",
+    "unitCount": 1,
     "tags": ["cast iron", "handle", "silicone", "culina"],
     "imageDir": "culina-products/handle-red",
     "productDescription": "The cast iron handle cover (red) is a silicone handle cover designed to insulate your hand from the hot handle"
@@ -156,6 +172,7 @@
   {
     "handle": "culina-salt-scrub",
     "title": "Culina Cast Iron Salt Scrub",
+    "unitCount": 1,
     "tags": ["cast iron", "cleaning", "salt scrub", "culina"],
     "imageDir": "culina-products/salt-scrub",
     "productDescription": "Cast Iron Salt Scrub is used for removing rust & burnt on food spots while helping to build & fortify the natural seasoning of your griddle cooking surface."
@@ -163,6 +180,7 @@
   {
     "handle": "culina-scraper-1",
     "title": "Culina Cast Iron Scraper",
+    "unitCount": 1,
     "tags": ["cast iron", "cleaning", "scraper", "culina"],
     "imageDir": "culina-products/scraper-1",
     "productDescription": "Culina cast iron scrapers are designed to help remove stubborn food and debris from the inside and outside of cast iron pans and griddles."
@@ -170,6 +188,7 @@
   {
     "handle": "culina-scraper-2",
     "title": "Culina Cast Iron Scraper (Wide)",
+    "unitCount": 1,
     "tags": ["cast iron", "cleaning", "scraper", "culina"],
     "imageDir": "culina-products/scraper-2",
     "productDescription": "Culina cast iron scrapers are designed to help remove stubborn food and debris from the inside and outside of cast iron pans and griddles."
@@ -177,6 +196,7 @@
   {
     "handle": "culina-scraper-stainless",
     "title": "Culina Stainless Steel Scraper",
+    "unitCount": 1,
     "tags": ["cast iron", "cleaning", "scraper", "stainless steel", "culina"],
     "imageDir": "culina-products/scraper-stainless",
     "productDescription": "The chainmail scrubber is spliced with high-quality stainless steel rings. The chainmail scrubber is designed to clean stubborn food debris from the bottom of your cast iron pan."
@@ -184,6 +204,7 @@
   {
     "handle": "culina-seasoning-stick",
     "title": "Culina Cast Iron Seasoning Stick",
+    "unitCount": 1,
     "tags": ["cast iron", "seasoning", "wax", "culina"],
     "imageDir": "culina-products/seasoning-stick",
     "productDescription": "The culina cast iron seasoning stick is an innovative design allowing the user to apply the seasoning from a deodorant style stick."

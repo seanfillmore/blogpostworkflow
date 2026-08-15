@@ -1,5 +1,5 @@
 import { strict as assert } from 'node:assert';
-import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +18,7 @@ import {
   buildConcept,
   buildConcepts,
   finalizeRunReport,
+  archiveRunOutput,
   DEFAULT_MAX_RENDERS,
   MAX_VARIATIONS,
   ESTIMATED_COST_PER_RENDER_USD,
@@ -71,6 +72,11 @@ function geminiReturningJpeg() {
 // A clean verify response: every requested string answered "found", quoted back
 // verbatim, the true volume read off the label, no defects. This is the shape the
 // verify gate scores — the transcript is diagnostic and decides nothing.
+//
+// `sceneInventory` is one product unit on a surface: the clean plate. It is included in
+// the default because inventoryVerdict reads an EMPTY inventory on a plate as
+// "unreported" and fails the frame — deliberately, so that a gate cannot go quiet by
+// being unanswered. Tests that want a dirty frame pass their own via `extra`.
 function verifyReply(expected, { volume = '8 fl. oz. (236ml)', garbled = false, extra = {} } = {}) {
   const checks = (expected || []).map(e => ({
     expected: e,
@@ -82,6 +88,10 @@ function verifyReply(expected, { volume = '8 fl. oz. (236ml)', garbled = false, 
     productVolume: volume,
     defects: [],
     transcript: garbled ? ['GARBLED'] : expected,
+    sceneInventory: [
+      { object: 'a white lotion bottle, centre', kind: 'product-unit' },
+      { object: 'a flat sand-coloured surface', kind: 'surface' },
+    ],
     ...extra,
   });
 }
@@ -364,6 +374,7 @@ const product = {
   title: 'Lotion',
   priceLabel: '$30',
   labelStrings: ['real SKIN CARE', '8 fl. oz. (236ml)'],
+  unitCount: 1,
 };
 const brandKit = { palette_hexes: ['#000000', '#EDE5D8'] };
 const zones = { headline: 'Six Ingredients.' };
@@ -753,6 +764,7 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
           productVolume: '8 fl. oz - 236ml',
           defects: [],
           transcript: [...ePlate, '8 fl. oz - 236ml'],
+          sceneInventory: [{ object: 'a white lotion bottle', kind: 'product-unit' }],
         }) }],
       }),
     },
@@ -824,6 +836,7 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
           productVolume: 'ILLEGIBLE',
           defects: [],
           transcript: mFinished,
+          sceneInventory: [{ object: 'a small white bottle, bottom centre', kind: 'product-unit' }],
         }) }],
       }),
     },
@@ -1140,4 +1153,54 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   });
   const sqGuide = sq.extras.find(e => e.name === 'guide-1x1.svg').buffer.toString('utf8');
   assert.ok(!/Platform UI covers this band/.test(sqGuide), 'no platform bands on a feed ratio');
+}
+
+// ── archiveRunOutput: worktree cleanup must not be able to destroy a run ─────────────
+//
+// Run output lands in gitignored data/creatives/ad-studio/<runId>/. Inside a worktree
+// that makes it untracked, and `git worktree remove --force` deletes untracked files —
+// which is how a set of sample plates was destroyed before Sean had seen them. The fix
+// cannot be "remember to copy them first", so it runs at the end of every run.
+{
+  const base = mkdtempSync(join(tmpdir(), 'ad-studio-archive-'));
+  const runDir = join(base, 'run-src');
+  mkdirSync(join(runDir, 'us-vs-them', 'v1'), { recursive: true });
+  writeFileSync(join(runDir, 'run.json'), '{"runId":"r1"}');
+  writeFileSync(join(runDir, 'us-vs-them', 'v1', 'meta-plate-1x1.png'), 'PLATEBYTES');
+
+  // Explicit destination via env — no git involved, so this asserts the copy itself.
+  const destRoot = join(base, 'archive');
+  const out = archiveRunOutput({ runDir, runId: 'r1', env: { AD_STUDIO_ARCHIVE_DIR: destRoot } });
+  assert.equal(out, join(destRoot, 'r1'));
+  assert.equal(readFileSync(join(out, 'run.json'), 'utf8'), '{"runId":"r1"}');
+  assert.equal(
+    readFileSync(join(out, 'us-vs-them', 'v1', 'meta-plate-1x1.png'), 'utf8'),
+    'PLATEBYTES',
+    'the images are the point — a copy that only takes run.json saves the audit trail and loses the work',
+  );
+
+  // Copying a run onto itself is a no-op, not a recursive copy: when the agent runs in
+  // the main checkout the destination already IS the source.
+  assert.equal(
+    archiveRunOutput({ runDir, runId: 'run-src', env: { AD_STUDIO_ARCHIVE_DIR: base } }),
+    null,
+    'archiving onto the source directory must no-op',
+  );
+
+  // A missing run directory is nothing to copy, not an error.
+  assert.equal(
+    archiveRunOutput({ runDir: join(base, 'nope'), runId: 'r1', env: { AD_STUDIO_ARCHIVE_DIR: destRoot } }),
+    null,
+  );
+
+  // NEVER throws. The images are already on disk by the time this runs, and turning a
+  // successful paid run into a crash over a failed backup copy is strictly worse than
+  // warning and moving on.
+  assert.equal(
+    archiveRunOutput({ runDir, runId: 'r1', env: { AD_STUDIO_ARCHIVE_DIR: '\0invalid' } }),
+    null,
+    'a failed archive must warn, not throw',
+  );
+
+  rmSync(base, { recursive: true, force: true });
 }
