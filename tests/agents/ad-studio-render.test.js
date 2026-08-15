@@ -128,3 +128,49 @@ const noPhysical = buildRenderPrompt({
 });
 assert.ok(noPhysical.includes('real SKIN CARE'));
 assert.ok(!/PHYSICAL FORM/i.test(noPhysical), 'no empty PHYSICAL FORM block when there is no description');
+
+// ── The renderer is told about the safe zone, not just judged on it ──────────────────
+//
+// critique.js hard-fails a 9:16 frame whose copy sits under the Stories/Reels UI. On the
+// first live run it did exactly that — correctly — three times in a row, because
+// ingredient-callout's layoutBrief MANDATES a full-width bottom bar and nothing had told
+// the renderer that the bottom fifth of a vertical frame is unusable. A check the layout
+// cannot satisfy is not a gate, it is a $0.39 tax per attempt.
+//
+// Same lesson as the physical description: detection without prevention burns retries.
+const verticalPrompt = buildRenderPrompt({
+  format: { key: 'x', layoutBrief: 'A brief with a bottom bar.' },
+  zones: { headline: 'HELLO' },
+  product: { labelStrings: ['real SKIN CARE'] },
+  brandKit: { palette_hexes: ['#000'] },
+  mode: 'finished',
+  ratio: '9:16',
+});
+assert.ok(/SAFE ZONE/i.test(verticalPrompt), 'a 9:16 render must be told about the platform safe zone');
+assert.ok(/top one-seventh/i.test(verticalPrompt));
+assert.ok(/bottom one-fifth/i.test(verticalPrompt));
+// The background may fill the frame — it is only TEXT that must stay out of the bands.
+assert.ok(/background/i.test(verticalPrompt));
+
+// A square frame has no platform UI over it, so the instruction must not appear: it would
+// shrink the usable area of every feed ad for no reason.
+const squarePrompt = buildRenderPrompt({
+  format: { key: 'x', layoutBrief: 'A brief with a bottom bar.' },
+  zones: { headline: 'HELLO' },
+  product: { labelStrings: ['real SKIN CARE'] },
+  brandKit: { palette_hexes: ['#000'] },
+  mode: 'finished',
+  ratio: '1:1',
+});
+assert.ok(!/SAFE ZONE/i.test(squarePrompt), 'no safe-zone instruction on a ratio nothing overlays');
+
+// A PLATE carries no copy to place, so the instruction is pointless there too.
+const platePrompt = buildRenderPrompt({
+  format: { key: 'x', layoutBrief: 'A brief.' },
+  zones: {},
+  product: { labelStrings: ['real SKIN CARE'] },
+  brandKit: { palette_hexes: ['#000'] },
+  mode: 'plate',
+  ratio: '9:16',
+});
+assert.ok(!/SAFE ZONE/i.test(platePrompt), 'a text-free plate needs no safe-zone instruction');

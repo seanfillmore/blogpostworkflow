@@ -22,22 +22,31 @@ Plan: `docs/superpowers/plans/2026-08-14-ad-studio.md`
 ## Usage
 
 ```bash
-node agents/ad-studio/index.js --product <handle> [--variant <name>] \
-  [--formats <key1,key2,...>] [--variations <n>] [--max-renders <n>] [--dry-run]
+node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
+  [--variant <name>] [--targets <spec>] [--variations <n>] [--max-renders <n>] [--dry-run]
 ```
 
 | Flag | Required | Meaning |
 |---|---|---|
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`. |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | no | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). **Pass it.** Omitting it (or passing it empty) renders the **whole six-format rotation** — 108 renders ≈ $14 at the default `--variations 3`. Normal use is one or two keys; the full rotation is a deliberate sweep, not a default you should reach by not typing a flag. |
-| `--variations` | no | Variations per concept — each is 6 renders. Default `3`, maximum `10`. |
+| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). **Required.** It used to be optional, and omitting it meant the whole six-format rotation — 108 renders ≈ $14 from a flag nobody typed. An unknown key is rejected with the valid list. |
+| `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta=1:1,meta=4:5`** — see below. |
+| `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
 | `--dry-run` | no | Generates copy and runs the claim gate, prints the result, and exits before any image is rendered. See below. |
 
-**Read the Cost section before running without `--dry-run`.** A default invocation —
-no `--formats` — is the entire rotation, 108 renders ≈ $14. Scope every real run with
-`--formats`.
+**The default run is deliberately the cheapest useful one:** one format, one variation,
+the two Meta feed ratios — **2 renders ≈ $0.26**. Everything above that is opted into.
+
+**Why 9:16 is not in the default target set.** Meta draws its own UI over the top ~14% and
+bottom ~20% of a Stories/Reels frame, and `critique.js` hard-fails ad copy placed there.
+All six `layoutBrief`s run a headline to the top edge and a bar to the bottom edge, and
+the image model keeps doing so even when the render prompt names the bands explicitly
+(`buildRenderPrompt`'s `SAFE ZONE` block). **Measured: 6 of 6 attempts across two live
+runs failed**, at 3 paid attempts each. `--targets meta=9:16` still works and is the right
+flag the day a vertical-first format exists — it is just not something to pay for by
+accident. The gate is correct here; the layouts are what need to change.
 
 Example — the one-concept proving run used before any batch:
 
@@ -197,8 +206,31 @@ data/creatives/ad-studio/<run-id>/
     v3/ ...
 ```
 
-`run.json` also carries `cost` (`renders`, `perRenderUsd`, `estimatedUsd`) and `budget`
-(`maxRenders`, `stopped`, `skipped[]`).
+`run.json` also carries `cost` (`renders`, `perRenderUsd`, `estimatedUsd`), `budget`
+(`maxRenders`, `stopped`, `skipped[]`), and:
+
+- **`ranking[]`** — accepted frames, best `critique.score` first. The frame worth looking
+  at is the first line of the file, not something found by opening every PNG. Rejected
+  frames are excluded: a frame that failed the gate is not a candidate to ship, whatever
+  an art director thought of its composition. Unscored accepted frames sort last.
+- **`scoreSummary`** — this run's mean against the rolling baseline.
+
+## The score baseline
+
+Every scored frame is appended to **`data/reports/ad-studio/scores.jsonl`** (one row per
+frame: run id, product, format, variation, artifact, score, ok). Rejected frames are
+included — excluding them would bias the baseline upward by construction.
+
+The baseline is read BEFORE the current run's rows are appended, so a run is never
+compared against a baseline containing itself. Below 50 observations the summary says so
+rather than reporting a delta: six frames is not a baseline, and a delta off n=6 invites
+reading noise as a trend. Scores are only really comparable **within a format** —
+`manifesto` renders the product small and understated, `us-vs-them` is a comparison table,
+and they are not being judged on the same thing. `byFormat` is the number that means
+something.
+
+This file is a few bytes per frame and must outlive the images, which
+`scripts/prune-ad-studio.mjs` deletes on a 90-day window.
 
 ## Housekeeping
 
@@ -241,11 +273,15 @@ free crops of the Meta frames.
 
 | | renders | ≈ cost |
 |---|---|---|
-| One variation of one concept (6 targets) | 6 | $0.78 |
-| One concept, `--variations 3` | 18 | $2.34 |
-| **Default run** — 6 formats × 3 variations × 6 targets | **108** | **$14.04** |
-| Default run, worst case (3 verify attempts everywhere) | 324 | $42.12 |
+| **Default** — one format, one variation, Meta feed | **2** | **$0.26** |
+| One format, `--variations 3`, Meta feed | 6 | $0.78 |
+| One format, one variation, `--targets all` | 6 | $0.78 |
+| One format, `--variations 3`, `--targets all` | 18 | $2.34 |
+| Six formats, `--variations 3`, `--targets all` (the old default) | 108 | $14.04 |
 | `--max-renders` default ceiling | 120 | $15.60 |
+
+Retries are charged. A frame that needs all 3 attempts costs 3 renders, so a nominally
+2-render run can bill 6 in the worst case.
 
 **The Gemini image model has a hard quota of 250 renders per project per day.** A default
 full-rotation run is 108, so two of them plus retries exhausts the day — the API then

@@ -19,6 +19,61 @@ export const PLATFORM_TARGETS = [
   { platform: 'demand-gen', ratio: '4:5', mode: 'plate' },
 ];
 
+/**
+ * Resolve a `--targets` spec to a subset of PLATFORM_TARGETS.
+ *
+ * Every variation used to render all six targets, forced, so the floor for "show me one
+ * ad style" was 6 renders (~$0.78) — half of it Demand Gen plates, which are only useful
+ * if a Demand Gen campaign is actually running.
+ *
+ * Accepts a comma-separated list of:
+ *   all                — every target
+ *   meta | demand-gen  — every target of that platform
+ *   <platform>=<ratio> — one placement, e.g. meta=9:16
+ *
+ * The `=` matters: a ratio contains a colon, so `meta:9:16` cannot be split unambiguously.
+ *
+ * Results follow PLATFORM_TARGETS order rather than the order the flag was written, so
+ * output paths and the progress tree stay stable however it is typed, and duplicates
+ * collapse instead of rendering the same target twice. An unrecognised token throws with
+ * the valid values named — a typo would otherwise silently render the wrong set, or none.
+ */
+export function selectTargets(spec) {
+  const tokens = String(spec || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (tokens.length === 0) {
+    throw new Error('ad-studio: --targets must name at least one target (all, meta, demand-gen, or <platform>=<ratio>)');
+  }
+
+  const platforms = [...new Set(PLATFORM_TARGETS.map(t => t.platform))];
+  const keep = new Set();
+
+  for (const token of tokens) {
+    if (token === 'all') {
+      PLATFORM_TARGETS.forEach((t, i) => keep.add(i));
+      continue;
+    }
+    const [platform, ratio] = token.includes('=') ? token.split('=') : [token, null];
+    if (!platforms.includes(platform)) {
+      throw new Error(
+        `ad-studio: unknown --targets value "${token}". Valid: all, ${platforms.join(', ')}, ` +
+        `or <platform>=<ratio> such as ${PLATFORM_TARGETS[0].platform}=${PLATFORM_TARGETS[0].ratio}`
+      );
+    }
+    const matches = PLATFORM_TARGETS
+      .map((t, i) => ({ t, i }))
+      .filter(({ t }) => t.platform === platform && (ratio === null || t.ratio === ratio));
+    if (matches.length === 0) {
+      throw new Error(
+        `ad-studio: no target "${token}" — ${platform} renders ` +
+        `${PLATFORM_TARGETS.filter(t => t.platform === platform).map(t => t.ratio).join(', ')}`
+      );
+    }
+    for (const { i } of matches) keep.add(i);
+  }
+
+  return PLATFORM_TARGETS.filter((_, i) => keep.has(i));
+}
+
 // Google Demand Gen text field limits.
 const HEADLINE_MAX = 40;
 const LONG_HEADLINE_MAX = 90;

@@ -135,3 +135,8 @@ data/reports/shopping-calibrator/
 # session-* masters are untouched. There is no retention policy yet: prune old run
 # directories by hand — a full disk has already cost this project four days of cron.
 data/creatives/ad-studio/
+
+# Ad Studio score baseline — accumulates per environment from real runs, like the run
+# output it summarises. Committing it would merge one machine's test runs into another's
+# baseline, which is exactly the number it exists to keep honest.
+data/reports/ad-studio/
