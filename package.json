@@ -97,7 +97,8 @@
     "ads-conversion-cutover": "node scripts/ads-conversion-cutover.mjs",
     "upload-click-id-theme": "node scripts/upload-click-id-theme.mjs",
     "check-variant-picker": "node scripts/check-variant-picker.mjs",
-    "ad-studio": "node agents/ad-studio/index.js"
+    "ad-studio": "node agents/ad-studio/index.js",
+    "prune-ad-studio": "node scripts/prune-ad-studio.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
