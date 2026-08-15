@@ -6,7 +6,9 @@
 //   1. per-string checks — for each requested string, a POINTED yes/no about that exact
 //                          character sequence, plus the literal text of that region
 //   2. product volume     — read-or-ILLEGIBLE; illegible passes, WRONG fails
-//   3. defects            — text obscured, cut off at the frame edge, or garbled
+//   3. defects            — finished: text obscured, cut off at the frame edge, or garbled
+//                           plate:    any text at all outside the product's own label; an
+//                                     EMPTY copy zone is the deliverable, never a defect
 //   4. pairing            — an ad whose words are all spelled correctly but whose
 //                           pictures sit against the wrong labels
 //
@@ -49,6 +51,32 @@
 //       A human would reject an ad whose product sits on top of its own copy; the gate
 //       now does too, along with text running off the frame edge and garbled glyph runs.
 //
+// ── R3a: the defect check is MODE-AWARE (2026-08-14, same day) ──────────────────
+//
+// R3 shipped asking one question in both modes — "what copy here is not fully legible
+// and correct" — and on a PLATE that question has no correct answer. A plate is rendered
+// under an instruction to put NO text anywhere except the product's own label and to
+// leave every copy zone "completely empty and clean"; Google Demand Gen mixes the text
+// assets in at serve time. The emptiness IS the deliverable. Asked what copy was
+// illegible, the verifier truthfully answered "the header bars are empty, the list rows
+// have no text" and the gate failed 5 of 18 plates on a live run for being exactly right:
+//
+//   [obscured] "[black rounded bar, left]"   — solid black bar with no text inside it
+//   [obscured] "[list items next to X marks]" — four rows with X icons and blank lines
+//
+// So in plate mode the question is INVERTED, not dropped. Absence of text is never a
+// defect; text that is PRESENT anywhere but the product's own label is — the same run
+// rendered a bottom bar reading "A LIBCDEFGHIJKLM NOPQRSTUVWXYZ" into a plate that was
+// supposed to be clean, and that must keep failing. Stray text on a plate is arguably
+// the more serious defect of the two: it cannot be fixed by the copy layer, it ships
+// as pixels.
+//
+// The prompt asks the inverted question, and normalizeDefects backstops it: on a plate,
+// a defect entry that quotes no rendered characters (a bracketed description of a region,
+// or the word "blank") is a report of ABSENCE and is dropped. Finished mode is untouched
+// — obscured, cut off and garbled all still fail there, which is what caught the
+// corrupted headline and the bottle sitting on top of its own closing line.
+//
 // The model was also raised from Haiku to Sonnet (config/creative-models.js). This is
 // one vision call guarding a ~$0.13 render that a human would otherwise have to read.
 
@@ -63,6 +91,12 @@ import { normalizeForMatch } from './claims.js';
  * one can only produce noise. Both this prompt and verdictFor gate the pairing check
  * on mode for that reason; see verdictFor.
  *
+ * It is also why the DEFECT question is inverted on a plate (R3a). Asking a plate "what
+ * copy here is illegible" has no correct answer — the copy zones are empty on purpose,
+ * and the verifier answering honestly failed 5 of 18 plates on a live run. The plate is
+ * asked the opposite question instead: what text is PRESENT that should not be. Absence
+ * is never reportable; stray glyphs always are.
+ *
  * Defaults to 'finished' — the strict side — so a caller that forgets to thread mode
  * through gets the tighter gate, never the looser one.
  *
@@ -71,8 +105,65 @@ import { normalizeForMatch } from './claims.js';
 export function buildVerifyPrompt({ expected, format, mode = 'finished', volumeStrings = [] }) {
   const list = (expected || []).map(s => `  - "${s}"`).join('\n');
   const wantsPairings = format.pairsImagesWithLabels && mode === 'finished';
+  const isPlate = mode === 'plate';
 
-  return `You are proofreading a finished advertisement image before it goes live. This image
+  const intro = isPlate
+    ? `You are proofreading a text-free BACKGROUND PLATE before it goes live. It is not a
+finished ad: the ad copy is supplied separately and composited over this image at serve
+time, so this image was rendered under an instruction to contain NO text of any kind
+except the product's own printed label, and to leave every area where copy will later sit
+completely empty and clean.`
+    : `You are proofreading a finished advertisement image before it goes live.`;
+
+  const defectsSection = isPlate
+    ? `3. STRAY TEXT — every headline bar, list row, caption slot and panel in this layout is
+   SUPPOSED to be empty. An empty bar, a blank line, a row of icons with nothing written
+   beside them: that is this image working exactly as specified.
+
+   DO NOT report absent, missing or blank text. There is no ad copy in this image that
+   could be obscured, cut off, truncated or incomplete, and "this bar contains no text" is
+   the correct outcome, never a defect. Never describe an empty region in "defects".
+
+   Report the OPPOSITE. List in "defects" every piece of lettering, every word, number or
+   glyph run that IS physically rendered anywhere in the image other than on the product's
+   own printed label. Placeholder copy ("HEADLINE", "TEXT HERE", "LOREM IPSUM"), alphabet
+   or letterform strips, stray captions, invented logos, watermarks, dates, prices: on a
+   plate all of it is a defect, whether it is spelled correctly or garbled.
+
+   For each one give "text" — the characters that are actually rendered, quoted glyph by
+   glyph, never a description of a region — "issue": "stray-text", and a short "detail"
+   saying where in the frame it sits.
+
+   NOT defects, do not report them:
+     - text printed on the PRODUCT'S OWN LABEL — the brand mark, the arc-set badge
+       micro-copy, the variant name, the volume. The label belongs on the product and is
+       supposed to be there; section 2 already covers the one falsifiable part of it.
+     - an empty zone, a blank bar, a blank line, or a bare icon with no text beside it.
+   Return [] if there is no text anywhere outside the product's own label.`
+    : `3. DEFECTS — list every piece of the AD'S OWN TYPESET COPY that is not fully legible
+   and correct, in "defects". Report a defect when such text is:
+     - overlapped, covered or obscured by another element (including the product itself)
+     - running off the edge of the frame, cropped, or cut off
+     - garbled: doubled letters, dropped letters, transposed letters, nonsense letter
+       runs, or a word that is not correctly spelled
+   For each defect give "text" (as rendered, not as you think it was meant) and "issue"
+   (one of "obscured", "cut-off", "garbled") and a short "detail".
+
+   NOT defects, do not report them:
+     - text printed on the PRODUCT'S OWN LABEL — the brand mark, the arc-set badge
+       micro-copy, the variant name, the volume. That label renders small by design and
+       its curved micro-copy cannot be read reliably at any render size; the one part of
+       it that carries a falsifiable spec is the volume, and section 2 already covers it.
+       (This exclusion is about text physically printed on the bottle. Type that belongs
+       to the ad's layout — headlines, rules, bottom bars, price/offer badges set on the
+       background — is IN scope even when it sits near the product.)
+     - text that is merely small, soft or low-resolution but not actually wrong. An
+       overlap, a crop or a wrong glyph is a defect; "I cannot fully confirm this" is not.
+     - correctly-spelled brand names, deliberate stylistic capitalisation, letterspacing
+       and intentional line breaks.
+   Return [] if there are none.`;
+
+  return `${intro} This image
 was produced by a generative image model. Those models corrupt text constantly: doubled
 letters ("TTHAN"), dropped letters ("FORMLA"), invented words ("CERAMIO"), and text that
 ends up underneath another object.
@@ -106,28 +197,7 @@ ${list}
    or simply absent, answer exactly "ILLEGIBLE". Never guess it, never infer it from the
    product's proportions, and never copy it from this prompt.
 
-3. DEFECTS — list every piece of the AD'S OWN TYPESET COPY that is not fully legible
-   and correct, in "defects". Report a defect when such text is:
-     - overlapped, covered or obscured by another element (including the product itself)
-     - running off the edge of the frame, cropped, or cut off
-     - garbled: doubled letters, dropped letters, transposed letters, nonsense letter
-       runs, or a word that is not correctly spelled
-   For each defect give "text" (as rendered, not as you think it was meant) and "issue"
-   (one of "obscured", "cut-off", "garbled") and a short "detail".
-
-   NOT defects, do not report them:
-     - text printed on the PRODUCT'S OWN LABEL — the brand mark, the arc-set badge
-       micro-copy, the variant name, the volume. That label renders small by design and
-       its curved micro-copy cannot be read reliably at any render size; the one part of
-       it that carries a falsifiable spec is the volume, and section 2 already covers it.
-       (This exclusion is about text physically printed on the bottle. Type that belongs
-       to the ad's layout — headlines, rules, bottom bars, price/offer badges set on the
-       background — is IN scope even when it sits near the product.)
-     - text that is merely small, soft or low-resolution but not actually wrong. An
-       overlap, a crop or a wrong glyph is a defect; "I cannot fully confirm this" is not.
-     - correctly-spelled brand names, deliberate stylistic capitalisation, letterspacing
-       and intentional line breaks.
-   Return [] if there are none.
+${defectsSection}
 
 4. TRANSCRIPT — every piece of text visible in the image, as rendered. Diagnostic only.
 ${wantsPairings ? `
@@ -139,7 +209,7 @@ Respond with JSON only:
 {
   "checks": [{ "expected": "...", "found": true, "rendered": "..." }],
   "productVolume": "...",
-  "defects": [{ "text": "...", "issue": "obscured", "detail": "..." }],
+  "defects": [{ "text": "...", "issue": "${isPlate ? 'stray-text' : 'obscured'}", "detail": "..." }],
   "transcript": ["...", "..."]${wantsPairings ? `,
   "pairings": [{ "label": "...", "depicts": "...", "matches": true }]` : ''}
 }${volumeStrings.length ? `
@@ -417,7 +487,32 @@ export function volumeVerdict(productVolume, volumeStrings) {
   };
 }
 
-const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled']);
+const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled', 'stray-text']);
+
+// Does this string quote any actual rendered character? Letters and digits only —
+// "—", "___" and "[]" quote nothing.
+const HAS_GLYPH_RE = /[\p{L}\p{N}]/u;
+// A whole-string bracket wrap is the model DESCRIBING a region, not quoting glyphs off
+// it: "[black rounded bar, left]", "(the four list rows)". Every false positive in the
+// live plate run had this exact shape. The plate prompt tells the model to quote
+// characters "glyph by glyph, never a description of a region", so a bracket wrap is a
+// reliable tell — and this test runs on plates ONLY, where a bracketed report can only
+// mean "there is nothing here". In finished mode "[the closing line]" may well be a real
+// occlusion report and is left alone.
+const BRACKETED_DESCRIPTION_RE = /^[[(<][\s\S]*[\])>]$/;
+// The same statement in words rather than brackets.
+const ABSENCE_WORD_RE = /^(blank|empty|none|nothing|no\s+text|not\s+present|absent|missing|n\/?a)\.?$/i;
+
+/**
+ * A defect entry that reports the ABSENCE of text rather than quoting text that is
+ * present. Only meaningful on a plate, where absence is the specification (R3a).
+ */
+function isAbsenceReport(text) {
+  const t = String(text || '').trim();
+  if (!HAS_GLYPH_RE.test(t)) return true;
+  if (BRACKETED_DESCRIPTION_RE.test(t)) return true;
+  return ABSENCE_WORD_RE.test(t);
+}
 
 /**
  * Any reported defect fails the render. A human would reject an ad whose product sits
@@ -427,10 +522,18 @@ const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled']);
  * Entries with no `text` at all are dropped: an empty object carries nothing a human
  * could act on from the proof file, and treating it as a failure would make a model
  * formatting slip indistinguishable from a real occlusion.
+ *
+ * On a PLATE (R3a) entries that report an absence are dropped as well. The plate is
+ * specified empty wherever copy will later be set, so "this bar has no text in it" is
+ * the deliverable and must never fail a render — while text that IS rendered on a plate
+ * still fails, because it cannot be fixed by the copy layer. `mode` defaults to
+ * 'finished', the strict side, so a caller that forgets to thread it keeps the full
+ * obscured/cut-off/garbled gate.
  */
-export function normalizeDefects(defects) {
+export function normalizeDefects(defects, mode = 'finished') {
   return (defects || [])
     .filter(d => d && typeof d.text === 'string' && d.text.trim())
+    .filter(d => mode !== 'plate' || !isAbsenceReport(d.text))
     .map(d => ({
       text: d.text.trim(),
       issue: DEFECT_ISSUES.has(String(d.issue || '').toLowerCase()) ? String(d.issue).toLowerCase() : 'unspecified',
@@ -478,10 +581,13 @@ export function verdictFor({
     );
   }
 
-  // 3. Occlusion / truncation / garbling (R3).
-  const reportedDefects = normalizeDefects(defects);
+  // 3. Text defects (R3), mode-aware (R3a): on a finished frame, copy that is obscured,
+  //    cut off or garbled; on a plate, copy that exists at all outside the product label.
+  const reportedDefects = normalizeDefects(defects, mode);
   if (reportedDefects.length) {
-    reasons.push(`${reportedDefects.length} text defect(s) — obscured, cut off, or garbled text`);
+    reasons.push(mode === 'plate'
+      ? `${reportedDefects.length} text defect(s) — a plate must carry no text except the product's own label`
+      : `${reportedDefects.length} text defect(s) — obscured, cut off, or garbled text`);
     for (const d of reportedDefects) reasons.push(`  [${d.issue}] "${d.text}"${d.detail ? ` — ${d.detail}` : ''}`);
   }
 

@@ -70,12 +70,24 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
      (the legitimate small-product case), a value agreeing with the real volume passes,
      a value that contradicts it **fails**. Numbers are compared, not strings, so
      punctuation never fails a render and a wrong number always does.
-   - **Defects.** Any of the ad's own typeset copy that is obscured, cut off at the
-     frame edge, or garbled fails the render. A live frame had the product bottle
-     sitting on top of the word "actually" in its own closing line and the verifier
-     silently reconstructed it. Text printed on the *product's* label is out of scope
-     here — arc-set badge micro-copy cannot be read reliably at any render size, and
-     asking about it made the verifier reject a known-good control.
+   - **Defects — the question is inverted per mode.** On a **finished frame**, any of the
+     ad's own typeset copy that is obscured, cut off at the frame edge, or garbled fails
+     the render; a live frame had the product bottle sitting on top of the word "actually"
+     in its own closing line and the verifier silently reconstructed it. On a **plate**
+     that question has no correct answer — the copy zones are empty *by specification*,
+     because Demand Gen mixes the text assets in at serve time — so asking it failed 5 of
+     18 plates on a live run for reporting empty header bars and blank list rows as
+     "obscured". A plate is asked the opposite question instead: **what text is PRESENT
+     that should not be.** Absence is never a defect there; any lettering, word or number
+     anywhere but the product's own printed label is, spelled correctly or not (the same
+     run rendered `A LIBCDEFGHIJKLM NOPQRSTUVWXYZ` into a bar that was supposed to be
+     clean). Stray text on a plate is the more expensive defect of the two — the copy
+     layer cannot remove pixels. `normalizeDefects` backstops the prompt: on a plate, a
+     defect entry that quotes no rendered characters (a bracketed description of a region,
+     or the word "blank") is a report of absence and is dropped. Text printed on the
+     *product's* label is out of scope in **both** modes — arc-set badge micro-copy cannot
+     be read reliably at any render size, and asking about it made the verifier reject a
+     known-good control.
    - **Pairing**, on **finished frames** of formats that pair a picture with a label.
      Not applied to Demand Gen plates: a plate is text-free by construction, so it has
      no labels to pair anything with, and demanding pairings there made every plate of
