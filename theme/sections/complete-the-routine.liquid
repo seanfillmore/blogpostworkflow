@@ -22,6 +22,20 @@
       padding: 1.4rem;
       background: {{ section.settings.background_color }};
     }
+    /* The whole card is one <a>, so without this every child inherits the theme's
+       default link styling — the title, blurb and price rendered underlined and
+       turned :visited purple once the buyer had seen the Set page. :visited is
+       listed explicitly because the browser default beats a bare `a` rule, and
+       colour is one of the few properties :visited is still allowed to change. */
+    #shopify-section-{{ section.id }} a.ctr-card,
+    #shopify-section-{{ section.id }} a.ctr-card:link,
+    #shopify-section-{{ section.id }} a.ctr-card:visited,
+    #shopify-section-{{ section.id }} a.ctr-card:hover,
+    #shopify-section-{{ section.id }} a.ctr-card:focus,
+    #shopify-section-{{ section.id }} a.ctr-card:active {
+      color: inherit;
+      text-decoration: none;
+    }
     #shopify-section-{{ section.id }} .ctr-card__media {
       flex: 0 0 88px;
       width: 88px;
