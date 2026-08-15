@@ -24,13 +24,14 @@ node agents/ad-studio/index.js --product <handle> [--variant <name>] \
 |---|---|---|
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`. |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | no | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). Omitted or empty → the full six-format rotation. |
+| `--formats` | no | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). **Pass it.** Omitting it (or passing it empty) renders the **whole six-format rotation** — 108 renders ≈ $14 at the default `--variations 3`. Normal use is one or two keys; the full rotation is a deliberate sweep, not a default you should reach by not typing a flag. |
 | `--variations` | no | Variations per concept — each is 6 renders. Default `3`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
 | `--dry-run` | no | Generates copy and runs the claim gate, prints the result, and exits before any image is rendered. See below. |
 
-**Read the Cost section before running without `--dry-run`.** A default invocation is
-108 renders ≈ $14.
+**Read the Cost section before running without `--dry-run`.** A default invocation —
+no `--formats` — is the entire rotation, 108 renders ≈ $14. Scope every real run with
+`--formats`.
 
 Example — the one-concept proving run used before any batch:
 
