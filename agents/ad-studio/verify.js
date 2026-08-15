@@ -885,7 +885,13 @@ export function normalizeInventoryKind(kind) {
  *     against a hard-coded 1: foam-soap-bundle is three bottles and both starter sets
  *     are multi-item, so "exactly one" would reject every correct render of them. Too
  *     many catches the ghost second bottle; too few catches a bundle rendered short.
- *   - any `other` object at all — a wood slice, a coconut, greenery, a prop.
+ *     THIS APPLIES IN EVERY SETTING — a ghost bottle is wrong on a lifestyle shot too.
+ *   - any `other` object at all — but ONLY when the format's plateSetting is 'studio'.
+ *     A 'scene' plate is specified as a real place (`problem-aware`'s everyday moment,
+ *     `top-x-review`'s editorial still life), so a counter edge or a soft background
+ *     object is the deliverable, not a defect. Strays are still recorded on a scene
+ *     plate and still land in proof.json, so a frame that drifted into a prop pile is
+ *     visible to a human — they just do not fail it automatically.
  *
  * An EMPTY inventory on a plate is a fail, not a pass. The model was asked for the one
  * thing every frame has at least one of; getting nothing back means the question was not
@@ -895,9 +901,9 @@ export function normalizeInventoryKind(kind) {
  * @param {object[]} inventory
  * @param {{expectedUnits?:number, mode?:string}} opts
  */
-export function inventoryVerdict(inventory, { expectedUnits = 1, mode = 'finished' } = {}) {
+export function inventoryVerdict(inventory, { expectedUnits = 1, mode = 'finished', setting = 'studio' } = {}) {
   if (mode !== 'plate') {
-    return { ok: true, status: 'not-applicable', units: [], strays: [], expectedUnits };
+    return { ok: true, status: 'not-applicable', units: [], strays: [], expectedUnits, setting };
   }
 
   const entries = (Array.isArray(inventory) ? inventory : [])
@@ -905,19 +911,21 @@ export function inventoryVerdict(inventory, { expectedUnits = 1, mode = 'finishe
     .map(e => ({ object: String(e.object).trim(), kind: normalizeInventoryKind(e.kind) }));
 
   if (entries.length === 0) {
-    return { ok: false, status: 'unreported', units: [], strays: [], expectedUnits };
+    return { ok: false, status: 'unreported', units: [], strays: [], expectedUnits, setting };
   }
 
   const units = entries.filter(e => e.kind === 'product-unit');
   const strays = entries.filter(e => e.kind === 'other');
 
+  // Unit count first, and in every setting. Defaults to 'studio' — the strict side — so a
+  // caller that forgets to thread the setting keeps the tighter gate, never the looser one.
   if (units.length !== expectedUnits) {
-    return { ok: false, status: 'wrong-unit-count', units, strays, expectedUnits };
+    return { ok: false, status: 'wrong-unit-count', units, strays, expectedUnits, setting };
   }
-  if (strays.length) {
-    return { ok: false, status: 'stray-objects', units, strays, expectedUnits };
+  if (strays.length && setting !== 'scene') {
+    return { ok: false, status: 'stray-objects', units, strays, expectedUnits, setting };
   }
-  return { ok: true, status: 'clean', units, strays, expectedUnits };
+  return { ok: true, status: strays.length ? 'clean-with-scene' : 'clean', units, strays, expectedUnits, setting };
 }
 
 const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled', 'stray-text']);
@@ -1054,7 +1062,9 @@ export function verdictFor({
   //     number, with nothing else beside it? This is the check that was missing when a
   //     plate carrying a ghost second bottle, a wood slice, greenery and a coconut passed
   //     every other question in this file.
-  const inventory = inventoryVerdict(sceneInventory, { expectedUnits: unitCount, mode });
+  const inventory = inventoryVerdict(sceneInventory, {
+    expectedUnits: unitCount, mode, setting: format.plateSetting,
+  });
   if (!inventory.ok) {
     if (inventory.status === 'unreported') {
       reasons.push('no scene inventory reported for a plate');

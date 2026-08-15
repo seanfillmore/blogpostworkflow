@@ -119,6 +119,26 @@ or jar, not even a faded, blurred, ghosted, reflected or partially cropped one.`
 PHYSICAL FORM above. Render those ${units} and nothing else: no extra unit beyond them, and
 no faded, blurred, ghosted, reflected or partially cropped duplicate of any of them.`;
 
+  // What may share the frame with the product. Driven by format.plateSetting, because the
+  // first cut of this forbade every setting on every format and flattened `problem-aware`
+  // and `top-x-review` into the same studio shot as the rest — throwing away the one thing
+  // those two formats are for. What put a coconut and a wood slice on the 2026-08-15 plate
+  // was the finished ad's INGREDIENT ROW, not the existence of a room.
+  //
+  // Both branches forbid the same two things, and they are the things that actually went
+  // wrong: ad furniture the operator sets by hand, and ingredient/botanical styling.
+  const settingClause = format.plateSetting === 'scene'
+    ? `THIS IS A REAL SETTING, NOT A STYLED SET. Ordinary things that genuinely belong in the
+place described above may appear, softly and out of focus, well away from the product. Do
+NOT dress the scene: no ingredients, no fruit, nuts, seeds, leaves, sprigs or greenery, no
+wood slices, no arranged flat-lay of objects around the product, and nothing chosen to
+signal what the product is made of. Those are artwork, and they are placed by hand later.
+Anything in the frame must read as incidental, never as arranged.`
+    : `NO PROPS AND NO SCENE DRESSING of any kind: no ingredients, no fruit or nuts, no leaves
+or greenery, no wood slices, boards, trays, bowls, cloths, stones, water, splashes, towels
+or bathroom fittings. The ground is a plain, even surface and nothing rests on it but the
+product.`;
+
   if (mode === 'plate') {
     // format.plateBrief, NEVER format.layoutBrief. layoutBrief describes the finished ad —
     // its columns, rules, ingredient cut-outs and lifestyle scene — and feeding it here is
@@ -139,10 +159,7 @@ and do not shrink it to be safe.
 
 ${unitClause}
 
-NO PROPS AND NO SCENE DRESSING of any kind: no ingredients, no fruit or nuts, no leaves or
-greenery, no wood slices, boards, trays, bowls, cloths, stones, water, splashes, towels or
-bathroom fittings. The ground is a plain, even surface and nothing rests on it but the
-product.
+${settingClause}
 
 ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS and NO NUMBERS anywhere in the image, except the
 product's own printed label, which must be complete and correct.

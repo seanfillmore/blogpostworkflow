@@ -235,3 +235,36 @@ const platePrompt = buildRenderPrompt({
   ratio: '9:16',
 });
 assert.ok(!/SAFE ZONE/i.test(platePrompt), 'a text-free plate needs no safe-zone instruction');
+
+// ── plateSetting decides what may share the frame ────────────────────────────────────
+//
+// The first cut of the plate brief forbade every setting on every format, which flattened
+// problem-aware and top-x-review into the same studio shot as the rest and threw away the
+// one thing those two formats are for. What put a coconut and a wood slice on the
+// 2026-08-15 plate was the finished ad's INGREDIENT ROW, not the existence of a room.
+// Sean, 2026-08-15: "there should be a scene when it is appropriate and everything meshes
+// together."
+{
+  const studioPlate = buildRenderPrompt({
+    format: formatByKey('manifesto'), zones, product, brandKit, mode: 'plate',
+  });
+  assert.ok(/NO PROPS AND NO SCENE DRESSING/i.test(studioPlate), 'a studio plate forbids any setting');
+
+  const scenePlate = buildRenderPrompt({
+    format: formatByKey('problem-aware'), zones, product, brandKit, mode: 'plate',
+  });
+  assert.ok(!/NO PROPS AND NO SCENE DRESSING/i.test(scenePlate), 'a scene plate must not get the blanket ban');
+  assert.ok(/REAL SETTING, NOT A STYLED SET/i.test(scenePlate), 'a scene plate gets the setting instruction');
+
+  // Both settings still forbid the two things that actually went wrong: ingredient and
+  // botanical styling, and the ad furniture the operator places by hand.
+  for (const [name, p] of [['studio', studioPlate], ['scene', scenePlate]]) {
+    assert.ok(/no ingredients/i.test(p), `${name}: ingredient styling must stay forbidden`);
+    assert.ok(/greenery/i.test(p), `${name}: botanical styling must stay forbidden`);
+    assert.ok(/NO ICONS/i.test(p), `${name}: ad furniture must stay forbidden`);
+    assert.ok(/NO TEXT/i.test(p), `${name}: a plate is text-free in either setting`);
+    assert.ok(/EXACTLY ONE UNIT/i.test(p), `${name}: the unit count applies in either setting`);
+  }
+  // A scene is a PLACE, not a styling exercise — the frame must not become a flat-lay.
+  assert.ok(/never as arranged/i.test(scenePlate), 'a scene must read as incidental, not arranged');
+}

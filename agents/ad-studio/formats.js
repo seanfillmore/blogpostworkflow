@@ -49,12 +49,9 @@
 // "the everyday moment where the problem shows up". The model rendered what it was told to
 // render. The fix is to stop telling it — not to shout the negation louder.
 //
-// Sean's spec, after inspecting that plate: exactly ONE unit of the product, on a clean
-// ground, no props, no scene dressing. He sets type and icons in Photoshop; the model's
-// job is a correct product and clean space, nothing else. So a plateBrief may name only:
-// the ground and its colour, and where the product sits and at what scale. It may NOT name
-// a prop, an ingredient, a surface texture that reads as a set, or any element the
-// finished ad would carry as artwork.
+// Sean's spec, after inspecting that plate: the right number of units of the product, on a
+// ground that suits the format, with no ad furniture. He sets type and icons in Photoshop;
+// the model's job is a correct product and clean space to set type onto.
 //
 // A plateBrief must NOT name a unit count either — it says "the product", never "a single
 // bottle". How many units belong in the frame is a property of the PRODUCT, not of the
@@ -63,11 +60,23 @@
 // count baked in here would reject every correct render of them. render.js emits the count
 // clause from product.unitCount instead.
 //
-// The consequence is deliberate and worth knowing: at PLATE level the six formats differ
-// only in product scale, product position and ground tone. `problem-aware` and
-// `top-x-review` lose the lifestyle/flat-lay staging they describe as finished ads. That
-// staging is what the props came from, and none of it survives contact with "no scene
-// dressing".
+// A PLATE MAY HAVE A SCENE WHERE ONE MESHES (Sean, 2026-08-15). The first cut of this
+// flattened all six formats onto a plain studio ground, which threw away the thing
+// `problem-aware` and `top-x-review` are for — an everyday moment and an editorial
+// flat-lay. That was an over-correction: what put a coconut and a wood slice on that plate
+// was the FINISHED-AD FURNITURE the layout brief described (a row of ingredient cut-outs),
+// not the existence of a setting.
+//
+// So `plateSetting` decides, per format:
+//
+//   'studio' — a plain, even ground and nothing else. The product is the only object.
+//   'scene'  — a coherent real-world setting the product plausibly sits in, with ordinary
+//              incidental objects allowed.
+//
+// In BOTH settings a plateBrief may never name: ad furniture (columns, rules, pills, bars,
+// badges, icons, checklists, headlines), ingredient or botanical styling (a coconut, a
+// sprig, a scattering of seeds — that is artwork the operator places, and it is literally
+// what went wrong), or a unit count. A scene is a PLACE, not ingredient styling.
 //
 // zoneCapacity (optional) caps how many strings an array-valued zone may carry,
 // keyed by the layoutBrief's own physical description of that zone — a "vertical
@@ -106,6 +115,7 @@ export const FORMATS = [
       'A solid black bar runs across the very bottom holding one line of letterspaced caps.',
     ].join(' '),
     // Finished, the columns flank the product. On the base they are empty space.
+    plateSetting: 'studio',
     plateBrief: [
       `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
       'The product stands upright, centred left to right, its base sitting on the lower third and its',
@@ -139,6 +149,7 @@ export const FORMATS = [
     ].join(' '),
     // This is the format the props incident happened on. NOTHING about ingredients here —
     // the ingredient row is placed by hand, and naming it is what produced the coconut.
+    plateSetting: 'studio',
     plateBrief: [
       `A soft warm sand ${SAND} gradient filling the whole frame, smooth and free of texture.`,
       'The product stands upright on the RIGHT side of the frame, large, its base on the lower third and its',
@@ -173,6 +184,8 @@ export const FORMATS = [
     ].join(' '),
     // productProminent: false — the plate reproduces that signature scale, so the volume
     // marking will read ILLEGIBLE here and volumeVerdict will pass it. That is intended.
+    // A letterpress poster is typography on a flat ground; a setting would fight it.
+    plateSetting: 'studio',
     plateBrief: [
       `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, no texture and no vignette.`,
       'The product sits small and understated at the bottom centre, resting on the surface like a signature,',
@@ -198,14 +211,17 @@ export const FORMATS = [
       'A single restrained line of caps runs across the bottom.',
       'No before/after split and no depiction of a skin condition — those are restricted in health and beauty.',
     ].join(' '),
-    // The "everyday moment where the problem shows up" is a SCENE, and a scene is what a
-    // plate may not have. The editorial feel has to come from the type the operator sets.
+    // The whole point of this format is the everyday moment, so its plate KEEPS the setting.
+    // A room is not what went wrong on 2026-08-15 — a row of ingredient cut-outs was.
+    plateSetting: 'scene',
     plateBrief: [
-      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
-      'The product stands upright in the lower right of the frame at moderate scale — present but not',
-      'dominant, occupying about a quarter of the frame height.',
-      'The upper two-thirds and the left side are empty ground.',
-      'Nothing else appears in the picture.',
+      'A calm, real domestic setting shot like clean editorial lifestyle photography: a plain bathroom',
+      'counter or bedside table in soft daylight, shallow depth of field, muted and uncluttered.',
+      'The product stands upright in the lower right at moderate scale — present but not dominant,',
+      'occupying about a quarter of the frame height, resting naturally on the surface.',
+      'The upper two-thirds of the frame is quiet, evenly lit wall or air with nothing in it, so type can be',
+      'set over it later.',
+      'No people and no hands.',
     ].join(' '),
   },
   {
@@ -227,13 +243,17 @@ export const FORMATS = [
       'lookalike packaging, or invented third-party logos, badges or award marks.',
       'A restrained line of caps runs across the bottom.',
     ].join(' '),
-    // "Flat-lay styling" is styling, i.e. props, so the plate does not get it. A roundup
-    // frame's job at base level is a legible hero with room for the ranking headline.
+    // A roundup reads as editorial because of how it is SHOT, not because of what is
+    // scattered around it — so the plate keeps the surface and the light, not a prop pile.
+    plateSetting: 'scene',
     plateBrief: [
-      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, generous and uncluttered.`,
+      'A magazine-style editorial still life on a plain matte surface — pale stone, paper or painted wood —',
+      'in soft directional daylight with a gentle natural shadow, generous negative space, restrained and',
+      'expensive-looking rather than styled or busy.',
       'The product stands upright, centred left to right, at hero scale, its base on the lower third and its',
       'top reaching about the middle of the frame.',
-      'The upper third is empty ground. Nothing else appears in the picture.',
+      'The upper third of the frame is clear and empty, reserved for type that is added later.',
+      'No competitor packaging and no award marks.',
     ].join(' '),
   },
   {
@@ -256,6 +276,8 @@ export const FORMATS = [
     ].join(' '),
     // The offer badge is the loudest element in the finished ad and is set by hand, so the
     // plate must leave the upper left genuinely empty rather than fill it with product.
+    // Premium CPG product photography IS a clean ground — that is the format's whole look.
+    plateSetting: 'studio',
     plateBrief: [
       `A clean warm sand ${SAND} ground filling the whole frame, lit like premium CPG product photography.`,
       'The product stands upright in the lower right of the frame at hero scale, its base on the lower third,',
@@ -269,9 +291,17 @@ export const FORMATS = [
 // IS the bug this field exists to fix, and it would come back the first time someone adds
 // a seventh format and only fills in the finished-ad brief. Load-time, so it cannot be
 // discovered halfway through a paid run.
+export const PLATE_SETTINGS = ['studio', 'scene'];
+
 for (const f of FORMATS) {
   for (const field of ['layoutBrief', 'plateBrief']) {
     if (!String(f[field] || '').trim()) throw new Error(`ad-studio format "${f.key}" is missing ${field}`);
+  }
+  // No default. 'studio' would silently strip the setting off a format that wants one and
+  // 'scene' would silently license props on one that does not; both are decisions, and a
+  // default is how a decision gets made by nobody.
+  if (!PLATE_SETTINGS.includes(f.plateSetting)) {
+    throw new Error(`ad-studio format "${f.key}" needs plateSetting: one of ${PLATE_SETTINGS.join(' | ')}`);
   }
 }
 

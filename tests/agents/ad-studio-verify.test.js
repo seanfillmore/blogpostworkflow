@@ -1302,3 +1302,71 @@ for (const inv of [[], ONE_UNIT, [{ object: 'a coconut', kind: 'other' }]]) {
   assert.ok(/illegible at render size/i.test(lg.ask), 'and say why');
   assert.ok(/shape/i.test(lg.label) && /placement/i.test(lg.label), 'the label shown to the model must say so too');
 }
+
+// ── The stray rule follows plateSetting; the unit count never does ───────────────────
+//
+// The first cut of the inventory failed ANY `other` object on any plate. That is right
+// for a studio plate and wrong for a scene one: `problem-aware` is specified as an
+// everyday moment and `top-x-review` as an editorial still life, so a counter edge or a
+// soft background object is the deliverable. Sean, 2026-08-15: "there should be a scene
+// when it is appropriate and everything meshes together."
+//
+// What does NOT relax is the unit count. A ghost second bottle is wrong in a bathroom too.
+{
+  const sceneish = [
+    { object: 'a white lotion bottle on the counter', kind: 'product-unit' },
+    { object: 'a bathroom counter', kind: 'surface' },
+    { object: 'a folded towel, soft focus, far left', kind: 'other' },
+  ];
+
+  const studio = inventoryVerdict(sceneish, { expectedUnits: 1, mode: 'plate', setting: 'studio' });
+  assert.equal(studio.ok, false, 'a stray object fails a STUDIO plate');
+  assert.equal(studio.status, 'stray-objects');
+
+  const scene = inventoryVerdict(sceneish, { expectedUnits: 1, mode: 'plate', setting: 'scene' });
+  assert.equal(scene.ok, true, 'the same object is the deliverable on a SCENE plate');
+  assert.equal(scene.status, 'clean-with-scene');
+  assert.equal(scene.strays.length, 1, 'and is still RECORDED, so a prop pile is visible in proof.json');
+
+  // The unit count is absolute in both settings.
+  const ghostInAScene = inventoryVerdict([
+    ...sceneish,
+    { object: 'a second, faded bottle behind the first', kind: 'product-unit' },
+  ], { expectedUnits: 1, mode: 'plate', setting: 'scene' });
+  assert.equal(ghostInAScene.ok, false, 'a ghost bottle fails even where props are allowed');
+  assert.equal(ghostInAScene.status, 'wrong-unit-count');
+
+  // setting defaults to 'studio', the strict side — a caller that forgets to thread it
+  // gets the tighter gate, never the looser one. Same posture as `mode`.
+  assert.equal(
+    inventoryVerdict(sceneish, { expectedUnits: 1, mode: 'plate' }).ok,
+    false,
+    'setting defaults to studio, the strict side',
+  );
+}
+
+// Wired through verdictFor from format.plateSetting, not from a parameter the caller
+// has to remember.
+{
+  const sceneFormat = formatByKey('problem-aware');   // plateSetting: 'scene'
+  const studioFormat = formatByKey('manifesto');      // plateSetting: 'studio'
+  const withProp = [
+    { object: 'a white lotion bottle', kind: 'product-unit' },
+    { object: 'a bedside table', kind: 'surface' },
+    { object: 'a lamp base, out of focus', kind: 'other' },
+  ];
+  const args = {
+    expected: ['A'], checks: cleanChecks(['A']), mode: 'plate',
+    volumeStrings: TRUE_VOLUME, productVolume: 'ILLEGIBLE', unitCount: 1,
+    sceneInventory: withProp,
+  };
+  assert.equal(verdictFor({ ...args, format: sceneFormat }).ok, true, 'problem-aware may have a lamp in shot');
+  assert.equal(verdictFor({ ...args, format: studioFormat }).ok, false, 'manifesto may not');
+}
+
+// The render prompt says the right thing for each setting — a scene format must not be
+// handed the blanket "NO PROPS AND NO SCENE DRESSING" that flattened it the first time.
+{
+  const p = buildVerifyPrompt({ expected: ['A'], format: formatByKey('problem-aware'), mode: 'plate' });
+  assert.ok(/SCENE INVENTORY/.test(p), 'a scene plate is still inventoried — the unit count still matters');
+}

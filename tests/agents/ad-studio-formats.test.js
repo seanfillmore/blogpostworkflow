@@ -27,16 +27,34 @@ for (const f of FORMATS) {
   assert.notEqual(f.plateBrief, f.layoutBrief, `${f.key}'s plate brief must not just be the layout brief`);
   assert.ok(!/#C1DF6D/i.test(f.plateBrief), `${f.key} must not use the retired green`);
 
-  // A plateBrief may name the ground and the product's size and position, and nothing
-  // else. Every word below is something that appeared on, or produced, the plate Sean
-  // rejected: props, scene dressing, ingredient imagery and a second unit.
+  // Every format must DECIDE its setting. No default: 'studio' would silently strip the
+  // setting off a format that wants one, and 'scene' would silently license props on one
+  // that does not.
+  assert.ok(['studio', 'scene'].includes(f.plateSetting), `${f.key} needs a plateSetting`);
+
+  // A plateBrief may never name FINISHED-AD FURNITURE — the columns, rules, pills, bars,
+  // badges, icons and checklists the operator sets by hand — in either setting.
   assert.ok(
-    !/\b(ingredient|coconut|wood|greenery|leaf|leaves|prop|flat-?lay|lifestyle|column|badge|headline|icon|checklist|bar\b)/i.test(f.plateBrief),
-    `${f.key}'s plate brief names finished-ad furniture or scene dressing`
+    !/\b(column|badge|headline|icon|checklist|pictogram|cut-?out)\b/i.test(f.plateBrief),
+    `${f.key}'s plate brief names finished-ad furniture`
   );
-  // It must positively say nothing else is in frame, so the instruction is not carried by
-  // render.js's negations alone — those are what lost last time.
-  assert.ok(/nothing else appears/i.test(f.plateBrief), `${f.key}'s plate brief must exclude everything else`);
+
+  // Nor INGREDIENT OR BOTANICAL STYLING, in either setting. That is the specific thing
+  // that went wrong on 2026-08-15 — a coconut, a wood slice and greenery, all of which
+  // came from ingredient-callout's layoutBrief asking for ingredient cut-outs. A scene is
+  // a PLACE, not ingredient styling: `problem-aware` may have a bathroom counter and still
+  // may not have a coconut on it.
+  assert.ok(
+    !/\b(ingredients?|coconuts?|fruits?|nuts?|seeds?|sprigs?|greenery|botanicals?|wood slices?)\b/i.test(f.plateBrief),
+    `${f.key}'s plate brief names ingredient or botanical styling`
+  );
+
+  // A STUDIO plate must positively say nothing else is in frame — that instruction cannot
+  // be left to render.js's negations alone, which is exactly what lost last time. A scene
+  // plate says the opposite by design and is exempt.
+  if (f.plateSetting === 'studio') {
+    assert.ok(/nothing else appears/i.test(f.plateBrief), `${f.key}'s studio plate must exclude everything else`);
+  }
 
   // ...but it must NOT state a unit count. That is per-product (product.unitCount), not
   // per-format: baking "a single unit" in here would reject every correct render of the
@@ -45,6 +63,20 @@ for (const f of FORMATS) {
     !/\b(single|one|two|three|four)\s+(unit|bottle|tube|jar|item|piece)/i.test(f.plateBrief),
     `${f.key}'s plate brief must not fix a unit count — that is product.unitCount's job`
   );
+}
+
+// Which formats keep a setting, and why: these two are the ones whose whole value IS the
+// context — an everyday moment and an editorial still life. The other four are studio
+// shots as finished ads too, so a setting there would be invention, not fidelity.
+assert.deepEqual(
+  FORMATS.filter(f => f.plateSetting === 'scene').map(f => f.key).sort(),
+  ['problem-aware', 'top-x-review'],
+);
+// A scene plate still has to leave clear space for the type the operator sets by hand —
+// otherwise "keep the scene" quietly becomes "there is nowhere to put the headline".
+for (const key of ['problem-aware', 'top-x-review']) {
+  assert.ok(/clear|quiet|negative space/i.test(formatByKey(key).plateBrief),
+    `${key}'s scene must still leave room for copy`);
 }
 
 // The two formats whose layouts pair pictures with words drive the pairing check.

@@ -73,10 +73,25 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    positive instruction beats a negation sitting below it. Both `formats.js` (at load) and
    `buildRenderPrompt` throw on a missing brief, so there is no path back to the fallback.
 
-   Consequence worth knowing: at plate level the six formats now differ only in product
-   scale, product position and ground tone. `problem-aware` and `top-x-review` lose the
-   lifestyle and flat-lay staging they describe as finished ads — that staging is exactly
-   what the props came from.
+   **A plate may have a scene where one meshes** (`plateSetting`, per format). The first
+   cut of this forbade every setting on every format, which flattened `problem-aware` and
+   `top-x-review` into the same studio shot as the rest and threw away the one thing those
+   two formats are for. That was an over-correction: what put a coconut and a wood slice on
+   the bad plate was the finished ad's **ingredient row**, not the existence of a room.
+
+   | setting | formats | what may share the frame |
+   |---|---|---|
+   | `studio` | `us-vs-them`, `ingredient-callout`, `manifesto`, `offer-focused` | nothing — a plain even ground and the product |
+   | `scene` | `problem-aware`, `top-x-review` | a coherent real place, with incidental objects |
+
+   In **both** settings a plate brief may never name ad furniture (columns, rules, pills,
+   bars, badges, icons, checklists, headlines), ingredient or botanical styling (a coconut,
+   a sprig, scattered seeds — that is artwork the operator places, and it is literally what
+   went wrong), or a unit count. **A scene is a PLACE, not ingredient styling:**
+   `problem-aware` may have a bathroom counter and still may not have a coconut on it.
+   `formats.js` throws at load if a format has no `plateSetting` — no default, because
+   `studio` would silently strip a setting off a format that wants one and `scene` would
+   silently license props on one that does not.
 2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
    `brandKit`, `reviews`) and quote its evidence verbatim.
@@ -181,7 +196,14 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
      product units must equal the product's `unitCount`, and there must be no `other`
      objects at all. An empty inventory on a plate **fails** as unreported.
 
-     Why it exists: the 2026-08-15 plate carried a ghost second bottle, a wood slice,
+     **The stray rule follows `plateSetting`; the unit count never does.** On a `scene`
+   plate an `other` object is the deliverable, so strays are recorded in `proof.json` but
+   do not fail the frame — a human can still see if it drifted into a prop pile. The unit
+   count is absolute in every setting: a ghost second bottle is wrong in a bathroom too.
+   `setting` defaults to `studio`, the strict side, so a caller that forgets to thread it
+   gets the tighter gate.
+
+   Why it exists: the 2026-08-15 plate carried a ghost second bottle, a wood slice,
      greenery and a coconut, and passed everything above. Each check had a reason not to
      see it — `FIDELITY_ATTRIBUTES` are phrased about *the* product, singular, so the
      verifier silently picked one unit and judged that; the volume transcript scan was
