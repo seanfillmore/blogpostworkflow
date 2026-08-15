@@ -13,7 +13,12 @@ assert.equal(CREATIVE_MODELS.imageGen, 'gemini-3-pro-image');
 assert.ok(CREATIVE_MODELS.adStudio, 'adStudio block must exist');
 assert.equal(CREATIVE_MODELS.adStudio.imageGen, 'gemini-3-pro-image');
 assert.ok(CREATIVE_MODELS.adStudio.copy.includes('opus'), 'copy must stay on the flagship');
-assert.ok(CREATIVE_MODELS.adStudio.verify.includes('haiku'), 'verify is a short vision task');
+// Verify is NOT a "short vision task" — that framing is what put it on Haiku, and Haiku
+// passed a live ad whose headline read "DOES MORE WORK TTHAN THE FORMLA" and whose
+// bottle said "4 FL oz / 118ml" on an 8 fl. oz. product, auto-correcting both on the way
+// out. It is one vision call guarding a ~$0.13 render that nothing else reads before it
+// goes live. Pinned to the exact ID so a downgrade has to be a deliberate edit here.
+assert.equal(CREATIVE_MODELS.adStudio.verify, 'claude-sonnet-5', 'verify must not go back to Haiku');
 assert.ok(CREATIVE_MODELS.adStudio.angle.includes('opus'), 'angle selection stays on the flagship');
 
 // No preview IDs anywhere in the model config or the dashboard picker.

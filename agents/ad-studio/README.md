@@ -55,15 +55,41 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
 4. **Render** (`render.js`, model: `gemini-3-pro-image` @2K) — **one generative pass**
    per variation per platform target, conditioned on up to 4 real reference
    photographs. The product is generated in-scene, never composited.
-5. **Verify** (`verify.js`, model: `claude-haiku-4-5`) — transcribes every visible
-   string and, on **finished frames** of formats that pair a picture with a label,
-   checks the pairing too. The pairing check does not apply to Demand Gen plates: a
-   plate is text-free by construction, so it has no labels to pair anything with, and
-   demanding pairings there made every plate of a pairing format an unavoidable hard
-   fail. Text matching is anchored at token boundaries — an unanchored substring match
+5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — four checks, all required:
+
+   - **Per-string checks.** For each requested string, a *pointed* question — does this
+     exact character sequence appear, yes or no, and what does that region actually
+     say. **Not** an open transcription. A vision model asked to transcribe repairs
+     misspellings semantically on the way out, so a transcript-driven gate is blind to
+     exactly the corruption class it exists to catch; it reported `FORMULA` where the
+     pixels said `FORMLA` and passed the ad on attempt 1. The model's "yes" is then
+     re-checked against the text it itself quoted, so a corrupted string has to survive
+     two independent answers. A transcript is still collected for `proof.json` but
+     decides nothing.
+   - **Product volume.** Read-or-`ILLEGIBLE`, on **every** format. `ILLEGIBLE` passes
+     (the legitimate small-product case), a value agreeing with the real volume passes,
+     a value that contradicts it **fails**. Numbers are compared, not strings, so
+     punctuation never fails a render and a wrong number always does.
+   - **Defects.** Any of the ad's own typeset copy that is obscured, cut off at the
+     frame edge, or garbled fails the render. A live frame had the product bottle
+     sitting on top of the word "actually" in its own closing line and the verifier
+     silently reconstructed it. Text printed on the *product's* label is out of scope
+     here — arc-set badge micro-copy cannot be read reliably at any render size, and
+     asking about it made the verifier reject a known-good control.
+   - **Pairing**, on **finished frames** of formats that pair a picture with a label.
+     Not applied to Demand Gen plates: a plate is text-free by construction, so it has
+     no labels to pair anything with, and demanding pairings there made every plate of
+     a pairing format an unavoidable hard fail.
+
+   Text matching is anchored at token boundaries — an unanchored substring match
    accepted `18 fl. oz.` for an expected `8 fl. oz.`, the exact false spec this gate
    exists to stop. `renderWithRetry` retries up to 3 attempts total before accepting
    the failure.
+
+   **The model is Sonnet, not Haiku, on purpose.** Haiku auto-corrected `TTHAN`/`FORMLA`
+   into clean text and passed a corrupted ad. This is one vision call guarding a ~$0.13
+   render that nobody else reads before it goes live; do not drop it back to save
+   pennies on the cheapest call in the pipeline.
 6. **Package** (`packaging.js`) — writes the six platform artifacts (3 Meta finished
    frames + 3 Demand Gen text-free plates) and buckets the concept's copy into Demand
    Gen's headline/long-headline/description fields.
@@ -109,9 +135,13 @@ free crops of the Meta frames.
 | Default run, worst case (3 verify attempts everywhere) | 324 | $42.12 |
 | `--max-renders` default ceiling | 120 | $15.60 |
 
-At ~$0.13 per Gemini 3 Pro 2K render, plus one Haiku vision call per render for the
-verify gate. `--dry-run` costs one Opus copy call per format and renders nothing.
-Scope a run with `--formats` and `--variations` rather than relying on the ceiling.
+At ~$0.13 per Gemini 3 Pro 2K render, plus one **Sonnet** vision call per render for the
+verify gate — roughly $0.01–0.02 on a 2K frame, so about a tenth of the render it is
+guarding and well under 15% on top of the table above. That is the whole argument for
+raising it off Haiku: the gate is the cheapest thing in the pipeline and the only thing
+between a corrupted headline and a live ad. `--dry-run` costs one Opus copy call per
+format and renders nothing. Scope a run with `--formats` and `--variations` rather than
+relying on the ceiling.
 
 ## Global constraints (non-obvious, do not relax)
 
@@ -131,9 +161,20 @@ Scope a run with `--formats` and `--variations` rather than relying on the ceili
   `productProminent: true`. That flag is a **legibility** judgement, not a priority
   one: `manifesto` renders the product "small and understated at the bottom center"
   and `problem-aware` "present but not dominant", and no vision model can read a 6pt
-  volume marking off those, so demanding it back would fail every attempt and burn the
+  brand mark off those, so demanding it back would fail every attempt and burn the
   retries. The model is still told exactly what the label says on those formats, so it
-  still cannot invent a volume. **`main()` aborts if this list comes back empty** — an empty
+  still cannot invent a volume.
+
+  **The flag no longer switches the label check off — only the hard expected strings.**
+  It used to strip `labelStrings` out of the gate's expected set wholesale, so on
+  `manifesto` and `problem-aware` a wrong label was not merely un-demanded, it was
+  *un-checked*. That is how a live frame shipped `4 FL oz / 118ml` on an 8 fl. oz.
+  bottle with `ok: true` on attempt 1. The **volume marking** is now verified on every
+  format regardless of the flag, tolerant of illegibility and intolerant of falsehood
+  (`verify.js`'s `volumeVerdict`, wired through `expectedForFormat`'s `volumeStrings`).
+  Do not widen the flag back into an off switch for the volume.
+
+  **`main()` aborts if this list comes back empty** — an empty
   list is exactly how the image model invents a volume that was never on the bottle
   (a design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text
   wasn't named). There is no flag to skip this check.

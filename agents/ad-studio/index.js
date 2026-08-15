@@ -20,7 +20,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { renderVariation, buildRenderPrompt, selectReferencePhotos } from './render.js';
-import { buildVerifyPrompt, parseVerifyResponse, verdictFor } from './verify.js';
+import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings } from './verify.js';
 import { selectFormats } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
@@ -99,7 +99,7 @@ export function sniffImageMediaType(buf) {
  * is reported, never silently swallowed.
  * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, budgetStopped:boolean, proof:object}>}
  */
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, mode = 'finished', maxAttempts = 3, budget = null }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, mode = 'finished', volumeStrings = [], maxAttempts = 3, budget = null }) {
   let attempts = 0;
   let lastProof = { ok: false, reasons: ['no attempt made'], missing: [], mismatchedPairs: [] };
   let lastBuffer = null;
@@ -124,18 +124,21 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
 
     const msg = await anthropic.messages.create({
       model: CREATIVE_MODELS.adStudio.verify,
-      max_tokens: 2000,
+      // A per-string check carries the expected string AND the rendered text back, so
+      // the response scales with the copy volume — 2000 truncated the JSON on a
+      // six-zone format and the truncation surfaced as an unparseable response.
+      max_tokens: 4000,
       messages: [{
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: lastMediaType, data: lastBuffer.toString('base64') } },
-          { type: 'text', text: buildVerifyPrompt({ expected, format, mode }) },
+          { type: 'text', text: buildVerifyPrompt({ expected, format, mode, volumeStrings }) },
         ],
       }],
     });
 
-    const { transcript, pairings } = parseVerifyResponse(textOf(msg));
-    lastProof = verdictFor({ expected, transcript, pairings, format, mode });
+    const { checks, productVolume, defects, transcript, pairings } = parseVerifyResponse(textOf(msg));
+    lastProof = verdictFor({ expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings });
     lastProof.transcript = transcript;
     if (lastProof.ok) return { ok: true, buffer: lastBuffer, mediaType: lastMediaType, attempts, budgetStopped: false, proof: lastProof };
   }
@@ -385,7 +388,7 @@ function artifactFilename(baseName, mediaType) {
  * plates at all. Fails the whole run immediately instead, before anything is spent.
  * @returns {Promise<{ok:boolean, artifact:string, buffer:Buffer|null, proofEntry:object}>}
  */
-export async function renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate, budget = null }) {
+export async function renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate, volumeStrings = [], budget = null }) {
   const { requestRatio, needsCrop } = renderRatioFor(target.ratio);
   const artifactBase = artifactName(target.platform, target.ratio, target.mode);
 
@@ -394,7 +397,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
     const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
     // mode is threaded all the way to verdictFor: a plate has no labels, so the
     // image/label pairing requirement must not be applied to it.
-    const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format, mode: target.mode, budget });
+    const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format, mode: target.mode, volumeStrings, budget });
 
     // A budget stop before the first attempt produces no bytes at all.
     if (!r.buffer) {
@@ -435,6 +438,12 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
         ok: r.proof.ok,
         reasons: r.proof.reasons,
         missing: r.proof.missing,
+        // What the verifier said each region ACTUALLY reads — the thing a human
+        // reviewing a rejected render needs, and the thing v1's proof.json could not
+        // record because it only ever held an auto-corrected transcript.
+        checkDetails: r.proof.checkDetails,
+        volume: r.proof.volume,
+        defects: r.proof.defects,
         mismatchedPairs: r.proof.mismatchedPairs,
         transcript: r.proof.transcript,
       },
@@ -469,7 +478,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
  */
 export async function renderVariationTargets({
   gemini, anthropic, targets, format, zones, product, brandKit, photoPaths,
-  expectedFinished, expectedPlate, budget = null, onProgress = () => {},
+  expectedFinished, expectedPlate, volumeStrings = [], budget = null, onProgress = () => {},
 }) {
   const proofByArtifact = {};
   const artifacts = [];
@@ -503,7 +512,7 @@ export async function renderVariationTargets({
     // money. Reuses buildRunReport's existing rejected-variation path via ok=false.
     const result = await renderTarget({
       gemini, anthropic, target, format, zones, product, brandKit, photoPaths,
-      expectedFinished, expectedPlate, budget,
+      expectedFinished, expectedPlate, volumeStrings, budget,
     });
 
     if (result.buffer) artifacts.push({ name: result.artifact, buffer: result.buffer });
@@ -531,18 +540,30 @@ export function filterDroppedClaims(claims, dropped) {
 }
 
 /**
- * The verify gate's expected-text list for each mode.
+ * The verify gate's expected-text list for each mode, plus the volume markings the
+ * gate compares the product's printed volume against.
  *
- * labelStrings ("8 fl. oz. (236ml)") are only demanded back on formats that render the
- * product large enough to read — see formats.js's productProminent. On manifesto and
- * problem-aware the product is deliberately tiny, and requiring a vision model to
- * transcribe a 6pt volume marking off it fails every attempt and burns the retries.
+ * `productProminent` still decides whether labelStrings are demanded back as HARD
+ * expected strings — on manifesto and problem-aware the product is deliberately tiny
+ * ("small and understated at the bottom center", "present but not dominant") and
+ * requiring a vision model to transcribe a 6pt brand mark off it fails every attempt
+ * and burns the retries.
+ *
+ * `volumeStrings` is returned SEPARATELY and unconditionally, for every format,
+ * prominent or not. That is the R2 fix: the flag used to strip labelStrings out
+ * wholesale, so a wrong volume on a small product was not merely un-demanded, it was
+ * un-checked — which is how "4 FL oz / 118ml" shipped on an 8 fl. oz. bottle. The
+ * volume is now checked everywhere in a shape that tolerates illegibility but not
+ * falsehood (verify.js's volumeVerdict). On a prominent format the volume is therefore
+ * covered twice — as a hard expected string AND by that check — which is the intended
+ * ordering: legible-and-right where it can be read, never-wrong everywhere else.
  */
 export function expectedForFormat({ zones, format, product }) {
   const labelStrings = format.productProminent ? [...(product.labelStrings || [])] : [];
   return {
     finished: [...expectedStrings(zones), ...labelStrings],
     plate: labelStrings,
+    volumeStrings: selectVolumeStrings(product.labelStrings),
   };
 }
 
@@ -795,7 +816,7 @@ async function main() {
     // the product large enough to read — the product's real label: an invented volume
     // shows up as a "missing expected string" the same way a misspelled headline would.
     // Plates (Demand Gen) carry no ad copy at all, only the product's own label.
-    const { finished: expectedFinished, plate: expectedPlate } = expectedForFormat({ zones, format, product });
+    const { finished: expectedFinished, plate: expectedPlate, volumeStrings } = expectedForFormat({ zones, format, product });
 
     const variationsOut = [];
     for (let n = 1; n <= args.variations; n++) {
@@ -804,7 +825,7 @@ async function main() {
 
       const { proofByArtifact, artifacts, ok: allOk, skipped } = await renderVariationTargets({
         gemini, anthropic, targets: PLATFORM_TARGETS, format, zones, product, brandKit, photoPaths,
-        expectedFinished, expectedPlate, budget,
+        expectedFinished, expectedPlate, volumeStrings, budget,
         onProgress: ({ artifact, result, skipped: wasSkipped }) => {
           if (wasSkipped) {
             console.log(`  ${conceptSlug} v${n} ${artifact}: SKIPPED — render budget of ${budget.max} exhausted`);

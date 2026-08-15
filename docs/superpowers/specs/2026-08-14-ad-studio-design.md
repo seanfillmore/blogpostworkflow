@@ -122,16 +122,60 @@ Prompt carries:
 
 ### 4. Verification gate
 
-Model: `claude-haiku-4-5` (vision).
+Model: `claude-sonnet-5` (vision). **Rebuilt 2026-08-14 — see "Verification rebuild" below.**
 
-Two checks, both required:
+Four checks, all required:
 
-- **Text diff** — transcribe every word visible in the render and diff against the exact
-  strings requested in stage 2, including the product's own label.
+- **Per-string checks** — for each exact string requested in stage 2 (including the
+  product's own label where it renders legibly), a pointed yes/no about that exact
+  character sequence, plus the literal text of that region. Deliberately **not** an open
+  transcription; see below.
+- **Product volume** — read-or-`ILLEGIBLE`, on every format. Illegible passes, a
+  contradicted volume fails.
+- **Defects** — ad copy that is obscured, cut off at the frame edge, or garbled fails.
 - **Semantic pairing** — where a layout pairs a supporting image with a label (ingredient
   rows, comparison columns), confirm each image depicts what its label says.
 
 The pairing check exists specifically to catch finding 4, which a text diff passes.
+
+#### Verification rebuild (2026-08-14)
+
+v1 of this gate shipped and then **passed a corrupted ad on attempt 1**. The rendered
+`manifesto` frame read `THE MOISTURIZING CLAIM DOES MORE WORK TTHAN THE FORMLA`, carried
+a garbled `CERAMIO OCOCONUT OIL` badge over a `4 FL oz / 118ml` volume on an 8 fl. oz.
+product, and had the bottle physically sitting on top of the word "actually" in its own
+closing line. `proof.json` recorded a clean transcript, `missing: []`, `ok: true`.
+
+Three independent defects produced that pass:
+
+1. **Open transcription invites auto-correction.** v1 asked the model to transcribe
+   everything and then searched the transcript for the expected strings. A vision model
+   reading text *semantically* repairs misspellings on the way out — it reported
+   `FORMULA` where the pixels said `FORMLA`, and reconstructed an occluded word. The
+   prompt already said "Do not correct spelling"; it did not help, because the request
+   itself is a reading task and the repair happens in the reading. The verdict is now
+   driven by a pointed per-string question, and the model's "yes" is re-checked against
+   the text it itself quoted for that region. A transcript is still collected for
+   `proof.json` as secondary diagnostic output and decides nothing.
+2. **`productProminent: false` disabled the label check entirely.** The flag existed for
+   a real reason — a 6pt label on a deliberately tiny product cannot be transcribed, and
+   demanding it fails every attempt and burns the retries — but it removed `labelStrings`
+   from the expected set wholesale, so a *wrong* label went unchecked. The volume is now
+   checked on every format in a shape that tolerates illegibility and not falsehood. The
+   flag survives, narrowed to the non-volume label strings.
+3. **No occlusion or truncation check.** Added; any obscured, cropped or garbled piece of
+   the ad's own copy fails the render. Text printed on the product's own label is out of
+   scope — arc-set badge micro-copy is unreadable at any render size and asking about it
+   made the verifier reject a known-good control frame.
+
+The model was raised from Haiku to Sonnet in the same change. Haiku is what auto-corrected
+`TTHAN`/`FORMLA` on the way out. This is one vision call per render, roughly a tenth the
+cost of the render it guards, and it is the only thing that reads the ad before it goes
+live — do not drop it back.
+
+Regression-tested against both saved artifacts: the corrupted `manifesto` frame now
+returns `ok: false` naming `TTHAN THE FORMLA` and the occluded closing line; a clean
+`offer-focused` frame from the same product still returns `ok: true`.
 
 Failure → regenerate that variation, up to 2 retries (3 render attempts total, ~$0.39
 worst case per variation). Variations still failing are marked `rejected` with their proof
@@ -232,5 +276,8 @@ reached the run stops rendering, still writes `run.json`, and records the stop p
 name of every skipped artifact under `budget` — it never truncates silently.
 `--variations` is capped at 10 for the same reason.
 
-Verification adds a Haiku vision call per render. Metered through the existing
-`lib/llm-usage` path so it lands in `scripts/llm-cost.mjs --week`.
+Verification adds a **Sonnet** vision call per render (raised from Haiku on 2026-08-14 —
+see the verification rebuild above). At 2K that is roughly $0.01–0.02 a call, about a
+tenth of the $0.13 render it guards, so under ~15% on top of every figure in the table.
+Metered through the existing `lib/llm-usage` path so it lands in
+`scripts/llm-cost.mjs --week`.
