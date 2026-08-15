@@ -98,9 +98,21 @@ ${brand}
 
 ${fidelity}
 
+THIS IS AN AD BASE, NOT A BACKGROUND. Compose it exactly as the layout above describes:
+put the product at the SIZE and in the POSITION that layout calls for, so the frame reads
+as a real advertisement with its copy not yet set. Do not centre the product or shrink it
+to be safe.
+
 ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS and NO NUMBERS anywhere in the image, except the
-product's own printed label, which must be complete and correct. Leave every area where copy
-would sit completely empty and clean, generously sized, so text can be set into it later.`;
+product's own printed label, which must be complete and correct.
+
+NO ICONS, NO ILLUSTRATIONS, NO PICTOGRAMS, NO INGREDIENT IMAGES, NO BADGES and NO LOGOS
+anywhere except those printed on the product's own label. Where the layout calls for a row
+of ingredient photographs, a checklist, a comparison column or a seal, leave that area
+EMPTY and clean — those elements are placed by hand afterwards.
+
+Every area where copy or an icon would sit must be clean, uncluttered and generously
+sized, with an even surface that type can be set onto legibly.`;
   }
 
   const copyBlock = Object.entries(zones || {})
@@ -122,13 +134,57 @@ ${fidelity}`;
 }
 
 /**
+ * The COMP pass: take a finished plate and show what it looks like with the copy set.
+ *
+ * This is a SECOND generative pass over a rendered image, which the rest of this pipeline
+ * refuses to do — see the note in CLAUDE.md. It is allowed here, and only here, because of
+ * what it is applied to and what it produces:
+ *
+ *   - The plate has ALREADY been verified and is the artifact that ships. It is not
+ *     modified; the comp is a separate file.
+ *   - The comp is a throwaway picture of what the ad could look like. Drift in it costs
+ *     nothing, because nobody uploads it.
+ *   - The original probe's failure mode was image/label pairing drift — ingredient photos
+ *     shifting one row against their captions. A plate carries no icons and no captions
+ *     now, so there are no pairings on it to shift.
+ *
+ * The instruction mirrors the Creatives tab's upscale path, which resubmits an image with
+ * "keep everything identical" and holds composition well enough in practice.
+ */
+export function buildCompPrompt({ zones }) {
+  const copyBlock = Object.entries(zones || {})
+    .map(([zone, value]) => {
+      const body = Array.isArray(value) ? value.map(v => `    - "${v}"`).join('\n') : `    "${value}"`;
+      return `  ${zone}:\n${body}`;
+    })
+    .join('\n');
+
+  return `Keep this image IDENTICAL — same composition, same product, same position and
+scale, same background, same lighting, same colours. Change nothing about the scene.
+
+Set the following advertising copy into the empty areas of the image, choosing sensible
+placement, size and hierarchy for a finished advertisement. Use a clean geometric sans.
+
+${copyBlock}
+
+Keep all type clear of the outer edges of the frame. This is a rough visual comp for
+review — the final type is set by hand afterwards.`;
+}
+
+/**
  * One image generation call.
  * @param {object} gemini a @google/genai client
  * @param {{prompt:string, photoPaths:string[], ratio:string}} args
  * @returns {Promise<Buffer>}
  */
-export async function renderVariation(gemini, { prompt, photoPaths, ratio }) {
+export async function renderVariation(gemini, { prompt, photoPaths, ratio, inputImage = null }) {
   const parts = [];
+  // The comp pass sends the finished PLATE back in and asks for copy to be set onto it.
+  // It goes first so the model reads it as the subject, with the reference photographs
+  // (if any) as supporting context rather than the other way round.
+  if (inputImage) {
+    parts.push({ inlineData: { data: inputImage.data, mimeType: inputImage.mimeType } });
+  }
   for (const p of photoPaths || []) {
     parts.push({
       inlineData: {

@@ -221,6 +221,23 @@ export function critiqueVerdict({
     };
   }
 
+  // A COMP is a throwaway picture of what the ad could look like — the type on it is
+  // model-generated and is replaced by hand. Its Part A answers are still worth RECORDING
+  // (they describe the concept's layout, which is real information) but they must never
+  // fail anything: retrying a comp buys a differently-imperfect comp at $0.13 a go, and
+  // the plate it was derived from has already been accepted.
+  if (mode === 'comp') {
+    const zoneC = normalizeZoneVerdict(safeZone);
+    const legibC = normalizeZoneVerdict(legibility);
+    const advisory = [...notes];
+    if (zoneC === 'violation') advisory.push(`safe-zone note${safeZoneDetail ? `: ${safeZoneDetail}` : ''}`);
+    if (legibC === 'violation') advisory.push(`legibility note${legibilityDetail ? `: ${legibilityDetail}` : ''}`);
+    return {
+      ok: true, status: 'advisory', reasons: [], notes: advisory,
+      score: readScoreValue, safeZone: zoneC, legibility: legibC,
+    };
+  }
+
   const zoneGated = Boolean(SAFE_ZONE_RATIOS[ratio]);
   const zone = normalizeZoneVerdict(safeZone);
   const legib = normalizeZoneVerdict(legibility);

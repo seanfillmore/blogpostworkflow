@@ -388,7 +388,7 @@ const expectedPlate = [...product.labelStrings];
 
   assert.equal(result.ok, true);
   assert.ok(result.buffer, 'a successful render must produce a buffer to write');
-  assert.equal(result.artifact, 'plate-1_91x1.png');
+  assert.equal(result.artifact, 'demand-gen-plate-1_91x1.png');
   assert.equal(result.proofEntry.requestRatio, '16:9', 'must request a ratio Gemini actually supports, not 1.91:1 directly');
   assert.equal(result.proofEntry.cropped, true);
 
@@ -399,7 +399,7 @@ const expectedPlate = [...product.labelStrings];
 
 // Success path with NO crop: a native ratio (1:1) is requested and delivered as-is.
 {
-  const target = { platform: 'meta', ratio: '1:1', mode: 'finished' };
+  const target = { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false };
   const result = await renderTarget({
     gemini: geminiReturning(),
     anthropic: anthropicFailing(0, expectedFinished),
@@ -409,7 +409,7 @@ const expectedPlate = [...product.labelStrings];
   assert.equal(result.ok, true);
   assert.equal(result.proofEntry.requestRatio, '1:1');
   assert.equal(result.proofEntry.cropped, false);
-  assert.equal(result.artifact, 'finished-1x1.png');
+  assert.equal(result.artifact, 'meta-plate-1x1.png');
 }
 
 // Failure path: the verify call itself throws (this is exactly what happened live —
@@ -418,7 +418,7 @@ const expectedPlate = [...product.labelStrings];
 // assertion that proves one target's failure can be recorded and the caller can
 // move on to the next target instead of the whole run dying.
 {
-  const target = { platform: 'meta', ratio: '4:5', mode: 'finished' };
+  const target = { platform: 'meta', ratio: '4:5', mode: 'plate', wantsComp: false };
   const result = await renderTarget({
     gemini: geminiReturning(),
     anthropic: anthropicThrowing('mock 400: media type mismatch'),
@@ -427,7 +427,7 @@ const expectedPlate = [...product.labelStrings];
   });
   assert.equal(result.ok, false);
   assert.equal(result.buffer, null, 'a failed target must not produce bytes to write');
-  assert.equal(result.artifact, 'finished-4x5.png', 'falls back to the un-renamed base artifact name when no mediaType was ever sniffed');
+  assert.equal(result.artifact, 'meta-plate-4x5.png', 'falls back to the un-renamed base artifact name when no mediaType was ever sniffed');
   assert.match(result.proofEntry.error, /mock 400: media type mismatch/);
   assert.equal(result.proofEntry.ok, false);
 }
@@ -469,18 +469,30 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   assert.equal(result.proofEntry.attempts, 1, 'and must not burn the retry budget getting there');
 }
 
-// The finished frame of that same format is unchanged: no pairings is still a hard fail.
+// THE PAIRING CHECK IS NOW DORMANT, and that is a deliberate consequence worth stating.
+//
+// It was the design's centrepiece: it caught an ad where every word was spelled correctly
+// and jojoba oil was captioned as coconut oil. It can only fire on a frame that pairs a
+// PICTURE with a LABEL — and no rendered artifact does that any more. The plate is
+// explicitly rendered with no icons, no ingredient photographs and no captions (the
+// operator places those in Photoshop), so there are no pairs on it to mismatch.
+//
+// The check itself is intact and still tested at the verdictFor level in
+// ad-studio-verify.test.js. It fires again the moment any format renders paired imagery.
+// What must NOT happen is renderTarget demanding pairings from a plate: that is the exact
+// shape that once made every Demand Gen plate of a pairing format an unavoidable hard
+// fail, 54 renders (~$7) that could not succeed.
 {
-  const target = { platform: 'meta', ratio: '1:1', mode: 'finished' };
+  const target = { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false };
   const result = await renderTarget({
     gemini: geminiReturning(),
-    anthropic: anthropicFailing(0, expectedFinished),
+    anthropic: anthropicFailing(0, expectedPlate),
     target, format: pairingFormat, zones, product, brandKit, photoPaths: [],
     expectedFinished, expectedPlate,
   });
-  assert.equal(result.ok, false, 'a finished pairing frame with no pairings must still fail');
-  assert.equal(result.proofEntry.attempts, 3, 'and must exhaust its attempts trying');
-  assert.ok(result.proofEntry.reasons.some(r => /no pairings reported/i.test(r)));
+  assert.equal(result.ok, true, 'a plate of a pairing format must not be asked for pairings');
+  assert.equal(result.proofEntry.attempts, 1, 'and must not burn retries on an impossible demand');
+  assert.ok(!result.proofEntry.reasons.some(r => /pairing/i.test(r)));
 }
 
 // ── Render budget ───────────────────────────────────────────────────────────────
@@ -521,7 +533,7 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   const result = await renderTarget({
     gemini: g,
     anthropic: anthropicFailing(0, expectedFinished),
-    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    target: { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false },
     format, zones, product, brandKit, photoPaths: [],
     expectedFinished, expectedPlate, budget,
   });
@@ -544,21 +556,30 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
     expectedFinished, expectedPlate: expectedFinished,
     budget,
   });
+  // The budget counts GENERATIVE CALLS, and a comp is one: the first target spends one
+  // render on its plate and one on the comp derived from it, which exhausts a ceiling of
+  // 2 and leaves the other five targets unfunded.
   assert.equal(g.calls(), 2, 'exactly the budget was spent, no more');
-  assert.equal(out.artifacts.length, 2, 'only the funded targets produced bytes');
+  const plates = out.artifacts.filter(a => /-plate-/.test(a.name));
+  const comps = out.artifacts.filter(a => /-comp-/.test(a.name));
+  const guides = out.artifacts.filter(a => /^guide-/.test(a.name));
+  assert.equal(plates.length, 1, 'only the funded target produced a plate');
+  assert.equal(comps.length, 1, 'and its comp');
+  assert.equal(guides.length, 1, 'a guide ships beside every plate and costs no render');
   assert.equal(out.ok, false, 'a budget-stopped variation is not an accepted one');
-  assert.equal(out.skipped.length, PLATFORM_TARGETS.length - 2, 'every dropped artifact is named');
+  assert.equal(out.skipped.length, PLATFORM_TARGETS.length - 1, 'every dropped artifact is named');
   assert.deepEqual(
     out.skipped,
-    ['finished-9x16.png', 'plate-1_91x1.png', 'plate-1x1.png', 'plate-4x5.png'],
+    ['meta-plate-4x5.png', 'meta-plate-9x16.png', 'demand-gen-plate-1_91x1.png',
+     'demand-gen-plate-1x1.png', 'demand-gen-plate-4x5.png'],
   );
   assert.equal(
     Object.keys(out.proofByArtifact).length,
     PLATFORM_TARGETS.length,
     'proof.json must still account for every target, skipped ones included',
   );
-  assert.equal(out.proofByArtifact['plate-4x5.png'].skipped, true);
-  assert.ok(out.proofByArtifact['plate-4x5.png'].reasons.some(r => /budget/i.test(r)));
+  assert.equal(out.proofByArtifact['demand-gen-plate-4x5.png'].skipped, true);
+  assert.ok(out.proofByArtifact['demand-gen-plate-4x5.png'].reasons.some(r => /budget/i.test(r)));
 }
 
 // With no budget the same call renders every target — proves the assertions above are
@@ -574,7 +595,9 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   });
   assert.equal(out.skipped.length, 0);
   assert.equal(out.ok, true);
-  assert.equal(g.calls(), PLATFORM_TARGETS.length - 1);
+  // One render per plate, plus one more for each comp derived from an accepted plate.
+  const funded = PLATFORM_TARGETS.filter(t => t.ratio !== '1.91:1');
+  assert.equal(g.calls(), funded.length + funded.filter(t => t.wantsComp).length);
 }
 
 // ── parseArgs: cost flags ───────────────────────────────────────────────────────
@@ -775,7 +798,7 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   const result = await renderTarget({
     gemini: geminiReturning(),
     anthropic: anthropicWrongVolume,
-    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    target: { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false },
     format, zones, product: manifestoProduct, brandKit, photoPaths: [],
     expectedFinished: mFinished, expectedPlate: mPlate, volumeStrings,
   });
@@ -808,7 +831,7 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   const result = await renderTarget({
     gemini: geminiReturning(),
     anthropic: anthropicIllegible,
-    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    target: { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false },
     format, zones, product: manifestoProduct, brandKit, photoPaths: [],
     expectedFinished: mFinished, expectedPlate: mPlate, volumeStrings,
   });
@@ -833,7 +856,7 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   const result = await renderTarget({
     gemini: geminiReturning(),
     anthropic: anthropicOccluded,
-    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    target: { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false },
     format, zones, product, brandKit, photoPaths: [],
     expectedFinished, expectedPlate,
   });
@@ -864,7 +887,7 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   const result = await renderTarget({
     gemini: geminiReturning(),
     anthropic: anthropicCorrupted,
-    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    target: { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false },
     format, zones, product, brandKit, photoPaths: [],
     expectedFinished, expectedPlate,
   });
@@ -1070,62 +1093,51 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   }
 }
 
-// ── Stage 5b is wired: the layout critique can fail a target, and always records ─────
+// ── Stage 5b after the plate-first change: nothing fails on layout any more ─────────
 //
-// The gate could answer "is every fact on this frame correct?" and never "is this frame
-// usable?". A headline sitting under Instagram's own UI chrome renders perfectly and
-// passes every text check; it is simply invisible in the placement it ships to.
+// PR #486 made the safe zone a hard fail and PR #488 measured it failing 6 of 6 vertical
+// frames — correctly, because every layoutBrief runs a headline to the frame edge and the
+// image model fills the frame whatever the prompt says.
+//
+// That whole conflict dissolves once the shipping artifact is a text-free plate. A plate
+// has no copy to place badly, so the safe zone cannot fail it; the bands ship as a guide
+// SVG and the operator sets type against them by hand. The comp still gets an opinion,
+// because the 1-5 score is what the ranking and the baseline are built on — but it can
+// never fail anything, since retrying a comp buys a differently-imperfect comp at $0.13
+// and the plate it came from has already been accepted.
 {
   const zonesX = { headline: 'Six Ingredients.' };
   const { finished: fx, plate: px, volumeStrings: vx } = expectedForFormat({
     zones: zonesX, format, product,
   });
 
-  // A safe-zone violation on a 9:16 frame fails the target, and says why in proof.json.
-  const aBuried = anthropicFailing(0, fx, { safeZone: 'VIOLATION' });
-  const buried = await renderTarget({
-    gemini: geminiReturning(), anthropic: aBuried,
-    target: { platform: 'meta', ratio: '9:16', mode: 'finished' },
+  // A 9:16 plate renders and passes. This is the exact target that could not succeed
+  // before, at three paid attempts every time.
+  const aVert = anthropicFailing(0, px, { safeZone: 'VIOLATION' });
+  const vert = await renderTarget({
+    gemini: geminiReturning(), anthropic: aVert,
+    target: { platform: 'meta', ratio: '9:16', mode: 'plate', wantsComp: false },
     format, zones: zonesX, product, brandKit, photoPaths: [],
     expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
   });
-  assert.equal(buried.ok, false, 'copy inside the platform safe zone must fail a 9:16 target');
-  assert.ok(buried.proofEntry.reasons.some(r => /safe zone/i.test(r)));
-  assert.equal(buried.proofEntry.attempts, 3, 'and it must feed the existing retry loop');
+  assert.equal(vert.ok, true, 'a 9:16 plate must render — it carries no copy to misplace');
+  assert.equal(vert.proofEntry.attempts, 1, 'and must not burn retries on a check it cannot fail');
+  assert.equal(aVert.critiques(), 0, 'a plate is never art-directed');
 
-  // The IDENTICAL answer on a square frame does not fail — nothing is drawn over a feed
-  // image, so there placement is a preference and gating a preference costs 3 renders.
-  const aSquare = anthropicFailing(0, fx, { safeZone: 'VIOLATION' });
-  const square = await renderTarget({
-    gemini: geminiReturning(), anthropic: aSquare,
-    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
-    format, zones: zonesX, product, brandKit, photoPaths: [],
-    expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
-  });
-  assert.equal(square.ok, true, 'a safe-zone answer must not fail a ratio nothing overlays');
+  // Every plate ships with its safe-zone guide, and the guide costs no render.
+  assert.ok(vert.extras.some(e => e.name === 'guide-9x16.svg'), 'the safe zone ships as a guide');
+  const guide = vert.extras.find(e => e.name === 'guide-9x16.svg').buffer.toString('utf8');
+  assert.ok(/SAFE ZONE/.test(guide));
+  assert.ok(/Platform UI covers this band/.test(guide), '9:16 guide must mark the UI bands');
 
-  // PART B: a terrible score NEVER blocks, and is recorded on the ACCEPTED frame so the
-  // operator can rank what survived.
-  const aUgly = anthropicFailing(0, fx, { score: 1 });
-  const ugly = await renderTarget({
-    gemini: geminiReturning(), anthropic: aUgly,
-    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+  // A feed ratio gets a guide too, but a plain bleed margin rather than platform bands —
+  // nothing is drawn over a feed image.
+  const sq = await renderTarget({
+    gemini: geminiReturning(), anthropic: anthropicFailing(0, px),
+    target: { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: false },
     format, zones: zonesX, product, brandKit, photoPaths: [],
     expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
   });
-  assert.equal(ugly.ok, true, 'a low quality score must never fail a render');
-  assert.equal(ugly.proofEntry.critique.score, 1, 'but it must reach proof.json');
-
-  // A PLATE is never art-directed at all — it carries no typeset copy, so there is no
-  // answerable question, and the call is skipped rather than paid for.
-  const aPlate = anthropicFailing(0, px);
-  const plate = await renderTarget({
-    gemini: geminiReturning(), anthropic: aPlate,
-    target: { platform: 'demand-gen', ratio: '1:1', mode: 'plate' },
-    format, zones: zonesX, product, brandKit, photoPaths: [],
-    expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
-  });
-  assert.equal(plate.ok, true);
-  assert.equal(aPlate.critiques(), 0, 'a plate must cost zero critique calls');
-  assert.equal(plate.proofEntry.critique.status, 'not-applicable');
+  const sqGuide = sq.extras.find(e => e.name === 'guide-1x1.svg').buffer.toString('utf8');
+  assert.ok(!/Platform UI covers this band/.test(sqGuide), 'no platform bands on a feed ratio');
 }

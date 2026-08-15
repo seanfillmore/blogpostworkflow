@@ -19,13 +19,13 @@ import { readFileSync, writeFileSync, mkdirSync, appendFileSync, existsSync } fr
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
-import { renderVariation, buildRenderPrompt, selectReferencePhotos } from './render.js';
+import { renderVariation, buildRenderPrompt, buildCompPrompt, selectReferencePhotos } from './render.js';
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings } from './verify.js';
 import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './critique.js';
 import { selectFormats, FORMATS } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
-import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
+import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { notify } from '../../lib/notify.js';
 
@@ -55,24 +55,14 @@ export const MAX_VARIATIONS = 10;
 // variations when you want a choice; do not pay for one by default.
 export const DEFAULT_VARIATIONS = 1;
 
-// Meta feed only — 1:1 and 4:5.
+// All three Meta placements. 9:16 is back: the safe zone stopped being something the
+// image model had to obey the moment type moved to Photoshop, so a vertical plate is now
+// as renderable as a square one and the bands ship as guide-9x16.svg instead of as three
+// failed attempts.
 //
-// Two exclusions, both evidence-based:
-//
-//   The three Demand Gen plates are independent renders, not free crops, so they are half
-//   the cost of every run, and they are useful only if a Demand Gen campaign is actually
-//   running. `--targets all` when it is.
-//
-//   9:16 is excluded because THESE FORMATS CANNOT CURRENTLY SATISFY IT. Meta draws its UI
-//   over the top ~14% and bottom ~20% of a Stories/Reels frame; critique.js hard-fails
-//   copy placed there, correctly. But every one of these six layoutBriefs runs a headline
-//   to the top edge and a bar to the bottom edge, and the image model keeps doing so even
-//   when the render prompt explicitly names the bands (buildRenderPrompt's SAFE ZONE
-//   block). Measured: 6 of 6 attempts across two live runs failed, at 3 paid attempts
-//   each. Until a format is laid out for vertical, `--targets meta=9:16` spends $0.39 to
-//   produce a frame the gate will reject. It stays reachable, deliberately, not by
-//   default. `--targets meta` is still all three.
-export const DEFAULT_TARGETS = 'meta=1:1,meta=4:5';
+// The three Demand Gen plates stay opt-in (`--targets all`) — they are useful only when a
+// Demand Gen campaign is actually running.
+export const DEFAULT_TARGETS = 'meta';
 
 /**
  * Counts every render ATTEMPT, retries included — retries are what make the worst case
@@ -556,89 +546,81 @@ function artifactFilename(baseName, mediaType) {
  */
 export async function renderTarget({ gemini, anthropic, target, format, zones, product, brandKit, photoPaths, expectedFinished, expectedPlate, volumeStrings = [], budget = null }) {
   const { requestRatio, needsCrop } = renderRatioFor(target.ratio);
-  const artifactBase = artifactName(target.platform, target.ratio, target.mode);
+  const plateName = artifactName(target.platform, target.ratio, 'plate');
 
   try {
-    const prompt = buildRenderPrompt({ format, zones, product, brandKit, mode: target.mode, ratio: target.ratio });
-    const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
-    // mode is threaded all the way to verdictFor: a plate has no labels, so the
-    // image/label pairing requirement must not be applied to it.
+    // EVERY target renders a PLATE. It is the artifact that ships — the operator sets the
+    // type and the icons onto it in Photoshop, against the guide written alongside. The
+    // finished-looking frame is derived from it afterwards as a throwaway comp.
+    const prompt = buildRenderPrompt({ format, zones, product, brandKit, mode: 'plate', ratio: target.ratio });
     const r = await renderWithRetry({
-      gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format,
+      gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected: expectedPlate, format,
       zones, deliveryRatio: target.ratio,
-      mode: target.mode, volumeStrings, physicalDescription: product.physicalDescription, budget,
+      mode: 'plate', volumeStrings, physicalDescription: product.physicalDescription, budget,
     });
 
-    // A budget stop before the first attempt produces no bytes at all.
     if (!r.buffer) {
       return {
-        ok: false,
-        artifact: artifactBase,
-        buffer: null,
+        ok: false, artifact: plateName, buffer: null, extras: [],
         proofEntry: {
-          platform: target.platform,
-          ratio: target.ratio,
-          requestRatio,
-          cropped: needsCrop,
-          mode: target.mode,
-          attempts: r.attempts,
-          budgetStopped: Boolean(r.budgetStopped),
-          ok: false,
-          reasons: r.proof.reasons,
+          platform: target.platform, ratio: target.ratio, requestRatio, cropped: needsCrop,
+          kind: 'plate', attempts: r.attempts, budgetStopped: Boolean(r.budgetStopped),
+          ok: false, reasons: r.proof.reasons,
         },
       };
     }
 
-    const buffer = needsCrop ? await cropToRatio(r.buffer, target.ratio) : r.buffer;
-    const artifact = artifactFilename(artifactBase, r.mediaType);
+    const plate = needsCrop ? await cropToRatio(r.buffer, target.ratio) : r.buffer;
+    const artifact = artifactFilename(plateName, r.mediaType);
+    const extras = [{ name: `guide-${ratioSlug(target.ratio)}.svg`, buffer: Buffer.from(buildSafeZoneGuide(target.ratio), 'utf8') }];
+
+    // The comp: one derived pass, and ONLY on a plate that was accepted. Deriving a comp
+    // from a rejected plate would spend $0.13 illustrating a frame nobody will use.
+    let compProof = null;
+    if (r.ok && target.wantsComp && (!budget || budget.take())) {
+      try {
+        const compBuf = await renderVariation(gemini, {
+          prompt: buildCompPrompt({ zones }),
+          photoPaths: [],
+          ratio: requestRatio,
+          inputImage: { data: plate.toString('base64'), mimeType: sniffImageMediaType(plate) },
+        });
+        const compFinal = needsCrop ? await cropToRatio(compBuf, target.ratio) : compBuf;
+        const compName = artifactFilename(artifactName(target.platform, target.ratio, 'comp'), sniffImageMediaType(compFinal));
+        extras.push({ name: compName, buffer: compFinal });
+        // Scored, never gated — see critiqueVerdict's 'comp' branch.
+        compProof = await critiqueArtifact({
+          anthropic, buffer: compFinal, mediaType: sniffImageMediaType(compFinal),
+          format, zones, mode: 'comp', ratio: target.ratio,
+        });
+      } catch (err) {
+        // A comp is decorative. Losing it must never cost the plate that was accepted.
+        compProof = { ok: true, status: 'error', error: err.message, reasons: [], notes: [], score: null };
+      }
+    }
 
     return {
       ok: r.ok,
       artifact,
-      buffer,
+      buffer: plate,
+      extras,
       proofEntry: {
-        platform: target.platform,
-        ratio: target.ratio,
-        requestRatio,
-        cropped: needsCrop,
-        mode: target.mode,
-        mediaType: r.mediaType,
-        attempts: r.attempts,
+        platform: target.platform, ratio: target.ratio, requestRatio, cropped: needsCrop,
+        kind: 'plate', mediaType: r.mediaType, attempts: r.attempts,
         budgetStopped: Boolean(r.budgetStopped),
-        ok: r.proof.ok,
-        reasons: r.proof.reasons,
-        missing: r.proof.missing,
-        // What the verifier said each region ACTUALLY reads — the thing a human
-        // reviewing a rejected render needs, and the thing v1's proof.json could not
-        // record because it only ever held an auto-corrected transcript.
-        checkDetails: r.proof.checkDetails,
-        volume: r.proof.volume,
-        // R4. Every attribute's verdict, not just the failing ones — a human reading an
-        // accepted frame's proof needs to see which attributes were actually judged and
-        // which came back CANNOT_TELL, or "accepted" reads as "checked" when it wasn't.
-        fidelity: r.proof.fidelity,
-        // Stage 5b. Carries the 1-5 quality score even on an ACCEPTED frame — the score
-        // exists to rank accepted frames for whoever chooses between them.
-        critique: r.proof.critique,
-        defects: r.proof.defects,
-        mismatchedPairs: r.proof.mismatchedPairs,
+        ok: r.proof.ok, reasons: r.proof.reasons, missing: r.proof.missing,
+        checkDetails: r.proof.checkDetails, volume: r.proof.volume, fidelity: r.proof.fidelity,
+        defects: r.proof.defects, mismatchedPairs: r.proof.mismatchedPairs,
         transcript: r.proof.transcript,
+        comp: compProof,
       },
     };
   } catch (err) {
     return {
-      ok: false,
-      artifact: artifactBase,
-      buffer: null,
+      ok: false, artifact: plateName, buffer: null, extras: [],
       proofEntry: {
-        platform: target.platform,
-        ratio: target.ratio,
-        requestRatio,
-        cropped: needsCrop,
-        mode: target.mode,
-        ok: false,
-        error: err.message,
-        attempts: null,
+        platform: target.platform, ratio: target.ratio, requestRatio, cropped: needsCrop,
+        kind: 'plate', ok: false, error: err.message, attempts: null,
       },
     };
   }
@@ -663,7 +645,7 @@ export async function renderVariationTargets({
   let allOk = true;
 
   for (const target of targets) {
-    const base = artifactName(target.platform, target.ratio, target.mode);
+    const base = artifactName(target.platform, target.ratio, 'plate');
 
     // Budget spent: stop cleanly and NAME what was dropped. Never silently truncate —
     // a short run that looks like a complete one is how $14 becomes an unexplained $42.
@@ -673,7 +655,7 @@ export async function renderVariationTargets({
       proofByArtifact[base] = {
         platform: target.platform,
         ratio: target.ratio,
-        mode: target.mode,
+        kind: 'plate',
         ok: false,
         skipped: true,
         budgetStopped: true,
@@ -693,6 +675,9 @@ export async function renderVariationTargets({
     });
 
     if (result.buffer) artifacts.push({ name: result.artifact, buffer: result.buffer });
+    // The guide, and the comp when there is one. They are not gated and carry no proof of
+    // their own; they are written beside the plate for whoever opens the folder.
+    for (const extra of result.extras || []) artifacts.push(extra);
     proofByArtifact[result.artifact] = result.proofEntry;
     if (!result.ok) allOk = false;
     if (result.proofEntry.budgetStopped) skipped.push(result.artifact);
