@@ -13,7 +13,7 @@ assert.equal(selectTargets('all').length, 6);
 
 const meta = selectTargets('meta');
 assert.equal(meta.length, 3);
-assert.ok(meta.every(t => t.platform === 'meta' && t.mode === 'finished'));
+assert.ok(meta.every(t => t.platform === 'meta' && t.mode === 'plate' && t.wantsComp));
 
 const dg = selectTargets('demand-gen');
 assert.equal(dg.length, 3);
@@ -53,21 +53,18 @@ assert.throws(() => parseArgs([...base, '--formats', 'not-a-format']), /not-a-fo
 const a = parseArgs([...base, '--formats', 'ingredient-callout']);
 assert.deepEqual(a.formats, ['ingredient-callout']);
 
-// Cheapest run by default: one variation, Meta FEED only. 2 renders (~$0.26), not 18.
+// One variation, all three Meta placements.
 assert.equal(DEFAULT_VARIATIONS, 1);
 assert.equal(a.variations, 1);
-assert.equal(a.targets.length, 2);
+assert.equal(a.targets.length, 3);
 assert.ok(a.targets.every(t => t.platform === 'meta'));
-// 9:16 is deliberately NOT in the default set. Meta covers the top ~14% and bottom ~20%
-// of a Stories/Reels frame, critique.js hard-fails copy placed there, and every one of
-// these six layoutBriefs puts a headline at the top edge and a bar at the bottom edge —
-// measured at 6 of 6 failures across two live runs, 3 paid attempts each. Paying $0.39
-// for a frame the gate is certain to reject is not a default.
-assert.ok(!a.targets.some(t => t.ratio === '9:16'), '9:16 must not be in the default set');
-// It stays reachable on purpose — the day a vertical-first format exists, this is how it
-// gets rendered.
+// 9:16 is BACK. It was pulled when the gate hard-failed copy inside Meta's Stories/Reels
+// UI bands — correct, but unsatisfiable, because every layoutBrief runs a headline to the
+// top edge and the image model fills the frame whatever the prompt says (6 of 6 live
+// failures). A plate carries no copy to place, so there is nothing left to violate: the
+// bands ship as guide-9x16.svg and the type is set against them by hand.
+assert.ok(a.targets.some(t => t.ratio === '9:16'), '9:16 renders again now that type is set by hand');
 assert.equal(selectTargets('meta=9:16').length, 1);
-assert.equal(selectTargets('meta').length, 3, '--targets meta is still all three');
 
 // Opting up is explicit.
 assert.equal(parseArgs([...base, '--formats', 'ingredient-callout', '--variations', '3']).variations, 3);

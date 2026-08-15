@@ -10,22 +10,30 @@ import {
   GEMINI_SUPPORTED_ASPECT_RATIOS,
 } from '../../agents/ad-studio/packaging.js';
 
-// Meta bakes text; Demand Gen takes a text-free plate.
+// EVERY target is a text-free plate now — the operator sets type in Photoshop. What
+// separates the platforms is whether a throwaway comp is derived from the plate: Meta gets
+// one so a human can see the intent before laying type onto it; Demand Gen does not,
+// because Google composites the text itself at serve time.
 const meta = PLATFORM_TARGETS.filter(t => t.platform === 'meta');
 const dg = PLATFORM_TARGETS.filter(t => t.platform === 'demand-gen');
 assert.deepEqual(meta.map(t => t.ratio).sort(), ['1:1', '4:5', '9:16']);
 assert.deepEqual(dg.map(t => t.ratio).sort(), ['1.91:1', '1:1', '4:5']);
-assert.ok(meta.every(t => t.mode === 'finished'), 'meta artifacts are baked');
+assert.ok(meta.every(t => t.mode === 'plate'), 'every shipping artifact is a text-free plate');
 assert.ok(dg.every(t => t.mode === 'plate'), 'demand gen artifacts are text-free plates');
+assert.ok(meta.every(t => t.wantsComp === true), 'meta gets a derived comp to look at');
+assert.ok(dg.every(t => t.wantsComp === false), 'demand gen has no use for a comp');
 
 // Paths and names.
 assert.equal(
   variationDir('/root', 'run-1', 'six-ingredients', 2),
   '/root/data/creatives/ad-studio/run-1/six-ingredients/v2'
 );
-assert.equal(artifactName('meta', '4:5', 'finished'), 'finished-4x5.png');
-assert.equal(artifactName('demand-gen', '1.91:1', 'plate'), 'plate-1_91x1.png');
-assert.equal(artifactName('meta', '1:1', 'finished'), 'finished-1x1.png');
+// The platform is in the name because Meta and Demand Gen both want a plate and both ask
+// for 1:1 and 4:5 — without it the two collide in one variation directory.
+assert.equal(artifactName('meta', '4:5', 'plate'), 'meta-plate-4x5.png');
+assert.equal(artifactName('meta', '4:5', 'comp'), 'meta-comp-4x5.png');
+assert.notEqual(artifactName('meta', '1:1', 'plate'), artifactName('demand-gen', '1:1', 'plate'));
+assert.equal(artifactName('demand-gen', '1.91:1', 'plate'), 'demand-gen-plate-1_91x1.png');
 
 // Demand Gen text assets, bucketed by Google's field limits.
 const assets = buildDemandGenAssets({

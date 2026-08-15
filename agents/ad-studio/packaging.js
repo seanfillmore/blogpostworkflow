@@ -2,21 +2,33 @@
 //
 // Stage 5.
 //
-// Meta serves the frame you upload, so its artifact is the finished baked ad.
-// Demand Gen mixes images, headlines and descriptions into combinations at serve time,
-// so its native artifact is the TEXT-FREE plate plus copy as separate upload fields.
-// The plate is not a fallback for Demand Gen — it is what the platform wants.
+// EVERY platform's shipping artifact is now the TEXT-FREE PLATE.
+//
+// It was already what Demand Gen wants — Google mixes images, headlines and descriptions
+// into combinations at serve time, so the plate plus copy-as-fields is native there, not a
+// fallback. It is now what Meta gets too, for a different reason: the operator sets the
+// type and the icons in Photoshop, against the safe-zone guide this file emits.
+//
+// The finished-looking frame still exists as a COMP, derived from the plate. It is a
+// picture of what the ad could be, not the ad. Nothing downstream should treat it as
+// shippable, and the gate deliberately no longer fails a render over its text.
 
 import { join } from 'node:path';
 import sharp from 'sharp';
+import { SAFE_ZONE_RATIOS } from './critique.js';
 
+// Every target renders a text-free PLATE. `wantsComp` decides whether a throwaway
+// finished-looking comp is derived from it afterwards: Meta gets one because a human is
+// about to lay type onto that plate and wants to see the intent; Demand Gen does not,
+// because Google composites the text itself at serve time and a comp would illustrate a
+// layout that will never exist.
 export const PLATFORM_TARGETS = [
-  { platform: 'meta', ratio: '1:1', mode: 'finished' },
-  { platform: 'meta', ratio: '4:5', mode: 'finished' },
-  { platform: 'meta', ratio: '9:16', mode: 'finished' },
-  { platform: 'demand-gen', ratio: '1.91:1', mode: 'plate' },
-  { platform: 'demand-gen', ratio: '1:1', mode: 'plate' },
-  { platform: 'demand-gen', ratio: '4:5', mode: 'plate' },
+  { platform: 'meta', ratio: '1:1', mode: 'plate', wantsComp: true },
+  { platform: 'meta', ratio: '4:5', mode: 'plate', wantsComp: true },
+  { platform: 'meta', ratio: '9:16', mode: 'plate', wantsComp: true },
+  { platform: 'demand-gen', ratio: '1.91:1', mode: 'plate', wantsComp: false },
+  { platform: 'demand-gen', ratio: '1:1', mode: 'plate', wantsComp: false },
+  { platform: 'demand-gen', ratio: '4:5', mode: 'plate', wantsComp: false },
 ];
 
 /**
@@ -83,8 +95,67 @@ export function variationDir(root, runId, conceptSlug, n) {
   return join(root, 'data', 'creatives', 'ad-studio', runId, conceptSlug, `v${n}`);
 }
 
-export function artifactName(platform, ratio, mode) {
-  return `${mode}-${ratio.replace(/\./g, '_').replace(':', 'x')}.png`;
+export function ratioSlug(ratio) {
+  return String(ratio).replace(/\./g, '_').replace(':', 'x');
+}
+
+/**
+ * `kind` is 'plate' (the text-free ad base — the artifact that ships to Photoshop) or
+ * 'comp' (the derived, throwaway example of what it could look like finished).
+ *
+ * The platform is in the name because both Meta and Demand Gen now want a plate, and at
+ * 1:1 and 4:5 they ask for the same ratio — without it the two would collide in one
+ * variation directory and the second write would silently win.
+ */
+export function artifactName(platform, ratio, kind) {
+  return `${platform}-${kind}-${ratioSlug(ratio)}.png`;
+}
+
+// Pixel dimensions to draw a guide at. The guide is an overlay opened next to the plate
+// in Photoshop, so it only has to match the plate's ASPECT — 1600px on the long edge is
+// plenty to place type against and small enough to be free.
+const GUIDE_LONG_EDGE = 1600;
+
+export function guideDimensions(ratio) {
+  const [w, h] = String(ratio).split(':').map(Number);
+  if (!w || !h) throw new Error(`ad-studio: cannot parse ratio "${ratio}"`);
+  return w >= h
+    ? { width: GUIDE_LONG_EDGE, height: Math.round((GUIDE_LONG_EDGE * h) / w) }
+    : { width: Math.round((GUIDE_LONG_EDGE * w) / h), height: GUIDE_LONG_EDGE };
+}
+
+/**
+ * The Photoshop safe-zone guide for one ratio.
+ *
+ * This is where the safe zone LIVES now. It used to be something the image model had to
+ * obey and the gate hard-failed — which failed 6 of 6 vertical frames, because every
+ * layoutBrief runs a headline to the top edge and the model fills the frame regardless of
+ * instruction. Type is set by hand now, so the safe zone becomes what it always should
+ * have been: a guide the person doing the layout can see.
+ *
+ * Bands come from SAFE_ZONE_RATIOS (Meta's published Stories/Reels numbers) where the
+ * platform actually draws UI. Everywhere else there is no overlay, so the guide shows a
+ * plain 6% bleed margin — useful for keeping type off the edge, not a platform rule.
+ */
+export function buildSafeZoneGuide(ratio) {
+  const { width: W, height: H } = guideDimensions(ratio);
+  const zone = SAFE_ZONE_RATIOS[ratio];
+  const top = Math.round(H * (zone ? zone.top : 0.06));
+  const bottom = Math.round(H * (zone ? zone.bottom : 0.06));
+  const side = Math.round(W * (zone ? zone.sides : 0.06));
+  const reels = zone ? Math.round(H * 0.35) : null;
+  const fs = Math.max(12, Math.round(W * 0.022));
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="#ff2d55" stroke-width="3"/>
+${zone ? `  <rect x="0" y="0" width="${W}" height="${top}" fill="#ff2d55" fill-opacity="0.14"/>
+  <rect x="0" y="${H - bottom}" width="${W}" height="${bottom}" fill="#ff2d55" fill-opacity="0.14"/>
+  <line x1="0" y1="${H - reels}" x2="${W}" y2="${H - reels}" stroke="#ff8c00" stroke-width="2" stroke-dasharray="10 8"/>
+  <text x="10" y="${H - reels - 8}" font-family="Arial, sans-serif" font-size="${fs}" fill="#ff8c00">Reels controls reach up to here</text>
+` : ''}  <rect x="${side}" y="${top}" width="${W - side * 2}" height="${H - top - bottom}" fill="none" stroke="#00c2ff" stroke-width="3" stroke-dasharray="16 12"/>
+  <text x="${side + 8}" y="${top + fs + 8}" font-family="Arial, sans-serif" font-size="${fs}" fill="#00c2ff">SAFE ZONE — set all type inside this box</text>
+${zone ? `  <text x="10" y="${top - 10}" font-family="Arial, sans-serif" font-size="${fs}" fill="#ff2d55">Platform UI covers this band</text>
+` : ''}</svg>`;
 }
 
 // Gemini's image endpoint only accepts a fixed set of aspect ratios (confirmed by
