@@ -628,9 +628,11 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   assert.deepEqual(nonProminent.finished, ['Six Ingredients.'], 'no labelStrings on a non-prominent layout');
   assert.deepEqual(nonProminent.plate, []);
 
+  // Every NON-volume label string is still demanded back on a prominent format —
+  // that half of the rule is untouched by R2b and is what stops a garbled brand mark.
   const prominent = expectedForFormat({ zones: { headline: 'Six Ingredients.' }, format: formatByKey('us-vs-them'), product });
-  assert.deepEqual(prominent.finished, ['Six Ingredients.', ...product.labelStrings], 'a hero-sized product must still prove its label');
-  assert.deepEqual(prominent.plate, [...product.labelStrings]);
+  assert.deepEqual(prominent.finished, ['Six Ingredients.', 'real SKIN CARE'], 'a hero-sized product must still prove its label');
+  assert.deepEqual(prominent.plate, ['real SKIN CARE']);
 
   // ...but the VOLUME is now surfaced for EVERY format, prominent or not. This is the
   // R2 fix: productProminent:false used to strip labelStrings wholesale, so a wrong
@@ -643,6 +645,79 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   assert.deepEqual(prominent.volumeStrings, volumes);
   // Only volume-shaped strings — the brand mark is not a volume claim.
   assert.ok(!nonProminent.volumeStrings.includes('real SKIN CARE'));
+}
+
+// ── R2b: a volume marking NEVER enters the per-string expected set, in either mode ──
+// The volume was being asserted twice by two mechanisms of different strictness, and
+// they disagreed inside one verdict. Live, us-vs-them/v1/plate-1_91x1.jpg:
+//
+//   reasons: "8 fl. oz. (236ml)" — not present — that region reads "8 fl. oz - 236ml"
+//   volume:  { "status": "match" }
+//
+// volumeVerdict tolerates the separator by design (the manifest and the bottle print it
+// differently); the per-string check demands the literal sequence and fails it. Three
+// targets in one run were rejected for carrying a CORRECT volume. Reverting the
+// subtraction in expectedForFormat fails here.
+{
+  const volumeShaped = s => /fl\.?\s*oz/i.test(s) || /\d\s*m\s*l\b/i.test(s);
+  const multiVolumeProduct = {
+    ...product,
+    labelStrings: ['real SKIN CARE', 'moisturizing body lotion', '8 fl. oz. (236ml)', '236ml'],
+  };
+
+  for (const key of ['us-vs-them', 'ingredient-callout', 'offer-focused', 'manifesto', 'problem-aware', 'top-x-review']) {
+    const f = formatByKey(key);
+    const out = expectedForFormat({
+      zones: { headline: 'Six Ingredients.' }, format: f, product: multiVolumeProduct,
+    });
+    for (const mode of ['finished', 'plate']) {
+      for (const s of out[mode]) {
+        assert.ok(!volumeShaped(s), `${key}/${mode}: volume string "${s}" must not be in the expected set`);
+        assert.ok(!out.volumeStrings.includes(s), `${key}/${mode}: "${s}" is checked by volumeVerdict already`);
+      }
+    }
+    // ...and every volume marking is still handed to volumeVerdict, on every format.
+    assert.deepEqual(out.volumeStrings, ['8 fl. oz. (236ml)', '236ml'], `${key}: the volume is still checked`);
+    // Non-volume label strings survive untouched where the product is legible.
+    if (f.productProminent) {
+      assert.deepEqual(out.plate, ['real SKIN CARE', 'moisturizing body lotion'], `${key}: non-volume label strings must survive`);
+    }
+  }
+}
+
+// ── R2b end to end: a matching volume with a different separator must now PASS ──────
+// The exact live shape — a plate whose only "missing" string was the volume, quoted
+// back as "8 fl. oz - 236ml" against a manifest that writes "8 fl. oz. (236ml)".
+{
+  const prominentFormat = formatByKey('us-vs-them');
+  const { finished: eFinished, plate: ePlate, volumeStrings } = expectedForFormat({
+    zones: { headline: 'Six Ingredients.' }, format: prominentFormat, product,
+  });
+  const anthropicSeparatorVolume = {
+    messages: {
+      create: async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          checks: ePlate.map(e => ({ expected: e, found: true, rendered: e })),
+          productVolume: '8 fl. oz - 236ml',
+          defects: [],
+          transcript: [...ePlate, '8 fl. oz - 236ml'],
+        }) }],
+      }),
+    },
+  };
+  const result = await renderTarget({
+    gemini: geminiReturning(),
+    anthropic: anthropicSeparatorVolume,
+    // 1:1 rather than the live frame's 1.91:1 purely so no crop runs: cropToRatio needs
+    // real image bytes and this suite's stubs are magic-byte fakes.
+    target: { platform: 'demand-gen', ratio: '1:1', mode: 'plate' },
+    format: prominentFormat, zones, product, brandKit, photoPaths: [],
+    expectedFinished: eFinished, expectedPlate: ePlate, volumeStrings,
+  });
+  assert.equal(result.ok, true, 'a volume differing only by separator must pass');
+  assert.equal(result.proofEntry.volume.status, 'match');
+  assert.deepEqual(result.proofEntry.missing, [], 'and must not be reported missing by the per-string check');
+  assert.equal(result.proofEntry.attempts, 1, 'and must not burn retries proving a correct volume');
 }
 
 // ── The volume is threaded all the way to the verdict, and a WRONG one fails ─────

@@ -554,16 +554,44 @@ export function filterDroppedClaims(claims, dropped) {
  * wholesale, so a wrong volume on a small product was not merely un-demanded, it was
  * un-checked — which is how "4 FL oz / 118ml" shipped on an 8 fl. oz. bottle. The
  * volume is now checked everywhere in a shape that tolerates illegibility but not
- * falsehood (verify.js's volumeVerdict). On a prominent format the volume is therefore
- * covered twice — as a hard expected string AND by that check — which is the intended
- * ordering: legible-and-right where it can be read, never-wrong everywhere else.
+ * falsehood (verify.js's volumeVerdict).
+ *
+ * ── R2b: the volume is SUBTRACTED from the expected set (2026-08-14) ─────────────
+ *
+ * R2 shipped saying the double coverage on a prominent format was "the intended
+ * ordering". It was not: the two mechanisms have different strictness and they
+ * contradicted each other inside a single verdict. From a live run
+ * (us-vs-them/v1/plate-1_91x1.jpg):
+ *
+ *   reasons: "8 fl. oz. (236ml)" — not present — that region reads "8 fl. oz - 236ml"
+ *   volume:  { "status": "match" }
+ *
+ * volumeVerdict compares NUMBERS and tolerates separator/punctuation differences by
+ * design, because the manifest prose writes the volume one way ("8 fl. oz. (236ml)")
+ * and the physical label prints it another ("8 fl. oz - 236ml", "8 fl. oz • 236ml",
+ * "8 fl. oz ~ 236ml"). The per-string check demands the character sequence literally
+ * and fails every one of those. Three targets in one run were rejected for having a
+ * correct, matching volume.
+ *
+ * So the volume markings are removed from the expected set in BOTH modes. The volume
+ * is volumeVerdict's responsibility and only its — one fact, one mechanism. Coverage
+ * is unchanged: volumeVerdict still runs on every format in every mode, and it is
+ * strictly the more capable of the two (the per-string check could only ever ask about
+ * the literal manifest spelling).
+ *
+ * Every NON-volume label string — brand mark, product type, variant name — is still
+ * demanded back exactly as before on a productProminent format.
  */
 export function expectedForFormat({ zones, format, product }) {
-  const labelStrings = format.productProminent ? [...(product.labelStrings || [])] : [];
+  const volumeStrings = selectVolumeStrings(product.labelStrings);
+  const isVolume = new Set(volumeStrings);
+  const labelStrings = format.productProminent
+    ? (product.labelStrings || []).filter(s => !isVolume.has(s))
+    : [];
   return {
     finished: [...expectedStrings(zones), ...labelStrings],
     plate: labelStrings,
-    volumeStrings: selectVolumeStrings(product.labelStrings),
+    volumeStrings,
   };
 }
 

@@ -285,6 +285,18 @@ assert.deepEqual(
 // A pure-punctuation expectation is unverifiable either way and must not be a failure.
 assert.deepEqual(evaluateChecks(['...'], []).missing, []);
 
+// found:false is taken at face value even when the quoted text WOULD have matched. The
+// model's own "no" is never overturned into a pass — the re-check exists to falsify a
+// "yes", not to rescue a "no". (Nothing pinned this branch: every other corrupted-string
+// case in this file also has garbled `rendered` text, so the diffTranscript re-check was
+// catching them and this line could be deleted with the suite still green.)
+{
+  const r = evaluateChecks(['SIX INGREDIENTS.'], [
+    { expected: 'SIX INGREDIENTS.', found: false, rendered: 'SIX INGREDIENTS.' },
+  ]);
+  assert.deepEqual(r.missing, ['SIX INGREDIENTS.'], 'a "no" answer must fail even when the quoted text matches');
+}
+
 // ── Volume: illegible passes, wrong FAILS (R2) ──────────────────────────────────
 assert.deepEqual(readVolume('8 fl. oz. (236ml)'), { oz: 8, ml: 236 });
 assert.deepEqual(readVolume('4 FL oz / 118ml'), { oz: 4, ml: 118 });
@@ -321,6 +333,80 @@ assert.equal(volumeVerdict('6 fl oz', []).ok, true);
 assert.equal(volumeVerdict('6 fl oz', ['real SKIN CARE']).ok, true);
 // Text with no volume number in it is another flavour of "could not read it".
 assert.equal(volumeVerdict('the label is turned away', TRUE_VOLUME).ok, true);
+
+// ── R2b: volumeVerdict is now the ONLY check on the volume, so it must carry the load ──
+//
+// The separator cases. Every one of these is a real string a live run read off the
+// physical label, and every one used to be failed by the per-string check while
+// volumeVerdict simultaneously reported "match" in the same verdict. They must pass.
+for (const read of ['8 fl. oz - 236ml', '8 fl. oz ~ 236ml', '8 fl. oz • 236ml', '8 fl oz • 236ml', '8 fl. oz · 236ml']) {
+  const v = volumeVerdict(read, TRUE_VOLUME);
+  assert.equal(v.ok, true, `"${read}" differs from the manifest only by punctuation and must pass`);
+  assert.equal(v.status, 'match');
+}
+
+// The contradiction cases. With the per-string check no longer offering a second
+// opinion, a wrong number must fail HERE or it ships.
+for (const read of ['18 fl. oz. • 236ml', '4 fl. oz (118ml)', '0 fl. oz. • 236ml', '8 fl. oz • 230ml']) {
+  const v = volumeVerdict(read, TRUE_VOLUME);
+  assert.equal(v.ok, false, `"${read}" contradicts the product and must FAIL`);
+  assert.equal(v.status, 'mismatch');
+}
+
+// THE 0-vs-8 CASE, in the exact live shape (top-x-review/v1/plate-1_91x1.jpg).
+// The verifier answered "productVolume": "ILLEGIBLE" while transcribing "0 fl. oz. •
+// 236ml" off the same pixels in the same call — a misrendered 8. Before R2b the
+// per-string check happened to catch that; it no longer looks at the volume at all, so
+// volumeVerdict falls back to the response's own transcript when it has no direct
+// reading. Note "0" must not be treated as absent: readVolume returns 0, not null.
+assert.deepEqual(readVolume('0 fl. oz. • 236ml'), { oz: 0, ml: 236 });
+{
+  const v = volumeVerdict('ILLEGIBLE', TRUE_VOLUME, [
+    'real', 'SKIN CARE', 'ORGANIC', 'pure unscented', 'moisturizing body lotion', '0 fl. oz. • 236ml',
+  ]);
+  assert.equal(v.ok, false, 'a transcribed volume that contradicts the product must FAIL, not pass as illegible');
+  assert.equal(v.status, 'mismatch');
+  assert.equal(v.source, 'transcript');
+  assert.equal(v.read, '0 fl. oz. • 236ml');
+}
+
+// The fallback can only FAIL a render, never pass one, and only where there is no
+// direct reading — these are the frames from the same live run that must be unaffected.
+{
+  // Genuinely illegible, nothing volume-shaped anywhere in the frame (manifesto plate).
+  const v = volumeVerdict('ILLEGIBLE', TRUE_VOLUME, ['real', 'SKIN CARE', 'pure unscented', 'moisturizing body lotion']);
+  assert.equal(v.ok, true, 'an illegible volume with no contradiction anywhere still passes');
+  assert.equal(v.status, 'illegible');
+}
+{
+  // Direct answer unreadable, but the transcript AGREES — a partial read is a correct
+  // read (problem-aware finished-1x1 transcribed "fl. oz. • 236ml", no ounce digit).
+  const v = volumeVerdict('ILLEGIBLE', TRUE_VOLUME, ['fl. oz. • 236ml', '8 fl oz']);
+  assert.equal(v.ok, true, 'a transcript that agrees must never fail a render');
+  assert.equal(v.status, 'illegible');
+}
+{
+  // A DIRECT reading is the answer to the question that was asked and always wins —
+  // the fallback must not become a second opinion on top of a first.
+  const v = volumeVerdict('8 fl. oz. • 236ml', TRUE_VOLUME, ['0 fl. oz. • 236ml']);
+  assert.equal(v.ok, true, 'a direct reading that matches is not overturned by the transcript');
+  assert.equal(v.status, 'match');
+  assert.equal(v.source, 'reported');
+}
+
+// The prompt must not invite the ILLEGIBLE-vs-transcribed contradiction in the first
+// place: ILLEGIBLE means no characters readable, not "the number looks wrong".
+{
+  const p = buildVerifyPrompt({ expected: ['A'], format: plainFormat });
+  assert.ok(
+    /ILLEGIBLE" means you cannot make out ANY characters/.test(p),
+    'the prompt must define ILLEGIBLE as "no characters readable"',
+  );
+  assert.ok(
+    /even if the number looks wrong/i.test(p),
+    'and must tell the model to quote a wrong-looking volume rather than hide it behind ILLEGIBLE',
+  );
+}
 
 // ── Defects: occluded, cut-off and garbled text (R3) ────────────────────────────
 assert.deepEqual(normalizeDefects([]), []);
@@ -725,6 +811,18 @@ for (const mode of ['plate', 'finished']) {
   });
   assert.equal(wrong.ok, false, `a contradicted volume fails in ${mode} mode`);
   assert.equal(wrong.volume.status, 'mismatch');
+
+  // R2b: and the transcript fallback is WIRED THROUGH verdictFor, not just implemented
+  // in volumeVerdict — the live 0-vs-8 frame, whole. The expected set no longer carries
+  // the volume, so nothing but volumeVerdict can catch this.
+  const zeroOz = verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), productVolume: 'ILLEGIBLE',
+    transcript: ['real', 'SKIN CARE', 'moisturizing body lotion', '0 fl. oz. • 236ml'],
+    volumeStrings: TRUE_VOLUME, format: plainFormat, mode,
+  });
+  assert.equal(zeroOz.ok, false, `a transcribed 0 fl. oz. on an 8 fl. oz. product fails in ${mode} mode`);
+  assert.equal(zeroOz.volume.status, 'mismatch');
+  assert.ok(zeroOz.reasons.some(r => /volume marking is WRONG/i.test(r) && /0 fl\. oz\./.test(r)));
 }
 
 // Task 2's suite pinned only ingredient-callout/us-vs-them/manifesto. Pin the rest:

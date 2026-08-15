@@ -51,6 +51,35 @@
 //       A human would reject an ad whose product sits on top of its own copy; the gate
 //       now does too, along with text running off the frame edge and garbled glyph runs.
 //
+// ── R2b: the volume is checked ONCE, by volumeVerdict (2026-08-14, same day) ────
+//
+// R2 left the volume marking in the per-string expected set on productProminent formats
+// AND checked it here, and called that "the intended ordering". It is not an ordering,
+// it is a contradiction: the two mechanisms have different strictness and they disagreed
+// inside a single verdict. From a live run (us-vs-them/v1/plate-1_91x1.jpg):
+//
+//   reasons: "8 fl. oz. (236ml)" — not present — that region reads "8 fl. oz - 236ml"
+//   volume:  { "status": "match" }
+//
+// volumeVerdict compares NUMBERS and tolerates separator and abbreviation differences on
+// purpose — the manifest prose writes "8 fl. oz. (236ml)" and the physical label prints
+// "8 fl. oz - 236ml" / "8 fl. oz • 236ml" / "8 fl. oz ~ 236ml". The per-string check
+// demands the character sequence literally and fails all of those. Three targets in one
+// run were rejected for carrying a correct volume.
+//
+// index.js's expectedForFormat now SUBTRACTS the volume markings from the expected set
+// in both modes, so the volume is asserted by exactly one mechanism: this one. Coverage
+// is unchanged — volumeVerdict runs on every format in every mode, and it is strictly
+// the more capable of the two, since the per-string check could only ever ask about the
+// literal manifest spelling.
+//
+// One thing the duplicate was accidentally covering had to be picked up here: the model
+// answering "productVolume": "ILLEGIBLE" while transcribing a readable — and wrong —
+// volume elsewhere in the SAME response (top-x-review/v1/plate-1_91x1.jpg: ILLEGIBLE vs
+// a transcribed "0 fl. oz. • 236ml", a misrendered 8). volumeVerdict now falls back to
+// the transcript when, and only when, it has no direct reading, and that fallback can
+// only fail a render, never pass one. Section 2 of the prompt was tightened to match.
+//
 // ── R3a: the defect check is MODE-AWARE (2026-08-14, same day) ──────────────────
 //
 // R3 shipped asking one question in both modes — "what copy here is not fully legible
@@ -196,6 +225,12 @@ ${list}
    "productVolume". If the product is too small, too blurred, angled away, cropped out
    or simply absent, answer exactly "ILLEGIBLE". Never guess it, never infer it from the
    product's proportions, and never copy it from this prompt.
+
+   "ILLEGIBLE" means you cannot make out ANY characters there. If you can read
+   characters at all, quote them — even partially, even if the number looks wrong,
+   implausible or misprinted. A volume you can read but that looks wrong is precisely
+   what this question exists to surface; reporting it is never a mistake. Do not answer
+   "ILLEGIBLE" for a marking you are able to transcribe anywhere else in this response.
 
 ${defectsSection}
 
@@ -450,9 +485,18 @@ export function selectVolumeStrings(labelStrings) {
  * Only the dimensions the model actually reported are compared: reading "8 fl. oz."
  * off a bottle whose ml marking is turned away is a correct read, not a mismatch.
  *
- * @returns {{ok:boolean, status:string, read:string, expected:string[]}}
+ * THIS IS THE ONLY CHECK ON THE VOLUME (R2b). expectedForFormat subtracts the volume
+ * markings from the per-string expected set, because that check demands the manifest's
+ * literal spelling and the label prints a different one — it failed three correct
+ * renders in one live run while this function said "match". Do not put the volume back
+ * into the expected set; if this check is not strict enough, make this check stricter.
+ *
+ * `transcript` is the response's own transcript of the frame, used ONLY as a fallback
+ * when there is no direct reading, and only to fail. See the loop below.
+ *
+ * @returns {{ok:boolean, status:string, read:string, source:string, expected:string[]}}
  */
-export function volumeVerdict(productVolume, volumeStrings) {
+export function volumeVerdict(productVolume, volumeStrings, transcript = []) {
   const read = String(productVolume || '').trim();
   const truths = (volumeStrings || []).map(readVolume).filter(v => v.oz !== null || v.ml !== null);
 
@@ -460,31 +504,54 @@ export function volumeVerdict(productVolume, volumeStrings) {
   // volume marking, so there is no claim to falsify. (index.js already aborts a run
   // whose labelStrings come back empty for the separate, stronger reason that an
   // unnamed label is how the image model invents a volume in the first place.)
-  if (truths.length === 0) return { ok: true, status: 'no-volume-on-file', read, expected: [] };
+  if (truths.length === 0) return { ok: true, status: 'no-volume-on-file', read, source: 'reported', expected: [] };
 
   const expectedList = (volumeStrings || []).filter(s => {
     const v = readVolume(s);
     return v.oz !== null || v.ml !== null;
   });
 
-  if (!read || ILLEGIBLE_RE.test(read)) return { ok: true, status: 'illegible', read, expected: expectedList };
-
-  const got = readVolume(read);
-  // The model typed something, but no volume number can be pulled out of it. That is
-  // not a contradicted spec — it is another flavour of "could not read it".
-  if (got.oz === null && got.ml === null) return { ok: true, status: 'illegible', read, expected: expectedList };
-
-  const agrees = truths.some(t =>
+  // Only the dimensions actually reported are compared: reading "8 fl. oz." off a
+  // bottle whose ml marking is turned away is a correct read, not a mismatch.
+  const agreesWithTruth = got => truths.some(t =>
     (got.oz === null || t.oz === null || got.oz === t.oz) &&
     (got.ml === null || t.ml === null || got.ml === t.ml)
   );
 
-  return {
-    ok: agrees,
-    status: agrees ? 'match' : 'mismatch',
-    read,
-    expected: expectedList,
-  };
+  const direct = (!read || ILLEGIBLE_RE.test(read)) ? { oz: null, ml: null } : readVolume(read);
+
+  // A direct reading beats everything else — it is the answer to the question that was
+  // asked about exactly this marking.
+  if (direct.oz !== null || direct.ml !== null) {
+    const ok = agreesWithTruth(direct);
+    return { ok, status: ok ? 'match' : 'mismatch', read, source: 'reported', expected: expectedList };
+  }
+
+  // No direct reading: the model answered ILLEGIBLE, or typed prose with no number in
+  // it. Before accepting that, check whether it CONTRADICTED itself elsewhere in the
+  // same response.
+  //
+  // Live case, top-x-review/v1/plate-1_91x1.jpg: "productVolume": "ILLEGIBLE" while the
+  // same call's transcript carried "0 fl. oz. • 236ml" — a misrendered 8. Two readings
+  // of the same pixels in one call, disagreeing. Until R2b the per-string check happened
+  // to catch it, because the volume was also in the expected set; it no longer is, and
+  // the volume must still be caught by the mechanism that owns it.
+  //
+  // This is not a second opinion on top of a first — it runs ONLY where there is no
+  // direct reading at all, and it can only ever FAIL a render, never pass one. That
+  // direction matters: R1's whole finding is that open transcription auto-corrects
+  // TOWARDS the truth, so a transcript that volunteers a contradicting volume is
+  // reporting a defect against its own bias. Taken across all 27 artifacts of the live
+  // run this was derived from, it fires on exactly that one frame.
+  for (const run of transcript || []) {
+    const got = readVolume(run);
+    if (got.oz === null && got.ml === null) continue;
+    if (!agreesWithTruth(got)) {
+      return { ok: false, status: 'mismatch', read: String(run).trim(), source: 'transcript', expected: expectedList };
+    }
+  }
+
+  return { ok: true, status: 'illegible', read, source: 'reported', expected: expectedList };
 }
 
 const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled', 'stray-text']);
@@ -572,12 +639,16 @@ export function verdictFor({
     for (const d of details) reasons.push(`  "${d.expected}" — ${d.reason}`);
   }
 
-  // 2. Product volume — illegible passes, wrong fails, on EVERY format (R2).
-  const volume = volumeVerdict(productVolume, volumeStrings);
+  // 2. Product volume — illegible passes, wrong fails, on EVERY format (R2). This is
+  //    the ONLY mechanism that checks the volume: expectedForFormat subtracts the
+  //    volume markings from `expected` so the per-string check never sees them (R2b).
+  const volume = volumeVerdict(productVolume, volumeStrings, transcript);
   if (!volume.ok) {
-    reasons.push(
-      `product volume marking is WRONG — the render shows "${volume.read}", ` +
-      `the product is ${volume.expected.join(' / ')}`
+    reasons.push(volume.source === 'transcript'
+      ? `product volume marking is WRONG — the verifier could not read it directly but ` +
+        `transcribed "${volume.read}" off the frame; the product is ${volume.expected.join(' / ')}`
+      : `product volume marking is WRONG — the render shows "${volume.read}", ` +
+        `the product is ${volume.expected.join(' / ')}`
     );
   }
 
@@ -612,8 +683,11 @@ export function verdictFor({
     volume,
     defects: reportedDefects,
     mismatchedPairs,
-    // Secondary diagnostic only — see R1. Recorded in proof.json so a human reading a
-    // failure can see what the model thought the frame said, but it decides nothing.
+    // Diagnostic only — see R1. Recorded in proof.json so a human reading a failure can
+    // see what the model thought the frame said; nothing in this diff decides anything.
+    // (The transcript itself is not entirely inert: volumeVerdict falls back to it when
+    // it has no direct volume reading — see R2b. That is the volume mechanism reaching
+    // for more evidence about the fact it owns, not this diff gaining teeth.)
     transcriptDiff: diffTranscript(expected, transcript),
   };
 }
