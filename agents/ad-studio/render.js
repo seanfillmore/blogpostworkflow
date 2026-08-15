@@ -40,11 +40,27 @@ export function buildRenderPrompt({ format, zones, product, brandKit, mode }) {
   const palette = (brandKit?.palette_hexes || []).join(', ');
   const labels = (product.labelStrings || []).map(s => `  - "${s}"`).join('\n');
 
+  // The manifest's prose description of the physical product. Naming what the label SAYS
+  // without describing what the bottle IS is how a live frame came back squat and wide,
+  // with a short disc cap and no black accent bar, while spelling every string correctly
+  // — so the text gate accepted it on attempt 1. The sister agent learned this first
+  // (PR #314, "faithful product renders ... pass product descriptions"); this is the
+  // same lesson applied here. Omitted entirely when a product has none on file, rather
+  // than rendered as an empty heading.
+  const physical = String(product.physicalDescription || '').trim();
+  const physicalBlock = physical ? `
+PHYSICAL FORM — the product on file is described as:
+${physical}
+Match that description as well as the photographs. Bottle proportions, the height and shape
+of the cap, and any solid colour bars or blocks on the label are part of the product's
+identity, not styling you may reinterpret.
+` : '';
+
   const fidelity = `PRODUCT FIDELITY IS THE HIGHEST PRIORITY.
 The supplied photographs are the SAME product from multiple angles. Study them and reproduce
 it exactly: proportions, cap, finish, and every element of the printed label in the correct
 order, at the correct relative size, with correct spelling.
-The label carries exactly these strings and no others:
+${physicalBlock}The label carries exactly these strings and no others:
 ${labels}
 Never render any other volume, size or count on the product.
 The product must be generated as part of the scene, lit and shadowed to match it, resting

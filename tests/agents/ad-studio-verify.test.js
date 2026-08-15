@@ -830,3 +830,204 @@ for (const mode of ['plate', 'finished']) {
 assert.equal(formatByKey('problem-aware').pairsImagesWithLabels, false);
 assert.equal(formatByKey('top-x-review').pairsImagesWithLabels, false);
 assert.equal(formatByKey('offer-focused').pairsImagesWithLabels, false);
+
+// ── R4: PRODUCT FIDELITY — the render is compared against the reference photographs ──
+//
+// The failure this exists for: a live ingredient-callout frame rendered a SQUAT, WIDE
+// bottle with a short disc cap, the brand mark in the middle of the label, no leaf
+// illustration and the volume set in black on white with no black accent bar. The real
+// bottle is tall and slim with a tall flip-top cap, the brand mark at the top, a leaf
+// below the badge, and the volume reversed out of a black bar. Every expected STRING was
+// present and correctly spelled, so the text gate had nothing to fail — accepted, one
+// attempt. Nothing in the gate had ever looked at the product's physical form.
+//
+// The verdict follows volumeVerdict's proven shape (R2): tolerant of "cannot tell",
+// intolerant of "wrong". A pointed question per attribute, never an open "does this
+// match?" — R1's whole finding is that an open question gets auto-corrected towards yes.
+import {
+  FIDELITY_ATTRIBUTES,
+  normalizeFidelityVerdict,
+  fidelityVerdict,
+} from '../../agents/ad-studio/verify.js';
+
+const REF = { hasReference: true };
+const allMatch = () => FIDELITY_ATTRIBUTES.map(a => ({ attribute: a.key, verdict: 'MATCH', detail: '' }));
+
+// Every attribute is asked about the RENDER against the REFERENCE, and each is coarse
+// enough to survive a product rendered small. A silent shrinking of this list would
+// narrow the gate without failing anything.
+assert.ok(FIDELITY_ATTRIBUTES.length >= 5, 'fidelity must ask about at least 5 attributes');
+for (const a of FIDELITY_ATTRIBUTES) {
+  assert.ok(a.key && a.label && a.ask, `attribute ${a.key} needs key, label and ask`);
+}
+assert.ok(FIDELITY_ATTRIBUTES.some(a => a.key === 'silhouette'), 'must check body shape/proportion');
+assert.ok(FIDELITY_ATTRIBUTES.some(a => a.key === 'closure'), 'must check the cap');
+assert.ok(FIDELITY_ATTRIBUTES.some(a => a.key === 'labelLayout'), 'must check label element order');
+assert.ok(FIDELITY_ATTRIBUTES.some(a => a.key === 'labelGraphics'), 'must check bars/illustrations/badges');
+
+// normalizeFidelityVerdict — tolerant of wording, intolerant of falsehood.
+assert.equal(normalizeFidelityVerdict('MATCH'), 'match');
+assert.equal(normalizeFidelityVerdict('yes'), 'match');
+assert.equal(normalizeFidelityVerdict('MISMATCH'), 'mismatch');
+assert.equal(normalizeFidelityVerdict('no'), 'mismatch');
+assert.equal(normalizeFidelityVerdict('wrong'), 'mismatch');
+assert.equal(normalizeFidelityVerdict('different'), 'mismatch');
+assert.equal(normalizeFidelityVerdict('CANNOT_TELL'), 'cannot-tell');
+assert.equal(normalizeFidelityVerdict('cannot tell'), 'cannot-tell');
+assert.equal(normalizeFidelityVerdict('too small to judge'), 'cannot-tell');
+// An answer nobody anticipated is NOT read as a failure — only an explicit "wrong" is.
+// Erring towards cannot-tell here costs a missed check; erring the other way rejects
+// good renders at $0.13 a retry on a model wording slip.
+assert.equal(normalizeFidelityVerdict('banana'), 'cannot-tell');
+assert.equal(normalizeFidelityVerdict(''), 'cannot-tell');
+assert.equal(normalizeFidelityVerdict(undefined), 'cannot-tell');
+
+// No reference photographs were sent → the question was never asked, so it cannot fail.
+// index.js already warns loudly when a product has no reference photos at all.
+assert.equal(fidelityVerdict([], { hasReference: false }).ok, true);
+assert.equal(fidelityVerdict([], { hasReference: false }).status, 'no-reference');
+
+// The happy path.
+const fidClean = fidelityVerdict(allMatch(), REF);
+assert.equal(fidClean.ok, true);
+assert.equal(fidClean.status, 'match');
+assert.equal(fidClean.mismatches.length, 0);
+
+// THE REGRESSION. A squat bottle with the wrong cap fails, and says which attribute and why.
+const fidSquat = fidelityVerdict([
+  { attribute: 'silhouette', verdict: 'MISMATCH', detail: 'render is squat and wide; the reference bottle is tall and slim' },
+  { attribute: 'closure', verdict: 'MISMATCH', detail: 'short disc cap; the reference has a tall flip-top' },
+  { attribute: 'labelLayout', verdict: 'MATCH', detail: '' },
+  { attribute: 'labelGraphics', verdict: 'MISMATCH', detail: 'no black accent bar and no leaf illustration' },
+  { attribute: 'colorFinish', verdict: 'MATCH', detail: '' },
+], REF);
+assert.equal(fidSquat.ok, false, 'a wrong bottle shape must fail the render');
+assert.equal(fidSquat.status, 'mismatch');
+assert.equal(fidSquat.mismatches.length, 3);
+assert.ok(fidSquat.mismatches.some(m => m.attribute === 'silhouette' && /tall and slim/.test(m.detail)));
+
+// Tolerant of illegibility — the manifesto / problem-aware case, where the product is
+// rendered deliberately small. Same reasoning as volumeVerdict's ILLEGIBLE pass: the
+// response to "cannot read it" is to accept it, not to stop asking.
+const fidSmall = fidelityVerdict(
+  FIDELITY_ATTRIBUTES.map(a => ({ attribute: a.key, verdict: 'CANNOT_TELL', detail: 'product too small' })),
+  REF,
+);
+assert.equal(fidSmall.ok, true, 'a product too small to judge must pass, not fail');
+assert.equal(fidSmall.status, 'cannot-tell');
+
+// Mixed cannot-tell and match still passes; one mismatch anywhere still fails.
+assert.equal(fidelityVerdict([
+  { attribute: 'silhouette', verdict: 'MATCH' },
+  { attribute: 'closure', verdict: 'CANNOT_TELL' },
+], REF).ok, true);
+assert.equal(fidelityVerdict([
+  { attribute: 'silhouette', verdict: 'MATCH' },
+  { attribute: 'closure', verdict: 'CANNOT_TELL' },
+  { attribute: 'labelGraphics', verdict: 'MISMATCH', detail: 'accent bar missing' },
+], REF).ok, false, 'one mismatch fails the whole verdict');
+
+// Attributes the model simply did not answer are cannot-tell, not failures.
+assert.equal(fidelityVerdict([{ attribute: 'silhouette', verdict: 'MATCH' }], REF).ok, true);
+
+// But a response that answers NOTHING while reference photos were supplied is a check
+// that silently did not run — the same shape as "no pairings reported for a layout that
+// pairs images with labels", and treated the same way: it fails and retries.
+const fidNone = fidelityVerdict([], REF);
+assert.equal(fidNone.ok, false, 'reference photos sent but no fidelity answers must fail');
+assert.equal(fidNone.status, 'unreported');
+
+// Unknown attribute keys are recorded, never crash, and a MISMATCH on one still fails.
+const fidOdd = fidelityVerdict([{ attribute: 'nozzleAngle', verdict: 'MISMATCH', detail: 'x' }], REF);
+assert.equal(fidOdd.ok, false);
+
+// ── R4 wired through verdictFor, in BOTH modes ─────────────────────────────────────
+// A plate is nothing BUT the product, so fidelity matters at least as much there as on
+// a finished frame. Unlike the defect question (R3a) this one does not invert.
+for (const mode of ['finished', 'plate']) {
+  const good = verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), format: plainFormat, mode,
+    fidelity: allMatch(), hasReference: true,
+  });
+  assert.equal(good.ok, true, `a faithful product passes in ${mode} mode`);
+  assert.equal(good.fidelity.status, 'match');
+
+  const bad = verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), format: plainFormat, mode,
+    fidelity: [{ attribute: 'silhouette', verdict: 'MISMATCH', detail: 'squat, not tall and slim' }],
+    hasReference: true,
+  });
+  assert.equal(bad.ok, false, `a wrong product shape fails in ${mode} mode`);
+  assert.ok(bad.reasons.some(r => /product does not match the reference/i.test(r)));
+  assert.ok(bad.reasons.some(r => /squat, not tall and slim/.test(r)), 'the reason must say what is wrong');
+}
+
+// A caller that forgets to thread hasReference through gets the check switched OFF, not
+// a hard fail on every render. That direction is deliberate: the OTHER direction turns
+// every target of a product with no reference photos into 3 failed paid attempts.
+assert.equal(verdictFor({
+  expected: ['A'], checks: cleanChecks(['A']), format: plainFormat, mode: 'finished',
+}).ok, true);
+
+// ── R4 in the prompt: pointed per-attribute questions, and a labelled image order ────
+const physical = 'An 8 fl. oz. white plastic cylindrical squeeze bottle with a black flip-top cap.';
+const pf = buildVerifyPrompt({
+  expected: ['SIX INGREDIENTS.'], format: plainFormat, mode: 'finished',
+  physicalDescription: physical, referenceCount: 2,
+});
+assert.ok(/REFERENCE PHOTOGRAPH/i.test(pf), 'the prompt must name the reference photographs');
+assert.ok(/RENDER UNDER TEST/i.test(pf), 'the prompt must name which image is the render');
+assert.ok(pf.includes(physical), 'the physical description on file must be in the prompt');
+for (const a of FIDELITY_ATTRIBUTES) {
+  assert.ok(pf.includes(a.label), `the prompt must ask about "${a.label}" specifically`);
+}
+assert.ok(/CANNOT_TELL/.test(pf), 'the prompt must offer the cannot-tell answer');
+// The trap R1 documents: an open "does the product match?" gets auto-corrected to yes.
+assert.ok(
+  !/does the product match|is this the same product\?/i.test(pf),
+  'the prompt must never ask one open match question',
+);
+// Without reference photographs there is nothing to compare against and the section
+// must not appear at all — an unanswerable question burns retries.
+const pfNone = buildVerifyPrompt({ expected: ['A'], format: plainFormat, referenceCount: 0 });
+assert.ok(!/RENDER UNDER TEST/i.test(pfNone), 'no fidelity section without reference photographs');
+
+// ── R4a: the false-positive guards, derived from live runs against real photographs ──
+//
+// The first cut of this check rejected a real PHOTOGRAPH of the product. It reported
+// "an additional silver/metallic band" and "a grey gradient at the shoulder" as label
+// graphics — both of them gloss and glare, neither of them ink. A check that fails a
+// genuine photo of the bottle would fail every well-lit render, at three paid attempts
+// each. Two narrowings fixed it, and both must survive:
+const guarded = buildVerifyPrompt({
+  expected: ['A'], format: plainFormat, referenceCount: 2,
+  physicalDescription: 'A white bottle.',
+});
+
+// 1. Photographic styling can never be a mismatch. The render is an advertisement, lit
+//    and staged on purpose; the reference is a product photograph.
+for (const styling of ['lighting', 'gloss', 'highlight', 'reflection', 'shadow', 'crop', 'angle']) {
+  assert.ok(
+    new RegExp(styling, 'i').test(guarded),
+    `the prompt must name "${styling}" as something that is never a mismatch`,
+  );
+}
+
+// 2. The question is asked ABOUT THE REFERENCE'S elements — missing, moved or reshaped —
+//    not about extra elements appearing in the render. Every false positive found was an
+//    "extra" that turned out to be a highlight. An extra printed graphic is both rarer
+//    and less harmful than a missing one; this asymmetry is deliberate.
+assert.ok(
+  /missing, moved or reshaped/i.test(guarded),
+  'labelGraphics must ask about reference elements going missing, not about extras appearing',
+);
+assert.ok(
+  /never an extra element/i.test(guarded),
+  'the prompt must tell the verifier not to report extra elements',
+);
+
+// 3. containerColour judges base colour only. It was "colours and finish" and read a warm
+//    highlight as a finish change on a bottle that was simply lit differently.
+const colour = FIDELITY_ATTRIBUTES.find(a => a.key === 'containerColour');
+assert.ok(colour, 'the colour attribute must be base-colour only, not finish');
+assert.ok(/base colour only/i.test(colour.ask));

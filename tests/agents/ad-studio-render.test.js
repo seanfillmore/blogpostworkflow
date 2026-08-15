@@ -83,3 +83,48 @@ await assert.rejects(
   () => renderVariation(emptyGemini, { prompt: 'P', photoPaths: [], ratio: '1:1' }),
   /no image/i
 );
+
+// ── The physical description reaches the renderer ──────────────────────────────────
+//
+// data/product-images/manifest.json describes the bottle precisely — "tall, slim lotion
+// bottle shape, roughly 7-8 inches tall", "a black horizontal accent bar behind the
+// variant name text" — and index.js used to mine that prose for label strings and then
+// throw it away. The renderer was told exactly what the label SAYS and nothing about what
+// the bottle IS, and it rendered a squat, wide bottle with a short disc cap and no accent
+// bar. Every string on it was correct, so the text gate accepted it on attempt 1.
+//
+// The sister agent learned this first: PR #314, "faithful product renders (drop reference
+// image, pass product descriptions)".
+const physical = 'An 8 fl. oz. (236ml) white plastic cylindrical squeeze bottle, tall and slim, ' +
+  'with a black flip-top cap and a black horizontal accent bar behind the variant name.';
+const withPhysical = buildRenderPrompt({
+  format: { key: 'x', layoutBrief: 'A brief.' },
+  zones: { headline: 'HELLO' },
+  product: { labelStrings: ['real SKIN CARE', '8 fl. oz. (236ml)'], physicalDescription: physical },
+  brandKit: { palette_hexes: ['#000'] },
+  mode: 'finished',
+});
+assert.ok(withPhysical.includes(physical), 'the render prompt must carry the physical description');
+assert.ok(/PHYSICAL FORM/i.test(withPhysical), 'the physical description needs its own labelled block');
+
+// A plate is the product on a clean background — the description matters MORE there.
+const platePhysical = buildRenderPrompt({
+  format: { key: 'x', layoutBrief: 'A brief.' },
+  zones: {},
+  product: { labelStrings: ['real SKIN CARE'], physicalDescription: physical },
+  brandKit: { palette_hexes: ['#000'] },
+  mode: 'plate',
+});
+assert.ok(platePhysical.includes(physical), 'a plate render must carry the physical description too');
+
+// A product with no description on file still renders — the label strings alone are the
+// pre-existing behaviour and must not start throwing.
+const noPhysical = buildRenderPrompt({
+  format: { key: 'x', layoutBrief: 'A brief.' },
+  zones: { headline: 'HELLO' },
+  product: { labelStrings: ['real SKIN CARE'] },
+  brandKit: { palette_hexes: ['#000'] },
+  mode: 'finished',
+});
+assert.ok(noPhysical.includes('real SKIN CARE'));
+assert.ok(!/PHYSICAL FORM/i.test(noPhysical), 'no empty PHYSICAL FORM block when there is no description');

@@ -112,6 +112,51 @@
 import { normalizeForMatch } from './claims.js';
 
 /**
+ * R4. The attributes the fidelity check asks about, one pointed question each.
+ *
+ * These are deliberately GENERIC across the catalogue rather than authored per product.
+ * The reference photograph is the specification; a hand-written `fidelityChecks` array
+ * per product would be nine more things to keep in sync with the photos, and the drift
+ * would be silent.
+ *
+ * Every one is COARSE — a proportion, a cap, an element order, a solid colour block.
+ * That is the point: these survive a product rendered small, where the label's own 6pt
+ * text does not (see productProminent). Do not add an attribute that can only be judged
+ * on a hero-sized render; it would answer CANNOT_TELL on half the rotation and quietly
+ * do nothing.
+ *
+ * Styling is explicitly NOT here. Lighting, angle, background and crop are the ad's to
+ * choose, and asking about them would fail correct renders for being art-directed.
+ */
+export const FIDELITY_ATTRIBUTES = [
+  {
+    key: 'silhouette',
+    label: 'the body shape and proportions of the product',
+    ask: 'Is the outline the same — height against width, taper, shoulders, whether it is tall and slim or short and wide?',
+  },
+  {
+    key: 'closure',
+    label: 'the cap or closure',
+    ask: 'Same type, same shape, and the same height relative to the body?',
+  },
+  {
+    key: 'labelLayout',
+    label: 'the order and placement of the elements on the label',
+    ask: 'Do the brand mark, product name, variant name, badge and volume sit in the same positions, top to bottom, as in the photographs?',
+  },
+  {
+    key: 'labelGraphics',
+    label: 'the graphics PRINTED on the label (colour bars or blocks, illustrations, badges, rules)',
+    ask: 'Take each graphic printed on the label in the REFERENCE photographs in turn. Is it present in the render, in the same place, the same shape? A missing solid colour bar, a missing illustration, or a badge whose text sits beside it rather than inside it is a mismatch. Report ONLY reference elements that are missing, moved or reshaped — never an extra element you see in the render, which is far more often a highlight, a reflection or a moulding seam than printed ink.',
+  },
+  {
+    key: 'containerColour',
+    label: 'the base colours of the container, cap and label',
+    ask: 'Is the container the same colour, the cap the same colour, the label the same colour? Judge the base colour only — a white bottle lit warm is still a white bottle.',
+  },
+];
+
+/**
  * `mode` is 'finished' (Meta baked frame) or 'plate' (Demand Gen, text-free).
  *
  * A PLATE carries no ad copy by construction — buildRenderPrompt's plate branch says
@@ -131,10 +176,22 @@ import { normalizeForMatch } from './claims.js';
  *
  * @param {{expected:string[], format:object, mode?:string, volumeStrings?:string[]}} args
  */
-export function buildVerifyPrompt({ expected, format, mode = 'finished', volumeStrings = [] }) {
+export function buildVerifyPrompt({
+  expected, format, mode = 'finished', volumeStrings = [],
+  physicalDescription = '', referenceCount = 0,
+}) {
   const list = (expected || []).map(s => `  - "${s}"`).join('\n');
   const wantsPairings = format.pairsImagesWithLabels && mode === 'finished';
   const isPlate = mode === 'plate';
+
+  // R4. Reference photographs are only sent when the product has them, so the fidelity
+  // section only exists when there is something to compare against. Asking it without
+  // them is an unanswerable question that costs three paid attempts.
+  const wantsFidelity = referenceCount > 0;
+  const nFidelity = 3;
+  const nDefects = wantsFidelity ? 4 : 3;
+  const nTranscript = nDefects + 1;
+  const nPairings = nTranscript + 1;
 
   const intro = isPlate
     ? `You are proofreading a text-free BACKGROUND PLATE before it goes live. It is not a
@@ -144,8 +201,48 @@ except the product's own printed label, and to leave every area where copy will 
 completely empty and clean.`
     : `You are proofreading a finished advertisement image before it goes live.`;
 
+  // R4. Pointed question per attribute, never one open "does this match?" — R1's finding
+  // is that an open question is answered towards yes. Each attribute is coarse enough to
+  // survive a product rendered small, and CANNOT_TELL is always available so that a small
+  // product costs a skipped check rather than three failed renders.
+  const fidelitySection = wantsFidelity
+    ? `${nFidelity}. PRODUCT FIDELITY — compare the PRODUCT in the render against the reference
+   photographs. Answer each of the following SEPARATELY. Do not answer them as a group and
+   do not give an overall impression.
+${FIDELITY_ATTRIBUTES.map(a => `     - "${a.key}" — ${a.label}. ${a.ask}`).join('\n')}
+${physicalDescription ? `
+   The product on file is described as: ${physicalDescription}
+   Treat that description and the photographs as the same source of truth. Where the
+   render contradicts either, that is a mismatch.
+` : ''}
+   For each attribute report "attribute", "verdict" and "detail". Keep "detail" to ONE
+   short sentence — it is read by a human triaging a rejected frame, not by a machine:
+     "MATCH"        — the render agrees with the reference photographs
+     "MISMATCH"     — the render visibly contradicts them. Say what each shows in "detail".
+     "CANNOT_TELL"  — the product is too small, too blurred, angled away or cropped for
+                      you to judge THIS attribute.
+
+   "CANNOT_TELL" is a correct and expected answer on layouts that render the product
+   small, and it is never counted against the image. Guessing "MATCH" because the product
+   is roughly right, or because you assume the render was produced from these photographs,
+   is the failure this question exists to catch.
+
+   REPORT A MISMATCH ONLY FOR THE PRODUCT'S PRINTED DESIGN OR PHYSICAL CONSTRUCTION.
+   The reference photographs and the render were lit, staged and shot differently on
+   purpose — the render is an advertisement, not a copy of the photograph. None of the
+   following is EVER a mismatch, no matter how different it looks:
+     - lighting, exposure, colour temperature, white balance, contrast
+     - gloss, sheen, specular highlights, glare, gradients, gleam along an edge, or a
+       bright or dark band that is a reflection rather than printed ink
+     - shadows, reflections on the surface below, or the surface itself
+     - background, props, scene, camera angle, distance, crop or depth of field
+     - the product being shown at a different size or rotation
+   A bottle that looks glossier, warmer, or has a highlight the photograph lacks is the
+   SAME BOTTLE. Ask yourself: would this difference still exist if both were lit
+   identically? If the answer is no, it is MATCH.` : '';
+
   const defectsSection = isPlate
-    ? `3. STRAY TEXT — every headline bar, list row, caption slot and panel in this layout is
+    ? `${nDefects}. STRAY TEXT — every headline bar, list row, caption slot and panel in this layout is
    SUPPOSED to be empty. An empty bar, a blank line, a row of icons with nothing written
    beside them: that is this image working exactly as specified.
 
@@ -169,7 +266,7 @@ completely empty and clean.`
        supposed to be there; section 2 already covers the one falsifiable part of it.
      - an empty zone, a blank bar, a blank line, or a bare icon with no text beside it.
    Return [] if there is no text anywhere outside the product's own label.`
-    : `3. DEFECTS — list every piece of the AD'S OWN TYPESET COPY that is not fully legible
+    : `${nDefects}. DEFECTS — list every piece of the AD'S OWN TYPESET COPY that is not fully legible
    and correct, in "defects". Report a defect when such text is:
      - overlapped, covered or obscured by another element (including the product itself)
      - running off the edge of the frame, cropped, or cut off
@@ -192,7 +289,20 @@ completely empty and clean.`
        and intentional line breaks.
    Return [] if there are none.`;
 
-  return `${intro} This image
+  // R4. With reference photographs attached there is more than one image in the call, and
+  // every other section asks about exactly one of them. Saying which is which is not
+  // optional: a model that transcribes the label off a reference photograph would report
+  // a perfect render of a product the ad never contained.
+  const imageOrder = wantsFidelity
+    ? `You have been given ${referenceCount + 1} images. The FIRST ${referenceCount} ${referenceCount === 1 ? 'is a REFERENCE PHOTOGRAPH' : 'are REFERENCE PHOTOGRAPHS'}
+of the real physical product, for comparison only. The LAST image is the RENDER UNDER TEST.
+Every question below is about the RENDER UNDER TEST unless it explicitly names the
+reference photographs. Never transcribe, read or report text from a reference photograph.
+
+`
+    : '';
+
+  return `${intro} ${imageOrder}This image
 was produced by a generative image model. Those models corrupt text constantly: doubled
 letters ("TTHAN"), dropped letters ("FORMLA"), invented words ("CERAMIO"), and text that
 ends up underneath another object.
@@ -232,22 +342,27 @@ ${list}
    what this question exists to surface; reporting it is never a mistake. Do not answer
    "ILLEGIBLE" for a marking you are able to transcribe anywhere else in this response.
 
-${defectsSection}
+${wantsFidelity ? `${fidelitySection}
 
-4. TRANSCRIPT — every piece of text visible in the image, as rendered. Diagnostic only.
+` : ''}${defectsSection}
+
+${nTranscript}. TRANSCRIPT — every piece of text visible in the image, as rendered. Diagnostic only.
 ${wantsPairings ? `
-5. PAIRINGS — this layout pairs a picture with each label. For every such pair, report the
+${nPairings}. PAIRINGS — this layout pairs a picture with each label. For every such pair, report the
    label text, a short description of what the picture actually depicts, and whether they
    match.` : ''}
 
 Respond with JSON only:
 {
   "checks": [{ "expected": "...", "found": true, "rendered": "..." }],
-  "productVolume": "...",
+  "productVolume": "...",${wantsFidelity ? `
+  "fidelity": [{ "attribute": "${FIDELITY_ATTRIBUTES[0].key}", "verdict": "MATCH", "detail": "..." }],` : ''}
   "defects": [{ "text": "...", "issue": "${isPlate ? 'stray-text' : 'obscured'}", "detail": "..." }],
   "transcript": ["...", "..."]${wantsPairings ? `,
   "pairings": [{ "label": "...", "depicts": "...", "matches": true }]` : ''}
-}${volumeStrings.length ? `
+}${wantsFidelity ? `
+
+("fidelity" must carry one entry for EVERY attribute listed in section ${nFidelity}, in that order.)` : ''}${volumeStrings.length ? `
 
 (The product's true volume is on file and your "productVolume" answer will be compared
 against it. Answering "ILLEGIBLE" when you genuinely cannot read it is correct and is
@@ -284,6 +399,9 @@ export function parseVerifyResponse(raw) {
     defects: Array.isArray(obj.defects) ? obj.defects : [],
     transcript: Array.isArray(obj.transcript) ? obj.transcript : [],
     pairings: Array.isArray(obj.pairings) ? obj.pairings : [],
+    // Absent → []. fidelityVerdict, not the parser, decides what an empty list means:
+    // nothing when no reference photographs were sent, a hard fail when they were.
+    fidelity: Array.isArray(obj.fidelity) ? obj.fidelity : [],
   };
 }
 
@@ -554,6 +672,80 @@ export function volumeVerdict(productVolume, volumeStrings, transcript = []) {
   return { ok: true, status: 'illegible', read, source: 'reported', expected: expectedList };
 }
 
+// R4. Answers that mean "the render contradicts the reference". Everything that is not
+// one of these — including a word nobody anticipated — is read as cannot-tell. The
+// asymmetry is deliberate and matches ILLEGIBLE_RE above: a missed check costs one
+// unverified attribute, while reading a model's wording slip as a defect costs three
+// paid renders of a frame that was correct.
+const FIDELITY_MISMATCH_RE = /^(mismatch|mis-match|no|wrong|incorrect|different|differs|false|fail(ed|s)?)\.?$/i;
+const FIDELITY_MATCH_RE = /^(match(es|ed)?|yes|correct|same|identical|true|ok)\.?$/i;
+
+/**
+ * One reported verdict → 'match' | 'mismatch' | 'cannot-tell'.
+ */
+export function normalizeFidelityVerdict(verdict) {
+  const v = String(verdict ?? '').trim();
+  if (FIDELITY_MISMATCH_RE.test(v)) return 'mismatch';
+  if (FIDELITY_MATCH_RE.test(v)) return 'match';
+  return 'cannot-tell';
+}
+
+/**
+ * R4. Does the rendered product match the real one?
+ *
+ * The gate had four checks and all four were about TEXT. A live ingredient-callout frame
+ * rendered a squat, wide bottle with a short disc cap, the brand mark halfway down the
+ * label, no leaf illustration and the volume set in black on white where the real bottle
+ * reverses it out of a black bar — and every expected string was present and correctly
+ * spelled, so it was accepted on attempt 1. A human rejected it in one glance. Nothing
+ * in the pipeline had ever compared the render to the photographs it was conditioned on.
+ *
+ * The shape is volumeVerdict's, deliberately — tolerant of "cannot tell", intolerant of
+ * "wrong":
+ *
+ *   no reference photographs sent      → pass  (the question was never asked)
+ *   every attribute cannot-tell        → pass  (the small-product case)
+ *   any attribute mismatch             → FAIL
+ *   reference photographs, no answers  → FAIL  (the check silently did not run)
+ *
+ * That last case is the pairing check's precedent: "no pairings reported for a layout
+ * that pairs images with labels" fails rather than passes, because a check that returns
+ * nothing is indistinguishable from a check that was never wired up. It is the one
+ * direction where a model formatting slip costs a retry, and it is worth it — the
+ * alternative is this whole function quietly doing nothing for a month.
+ *
+ * @returns {{ok:boolean, status:string, mismatches:Array<{attribute:string,detail:string}>,
+ *            answers:Array<{attribute:string,verdict:string,detail:string}>}}
+ */
+export function fidelityVerdict(fidelity, { hasReference = false } = {}) {
+  if (!hasReference) {
+    return { ok: true, status: 'no-reference', mismatches: [], answers: [] };
+  }
+
+  const answers = (Array.isArray(fidelity) ? fidelity : [])
+    .filter(f => f && (f.attribute || f.key))
+    .map(f => ({
+      attribute: String(f.attribute || f.key).trim(),
+      verdict: normalizeFidelityVerdict(f.verdict ?? f.result ?? f.status),
+      detail: typeof f.detail === 'string' ? f.detail.trim() : '',
+    }));
+
+  if (answers.length === 0) {
+    return { ok: false, status: 'unreported', mismatches: [], answers: [] };
+  }
+
+  const mismatches = answers
+    .filter(a => a.verdict === 'mismatch')
+    .map(a => ({ attribute: a.attribute, detail: a.detail }));
+
+  if (mismatches.length) return { ok: false, status: 'mismatch', mismatches, answers };
+
+  // Attributes the model did not answer at all are absent from `answers` and count as
+  // cannot-tell — the same tolerance an explicit CANNOT_TELL gets.
+  const status = answers.some(a => a.verdict === 'match') ? 'match' : 'cannot-tell';
+  return { ok: true, status, mismatches: [], answers };
+}
+
 const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled', 'stray-text']);
 
 // Does this string quote any actual rendered character? Letters and digits only —
@@ -629,6 +821,7 @@ export function normalizeDefects(defects, mode = 'finished') {
 export function verdictFor({
   expected, checks, productVolume = '', defects = [], transcript = [],
   pairings, format, mode = 'finished', volumeStrings = [],
+  fidelity = [], hasReference = false,
 }) {
   const reasons = [];
 
@@ -652,7 +845,28 @@ export function verdictFor({
     );
   }
 
-  // 3. Text defects (R3), mode-aware (R3a): on a finished frame, copy that is obscured,
+  // 3. Product fidelity (R4) — is the rendered product actually our product? Runs in
+  //    BOTH modes: unlike the defect question (R3a) this one does not invert, and a
+  //    plate is nothing but the product, so it matters there at least as much.
+  //    `hasReference` defaults to false, which switches the check OFF rather than
+  //    failing every render — a product with no reference photos on file would otherwise
+  //    burn three paid attempts per target on a question nothing can answer.
+  const productFidelity = fidelityVerdict(fidelity, { hasReference });
+  if (!productFidelity.ok) {
+    if (productFidelity.status === 'unreported') {
+      reasons.push('no product fidelity answers reported while reference photographs were supplied');
+    } else {
+      reasons.push(
+        `rendered product does not match the reference photographs ` +
+        `(${productFidelity.mismatches.length} attribute(s))`
+      );
+      for (const m of productFidelity.mismatches) {
+        reasons.push(`  [${m.attribute}]${m.detail ? ` ${m.detail}` : ''}`);
+      }
+    }
+  }
+
+  // 4. Text defects (R3), mode-aware (R3a): on a finished frame, copy that is obscured,
   //    cut off or garbled; on a plate, copy that exists at all outside the product label.
   const reportedDefects = normalizeDefects(defects, mode);
   if (reportedDefects.length) {
@@ -662,7 +876,7 @@ export function verdictFor({
     for (const d of reportedDefects) reasons.push(`  [${d.issue}] "${d.text}"${d.detail ? ` — ${d.detail}` : ''}`);
   }
 
-  // 4. Image/label pairing — unchanged, still the design's centrepiece.
+  // 5. Image/label pairing — unchanged, still the design's centrepiece.
   let mismatchedPairs = [];
   if (format.pairsImagesWithLabels && mode === 'finished') {
     if (!pairings || pairings.length === 0) {
@@ -681,6 +895,7 @@ export function verdictFor({
     missing,
     checkDetails: details,
     volume,
+    fidelity: productFidelity,
     defects: reportedDefects,
     mismatchedPairs,
     // Diagnostic only — see R1. Recorded in proof.json so a human reading a failure can

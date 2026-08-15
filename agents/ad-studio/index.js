@@ -78,6 +78,12 @@ function textOf(msg) {
 // image appears to be a image/jpeg image"). Every verify call failed until this was
 // fixed, which means every render was paid for and then thrown away. No silent
 // default: an unrecognized signature throws rather than guessing.
+// R4. How many reference photographs the VERIFY call gets. The renderer gets up to 4
+// (selectReferencePhotos' own cap); the verifier gets fewer because its call is made once
+// per attempt and every photograph is input tokens on it. Two angles are enough to judge
+// silhouette, cap and label element order — the attributes in FIDELITY_ATTRIBUTES.
+const VERIFY_REFERENCE_MAX = 2;
+
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const JPEG_SIGNATURE = [0xff, 0xd8, 0xff];
 
@@ -99,7 +105,15 @@ export function sniffImageMediaType(buf) {
  * is reported, never silently swallowed.
  * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, budgetStopped:boolean, proof:object}>}
  */
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, mode = 'finished', volumeStrings = [], maxAttempts = 3, budget = null }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, mode = 'finished', volumeStrings = [], physicalDescription = '', maxAttempts = 3, budget = null }) {
+  // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
+  // can compare the product it got against the product it asked for. Capped below what
+  // the renderer gets: two angles are enough to judge silhouette, cap and label order,
+  // and every extra photograph is input tokens on a call made once per attempt.
+  const referencePhotos = (photoPaths || []).slice(0, VERIFY_REFERENCE_MAX).map(p => {
+    const buf = readFileSync(p);
+    return { mediaType: sniffImageMediaType(buf), data: buf.toString('base64') };
+  });
   let attempts = 0;
   let lastProof = { ok: false, reasons: ['no attempt made'], missing: [], mismatchedPairs: [] };
   let lastBuffer = null;
@@ -127,18 +141,47 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
       // A per-string check carries the expected string AND the rendered text back, so
       // the response scales with the copy volume — 2000 truncated the JSON on a
       // six-zone format and the truncation surfaced as an unparseable response.
-      max_tokens: 4000,
+      // R4 added a per-attribute fidelity block, five entries each carrying a prose
+      // detail, on top of a per-string check that already scales with the copy volume.
+      // 5000 truncated the JSON on the 1x1 frame of a six-zone format — the same failure
+      // 2000 produced before it, surfacing as an unparseable response rather than as
+      // "the output was cut off". Raised, and the cut is now reported as itself below.
+      max_tokens: 8000,
       messages: [{
         role: 'user',
         content: [
+          // Reference photographs FIRST, each labelled, then the render. buildVerifyPrompt
+          // states this order too — a verifier that read the label off a reference photo
+          // would report a flawless render of a product the ad never contained.
+          ...referencePhotos.flatMap((ref, i) => [
+            { type: 'text', text: `REFERENCE PHOTOGRAPH ${i + 1} of the real product:` },
+            { type: 'image', source: { type: 'base64', media_type: ref.mediaType, data: ref.data } },
+          ]),
+          ...(referencePhotos.length ? [{ type: 'text', text: 'THE RENDER UNDER TEST:' }] : []),
           { type: 'image', source: { type: 'base64', media_type: lastMediaType, data: lastBuffer.toString('base64') } },
-          { type: 'text', text: buildVerifyPrompt({ expected, format, mode, volumeStrings }) },
+          { type: 'text', text: buildVerifyPrompt({
+            expected, format, mode, volumeStrings,
+            physicalDescription, referenceCount: referencePhotos.length,
+          }) },
         ],
       }],
     });
 
-    const { checks, productVolume, defects, transcript, pairings } = parseVerifyResponse(textOf(msg));
-    lastProof = verdictFor({ expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings });
+    // A truncated response is not a malformed one, and saying so is the difference
+    // between a one-line max_tokens bump and an afternoon debugging the parser. Same
+    // reasoning as the blog-post-writer's stop_reason check in CLAUDE.md.
+    if (msg.stop_reason === 'max_tokens') {
+      throw new Error(
+        `ad-studio: the verify response was cut off at the ${msg.usage?.output_tokens ?? '?'}-token ` +
+        `limit, so this render could not be scored. Raise max_tokens in renderWithRetry.`
+      );
+    }
+
+    const { checks, productVolume, defects, transcript, pairings, fidelity } = parseVerifyResponse(textOf(msg));
+    lastProof = verdictFor({
+      expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings,
+      fidelity, hasReference: referencePhotos.length > 0,
+    });
     lastProof.transcript = transcript;
     if (lastProof.ok) return { ok: true, buffer: lastBuffer, mediaType: lastMediaType, attempts, budgetStopped: false, proof: lastProof };
   }
@@ -397,7 +440,10 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
     const expected = target.mode === 'finished' ? expectedFinished : expectedPlate;
     // mode is threaded all the way to verdictFor: a plate has no labels, so the
     // image/label pairing requirement must not be applied to it.
-    const r = await renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format, mode: target.mode, volumeStrings, budget });
+    const r = await renderWithRetry({
+      gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected, format,
+      mode: target.mode, volumeStrings, physicalDescription: product.physicalDescription, budget,
+    });
 
     // A budget stop before the first attempt produces no bytes at all.
     if (!r.buffer) {
@@ -443,6 +489,10 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
         // record because it only ever held an auto-corrected transcript.
         checkDetails: r.proof.checkDetails,
         volume: r.proof.volume,
+        // R4. Every attribute's verdict, not just the failing ones — a human reading an
+        // accepted frame's proof needs to see which attributes were actually judged and
+        // which came back CANNOT_TELL, or "accepted" reads as "checked" when it wasn't.
+        fidelity: r.proof.fidelity,
         defects: r.proof.defects,
         mismatchedPairs: r.proof.mismatchedPairs,
         transcript: r.proof.transcript,
@@ -759,6 +809,12 @@ async function main() {
     title: catalogEntry.title,
     priceLabel: catalogEntry.priceLabel,
     labelStrings,
+    // R4. The manifest's prose description of the PHYSICAL product — "tall, slim lotion
+    // bottle shape", "a black horizontal accent bar behind the variant name text". It was
+    // being mined for label strings and volume markings and then dropped on the floor, so
+    // the renderer knew what the label said and nothing about what the bottle was, and
+    // the gate had nothing to compare a shape against. Both now read it.
+    physicalDescription: manifestEntry.productDescription || '',
   };
 
   const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry });
