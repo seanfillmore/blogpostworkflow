@@ -10,6 +10,11 @@ deliberately produces text-free images with a Photoshop-guide overlay. Ad Studio
 produces the finished ad itself, copy included, end to end, with no manual
 finishing step.
 
+> **An accepted render is not a verified ad.** The gate checks text and the volume marking
+> — nothing compares the rendered product to the reference photos, and nothing judges copy
+> quality or layout. See "What the gate does NOT verify" in the spec's stage 4 before you
+> trust an `ok: true`.
+
 Spec: `docs/superpowers/specs/2026-08-14-ad-studio-design.md`
 Plan: `docs/superpowers/plans/2026-08-14-ad-studio.md`
 

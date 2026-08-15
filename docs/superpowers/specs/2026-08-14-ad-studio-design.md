@@ -2,7 +2,10 @@
 
 **Date:** 2026-08-14
 **Branch:** `feature/ad-studio`
-**Status:** approved design, pending implementation plan
+**Status:** built and running. Stages 1–3 and 5 are as designed. **Stage 4 (verification)
+is partial and known-incomplete** — it was rebuilt four times over one day of live running
+and still verifies nothing about the rendered product itself. Read
+"Verification status — read this before trusting an accept" before judging any batch.
 
 ## Goal
 
@@ -122,23 +125,61 @@ Prompt carries:
 
 ### 4. Verification gate
 
-Model: `claude-sonnet-5` (vision). **Rebuilt 2026-08-14 — see "Verification rebuild" below.**
+Model: `claude-sonnet-5` (vision), one call per rendered artifact. Implemented in
+`agents/ad-studio/verify.js`.
 
-Four checks, all required:
+**This gate is a text-and-volume proofreader. It is not a quality judge, and it does not
+look at the product.** Read both lists below before treating an `ok: true` as a verdict on
+an ad. The original design described this stage as four checks; a full day of live running
+found four separate defects in it, three of which are fixed and one of which is still open.
+What follows is the state as of 2026-08-14, not the intent.
 
-- **Per-string checks** — for each exact string requested in stage 2 (including the
-  product's own label where it renders legibly), a pointed yes/no about that exact
-  character sequence, plus the literal text of that region. Deliberately **not** an open
-  transcription; see below.
-- **Product volume** — read-or-`ILLEGIBLE`, on every format. Illegible passes, a
-  contradicted volume fails.
-- **Defects** — ad copy that is obscured, cut off at the frame edge, or garbled fails.
-- **Semantic pairing** — where a layout pairs a supporting image with a label (ingredient
-  rows, comparison columns), confirm each image depicts what its label says.
+**What the gate verifies, as of now:**
 
-The pairing check exists specifically to catch finding 4, which a text diff passes.
+- **Per-string presence.** For each exact string requested in stage 2, a pointed yes/no
+  about that exact character sequence, plus the literal text of that region. Deliberately
+  **not** an open transcription — see the history below. The model's "yes" is then
+  re-checked mechanically against the text it itself quoted, at token boundaries, so a
+  corrupted string has to survive two independent answers.
+- **The product's volume marking**, on **every format in every mode**, by a dedicated
+  check (`volumeVerdict`) rather than by string equality. It compares numbers, so
+  separator and punctuation differences (`8 fl. oz. (236ml)` vs `8 fl. oz - 236ml`) never
+  fail a render; it accepts `ILLEGIBLE`, because a product rendered small by design cannot
+  be read and demanding it would burn every retry; and it fails a value that contradicts
+  the truth. When it has no direct reading it falls back to the response's own transcript
+  — and **that fallback can only ever fail a render, never pass one.**
+- **Semantic image/label pairing**, on `finished` frames of formats that declare
+  `pairsImagesWithLabels`. This check exists specifically to catch finding 4, which a text
+  diff passes.
+- **Obscured, cut-off and garbled text**, on `finished` frames.
+- **Stray text on `plate` artifacts.** A plate must carry no text but the product's own
+  label. Blank zones on a plate are the specification and are never a defect — the defect
+  question is inverted per mode for exactly this reason.
 
-#### Verification rebuild (2026-08-14)
+**What the gate does NOT verify:**
+
+- **Product fidelity. Nothing in this pipeline compares the rendered product to the
+  reference photographs.** This is the largest open gap in the design. An `offer-focused`
+  render of `coconut-lotion / pure-unscented` was **accepted on the first attempt** with a
+  substantially redesigned label: the circular badge had moved from the middle of the label
+  to the bottom and shrunk, the green leaf illustration was absent entirely, and the black
+  band that carries the volume was gone, with the volume set as plain text on white. Every
+  string the gate checks was present, and the volume value was correct — so it passed.
+  Finding 5 and the render prompt both rest on the promise that *the product is generated
+  in-scene, conditioned on real photographs*. That promise governs what we ask for. It is
+  verified by nothing.
+- **Copy quality and grammar.** The subhead on that same frame read
+  `...that sink in instead of sitting on top of it` — "it" has no antecedent. The gate
+  confirmed the string was rendered exactly as stage 2 wrote it, which it was.
+- **Layout, composition, or aesthetic quality of any kind.** The gate has no opinion on
+  whether an ad is worth running.
+
+Failure → regenerate that variation, up to 2 retries (3 render attempts total, ~$0.39
+worst case per variation). Variations still failing are marked `rejected` with their proof
+report and are not packaged. A concept where all variations fail surfaces in the run report
+rather than shipping silently.
+
+#### Verification rebuild (2026-08-14) — the history, because it explains the shape
 
 v1 of this gate shipped and then **passed a corrupted ad on attempt 1**. The rendered
 `manifesto` frame read `THE MOISTURIZING CLAIM DOES MORE WORK TTHAN THE FORMLA`, carried
@@ -160,9 +201,11 @@ Three independent defects produced that pass:
 2. **`productProminent: false` disabled the label check entirely.** The flag existed for
    a real reason — a 6pt label on a deliberately tiny product cannot be transcribed, and
    demanding it fails every attempt and burns the retries — but it removed `labelStrings`
-   from the expected set wholesale, so a *wrong* label went unchecked. The volume is now
-   checked on every format in a shape that tolerates illegibility and not falsehood. The
-   flag survives, narrowed to the non-volume label strings.
+   from the expected set wholesale, so a *wrong* label went unchecked, which is how the
+   garbled badge and the false volume shipped. The volume is now checked on every format
+   in a shape that tolerates illegibility and not falsehood. **The flag survives, narrowed
+   to the non-volume label strings only. It must never be widened back into an off switch
+   for the volume.**
 3. **No occlusion or truncation check.** Added; any obscured, cropped or garbled piece of
    the ad's own copy fails the render. Text printed on the product's own label is out of
    scope — arc-set badge micro-copy is unreadable at any render size and asking about it
@@ -175,12 +218,31 @@ live — do not drop it back.
 
 Regression-tested against both saved artifacts: the corrupted `manifesto` frame now
 returns `ok: false` naming `TTHAN THE FORMLA` and the occluded closing line; a clean
-`offer-focused` frame from the same product still returns `ok: true`.
+`offer-focused` frame from the same product still returns `ok: true`. Re-judging a saved
+12-frame batch under the rebuilt gate turned **12/12 accepted into 10 pass / 2 fail** —
+one of the two carried a wrong volume on the product label.
 
-Failure → regenerate that variation, up to 2 retries (3 render attempts total, ~$0.39
-worst case per variation). Variations still failing are marked `rejected` with their proof
-report and are not packaged. A concept where all variations fail surfaces in the run report
-rather than shipping silently.
+Two further defects surfaced on the next live run, and are fixed:
+
+4. **The occlusion check over-rejected on plates.** A Demand Gen plate is rendered
+   text-free on purpose; its empty header bars and blank list rows are the deliverable.
+   Asked what copy was illegible, the verifier answered honestly — "the header bars are
+   empty" — and the gate failed 5 of 18 plates for being exactly right. **The defect
+   question is now inverted per mode:** a finished frame is asked what copy is obscured,
+   cut off or garbled; a plate is asked what text is *present* that should not be. Absence
+   is never a defect on a plate; stray glyphs always are, and are the more expensive of
+   the two defects, because the copy layer cannot remove pixels.
+5. **The volume was asserted twice, by two mechanisms of different strictness.** The
+   per-string check demanded the manifest's literal spelling while `volumeVerdict`
+   compared numbers; one live run rejected three targets whose volume `volumeVerdict` had
+   just reported as `match`. The volume was removed from the per-string expected set so it
+   is asserted once, by the mechanism that owns it. That briefly opened a hole — a plate
+   reported `productVolume: "ILLEGIBLE"` while transcribing a readable `0 fl. oz. • 236ml`
+   (a misrendered `8`) elsewhere in the same response, and nothing was left to catch it.
+   The transcript fallback described above closes it, in the fail-only direction.
+
+Every one of these five was found by opening the rendered images. None was found by the
+test suite, which stayed green at 1301–1308 passing throughout.
 
 ### 5. Platform packaging
 
@@ -196,6 +258,45 @@ but not pixel-identical. Pixel alignment was the one thing two-pass bought, and 
 shows it costs more than it returns.
 
 Meta safe margins applied per the existing packager conventions.
+
+## Verification status — read this before trusting an accept
+
+The gate works, and it is not finished. An `ok: true` on an artifact means **"the text and
+the volume check out"**. It does not mean "this ad is good", and it does not mean "this is
+our product". Treat that sentence as the standing definition of an accept.
+
+### Known open
+
+1. **Product fidelity — the largest gap.** Nothing compares the rendered product to the
+   reference photographs in `data/product-images/`. A first-attempt accept has already
+   shipped a lotion bottle with the badge moved and shrunk, the leaf illustration missing,
+   and the volume band deleted. Every gate the design has, that render passed. Until
+   something reads the product, the accepted output of this pipeline needs a human looking
+   at the bottle.
+2. **Per-channel acceptance.** A concept is currently accepted only when **all six**
+   platform targets pass. Meta and Demand Gen are different channels with different
+   artifacts, and one bad Demand Gen plate marks a whole concept rejected even when its
+   three Meta frames are publishable — which is throwing away paid renders that are ready
+   to run. Acceptance should be reported per channel: Meta frames and Demand Gen plates
+   pass or fail independently.
+3. **Copy quality is unverified.** Stage 2 writes the strings, stage 4 confirms those exact
+   strings were rendered. Nothing between them asks whether the sentence is good, or even
+   grammatical — a live subhead ended `...instead of sitting on top of it` with no
+   antecedent for "it".
+4. **The standing rule.** Accept = text present, volume correct. Nothing more is claimed.
+
+### How to judge a batch
+
+The accept verdict is **necessary, not sufficient**. Open the images.
+
+Every gate defect found so far — the auto-corrected headline, the disabled label check,
+the missing occlusion check, the over-rejected plates, the double-asserted volume, and the
+redesigned product label that is still unguarded — was found by looking at output. Not one
+was found by the test suite, which stayed green at 1301–1308 passing through all of it. A
+green suite here means the code does what it was written to do; it says nothing about
+whether what it was written to do is enough.
+
+Read `proof.json` when a frame fails, and look at the frame when it passes.
 
 ## Output layout
 
