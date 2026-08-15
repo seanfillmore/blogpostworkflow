@@ -10,10 +10,11 @@ deliberately produces text-free images with a Photoshop-guide overlay. Ad Studio
 produces the finished ad itself, copy included, end to end, with no manual
 finishing step.
 
-> **An accepted render is not a verified ad.** The gate checks text, the volume marking and
-> — since 2026-08-15 — whether the rendered product is physically our product. It still does
-> not judge **copy quality or layout**: an `ok: true` frame can be correct in every fact and
-> a poor ad. See "What the gate does NOT verify" in the spec's stage 4.
+> **An accepted render is checked, not curated.** The gate checks text, the volume marking,
+> whether the rendered product is physically our product, and whether the frame is usable —
+> copy clear of the platform's UI chrome, and legible at thumb size. What it does **not** do
+> is decide the ad is *good*: that is a 1-5 score recorded on every accepted frame, never a
+> pass/fail. Rank by `critique.score`; do not read `ok: true` as "ship it".
 
 Spec: `docs/superpowers/specs/2026-08-14-ad-studio-design.md`
 Plan: `docs/superpowers/plans/2026-08-14-ad-studio.md`
@@ -138,7 +139,41 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    into clean text and passed a corrupted ad. This is one vision call guarding a ~$0.13
    render that nobody else reads before it goes live; do not drop it back to save
    pennies on the cheapest call in the pipeline.
-6. **Package** (`packaging.js`) — writes the six platform artifacts (3 Meta finished
+6. **Layout critique** (`critique.js`, model: `claude-sonnet-5`) — a **second, separate**
+   vision call, run only on a frame that already passed stage 5, and only on **finished
+   frames** (a plate carries no typeset copy, so neither check has an answerable question
+   and the call is skipped rather than paid for). Split in two on purpose:
+
+   - **Part A — objective, HARD FAIL, feeds the existing retry loop.**
+     **Safe zone:** on **9:16 only**, is any of the ad's own copy inside the bands Meta
+     draws its UI over? Meta unified Stories and Reels onto one 9:16 safe zone in March
+     2026 — top 14%, sides 6%, bottom 20% (Stories) to 35% (Reels). The gate uses the
+     **Stories** depth; Reels' bottom 35% plus the top 14% puts half the frame off-limits
+     and these six formats were not laid out for that, so a frame that clears Stories but
+     not Reels is reported in the notes for a human to weigh. 1:1 and 4:5 are **not**
+     gated — nothing is drawn over a feed image, so placement there is a preference, and
+     gating a preference costs three paid renders every time it fires. The bands are
+     stated to the model as **fractions** ("the top one-seventh"), never percentages: a
+     vision model eyeballs a fraction far more reliably than it estimates 14%, and the
+     whole check rests on that estimate.
+     **Legibility:** on every finished ratio, can the copy be read at thumb size —
+     contrast and size only, never typeface or colour taste.
+     Both are three-valued; `CANNOT_TELL` passes, the same tolerance `volumeVerdict`
+     gives `ILLEGIBLE`.
+
+   - **Part B — subjective, RECORDED, never blocks.** A 1-5 quality score with notes,
+     written to `proof.json` and `run.json`. Making "is this a good ad?" a hard fail
+     would reject good work and pay for three attempts doing it — the exact
+     false-positive class that cost two rounds on the fidelity check. The score exists to
+     **rank accepted frames**, which the UI spec says is where the operator's time goes.
+
+   **Why a separate call and not more sections in `buildVerifyPrompt`.** That prompt's
+   central instruction is *"You are NOT reading for meaning. Do not repair, complete,
+   normalize or auto-correct anything"* — a deliberately literal pixel read, arrived at
+   over five fix rounds. Art direction is the opposite instruction. Asking one call to do
+   both contradicts its own framing and risks a gate that was expensive to stabilise.
+
+7. **Package** (`packaging.js`) — writes the six platform artifacts (3 Meta finished
    frames + 3 Demand Gen text-free plates) and buckets the concept's copy into Demand
    Gen's headline/long-headline/description fields.
 
@@ -217,6 +252,9 @@ full-rotation run is 108, so two of them plus retries exhausts the day — the A
 returns 429 with a ~19h retry delay and every remaining target of the run errors out
 (per-target resilience keeps the run alive and still writes `run.json`). Scope runs with
 `--formats`; do not discover this ceiling mid-batch.
+
+The **layout critique** adds one more Sonnet call, but only on finished frames that
+already passed verify — roughly **$0.01 each, under $1 on a default run**.
 
 At ~$0.13 per Gemini 3 Pro 2K render, plus one **Sonnet** vision call per render for the
 verify gate — ~$0.04 on a 2K frame now that the call also carries two reference

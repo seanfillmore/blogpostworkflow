@@ -86,13 +86,38 @@ function verifyReply(expected, { volume = '8 fl. oz. (236ml)', garbled = false, 
   });
 }
 
+// A clean CRITIQUE response (stage 5b): inside the safe zone, legible, decent score.
+// Part A passes, so it never changes a verdict these tests are about.
+function critiqueReply({ safeZone = 'OK', legibility = 'OK', score = 4 } = {}) {
+  return JSON.stringify({ safeZone, safeZoneDetail: '', legibility, legibilityDetail: '', score, reasons: [] });
+}
+
+// Is this request the art-direction call rather than the verify call? renderWithRetry
+// makes BOTH against the same client, so a stub that answers every request with a verify
+// reply hands the critique a response with no safeZone/legibility in it — which
+// critiqueVerdict correctly reads as "the check did not run" and fails the frame.
+function isCritiqueRequest(params) {
+  return (params?.messages?.[0]?.content || [])
+    .some(b => b.type === 'text' && /ART DIRECTOR/i.test(b.text || ''));
+}
+
 // A verifier that fails the first `failFor` attempts, then passes.
-function anthropicFailing(failFor, expected) {
+//
+// `calls()` counts VERIFY calls only. A frame that passes verify also costs one critique
+// call, and folding the two together would make every existing "one render, one verify"
+// assertion read as two verifies.
+function anthropicFailing(failFor, expected, critique = {}) {
   let calls = 0;
+  let critiques = 0;
   return {
     calls: () => calls,
+    critiques: () => critiques,
     messages: {
-      create: async () => {
+      create: async (params) => {
+        if (isCritiqueRequest(params)) {
+          critiques += 1;
+          return { content: [{ type: 'text', text: critiqueReply(critique) }] };
+        }
         calls += 1;
         return { content: [{ type: 'text', text: verifyReply(expected, { garbled: calls <= failFor }) }] };
       },
@@ -110,6 +135,7 @@ function anthropicCapturing(expected) {
     messages: {
       create: async (params) => {
         requests.push(params);
+        if (isCritiqueRequest(params)) return { content: [{ type: 'text', text: critiqueReply() }] };
         return { content: [{ type: 'text', text: verifyReply(expected) }] };
       },
     },
@@ -766,8 +792,8 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   });
   const anthropicIllegible = {
     messages: {
-      create: async () => ({
-        content: [{ type: 'text', text: JSON.stringify({
+      create: async (params) => ({
+        content: [{ type: 'text', text: isCritiqueRequest(params) ? critiqueReply() : JSON.stringify({
           checks: mFinished.map(e => ({ expected: e, found: true, rendered: e })),
           productVolume: 'ILLEGIBLE',
           defects: [],
@@ -1039,4 +1065,64 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
+}
+
+// ── Stage 5b is wired: the layout critique can fail a target, and always records ─────
+//
+// The gate could answer "is every fact on this frame correct?" and never "is this frame
+// usable?". A headline sitting under Instagram's own UI chrome renders perfectly and
+// passes every text check; it is simply invisible in the placement it ships to.
+{
+  const zonesX = { headline: 'Six Ingredients.' };
+  const { finished: fx, plate: px, volumeStrings: vx } = expectedForFormat({
+    zones: zonesX, format, product,
+  });
+
+  // A safe-zone violation on a 9:16 frame fails the target, and says why in proof.json.
+  const aBuried = anthropicFailing(0, fx, { safeZone: 'VIOLATION' });
+  const buried = await renderTarget({
+    gemini: geminiReturning(), anthropic: aBuried,
+    target: { platform: 'meta', ratio: '9:16', mode: 'finished' },
+    format, zones: zonesX, product, brandKit, photoPaths: [],
+    expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
+  });
+  assert.equal(buried.ok, false, 'copy inside the platform safe zone must fail a 9:16 target');
+  assert.ok(buried.proofEntry.reasons.some(r => /safe zone/i.test(r)));
+  assert.equal(buried.proofEntry.attempts, 3, 'and it must feed the existing retry loop');
+
+  // The IDENTICAL answer on a square frame does not fail — nothing is drawn over a feed
+  // image, so there placement is a preference and gating a preference costs 3 renders.
+  const aSquare = anthropicFailing(0, fx, { safeZone: 'VIOLATION' });
+  const square = await renderTarget({
+    gemini: geminiReturning(), anthropic: aSquare,
+    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    format, zones: zonesX, product, brandKit, photoPaths: [],
+    expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
+  });
+  assert.equal(square.ok, true, 'a safe-zone answer must not fail a ratio nothing overlays');
+
+  // PART B: a terrible score NEVER blocks, and is recorded on the ACCEPTED frame so the
+  // operator can rank what survived.
+  const aUgly = anthropicFailing(0, fx, { score: 1 });
+  const ugly = await renderTarget({
+    gemini: geminiReturning(), anthropic: aUgly,
+    target: { platform: 'meta', ratio: '1:1', mode: 'finished' },
+    format, zones: zonesX, product, brandKit, photoPaths: [],
+    expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
+  });
+  assert.equal(ugly.ok, true, 'a low quality score must never fail a render');
+  assert.equal(ugly.proofEntry.critique.score, 1, 'but it must reach proof.json');
+
+  // A PLATE is never art-directed at all — it carries no typeset copy, so there is no
+  // answerable question, and the call is skipped rather than paid for.
+  const aPlate = anthropicFailing(0, px);
+  const plate = await renderTarget({
+    gemini: geminiReturning(), anthropic: aPlate,
+    target: { platform: 'demand-gen', ratio: '1:1', mode: 'plate' },
+    format, zones: zonesX, product, brandKit, photoPaths: [],
+    expectedFinished: fx, expectedPlate: px, volumeStrings: vx,
+  });
+  assert.equal(plate.ok, true);
+  assert.equal(aPlate.critiques(), 0, 'a plate must cost zero critique calls');
+  assert.equal(plate.proofEntry.critique.status, 'not-applicable');
 }
