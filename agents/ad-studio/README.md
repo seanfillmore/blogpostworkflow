@@ -332,6 +332,16 @@ relying on the ceiling.
   (a design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text
   wasn't named). There is no flag to skip this check.
 
+  **Net weight counts as a volume marking.** `readVolume` understood fluid ounces and
+  millilitres only, so the lip balm (`0.15 oz • 4.25g`) and the bar soap (`3.4 oz • 84g`)
+  were invisible to `volumeVerdict` — it reported `no-volume-on-file` and passed any
+  weight the model invented. Worse, since `expectedForFormat` only subtracts *recognised*
+  markings from the expected set, those two stayed in it and were checked by the strict
+  literal matcher instead — the exact mechanism R2b removed for the lotion after it
+  rejected three correct renders over punctuation. Weight is now parsed alongside volume
+  (`wtOz`, `g`). The weight pattern deliberately cannot match a *fluid* ounce marking:
+  `8 fl. oz.` puts `fl.` between the number and `oz`, which `\s*` cannot cross.
+
   It holds only **spec-bearing** label text — brand mark, product type, variant name
   and above all the volume marking. Two things are deliberately excluded:
 
