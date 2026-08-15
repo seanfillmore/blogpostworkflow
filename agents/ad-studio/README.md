@@ -216,6 +216,25 @@ relying on the ceiling.
   (`verify.js`'s `volumeVerdict`, wired through `expectedForFormat`'s `volumeStrings`).
   Do not widen the flag back into an off switch for the volume.
 
+  **The volume is checked once, and never by the per-string check.**
+  `expectedForFormat` subtracts the volume markings from the expected set in *both*
+  modes; every other label string (brand mark, product type, variant name) is demanded
+  back exactly as before on a `productProminent` format. The two mechanisms have
+  different strictness and were contradicting each other inside one verdict:
+  `volumeVerdict` compares numbers and tolerates punctuation, because the manifest
+  writes `8 fl. oz. (236ml)` while the bottle prints `8 fl. oz - 236ml`; the per-string
+  check demands the literal sequence and failed it. A live run rejected three targets
+  whose volume `volumeVerdict` had just reported as `"status": "match"`. If the volume
+  gate ever needs to be stricter, make `volumeVerdict` stricter — do not re-add the
+  volume to the expected set.
+
+  One thing the duplicate was accidentally covering moved into `volumeVerdict` with it:
+  the verifier answering `"productVolume": "ILLEGIBLE"` while transcribing a readable,
+  wrong volume elsewhere in the same response (a live plate reported `ILLEGIBLE` and
+  transcribed `0 fl. oz. • 236ml` — a misrendered `8`). `volumeVerdict` falls back to
+  the response's transcript when, and only when, it has no direct reading, and that
+  fallback can only *fail* a render, never pass one.
+
   **`main()` aborts if this list comes back empty** — an empty
   list is exactly how the image model invents a volume that was never on the bottle
   (a design probe rendered `6 fl. oz.` on a 2 fl oz bottle when the label text
