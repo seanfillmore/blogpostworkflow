@@ -39,8 +39,17 @@ RULES:
 - Do not invent counts, percentages, volumes, timeframes, awards or third-party endorsements.
 - EVERY factual statement must be traceable. For each, set factual: true, name a sourceId
   from: pdp, catalog, brandKit, reviews — and quote the exact supporting phrase in evidence.
-  The evidence must appear verbatim in that source; it is checked before anything renders and
-  there is no override.
+  The evidence must be a CONTIGUOUS, VERBATIM SUBSTRING copied from that ONE named source —
+  never assembled, never joined from two places, never reworded, and never spanning two
+  separate facts. It is checked before anything renders, by exact substring match, and
+  there is no override — a paraphrased or synthesized quote fails the gate and stops the
+  run entirely, including every OTHER concept's copy already written.
+- If an ad line combines two facts (e.g. an ingredient count AND a price), split it into
+  TWO claims in the claims array, each with its own sourceId and its own verbatim evidence
+  quote — one claim per fact, never one evidence string built by concatenating both. For
+  example "6 CLEAN INGREDIENTS — $30" is two claims: the ingredient count sourced against
+  catalog with its own quote, and the price sourced against catalog with its own separate
+  quote — not one evidence string joining a title fragment and a price with a dash.
 - Pure persuasion with no factual assertion is fine: set factual: false and omit sourceId.
 
 Respond with JSON only, no commentary:

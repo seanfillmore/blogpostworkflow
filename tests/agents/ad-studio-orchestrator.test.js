@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import {
@@ -14,12 +15,15 @@ import {
   filterDroppedClaims,
   expectedForFormat,
   parseArgs,
+  buildConcept,
+  buildConcepts,
+  finalizeRunReport,
   DEFAULT_MAX_RENDERS,
   MAX_VARIATIONS,
   ESTIMATED_COST_PER_RENDER_USD,
 } from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
-import { assertClaimsSourced } from '../../agents/ad-studio/claims.js';
+import { assertClaimsSourced, buildSourceIndex } from '../../agents/ad-studio/claims.js';
 import { PLATFORM_TARGETS } from '../../agents/ad-studio/packaging.js';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -610,4 +614,202 @@ const pairingFormat = formatByKey('ingredient-callout'); // pairsImagesWithLabel
   const prominent = expectedForFormat({ zones: { headline: 'Six Ingredients.' }, format: formatByKey('us-vs-them'), product });
   assert.deepEqual(prominent.finished, ['Six Ingredients.', ...product.labelStrings], 'a hero-sized product must still prove its label');
   assert.deepEqual(prominent.plate, [...product.labelStrings]);
+}
+
+// ── Claim-gate failure isolation ─────────────────────────────────────────────────
+// Real incident: a run of 4 concepts hit an unsourced claim on the FIRST one and
+// assertClaimsSourced's throw propagated out of main() uncaught, aborting the whole
+// run — manifesto, problem-aware and top-x-review never even got a copy call, and no
+// run.json was written. Fix mirrors renderTarget/renderVariationTargets: buildConcept
+// tries assertClaimsSourced and turns ONLY its failure into a structured rejection;
+// buildConcepts loops and never itself catches anything, so an unrelated error still
+// aborts the run.
+
+// A stub Anthropic client for the copy call. Reads the format key out of the prompt
+// (buildCopyPrompt always writes "FORMAT: <key> —") so each format gets a distinct,
+// controllable response without needing a real model.
+function anthropicCopyStub({ badFormatKey, evidenceOk, evidenceBad }) {
+  let calls = 0;
+  const promptsSeen = [];
+  return {
+    calls: () => calls,
+    promptsSeen,
+    messages: {
+      create: async (params) => {
+        calls += 1;
+        const prompt = params.messages[0].content;
+        promptsSeen.push(prompt);
+        const m = prompt.match(/FORMAT: ([\w-]+)/);
+        const key = m ? m[1] : null;
+        const isBad = key === badFormatKey;
+        const zones = { headline: `Headline for ${key}` };
+        const claims = [{
+          zone: 'headline',
+          text: `Headline for ${key}`,
+          factual: true,
+          sourceId: 'catalog',
+          evidence: isBad ? evidenceBad : evidenceOk,
+        }];
+        return { content: [{ type: 'text', text: JSON.stringify({ zones, claims }) }] };
+      },
+    },
+  };
+}
+
+const claimGateProduct = { handle: 'coconut-lotion', title: 'Lotion', priceLabel: '$30', labelStrings: ['x'] };
+const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clean Ingredients Lotion' } });
+
+// buildConcept: the claim gate's own failure is turned into a structured rejection,
+// not a throw — but ONLY when the failure is actually assertClaimsSourced's. Its
+// message ("Claim gate failed — N unsourced claim(s)...") is unchanged from
+// claims.js, unmodified by this fix.
+{
+  const goodFormat = formatByKey('us-vs-them');
+  const badFormat = formatByKey('manifesto');
+
+  const goodAnthropic = anthropicCopyStub({ badFormatKey: null, evidenceOk: 'Six Clean Ingredients' });
+  const goodResult = await buildConcept({
+    anthropic: goodAnthropic, format: goodFormat, product: claimGateProduct, pdpBody: '', persona: null, sourceIndex: claimGateSourceIndex,
+  });
+  assert.equal(goodResult.ok, true);
+  assert.equal(goodResult.conceptSlug, 'us-vs-them');
+  assert.equal(goodResult.format.key, 'us-vs-them', 'the full format object is carried through for the render stage');
+
+  const badAnthropic = anthropicCopyStub({ badFormatKey: 'manifesto', evidenceBad: 'this phrase appears nowhere in any source' });
+  const badResult = await buildConcept({
+    anthropic: badAnthropic, format: badFormat, product: claimGateProduct, pdpBody: '', persona: null, sourceIndex: claimGateSourceIndex,
+  });
+  assert.equal(badResult.ok, false, 'a claim-gate failure must not throw out of buildConcept');
+  assert.equal(badResult.conceptSlug, 'manifesto');
+  assert.equal(badResult.violations.length, 1);
+  assert.match(badResult.violations[0].reason, /evidence not found/);
+  assert.match(badResult.error, /^Claim gate failed/, 'assertClaimsSourced\'s own message, unchanged');
+}
+
+// buildConcept: an error that is NOT the claim gate must still surface. Simulated by
+// an Anthropic client whose copy call itself throws (a network failure, a live 500) —
+// this must propagate, not be swallowed as if it were an unsourced claim.
+{
+  const throwingAnthropic = { messages: { create: async () => { throw new Error('mock network failure: ECONNRESET'); } } };
+  await assert.rejects(
+    () => buildConcept({
+      anthropic: throwingAnthropic, format: formatByKey('us-vs-them'), product: claimGateProduct, pdpBody: '', persona: null, sourceIndex: claimGateSourceIndex,
+    }),
+    /mock network failure/,
+    'only the claim gate\'s own failure may be caught — everything else must surface',
+  );
+}
+
+// buildConcepts: THE isolation test. 3 concepts, the MIDDLE one has an unsourced
+// claim. The other two must still be attempted and still succeed — the whole point
+// of the fix is that one bad concept does not cost the copy already generated (and
+// paid for) on the others.
+{
+  const formats = [formatByKey('us-vs-them'), formatByKey('manifesto'), formatByKey('problem-aware')];
+  const anthropic = anthropicCopyStub({
+    badFormatKey: 'manifesto',
+    evidenceOk: 'Six Clean Ingredients',
+    evidenceBad: 'this phrase appears nowhere in any source',
+  });
+
+  const { concepts, rejectedConcepts } = await buildConcepts({
+    anthropic, formats, product: claimGateProduct, pdpBody: '', persona: null, sourceIndex: claimGateSourceIndex,
+  });
+
+  assert.equal(anthropic.calls(), 3, 'all 3 concepts must be attempted — the failure on #2 must not stop #3 from even being asked for');
+  assert.equal(concepts.length, 2, 'the two good concepts render');
+  assert.deepEqual(concepts.map(c => c.format.key).sort(), ['problem-aware', 'us-vs-them']);
+  assert.equal(rejectedConcepts.length, 1);
+  assert.equal(rejectedConcepts[0].conceptSlug, 'manifesto', 'the run report must name exactly which concept was rejected');
+  assert.ok(rejectedConcepts[0].violations.length > 0, 'and carry the violations that failed it');
+  assert.match(rejectedConcepts[0].violations[0].reason, /evidence not found/);
+}
+
+// buildRunReport: a rejected concept is named in the report with its violations —
+// impossible to read run.json and think it succeeded or was never requested.
+{
+  const r = buildRunReport({
+    runId: 'run-4',
+    product: { handle: 'coconut-lotion', title: 'Lotion' },
+    results: [{ conceptSlug: 'us-vs-them', format: 'us-vs-them', variations: [{ n: 1, ok: true }] }],
+    renders: 6,
+    rejectedConcepts: [{
+      conceptSlug: 'manifesto',
+      format: 'manifesto',
+      violations: [{ zone: 'headline', text: 'Headline for manifesto', reason: 'evidence not found in source catalog: "this phrase appears nowhere in any source"' }],
+      error: 'Claim gate failed — 1 unsourced claim(s). Nothing was rendered.',
+    }],
+  });
+  assert.equal(r.rejectedConcepts.length, 1);
+  assert.equal(r.rejectedConcepts[0].conceptSlug, 'manifesto');
+  assert.match(r.rejectedConcepts[0].violations[0].reason, /evidence not found/);
+  assert.equal(r.totals.requested, 2, 'requested = rendered + rejected — a rejected concept must still count as asked-for');
+
+  // A run with no rejections carries an empty (not missing) rejectedConcepts list.
+  const clean = buildRunReport({
+    runId: 'run-5',
+    product: { handle: 'coconut-lotion', title: 'Lotion' },
+    results: [{ conceptSlug: 'us-vs-them', format: 'us-vs-them', variations: [{ n: 1, ok: true }] }],
+  });
+  assert.deepEqual(clean.rejectedConcepts, []);
+  assert.equal(clean.totals.requested, 1);
+}
+
+// finalizeRunReport: a run where EVERY concept fails the claim gate (concepts: [])
+// must still write run.json to disk AND fail the run (throw, so main()'s existing
+// catch()/process.exit(1) path fires) — a silent empty success would look like a
+// clean run of zero concepts instead of a total claim-gate rejection.
+{
+  const tmpDir = mkdtempSync(join(tmpdir(), 'ad-studio-test-'));
+  try {
+    assert.throws(
+      () => finalizeRunReport({
+        runDir: tmpDir,
+        runId: 'run-all-rejected',
+        product: { handle: 'coconut-lotion', title: 'Lotion' },
+        results: [], // nothing rendered — every concept was rejected before render
+        renders: 0,
+        budget: null,
+        concepts: [], // nothing survived the gate
+        rejectedConcepts: [
+          { conceptSlug: 'us-vs-them', format: 'us-vs-them', violations: [{ zone: 'headline', text: 'A', reason: 'evidence not found in source catalog: "x"' }], error: 'Claim gate failed — 1 unsourced claim(s).' },
+          { conceptSlug: 'manifesto', format: 'manifesto', violations: [{ zone: 'headline', text: 'B', reason: 'evidence not found in source catalog: "y"' }], error: 'Claim gate failed — 1 unsourced claim(s).' },
+        ],
+      }),
+      /every requested concept.*rejected by the claim gate/i,
+      'a run where every concept fails the gate must throw (so the process exits non-zero)',
+    );
+
+    const written = JSON.parse(readFileSync(join(tmpDir, 'run.json'), 'utf8'));
+    assert.equal(written.results.length, 0);
+    assert.equal(written.rejectedConcepts.length, 2, 'run.json must still be written, naming every rejected concept');
+    assert.deepEqual(written.rejectedConcepts.map(c => c.conceptSlug).sort(), ['manifesto', 'us-vs-them']);
+    assert.equal(written.totals.requested, 2, 'both requested concepts are accounted for even though neither rendered');
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+// finalizeRunReport: a PARTIAL rejection (some concepts rendered) must NOT throw —
+// only a total wipeout does. run.json is still written either way.
+{
+  const tmpDir = mkdtempSync(join(tmpdir(), 'ad-studio-test-'));
+  try {
+    const report = finalizeRunReport({
+      runDir: tmpDir,
+      runId: 'run-partial',
+      product: { handle: 'coconut-lotion', title: 'Lotion' },
+      results: [{ conceptSlug: 'us-vs-them', format: 'us-vs-them', variations: [{ n: 1, ok: true }] }],
+      renders: 6,
+      budget: null,
+      concepts: [{ format: { key: 'us-vs-them' } }],
+      rejectedConcepts: [{ conceptSlug: 'manifesto', format: 'manifesto', violations: [{ zone: 'headline', text: 'B', reason: 'evidence not found' }], error: 'Claim gate failed — 1 unsourced claim(s).' }],
+    });
+    assert.equal(report.rejectedConcepts.length, 1);
+    assert.equal(report.results.length, 1);
+    const written = JSON.parse(readFileSync(join(tmpDir, 'run.json'), 'utf8'));
+    assert.equal(written.rejectedConcepts[0].conceptSlug, 'manifesto');
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
 }

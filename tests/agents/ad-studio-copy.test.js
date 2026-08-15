@@ -33,6 +33,17 @@ assert.ok(
 // A zone with no declared capacity (subhead) gets no maximum language attached to it.
 assert.ok(!/subhead \(maximum/.test(prompt), 'a zone with no capacity must not get a maximum hint');
 
+// The evidence instruction must forbid a synthesized quote — the real live failure
+// was the model citing "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients
+// (coconut-lotion) — $30", which concatenates the catalog title, the handle and the
+// price with a dash. No such string exists in any source; the gate correctly rejected
+// it, but the prompt never told the model that a compound line must become two
+// separately-sourced claims. Assert the tightened instruction is actually present.
+assert.match(prompt, /contiguous/i, 'evidence must be a contiguous substring');
+assert.match(prompt, /verbatim/i, 'evidence must be verbatim, not reworded');
+assert.match(prompt, /\bone\b.*source|single.*source|ONE named source/i, 'evidence must come from a single named source');
+assert.match(prompt, /split it into|split.*two claims/i, 'a compound claim must be split into two sourced claims');
+
 // parseCopyResponse: bare JSON.
 const payload = {
   zones: { headline: 'SIX INGREDIENTS.', subhead: "THAT'S THE WHOLE LIST.", listItems: ['ORGANIC JOJOBA'], bottomBar: 'NO MINERAL OIL' },

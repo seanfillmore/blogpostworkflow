@@ -22,7 +22,7 @@ import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { renderVariation, buildRenderPrompt, selectReferencePhotos } from './render.js';
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor } from './verify.js';
 import { selectFormats } from './formats.js';
-import { buildSourceIndex, assertClaimsSourced } from './claims.js';
+import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
 import { PLATFORM_TARGETS, variationDir, artifactName, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { notify } from '../../lib/notify.js';
@@ -144,6 +144,78 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
 }
 
 /**
+ * Generate copy and pass it through the claim gate for ONE concept (format).
+ *
+ * Mirrors renderTarget: the fallible step — assertClaimsSourced — is tried here and
+ * ONLY a claim-gate failure is turned into a structured result. assertClaimsSourced
+ * itself is untouched (still throws, still no override flag); this function is "the
+ * caller" the isolation belongs in. Matching on the exact message prefix that
+ * function has always thrown (not a try/catch around the whole concept) is what
+ * guarantees an unrelated failure — a network error on the copy call, a malformed
+ * response from parseCopyResponse, enforceZoneCapacity throwing — still propagates
+ * and aborts the run instead of being swallowed as if it were a sourcing problem.
+ *
+ * @returns {Promise<{ok:true, conceptSlug:string, format:object, zones:object, claims:object[]}
+ *                  |{ok:false, conceptSlug:string, format:string, violations:object[], error:string}>}
+ */
+export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex }) {
+  console.log(`Copy: ${format.key} (${format.name})...`);
+  const prompt = buildCopyPrompt({ format, product, pdpBody, persona });
+  const msg = await anthropic.messages.create({
+    model: CREATIVE_MODELS.adStudio.copy,
+    max_tokens: 3000,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  const { zones: rawZones, claims: rawClaims } = parseCopyResponse(textOf(msg));
+
+  // Hard cap — a backstop for when the model ignores buildCopyPrompt's capacity
+  // hint (or the capacity hint doesn't apply, e.g. no zoneCapacity declared). Must
+  // run BEFORE the claim gate: the gate has to see the copy that will actually
+  // render, not the pre-truncation draft.
+  const { zones, dropped } = enforceZoneCapacity(rawZones, format);
+
+  // A claim whose text was just truncated away must not reach the gate either — it
+  // will never render, so sourcing it (or failing to) proves nothing, and running
+  // the gate against text that no longer exists is exactly the "validate a claim we
+  // then dropped" bug this fix exists to close. Zone-aware — see filterDroppedClaims.
+  const claims = filterDroppedClaims(rawClaims, dropped);
+
+  try {
+    // Hard stop, unchanged — no override flag. Runs on the TRUNCATED copy above.
+    assertClaimsSourced(claims, sourceIndex);
+  } catch (err) {
+    if (!/^Claim gate failed/.test(err.message)) throw err;
+    const { violations } = validateClaims(claims, sourceIndex);
+    console.error(`  REJECTED — claim gate failed for "${format.key}": ${violations.length} unsourced claim(s).`);
+    for (const v of violations) console.error(`    [${v.zone}] "${v.text}" — ${v.reason}`);
+    return { ok: false, conceptSlug: format.key, format: format.key, violations, error: err.message };
+  }
+
+  return { ok: true, conceptSlug: format.key, format, zones, claims };
+}
+
+/**
+ * Build every requested concept, isolating a claim-gate failure to the ONE concept
+ * that produced it — mirrors renderVariationTargets: one bad target already couldn't
+ * be allowed to discard money and work spent on the others, and a bad concept is no
+ * different. The one thing this loop does NOT do is catch anything itself — that
+ * belongs to buildConcept (see its docstring), so an unexpected error here still
+ * propagates and aborts the whole run.
+ *
+ * @returns {Promise<{concepts:{format:object, zones:object, claims:object[]}[], rejectedConcepts:{conceptSlug:string, format:string, violations:object[], error:string}[]}>}
+ */
+export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex }) {
+  const concepts = [];
+  const rejectedConcepts = [];
+  for (const format of formats) {
+    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex });
+    if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims });
+    else rejectedConcepts.push({ conceptSlug: result.conceptSlug, format: result.format, violations: result.violations, error: result.error });
+  }
+  return { concepts, rejectedConcepts };
+}
+
+/**
  * @param {{runId:string, product:object, results:object[], renders?:number, budget?:{maxRenders:number, stopped:boolean, skipped:string[]}}} args
  *
  * `renders` and `cost` are here because a run that spends money and reports only
@@ -151,8 +223,14 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  * always said run.json carries costs. `budget` records a budget stop and names every
  * artifact that was dropped because of it, so a short run can never be mistaken for a
  * complete one.
+ *
+ * `rejectedConcepts` (from buildConcepts) names every concept the claim gate rejected
+ * before it ever reached render, with the violations that failed it — so it is never
+ * ambiguous whether a requested concept succeeded, was skipped, or was never asked
+ * for. `totals.requested` is results.length + rejectedConcepts.length: the count of
+ * concepts asked for, independent of how many actually rendered.
  */
-export function buildRunReport({ runId, product, results, renders = 0, budget = null }) {
+export function buildRunReport({ runId, product, results, renders = 0, budget = null, rejectedConcepts = [] }) {
   let accepted = 0;
   let rejected = 0;
   const conceptsWithNoAcceptedVariation = [];
@@ -169,7 +247,7 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
     generatedAt: new Date().toISOString(),
     product: { handle: product.handle, title: product.title },
     models: CREATIVE_MODELS.adStudio,
-    totals: { accepted, rejected, concepts: results.length },
+    totals: { accepted, rejected, concepts: results.length, requested: results.length + rejectedConcepts.length },
     cost: {
       renders,
       perRenderUsd: ESTIMATED_COST_PER_RENDER_USD,
@@ -184,8 +262,42 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
         }
       : null,
     conceptsWithNoAcceptedVariation,
+    rejectedConcepts,
     results,
   };
+}
+
+/**
+ * Build the run report, write run.json, and decide whether the run must fail.
+ *
+ * Extracted from main() for the same reason renderVariationTargets was: "every
+ * concept rejected by the claim gate still writes a report and fails the run" is a
+ * behavior nothing can prove while it only lives inline in main() — main() itself
+ * does live file/network I/O that a unit test has no business triggering.
+ *
+ * run.json is written FIRST, unconditionally — a run where every concept failed the
+ * gate must still leave a human-readable report on disk, not just a non-zero exit
+ * code. The throw below (concepts.length === 0 && rejectedConcepts.length > 0) comes
+ * after that write and only decides the exit code, via the same catch()/
+ * process.exit(1) path any other main() failure already takes.
+ *
+ * A PARTIAL rejection (some concepts rendered, at least one didn't) is not fatal —
+ * it's reported in run.json and the daily-summary notification, same as a budget
+ * stop or an accepted-zero-variations concept already are.
+ */
+export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts }) {
+  const report = buildRunReport({ runId, product, results, renders, budget, rejectedConcepts });
+  writeFileSync(join(runDir, 'run.json'), JSON.stringify(report, null, 2));
+
+  if (concepts.length === 0 && rejectedConcepts.length > 0) {
+    throw new Error(
+      `ad-studio: every requested concept (${rejectedConcepts.length}) was rejected by the claim gate — ` +
+      `nothing rendered. Rejected: ${rejectedConcepts.map(c => c.conceptSlug).join(', ')}. ` +
+      `See ${join(runDir, 'run.json')} for violations.`
+    );
+  }
+
+  return report;
 }
 
 // ── argv / env / data loading ──────────────────────────────────────────────
@@ -604,37 +716,21 @@ async function main() {
 
   const formats = selectFormats(args.formats.length ? args.formats : undefined);
 
-  // Stage 2: copy + the claim gate. Runs regardless of --dry-run — the dry run's whole
-  // purpose is proving the gate fires against real generated copy before anything costs
-  // money on the render side.
-  const concepts = [];
-  for (const format of formats) {
-    console.log(`Copy: ${format.key} (${format.name})...`);
-    const prompt = buildCopyPrompt({ format, product, pdpBody, persona });
-    const msg = await anthropic.messages.create({
-      model: CREATIVE_MODELS.adStudio.copy,
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const { zones: rawZones, claims: rawClaims } = parseCopyResponse(textOf(msg));
+  // Stage 2: copy + the claim gate, per concept. Runs regardless of --dry-run — the
+  // dry run's whole purpose is proving the gate fires against real generated copy
+  // before anything costs money on the render side.
+  //
+  // A claim-gate failure on ONE concept must not cost the others — see buildConcepts/
+  // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
+  // resilience. assertClaimsSourced itself is unchanged: still throws, still no
+  // override flag; buildConcept is the caller the isolation belongs in.
+  const { concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex });
 
-    // Hard cap — a backstop for when the model ignores buildCopyPrompt's capacity
-    // hint (or the capacity hint doesn't apply, e.g. no zoneCapacity declared). Must
-    // run BEFORE the claim gate: the gate has to see the copy that will actually
-    // render, not the pre-truncation draft.
-    const { zones, dropped } = enforceZoneCapacity(rawZones, format);
-
-    // A claim whose text was just truncated away must not reach the gate either — it
-    // will never render, so sourcing it (or failing to) proves nothing, and running
-    // the gate against text that no longer exists is exactly the "validate a claim we
-    // then dropped" bug this fix exists to close. Zone-aware — see filterDroppedClaims.
-    const claims = filterDroppedClaims(rawClaims, dropped);
-
-    // Hard stop — never wrapped in try/catch, no override flag. An unsourced factual
-    // claim must not reach the render stage. Runs on the TRUNCATED copy above.
-    assertClaimsSourced(claims, sourceIndex);
-
-    concepts.push({ format, zones, claims });
+  if (rejectedConcepts.length) {
+    console.log(
+      `\nClaim gate rejected ${rejectedConcepts.length} of ${formats.length} concept(s): ` +
+      `${rejectedConcepts.map(c => c.conceptSlug).join(', ')} — see run.json for violations.`
+    );
   }
 
   if (args.dryRun) {
@@ -657,8 +753,17 @@ async function main() {
       }
       console.log('');
     }
-    console.log('Dry run complete — the claim gate passed for every concept above. No Gemini calls were made.');
-    return { dryRun: true, concepts };
+    for (const c of rejectedConcepts) {
+      console.log(`── ${c.conceptSlug} — REJECTED by the claim gate ──`);
+      for (const v of c.violations) console.log(`  [${v.zone}] "${v.text}" — ${v.reason}`);
+      console.log('');
+    }
+    console.log(
+      concepts.length === formats.length
+        ? 'Dry run complete — the claim gate passed for every concept above. No Gemini calls were made.'
+        : `Dry run complete — ${concepts.length} concept(s) passed the claim gate, ${rejectedConcepts.length} rejected (see above). No Gemini calls were made.`
+    );
+    return { dryRun: true, concepts, rejectedConcepts };
   }
 
   // Stage 3-5: single-pass render → verify → package, one variation directory per N.
@@ -722,14 +827,11 @@ async function main() {
     results.push({ conceptSlug, format: format.key, variations: variationsOut });
   }
 
-  const report = buildRunReport({
-    runId,
-    product,
-    results,
-    renders: budget.used(),
+  const report = finalizeRunReport({
+    runDir, runId, product, results, renders: budget.used(),
     budget: { maxRenders: budget.max, stopped: skippedArtifacts.length > 0, skipped: skippedArtifacts },
+    rejectedConcepts, concepts,
   });
-  writeFileSync(join(runDir, 'run.json'), JSON.stringify(report, null, 2));
   console.log(`\nRun complete: ${report.totals.accepted} accepted / ${report.totals.rejected} rejected. ${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}. Output: data/creatives/ad-studio/${runId}/`);
   if (report.budget?.stopped) {
     console.log(
@@ -748,12 +850,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (result?.dryRun) return; // a proving run, not a production run — no digest noise
       const { report } = result || {};
       const budgetStopped = Boolean(report?.budget?.stopped);
-      const hasGaps = (report?.conceptsWithNoAcceptedVariation?.length || 0) > 0 || budgetStopped;
+      const rejectedByGate = report?.rejectedConcepts?.length || 0;
+      const hasGaps = (report?.conceptsWithNoAcceptedVariation?.length || 0) > 0 || budgetStopped || rejectedByGate > 0;
       const body = report
         ? `${report.totals.accepted} accepted / ${report.totals.rejected} rejected across ${report.totals.concepts} concept(s).` +
           `\n${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}.` +
           (budgetStopped
             ? `\nBUDGET STOP at --max-renders ${report.budget.maxRenders} — ${report.budget.skippedCount} artifact(s) skipped.`
+            : '') +
+          (rejectedByGate
+            ? `\nClaim gate rejected ${rejectedByGate} concept(s): ${report.rejectedConcepts.map(c => c.conceptSlug).join(', ')}.`
             : '') +
           (report.conceptsWithNoAcceptedVariation.length ? `\nNo accepted variation: ${report.conceptsWithNoAcceptedVariation.join(', ')}` : '') +
           `\nOutput: data/creatives/ad-studio/${report.runId}/`
