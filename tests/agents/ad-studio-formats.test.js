@@ -1,14 +1,49 @@
 import { strict as assert } from 'node:assert';
 import { FORMATS, selectFormats, formatByKey } from '../../agents/ad-studio/formats.js';
 
-// Six v1 formats, each with the fields the downstream stages read.
-assert.equal(FORMATS.length, 6);
+// Nine formats, each with the fields the downstream stages read. Six v1 plus three added
+// 2026-08-15 from reference creatives that are actually running (Bonafide, Magic Spoon /
+// MUD\WTR, a kids' supplement before/after).
+assert.equal(FORMATS.length, 9);
 const keys = FORMATS.map(f => f.key);
 assert.deepEqual(
   [...keys].sort(),
-  ['ingredient-callout', 'manifesto', 'offer-focused', 'problem-aware', 'top-x-review', 'us-vs-them']
+  [
+    'ingredient-callout', 'manifesto', 'offer-focused', 'problem-aware', 'stat-stack',
+    'state-contrast', 'testimonial', 'top-x-review', 'us-vs-them',
+  ]
 );
-assert.equal(new Set(keys).size, 6, 'format keys must be unique');
+assert.equal(new Set(keys).size, 9, 'format keys must be unique');
+
+// A format is DATA — nothing downstream branches on a format key, and no zone name is
+// hard-coded anywhere. These three were added without touching a line of logic, which is
+// the property formats.js's header claims and the only thing that keeps it cheap to add
+// the tenth.
+for (const key of ['testimonial', 'stat-stack', 'state-contrast']) {
+  const f = formatByKey(key);
+  assert.ok(f, `${key} must resolve`);
+  assert.deepEqual(selectFormats([key]).map(x => x.key), [key], `${key} must be selectable`);
+}
+
+// state-contrast is a COMPLIANCE-shaped format. Meta prohibits before-and-after imagery in
+// health and beauty — problem-aware's own layoutBrief already encodes that rule for this
+// catalogue, and the reference ad only gets away with the shape because its two states are
+// cartoons rather than photographs of a body. So the contrast is illustrated and about the
+// EXPERIENCE, and the brief has to say so in terms nobody can misread.
+{
+  const sc = formatByKey('state-contrast').layoutBrief;
+  assert.ok(/NEVER a photograph of skin, a body, a face/i.test(sc), 'must forbid photographic before/after');
+  assert.ok(/depiction of a skin condition/i.test(sc), 'must forbid depicting a condition');
+  assert.ok(/prohibited in health and beauty/i.test(sc), 'must say why, so nobody relaxes it');
+}
+
+// A testimonial quote is the one zone that CANNOT be written — it has to be a real review.
+// claims.js already owns enforcement (sourceId `reviews`); this just makes sure the copy
+// stage is told, because an invented quote is the worst thing this pipeline could emit.
+assert.ok(
+  /MUST BE A REAL CUSTOMER REVIEW/i.test(formatByKey('testimonial').layoutBrief),
+  'the testimonial brief must demand a verbatim review quote',
+);
 
 for (const f of FORMATS) {
   assert.ok(f.name, `${f.key} needs a name`);
@@ -98,8 +133,8 @@ assert.equal(formatByKey('top-x-review').productProminent, true);
 assert.equal(formatByKey('offer-focused').productProminent, true);
 
 // selectFormats
-assert.equal(selectFormats().length, 6, 'no args returns the full rotation');
-assert.equal(selectFormats([]).length, 6, 'empty array returns the full rotation');
+assert.equal(selectFormats().length, 9, 'no args returns the full rotation');
+assert.equal(selectFormats([]).length, 9, 'empty array returns the full rotation');
 assert.deepEqual(selectFormats(['manifesto']).map(f => f.key), ['manifesto']);
 assert.deepEqual(
   selectFormats(['manifesto', 'us-vs-them']).map(f => f.key),

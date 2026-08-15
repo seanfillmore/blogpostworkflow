@@ -285,6 +285,114 @@ export const FORMATS = [
       'The top of the frame and the left side are empty ground. Nothing else appears in the picture.',
     ].join(' '),
   },
+
+  // ── Added 2026-08-15 from reference creatives Sean collected ──────────────────────
+  //
+  // Three shapes the rotation had no answer for, taken from ads that are running:
+  // Bonafide (quote-led), Magic Spoon and MUD\WTR (stats radiating off a centred hero),
+  // and a kids' supplement ad that contrasts a before state with an after state.
+  //
+  // STYLE ONLY (Sean, 2026-08-15). Several of those references have visibly garbled
+  // machine-generated label text — "Zaro Sugar", "Het Flash Relief", "tummy discomrfort"
+  // shipped in a live ad. We are reading their LAYOUT and their ANGLE, never their copy,
+  // and that garbling is itself the argument for plate-first: they baked type into the
+  // render and it broke.
+  {
+    key: 'testimonial',
+    name: 'Testimonial / customer quote',
+    awareness: 'problem',
+    pairsImagesWithLabels: false,
+    // The quote dominates and the product sits small beneath it, exactly as in the
+    // reference. Not label-legible, so the gate must not demand the label back — same
+    // reasoning as manifesto. The volume is still checked on every format.
+    productProminent: false,
+    // "headline" IS the quote here. Every format carries a headline zone; naming this one
+    // "quote" would break that invariant for no gain.
+    zones: ['headline', 'attribution', 'trustLine'],
+    layoutBrief: [
+      `A large opening quotation mark at the top, then a customer quote set very large across the upper half,`,
+      `black on white, the most emotive phrase in heavier weight than the rest.`,
+      'Beneath it the attribution on its own line, smaller and grey.',
+      'The product stands centred in the lower third at modest scale.',
+      'A short line of third-party credibility sits beside it, with a row of stars.',
+      'THE QUOTE MUST BE A REAL CUSTOMER REVIEW, quoted verbatim from the reviews source — never written.',
+      'A supplement disclaimer is required in the finished ad and is set by hand at the very bottom.',
+    ].join(' '),
+    // The quote needs a lot of quiet white space above the product, and the credibility
+    // line needs room beside it.
+    plateSetting: 'studio',
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
+      'The product stands upright, centred left to right, small and low — its base on the lower fifth and',
+      'its top reaching no higher than a third of the way up the frame.',
+      'The whole upper two-thirds is empty ground. Nothing else appears in the picture.',
+    ].join(' '),
+  },
+  {
+    key: 'stat-stack',
+    name: 'Stat stack / annotated hero',
+    awareness: 'solution',
+    pairsImagesWithLabels: false,
+    // "clearly the hero, centred" at full size — the label is the point of the frame.
+    productProminent: true,
+    zones: ['headline', 'stats', 'bottomBar'],
+    // Four short stats, one per corner around a centred hero. The references run four
+    // (MUD\WTR) to six (Magic Spoon); six crowds a phone-width frame and the fifth and
+    // sixth end up overlapping the product.
+    zoneCapacity: { stats: 4 },
+    layoutBrief: [
+      'A short benefit headline across the top, then the product standing centred as the hero at full size,',
+      'lit like premium product photography with a soft contact shadow.',
+      'Four short stats sit around it, one per corner, each a large number or figure above a small caption,',
+      'and each joined to the product by a hand-drawn curved arrow.',
+      'A solid bar across the very bottom carries one line of letterspaced caps.',
+      'Every stat must be a figure quoted from a named source — never an invented number.',
+    ].join(' '),
+    plateSetting: 'studio',
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
+      'The product stands upright, centred both left to right and top to bottom, at hero scale, occupying',
+      'roughly the middle third of the frame with a soft contact shadow.',
+      'Wide, even margins of empty ground surround it on all four sides.',
+      'Nothing else appears in the picture.',
+    ].join(' '),
+  },
+  {
+    key: 'state-contrast',
+    name: 'State contrast (before / after)',
+    awareness: 'problem',
+    pairsImagesWithLabels: false,
+    productProminent: true,
+    zones: ['headline', 'subhead', 'beforeLabel', 'afterLabel', 'bottomBar'],
+    // COMPLIANCE, and it is the reason this format is shaped the way it is. Meta's health
+    // and beauty policy prohibits before-and-after imagery, and problem-aware's own
+    // layoutBrief already encodes that rule for this catalogue. The reference ad gets away
+    // with the shape because its two states are CARTOON ILLUSTRATIONS, not photographs of
+    // a body.
+    //
+    // So the contrast here is illustrated and it is about the EXPERIENCE, never the skin:
+    // no body, no face, no photographic skin, no depiction of a condition. And because the
+    // illustrations are artwork, the operator draws them in Photoshop — which means this
+    // format's plate is simply the product with the two state areas left empty.
+    layoutBrief: [
+      'A two-state contrast reading left to right: a "before" state on the left, a chevron or arrow in the',
+      'middle, and an "after" state on the right, each drawn as a simple flat illustration with a short label.',
+      'A bold headline sits across the top with a supporting line beneath it.',
+      'The product stands centred and lower, between the two states, at full size.',
+      'A bar across the bottom carries short benefit phrases.',
+      'The two states illustrate the EXPERIENCE — a routine, a moment, a feeling — as flat illustration only.',
+      'NEVER a photograph of skin, a body, a face, or any depiction of a skin condition: before-and-after',
+      'imagery of a person is prohibited in health and beauty and will have the ad rejected.',
+    ].join(' '),
+    plateSetting: 'studio',
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
+      'The product stands upright, centred left to right, its base on the lower third and its top reaching',
+      'about the middle of the frame.',
+      'Wide areas of empty ground sit to the left and to the right of it, and across the top.',
+      'Nothing else appears in the picture.',
+    ].join(' '),
+  },
 ];
 
 // A format with no plateBrief must not silently fall back to layoutBrief — that fallback

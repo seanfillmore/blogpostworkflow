@@ -30,7 +30,7 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 |---|---|---|
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`, and its manifest entry must carry a `unitCount` (see below). |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). **Required.** It used to be optional, and omitting it meant the whole six-format rotation — 108 renders ≈ $14 from a flag nobody typed. An unknown key is rejected with the valid list. |
+| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`). **Required.** It used to be optional, and omitting it meant the whole six-format rotation — 108 renders ≈ $14 from a flag nobody typed. An unknown key is rejected with the valid list. |
 | `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta=1:1,meta=4:5`** — see below. |
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
@@ -81,7 +81,7 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
 
    | setting | formats | what may share the frame |
    |---|---|---|
-   | `studio` | `us-vs-them`, `ingredient-callout`, `manifesto`, `offer-focused` | nothing — a plain even ground and the product |
+   | `studio` | `us-vs-them`, `ingredient-callout`, `manifesto`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast` | nothing — a plain even ground and the product |
    | `scene` | `problem-aware`, `top-x-review` | a coherent real place, with incidental objects |
 
    In **both** settings a plate brief may never name ad furniture (columns, rules, pills,
@@ -92,6 +92,22 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    `formats.js` throws at load if a format has no `plateSetting` — no default, because
    `studio` would silently strip a setting off a format that wants one and `scene` would
    silently license props on one that does not.
+   **Three formats added 2026-08-15 from reference creatives that are running** — Bonafide
+   (quote-led), Magic Spoon / MUD\WTR (stats radiating off a centred hero), and a kids'
+   supplement before/after. All three were added as **data only**: no zone name is
+   hard-coded anywhere downstream, so nine formats cost the same logic as six.
+
+   *Style only.* Several of those references carry visibly garbled machine-generated label
+   text — `Zaro Sugar`, `Het Flash Relief`, and `tummy discomrfort` in a live Para Guard
+   ad. We read their layout and their angle, never their copy, and that garbling is itself
+   the argument for plate-first: they baked type into the render and it broke.
+
+   | key | shape | notes |
+   |---|---|---|
+   | `testimonial` | big customer quote, attribution, product small beneath, star/credibility line | The quote **must be a verbatim review** — `claims.js` enforces it via the `reviews` source. An invented testimonial is the worst thing this pipeline could emit. A supplement disclaimer is required in the finished ad and is set by hand. |
+   | `stat-stack` | centred hero with four stats in the corners, joined by hand-drawn arrows | `zoneCapacity: { stats: 4 }` — the references run 4–6 and six crowds a phone-width frame into the product. |
+   | `state-contrast` | illustrated before → after with the product between | **Compliance-shaped.** Meta prohibits before-and-after imagery in health and beauty, and `problem-aware`'s brief already encodes that. The reference only gets away with the shape because its states are cartoons. So both states are flat illustration of the *experience* — never a photograph of skin, a body, a face, or a depiction of a condition — and because illustrations are artwork, the operator draws them; the plate is just the product with both state areas empty. |
+
 2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
    `brandKit`, `reviews`) and quote its evidence verbatim.
