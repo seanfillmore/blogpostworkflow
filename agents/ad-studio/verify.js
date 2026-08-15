@@ -146,8 +146,19 @@ export const FIDELITY_ATTRIBUTES = [
   },
   {
     key: 'labelGraphics',
-    label: 'the graphics PRINTED on the label (colour bars or blocks, illustrations, badges, rules)',
-    ask: 'Take each graphic printed on the label in the REFERENCE photographs in turn. Is it present in the render, in the same place, the same shape? A missing solid colour bar, a missing illustration, or a badge whose text sits beside it rather than inside it is a mismatch. Report ONLY reference elements that are missing, moved or reshaped — never an extra element you see in the render, which is far more often a highlight, a reflection or a moulding seam than printed ink.',
+    label: 'the SHAPE and PLACEMENT of the graphics printed on the label (colour bars or blocks, illustrations, badges, rules)',
+    // NARROWED 2026-08-15. This used to invite a judgement on the badge as a whole, and
+    // the badge carries arc-set micro-copy that no vision model reads reliably at render
+    // size. Sean eyeballed both live rejects: the 9:16 badge "looks fine" — a FALSE
+    // POSITIVE that cost three paid attempts — and the 4:5 badge was "definitely
+    // garbled", but that frame was independently rejected for stray "HOIXIM HEADLINE"
+    // text baked into a plate. So narrowing to shape and placement loses no true
+    // positive and drops a whole class of false ones.
+    //
+    // This is the same exclusion buildLabelStrings already applies to badge micro-copy,
+    // for the same reason, and the same lesson as productProminent: when a check demands
+    // something unreadable, accept "cannot read it" rather than burning the retries.
+    ask: 'Take each graphic printed on the label in the REFERENCE photographs in turn. Is it PRESENT in the render, in the same place, and the same shape? A missing solid colour bar, a missing illustration, or a badge that has become a rectangle or moved to the other end of the label is a mismatch. JUDGE SHAPE AND POSITION ONLY — never whether the small text inside or around a badge is spelled correctly or is readable at all. Arc-set badge micro-copy is illegible at render size by design and a garbled-looking badge legend is NOT a mismatch. Report ONLY reference elements that are missing, moved or reshaped — never an extra element you see in the render, which is far more often a highlight, a reflection or a moulding seam than printed ink.',
   },
   {
     key: 'containerColour',
@@ -178,7 +189,7 @@ export const FIDELITY_ATTRIBUTES = [
  */
 export function buildVerifyPrompt({
   expected, format, mode = 'finished', volumeStrings = [],
-  physicalDescription = '', referenceCount = 0,
+  physicalDescription = '', referenceCount = 0, unitCount = 1,
 }) {
   const list = (expected || []).map(s => `  - "${s}"`).join('\n');
   const wantsPairings = format.pairsImagesWithLabels && mode === 'finished';
@@ -192,6 +203,12 @@ export function buildVerifyPrompt({
   const nDefects = wantsFidelity ? 4 : 3;
   const nTranscript = nDefects + 1;
   const nPairings = nTranscript + 1;
+  // The inventory is a PLATE check and numbers after everything else. A finished frame is
+  // supposed to carry columns, rules, ingredient cut-outs and a styled scene — its
+  // layoutBrief asks for them — so there is no "does this belong" question to ask of it.
+  // A plate is specified as the product on empty ground, which makes the question exact.
+  const wantsInventory = isPlate;
+  const nInventory = (wantsPairings ? nPairings : nTranscript) + 1;
 
   const intro = isPlate
     ? `You are proofreading a text-free BACKGROUND PLATE before it goes live. It is not a
@@ -289,6 +306,62 @@ ${physicalDescription ? `
        and intentional line breaks.
    Return [] if there are none.`;
 
+  // R5. SCENE INVENTORY — the check nothing was doing.
+  //
+  // The 2026-08-15 plate carried a ghost second bottle, a wood slice, greenery and a
+  // coconut, and passed. Every existing check had a reason not to see it: FIDELITY_
+  // ATTRIBUTES are phrased about *the* product, singular, so the verifier silently picked
+  // one unit ("the large bottle on the right") and judged that; the volume scan was gated;
+  // and the stray-text rule correctly exempts text on the product's own label, which
+  // exempted the ghost bottle's wrong volume twice over.
+  //
+  // The generalisable shape: EVERY CHECK ASSUMED EXACTLY ONE PRODUCT IN THE FRAME. When
+  // adding a check here, ask what it assumes about how many of something is present.
+  //
+  // This is an inventory, not a unit count (Sean, 2026-08-15). A hard-coded "exactly one"
+  // would fail every genuine multi-unit product — foam-soap-bundle, both starter sets and
+  // the lip balm four-pack — so the expected number comes from product.unitCount, and the
+  // model is asked to CLASSIFY each object rather than to judge "does this belong".
+  // Classification is the more reliable ask, and its output ("a wood slice, a coconut, a
+  // second partially-rendered bottle") is actionable where "count: 2" is not. Same move as
+  // the pointed per-attribute fidelity questions: specific beats open-ended.
+  //
+  // The verifier is NOT told how many units to expect. Telling it would be R1's exact
+  // failure mode — an open question answered towards the number in the prompt — and the
+  // whole point is to learn what is in the frame from a model that does not know what the
+  // right answer is. inventoryVerdict does the comparison against unitCount in code.
+  const inventorySection = wantsInventory
+    ? `${nInventory}. SCENE INVENTORY — list EVERY distinct physical object you can see in the frame, in
+   "sceneInventory". Work across the whole image, including anything faint, blurred,
+   ghosted, semi-transparent, out of focus, reflected, or cropped by the frame edge. An
+   object that is only half-rendered is still an object and MUST be listed.
+
+   For each one give:
+     "object" — a short concrete description including where it sits ("a white lotion
+                bottle, centre right", "a slice of wood under the bottle", "a second,
+                partly faded bottle behind the first")
+     "kind"   — exactly one of:
+                  "product-unit" — a unit of the product being advertised, INCLUDING a
+                                   faded, ghosted, duplicated or partially rendered one.
+                                   Count every one you can see separately, even if two
+                                   are the same item shown twice.
+                  "surface"      — the ground, table, backdrop or background the product
+                                   rests on or against. There is normally exactly one.
+                  "other"        — anything else at all: ingredients, fruit, nuts, leaves,
+                                   greenery, wood slices, boards, trays, bowls, cloths,
+                                   stones, water, splashes, packaging boxes, props of any
+                                   kind, decorative shapes.
+
+   NOT objects — never list these: shadows, reflected light, highlights, gradients,
+   vignettes, blur, grain, or the empty background itself considered separately from the
+   surface. Lighting is not a thing in the scene.
+
+   Report what you SEE, not what you expect a clean advertisement to contain. If there is
+   a second bottle you are unsure about, list it — an object listed in error costs one
+   re-render, an object omitted ships.
+
+` : '';
+
   // R4. With reference photographs attached there is more than one image in the call, and
   // every other section asks about exactly one of them. Saying which is which is not
   // optional: a model that transcribes the label off a reference photograph would report
@@ -350,17 +423,22 @@ ${nTranscript}. TRANSCRIPT — every piece of text visible in the image, as rend
 ${wantsPairings ? `
 ${nPairings}. PAIRINGS — this layout pairs a picture with each label. For every such pair, report the
    label text, a short description of what the picture actually depicts, and whether they
-   match.` : ''}
-
-Respond with JSON only:
+   match.
+` : ''}
+${inventorySection}Respond with JSON only:
 {
   "checks": [{ "expected": "...", "found": true, "rendered": "..." }],
   "productVolume": "...",${wantsFidelity ? `
   "fidelity": [{ "attribute": "${FIDELITY_ATTRIBUTES[0].key}", "verdict": "MATCH", "detail": "..." }],` : ''}
   "defects": [{ "text": "...", "issue": "${isPlate ? 'stray-text' : 'obscured'}", "detail": "..." }],
   "transcript": ["...", "..."]${wantsPairings ? `,
-  "pairings": [{ "label": "...", "depicts": "...", "matches": true }]` : ''}
-}${wantsFidelity ? `
+  "pairings": [{ "label": "...", "depicts": "...", "matches": true }]` : ''}${wantsInventory ? `,
+  "sceneInventory": [{ "object": "...", "kind": "product-unit" }]` : ''}
+}${wantsInventory ? `
+
+("sceneInventory" must list every object in the frame, one entry each. It is a factual
+inventory, not a judgement about whether the image is good — do not leave an object out
+because it looks like it belongs, and do not merge two units into one entry.)` : ''}${wantsFidelity ? `
 
 ("fidelity" must carry one entry for EVERY attribute listed in section ${nFidelity}, in that order.)` : ''}${volumeStrings.length ? `
 
@@ -402,6 +480,9 @@ export function parseVerifyResponse(raw) {
     // Absent → []. fidelityVerdict, not the parser, decides what an empty list means:
     // nothing when no reference photographs were sent, a hard fail when they were.
     fidelity: Array.isArray(obj.fidelity) ? obj.fidelity : [],
+    // Absent → []. Same division of labour: inventoryVerdict decides that an empty
+    // inventory means "unreported" on a plate and means nothing on a finished frame.
+    sceneInventory: Array.isArray(obj.sceneInventory) ? obj.sceneInventory : [],
   };
 }
 
@@ -626,8 +707,9 @@ export function selectVolumeStrings(labelStrings) {
  * renders in one live run while this function said "match". Do not put the volume back
  * into the expected set; if this check is not strict enough, make this check stricter.
  *
- * `transcript` is the response's own transcript of the frame, used ONLY as a fallback
- * when there is no direct reading, and only to fail. See the loop below.
+ * `transcript` is the response's own transcript of the frame. It is scanned on EVERY
+ * call, not only when the direct reading is missing, and can only ever fail a render.
+ * See the loop below for why the old gate let a wrong volume through.
  *
  * @returns {{ok:boolean, status:string, read:string, source:string, expected:string[]}}
  */
@@ -656,35 +738,39 @@ export function volumeVerdict(productVolume, volumeStrings, transcript = []) {
     ? { oz: null, ml: null, wtOz: null, g: null }
     : readVolume(read);
 
-  // A direct reading beats everything else — it is the answer to the question that was
-  // asked about exactly this marking.
-  if (hasVolumeReading(direct)) {
-    const ok = agreesWithTruth(direct);
-    return { ok, status: ok ? 'match' : 'mismatch', read, source: 'reported', expected: expectedList };
+  // A WRONG direct reading fails immediately and is reported as itself: it is the answer
+  // to the question asked about exactly this marking, so it is the most actionable thing
+  // to put in front of a human triaging the reject.
+  if (hasVolumeReading(direct) && !agreesWithTruth(direct)) {
+    return { ok: false, status: 'mismatch', read, source: 'reported', expected: expectedList };
   }
 
-  // No direct reading: the model answered ILLEGIBLE, or typed prose with no number in
-  // it. Before accepting that, check whether it CONTRADICTED itself elsewhere in the
-  // same response.
+  // The direct reading is now either absent or correct. Scan the response's own
+  // transcript for a volume that CONTRADICTS the truth — UNCONDITIONALLY.
   //
-  // Live case, top-x-review/v1/plate-1_91x1.jpg: "productVolume": "ILLEGIBLE" while the
-  // same call's transcript carried "0 fl. oz. • 236ml" — a misrendered 8. Two readings
-  // of the same pixels in one call, disagreeing. Until R2b the per-string check happened
-  // to catch it, because the volume was also in the expected set; it no longer is, and
-  // the volume must still be caught by the mechanism that owns it.
+  // This used to run only when there was no direct reading, and that gate is how the
+  // 2026-08-15 plate passed. The response transcript carried BOTH "8 fl. oz • 236ml" and
+  // "8 fl. oz . 230ml" — the second one printed on a ghost second bottle — while the
+  // direct "productVolume" answer was correct, so the fallback never ran and the frame
+  // was accepted.
   //
-  // This is not a second opinion on top of a first — it runs ONLY where there is no
-  // direct reading at all, and it can only ever FAIL a render, never pass one. That
-  // direction matters: R1's whole finding is that open transcription auto-corrects
-  // TOWARDS the truth, so a transcript that volunteers a contradicting volume is
-  // reporting a defect against its own bias. Taken across all 27 artifacts of the live
-  // run this was derived from, it fires on exactly that one frame.
+  // The old docstring's own justification for the gate was that the scan "can only ever
+  // FAIL a render, never pass one". That is an argument for running it ALWAYS, not for
+  // gating it: a check that cannot produce a false pass costs nothing to run, and there
+  // was never a reason to make a correct direct reading suppress it. R1's finding cuts
+  // the same way — open transcription auto-corrects TOWARDS the truth, so a transcript
+  // that volunteers a contradicting volume is reporting a defect against its own bias.
+  // One frame reading its volume correctly does not mean every unit in the frame does.
   for (const run of transcript || []) {
     const got = readVolume(run);
     if (!hasVolumeReading(got)) continue;
     if (!agreesWithTruth(got)) {
       return { ok: false, status: 'mismatch', read: String(run).trim(), source: 'transcript', expected: expectedList };
     }
+  }
+
+  if (hasVolumeReading(direct)) {
+    return { ok: true, status: 'match', read, source: 'reported', expected: expectedList };
   }
 
   return { ok: true, status: 'illegible', read, source: 'reported', expected: expectedList };
@@ -764,6 +850,76 @@ export function fidelityVerdict(fidelity, { hasReference = false } = {}) {
   return { ok: true, status, mismatches: [], answers };
 }
 
+// R5. Inventory `kind` values, and how a word nobody anticipated is read.
+//
+// The asymmetry is the opposite of FIDELITY_MISMATCH_RE's, on purpose. There, an
+// unrecognised word is read as cannot-tell, because a missed check costs one unverified
+// attribute while a misread costs three paid renders of a correct frame. Here, the model
+// has just told us there IS an object and has described it; the only open question is
+// which bucket it falls in. Reading "prop" or "decoration" or "garnish" as `surface`
+// would silently drop it from the gate — the exact way the ghost bottle got through — so
+// anything that is not clearly a product unit or the ground is treated as `other`.
+const INVENTORY_PRODUCT_RE = /^(product[\s-]?unit|product|unit|item|bottle|tube|jar|container|the\s+product)s?\.?$/i;
+const INVENTORY_SURFACE_RE = /^(surface|ground|background|backdrop|table|floor|wall|base)s?\.?$/i;
+
+/**
+ * One reported `kind` → 'product-unit' | 'surface' | 'other'.
+ */
+export function normalizeInventoryKind(kind) {
+  const k = String(kind ?? '').trim();
+  if (INVENTORY_PRODUCT_RE.test(k)) return 'product-unit';
+  if (INVENTORY_SURFACE_RE.test(k)) return 'surface';
+  return 'other';
+}
+
+/**
+ * R5. Does the frame contain the product and nothing else?
+ *
+ * Runs on PLATES only. A finished frame is supposed to carry the furniture its
+ * layoutBrief describes, so "does this object belong" has no answer there; a plate is
+ * specified as the product on empty ground, which makes the question exact.
+ *
+ * Two ways to fail, and they are reported separately because they are different bugs:
+ *
+ *   - the wrong NUMBER of product units. Compared against product.unitCount, never
+ *     against a hard-coded 1: foam-soap-bundle is three bottles and both starter sets
+ *     are multi-item, so "exactly one" would reject every correct render of them. Too
+ *     many catches the ghost second bottle; too few catches a bundle rendered short.
+ *   - any `other` object at all — a wood slice, a coconut, greenery, a prop.
+ *
+ * An EMPTY inventory on a plate is a fail, not a pass. The model was asked for the one
+ * thing every frame has at least one of; getting nothing back means the question was not
+ * answered, and scoring an unanswered question as clean is how a gate becomes decorative.
+ * Same posture as fidelityVerdict's 'unreported'.
+ *
+ * @param {object[]} inventory
+ * @param {{expectedUnits?:number, mode?:string}} opts
+ */
+export function inventoryVerdict(inventory, { expectedUnits = 1, mode = 'finished' } = {}) {
+  if (mode !== 'plate') {
+    return { ok: true, status: 'not-applicable', units: [], strays: [], expectedUnits };
+  }
+
+  const entries = (Array.isArray(inventory) ? inventory : [])
+    .filter(e => e && (typeof e.object === 'string' ? e.object.trim() : ''))
+    .map(e => ({ object: String(e.object).trim(), kind: normalizeInventoryKind(e.kind) }));
+
+  if (entries.length === 0) {
+    return { ok: false, status: 'unreported', units: [], strays: [], expectedUnits };
+  }
+
+  const units = entries.filter(e => e.kind === 'product-unit');
+  const strays = entries.filter(e => e.kind === 'other');
+
+  if (units.length !== expectedUnits) {
+    return { ok: false, status: 'wrong-unit-count', units, strays, expectedUnits };
+  }
+  if (strays.length) {
+    return { ok: false, status: 'stray-objects', units, strays, expectedUnits };
+  }
+  return { ok: true, status: 'clean', units, strays, expectedUnits };
+}
+
 const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled', 'stray-text']);
 
 // Does this string quote any actual rendered character? Letters and digits only —
@@ -839,7 +995,7 @@ export function normalizeDefects(defects, mode = 'finished') {
 export function verdictFor({
   expected, checks, productVolume = '', defects = [], transcript = [],
   pairings, format, mode = 'finished', volumeStrings = [],
-  fidelity = [], hasReference = false,
+  fidelity = [], hasReference = false, sceneInventory = [], unitCount = 1,
 }) {
   const reasons = [];
 
@@ -894,6 +1050,25 @@ export function verdictFor({
     for (const d of reportedDefects) reasons.push(`  [${d.issue}] "${d.text}"${d.detail ? ` — ${d.detail}` : ''}`);
   }
 
+  // 4b. Scene inventory (R5) — plates only. Is the product in the frame, in the right
+  //     number, with nothing else beside it? This is the check that was missing when a
+  //     plate carrying a ghost second bottle, a wood slice, greenery and a coconut passed
+  //     every other question in this file.
+  const inventory = inventoryVerdict(sceneInventory, { expectedUnits: unitCount, mode });
+  if (!inventory.ok) {
+    if (inventory.status === 'unreported') {
+      reasons.push('no scene inventory reported for a plate');
+    } else if (inventory.status === 'wrong-unit-count') {
+      reasons.push(
+        `the frame shows ${inventory.units.length} unit(s) of the product, expected ${inventory.expectedUnits}`
+      );
+      for (const u of inventory.units) reasons.push(`  [unit] ${u.object}`);
+    } else {
+      reasons.push(`${inventory.strays.length} object(s) in the frame that a plate must not contain`);
+      for (const s of inventory.strays) reasons.push(`  [stray] ${s.object}`);
+    }
+  }
+
   // 5. Image/label pairing — unchanged, still the design's centrepiece.
   let mismatchedPairs = [];
   if (format.pairsImagesWithLabels && mode === 'finished') {
@@ -914,6 +1089,7 @@ export function verdictFor({
     checkDetails: details,
     volume,
     fidelity: productFidelity,
+    inventory,
     defects: reportedDefects,
     mismatchedPairs,
     // Diagnostic only — see R1. Recorded in proof.json so a human reading a failure can

@@ -15,8 +15,9 @@
 
 import { GoogleGenAI } from '@google/genai';
 import Anthropic from '../../lib/anthropic.js';
-import { readFileSync, writeFileSync, mkdirSync, appendFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, appendFileSync, existsSync, cpSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { renderVariation, buildRenderPrompt, buildCompPrompt, selectReferencePhotos } from './render.js';
@@ -162,7 +163,7 @@ export async function critiqueArtifact({ anthropic, buffer, mediaType, format, z
  * is reported, never silently swallowed.
  * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, budgetStopped:boolean, proof:object}>}
  */
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', maxAttempts = 3, budget = null }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null }) {
   // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
   // can compare the product it got against the product it asked for. Capped below what
   // the renderer gets: two angles are enough to judge silhouette, cap and label order,
@@ -218,7 +219,7 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
           { type: 'image', source: { type: 'base64', media_type: lastMediaType, data: lastBuffer.toString('base64') } },
           { type: 'text', text: buildVerifyPrompt({
             expected, format, mode, volumeStrings,
-            physicalDescription, referenceCount: referencePhotos.length,
+            physicalDescription, referenceCount: referencePhotos.length, unitCount,
           }) },
         ],
       }],
@@ -234,10 +235,10 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
       );
     }
 
-    const { checks, productVolume, defects, transcript, pairings, fidelity } = parseVerifyResponse(textOf(msg));
+    const { checks, productVolume, defects, transcript, pairings, fidelity, sceneInventory } = parseVerifyResponse(textOf(msg));
     lastProof = verdictFor({
       expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings,
-      fidelity, hasReference: referencePhotos.length > 0,
+      fidelity, hasReference: referencePhotos.length > 0, sceneInventory, unitCount,
     });
     lastProof.transcript = transcript;
 
@@ -438,6 +439,53 @@ export function finalizeRunReport({ runDir, runId, product, results, renders, bu
   return report;
 }
 
+/**
+ * Copy a finished run's output somewhere `git worktree remove` cannot reach.
+ *
+ * Run output lands in `data/creatives/ad-studio/<runId>/` under whatever checkout the
+ * agent was launched from. That path is gitignored, so inside a worktree it is untracked
+ * — and `git worktree remove --force` deletes untracked files. That is how a set of
+ * sample plates was destroyed before Sean had seen them.
+ *
+ * The fix cannot be "remember to copy them first", so this runs at the end of every run.
+ *
+ * Destination, in order: $AD_STUDIO_ARCHIVE_DIR, else `data/creatives/ad-studio/` under
+ * the MAIN checkout, found via git's common dir (a worktree's `.git` file points at
+ * `<main>/.git/worktrees/<name>`, and the common dir is `<main>/.git`). When the agent is
+ * already running in the main checkout the destination equals the source and this no-ops.
+ *
+ * Never throws. A failed archive copy must not turn a successful, paid run into an error
+ * — the images are still on disk at that point, and the whole purpose is to lose less.
+ *
+ * @returns {string|null} the directory copied to, or null if nothing was copied
+ */
+export function archiveRunOutput({ runDir, runId, root = ROOT, env = process.env } = {}) {
+  try {
+    if (!existsSync(runDir)) return null;
+
+    let destRoot = String(env.AD_STUDIO_ARCHIVE_DIR || '').trim();
+    if (!destRoot) {
+      const commonDir = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], {
+        cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim();
+      if (!commonDir) return null;
+      destRoot = join(dirname(commonDir), 'data', 'creatives', 'ad-studio');
+    }
+
+    const dest = join(destRoot, runId);
+    // Same checkout — the files are already where they will stay.
+    if (resolve(dest) === resolve(runDir)) return null;
+
+    mkdirSync(destRoot, { recursive: true });
+    cpSync(runDir, dest, { recursive: true });
+    return dest;
+  } catch (err) {
+    console.warn(`ad-studio: could not archive run output (${err.message}). The run itself is unaffected; ` +
+      `copy ${runDir} by hand before removing this worktree.`);
+    return null;
+  }
+}
+
 // ── argv / env / data loading ──────────────────────────────────────────────
 
 export function parseArgs(argv) {
@@ -556,7 +604,8 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
     const r = await renderWithRetry({
       gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected: expectedPlate, format,
       zones, deliveryRatio: target.ratio,
-      mode: 'plate', volumeStrings, physicalDescription: product.physicalDescription, budget,
+      mode: 'plate', volumeStrings, physicalDescription: product.physicalDescription,
+      unitCount: product.unitCount, budget,
     });
 
     if (!r.buffer) {
@@ -1086,6 +1135,11 @@ async function main() {
     rejectedConcepts, concepts,
   });
   console.log(`\nRun complete: ${report.totals.accepted} accepted / ${report.totals.rejected} rejected. ${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}. Output: data/creatives/ad-studio/${runId}/`);
+
+  // Copy the images somewhere `git worktree remove --force` cannot reach. Runs on every
+  // run, because "remember to copy them first" is what lost a set of sample plates.
+  const archived = archiveRunOutput({ runDir, runId });
+  if (archived) console.log(`Archived to: ${archived}`);
 
   if (report.ranking.length) {
     console.log('\nBest frames first:');

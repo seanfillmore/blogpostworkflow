@@ -98,7 +98,7 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    of those. A missing or invalid `unitCount` **aborts the run** rather than defaulting to
    1 — the same posture as empty `labelStrings`, and for the same reason: a silent default
    is how a wrong assumption ships without anyone deciding it.
-5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — four checks, all required:
+5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — five checks, all required:
 
    - **Per-string checks.** For each requested string, a *pointed* question — does this
      exact character sequence appear, yes or no, and what does that region actually
@@ -112,7 +112,14 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    - **Product volume.** Read-or-`ILLEGIBLE`, on **every** format. `ILLEGIBLE` passes
      (the legitimate small-product case), a value agreeing with the real volume passes,
      a value that contradicts it **fails**. Numbers are compared, not strings, so
-     punctuation never fails a render and a wrong number always does.
+     punctuation never fails a render and a wrong number always does. The response's own
+     transcript is **also** scanned for a contradicting volume, on every call — not only
+     when the direct reading is missing. That gate is how the 2026-08-15 plate passed: the
+     response carried both `8 fl. oz • 236ml` (correct, off the hero bottle) and
+     `8 fl. oz . 230ml` (wrong, printed on a ghost second bottle), and because the direct
+     answer was right the scan never ran. The old justification for gating it — that the
+     scan "can only ever FAIL a render, never pass one" — was always the argument for
+     running it unconditionally.
    - **Defects — the question is inverted per mode.** On a **finished frame**, any of the
      ad's own typeset copy that is obscured, cut off at the frame edge, or garbled fails
      the render; a live frame had the product bottle sitting on top of the word "actually"
@@ -159,6 +166,38 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
      missing, moved or reshaped, and explicitly not whether extra elements appeared,
      because every false positive found was an "extra" that turned out to be a highlight.
      Do not widen either one back.
+
+     **A third narrowing, 2026-08-15: `labelGraphics` judges SHAPE AND PLACEMENT ONLY,
+     never micro-copy.** The badge carries arc-set text no vision model reads reliably at
+     render size. Both live rejects were eyeballed: the 9:16 badge "looks fine" — a false
+     positive that cost three paid attempts — and the 4:5 badge was "definitely garbled",
+     but that frame was independently rejected for stray `"HOIXIM HEADLINE"` text baked
+     into a plate. So the narrowing loses no true positive. It is the same exclusion
+     `buildLabelStrings` already applies, for the same reason, and the same lesson as
+     `productProminent`: when a check demands something unreadable, accept "cannot read
+     it" rather than burning the retries.
+   - **Scene inventory — plates only.** The verifier lists **every** distinct object in the
+     frame and classifies each as `product-unit`, `surface` or `other`. The count of
+     product units must equal the product's `unitCount`, and there must be no `other`
+     objects at all. An empty inventory on a plate **fails** as unreported.
+
+     Why it exists: the 2026-08-15 plate carried a ghost second bottle, a wood slice,
+     greenery and a coconut, and passed everything above. Each check had a reason not to
+     see it — `FIDELITY_ATTRIBUTES` are phrased about *the* product, singular, so the
+     verifier silently picked one unit and judged that; the volume transcript scan was
+     gated; and the stray-text rule correctly exempts text on the product's own label,
+     which exempted the ghost bottle's wrong volume twice over. **The generalisable shape:
+     every check assumed exactly one product in the frame. When adding a check here, ask
+     what it assumes about how many of something is present.**
+
+     It is an inventory, not a unit count, and that is the point: a hard-coded "exactly
+     one" would fail every genuine multi-unit product, while an inventory handles bundles
+     naturally *and* still catches a ghost bottle. Its output — "a wood slice, a coconut, a
+     second partially-rendered bottle" — is actionable where "count: 2" is not. The
+     verifier is **never told how many units to expect**: that would be R1's exact failure
+     mode, an open question answered towards the number in the prompt. `inventoryVerdict`
+     does the comparison in code. Finished frames are not inventoried — their `layoutBrief`
+     asks for the furniture, so "does this belong" has no answer there.
 
    - **Pairing**, on **finished frames** of formats that pair a picture with a label.
      Not applied to Demand Gen plates: a plate is text-free by construction, so it has
@@ -259,6 +298,15 @@ This file is a few bytes per frame and must outlive the images, which
 `scripts/prune-ad-studio.mjs` deletes on a 90-day window.
 
 ## Housekeeping
+
+**Every run auto-archives its output.** At the end of a run `archiveRunOutput` copies
+`data/creatives/ad-studio/<runId>/` to the same path under the **main checkout**, found via
+git's common dir. Run output is gitignored, which inside a worktree means untracked — and
+`git worktree remove --force` deletes untracked files. That is how a set of sample plates
+was destroyed before anyone had seen them. Set `AD_STUDIO_ARCHIVE_DIR` to send it somewhere
+else; running in the main checkout no-ops, because the destination is already the source.
+A failed copy warns and never fails the run — the images are on disk by then, and turning a
+successful paid run into a crash over a backup is strictly worse.
 
 `data/creatives/ad-studio/` is gitignored (one default run is ~137 MB of 2K renders) and
 accumulates with every run. The production box has a 24 GB disk and a full one has
