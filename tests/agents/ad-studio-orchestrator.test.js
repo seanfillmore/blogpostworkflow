@@ -364,6 +364,7 @@ const product = {
   title: 'Lotion',
   priceLabel: '$30',
   labelStrings: ['real SKIN CARE', '8 fl. oz. (236ml)'],
+  unitCount: 1,
 };
 const brandKit = { palette_hexes: ['#000000', '#EDE5D8'] };
 const zones = { headline: 'Six Ingredients.' };

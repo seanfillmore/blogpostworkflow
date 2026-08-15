@@ -19,6 +19,32 @@ for (const f of FORMATS) {
   assert.ok(f.zones.includes('headline'), `${f.key} must have a headline zone`);
   assert.ok(f.layoutBrief.length > 100, `${f.key} needs a real layout brief`);
   assert.ok(!/#C1DF6D/i.test(f.layoutBrief), `${f.key} must not use the retired green`);
+
+  // The plate is the artifact that ships, so its brief is as mandatory as the layout's.
+  // A format with no plateBrief used to fall back to layoutBrief and render the finished
+  // ad's props onto the base — see formats.js's note on the 2026-08-15 incident.
+  assert.ok(f.plateBrief && f.plateBrief.length > 100, `${f.key} needs a real plate brief`);
+  assert.notEqual(f.plateBrief, f.layoutBrief, `${f.key}'s plate brief must not just be the layout brief`);
+  assert.ok(!/#C1DF6D/i.test(f.plateBrief), `${f.key} must not use the retired green`);
+
+  // A plateBrief may name the ground and the product's size and position, and nothing
+  // else. Every word below is something that appeared on, or produced, the plate Sean
+  // rejected: props, scene dressing, ingredient imagery and a second unit.
+  assert.ok(
+    !/\b(ingredient|coconut|wood|greenery|leaf|leaves|prop|flat-?lay|lifestyle|column|badge|headline|icon|checklist|bar\b)/i.test(f.plateBrief),
+    `${f.key}'s plate brief names finished-ad furniture or scene dressing`
+  );
+  // It must positively say nothing else is in frame, so the instruction is not carried by
+  // render.js's negations alone — those are what lost last time.
+  assert.ok(/nothing else appears/i.test(f.plateBrief), `${f.key}'s plate brief must exclude everything else`);
+
+  // ...but it must NOT state a unit count. That is per-product (product.unitCount), not
+  // per-format: baking "a single unit" in here would reject every correct render of the
+  // foam soap bundle, the lip balm four-pack and both starter sets.
+  assert.ok(
+    !/\b(single|one|two|three|four)\s+(unit|bottle|tube|jar|item|piece)/i.test(f.plateBrief),
+    `${f.key}'s plate brief must not fix a unit count — that is product.unitCount's job`
+  );
 }
 
 // The two formats whose layouts pair pictures with words drive the pairing check.

@@ -10,6 +10,7 @@ const product = {
   handle: 'coconut-lotion',
   productDescription: 'An 8 fl. oz. white plastic bottle with a black disc cap.',
   labelStrings: ['real', 'SKIN CARE', 'coconut breeze', 'moisturizing body lotion', '8 fl. oz. - 236ml'],
+  unitCount: 1,
 };
 const brandKit = { palette_hexes: ['#000000', '#EDE5D8', '#AEDEAC', '#EDEDED'] };
 const zones = { headline: 'SIX INGREDIENTS.', listItems: ['ORGANIC JOJOBA'], bottomBar: 'NO MINERAL OIL' };
@@ -35,8 +36,68 @@ assert.ok(!plate.includes('NO MINERAL OIL'), 'plate must not carry bottom-bar co
 assert.ok(/NO TEXT/i.test(plate), 'plate must forbid text');
 assert.ok(plate.includes('8 fl. oz. - 236ml'), 'plate still needs a correct product label');
 
+// ── A plate gets the plateBrief, and NEVER the layoutBrief ──────────────────────────
+//
+// The 2026-08-15 incident: a 1:1 plate came back with wood slices, greenery, a coconut and
+// a second half-faded bottle whose label read "8 fl. oz . 230ml". The plate branch was
+// interpolating format.layoutBrief — ingredient-callout's, which asks in so many words for
+// "a small photorealistic cut-out image of that ingredient" — and then negating it below.
+// The model rendered the positive instruction. These assertions are the regression.
+assert.ok(plate.includes(format.plateBrief.slice(0, 40)), 'plate must carry the plate brief');
+assert.ok(!plate.includes(format.layoutBrief.slice(0, 60)), 'plate must NOT carry the finished-ad layout brief');
+assert.ok(!/cut-out image of that ingredient/i.test(plate), 'plate must not ask for ingredient imagery');
+assert.ok(/NO PROPS/i.test(plate), 'plate must forbid props');
+
+// ── The unit count comes from the PRODUCT, not from a constant ───────────────────────
+//
+// "Exactly one unit" is true of the lotion and false of four of eleven RSC products.
+// Hard-coding it would reject every correct render of foam-soap-bundle (three bottles),
+// coconut-oil-lip-balm (four tubes) and both starter sets — the ghost-second-bottle bug
+// and the bundle bug are the same assumption read from opposite sides.
+const singlePlate = buildRenderPrompt({ format, zones, product: { ...product, unitCount: 1 }, brandKit, mode: 'plate' });
+assert.ok(/EXACTLY ONE UNIT/i.test(singlePlate), 'a single-unit product must demand exactly one');
+assert.ok(/No second bottle/i.test(singlePlate), 'a single-unit product must forbid a second unit');
+
+const bundlePlate = buildRenderPrompt({ format, zones, product: { ...product, unitCount: 3 }, brandKit, mode: 'plate' });
+assert.ok(/EXACTLY 3 UNITS/i.test(bundlePlate), 'a 3-piece bundle must ask for 3 units');
+assert.ok(!/EXACTLY ONE UNIT/i.test(bundlePlate), 'a bundle must never be told to render one unit');
+// It still forbids EXTRA units — a ghosted fourth bottle is as wrong on a bundle as a
+// second one is on a single.
+assert.ok(/ghosted/i.test(bundlePlate), 'a bundle must still forbid duplicate/ghost units');
+
+// The finished frame is unchanged — it still gets the full advertisement brief.
+assert.ok(finished.includes(format.layoutBrief.slice(0, 60)), 'finished mode still carries the layout brief');
+assert.ok(!finished.includes(format.plateBrief.slice(0, 40)), 'finished mode must not carry the plate brief');
+
 // An unknown mode is a programming error, not a silent default.
 assert.throws(() => buildRenderPrompt({ format, zones, product, brandKit, mode: 'wat' }), /unknown mode/i);
+
+// A format missing the brief its mode needs must throw, not interpolate "undefined" into a
+// paid image call. Template literals stringify undefined silently, so this is the only
+// thing standing between a typo and a render of whatever the model makes of that word.
+assert.throws(
+  () => buildRenderPrompt({ format: { key: 'x', layoutBrief: 'A brief.' }, zones: {}, product, brandKit, mode: 'plate' }),
+  /has no plateBrief/i,
+  'plate mode must reject a format with no plateBrief'
+);
+assert.throws(
+  () => buildRenderPrompt({ format: { key: 'x', plateBrief: 'A brief.' }, zones, product, brandKit, mode: 'finished' }),
+  /has no layoutBrief/i,
+  'finished mode must reject a format with no layoutBrief'
+);
+
+// Same hole, one line further down: Number(undefined) is NaN, NaN !== 1, so a missing
+// unitCount would fall through to the plural branch and render "EXACTLY NaN UNITS".
+assert.throws(
+  () => buildRenderPrompt({ format, zones, product: { labelStrings: ['x'] }, brandKit, mode: 'plate' }),
+  /no valid unitCount/i,
+  'a plate must reject a product with no unitCount rather than emit NaN'
+);
+assert.throws(
+  () => buildRenderPrompt({ format, zones, product: { labelStrings: ['x'], unitCount: 0 }, brandKit, mode: 'plate' }),
+  /no valid unitCount/i,
+  'zero units is not a renderable product'
+);
 
 // selectReferencePhotos: deterministic, image files only, capped.
 const dir = join(tmpdir(), 'ad-studio-photos-' + Date.now());
@@ -109,9 +170,9 @@ assert.ok(/PHYSICAL FORM/i.test(withPhysical), 'the physical description needs i
 
 // A plate is the product on a clean background — the description matters MORE there.
 const platePhysical = buildRenderPrompt({
-  format: { key: 'x', layoutBrief: 'A brief.' },
+  format: { key: 'x', layoutBrief: 'A brief.', plateBrief: 'A plate brief.' },
   zones: {},
-  product: { labelStrings: ['real SKIN CARE'], physicalDescription: physical },
+  product: { labelStrings: ['real SKIN CARE'], physicalDescription: physical, unitCount: 1 },
   brandKit: { palette_hexes: ['#000'] },
   mode: 'plate',
 });
@@ -166,9 +227,9 @@ assert.ok(!/SAFE ZONE/i.test(squarePrompt), 'no safe-zone instruction on a ratio
 
 // A PLATE carries no copy to place, so the instruction is pointless there too.
 const platePrompt = buildRenderPrompt({
-  format: { key: 'x', layoutBrief: 'A brief.' },
+  format: { key: 'x', layoutBrief: 'A brief.', plateBrief: 'A plate brief.' },
   zones: {},
-  product: { labelStrings: ['real SKIN CARE'] },
+  product: { labelStrings: ['real SKIN CARE'], unitCount: 1 },
   brandKit: { palette_hexes: ['#000'] },
   mode: 'plate',
   ratio: '9:16',

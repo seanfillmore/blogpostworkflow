@@ -28,7 +28,7 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 
 | Flag | Required | Meaning |
 |---|---|---|
-| `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`. |
+| `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`, and its manifest entry must carry a `unitCount` (see below). |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
 | `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`). **Required.** It used to be optional, and omitting it meant the whole six-format rotation — 108 renders ≈ $14 from a flag nobody typed. An unknown key is rejected with the valid list. |
 | `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta=1:1,meta=4:5`** — see below. |
@@ -61,6 +61,22 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    not an LLM call. One concept per selected format so a batch cannot collapse into
    six variants of one idea. Each format also declares `pairsImagesWithLabels`, which
    the verification stage reads.
+
+   **Each format carries TWO briefs, and they are not interchangeable.** `layoutBrief`
+   describes the finished advertisement — its columns, rules, pills, bars and ingredient
+   cut-outs. `plateBrief` describes the ad base: the ground the product stands on, and the
+   size and position it occupies. Nothing else. The plate used to be rendered from
+   `layoutBrief` with the furniture negated underneath ("leave that area EMPTY"), and on
+   2026-08-15 that produced a 1:1 plate carrying wood slices, greenery, a coconut and a
+   second half-faded bottle — because `ingredient-callout`'s layout brief asks in so many
+   words for "a small photorealistic cut-out image of that ingredient", and a vivid
+   positive instruction beats a negation sitting below it. Both `formats.js` (at load) and
+   `buildRenderPrompt` throw on a missing brief, so there is no path back to the fallback.
+
+   Consequence worth knowing: at plate level the six formats now differ only in product
+   scale, product position and ground tone. `problem-aware` and `top-x-review` lose the
+   lifestyle and flat-lay staging they describe as finished ads — that staging is exactly
+   what the props came from.
 2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
    `brandKit`, `reviews`) and quote its evidence verbatim.
@@ -72,6 +88,16 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    per variation per platform target, conditioned on up to 4 real reference
    photographs **and the manifest's prose description of the physical product**
    (`PHYSICAL FORM` in the prompt). The product is generated in-scene, never composited.
+
+   **How many units belong in the frame is per-product data, not a constant.** Every
+   manifest entry carries `unitCount`, and the plate prompt demands exactly that many and
+   forbids any extra — including a faded, ghosted or partially cropped duplicate. It has
+   to be data because four of the eleven RSC products are genuinely multi-unit
+   (`foam-soap-bundle` 3, `coconut-oil-lip-balm` 4, `sensitive-skin-starter-set` 3,
+   `skincare-starter-set` 2); a hard-coded "exactly one" would reject every correct render
+   of those. A missing or invalid `unitCount` **aborts the run** rather than defaulting to
+   1 — the same posture as empty `labelStrings`, and for the same reason: a silent default
+   is how a wrong assumption ships without anyone deciding it.
 5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — four checks, all required:
 
    - **Per-string checks.** For each requested string, a *pointed* question — does this

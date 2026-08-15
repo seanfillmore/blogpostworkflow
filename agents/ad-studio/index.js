@@ -927,7 +927,30 @@ async function main() {
     // the renderer knew what the label said and nothing about what the bottle was, and
     // the gate had nothing to compare a shape against. Both now read it.
     physicalDescription: manifestEntry.productDescription || '',
+    // How many physical units this product IS. The plate render is told to put exactly
+    // this many in the frame and nothing else, and the verifier is told the same number
+    // when it inventories the scene.
+    //
+    // It has to be per-PRODUCT data, not a constant. "Exactly one unit" is true of the
+    // lotion and false of four of eleven RSC products — foam-soap-bundle is three
+    // bottles, coconut-oil-lip-balm four tubes, sensitive-skin-starter-set three items,
+    // skincare-starter-set two. Hard-coding 1 would reject every correct render of those,
+    // which is the same mistake as the checks that assumed a single product in frame and
+    // let a ghost second bottle through (2026-08-15) — read from the other side.
+    //
+    // Absent is an abort, not a default of 1, for the labelStrings reason: a silent
+    // default is how a wrong assumption ships without anyone deciding it.
+    unitCount: manifestEntry.unitCount,
   };
+  if (!Number.isInteger(product.unitCount) || product.unitCount < 1) {
+    throw new Error(
+      `ad-studio: "${handle}" has no valid unitCount in data/product-images/manifest.json ` +
+      `(got ${JSON.stringify(manifestEntry.unitCount)}). Set it to the number of physical ` +
+      `units the product is — 1 for a single bottle, 3 for the foam soap bundle — before ` +
+      `running again. It is refusing rather than assuming 1 because assuming is how a ` +
+      `bundle gets rejected for being a bundle.`
+    );
+  }
 
   const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry });
 

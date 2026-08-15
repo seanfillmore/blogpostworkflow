@@ -3,8 +3,8 @@
 // The v1 ad-format rotation. A batch renders one concept per format so it cannot
 // collapse into six variants of one idea.
 //
-// This table is DATA. Adding a seventh format is a new entry plus its layoutBrief —
-// never a code change anywhere else.
+// This table is DATA. Adding a seventh format is a new entry plus its layoutBrief and its
+// plateBrief — never a code change anywhere else.
 //
 // pairsImagesWithLabels drives the verification gate: layouts that sit a picture
 // beside a word can render every word correctly and still caption jojoba oil as
@@ -36,6 +36,38 @@
 // verify.js's volumeVerdict and index.js's expectedForFormat). The flag survives
 // because the rest of the label genuinely cannot be read at signature size; do not
 // widen it back into an off switch for the volume.
+//
+// layoutBrief describes the FINISHED ADVERTISEMENT — every column, rule, pill, bar and
+// ingredient cut-out. plateBrief describes the AD BASE: the ground the product stands on
+// and the size and position it occupies. They are separate fields because the plate used
+// to inherit layoutBrief, and that is how a 1:1 plate came back with wood slices,
+// greenery, a coconut and a second half-faded bottle (2026-08-15).
+//
+// The plate prompt did say "leave that area EMPTY and clean", but a negative instruction
+// loses to a vivid positive one: `ingredient-callout`'s layoutBrief asks in so many words
+// for "a small photorealistic cut-out image of that ingredient", and `problem-aware`'s for
+// "the everyday moment where the problem shows up". The model rendered what it was told to
+// render. The fix is to stop telling it — not to shout the negation louder.
+//
+// Sean's spec, after inspecting that plate: exactly ONE unit of the product, on a clean
+// ground, no props, no scene dressing. He sets type and icons in Photoshop; the model's
+// job is a correct product and clean space, nothing else. So a plateBrief may name only:
+// the ground and its colour, and where the product sits and at what scale. It may NOT name
+// a prop, an ingredient, a surface texture that reads as a set, or any element the
+// finished ad would carry as artwork.
+//
+// A plateBrief must NOT name a unit count either — it says "the product", never "a single
+// bottle". How many units belong in the frame is a property of the PRODUCT, not of the
+// format: four of eleven RSC products are genuinely multi-unit (foam-soap-bundle is three
+// bottles, coconut-oil-lip-balm four tubes, both starter sets two and three items), so a
+// count baked in here would reject every correct render of them. render.js emits the count
+// clause from product.unitCount instead.
+//
+// The consequence is deliberate and worth knowing: at PLATE level the six formats differ
+// only in product scale, product position and ground tone. `problem-aware` and
+// `top-x-review` lose the lifestyle/flat-lay staging they describe as finished ads. That
+// staging is what the props came from, and none of it survives contact with "no scene
+// dressing".
 //
 // zoneCapacity (optional) caps how many strings an array-valued zone may carry,
 // keyed by the layoutBrief's own physical description of that zone — a "vertical
@@ -73,6 +105,13 @@ export const FORMATS = [
       'Above each column sits a solid black rounded pill holding that column header in reversed type.',
       'A solid black bar runs across the very bottom holding one line of letterspaced caps.',
     ].join(' '),
+    // Finished, the columns flank the product. On the base they are empty space.
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
+      'The product stands upright, centred left to right, its base sitting on the lower third and its',
+      'top reaching about the middle of the frame, so the upper third is entirely clear.',
+      'Nothing else appears in the picture.',
+    ].join(' '),
   },
   {
     key: 'ingredient-callout',
@@ -97,6 +136,15 @@ export const FORMATS = [
       'cut-out image of that ingredient with its label.',
       'The product stands large on the opposite side as the hero, lit to match, with a soft contact shadow.',
       `A ${GREY} strip across the bottom split by thin vertical rules into equal cells, one short phrase per cell.`,
+    ].join(' '),
+    // This is the format the props incident happened on. NOTHING about ingredients here —
+    // the ingredient row is placed by hand, and naming it is what produced the coconut.
+    plateBrief: [
+      `A soft warm sand ${SAND} gradient filling the whole frame, smooth and free of texture.`,
+      'The product stands upright on the RIGHT side of the frame, large, its base on the lower third and its',
+      'height filling roughly the middle half of the frame.',
+      'The entire left side and the top of the frame are empty ground.',
+      'Nothing else appears in the picture.',
     ].join(' '),
   },
   {
@@ -123,6 +171,14 @@ export const FORMATS = [
       'A closing line sits inside a thin rectangular box near the bottom.',
       'The product appears small and understated at the bottom center, sitting on the surface like a signature.',
     ].join(' '),
+    // productProminent: false — the plate reproduces that signature scale, so the volume
+    // marking will read ILLEGIBLE here and volumeVerdict will pass it. That is intended.
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, no texture and no vignette.`,
+      'The product sits small and understated at the bottom centre, resting on the surface like a signature,',
+      'occupying only the bottom fifth of the frame.',
+      'Everything above it is empty ground. Nothing else appears in the picture.',
+    ].join(' '),
   },
   {
     key: 'problem-aware',
@@ -141,6 +197,15 @@ export const FORMATS = [
       'with the product present but not dominant.',
       'A single restrained line of caps runs across the bottom.',
       'No before/after split and no depiction of a skin condition — those are restricted in health and beauty.',
+    ].join(' '),
+    // The "everyday moment where the problem shows up" is a SCENE, and a scene is what a
+    // plate may not have. The editorial feel has to come from the type the operator sets.
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
+      'The product stands upright in the lower right of the frame at moderate scale — present but not',
+      'dominant, occupying about a quarter of the frame height.',
+      'The upper two-thirds and the left side are empty ground.',
+      'Nothing else appears in the picture.',
     ].join(' '),
   },
   {
@@ -162,6 +227,14 @@ export const FORMATS = [
       'lookalike packaging, or invented third-party logos, badges or award marks.',
       'A restrained line of caps runs across the bottom.',
     ].join(' '),
+    // "Flat-lay styling" is styling, i.e. props, so the plate does not get it. A roundup
+    // frame's job at base level is a legible hero with room for the ranking headline.
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, generous and uncluttered.`,
+      'The product stands upright, centred left to right, at hero scale, its base on the lower third and its',
+      'top reaching about the middle of the frame.',
+      'The upper third is empty ground. Nothing else appears in the picture.',
+    ].join(' '),
   },
   {
     key: 'offer-focused',
@@ -181,8 +254,26 @@ export const FORMATS = [
       'placed so it reads within a second at phone size.',
       'A solid black bar across the bottom carries one line of letterspaced caps.',
     ].join(' '),
+    // The offer badge is the loudest element in the finished ad and is set by hand, so the
+    // plate must leave the upper left genuinely empty rather than fill it with product.
+    plateBrief: [
+      `A clean warm sand ${SAND} ground filling the whole frame, lit like premium CPG product photography.`,
+      'The product stands upright in the lower right of the frame at hero scale, its base on the lower third,',
+      'with a soft contact shadow.',
+      'The top of the frame and the left side are empty ground. Nothing else appears in the picture.',
+    ].join(' '),
   },
 ];
+
+// A format with no plateBrief must not silently fall back to layoutBrief — that fallback
+// IS the bug this field exists to fix, and it would come back the first time someone adds
+// a seventh format and only fills in the finished-ad brief. Load-time, so it cannot be
+// discovered halfway through a paid run.
+for (const f of FORMATS) {
+  for (const field of ['layoutBrief', 'plateBrief']) {
+    if (!String(f[field] || '').trim()) throw new Error(`ad-studio format "${f.key}" is missing ${field}`);
+  }
+}
 
 const BY_KEY = new Map(FORMATS.map(f => [f.key, f]));
 
