@@ -19,6 +19,7 @@ import {
   buildConcepts,
   finalizeRunReport,
   archiveRunOutput,
+  fetchAdReviews,
   DEFAULT_MAX_RENDERS,
   MAX_VARIATIONS,
   ESTIMATED_COST_PER_RENDER_USD,
@@ -1203,4 +1204,30 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   );
 
   rmSync(base, { recursive: true, force: true });
+}
+
+// ── fetchAdReviews: the `reviews` source finally exists ──────────────────────────────
+//
+// claims.js has accepted a `reviews` sourceId since day one and NOTHING EVER PASSED ONE —
+// buildSourceIndex only adds the key when reviews are handed to it, and index.js never
+// did. That was invisible until the `testimonial` format shipped, because no earlier
+// format had a zone that must quote a customer. Its first live run died at the copy stage:
+// told to quote verbatim from a source that did not exist, the model answered in prose
+// instead of JSON.
+{
+  // Never throws — a Judge.me outage or a product with no reviews must not stop a run of
+  // formats that never quote a customer. The claim gate is the right failure for the ones
+  // that do: an invented testimonial comes back unsourced and is rejected before any
+  // render is paid for.
+  assert.deepEqual(await fetchAdReviews('x', { env: {} }), [], 'no credentials → no reviews, no throw');
+  assert.deepEqual(
+    await fetchAdReviews('x', { env: { JUDGEME_API_TOKEN: 't' } }),
+    [],
+    'a token with no shop domain is still not enough',
+  );
+  assert.deepEqual(
+    await fetchAdReviews('x', { env: { SHOPIFY_STORE: 's' } }),
+    [],
+    'a shop domain with no token is still not enough',
+  );
 }

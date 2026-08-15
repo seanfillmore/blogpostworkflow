@@ -486,6 +486,34 @@ export function archiveRunOutput({ runDir, runId, root = ROOT, env = process.env
   }
 }
 
+/**
+ * Customer reviews for one product, as plain strings for the claim gate's source index.
+ *
+ * Never throws: see the call site. Returns [] on a missing token, an API failure, or a
+ * product with no reviews, and the claim gate handles the consequence.
+ *
+ * @param {string} handle
+ * @returns {Promise<string[]>}
+ */
+export async function fetchAdReviews(handle, { env = process.env } = {}) {
+  const token = env.JUDGEME_API_TOKEN;
+  const shopDomain = env.SHOPIFY_STORE;
+  if (!token || !shopDomain) return [];
+  try {
+    const { resolveExternalId, fetchProductReviews, stripHtmlForReview } = await import('../../lib/judgeme.js');
+    const externalId = await resolveExternalId(handle, shopDomain, token);
+    if (!externalId) return [];
+    const reviews = await fetchProductReviews(externalId, shopDomain, token);
+    return (reviews || [])
+      .map(r => stripHtmlForReview(r?.body || ''))
+      .map(t => String(t || '').trim())
+      .filter(Boolean);
+  } catch (err) {
+    console.warn(`ad-studio: could not fetch reviews for "${handle}" (${err.message}) — continuing without them.`);
+    return [];
+  }
+}
+
 // ── argv / env / data loading ──────────────────────────────────────────────
 
 export function parseArgs(argv) {
@@ -1007,7 +1035,28 @@ async function main() {
     );
   }
 
-  const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry });
+  // Real customer reviews, so `reviews` is a source a claim can actually cite.
+  //
+  // claims.js has accepted a `reviews` sourceId since day one and NOTHING EVER PASSED ONE
+  // — the index simply had no `reviews` key, so any claim citing it was unsourced. That
+  // was invisible until the `testimonial` format shipped (2026-08-15), because no earlier
+  // format had a zone that must quote a customer. Its first live run failed at the copy
+  // stage: told to quote verbatim from a source that did not exist, the model answered in
+  // prose instead of JSON.
+  //
+  // Best-effort by design. A Judge.me outage, a missing token or a product with no reviews
+  // yet must not stop a run of formats that never quote a customer — and for the ones that
+  // do, the claim gate is already the right failure: an invented testimonial comes back
+  // unsourced and the concept is rejected before anything renders. That is a far better
+  // outcome than a hard abort here, and a far better one than shipping a made-up quote.
+  // `env`, not process.env: loadEnv() parses .env into a local object and deliberately
+  // never populates process.env, so a default of process.env silently finds no token and
+  // reports "no reviews" on a product that has 26 of them.
+  const reviews = await fetchAdReviews(handle, { env });
+  if (reviews.length) console.log(`Reviews on file for ${handle}: ${reviews.length}`);
+  else console.warn(`No Judge.me reviews for ${handle} — any format that quotes a customer will be rejected by the claim gate.`);
+
+  const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews });
 
   const formats = selectFormats(args.formats.length ? args.formats : undefined);
 
