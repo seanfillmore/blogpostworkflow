@@ -330,35 +330,86 @@ ${physicalDescription ? `
   // failure mode — an open question answered towards the number in the prompt — and the
   // whole point is to learn what is in the frame from a model that does not know what the
   // right answer is. inventoryVerdict does the comparison against unitCount in code.
+  //
+  // FIRST LIVE RUN, 2026-08-15. That care was undone one paragraph lower down. The first
+  // cut of this section chased completeness — "including anything faint, blurred, ghosted,
+  // semi-transparent" and, fatally, "if there is a second bottle you are unsure about,
+  // list it — an object listed in error costs one re-render, an object omitted ships."
+  //
+  // That names the thing to find. The 9:16 plate came back with a clean gradient at the
+  // top and the verifier reported "a faded, ghosted second bottle silhouette, partially
+  // cropped" — 3 times out of 3, and again 3/3 on a re-probe. The frame was correct. It
+  // burned the whole retry budget and failed the target. The 1:1 and 4:5 of the same run,
+  // which have less empty background to read into, passed 3/3.
+  //
+  // The cost model in that sentence was also backwards: a false positive costs the FULL
+  // three attempts and then a failed target, not one re-render.
+  //
+  // So the instruction is now the opposite: report only what has an edge you can trace,
+  // and treat a gradient, a vignette or a compression artifact as background. Same lesson
+  // as R1 and as the labelGraphics narrowing — do not ask a vision model to strain, and
+  // never hand it the answer you are afraid of.
+  //
+  // The same probe caught a second false positive: the leaf illustration PRINTED ON the
+  // bottle's label was classified `other` in 4 of 6 runs, which would fail every studio
+  // plate of a product whose label has artwork on it. Label artwork is part of the
+  // product, not an object in the scene, and is now excluded explicitly. That one was
+  // fixed by the exclusion alone — 3/3 clean on re-probe.
+  //
+  // The ghost bottle was NOT. De-biasing the language left it at 3/3, so the bias was
+  // not the mechanism: an OPEN "list every object" question is simply unreliable at
+  // counting on a frame that is mostly empty — and a plate is mostly empty by design,
+  // which is the worst possible pairing. Because the confabulation is consistent rather
+  // than random, majority voting across repeated calls cannot fix it either; it would
+  // just buy the same wrong answer three times.
+  //
+  // So the count is now POINTED, exactly as R1 fixed the string checks: a unit counts
+  // only if the model can resolve BOTH a closure and a body on it. That is not an
+  // arbitrary bar — it is how the real defect actually presented. The 2026-08-15 ghost
+  // was substantial enough to carry a READABLE wrong volume ("8 fl. oz . 230ml"), so it
+  // clears this bar comfortably, while "a blurred shape cropped at the top edge" does
+  // not. Specific beats open-ended, again.
   const inventorySection = wantsInventory
     ? `${nInventory}. SCENE INVENTORY — list EVERY distinct physical object you can see in the frame, in
-   "sceneInventory". Work across the whole image, including anything faint, blurred,
-   ghosted, semi-transparent, out of focus, reflected, or cropped by the frame edge. An
-   object that is only half-rendered is still an object and MUST be listed.
+   "sceneInventory". Work across the whole image, including the edges and corners.
+
+   Report only objects you can actually MAKE OUT — something with a discernible edge or
+   outline. A smooth gradient, a soft vignette, an uneven patch of background lighting or
+   a compression artifact is NOT an object, however suggestive it looks. If you find
+   yourself describing something as faint, ghostly or barely visible, look again and ask
+   whether you can trace its outline; if you cannot, it is background and you must leave
+   it out.
 
    For each one give:
      "object" — a short concrete description including where it sits ("a white lotion
                 bottle, centre right", "a slice of wood under the bottle", "a second,
                 partly faded bottle behind the first")
      "kind"   — exactly one of:
-                  "product-unit" — a unit of the product being advertised, INCLUDING a
-                                   faded, ghosted, duplicated or partially rendered one.
-                                   Count every one you can see separately, even if two
-                                   are the same item shown twice.
+                  "product-unit" — a unit of the product being advertised. Count a unit ONLY
+                                   if you can make out BOTH its closure (cap, pump or lid)
+                                   AND its body or label as separate, resolved parts of
+                                   that object. A shape you would describe as blurred,
+                                   out of focus, ghostly or merely suggested does not
+                                   meet that bar: call it background and leave it out.
+                                   If two units are genuinely present, each will show its
+                                   own cap and its own body — say so in "object".
                   "surface"      — the ground, table, backdrop or background the product
                                    rests on or against. There is normally exactly one.
-                  "other"        — anything else at all: ingredients, fruit, nuts, leaves,
-                                   greenery, wood slices, boards, trays, bowls, cloths,
-                                   stones, water, splashes, packaging boxes, props of any
-                                   kind, decorative shapes.
+                  "other"        — a separate physical object sitting in the scene:
+                                   ingredients, fruit, nuts, leaves, greenery, wood
+                                   slices, boards, trays, bowls, cloths, stones, water,
+                                   splashes, packaging boxes, props of any kind.
 
-   NOT objects — never list these: shadows, reflected light, highlights, gradients,
-   vignettes, blur, grain, or the empty background itself considered separately from the
-   surface. Lighting is not a thing in the scene.
+   NOT objects — never list these:
+     - anything PRINTED ON the product's own label: an illustration, a leaf or fruit
+       graphic, a badge, a coloured bar. That is artwork on the packaging, not a thing
+       in the scene, and the product carries it into any frame it appears in.
+     - shadows, reflected light, highlights, gradients, vignettes, blur, grain, JPEG
+       banding, or the empty background considered separately from the surface. Lighting
+       is not a thing in the scene.
 
-   Report what you SEE, not what you expect a clean advertisement to contain. If there is
-   a second bottle you are unsure about, list it — an object listed in error costs one
-   re-render, an object omitted ships.
+   Report what you SEE, not what you expect a clean advertisement to contain, and not
+   what you expect a generative model to have got wrong.
 
 ` : '';
 
@@ -862,6 +913,32 @@ export function fidelityVerdict(fidelity, { hasReference = false } = {}) {
 const INVENTORY_PRODUCT_RE = /^(product[\s-]?unit|product|unit|item|bottle|tube|jar|container|the\s+product)s?\.?$/i;
 const INVENTORY_SURFACE_RE = /^(surface|ground|background|backdrop|table|floor|wall|base)s?\.?$/i;
 
+// R5. An object the model itself hedged. Same shape, same justification and same file as
+// isAbsenceReport: the live run showed one description pattern was ALWAYS a false
+// positive, so it is filtered in code rather than argued with in the prompt.
+//
+// On the first live run the 9:16 plate's large empty gradient produced a confabulated
+// second bottle in 9 of 9 vision calls across three different prompt wordings. Making the
+// COUNT pointed (a unit needs a resolvable closure and body) moved it out of
+// 'product-unit' — and straight into 'other', where the stray rule would have failed the
+// same correct frame for a different reason. The model will not stop reporting something
+// in a big empty area; what it will do, reliably, is tell you it cannot resolve it.
+//
+// So the resolution bar applies to EVERY bucket, not just to product units. An object
+// nobody can make out is background, whatever it might have been.
+//
+// These entries are not discarded — inventoryVerdict returns them as `unresolved` and
+// they are written to proof.json, so a frame that really does have something faint in it
+// is still visible to a human reading the proof.
+const UNRESOLVED_RE = /\b(blurr?(ed|y)|out[- ]of[- ]focus|ghost(ly|ed)?|indistinct|barely visible|faint|suggested|ambiguous|unclear|possible|possibly|might be|appears to be a)\b/i;
+
+/**
+ * Did the model describe this object as something it could not actually resolve?
+ */
+export function isUnresolvedObject(objectText) {
+  return UNRESOLVED_RE.test(String(objectText || ''));
+}
+
 /**
  * One reported `kind` → 'product-unit' | 'surface' | 'other'.
  */
@@ -903,15 +980,20 @@ export function normalizeInventoryKind(kind) {
  */
 export function inventoryVerdict(inventory, { expectedUnits = 1, mode = 'finished', setting = 'studio' } = {}) {
   if (mode !== 'plate') {
-    return { ok: true, status: 'not-applicable', units: [], strays: [], expectedUnits, setting };
+    return { ok: true, status: 'not-applicable', units: [], strays: [], unresolved: [], expectedUnits, setting };
   }
 
-  const entries = (Array.isArray(inventory) ? inventory : [])
+  const all = (Array.isArray(inventory) ? inventory : [])
     .filter(e => e && (typeof e.object === 'string' ? e.object.trim() : ''))
     .map(e => ({ object: String(e.object).trim(), kind: normalizeInventoryKind(e.kind) }));
 
+  // Hedged descriptions are background, in every bucket — see UNRESOLVED_RE. Kept and
+  // returned so nothing vanishes silently from the proof.
+  const unresolved = all.filter(e => isUnresolvedObject(e.object));
+  const entries = all.filter(e => !isUnresolvedObject(e.object));
+
   if (entries.length === 0) {
-    return { ok: false, status: 'unreported', units: [], strays: [], expectedUnits, setting };
+    return { ok: false, status: 'unreported', units: [], strays: [], unresolved, expectedUnits, setting };
   }
 
   const units = entries.filter(e => e.kind === 'product-unit');
@@ -920,12 +1002,12 @@ export function inventoryVerdict(inventory, { expectedUnits = 1, mode = 'finishe
   // Unit count first, and in every setting. Defaults to 'studio' — the strict side — so a
   // caller that forgets to thread the setting keeps the tighter gate, never the looser one.
   if (units.length !== expectedUnits) {
-    return { ok: false, status: 'wrong-unit-count', units, strays, expectedUnits, setting };
+    return { ok: false, status: 'wrong-unit-count', units, strays, unresolved, expectedUnits, setting };
   }
   if (strays.length && setting !== 'scene') {
-    return { ok: false, status: 'stray-objects', units, strays, expectedUnits, setting };
+    return { ok: false, status: 'stray-objects', units, strays, unresolved, expectedUnits, setting };
   }
-  return { ok: true, status: strays.length ? 'clean-with-scene' : 'clean', units, strays, expectedUnits, setting };
+  return { ok: true, status: strays.length ? 'clean-with-scene' : 'clean', units, strays, unresolved, expectedUnits, setting };
 }
 
 const DEFECT_ISSUES = new Set(['obscured', 'cut-off', 'garbled', 'stray-text']);

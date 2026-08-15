@@ -660,6 +660,12 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
         ok: r.proof.ok, reasons: r.proof.reasons, missing: r.proof.missing,
         checkDetails: r.proof.checkDetails, volume: r.proof.volume, fidelity: r.proof.fidelity,
         defects: r.proof.defects, mismatchedPairs: r.proof.mismatchedPairs,
+        // The inventory is persisted in full, not just as a pass/fail. On a SCENE plate
+        // strays never fail the frame, so this list is the only way a human sees that a
+        // bathroom counter quietly became a prop pile — and on any plate it is what makes
+        // a rejection triageable ("a second, faded bottle at the top edge") instead of
+        // just a verdict.
+        inventory: r.proof.inventory,
         transcript: r.proof.transcript,
         comp: compProof,
       },

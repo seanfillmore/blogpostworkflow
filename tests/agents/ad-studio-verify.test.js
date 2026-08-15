@@ -11,6 +11,7 @@ import {
   verdictFor,
   normalizeInventoryKind,
   inventoryVerdict,
+  isUnresolvedObject,
 } from '../../agents/ad-studio/verify.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
@@ -1267,8 +1268,15 @@ for (const inv of [[], ONE_UNIT, [{ object: 'a coconut', kind: 'other' }]]) {
   assert.ok(/SCENE INVENTORY/.test(platePrompt), 'a plate must be asked for a scene inventory');
   assert.ok(/sceneInventory/.test(platePrompt), 'and the response shape must name the field');
   assert.ok(/product-unit/.test(platePrompt) && /"other"/.test(platePrompt), 'the kinds must be enumerated');
-  assert.ok(/ghosted/i.test(platePrompt), 'a half-rendered duplicate must be explicitly in scope');
+  // A unit must be RESOLVED to be counted — closure and body both made out. The first
+  // live run showed why: an open "list everything, including anything faint or ghosted"
+  // question confabulated a second bottle on the empty 9:16 gradient in 9 of 9 vision
+  // calls. See the note above UNRESOLVED_RE.
+  assert.ok(/closure \(cap, pump or lid\)/i.test(platePrompt), 'a counted unit needs a resolvable closure');
+  assert.ok(/does not\s+meet that bar/i.test(platePrompt), 'an unresolvable shape must be excluded, not counted');
   assert.ok(/shadows/i.test(platePrompt), 'shadows must be explicitly out of scope');
+  assert.ok(/PRINTED ON the product's own label/i.test(platePrompt),
+    'label artwork must be out of scope — it was classified as a stray in 4 of 6 live calls');
   assert.ok(!/\b3\b/.test(platePrompt.split('SCENE INVENTORY')[1] || ''),
     'the prompt must never disclose the expected unit count');
 
@@ -1316,7 +1324,7 @@ for (const inv of [[], ONE_UNIT, [{ object: 'a coconut', kind: 'other' }]]) {
   const sceneish = [
     { object: 'a white lotion bottle on the counter', kind: 'product-unit' },
     { object: 'a bathroom counter', kind: 'surface' },
-    { object: 'a folded towel, soft focus, far left', kind: 'other' },
+    { object: 'a folded towel, far left', kind: 'other' },
   ];
 
   const studio = inventoryVerdict(sceneish, { expectedUnits: 1, mode: 'plate', setting: 'studio' });
@@ -1353,7 +1361,7 @@ for (const inv of [[], ONE_UNIT, [{ object: 'a coconut', kind: 'other' }]]) {
   const withProp = [
     { object: 'a white lotion bottle', kind: 'product-unit' },
     { object: 'a bedside table', kind: 'surface' },
-    { object: 'a lamp base, out of focus', kind: 'other' },
+    { object: 'a ceramic lamp base at the edge of the table', kind: 'other' },
   ];
   const args = {
     expected: ['A'], checks: cleanChecks(['A']), mode: 'plate',
@@ -1369,4 +1377,81 @@ for (const inv of [[], ONE_UNIT, [{ object: 'a coconut', kind: 'other' }]]) {
 {
   const p = buildVerifyPrompt({ expected: ['A'], format: formatByKey('problem-aware'), mode: 'plate' });
   assert.ok(/SCENE INVENTORY/.test(p), 'a scene plate is still inventoried — the unit count still matters');
+}
+
+// ── The resolution bar applies to EVERY bucket (first live run, 2026-08-15) ──────────
+//
+// The 9:16 plate's large empty gradient produced a confabulated second bottle in 9 of 9
+// vision calls across three prompt wordings. Direct pixel inspection — the upper 45% of
+// the frame, greyscaled and contrast-stretched — showed only gradient and the main
+// bottle's cap. There was nothing there.
+//
+// Two things that did NOT work, and are worth not re-attempting:
+//   - de-biasing the wording. Removing "if there is a second bottle you are unsure about,
+//     list it" left it at 3/3. The bias was not the mechanism.
+//   - majority voting. The confabulation is CONSISTENT, not random, so N calls buy the
+//     same wrong answer N times.
+//
+// Making the count pointed moved it out of 'product-unit' and straight into 'other',
+// where the stray rule would have failed the same correct frame for a different reason.
+// What the model does do reliably is SAY it cannot resolve the thing — so that is what
+// is filtered, in code, in every bucket. Same shape and justification as isAbsenceReport.
+assert.equal(isUnresolvedObject('a blurred, out-of-focus second bottle in the upper background'), true);
+assert.equal(isUnresolvedObject('second, blurred/out-of-focus white bottle, upper portion of frame'), true);
+assert.equal(isUnresolvedObject('a faint shape near the top edge'), true);
+assert.equal(isUnresolvedObject('possibly a second bottle'), true);
+assert.equal(isUnresolvedObject('a white lotion bottle with black cap, centre right'), false);
+assert.equal(isUnresolvedObject('a slice of wood under the bottle'), false);
+assert.equal(isUnresolvedObject(''), false);
+
+{
+  // The exact live inventory that failed a correct 9:16 frame. It must now pass, and the
+  // hedged entry must survive in `unresolved` so a human reading proof.json still sees it.
+  const live = [
+    { object: 'white lotion bottle with black cap, centered lower-right, front label visible', kind: 'product-unit' },
+    { object: 'blurred, out-of-focus second bottle shape in upper background, no distinct cap/body separation', kind: 'other' },
+    { object: 'beige/tan gradient background surface', kind: 'surface' },
+  ];
+  const v = inventoryVerdict(live, { expectedUnits: 1, mode: 'plate', setting: 'studio' });
+  assert.equal(v.ok, true, 'a correct frame must not be failed by a shape the model could not resolve');
+  assert.equal(v.status, 'clean');
+  assert.equal(v.units.length, 1);
+  assert.equal(v.strays.length, 0, 'the hedged object must not count as a stray');
+  assert.equal(v.unresolved.length, 1, 'but it must be RECORDED, never silently dropped');
+}
+
+{
+  // A RESOLVED second unit still fails — the filter must not have swallowed the bug the
+  // inventory exists for. The real 2026-08-15 ghost carried a readable wrong volume
+  // ("8 fl. oz . 230ml"), so it was substantial enough to describe without hedging.
+  const realGhost = [
+    { object: 'white lotion bottle with black cap and label, centre', kind: 'product-unit' },
+    { object: 'a second bottle behind and right of the first, its own cap and label visible', kind: 'product-unit' },
+    { object: 'a flat sand surface', kind: 'surface' },
+  ];
+  const v = inventoryVerdict(realGhost, { expectedUnits: 1, mode: 'plate', setting: 'studio' });
+  assert.equal(v.ok, false, 'a resolved second unit must still fail');
+  assert.equal(v.status, 'wrong-unit-count');
+}
+// A resolved PROP still fails a studio plate too — the wood slice and the coconut were
+// never hedged descriptions.
+assert.equal(
+  inventoryVerdict([
+    { object: 'a white lotion bottle with black cap', kind: 'product-unit' },
+    { object: 'a slice of wood under the bottle', kind: 'other' },
+  ], { expectedUnits: 1, mode: 'plate', setting: 'studio' }).ok,
+  false,
+  'a resolved prop must still fail a studio plate',
+);
+// An inventory of NOTHING BUT hedged entries is unreported, not clean — the model did not
+// answer the question, and scoring an unanswered question as a pass is how a gate goes
+// quiet.
+{
+  const v = inventoryVerdict(
+    [{ object: 'a faint blurred shape, possibly a bottle', kind: 'product-unit' }],
+    { expectedUnits: 1, mode: 'plate', setting: 'studio' },
+  );
+  assert.equal(v.ok, false);
+  assert.equal(v.status, 'unreported');
+  assert.equal(v.unresolved.length, 1);
 }

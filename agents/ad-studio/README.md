@@ -196,7 +196,31 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
      product units must equal the product's `unitCount`, and there must be no `other`
      objects at all. An empty inventory on a plate **fails** as unreported.
 
-     **The stray rule follows `plateSetting`; the unit count never does.** On a `scene`
+     **Two live-run corrections, both paid for with false positives (2026-08-15).** The
+   first cut asked an OPEN "list every object, including anything faint, blurred or
+   ghosted" and added "if there is a second bottle you are unsure about, list it". On the
+   9:16 plate — a tall frame that is mostly empty gradient by design — that produced a
+   confabulated second bottle in **9 of 9 vision calls across three prompt wordings**,
+   burning the full retry budget on a frame that pixel inspection proved was correct. The
+   1:1 and 4:5 of the same run passed 3/3. De-biasing the wording did not fix it, and
+   majority voting cannot: the confabulation is *consistent*, so N calls buy the same
+   wrong answer N times. Two changes did fix it, and they are R1's lesson again — pointed
+   beats open, and never ask a vision model to strain:
+
+   - a unit counts only if the model can resolve **both a closure and a body** on it;
+   - an object the model itself describes as blurred, out-of-focus, faint or possible is
+     **background, in every bucket** (`isUnresolvedObject`) — filtered in code, the same
+     shape and justification as `isAbsenceReport`. Filtered entries are returned as
+     `unresolved` and written to `proof.json`, never silently dropped.
+
+   The real 2026-08-15 ghost carried a *readable* wrong volume (`8 fl. oz . 230ml`), so it
+   clears the resolution bar comfortably; and the unconditional transcript volume scan
+   catches that frame independently. The second correction: the leaf illustration **printed
+   on the bottle's label** was classified as a stray object in 4 of 6 calls, which would
+   have failed every studio plate of a product whose label has artwork on it. Label artwork
+   is part of the product and is now excluded explicitly.
+
+   **The stray rule follows `plateSetting`; the unit count never does.** On a `scene`
    plate an `other` object is the deliverable, so strays are recorded in `proof.json` but
    do not fail the frame — a human can still see if it drifted into a prop pile. The unit
    count is absolute in every setting: a ghost second bottle is wrong in a bathroom too.

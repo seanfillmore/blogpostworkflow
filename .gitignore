@@ -140,3 +140,7 @@ data/creatives/ad-studio/
 # output it summarises. Committing it would merge one machine's test runs into another's
 # baseline, which is exactly the number it exists to keep honest.
 data/reports/ad-studio/
+
+# Per-run LLM spend telemetry, written by lib/llm-meter on every agent run.
+# Machine-generated and append-only; scripts/llm-cost.mjs reads it locally.
+data/reports/llm-usage/
