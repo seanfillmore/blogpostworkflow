@@ -10,10 +10,10 @@
     "06-final-call.html": "WJ8J9J"
   },
   "nurtureFlowId": "XnD2WQ",
-  "entryOpensAt": "2026-08-15T00:00:00-06:00",
+  "entryOpensAt": "2026-08-18T00:00:00-06:00",
   "entryClosesAt": "2026-09-14T23:59:59-06:00",
   "drawAt": "2026-09-16T12:00:00-06:00",
-  "_datesNote": "Store-local (-06:00) and the single source of truth for timing. The deadline campaigns (05-reminder, 06-final-call) are computed from entryClosesAt by lib/giveaway/nurture-schedule.js, and close-entry-period.mjs disables the nurture flow the morning after it. The same dates appear in prose in data/giveaway/official-rules.html and in the 06-final-call preheader — change all three together.",
+  "_datesNote": "Store-local (-06:00) and the single source of truth for timing. The deadline campaigns (05-reminder, 06-final-call) are computed from entryClosesAt by lib/giveaway/nurture-schedule.js, and close-entry-period.mjs disables the nurture flow the morning after it. The same dates appear in prose in data/giveaway/official-rules.html and in the 06-final-call preheader — change all three together. Entry OPEN date moved 2026-08-14: Aug 15 -> Aug 18 to match the ad launch.",
   "metaPixelId": "1948396628850834",
   "_metaPixelNote": "Real Skin Care pixel, installed via the Shopify Facebook & Instagram sales channel with Maximum data sharing (Pixel + advanced matching + Conversions API). Asserted by scripts/giveaway/verify-launch.mjs.",
   "deadlineCampaigns": {
