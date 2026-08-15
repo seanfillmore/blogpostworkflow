@@ -10,10 +10,10 @@ deliberately produces text-free images with a Photoshop-guide overlay. Ad Studio
 produces the finished ad itself, copy included, end to end, with no manual
 finishing step.
 
-> **An accepted render is not a verified ad.** The gate checks text and the volume marking
-> — nothing compares the rendered product to the reference photos, and nothing judges copy
-> quality or layout. See "What the gate does NOT verify" in the spec's stage 4 before you
-> trust an `ok: true`.
+> **An accepted render is not a verified ad.** The gate checks text, the volume marking and
+> — since 2026-08-15 — whether the rendered product is physically our product. It still does
+> not judge **copy quality or layout**: an `ok: true` frame can be correct in every fact and
+> a poor ad. See "What the gate does NOT verify" in the spec's stage 4.
 
 Spec: `docs/superpowers/specs/2026-08-14-ad-studio-design.md`
 Plan: `docs/superpowers/plans/2026-08-14-ad-studio.md`
@@ -60,7 +60,8 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    copy call, `--dry-run` or not.
 4. **Render** (`render.js`, model: `gemini-3-pro-image` @2K) — **one generative pass**
    per variation per platform target, conditioned on up to 4 real reference
-   photographs. The product is generated in-scene, never composited.
+   photographs **and the manifest's prose description of the physical product**
+   (`PHYSICAL FORM` in the prompt). The product is generated in-scene, never composited.
 5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — four checks, all required:
 
    - **Per-string checks.** For each requested string, a *pointed* question — does this
@@ -94,6 +95,35 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
      *product's* label is out of scope in **both** modes — arc-set badge micro-copy cannot
      be read reliably at any render size, and asking about it made the verifier reject a
      known-good control.
+   - **Product fidelity — is the rendered product actually our product?** The verify call
+     carries the first **two reference photographs** alongside the render, and asks a
+     *pointed* question per attribute: `silhouette`, `closure`, `labelLayout`,
+     `labelGraphics`, `containerColour` (`FIDELITY_ATTRIBUTES` in `verify.js`). Never one
+     open "does this match?" — R1's finding again: an open question is answered towards
+     yes. Answers are three-valued and follow `volumeVerdict`'s proven shape:
+     `CANNOT_TELL` **passes** (the small-product case on `manifesto`/`problem-aware`),
+     `MISMATCH` **fails**, and a response carrying *no* fidelity answers at all while
+     reference photos were sent **fails** — a check that returns nothing is
+     indistinguishable from a check that was never wired up. Runs in **both** modes:
+     unlike the defect question this one does not invert, and a plate is nothing but the
+     product. With no reference photos on file the check is off, never a hard fail.
+
+     Why it exists: a live `ingredient-callout` frame was **accepted on attempt 1** with a
+     bottle that had no black accent bar, no leaf illustration, and the badge micro-copy
+     set beside a flat glyph instead of inside the circular badge. Every expected string
+     was present and correctly spelled, so four text checks had nothing to fail. A human
+     rejected it in one glance. `tests/fixtures/ad-studio/accepted-wrong-bottle-2026-08-14.png`
+     is that frame.
+
+     **Two narrowings are load-bearing and were each paid for with a false positive.**
+     The first cut rejected a *real photograph* of the product, reporting gloss bands and
+     a shoulder gradient as label graphics. So: (a) photographic styling — lighting,
+     gloss, specular, shadow, background, angle, crop — is named in the prompt as never a
+     mismatch; and (b) `labelGraphics` asks only whether the **reference's** elements are
+     missing, moved or reshaped, and explicitly not whether extra elements appeared,
+     because every false positive found was an "extra" that turned out to be a highlight.
+     Do not widen either one back.
+
    - **Pairing**, on **finished frames** of formats that pair a picture with a label.
      Not applied to Demand Gen plates: a plate is text-free by construction, so it has
      no labels to pair anything with, and demanding pairings there made every plate of
@@ -182,9 +212,16 @@ free crops of the Meta frames.
 | Default run, worst case (3 verify attempts everywhere) | 324 | $42.12 |
 | `--max-renders` default ceiling | 120 | $15.60 |
 
+**The Gemini image model has a hard quota of 250 renders per project per day.** A default
+full-rotation run is 108, so two of them plus retries exhausts the day — the API then
+returns 429 with a ~19h retry delay and every remaining target of the run errors out
+(per-target resilience keeps the run alive and still writes `run.json`). Scope runs with
+`--formats`; do not discover this ceiling mid-batch.
+
 At ~$0.13 per Gemini 3 Pro 2K render, plus one **Sonnet** vision call per render for the
-verify gate — roughly $0.01–0.02 on a 2K frame, so about a tenth of the render it is
-guarding and well under 15% on top of the table above. That is the whole argument for
+verify gate — ~$0.04 on a 2K frame now that the call also carries two reference
+photographs for the fidelity check (~14k input tokens), so still under a third of the
+render it is guarding. That is the whole argument for
 raising it off Haiku: the gate is the cheapest thing in the pipeline and the only thing
 between a corrupted headline and a live ad. `--dry-run` costs one Opus copy call per
 format and renders nothing. Scope a run with `--formats` and `--variations` rather than
@@ -200,6 +237,18 @@ relying on the ceiling.
 - **No cutout compositing.** `data/brand/cutouts/` is never read by this agent. The
   product is generated in-scene, conditioned on real reference photographs, so
   lighting, contact shadow and perspective match the rest of the frame.
+- **The manifest's physical description reaches BOTH the renderer and the gate.**
+  `manifestEntry.productDescription` was being mined for label strings and volume
+  markings and then dropped — so the renderer was told exactly what the label *said* and
+  nothing about what the bottle *was*, while the description on file already read "tall,
+  slim lotion bottle shape" and "a black horizontal accent bar behind the variant name
+  text". It rendered neither, and the gate had no shape to compare against. It now flows
+  through `product.physicalDescription` into `buildRenderPrompt`'s `PHYSICAL FORM` block
+  and into `buildVerifyPrompt`'s fidelity section. The sister agent learned this first
+  (PR #314, "faithful product renders … pass product descriptions"); do not un-learn it
+  here. A product whose manifest entry has a thin `productDescription` gets a weaker
+  render and a weaker check — improving that prose is the cheapest quality lever in this
+  pipeline.
 - **Exact label strings, every time.** `product.labelStrings` (built by
   `buildLabelStrings` in `index.js` from quoted label text and the volume marking in
   the manifest's `productDescription`, plus `--variant`) is named literally in every
