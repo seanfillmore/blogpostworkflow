@@ -163,6 +163,57 @@ export async function critiqueArtifact({ anthropic, buffer, mediaType, format, z
  * is reported, never silently swallowed.
  * @returns {Promise<{ok:boolean, buffer:Buffer|null, mediaType:string|null, attempts:number, budgetStopped:boolean, proof:object}>}
  */
+// Gemini 503s. Two of nine plates in the 2026-08-15 three-format run were lost to
+// "Deadline expired before operation could complete" — not a quality rejection, just the
+// API being unavailable — and renderVariation's throw escaped renderWithRetry entirely,
+// so the target was recorded as errored with no second try.
+//
+// Deliberately NOT lib/retry.js. That helper is built for scheduled cron work: 60s between
+// tries, then up to ten 30-minute restart cycles. Correct when nothing is waiting; wrong
+// here, where an operator is watching a paid run and a persistent outage should surface in
+// seconds, not five hours.
+const TRANSIENT_STATUS = new Set([429, 500, 502, 503, 504, 529]);
+const TRANSIENT_RE = /\b(429|500|502|503|504|529)\b|UNAVAILABLE|DEADLINE_EXCEEDED|deadline expired|ECONNRESET|ETIMEDOUT|socket hang up|fetch failed/i;
+
+/**
+ * Is this an error worth trying the same call again for?
+ *
+ * Checks the status field AND the message, because the @google/genai client surfaces the
+ * code inside a JSON string ({"error":{"code":503,...}}) rather than as err.status — a
+ * predicate that only read err.status would have missed the exact failure this exists for.
+ */
+export function isTransientApiError(err) {
+  const status = err?.status ?? err?.statusCode ?? err?.code ?? null;
+  if (typeof status === 'number' && TRANSIENT_STATUS.has(status)) return true;
+  // A non-retryable client error must never be read as transient just because its body
+  // happens to contain a number. 4xx (except 429) is a bug in our request, not weather.
+  if (typeof status === 'number' && status >= 400 && status < 500 && status !== 429) return false;
+  return TRANSIENT_RE.test(String(err?.message || ''));
+}
+
+/**
+ * One render call, with bounded retries on transient API failures.
+ *
+ * A transient failure produced NO image, so it is not a quality attempt and must not
+ * consume one of the three the gate is allowed — but it DOES take budget, because budget
+ * counts calls made and a spin against a broken API must still terminate.
+ */
+export async function renderVariationWithBackoff(gemini, args, { tries = 3, delayMs = 4000, budget = null, sleep = (ms) => new Promise(r => setTimeout(r, ms)) } = {}) {
+  let lastErr;
+  for (let i = 1; i <= tries; i++) {
+    try {
+      return await renderVariation(gemini, args);
+    } catch (err) {
+      lastErr = err;
+      if (!isTransientApiError(err) || i === tries) throw err;
+      console.warn(`  transient render error (${String(err.message || '').slice(0, 120)}) — retry ${i}/${tries - 1} in ${delayMs / 1000}s`);
+      await sleep(delayMs * i);
+      if (budget && !budget.take()) throw lastErr;
+    }
+  }
+  throw lastErr;
+}
+
 export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null }) {
   // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
   // can compare the product it got against the product it asked for. Capped below what
@@ -190,7 +241,7 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
       break;
     }
     attempts += 1;
-    lastBuffer = await renderVariation(gemini, { prompt, photoPaths, ratio });
+    lastBuffer = await renderVariationWithBackoff(gemini, { prompt, photoPaths, ratio }, { budget });
     // Sniff on every attempt — nothing guarantees Gemini returns the same format twice.
     lastMediaType = sniffImageMediaType(lastBuffer);
 
@@ -656,8 +707,8 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
     let compProof = null;
     if (r.ok && target.wantsComp && (!budget || budget.take())) {
       try {
-        const compBuf = await renderVariation(gemini, {
-          prompt: buildCompPrompt({ zones }),
+        const compBuf = await renderVariationWithBackoff(gemini, {
+          prompt: buildCompPrompt({ zones, format }),
           photoPaths: [],
           ratio: requestRatio,
           inputImage: { data: plate.toString('base64'), mimeType: sniffImageMediaType(plate) },

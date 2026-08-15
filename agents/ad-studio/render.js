@@ -209,7 +209,7 @@ ${fidelity}`;
  * The instruction mirrors the Creatives tab's upscale path, which resubmits an image with
  * "keep everything identical" and holds composition well enough in practice.
  */
-export function buildCompPrompt({ zones }) {
+export function buildCompPrompt({ zones, format }) {
   const copyBlock = Object.entries(zones || {})
     .map(([zone, value]) => {
       const body = Array.isArray(value) ? value.map(v => `    - "${v}"`).join('\n') : `    "${value}"`;
@@ -217,16 +217,37 @@ export function buildCompPrompt({ zones }) {
     })
     .join('\n');
 
-  return `Keep this image IDENTICAL — same composition, same product, same position and
-scale, same background, same lighting, same colours. Change nothing about the scene.
+  // The comp MUST carry format.layoutBrief. Without it this asked only for copy placed
+  // "sensibly", so every comp came back as the same generic arrangement no matter which
+  // format produced it — a testimonial and a stat-stack were indistinguishable.
+  //
+  // That was tolerable while the comp was scenery. It is not any more: the operator
+  // rebuilds the ad in Photoshop FROM the comp, so the comp is the design reference and
+  // its job is to show the format's actual structure — the two columns, the arrows off
+  // the hero, the quote — not merely that words fit somewhere.
+  const layout = String(format?.layoutBrief || '').trim();
 
-Set the following advertising copy into the empty areas of the image, choosing sensible
-placement, size and hierarchy for a finished advertisement. Use a clean geometric sans.
+  return `Turn this image into a finished advertisement.
 
+KEEP THE PRODUCT EXACTLY AS IT IS — same position in the frame, same scale, same angle,
+same lighting and colours. Do not move it, resize it, re-render it or replace it. It is the
+one fixed element; everything else is built around it.
+
+${layout ? `THE ADVERTISEMENT TO BUILD:
+${layout}
+
+Follow that layout as closely as the product's existing position allows. Where the layout
+calls for a structure the product now sits in the way of, move the STRUCTURE, never the
+product.
+
+` : ''}EXACT COPY TO SET — use these strings, in these zones:
 ${copyBlock}
 
-Keep all type clear of the outer edges of the frame. This is a rough visual comp for
-review — the final type is set by hand afterwards.`;
+Use a clean geometric sans. Keep all type clear of the outer edges of the frame.
+
+This is a visual comp: it shows what the finished ad should look like so a designer can
+rebuild it by hand. Layout, hierarchy and structure are what matter — get those right even
+if small type renders imperfectly.`;
 }
 
 /**
