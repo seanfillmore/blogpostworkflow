@@ -561,6 +561,172 @@ assert.equal(verdictFor({ expected: ['A'], format: plainFormat }).ok, false);
   assert.equal(v.ok, false, 'a clean transcript must not overturn a failed per-string check');
 }
 
+// ── R3a: the defect check is MODE-AWARE ─────────────────────────────────────────
+//
+// A plate is rendered under "ABSOLUTELY NO TEXT ... Leave every area where copy would sit
+// completely empty and clean" — Demand Gen mixes the text assets in at serve time, so the
+// EMPTINESS is the deliverable. Asked the finished-frame question ("what copy here is not
+// fully legible"), the verifier truthfully reported the empty header bars and blank list
+// rows and the gate failed 5 of 18 plates on a live run for being exactly right.
+
+// The plate prompt asks the INVERTED question. Reverting section 3 to the finished-frame
+// wording fails every one of these.
+const platePrompt = buildVerifyPrompt({ expected: ['8 fl. oz. (236ml)'], format: pairingFormat, mode: 'plate' });
+assert.ok(
+  /DO NOT report absent, missing or blank text/i.test(platePrompt),
+  'a plate must never be asked to report missing text',
+);
+assert.ok(
+  /stray-text/.test(platePrompt),
+  'a plate is asked instead about text that IS present where none was asked for',
+);
+assert.ok(
+  /blank bar|empty zone/i.test(platePrompt),
+  'and is told explicitly that an empty zone is not a defect',
+);
+assert.ok(
+  !/AD'S OWN TYPESET COPY/.test(platePrompt),
+  'the finished-frame defect question must not be asked of a plate at all',
+);
+// The product's own label stays out of scope on a plate too — that carve-out is what
+// stopped the verifier rejecting a known-good control on its arc-set badge micro-copy.
+assert.ok(/PRODUCT'S OWN LABEL/.test(platePrompt));
+
+// The FINISHED prompt is untouched: it still asks about occlusion, truncation and
+// garbling, which is what caught the corrupted headline and the bottle sitting on the
+// word "actually".
+const finishedPrompt = buildVerifyPrompt({ expected: ['A'], format: plainFormat, mode: 'finished' });
+assert.ok(/AD'S OWN TYPESET COPY/.test(finishedPrompt));
+assert.ok(/obscured/.test(finishedPrompt) && /cut-off/.test(finishedPrompt) && /garbled/.test(finishedPrompt));
+assert.ok(!/stray-text/.test(finishedPrompt), 'the plate question must not leak into a finished frame');
+
+// normalizeDefects: on a plate, an entry that quotes no rendered characters is a report
+// of ABSENCE and is dropped. These are the four verbatim entries from the live proof.json.
+const LIVE_PLATE_FALSE_POSITIVES = [
+  { text: '[black rounded bar, left]', issue: 'obscured', detail: 'Left header bar is a solid black rounded rectangle with no visible text inside it.' },
+  { text: '[black rounded bar, right]', issue: 'obscured', detail: 'Right header bar is a solid black rounded rectangle with no visible text inside it.' },
+  { text: '[list items next to X marks]', issue: 'obscured', detail: 'Four rows on the left marked with X icons have no accompanying text, just blank lines.' },
+  { text: '[list items next to check marks]', issue: 'obscured', detail: 'Four rows on the right marked with checkmark icons have no accompanying text, just blank lines.' },
+];
+assert.deepEqual(normalizeDefects(LIVE_PLATE_FALSE_POSITIVES, 'plate'), []);
+assert.deepEqual(normalizeDefects([{ text: '(the four list rows)' }, { text: '—' }, { text: 'blank' }], 'plate'), []);
+// ...but text that IS rendered survives, and its reported issue is kept as-is.
+assert.deepEqual(
+  normalizeDefects([{ text: 'A LIBCDEFGHIJKLM NOPQRSTUVWXYZ', issue: 'garbled', detail: 'bottom bar' }], 'plate'),
+  [{ text: 'A LIBCDEFGHIJKLM NOPQRSTUVWXYZ', issue: 'garbled', detail: 'bottom bar' }],
+);
+assert.equal(normalizeDefects([{ text: 'HEADLINE TEXT HERE', issue: 'stray-text' }], 'plate').length, 1);
+assert.equal(normalizeDefects([{ text: 'x', issue: 'stray-text' }])[0].issue, 'stray-text');
+// The absence filter is PLATE-ONLY. On a finished frame "[the closing line]" may well be
+// a real occlusion report, and mode defaults to the strict side.
+assert.equal(normalizeDefects(LIVE_PLATE_FALSE_POSITIVES, 'finished').length, 4);
+assert.equal(normalizeDefects(LIVE_PLATE_FALSE_POSITIVES).length, 4, 'mode defaults to finished');
+
+// verdictFor, plate mode: THE FALSE POSITIVE. Empty copy zones described back as defects
+// must produce ok:true — this is plate-1_91x1.jpg of the live run, which is a correct plate.
+{
+  const v = verdictFor({
+    expected: ['8 fl. oz. (236ml)'],
+    checks: cleanChecks(['8 fl. oz. (236ml)']),
+    productVolume: '8 fl. oz. • 236ml',
+    volumeStrings: TRUE_VOLUME,
+    defects: LIVE_PLATE_FALSE_POSITIVES,
+    pairings: [],
+    format: pairingFormat,
+    mode: 'plate',
+  });
+  assert.equal(v.ok, true, 'a plate\'s deliberately-empty copy zones are not defects');
+  assert.deepEqual(v.reasons, []);
+  assert.deepEqual(v.defects, []);
+}
+
+// verdictFor, plate mode: THE GENUINE DEFECT. Stray text rendered into a plate that was
+// specified clean must still fail — this is plate-1x1.jpg of the same run.
+{
+  const v = verdictFor({
+    expected: ['8 fl. oz. (236ml)'],
+    checks: cleanChecks(['8 fl. oz. (236ml)']),
+    productVolume: '8 fl. oz • 236ml',
+    volumeStrings: TRUE_VOLUME,
+    defects: [{
+      text: 'A LIBCDEFGHIJKLM NOPQRSTUVWXYZ',
+      issue: 'garbled',
+      detail: 'Bottom bar alphabet strip is malformed.',
+    }],
+    pairings: [],
+    format: pairingFormat,
+    mode: 'plate',
+  });
+  assert.equal(v.ok, false, 'text rendered into a text-free plate must fail');
+  assert.equal(v.defects.length, 1);
+  assert.ok(v.reasons.some(r => /A LIBCDEFGHIJKLM/.test(r)));
+  assert.ok(v.reasons.some(r => /no text except the product's own label/i.test(r)));
+}
+// Correctly-spelled placeholder copy on a plate fails too — garbling is not the point,
+// presence is. The copy layer cannot remove pixels.
+assert.equal(
+  verdictFor({
+    expected: ['8 fl. oz. (236ml)'], checks: cleanChecks(['8 fl. oz. (236ml)']),
+    volumeStrings: TRUE_VOLUME, pairings: [], format: pairingFormat, mode: 'plate',
+    defects: [{ text: 'HEADLINE TEXT HERE', issue: 'stray-text', detail: 'top left bar' }],
+  }).ok,
+  false,
+  'a cleanly-spelled placeholder headline is still stray text on a plate',
+);
+
+// FINISHED mode is unchanged by all of the above — asserted through the same entry point.
+assert.equal(
+  verdictFor({
+    expected: ['Six ingredients that actually absorb into skin.'],
+    checks: cleanChecks(['Six ingredients that actually absorb into skin.']),
+    volumeStrings: TRUE_VOLUME, format: plainFormat, mode: 'finished',
+    defects: [{ text: 'actually', issue: 'obscured', detail: 'the bottle sits on top of this word' }],
+  }).ok,
+  false,
+  'obscured copy still fails a finished frame',
+);
+assert.equal(
+  verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), volumeStrings: TRUE_VOLUME,
+    format: plainFormat, mode: 'finished',
+    defects: [{ text: 'CERAMIO OCOCONUT OIL', issue: 'garbled', detail: 'badge text is nonsense' }],
+  }).ok,
+  false,
+  'garbled copy still fails a finished frame',
+);
+{
+  const v = verdictFor({
+    expected: ['THE MOISTURIZING CLAIM DOES MORE WORK THAN THE FORMULA'],
+    checks: [{
+      expected: 'THE MOISTURIZING CLAIM DOES MORE WORK THAN THE FORMULA',
+      found: true,
+      rendered: 'THE MOISTURIZING CLAIM DOES MORE WORK TTHAN THE FORMLA',
+    }],
+    productVolume: 'ILLEGIBLE', volumeStrings: TRUE_VOLUME,
+    format: plainFormat, mode: 'finished',
+  });
+  assert.equal(v.ok, false, 'the corrupted-headline case still fails in finished mode');
+  assert.ok(v.reasons.some(r => /TTHAN THE FORMLA/.test(r)));
+}
+
+// The VOLUME check is untouched in both modes: illegible passes, a contradicted number fails.
+for (const mode of ['plate', 'finished']) {
+  assert.equal(
+    verdictFor({
+      expected: ['A'], checks: cleanChecks(['A']), productVolume: 'ILLEGIBLE',
+      volumeStrings: TRUE_VOLUME, format: plainFormat, mode,
+    }).ok,
+    true,
+    `an illegible volume passes in ${mode} mode`,
+  );
+  const wrong = verdictFor({
+    expected: ['A'], checks: cleanChecks(['A']), productVolume: '4 FL oz / 118ml',
+    volumeStrings: TRUE_VOLUME, format: plainFormat, mode,
+  });
+  assert.equal(wrong.ok, false, `a contradicted volume fails in ${mode} mode`);
+  assert.equal(wrong.volume.status, 'mismatch');
+}
+
 // Task 2's suite pinned only ingredient-callout/us-vs-them/manifesto. Pin the rest:
 // a silent flip of any of these would disable or wrongly enable the pairing check.
 assert.equal(formatByKey('problem-aware').pairsImagesWithLabels, false);
