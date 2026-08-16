@@ -391,6 +391,8 @@ else; running in the main checkout no-ops, because the destination is already th
 A failed copy warns and never fails the run — the images are on disk by then, and turning a
 successful paid run into a crash over a backup is strictly worse.
 
+**Every run enforces a 10 GiB budget on `data/creatives/` before it exits** (`lib/creatives-budget.js`). Purge is tiered and stops as soon as the total fits — rejected frames past a 7-day grace, then Ad Studio images from runs older than 14 days, then Creatives-tab sessions idle 30+ days. JSON is never touched, and the run just written is never eligible, so a sweep can never eat the frames you are about to look at. If it cannot free enough it warns instead of reporting success. `npm run creatives-budget -- --apply` is the same sweep by hand.
+
 `data/creatives/ad-studio/` is gitignored (one default run is ~137 MB of 2K renders) and
 accumulates with every run. The production box has a 24 GB disk and a full one has
 already cost this project four days of cron (see CLAUDE.md's Server Deployment notes) —
