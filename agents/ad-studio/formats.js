@@ -166,31 +166,57 @@ export const FORMATS = [
     // "small and understated at the bottom center, sitting on the surface like a
     // signature" — the label is not legible at that size, so it is not gated.
     productProminent: false,
-    zones: ['headline', 'subhead', 'rows', 'closer'],
-    // rows are full-width typographic lines separated by rules on a poster-style
-    // layout — each one is visually heavy (label + a large phrase), so the format
-    // reads as a manifesto rather than a list only while it stays short. 4 rows is
-    // about what a single poster frame can hold before it stops feeling like a
-    // manifesto and starts feeling like a spec sheet. closer is one line in a box, not
-    // a list, so it takes no cap.
-    zoneCapacity: { rows: 4 },
+    zones: ['headline', 'rows', 'bottomBar'],
+    // REBUILT 2026-08-16. Sean, on the first live comp: "way too cluttered and is not an
+    // effective ad." He was right, and the layoutBrief was the cause.
+    //
+    // It asked for a small label on the LEFT paired with a large phrase on the RIGHT,
+    // four times, plus a headline, plus a subhead, plus a boxed closer — SEVEN competing
+    // text blocks, about a dozen lines, all in one red at one weight. It read as a spec
+    // sheet, the left labels (WATER / FILM / ABSORB / SIX) carried no meaning on their
+    // own, and the product ended up physically overlapped by the middle rows instead of
+    // sitting under them.
+    //
+    // A manifesto is ONE assertion said plainly. So: no label column, three short lines
+    // instead of four long ones, the subhead and the boxed closer both gone, and the
+    // product given clear space of its own. Three text blocks, not seven.
+    //
+    // The product moved to the BOTTOM RIGHT on the second pass. Decluttering alone left it
+    // centred, and a centred product under full-width rows collides every time — the comp
+    // put the bottle straight through "A film that sits on top". Asking for clearance in
+    // words did not work; moving the product out of the column did. LATERAL placement is
+    // the instruction this model actually honours (ingredient-callout's "RIGHT side" and
+    // problem-aware's "lower right" both held, while every vertical/scale instruction has
+    // been ignored), so the fix uses the lever that works rather than repeating the one
+    // that does not.
+    //
+    // 3, and the brief demands the lines be SHORT. The old cap of 4 was about how many
+    // rows fit; the real constraint was never the count, it was the words per row —
+    // "MOSTLY WATER, MINERAL OIL, AND A THICKENER" wrapped to three lines by itself.
+    zoneCapacity: { rows: 3 },
     layoutBrief: [
       `An almost entirely typographic letterpress-style poster on ${SAND}, modern and clean rather than rustic.`,
-      'A very large stacked headline, then a smaller line beneath it.',
-      'Then a series of rows separated by thin horizontal rules, each row pairing a small label on the left',
-      'with a large phrase on the right set in a deep warm brick red.',
-      'A closing line sits inside a thin rectangular box near the bottom.',
-      'The product appears small and understated at the bottom center, sitting on the surface like a signature.',
+      'One very large stacked headline across the top, at most two lines, in a deep warm brick red.',
+      'Beneath it three short declarative lines, stacked and left-aligned, each on its own line and separated',
+      'by a thin horizontal rule running the full width.',
+      'Each of those lines is a SHORT phrase of no more than five or six words that fits on ONE line —',
+      'they are statements, not sentences, and there is no label or category word beside them.',
+      'The product stands in the BOTTOM RIGHT of the frame, clearly visible and completely clear of the type.',
+      'The three lines and their rules occupy the LEFT of the frame and stop short of the product —',
+      'no line, rule or word crosses it or runs behind it.',
+      'One restrained line of small letterspaced caps runs across the very bottom.',
     ].join(' '),
-    // productProminent: false — the plate reproduces that signature scale, so the volume
-    // marking will read ILLEGIBLE here and volumeVerdict will pass it. That is intended.
+    // productProminent stays FALSE even though the 2026-08-16 rebuild enlarged the product.
+    // The flag is permission for the gate to DEMAND the label back, not a claim about
+    // size; leaving it false costs nothing and keeps the lenient path. The volume is still
+    // checked on every format regardless (volumeVerdict).
     // A letterpress poster is typography on a flat ground; a setting would fight it.
     plateSetting: 'studio',
     plateBrief: [
       `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, no texture and no vignette.`,
-      'The product sits small and understated at the bottom centre, resting on the surface like a signature,',
-      'occupying only the bottom fifth of the frame.',
-      'Everything above it is empty ground. Nothing else appears in the picture.',
+      'The product stands upright in the BOTTOM RIGHT of the frame, resting on the surface, occupying roughly',
+      'the bottom third of the frame height — understated, but large enough to read clearly at phone size.',
+      'The whole left side and the top of the frame are empty ground. Nothing else appears in the picture.',
     ].join(' '),
   },
   {
