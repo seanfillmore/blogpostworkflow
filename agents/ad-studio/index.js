@@ -31,7 +31,7 @@ import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZ
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { notify } from '../../lib/notify.js';
 import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
-import { enforceBudget, formatBytes, DEFAULT_BUDGET_BYTES } from '../../lib/creatives-budget.js';
+import { enforceBudget, formatBytes } from '../../lib/creatives-budget.js';
 import { USD_PER_RENDER } from '../../lib/ad-studio-cost.js';
 import { updateJob, appendEvent, isValidJobId } from '../../lib/ad-studio-job.js';
 
@@ -1275,6 +1275,42 @@ async function main() {
     if (dest) console.log(`Archived to: ${dest}`);
   };
   ARCHIVE_ON_EXIT = flushArchive;
+
+  // PURGE AS WE GO. A disk budget that waits for someone to remember a script is not a
+  // budget — this project already lost four days of cron to a full disk, and the failure
+  // mode is that every scheduled job stops with nothing saying why.
+  //
+  // The run just finished is passed as keepPaths so a sweep can never eat the frames the
+  // operator is about to look at, no matter how far over budget the directory is.
+  //
+  // Called from BOTH the normal completion path and the SIGINT/SIGTERM handler below —
+  // it used to live only inside the signal handler, which meant a normal, successful run
+  // never purged anything and the sweep only ever ran on an interrupted one. It is
+  // idempotent and cheap (a directory walk), so calling it twice on an interrupted run
+  // (once here, once if the process is also re-entered) is harmless.
+  const sweepDiskBudget = () => {
+    try {
+      const creativesDir = join(ROOT, 'data', 'creatives');
+      const sweep = enforceBudget({ creativesDir, apply: true, keepPaths: [runDir] });
+      if (sweep.deletions?.length) {
+        console.log(
+          `Disk budget: freed ${formatBytes(sweep.freedBytes)} (${sweep.deletions.length} image(s)) — ` +
+          `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)} used.`
+        );
+        if (!sweep.underBudget) {
+          console.warn(
+            `Disk budget: STILL OVER after purging everything eligible. ` +
+            `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)}. ` +
+            `Raise the budget or widen the retention windows — nothing further can be freed safely.`
+          );
+        }
+      }
+    } catch (err) {
+      // A budget sweep must never fail a finished, paid run.
+      console.warn(`Disk budget: sweep skipped (${err.message}).`);
+    }
+  };
+
   // Registered INSIDE main, never at module scope: importing an agent must not install
   // process-level handlers as a side effect (see the agents-run-on-import hazard).
   // `once` so a second Ctrl-C is not swallowed by a handler that has already run.
@@ -1283,33 +1319,7 @@ async function main() {
       console.warn(`\nad-studio: ${sig} — archiving run output before exit.`);
       flushArchive();
       job.finish({ runId, totals: null, status: 'cancelled' });
-
-  // PURGE AS WE GO. A disk budget that waits for someone to remember a script is not a
-  // budget — this project already lost four days of cron to a full disk, and the failure
-  // mode is that every scheduled job stops with nothing saying why.
-  //
-  // The run just finished is passed as keepPaths so a sweep can never eat the frames the
-  // operator is about to look at, no matter how far over budget the directory is.
-  try {
-    const creativesDir = join(ROOT, 'data', 'creatives');
-    const sweep = enforceBudget({ creativesDir, apply: true, keepPaths: [runDir] });
-    if (sweep.deletions?.length) {
-      console.log(
-        `Disk budget: freed ${formatBytes(sweep.freedBytes)} (${sweep.deletions.length} image(s)) — ` +
-        `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)} used.`
-      );
-      if (!sweep.underBudget) {
-        console.warn(
-          `Disk budget: STILL OVER after purging everything eligible. ` +
-          `${formatBytes(sweep.wouldRemain)} of ${formatBytes(DEFAULT_BUDGET_BYTES)}. ` +
-          `Raise the budget or widen the retention windows — nothing further can be freed safely.`
-        );
-      }
-    }
-  } catch (err) {
-    // A budget sweep must never fail a finished, paid run.
-    console.warn(`Disk budget: sweep skipped (${err.message}).`);
-  }
+      sweepDiskBudget();
       process.exit(130);
     });
   }
@@ -1432,6 +1442,10 @@ async function main() {
       `${report.budget.skippedCount} artifact(s) were not rendered:\n  ${report.budget.skipped.join('\n  ')}`
     );
   }
+
+  // Normal completion — the sweep used to run only inside the SIGINT/SIGTERM handler
+  // above, so a successful run never purged anything. See sweepDiskBudget's docstring.
+  sweepDiskBudget();
 
   return { report };
 }

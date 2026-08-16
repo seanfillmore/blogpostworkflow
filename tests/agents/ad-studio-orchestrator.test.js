@@ -1376,3 +1376,63 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   });
   assert.deepEqual(report.totals.artifacts, { accepted: 0, rejected: 0, errored: 0, total: 0 });
 }
+
+// ── Regression guard: the disk-budget sweep must run on a NORMAL, successful run ────
+//
+// enforceBudget used to be called only from inside the SIGINT/SIGTERM handler, right
+// before process.exit(130) — so a normal run that finished without being interrupted
+// never purged anything at all, contradicting both CLAUDE.md ("enforced automatically
+// at the end of every Ad Studio run") and this agent's own README ("Every run enforces
+// a ... budget ... before it exits").
+//
+// main() is not exported, constructs live Anthropic/Gemini clients and hits the network
+// (fetchPdpBody) directly rather than accepting them as parameters, and is guarded
+// against running on import — so it cannot be invoked from a test without a real, paid
+// run. The wiring is asserted against the source instead, the same pattern
+// tests/agents/blog-post-writer-voc.test.js uses for exactly the same reason.
+{
+  const SRC = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  // sweepDiskBudget is defined exactly once, as a local function inside main(), and
+  // enforceBudget must be called from nowhere else — a second, un-swept call site would
+  // defeat the point of centralising it.
+  const sweepDef = SRC.match(/const sweepDiskBudget = \(\) => \{[\s\S]*?\n  \};/);
+  assert.ok(sweepDef, 'sweepDiskBudget must be defined as a named local function in main()');
+  assert.match(sweepDef[0], /enforceBudget\(/, 'sweepDiskBudget must actually call enforceBudget');
+  assert.equal(
+    (SRC.match(/enforceBudget\(/g) || []).length, 1,
+    'enforceBudget must be called from exactly one place: inside sweepDiskBudget',
+  );
+
+  // It is called exactly twice: once from the SIGINT/SIGTERM handler (interrupt path),
+  // once on normal completion. Two, not one — dropping either call regresses either the
+  // interrupt path or the normal path.
+  const calls = SRC.match(/\bsweepDiskBudget\(\);/g) || [];
+  assert.equal(calls.length, 2, 'sweepDiskBudget must be called from both the interrupt path and the normal completion path');
+
+  // The interrupt-path call: inside the process.once(sig, ...) handler, before
+  // process.exit(130) — unchanged behaviour from before this fix.
+  const sigHandler = SRC.match(/for \(const sig of \['SIGINT', 'SIGTERM'\]\) \{[\s\S]*?\n  \}\n/);
+  assert.ok(sigHandler, 'the SIGINT/SIGTERM registration block must still exist');
+  assert.match(
+    sigHandler[0], /sweepDiskBudget\(\);\s*\n\s*process\.exit\(130\);/,
+    'the interrupt path must still sweep before exiting',
+  );
+
+  // THE FIX: a call must also exist on the normal completion path — after the run
+  // report's console summary ("Run complete: ...") and before main() returns. Slicing
+  // the source from "Run complete:" onward excludes the signal handler entirely (it is
+  // registered earlier in main()), so this only passes if the sweep call is genuinely
+  // reachable on a run that finishes without being interrupted.
+  const afterRunComplete = SRC.slice(SRC.indexOf('Run complete:'));
+  assert.ok(afterRunComplete.length > 0 && SRC.indexOf('Run complete:') > -1, 'sanity: the run-complete summary must exist');
+  assert.match(
+    afterRunComplete,
+    /sweepDiskBudget\(\);[\s\S]*return \{ report \};/,
+    'a normal, successful run must sweep the disk budget before main() returns — not only on interrupt',
+  );
+  assert.ok(
+    !sigHandler[0].includes('Run complete:'),
+    'sanity: the normal-completion sweep found above is not accidentally inside the signal handler block',
+  );
+}

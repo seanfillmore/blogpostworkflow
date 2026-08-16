@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   collectImages, measureDir, rejectedVariationDirs, planPurge, enforceBudget, formatBytes,
-  DEFAULT_BUDGET_BYTES,
+  DEFAULT_BUDGET_BYTES, resolveBudgetBytes,
 } from '../../lib/creatives-budget.js';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -195,3 +195,21 @@ assert.equal(formatBytes(0), '0B');
 assert.equal(formatBytes(1024), '1.0KB');
 assert.equal(formatBytes(10 * 1024 * 1024 * 1024), '10GB');
 assert.equal(formatBytes(1536), '1.5KB');
+
+// ── resolveBudgetBytes: the ceiling must fit the disk it protects ──────────────────
+{
+  assert.equal(resolveBudgetBytes({}), DEFAULT_BUDGET_BYTES);
+}
+
+// The production box has ~9.9 GB free of 24 GB. A 10 GiB ceiling can never fire
+// before the disk fills, which is the failure that cost this project four days of
+// cron. The server sets 4 GiB; local keeps the default.
+{
+  assert.equal(resolveBudgetBytes({ CREATIVES_BUDGET_BYTES: String(4 * 1024 ** 3) }), 4 * 1024 ** 3);
+}
+
+{
+  assert.equal(resolveBudgetBytes({ CREATIVES_BUDGET_BYTES: 'lots' }), DEFAULT_BUDGET_BYTES);
+  assert.equal(resolveBudgetBytes({ CREATIVES_BUDGET_BYTES: '0' }), DEFAULT_BUDGET_BYTES);
+  assert.equal(resolveBudgetBytes({ CREATIVES_BUDGET_BYTES: '-1' }), DEFAULT_BUDGET_BYTES);
+}

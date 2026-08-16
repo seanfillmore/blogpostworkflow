@@ -17,7 +17,7 @@
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  enforceBudget, planPurge, formatBytes, DEFAULT_BUDGET_BYTES,
+  enforceBudget, planPurge, formatBytes, resolveBudgetBytes,
 } from '../lib/creatives-budget.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -26,7 +26,7 @@ const flag = (name) => { const i = argv.indexOf(name); return i === -1 ? undefin
 
 const apply = argv.includes('--apply');
 const gb = flag('--budget-gb');
-const budgetBytes = gb === undefined ? DEFAULT_BUDGET_BYTES : Number(gb) * 1024 * 1024 * 1024;
+const budgetBytes = gb === undefined ? resolveBudgetBytes() : Number(gb) * 1024 * 1024 * 1024;
 const creativesDir = flag('--dir') || join(ROOT, 'data', 'creatives');
 
 if (!Number.isFinite(budgetBytes) || budgetBytes <= 0) {
