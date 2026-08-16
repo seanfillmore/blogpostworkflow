@@ -144,3 +144,37 @@ assert.deepEqual(
 assert.throws(() => selectFormats(['nope']), /unknown format: nope/i);
 
 assert.equal(formatByKey('nope'), undefined);
+
+// ── manifesto was rebuilt because it was not an effective ad (2026-08-16) ────────────
+//
+// Sean, on the first live comp: "way too cluttered and is not an effective ad." The
+// layoutBrief was the cause — a small label LEFT paired with a large phrase RIGHT, four
+// times, plus a headline, plus a subhead, plus a boxed closer. Seven competing text
+// blocks, about a dozen lines, one red at one weight; the left labels (WATER / FILM /
+// ABSORB / SIX) carried no meaning alone, and the product ended up physically overlapped
+// by the middle rows.
+{
+  const m = formatByKey('manifesto');
+
+  // Three text blocks, not seven. The subhead and the boxed closer are gone.
+  assert.deepEqual(m.zones, ['headline', 'rows', 'bottomBar']);
+  assert.ok(!m.zones.includes('subhead'), 'the subhead was a competing block');
+  assert.ok(!m.zones.includes('closer'), 'the boxed closer was a competing block');
+
+  // The real constraint was never the row COUNT, it was words per row — "MOSTLY WATER,
+  // MINERAL OIL, AND A THICKENER" wrapped to three lines on its own.
+  assert.equal(m.zoneCapacity.rows, 3);
+  assert.ok(/no more than five or six words/i.test(m.layoutBrief), 'the brief must cap phrase length');
+  assert.ok(/fits on ONE line/i.test(m.layoutBrief));
+
+  // No label column — that is what made it read as a spec sheet.
+  assert.ok(/no label or category word beside them/i.test(m.layoutBrief));
+
+  // The product must be clear of the type, which it was not.
+  assert.ok(/completely clear of the type/i.test(m.layoutBrief));
+  assert.ok(/nothing overlapping it/i.test(m.layoutBrief));
+
+  // Enlarging the product on the plate must NOT flip productProminent — that flag is
+  // permission for the gate to demand the label back, and turning it on buys retries.
+  assert.equal(m.productProminent, false);
+}
