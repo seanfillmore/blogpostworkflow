@@ -31,6 +31,7 @@ import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZ
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { notify } from '../../lib/notify.js';
 import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
+import { enforceBudget, formatBytes, DEFAULT_BUDGET_BYTES } from '../../lib/creatives-budget.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -1228,6 +1229,33 @@ async function main() {
     process.once(sig, () => {
       console.warn(`\nad-studio: ${sig} — archiving run output before exit.`);
       flushArchive();
+
+  // PURGE AS WE GO. A disk budget that waits for someone to remember a script is not a
+  // budget — this project already lost four days of cron to a full disk, and the failure
+  // mode is that every scheduled job stops with nothing saying why.
+  //
+  // The run just finished is passed as keepPaths so a sweep can never eat the frames the
+  // operator is about to look at, no matter how far over budget the directory is.
+  try {
+    const creativesDir = join(ROOT, 'data', 'creatives');
+    const sweep = enforceBudget({ creativesDir, apply: true, keepPaths: [runDir] });
+    if (sweep.deletions?.length) {
+      console.log(
+        `Disk budget: freed ${formatBytes(sweep.freedBytes)} (${sweep.deletions.length} image(s)) — ` +
+        `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)} used.`
+      );
+      if (!sweep.underBudget) {
+        console.warn(
+          `Disk budget: STILL OVER after purging everything eligible. ` +
+          `${formatBytes(sweep.wouldRemain)} of ${formatBytes(DEFAULT_BUDGET_BYTES)}. ` +
+          `Raise the budget or widen the retention windows — nothing further can be freed safely.`
+        );
+      }
+    }
+  } catch (err) {
+    // A budget sweep must never fail a finished, paid run.
+    console.warn(`Disk budget: sweep skipped (${err.message}).`);
+  }
       process.exit(130);
     });
   }

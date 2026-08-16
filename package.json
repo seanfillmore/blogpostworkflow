@@ -98,7 +98,8 @@
     "upload-click-id-theme": "node scripts/upload-click-id-theme.mjs",
     "check-variant-picker": "node scripts/check-variant-picker.mjs",
     "ad-studio": "node agents/ad-studio/index.js",
-    "prune-ad-studio": "node scripts/prune-ad-studio.mjs"
+    "prune-ad-studio": "node scripts/prune-ad-studio.mjs",
+    "creatives-budget": "node scripts/creatives-budget.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
