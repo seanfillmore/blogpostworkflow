@@ -1304,3 +1304,67 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   );
   assert.ok(calls < 5, 'an exhausted budget stops the retry loop early');
 }
+
+// ── Artifact-level totals: a 503 must not read as "the gate rejected this" ───────────
+//
+// A variation is `ok` only when EVERY placement passed, so one failed frame made the whole
+// variation "rejected" and the plates that DID pass vanished from the headline. The
+// 2026-08-15 three-format run reported "1 accepted / 2 rejected" when 7 of its 9 plates
+// were good and both misses were Gemini 503s. Each plate is independently usable, so the
+// artifact count is the one that describes what the operator actually got.
+{
+  const report = buildRunReport({
+    runId: 'r', product: { handle: 'h', title: 'T' }, renders: 9,
+    results: [
+      {
+        conceptSlug: 'testimonial', format: 'testimonial',
+        variations: [{ n: 1, ok: false, artifacts: [
+          { artifact: 'meta-plate-1x1.jpg', ok: true },
+          { artifact: 'meta-plate-4x5.png', ok: false, errored: true },   // Gemini 503
+          { artifact: 'meta-plate-9x16.jpg', ok: true },
+        ] }],
+      },
+      {
+        conceptSlug: 'problem-aware', format: 'problem-aware',
+        variations: [{ n: 1, ok: false, artifacts: [
+          { artifact: 'meta-plate-1x1.jpg', ok: true },
+          { artifact: 'meta-plate-4x5.jpg', ok: false },                  // real gate reject
+          { artifact: 'meta-plate-9x16.jpg', ok: true },
+        ] }],
+      },
+    ],
+  });
+
+  // Variation-level totals are unchanged — a variation really is an incomplete set.
+  assert.equal(report.totals.accepted, 0);
+  assert.equal(report.totals.rejected, 2);
+
+  // ...but the artifact totals say what actually happened: 4 usable plates, one turned
+  // down on quality, one lost to the API. Those last two are NOT the same event.
+  assert.deepEqual(report.totals.artifacts, { accepted: 4, rejected: 1, errored: 1, total: 6 });
+}
+
+// A clean run reports no rejections and no errors, and the totals still add up.
+{
+  const report = buildRunReport({
+    runId: 'r', product: { handle: 'h', title: 'T' }, renders: 3,
+    results: [{
+      conceptSlug: 'us-vs-them', format: 'us-vs-them',
+      variations: [{ n: 1, ok: true, artifacts: [
+        { artifact: 'a.jpg', ok: true }, { artifact: 'b.jpg', ok: true }, { artifact: 'c.jpg', ok: true },
+      ] }],
+    }],
+  });
+  assert.deepEqual(report.totals.artifacts, { accepted: 3, rejected: 0, errored: 0, total: 3 });
+  assert.equal(report.totals.accepted, 1);
+}
+
+// A variation with no artifacts at all (claim-gate reject never reaches render) must not
+// throw or invent counts.
+{
+  const report = buildRunReport({
+    runId: 'r', product: { handle: 'h', title: 'T' },
+    results: [{ conceptSlug: 'x', format: 'x', variations: [{ n: 1, ok: false }] }],
+  });
+  assert.deepEqual(report.totals.artifacts, { accepted: 0, rejected: 0, errored: 0, total: 0 });
+}
