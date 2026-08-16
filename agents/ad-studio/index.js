@@ -32,6 +32,7 @@ import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './base
 import { notify } from '../../lib/notify.js';
 import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
 import { enforceBudget, formatBytes, DEFAULT_BUDGET_BYTES } from '../../lib/creatives-budget.js';
+import { USD_PER_RENDER } from '../../lib/ad-studio-cost.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -46,7 +47,7 @@ let ARCHIVE_ON_EXIT = null;
 
 // Gemini 3 Pro image, 2K. The single number every cost figure in the README and the
 // design spec is derived from — keep them in step if it changes.
-export const ESTIMATED_COST_PER_RENDER_USD = 0.13;
+export const ESTIMATED_COST_PER_RENDER_USD = USD_PER_RENDER;
 
 // A default run is 6 concepts × 3 variations × 6 platform targets = 108 renders before
 // a single retry (~$14), and 324 (~$42) if every artifact needs all 3 attempts. Nothing
