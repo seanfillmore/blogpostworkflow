@@ -34,7 +34,15 @@ export function normalizeForMatch(s) {
     .replace(/[‘’ʼ]/g, "'")
     .replace(/[“”]/g, '"')
     .replace(/[–—]/g, '-')
-    .replace(/[•·|]/g, ' ')
+    // Separators that stand in for a line break or a bullet, normalised to a space.
+    // "/" earned its place on 2026-08-16: the verifier quoted a two-line brand mark as
+    // "real / SKIN CARE", which never matched the expected "real SKIN CARE", and an
+    // offer-focused plate that was correct burned all three paid attempts and lost its
+    // placement. The verify prompt explicitly promises that line breaks are ignored when
+    // deciding `found` — this is the mechanical re-check finally honouring that promise.
+    // Symmetric: the same normalisation runs on the needle and the haystack, so widening
+    // it cannot loosen the claim gate.
+    .replace(/[•·|/\\⁄]/g, ' ')
     .toLowerCase()
     .replace(/(^|[^a-z0-9])\+/g, '$1 ')
     .replace(/[.,;:!?"'()\[\]]/g, '')
