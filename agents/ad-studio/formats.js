@@ -181,6 +181,15 @@ export const FORMATS = [
     // instead of four long ones, the subhead and the boxed closer both gone, and the
     // product given clear space of its own. Three text blocks, not seven.
     //
+    // The product moved to the BOTTOM RIGHT on the second pass. Decluttering alone left it
+    // centred, and a centred product under full-width rows collides every time — the comp
+    // put the bottle straight through "A film that sits on top". Asking for clearance in
+    // words did not work; moving the product out of the column did. LATERAL placement is
+    // the instruction this model actually honours (ingredient-callout's "RIGHT side" and
+    // problem-aware's "lower right" both held, while every vertical/scale instruction has
+    // been ignored), so the fix uses the lever that works rather than repeating the one
+    // that does not.
+    //
     // 3, and the brief demands the lines be SHORT. The old cap of 4 was about how many
     // rows fit; the real constraint was never the count, it was the words per row —
     // "MOSTLY WATER, MINERAL OIL, AND A THICKENER" wrapped to three lines by itself.
@@ -192,8 +201,9 @@ export const FORMATS = [
       'by a thin horizontal rule running the full width.',
       'Each of those lines is a SHORT phrase of no more than five or six words that fits on ONE line —',
       'they are statements, not sentences, and there is no label or category word beside them.',
-      'The product sits at the bottom centre, clearly visible and completely clear of the type,',
-      'with the lowest rule above it and nothing overlapping it.',
+      'The product stands in the BOTTOM RIGHT of the frame, clearly visible and completely clear of the type.',
+      'The three lines and their rules occupy the LEFT of the frame and stop short of the product —',
+      'no line, rule or word crosses it or runs behind it.',
       'One restrained line of small letterspaced caps runs across the very bottom.',
     ].join(' '),
     // productProminent stays FALSE even though the 2026-08-16 rebuild enlarged the product.
@@ -204,9 +214,9 @@ export const FORMATS = [
     plateSetting: 'studio',
     plateBrief: [
       `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, no texture and no vignette.`,
-      'The product stands upright at the bottom centre, resting on the surface, occupying roughly the bottom',
-      'third of the frame — understated, but large enough to read clearly at phone size.',
-      'Everything above it is empty ground. Nothing else appears in the picture.',
+      'The product stands upright in the BOTTOM RIGHT of the frame, resting on the surface, occupying roughly',
+      'the bottom third of the frame height — understated, but large enough to read clearly at phone size.',
+      'The whole left side and the top of the frame are empty ground. Nothing else appears in the picture.',
     ].join(' '),
   },
   {

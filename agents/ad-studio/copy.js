@@ -7,7 +7,16 @@
  * @param {{format:object, product:object, pdpBody:string, persona?:object, tactics?:string[]}} args
  * @returns {string}
  */
-export function buildCopyPrompt({ format, product, pdpBody, persona, tactics }) {
+// How many reviews the writer is shown, and how much of each.
+//
+// Bounded because 26 full reviews is a lot of tokens on a call made once per concept.
+// Truncating the DISPLAY is safe: the claim gate validates evidence against the FULL
+// review text in the source index, so any quote taken from the shown excerpt is still a
+// contiguous substring of the source.
+const REVIEWS_SHOWN = 12;
+const REVIEW_CHARS = 320;
+
+export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [] }) {
   const zoneList = format.zones
     .map(z => {
       const cap = format.zoneCapacity?.[z];
@@ -25,6 +34,9 @@ PRODUCT: ${product.title} (${product.handle}) — ${product.priceLabel}
 PRODUCT PAGE COPY (a source you may cite as "pdp"):
 ${pdpBody}
 
+${reviews.length ? `CUSTOMER REVIEWS (a source you may cite as "reviews") — real, verbatim, 4 and 5 star:
+${reviews.slice(0, REVIEWS_SHOWN).map((r, i) => `  [${i + 1}] ${String(r).slice(0, REVIEW_CHARS)}`).join('\n')}
+` : ''}
 ${persona ? `BUYER: ${persona.name}\nWHAT THEY ALREADY TRIED: ${(persona.angles || []).join('; ')}` : ''}
 
 ${tactics && tactics.length ? `COPY TACTICS AVAILABLE:\n${tactics.map(t => `  - ${t}`).join('\n')}` : ''}

@@ -334,9 +334,9 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  * @returns {Promise<{ok:true, conceptSlug:string, format:object, zones:object, claims:object[]}
  *                  |{ok:false, conceptSlug:string, format:string, violations:object[], error:string}>}
  */
-export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex }) {
+export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [] }) {
   console.log(`Copy: ${format.key} (${format.name})...`);
-  const prompt = buildCopyPrompt({ format, product, pdpBody, persona });
+  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews });
   const msg = await anthropic.messages.create({
     model: CREATIVE_MODELS.adStudio.copy,
     max_tokens: 3000,
@@ -380,11 +380,11 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
  *
  * @returns {Promise<{concepts:{format:object, zones:object, claims:object[]}[], rejectedConcepts:{conceptSlug:string, format:string, violations:object[], error:string}[]}>}
  */
-export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex }) {
+export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [] }) {
   const concepts = [];
   const rejectedConcepts = [];
   for (const format of formats) {
-    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex });
+    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews });
     if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims });
     else rejectedConcepts.push({ conceptSlug: result.conceptSlug, format: result.format, violations: result.violations, error: result.error });
   }
@@ -565,7 +565,13 @@ export async function fetchAdReviews(handle, { env = process.env } = {}) {
     const externalId = await resolveExternalId(handle, shopDomain, token);
     if (!externalId) return [];
     const reviews = await fetchProductReviews(externalId, shopDomain, token);
+    // 4- and 5-star only, best first. A testimonial format quotes whatever it is given,
+    // and this product's review set includes "Barely if any moisturizing" — handing the
+    // writer the full set invites an own-goal, and the claim gate would happily pass it
+    // because it IS a verbatim quote from a named source. Sourcing is not curation.
     return (reviews || [])
+      .filter(r => Number(r?.rating) >= 4)
+      .sort((a, b) => Number(b?.rating || 0) - Number(a?.rating || 0))
       .map(r => stripHtmlForReview(r?.body || ''))
       .map(t => String(t || '').trim())
       .filter(Boolean);
@@ -1129,7 +1135,7 @@ async function main() {
   // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
   // resilience. assertClaimsSourced itself is unchanged: still throws, still no
   // override flag; buildConcept is the caller the isolation belongs in.
-  const { concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex });
+  const { concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews });
 
   if (rejectedConcepts.length) {
     console.log(

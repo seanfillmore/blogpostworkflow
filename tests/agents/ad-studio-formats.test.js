@@ -170,9 +170,14 @@ assert.equal(formatByKey('nope'), undefined);
   // No label column — that is what made it read as a spec sheet.
   assert.ok(/no label or category word beside them/i.test(m.layoutBrief));
 
-  // The product must be clear of the type, which it was not.
+  // The product must be clear of the type, which it was not — and clearance is achieved
+  // by MOVING it laterally, not by asking. Decluttering alone left it centred and the comp
+  // put the bottle straight through "A film that sits on top"; lateral placement is the
+  // only positional instruction this model reliably honours.
   assert.ok(/completely clear of the type/i.test(m.layoutBrief));
-  assert.ok(/nothing overlapping it/i.test(m.layoutBrief));
+  assert.ok(/BOTTOM RIGHT/.test(m.layoutBrief), 'the product must be moved out of the text column');
+  assert.ok(/no line, rule or word crosses it/i.test(m.layoutBrief));
+  assert.ok(/BOTTOM RIGHT/.test(m.plateBrief), 'and the plate must put it there to begin with');
 
   // Enlarging the product on the plate must NOT flip productProminent — that flag is
   // permission for the gate to demand the label back, and turning it on buys retries.
