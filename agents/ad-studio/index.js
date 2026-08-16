@@ -29,6 +29,7 @@ import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedString
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { notify } from '../../lib/notify.js';
+import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -529,50 +530,21 @@ export function finalizeRunReport({ runDir, runId, product, results, renders, bu
 }
 
 /**
- * Copy a finished run's output somewhere `git worktree remove` cannot reach.
- *
- * Run output lands in `data/creatives/ad-studio/<runId>/` under whatever checkout the
- * agent was launched from. That path is gitignored, so inside a worktree it is untracked
- * — and `git worktree remove --force` deletes untracked files. That is how a set of
- * sample plates was destroyed before Sean had seen them.
- *
- * The fix cannot be "remember to copy them first", so this runs at the end of every run.
- *
- * Destination, in order: $AD_STUDIO_ARCHIVE_DIR, else `data/creatives/ad-studio/` under
- * the MAIN checkout, found via git's common dir (a worktree's `.git` file points at
- * `<main>/.git/worktrees/<name>`, and the common dir is `<main>/.git`). When the agent is
- * already running in the main checkout the destination equals the source and this no-ops.
- *
- * Never throws. A failed archive copy must not turn a successful, paid run into an error
- * — the images are still on disk at that point, and the whole purpose is to lose less.
+ * Ad Studio's binding of the shared archiver. See lib/archive-run-output.js for the
+ * hazard this exists for, and for when an agent should NOT use it.
  *
  * @returns {string|null} the directory copied to, or null if nothing was copied
  */
 export function archiveRunOutput({ runDir, runId, root = ROOT, env = process.env } = {}) {
-  try {
-    if (!existsSync(runDir)) return null;
-
-    let destRoot = String(env.AD_STUDIO_ARCHIVE_DIR || '').trim();
-    if (!destRoot) {
-      const commonDir = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], {
-        cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
-      }).trim();
-      if (!commonDir) return null;
-      destRoot = join(dirname(commonDir), 'data', 'creatives', 'ad-studio');
-    }
-
-    const dest = join(destRoot, runId);
-    // Same checkout — the files are already where they will stay.
-    if (resolve(dest) === resolve(runDir)) return null;
-
-    mkdirSync(destRoot, { recursive: true });
-    cpSync(runDir, dest, { recursive: true });
-    return dest;
-  } catch (err) {
-    console.warn(`ad-studio: could not archive run output (${err.message}). The run itself is unaffected; ` +
-      `copy ${runDir} by hand before removing this worktree.`);
-    return null;
-  }
+  return archiveRun({
+    sourceDir: runDir,
+    runId,
+    relativeDir: 'data/creatives/ad-studio',
+    root,
+    envVar: 'AD_STUDIO_ARCHIVE_DIR',
+    env,
+    label: 'ad-studio',
+  });
 }
 
 /**

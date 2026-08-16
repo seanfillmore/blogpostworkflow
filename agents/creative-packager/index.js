@@ -14,6 +14,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { scanSkillInventory, renderContextMirror } from '../../lib/marketing-learner.js';
+import { archiveRunOutput } from '../../lib/archive-run-output.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -545,6 +546,21 @@ async function main() {
   process.stdout.write('  Packaging ZIP... ');
   await createZip(zipPath, zipFiles);
   console.log(`done → ${zipName}`);
+
+  // Copy the package somewhere `git worktree remove --force` cannot reach. data/
+  // creative-packages/ is gitignored, so inside a worktree the ZIP is untracked and a
+  // worktree cleanup deletes it — the same way a set of Ad Studio plates was destroyed on
+  // 2026-08-15. No-ops when this runs in the main checkout, which is what happens when the
+  // dashboard drives it on the server, so it costs nothing there.
+  const archived = archiveRunOutput({
+    sourceDir: zipPath,
+    runId: zipName,
+    relativeDir: 'data/creative-packages',
+    root: ROOT,
+    envVar: 'CREATIVE_PACKAGES_ARCHIVE_DIR',
+    label: 'creative-packager',
+  });
+  if (archived) console.log(`  Archived to: ${archived}`);
 
   const downloadUrl = source === 'session' ? `/api/creatives/package/download/${jobIdArg}` : `/api/creative-packages/download/${jobIdArg}`;
   writeJobStatus(jobPath, { status: 'complete', downloadUrl, zipPath });

@@ -361,7 +361,7 @@ This file is a few bytes per frame and must outlive the images, which
 
 ## Housekeeping
 
-**Every run auto-archives its output.** At the end of a run `archiveRunOutput` copies
+**Every run auto-archives its output**, on the success path, the failure path and on SIGINT/SIGTERM — a run that crashed or was interrupted used to leave its images only in the worktree, where `git worktree remove --force` destroys them. The mechanism is shared (`lib/archive-run-output.js`); `agents/creative-packager` uses it too. At the end of a run it copies
 `data/creatives/ad-studio/<runId>/` to the same path under the **main checkout**, found via
 git's common dir. Run output is gitignored, which inside a worktree means untracked — and
 `git worktree remove --force` deletes untracked files. That is how a set of sample plates
