@@ -138,3 +138,71 @@ assert.deepEqual(expectedStrings({}), []);
   }
   assert.deepEqual(warnings2, [], 'no truncation, no log');
 }
+
+// ── EMPTY IS NOT VALID COPY (2026-08-16) ────────────────────────────────────────────
+//
+// parseCopyResponse checked the SHAPE of the response and never its content, so
+// {"headline": "", "attribution": "", "trustLine": ""} sailed through: the claim gate had
+// zero claims to validate and therefore trivially passed, three plates were rendered and
+// paid for, and the comp pass filled the vacuum by INVENTING ad copy ("Real Skin Care for
+// Real People") that no source had ever supported.
+//
+// That is the worst failure available here — the claim gate exists to stop unsourced copy,
+// and an empty response walks AROUND it rather than through it. It happened on
+// `testimonial`, whose entire purpose is quoting a real customer.
+{
+  const testimonial = formatByKey('testimonial');
+  const blank = JSON.stringify({ zones: { headline: '', attribution: '', trustLine: '' }, claims: [] });
+  assert.throws(
+    () => parseCopyResponse(blank, testimonial),
+    /empty zone\(s\): headline, attribution, trustLine/,
+    'an all-empty response must be refused',
+  );
+
+  // One empty zone among good ones is still a blank region in the finished ad.
+  assert.throws(
+    () => parseCopyResponse(
+      JSON.stringify({ zones: { headline: 'Real quote', attribution: '', trustLine: 'x' }, claims: [] }),
+      testimonial,
+    ),
+    /empty zone\(s\): attribution/,
+  );
+
+  // Whitespace is empty.
+  assert.throws(
+    () => parseCopyResponse(
+      JSON.stringify({ zones: { headline: '   ', attribution: 'a', trustLine: 'b' }, claims: [] }),
+      testimonial,
+    ),
+    /empty zone\(s\): headline/,
+  );
+
+  // A complete response is unchanged.
+  const good = parseCopyResponse(
+    JSON.stringify({ zones: { headline: 'q', attribution: '— Karen M.', trustLine: 't' }, claims: [] }),
+    testimonial,
+  );
+  assert.deepEqual(good.zones, { headline: 'q', attribution: '— Karen M.', trustLine: 't' });
+}
+
+// An ARRAY zone counts as empty when it has no usable entries — a list format with
+// `listItems: []` renders the same blank region a missing string would.
+{
+  const cb = formatByKey('ingredient-callout');
+  const zones = { headline: 'h', subhead: 's', listItems: [], bottomBar: ['b'] };
+  assert.throws(() => parseCopyResponse(JSON.stringify({ zones, claims: [] }), cb), /empty zone\(s\): listItems/);
+  assert.throws(
+    () => parseCopyResponse(JSON.stringify({ zones: { ...zones, listItems: ['', '  '] }, claims: [] }), cb),
+    /empty zone\(s\): listItems/,
+    'an array of blanks is still empty',
+  );
+  const ok = parseCopyResponse(JSON.stringify({ zones: { ...zones, listItems: ['jojoba'] }, claims: [] }), cb);
+  assert.deepEqual(ok.zones.listItems, ['jojoba']);
+}
+
+// With no format passed, the declared list falls back to the response's own keys — a
+// caller that omits it still gets the empty check, just scoped to what was returned.
+assert.throws(
+  () => parseCopyResponse(JSON.stringify({ zones: { headline: '' }, claims: [] })),
+  /empty zone\(s\): headline/,
+);

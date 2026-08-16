@@ -83,12 +83,42 @@ function extractJson(raw) {
  * @param {string} raw
  * @returns {{zones:Record<string,string|string[]>, claims:object[]}}
  */
-export function parseCopyResponse(raw) {
+export function parseCopyResponse(raw, format = null) {
   const obj = extractJson(raw);
   if (!obj) throw new Error('ad-studio: could not parse copy response as JSON');
   if (!obj.zones || typeof obj.zones !== 'object') throw new Error('ad-studio: copy response missing "zones"');
   if (!Array.isArray(obj.claims)) throw new Error('ad-studio: copy response missing "claims"');
-  return { zones: obj.zones, claims: obj.claims };
+
+  // EMPTY IS NOT VALID COPY. The shape was checked and the content never was, so a
+  // response of {"headline": "", "attribution": "", "trustLine": ""} sailed through: the
+  // claim gate had zero claims to validate and therefore trivially passed, three plates
+  // were rendered and paid for, and the comp pass filled the vacuum by INVENTING ad copy
+  // ("Real Skin Care for Real People") that no source had ever supported.
+  //
+  // That is the worst failure mode available to this pipeline — the claim gate exists
+  // precisely to stop unsourced copy, and an empty response walks around it rather than
+  // through it. It happened on `testimonial`, whose entire purpose is quoting a real
+  // customer (2026-08-16).
+  //
+  // Throwing here is right and cheap: nothing has been rendered yet at this point, so the
+  // cost is one wasted copy call rather than three wasted image calls plus an ad nobody
+  // can use. buildConcepts isolates it to the one concept, so the rest of the run stands.
+  const zones = obj.zones;
+  const declared = Array.isArray(format?.zones) && format.zones.length ? format.zones : Object.keys(zones);
+  const empty = declared.filter(z => {
+    const v = zones[z];
+    if (Array.isArray(v)) return v.filter(x => String(x ?? '').trim()).length === 0;
+    return !String(v ?? '').trim();
+  });
+  if (empty.length) {
+    throw new Error(
+      `ad-studio: copy response has empty zone(s): ${empty.join(', ')}. An empty zone is not ` +
+      `copy — it renders a blank ad and gives the claim gate nothing to check, so the comp ` +
+      `pass invents text instead. Refusing before anything is rendered.`
+    );
+  }
+
+  return { zones, claims: obj.claims };
 }
 
 /**

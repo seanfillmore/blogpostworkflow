@@ -937,7 +937,15 @@ function anthropicCopyStub({ badFormatKey, evidenceOk, evidenceBad }) {
         const m = prompt.match(/FORMAT: ([\w-]+)/);
         const key = m ? m[1] : null;
         const isBad = key === badFormatKey;
-        const zones = { headline: `Headline for ${key}` };
+        // Every zone the format declares must carry copy — parseCopyResponse rejects an
+        // empty one, because an empty zone renders a blank ad and gives the claim gate
+        // nothing to check (see its comment). A stub that filled only `headline` was
+        // testing an input production can no longer produce.
+        const fmt = key ? formatByKey(key) : null;
+        const zones = {};
+        for (const z of (fmt?.zones || ['headline'])) {
+          zones[z] = z === 'headline' ? `Headline for ${key}` : `${z} copy for ${key}`;
+        }
         const claims = [{
           zone: 'headline',
           text: `Headline for ${key}`,
