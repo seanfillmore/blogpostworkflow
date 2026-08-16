@@ -7,7 +7,7 @@
 //                                 [--formats us-vs-them,manifesto] [--variations 3]
 //                                 [--max-renders 120] [--dry-run]
 //
-// A default run (6 formats × 3 variations × 6 platform targets) is 108 renders ≈ $14
+// A default run (6 formats × 3 variations × 6 platform targets) is 162 renders ≈ $21.06
 // before retries; --max-renders is the hard ceiling. See the README's Cost section.
 //
 // Stages: angle → copy (+ claim gate) → single-pass render → verify → package.
@@ -33,6 +33,7 @@ import { notify } from '../../lib/notify.js';
 import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
 import { enforceBudget, formatBytes, DEFAULT_BUDGET_BYTES } from '../../lib/creatives-budget.js';
 import { USD_PER_RENDER } from '../../lib/ad-studio-cost.js';
+import { updateJob, appendEvent, isValidJobId } from '../../lib/ad-studio-job.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -49,10 +50,10 @@ let ARCHIVE_ON_EXIT = null;
 // design spec is derived from — keep them in step if it changes.
 export const ESTIMATED_COST_PER_RENDER_USD = USD_PER_RENDER;
 
-// A default run is 6 concepts × 3 variations × 6 platform targets = 108 renders before
-// a single retry (~$14), and 324 (~$42) if every artifact needs all 3 attempts. Nothing
-// in the pipeline bounded that. 120 leaves a dozen retries on a default run and stops
-// the pathological case cold; override with --max-renders.
+// A default run is 6 concepts × 3 variations × 6 platform targets = 162 renders before
+// a single retry (~$21.06), and 378 (~$49.14) if every artifact needs all 3 attempts.
+// Nothing in the pipeline bounded that. 120 leaves a dozen retries on a default run and
+// stops the pathological case cold; override with --max-renders.
 export const DEFAULT_MAX_RENDERS = 120;
 
 // The number of --variations above which the flag is almost certainly a typo. 10
@@ -613,7 +614,7 @@ export function parseArgs(argv) {
   if (!product) throw new Error('ad-studio: --product is required, e.g. --product coconut-lotion');
   const variant = getFlag('--variant') || null;
   // --formats is REQUIRED. Omitting it used to mean the entire six-format rotation:
-  // 108 renders, ~$14, from a flag the operator never touched. The cheapest action has to
+  // 162 renders, ~$21.06, from a flag the operator never touched. The cheapest action has to
   // be the one you get by accident — the same reasoning that makes dry-run the default on
   // scripts/prune-ad-studio.mjs. The error names the keys so the fix does not require
   // opening formats.js.
@@ -655,8 +656,15 @@ export function parseArgs(argv) {
   if (!Number.isInteger(maxRenders) || maxRenders < 1) {
     throw new Error(`ad-studio: --max-renders must be a positive integer, got "${maxRendersRaw}"`);
   }
+  // --job-id turns on progress reporting into data/reports/ad-studio/jobs/<id>.json.
+  // The dashboard sets it; a human never does. Validated here as well as in the route
+  // because this argv can also arrive from a shell.
+  const jobId = getFlag('--job-id') || null;
+  if (jobId !== null && !isValidJobId(jobId)) {
+    throw new Error(`ad-studio: invalid --job-id "${jobId}" — letters, digits, dot, dash and underscore only`);
+  }
   const dryRun = argv.includes('--dry-run');
-  return { product, variant, formats, targets, variations, maxRenders, dryRun };
+  return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId };
 }
 
 function loadEnv() {
@@ -1035,8 +1043,42 @@ export function buildLabelStrings({ manifestEntry, variant }) {
   return [...set];
 }
 
+/**
+ * Progress reporting into a dashboard job file.
+ *
+ * EVERY METHOD IS A NO-OP WITHOUT A JOB ID. Every CLI invocation in this repo's
+ * history passes none, and none of them should start writing files.
+ *
+ * Every method also swallows its own errors. A job file that cannot be written must
+ * never turn a successful, paid run into a crash — the same posture archiveRunOutput
+ * takes, and for the same reason: by the time this is called the money is spent and
+ * the images are on disk.
+ */
+export function createJobReporter({ root = ROOT, jobId = null } = {}) {
+  if (!jobId) {
+    const noop = () => {};
+    return { start: noop, event: noop, finish: noop, fail: noop };
+  }
+  const guard = (fn) => (...a) => { try { return fn(...a); } catch { /* never fail a run over a job file */ } };
+  return {
+    start: guard(({ pid, runId = null, plan = null }) => updateJob(root, jobId, {
+      status: 'running', pid, runId, plan, startedAt: new Date().toISOString(),
+    })),
+    event: guard((event) => appendEvent(root, jobId, event)),
+    finish: guard(({ runId = null, totals = null, status = 'complete' }) => updateJob(root, jobId, {
+      status, runId, totals, finishedAt: new Date().toISOString(),
+    })),
+    // The MESSAGE only. A stack trace can carry absolute paths, and this file is
+    // served to a browser over a public URL.
+    fail: guard((err) => updateJob(root, jobId, {
+      status: 'error', error: err?.message || String(err), finishedAt: new Date().toISOString(),
+    })),
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  const job = createJobReporter({ root: ROOT, jobId: args.jobId });
 
   const env = loadEnv();
   if (!env.ANTHROPIC_API_KEY) throw new Error('ad-studio: missing ANTHROPIC_API_KEY in .env');
@@ -1158,6 +1200,13 @@ async function main() {
   // override flag; buildConcept is the caller the isolation belongs in.
   const { concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews });
 
+  // A gate rejection is a first-class outcome the UI must show, and it happens before
+  // any render.
+  for (const c of concepts) job.event({ stage: 'copy', concept: c.format.key, state: 'ok' });
+  for (const c of rejectedConcepts) {
+    job.event({ stage: 'copy', concept: c.conceptSlug, state: 'gate-rejected', reasons: (c.violations || []).map(v => `[${v.zone}] ${v.reason}`) });
+  }
+
   if (rejectedConcepts.length) {
     console.log(
       `\nClaim gate rejected ${rejectedConcepts.length} of ${formats.length} concept(s): ` +
@@ -1166,6 +1215,7 @@ async function main() {
   }
 
   if (args.dryRun) {
+    job.start({ pid: process.pid, runId: null });
     console.log(`\nDRY RUN — ${concepts.length} concept(s) for ${product.title} (${handle}${args.variant ? '/' + args.variant : ''})`);
     console.log(`labelStrings: ${JSON.stringify(labelStrings)}\n`);
     for (const c of concepts) {
@@ -1195,6 +1245,7 @@ async function main() {
         ? 'Dry run complete — the claim gate passed for every concept above. No Gemini calls were made.'
         : `Dry run complete — ${concepts.length} concept(s) passed the claim gate, ${rejectedConcepts.length} rejected (see above). No Gemini calls were made.`
     );
+    job.finish({ runId: null, totals: { renders: 0, concepts: concepts.length, rejected: rejectedConcepts.length } });
     return { dryRun: true, concepts, rejectedConcepts };
   }
 
@@ -1202,6 +1253,7 @@ async function main() {
   const runId = `${handle}${args.variant ? '-' + args.variant : ''}-${new Date().toISOString().replace(/[:.]/g, '-')}`;
   const runDir = join(ROOT, 'data', 'creatives', 'ad-studio', runId);
   mkdirSync(runDir, { recursive: true });
+  job.start({ pid: process.pid, runId });
 
   // Archive on EVERY exit path, not just the happy one.
   //
@@ -1230,6 +1282,7 @@ async function main() {
     process.once(sig, () => {
       console.warn(`\nad-studio: ${sig} — archiving run output before exit.`);
       flushArchive();
+      job.finish({ runId, totals: null, status: 'cancelled' });
 
   // PURGE AS WE GO. A disk budget that waits for someone to remember a script is not a
   // budget — this project already lost four days of cron to a full disk, and the failure
@@ -1298,6 +1351,7 @@ async function main() {
         onProgress: ({ artifact, result, skipped: wasSkipped }) => {
           if (wasSkipped) {
             console.log(`  ${conceptSlug} v${n} ${artifact}: SKIPPED — render budget of ${budget.max} exhausted`);
+            job.event({ stage: 'render', concept: conceptSlug, variation: n, artifact, state: 'skipped-budget' });
             return;
           }
           const score = result.proofEntry?.critique?.score;
@@ -1307,6 +1361,13 @@ async function main() {
               ? `  ${conceptSlug} v${n} ${artifact}: ${result.ok ? 'OK' : 'FAILED'} (${result.proofEntry.attempts} attempt(s))${scoreLabel}`
               : `  ${conceptSlug} v${n} ${artifact}: ERROR — ${result.proofEntry.error || result.proofEntry.reasons?.join('; ')}`
           );
+          job.event({
+            stage: 'render', concept: conceptSlug, variation: n, artifact,
+            state: result.buffer ? (result.ok ? 'accepted' : 'rejected') : 'errored',
+            attempts: result.proofEntry?.attempts ?? null,
+            score: typeof score === 'number' ? score : null,
+            reasons: result.ok ? [] : (result.proofEntry?.reasons || []),
+          });
         },
       });
 
@@ -1338,6 +1399,7 @@ async function main() {
     budget: { maxRenders: budget.max, stopped: skippedArtifacts.length > 0, skipped: skippedArtifacts },
     rejectedConcepts, concepts,
   });
+  job.finish({ runId, totals: { ...report.totals, renders: budget.used() } });
   const at = report.totals.artifacts;
   console.log(
     `\nRun complete: ${at.accepted}/${at.total} plate(s) accepted` +
@@ -1406,6 +1468,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       // A run that THREW still produced images, and they are the expensive part. Archive
       // before anything else — notify can fail, process.exit certainly ends things.
       try { ARCHIVE_ON_EXIT?.(); } catch { /* archiving must never mask the real error */ }
+      try {
+        const failedJobId = parseArgs(process.argv.slice(2)).jobId;
+        if (failedJobId) createJobReporter({ jobId: failedJobId }).fail(err);
+      } catch { /* a parseArgs failure is itself the error being reported */ }
       await notify({ subject: 'Ad Studio failed', body: err.message || String(err), status: 'error', category: 'ads' }).catch(() => {});
       console.error(err);
       process.exit(1);
