@@ -20,6 +20,8 @@ import {
   finalizeRunReport,
   archiveRunOutput,
   fetchAdReviews,
+  isTransientApiError,
+  renderVariationWithBackoff,
   DEFAULT_MAX_RENDERS,
   MAX_VARIATIONS,
   ESTIMATED_COST_PER_RENDER_USD,
@@ -1230,4 +1232,75 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
     [],
     'a shop domain with no token is still not enough',
   );
+}
+
+// ── Transient API errors get retried; real errors do not ────────────────────────────
+//
+// Two of nine plates in the 2026-08-15 three-format run were lost to Gemini "Deadline
+// expired before operation could complete" — not a quality rejection, just the API being
+// unavailable. renderVariation's throw escaped renderWithRetry entirely, so the target was
+// recorded as errored with no second try, and the whole concept was reported rejected.
+{
+  // The @google/genai client surfaces the code INSIDE a JSON string rather than as
+  // err.status, so a predicate that only read err.status would have missed the exact
+  // failure this exists for.
+  assert.equal(isTransientApiError(new Error('{"error":{"code":503,"message":"Deadline expired before operation could complete.","status":"UNAVAILABLE"}}')), true);
+  assert.equal(isTransientApiError(Object.assign(new Error('nope'), { status: 429 })), true);
+  assert.equal(isTransientApiError(Object.assign(new Error('nope'), { status: 500 })), true);
+  assert.equal(isTransientApiError(new Error('fetch failed')), true);
+  assert.equal(isTransientApiError(new Error('socket hang up')), true);
+
+  // A 4xx is a bug in our request, not weather — and must not be read as transient just
+  // because its body happens to contain a number.
+  assert.equal(isTransientApiError(Object.assign(new Error('{"code":400}'), { status: 400 })), false);
+  assert.equal(isTransientApiError(Object.assign(new Error('bad'), { status: 401 })), false);
+  assert.equal(isTransientApiError(new Error('ad-studio: Gemini returned no image')), false);
+}
+
+{
+  // Succeeds on the third try, and the caller never sees the failures.
+  let calls = 0;
+  const flaky = { models: { generateContent: async () => {
+    calls += 1;
+    if (calls < 3) throw new Error('{"error":{"code":503,"status":"UNAVAILABLE"}}');
+    return { candidates: [{ content: { parts: [{ inlineData: { data: Buffer.from('IMG').toString('base64') } }] } }] };
+  } } };
+  const buf = await renderVariationWithBackoff(flaky, { prompt: 'P', photoPaths: [], ratio: '1:1' }, { delayMs: 0, sleep: async () => {} });
+  assert.equal(buf.toString(), 'IMG');
+  assert.equal(calls, 3, 'must keep trying through transient failures');
+}
+
+{
+  // A non-transient error is NOT retried — retrying a malformed request just burns budget.
+  let calls = 0;
+  const broken = { models: { generateContent: async () => { calls += 1; throw Object.assign(new Error('bad request'), { status: 400 }); } } };
+  await assert.rejects(
+    () => renderVariationWithBackoff(broken, { prompt: 'P', photoPaths: [], ratio: '1:1' }, { delayMs: 0, sleep: async () => {} }),
+    /bad request/,
+  );
+  assert.equal(calls, 1, 'a 4xx must fail on the first call');
+}
+
+{
+  // A persistent outage gives up rather than spinning — an operator is watching a paid run.
+  let calls = 0;
+  const down = { models: { generateContent: async () => { calls += 1; throw new Error('UNAVAILABLE'); } } };
+  await assert.rejects(
+    () => renderVariationWithBackoff(down, { prompt: 'P', photoPaths: [], ratio: '1:1' }, { tries: 3, delayMs: 0, sleep: async () => {} }),
+    /UNAVAILABLE/,
+  );
+  assert.equal(calls, 3, 'bounded, not infinite');
+}
+
+{
+  // A retry takes budget: it produced no image, but it was a call made, and a spin against
+  // a broken API must still terminate.
+  const budget = createRenderBudget(1);
+  let calls = 0;
+  const down = { models: { generateContent: async () => { calls += 1; throw new Error('UNAVAILABLE'); } } };
+  await assert.rejects(
+    () => renderVariationWithBackoff(down, { prompt: 'P', photoPaths: [], ratio: '1:1' }, { tries: 5, delayMs: 0, sleep: async () => {}, budget }),
+    /UNAVAILABLE/,
+  );
+  assert.ok(calls < 5, 'an exhausted budget stops the retry loop early');
 }

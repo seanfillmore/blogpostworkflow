@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { buildRenderPrompt, selectReferencePhotos, renderVariation } from '../../agents/ad-studio/render.js';
+import { buildRenderPrompt, buildCompPrompt, selectReferencePhotos, renderVariation } from '../../agents/ad-studio/render.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 
 const product = {
@@ -267,4 +267,38 @@ assert.ok(!/SAFE ZONE/i.test(platePrompt), 'a text-free plate needs no safe-zone
   }
   // A scene is a PLACE, not a styling exercise — the frame must not become a flat-lay.
   assert.ok(/never as arranged/i.test(scenePlate), 'a scene must read as incidental, not arranged');
+}
+
+// ── The comp carries the FORMAT's layout, not just "put the words somewhere" ─────────
+//
+// buildCompPrompt never saw format.layoutBrief, so it asked only for copy placed
+// "sensibly" and every comp came back as the same generic arrangement whatever format
+// produced it — a testimonial and a stat-stack were indistinguishable.
+//
+// That was tolerable while the comp was scenery. It is not any more: Sean rebuilds the ad
+// in Photoshop FROM the comp (2026-08-15, "I just need the comp to look the way it needs
+// to be so I can then recreate it with text"), which makes the comp the design reference.
+{
+  const usVsThem = formatByKey('us-vs-them');
+  const comp = buildCompPrompt({ zones, format: usVsThem });
+  assert.ok(comp.includes(usVsThem.layoutBrief.slice(0, 60)), 'the comp must carry the layout brief');
+  assert.ok(comp.includes('SIX INGREDIENTS.'), 'and the exact copy to set');
+
+  // The product is the one fixed element — it is already verified, and re-rendering it is
+  // how a second pass drifts a shipping artifact. When the layout and the product fight,
+  // the layout yields.
+  assert.ok(/KEEP THE PRODUCT EXACTLY AS IT IS/i.test(comp));
+  assert.ok(/move the STRUCTURE, never the\s+product/i.test(comp));
+
+  // Two different formats must produce visibly different comp instructions — that is the
+  // whole point of the change.
+  const testimonial = buildCompPrompt({ zones, format: formatByKey('testimonial') });
+  assert.notEqual(comp, testimonial, 'different formats must brief the comp differently');
+  assert.ok(!testimonial.includes(usVsThem.layoutBrief.slice(0, 60)));
+
+  // A format with no layoutBrief still produces a usable comp rather than the word
+  // "undefined" — the comp is decorative enough that degrading beats throwing.
+  const bare = buildCompPrompt({ zones, format: {} });
+  assert.ok(!/undefined/.test(bare), 'a missing layout brief must not interpolate "undefined"');
+  assert.ok(bare.includes('SIX INGREDIENTS.'), 'and the copy must still be set');
 }
