@@ -36,6 +36,7 @@ import googleRoutes from './routes/google.js';
 import metaAdsRoutes from './routes/meta-ads.js';
 import adsRoutes from './routes/ads.js';
 import creativesRoutes from './routes/creatives.js';
+import adStudioRoutes from './routes/ad-studio.js';
 import campaignsRoutes from './routes/campaigns.js';
 import indexingRoutes from './routes/indexing.js';
 import performanceQueueRoutes from './routes/performance-queue.js';
@@ -102,6 +103,7 @@ const ROUTES = [
   ...metaAdsRoutes,
   ...adsRoutes,
   ...creativesRoutes,
+  ...adStudioRoutes,
   ...campaignsRoutes,
   ...indexingRoutes,
   ...performanceQueueRoutes,
