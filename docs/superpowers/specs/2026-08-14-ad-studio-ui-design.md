@@ -2,9 +2,47 @@
 
 **Date:** 2026-08-14
 **Branch:** `docs/ad-studio-ui`
-**Status:** spec only — not scheduled, not built. Now also covers **format selection**
-(what a run spends before it spends it) and **format learning** (growing the rotation
-from reference material instead of by hand).
+**Status:** **IN BUILD from 2026-08-16.** Covers run setup, watching a run, judging a
+batch, history, and **format learning** (growing the rotation from reference material
+instead of by hand).
+
+## Reconciliation, 2026-08-16 — read this before the body
+
+The spec was written on 2026-08-14 and the agent changed underneath it (PRs #490–#498).
+The design intent below all still holds; these specifics do not. Where they conflict, this
+section wins.
+
+| Spec says | Reality now |
+|---|---|
+| six formats | **nine** — `testimonial`, `stat-stack`, `state-contrast` added 2026-08-15 |
+| `formats × variations × 6 targets` | **× 3.** `DEFAULT_TARGETS` is `meta` (1:1, 4:5, 9:16); the three Demand Gen plates are opt-in via `--targets all`. A default run is 3 renders ≈ $0.39, not 108 ≈ $14 |
+| judging shows `missing[]`, `mismatchedPairs[]`, `transcript` | proof.json now also carries `volume`, `fidelity`, `inventory` (`units`/`strays`/`unresolved`), `defects` and `comp`. The judging screen must render all of them, not the three the spec knew about |
+| Known issue: claim-gate aborts a whole run | **Fixed.** `buildConcepts` isolates a rejected concept; the run continues |
+| Known issue: three formats never rendered live | **Fixed.** All nine have rendered; `productProminent` is correct on all of them |
+| one gate on copy (`claims.js`) | **two.** `health-claims.js` runs first and rejects disease/drug/therapeutic/substantiation language in any zone. A health-gate rejection is a first-class outcome the UI must show exactly like a claim-gate one |
+| totals are accepted/rejected variations | `totals.artifacts` now counts **plates**, splitting `errored` (API was down) from `rejected` (gate said no). The judging screen must not conflate them — they call for opposite responses |
+
+**Two additions the spec has no concept of, and the first one changes what the judging
+screen is for:**
+
+1. **The COMP is the artifact the operator works from.** Sean, 2026-08-16: *"I just need
+   the comp to look the way it needs to be so I can then recreate it with text."* The plate
+   is the compositing base; the comp shows the intended layout and is what gets rebuilt in
+   Photoshop. **The judging screen must show plate and comp together for each target** — a
+   contact sheet of plates alone judges the wrong artifact. The comp's own product is
+   NOT trustworthy (a second generative pass drifts the label — a verified 236ml plate
+   produced a 230ml comp), so the pairing must make clear which one is the base.
+2. **`plateSetting` and `plateBrief` are part of a format.** Format learning must extract
+   both — a learned format with no `plateBrief` throws at load, and `plateSetting`
+   (`studio` | `scene`) has no default because either default silently does the wrong
+   thing. Add both to the extraction field table below. `unitCount` is **per-product**
+   (`data/product-images/manifest.json`), never per-format.
+
+**Build order departs from the screen numbering below, deliberately.** Screens 3 and 4
+(judge + history) come first and read runs already on disk. Runs work fine from the CLI
+today; *judging* exists nowhere but a folder of JPEGs, which is why the current workflow is
+copying images to a Desktop folder and building contact sheets by hand. Setup and live
+progress (screens 1–2) follow, then format learning.
 
 ## Why
 

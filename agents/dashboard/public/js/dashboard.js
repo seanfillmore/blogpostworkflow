@@ -2870,11 +2870,25 @@ function switchCreativesMode(mode) {
 }
 
 function syncModeUI() {
+  // THREE modes now, so the old `isAd` boolean is no longer the whole story: Ad Studio is
+  // neither Studio nor Ad Builder, and treating "not adbuilder" as "studio" would leave
+  // the generation controls visible underneath the judging screen.
+  var isStudio = creativesState.mode === 'studio';
   var isAd = creativesState.mode === 'adbuilder';
+  var isAdStudio = creativesState.mode === 'adstudio';
   var studioBtn = document.getElementById('mode-studio-btn');
   var adBtn = document.getElementById('mode-adbuilder-btn');
-  if (studioBtn) studioBtn.classList.toggle('active', !isAd);
+  var asBtn = document.getElementById('mode-adstudio-btn');
+  if (studioBtn) studioBtn.classList.toggle('active', isStudio);
   if (adBtn) adBtn.classList.toggle('active', isAd);
+  if (asBtn) asBtn.classList.toggle('active', isAdStudio);
+
+  // Ad Studio takes the full width and hides the generation layout entirely.
+  var asPanel = document.getElementById('adstudio-panel');
+  var layout = document.getElementById('creatives-layout');
+  if (asPanel) asPanel.style.display = isAdStudio ? 'block' : 'none';
+  if (layout) layout.style.display = isAdStudio ? 'none' : 'grid';
+  if (isAdStudio) { refreshAdStudioRuns(); return; }
   var adPanel = document.getElementById('adbuilder-panel');
   if (adPanel) adPanel.style.display = isAd ? 'block' : 'none';
   // Studio's free-prompt fields hide in Ad Builder (hero prompt is generated).
@@ -5535,4 +5549,236 @@ async function resolveAlert(campaignId, alertType) {
     await fetch('/api/campaigns/' + encodeURIComponent(campaignId) + '/alerts/' + encodeURIComponent(alertType) + '/resolve', { method: 'POST', credentials: 'same-origin' });
     loadCampaignCards();
   } catch (e) { alert('Resolve failed: ' + e.message); }
+}
+
+// ── Ad Studio: judging a batch ───────────────────────────────────────────────────────
+//
+// The one thing this screen is for is deciding which frames ship. Everything here serves
+// that: the verdict sits ON the frame, the reason is in words beside it, and the copy the
+// concept was written from is shown once at the top of its group so a rejection can be
+// judged in a glance without opening proof.json.
+//
+// Plate AND comp are shown together. The plate is the compositing base; the comp shows the
+// intended layout and is what gets rebuilt in Photoshop. Judging plates alone judges the
+// wrong artifact. The comp's own product is not trustworthy — it is a second generative
+// pass and drifts the label — so the pairing says which is which rather than leaving the
+// operator to infer it.
+
+var adStudioState = { runs: [], run: null, busy: false };
+
+function adStudioEsc(v) {
+  return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function refreshAdStudioRuns() {
+  var sel = document.getElementById('adstudio-run-select');
+  if (!sel) return;
+  try {
+    var res = await fetch('/api/ad-studio/runs', { credentials: 'same-origin' });
+    var data = await res.json();
+    adStudioState.runs = data.runs || [];
+  } catch (err) {
+    adStudioState.runs = [];
+  }
+  if (!adStudioState.runs.length) {
+    sel.innerHTML = '<option value="">No runs yet</option>';
+    document.getElementById('adstudio-body').innerHTML =
+      '<p style="color:var(--muted);font-size:0.9rem">No Ad Studio runs on disk yet. Run the agent, then judge it here.</p>';
+    return;
+  }
+  sel.innerHTML = adStudioState.runs.map(function (r) {
+    var a = r.artifacts;
+    // "—" not "0/0" when there is no run.json: a crashed run and a run that produced
+    // nothing are different facts and must not look identical in the picker.
+    var tally = a ? (a.accepted + '/' + a.total + ' plates') : 'incomplete';
+    var when = r.generatedAt ? new Date(r.generatedAt).toLocaleString() : r.runId.slice(-24, -5);
+    return '<option value="' + adStudioEsc(r.runId) + '">' +
+      adStudioEsc((r.concepts || []).join(', ') || r.runId) + ' — ' + adStudioEsc(tally) + ' — ' + adStudioEsc(when) +
+      '</option>';
+  }).join('');
+  loadAdStudioRun(sel.value || adStudioState.runs[0].runId);
+}
+
+async function loadAdStudioRun(runId) {
+  if (!runId) return;
+  var body = document.getElementById('adstudio-body');
+  body.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
+  try {
+    var res = await fetch('/api/ad-studio/run/' + encodeURIComponent(runId), { credentials: 'same-origin' });
+    if (!res.ok) throw new Error('run not found');
+    adStudioState.run = await res.json();
+  } catch (err) {
+    body.innerHTML = '<p style="color:var(--danger,#f87171)">Could not load run: ' + adStudioEsc(err.message) + '</p>';
+    return;
+  }
+  renderAdStudioRun();
+}
+
+function adStudioBadge(state) {
+  var map = {
+    accepted: ['#166534', '#dcfce7', 'Accepted'],
+    rejected: ['#7f1d1d', '#fee2e2', 'Rejected'],
+    // An API failure is styled apart from a gate rejection on purpose: they call for
+    // opposite responses, and a 503 shown in "rejected" red sends the operator hunting a
+    // quality problem that is not there.
+    errored: ['#78350f', '#fef3c7', 'API error'],
+    missing: ['#334155', '#e2e8f0', 'No proof']
+  };
+  var m = map[state] || map.missing;
+  return '<span style="background:' + m[1] + ';color:' + m[0] + ';padding:0.1rem 0.45rem;border-radius:4px;' +
+    'font-size:0.72rem;font-weight:600;letter-spacing:0.02em">' + m[2] + '</span>';
+}
+
+function renderAdStudioRun() {
+  var run = adStudioState.run;
+  var body = document.getElementById('adstudio-body');
+  if (!run) { body.innerHTML = ''; return; }
+  var keptOnly = !!(document.getElementById('adstudio-kept-only') || {}).checked;
+
+  var t = run.totals && run.totals.artifacts;
+  var sum = document.getElementById('adstudio-summary');
+  if (sum) {
+    sum.innerHTML = (run.product ? adStudioEsc(run.product.title || run.product.handle) + ' · ' : '') +
+      (t ? (t.accepted + ' accepted, ' + t.rejected + ' rejected, ' + t.errored + ' API error(s) of ' + t.total + ' plates') : 'no run.json') +
+      (run.cost ? ' · ' + run.cost.renders + ' renders ≈ $' + run.cost.estimatedUsd : '') +
+      (run.keptCount ? ' · ' + run.keptCount + ' kept' : '');
+  }
+
+  var html = '';
+
+  // A concept the gate rejected never rendered, so it has no images and would otherwise
+  // vanish — the operator would see fewer concepts than requested with no reason anywhere.
+  (run.gateRejected || []).forEach(function (g) {
+    html += '<div style="border:1px solid #fca5a5;background:#fef2f2;border-radius:7px;padding:0.7rem;margin-bottom:0.8rem">' +
+      '<strong style="color:#7f1d1d">' + adStudioEsc(g.conceptSlug) + ' — rejected before rendering</strong>' +
+      '<pre style="white-space:pre-wrap;font-size:0.78rem;margin:0.4rem 0 0;color:#7f1d1d">' + adStudioEsc(g.error) + '</pre>' +
+      '</div>';
+  });
+
+  (run.concepts || []).forEach(function (c) {
+    var targets = [];
+    c.variations.forEach(function (v) {
+      v.targets.forEach(function (tg) {
+        if (keptOnly && !(tg.decision && tg.decision.keep)) return;
+        targets.push({ v: v.name, t: tg });
+      });
+    });
+    if (!targets.length) return;
+
+    html += '<section style="margin-bottom:1.4rem;border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+    html += '<header style="background:var(--card);padding:0.6rem 0.8rem;border-bottom:1px solid var(--border)">' +
+      '<strong style="font-size:0.95rem">' + adStudioEsc(c.conceptSlug) + '</strong></header>';
+
+    // The copy once per concept, not once per frame — it is identical across targets and
+    // repeating it pushes the images off screen.
+    if (c.copy) {
+      html += '<div style="padding:0.6rem 0.8rem;border-bottom:1px solid var(--border);font-size:0.8rem;background:var(--bg)">';
+      Object.keys(c.copy).forEach(function (z) {
+        var val = c.copy[z];
+        html += '<div style="margin-bottom:0.2rem"><span style="color:var(--muted)">' + adStudioEsc(z) + ':</span> ' +
+          adStudioEsc(Array.isArray(val) ? val.join(' · ') : val) + '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '<div style="display:flex;flex-wrap:wrap;gap:0.9rem;padding:0.8rem">';
+    targets.forEach(function (row) {
+      var tg = row.t;
+      var base = '/api/ad-studio/image/' + encodeURIComponent(run.runId) + '/' +
+        encodeURIComponent(c.conceptSlug) + '/' + encodeURIComponent(row.v) + '/';
+      var kept = tg.decision && tg.decision.keep;
+      html += '<div style="border:1px solid ' + (kept ? 'var(--accent)' : 'var(--border)') +
+        ';border-radius:7px;padding:0.6rem;width:29rem;background:var(--card)">';
+
+      html += '<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.45rem;flex-wrap:wrap">' +
+        adStudioBadge(tg.outcome.state) +
+        '<strong style="font-size:0.82rem">' + adStudioEsc(row.v) + ' · ' + adStudioEsc(tg.ratio) + '</strong>' +
+        '<span style="font-size:0.74rem;color:var(--muted)">' + adStudioEsc(tg.attempts || '?') + ' attempt(s)</span>' +
+        (tg.decision && tg.decision.override
+          ? '<span style="font-size:0.7rem;background:#fef3c7;color:#78350f;padding:0.05rem 0.35rem;border-radius:4px">kept over gate</span>'
+          : '') +
+        '</div>';
+
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">';
+      html += '<figure style="margin:0"><img src="' + base + encodeURIComponent(tg.plate) + '" ' +
+        'style="width:100%;border-radius:5px;display:block;background:#fff" loading="lazy">' +
+        '<figcaption style="font-size:0.68rem;color:var(--muted);margin-top:0.15rem">PLATE — composite from this</figcaption></figure>';
+      if (tg.comp) {
+        html += '<figure style="margin:0"><img src="' + base + encodeURIComponent(tg.comp) + '" ' +
+          'style="width:100%;border-radius:5px;display:block;background:#fff" loading="lazy">' +
+          '<figcaption style="font-size:0.68rem;color:var(--muted);margin-top:0.15rem">COMP — layout only, product not trustworthy</figcaption></figure>';
+      } else {
+        html += '<div style="font-size:0.72rem;color:var(--muted);display:flex;align-items:center">No comp</div>';
+      }
+      html += '</div>';
+
+      if (tg.outcome.reasons.length) {
+        html += '<ul style="margin:0.45rem 0 0;padding-left:1.1rem;font-size:0.76rem;color:#b91c1c">' +
+          tg.outcome.reasons.map(function (r) { return '<li>' + adStudioEsc(r) + '</li>'; }).join('') + '</ul>';
+      }
+      if (tg.checks.length) {
+        html += '<div style="margin-top:0.4rem;font-size:0.73rem;color:var(--muted)">' +
+          tg.checks.map(function (ck) {
+            return '<div>' + (ck.ok ? '✓' : '✗') + ' ' + adStudioEsc(ck.check) +
+              (ck.detail ? ' — ' + adStudioEsc(ck.detail) : '') + '</div>';
+          }).join('') + '</div>';
+      }
+
+      html += '<div style="margin-top:0.5rem;display:flex;gap:0.4rem;align-items:center">' +
+        '<button onclick="adStudioDecide(\'' + adStudioEsc(tg.key) + '\',' + (kept ? 'false' : 'true') + ')" ' +
+        'class="btn-sm" style="padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer">' +
+        (kept ? 'Discard' : 'Keep') + '</button>' +
+        (tg.outcome.state !== 'accepted' && !kept
+          ? '<span style="font-size:0.7rem;color:var(--muted)">keeping this overrides the gate</span>' : '') +
+        '</div>';
+
+      html += '</div>';
+    });
+    html += '</div></section>';
+  });
+
+  body.innerHTML = html || '<p style="color:var(--muted)">Nothing to show.</p>';
+}
+
+async function adStudioDecide(key, keep) {
+  var run = adStudioState.run;
+  if (!run || adStudioState.busy) return;
+  adStudioState.busy = true;
+  try {
+    await fetch('/api/ad-studio/run/' + encodeURIComponent(run.runId) + '/decide', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ key: key, keep: keep })
+    });
+    // Re-read rather than patching local state: the server decides whether this counted as
+    // an override, from the gate's own record, and the badge has to reflect that answer.
+    await loadAdStudioRun(run.runId);
+  } catch (err) {
+    alert('Could not save decision: ' + err.message);
+  } finally {
+    adStudioState.busy = false;
+  }
+}
+
+function exportAdStudioKept() {
+  var run = adStudioState.run;
+  if (!run) return;
+  var lines = [];
+  (run.concepts || []).forEach(function (c) {
+    c.variations.forEach(function (v) {
+      v.targets.forEach(function (tg) {
+        if (tg.decision && tg.decision.keep) {
+          lines.push('data/creatives/ad-studio/' + run.runId + '/' + c.conceptSlug + '/' + v.name + '/' + tg.plate);
+        }
+      });
+    });
+  });
+  if (!lines.length) { alert('Nothing kept yet.'); return; }
+  navigator.clipboard.writeText(lines.join('\n')).then(function () {
+    alert(lines.length + ' path(s) copied.');
+  }, function () {
+    alert(lines.join('\n'));
+  });
 }
