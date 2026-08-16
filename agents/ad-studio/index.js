@@ -342,7 +342,7 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
     max_tokens: 3000,
     messages: [{ role: 'user', content: prompt }],
   });
-  const { zones: rawZones, claims: rawClaims } = parseCopyResponse(textOf(msg));
+  const { zones: rawZones, claims: rawClaims } = parseCopyResponse(textOf(msg), format);
 
   // Hard cap — a backstop for when the model ignores buildCopyPrompt's capacity
   // hint (or the capacity hint doesn't apply, e.g. no zoneCapacity declared). Must
