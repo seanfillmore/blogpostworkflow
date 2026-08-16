@@ -77,7 +77,7 @@ the estimator is the whole reason screen 1 exists, so it has to use the real mod
 
 At $0.13/render: the default form state (1 format, 1 variation, Meta) is **$0.78 expected,
 $1.56 worst**. A full sweep (9 formats × 3 variations × `--targets all`) is **$31.59 /
-$77.22**.
+$73.71**.
 
 The README's cost table and its "default target set" line are stale for the same reason and
 are corrected in the implementation PR.
