@@ -55,7 +55,7 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
   --formats ingredient-callout --dry-run
 ```
 
-## The five stages
+## The stages
 
 1. **Format rotation** (`formats.js`, `selectFormats`) — a forced rotation over data,
    not an LLM call. One concept per selected format so a batch cannot collapse into
@@ -111,11 +111,32 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
 2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
    `brandKit`, `reviews`) and quote its evidence verbatim.
-3. **Claim gate** (`claims.js`, `assertClaimsSourced`) — checks every factual claim's
+3. **Health-claim gate** (`health-claims.js`, `assertNoHealthClaims`) — runs on every zone
+   of every format, **before** the sourcing gate, and throws with no override. A cosmetic
+   may say what it does to the appearance and feel of skin; it may not name a disease,
+   name a drug or prescription treatment, claim to heal/cure/treat/prevent/reverse, or
+   assert clinical, dermatologist or FDA backing.
+
+   It exists because **sourcing is not sufficiency.** On 2026-08-16 the `testimonial`
+   format returned a verbatim, correctly-sourced Judge.me review — *"I have tried
+   prescription strength lotions, steroids... to no avail.... Until Real Skin Care!!!!"* —
+   and the sourcing gate passed it, correctly. But the FTC holds an advertiser responsible
+   for claims an endorsement *conveys* (16 CFR 255), and the FDA treats marketing material
+   **including testimonials** as evidence of intended use, which is what turns a cosmetic
+   into an unapproved drug. Meta likewise holds advertisers responsible for third-party
+   quotes; its enforcement is automated and inconsistent, which is the trap — passing
+   review is not a safe harbour.
+
+   Prevention as well as detection: `selectQuotableReviews` withholds reviews carrying such
+   language from the writer entirely, so it never spends a call choosing one. Ordinary
+   cosmetic vocabulary is deliberately untouched — moisturize, absorb, soothe, soften,
+   dry skin, sensitive skin — and the word boundaries are tested so "heal" never fires on
+   "healthy" nor "cure" on "manicure".
+4. **Claim gate** (`claims.js`, `assertClaimsSourced`) — checks every factual claim's
    evidence actually appears in its named source and **throws, stopping the whole
    run**, if any claim is unsourced or its evidence doesn't match. Runs after every
    copy call, `--dry-run` or not.
-4. **Render** (`render.js`, model: `gemini-3-pro-image` @2K) — **one generative pass**
+5. **Render** (`render.js`, model: `gemini-3-pro-image` @2K) — **one generative pass**
    per variation per platform target, conditioned on up to 4 real reference
    photographs **and the manifest's prose description of the physical product**
    (`PHYSICAL FORM` in the prompt). The product is generated in-scene, never composited.
@@ -129,7 +150,7 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    of those. A missing or invalid `unitCount` **aborts the run** rather than defaulting to
    1 — the same posture as empty `labelStrings`, and for the same reason: a silent default
    is how a wrong assumption ships without anyone deciding it.
-5. **Verify** (`verify.js`, model: `claude-sonnet-5`) — five checks, all required:
+6. **Verify** (`verify.js`, model: `claude-sonnet-5`) — five checks, all required:
 
    - **Per-string checks.** For each requested string, a *pointed* question — does this
      exact character sequence appear, yes or no, and what does that region actually
