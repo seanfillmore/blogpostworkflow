@@ -129,3 +129,41 @@ assert.equal(
   false,
   'a claim made only of separator glyphs normalizes to empty and must not match everything',
 );
+
+// ── "/" is a separator, not a character (2026-08-16) ────────────────────────────────
+//
+// The verify prompt promises that LINE BREAKS are ignored when deciding whether an
+// expected string is present. The mechanical re-check did not honour that: a two-line
+// brand mark quoted back as "real / SKIN CARE" never matched the expected
+// "real SKIN CARE", and an offer-focused 1:1 plate that was entirely correct burned all
+// three paid attempts and lost its placement. "|" and "•" were already stripped; "/" was
+// the one the model actually reached for.
+assert.equal(normalizeForMatch('real / SKIN CARE'), 'real skin care');
+assert.equal(normalizeForMatch('real | SKIN CARE'), 'real skin care');
+assert.equal(normalizeForMatch('real \\ SKIN CARE'), 'real skin care');
+assert.equal(normalizeForMatch('real ⁄ SKIN CARE'), 'real skin care');
+assert.equal(normalizeForMatch('real\nSKIN CARE'), 'real skin care');
+// The un-separated form is unchanged — this widens what matches, it does not move it.
+assert.equal(normalizeForMatch('real SKIN CARE'), 'real skin care');
+
+// A volume written with a slash normalises the same way the label prints it, so the
+// literal and the rendered form agree instead of differing on punctuation alone.
+assert.equal(normalizeForMatch('8 fl. oz / 236ml'), normalizeForMatch('8 fl. oz • 236ml'));
+assert.equal(normalizeForMatch('4 FL oz / 118ml'), '4 fl oz 118ml');
+
+// Symmetry is what makes this safe for the CLAIM GATE: the same normalisation runs on the
+// evidence and on the source, so a slash cannot make an unsourced claim look sourced.
+{
+  const index = buildSourceIndex({ pdpBody: 'Built on six ingredients / no fillers at all.' });
+  const ok = validateClaims(
+    [{ zone: 'headline', text: 'Six ingredients', factual: true, sourceId: 'pdp', evidence: 'six ingredients / no fillers' }],
+    index,
+  );
+  assert.equal(ok.ok, true, 'evidence and source normalise identically');
+
+  const bad = validateClaims(
+    [{ zone: 'headline', text: 'Clinically proven', factual: true, sourceId: 'pdp', evidence: 'clinically proven / dermatologist tested' }],
+    index,
+  );
+  assert.equal(bad.ok, false, 'and a claim that is genuinely absent still fails');
+}
