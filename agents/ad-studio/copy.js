@@ -48,6 +48,16 @@ RULES:
 - Write the literal strings that will be rendered into the image. No placeholders.
 - Headlines are short enough to read at phone size in one second.
 - Never claim a manufacturing origin other than "made in the USA".
+- NO HEALTH CLAIMS, in any zone, including inside a customer quote. This product is a
+  COSMETIC. You may say what it does to the appearance and feel of skin — moisturizes,
+  absorbs, softens, soothes, non-greasy, for dry or sensitive skin. You may NOT name a
+  disease or condition (eczema, psoriasis, dermatitis, rosacea, acne, infection, rash),
+  name a drug or prescription treatment (steroid, cortisone, prescription, antibiotic,
+  over-the-counter), or say the product heals, cures, treats, prevents, reverses or
+  remedies anything. Do not claim clinical, dermatologist or FDA backing.
+  A verbatim customer review is NOT an exception: an advertiser is responsible for the
+  claims an endorsement conveys, so a quote naming a disease makes it our claim. If the
+  only quote that fits carries such language, pick a different quote.
 - Do not invent counts, percentages, volumes, timeframes, awards or third-party endorsements.
 - EVERY factual statement must be traceable. For each, set factual: true, name a sourceId
   from: pdp, catalog, brandKit, reviews — and quote the exact supporting phrase in evidence.

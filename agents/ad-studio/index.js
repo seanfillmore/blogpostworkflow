@@ -25,6 +25,7 @@ import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings
 import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './critique.js';
 import { selectFormats, FORMATS } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
+import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
@@ -336,7 +337,10 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  */
 export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [] }) {
   console.log(`Copy: ${format.key} (${format.name})...`);
-  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews });
+  // Prevention as well as detection: a review carrying disease or drug language is
+  // dropped before the writer sees it, so it cannot pick one and burn a call on a choice
+  // it never needed to make.
+  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews) });
   const msg = await anthropic.messages.create({
     model: CREATIVE_MODELS.adStudio.copy,
     max_tokens: 3000,
@@ -357,9 +361,24 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
   const claims = filterDroppedClaims(rawClaims, dropped);
 
   try {
+    // TWO hard gates, different questions. Sourcing: can this be traced to something we
+    // hold? Health: is a COSMETIC allowed to say it at all? A verbatim customer review
+    // passes the first and can still fail the second — see health-claims.js.
+    //
+    // Health runs FIRST because it is the cheaper answer and the more serious failure.
+    assertNoHealthClaims(zones);
     // Hard stop, unchanged — no override flag. Runs on the TRUNCATED copy above.
     assertClaimsSourced(claims, sourceIndex);
   } catch (err) {
+    if (/^Health claim gate failed/.test(err.message)) {
+      console.error(`  REJECTED — health claim gate failed for "${format.key}":`);
+      console.error(err.message.split('\n').slice(1).join('\n'));
+      return {
+        ok: false, conceptSlug: format.key, format: format.key,
+        violations: [{ zone: 'copy', text: '', reason: 'disallowed health claim' }],
+        error: err.message,
+      };
+    }
     if (!/^Claim gate failed/.test(err.message)) throw err;
     const { violations } = validateClaims(claims, sourceIndex);
     console.error(`  REJECTED — claim gate failed for "${format.key}": ${violations.length} unsourced claim(s).`);
