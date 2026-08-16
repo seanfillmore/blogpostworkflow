@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   jobsDir, jobPath, isValidJobId, writeJob, readJob, updateJob, appendEvent,
-  listJobs, findActiveJob, rendersToday, pruneJobs,
+  listJobs, findActiveJob, rendersToday, pruneJobs, DEFAULT_MAX_AGE_MS,
 } from '../../lib/ad-studio-job.js';
 
 function freshRoot() {
@@ -69,6 +69,38 @@ test('update on a missing job throws rather than creating a headless one', () =>
   assert.throws(() => updateJob(freshRoot(), 'ghost', { status: 'running' }), /ghost/);
 });
 
+// createdAt drives pruning, rendersToday, and findActiveJob's staleness checks. A job
+// that never gets one is invisible to all three — the "never cleaned up" failure mode
+// that has already cost this project four days of cron to a full disk.
+test('writeJob stamps createdAt when the caller omits it', () => {
+  const root = freshRoot();
+  const before = Date.now();
+  const job = writeJob(root, { jobId: 'j1', status: 'pending' });
+  const after = Date.now();
+  assert.ok(job.createdAt, 'createdAt should be stamped');
+  const stamped = Date.parse(job.createdAt);
+  assert.ok(stamped >= before && stamped <= after);
+  assert.equal(readJob(root, 'j1').createdAt, job.createdAt);
+});
+
+test('writeJob leaves an existing createdAt untouched, including through an update', () => {
+  const root = freshRoot();
+  const original = '2020-01-01T00:00:00.000Z';
+  writeJob(root, { jobId: 'j1', status: 'pending', createdAt: original });
+  const updated = updateJob(root, 'j1', { status: 'running' });
+  assert.equal(updated.createdAt, original);
+  assert.equal(readJob(root, 'j1').createdAt, original);
+});
+
+test('a job written with no createdAt is prunable once it ages past the window', () => {
+  const root = freshRoot();
+  const job = writeJob(root, { jobId: 'j1', status: 'complete' });
+  const stampedAt = Date.parse(job.createdAt);
+  const future = stampedAt + DEFAULT_MAX_AGE_MS + 1000;
+  assert.deepEqual(pruneJobs(root, { now: future }), ['j1']);
+  assert.equal(readJob(root, 'j1'), null);
+});
+
 test('events append in order and each carries a timestamp', () => {
   const root = freshRoot();
   writeJob(root, { jobId: 'j1', status: 'running' });
@@ -125,6 +157,23 @@ test('a pending job that never claimed a pid goes stale and stops blocking', () 
   const now = Date.parse('2026-08-16T12:00:00.000Z');
   writeJob(root, { jobId: 'j1', status: 'pending', createdAt: '2026-08-16T11:50:00.000Z' });
   assert.equal(findActiveJob(root, { now, isAlive: () => false }), null);
+});
+
+// A newer job sitting above an older one in listJobs must not shadow it: the dashboard
+// refuses a second launch based on this answer, so returning the wrong job means either
+// a double-paid run or a permanently blocked launch button.
+test('a newer complete job does not shadow an older running one', () => {
+  const root = freshRoot();
+  writeJob(root, { jobId: 'old', status: 'running', pid: 111, createdAt: '2026-08-16T10:00:00.000Z' });
+  writeJob(root, { jobId: 'new', status: 'complete', pid: 222, createdAt: '2026-08-16T11:00:00.000Z' });
+  assert.equal(findActiveJob(root, { isAlive: () => true }).jobId, 'old');
+});
+
+test('with two live running jobs, the newest is returned', () => {
+  const root = freshRoot();
+  writeJob(root, { jobId: 'old', status: 'running', pid: 111, createdAt: '2026-08-16T10:00:00.000Z' });
+  writeJob(root, { jobId: 'new', status: 'running', pid: 222, createdAt: '2026-08-16T11:00:00.000Z' });
+  assert.equal(findActiveJob(root, { isAlive: () => true }).jobId, 'new');
 });
 
 // Gemini's project quota is a hard 250 renders/day. The form shows what today has
