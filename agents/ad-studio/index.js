@@ -32,6 +32,11 @@ import { notify } from '../../lib/notify.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
+// Set by main() once a run directory exists, so the top-level .catch() — which is outside
+// main's scope — can still archive the images of a run that threw. Null until then, and
+// cleared by the first flush. See the archive comment in main().
+let ARCHIVE_ON_EXIT = null;
+
 // (There is deliberately no slugify() here: the concept slug is the format key, which
 // formats.js already guarantees is a slug. An exported-but-uncalled helper with a test
 // of its own reads as covered code that nothing uses.)
@@ -405,11 +410,36 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
   let rejected = 0;
   const conceptsWithNoAcceptedVariation = [];
 
+  // ARTIFACT-level totals, alongside the variation-level ones.
+  //
+  // A variation is `ok` only when EVERY one of its placements passed, so a single failed
+  // frame makes the whole variation "rejected" and the plates that did pass disappear from
+  // the headline. The 2026-08-15 three-format run reported "1 accepted / 2 rejected" when
+  // 7 of its 9 plates were good and the 2 misses were Gemini 503s, not quality rejections.
+  // That is not a rounding error, it is the report saying the run failed when it mostly
+  // worked — and each plate is independently usable, so the artifact count is the one that
+  // describes what the operator actually got.
+  //
+  // `errored` is split out from `rejected` for the same reason: "the gate turned this
+  // down" and "the API was unavailable" call for completely different responses, and
+  // conflating them sends you looking for a quality problem that is not there.
+  let artifactsAccepted = 0;
+  let artifactsRejected = 0;
+  let artifactsErrored = 0;
+
   for (const c of results) {
     const okCount = c.variations.filter(v => v.ok).length;
     accepted += okCount;
     rejected += c.variations.length - okCount;
     if (okCount === 0) conceptsWithNoAcceptedVariation.push(c.conceptSlug);
+
+    for (const v of c.variations) {
+      for (const a of v.artifacts || []) {
+        if (a.ok) artifactsAccepted += 1;
+        else if (a.errored) artifactsErrored += 1;
+        else artifactsRejected += 1;
+      }
+    }
   }
 
   return {
@@ -417,7 +447,15 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
     generatedAt: new Date().toISOString(),
     product: { handle: product.handle, title: product.title },
     models: CREATIVE_MODELS.adStudio,
-    totals: { accepted, rejected, concepts: results.length, requested: results.length + rejectedConcepts.length },
+    totals: {
+      accepted, rejected, concepts: results.length, requested: results.length + rejectedConcepts.length,
+      artifacts: {
+        accepted: artifactsAccepted,
+        rejected: artifactsRejected,
+        errored: artifactsErrored,
+        total: artifactsAccepted + artifactsRejected + artifactsErrored,
+      },
+    },
     cost: {
       renders,
       perRenderUsd: ESTIMATED_COST_PER_RENDER_USD,
@@ -1166,6 +1204,37 @@ async function main() {
   const runDir = join(ROOT, 'data', 'creatives', 'ad-studio', runId);
   mkdirSync(runDir, { recursive: true });
 
+  // Archive on EVERY exit path, not just the happy one.
+  //
+  // archiveRunOutput used to be called once, after finalizeRunReport — so a run that threw
+  // (a malformed copy response, an unmapped ratio) or was interrupted with Ctrl-C left its
+  // images only in the working tree, which inside a worktree means untracked, which means
+  // `git worktree remove --force` deletes them. That is the exact loss the archive exists
+  // to prevent, and it already had to be worked around by hand once (2026-08-15).
+  //
+  // Idempotent: `pending` is cleared on the first call, so the success path, the failure
+  // path and a signal cannot triple-copy the same run.
+  let pending = { runDir, runId };
+  const flushArchive = () => {
+    if (!pending) return;
+    const p = pending;
+    pending = null;
+    ARCHIVE_ON_EXIT = null;
+    const dest = archiveRunOutput(p);
+    if (dest) console.log(`Archived to: ${dest}`);
+  };
+  ARCHIVE_ON_EXIT = flushArchive;
+  // Registered INSIDE main, never at module scope: importing an agent must not install
+  // process-level handlers as a side effect (see the agents-run-on-import hazard).
+  // `once` so a second Ctrl-C is not swallowed by a handler that has already run.
+  for (const sig of ['SIGINT', 'SIGTERM']) {
+    process.once(sig, () => {
+      console.warn(`\nad-studio: ${sig} — archiving run output before exit.`);
+      flushArchive();
+      process.exit(130);
+    });
+  }
+
   const photoDir = args.variant
     ? join(ROOT, 'data', 'product-images', manifestEntry.imageDir, args.variant)
     : join(ROOT, 'data', 'product-images', manifestEntry.imageDir);
@@ -1227,6 +1296,9 @@ async function main() {
         artifacts: Object.entries(proofByArtifact).map(([artifact, p]) => ({
           artifact,
           ok: Boolean(p.ok),
+          // An API failure is not a quality rejection. buildRunReport counts the two
+          // separately so a 503 never reads as "the gate turned this down".
+          errored: Boolean(p.error),
           score: typeof p.critique?.score === 'number' ? p.critique.score : null,
         })),
       });
@@ -1240,12 +1312,16 @@ async function main() {
     budget: { maxRenders: budget.max, stopped: skippedArtifacts.length > 0, skipped: skippedArtifacts },
     rejectedConcepts, concepts,
   });
-  console.log(`\nRun complete: ${report.totals.accepted} accepted / ${report.totals.rejected} rejected. ${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}. Output: data/creatives/ad-studio/${runId}/`);
+  const at = report.totals.artifacts;
+  console.log(
+    `\nRun complete: ${at.accepted}/${at.total} plate(s) accepted` +
+    (at.rejected ? `, ${at.rejected} rejected by the gate` : '') +
+    (at.errored ? `, ${at.errored} lost to API errors` : '') +
+    `. ${report.totals.accepted}/${report.totals.accepted + report.totals.rejected} variation(s) complete. ` +
+    `${report.cost.renders} render(s), ≈$${report.cost.estimatedUsd}. Output: data/creatives/ad-studio/${runId}/`
+  );
 
-  // Copy the images somewhere `git worktree remove --force` cannot reach. Runs on every
-  // run, because "remember to copy them first" is what lost a set of sample plates.
-  const archived = archiveRunOutput({ runDir, runId });
-  if (archived) console.log(`Archived to: ${archived}`);
+  flushArchive();
 
   if (report.ranking.length) {
     console.log('\nBest frames first:');
@@ -1301,6 +1377,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       }).catch(() => {});
     })
     .catch(async (err) => {
+      // A run that THREW still produced images, and they are the expensive part. Archive
+      // before anything else — notify can fail, process.exit certainly ends things.
+      try { ARCHIVE_ON_EXIT?.(); } catch { /* archiving must never mask the real error */ }
       await notify({ subject: 'Ad Studio failed', body: err.message || String(err), status: 'error', category: 'ads' }).catch(() => {});
       console.error(err);
       process.exit(1);
