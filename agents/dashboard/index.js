@@ -37,6 +37,8 @@ import metaAdsRoutes from './routes/meta-ads.js';
 import adsRoutes from './routes/ads.js';
 import creativesRoutes from './routes/creatives.js';
 import adStudioRoutes from './routes/ad-studio.js';
+import adStudioLaunchRoutes from './routes/ad-studio-launch.js';
+import { pruneJobs } from '../../lib/ad-studio-job.js';
 import campaignsRoutes from './routes/campaigns.js';
 import indexingRoutes from './routes/indexing.js';
 import performanceQueueRoutes from './routes/performance-queue.js';
@@ -104,6 +106,7 @@ const ROUTES = [
   ...adsRoutes,
   ...creativesRoutes,
   ...adStudioRoutes,
+  ...adStudioLaunchRoutes,
   ...campaignsRoutes,
   ...indexingRoutes,
   ...performanceQueueRoutes,
@@ -199,6 +202,13 @@ server.listen(PORT, BIND, () => {
     const reconciled = reconcileStaleInProgress();
     if (reconciled.length) console.log(`  Reconciled ${reconciled.length} orphaned in_progress item(s): ${reconciled.join(', ')}`);
   } catch (e) { console.error('  stale-in_progress sweep failed:', e.message); }
+
+  // Job files are a few KB and the run's own run.json is the permanent record. Nothing
+  // accumulates unswept on a 24 GB box.
+  try {
+    const pruned = pruneJobs(ROOT);
+    if (pruned.length) console.log(`  Pruned ${pruned.length} Ad Studio job file(s).`);
+  } catch (e) { console.error('  Ad Studio job prune failed:', e.message); }
 
   if (doOpen) {
     import('node:child_process').then(({ execSync }) => {
