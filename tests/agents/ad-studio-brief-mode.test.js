@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
-  parseArgs, buildRunReport, finalizeRunReport, SCORES_PATH,
+  parseArgs, buildRunReport, finalizeRunReport, SCORES_PATH, ROOT,
   findBriefProduct, assertBriefApproved, resolveBriefFormatKey, buildBriefAttribution,
   briefRenderSucceeded,
 } from '../../agents/ad-studio/index.js';
@@ -248,4 +248,80 @@ test('an approved brief round-trips through the store for rendering', () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// ── source guards: both deadline-critical fixes are wired into main(), not just proven ──
+//
+// C1's whole history is a correctly-implemented thing bound to the wrong field — a
+// function existing and being tested elsewhere is not evidence it is CALLED at the right
+// place. `assertNoHealthClaims` and `briefRenderSucceeded` both have full unit coverage
+// already, and both call sites live inside main(), which is unexported, hits the network,
+// and is guarded against running on import — so neither call site had any test that would
+// notice its own deletion. Same idiom tests/agents/ad-studio-orchestrator.test.js already
+// uses for exactly this reason (see its sweepDiskBudget/job.start source guards): read the
+// source text, pin presence AND — where order matters — ordering.
+test('main() re-derives the health gate on the copy actually about to render, before anything paid happens', () => {
+  const SRC = readFileSync(join(ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  const chosenFormatIdx = SRC.indexOf('const chosenFormat = selectFormats([attribution.format])[0];');
+  const healthGateIdx = SRC.indexOf('assertNoHealthClaims(brief.zones);');
+  const conceptsAssignIdx = SRC.indexOf('concepts = [{ format: chosenFormat, zones: brief.zones, claims: brief.claims || [] }];');
+
+  assert.ok(chosenFormatIdx > -1, 'sanity: the brief-mode format resolution must still exist');
+  assert.ok(conceptsAssignIdx > -1, 'sanity: the brief-mode concept assignment must still exist');
+  assert.ok(
+    healthGateIdx > -1,
+    'main() must call assertNoHealthClaims(brief.zones) — nothing binds a brief\'s stored ' +
+    'gates.health.ok to its zones, so this is the only thing that actually re-proves the ' +
+    'gate against the copy about to render',
+  );
+  assert.ok(
+    chosenFormatIdx < healthGateIdx && healthGateIdx < conceptsAssignIdx,
+    'assertNoHealthClaims must run AFTER the format is resolved but BEFORE the concept is ' +
+    'built — i.e. before the render loop can spend anything on copy that was never re-checked',
+  );
+});
+
+test('main() only marks a brief "rendered" when briefRenderSucceeded(report) is true', () => {
+  const SRC = readFileSync(join(ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  const guardIdx = SRC.indexOf('if (brief && briefRenderSucceeded(report)) {');
+  assert.ok(
+    guardIdx > -1,
+    'the rendered transition must be gated on briefRenderSucceeded(report) — without it, a ' +
+    'run that lost every render attempt (a Gemini outage, a --max-renders stop) still marks ' +
+    'the brief "rendered", and assertBriefApproved then refuses it by name forever',
+  );
+
+  // The guarded branch must be the one that actually performs the transition, not a
+  // decoy — decideBrief(..., { state: 'rendered' }) must appear inside this if-block,
+  // before the next top-level `} else if (brief) {`.
+  const elseIdx = SRC.indexOf('} else if (brief) {', guardIdx);
+  assert.ok(elseIdx > guardIdx, 'sanity: the "nothing accepted" branch must still exist');
+  const guardedBlock = SRC.slice(guardIdx, elseIdx);
+  assert.match(
+    guardedBlock, /decideBrief\(ROOT, handle, brief\.briefId, \{ state: 'rendered'/,
+    'the guarded branch must be the one that calls decideBrief with state: \'rendered\'',
+  );
+});
+
+// The advisory from review: renders that happened before a run came up empty were still
+// paid for. Record the run id even though the brief stays 'approved' and retryable, so an
+// operator retrying later sees the prior spend instead of a clean record with no trace of
+// it.
+test('a run that produced nothing still leaves a trace of the spend, without changing state', () => {
+  const SRC = readFileSync(join(ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+  const elseIdx = SRC.indexOf('} else if (brief) {');
+  assert.ok(elseIdx > -1, 'sanity: the "nothing accepted" branch must still exist');
+  const nextBraceIdx = SRC.indexOf('\n  }', elseIdx);
+  const elseBlock = SRC.slice(elseIdx, nextBraceIdx);
+  assert.match(
+    elseBlock, /failedRunIds:\s*\[\s*\.\.\.\(current\.failedRunIds \|\| \[\]\),\s*runId\s*\]/,
+    'a run with nothing accepted must still append the run id to failedRunIds — the spend ' +
+    'happened even though nothing was accepted',
+  );
+  assert.doesNotMatch(
+    elseBlock, /state:\s*'rendered'/,
+    'recording the failed spend must not change state — the brief stays approved and retryable',
+  );
 });

@@ -1665,6 +1665,12 @@ async function main() {
     const rendered = decideBrief(ROOT, handle, brief.briefId, { state: 'rendered', note: `rendered by run ${runId}` });
     writeBrief(ROOT, { ...rendered, renderedRunIds: [...(rendered.renderedRunIds || []), runId] });
   } else if (brief) {
+    // Nothing was accepted, but the renders that DID happen were still paid for — record
+    // the run id so an operator retrying this brief later sees the prior spend instead of
+    // a clean 'approved' record with no trace of it. State is untouched: still 'approved',
+    // still retryable through the approval boundary above.
+    const current = readBrief(ROOT, handle, brief.briefId) || brief;
+    writeBrief(ROOT, { ...current, failedRunIds: [...(current.failedRunIds || []), runId] });
     console.warn(
       `ad-studio: brief "${brief.briefId}" was NOT marked "rendered" — this run produced no accepted ` +
       `artifact (a transient render failure or a --max-renders stop). It remains "approved" and can ` +
