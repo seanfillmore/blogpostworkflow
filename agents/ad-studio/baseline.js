@@ -53,8 +53,13 @@ export function rankArtifacts(results) {
  * One row per SCORED artifact, accepted or not. A rejected frame's score is still
  * evidence about what this pipeline produces, which is exactly what a baseline is for —
  * excluding them would bias the baseline upward by construction.
+ *
+ * `attribution` (brief mode only) is `{ briefId, personaId, angleId, awareness, format }`
+ * or `null`, stamped onto every row unchanged. scores.jsonl outlives run.json — images
+ * get pruned, this file doesn't — so it is the durable record a future per-creative join
+ * reads persona/angle/awareness/format off of.
  */
-export function scoreRows({ runId, product, results }) {
+export function scoreRows({ runId, product, results, attribution = null }) {
   const rows = [];
   for (const concept of results || []) {
     for (const v of concept.variations || []) {
@@ -68,6 +73,7 @@ export function scoreRows({ runId, product, results }) {
           artifact: a.artifact,
           score: a.score,
           ok: Boolean(a.ok),
+          attribution,
         });
       }
     }
