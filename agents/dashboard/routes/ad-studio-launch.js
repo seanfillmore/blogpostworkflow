@@ -23,7 +23,7 @@ import { join } from 'node:path';
 import { FORMATS } from '../../ad-studio/formats.js';
 import { selectTargets } from '../../ad-studio/packaging.js';
 import { estimateRenders, USD_PER_RENDER } from '../../../lib/ad-studio-cost.js';
-import { writeJob, readJob, updateJob, findActiveJob, rendersToday, isValidJobId } from '../../../lib/ad-studio-job.js';
+import { writeJob, readJob, updateJob, findActiveJob, rendersToday, isValidJobId, pidAlive } from '../../../lib/ad-studio-job.js';
 import { respondJson, respondError, readJsonBody } from '../lib/responses.js';
 import { ROOT, PRODUCT_IMAGES_DIR, PRODUCT_MANIFEST_PATH } from '../lib/paths.js';
 
@@ -257,7 +257,17 @@ export default [
       if (!isValidJobId(jobId)) return respondError(res, 400, 'bad job id');
       const job = readJob(ROOT, jobId);
       if (!job) return respondError(res, 404, 'no such job');
-      respondJson(res, job);
+      // `alive` is computed fresh on every request and added to the RESPONSE ONLY — it
+      // is never written back to the job file. The job file has exactly one writer (the
+      // agent process itself, from the moment it boots — see the module comment above),
+      // which is precisely why cancel is a signal rather than a write. Persisting a
+      // liveness flag here would make this route a second writer and defeat that
+      // contract. The box is 961 MB and the agent can be OOM-killed between writing
+      // status:'running' and its next terminal write, in which case the job file says
+      // 'running' forever with no other signal — this field exists so the browser can
+      // tell a live run from an abandoned one without the file itself ever lying.
+      const alive = job.status === 'running' && job.pid ? pidAlive(job.pid) : undefined;
+      respondJson(res, alive === undefined ? job : { ...job, alive });
     },
   },
 

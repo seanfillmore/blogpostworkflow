@@ -132,3 +132,93 @@ function extractFunctionSource(src, name) {
 
   console.log(`✓ all ${idsReferenced.size} Ad Studio getElementById ids exist in index.html`);
 }
+
+// ── 3. Function-reference parity ───────────────────────────────────────────────────
+// Review finding (2026-08-16): switchAdStudioView('judge') called loadAdStudioRuns(),
+// which is referenced exactly once in the whole repo and defined nowhere — the real
+// function is refreshAdStudioRuns(). Neither test 1 nor test 2 above can see this class
+// of bug: it is not an arithmetic mismatch and not a missing element id, it is a
+// function reference with no matching definition. This closes that gap: every function
+// name invoked from an inline handler (onclick/onchange/oninput) inside #adstudio-panel,
+// and every Ad-Studio-named function called from within the Ad Studio JS itself, must
+// resolve to a real `function <name>(...)` in dashboard.js.
+{
+  /**
+   * Bound the `<div id="...">...</div>` subtree by DIV DEPTH, not by a naive regex to
+   * the next `</div>` (which would stop at the first nested close and miss almost
+   * everything) or by slicing to end-of-file (which was tried and liberally over-matched
+   * — it pulled in Ad Builder, template-modal and mobile-tab-switch onclick handlers
+   * that have nothing to do with Ad Studio and would have hidden a real gap behind a
+   * mountain of unrelated, already-passing names).
+   */
+  function extractDivById(html, id) {
+    const marker = `<div id="${id}"`;
+    const start = html.indexOf(marker);
+    assert.ok(start !== -1, `#${id} must exist in ${INDEX_HTML_PATH}`);
+    const openTagEnd = html.indexOf('>', start) + 1;
+    assert.ok(openTagEnd > 0, `#${id}'s opening tag must be closed`);
+    let depth = 1;
+    let i = openTagEnd;
+    while (depth > 0) {
+      const nextOpen = html.indexOf('<div', i);
+      const nextClose = html.indexOf('</div>', i);
+      assert.ok(nextClose !== -1, `#${id}'s <div> must have a matching </div>`);
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth++;
+        i = nextOpen + 4;
+      } else {
+        depth--;
+        i = nextClose + 6;
+      }
+    }
+    return html.slice(start, i);
+  }
+
+  /** Every `<identifier>(` in `text` whose name matches `pattern`. */
+  function callNamesMatching(text, pattern) {
+    const names = new Set();
+    for (const m of text.matchAll(/([A-Za-z_$][\w$]*)\s*\(/g)) {
+      if (pattern.test(m[1])) names.add(m[1]);
+    }
+    return names;
+  }
+
+  const AD_STUDIO_NAME = /adstudio/i;
+
+  const panelHtml = extractDivById(indexHtml, 'adstudio-panel');
+  const handlerAttrs = [...panelHtml.matchAll(/\b(?:onclick|onchange|oninput)="([^"]*)"/g)].map((m) => m[1]);
+  assert.ok(handlerAttrs.length > 0, 'sanity: #adstudio-panel must carry inline handler attributes to scan');
+
+  const markupCalls = new Set();
+  for (const attr of handlerAttrs) {
+    for (const name of callNamesMatching(attr, AD_STUDIO_NAME)) markupCalls.add(name);
+  }
+  assert.ok(markupCalls.size > 0, 'sanity: #adstudio-panel must reference at least one Ad Studio function by name');
+
+  // The Ad Studio JS section — same boundary test 2 uses, and for the same reason: it is
+  // everything from `var adStudioState` to end of file, which is also where dynamically
+  // built onclick attributes (e.g. renderAdStudioRun's per-target buttons) live as string
+  // literals in the SOURCE — scanning this text (not executing it) still finds those
+  // names, which is exactly what is wanted: they become real onclick attributes at
+  // runtime even though index.html never contains them literally.
+  const jsSectionStart = dashboardSrc.indexOf('var adStudioState');
+  assert.ok(jsSectionStart !== -1, 'adStudioState must exist in dashboard.js');
+  const adStudioJs = dashboardSrc.slice(jsSectionStart);
+  const jsCalls = callNamesMatching(adStudioJs, AD_STUDIO_NAME);
+  assert.ok(jsCalls.size > 0, 'sanity: the Ad Studio JS section must call at least one Ad Studio function by name');
+
+  const definedFunctions = new Set(
+    [...dashboardSrc.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1])
+  );
+  assert.ok(definedFunctions.size > 50, 'sanity: dashboard.js must define plenty of functions');
+
+  const allCalled = new Set([...markupCalls, ...jsCalls]);
+  const undefinedCalls = [...allCalled].filter((name) => !definedFunctions.has(name));
+  assert.deepEqual(
+    undefinedCalls, [],
+    'every Ad Studio function referenced from #adstudio-panel markup or the Ad Studio JS ' +
+    `must be defined in dashboard.js; missing: ${undefinedCalls.join(', ')}`
+  );
+
+  console.log(`✓ all ${allCalled.size} Ad Studio function references resolve to a real definition in dashboard.js`);
+}

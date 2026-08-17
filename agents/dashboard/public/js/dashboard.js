@@ -5581,7 +5581,7 @@ function switchAdStudioView(view) {
   var judgeBtn = document.getElementById('as-view-judge-btn');
   if (newBtn) newBtn.classList.toggle('active', view === 'new');
   if (judgeBtn) judgeBtn.classList.toggle('active', view === 'judge');
-  if (view === 'judge') loadAdStudioRuns();
+  if (view === 'judge') refreshAdStudioRuns();
   else if (!adStudioSetup.options) loadAdStudioOptions();
 }
 
@@ -5654,7 +5654,10 @@ function adStudioEstimate() {
     ? '<strong>' + expected + ' renders · ' + usd(expected) + '</strong>' +
       ' <span style="color:var(--muted)">worst case ' + worst + ' · ' + usd(worst) + '</span>'
     : '<span style="color:var(--muted)">$0.00 — pick a format</span>';
-  document.getElementById('as-run-btn').disabled = formats.length === 0;
+  // Gated on the computed cost, not on format count alone — 1+ formats with Variations
+  // cleared or typed as 0 still computes expected 0, and a $0.00 Render button that
+  // leads to a server-side 400 contradicts the whole point of showing a cost up front.
+  document.getElementById('as-run-btn').disabled = expected === 0;
 }
 
 async function adStudioLaunch(dryRun) {
@@ -5697,7 +5700,13 @@ function adStudioPollJob(jobId) {
       job = await res.json();
     } catch (e) { return; }
     adStudioRenderJob(job);
-    if (job.status === 'complete' || job.status === 'error' || job.status === 'cancelled') {
+    // A job stuck at status:'running' with its pid gone (OOM-killed — the box is 961 MB,
+    // see lib/ad-studio-job.js) would otherwise poll forever with no terminal status ever
+    // arriving. `alive` only exists on the response for a running job with a pid (see the
+    // route), so `=== false` is the one value that means "checked and confirmed gone" —
+    // it is never true for a live run and never present for a job that already finished.
+    var processGone = job.status === 'running' && job.alive === false;
+    if (job.status === 'complete' || job.status === 'error' || job.status === 'cancelled' || processGone) {
       clearInterval(adStudioSetup.pollTimer);
       adStudioSetup.pollTimer = null;
       document.getElementById('as-dry-btn').disabled = false;
@@ -5709,9 +5718,10 @@ function adStudioPollJob(jobId) {
 }
 
 function adStudioRenderJob(job) {
+  var processGone = job.status === 'running' && job.alive === false;
   var status = document.getElementById('as-progress-status');
-  status.textContent = job.status + (job.runId ? ' — ' + job.runId : '');
-  document.getElementById('as-cancel-btn').style.display = job.status === 'running' ? '' : 'none';
+  status.textContent = (processGone ? 'stopped — process gone' : job.status) + (job.runId ? ' — ' + job.runId : '');
+  document.getElementById('as-cancel-btn').style.display = (job.status === 'running' && !processGone) ? '' : 'none';
   var link = document.getElementById('as-judge-link');
   if (job.status === 'complete' && job.runId) {
     link.style.display = '';
@@ -5721,6 +5731,12 @@ function adStudioRenderJob(job) {
   }
 
   var html = '';
+  if (processGone) {
+    html += '<div style="color:var(--danger,#f87171);margin-bottom:0.4rem">' +
+      'The render process is no longer running (it may have been killed for memory). ' +
+      'It is not going to finish on its own. Any frames it had already written are on ' +
+      'disk — switch to Judge and look for this run.</div>';
+  }
   if (job.plan) {
     html += '<div style="color:var(--muted);margin-bottom:0.4rem">planned ' + job.plan.expected +
       ' render(s) · $' + job.plan.expectedUsd.toFixed(2) + '</div>';
