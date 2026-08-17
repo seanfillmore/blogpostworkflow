@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   BRIEF_STATES, briefsDir, briefPath, isValidBriefId,
-  writeBrief, readBrief, listBriefs, decideBrief, listProductsWithBriefs,
+  writeBrief, readBrief, listBriefs, decideBrief, listProductsWithBriefs, chooseFormat,
 } from '../../lib/ad-brief.js';
 
 const freshRoot = () => mkdtempSync(join(tmpdir(), 'ad-brief-'));
@@ -250,4 +250,83 @@ test('listProductsWithBriefs enumerates the product directories', () => {
   writeBrief(root, brief());
   writeBrief(root, brief({ briefId: 'soap-p5a3-1', product: 'coconut-soap' }));
   assert.deepEqual(listProductsWithBriefs(root).sort(), ['coconut-lotion', 'coconut-soap']);
+});
+
+// ── chooseFormat — the operator's override, and the boundary that keeps it honest ──
+//
+// resolveBriefFormatKey (agents/ad-studio/index.js) reads `format.chosen ?? proposed`
+// at render time; this is the only function that ever writes `format.chosen`. Its own
+// security property is narrower than decide's approval gate but just as load-bearing:
+// the key must come from THIS brief's own proposed+alternatives (what the awareness
+// join actually produced for its angle), never the global format table, or an operator
+// could point an unaware angle's copy at a product-aware layout and silently defeat the
+// join lib/ad-brief-score.js's headroom weighting exists to protect.
+
+// Real keys from agents/ad-studio/formats.js (testimonial, manifesto, stat-stack) —
+// chooseFormat itself never reads the global FORMATS table, only the brief's own
+// proposed+alternatives, but using real keys here keeps the fixture honest against
+// what agents/ad-brief/index.js's formatsForAngle() would actually have produced.
+const withFormat = (over = {}) => brief({
+  format: { proposed: 'testimonial', alternatives: ['manifesto', 'stat-stack'] },
+  ...over,
+});
+
+test('chooseFormat accepts a listed alternative', () => {
+  const root = freshRoot();
+  writeBrief(root, withFormat());
+  const out = chooseFormat(root, 'coconut-lotion', brief().briefId, 'manifesto');
+  assert.equal(out.format.chosen, 'manifesto');
+});
+
+test('chooseFormat accepts the proposed key itself', () => {
+  const root = freshRoot();
+  writeBrief(root, withFormat());
+  const out = chooseFormat(root, 'coconut-lotion', brief().briefId, 'testimonial');
+  assert.equal(out.format.chosen, 'testimonial');
+});
+
+test('chooseFormat refuses a real format key this brief never proposed', () => {
+  const root = freshRoot();
+  writeBrief(root, withFormat());
+  // "ingredient-callout" is a real key elsewhere in FORMATS, just not one of THIS
+  // brief's own proposed/alternatives — the whole point of scoping to the brief record
+  // rather than the global table.
+  assert.throws(
+    () => chooseFormat(root, 'coconut-lotion', brief().briefId, 'ingredient-callout'),
+    /not a format available/,
+  );
+});
+
+test('chooseFormat refuses a made-up format key', () => {
+  const root = freshRoot();
+  writeBrief(root, withFormat());
+  assert.throws(
+    () => chooseFormat(root, 'coconut-lotion', brief().briefId, 'not-a-real-format'),
+    /not a format available/,
+  );
+});
+
+test('chooseFormat refuses a brief with no proposed format — nothing to choose among', () => {
+  const root = freshRoot();
+  writeBrief(root, brief({ format: { proposed: null, alternatives: [] } }));
+  assert.throws(
+    () => chooseFormat(root, 'coconut-lotion', brief().briefId, 'before-after'),
+    /no proposed format/,
+  );
+});
+
+test('chooseFormat leaves state and gates untouched — a parameter change, not a decision', () => {
+  const root = freshRoot();
+  writeBrief(root, withFormat({ state: 'approved', gates: passingGates }));
+  const out = chooseFormat(root, 'coconut-lotion', brief().briefId, 'testimonial');
+  assert.equal(out.state, 'approved');
+  assert.deepEqual(out.gates, passingGates);
+  // Round-trips too, not just the return value.
+  const reread = readBrief(root, 'coconut-lotion', brief().briefId);
+  assert.equal(reread.state, 'approved');
+  assert.equal(reread.format.chosen, 'testimonial');
+});
+
+test('chooseFormat on a missing brief throws rather than creating one', () => {
+  assert.throws(() => chooseFormat(freshRoot(), 'coconut-lotion', 'ghost', 'before-after'), /ghost/);
 });

@@ -1,8 +1,18 @@
 // agents/dashboard/routes/ad-brief.js
 //
-// The four HTTP entry points onto the ad-BRIEF stage: list what exists, generate more,
-// and decide what happens to one. Sibling to routes/ad-studio-launch.js, which owns the
-// equivalent surface for Ad Studio renders — this module follows its shape on purpose:
+// The six HTTP entry points onto the ad-BRIEF stage: list what exists, generate more,
+// decide what happens to one, choose which of its alternative formats it renders with,
+// and render an approved one. Sibling to routes/ad-studio-launch.js, which owns the
+// equivalent surface for Ad Studio's own product-mode renders — this module follows its
+// shape on purpose:
+//
+// /render and /format were added after Task 6 shipped the Briefs view: the view's own
+// action list (Render, plus a format-override dropdown) always included both, but
+// Task 5's route table never built the endpoints behind them — a plan inconsistency,
+// not a scope cut, caught in review rather than shipped as a half flow. /render reuses
+// agents/ad-studio/index.js's existing `--brief` CLI mode (added in Task 4, for exactly
+// this) rather than adding a second render path; /format writes through lib/ad-brief.js
+// so the approval invariant it protects is not something this route has to re-derive.
 //
 //   1. Every path segment is validated BEFORE it can reach the filesystem. `product` and
 //      `briefId` both flow into lib/ad-brief.js's briefPath()/briefsDir(), which throw an
@@ -33,6 +43,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   listBriefs, decideBrief, listProductsWithBriefs, isValidBriefId, BRIEF_STATES,
+  readBrief, chooseFormat,
 } from '../../../lib/ad-brief.js';
 import { writeJob, updateJob, findActiveJob, isValidJobId } from '../../../lib/ad-studio-job.js';
 import { respondJson, respondError, readJsonBody } from '../lib/responses.js';
@@ -203,6 +214,112 @@ export function performGenerate(args, deps = {}) {
   return { ok: true, jobId };
 }
 
+/**
+ * The only place a render request is trusted. Returns normalised args or a reason.
+ *
+ * Shape mirrors validateDecide exactly (both take `{product, briefId}` and check them
+ * against the same `deps.products` allowlist) — render has no extra fields, because the
+ * decision of WHAT to render already lives on the brief record itself (state, and
+ * format.chosen/proposed), not in this request body.
+ */
+export function validateRender(body = {}, { products = [] } = {}) {
+  const bad = (error) => ({ ok: false, error });
+
+  const product = String(body.product || '').trim();
+  if (!product || !isValidBriefId(product)) return bad('a valid product handle is required');
+
+  const briefId = String(body.briefId || '').trim();
+  if (!briefId || !isValidBriefId(briefId)) return bad('a valid brief id is required');
+
+  const entry = products.find(p => p.handle === product);
+  if (!entry) return bad('unknown product');
+
+  return { ok: true, args: { product, briefId } };
+}
+
+/**
+ * The only place a format-choice request is trusted. Returns normalised args or a
+ * reason. `formatKey` is checked for shape only (a safe segment, non-empty) — whether
+ * it is actually one of THIS brief's own proposed/alternative formats is lib/ad-brief.js's
+ * chooseFormat()'s job, not this route's; that check needs the brief record, which this
+ * function deliberately never reads (same reason validateDecide doesn't reach into the
+ * brief record — it wants to stay testable against a synthetic product list, and the
+ * value check belongs where the source of truth for "valid formats for this brief"
+ * lives).
+ */
+export function validateChooseFormat(body = {}, { products = [] } = {}) {
+  const bad = (error) => ({ ok: false, error });
+
+  const product = String(body.product || '').trim();
+  if (!product || !isValidBriefId(product)) return bad('a valid product handle is required');
+
+  const briefId = String(body.briefId || '').trim();
+  if (!briefId || !isValidBriefId(briefId)) return bad('a valid brief id is required');
+
+  const formatKey = String(body.formatKey || '').trim();
+  if (!formatKey || !isValidBriefId(formatKey)) return bad('a valid formatKey is required');
+
+  const entry = products.find(p => p.handle === product);
+  if (!entry) return bad('unknown product');
+
+  return { ok: true, args: { product, briefId, formatKey } };
+}
+
+/**
+ * The concurrency check, the job-file write, and the spawn for a BRIEF RENDER — same
+ * one-writer contract as performGenerate above, just pointed at
+ * agents/ad-studio/index.js's own `--brief` CLI mode (Task 4) instead of
+ * agents/ad-brief/index.js. `findActiveJob` is the SAME shared guard performGenerate
+ * uses (not partitioned by kind) for the identical reason: this box has one CPU and
+ * ~430 MB free, and a render (Anthropic + Gemini) running alongside a brief-generation
+ * batch (many sequential Anthropic calls) would only slow each other down.
+ *
+ * Deliberately does NOT re-check approval or format here — the route handler already
+ * did, against a just-read brief record, immediately before calling this. Duplicating
+ * that check here would just be a second read of a record that could have changed in
+ * the gap between the two reads either way; the real, unbypassable enforcement is
+ * agents/ad-studio/index.js's own assertBriefApproved()/resolveBriefFormatKey(), which
+ * run inside the spawned process before anything renders regardless of what this route
+ * believed.
+ */
+export function performRender(args, deps = {}) {
+  const {
+    findActiveJob: findActiveJobFn = findActiveJob,
+    writeJob: writeJobFn = writeJob,
+    updateJob: updateJobFn = updateJob,
+    spawn: spawnFn = spawn,
+  } = deps;
+
+  const active = findActiveJobFn(ROOT);
+  if (active) {
+    return { ok: false, status: 409, error: `a run is already in progress (${active.jobId}) — wait for it or cancel it first` };
+  }
+
+  const jobId = `ad-brief-render-${args.briefId}-${Date.now()}`;
+  if (!isValidJobId(jobId)) return { ok: false, status: 400, error: 'could not build a safe job id' };
+
+  // Written ONCE, here. agents/ad-studio/index.js claims this file (pid, status
+  // 'running') the moment it boots, the same job.start({pid}) call it already makes
+  // for a product-mode launch — --brief mode is not a special case there.
+  writeJobFn(ROOT, {
+    jobId, status: 'pending', kind: 'ad-brief-render', createdAt: new Date().toISOString(),
+    args, runId: null, pid: null, events: [], totals: null, error: null,
+  });
+
+  const child = spawnFn('node', [join(ROOT, 'agents/ad-studio/index.js'), '--brief', args.briefId, '--job-id', jobId], {
+    cwd: ROOT, detached: true, stdio: 'ignore',
+  });
+
+  // Same one write this route family keeps for itself: a spawn that never started
+  // never claimed the job file, so nothing else will ever report it as failed.
+  child.on('error', () => {
+    try { updateJobFn(ROOT, jobId, { status: 'error', error: 'failed to start the render process' }); } catch { /* the job file itself may be what's broken */ }
+  });
+
+  child.unref();
+  return { ok: true, jobId };
+}
+
 export default [
   // GET /api/ad-brief/products — products that already have briefs, unioned with the
   // catalog products a brief can be generated for, so the dashboard never has to make a
@@ -321,6 +438,110 @@ export default [
       } catch {
         respondError(res, 409, 'that brief could not be moved to the requested state — check its gates and current state');
       }
+    },
+  },
+
+  // POST /api/ad-brief/format — { product, briefId, formatKey } -> chooseFormat.
+  // Writes `format.chosen`, the field agents/ad-studio/index.js's resolveBriefFormatKey
+  // already reads at render time; before this route existed nothing ever wrote it.
+  {
+    method: 'POST',
+    match: '/api/ad-brief/format',
+    async handler(req, res, ctx) {
+      let body;
+      try { body = await readJsonBody(req); } catch { return respondError(res, 400, 'bad JSON body'); }
+
+      // Same unguarded-readdirSync hazard as /decide (code review, 2026-08-17) — this
+      // sits after the handler's first await, so an fs fault here would otherwise reach
+      // lib/router.js's dispatch(), which calls handlers without awaiting them.
+      const listProductsWithBriefsFn = ctx?.adBriefDeps?.listProductsWithBriefs || listProductsWithBriefs;
+      let knownProducts;
+      try {
+        knownProducts = listProductsWithBriefsFn(ROOT).map(handle => ({ handle }));
+      } catch {
+        return respondError(res, 500, 'failed to load known products');
+      }
+
+      const verdict = validateChooseFormat(body, { products: knownProducts });
+      if (!verdict.ok) return respondError(res, 400, verdict.error);
+
+      // chooseFormat() enforces the real check (this brief's OWN proposed+alternatives,
+      // not the global format table) and this route must not attempt to re-implement or
+      // relax that — it only translates a throw into a fixed response, same discipline
+      // as /decide just above.
+      const chooseFormatFn = ctx?.adBriefDeps?.chooseFormat || chooseFormat;
+      try {
+        const brief = chooseFormatFn(ROOT, verdict.args.product, verdict.args.briefId, verdict.args.formatKey);
+        respondJson(res, { ok: true, brief });
+      } catch {
+        respondError(res, 400, 'that format is not available for this brief — check its proposed format and alternatives');
+      }
+    },
+  },
+
+  // POST /api/ad-brief/render — { product, briefId } -> spawn agents/ad-studio/index.js
+  // --brief <briefId>, the same job mechanism /generate uses. THE security boundary:
+  // only a brief whose stored `state` is 'approved' may render, checked HERE by name
+  // (not delegated to a caught exception) because lib/ad-brief.js already guarantees
+  // that state was unreachable without both gates strictly passing.
+  {
+    method: 'POST',
+    match: '/api/ad-brief/render',
+    async handler(req, res, ctx) {
+      let body;
+      try { body = await readJsonBody(req); } catch { return respondError(res, 400, 'bad JSON body'); }
+
+      const listProductsWithBriefsFn = ctx?.adBriefDeps?.listProductsWithBriefs || listProductsWithBriefs;
+      let knownProducts;
+      try {
+        knownProducts = listProductsWithBriefsFn(ROOT).map(handle => ({ handle }));
+      } catch {
+        return respondError(res, 500, 'failed to load known products');
+      }
+
+      const verdict = validateRender(body, { products: knownProducts });
+      if (!verdict.ok) return respondError(res, 400, verdict.error);
+
+      const readBriefFn = ctx?.adBriefDeps?.readBrief || readBrief;
+      let brief;
+      try {
+        brief = readBriefFn(ROOT, verdict.args.product, verdict.args.briefId);
+      } catch {
+        return respondError(res, 500, 'failed to load the brief');
+      }
+      if (!brief) return respondError(res, 404, 'no such brief');
+
+      // `brief.state` is not client-supplied — it comes from the record this route just
+      // read off disk, and writeBrief() restricts it to the closed BRIEF_STATES
+      // vocabulary, so naming it in the response is not the "echo a value back" rule 2
+      // warns against; it is exactly the "by name" refusal this endpoint exists to give.
+      if (brief.state !== 'approved') {
+        return respondError(res, 409,
+          `brief is "${brief.state}", not "approved" — only an approved brief can render`);
+      }
+
+      // A null-format brief has no `gates` block at all (agents/ad-brief/index.js never
+      // writes one for an angle with no matching format — see generateBriefs) and so
+      // could never have reached 'approved' in the first place; checked explicitly
+      // anyway so the refusal names the real reason rather than relying on that chain.
+      const formatKey = brief.format?.chosen ?? brief.format?.proposed ?? null;
+      if (!formatKey) {
+        return respondError(res, 409, 'this brief has no format to render — no format covers its awareness level');
+      }
+
+      // Same reasoning as /generate's handler: findActiveJob/writeJob/spawn are
+      // synchronous fs/process calls that can throw (ENOSPC, most realistically — see
+      // CLAUDE.md's disk-budget history) and nothing here registers
+      // 'unhandledRejection'. Fixed 500; never echo the exception.
+      let result;
+      try {
+        result = performRender(verdict.args, ctx?.adBriefDeps);
+      } catch {
+        return respondError(res, 500, 'failed to launch the render — check server disk space and logs');
+      }
+
+      if (!result.ok) return respondError(res, result.status, result.error);
+      respondJson(res, { ok: true, jobId: result.jobId });
     },
   },
 ];

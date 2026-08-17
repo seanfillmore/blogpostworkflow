@@ -5721,17 +5721,36 @@ function adStudioPollJob(jobId) {
   tick();
 }
 
-function adStudioRenderJob(job) {
+// `opts` lets a second caller (Briefs' Render action, below — a --brief render is
+// still agents/ad-studio/index.js's own main(), so its job.events carry this EXACT
+// shape) target its own progress elements instead of duplicating this whole function.
+// Every default reproduces the New-run panel's original hardcoded ids exactly, so
+// adStudioRenderJob(job) with no second argument — every call site before this task —
+// behaves identically to before. `cancelBtnId`/`judgeLinkId` accept an explicit `null`
+// to skip that element entirely, because the Briefs panel has neither a cancel button
+// nor a judge link, and touching `#as-cancel-btn`/`#as-judge-link` from a Briefs render
+// would be a cross-panel side effect on the unrelated New-run screen's own controls.
+function adStudioRenderJob(job, opts) {
+  opts = opts || {};
+  var statusId = opts.statusId || 'as-progress-status';
+  var bodyId = opts.bodyId || 'as-progress-body';
+  var cancelBtnId = opts.cancelBtnId === undefined ? 'as-cancel-btn' : opts.cancelBtnId;
+  var judgeLinkId = opts.judgeLinkId === undefined ? 'as-judge-link' : opts.judgeLinkId;
+
   var processGone = job.status === 'running' && job.alive === false;
-  var status = document.getElementById('as-progress-status');
+  var status = document.getElementById(statusId);
   status.textContent = (processGone ? 'stopped — process gone' : job.status) + (job.runId ? ' — ' + job.runId : '');
-  document.getElementById('as-cancel-btn').style.display = (job.status === 'running' && !processGone) ? '' : 'none';
-  var link = document.getElementById('as-judge-link');
-  if (job.status === 'complete' && job.runId) {
-    link.style.display = '';
-    link.onclick = function () { switchAdStudioView('judge'); loadAdStudioRun(job.runId); return false; };
-  } else {
-    link.style.display = 'none';
+  if (cancelBtnId) {
+    document.getElementById(cancelBtnId).style.display = (job.status === 'running' && !processGone) ? '' : 'none';
+  }
+  if (judgeLinkId) {
+    var link = document.getElementById(judgeLinkId);
+    if (job.status === 'complete' && job.runId) {
+      link.style.display = '';
+      link.onclick = function () { switchAdStudioView('judge'); loadAdStudioRun(job.runId); return false; };
+    } else {
+      link.style.display = 'none';
+    }
   }
 
   var html = '';
@@ -5770,7 +5789,7 @@ function adStudioRenderJob(job) {
     });
     html += '</div>';
   });
-  document.getElementById('as-progress-body').innerHTML = html;
+  document.getElementById(bodyId).innerHTML = html;
 }
 
 async function adStudioCancel() {
@@ -5996,26 +6015,23 @@ function exportAdStudioKept() {
 // A brief carries the FINISHED, gate-passed copy for one persona angle, plus the
 // evidence behind it and a score (lib/ad-brief.js). This is the direct answer to the
 // complaint that started this feature: "The UI makes no sense. I have no way of
-// influencing the ad creatives... I did a dry-run and then nothing." Generation,
-// list and decide all hit the four routes agents/dashboard/routes/ad-brief.js ships.
-// Brief-generation jobs share Ad Studio's own job store (there is no separate
-// ad-brief job route) so progress is polled off the SAME /api/ad-studio/job/<id>
-// adStudioPollJob already uses, just rendered into this view's own elements.
+// influencing the ad creatives... I did a dry-run and then nothing." Generate, list,
+// decide, choose-format and render all hit agents/dashboard/routes/ad-brief.js's six
+// routes. Brief-generation AND render jobs both share Ad Studio's own job store (there
+// is no separate ad-brief job route — findActiveJob is deliberately not partitioned by
+// kind, see routes/ad-brief.js's performGenerate/performRender docstrings) so progress
+// for either is polled off the SAME /api/ad-studio/job/<id> adStudioPollJob already
+// uses for the New-run panel, just rendered into this view's own elements.
 //
-// Render has no dashboard route to call — only agents/ad-studio/index.js's CLI
-// itself understands `--brief <id>`, and that is deliberate: rendering re-uses the
-// brief's exact stored copy with no second LLM call, and wiring that through the
-// browser is out of this task's scope (see the four-route contract above). The
-// Render button therefore copies the CLI command instead of pretending to spend
-// money it cannot actually authorize yet.
+// Render POSTs /api/ad-brief/render, which spawns agents/ad-studio/index.js's own
+// `--brief <id>` CLI mode (Task 4) — rendering re-uses the brief's exact stored copy
+// with no second LLM call. Its job.events therefore carry Ad Studio's OWN shape
+// ({stage, variation, artifact, state, reasons, score} grouped by concept), not the
+// {angleId, personaId, state, format} shape a generation batch's events carry — see
+// briefRenderProgress below, which reuses adStudioRenderJob rather than re-deriving
+// that rendering logic a second time.
 
 var briefState = { products: [], product: null, briefs: [], busy: false, jobId: null, pollTimer: null };
-
-// Local-only: which format an operator picked for a brief this page load. There is no
-// route to persist `format.chosen` (see the module comment), so this never survives a
-// reload and never changes what --brief actually renders — it exists so the dropdown
-// required by the spec is not decorative, even though it cannot commit anything yet.
-var briefFormatOverrides = {};
 
 async function loadBriefProducts() {
   var sel = document.getElementById('ab-product');
@@ -6165,7 +6181,12 @@ function briefFormatHtml(brief) {
       'no format covers this awareness level</div>';
   }
   var opts = [brief.format.proposed].concat(brief.format.alternatives || []);
-  var current = briefFormatOverrides[brief.briefId] || brief.format.proposed;
+  // `chosen` is the operator's override, persisted server-side by POST
+  // /api/ad-brief/format (lib/ad-brief.js's chooseFormat) — the same field
+  // agents/ad-studio/index.js's resolveBriefFormatKey reads at render time via
+  // `format.chosen ?? format.proposed`. Falls back to `proposed` for a brief nobody
+  // has overridden yet.
+  var current = brief.format.chosen || brief.format.proposed;
   return '<div style="margin-bottom:0.4rem;font-size:0.82rem">Format: ' +
     '<select onchange="briefFormatChanged(\'' + adStudioEsc(brief.briefId) + '\',this.value)" ' +
     'class="creatives-select" style="display:inline-block;width:auto">' +
@@ -6175,9 +6196,29 @@ function briefFormatHtml(brief) {
     }).join('') + '</select></div>';
 }
 
-function briefFormatChanged(briefId, formatKey) {
-  // Local UI state only — see the module comment on briefFormatOverrides.
-  briefFormatOverrides[briefId] = formatKey;
+// Persists the override via POST /api/ad-brief/format. lib/ad-brief.js's chooseFormat
+// validates `formatKey` against THIS brief's own proposed+alternatives (never the
+// global format table), so an unexpected refusal here means the brief record and this
+// dropdown's own options have already drifted apart — reloading is the correct
+// recovery either way, success or failure.
+async function briefFormatChanged(briefId, formatKey) {
+  var product = document.getElementById('ab-product').value;
+  try {
+    var res = await fetch('/api/ad-brief/format', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ product: product, briefId: briefId, formatKey: formatKey })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  } catch (err) {
+    alert('Could not save the format choice: ' + err.message);
+  } finally {
+    // Re-read either way: on success this reflects the new `chosen` field, on failure
+    // it reverts the dropdown to whatever the server actually has on record.
+    await loadBriefs();
+  }
 }
 
 function briefCardHtml(brief) {
@@ -6215,7 +6256,7 @@ function briefCardHtml(brief) {
   }
   // Render only for an approved brief — the whole point of the approval gate.
   if (brief.state === 'approved') {
-    html += '<button onclick="briefRenderCommand(\'' + adStudioEsc(brief.briefId) + '\')" ' +
+    html += '<button onclick="briefRender(\'' + adStudioEsc(brief.briefId) + '\')" ' +
       'class="btn-sm" style="padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer">Render</button>';
   }
   html += '</div>';
@@ -6260,16 +6301,31 @@ async function briefDecide(briefId, state) {
   }
 }
 
-// No dashboard route renders a brief — see the module comment. Copies the exact CLI
-// invocation instead, mirroring exportAdStudioKept()'s clipboard pattern above.
-function briefRenderCommand(briefId) {
-  var cmd = 'node agents/ad-studio/index.js --brief ' + briefId;
-  navigator.clipboard.writeText(cmd).then(function () {
-    alert('Render command copied:\n\n' + cmd +
-      '\n\nRun this on the server to render this brief\'s exact approved copy — no second copy call.');
-  }, function () {
-    alert(cmd);
-  });
+// POST /api/ad-brief/render — spawns agents/ad-studio/index.js's own `--brief <id>`
+// CLI mode (Task 4), so the copy that renders is exactly the copy this screen showed:
+// no second LLM call. `busy` guards only the initial POST (which just returns a jobId);
+// the actual render is long-running and tracked separately via briefState.pollTimer, so
+// `busy` is released as soon as the launch itself has succeeded or failed, same as
+// briefDecide above.
+async function briefRender(briefId) {
+  if (briefState.busy) return;
+  var product = document.getElementById('ab-product').value;
+  briefState.busy = true;
+  try {
+    var res = await fetch('/api/ad-brief/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ product: product, briefId: briefId })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    briefRenderPollJob(data.jobId);
+  } catch (err) {
+    alert('Could not start the render: ' + err.message);
+  } finally {
+    briefState.busy = false;
+  }
 }
 
 async function briefGenerate() {
@@ -6287,14 +6343,14 @@ async function briefGenerate() {
     });
     var data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
-    briefPollJob(data.jobId);
+    briefGeneratePollJob(data.jobId);
   } catch (e) {
     err.textContent = e.message;
     document.getElementById('ab-generate-btn').disabled = false;
   }
 }
 
-function briefPollJob(jobId) {
+function briefGeneratePollJob(jobId) {
   briefState.jobId = jobId;
   document.getElementById('ab-progress').style.display = '';
   if (briefState.pollTimer) clearInterval(briefState.pollTimer);
@@ -6304,7 +6360,7 @@ function briefPollJob(jobId) {
       var res = await fetch('/api/ad-studio/job/' + encodeURIComponent(jobId), { credentials: 'same-origin' });
       job = await res.json();
     } catch (e) { return; }
-    briefRenderJobProgress(job);
+    briefGenerateProgress(job);
     // Same 'alive' reasoning as adStudioPollJob: a job stuck 'running' with its pid
     // gone (OOM-killed — the box is 961 MB) would otherwise poll forever.
     var processGone = job.status === 'running' && job.alive === false;
@@ -6323,7 +6379,11 @@ function briefPollJob(jobId) {
   tick();
 }
 
-function briefRenderJobProgress(job) {
+// Brief-GENERATION job events: {angleId, personaId, state, format} per angle, from
+// agents/ad-brief/index.js's generateBriefs — a different shape from a render job's
+// events (see briefRenderProgress below), so this stays its own small renderer rather
+// than trying to make one function cover both shapes.
+function briefGenerateProgress(job) {
   var processGone = job.status === 'running' && job.alive === false;
   var status = document.getElementById('ab-progress-status');
   status.textContent = (processGone ? 'stopped — process gone' : job.status);
@@ -6342,4 +6402,44 @@ function briefRenderJobProgress(job) {
       adStudioEsc(e.state || '') + (e.format ? ' · ' + adStudioEsc(e.format) : ' · no format') + '</div>';
   });
   document.getElementById('ab-progress-body').innerHTML = html;
+}
+
+// Polls a --brief render the same way briefGeneratePollJob polls a generation batch —
+// same /api/ad-studio/job/<id> endpoint, same shared job store — but reloads the brief
+// list on completion because THIS job flips the brief's own state to 'rendered' (or
+// leaves it 'approved' with a failed run id recorded — see agents/ad-studio/index.js's
+// briefRenderSucceeded), not because new briefs were written.
+function briefRenderPollJob(jobId) {
+  briefState.jobId = jobId;
+  document.getElementById('ab-progress').style.display = '';
+  if (briefState.pollTimer) clearInterval(briefState.pollTimer);
+  var tick = async function () {
+    var job;
+    try {
+      var res = await fetch('/api/ad-studio/job/' + encodeURIComponent(jobId), { credentials: 'same-origin' });
+      job = await res.json();
+    } catch (e) { return; }
+    briefRenderProgress(job);
+    var processGone = job.status === 'running' && job.alive === false;
+    if (job.status === 'complete' || job.status === 'error' || job.status === 'cancelled' || processGone) {
+      clearInterval(briefState.pollTimer);
+      briefState.pollTimer = null;
+      loadBriefs();
+    }
+  };
+  briefState.pollTimer = setInterval(tick, 2000);
+  tick();
+}
+
+// A --brief render is still agents/ad-studio/index.js's own main(), so its job.events
+// carry the EXACT shape adStudioRenderJob (New-run panel, above) already knows how to
+// render — reused here rather than re-derived, targeting this view's own progress
+// elements and explicitly skipping the cancel button and judge link neither of which
+// exist in the Briefs panel (passing `null` rather than leaving them at their
+// New-run-panel defaults, which would otherwise reach into `#as-cancel-btn`/
+// `#as-judge-link` — the OTHER view's own controls — as a cross-panel side effect).
+function briefRenderProgress(job) {
+  adStudioRenderJob(job, {
+    statusId: 'ab-progress-status', bodyId: 'ab-progress-body', cancelBtnId: null, judgeLinkId: null,
+  });
 }
