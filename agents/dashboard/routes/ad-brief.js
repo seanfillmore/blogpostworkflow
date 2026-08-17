@@ -1,10 +1,11 @@
 // agents/dashboard/routes/ad-brief.js
 //
-// The six HTTP entry points onto the ad-BRIEF stage: list what exists, generate more,
-// decide what happens to one, choose which of its alternative formats it renders with,
-// and render an approved one. Sibling to routes/ad-studio-launch.js, which owns the
-// equivalent surface for Ad Studio's own product-mode renders — this module follows its
-// shape on purpose:
+// The HTTP entry points onto the ad-BRIEF stage: list the products and whether each one is
+// briefable at all, plan what a generation would cost, list what exists, generate more,
+// decide what happens to one, choose which of its alternative formats it renders with, and
+// render an approved one. Sibling to routes/ad-studio-launch.js, which owns the equivalent
+// surface for Ad Studio's own product-mode renders — this module follows its shape on
+// purpose:
 //
 // /render and /format were added after Task 6 shipped the Briefs view: the view's own
 // action list (Render, plus a format-override dropdown) always included both, but
@@ -43,8 +44,12 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   listBriefs, decideBrief, listProductsWithBriefs, isValidBriefId, BRIEF_STATES,
-  readBrief, chooseFormat,
+  readBrief, chooseFormat, selectableFormats,
 } from '../../../lib/ad-brief.js';
+// The SAME cluster and relevance logic agents/ad-brief/index.js acts on, not a second copy
+// of it — see lib/ad-brief-plan.js's header for why it is a lib rather than an import of
+// the agent (which would pull Anthropic, @google/genai and sharp into this one PM2 process).
+import { clusterCoverage, planBriefs } from '../../../lib/ad-brief-plan.js';
 import { writeJob, updateJob, findActiveJob, isValidJobId } from '../../../lib/ad-studio-job.js';
 import { respondJson, respondError, readJsonBody } from '../lib/responses.js';
 import { ROOT, PRODUCT_MANIFEST_PATH } from '../lib/paths.js';
@@ -65,6 +70,28 @@ function manifestProducts() {
     return [];
   }
 }
+
+/**
+ * The persona file the cluster guard is judged against. Missing or corrupt returns null,
+ * which clusterCoverage() reads as "no cluster" and refuses every product for — the right
+ * failure: no personas means no evidence means nothing is briefable, which is exactly what
+ * the operator needs to be told.
+ */
+function personasData() {
+  try {
+    return JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The longest note a decision may carry. A note is free text typed by an operator and
+ * written verbatim into a brief JSON file that the Briefs tab re-reads on every load, so an
+ * uncapped one is an unbounded write behind a single authenticated POST. 2,000 characters is
+ * far more than the "why I rejected this angle" this field exists for and still bounded.
+ */
+export const MAX_NOTE_LENGTH = 2000;
 
 /**
  * The only place a decide request is trusted. Returns normalised args or a reason.
@@ -94,7 +121,13 @@ export function validateDecide(body = {}, { products = [] } = {}) {
   const entry = products.find(p => p.handle === product);
   if (!entry) return bad('unknown product');
 
-  const note = body.note === undefined ? undefined : String(body.note);
+  // Capped, not truncated: silently storing half an operator's sentence is worse than
+  // telling them it was too long. See MAX_NOTE_LENGTH.
+  let note;
+  if (body.note !== undefined) {
+    note = String(body.note);
+    if (note.length > MAX_NOTE_LENGTH) return bad(`note must be ${MAX_NOTE_LENGTH} characters or fewer`);
+  }
 
   return { ok: true, args: { product, briefId, state, note } };
 }
@@ -140,12 +173,32 @@ export function validateGenerate(body = {}, { products = [] } = {}) {
  * before any network call — see that file's parseArgs and main() for the claim.
  */
 export function buildAgentArgv(args, jobId) {
-  const argv = ['--product', args.product];
-  if (args.variant) argv.push('--variant', args.variant);
-  if (args.angles && args.angles.length) argv.push('--angles', args.angles.join(','));
+  const argv = ['--product', argvValue(args.product)];
+  if (args.variant) argv.push('--variant', argvValue(args.variant));
+  if (args.angles && args.angles.length) argv.push('--angles', argvValue(args.angles.join(',')));
   if (args.dryRun) argv.push('--dry-run');
-  argv.push('--job-id', jobId);
+  argv.push('--job-id', argvValue(jobId));
   return argv;
+}
+
+/**
+ * A value that would be read as a flag never reaches argv.
+ *
+ * The validators above already refuse a leading dash (lib/ad-brief.js's checkSegment), so
+ * this cannot fire on the real path — it is here because argv position is the thing that
+ * broke and this is the function that builds argv. `{angles: ["--job-id"]}` used to pass
+ * every check, shift the argument list by one, and make the agent claim a job file named
+ * `--job-id.json` while the route's real job stayed 'pending' — after the 60s pending grace
+ * a second click then launched a second PAID batch. Throws rather than filters: a request
+ * that reaches here with a flag-shaped value is a validator that has regressed, and
+ * quietly dropping the value would hide it. (Code review, 2026-08-17.)
+ */
+function argvValue(value) {
+  const s = String(value);
+  if (s.startsWith('-')) {
+    throw new Error('ad-brief route: refusing to pass a value that starts with "-" as a CLI argument');
+  }
+  return s;
 }
 
 /**
@@ -324,24 +377,35 @@ export default [
   // GET /api/ad-brief/products — products that already have briefs, unioned with the
   // catalog products a brief can be generated for, so the dashboard never has to make a
   // second round trip to know which handle to offer next.
+  //
+  // EVERY ENTRY CARRIES ITS CLUSTER COVERAGE. The manifest holds 11 non-Culina products;
+  // only the 4 in the skin cluster have voice-of-customer personas behind them, and
+  // agents/ad-brief/index.js aborts on the rest. The browser used to default to
+  // `products[0]` — `coconut-oil-deodorant` — so the very first click on the new tab was
+  // always a failed job. Uncovered products are still LISTED, marked unavailable with the
+  // reason and the remedy: filtering them out would hide that the product exists and that
+  // running agents/voice-of-customer for its cluster is what unlocks it. `covered` is
+  // computed by lib/ad-brief-plan.js's clusterCoverage — the same function the agent's own
+  // abort is now a thin throw around, so the label and the refusal cannot disagree.
   {
     method: 'GET',
     match: '/api/ad-brief/products',
     handler(req, res) {
       try {
         const manifest = manifestProducts();
+        const personas = personasData();
         const withBriefs = new Set(listProductsWithBriefs(ROOT));
-        const products = manifest.map(p => ({
-          handle: p.handle,
-          title: p.title || p.handle,
-          hasBriefs: withBriefs.has(p.handle),
-        }));
+        const mark = (handle, title, hasBriefs) => {
+          const coverage = clusterCoverage(handle, personas);
+          return { handle, title, hasBriefs, covered: coverage.covered, coverageReason: coverage.reason };
+        };
+        const products = manifest.map(p => mark(p.handle, p.title || p.handle, withBriefs.has(p.handle)));
         // A product that has briefs on disk but has since dropped out of the manifest
         // (discontinued, renamed) still needs to be visible — a catalog change shouldn't
         // hide a decision that was already made about it.
         const manifestHandles = new Set(manifest.map(p => p.handle));
         for (const handle of withBriefs) {
-          if (!manifestHandles.has(handle)) products.push({ handle, title: handle, hasBriefs: true });
+          if (!manifestHandles.has(handle)) products.push(mark(handle, handle, true));
         }
         respondJson(res, { ok: true, products });
       } catch {
@@ -350,7 +414,54 @@ export default [
     },
   },
 
+  // GET /api/ad-brief/plan?product=<handle> — WHAT A GENERATE CLICK WOULD COST, before it
+  // is clicked. One Opus copy call per angle that resolves to a format; an angle whose
+  // awareness level no format covers is recorded and costs nothing. The sibling New-run
+  // panel has shown a live render estimate since it shipped and this one showed nothing,
+  // which contradicts this project's own rule that the cheapest action must be the one you
+  // get by accident. Computed server-side from lib/ad-brief-plan.js — the same relevance and
+  // cluster logic the agent applies — rather than reimplemented in the browser, because a
+  // number the browser derives itself is a number that can be wrong.
+  //
+  // Free to call: no network, no LLM, no Anthropic key needed.
+  {
+    method: 'GET',
+    match: (url) => url.split('?')[0] === '/api/ad-brief/plan',
+    handler(req, res) {
+      try {
+        const urlObj = new URL(req.url, 'http://localhost');
+        const handle = (urlObj.searchParams.get('product') || '').trim();
+        if (!handle || !isValidBriefId(handle)) return respondError(res, 400, 'a valid product handle is required');
+        const entry = manifestProducts().find(p => p.handle === handle);
+        if (!entry) return respondError(res, 400, 'unknown product');
+
+        const plan = planBriefs({
+          personasData: personasData(),
+          product: { handle, title: entry.title || handle },
+        });
+        respondJson(res, {
+          ok: true,
+          product: handle,
+          covered: plan.covered,
+          reason: plan.reason,
+          angleCount: plan.angleCount,
+          copyCalls: plan.copyCalls,
+          angles: plan.angles,
+        });
+      } catch {
+        respondError(res, 500, 'failed to plan brief generation');
+      }
+    },
+  },
+
   // GET /api/ad-brief/list?product=<handle> — ranked briefs for one product.
+  //
+  // Each brief is annotated with `selectableFormats`: which of its offered formats can
+  // actually carry the copy it already holds (identical zone key set — see
+  // lib/ad-brief.js's selectableFormats). Annotated rather than persisted, because it is
+  // derived from the format table and would go stale the moment a format's zones changed.
+  // The dropdown offers exactly this list, so it can no longer present an option the server
+  // is going to refuse.
   {
     method: 'GET',
     match: (url) => url.split('?')[0] === '/api/ad-brief/list',
@@ -359,7 +470,7 @@ export default [
         const urlObj = new URL(req.url, 'http://localhost');
         const product = (urlObj.searchParams.get('product') || '').trim();
         if (!product || !isValidBriefId(product)) return respondError(res, 400, 'a valid product handle is required');
-        const briefs = listBriefs(ROOT, product);
+        const briefs = listBriefs(ROOT, product).map(b => ({ ...b, selectableFormats: selectableFormats(b) }));
         respondJson(res, { ok: true, product, briefs });
       } catch {
         respondError(res, 500, 'failed to load briefs');

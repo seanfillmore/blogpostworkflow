@@ -46,51 +46,21 @@ import { buildConcept, buildLabelStrings, fetchAdReviews, createJobReporter } fr
 import { scoreBrief } from '../../lib/ad-brief-score.js';
 import { writeBrief } from '../../lib/ad-brief.js';
 import { isValidJobId } from '../../lib/ad-studio-job.js';
-import { SKIN_CLUSTER_HANDLES } from '../../lib/voice-of-customer.js';
+// The selection brain lives in lib/ so the dashboard's /api/ad-brief routes can tell the
+// operator which products are briefable and how many copy calls a click costs WITHOUT
+// importing this module — which would pull Anthropic, @google/genai and sharp into the
+// single 961 MB dashboard process. Re-exported below so this file's public surface, and
+// every existing caller and test, is unchanged. See lib/ad-brief-plan.js's header.
+import {
+  AWARENESS_TO_FORMAT_AWARENESS, formatsForAngle, angleRelevance,
+  allPersonaAngles, assertClusterCoverage,
+} from '../../lib/ad-brief-plan.js';
+
+export {
+  AWARENESS_TO_FORMAT_AWARENESS, formatsForAngle, angleRelevance, assertClusterCoverage,
+};
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-
-/**
- * Which product handles each personas.json `cluster` value covers.
- *
- * personas.json carries a top-level `cluster` and NO per-persona product linkage — the
- * only handle list that exists today is voice-of-customer's own SKIN_CLUSTER_HANDLES.
- * Deliberately a closed map: a cluster absent here is a cluster this agent has no
- * evidence for, and it must abort rather than guess. See main()'s cluster guard.
- */
-const CLUSTER_HANDLES = {
-  skin: SKIN_CLUSTER_HANDLES,
-};
-
-/**
- * The awareness join.
- *
- * formats.js tags each format problem|solution|product. Persona angles carry the finer
- * five-level scale. `unaware` and `most-aware` map to NULL because no format covers them
- * — 4 of the 15 angles on file are unrenderable today, and by the headroom argument in
- * lib/ad-brief-score.js those are among the most valuable angles we hold. Null is
- * deliberate: mapping them to the nearest format would silently render a broad angle as
- * a narrow one and hide the gap. See the spec's "Known gap".
- */
-export const AWARENESS_TO_FORMAT_AWARENESS = {
-  'unaware': null,
-  'problem-aware': 'problem',
-  'solution-aware': 'solution',
-  'product-aware': 'product',
-  'most-aware': null,
-};
-
-/**
- * Which formats can carry this angle. `proposed` is the first match in FORMATS'
- * declaration order, which is curated rather than arbitrary; the rest are offered as
- * alternatives so the operator can override in one click.
- */
-export function formatsForAngle(angle, formats = FORMATS) {
-  const want = AWARENESS_TO_FORMAT_AWARENESS[angle?.awareness] ?? null;
-  if (!want) return { proposed: null, alternatives: [] };
-  const keys = formats.filter(f => f.awareness === want).map(f => f.key);
-  return { proposed: keys[0] ?? null, alternatives: keys.slice(1) };
-}
 
 /**
  * copy.js's buildCopyPrompt wants { name, angles: [flat strings] } and renders them as
@@ -103,44 +73,55 @@ export function personaProjection(persona, angle) {
   return { name: persona?.name || '', angles: [parts.join(' — ')] };
 }
 
-const PRODUCT_WORDS = /\b(soap|bar|lotion|cream|deodorant|toothpaste|balm|wash)\b/gi;
-
-/**
- * Is this angle about this product?
- *
- * personas.json is cluster-scoped, so without this a lotion-specific angle ("The first
- * lotion that didn't react") would be briefed against bar soap and produce nonsense — at
- * one Opus call apiece. An angle naming NO product word stays relevant to everything,
- * which is the common case and the safe default.
- */
-export function angleRelevance(angle, product) {
-  const text = `${angle?.label || ''} ${angle?.proof || ''} ${angle?.objection_addressed || ''}`;
-  const named = [...new Set((text.match(PRODUCT_WORDS) || []).map(w => w.toLowerCase()))];
-  if (!named.length) return true;
-  const target = `${product?.handle || ''} ${product?.title || ''}`.toLowerCase();
-  return named.some(w => target.includes(w));
-}
-
 export function buildBriefId(product, angleId, now = Date.now()) {
   return `${product}-${angleId}-${now}`;
+}
+
+/**
+ * A VALUE THAT STARTS WITH A DASH IS A MISSING VALUE, not a value.
+ *
+ * `--product --dry-run` reads as product "--dry-run"; `--angles --job-id --job-id X` reads
+ * as jobId "--job-id". The second one is not hypothetical: a request of
+ * `{angles: ["--job-id"]}` passed every validator (a dash is an ordinary filename
+ * character, so the safe-segment test allowed it), shifted argv by one, and made this agent
+ * claim a job file literally named `--job-id.json` while the route's real job sat at
+ * 'pending' — after which the 60-second pending grace let a second click launch a second
+ * PAID batch. lib/ad-brief.js's checkSegment now refuses a leading dash at the route
+ * boundary; this is the same refusal for argv that arrives from a shell. (Code review,
+ * 2026-08-17.)
+ */
+function assertNotFlagShaped(name, value) {
+  if (value !== undefined && value !== null && String(value).startsWith('-')) {
+    throw new Error(
+      `ad-brief: ${name} was given "${value}", which starts with "-" — that is a flag, not a ` +
+      `value, so ${name} is missing its argument.`
+    );
+  }
 }
 
 export function parseArgs(argv) {
   const get = (name) => { const i = argv.indexOf(name); return i === -1 ? undefined : argv[i + 1]; };
   const product = get('--product');
   if (!product) throw new Error('ad-brief: --product is required, e.g. --product coconut-lotion');
+  assertNotFlagShaped('--product', product);
+  const variant = get('--variant') || null;
+  assertNotFlagShaped('--variant', variant);
   const anglesRaw = get('--angles');
+  assertNotFlagShaped('--angles', anglesRaw);
+  const angles = anglesRaw ? anglesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  for (const a of angles) assertNotFlagShaped('--angles', a);
   // Validated here too, not just in the route: this argv can also arrive from a shell,
   // and the same safe-segment rule the job file's path is built from (lib/ad-studio-job.js)
   // must hold no matter who supplied it.
   const jobId = get('--job-id') || null;
+  assertNotFlagShaped('--job-id', jobId);
   if (jobId !== null && !isValidJobId(jobId)) {
     throw new Error(`ad-brief: invalid --job-id "${jobId}" — letters, digits, dot, dash and underscore only`);
   }
   return {
     product,
-    variant: get('--variant') || null,
-    angles: anglesRaw ? anglesRaw.split(',').map(s => s.trim()).filter(Boolean) : [],
+    variant,
+    angles,
     dryRun: argv.includes('--dry-run'),
     jobId,
   };
@@ -243,40 +224,6 @@ export function gatesFromRejection(result) {
     health: { ok: false, unresolved: true, error: unknownError },
     claims: { ok: false, unresolved: true, unsourced: [], error: unknownError },
   };
-}
-
-/**
- * Flatten every persona's angles into { persona, angle } pairs. personas.json has no
- * cross-persona angle-id collisions (p1a1, p2a1, ... — the persona id is baked into the
- * angle id), so this list is safe to filter by bare angle id.
- */
-function allPersonaAngles(personasData) {
-  return (personasData.personas || []).flatMap(persona =>
-    (persona.angles || []).map(angle => ({ persona, angle }))
-  );
-}
-
-/**
- * The cluster guard. personas.json carries a single top-level `cluster` and NO
- * per-persona product linkage, so this is the only place "is this product covered by
- * the personas we have evidence for" can be answered. Extracted to a pure, exported
- * function so it is directly testable — main()'s abort message is exactly this error.
- *
- * Never falls back to another cluster's personas and never invents one: fabricated
- * audience reasoning underneath a claim-gated ad is what this whole pipeline exists to
- * prevent.
- */
-export function assertClusterCoverage(handle, personasData, clusterHandles = CLUSTER_HANDLES) {
-  const cluster = personasData?.cluster;
-  const handles = clusterHandles[cluster];
-  if (!handles || !handles.includes(handle)) {
-    throw new Error(
-      `ad-brief: "${handle}" is not covered by the "${cluster || 'unknown'}" cluster's personas ` +
-      `(data/context/personas.json covers: ${handles ? handles.join(', ') : '(no handles for this cluster)'}). ` +
-      `Run agents/voice-of-customer for "${handle}"'s cluster before briefing it — this agent never ` +
-      `falls back to another cluster's personas and never invents one.`
-    );
-  }
 }
 
 /**

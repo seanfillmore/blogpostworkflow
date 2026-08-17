@@ -6,7 +6,9 @@ import { tmpdir } from 'node:os';
 import {
   BRIEF_STATES, briefsDir, briefPath, isValidBriefId,
   writeBrief, readBrief, listBriefs, decideBrief, listProductsWithBriefs, chooseFormat,
+  selectableFormats,
 } from '../../lib/ad-brief.js';
+import { FORMATS } from '../../agents/ad-studio/formats.js';
 
 const freshRoot = () => mkdtempSync(join(tmpdir(), 'ad-brief-'));
 
@@ -29,6 +31,27 @@ test('brief ids may not contain a path separator', () => {
   assert.equal(isValidBriefId('a/b'), false);
   assert.equal(isValidBriefId('..'), false);
   assert.equal(isValidBriefId(''), false);
+});
+
+// A LEADING DASH IS AN ARGV HAZARD, not a filesystem one, and it slipped through because a
+// dash is a perfectly ordinary filename character (code review 2026-08-17). Every value this
+// test covers becomes a CLI value in a spawned process (`--angles <v>`, `--brief <v>`,
+// `--product <v>`), so a segment of `--job-id` shifted the argument list by one: the agent
+// read `--job-id` as its OWN job id, claimed a job file literally named `--job-id.json`, and
+// left the route's real job at 'pending' — after which the 60s pending grace let a second
+// click launch a second PAID Anthropic batch.
+test('a segment that starts with "-" is refused — it would be read as a CLI flag', () => {
+  for (const bad of ['--job-id', '--dry-run', '-x', '--product', '-']) {
+    assert.equal(isValidBriefId(bad), false, `"${bad}" must be refused`);
+  }
+  // The dash itself is still fine anywhere else — every real brief id is full of them.
+  assert.equal(isValidBriefId('coconut-lotion-p1a1-1786000000000'), true);
+  assert.equal(isValidBriefId('a-b--c'), true);
+});
+
+test('the leading-dash refusal reaches the path builders, and names the reason', () => {
+  assert.throws(() => briefsDir('/tmp/x', '--job-id'), /must not start with "-"/);
+  assert.throws(() => briefPath('/tmp/x', 'coconut-lotion', '--dry-run'), /must not start with "-"/);
 });
 
 // The product name is a directory segment and reaches the filesystem from HTTP.
@@ -271,11 +294,97 @@ const withFormat = (over = {}) => brief({
   ...over,
 });
 
-test('chooseFormat accepts a listed alternative', () => {
+// ── the zone-shape half of the check (code review 2026-08-17) ───────────────────────────
+//
+// Being listed as an alternative is NOT enough. `zones` holds finished copy written for the
+// PROPOSED format's zone list, and a format override deliberately preserves `state` and
+// `gates` — so switching an already-APPROVED brief to a format with different zones kept the
+// approval, left the new format's zones with no copy at all, and dropped whatever was in
+// `headline` into the new layout's slot for it. On manifesto→testimonial that means a written
+// manifesto assertion sitting in a slot whose layoutBrief demands "a REAL CUSTOMER REVIEW,
+// quoted verbatim... never written", which the operator then sets in quotation marks off the
+// comp. No pixel is un-gated (a plate carries no text), which is exactly why nothing
+// downstream could catch it.
+//
+// A synthetic format table is injected where the ACCEPT path needs testing, because with the
+// real table there is nothing to accept: no two formats at the same awareness level share a
+// zone shape, so every brief's selectable list is exactly `[proposed]`. That is asserted
+// directly against the real table below.
+const TWO_COMPATIBLE = [
+  { key: 'testimonial', zones: ['headline', 'attribution', 'trustLine'] },
+  { key: 'twin-of-testimonial', zones: ['trustLine', 'headline', 'attribution'] }, // same set, different order
+  { key: 'manifesto', zones: ['headline', 'rows', 'bottomBar'] },
+];
+
+test('chooseFormat accepts an alternative whose zone key set is identical (order does not matter)', () => {
   const root = freshRoot();
-  writeBrief(root, withFormat());
-  const out = chooseFormat(root, 'coconut-lotion', brief().briefId, 'manifesto');
-  assert.equal(out.format.chosen, 'manifesto');
+  writeBrief(root, brief({ format: { proposed: 'testimonial', alternatives: ['twin-of-testimonial', 'manifesto'] } }));
+  const out = chooseFormat(root, 'coconut-lotion', brief().briefId, 'twin-of-testimonial', { formats: TWO_COMPATIBLE });
+  assert.equal(out.format.chosen, 'twin-of-testimonial');
+});
+
+test('chooseFormat refuses a listed alternative whose zones differ from the copy it would carry', () => {
+  const root = freshRoot();
+  writeBrief(root, brief({ format: { proposed: 'testimonial', alternatives: ['manifesto'] } }));
+  assert.throws(
+    () => chooseFormat(root, 'coconut-lotion', brief().briefId, 'manifesto', { formats: TWO_COMPATIBLE }),
+    /cannot carry .* copy/,
+  );
+});
+
+test('an APPROVED brief cannot be switched onto an incompatible format either — approval is preserved, so this is the dangerous case', () => {
+  const root = freshRoot();
+  // The real pairing from the review: a problem-aware angle proposes manifesto, is offered
+  // testimonial, and is already approved. Real FORMATS table, no injection.
+  writeBrief(root, brief({
+    state: 'approved',
+    gates: passingGates,
+    zones: { headline: 'Most lotions are mostly water.', rows: ['a', 'b', 'c'], bottomBar: 'MADE IN THE USA' },
+    format: { proposed: 'manifesto', alternatives: ['problem-aware', 'testimonial', 'state-contrast'] },
+  }));
+  for (const key of ['problem-aware', 'testimonial', 'state-contrast']) {
+    assert.throws(
+      () => chooseFormat(root, 'coconut-lotion', brief().briefId, key),
+      /cannot carry .* copy/,
+      `${key} must be refused — its zones differ from manifesto's`,
+    );
+  }
+  // Still approved, still manifesto, nothing written.
+  const reread = readBrief(root, 'coconut-lotion', brief().briefId);
+  assert.equal(reread.state, 'approved');
+  assert.equal(reread.format.chosen, undefined);
+});
+
+test('selectableFormats returns exactly one entry — the proposed format — for every awareness level in the real table', () => {
+  // The honest consequence of the rule, asserted rather than assumed: no two formats at the
+  // same awareness level share a zone shape today, so the operator's dropdown has nothing in
+  // it. If a format is ever added that DOES share a shape, this test fails and is the
+  // reminder that the dropdown becomes live.
+  const byAwareness = new Map();
+  for (const f of FORMATS) {
+    if (!byAwareness.has(f.awareness)) byAwareness.set(f.awareness, []);
+    byAwareness.get(f.awareness).push(f.key);
+  }
+  for (const [awareness, keys] of byAwareness) {
+    const b = { format: { proposed: keys[0], alternatives: keys.slice(1) } };
+    assert.deepEqual(
+      selectableFormats(b), [keys[0]],
+      `awareness "${awareness}": only the proposed format may be selectable, got ${selectableFormats(b).join(', ')}`,
+    );
+  }
+});
+
+test('selectableFormats is empty for a brief with no proposed format', () => {
+  assert.deepEqual(selectableFormats({ format: { proposed: null, alternatives: [] } }), []);
+  assert.deepEqual(selectableFormats({}), []);
+  assert.deepEqual(selectableFormats(null), []);
+});
+
+test('selectableFormats drops an offered key that is not in the format table at all', () => {
+  // A brief written before a format was renamed or removed. An unknown key has no zones to
+  // compare, so it can never be selectable.
+  const b = { format: { proposed: 'manifesto', alternatives: ['format-that-was-deleted'] } };
+  assert.deepEqual(selectableFormats(b), ['manifesto']);
 });
 
 test('chooseFormat accepts the proposed key itself', () => {

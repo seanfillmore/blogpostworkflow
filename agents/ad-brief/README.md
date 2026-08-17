@@ -121,7 +121,7 @@ black box. `scoreBrief()` sums four components, each capped:
 | Component    | Max | What it measures |
 |---|---|---|
 | `persona`    | 30  | Evidence count + emotional intensity behind the persona (voice-of-customer's own fields). |
-| `proof`      | 25  | Whether the angle's `source_quotes` actually appear in real reviews — 0 if the angle asserts a benefit no reviewer voiced. |
+| `proof`      | 25  | Whether the angle's `source_quotes` actually appear in real reviews. **25** on a match, **6** when the quotes match nothing, and 0 only when the angle carries no `source_quotes` at all — which `agents/voice-of-customer` never writes, so the zero branch is unreachable on real data. |
 | `commercial` | 25  | Whether the product's cluster is earning, per `seo-impact`'s latest report; neutral (12) with no matching data. |
 | `headroom`   | 20  | Awareness headroom — broad `unaware`/`problem-aware` angles convert slower but keep running longer than narrow `product-aware` ones, which harvest fast and exhaust fast. |
 
@@ -132,6 +132,38 @@ a measured outcome. Objective failures (an unsourced claim, a health-claim viola
 are handled as hard floors elsewhere — the `gates` block — and are not scores. The score
 only ever **ranks** briefs for a human to triage; a guess dressed up as a threshold is
 how good work gets thrown away before anyone looks at it.
+
+**There is no falsified-tactic floor.** `lib/ad-brief-score.js`'s header used to list one
+next to those two. Nothing in this agent or in Ad Studio reads the `## Falsified` sections of
+`.claude/skills/marketing-*/SKILL.md`, and `buildConcept` does not even pass `tactics` to
+`buildCopyPrompt`, so the tactic menu is never offered to the copy writer and never
+blocklisted. `creative-packager` is the only agent that reads those skills. Stated here so
+nobody relies on a safeguard that is not built.
+
+### What the score actually discriminates on
+
+Honest reading of the 100 points, because two of the four components carry far less signal
+than their weights suggest:
+
+- **`commercial` (25) is a constant within any ranking a human sees.** It is a function of
+  the product handle alone, and briefs are only ever listed and ranked for one product at a
+  time. Those 25 points are therefore a fixed offset on every row of every list — they move
+  the totals up or down together and never change the order.
+- **`persona` (30) compresses.** After Task 1's recalibration set the ceilings where the real
+  data tops out (15 reviews, intensity 9.0), all five personas on file score **24–30 of 30**.
+  Six points of spread across the whole roster.
+- **So the live discriminators are `headroom` (5 discrete values, 7–20) and `proof` (6 or
+  25).** In practice a brief's position in the list is decided by its awareness level and
+  whether its quote matched a review.
+- **`proof` also partly measures the SOURCE of a quote, not its truth.** It matches only
+  Judge.me reviews for that same product handle (`fetchAdReviews`), so a genuine,
+  correctly-attributed Reddit quote scores 6 exactly like an invented one would.
+
+**Rebalancing waits for real outcome data.** The weights were a first guess made with no ad
+performance behind them; re-weighting them now, still with none, would be a second guess
+dressed up as a correction. The right unlock is `data/meta-ads-insights/` containing runs
+these briefs produced. Until then the numbers stay as they are and this section is the
+warning label.
 
 ## State vocabulary (`lib/ad-brief.js`'s `BRIEF_STATES`)
 
@@ -160,9 +192,53 @@ need real data to mean anything.
 ## CLI
 
 ```
---product <handle>     required
---variant <name>       optional, e.g. coconut-breeze
+--product <handle>      required
+--variant <name>        optional, e.g. coconut-breeze
 --angles p1a1,p5a3      optional; comma-separated angle ids. Default: every angle
                         passing angleRelevance() for this product.
 --dry-run               preview only — no Anthropic calls, no writes
+--job-id <id>           optional; progress reporting into
+                        data/reports/ad-studio/jobs/<id>.json, claimed at boot via the
+                        same createJobReporter Ad Studio uses. The dashboard's
+                        /api/ad-brief/generate route sets it; a human never does. Every
+                        reporter call is a no-op without it.
 ```
+
+No value may start with `-`. `--product --dry-run` and `--angles --job-id` shift the whole
+argument list by one, and the second one really happened: it made the agent claim a job file
+named `--job-id.json` while the dashboard's real job sat at `pending`, whereupon the 60-second
+pending grace let a second click launch a second paid batch. `parseArgs` refuses a
+flag-shaped value, and `lib/ad-brief.js`'s `checkSegment` refuses one at the route boundary.
+
+## The format override, and why the dropdown is usually empty
+
+`format.proposed` is the first format whose awareness level matches the angle;
+`format.alternatives` are the others at that level, and the Briefs view offers them so an
+operator can switch in one click. But **a switch is only allowed between formats with an
+identical zone key set** (`lib/ad-brief.js`'s `selectableFormats` / `chooseFormat`), because
+`zones` holds finished copy written for the *proposed* format's zone list and a format
+override deliberately preserves `state` and `gates`.
+
+Without that rule, switching an **already-approved** brief from `manifesto` (`headline`,
+`rows`, `bottomBar`) to `testimonial` (`headline`, `attribution`, `trustLine`) kept the
+approval, left two zones with no copy at all, and dropped a written manifesto assertion into
+`testimonial`'s quote slot — whose `layoutBrief` says "THE QUOTE MUST BE A REAL CUSTOMER
+REVIEW, quoted verbatim from the reviews source — never written", and which the operator then
+sets in quotation marks off the comp. The plate carries no text, so no gate downstream could
+have caught it; it is the one place in this feature that could present authored copy as a
+customer testimonial.
+
+**As of 2026-08-17 no angle has a selectable alternative.** No two formats at the same
+awareness level share a zone shape:
+
+| Awareness | Proposed | Others at that level, and why they are refused |
+|---|---|---|
+| `problem-aware` | `manifesto` | `problem-aware` (`subhead`), `testimonial` (`attribution`, `trustLine`), `state-contrast` (`beforeLabel`, `afterLabel`) |
+| `solution-aware` | `us-vs-them` | `ingredient-callout` (`listItems`), `top-x-review` (`subhead`), `stat-stack` (`stats`) |
+| `product-aware` | `offer-focused` | none offered |
+
+So the view renders the format as a plain label rather than a one-option dropdown. That is
+the correct outcome, not a rule to widen: to run an angle through another format, generate a
+brief against it — the copy has to be authored for the layout. `problem-aware` and
+`top-x-review` do share a zone shape, but they sit at different awareness levels and so are
+never offered together.

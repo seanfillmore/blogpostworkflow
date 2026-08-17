@@ -309,6 +309,29 @@ test('--job-id is parsed, validated the same way as Ad Studio\'s, and defaults t
   );
 });
 
+// A VALUE THAT STARTS WITH A DASH IS A MISSING VALUE (code review 2026-08-17). This is the
+// argv half of the fix whose route half is lib/ad-brief.js's checkSegment. The concrete
+// failure: `--angles --job-id` shifted the argument list by one, so `get('--job-id')` returned
+// the literal string `--job-id`, which passed isValidJobId (a dash is an ordinary filename
+// character) and made the agent claim a job file named `--job-id.json` while the dashboard's
+// real job stayed 'pending' — after the 60s pending grace a second click launched a second
+// PAID Anthropic batch.
+test('a flag-shaped value is refused rather than read as a value', () => {
+  // The exact shape the route used to emit for {angles: ["--job-id"]}.
+  assert.throws(
+    () => parseArgs(['--product', 'coconut-lotion', '--angles', '--job-id', '--job-id', 'ad-brief-real-1']),
+    /is a flag, not a value/,
+  );
+  assert.throws(() => parseArgs(['--product', '--dry-run']), /is a flag, not a value/);
+  assert.throws(() => parseArgs(['--product', 'coconut-lotion', '--variant', '--job-id']), /is a flag, not a value/);
+  assert.throws(() => parseArgs(['--product', 'coconut-lotion', '--angles', 'p1a1,-x']), /is a flag, not a value/);
+  assert.throws(() => parseArgs(['--product', 'coconut-lotion', '--job-id', '-x']), /is a flag, not a value/);
+  // Dashes anywhere but the front are untouched — every real handle and job id is full of them.
+  assert.equal(parseArgs(['--product', 'coconut-lotion', '--job-id', 'ad-brief-coconut-lotion-1']).jobId,
+    'ad-brief-coconut-lotion-1');
+  assert.deepEqual(parseArgs(['--product', 'coconut-lotion', '--angles', 'p1a1,p5a3']).angles, ['p1a1', 'p5a3']);
+});
+
 test('with no --job-id, createJobReporter is a no-op and nothing is written to the job store', () => {
   const root = mkdtempSync(join(tmpdir(), 'ad-brief-job-'));
   try {

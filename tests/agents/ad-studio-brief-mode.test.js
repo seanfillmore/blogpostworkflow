@@ -250,16 +250,45 @@ test('an approved brief round-trips through the store for rendering', () => {
   }
 });
 
-// ── source guards: both deadline-critical fixes are wired into main(), not just proven ──
+// ── source guards: the deadline-critical fixes are wired into main(), not just proven ──
 //
 // C1's whole history is a correctly-implemented thing bound to the wrong field — a
 // function existing and being tested elsewhere is not evidence it is CALLED at the right
-// place. `assertNoHealthClaims` and `briefRenderSucceeded` both have full unit coverage
-// already, and both call sites live inside main(), which is unexported, hits the network,
-// and is guarded against running on import — so neither call site had any test that would
-// notice its own deletion. Same idiom tests/agents/ad-studio-orchestrator.test.js already
-// uses for exactly this reason (see its sweepDiskBudget/job.start source guards): read the
-// source text, pin presence AND — where order matters — ordering.
+// place. `assertBriefApproved`, `assertNoHealthClaims` and `briefRenderSucceeded` all have
+// full unit coverage already, and all three call sites live inside main(), which is
+// unexported, hits the network, and is guarded against running on import — so no call site
+// had any test that would notice its own deletion. Same idiom
+// tests/agents/ad-studio-orchestrator.test.js already uses for exactly this reason (see its
+// sweepDiskBudget/job.start source guards): read the source text, pin presence AND — where
+// order matters — ordering.
+
+// THE APPROVAL BOUNDARY, and the last of the three to get a guard (code review 2026-08-17).
+// It is the most security-relevant of them: "only an approved brief renders" is the entire
+// compliance argument for letting a human steer ad copy, and
+// agents/dashboard/routes/ad-brief.js's own /render handler explicitly leans on it —
+// "the real, unbypassable enforcement is agents/ad-studio/index.js's own
+// assertBriefApproved()". A route that delegates enforcement to a call nothing pins is a
+// route relying on a comment.
+test('main() calls assertBriefApproved before it resolves the format — the approval boundary is wired in, not just unit-tested', () => {
+  const SRC = readFileSync(join(ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  const approvedIdx = SRC.indexOf('assertBriefApproved(brief, args.brief);');
+  const chosenFormatIdx = SRC.indexOf('const chosenFormat = selectFormats([attribution.format])[0];');
+
+  assert.ok(
+    approvedIdx > -1,
+    'main() must call assertBriefApproved(brief, args.brief) — without it, --brief renders any ' +
+    'brief on disk regardless of state, and routes/ad-brief.js delegates the real enforcement ' +
+    'to exactly this call',
+  );
+  assert.ok(chosenFormatIdx > -1, 'sanity: the brief-mode format resolution must still exist');
+  assert.ok(
+    approvedIdx < chosenFormatIdx,
+    'assertBriefApproved must run BEFORE the format is resolved — it is the first thing that ' +
+    'happens to a brief, ahead of the format resolution the health-gate guard below anchors on, ' +
+    'so an unapproved brief is refused before any of its fields are acted on',
+  );
+});
 test('main() re-derives the health gate on the copy actually about to render, before anything paid happens', () => {
   const SRC = readFileSync(join(ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
 
@@ -373,4 +402,29 @@ test('the failedRunIds write is wrapped so it cannot throw out of main() and ski
   // Confirm the disk sweep is still reachable after this whole branch, i.e. nothing
   // between here and sweepDiskBudget() depends on this write having succeeded.
   assert.match(SRC.slice(elseIdx), /sweepDiskBudget\(\);/, 'sanity: normal completion must still reach the disk sweep');
+});
+
+// Ledger #6: the job event must not claim a copy call happened in the one mode whose whole
+// promise is that none did. Brief mode reuses the approved strings and makes zero Anthropic
+// copy calls, but the per-concept progress event was reported as `stage: 'copy'` either way —
+// so the Briefs panel told the operator "copy — ok" for work that never occurred. A source
+// guard, for the same reason as the three above: the emit sits inside main().
+test('main() reports the copy stage as "approved-copy" in brief mode — no copy call happened', () => {
+  const SRC = readFileSync(join(ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  assert.match(
+    SRC, /const copyStage = brief \? 'approved-copy' : 'copy';/,
+    'brief mode must relabel the copy stage — reporting "copy" claims a paid copy call that ' +
+    'brief mode never makes',
+  );
+  assert.match(
+    SRC, /job\.event\(\{ stage: copyStage, concept: c\.format\.key, state: 'ok' \}\)/,
+    'and the emit must actually use the relabelled stage, not a leftover literal',
+  );
+  // 'ok' is load-bearing: the Briefs view colours anything other than 'ok'/'accepted' as a
+  // failure, so relabelling the STATE instead would have painted a healthy run red.
+  assert.doesNotMatch(
+    SRC, /stage: copyStage, concept: c\.format\.key, state: '(?!ok')/,
+    'the state must stay "ok" — the view treats any other value as a failure',
+  );
 });

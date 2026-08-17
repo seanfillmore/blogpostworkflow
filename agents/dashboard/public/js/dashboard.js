@@ -6033,6 +6033,12 @@ function exportAdStudioKept() {
 
 var briefState = { products: [], product: null, briefs: [], busy: false, jobId: null, pollTimer: null };
 
+// Only 4 of the 11 non-Culina catalogue products have voice-of-customer personas behind
+// them; agents/ad-brief/index.js aborts on the other 7 (lib/ad-brief-plan.js's cluster
+// guard). The dropdown used to default to products[0] — coconut-oil-deodorant — so the
+// FIRST click on this tab was always a failed job. Uncovered products stay in the list,
+// labelled and disabled with the reason, because hiding them would hide that running
+// agents/voice-of-customer for their cluster is what unlocks them.
 async function loadBriefProducts() {
   var sel = document.getElementById('ab-product');
   var prevValue = sel.value;
@@ -6046,21 +6052,84 @@ async function loadBriefProducts() {
   if (!briefState.products.length) {
     sel.innerHTML = '<option value="">No products</option>';
     document.getElementById('ab-summary').textContent = '';
+    document.getElementById('ab-plan').textContent = '';
     document.getElementById('ab-list').innerHTML =
       '<p style="color:var(--muted)">No products available for briefs yet.</p>';
     return;
   }
   sel.innerHTML = briefState.products.map(function (p) {
-    return '<option value="' + adStudioEsc(p.handle) + '">' + adStudioEsc(p.title) +
-      (p.hasBriefs ? '' : ' (no briefs yet)') + '</option>';
+    var suffix = p.covered === false ? ' — no personas (unavailable)' : (p.hasBriefs ? '' : ' (no briefs yet)');
+    return '<option value="' + adStudioEsc(p.handle) + '"' + (p.covered === false ? ' disabled' : '') + '>' +
+      adStudioEsc(p.title) + suffix + '</option>';
   }).join('');
-  var keep = briefState.products.some(function (p) { return p.handle === prevValue; });
-  sel.value = keep ? prevValue : briefState.products[0].handle;
-  loadBriefs();
+  // Default to a COVERED handle, and only fall back to products[0] if nothing is covered
+  // (in which case the panel is going to explain why rather than launch anything).
+  var covered = briefState.products.filter(function (p) { return p.covered !== false; });
+  var keep = briefState.products.some(function (p) { return p.handle === prevValue && p.covered !== false; });
+  sel.value = keep ? prevValue : ((covered[0] || briefState.products[0]).handle);
+  briefProductChanged();
+}
+
+function briefProductForHandle(handle) {
+  var match = (briefState.products || []).filter(function (p) { return p.handle === handle; });
+  return match.length ? match[0] : null;
 }
 
 function briefProductChanged() {
+  loadBriefPlan();
   loadBriefs();
+}
+
+// The cost of a Generate click, stated before it is clicked: one Opus copy call per angle
+// that resolves to a format. Comes from GET /api/ad-brief/plan, which runs the SAME
+// relevance and cluster logic the agent uses (lib/ad-brief-plan.js) — deriving it here
+// would be a second implementation free to disagree with the first.
+async function loadBriefPlan() {
+  var handle = document.getElementById('ab-product').value;
+  var el = document.getElementById('ab-plan');
+  var genBtn = document.getElementById('ab-generate-btn');
+  var dryBtn = document.getElementById('ab-dryrun-btn');
+  var entry = briefProductForHandle(handle);
+
+  // An uncovered product can never produce a brief, so neither button is offered — and the
+  // reason names the remedy rather than leaving the operator to discover it from a failed job.
+  if (entry && entry.covered === false) {
+    el.innerHTML = '<span style="color:var(--danger,#f87171)">Cannot be briefed: ' +
+      adStudioEsc(entry.coverageReason || 'no voice-of-customer personas cover this product.') + '</span>';
+    genBtn.disabled = true;
+    dryBtn.disabled = true;
+    return;
+  }
+
+  el.textContent = 'checking what a run would cost…';
+  genBtn.disabled = true;
+  dryBtn.disabled = true;
+  if (!handle) { el.textContent = ''; return; }
+
+  var plan;
+  try {
+    var res = await fetch('/api/ad-brief/plan?product=' + encodeURIComponent(handle), { credentials: 'same-origin' });
+    plan = await res.json();
+    if (!res.ok || !plan.ok) throw new Error(plan.error || ('HTTP ' + res.status));
+  } catch (err) {
+    el.innerHTML = '<span style="color:var(--danger,#f87171)">Could not work out what a run would cost: ' +
+      adStudioEsc(err.message) + '</span>';
+    return;
+  }
+
+  if (!plan.covered) {
+    el.innerHTML = '<span style="color:var(--danger,#f87171)">Cannot be briefed: ' +
+      adStudioEsc(plan.reason || 'no personas cover this product.') + '</span>';
+    return;
+  }
+
+  var noFormat = plan.angleCount - plan.copyCalls;
+  el.innerHTML = '<strong>' + plan.angleCount + '</strong> angle(s) would be briefed · ' +
+    '<strong>' + plan.copyCalls + '</strong> Opus copy call(s)' +
+    (noFormat > 0 ? ' · ' + noFormat + ' angle(s) have no format and cost nothing' : '') +
+    ' · a dry run makes <strong>zero</strong> calls.';
+  genBtn.disabled = plan.angleCount === 0;
+  dryBtn.disabled = plan.angleCount === 0;
 }
 
 async function loadBriefs() {
@@ -6170,23 +6239,43 @@ function briefGateFailureHtml(brief) {
   return html;
 }
 
-// The proposed format, with a dropdown of the alternatives. A null proposed format
-// means no format covers this angle's awareness level (agents/ad-brief/index.js's
-// AWARENESS_TO_FORMAT_AWARENESS — unaware/most-aware map to null on purpose) and the
-// brief cannot be approved: lib/ad-brief.js's writeBrief refuses `approved` without a
-// passing gates block, and a null-format brief never got one.
+// The proposed format, with a dropdown of the alternatives that can actually carry this
+// brief's copy. A null proposed format means no format covers this angle's awareness level
+// (lib/ad-brief-plan.js's AWARENESS_TO_FORMAT_AWARENESS — unaware/most-aware map to null on
+// purpose) and the brief cannot be approved: lib/ad-brief.js's writeBrief refuses `approved`
+// without a passing gates block, and a null-format brief never got one.
+//
+// `selectableFormats` comes from the server (GET /api/ad-brief/list annotates it with
+// lib/ad-brief.js's selectableFormats), NOT from format.alternatives. An offered alternative
+// is only selectable if its zone key set matches the format the copy was written for —
+// otherwise the render pairs one format's layout with another's copy, which on
+// manifesto→testimonial meant a written assertion landing in a slot whose layoutBrief demands
+// a verbatim customer quote. TODAY THAT LEAVES EXACTLY ONE ENTRY for every angle in the
+// catalogue: no two formats at the same awareness level share a zone shape. A dropdown with
+// nothing to choose is the correct outcome, so this renders a plain label and says why rather
+// than a one-option select.
 function briefFormatHtml(brief) {
   if (!brief.format || !brief.format.proposed) {
     return '<div style="color:#b91c1c;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem">' +
       'no format covers this awareness level</div>';
   }
-  var opts = [brief.format.proposed].concat(brief.format.alternatives || []);
   // `chosen` is the operator's override, persisted server-side by POST
   // /api/ad-brief/format (lib/ad-brief.js's chooseFormat) — the same field
   // agents/ad-studio/index.js's resolveBriefFormatKey reads at render time via
   // `format.chosen ?? format.proposed`. Falls back to `proposed` for a brief nobody
   // has overridden yet.
   var current = brief.format.chosen || brief.format.proposed;
+  var opts = brief.selectableFormats || [brief.format.proposed];
+  if (opts.indexOf(current) === -1) opts = [current].concat(opts);
+
+  if (opts.length < 2) {
+    var offered = (brief.format.alternatives || []).length;
+    return '<div style="margin-bottom:0.4rem;font-size:0.82rem">Format: <strong>' + adStudioEsc(current) + '</strong>' +
+      (offered
+        ? '<span style="color:var(--muted)"> — no alternative format shares its zone shape, so the copy ' +
+          'cannot be moved to one; generate a new brief against the other format instead</span>'
+        : '') + '</div>';
+  }
   return '<div style="margin-bottom:0.4rem;font-size:0.82rem">Format: ' +
     '<select onchange="briefFormatChanged(\'' + adStudioEsc(brief.briefId) + '\',this.value)" ' +
     'class="creatives-select" style="display:inline-block;width:auto">' +
@@ -6328,18 +6417,29 @@ async function briefRender(briefId) {
   }
 }
 
-async function briefGenerate() {
+// `dryRun` is threaded straight through to the agent's own --dry-run, which makes ZERO
+// Anthropic calls and writes nothing (unlike Ad Studio's --dry-run, which still pays for
+// copy). validateGenerate and buildAgentArgv have accepted and threaded the flag since the
+// route shipped; only this panel never offered it, which left the expensive path as the only
+// path a click could take.
+async function briefGenerate(dryRun) {
   var err = document.getElementById('ab-generate-error');
   err.textContent = '';
   var product = document.getElementById('ab-product').value;
   if (!product) { err.textContent = 'pick a product first'; return; }
+  var entry = briefProductForHandle(product);
+  if (entry && entry.covered === false) {
+    err.textContent = entry.coverageReason || 'this product has no voice-of-customer personas behind it';
+    return;
+  }
   document.getElementById('ab-generate-btn').disabled = true;
+  document.getElementById('ab-dryrun-btn').disabled = true;
   try {
     var res = await fetch('/api/ad-brief/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify({ product: product })
+      body: JSON.stringify({ product: product, dryRun: !!dryRun })
     });
     var data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
@@ -6347,6 +6447,7 @@ async function briefGenerate() {
   } catch (e) {
     err.textContent = e.message;
     document.getElementById('ab-generate-btn').disabled = false;
+    document.getElementById('ab-dryrun-btn').disabled = false;
   }
 }
 
@@ -6368,6 +6469,7 @@ function briefGeneratePollJob(jobId) {
       clearInterval(briefState.pollTimer);
       briefState.pollTimer = null;
       document.getElementById('ab-generate-btn').disabled = false;
+      document.getElementById('ab-dryrun-btn').disabled = false;
       // Briefs land on disk one at a time as the batch runs (writeBrief is called
       // per-angle, not once at the end — see agents/ad-brief/index.js), so a fresh
       // list load after the terminal tick picks up everything that was written even

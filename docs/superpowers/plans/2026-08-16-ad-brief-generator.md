@@ -268,7 +268,7 @@ export function scorePersona(persona) {
 export function scoreProof(angle, reviews = []) {
   const quotes = (angle?.source_quotes || []).map(normalize).filter(Boolean);
   if (!quotes.length) return 0;
-  const corpus = reviews.map(r => normalize(r?.body ?? r)).join('   ');
+  const corpus = reviews.map(r => normalize(r?.body ?? r)).join('   ');
   // A quote counts when a substantial run of it survives into a real review. Full quotes
   // are often lightly trimmed by the persona writer, so match on the first 8 words.
   const hit = quotes.some(q => {
@@ -324,6 +324,27 @@ node --test tests/lib/ad-brief-score.test.js
 ```
 
 Expected: PASS, 0 fail, **0 cancelled**.
+
+**KNOWN WEAKNESS IN THESE WEIGHTS — recorded 2026-08-17, at the final whole-branch review,
+and deliberately NOT fixed.** Two of the four components carry much less signal than their
+weights imply:
+
+- `commercial` (25 pts) is a function of the product handle alone, and briefs are only ever
+  ranked against other briefs *for the same product*. Those 25 points are a **constant
+  offset** in every ranking a human sees — they never change the order of anything.
+- `persona` (30 pts) **compresses**: once the ceilings in Step 3 were calibrated to where the
+  real data tops out (15 reviews, intensity 9.0), all five personas on file score 24–30.
+- The effective live discriminators are therefore `headroom` (5 discrete values, 7–20) and
+  `proof` (6 or 25).
+- `proof` also partly measures *which source* a quote came from: it matches only Judge.me
+  reviews for that handle, so a real, correctly-attributed Reddit quote scores 6.
+
+It is left as-is on purpose. Re-weighting with no ad-performance data would be a second guess
+presented as a correction, and this module's own header is explicit that every number in it is
+an a-priori judgement. The unlock is `data/meta-ads-insights/` holding real outcomes for ads
+these briefs produced; until then the honest move is the warning label, which also lives in
+`agents/ad-brief/README.md` ("What the score actually discriminates on") and in the module
+header.
 
 - [ ] **Step 5: Commit**
 

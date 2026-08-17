@@ -123,13 +123,60 @@ test('scoreBrief returns every component alongside the total', () => {
   }
 });
 
-test('the total can never exceed 100 even at maximum everything', () => {
+// This test claimed to prove the ceiling and did not: its fixture quote was `'exact'`, five
+// characters, which fails scoreProof's `head.length > 12` guard — so proof scored 6 instead
+// of 25 and the "maximum everything" total came to 81. A ceiling test that never reaches the
+// ceiling proves the arithmetic is bounded by something, but not by what it says. The quote is
+// now long enough to clear the head guard, and the assertion is the exact 100 rather than
+// `<= 100`, so a future weight change that pushed a component past its cap would fail here
+// instead of passing quietly. (Code review, 2026-08-17.)
+test('the total is exactly 100 at maximum everything, and cannot exceed it', () => {
+  const MAXED_QUOTE = 'it cleared up the dry patches on my hands in about four days';
   const s = scoreBrief({
     persona: { evidence_count: 9999, emotional_intensity: 10 },
-    angle: { awareness: 'unaware', source_quotes: ['exact'] },
-    reviews: [{ body: 'exact' }],
+    angle: { awareness: 'unaware', source_quotes: [MAXED_QUOTE] },
+    reviews: [{ body: MAXED_QUOTE }],
     productHandle: 'coconut-lotion',
     seoImpact: { clusters: [{ cluster: 'lotion', revenue: 1e9, revenueDelta: 1e9 }] },
   });
+  // Named individually so a failure says WHICH cap leaked rather than only that the sum did.
+  assert.equal(s.persona, 30, 'persona must cap at 30');
+  assert.equal(s.proof, 25, 'proof must reach its 25 — a fixture quote too short for the 12-character head guard scores 6 and hides the ceiling');
+  assert.equal(s.commercial, 25, 'commercial must cap at 25');
+  assert.equal(s.headroom, 20, 'headroom must cap at 20');
+  assert.equal(s.total, 100, `total was ${s.total}`);
+});
+
+// Nothing in this module validates its inputs, and the data it reads is generated
+// (personas.json) or absent in a local checkout (seo-impact's latest.json), so hostile and
+// nonsensical values reach it in the ordinary course of business. Every component must degrade
+// to a number in range rather than to NaN — a NaN total sorts unpredictably in listBriefs and
+// would silently bury or float a brief.
+test('negative, NaN and non-numeric inputs degrade to in-range numbers, never NaN', () => {
+  const s = scoreBrief({
+    persona: { evidence_count: -50, emotional_intensity: -9 },
+    angle: { awareness: 'problem-aware', source_quotes: [] },
+    reviews: null,
+    productHandle: 'coconut-lotion',
+    seoImpact: { clusters: [{ cluster: 'lotion', revenue: -1e9, revenueDelta: -1e9 }] },
+  });
+  for (const k of ['persona', 'proof', 'commercial', 'headroom', 'total']) {
+    assert.ok(Number.isFinite(s[k]), `${k} must be a finite number, got ${s[k]}`);
+    assert.ok(s[k] >= 0, `${k} must never go negative, got ${s[k]}`);
+  }
   assert.ok(s.total <= 100, `total was ${s.total}`);
+
+  // Garbage of the wrong TYPE, too — scorePersona/scoreCommercial coerce with Number(), which
+  // yields NaN for a string, and `Math.min(NaN, 15)` is NaN. `|| 0` is what stops that; this
+  // pins it.
+  const t = scoreBrief({
+    persona: { evidence_count: 'lots', emotional_intensity: {} },
+    angle: { awareness: 'banana', source_quotes: ['x'] },
+    reviews: [{ body: null }],
+    productHandle: '',
+    seoImpact: { clusters: [{ cluster: 'lotion', revenue: 'a bit', revenueDelta: undefined }] },
+  });
+  for (const k of ['persona', 'proof', 'commercial', 'headroom', 'total']) {
+    assert.ok(Number.isFinite(t[k]), `${k} must be a finite number, got ${t[k]}`);
+  }
 });

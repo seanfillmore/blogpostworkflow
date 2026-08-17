@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { EventEmitter } from 'node:events';
 import routes, {
   validateDecide, validateGenerate, buildAgentArgv, performGenerate,
-  validateRender, validateChooseFormat, performRender,
+  validateRender, validateChooseFormat, performRender, MAX_NOTE_LENGTH,
 } from '../../agents/dashboard/routes/ad-brief.js';
 
 const PRODUCTS = [{ handle: 'coconut-lotion' }, { handle: 'coconut-soap' }];
@@ -563,4 +563,199 @@ test('POST /format answers 500 rather than rejecting when listProductsWithBriefs
   })));
   assert.equal(res.statusCode, 500);
   assert.doesNotMatch(JSON.parse(res.body).error, /EACCES/);
+});
+
+// ── M1: the note is capped ──────────────────────────────────────────────────────────
+//
+// `note` is free text typed by an operator and written verbatim into a brief JSON file the
+// Briefs tab re-reads on every load. Uncapped, one authenticated POST is an unbounded write.
+
+/**
+ * A GET-shaped request stub. The makeReq above models only the body stream (readJsonBody
+ * registers 'data' then 'end' and never looks at the URL); the /plan and /list handlers read
+ * `req.url`, so they need this one.
+ */
+function makeUrlReq(url) {
+  return { url, headers: {}, on() { return this; } };
+}
+
+test('a note within the cap is accepted and passed through unchanged', () => {
+  const note = 'rejected — the angle leans on a prescription comparison';
+  const r = validateDecide(
+    { product: 'coconut-lotion', briefId: 'b1', state: 'rejected', note },
+    { products: PRODUCTS },
+  );
+  assert.equal(r.ok, true);
+  assert.equal(r.args.note, note);
+});
+
+test('a note over the cap is refused, not silently truncated', () => {
+  const r = validateDecide(
+    { product: 'coconut-lotion', briefId: 'b1', state: 'rejected', note: 'x'.repeat(MAX_NOTE_LENGTH + 1) },
+    { products: PRODUCTS },
+  );
+  assert.equal(r.ok, false);
+  assert.match(r.error, /characters or fewer/);
+});
+
+test('exactly the cap is allowed — an off-by-one here would reject a legitimate note', () => {
+  const r = validateDecide(
+    { product: 'coconut-lotion', briefId: 'b1', state: 'rejected', note: 'x'.repeat(MAX_NOTE_LENGTH) },
+    { products: PRODUCTS },
+  );
+  assert.equal(r.ok, true);
+});
+
+test('an absent note stays absent — undefined, not an empty string', () => {
+  const r = validateDecide({ product: 'coconut-lotion', briefId: 'b1', state: 'rejected' }, { products: PRODUCTS });
+  assert.equal(r.ok, true);
+  assert.equal(r.args.note, undefined);
+});
+
+// ── M2: a flag-shaped value never reaches argv ──────────────────────────────────────
+//
+// `{angles: ["--job-id"]}` passed every validator (a dash is an ordinary filename character,
+// so the safe-segment test allowed it), shifted the spawned argv by one, and made the agent
+// claim a job file literally named `--job-id.json` while the route's real job stayed
+// 'pending'. After the 60-second pending grace a second click then launched a second PAID
+// Anthropic batch. Refused at the validator now (lib/ad-brief.js's checkSegment), with
+// buildAgentArgv throwing as a backstop in case a validator ever regresses.
+
+test('generate refuses an angle id that starts with a dash', () => {
+  for (const bad of ['--job-id', '--dry-run', '-x']) {
+    const r = validateGenerate({ product: 'coconut-lotion', angles: [bad] }, { products: PRODUCTS });
+    assert.equal(r.ok, false, `angle "${bad}" must be refused`);
+    assert.match(r.error, /invalid angle id/);
+  }
+});
+
+test('every other segment that reaches argv refuses a leading dash too', () => {
+  assert.equal(validateGenerate({ product: '--dry-run' }, { products: PRODUCTS }).ok, false);
+  assert.equal(validateGenerate({ product: 'coconut-lotion', variant: '--job-id' }, { products: PRODUCTS }).ok, false);
+  assert.equal(validateRender({ product: 'coconut-lotion', briefId: '--brief' }, { products: PRODUCTS }).ok, false);
+  assert.equal(validateDecide({ product: 'coconut-lotion', briefId: '--brief', state: 'rejected' }, { products: PRODUCTS }).ok, false);
+  assert.equal(validateChooseFormat({ product: 'coconut-lotion', briefId: 'b1', formatKey: '--formats' }, { products: PRODUCTS }).ok, false);
+});
+
+test('buildAgentArgv throws rather than emit a flag-shaped value, if a validator ever regresses', () => {
+  const args = { product: 'coconut-lotion', variant: null, angles: ['--job-id'], dryRun: false };
+  assert.throws(() => buildAgentArgv(args, 'job-1'), /starts with "-"/);
+  assert.throws(() => buildAgentArgv({ ...args, angles: [], product: '--product' }, 'job-1'), /starts with "-"/);
+  assert.throws(() => buildAgentArgv({ ...args, angles: [] }, '--job-id'), /starts with "-"/);
+});
+
+test('the flag-shaped angle never reaches a spawn at all', async () => {
+  const route = routes.find(r => r.method === 'POST' && r.match === '/api/ad-brief/generate');
+  let spawned = false;
+  const req = makeReq(JSON.stringify({ product: 'coconut-lotion', angles: ['--job-id'] }));
+  const res = makeRes();
+  await route.handler(req, res, {
+    adBriefDeps: {
+      findActiveJob: () => null,
+      writeJob: () => {},
+      updateJob: () => {},
+      spawn: () => { spawned = true; return fakeSpawnableChild(); },
+    },
+  });
+  // 400 from validateGenerate — the real manifest is read here, and coconut-lotion is in it.
+  assert.equal(res.statusCode, 400);
+  assert.equal(spawned, false, 'a flag-shaped angle must be refused before anything is spawned');
+});
+
+// ── I4: cluster coverage is on the /products response ───────────────────────────────
+//
+// The manifest holds 11 non-Culina products; only the 4 skin-cluster handles have
+// voice-of-customer personas behind them, and the agent aborts on the rest. The browser used
+// to default to products[0] — coconut-oil-deodorant — so the first click on the tab was
+// always a failed job. Uncovered products stay LISTED with a reason: the operator should see
+// that the product exists and what unlocks it.
+
+test('GET /products marks cluster coverage on every entry, and lists uncovered products rather than hiding them', async () => {
+  const route = routes.find(r => r.method === 'GET' && r.match === '/api/ad-brief/products');
+  assert.ok(route, 'GET /api/ad-brief/products route not found');
+  const res = makeRes();
+  await route.handler(makeUrlReq('/api/ad-brief/products'), res, {});
+  assert.equal(res.statusCode, 200);
+  const { products } = JSON.parse(res.body);
+  assert.ok(products.length > 4, 'the uncovered products must still be listed');
+
+  for (const p of products) {
+    assert.equal(typeof p.covered, 'boolean', `${p.handle} must carry a coverage verdict`);
+    if (!p.covered) {
+      assert.ok(p.coverageReason, `${p.handle} must say WHY it cannot be briefed`);
+      assert.match(p.coverageReason, /voice-of-customer/, 'the reason must name the remedy');
+    } else {
+      assert.equal(p.coverageReason, null);
+    }
+  }
+
+  // The specific regression: the product the dropdown used to default to is one of the
+  // uncovered ones, and the skin-cluster handles are the covered ones.
+  const byHandle = new Map(products.map(p => [p.handle, p]));
+  assert.equal(byHandle.get('coconut-oil-deodorant')?.covered, false);
+  assert.equal(byHandle.get('coconut-oil-toothpaste')?.covered, false);
+  assert.equal(byHandle.get('coconut-lotion')?.covered, true);
+  assert.equal(byHandle.get('coconut-soap')?.covered, true);
+  assert.equal(byHandle.get('organic-foaming-hand-soap')?.covered, true);
+});
+
+// ── I5: the plan endpoint — what a click costs, before it is clicked ────────────────
+
+test('GET /plan reports the angle count and the copy-call count for a covered product', async () => {
+  const route = routes.find(r => r.method === 'GET' && r.match !== undefined && typeof r.match === 'function' &&
+    r.match('/api/ad-brief/plan?product=coconut-lotion'));
+  assert.ok(route, 'GET /api/ad-brief/plan route not found');
+  const res = makeRes();
+  await route.handler(makeUrlReq('/api/ad-brief/plan?product=coconut-lotion'), res, {});
+  assert.equal(res.statusCode, 200);
+  const plan = JSON.parse(res.body);
+  assert.equal(plan.ok, true);
+  assert.equal(plan.covered, true);
+  assert.ok(plan.angleCount > 0, 'a covered product must have angles to brief');
+  assert.ok(plan.copyCalls <= plan.angleCount, 'an angle with no format costs no copy call');
+  assert.equal(plan.angles.length, plan.angleCount);
+  for (const a of plan.angles) {
+    assert.ok(a.angleId, 'each angle must be named so the operator can see what is queued');
+    assert.ok('format' in a, 'each angle must report the format it resolved to, or null');
+  }
+});
+
+test('GET /plan reports an uncovered product as uncovered, with the reason and zero calls', async () => {
+  const route = routes.find(r => r.method === 'GET' && typeof r.match === 'function' &&
+    r.match('/api/ad-brief/plan?product=coconut-oil-deodorant'));
+  const res = makeRes();
+  await route.handler(makeUrlReq('/api/ad-brief/plan?product=coconut-oil-deodorant'), res, {});
+  assert.equal(res.statusCode, 200);
+  const plan = JSON.parse(res.body);
+  assert.equal(plan.covered, false);
+  assert.equal(plan.copyCalls, 0);
+  assert.equal(plan.angleCount, 0);
+  assert.match(plan.reason, /voice-of-customer/);
+});
+
+test('GET /plan refuses a traversal or unknown product', async () => {
+  const route = routes.find(r => r.method === 'GET' && typeof r.match === 'function' &&
+    r.match('/api/ad-brief/plan?product=x'));
+  for (const q of ['../etc', 'not-a-product', '', '--dry-run']) {
+    const res = makeRes();
+    await route.handler(makeUrlReq('/api/ad-brief/plan?product=' + encodeURIComponent(q)), res, {});
+    assert.equal(res.statusCode, 400, `product "${q}" must be refused`);
+  }
+});
+
+// ── I1, at the route level: /list tells the browser what is actually selectable ─────
+
+test('GET /list annotates each brief with selectableFormats so the dropdown cannot offer a refusal', async () => {
+  const route = routes.find(r => r.method === 'GET' && typeof r.match === 'function' &&
+    r.match('/api/ad-brief/list?product=coconut-lotion'));
+  assert.ok(route, 'GET /api/ad-brief/list route not found');
+  const res = makeRes();
+  await route.handler(makeUrlReq('/api/ad-brief/list?product=coconut-lotion'), res, {});
+  assert.equal(res.statusCode, 200);
+  const { briefs } = JSON.parse(res.body);
+  // The briefs directory is empty in a fresh worktree; the annotation is what matters, so
+  // this asserts the SHAPE for whatever is there and never depends on fixtures on disk.
+  for (const b of briefs) {
+    assert.ok(Array.isArray(b.selectableFormats), `${b.briefId} must carry a selectableFormats array`);
+  }
 });

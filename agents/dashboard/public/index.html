@@ -265,9 +265,16 @@
       <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.6rem">
         <select id="ab-product" onchange="briefProductChanged()" class="creatives-select" style="min-width:16rem"></select>
         <button onclick="loadBriefProducts()" class="btn-sm" style="padding:0.28rem 0.7rem;font-size:0.8rem;cursor:pointer">Refresh</button>
-        <button id="ab-generate-btn" onclick="briefGenerate()" class="creatives-mode-btn" style="padding:0.35rem 0.9rem;cursor:pointer">Generate briefs</button>
+        <!-- Dry run FIRST, and it is the free one: it makes zero Anthropic calls (unlike Ad
+             Studio's --dry-run, which still pays for copy). Generate spends one Opus call
+             per angle, so #ab-plan states that count before either button is pressed —
+             this project's rule is that the cheapest action is the one you get by
+             accident. -->
+        <button id="ab-dryrun-btn" onclick="briefGenerate(true)" class="btn-sm" style="padding:0.35rem 0.9rem;font-size:0.8rem;cursor:pointer">Dry run (free)</button>
+        <button id="ab-generate-btn" onclick="briefGenerate(false)" class="creatives-mode-btn" style="padding:0.35rem 0.9rem;cursor:pointer">Generate briefs</button>
         <span id="ab-summary" style="font-size:0.82rem;color:var(--muted)"></span>
       </div>
+      <div id="ab-plan" style="margin-bottom:0.5rem;font-size:0.82rem;color:var(--muted)"></div>
       <div id="ab-generate-error" style="margin-bottom:0.5rem;font-size:0.82rem;color:var(--danger,#f87171)"></div>
       <div id="ab-progress" style="margin-bottom:1rem;display:none;border:1px solid var(--border);border-radius:7px;padding:0.6rem 0.8rem;background:var(--card)">
         <strong id="ab-progress-status" style="font-size:0.88rem"></strong>

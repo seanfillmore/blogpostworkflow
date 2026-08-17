@@ -1451,7 +1451,15 @@ async function main() {
 
   // A gate rejection is a first-class outcome the UI must show, and it happens before
   // any render.
-  for (const c of concepts) job.event({ stage: 'copy', concept: c.format.key, state: 'ok' });
+  //
+  // The stage is NAMED FOR WHAT HAPPENED. In brief mode no copy call was made — the whole
+  // promise of the mode is that the approved strings render untouched — so reporting
+  // `stage: 'copy'` told the operator a paid copy call had occurred in the one mode whose
+  // entire point is that none did (code review, 2026-08-17). `approved-copy` says the copy
+  // came off the brief. `state` stays 'ok' either way: the Briefs view colours anything
+  // other than 'ok'/'accepted' as a failure.
+  const copyStage = brief ? 'approved-copy' : 'copy';
+  for (const c of concepts) job.event({ stage: copyStage, concept: c.format.key, state: 'ok' });
   for (const c of rejectedConcepts) {
     job.event({ stage: 'copy', concept: c.conceptSlug, state: 'gate-rejected', reasons: (c.violations || []).map(v => `[${v.zone}] ${v.reason}`) });
   }
