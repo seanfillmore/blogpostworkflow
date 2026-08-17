@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert';
+import { test } from 'node:test';
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -25,6 +26,7 @@ import {
   DEFAULT_MAX_RENDERS,
   MAX_VARIATIONS,
   ESTIMATED_COST_PER_RENDER_USD,
+  describeSweep,
 } from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 import { assertClaimsSourced, buildSourceIndex } from '../../agents/ad-studio/claims.js';
@@ -1375,4 +1377,181 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
     results: [{ conceptSlug: 'x', format: 'x', variations: [{ n: 1, ok: false }] }],
   });
   assert.deepEqual(report.totals.artifacts, { accepted: 0, rejected: 0, errored: 0, total: 0 });
+}
+
+// ── Regression guard: the disk-budget sweep must run on a NORMAL, successful run ────
+//
+// enforceBudget used to be called only from inside the SIGINT/SIGTERM handler, right
+// before process.exit(130) — so a normal run that finished without being interrupted
+// never purged anything at all, contradicting both CLAUDE.md ("enforced automatically
+// at the end of every Ad Studio run") and this agent's own README ("Every run enforces
+// a ... budget ... before it exits").
+//
+// main() is not exported, constructs live Anthropic/Gemini clients and hits the network
+// (fetchPdpBody) directly rather than accepting them as parameters, and is guarded
+// against running on import — so it cannot be invoked from a test without a real, paid
+// run. The wiring is asserted against the source instead, the same pattern
+// tests/agents/blog-post-writer-voc.test.js uses for exactly the same reason.
+{
+  const SRC = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  // sweepDiskBudget is defined exactly once, as a local function inside main(), and
+  // enforceBudget must be called from nowhere else — a second, un-swept call site would
+  // defeat the point of centralising it.
+  const sweepDef = SRC.match(/const sweepDiskBudget = \(\) => \{[\s\S]*?\n  \};/);
+  assert.ok(sweepDef, 'sweepDiskBudget must be defined as a named local function in main()');
+  assert.match(sweepDef[0], /enforceBudget\(/, 'sweepDiskBudget must actually call enforceBudget');
+  assert.equal(
+    (SRC.match(/enforceBudget\(/g) || []).length, 1,
+    'enforceBudget must be called from exactly one place: inside sweepDiskBudget',
+  );
+
+  // It is called exactly twice: once from the SIGINT/SIGTERM handler (interrupt path),
+  // once on normal completion. Two, not one — dropping either call regresses either the
+  // interrupt path or the normal path.
+  const calls = SRC.match(/\bsweepDiskBudget\(\);/g) || [];
+  assert.equal(calls.length, 2, 'sweepDiskBudget must be called from both the interrupt path and the normal completion path');
+
+  // The interrupt-path call: inside the process.once(sig, ...) handler, before
+  // process.exit(130) — unchanged behaviour from before this fix.
+  const sigHandler = SRC.match(/for \(const sig of \['SIGINT', 'SIGTERM'\]\) \{[\s\S]*?\n  \}\n/);
+  assert.ok(sigHandler, 'the SIGINT/SIGTERM registration block must still exist');
+  assert.match(
+    sigHandler[0], /sweepDiskBudget\(\);\s*\n\s*process\.exit\(130\);/,
+    'the interrupt path must still sweep before exiting',
+  );
+
+  // THE FIX: a call must also exist on the normal completion path — after the run
+  // report's console summary ("Run complete: ...") and before main() returns. Slicing
+  // the source from "Run complete:" onward excludes the signal handler entirely (it is
+  // registered earlier in main()), so this only passes if the sweep call is genuinely
+  // reachable on a run that finishes without being interrupted.
+  const afterRunComplete = SRC.slice(SRC.indexOf('Run complete:'));
+  assert.ok(afterRunComplete.length > 0 && SRC.indexOf('Run complete:') > -1, 'sanity: the run-complete summary must exist');
+  assert.match(
+    afterRunComplete,
+    /sweepDiskBudget\(\);[\s\S]*return \{ report \};/,
+    'a normal, successful run must sweep the disk budget before main() returns — not only on interrupt',
+  );
+  assert.ok(
+    !sigHandler[0].includes('Run complete:'),
+    'sanity: the normal-completion sweep found above is not accidentally inside the signal handler block',
+  );
+}
+
+// ── I5: the over-budget warning must be reachable with NOTHING deleted ───────────────
+//
+// The warning used to be nested inside `if (sweep.deletions.length)`, so the one case
+// that matters most was silent: the directory over budget with nothing eligible — every
+// run younger than the 14-day tier-2 window, which is exactly what a week of one-click
+// runs produces. planPurge returns {deletions: [], underBudget: false} there, the run
+// exited saying nothing, and the README (written on this branch) claims "If it cannot
+// free enough it warns instead of reporting success."
+//
+// describeSweep is the pure message-building half of sweepDiskBudget, extracted so this
+// is testable without a paid run; the source guard below pins that main() still uses it.
+
+test('describeSweep warns when the sweep freed nothing and is still over budget', () => {
+  const { info, warning } = describeSweep({
+    deletions: [], freedBytes: 0, underBudget: false,
+    totalBytes: 5 * 1024 ** 3, wouldRemain: 5 * 1024 ** 3, budgetBytes: 4 * 1024 ** 3,
+  });
+  assert.equal(info, null, 'nothing was deleted, so there is nothing to report as freed');
+  assert.match(warning, /STILL OVER/);
+  assert.match(warning, /nothing was eligible/);
+});
+
+test('describeSweep warns when a purge ran and still did not get under the ceiling', () => {
+  const { info, warning } = describeSweep({
+    deletions: [{ path: '/x.jpg', bytes: 10 }], freedBytes: 10, underBudget: false,
+    totalBytes: 5 * 1024 ** 3, wouldRemain: 5 * 1024 ** 3, budgetBytes: 4 * 1024 ** 3,
+  });
+  assert.match(info, /freed/);
+  assert.match(warning, /STILL OVER/);
+  assert.doesNotMatch(warning, /nothing was eligible/);
+});
+
+test('describeSweep says nothing when the sweep got under the ceiling', () => {
+  const under = describeSweep({
+    deletions: [{ path: '/x.jpg', bytes: 10 }], freedBytes: 10, underBudget: true,
+    totalBytes: 10, wouldRemain: 0, budgetBytes: 4 * 1024 ** 3,
+  });
+  assert.match(under.info, /freed/);
+  assert.equal(under.warning, null);
+
+  const quiet = describeSweep({ deletions: [], freedBytes: 0, underBudget: true, wouldRemain: 0, budgetBytes: 1 });
+  assert.equal(quiet.info, null);
+  assert.equal(quiet.warning, null);
+});
+
+// enforceBudget's error shape carries no `underBudget` at all, and has already warned
+// about the failure on its own. A sweep that could not even plan must not also claim the
+// directory is over budget.
+test('describeSweep stays silent on the failed-sweep shape', () => {
+  const { info, warning } = describeSweep({ deletions: [], freedBytes: 0, applied: false, error: 'EACCES' });
+  assert.equal(info, null);
+  assert.equal(warning, null);
+});
+
+{
+  const SRC = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+  const sweepDef = SRC.match(/const sweepDiskBudget = \(\) => \{[\s\S]*?\n  \};/);
+  assert.ok(sweepDef, 'sanity: sweepDiskBudget must still exist');
+  assert.match(
+    sweepDef[0], /describeSweep\(sweep\)/,
+    'sweepDiskBudget must build its output through describeSweep — the function this test can reach',
+  );
+  assert.doesNotMatch(
+    sweepDef[0], /STILL OVER/,
+    'the warning text must live in describeSweep, not be re-inlined behind a deletions check',
+  );
+}
+
+// ── Regression guard: main() must claim the job file before it does anything else ───
+//
+// `job.start({ pid: process.pid });` is what stops a second Render click in the browser
+// from spawning a second, fully-paid run: the launch route refuses a second launch once a
+// job file is claimed with a live pid, but a claim made only after the per-format copy
+// calls (minutes of sequential Anthropic requests) leaves that whole window open. Live,
+// that gap turned one run into two — 240 renders instead of 120, ≈$31.20 instead of
+// ≈$15.60, and two 2K-render processes fighting over a 961 MB box. A reviewer deleted
+// this one line on this branch and 75/75 tests still passed; this test exists to close
+// that gap, not to be deleted the next time it's inconvenient.
+//
+// main() is not exported, constructs live Anthropic/Gemini clients, hits the network
+// directly, and is guarded against running on import — so, like the sweepDiskBudget guard
+// above, this has to read the source rather than call main().
+{
+  const SRC = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  const mainStart = SRC.indexOf('async function main() {');
+  const guardStart = SRC.indexOf('// Guard: importing this module must not run the agent.');
+  assert.ok(mainStart > -1, 'sanity: main() must still exist');
+  assert.ok(guardStart > mainStart, 'sanity: the import guard must still exist, after main()');
+  const mainBody = SRC.slice(mainStart, guardStart);
+
+  // The boot claim is the UNqualified call — `{ pid: process.pid }`, no runId. The later
+  // top-up call once a run directory exists (`{ pid: process.pid, runId }`) is a different
+  // string and will not satisfy this match, so this only passes if the early claim is
+  // genuinely present, not just some job.start() call anywhere in main().
+  const bootClaimIndex = mainBody.indexOf('job.start({ pid: process.pid });');
+  assert.ok(
+    bootClaimIndex > -1,
+    'main() must claim the job file with job.start({ pid: process.pid }) before anything else',
+  );
+
+  // Anchor: fetchPdpBody() is the first thing in main() that reaches the network — it
+  // fetches the live PDP page over HTTP. Everything between the claim and here (loadEnv,
+  // the manifest, the catalog, the brand kit) is a local file read that returns in
+  // microseconds; a fetch is the first place a real stall — and therefore a real window
+  // for a second Render click — can happen. This mirrors main()'s own comment on the
+  // claim line: "before .env, before the manifest, before a single network call."
+  const anchorIndex = mainBody.indexOf('await fetchPdpBody(site.url, handle);');
+  assert.ok(anchorIndex > -1, 'sanity: the fetchPdpBody call must still exist in main()');
+
+  assert.ok(
+    bootClaimIndex < anchorIndex,
+    'the job-file claim must happen before the first network call (fetchPdpBody) — moving ' +
+    'it later reopens the window where a second Render click pays for a second run',
+  );
 }

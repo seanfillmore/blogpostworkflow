@@ -17,7 +17,7 @@
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  enforceBudget, planPurge, formatBytes, DEFAULT_BUDGET_BYTES,
+  enforceBudget, planPurge, formatBytes, configuredBudgetBytes,
 } from '../lib/creatives-budget.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -26,7 +26,11 @@ const flag = (name) => { const i = argv.indexOf(name); return i === -1 ? undefin
 
 const apply = argv.includes('--apply');
 const gb = flag('--budget-gb');
-const budgetBytes = gb === undefined ? DEFAULT_BUDGET_BYTES : Number(gb) * 1024 * 1024 * 1024;
+// configuredBudgetBytes, not resolveBudgetBytes(process.env): the weekly cron line is
+// `cd /root/seo-claude && /usr/bin/node scripts/creatives-budget.mjs --apply`, and cron
+// does not source `.env`. Reading process.env alone gave this — the one sweep that runs
+// with nobody watching — the 10 GiB LOCAL default on a box with ~9.9 GB free.
+const budgetBytes = gb === undefined ? configuredBudgetBytes() : Number(gb) * 1024 * 1024 * 1024;
 const creativesDir = flag('--dir') || join(ROOT, 'data', 'creatives');
 
 if (!Number.isFinite(budgetBytes) || budgetBytes <= 0) {

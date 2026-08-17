@@ -23,21 +23,23 @@ Plan: `docs/superpowers/plans/2026-08-14-ad-studio.md`
 
 ```bash
 node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
-  [--variant <name>] [--targets <spec>] [--variations <n>] [--max-renders <n>] [--dry-run]
+  [--variant <name>] [--targets <spec>] [--variations <n>] [--max-renders <n>] [--dry-run] [--job-id <id>]
 ```
 
 | Flag | Required | Meaning |
 |---|---|---|
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`, and its manifest entry must carry a `unitCount` (see below). |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`). **Required.** It used to be optional, and omitting it meant the whole six-format rotation — 108 renders ≈ $14 from a flag nobody typed. An unknown key is rejected with the valid list. |
-| `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta=1:1,meta=4:5`** — see below. |
+| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`). **Required.** It used to be optional, and omitting it meant the whole rotation — nine formats today, 54 renders ≈ $7.02 at the current defaults and 243 (≈$31.59) at 3 variations across all 6 targets, from a flag nobody typed. An unknown key is rejected with the valid list. |
+| `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta`** — all three Meta ratios, see below. |
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
 | `--dry-run` | no | Generates copy and runs the claim gate, prints the result, and exits before any image is rendered. See below. |
+| `--job-id` | no | Progress reporting for the dashboard. Writes stage-by-stage state into `data/reports/ad-studio/jobs/<id>.json`, which the Ad Studio tab polls. Set by the dashboard's launch route; a human never types it. The file is CLAIMED (status `running`, this process's pid) immediately after argument parsing, before any network call — the route refuses a second launch only while a job is pending-and-fresh or claimed-and-alive, so claiming late is how two paid runs start at once. **With no `--job-id` nothing is written and the CLI behaves exactly as before.** |
 
 **The default run is deliberately the cheapest useful one:** one format, one variation,
-the two Meta feed ratios — **2 renders ≈ $0.26**. Everything above that is opted into.
+all three Meta ratios — **6 renders ≈ $0.78** (a Meta target bills the plate and its
+comp — see Cost below). Everything above that is opted into.
 
 **Why 9:16 is not in the default target set.** Meta draws its own UI over the top ~14% and
 bottom ~20% of a Stories/Reels frame, and `critique.js` hard-fails ad copy placed there.
@@ -391,7 +393,7 @@ else; running in the main checkout no-ops, because the destination is already th
 A failed copy warns and never fails the run — the images are on disk by then, and turning a
 successful paid run into a crash over a backup is strictly worse.
 
-**Every run enforces a 10 GiB budget on `data/creatives/` before it exits** (`lib/creatives-budget.js`). Purge is tiered and stops as soon as the total fits — rejected frames past a 7-day grace, then Ad Studio images from runs older than 14 days, then Creatives-tab sessions idle 30+ days. JSON is never touched, and the run just written is never eligible, so a sweep can never eat the frames you are about to look at. If it cannot free enough it warns instead of reporting success. `npm run creatives-budget -- --apply` is the same sweep by hand.
+**Every run enforces a disk budget on `data/creatives/` before it exits** (`lib/creatives-budget.js`) — 10 GiB locally, and 4 GiB on the production server via `CREATIVES_BUDGET_BYTES` (that box has ~9.9 GB free of 24 GB, and a ceiling above the free disk can never fire before the disk fills). The ceiling is read from `process.env` first and then from `.env` (`configuredBudgetBytes()`), so a hand-run agent and the weekly cron sweep get the server's value even though neither has `.env` in its environment. Purge is tiered and stops as soon as the total fits — rejected frames past a 7-day grace, then Ad Studio images from runs older than 14 days, then Creatives-tab sessions idle 30+ days. JSON is never touched, and the run just written is never eligible, so a sweep can never eat the frames you are about to look at. If it cannot free enough it warns instead of reporting success. The sweep runs on every exit path — normal completion and SIGINT/SIGTERM alike. `npm run creatives-budget -- --apply` is the same sweep by hand.
 
 `data/creatives/ad-studio/` is gitignored (one default run is ~137 MB of 2K renders) and
 accumulates with every run. The production box has a 24 GB disk and a full one has
@@ -432,18 +434,24 @@ free crops of the Meta frames.
 
 | | renders | ≈ cost |
 |---|---|---|
-| **Default** — one format, one variation, Meta feed | **2** | **$0.26** |
-| One format, `--variations 3`, Meta feed | 6 | $0.78 |
-| One format, one variation, `--targets all` | 6 | $0.78 |
-| One format, `--variations 3`, `--targets all` | 18 | $2.34 |
-| Six formats, `--variations 3`, `--targets all` (the old default) | 108 | $14.04 |
+| **Default** — one format, one variation, `--targets meta` | **6** | **$0.78** |
+| One format, `--variations 3`, Meta | 18 | $2.34 |
+| One format, one variation, `--targets all` | 9 | $1.17 |
+| One format, `--variations 3`, `--targets all` | 27 | $3.51 |
+| Nine formats, `--variations 3`, `--targets all` | 243 | $31.59 |
 | `--max-renders` default ceiling | 120 | $15.60 |
 
-Retries are charged. A frame that needs all 3 attempts costs 3 renders, so a nominally
-2-render run can bill 6 in the worst case.
+**A Meta target bills two renders.** The plate is rendered and gated, then a comp is
+derived from it as the operator's layout reference — and that derived pass takes a
+budget slot like any other render. Demand Gen plates get no comp, so they bill one.
+Every row above follows from that; `lib/ad-studio-cost.js` is the one implementation
+and `tests/lib/ad-studio-cost.test.js` pins these numbers.
+
+Retries are charged. A frame that needs all 3 attempts costs 3 plate renders, so a
+nominally 6-render run can bill 12 in the worst case.
 
 **The Gemini image model has a hard quota of 250 renders per project per day.** A default
-full-rotation run is 108, so two of them plus retries exhausts the day — the API then
+full-rotation run is 162, so a single one plus retries can exhaust the day — the API then
 returns 429 with a ~19h retry delay and every remaining target of the run errors out
 (per-target resilience keeps the run alive and still writes `run.json`). Scope runs with
 `--formats`; do not discover this ceiling mid-batch.

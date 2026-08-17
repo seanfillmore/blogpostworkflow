@@ -196,17 +196,64 @@
        sheet of plate+comp pairs does not fit the two-column prompt/canvas split, and
        squeezing it in would mean judging frames at half width. -->
   <div id="adstudio-panel" style="display:none;height:calc(100vh - 200px);overflow:auto;padding:0 0.25rem 2rem">
-    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.6rem">
-      <select id="adstudio-run-select" onchange="loadAdStudioRun(this.value)" class="creatives-select" style="min-width:22rem"></select>
-      <button onclick="refreshAdStudioRuns()" class="btn-sm" style="padding:0.28rem 0.7rem;font-size:0.8rem;cursor:pointer">Refresh</button>
-      <span id="adstudio-summary" style="font-size:0.82rem;color:var(--muted)"></span>
-      <span style="flex:1"></span>
-      <label style="font-size:0.8rem;color:var(--muted);display:inline-flex;align-items:center;gap:0.3rem">
-        <input type="checkbox" id="adstudio-kept-only" onchange="renderAdStudioRun()"> kept only
-      </label>
-      <button onclick="exportAdStudioKept()" class="btn-sm" style="padding:0.28rem 0.7rem;font-size:0.8rem;cursor:pointer">Copy kept paths</button>
+    <div style="display:flex;gap:0.4rem;margin-bottom:0.75rem">
+      <button id="as-view-new-btn" onclick="switchAdStudioView('new')" class="creatives-mode-btn" style="padding:0.3rem 0.8rem;border:none;font-size:0.82rem;cursor:pointer">New run</button>
+      <button id="as-view-judge-btn" onclick="switchAdStudioView('judge')" class="creatives-mode-btn" style="padding:0.3rem 0.8rem;border:none;font-size:0.82rem;cursor:pointer">Judge</button>
     </div>
-    <div id="adstudio-body"></div>
+
+    <div id="adstudio-new" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:0.75rem;margin-bottom:0.75rem">
+        <label style="font-size:0.8rem">Product<br>
+          <select id="as-product" class="creatives-select" onchange="adStudioProductChanged()" style="width:100%"></select></label>
+        <label style="font-size:0.8rem">Variant<br>
+          <select id="as-variant" class="creatives-select" style="width:100%"></select></label>
+        <label style="font-size:0.8rem">Variations<br>
+          <input id="as-variations" type="number" min="1" max="10" value="1" oninput="adStudioEstimate()" style="width:100%"></label>
+        <label style="font-size:0.8rem">Targets<br>
+          <select id="as-targets" class="creatives-select" onchange="adStudioEstimate()" style="width:100%">
+            <option value="meta">Meta — 1:1, 4:5, 9:16</option>
+            <option value="all">All — Meta + Demand Gen</option>
+          </select></label>
+        <label style="font-size:0.8rem">Render ceiling<br>
+          <input id="as-max-renders" type="number" min="1" value="120" oninput="adStudioEstimate()" style="width:100%"></label>
+      </div>
+
+      <div style="margin-bottom:0.5rem;font-size:0.8rem;color:var(--muted)">
+        Formats — none selected by default. <a href="#" onclick="adStudioSelectAllFormats();return false">select all</a>
+      </div>
+      <div id="as-formats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:0.35rem;margin-bottom:0.75rem"></div>
+
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+        <button id="as-dry-btn" onclick="adStudioLaunch(true)" class="creatives-mode-btn" style="padding:0.4rem 1rem;cursor:pointer">Dry run (free)</button>
+        <button id="as-run-btn" onclick="adStudioLaunch(false)" class="creatives-mode-btn" style="padding:0.4rem 1rem;cursor:pointer" disabled>Render</button>
+        <span id="as-estimate" style="font-size:0.85rem"></span>
+        <span id="as-today" style="font-size:0.78rem;color:var(--muted)"></span>
+      </div>
+      <div id="as-launch-error" style="margin-top:0.5rem;font-size:0.82rem;color:var(--danger,#f87171)"></div>
+
+      <div id="as-progress" style="margin-top:1rem;display:none">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem">
+          <strong id="as-progress-status" style="font-size:0.9rem"></strong>
+          <button id="as-cancel-btn" onclick="adStudioCancel()" class="creatives-mode-btn" style="padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer">Cancel</button>
+          <a id="as-judge-link" href="#" style="display:none;font-size:0.82rem" onclick="switchAdStudioView('judge');return false">Judge this run →</a>
+        </div>
+        <div id="as-progress-body" style="font-size:0.82rem"></div>
+      </div>
+    </div>
+
+    <div id="adstudio-judge">
+      <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.6rem">
+        <select id="adstudio-run-select" onchange="loadAdStudioRun(this.value)" class="creatives-select" style="min-width:22rem"></select>
+        <button onclick="refreshAdStudioRuns()" class="btn-sm" style="padding:0.28rem 0.7rem;font-size:0.8rem;cursor:pointer">Refresh</button>
+        <span id="adstudio-summary" style="font-size:0.82rem;color:var(--muted)"></span>
+        <span style="flex:1"></span>
+        <label style="font-size:0.8rem;color:var(--muted);display:inline-flex;align-items:center;gap:0.3rem">
+          <input type="checkbox" id="adstudio-kept-only" onchange="renderAdStudioRun()"> kept only
+        </label>
+        <button onclick="exportAdStudioKept()" class="btn-sm" style="padding:0.28rem 0.7rem;font-size:0.8rem;cursor:pointer">Copy kept paths</button>
+      </div>
+      <div id="adstudio-body"></div>
+    </div>
   </div>
 
   <div id="creatives-layout" style="display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 220px);overflow:hidden">

@@ -15,7 +15,7 @@ section wins.
 | Spec says | Reality now |
 |---|---|
 | six formats | **nine** — `testimonial`, `stat-stack`, `state-contrast` added 2026-08-15 |
-| `formats × variations × 6 targets` | **× 3.** `DEFAULT_TARGETS` is `meta` (1:1, 4:5, 9:16); the three Demand Gen plates are opt-in via `--targets all`. A default run is 3 renders ≈ $0.39, not 108 ≈ $14 |
+| `formats × variations × 6 targets` | **× 3.** `DEFAULT_TARGETS` is `meta` (1:1, 4:5, 9:16); the three Demand Gen plates are opt-in via `--targets all`. A default run is 3 plates + 3 comps = **6 renders ≈ $0.78**, not 108 ≈ $14 — see the addendum, a Meta target bills twice |
 | judging shows `missing[]`, `mismatchedPairs[]`, `transcript` | proof.json now also carries `volume`, `fidelity`, `inventory` (`units`/`strays`/`unresolved`), `defects` and `comp`. The judging screen must render all of them, not the three the spec knew about |
 | Known issue: claim-gate aborts a whole run | **Fixed.** `buildConcepts` isolates a rejected concept; the run continues |
 | Known issue: three formats never rendered live | **Fixed.** All nine have rendered; `productProminent` is correct on all of them |
@@ -43,6 +43,129 @@ screen is for:**
 today; *judging* exists nowhere but a folder of JPEGs, which is why the current workflow is
 copying images to a Desktop folder and building contact sheets by hand. Setup and live
 progress (screens 1–2) follow, then format learning.
+
+## Addendum, 2026-08-16 — running on the server (screens 1–2)
+
+Approved by Sean 2026-08-16. **Where this conflicts with the screen 1–2 bodies below, this
+wins**, the same way the Reconciliation section wins over the rest.
+
+Scope of this build: screens 1 and 2 only. Not creative steering (choosing the angle, the
+persona, the review to quote) and not format learning — each is its own project.
+
+### The problem it solves
+
+`/api/ad-studio/runs` returns `{"runs":[]}` on the server, because Ad Studio has never run
+there: `data/creatives/ad-studio/` does not exist on the box. The judging screen shipped in
+PR #499 is only useful where the runs are. Rather than sync run output up from a laptop,
+**the server becomes where runs happen**, which is also the only way a run survives closing
+the lid.
+
+The box is ready for it and was verified before this was designed: `data/product-images/`
+is present (233 MB, all 12 product directories), `GEMINI_API_KEY` is in `.env`, Node
+22.22.1.
+
+### A Meta target costs TWO renders, not one
+
+`index.js`'s comp pass calls `budget.take()`. So a Meta plate that passes bills the plate
+**and** its derived comp. Three documents were wrong about this, including this spec — and
+the estimator is the whole reason screen 1 exists, so it has to use the real model:
+
+- **Expected** — `F × V × (2m + d)`; every plate passes first attempt, every Meta plate
+  gets a comp. `m` = selected Meta ratios, `d` = selected Demand Gen ratios.
+- **Worst case** — `F × V × (3(m+d) + m)`; every plate burns all three attempts. A
+  *rejected* plate never gets a comp, which is why the comp term stays at `m`.
+
+At $0.13/render: the default form state (1 format, 1 variation, Meta) is **$0.78 expected,
+$1.56 worst**. A full sweep (9 formats × 3 variations × `--targets all`) is **$31.59 /
+$73.71**.
+
+The README's cost table and its "default target set" line are stale for the same reason and
+are corrected in the implementation PR.
+
+### Execution: a spawned child, not the dashboard's own process
+
+**This overrides the implementation note below that says to drive the exported functions
+in-process.** The reason is the box: 1 vCPU, 961 MB RAM, ~305 MB free. In-process puts 2K
+PNG buffers and base64 payloads in the same heap as the dashboard, so an OOM takes down
+`seo-dashboard` rather than one run; and every `pm2 restart` — i.e. every deploy — would
+kill a paid run in flight.
+
+Instead, the pattern `agents/creative-packager` already uses here: the route writes a job
+file and spawns `node agents/ad-studio/index.js --job-id <id>` detached, and **the agent
+writes structured progress into that job file itself**. That honours what the original note
+was protecting — it objected to scraping stdout and losing structured errors, and nothing
+here scrapes stdout. One code path serves both CLI and UI runs.
+
+### The job protocol
+
+`data/reports/ad-studio/jobs/<jobId>.json`, written atomically (temp file + rename) because
+the route polls it while the agent writes it:
+
+```json
+{ "jobId": "...", "status": "pending|running|complete|error",
+  "args": { "product": "...", "variant": null, "formats": [...], "variations": 1,
+            "targets": "meta", "maxRenders": 120, "dryRun": false },
+  "runId": null, "startedAt": "...", "finishedAt": null, "error": null,
+  "plan": { "targets": [...], "expectedRenders": 6, "worstCaseRenders": 12 },
+  "events": [ { "at": "...", "stage": "copy|render|verify|done", "concept": "...",
+                "variation": 1, "artifact": "plate-1x1.png", "state": "accepted",
+                "attempts": 1, "reasons": [] } ],
+  "totals": { "artifacts": {}, "renders": 3 } }
+```
+
+Agent side: `--job-id` joins `parseArgs`, and a `reportProgress()` writer hangs off the
+`onProgress` hook `renderVariationTargets` already exposes, plus the stage boundaries that
+have no hook yet — copy generated per concept, health/claim-gate rejection, run finalized.
+**With no `--job-id` every write is a no-op**, so the CLI behaves exactly as it does today.
+
+`data/reports/ad-studio/` is already gitignored, so job files need no ignore rule. They are
+a few KB each and are pruned at 3 days on dashboard start, the same as `run-jobs/` —
+the run's own `run.json` is the permanent record, not the job file.
+
+Routes: `POST /api/ad-studio/launch`, `GET /api/ad-studio/job/:id`, and
+`POST /api/ad-studio/job/:id/cancel` (SIGTERM — the agent's existing signal handler
+archives run output before exiting).
+
+### Screen 1, as built
+
+The controls in the table below, plus `--targets` (Meta · All), which that table omits.
+Products come from `manifest.json` with Culina filtered out, variants from the product's
+subdirectories on disk, formats from `FORMATS` — all read server-side and served to the
+browser, so a tenth format needs no UI edit.
+
+`--dry-run` is a first-class button as specified, and the health-claim gate's rejections
+render alongside the sourcing gate's.
+
+### Screen 2, as built
+
+Poll the job every 2s. Concept → variation → target tree with live state, the budget stop
+surfaced when it fires, and a gate-rejected concept shown as a first-class outcome rather
+than an error page. On completion, link straight into the judging screen for that `runId`.
+
+### Guardrails — new, and the reason is that this button spends money
+
+The dashboard is reachable over a public ngrok URL behind basic auth. A launch endpoint is
+categorically different from every other route on it, so:
+
+1. **One run at a time.** A lock file; a second launch gets 409 naming the active run. On
+   1 vCPU, two concurrent runs would also only slow each other down.
+2. **Server-side validation, never client-trusted.** The route builds argv and lets the
+   agent's own `parseArgs` throw — it already rejects unknown formats and >10 variations.
+   The browser's copy of the format list is a convenience, never the authority.
+3. **A launch ceiling.** Reject a launch whose *expected* renders exceed `--max-renders`,
+   and clamp `--max-renders` to 120 server-side. Show today's render count in the form:
+   Gemini's project quota is a hard 250/day and a full sweep is ~95.
+
+### The disk budget has to come down on this box
+
+`data/creatives/` has a 10 GiB ceiling (PR #500) and the server has **9.9 GB free of 24 GB**.
+Those numbers are incompatible: the budget can never fire before the disk fills, and a full
+disk has already cost this project four days of cron. Nothing is wrong today — the directory
+is at 252 MB — but making runs one click away is exactly what changes that.
+
+So `enforceBudget`'s ceiling becomes env-overridable (`CREATIVES_BUDGET_BYTES`), the server
+is set to **4 GiB**, and the 10 GiB default stays for local. The purge policy itself is
+unchanged.
 
 ## Why
 
@@ -110,7 +233,8 @@ defaulting to all six makes the cheap path require five deliberate *un*-clicks a
 charges $14 for forgetting. "Select all" stays one click away for the rare full sweep.
 
 **Show the cost before the button, and update it as formats are ticked.** Renders are
-~$0.13. Compute `formats × variations × 6 targets` live as the form changes and display
+~$0.13. Compute the estimate live as the form changes (the formula is in the addendum —
+a Meta target bills a plate *and* a comp, so it is not one render per target) and display
 both the expected and the worst-case-with-retries figure, **inline next to the run
 button** — not in a panel elsewhere on the page, and not in a confirmation dialog that
 appears after the decision is made. The number has to move while the operator is
@@ -319,19 +443,20 @@ batch.
 
 ## Implementation notes
 
-- **Do not shell out to the CLI.** `agents/ad-studio/index.js` exports its pure functions
-  and its stage helpers; the route should drive those directly, the way
-  `routes/creatives.js` drives `creative-packager`. Shelling out loses structured progress
-  and makes errors unparseable.
+- ~~**Do not shell out to the CLI.**~~ **Superseded by the addendum 2026-08-16.** The
+  concern was real — stdout scraping loses structured progress and makes errors
+  unparseable — but running in-process on a 1 vCPU / 961 MB box means an OOM kills the
+  dashboard and every `pm2 restart` kills a paid run. The agent is spawned as a detached
+  child that writes structured progress into its own job file, which scrapes nothing.
 - **Long-running work needs a job, not a request.** A run outlives an HTTP request. Follow
   the existing pattern in `agents/creative-packager` (job file + status polling) rather
   than inventing a queue.
 - **Never render the raw `.env` or API keys into any response.** The agent reads `.env`
   directly; the route must not echo it.
 - **The 24 GB server disk is a real constraint.** One variation is ~7.6 MB and a default
-  run ~137 MB. `data/creatives/ad-studio/` is gitignored but not pruned. A UI that makes
-  runs easy to launch makes this urgent — v1 should include a retention policy, or at
-  minimum surface total disk used and offer deletion of old runs.
+  run ~137 MB. A UI that makes runs easy to launch makes this urgent. **Half-done:** the
+  retention policy shipped in PR #500 (`lib/creatives-budget.js`, swept at the end of every
+  run), but its 10 GiB ceiling exceeds the server's free disk — see the addendum.
 
 ## Known agent-side issues this UI will expose
 

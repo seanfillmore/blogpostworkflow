@@ -2888,7 +2888,7 @@ function syncModeUI() {
   var layout = document.getElementById('creatives-layout');
   if (asPanel) asPanel.style.display = isAdStudio ? 'block' : 'none';
   if (layout) layout.style.display = isAdStudio ? 'none' : 'grid';
-  if (isAdStudio) { refreshAdStudioRuns(); return; }
+  if (isAdStudio) { switchAdStudioView(adStudioSetup.view); return; }
   var adPanel = document.getElementById('adbuilder-panel');
   if (adPanel) adPanel.style.display = isAd ? 'block' : 'none';
   // Studio's free-prompt fields hide in Ad Builder (hero prompt is generated).
@@ -5569,6 +5569,210 @@ var adStudioState = { runs: [], run: null, busy: false };
 function adStudioEsc(v) {
   return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+var adStudioSetup = { options: null, view: 'new', jobId: null, pollTimer: null };
+
+function switchAdStudioView(view) {
+  adStudioSetup.view = view;
+  document.getElementById('adstudio-new').style.display = view === 'new' ? '' : 'none';
+  document.getElementById('adstudio-judge').style.display = view === 'judge' ? '' : 'none';
+  var newBtn = document.getElementById('as-view-new-btn');
+  var judgeBtn = document.getElementById('as-view-judge-btn');
+  if (newBtn) newBtn.classList.toggle('active', view === 'new');
+  if (judgeBtn) judgeBtn.classList.toggle('active', view === 'judge');
+  if (view === 'judge') refreshAdStudioRuns();
+  else if (!adStudioSetup.options) loadAdStudioOptions();
+}
+
+async function loadAdStudioOptions() {
+  try {
+    var res = await fetch('/api/ad-studio/options', { credentials: 'same-origin' });
+    adStudioSetup.options = await res.json();
+  } catch (err) {
+    document.getElementById('as-launch-error').textContent = 'Could not load options: ' + err.message;
+    return;
+  }
+  var o = adStudioSetup.options;
+  document.getElementById('as-product').innerHTML = o.products.map(function (p) {
+    return '<option value="' + adStudioEsc(p.handle) + '">' + adStudioEsc(p.title) + '</option>';
+  }).join('');
+  // NOTHING is checked. The cheapest action must be the one you get by accident.
+  document.getElementById('as-formats').innerHTML = o.formats.map(function (f) {
+    return '<label style="font-size:0.82rem;display:block"><input type="checkbox" class="as-format" value="' +
+      adStudioEsc(f.key) + '" onchange="adStudioEstimate()"> ' + adStudioEsc(f.key) +
+      ' <span style="color:var(--muted)">' + adStudioEsc(f.name || '') + '</span></label>';
+  }).join('');
+  document.getElementById('as-max-renders').max = o.maxRendersCeiling;
+  document.getElementById('as-variations').max = o.maxVariations;
+  document.getElementById('as-today').textContent =
+    o.rendersToday + ' render(s) billed today (Gemini allows 250)';
+  adStudioProductChanged();
+  if (o.activeJobId) adStudioPollJob(o.activeJobId);
+}
+
+function adStudioProductChanged() {
+  var o = adStudioSetup.options;
+  if (!o) return;
+  var handle = document.getElementById('as-product').value;
+  var product = o.products.filter(function (p) { return p.handle === handle; })[0];
+  var variants = (product && product.variants) || [];
+  document.getElementById('as-variant').innerHTML =
+    '<option value="">(none)</option>' + variants.map(function (v) {
+      return '<option value="' + adStudioEsc(v) + '">' + adStudioEsc(v) + '</option>';
+    }).join('');
+  adStudioEstimate();
+}
+
+function adStudioSelectedFormats() {
+  return Array.prototype.slice.call(document.querySelectorAll('.as-format:checked'))
+    .map(function (el) { return el.value; });
+}
+
+function adStudioSelectAllFormats() {
+  Array.prototype.slice.call(document.querySelectorAll('.as-format'))
+    .forEach(function (el) { el.checked = true; });
+  adStudioEstimate();
+}
+
+// Mirrors lib/ad-studio-cost.js. A Meta target bills TWO renders — the plate and the
+// comp derived from it. This copy is a DISPLAY convenience so the number moves while
+// boxes are ticked; the authority is the server, which recomputes it at launch and
+// refuses anything over the ceiling.
+function adStudioEstimate() {
+  var o = adStudioSetup.options;
+  if (!o) return;
+  var formats = adStudioSelectedFormats();
+  var variations = parseInt(document.getElementById('as-variations').value, 10) || 0;
+  var setKey = document.getElementById('as-targets').value;
+  var set = o.targetSets.filter(function (t) { return t.key === setKey; })[0] || { meta: 0, demandGen: 0 };
+  var concepts = formats.length * variations;
+  var expected = concepts * (2 * set.meta + set.demandGen);
+  var worst = concepts * (3 * (set.meta + set.demandGen) + set.meta);
+  var usd = function (n) { return '$' + (n * o.perRenderUsd).toFixed(2); };
+  document.getElementById('as-estimate').innerHTML = formats.length
+    ? '<strong>' + expected + ' renders · ' + usd(expected) + '</strong>' +
+      ' <span style="color:var(--muted)">worst case ' + worst + ' · ' + usd(worst) + '</span>'
+    : '<span style="color:var(--muted)">$0.00 — pick a format</span>';
+  // Gated on the computed cost, not on format count alone — 1+ formats with Variations
+  // cleared or typed as 0 still computes expected 0, and a $0.00 Render button that
+  // leads to a server-side 400 contradicts the whole point of showing a cost up front.
+  document.getElementById('as-run-btn').disabled = expected === 0;
+}
+
+async function adStudioLaunch(dryRun) {
+  var err = document.getElementById('as-launch-error');
+  err.textContent = '';
+  var body = {
+    product: document.getElementById('as-product').value,
+    variant: document.getElementById('as-variant').value || null,
+    formats: adStudioSelectedFormats(),
+    variations: parseInt(document.getElementById('as-variations').value, 10),
+    targets: document.getElementById('as-targets').value,
+    maxRenders: parseInt(document.getElementById('as-max-renders').value, 10),
+    dryRun: !!dryRun,
+  };
+  document.getElementById('as-run-btn').disabled = true;
+  document.getElementById('as-dry-btn').disabled = true;
+  try {
+    var res = await fetch('/api/ad-studio/launch', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    adStudioPollJob(data.jobId);
+  } catch (e) {
+    err.textContent = e.message;
+    document.getElementById('as-dry-btn').disabled = false;
+    adStudioEstimate();
+  }
+}
+
+function adStudioPollJob(jobId) {
+  adStudioSetup.jobId = jobId;
+  document.getElementById('as-progress').style.display = '';
+  if (adStudioSetup.pollTimer) clearInterval(adStudioSetup.pollTimer);
+  var tick = async function () {
+    var job;
+    try {
+      var res = await fetch('/api/ad-studio/job/' + encodeURIComponent(jobId), { credentials: 'same-origin' });
+      job = await res.json();
+    } catch (e) { return; }
+    adStudioRenderJob(job);
+    // A job stuck at status:'running' with its pid gone (OOM-killed — the box is 961 MB,
+    // see lib/ad-studio-job.js) would otherwise poll forever with no terminal status ever
+    // arriving. `alive` only exists on the response for a running job with a pid (see the
+    // route), so `=== false` is the one value that means "checked and confirmed gone" —
+    // it is never true for a live run and never present for a job that already finished.
+    var processGone = job.status === 'running' && job.alive === false;
+    if (job.status === 'complete' || job.status === 'error' || job.status === 'cancelled' || processGone) {
+      clearInterval(adStudioSetup.pollTimer);
+      adStudioSetup.pollTimer = null;
+      document.getElementById('as-dry-btn').disabled = false;
+      adStudioEstimate();
+    }
+  };
+  adStudioSetup.pollTimer = setInterval(tick, 2000);
+  tick();
+}
+
+function adStudioRenderJob(job) {
+  var processGone = job.status === 'running' && job.alive === false;
+  var status = document.getElementById('as-progress-status');
+  status.textContent = (processGone ? 'stopped — process gone' : job.status) + (job.runId ? ' — ' + job.runId : '');
+  document.getElementById('as-cancel-btn').style.display = (job.status === 'running' && !processGone) ? '' : 'none';
+  var link = document.getElementById('as-judge-link');
+  if (job.status === 'complete' && job.runId) {
+    link.style.display = '';
+    link.onclick = function () { switchAdStudioView('judge'); loadAdStudioRun(job.runId); return false; };
+  } else {
+    link.style.display = 'none';
+  }
+
+  var html = '';
+  if (processGone) {
+    html += '<div style="color:var(--danger,#f87171);margin-bottom:0.4rem">' +
+      'The render process is no longer running (it may have been killed for memory). ' +
+      'It is not going to finish on its own. Any frames it had already written are on ' +
+      'disk — switch to Judge and look for this run.</div>';
+  }
+  if (job.plan) {
+    html += '<div style="color:var(--muted);margin-bottom:0.4rem">planned ' + job.plan.expected +
+      ' render(s) · $' + job.plan.expectedUsd.toFixed(2) + '</div>';
+  }
+  if (job.error) {
+    html += '<pre style="white-space:pre-wrap;color:var(--danger,#f87171)">' + adStudioEsc(job.error) + '</pre>';
+  }
+  var byConcept = {};
+  (job.events || []).forEach(function (e) {
+    byConcept[e.concept || '—'] = byConcept[e.concept || '—'] || [];
+    byConcept[e.concept || '—'].push(e);
+  });
+  Object.keys(byConcept).forEach(function (concept) {
+    html += '<div style="margin-bottom:0.5rem"><strong>' + adStudioEsc(concept) + '</strong>';
+    byConcept[concept].forEach(function (e) {
+      // A gate rejection is a first-class outcome, not an error page.
+      var colour = e.state === 'accepted' ? 'var(--ok,#4ade80)'
+        : (e.state === 'ok' ? 'var(--muted)' : 'var(--danger,#f87171)');
+      html += '<div style="color:' + colour + '">' +
+        adStudioEsc(e.stage) + (e.variation ? ' v' + e.variation : '') +
+        (e.artifact ? ' · ' + adStudioEsc(e.artifact) : '') +
+        ' — ' + adStudioEsc(e.state || '') +
+        (e.attempts ? ' (' + e.attempts + ' attempt(s))' : '') +
+        (typeof e.score === 'number' ? ' — ' + e.score + '/5' : '') +
+        ((e.reasons && e.reasons.length) ? '<br><span style="color:var(--muted)">' + adStudioEsc(e.reasons.join('; ')) + '</span>' : '') +
+        '</div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('as-progress-body').innerHTML = html;
+}
+
+async function adStudioCancel() {
+  if (!adStudioSetup.jobId) return;
+  await fetch('/api/ad-studio/job/' + encodeURIComponent(adStudioSetup.jobId) + '/cancel',
+    { method: 'POST', credentials: 'same-origin' });
 }
 
 async function refreshAdStudioRuns() {
