@@ -144,3 +144,8 @@ data/reports/ad-studio/
 # Per-run LLM spend telemetry, written by lib/llm-meter on every agent run.
 # Machine-generated and append-only; scripts/llm-cost.mjs reads it locally.
 data/reports/llm-usage/
+
+# Ad Studio brief store — generated output. Scoped to the ad-studio subtree only:
+# data/briefs/ itself already holds committed content-brief JSON for a different
+# pipeline, and ignoring the parent would silently drop tracked files from future diffs.
+data/briefs/ad-studio/
