@@ -28,13 +28,13 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
 ## Validate every image change with a continuously running Amazon Experiments A/B test — version A vs version B, scheduled, read the metric delta — and always keep one new variant in test.
-**Stage:** traffic — parked until the traffic phase opens.
+**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
 
 **Why it works:** Continuous data-backed iteration compounds: each proven winner becomes the new control, so a seller running experiments constantly pulls permanently ahead of competitors who set an image once and leave it. The cadence is the mechanism, not any single winning frame.
 
 **Evidence offered:** All the portfolio before/afters are asserted to be Amazon Experiments results; a setup graphic is shown. No eligibility, duration, or significance detail given.
 
-**Fit here (7/10):** The only defect is session volume: at ~36 Amazon orders/month no variant reaches a readable delta, which is why this is parked rather than dropped. The mechanism itself is sound and durable — promote proven winners to control and always keep one variant in test — and Amazon Experiments is a live, current tool available to brand-registered sellers, so this is not a stale platform-mechanics artifact. Once traffic volume exists, a standing image-test cadence on a 12-SKU catalog is genuinely worth running. Worth 7 on its merits, not the 3 it would get for being unreadable today.
+**Fit here (7/10):** The mechanism is sound and durable — promote proven winners to control and always keep one variant in test — and Amazon Experiments is a live, current tool available to brand-registered sellers, so this is not a stale platform-mechanics artifact. Note that this was parked under `traffic`, but its real blocker was never ad budget: it is Amazon session volume, at ~36 Amazon orders/month too thin for a variant to reach a readable delta. Opening the Meta gate does not fix that, because the giveaway campaign drives Shopify entries rather than Amazon sessions. Still worth 7 on merit and worth starting a standing cadence on the highest-traffic ASIN, accepting that early reads are directional.
 
 **How it meshes with the rules above:** the one-lever-per-frame discipline is what makes this cadence readable — a variant that changes three levers at once produces a delta you cannot attribute. Until the gate opens, main-image and secondary-slot changes here are judgement-led: change one lever, ship, move on, and keep a written record of what changed so the same frames can be re-run as proper A/B pairs when sessions support it.
 

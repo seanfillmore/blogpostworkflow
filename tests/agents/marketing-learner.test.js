@@ -1767,6 +1767,7 @@ console.log('✓ marketing-learner date + constraint tests pass');
 // discoverable, while the fleet-facing projection hides it until that gate opens.
 import {
   STAGES,
+  CURRENT_STAGE,
   extractStagedTactics,
   isStageActive,
 } from '../../lib/marketing-learner.js';
@@ -1909,8 +1910,15 @@ import {
   assert.ok(!md.includes('marketing-paid-media'), 'a fully-parked skill is omitted entirely');
 }
 
-// Default stage: callers that pass no options get the configured current phase
+// Default stage: callers that pass no options get the CONFIGURED current phase
 // rather than "everything", so an un-updated caller cannot leak parked tactics.
+//
+// This used to assert that a `traffic`-parked section was hidden by default, which
+// silently encoded "traffic is still in the future". CURRENT_STAGE reached 'traffic'
+// on 2026-08-17, so that fixture would now fail for the right reason — the gate is
+// open — and pinning any single stage's visibility just re-breaks on the next bump.
+// Pin the actual contract instead: default === explicit CURRENT_STAGE, and a stage
+// beyond the current one is still hidden.
 {
   const content = [
     '---', 'name: marketing-paid-media', 'description: Paid.', '---', '',
@@ -1922,11 +1930,19 @@ import {
     '**Why it works:** Now.', '',
   ].join('\n');
 
-  const md = renderContextMirror([
-    { name: 'marketing-paid-media', description: 'Paid.', path: '/tmp/a/SKILL.md', content },
-  ]);
-  assert.ok(!md.includes('Parked thing'), 'the default projection is gated, not permissive');
-  assert.ok(md.includes('Active thing'));
+  const inv = [{ name: 'marketing-paid-media', description: 'Paid.', path: '/tmp/a/SKILL.md', content }];
+  assert.equal(
+    renderContextMirror(inv),
+    renderContextMirror(inv, { stage: CURRENT_STAGE }),
+    'the default projection is the configured stage, not a permissive "everything"',
+  );
+  assert.ok(renderContextMirror(inv).includes('Active thing'), 'an unstaged section is always live');
+
+  // The gating machinery itself still works — check against an earlier phase, which
+  // is the only direction left to test now that 'traffic' is the last stage.
+  const atCro = renderContextMirror(inv, { stage: 'cro' });
+  assert.ok(!atCro.includes('Parked thing'), 'a later-stage section is hidden from an earlier phase');
+  assert.ok(atCro.includes('Active thing'), 'an unstaged section survives an earlier phase');
 }
 
 // The extraction prompt must tell the model to park rather than reject, or the
@@ -1934,7 +1950,15 @@ import {
 {
   const b = buildConstraintBlock({ sourceType: 'video' });
   assert.match(b, /stage/i, 'the constraint block explains staging');
-  assert.match(b, /"traffic"/, 'the stage values are named for the model');
+  assert.match(b, /traffic/, 'the traffic phase is named for the model');
+  // Every gate is open as of 2026-08-17, so the block must say so and must stop the
+  // model discounting a tactic for a gate that no longer exists. That mis-scoring is
+  // not hypothetical: it cost six Meta reporting tactics 4/10 apiece on 2026-08-16,
+  // the same week the ad account was being built for the giveaway.
+  assert.match(b, /gate is OPEN|gates \(tracking, cro, offer-aov, traffic\) are open/i,
+    'the constraint block states the traffic gate is open');
+  assert.match(b, /omit `stage` on every tactic/i,
+    'the constraint block tells the model to stop setting stage');
   assert.ok(
     !/Requires ad budget materially above current spend\.\n/.test(b) ||
       /do not reject/i.test(b),

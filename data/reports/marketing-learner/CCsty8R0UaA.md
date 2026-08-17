@@ -6,6 +6,16 @@
 
 
 
+> **Correction, 2026-08-17.** This run scored tactics against a CLOSED traffic gate —
+> the extractor was told paid spend sat behind Tracking → CRO → Offer/AOV. That was wrong:
+> a Meta campaign for the soap giveaway was being stood up the same week. Six adopted
+> tactics were capped at 4/10 on gate reasoning and two were rejected on it. The gate was
+> opened (`CURRENT_STAGE = 'traffic'`), the affected fit rationales were rewritten and
+> re-scored, and the bid-strategy/attribution-window tactic was re-adopted into
+> `marketing-paid-acquisition-scaling`. **The scores below are the originals and are
+> superseded by the skill files.** The rejections that stand on their own merits — Motion,
+> Varos, agency/creator comparison, and the four duplicates — are unaffected.
+
 Found 19 tactics: 9 adopted, 10 rejected.
 
 ## Adopted
