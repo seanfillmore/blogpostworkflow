@@ -122,7 +122,7 @@ black box. `scoreBrief()` sums four components, each capped:
 |---|---|---|
 | `persona`    | 30  | Evidence count + emotional intensity behind the persona (voice-of-customer's own fields). |
 | `proof`      | 25  | Whether the angle's `source_quotes` actually appear in real reviews. **25** on a match, **6** when the quotes match nothing, and 0 only when the angle carries no `source_quotes` at all — which `agents/voice-of-customer` never writes, so the zero branch is unreachable on real data. |
-| `commercial` | 25  | Whether the product's cluster is earning, per `seo-impact`'s latest report; neutral (12) with no matching data. |
+| `commercial` | 25  | Whether the product's cluster is earning, per `seo-impact`'s latest report; neutral (12) with no matching cluster, and **also neutral when a matched cluster carries $0 revenue and no revenueDelta in either direction** — that combination is a no-signal state, not a zero-value one (see `lib/ad-brief-score.js`'s `scoreCommercial` header). A matched cluster with genuine negative momentum (revenueDelta < 0) is a real signal and is not neutralised — it scores at the bottom of the range instead. |
 | `headroom`   | 20  | Awareness headroom — broad `unaware`/`problem-aware` angles convert slower but keep running longer than narrow `product-aware` ones, which harvest fast and exhaust fast. |
 
 **The score never kills a brief.** There is no ad-performance data behind any of these
@@ -149,6 +149,21 @@ than their weights suggest:
   the product handle alone, and briefs are only ever listed and ranked for one product at a
   time. Those 25 points are therefore a fixed offset on every row of every list — they move
   the totals up or down together and never change the order.
+- **Today it is close to a constant ACROSS products too, and that is expected, not a bug.**
+  Fixed 2026-08-17: `scoreCommercial` used to score a matched cluster with $0 revenue as a
+  flat 0 — reading "commercially worthless" out of what is actually a no-signal state, since
+  seo-impact's organic-revenue attribution is directional only (see
+  `project_revenue_attribution_unreliable.md`) and every RSC cluster attributed $0 on the
+  server the day this was caught. It now scores that combination at the same neutral (12) as
+  no match at all. The observable consequence: with every relevant cluster still at $0,
+  `commercial` lands on 12 for most products right now, and the live discriminators really
+  are `headroom` and `proof`, same conclusion as before the fix, reached honestly instead of
+  by accident. The one live exception is informative rather than a leftover bug: a cluster
+  that attributes $0 revenue but carries a real `revenueDelta` (the server's "body lotion"
+  cluster was -25.2 the day this was found) is not neutralised — `coconut-lotion` scores 0 on
+  `commercial`, correctly below every product whose matched cluster shows no movement at all.
+  This will stop being nearly-constant automatically, with no further code change, the day
+  `seo-impact` starts attributing real organic revenue to these clusters.
 - **`persona` (30) compresses.** After Task 1's recalibration set the ceilings where the real
   data tops out (15 reviews, intensity 9.0), all five personas on file score **24–30 of 30**.
   Six points of spread across the whole roster.

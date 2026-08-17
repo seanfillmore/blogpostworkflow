@@ -90,6 +90,29 @@ test('a missing or malformed seo-impact report scores neutral for everything', (
   assert.equal(scoreCommercial('coconut-lotion', null), scoreCommercial('coconut-soap', null));
 });
 
+// Found live on the server the morning after PR #504 deployed: every RSC cluster
+// scoreCommercial actually matched against was attributing $0 revenue, and a MATCHED
+// cluster carrying $0 revenue used to fall through to the ordinary formula and compute
+// 0/10 + 0 = 0 — reading as "commercially worthless" when $0 attributed revenue (from an
+// attribution pipeline this repo's own notes call directional-only) means nothing was
+// measured, the same epistemic position as no match at all. A matched cluster with $0
+// revenue and $0 revenueDelta (no momentum in either direction) must score the same
+// neutral as no match, not the bottom of the range.
+test('a matched cluster with zero revenue and no momentum scores neutral, not zero (the live 2026-08-17 bug)', () => {
+  const ZERO_SIGNAL = { clusters: [{ cluster: 'soap', revenue: 0, revenueDelta: 0 }] };
+  assert.equal(scoreCommercial('coconut-soap', ZERO_SIGNAL), 12);
+});
+
+// The fix above must not launder a REAL decline into the same neutral. A cluster can
+// attribute $0 revenue in the window and still carry a genuine negative revenueDelta —
+// "body lotion" on the server was rev=0, delta=-25.2 the day this was found. That is
+// evidence of a real decline, not silence, and must score below the no-signal neutral.
+test('a matched cluster with zero revenue but genuine negative momentum scores low, not neutral', () => {
+  const DECLINING = { clusters: [{ cluster: 'body lotion', revenue: 0, revenueDelta: -25.2 }] };
+  const declining = scoreCommercial('coconut-lotion', DECLINING);
+  assert.ok(declining < 12, `a real decline must score below the no-signal neutral, got ${declining}`);
+});
+
 // ── headroom ────────────────────────────────────────────────────────────────────────
 //
 // Narrow product-aware angles harvest fast and exhaust fast; broad problem-aware and

@@ -159,6 +159,24 @@ that run dry first.
 Every component is stored and displayed. A score whose parts are hidden is a black box, and
 with no outcome data behind it, a black box is exactly what this must not be.
 
+**Correction, 2026-08-17 — Commercial's neutral was reachable only by accident.** The first
+build of `scoreCommercial` returned the documented neutral (12, "absence of evidence is not
+evidence") only when a product had no matching `seo-impact` cluster at all. The morning after
+PR #504 deployed, every RSC cluster the agent actually matched against was attributing $0
+revenue — itself unsurprising, since `seo-impact`'s organic-revenue numbers are directional
+only, not something to trust absolutely — and a MATCHED cluster with $0 revenue fell through
+to the ordinary formula instead of the neutral branch, scoring a flat 0. That reads as "this
+product is commercially worthless" for every product on the roster, which $0 attributed
+revenue does not mean. Fixed: a matched cluster set with $0 total revenue AND no
+`revenueDelta` in either direction now scores the same neutral as no match. A matched cluster
+that carries $0 revenue but a genuine negative `revenueDelta` is not covered by that fix and
+still scores at the bottom of the range — decline is real evidence, and laundering it into
+"no signal" would hide it. See `agents/ad-brief/README.md`'s "What the score actually
+discriminates on" for the current, honest read: with every relevant cluster still at $0 today,
+`commercial` lands on the same neutral value for most products, so `headroom` and `proof` are
+the components actually doing the ranking — the fix corrects what neutral *means*, it does not
+make `commercial` discriminate between products where the underlying revenue data doesn't yet.
+
 ## 4. The clarification loop
 
 A brief whose claim cannot be verified does not silently die. It lands in `needs-evidence`

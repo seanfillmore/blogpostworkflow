@@ -112,6 +112,69 @@ test('an angle naming no product stays relevant to everything', () => {
   assert.equal(angleRelevance(angle, { handle: 'coconut-soap', title: 'Coconut Bar Soap' }), true);
 });
 
+// THE LIVE BUG (code review, 2026-08-17). angleRelevance used to pool label + proof +
+// objection_addressed into one set and match on ANY of them, so "The winter survival
+// cream" (label: cream) got briefed against coconut-soap because its `proof` field
+// happens to mention "hand soap users" as one more data point about who likes it. The
+// label is the angle's SUBJECT; proof and objection are supporting prose that can name a
+// different product in passing without being about it — when the label names a product
+// category, that category decides alone, and nothing in proof can add to or override it.
+test('a label naming one product category decides relevance even when proof mentions a different one (the live p5a2 bug)', () => {
+  const angle = {
+    label: 'The winter survival cream',
+    proof: 'A Wisconsin family uses it as their whole-household winter moisturizer, calling it ' +
+      'long-lasting and non-greasy; hand soap users say it keeps winter hands from getting irritated.',
+  };
+  assert.equal(
+    angleRelevance(angle, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap' }),
+    false,
+    'proof mentioning soap in passing must not override what the label is about'
+  );
+  assert.equal(
+    angleRelevance(angle, { handle: 'coconut-lotion', title: 'Non-Toxic Body Lotion' }),
+    true,
+    '"cream" and "lotion" are the same product category'
+  );
+});
+
+// The label is silent here ("After prescriptions failed" names no product), so the fix
+// falls back to proof + objection_addressed — but only a category named in BOTH counts as
+// decisive. Reproduces the real p1a1 angle: objection_addressed only reaches "lotion"
+// inside a skeptical customer's rhetorical aside ("...so why would a coconut lotion?"),
+// with nothing in proof to corroborate it. A category named in only one of the two
+// supporting fields is exactly the "mentioned in passing" case this fix exists to stop
+// trusting, so this must stay relevant to every product, not narrow to lotion.
+test('a category named in only one of proof/objection_addressed does not decide — only agreement between both does', () => {
+  const angle = {
+    label: 'After prescriptions failed',
+    proof: 'Verified reviewer with severe eczema reports going from hourly reapplication to twice a day.',
+    objection_addressed: "'I've already tried everything, so why would a coconut lotion?'",
+  };
+  assert.equal(angleRelevance(angle, { handle: 'coconut-lotion', title: 'Coconut Lotion' }), true);
+  assert.equal(angleRelevance(angle, { handle: 'coconut-soap', title: 'Coconut Bar Soap' }), true);
+});
+
+// The corroboration case actually firing: both supporting fields independently name the
+// same category, with the label silent.
+test('a category named in BOTH proof and objection_addressed decides, when the label is silent', () => {
+  const angle = {
+    label: 'Absorbs before you get dressed',
+    proof: 'Buyers who hate slow-absorbing, sticky lotion report quick absorption with no oily look.',
+    objection_addressed: "'I hate waiting for lotion to sink in.'",
+  };
+  assert.equal(angleRelevance(angle, { handle: 'coconut-lotion', title: 'Coconut Lotion' }), true);
+  assert.equal(angleRelevance(angle, { handle: 'coconut-soap', title: 'Coconut Bar Soap' }), false);
+});
+
+// "bar" and "wash" are how a soap gets talked about without ever saying "soap" — the real
+// catalog title is "Moisturizing Coconut Soap", which never contains the literal word
+// "bar". Without category grouping, a label-decisive "bar" would fail to match the very
+// product it is obviously about.
+test('"bar" and "soap" are the same product category', () => {
+  const angle = { label: 'The bar you put out for guests' };
+  assert.equal(angleRelevance(angle, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap' }), true);
+});
+
 // ── ids and args ────────────────────────────────────────────────────────────────────
 test('a brief id is safe as a filename and carries product and angle', () => {
   const id = buildBriefId('coconut-lotion', 'p1a1', 1786000000000);

@@ -17,6 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   CLUSTER_HANDLES, clusterCoverage, assertClusterCoverage, planBriefs, formatsForAngle,
+  angleRelevance,
 } from '../../lib/ad-brief-plan.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -122,4 +123,45 @@ test('planBriefs relevance filtering keeps a lotion angle off bar soap', () => {
   const soap = planBriefs({ personasData: PERSONAS, product: { handle: 'coconut-soap', title: 'Coconut Bar Soap' } });
   assert.ok(lotion.angleCount > soap.angleCount,
     'lotion-specific angles must not also be planned for bar soap');
+});
+
+// ── the live p5a2 bug, on the REAL personas.json (code review, 2026-08-17) ─────────────
+//
+// "The winter survival cream" (p5a2) used to be briefed against coconut-soap because its
+// `proof` field mentions "hand soap users" in passing. Checked against the actual file on
+// disk, with the actual production catalog title (no "cream" anywhere in it), rather than
+// a hand-written fixture — this is the exact request that shipped copy for the wrong
+// product and cost one real Opus call.
+test('the real p5a2 angle ("The winter survival cream") is not briefed against coconut-soap', () => {
+  const p5a2 = PERSONAS.personas.flatMap(p => p.angles).find(a => a.id === 'p5a2');
+  assert.equal(p5a2.label, 'The winter survival cream', 'sanity: this is still the angle the live bug named');
+  assert.equal(angleRelevance(p5a2, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap | 3.4oz' }), false);
+});
+
+// ── the three sanity checks the fix was verified against, pinned as tests ──────────────
+test('p5a3 ("The bar you put out for guests") is soap-relevant and not lotion-relevant', () => {
+  const p5a3 = PERSONAS.personas.flatMap(p => p.angles).find(a => a.id === 'p5a3');
+  assert.equal(angleRelevance(p5a3, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap | 3.4oz' }), true);
+  assert.equal(
+    angleRelevance(p5a3, { handle: 'coconut-lotion', title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' }),
+    false
+  );
+});
+
+test('p3a2 ("The first lotion that didn\'t react") is lotion-relevant and not soap-relevant', () => {
+  const p3a2 = PERSONAS.personas.flatMap(p => p.angles).find(a => a.id === 'p3a2');
+  assert.equal(
+    angleRelevance(p3a2, { handle: 'coconut-lotion', title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' }),
+    true
+  );
+  assert.equal(angleRelevance(p3a2, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap | 3.4oz' }), false);
+});
+
+test('p1a1 ("After prescriptions failed") names no product and stays relevant to both', () => {
+  const p1a1 = PERSONAS.personas.flatMap(p => p.angles).find(a => a.id === 'p1a1');
+  assert.equal(
+    angleRelevance(p1a1, { handle: 'coconut-lotion', title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' }),
+    true
+  );
+  assert.equal(angleRelevance(p1a1, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap | 3.4oz' }), true);
 });
