@@ -57,6 +57,21 @@ test('an angle with no source quotes scores 0 proof, not full marks', () => {
   assert.equal(scoreProof({ id: 'x', proof: 'trust me' }, REVIEWS), 0);
 });
 
+// A quote head must survive inside ONE review, not be assembled from the tail of one
+// review and the head of the next. Two reviews that, concatenated with a single space,
+// would contain the quote's head — but neither contains it alone — must not score proof.
+test('proof does not score full marks when a quote head only matches across a review boundary', () => {
+  const splitAngle = {
+    id: 'split-quote',
+    source_quotes: ['all day long totally changed my morning routine'],
+  };
+  const splitReviews = [
+    { body: 'stays put all day long' },
+    { body: 'totally changed my morning routine forever' },
+  ];
+  assert.ok(scoreProof(splitAngle, splitReviews) < 25);
+});
+
 // ── commercial ──────────────────────────────────────────────────────────────────────
 test('commercial rewards a product whose cluster earns revenue', () => {
   assert.ok(scoreCommercial('coconut-lotion', SEO) > scoreCommercial('coconut-soap', SEO));
