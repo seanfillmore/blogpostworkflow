@@ -1,6 +1,6 @@
 ---
 name: marketing-awareness-level-messaging
-description: Use when deciding what a page, email, or listing should actually say — mapping product page hero copy, Amazon titles and bullets, welcome and post-purchase email flows, and landing pages to whether the reader is unaware, problem-aware, solution-aware, or product-aware, checking that against how sophisticated (saturated) the category already is, turning that diagnosis into concrete headline stems, and deriving extra assets by re-entering one proven angle at a different awareness level.
+description: Use when deciding what a page, email, or listing should actually say — mapping product page hero copy, Amazon titles and bullets, welcome and post-purchase email flows, and landing pages to whether the reader is unaware, problem-aware, solution-aware, or product-aware, checking that against how sophisticated (saturated) the category already is, weighing narrow fast-converting angles against broader ones with more headroom, turning that diagnosis into concrete headline stems, and deriving extra assets by re-entering one proven angle at a different awareness level.
 ---
 
 # Awareness Level Messaging
@@ -30,6 +30,21 @@ Awareness is about the individual reader; sophistication is about how much the *
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 
+## Judge an angle by its headroom, not only by how fast it converts out of the gate.
+
+The awareness levels are not interchangeable slots — they trade off against each other. Narrow, lower-funnel messaging (competitor comparison, spec numbers, value math) converts fastest early because it picks off the already-convinced buyers who are cheapest to convert; that pool is small and finite, so the angle runs dry. Broader problem-aware or unaware messaging converts more slowly at first but has far more audience left to reach, so it keeps running and scales longest.
+
+- **Narrow / product-aware** → harvests fast, exhausts fast. Right for retargeting, reorder emails, comparison sections, and anywhere the reader already knows the category.
+- **Broad / problem-aware or unaware** → slower to prove out, far more headroom. Right for the PDP hero, the top-of-funnel content piece, and the subject line that has to keep working month after month.
+
+**Why it works:** Early conversion rate is partly a measure of how pre-sold the audience already was, not how good the message is. An angle that only speaks to people who have already decided has nowhere left to go once that segment is served; an angle pitched upstream still has an audience the day after.
+
+**Evidence offered:** One test recounted: variant A (value-based, competitor comparison, numbers-heavy) converted faster initially, while variant B (negative framing, trigger word, question format, broader appeal) ran and won longest. Single account anecdote, no figures.
+
+**Fit here (5/10):** Durable principle class (awareness/audience-size logic), age irrelevant. It supplies the tradeoff the awareness mapping above leaves implicit — that the product-aware angle harvests fast and runs dry while the problem-aware angle sustains. Usable today at zero cost as a judgement rule for what a PDP hero, an Amazon A+ block, or an email subject line should lead with, and it fits the natural-deodorant reality where "aluminum-free" is table stakes and the problem-aware angle has far more people left in it. Capped at 5 because the evidence is a single unquantified test and the notion of an angle "running out" is a paid-scaling artifact that does not transfer literally to an evergreen product page — on owned surfaces it argues for placement (broad above the fold, narrow further down) rather than for retiring anything.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
 ## Operationalize the framework with three how-to sentence stems, one per awareness stage.
 
 This is the concrete execution layer for the awareness-level diagnosis above — instead of abstractly "matching awareness," write the literal headline:
@@ -42,7 +57,7 @@ This is the concrete execution layer for the awareness-level diagnosis above —
 
 **Evidence offered:** "How do I pick" was the top performer for six months for both a home decor and an apparel client; the rest is practitioner assertion, with an explicit admission that this framing makes bad YouTube content but keeps working in ads.
 
-**Fit here (7/10):** Durable principle class and the cleanest operationalization of awareness levels — it converts an abstract framework into three literal sentence stems. Executable solo at zero cost: "how to know if your deodorant is the problem" for top-of-funnel content and problem-aware PDP copy; "how to choose a natural deodorant that actually works" as a comparison section or Amazon A+ block; "how to start" for the transition-period onboarding email that directly serves the 18–22.5% repeat rate. In a saturated category, fill the body of each stem with the named mechanism rather than the category claim.
+**Fit here (7/10):** Durable principle class and the cleanest operationalization of awareness levels — it converts an abstract framework into three literal sentence stems. Executable solo at zero cost: "how to know if your deodorant is the problem" for top-of-funnel content and problem-aware PDP copy; "how to choose a natural deodorant that actually works" as a comparison section or Amazon A+ block; "how to start" for the transition-period onboarding email that directly serves the 18–22.5% repeat rate. In a saturated category, fill the body of each stem with the named mechanism rather than the category claim. The stems also map onto the headroom tradeoff: "how to know if" is the broad, long-running one; "how do I pick" is narrower and harvests comparison shoppers.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
@@ -54,7 +69,7 @@ Once an angle converts, don't rewrite it — swap only the hook and the bridge s
 
 **Evidence offered:** Side-by-side of the direct "if your dog eats grass, do this" hook versus the unaware "our dogs can't talk to us" hook leading into the identical script; both described as winners. Practitioner assertion, no numbers.
 
-**Fit here (6/10):** Durable principle class, age irrelevant. This is the derivation move that sits on top of the diagnosis above: the earlier sections tell you which awareness level a surface serves; this one tells you how to generate a variant for a *different* surface without starting from scratch. Free and solo-executable across an Amazon title vs. an A+ block vs. a PDP hero vs. an email subject line — one natural-deodorant angle, four entry points. Pair it with the how-to stems: keep the body, swap the stem ("how to know if..." → "how do I pick...") to slide the same argument up or down the awareness ladder. Note that only the *entry point* varies — the mechanism-led body stays fixed, because sophistication is a property of the category and doesn't change between surfaces. Capped at 6 because Real Skin Care cannot measure which variant wins — it can only reason about coverage, not test it.
+**Fit here (6/10):** Durable principle class, age irrelevant. This is the derivation move that sits on top of the diagnosis above: the earlier sections tell you which awareness level a surface serves; this one tells you how to generate a variant for a *different* surface without starting from scratch. It is also the practical remedy for a narrow angle with no headroom left — re-enter the same body from a broader hook rather than scrapping it. Free and solo-executable across an Amazon title vs. an A+ block vs. a PDP hero vs. an email subject line — one natural-deodorant angle, four entry points. Pair it with the how-to stems: keep the body, swap the stem ("how to know if..." → "how do I pick...") to slide the same argument up or down the awareness ladder. Note that only the *entry point* varies — the mechanism-led body stays fixed, because sophistication is a property of the category and doesn't change between surfaces. Capped at 6 because Real Skin Care cannot measure which variant wins — it can only reason about coverage, not test it.
 
 *Source: Spencer Pawliw — "We 38x'd Meta Spend in 4 Months. Here's What Actually Did It" (goedDlD00T0)*
 

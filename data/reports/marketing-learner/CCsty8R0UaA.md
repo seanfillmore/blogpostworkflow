@@ -1,0 +1,187 @@
+# How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)
+
+**Creator:** Dara Denney  
+**Video:** https://www.youtube.com/watch?v=CCsty8R0UaA  
+**Published:** 2025-01-16  
+
+
+
+Found 19 tactics: 9 adopted, 10 rejected.
+
+## Adopted
+
+### Split every metric into primary metrics you are allowed to optimize on (spend, purchases, cost per purchase, ROAS — or leads and cost per lead) and secondary 'storytelling' metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain why something worked, and never budget-optimize on a secondary metric — in particular do not treat click-through rate as a performance verdict, because broad targeting depresses CTR even when the ad is reaching exactly the right buyers. — 6/10
+
+**Why it works:** Only the conversion and cost-per-conversion metrics measure the outcome you are paying for; the rest are inputs that can move for reasons unrelated to revenue. Scaling on a secondary metric therefore funds ads that are cheap to deliver or easy to click rather than ads that sell, and under broad targeting a low CTR can mean the ad filtered correctly rather than failed. The real explanation for why an ad worked usually sits in the creative — the message, the visual, the format — not anywhere in the numbers.
+
+**Evidence:** Practitioner assertion, illustrated on one live campaign where the winning ad had an unremarkable outbound CTR but a hook rate roughly double the account average. No controlled comparison.
+
+**Fit:** Durable-principle class (measurement discipline), so age is not the limiter — it is a direct restatement of the prime directive that revenue, not clicks or reach, decides where money goes, and it is the correct guardrail against the classic solo-operator mistake of scaling the ad with the best CTR. Blocked only by the traffic gate: there is no ad account, no budget and no working attribution to read purchases against, which is gate one. Held at 6 rather than higher because it prevents waste rather than producing revenue, and at ~54 orders/month even the primary metrics will be too thin to read cleanly at first.
+
+**Target skill:** `marketing-paid-acquisition-scaling` (edit)
+
+**Merged from:** part 1 of 2
+
+### Do not buy a first-party attribution platform (Triple Whale, Northbeam) until you are running meaningful budgets across several channels — native platform reporting is sufficient, and these tools do not unlock creative-level insight for a single-channel advertiser. — 6/10
+
+**Why it works:** Multi-touch attribution tools exist to reconcile conflicting numbers across independent channels (TV, podcast, influencer, Google, Meta). With one acquisition channel there is nothing to reconcile, so the tool adds subscription cost and dashboard maintenance without changing a single decision you would have made from the native numbers.
+
+**Evidence:** Practitioner position stated plainly, with the counter-case named: one client that does invest across multiple channels and therefore does use Triple Whale. Assertion, no cost or decision-quality comparison.
+
+**Fit:** Executable today and the one item here that needs no ad account, because it is a spend-avoidance decision rather than an activity: at ~$2,700/mo combined revenue, a multi-touch attribution subscription would consume a visible share of monthly income and change nothing, since there is one paid channel (none) and two sales surfaces. It also sharpens the Tracking gate honestly — gate one means getting Shopify, Klaviyo and Amazon reporting trustworthy, not buying an attribution platform. Held at 6 because it protects margin rather than producing revenue, and the creator's threshold is set from mid-scale DTC accounts rather than a $2,700/mo operation.
+
+**Target skill:** `marketing-paid-acquisition-scaling` (edit)
+
+**Merged from:** part 1 of 2
+
+### A metrics row is not an analysis — tag every asset with its qualitative attributes (format, who delivered it, imagery and production quality, setting, messaging angle) so that when you compare winners to losers you can name what actually differed. — 5/10
+
+**Why it works:** Performance numbers tell you which asset won but carry no information about why, so acting on them alone means producing 'more variants of B' without knowing which property of B did the work. Attributes recorded at production time turn a set of results into a set of testable explanations, and recurring attributes across winners become the thing you deliberately reproduce.
+
+**Evidence:** Walkthrough of a four-variant test slide, showing what the numeric readout omits, plus one case where the same creator was identified as the recurring driver across multiple winning ads and was re-hired on that basis. Practitioner demonstration, no controlled comparison.
+
+**Fit:** Durable-principle class (a feedback-loop discipline, not a platform mechanic), so age is irrelevant. Its native home — a Meta creative test — does not exist here, but the attribute-tagging half has an honest translation on the two surfaces a solo operator actually has: Klaviyo campaign history (tag each send by angle, format, awareness level before comparing opens and clicks) and Amazon/PDP image changes (record which lever changed, which marketing-product-image-stack already asks for so the frames can be re-run as proper A/B pairs once sessions support it). Capped at 5 because it is close kin to the existing top-vs-bottom-decile contrast in marketing-performance-pattern-analysis — the additive part is only the explicit attribute taxonomy recorded before results arrive — and because at ~54 orders/month and a sub-1,000 subscriber list every conclusion is directional judgement, not a finding.
+
+**Target skill:** `marketing-performance-pattern-analysis` (edit)
+
+**Merged from:** part 2 of 2
+
+### Narrower, lower-funnel messaging converts fastest out of the gate but exhausts quickly, while broader problem-aware/unaware messaging is what keeps running and scales longest — so judge an angle by its headroom, not only by its early conversion rate. — 5/10
+
+**Why it works:** Low-funnel messaging picks off the already-convinced buyers who are cheapest to convert, so it looks best early; that pool is small and finite. Broader messaging appeals to a wider, less-aware segment, so it converts more slowly at first but has far more audience left to reach, which is why it outlives the narrow variant.
+
+**Evidence:** One test recounted: variant A (value-based, competitor comparison, numbers-heavy) converted faster initially, while variant B (negative framing, trigger word, question format, broader appeal) ran and won longest. Single account anecdote, no figures.
+
+**Fit:** Durable principle class (awareness/audience-size logic), age irrelevant. Genuinely additive to marketing-awareness-level-messaging, which maps messages to awareness levels but never states the tradeoff between them — that the product-aware angle harvests fast and runs dry while the problem-aware angle sustains. Usable today at zero cost as a judgement rule for what a PDP hero, an Amazon A+ block, or an email subject line should lead with, and it fits the natural-deodorant reality where 'aluminum-free' is table stakes and the problem-aware angle has far more people left in it. Capped at 5 because the evidence is a single unquantified test and the notion of an angle 'running out' is a paid-scaling artifact that does not transfer literally to an evergreen product page.
+
+**Target skill:** `marketing-awareness-level-messaging` (edit)
+
+**Merged from:** part 2 of 2
+
+### Configure Ads Manager to a fixed, minimal column set — amount spent, purchases, cost per purchase and ROAS first, then frequency, reach, impressions and CPM, then unique outbound click-through rate and cost per link click, then hook rate, hold rate and video average play time, plus post shares — and sort ads highest to lowest by amount spent so you triage where the money is actually going before looking at anything else; use unique outbound CTR rather than the generic click-through metric. — 4/10
+
+**Why it works:** A small deliberate column set stops you drowning in metrics: the first four tell you what is working, the audience metrics tell you who you reached, and unique outbound CTR is the 'purest' click metric because it excludes clicks that never land on the site (profile taps, expands), so it is the only click figure that reflects real landing-page arrivals. Sorting by spend puts the money-consuming ads first so triage follows the dollars — an underperforming ad consuming most of the budget is the only thing worth turning off first, and a strong ad with negligible spend is not yet moving the account.
+
+**Evidence:** Live screen share of her own account with a real ASC campaign, including one campaign where a single ad held roughly 75% of an $11.5k spend; practitioner assertion about which metrics matter. No comparison against other setups, no performance data tying the column choice or sort order to outcomes.
+
+**Fit:** Platform-mechanics class (column names, sort controls and metric definitions) and roughly 13 months old at review, so the specific metric labels are already suspect and will likely be renamed again before this business reaches the traffic gate. It also cannot be run at all today: there is no ad account, no budget and no media buyer, and paid spend sits last behind Tracking → CRO → Offer/AOV. Worth recording as the reporting setup to build on day one of any future spend — including the 'attention follows the dollars' sort habit — but capped at 4 because it is a viewing habit rather than a revenue mechanism and the exact fields will need re-deriving anyway.
+
+**Target skill:** `marketing-paid-acquisition-scaling` (edit)
+
+**Merged from:** part 1 of 2; part 1 of 2
+
+### Watch frequency as an audience-exhaustion alarm: an average frequency above about 5 over the last seven days or few weeks means your creative is hitting the same people repeatedly rather than reaching new ones. — 4/10
+
+**Why it works:** Reach counts distinct people and impressions count total deliveries, so frequency is the ratio that reveals whether delivery has collapsed onto a small retargeting-sized pool. A rising frequency means the same audience is being re-served, which inflates cost per purchase without adding new customers, and it signals the creative set is too narrow to open new audiences.
+
+**Evidence:** Assertion plus her stated personal threshold ('I get a little worried above five'), read off one live campaign that she says was reaching plenty of new people. No data linking a frequency threshold to CPA outcomes.
+
+**Fit:** Platform-mechanics class (delivery diagnostics) and about 13 months old, so the threshold is a soft practitioner number rather than a stable rule. Unrunnable today for the obvious reason: no ad account, no spend, and paid sits behind Tracking → CRO → Offer/AOV. Recorded because at the small daily budgets this business would ever run, audience exhaustion arrives fast and frequency is the cheapest way to see it, but capped at 4 because it is a single warning-light reading with no revenue mechanism of its own and it partly overlaps the diagnostic-metric rule.
+
+**Target skill:** `marketing-paid-acquisition-scaling` (edit)
+
+**Merged from:** part 1 of 2
+
+### Add hook rate (percentage who watched the first three seconds) and hold rate (percentage who watched the first fifteen seconds or the whole ad if shorter) as custom metrics, and read hold rate alongside video average play time rather than relying on average play time alone. — 4/10
+
+**Why it works:** Neither figure exists natively, so without building them you have no view of whether a video's opening earned attention or whether the body retained it. Average play time is distorted by ad length — long ads inflate it — whereas hook and hold are percentages of the same denominator, so they isolate whether the first seconds and the middle are doing their jobs and can be compared across the account.
+
+**Evidence:** Formulas shown on screen; one live example where the winning ad's hook rate was roughly double the account average of ~30% and hold roughly double the 7–8% average. Single account, no controlled test. Explicitly acknowledged as unavailable for image ads.
+
+**Fit:** Platform-mechanics class (custom metric formulas inside Ads Manager) and about 13 months old, so the field names are the first thing likely to have changed. Doubly blocked: it needs an ad account and spend that do not exist, and it only reads video creative, which a solo operator with no designer and no videographer barely produces — the closest asset is a repeat-customer testimonial clip. Worth recording because existing skills reference hook rate as the native measurement for hook-injection work without saying how to compute it, but a 4 because it measures a creative type this business hardly has.
+
+**Target skill:** `marketing-paid-acquisition-scaling` (edit)
+
+**Merged from:** part 1 of 2
+
+### Do not force budget toward the ads showing the best cost per purchase or ROAS while the algorithm concentrates spend elsewhere — that is Meta's documented breakdown effect, and throttling spend to those apparently cheaper ads usually makes them perform worse. — 4/10
+
+**Why it works:** The headline efficiency of a low-spend ad reflects the small, cheapest slice of audience it happened to reach, not what it would do at scale. The algorithm has already estimated that pushing more budget through it would land on costlier inventory, so the attractive CPA is an artefact of tiny delivery rather than a property of the ad — and manually overriding the allocation surfaces that.
+
+**Evidence:** Attributed to Meta's own published explanation of the breakdown effect, plus her claim to have tested overriding it 'multiple times' with worse results. No figures from those tests.
+
+**Fit:** Platform-mechanics class (algorithmic budget allocation behaviour) about 13 months old, and precisely the kind of claim likely to be restated or obsolete by the time this business clears Tracking → CRO → Offer/AOV and reaches the traffic gate. Also unrunnable today with no ad account and no spend. Recorded because it pre-empts a real solo-operator instinct — hand-forcing budget onto the ad with the prettiest ROAS column — but held at 4 because the underlying statistical point (small-sample efficiency is not scalable efficiency) is already the reason nothing in this account is measurable at ~54 orders/month.
+
+**Target skill:** `marketing-paid-acquisition-scaling` (edit)
+
+**Merged from:** part 1 of 2
+
+### Pull the age, gender, and placement breakdowns on a winning creative — if it is over-indexing on a demographic or a placement, build more creative aimed at that audience or formatted for that placement. — 4/10
+
+**Why it works:** A creative does not perform uniformly across the audience it is served to; the breakdown reveals which slice is actually producing the result, which converts an unexplained winner into a stated audience or format hypothesis you can deliberately build the next asset against.
+
+**Evidence:** Assertion with hypothetical examples (a creative skewing 50+, Instagram versus Facebook, feed versus stories versus reels). No account data shown.
+
+**Fit:** Platform-mechanics class — Ads Manager breakdown categories and placement names are exactly the detail that shifts — but published 2025-01, so age is not what caps this; the gate is. It requires an ad account, spend, and enough conversion volume for a breakdown split to mean anything, none of which exist, and paid sits last behind Tracking → CRO → Offer/AOV. Worth recording because it is genuinely additive for a future ad account: marketing-paid-acquisition-scaling already covers dissecting a winner into components, but nothing there covers reading who the winner actually reached.
+
+**Target skill:** `marketing-paid-acquisition-scaling` (edit)
+
+**Merged from:** part 2 of 2
+
+## Rejected
+
+### Don't try to explain why every loser failed — look instead for recurring patterns across the account (messaging, visuals, formats) and pressure-test the ones that seem to be working. — 3/10
+
+**Rejected because:** Duplicates existing pattern-analysis and winner-dissection rules in a weaker form (no bottom-decile contrast); a third near-identical statement would degrade skill triggering.
+
+**Fit reasoning:** The substance already exists in two places: marketing-performance-pattern-analysis owns contrasting top and bottom performers to isolate the working variable, and marketing-paid-acquisition-scaling owns dissecting a proven winner into components and iterating on it rather than testing fresh concepts. This version is weaker than either — it drops the bottom-decile contrast that gives the existing rule its diagnostic power.
+
+### Run a messaging analysis across the variants in a test, classifying each by its angle — value-based, competitor comparison, numbers-heavy, negative marketing, trigger word, question format, fast-and-easy, problem-solution. — 3/10
+
+**Rejected because:** Duplicates the deeper angle taxonomy already in marketing-conversion-copy-angles and the classify-before-comparing habit already adopted via attribute tagging; a competing thinner list would degrade triggering accuracy.
+
+**Fit reasoning:** The angle taxonomy itself is already owned in more depth by marketing-conversion-copy-angles (specificity and hard numbers, negative framing, trigger-word injection, taboo, one-thing simplicity, transformation-first) and the classification-before-comparison habit is covered by the adopted attribute-tagging tactic. Shipping it again would add a competing, thinner list of the same angle names.
+
+### No analysis is complete without comparative context — benchmark the creative against your own current top performers, and against what competitors are running in their ad libraries (formats, messaging, whether they repeat anything month over month). — 3/10
+
+**Rejected because:** Both halves duplicate existing skills (own-performer comparison in marketing-performance-pattern-analysis, competitor ad-library run-duration reading in marketing-competitor-messaging-teardown) with less actionable detail.
+
+**Fit reasoning:** Both halves are already owned. Comparing an asset to your own top and bottom performers is the entire premise of marketing-performance-pattern-analysis, and reading competitor ad libraries — including the 'what has run repeatedly, so it is probably working' inference — is covered in more actionable detail by the run-duration ranking rule in marketing-competitor-messaging-teardown, which already names the relevant competitor set.
+
+### Start an Advantage+ Shopping campaign at a minimum of about $100/day and load it with at least ~20 creatives, because ASC campaigns perform best with high creative volume. — 2/10
+
+**Rejected because:** Minimum viable spend exceeds total monthly revenue and the 20-creative requirement is unreachable for a solo operator with no designer; the campaign-type mechanics will also have been rewritten before the traffic gate opens.
+
+**Fit reasoning:** Fails on more than timing. $100/day is $3,000/mo, larger than the entire business's combined revenue, and 20 distinct creatives is not something one operator with no designer produces for a single campaign — so there is no honest scaled-down version. It is also platform-mechanics class (campaign-type naming and creative-count heuristics) at ~13 months old, and ASC's structure is exactly what will have been rewritten before this business reaches the traffic gate.
+
+### Beginners should set the bid strategy to highest volume and the attribution setting to 7-day click / 1-day view. — 2/10
+
+**Rejected because:** Fastest-decaying platform settings with no durable mechanism beyond 'pick the default that chases conversions', which the already-parked purchase-objective rule covers; would need re-deriving from the live interface anyway.
+
+**Fit reasoning:** Platform-mechanics class and, specifically, attribution windows and bid-strategy naming — the two items the decay table calls out as fastest-decaying. At ~13 months old these defaults are already worth checking, and paid spend here is gated behind Tracking → CRO → Offer/AOV → Traffic, so any recorded setting would have to be re-derived from the current interface before use.
+
+### Do your analysis first and your optimization second — never tweak the account while you are still reading the data. — 2/10
+
+**Rejected because:** Mindset framing with no procedure; the actionable version is already covered by the existing 7–14 day learning-phase edit freeze, and duplicating it would blur that skill's triggering.
+
+**Fit reasoning:** Mostly mindset framing with no stated procedure — no cadence, no threshold, no artifact — and the concrete discipline it gestures at (stop editing so the account can produce a readable signal) is already owned by the 7–14 day learning-phase edit freeze parked in marketing-paid-acquisition-scaling, which gives an actual number of days.
+
+### Reserve this full in-depth teardown for big swings or a unicorn ad that is scaling hard — do not do it for every test. — 2/10
+
+**Rejected because:** Workload-allocation advice for an analyst team running many tests; there is no test program or unicorn asset to triage, and no revenue mechanism even after the traffic gate opens.
+
+**Fit reasoning:** An effort-triage rule for a team running a continuous test program across many accounts. RSC runs no creative tests, has no unicorn to dissect, and at ~54 orders/month has no asset whose performance is statistically distinguishable from any other — so there is nothing for the triage rule to triage. Not a stage problem either: even after the traffic gate opens, this is workload allocation for an analyst team, not a mechanism.
+
+### Run your creative analysis and comparison reporting in Motion rather than Ads Manager, using standing weekly and monthly top-creative reports, per-test reports and format-diversity analyses, because they are easier to produce automatically and easier to share with teammates who find Ads Manager intimidating. — 1/10
+
+**Rejected because:** Requires a paid third-party analytics subscription, an active ad account, high creative volume and teammates to share reports with — none of which exist for a solo operator at ~$2,700/mo with paid traffic behind three earlier gates; the useful format-diversity half is already covered by existing skills.
+
+**Fit reasoning:** Every input is absent: a paid creative-analytics subscription against ~$2,700/mo revenue, enough creative volume for weekly top-performer reports, an ad account to report on, and teammates to share dashboards with. It is also fast-decaying platform-mechanics class (a specific third-party tool integrated with Ads Manager), and the format-diversity half is already owned by the format rotation in marketing-product-image-stack and the coverage gap analysis in marketing-competitor-messaging-teardown.
+
+### Benchmark your CPM and click-through rate against industry, product and demographic norms using Varos so you know whether your numbers are actually good. — 1/10
+
+**Rejected because:** Needs a live ad account and a second paid subscription to benchmark metrics that are explicitly barred from driving budget decisions, and at achievable spend the business's own CPM/CTR would be too noisy to benchmark.
+
+**Fit reasoning:** Requires a live ad account generating the CPM and CTR to be benchmarked plus another paid subscription against ~$2,700/mo revenue, and it benchmarks metrics that the adopted primary/secondary rule says must never drive a budget decision anyway. Nothing here is a revenue mechanism, and at the volumes this business would ever run its own CPM would be too noisy to compare to any benchmark meaningfully.
+
+### Compare performance across your agency partners and across creator types (celebrity, influencer, UGC) so you can increase scope and retainers with the ones moving the needle, drop the ones that are not, and re-hire or find lookalikes of the creators that worked. — 1/10
+
+**Rejected because:** Requires multiple agency retainers and a paid creator/celebrity roster that do not and will not exist for a solo operator; the realistic sliver is already covered by marketing-creator-content-sourcing.
+
+**Fit reasoning:** Assumes multiple agency retainers, a celebrity and influencer program, and a paid UGC roster. This is a solo operator with no team, no agency, and no media buyer at ~$2,700/mo combined revenue — there is no vendor set to compare, and the only realistic on-camera source (a repeat customer paid in product) is already covered by marketing-creator-content-sourcing. Not blocked by timing; it is a different business model.
+
+## Skills touched
+
+- `marketing-paid-acquisition-scaling` (edit)
+- `marketing-performance-pattern-analysis` (edit)
+- `marketing-awareness-level-messaging` (edit)
