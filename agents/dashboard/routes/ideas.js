@@ -2,21 +2,15 @@
 import { loadCalendar, upsertItem } from '../../../lib/calendar-store.js';
 import { join } from 'node:path';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
+// The SHARED helper, not a local copy. This module used to carry its own byte-identical
+// clone, which meant it also carried the `JSON.parse('null')` process-kill fixed in
+// lib/responses.js on 2026-08-17 — a central fix that two route modules opt out of by
+// re-implementing is not a central fix. See that function's docstring.
+import { readJsonBody } from '../lib/responses.js';
 
 function respondJson(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
-}
-
-function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (d) => { body += d; });
-    req.on('end', () => {
-      try { resolve(body ? JSON.parse(body) : {}); } catch (err) { reject(err); }
-    });
-    req.on('error', reject);
-  });
 }
 
 function getReviewItems() {
@@ -37,22 +31,34 @@ export default [
   {
     method: 'PATCH',
     match: (url) => /^\/api\/ideas\/[^/]+$/.test(url),
+    // lib/router.js's dispatch() calls this async handler without awaiting it and nothing
+    // in this process registers 'unhandledRejection', so ANY throw in here takes down the
+    // whole shared seo-dashboard PM2 process rather than failing one request. This handler
+    // had three ways to do that: an unguarded `await readJsonBody` (malformed JSON), a
+    // destructure of a `null` body, and `keyword.trim()` on a non-string. Guarded the same
+    // "whole handler body" way routes/ad-brief.js documents.
     async handler(req, res) {
-      const slug = decodeURIComponent(req.url.split('/').pop());
-      const body = await readJsonBody(req);
-      const { keyword, title } = body;
+      try {
+        const slug = decodeURIComponent(req.url.split('/').pop());
+        let body;
+        try { body = await readJsonBody(req); } catch { return respondJson(res, { ok: false, error: 'bad JSON body' }, 400); }
+        const { keyword, title } = body;
 
-      const calendar = loadCalendar();
-      const item = calendar.items.find((i) => i.slug === slug);
-      if (!item) return respondJson(res, { ok: false, error: 'Not found' }, 404);
-      if (item.status !== 'review') return respondJson(res, { ok: false, error: 'Item is not in review status' }, 400);
+        const calendar = loadCalendar();
+        const item = calendar.items.find((i) => i.slug === slug);
+        if (!item) return respondJson(res, { ok: false, error: 'Not found' }, 404);
+        if (item.status !== 'review') return respondJson(res, { ok: false, error: 'Item is not in review status' }, 400);
 
-      const updates = { slug };
-      if (keyword !== undefined) updates.keyword = keyword.trim();
-      if (title !== undefined) updates.title = title.trim();
+        const updates = { slug };
+        // String() before trim(): a JSON body may legally send a number or an object here.
+        if (keyword !== undefined) updates.keyword = String(keyword).trim();
+        if (title !== undefined) updates.title = String(title).trim();
 
-      upsertItem({ ...item, ...updates });
-      respondJson(res, { ok: true });
+        upsertItem({ ...item, ...updates });
+        respondJson(res, { ok: true });
+      } catch {
+        respondJson(res, { ok: false, error: 'could not update that idea' }, 500);
+      }
     },
   },
 

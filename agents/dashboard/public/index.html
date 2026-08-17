@@ -199,6 +199,7 @@
     <div style="display:flex;gap:0.4rem;margin-bottom:0.75rem">
       <button id="as-view-new-btn" onclick="switchAdStudioView('new')" class="creatives-mode-btn" style="padding:0.3rem 0.8rem;border:none;font-size:0.82rem;cursor:pointer">New run</button>
       <button id="as-view-judge-btn" onclick="switchAdStudioView('judge')" class="creatives-mode-btn" style="padding:0.3rem 0.8rem;border:none;font-size:0.82rem;cursor:pointer">Judge</button>
+      <button id="as-view-briefs-btn" onclick="switchAdStudioView('briefs')" class="creatives-mode-btn" style="padding:0.3rem 0.8rem;border:none;font-size:0.82rem;cursor:pointer">Briefs</button>
     </div>
 
     <div id="adstudio-new" style="display:none">
@@ -253,6 +254,33 @@
         <button onclick="exportAdStudioKept()" class="btn-sm" style="padding:0.28rem 0.7rem;font-size:0.8rem;cursor:pointer">Copy kept paths</button>
       </div>
       <div id="adstudio-body"></div>
+    </div>
+
+    <!-- Briefs — copy is judged and approved here, BEFORE any image renders. Ranked
+         highest score first; the score is shown with its four components broken out
+         because with no ad-performance data behind it (see lib/ad-brief-score.js), a
+         bare total would be a black box. Approving a brief commits to the exact copy
+         shown here — nothing is regenerated at render time. -->
+    <div id="adstudio-briefs" style="display:none">
+      <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.6rem">
+        <select id="ab-product" onchange="briefProductChanged()" class="creatives-select" style="min-width:16rem"></select>
+        <button onclick="loadBriefProducts()" class="btn-sm" style="padding:0.28rem 0.7rem;font-size:0.8rem;cursor:pointer">Refresh</button>
+        <!-- Dry run FIRST, and it is the free one: it makes zero Anthropic calls (unlike Ad
+             Studio's --dry-run, which still pays for copy). Generate spends one Opus call
+             per angle, so #ab-plan states that count before either button is pressed —
+             this project's rule is that the cheapest action is the one you get by
+             accident. -->
+        <button id="ab-dryrun-btn" onclick="briefGenerate(true)" class="btn-sm" style="padding:0.35rem 0.9rem;font-size:0.8rem;cursor:pointer">Dry run (free)</button>
+        <button id="ab-generate-btn" onclick="briefGenerate(false)" class="creatives-mode-btn" style="padding:0.35rem 0.9rem;cursor:pointer">Generate briefs</button>
+        <span id="ab-summary" style="font-size:0.82rem;color:var(--muted)"></span>
+      </div>
+      <div id="ab-plan" style="margin-bottom:0.5rem;font-size:0.82rem;color:var(--muted)"></div>
+      <div id="ab-generate-error" style="margin-bottom:0.5rem;font-size:0.82rem;color:var(--danger,#f87171)"></div>
+      <div id="ab-progress" style="margin-bottom:1rem;display:none;border:1px solid var(--border);border-radius:7px;padding:0.6rem 0.8rem;background:var(--card)">
+        <strong id="ab-progress-status" style="font-size:0.88rem"></strong>
+        <div id="ab-progress-body" style="font-size:0.8rem;margin-top:0.4rem"></div>
+      </div>
+      <div id="ab-list"></div>
     </div>
   </div>
 

@@ -15,6 +15,24 @@ import { selectTargets } from '../../agents/ad-studio/packaging.js';
 //   2. Every element id the Ad Studio browser code calls document.getElementById() on
 //      must exist in index.html. A missed wrap or a typo'd id is otherwise a silent
 //      blank-panel failure with nothing in the console.
+//
+// Extended for Task 6 (ad-brief-generator plan)'s Briefs view: the id-parity check
+// (2) is scoped to the whole Ad Studio JS section already, with no per-function
+// allowlist, so it covers the Briefs code (appended to the same section) without any
+// change here — the sanity assertions below just pin that down explicitly rather than
+// leaving it to be true by construction alone. The function-reference check (3) DID
+// need a code change: its name filter was `/adstudio/i`, and none of loadBriefs,
+// renderBriefs, briefDecide, briefGenerate, briefRender etc. contain "adstudio" —
+// widening it to also match "brief" is what makes test 3 look at them at all.
+//
+// Extended again for the coordinator's render/format-persistence fix (2026-08-17):
+// adStudioRenderJob was refactored to accept opts.statusId/bodyId/cancelBtnId/
+// judgeLinkId (defaulting to its original hardcoded #as-* ids) so briefRenderProgress
+// could reuse it for the Briefs panel's own #ab-progress* elements instead of
+// re-deriving the same rendering logic. That refactor moved four ids OUT of literal
+// `getElementById('...')` calls and into string-literal DEFAULTS, which check (2)'s
+// regex cannot see — check 2b below closes exactly that gap, extracted the same
+// verbatim-source way check 1 extracts adStudioEstimate's arithmetic.
 
 const DASHBOARD_JS_PATH = join('agents', 'dashboard', 'public', 'js', 'dashboard.js');
 const INDEX_HTML_PATH = join('agents', 'dashboard', 'public', 'index.html');
@@ -130,7 +148,64 @@ function extractFunctionSource(src, name) {
     `every getElementById id the Ad Studio JS calls must exist as id="..." in index.html; missing: ${missing.join(', ')}`
   );
 
+  // Pin the Briefs view specifically into this check, so a future edit that narrowed
+  // the section boundary (or moved the Briefs code outside it) fails loudly here
+  // instead of relying on the generic scan alone to have caught it.
+  const briefIds = ['ab-product', 'ab-generate-btn', 'ab-generate-error', 'ab-progress',
+    'ab-progress-status', 'ab-progress-body', 'ab-summary', 'ab-list', 'adstudio-briefs', 'as-view-briefs-btn'];
+  const missingBriefIds = briefIds.filter((id) => !idsReferenced.has(id) || !idsInHtml.has(id));
+  assert.deepEqual(
+    missingBriefIds, [],
+    `Briefs view ids must be both referenced by the Ad Studio JS and present in index.html; missing: ${missingBriefIds.join(', ')}`
+  );
+
   console.log(`✓ all ${idsReferenced.size} Ad Studio getElementById ids exist in index.html`);
+}
+
+// ── 2b. adStudioRenderJob's target ids, on BOTH sides of the opts refactor ─────────
+//
+// adStudioRenderJob(job, opts) now resolves its four element ids from `opts.*` with
+// string-literal DEFAULTS rather than four hardcoded getElementById('...') calls, so
+// check 2 above (which only scans for literal getElementById calls) no longer sees
+// '#as-progress-status' / '#as-progress-body' / '#as-cancel-btn' / '#as-judge-link' at
+// all — extracted the same verbatim-source way check 1 extracts adStudioEstimate's
+// arithmetic, so a typo'd default fails here instead of silently ceasing to be checked.
+// briefRenderProgress's own override object is checked the same way, on the OTHER side
+// of the same call.
+{
+  const idsInHtml = new Set([...indexHtml.matchAll(/\bid=["']([^"']+)["']/g)].map((m) => m[1]));
+
+  const renderJobSrc = extractFunctionSource(dashboardSrc, 'adStudioRenderJob');
+  const defaults = {
+    statusId: renderJobSrc.match(/opts\.statusId\s*\|\|\s*'([^']+)'/),
+    bodyId: renderJobSrc.match(/opts\.bodyId\s*\|\|\s*'([^']+)'/),
+    cancelBtnId: renderJobSrc.match(/opts\.cancelBtnId\s*===\s*undefined\s*\?\s*'([^']+)'/),
+    judgeLinkId: renderJobSrc.match(/opts\.judgeLinkId\s*===\s*undefined\s*\?\s*'([^']+)'/),
+  };
+  for (const [opt, m] of Object.entries(defaults)) {
+    assert.ok(m, `adStudioRenderJob must default opts.${opt} from a string literal`);
+    assert.ok(idsInHtml.has(m[1]), `adStudioRenderJob's default opts.${opt} "${m[1]}" must exist as id="..." in index.html`);
+  }
+  // These four must stay the New-run panel's OWN ids — the whole point of the refactor
+  // was letting a second caller override them, not changing what "no override" means.
+  assert.equal(defaults.statusId[1], 'as-progress-status');
+  assert.equal(defaults.bodyId[1], 'as-progress-body');
+  assert.equal(defaults.cancelBtnId[1], 'as-cancel-btn');
+  assert.equal(defaults.judgeLinkId[1], 'as-judge-link');
+
+  const briefRenderProgressSrc = extractFunctionSource(dashboardSrc, 'briefRenderProgress');
+  const overrideStatus = briefRenderProgressSrc.match(/statusId:\s*'([^']+)'/);
+  const overrideBody = briefRenderProgressSrc.match(/bodyId:\s*'([^']+)'/);
+  assert.ok(overrideStatus, 'briefRenderProgress must pass a literal statusId override');
+  assert.ok(overrideBody, 'briefRenderProgress must pass a literal bodyId override');
+  assert.ok(idsInHtml.has(overrideStatus[1]), `briefRenderProgress's statusId override "${overrideStatus[1]}" must exist in index.html`);
+  assert.ok(idsInHtml.has(overrideBody[1]), `briefRenderProgress's bodyId override "${overrideBody[1]}" must exist in index.html`);
+  // Explicitly null, not left at the New-run panel's defaults — a Briefs render must
+  // never toggle #as-cancel-btn or #as-judge-link, the OTHER view's own controls.
+  assert.match(briefRenderProgressSrc, /cancelBtnId:\s*null/, 'briefRenderProgress must pass cancelBtnId: null, not default to #as-cancel-btn');
+  assert.match(briefRenderProgressSrc, /judgeLinkId:\s*null/, 'briefRenderProgress must pass judgeLinkId: null, not default to #as-judge-link');
+
+  console.log('✓ adStudioRenderJob\'s default ids and briefRenderProgress\'s override ids both resolve in index.html');
 }
 
 // ── 3. Function-reference parity ───────────────────────────────────────────────────
@@ -183,7 +258,15 @@ function extractFunctionSource(src, name) {
     return names;
   }
 
-  const AD_STUDIO_NAME = /adstudio/i;
+  // "brief" added for Task 6's Briefs view: loadBriefs, renderBriefs, briefDecide,
+  // briefGenerate, briefRenderCommand and friends carry no "adstudio" substring at
+  // all, so the original pattern would have silently skipped every one of them —
+  // exactly the class of bug this test exists to catch (see the module comment).
+  // Safe to widen: verified by direct search that neither #adstudio-panel's markup
+  // nor the Ad Studio JS section (from `var adStudioState` onward) contained any
+  // pre-existing "brief" identifier before this task, so nothing already in scope
+  // gets newly (and wrongly) swept in.
+  const AD_STUDIO_NAME = /adstudio|brief/i;
 
   const panelHtml = extractDivById(indexHtml, 'adstudio-panel');
   const handlerAttrs = [...panelHtml.matchAll(/\b(?:onclick|onchange|oninput)="([^"]*)"/g)].map((m) => m[1]);
@@ -218,6 +301,17 @@ function extractFunctionSource(src, name) {
     undefinedCalls, [],
     'every Ad Studio function referenced from #adstudio-panel markup or the Ad Studio JS ' +
     `must be defined in dashboard.js; missing: ${undefinedCalls.join(', ')}`
+  );
+
+  // Pin the Briefs functions specifically, so a rename that keeps everything internally
+  // consistent (call site and definition renamed together) but drifts from what this
+  // task actually shipped still shows up as a coverage gap rather than passing quietly.
+  const briefFns = ['switchAdStudioView', 'loadBriefs', 'renderBriefs', 'briefDecide', 'briefGenerate',
+    'briefRender', 'briefFormatChanged'];
+  const missingBriefFns = briefFns.filter((name) => !allCalled.has(name) || !definedFunctions.has(name));
+  assert.deepEqual(
+    missingBriefFns, [],
+    `Briefs view functions must be both referenced and defined; missing: ${missingBriefFns.join(', ')}`
   );
 
   console.log(`✓ all ${allCalled.size} Ad Studio function references resolve to a real definition in dashboard.js`);

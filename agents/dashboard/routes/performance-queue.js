@@ -7,17 +7,11 @@ import { getBlogs, getArticle, updateArticle, getProducts, updateProduct, create
 import { getPostMeta, getMetaPath, getContentPath, listAllSlugs } from '../../../lib/posts.js';
 import { buildTriggerCommand, agentForOpportunityItem } from '../lib/opportunity-trigger.js';
 import { ensureLocalPostForUrl } from '../../../lib/ensure-local-post.js';
-
-function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (d) => { body += d; });
-    req.on('end', () => {
-      try { resolve(body ? JSON.parse(body) : {}); } catch (err) { reject(err); }
-    });
-    req.on('error', reject);
-  });
-}
+// The SHARED helper, not a local copy — this module used to carry its own byte-identical
+// clone, and with it the `JSON.parse('null')` process-kill fixed in lib/responses.js on
+// 2026-08-17. Its one call site (the /feedback route) already destructures inside a
+// try/catch, so the rejection lands as a 400 exactly as before.
+import { readJsonBody } from '../lib/responses.js';
 
 function findItem(slug) {
   return listQueueItems().find((i) => i.slug === slug) || null;

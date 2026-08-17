@@ -37,6 +37,7 @@ import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js'
 import { enforceBudget, formatBytes } from '../../lib/creatives-budget.js';
 import { USD_PER_RENDER } from '../../lib/ad-studio-cost.js';
 import { updateJob, appendEvent, isValidJobId } from '../../lib/ad-studio-job.js';
+import { readBrief, writeBrief, isValidBriefId, listProductsWithBriefs, decideBrief } from '../../lib/ad-brief.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -431,8 +432,15 @@ export async function buildConcepts({ anthropic, formats, product, pdpBody, pers
  * ambiguous whether a requested concept succeeded, was skipped, or was never asked
  * for. `totals.requested` is results.length + rejectedConcepts.length: the count of
  * concepts asked for, independent of how many actually rendered.
+ *
+ * `attribution` (brief mode only — see main()) is `{ briefId, personaId, angleId,
+ * awareness, format }` or `null`. It is stamped BOTH on the report AND on every
+ * artifact row: the report-level copy is what a human reads, the per-artifact copy is
+ * what a scores.jsonl row and any future per-creative join need. Attributes recorded at
+ * production time cannot be reconstructed afterwards, so a run with no brief reports
+ * `attribution: null` — never a half-filled stub that would look like data.
  */
-export function buildRunReport({ runId, product, results, renders = 0, budget = null, rejectedConcepts = [], scoreSummary = null }) {
+export function buildRunReport({ runId, product, results, renders = 0, budget = null, rejectedConcepts = [], scoreSummary = null, attribution = null }) {
   let accepted = 0;
   let rejected = 0;
   const conceptsWithNoAcceptedVariation = [];
@@ -469,11 +477,23 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
     }
   }
 
+  // Attribution stamped onto every artifact row, alongside the report-level copy above.
+  // Only rows that already carry an `artifacts` array gain the field — a variation with
+  // no artifacts at all (a claim-gate reject that never reached render) is left exactly
+  // as it was passed in.
+  const attributedResults = results.map(c => ({
+    ...c,
+    variations: c.variations.map(v => (
+      v.artifacts ? { ...v, artifacts: v.artifacts.map(a => ({ ...a, attribution })) } : v
+    )),
+  }));
+
   return {
     runId,
     generatedAt: new Date().toISOString(),
     product: { handle: product.handle, title: product.title },
     models: CREATIVE_MODELS.adStudio,
+    attribution,
     totals: {
       accepted, rejected, concepts: results.length, requested: results.length + rejectedConcepts.length,
       artifacts: {
@@ -502,7 +522,7 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
     // first line of run.json rather than something found by opening every PNG.
     ranking: rankArtifacts(results),
     scoreSummary,
-    results,
+    results: attributedResults,
   };
 }
 
@@ -526,15 +546,19 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
  */
 export const SCORES_PATH = join('data', 'reports', 'ad-studio', 'scores.jsonl');
 
-export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts, root = ROOT }) {
+export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts, attribution = null, root = ROOT }) {
   // The rolling baseline is READ before this run's rows are appended, so a run is never
   // compared against a baseline that already contains it.
   const scoresFile = join(root, SCORES_PATH);
   const baseline = readBaselineFrom(existsSync(scoresFile) ? readFileSync(scoresFile, 'utf8') : '');
-  const rows = scoreRows({ runId, product, results });
+  // attribution rides along on every scores.jsonl row too — that file outlives run.json
+  // (the images get pruned; scores.jsonl doesn't), so it is the one place a future
+  // per-creative join can find persona/angle/awareness/format without opening a run
+  // directory that may already be gone.
+  const rows = scoreRows({ runId, product, results, attribution });
   const scoreSummary = summariseRun(rows, baseline);
 
-  const report = buildRunReport({ runId, product, results, renders, budget, rejectedConcepts, scoreSummary });
+  const report = buildRunReport({ runId, product, results, renders, budget, rejectedConcepts, scoreSummary, attribution });
   writeFileSync(join(runDir, 'run.json'), JSON.stringify(report, null, 2));
 
   // Append-only, and a few bytes per frame — this file is the score history and must
@@ -614,18 +638,28 @@ export function parseArgs(argv) {
     const i = argv.indexOf(name);
     return i === -1 ? undefined : argv[i + 1];
   };
+
+  // Brief mode. The brief carries the product, the format and the finished copy, so
+  // --product and --formats are not required (and must not be, or the two could disagree
+  // with what was approved).
+  const brief = getFlag('--brief') || null;
+  if (brief !== null && !isValidBriefId(brief)) {
+    throw new Error(`ad-studio: invalid --brief "${brief}" — letters, digits, dot, dash and underscore only`);
+  }
+
   const product = getFlag('--product');
-  if (!product) throw new Error('ad-studio: --product is required, e.g. --product coconut-lotion');
+  if (!product && !brief) throw new Error('ad-studio: --product is required, e.g. --product coconut-lotion');
   const variant = getFlag('--variant') || null;
-  // --formats is REQUIRED. Omitting it used to mean the entire rotation — nine formats
-  // today, 54 renders ≈ $7.02 at the current defaults, and 243 (≈$31.59) at 3 variations
-  // across all 6 targets — from a flag the operator never touched. The cheapest action has to
-  // be the one you get by accident — the same reasoning that makes dry-run the default on
-  // scripts/prune-ad-studio.mjs. The error names the keys so the fix does not require
-  // opening formats.js.
+  // --formats is REQUIRED outside brief mode. Omitting it used to mean the entire
+  // rotation — nine formats today, 54 renders ≈ $7.02 at the current defaults, and 243
+  // (≈$31.59) at 3 variations across all 6 targets — from a flag the operator never
+  // touched. The cheapest action has to be the one you get by accident — the same
+  // reasoning that makes dry-run the default on scripts/prune-ad-studio.mjs. The error
+  // names the keys so the fix does not require opening formats.js. A brief supplies its
+  // own format, so this requirement does not apply in brief mode.
   const formatsRaw = getFlag('--formats');
   const formats = formatsRaw ? formatsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-  if (formats.length === 0) {
+  if (!brief && formats.length === 0) {
     throw new Error(
       `ad-studio: --formats is required. Pick one or more of: ${FORMATS.map(f => f.key).join(', ')}. ` +
       `(Pass them all deliberately if you really want the full rotation.)`
@@ -669,7 +703,105 @@ export function parseArgs(argv) {
     throw new Error(`ad-studio: invalid --job-id "${jobId}" — letters, digits, dot, dash and underscore only`);
   }
   const dryRun = argv.includes('--dry-run');
-  return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId };
+  return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId, brief };
+}
+
+// ── Brief mode — resolution and the approval boundary ──────────────────────────────
+//
+// Extracted out of main() so this — the security boundary of the whole feature — is
+// unit-testable without executing main() (which is not exported, hits the network, and
+// is guarded against running on import). Small and pure wherever possible.
+
+/**
+ * Resolve a --brief id to the product directory that actually holds it, by SCANNING
+ * listProductsWithBriefs rather than parsing the id. The id embeds the product as a
+ * prefix, but trusting that prefix would let a malformed or hostile id address an
+ * arbitrary path; the directory that genuinely contains the file is the only thing
+ * downstream code (manifest/catalog/photo lookups) may trust as "the product".
+ * @returns {string|null} the product handle, or null if no product's directory holds this id
+ */
+export function findBriefProduct(root, briefId) {
+  return listProductsWithBriefs(root).find(p => readBrief(root, p, briefId)) ?? null;
+}
+
+/**
+ * THE approval boundary. Only `approved` renders — refuse anything else BY NAME, so the
+ * operator knows exactly why: a `ready` brief has not been approved by a human, a
+ * `needs-evidence` one failed a gate outright, a `rejected` one was turned down, a
+ * `rendered` one is already done. Throws rather than returning a verdict — there is no
+ * legitimate caller that wants to proceed past a non-approved brief.
+ */
+export function assertBriefApproved(brief, briefId) {
+  if (brief.state !== 'approved') {
+    throw new Error(
+      `ad-studio: brief "${briefId}" is "${brief.state}", not "approved" — only an approved brief ` +
+      `can render. ` +
+      (brief.state === 'ready' ? 'It has not been approved by a human yet.'
+        : brief.state === 'needs-evidence' ? 'It failed a gate and needs evidence before it can be approved.'
+        : brief.state === 'rejected' ? 'It was rejected.'
+        : brief.state === 'rendered' ? 'It has already been rendered.'
+        : '')
+    );
+  }
+}
+
+/**
+ * The format key a brief will render with — `chosen` (an operator's pick among
+ * alternatives, from a later task's approval UI) if set, else the awareness join's
+ * `proposed` format. Some angles have no matching format at all (their awareness level
+ * has no format that covers it yet) — refuse rather than silently substituting a
+ * different one, naming the awareness level so the gap is legible.
+ * @returns {string} the format key
+ */
+export function resolveBriefFormatKey(brief, briefId) {
+  const formatKey = brief.format?.chosen ?? brief.format?.proposed ?? null;
+  if (!formatKey) {
+    throw new Error(
+      `ad-studio: brief "${briefId}" has no format to render — its angle is ` +
+      `"${brief.angle?.awareness ?? 'unknown'}"-aware, and no format covers that awareness ` +
+      `level yet, so it cannot render.`
+    );
+  }
+  return formatKey;
+}
+
+/**
+ * Attribution: what a future per-creative join needs, and what a human reads off the
+ * report. Recorded now because it can never be reconstructed after the ad has run — the
+ * difference between "ad B won" and "problem-aware, testimonial, persona 1 won".
+ *
+ * `agents/ad-brief/index.js` (the generator) writes `personaId`/`angleId` at the TOP
+ * LEVEL of the record, not nested under a `persona`/`angle` id — reading only
+ * `brief.persona?.id` silently produced `personaId: null` on every real brief, the exact
+ * half-filled stub this task exists to prevent. Both shapes are accepted so a caller is
+ * never punished for reading the field the writer didn't populate.
+ */
+export function buildBriefAttribution(brief, formatKey) {
+  return {
+    briefId: brief.briefId,
+    personaId: brief.personaId ?? brief.persona?.id ?? null,
+    angleId: brief.angleId ?? brief.angle?.id ?? null,
+    awareness: brief.angle?.awareness ?? null,
+    format: formatKey,
+  };
+}
+
+/**
+ * Whether a brief-mode run produced anything worth marking the brief 'rendered' for.
+ *
+ * finalizeRunReport only throws when EVERY concept was rejected by the claim gate
+ * (concepts.length === 0 && rejectedConcepts.length > 0) — never true in brief mode,
+ * which always has exactly one concept and skips the gate entirely. So a run that lost
+ * every render attempt to a transient Gemini outage, or that hit the --max-renders
+ * ceiling before this concept's targets were reached, does NOT throw — it returns a
+ * report with zero accepted artifacts. Accepted-artifact count is therefore the only
+ * honest signal of success. Getting this wrong permanently strands an approved,
+ * gate-passed brief: assertBriefApproved above refuses a 'rendered' brief BY NAME on
+ * every later attempt, so marking one 'rendered' after a run that produced nothing
+ * destroys it exactly as thoroughly as a genuine success would.
+ */
+export function briefRenderSucceeded(report) {
+  return Boolean(report?.totals?.artifacts?.accepted > 0);
 }
 
 function loadEnv() {
@@ -1145,7 +1277,28 @@ async function main() {
   const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const gemini = env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null;
 
-  const handle = args.product;
+  // ── Brief mode ────────────────────────────────────────────────────────────────────
+  //
+  // Only an `approved` brief renders — that is the security boundary of the whole
+  // feature, enforced upstream by lib/ad-brief.js (an `approved` record cannot even be
+  // WRITTEN unless its immutable `gates` block shows both the health and sourcing gates
+  // passed) and re-checked here by assertBriefApproved. See the helpers above (right
+  // after parseArgs) for findBriefProduct/assertBriefApproved/resolveBriefFormatKey/
+  // buildBriefAttribution — extracted so this boundary is unit-testable on its own.
+  let brief = null;
+  let attribution = null;
+  let handle = args.product;
+  if (args.brief) {
+    const briefProduct = findBriefProduct(ROOT, args.brief);
+    if (!briefProduct) {
+      throw new Error(`ad-studio: no brief found with id "${args.brief}" under any product in data/briefs/ad-studio/`);
+    }
+    brief = readBrief(ROOT, briefProduct, args.brief);
+    assertBriefApproved(brief, args.brief);
+    const formatKey = resolveBriefFormatKey(brief, args.brief);
+    attribution = buildBriefAttribution(brief, formatKey);
+    handle = briefProduct;
+  }
 
   const manifest = loadJson(join(ROOT, 'data', 'product-images', 'manifest.json'));
   const manifestEntry = manifest.find(p => p.handle === handle);
@@ -1161,22 +1314,35 @@ async function main() {
 
   const brandKit = loadJson(join(ROOT, 'data', 'brand', 'brand-kit.json'));
 
-  const personasData = loadJson(join(ROOT, 'data', 'context', 'personas.json'));
-  const rawPersona = personasData.personas?.[0] || null;
-  // copy.js's buildCopyPrompt expects persona.angles as flat strings ("WHAT THEY
-  // ALREADY TRIED"); personas.json's angles are objects, so project the field that
-  // best matches that label.
-  const persona = rawPersona
-    ? {
-        name: rawPersona.name,
-        angles: (rawPersona.angles || []).map(a => a.objection_addressed || a.label).filter(Boolean),
-      }
-    : null;
+  // The brief supplies its own variant, so the operator is never asked to restate it
+  // (and cannot make it disagree with what was approved) — see the --brief parseArgs
+  // comment above for the same reasoning applied to product and format.
+  const variant = brief ? (brief.variant || null) : args.variant;
 
-  const site = loadJson(join(ROOT, 'config', 'site.json'));
-  const pdpBody = await fetchPdpBody(site.url, handle);
+  // Persona projection and the live PDP body exist only to feed buildConcepts' copy
+  // call (persona.js's prompt, claims.js's source index). Brief mode skips both: the
+  // brief already carries finished, gate-passed copy, and fetching either here would be
+  // a network call that nothing downstream reads.
+  let persona = null;
+  let pdpBody = '';
+  if (!brief) {
+    const personasData = loadJson(join(ROOT, 'data', 'context', 'personas.json'));
+    const rawPersona = personasData.personas?.[0] || null;
+    // copy.js's buildCopyPrompt expects persona.angles as flat strings ("WHAT THEY
+    // ALREADY TRIED"); personas.json's angles are objects, so project the field that
+    // best matches that label.
+    persona = rawPersona
+      ? {
+          name: rawPersona.name,
+          angles: (rawPersona.angles || []).map(a => a.objection_addressed || a.label).filter(Boolean),
+        }
+      : null;
 
-  const labelStrings = buildLabelStrings({ manifestEntry, variant: args.variant });
+    const site = loadJson(join(ROOT, 'config', 'site.json'));
+    pdpBody = await fetchPdpBody(site.url, handle);
+  }
+
+  const labelStrings = buildLabelStrings({ manifestEntry, variant });
   // ABORT — see buildLabelStrings' docstring. Not recoverable, no override flag.
   if (labelStrings.length === 0) {
     throw new Error(
@@ -1223,44 +1389,77 @@ async function main() {
     );
   }
 
-  // Real customer reviews, so `reviews` is a source a claim can actually cite.
-  //
-  // claims.js has accepted a `reviews` sourceId since day one and NOTHING EVER PASSED ONE
-  // — the index simply had no `reviews` key, so any claim citing it was unsourced. That
-  // was invisible until the `testimonial` format shipped (2026-08-15), because no earlier
-  // format had a zone that must quote a customer. Its first live run failed at the copy
-  // stage: told to quote verbatim from a source that did not exist, the model answered in
-  // prose instead of JSON.
-  //
-  // Best-effort by design. A Judge.me outage, a missing token or a product with no reviews
-  // yet must not stop a run of formats that never quote a customer — and for the ones that
-  // do, the claim gate is already the right failure: an invented testimonial comes back
-  // unsourced and the concept is rejected before anything renders. That is a far better
-  // outcome than a hard abort here, and a far better one than shipping a made-up quote.
-  // `env`, not process.env: loadEnv() parses .env into a local object and deliberately
-  // never populates process.env, so a default of process.env silently finds no token and
-  // reports "no reviews" on a product that has 26 of them.
-  const reviews = await fetchAdReviews(handle, { env });
-  if (reviews.length) console.log(`Reviews on file for ${handle}: ${reviews.length}`);
-  else console.warn(`No Judge.me reviews for ${handle} — any format that quotes a customer will be rejected by the claim gate.`);
+  let formats, concepts, rejectedConcepts;
+  if (brief) {
+    // Skip concept generation ENTIRELY — no buildConcepts, no copy model call. The
+    // brief already carries the finished, gate-passed strings; rendering exactly those
+    // is the whole point of brief mode, so nothing may drift between what a human
+    // approved and what gets baked into an image.
+    const chosenFormat = selectFormats([attribution.format])[0];
+    formats = [chosenFormat];
 
-  const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews });
+    // The stored `gates.health.ok` records what was true when the brief was generated,
+    // but nothing BINDS that record to `zones` — writeBrief validates the gates block's
+    // shape, never that it was actually computed from the copy sitting beside it on
+    // disk. assertNoHealthClaims is a pure function over strings, no imports, no I/O —
+    // re-proving it here against the copy that is actually about to render is free, and
+    // closes that gap. No override, same as everywhere else this gate runs: a rejection
+    // aborts the run.
+    //
+    // Sourcing (assertClaimsSourced) is deliberately NOT re-run: it needs a sourceIndex
+    // built from a live PDP fetch and Judge.me, which brief mode exists to avoid.
+    assertNoHealthClaims(brief.zones);
 
-  const formats = selectFormats(args.formats.length ? args.formats : undefined);
+    concepts = [{ format: chosenFormat, zones: brief.zones, claims: brief.claims || [] }];
+    rejectedConcepts = [];
+  } else {
+    // Real customer reviews, so `reviews` is a source a claim can actually cite.
+    //
+    // claims.js has accepted a `reviews` sourceId since day one and NOTHING EVER PASSED ONE
+    // — the index simply had no `reviews` key, so any claim citing it was unsourced. That
+    // was invisible until the `testimonial` format shipped (2026-08-15), because no earlier
+    // format had a zone that must quote a customer. Its first live run failed at the copy
+    // stage: told to quote verbatim from a source that did not exist, the model answered in
+    // prose instead of JSON.
+    //
+    // Best-effort by design. A Judge.me outage, a missing token or a product with no reviews
+    // yet must not stop a run of formats that never quote a customer — and for the ones that
+    // do, the claim gate is already the right failure: an invented testimonial comes back
+    // unsourced and the concept is rejected before anything renders. That is a far better
+    // outcome than a hard abort here, and a far better one than shipping a made-up quote.
+    // `env`, not process.env: loadEnv() parses .env into a local object and deliberately
+    // never populates process.env, so a default of process.env silently finds no token and
+    // reports "no reviews" on a product that has 26 of them.
+    const reviews = await fetchAdReviews(handle, { env });
+    if (reviews.length) console.log(`Reviews on file for ${handle}: ${reviews.length}`);
+    else console.warn(`No Judge.me reviews for ${handle} — any format that quotes a customer will be rejected by the claim gate.`);
 
-  // Stage 2: copy + the claim gate, per concept. Runs regardless of --dry-run — the
-  // dry run's whole purpose is proving the gate fires against real generated copy
-  // before anything costs money on the render side.
-  //
-  // A claim-gate failure on ONE concept must not cost the others — see buildConcepts/
-  // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
-  // resilience. assertClaimsSourced itself is unchanged: still throws, still no
-  // override flag; buildConcept is the caller the isolation belongs in.
-  const { concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews });
+    const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews });
+
+    formats = selectFormats(args.formats.length ? args.formats : undefined);
+
+    // Stage 2: copy + the claim gate, per concept. Runs regardless of --dry-run — the
+    // dry run's whole purpose is proving the gate fires against real generated copy
+    // before anything costs money on the render side.
+    //
+    // A claim-gate failure on ONE concept must not cost the others — see buildConcepts/
+    // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
+    // resilience. assertClaimsSourced itself is unchanged: still throws, still no
+    // override flag; buildConcept is the caller the isolation belongs in.
+    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews }));
+  }
 
   // A gate rejection is a first-class outcome the UI must show, and it happens before
   // any render.
-  for (const c of concepts) job.event({ stage: 'copy', concept: c.format.key, state: 'ok' });
+  //
+  // The stage is NAMED FOR WHAT HAPPENED. In brief mode no copy call was made — the whole
+  // promise of the mode is that the approved strings render untouched — so reporting
+  // `stage: 'copy'` told the operator a paid copy call had occurred in the one mode whose
+  // entire point is that none did (code review, 2026-08-17). `approved-copy` says the copy
+  // came off the brief. `state` stays 'ok' either way: the Briefs view colours anything
+  // other than 'ok'/'accepted' as a failure.
+  const copyStage = brief ? 'approved-copy' : 'copy';
+  for (const c of concepts) job.event({ stage: copyStage, concept: c.format.key, state: 'ok' });
   for (const c of rejectedConcepts) {
     job.event({ stage: 'copy', concept: c.conceptSlug, state: 'gate-rejected', reasons: (c.violations || []).map(v => `[${v.zone}] ${v.reason}`) });
   }
@@ -1274,7 +1473,7 @@ async function main() {
 
   if (args.dryRun) {
     // No job.start() here: the file was claimed at boot, and a dry run never gets a runId.
-    console.log(`\nDRY RUN — ${concepts.length} concept(s) for ${product.title} (${handle}${args.variant ? '/' + args.variant : ''})`);
+    console.log(`\nDRY RUN — ${concepts.length} concept(s) for ${product.title} (${handle}${variant ? '/' + variant : ''})`);
     console.log(`labelStrings: ${JSON.stringify(labelStrings)}\n`);
     for (const c of concepts) {
       console.log(`── ${c.format.key} — ${c.format.name} ──`);
@@ -1308,7 +1507,7 @@ async function main() {
   }
 
   // Stage 3-5: single-pass render → verify → package, one variation directory per N.
-  const runId = `${handle}${args.variant ? '-' + args.variant : ''}-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+  const runId = `${handle}${variant ? '-' + variant : ''}-${new Date().toISOString().replace(/[:.]/g, '-')}`;
   const runDir = join(ROOT, 'data', 'creatives', 'ad-studio', runId);
   mkdirSync(runDir, { recursive: true });
   // Top-up, not a claim: the pid and 'running' status went on at boot. This adds the run
@@ -1375,8 +1574,8 @@ async function main() {
     });
   }
 
-  const photoDir = args.variant
-    ? join(ROOT, 'data', 'product-images', manifestEntry.imageDir, args.variant)
+  const photoDir = variant
+    ? join(ROOT, 'data', 'product-images', manifestEntry.imageDir, variant)
     : join(ROOT, 'data', 'product-images', manifestEntry.imageDir);
   const photoPaths = selectReferencePhotos(photoDir);
   if (photoPaths.length === 0) {
@@ -1458,9 +1657,50 @@ async function main() {
   const report = finalizeRunReport({
     runDir, runId, product, results, renders: budget.used(),
     budget: { maxRenders: budget.max, stopped: skippedArtifacts.length > 0, skipped: skippedArtifacts },
-    rejectedConcepts, concepts,
+    rejectedConcepts, concepts, attribution,
   });
   job.finish({ runId, totals: { ...report.totals, renders: budget.used() } });
+
+  // Mark the brief 'rendered' ONLY if this run actually produced an accepted artifact —
+  // see briefRenderSucceeded's docstring for why finalizeRunReport not throwing is not
+  // proof of that (it only throws on a total claim-gate wipeout, which brief mode can
+  // never hit, since it skips the gate). Getting this backwards would permanently strand
+  // an approved brief behind a transient render failure: assertBriefApproved refuses a
+  // 'rendered' brief BY NAME on every subsequent attempt. Two calls when it does
+  // succeed, not one: decideBrief only knows state/note, so the renderedRunIds append
+  // goes through writeBrief directly on the record decideBrief just wrote.
+  if (brief && briefRenderSucceeded(report)) {
+    const rendered = decideBrief(ROOT, handle, brief.briefId, { state: 'rendered', note: `rendered by run ${runId}` });
+    writeBrief(ROOT, { ...rendered, renderedRunIds: [...(rendered.renderedRunIds || []), runId] });
+  } else if (brief) {
+    // Nothing was accepted, but the renders that DID happen were still paid for — record
+    // the run id so an operator retrying this brief later sees the prior spend instead of
+    // a clean 'approved' record with no trace of it. State is untouched: still 'approved',
+    // still retryable through the approval boundary above.
+    //
+    // NEVER let this throw escape. writeBrief throws on any fs error, and ENOSPC is the
+    // realistic one here — this project has already lost four days of cron to a full
+    // disk. If it threw uncaught, the run would fall into the top-level catch instead of
+    // finishing normally: flushArchive() would never run, and — worse — sweepDiskBudget()
+    // below would never run either, skipping "purge as we go" at exactly the moment disk
+    // pressure is the plausible cause. A bookkeeping write must not be able to suppress
+    // the disk sweep. Same posture archiveRunOutput already takes, for the same reason:
+    // by now the money is spent and the images are on disk, so nothing here may turn a
+    // finished, non-fatal run (zero accepted artifacts is already known and reported) into
+    // a crash.
+    try {
+      const current = readBrief(ROOT, handle, brief.briefId) || brief;
+      writeBrief(ROOT, { ...current, failedRunIds: [...(current.failedRunIds || []), runId] });
+    } catch (err) {
+      console.warn(`ad-studio: could not record failed run id on brief "${brief.briefId}" (${err.message}) — continuing.`);
+    }
+    console.warn(
+      `ad-studio: brief "${brief.briefId}" was NOT marked "rendered" — this run produced no accepted ` +
+      `artifact (a transient render failure or a --max-renders stop). It remains "approved" and can ` +
+      `be retried with --brief ${brief.briefId}.`
+    );
+  }
+
   const at = report.totals.artifacts;
   console.log(
     `\nRun complete: ${at.accepted}/${at.total} plate(s) accepted` +

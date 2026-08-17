@@ -38,6 +38,7 @@ import adsRoutes from './routes/ads.js';
 import creativesRoutes from './routes/creatives.js';
 import adStudioRoutes from './routes/ad-studio.js';
 import adStudioLaunchRoutes from './routes/ad-studio-launch.js';
+import adBriefRoutes from './routes/ad-brief.js';
 import { pruneJobs } from '../../lib/ad-studio-job.js';
 import campaignsRoutes from './routes/campaigns.js';
 import indexingRoutes from './routes/indexing.js';
@@ -107,6 +108,7 @@ const ROUTES = [
   ...creativesRoutes,
   ...adStudioRoutes,
   ...adStudioLaunchRoutes,
+  ...adBriefRoutes,
   ...campaignsRoutes,
   ...indexingRoutes,
   ...performanceQueueRoutes,
