@@ -69,11 +69,64 @@ test('writeBrief accepts a brief with no state field at all', () => {
   assert.doesNotThrow(() => writeBrief(root, noState));
 });
 
+// The gate check has to live at the single write point, not only inside decideBrief —
+// writeBrief is a side door onto the same file, and in a later task its inputs originate
+// from an HTTP handler. Only an approved brief is ever rendered into a paid image, so this
+// is the security boundary of the whole feature.
+test('writeBrief refuses an approved record with no gates block', () => {
+  const root = freshRoot();
+  assert.throws(() => writeBrief(root, brief({ state: 'approved' })), /gate/i);
+});
+
+test('writeBrief refuses an approved record whose gates.claims.ok is false', () => {
+  const root = freshRoot();
+  assert.throws(
+    () => writeBrief(root, brief({ state: 'approved', gates: { health: { ok: true }, claims: { ok: false } } })),
+    /gate/i,
+  );
+});
+
+test('writeBrief refuses an approved record whose gates.health.ok is false', () => {
+  const root = freshRoot();
+  assert.throws(
+    () => writeBrief(root, brief({ state: 'approved', gates: { health: { ok: false }, claims: { ok: true } } })),
+    /gate/i,
+  );
+});
+
+// Truthy is not the same as === true. A gate value of 1 or 'true' must not slip past a
+// strict comparison the way it would past a plain if (gates.health.ok) check.
+test('writeBrief refuses an approved record whose gate values are truthy but not boolean true', () => {
+  const root = freshRoot();
+  assert.throws(
+    () => writeBrief(root, brief({ state: 'approved', gates: { health: { ok: 1 }, claims: { ok: true } } })),
+    /gate/i,
+  );
+  assert.throws(
+    () => writeBrief(root, brief({ state: 'approved', gates: { health: { ok: true }, claims: { ok: 'true' } } })),
+    /gate/i,
+  );
+});
+
+test('writeBrief accepts an approved record whose gates both pass', () => {
+  const root = freshRoot();
+  assert.doesNotThrow(() => writeBrief(root, brief({ state: 'approved', gates: passingGates })));
+});
+
+// A needs-evidence brief legitimately has failing (or absent) gates and must still be
+// writable — the invariant is scoped to 'approved' records only, not every record.
+test('writeBrief still accepts non-approved records regardless of their gates, including none at all', () => {
+  const root = freshRoot();
+  assert.doesNotThrow(() => writeBrief(root, brief({ briefId: 'a', state: 'needs-evidence' })));
+  assert.doesNotThrow(() => writeBrief(root, brief({ briefId: 'b', state: 'ready', gates: { health: { ok: false }, claims: { ok: false } } })));
+  assert.doesNotThrow(() => writeBrief(root, brief({ briefId: 'c', state: 'rejected' })));
+});
+
 // The dashboard reads these while the agent writes them.
 test('a write leaves no partial file behind', () => {
   const root = freshRoot();
   writeBrief(root, brief());
-  writeBrief(root, brief({ state: 'approved' }));
+  writeBrief(root, brief({ state: 'approved', gates: passingGates }));
   assert.deepEqual(readdirSync(briefsDir(root, 'coconut-lotion')), [`${brief().briefId}.json`]);
 });
 
@@ -174,6 +227,18 @@ test('a brief with both gates passing can be approved, from ready and from rejec
 
   writeBrief(root, brief({ briefId: 'from-rejected', state: 'rejected', gates: passingGates }));
   assert.doesNotThrow(() => decideBrief(root, 'coconut-lotion', 'from-rejected', { state: 'approved' }));
+});
+
+// decideBrief's own gate check happens before it ever calls writeBrief, so a legitimate
+// approval should sail through writeBrief's invariant too — confirm that end to end rather
+// than assume it, because if writeBrief's check ever regressed to disagree with decideBrief's,
+// every real approval would break along with the attack it's meant to stop.
+test('a legitimate decideBrief approval still round-trips end to end', () => {
+  const root = freshRoot();
+  writeBrief(root, brief({ state: 'ready', gates: passingGates }));
+  const out = decideBrief(root, 'coconut-lotion', brief().briefId, { state: 'approved' });
+  assert.equal(out.state, 'approved');
+  assert.equal(readBrief(root, 'coconut-lotion', brief().briefId).state, 'approved');
 });
 
 test('decide on a missing brief throws rather than creating one', () => {
