@@ -19,7 +19,7 @@ description: Use when the goal is a second or repeat purchase from someone who a
 
 ## Once refills ship, stop leaking subscribers to failed payments: time charges to paycheck dates, retry a declined card several times the same day, and hold a backup payment method.
 
-**Stage:** offer-aov — parked until the offer-aov phase opens.
+**Stage:** offer-aov — gate OPEN as of 2026-08-17. Live; no longer parked.
 
 **Why it works:** Cards are likeliest to clear when the account has just been funded, and deposit timing varies within the day, so same-day retries capture charges that failed only on timing rather than on funds. Separately, a large share of recurring revenue is lost to customers who never chose to cancel at all — their card expired or maxed out — so a second stored method recovers revenue that was never actually at risk of refusal. This is involuntary churn: retention lost without a retention decision.
 

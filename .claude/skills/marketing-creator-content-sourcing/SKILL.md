@@ -6,13 +6,13 @@ description: How a solo operator sources, screens, briefs and deploys on-camera 
 # Creator Content Sourcing
 
 ## Activate creator content through Meta partnership ads because the delivery starts with the creator's own seed audience and expands from there, reaching net-new people your pixel keeps missing.
-**Stage:** traffic — parked until the traffic phase opens. Recorded now so it is not re-derived later.
+**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
 
 **Why it works:** A partnership ad is served first to the creator's engaged followers and then to lookalikes of them, so it escapes the audience rut an account develops after years of optimizing against its own pixel — and Meta's persona-based Andromeda targeting rewards content that maps to new personas.
 
 **Evidence offered:** Assertion plus secondhand claims: a performance summit statement that creator content is the future of selling, and named brand interviews (Pacted, Caraway said small creators/UGC performed best on partnership ads; Jones Road said bigger influencer and celebrity deals performed better for them). No spend, CPA, or incrementality figures.
 
-**Fit here (4/10):** Platform-mechanics class — published fresh (2026-08) so no decay discount today, but it is exactly the kind of claim (Andromeda behavior, partnership-ad delivery, in-Reels affiliate links) that will likely be obsolete by the time this business reaches the traffic gate, which is what caps it at 4. It also needs three things RSC lacks simultaneously: an ad budget, a media buyer, and cash to pay a creator. The mechanism is real and worth recording so it is not re-derived, but it is a long park on a fast-decaying claim.
+**Fit here (6/10):** Platform-mechanics class published fresh (2026-08), so it is current, and the traffic gate it was parked behind is open — the "long park on a fast-decaying claim" reasoning no longer applies, which is what raises it from 4. Two of the three things it needed now exist: an ad budget and a live Meta account. The remaining one is a creator, and the giveaway is itself the cheapest way to solve that — entrants are self-selected brand-interested people, and paying one in product for a usable clip costs COGS rather than cash (see the sourcing tactics below). Held at 6 rather than higher because a partnership ad requires the creator to grant permission on their own handle, which is a real coordination step a solo operator has not done before, and because the delivery-behaviour claims are unverified here.
 
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
