@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert';
+import { test } from 'node:test';
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -25,6 +26,7 @@ import {
   DEFAULT_MAX_RENDERS,
   MAX_VARIATIONS,
   ESTIMATED_COST_PER_RENDER_USD,
+  describeSweep,
 } from '../../agents/ad-studio/index.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
 import { assertClaimsSourced, buildSourceIndex } from '../../agents/ad-studio/claims.js';
@@ -1434,5 +1436,73 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   assert.ok(
     !sigHandler[0].includes('Run complete:'),
     'sanity: the normal-completion sweep found above is not accidentally inside the signal handler block',
+  );
+}
+
+// ── I5: the over-budget warning must be reachable with NOTHING deleted ───────────────
+//
+// The warning used to be nested inside `if (sweep.deletions.length)`, so the one case
+// that matters most was silent: the directory over budget with nothing eligible — every
+// run younger than the 14-day tier-2 window, which is exactly what a week of one-click
+// runs produces. planPurge returns {deletions: [], underBudget: false} there, the run
+// exited saying nothing, and the README (written on this branch) claims "If it cannot
+// free enough it warns instead of reporting success."
+//
+// describeSweep is the pure message-building half of sweepDiskBudget, extracted so this
+// is testable without a paid run; the source guard below pins that main() still uses it.
+
+test('describeSweep warns when the sweep freed nothing and is still over budget', () => {
+  const { info, warning } = describeSweep({
+    deletions: [], freedBytes: 0, underBudget: false,
+    totalBytes: 5 * 1024 ** 3, wouldRemain: 5 * 1024 ** 3, budgetBytes: 4 * 1024 ** 3,
+  });
+  assert.equal(info, null, 'nothing was deleted, so there is nothing to report as freed');
+  assert.match(warning, /STILL OVER/);
+  assert.match(warning, /nothing was eligible/);
+});
+
+test('describeSweep warns when a purge ran and still did not get under the ceiling', () => {
+  const { info, warning } = describeSweep({
+    deletions: [{ path: '/x.jpg', bytes: 10 }], freedBytes: 10, underBudget: false,
+    totalBytes: 5 * 1024 ** 3, wouldRemain: 5 * 1024 ** 3, budgetBytes: 4 * 1024 ** 3,
+  });
+  assert.match(info, /freed/);
+  assert.match(warning, /STILL OVER/);
+  assert.doesNotMatch(warning, /nothing was eligible/);
+});
+
+test('describeSweep says nothing when the sweep got under the ceiling', () => {
+  const under = describeSweep({
+    deletions: [{ path: '/x.jpg', bytes: 10 }], freedBytes: 10, underBudget: true,
+    totalBytes: 10, wouldRemain: 0, budgetBytes: 4 * 1024 ** 3,
+  });
+  assert.match(under.info, /freed/);
+  assert.equal(under.warning, null);
+
+  const quiet = describeSweep({ deletions: [], freedBytes: 0, underBudget: true, wouldRemain: 0, budgetBytes: 1 });
+  assert.equal(quiet.info, null);
+  assert.equal(quiet.warning, null);
+});
+
+// enforceBudget's error shape carries no `underBudget` at all, and has already warned
+// about the failure on its own. A sweep that could not even plan must not also claim the
+// directory is over budget.
+test('describeSweep stays silent on the failed-sweep shape', () => {
+  const { info, warning } = describeSweep({ deletions: [], freedBytes: 0, applied: false, error: 'EACCES' });
+  assert.equal(info, null);
+  assert.equal(warning, null);
+});
+
+{
+  const SRC = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+  const sweepDef = SRC.match(/const sweepDiskBudget = \(\) => \{[\s\S]*?\n  \};/);
+  assert.ok(sweepDef, 'sanity: sweepDiskBudget must still exist');
+  assert.match(
+    sweepDef[0], /describeSweep\(sweep\)/,
+    'sweepDiskBudget must build its output through describeSweep — the function this test can reach',
+  );
+  assert.doesNotMatch(
+    sweepDef[0], /STILL OVER/,
+    'the warning text must live in describeSweep, not be re-inlined behind a deletions check',
   );
 }

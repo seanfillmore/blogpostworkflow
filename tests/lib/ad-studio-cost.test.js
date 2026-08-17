@@ -64,9 +64,18 @@ test('an empty format selection costs nothing', () => {
   assert.equal(r.expectedUsd, 0);
 });
 
+// A real float-noise case, not a tautology. 30 × 0.13 is 3.9000000000000004 in IEEE 754,
+// so multiplying without rounding puts thirteen decimal places into a dollar figure the
+// browser then renders. The first assertion proves the noise is genuinely there, which is
+// what the previous version of this test lacked: it compared the function's own output to
+// its own output rounded, and passed with no rounding at all.
 test('money is rounded to cents, never left as float noise', () => {
-  const r = estimateRenders({ formats: ['a', 'b', 'c'], variations: 1, targets: META });
-  assert.equal(r.expectedUsd, Number(r.expectedUsd.toFixed(2)));
+  const raw = 30 * USD_PER_RENDER;
+  assert.notEqual(raw, 3.9, 'sanity: this case really does carry float noise');
+
+  const r = estimateRenders({ formats: ['a', 'b', 'c', 'd', 'e'], variations: 1, targets: META });
+  assert.equal(r.expected, 30);
+  assert.equal(r.expectedUsd, 3.9);
 });
 
 test('the per-render price is exported for callers that show it', () => {

@@ -7,8 +7,11 @@
 //                                 [--formats us-vs-them,manifesto] [--variations 3]
 //                                 [--max-renders 120] [--dry-run]
 //
-// A default run (6 formats × 3 variations × 6 platform targets) is 162 renders ≈ $21.06
-// before retries; --max-renders is the hard ceiling. See the README's Cost section.
+// A default run is the cheapest useful one — ONE format (--formats is required), one
+// variation, the three Meta placements — 6 renders ≈ $0.78 before retries, because a Meta
+// target bills the plate and the comp derived from it. The full rotation is nine formats
+// (formats.js); all nine × 3 variations × all 6 platform targets is 243 renders ≈ $31.59.
+// --max-renders is the hard ceiling. See the README's Cost section.
 //
 // Stages: angle → copy (+ claim gate) → single-pass render → verify → package.
 // See docs/superpowers/specs/2026-08-14-ad-studio-design.md
@@ -50,10 +53,11 @@ let ARCHIVE_ON_EXIT = null;
 // design spec is derived from — keep them in step if it changes.
 export const ESTIMATED_COST_PER_RENDER_USD = USD_PER_RENDER;
 
-// A default run is 6 concepts × 3 variations × 6 platform targets = 162 renders before
-// a single retry (~$21.06), and 378 (~$49.14) if every artifact needs all 3 attempts.
-// Nothing in the pipeline bounded that. 120 leaves a dozen retries on a default run and
-// stops the pathological case cold; override with --max-renders.
+// The expensive end of the range is the full sweep: 9 concepts × 3 variations × 6
+// platform targets = 243 renders before a single retry (~$31.59), and 567 (~$73.71) if
+// every plate needs all 3 attempts. Nothing in the pipeline bounded that. 120 covers a
+// generous run with retries to spare and stops the pathological case cold; override with
+// --max-renders.
 export const DEFAULT_MAX_RENDERS = 120;
 
 // The number of --variations above which the flag is almost certainly a typo. 10
@@ -613,8 +617,9 @@ export function parseArgs(argv) {
   const product = getFlag('--product');
   if (!product) throw new Error('ad-studio: --product is required, e.g. --product coconut-lotion');
   const variant = getFlag('--variant') || null;
-  // --formats is REQUIRED. Omitting it used to mean the entire six-format rotation:
-  // 162 renders, ~$21.06, from a flag the operator never touched. The cheapest action has to
+  // --formats is REQUIRED. Omitting it used to mean the entire rotation — nine formats
+  // today, 54 renders ≈ $7.02 at the current defaults, and 243 (≈$31.59) at 3 variations
+  // across all 6 targets — from a flag the operator never touched. The cheapest action has to
   // be the one you get by accident — the same reasoning that makes dry-run the default on
   // scripts/prune-ad-studio.mjs. The error names the keys so the fix does not require
   // opening formats.js.
@@ -641,7 +646,7 @@ export function parseArgs(argv) {
   if (!Number.isInteger(variations) || variations < 1) {
     throw new Error(`ad-studio: --variations must be a positive integer, got "${variationsRaw}"`);
   }
-  // Upper bound: --variations multiplies by 6 platform targets and 6 formats. An
+  // Upper bound: --variations multiplies by up to 6 platform targets and 9 formats. An
   // unbounded flag is an unbounded bill.
   if (variations > MAX_VARIATIONS) {
     throw new Error(
@@ -1060,12 +1065,30 @@ export function createJobReporter({ root = ROOT, jobId = null } = {}) {
     return { start: noop, event: noop, finish: noop, fail: noop };
   }
   const guard = (fn) => (...a) => { try { return fn(...a); } catch { /* never fail a run over a job file */ } };
+  // Stamped by the first start() — the CLAIM — and reused by the later one that fills in
+  // the run id, so startedAt keeps meaning "when this process took the job".
+  let startedAt = null;
   return {
-    start: guard(({ pid, runId = null, plan = null }) => updateJob(root, jobId, {
-      status: 'running', pid, runId, plan, startedAt: new Date().toISOString(),
-    })),
+    // CLAIM AND TOP-UP, in that order, and idempotent.
+    //
+    // Called first with just a pid, immediately after parseArgs and before any network
+    // call, because the file is what stops a second launch: until the agent claims it the
+    // job is only 'pending', and findActiveJob stops honouring a pending job after 60s.
+    // The agent used to claim after buildConcepts — a sequential Anthropic call per
+    // format — so from 60s in until the copy stage finished, a second Render click
+    // spawned a second paid agent (~$15.60 each).
+    //
+    // Called again with `runId` once a run directory exists. Absent fields are LEFT
+    // ALONE by updateJob (see its patch semantics), so this second call cannot demote the
+    // status back to 'pending', clear the pid, or wipe the launch route's cost plan.
+    start: guard(({ pid, runId, plan } = {}) => {
+      startedAt ||= new Date().toISOString();
+      return updateJob(root, jobId, { status: 'running', pid, runId, plan, startedAt });
+    }),
     event: guard((event) => appendEvent(root, jobId, event)),
-    finish: guard(({ runId = null, totals = null, status = 'complete' }) => updateJob(root, jobId, {
+    // `runId`/`totals` absent means "keep what is on file" — a finish that omits the run
+    // id must not erase the one start() recorded.
+    finish: guard(({ runId, totals, status = 'complete' } = {}) => updateJob(root, jobId, {
       status, runId, totals, finishedAt: new Date().toISOString(),
     })),
     // The MESSAGE only. A stack trace can carry absolute paths, and this file is
@@ -1076,9 +1099,44 @@ export function createJobReporter({ root = ROOT, jobId = null } = {}) {
   };
 }
 
+/**
+ * What a disk-budget sweep should print. PURE — takes the sweep result, returns lines.
+ *
+ * THE WARNING IS THE POINT, and it must not depend on anything having been deleted. It
+ * used to be nested inside `if (sweep.deletions.length)`, which made it unreachable in
+ * the one case that matters most: the directory over budget with NOTHING eligible —
+ * every run younger than the 14-day tier-2 window, which is exactly what a week of
+ * one-click runs produces. planPurge returns `{deletions: [], underBudget: false}` there
+ * and the run exited silently, having freed nothing, on a box with ~9.9 GB free.
+ *
+ * `underBudget === false` rather than `!underBudget`: enforceBudget's error shape carries
+ * no `underBudget` at all, and it has already warned about the failure itself.
+ */
+export function describeSweep(sweep = {}) {
+  const info = sweep.deletions?.length
+    ? `Disk budget: freed ${formatBytes(sweep.freedBytes)} (${sweep.deletions.length} image(s)) — ` +
+      `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)} used.`
+    : null;
+  const warning = sweep.underBudget === false
+    ? `Disk budget: STILL OVER after purging everything eligible. ` +
+      `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)} used` +
+      (sweep.deletions?.length ? '' : ', and nothing was eligible to delete') +
+      `. Raise the budget or widen the retention windows — nothing further can be freed safely.`
+    : null;
+  return { info, warning };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const job = createJobReporter({ root: ROOT, jobId: args.jobId });
+
+  // CLAIM THE JOB FILE NOW — before .env, before the manifest, before a single network
+  // call. The launch route writes the file as 'pending' with no pid and refuses a second
+  // launch while a job is pending, but only for 60 seconds; after that only a claimed,
+  // live pid blocks. Claiming late (this used to happen after the per-format copy calls)
+  // left a window minutes long in which a second Render click paid for a second run.
+  // A no-op without --job-id, like every other reporter call.
+  job.start({ pid: process.pid });
 
   const env = loadEnv();
   if (!env.ANTHROPIC_API_KEY) throw new Error('ad-studio: missing ANTHROPIC_API_KEY in .env');
@@ -1215,7 +1273,7 @@ async function main() {
   }
 
   if (args.dryRun) {
-    job.start({ pid: process.pid, runId: null });
+    // No job.start() here: the file was claimed at boot, and a dry run never gets a runId.
     console.log(`\nDRY RUN — ${concepts.length} concept(s) for ${product.title} (${handle}${args.variant ? '/' + args.variant : ''})`);
     console.log(`labelStrings: ${JSON.stringify(labelStrings)}\n`);
     for (const c of concepts) {
@@ -1245,7 +1303,7 @@ async function main() {
         ? 'Dry run complete — the claim gate passed for every concept above. No Gemini calls were made.'
         : `Dry run complete — ${concepts.length} concept(s) passed the claim gate, ${rejectedConcepts.length} rejected (see above). No Gemini calls were made.`
     );
-    job.finish({ runId: null, totals: { renders: 0, concepts: concepts.length, rejected: rejectedConcepts.length } });
+    job.finish({ totals: { renders: 0, concepts: concepts.length, rejected: rejectedConcepts.length } });
     return { dryRun: true, concepts, rejectedConcepts };
   }
 
@@ -1253,6 +1311,9 @@ async function main() {
   const runId = `${handle}${args.variant ? '-' + args.variant : ''}-${new Date().toISOString().replace(/[:.]/g, '-')}`;
   const runDir = join(ROOT, 'data', 'creatives', 'ad-studio', runId);
   mkdirSync(runDir, { recursive: true });
+  // Top-up, not a claim: the pid and 'running' status went on at boot. This adds the run
+  // id now that a directory exists, and re-asserts the pid so a claim that failed (a job
+  // file not yet flushed, say) still gets one.
   job.start({ pid: process.pid, runId });
 
   // Archive on EVERY exit path, not just the happy one.
@@ -1292,19 +1353,9 @@ async function main() {
     try {
       const creativesDir = join(ROOT, 'data', 'creatives');
       const sweep = enforceBudget({ creativesDir, apply: true, keepPaths: [runDir] });
-      if (sweep.deletions?.length) {
-        console.log(
-          `Disk budget: freed ${formatBytes(sweep.freedBytes)} (${sweep.deletions.length} image(s)) — ` +
-          `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)} used.`
-        );
-        if (!sweep.underBudget) {
-          console.warn(
-            `Disk budget: STILL OVER after purging everything eligible. ` +
-            `${formatBytes(sweep.wouldRemain)} of ${formatBytes(sweep.budgetBytes)}. ` +
-            `Raise the budget or widen the retention windows — nothing further can be freed safely.`
-          );
-        }
-      }
+      const { info, warning } = describeSweep(sweep);
+      if (info) console.log(info);
+      if (warning) console.warn(warning);
     } catch (err) {
       // A budget sweep must never fail a finished, paid run.
       console.warn(`Disk budget: sweep skipped (${err.message}).`);

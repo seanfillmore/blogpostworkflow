@@ -152,11 +152,52 @@ test('a just-created pending job with no pid is active during the grace window',
   assert.equal(findActiveJob(root, { now, isAlive: () => false }).jobId, 'j1');
 });
 
-test('a pending job that never claimed a pid goes stale and stops blocking', () => {
+// The grace window covers the seconds between the route's write and the child booting,
+// and NOTHING ELSE. The agent claims the file immediately after parseArgs, before any
+// network call, so a job still 'pending' ten minutes later is a child that never started
+// — a bad cwd, no `node` on PATH, an OOM at boot — and must not block the next launch
+// forever. (It is safe to stop blocking here only BECAUSE the claim is early: when the
+// agent claimed after the copy stage instead, this same rule opened a minutes-long window
+// in which a second Render click paid for a second run.)
+test('a pending job whose child never booted stops blocking once the grace expires', () => {
   const root = freshRoot();
   const now = Date.parse('2026-08-16T12:00:00.000Z');
   writeJob(root, { jobId: 'j1', status: 'pending', createdAt: '2026-08-16T11:50:00.000Z' });
   assert.equal(findActiveJob(root, { now, isAlive: () => false }), null);
+});
+
+// C1, the expensive one: a run claims at boot and only gets a runId minutes later, after
+// the per-format Anthropic copy calls. Everything in between must still block a launch,
+// long past the 60s pending grace, or a second Render click spawns a second paid agent.
+test('a job claimed at boot still blocks during the copy stage, long after the grace window', () => {
+  const root = freshRoot();
+  const createdAt = '2026-08-16T11:50:00.000Z';
+  const now = Date.parse('2026-08-16T12:00:00.000Z');   // 10 minutes later
+  writeJob(root, { jobId: 'j1', status: 'pending', createdAt });
+  // What the agent's early claim writes: running, its own pid, no runId yet.
+  updateJob(root, 'j1', { status: 'running', pid: 4242, startedAt: createdAt });
+  const job = readJob(root, 'j1');
+  assert.equal(job.runId, undefined, 'sanity: the copy stage has no run id yet');
+  assert.equal(findActiveJob(root, { now, isAlive: () => true }).jobId, 'j1');
+});
+
+// I2. `undefined` means "leave it alone"; only an explicit null clears. Without this,
+// job.start()'s optional `plan` argument wiped the launch route's cost estimate — the
+// "planned N renders · $X" line the operator reads while the money is being spent.
+test('an update leaves a field alone when the patch value is undefined', () => {
+  const root = freshRoot();
+  writeJob(root, { jobId: 'j1', status: 'pending', plan: { expected: 6, expectedUsd: 0.78 }, runId: 'r1' });
+  const merged = updateJob(root, 'j1', { status: 'running', plan: undefined, runId: undefined });
+  assert.equal(merged.status, 'running');
+  assert.deepEqual(merged.plan, { expected: 6, expectedUsd: 0.78 });
+  assert.equal(merged.runId, 'r1');
+  assert.deepEqual(readJob(root, 'j1').plan, { expected: 6, expectedUsd: 0.78 });
+});
+
+test('an explicit null still clears a field', () => {
+  const root = freshRoot();
+  writeJob(root, { jobId: 'j1', status: 'running', error: 'earlier failure' });
+  assert.equal(updateJob(root, 'j1', { error: null }).error, null);
 });
 
 // A newer job sitting above an older one in listJobs must not shadow it: the dashboard

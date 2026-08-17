@@ -63,17 +63,38 @@ function variantsFor(product) {
 /**
  * The only place a launch request is trusted. Returns normalised args or a reason.
  *
- * `formats` and `manifestProducts` are injected so this is testable without the real
- * manifest, and so the test suite pins the RULES rather than today's product list.
+ * `formats`, `manifestProducts` and `variantsFor` are injected so this is testable without
+ * the real manifest or the real image tree, and so the test suite pins the RULES rather
+ * than today's product list.
  */
-export function validateLaunch(body = {}, { formats = FORMATS, manifestProducts: products = [] } = {}) {
+export function validateLaunch(
+  body = {},
+  { formats = FORMATS, manifestProducts: products = [], variantsFor: variants = variantsFor } = {},
+) {
   const bad = (error) => ({ ok: false, error });
 
   const product = String(body.product || '').trim();
   if (!product) return bad('product is required');
-  if (!products.some(p => p.handle === product)) return bad(`unknown product "${product}"`);
+  const entry = products.find(p => p.handle === product);
+  if (!entry) return bad(`unknown product "${product}"`);
 
+  // Whitelist, not a sanitiser. `variant` is the one client field that reaches the
+  // filesystem twice inside the agent: as `data/product-images/<imageDir>/<variant>`,
+  // read with readdirSync and fed to the image model as product reference photos, and as
+  // part of the run id, which is mkdir'd as root under data/creatives/ad-studio/. A
+  // "../../.." in either is a directory traversal, so the only safe test is membership of
+  // the same list the browser's dropdown is built from. Absent stays legal — most RSC
+  // products have no variant subdirectories at all.
   const variant = body.variant ? String(body.variant).trim() : null;
+  if (variant) {
+    const allowed = variants(entry);
+    if (!allowed.includes(variant)) {
+      // Never echo the submitted value: this string is rendered back into the page.
+      return bad(allowed.length
+        ? `unknown variant for "${product}" — pick one of: ${allowed.join(', ')}`
+        : `"${product}" has no variants — leave the variant blank`);
+    }
+  }
 
   const requested = Array.isArray(body.formats) ? body.formats.map(f => String(f).trim()).filter(Boolean) : [];
   if (!requested.length) return bad('pick at least one format');

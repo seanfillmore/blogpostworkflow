@@ -43,6 +43,54 @@ test('start claims the job: running, with the pid and the run id', () => {
   assert.ok(job.startedAt);
 });
 
+// C1. The claim happens at boot with a pid and nothing else; the run id arrives minutes
+// later. The second call must not demote the status or clear the pid, and the first must
+// leave a job that findActiveJob will honour past the 60s pending grace.
+test('a pid-only claim marks the job running, and a later runId tops it up', () => {
+  const root = freshRoot();
+  writeJob(root, { jobId: 'j1', status: 'pending', createdAt: new Date().toISOString() });
+  const r = createJobReporter({ root, jobId: 'j1' });
+
+  r.start({ pid: 4242 });
+  const claimed = readJob(root, 'j1');
+  assert.equal(claimed.status, 'running');
+  assert.equal(claimed.pid, 4242);
+  assert.equal(claimed.runId, undefined);
+
+  r.start({ pid: 4242, runId: 'coconut-lotion-2026' });
+  const topped = readJob(root, 'j1');
+  assert.equal(topped.status, 'running');
+  assert.equal(topped.pid, 4242);
+  assert.equal(topped.runId, 'coconut-lotion-2026');
+  assert.equal(topped.startedAt, claimed.startedAt, 'startedAt is when the process took the job');
+});
+
+// I2. The launch route writes the cost plan; the browser gates its "planned N renders ·
+// $X" line on job.plan. start() defaulting plan to null erased it the moment the run
+// started spending — precisely when the operator wants to see it.
+test('a start with no plan preserves the plan the launch route wrote', () => {
+  const root = freshRoot();
+  const plan = { expected: 6, expectedUsd: 0.78, worstCase: 12 };
+  writeJob(root, { jobId: 'j1', status: 'pending', plan, createdAt: new Date().toISOString() });
+  const r = createJobReporter({ root, jobId: 'j1' });
+  r.start({ pid: 4242 });
+  assert.deepEqual(readJob(root, 'j1').plan, plan);
+  r.start({ pid: 4242, runId: 'coconut-lotion-2026' });
+  assert.deepEqual(readJob(root, 'j1').plan, plan, 'still there once the run has a run id');
+});
+
+// The same rule on the terminal write: a finish that omits the run id must not erase it.
+test('a finish with no runId keeps the one start recorded', () => {
+  const root = freshRoot();
+  writeJob(root, { jobId: 'j1', status: 'pending', createdAt: new Date().toISOString() });
+  const r = createJobReporter({ root, jobId: 'j1' });
+  r.start({ pid: 4242, runId: 'coconut-lotion-2026' });
+  r.finish({ totals: { renders: 6 } });
+  const job = readJob(root, 'j1');
+  assert.equal(job.runId, 'coconut-lotion-2026');
+  assert.equal(job.status, 'complete');
+});
+
 test('events accumulate on the job', () => {
   const root = freshRoot();
   writeJob(root, { jobId: 'j1', status: 'pending', createdAt: new Date().toISOString() });

@@ -1,11 +1,21 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { EventEmitter } from 'node:events';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import routes, { validateLaunch, buildAgentArgv, performLaunch, MAX_RENDERS_CEILING } from '../../agents/dashboard/routes/ad-studio-launch.js';
+import { writeJob, readJob, findActiveJob } from '../../lib/ad-studio-job.js';
+import { createJobReporter } from '../../agents/ad-studio/index.js';
 
 const FORMATS = [{ key: 'manifesto' }, { key: 'us-vs-them' }, { key: 'testimonial' }];
 const PRODUCTS = [{ handle: 'coconut-lotion' }, { handle: 'coconut-oil-deodorant' }];
-const ctx = { formats: FORMATS, manifestProducts: PRODUCTS };
+const VARIANTS = { 'coconut-lotion': ['coconut-breeze', 'unscented'], 'coconut-oil-deodorant': [] };
+const ctx = {
+  formats: FORMATS,
+  manifestProducts: PRODUCTS,
+  variantsFor: (p) => VARIANTS[p.handle] || [],
+};
 
 const good = { product: 'coconut-lotion', formats: ['manifesto'], variations: 1, targets: 'meta', maxRenders: 120 };
 
@@ -36,6 +46,46 @@ test('an unknown format is refused and named', () => {
 // cheapest action is the one you get by accident.
 test('no formats is refused rather than meaning all of them', () => {
   assert.equal(validateLaunch({ ...good, formats: [] }, ctx).ok, false);
+});
+
+// ── variant: the one client field that reaches the filesystem ───────────────────────
+//
+// It lands in `data/product-images/<imageDir>/<variant>` (readdirSync'd, and the photos
+// found there are sent to the image model as product references) and in the run id, which
+// is mkdir'd under data/creatives/ad-studio/ as root. It was taken straight from the
+// request body while the module's own docstring claimed every field was re-validated.
+
+test('a variant the product actually has is accepted', () => {
+  const r = validateLaunch({ ...good, variant: 'coconut-breeze' }, ctx);
+  assert.equal(r.ok, true);
+  assert.equal(r.args.variant, 'coconut-breeze');
+});
+
+test('a variant the product does not have is refused', () => {
+  const r = validateLaunch({ ...good, variant: 'pumpkin-spice' }, ctx);
+  assert.equal(r.ok, false);
+  assert.match(r.error, /variant/i);
+});
+
+test('a traversal in the variant is refused, and never echoed back', () => {
+  for (const attempt of ['../../../../etc/ssl/certs', '../../../../tmp/x', '..']) {
+    const r = validateLaunch({ ...good, variant: attempt }, ctx);
+    assert.equal(r.ok, false, `"${attempt}" must not validate`);
+    assert.doesNotMatch(r.error, /\.\./, 'the refusal must not reflect the submitted path back into the page');
+  }
+});
+
+test('a product with no variant subdirectories refuses any variant at all', () => {
+  const r = validateLaunch(
+    { ...good, product: 'coconut-oil-deodorant', variant: 'anything' }, ctx,
+  );
+  assert.equal(r.ok, false);
+  assert.match(r.error, /no variants/i);
+});
+
+test('no variant stays legal — most products have none', () => {
+  assert.equal(validateLaunch(good, ctx).args.variant, null);
+  assert.equal(validateLaunch({ ...good, variant: '' }, ctx).args.variant, null);
 });
 
 test('variations must be a whole number in 1..10', () => {
@@ -146,6 +196,44 @@ function makeReq(bodyStr) {
 // FORMATS (unlike the tests above, which inject a fake ctx into validateLaunch) — so
 // `good` has to be a request that is actually valid today: 'coconut-lotion' is a real
 // RSC product handle and 'manifesto' a real format key.
+
+// C1, the expensive one. A run is in its COPY stage: the agent has claimed the job file
+// at boot (status running, its own pid) but has no runId yet, because buildConcepts is a
+// sequential Anthropic call per format and takes minutes. This test builds that state
+// through the real reporter and the real job lib, then asks the real findActiveJob about
+// it — nothing is stubbed except the clock's worth of elapsed time (the job is written
+// ten minutes old, well past the 60s pending grace) and the spawn.
+//
+// Before the fix the agent did not claim until after buildConcepts, so this same moment
+// returned no active job and a second Render click spawned a second paid agent: ~$15.60
+// twice over.
+test('a second launch is refused while a run is in its copy stage', () => {
+  const root = mkdtempSync(join(tmpdir(), 'ad-studio-launch-'));
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
+  // What the route writes, once, at launch.
+  writeJob(root, { jobId: 'coconut-lotion-1', status: 'pending', createdAt: tenMinutesAgo, pid: null, plan: { expected: 6 } });
+  // What the agent does immediately after parseArgs, before any network call.
+  createJobReporter({ root, jobId: 'coconut-lotion-1' }).start({ pid: process.pid });
+
+  const claimed = readJob(root, 'coconut-lotion-1');
+  assert.equal(claimed.status, 'running');
+  assert.equal(claimed.runId, undefined, 'sanity: the copy stage has produced no run id yet');
+  assert.deepEqual(claimed.plan, { expected: 6 }, 'the cost plan survives the claim');
+
+  const { args } = validateLaunch(good, ctx);
+  let spawned = 0;
+  const result = performLaunch(args, {
+    findActiveJob: () => findActiveJob(root),
+    writeJob: () => { throw new Error('a refused launch must not write a second job file'); },
+    spawn: () => { spawned += 1; throw new Error('a refused launch must not spawn a second paid agent'); },
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.status, 409);
+  assert.match(result.error, /already in progress/);
+  assert.equal(spawned, 0);
+});
 
 test('performLaunch propagates a writeJob failure rather than swallowing it', () => {
   const { args } = validateLaunch(good, ctx);
