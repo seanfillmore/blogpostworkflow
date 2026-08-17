@@ -1506,3 +1506,52 @@ test('describeSweep stays silent on the failed-sweep shape', () => {
     'the warning text must live in describeSweep, not be re-inlined behind a deletions check',
   );
 }
+
+// ── Regression guard: main() must claim the job file before it does anything else ───
+//
+// `job.start({ pid: process.pid });` is what stops a second Render click in the browser
+// from spawning a second, fully-paid run: the launch route refuses a second launch once a
+// job file is claimed with a live pid, but a claim made only after the per-format copy
+// calls (minutes of sequential Anthropic requests) leaves that whole window open. Live,
+// that gap turned one run into two — 240 renders instead of 120, ≈$31.20 instead of
+// ≈$15.60, and two 2K-render processes fighting over a 961 MB box. A reviewer deleted
+// this one line on this branch and 75/75 tests still passed; this test exists to close
+// that gap, not to be deleted the next time it's inconvenient.
+//
+// main() is not exported, constructs live Anthropic/Gemini clients, hits the network
+// directly, and is guarded against running on import — so, like the sweepDiskBudget guard
+// above, this has to read the source rather than call main().
+{
+  const SRC = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+
+  const mainStart = SRC.indexOf('async function main() {');
+  const guardStart = SRC.indexOf('// Guard: importing this module must not run the agent.');
+  assert.ok(mainStart > -1, 'sanity: main() must still exist');
+  assert.ok(guardStart > mainStart, 'sanity: the import guard must still exist, after main()');
+  const mainBody = SRC.slice(mainStart, guardStart);
+
+  // The boot claim is the UNqualified call — `{ pid: process.pid }`, no runId. The later
+  // top-up call once a run directory exists (`{ pid: process.pid, runId }`) is a different
+  // string and will not satisfy this match, so this only passes if the early claim is
+  // genuinely present, not just some job.start() call anywhere in main().
+  const bootClaimIndex = mainBody.indexOf('job.start({ pid: process.pid });');
+  assert.ok(
+    bootClaimIndex > -1,
+    'main() must claim the job file with job.start({ pid: process.pid }) before anything else',
+  );
+
+  // Anchor: fetchPdpBody() is the first thing in main() that reaches the network — it
+  // fetches the live PDP page over HTTP. Everything between the claim and here (loadEnv,
+  // the manifest, the catalog, the brand kit) is a local file read that returns in
+  // microseconds; a fetch is the first place a real stall — and therefore a real window
+  // for a second Render click — can happen. This mirrors main()'s own comment on the
+  // claim line: "before .env, before the manifest, before a single network call."
+  const anchorIndex = mainBody.indexOf('await fetchPdpBody(site.url, handle);');
+  assert.ok(anchorIndex > -1, 'sanity: the fetchPdpBody call must still exist in main()');
+
+  assert.ok(
+    bootClaimIndex < anchorIndex,
+    'the job-file claim must happen before the first network call (fetchPdpBody) — moving ' +
+    'it later reopens the window where a second Render click pays for a second run',
+  );
+}
