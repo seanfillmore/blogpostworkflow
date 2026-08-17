@@ -16,11 +16,17 @@
 //   3. The whole handler body is wrapped in try/catch. lib/router.js's dispatch() calls
 //      handlers without awaiting them and nothing in this process registers
 //      `unhandledRejection`, so an unguarded throw here would take down the entire shared
-//      `seo-dashboard` PM2 process, not just this tab.
+//      `seo-dashboard` PM2 process, not just this tab. This is a "whole body" rule, not a
+//      "the obvious part" rule — /decide's own listProductsWithBriefs(ROOT) call sits
+//      after this handler's first await and was missed once already (code review,
+//      2026-08-17); see that handler for the fix.
 //   4. Generation is a long job that outlives the request, so it reuses the SAME job-file
 //      mechanism as Ad Studio (lib/ad-studio-job.js) — same one-run-at-a-time guard via
-//      findActiveJob, same detached spawn. See performGenerate()'s docstring for the one
-//      place this deliberately departs from ad-studio-launch.js's contract, and why.
+//      findActiveJob (deliberately SHARED with Ad Studio's renders, not partitioned by
+//      kind — see performGenerate()'s docstring for why), same detached spawn, same
+//      ONE-WRITER contract: this route writes the job file once and only reads it after,
+//      exactly like ad-studio-launch.js, because agents/ad-brief/index.js now claims its
+//      own job file via --job-id the same way agents/ad-studio/index.js does.
 
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -114,41 +120,52 @@ export function validateGenerate(body = {}, { products = [] } = {}) {
   return { ok: true, args: { product, variant, angles, dryRun } };
 }
 
-/** Built from validated args only — nothing from the request body reaches argv directly. */
-export function buildAgentArgv(args) {
+/**
+ * Built from validated args only — nothing from the request body reaches argv directly.
+ *
+ * `jobId` is threaded through last, mirroring routes/ad-studio-launch.js's
+ * buildAgentArgv(args, jobId): agents/ad-brief/index.js now accepts --job-id (added
+ * alongside this route in the same review pass) and claims the job file itself at boot,
+ * before any network call — see that file's parseArgs and main() for the claim.
+ */
+export function buildAgentArgv(args, jobId) {
   const argv = ['--product', args.product];
   if (args.variant) argv.push('--variant', args.variant);
   if (args.angles && args.angles.length) argv.push('--angles', args.angles.join(','));
   if (args.dryRun) argv.push('--dry-run');
+  argv.push('--job-id', jobId);
   return argv;
 }
 
 /**
- * The concurrency check, the job-file write, and the spawn — mirrors
- * routes/ad-studio-launch.js's performLaunch() almost exactly, with one deliberate
- * departure documented below.
+ * The concurrency check, the job-file write, and the spawn — the ONE-WRITER contract
+ * lib/ad-studio-job.js's header describes, same as routes/ad-studio-launch.js's
+ * performLaunch(): this route writes the job file exactly once, before the spawn, and
+ * only ever reads it afterwards. agents/ad-brief/index.js claims it (pid, status
+ * 'running') the moment it boots and writes its own terminal status — the same
+ * createJobReporter Ad Studio's agent uses, imported there rather than reimplemented.
  *
- * DEPARTURE FROM THE "ONE WRITER" CONTRACT. lib/ad-studio-job.js's header comment states
- * the job file has exactly one writer: the dashboard route creates it, then the spawned
- * agent claims it and writes everything after that (pid, status, completion). That holds
- * for agents/ad-studio/index.js, which accepts --job-id and calls createJobReporter(). As
- * of this task, agents/ad-brief/index.js's parseArgs (see that file) recognises only
- * --product, --variant, --angles and --dry-run — there is no --job-id flag and the agent
- * never touches a job file. Passing --job-id to it would be silently ignored, which is
- * worse than not passing it: a caller reading the argv would believe the agent claims the
- * job when it does not.
+ * This used to be different: before agents/ad-brief/index.js accepted --job-id, this
+ * function wrote the child's pid and terminal status itself, from 'exit'/'error'
+ * listeners bound to the in-memory ChildProcess. Code review on 2026-08-17 found the
+ * failure mode that made that unsafe — the child is spawned `detached` and `unref()`'d
+ * specifically so it outlives this process, but a `pm2 restart` (every deploy runs one)
+ * kills this process's listeners along with it while the child keeps running. Nobody was
+ * left to write the terminal status, so a job that actually finished correctly sat at
+ * 'running' forever. Restoring the one-writer contract removes that failure mode instead
+ * of working around it.
  *
- * Rather than leave the job permanently stuck at 'pending' (which would make
- * findActiveJob's one-run-at-a-time guard lapse after DEFAULT_PENDING_GRACE_MS — 60
- * seconds, nowhere near long enough for a multi-angle Anthropic batch — and let a second
- * generate request launch a concurrent, paid run), this route becomes the sole writer for
- * the whole lifecycle: it records the child's pid the moment spawn() returns it, and the
- * terminal status from the child's own 'exit' event. This is the same shape as
- * ad-studio-launch.js's own child.on('error', ...) handler for a spawn that never starts —
- * extended to cover the rest of the run, because nothing else here ever will. See the
- * task-5 report for why this could not be solved by matching the Ad Studio agent's
- * contract exactly without also changing agents/ad-brief/index.js, which is out of this
- * task's file list.
+ * The child's 'error' listener is the one write that stays here, and it does NOT violate
+ * the contract above: it only fires when spawn() itself fails synchronously or
+ * asynchronously (e.g. ENOENT: no `node` on PATH) — cases in which the child process
+ * never ran at all, so it never had the chance to claim the job file. There is no writer
+ * to conflict with, only a launch that needs to be reported as failed rather than left at
+ * 'pending' forever.
+ *
+ * `findActiveJob` is shared with Ad Studio's renders on purpose (not partitioned by
+ * `kind`): this box is 1 vCPU with ~430 MB free, and a brief-generation batch (many
+ * sequential Anthropic calls) running at the same time as an Ad Studio render
+ * (Anthropic + Gemini) would only slow each other down, not actually parallelise.
  */
 export function performGenerate(args, deps = {}) {
   const {
@@ -166,38 +183,20 @@ export function performGenerate(args, deps = {}) {
   const jobId = `ad-brief-${args.product}-${Date.now()}`;
   if (!isValidJobId(jobId)) return { ok: false, status: 400, error: 'could not build a safe job id' };
 
-  // Written ONCE before the spawn, same as ad-studio-launch.js. Everything after this is
-  // this SAME route's own follow-up writes (see this function's docstring) rather than a
-  // second writer — the agent never touches this file.
+  // Written ONCE, here. The agent owns this file from the moment it boots.
   writeJobFn(ROOT, {
     jobId, status: 'pending', kind: 'ad-brief', createdAt: new Date().toISOString(),
     args, runId: null, pid: null, events: [], totals: null, error: null,
   });
 
-  const child = spawnFn('node', [join(ROOT, 'agents/ad-brief/index.js'), ...buildAgentArgv(args)], {
+  const child = spawnFn('node', [join(ROOT, 'agents/ad-brief/index.js'), ...buildAgentArgv(args, jobId)], {
     cwd: ROOT, detached: true, stdio: 'ignore',
   });
 
-  // spawn() returns synchronously with a pid once the OS has forked the process, even
-  // though 'error'/'exit' arrive later — recording it here is the earliest point this
-  // route can tell the job file which process it is tracking.
-  if (child.pid) {
-    try { updateJobFn(ROOT, jobId, { status: 'running', pid: child.pid, startedAt: new Date().toISOString() }); } catch { /* the job file itself may be what's broken */ }
-  }
-
-  // Mirrors ad-studio-launch.js's own child.on('error', ...): an exception thrown out of
-  // an 'error' listener is itself an uncaught exception, so this stays defensive.
+  // See this function's docstring: the ONE case this route still writes for itself,
+  // because the child never claimed the file if it never started.
   child.on('error', () => {
-    try { updateJobFn(ROOT, jobId, { status: 'error', error: 'failed to start the brief generation process' }); } catch { /* ignore */ }
-  });
-
-  child.on('exit', (code) => {
-    try {
-      updateJobFn(ROOT, jobId, {
-        status: code === 0 ? 'complete' : 'error',
-        error: code === 0 ? null : `brief generation exited with code ${code}`,
-      });
-    } catch { /* the job file itself may be what's broken (e.g. full disk) — nothing more to do */ }
+    try { updateJobFn(ROOT, jobId, { status: 'error', error: 'failed to start the brief generation process' }); } catch { /* the job file itself may be what's broken */ }
   });
 
   child.unref();
@@ -285,11 +284,26 @@ export default [
   {
     method: 'POST',
     match: '/api/ad-brief/decide',
-    async handler(req, res) {
+    async handler(req, res, ctx) {
       let body;
       try { body = await readJsonBody(req); } catch { return respondError(res, 400, 'bad JSON body'); }
 
-      const knownProducts = listProductsWithBriefs(ROOT).map(handle => ({ handle }));
+      // listProductsWithBriefs() reads a directory (readdirSync); lib/ad-brief.js guards
+      // each per-entry statSync individually but not the readdirSync itself, so an
+      // EACCES, an EIO, or a TOCTOU race between its own existsSync and the read that
+      // follows reaches here as a throw. This sits after the handler's first await —
+      // exactly the shape lib/router.js's dispatch() cannot catch (it calls handlers
+      // without awaiting them, and nothing here registers 'unhandledRejection'), so an
+      // unguarded throw would kill the whole shared seo-dashboard process rather than
+      // fail this one request. Code review, 2026-08-17.
+      const listProductsWithBriefsFn = ctx?.adBriefDeps?.listProductsWithBriefs || listProductsWithBriefs;
+      let knownProducts;
+      try {
+        knownProducts = listProductsWithBriefsFn(ROOT).map(handle => ({ handle }));
+      } catch {
+        return respondError(res, 500, 'failed to load known products');
+      }
+
       const verdict = validateDecide(body, { products: knownProducts });
       if (!verdict.ok) return respondError(res, 400, verdict.error);
 

@@ -3,7 +3,19 @@
 // Generates ad BRIEFS — one per persona angle — before any image is rendered.
 //
 //   node agents/ad-brief/index.js --product coconut-lotion [--variant coconut-breeze]
-//                                [--angles p1a1,p5a3] [--dry-run]
+//                                [--angles p1a1,p5a3] [--dry-run] [--job-id <id>]
+//
+// --job-id turns on progress reporting into data/reports/ad-studio/jobs/<id>.json, via
+// the SAME createJobReporter Ad Studio uses (imported, never reimplemented — see the
+// gates rule below). The dashboard's /api/ad-brief/generate route sets it; a human
+// never does. Every reporter method is a no-op without one, so every invocation in this
+// file's own history — none of which passed --job-id — behaves exactly as before.
+// This closes a gap a 2026-08-17 review found: the route used to write a job's pid and
+// terminal status itself because this agent had no way to claim the file, which meant a
+// `pm2 restart` mid-run (every deploy does one) left the route's in-memory 'exit'
+// listener gone and the job stuck at 'running' forever even though the briefs had
+// already landed correctly on disk. Claiming the file here, the way the agent that
+// actually knows when it's done, removes that failure mode.
 //
 // WHY THIS EXISTS. Ad Studio used to write copy and immediately spend ~$0.78 rendering
 // it. The copy is the part that decides whether a concept was ever worth rendering, so
@@ -30,9 +42,10 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '../../lib/anthropic.js';
 import { FORMATS } from '../ad-studio/formats.js';
 import { buildSourceIndex } from '../ad-studio/claims.js';
-import { buildConcept, buildLabelStrings, fetchAdReviews } from '../ad-studio/index.js';
+import { buildConcept, buildLabelStrings, fetchAdReviews, createJobReporter } from '../ad-studio/index.js';
 import { scoreBrief } from '../../lib/ad-brief-score.js';
 import { writeBrief } from '../../lib/ad-brief.js';
+import { isValidJobId } from '../../lib/ad-studio-job.js';
 import { SKIN_CLUSTER_HANDLES } from '../../lib/voice-of-customer.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -117,11 +130,19 @@ export function parseArgs(argv) {
   const product = get('--product');
   if (!product) throw new Error('ad-brief: --product is required, e.g. --product coconut-lotion');
   const anglesRaw = get('--angles');
+  // Validated here too, not just in the route: this argv can also arrive from a shell,
+  // and the same safe-segment rule the job file's path is built from (lib/ad-studio-job.js)
+  // must hold no matter who supplied it.
+  const jobId = get('--job-id') || null;
+  if (jobId !== null && !isValidJobId(jobId)) {
+    throw new Error(`ad-brief: invalid --job-id "${jobId}" — letters, digits, dot, dash and underscore only`);
+  }
   return {
     product,
     variant: get('--variant') || null,
     angles: anglesRaw ? anglesRaw.split(',').map(s => s.trim()).filter(Boolean) : [],
     dryRun: argv.includes('--dry-run'),
+    jobId,
   };
 }
 
@@ -279,10 +300,17 @@ export function assertClusterCoverage(handle, personasData, clusterHandles = CLU
  * --dry-run never calls buildConceptFn and never writes: it returns the same shape
  * (score, proposed format, state) so main() can print an identical summary, each entry
  * additionally carrying `pending: true`.
+ *
+ * `job` defaults to a no-op reporter (createJobReporter() with no jobId, per its own
+ * contract) so every existing caller of this function — including every test in this
+ * repo's history — behaves exactly as before. When the caller does pass a live reporter
+ * (main(), below), each angle reports its own outcome via job.event() as it lands, the
+ * same shape Ad Studio's own per-concept reporting uses, so a dashboard watching the job
+ * file sees progress angle by angle rather than one lump update at the very end.
  */
 export async function generateBriefs({
   selected, product, pdpBody, sourceIndex, reviews, seoImpact, dryRun, anthropic, root,
-  now = Date.now(), buildConceptFn = buildConcept,
+  now = Date.now(), buildConceptFn = buildConcept, job = createJobReporter(),
 }) {
   const out = [];
   for (const { persona, angle } of selected) {
@@ -306,13 +334,17 @@ export async function generateBriefs({
     // narrow one and hide exactly the gap this is meant to surface.
     if (!proposed) {
       const brief = { ...base, zones: null, state: 'ready' };
-      out.push(dryRun ? { ...brief, pending: true } : writeBrief(root, brief));
+      const saved = dryRun ? { ...brief, pending: true } : writeBrief(root, brief);
+      job.event({ stage: 'brief', angleId: angle.id, personaId: persona.id, state: saved.state, format: null });
+      out.push(saved);
       continue;
     }
 
     if (dryRun) {
       // No copy call, no write — --dry-run only previews the plan.
-      out.push({ ...base, zones: null, state: 'ready', pending: true });
+      const saved = { ...base, zones: null, state: 'ready', pending: true };
+      job.event({ stage: 'brief', angleId: angle.id, personaId: persona.id, state: saved.state, format: proposed, pending: true });
+      out.push(saved);
       continue;
     }
 
@@ -340,7 +372,9 @@ export async function generateBriefs({
         };
 
     // Persisted before the loop moves to the next angle — see this function's docstring.
-    out.push(writeBrief(root, brief));
+    const saved = writeBrief(root, brief);
+    job.event({ stage: 'brief', angleId: angle.id, personaId: persona.id, state: saved.state, format: proposed });
+    out.push(saved);
   }
   return out;
 }
@@ -348,6 +382,17 @@ export async function generateBriefs({
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const handle = args.product;
+
+  const job = createJobReporter({ root: ROOT, jobId: args.jobId });
+
+  // CLAIM THE JOB FILE NOW — before .env, before personas, before a single network call.
+  // Mirrors agents/ad-studio/index.js's own reasoning, learned the hard way there: the
+  // dashboard route writes the file as 'pending' and only refuses a second /generate
+  // request for DEFAULT_PENDING_GRACE_MS (60s) unless a live pid is on record. A
+  // multi-angle Anthropic batch runs far longer than that, so claiming late would leave
+  // a window in which a second click launches a second paid batch. A no-op without
+  // --job-id, like every other reporter call.
+  job.start({ pid: process.pid });
 
   const env = loadEnv();
   if (!env.ANTHROPIC_API_KEY) throw new Error('ad-brief: missing ANTHROPIC_API_KEY in .env');
@@ -422,6 +467,7 @@ async function main() {
 
   if (!selected.length) {
     console.log(`ad-brief: no angles selected for "${handle}" — nothing to do.`);
+    job.finish({ totals: { briefs: 0 } });
     return { dryRun: args.dryRun, briefs: [] };
   }
 
@@ -433,7 +479,7 @@ async function main() {
   // others' already-generated, already-paid-for briefs.
   const results = await generateBriefs({
     selected, product, pdpBody, sourceIndex, reviews, seoImpact,
-    dryRun: args.dryRun, anthropic, root: ROOT, now,
+    dryRun: args.dryRun, anthropic, root: ROOT, now, job,
   });
 
   // Step 9: rank + print, computed from what generateBriefs actually returned (which — on
@@ -459,6 +505,7 @@ async function main() {
       );
       console.log('');
     }
+    job.finish({ totals: { briefs: ranked.length } });
     return { dryRun: true, briefs: ranked };
   }
 
@@ -477,9 +524,20 @@ async function main() {
     }
   }
 
+  job.finish({ totals: { briefs: ranked.length, needsEvidence: needsEvidence.length } });
   return { dryRun: false, briefs: ranked };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  main().catch((err) => { console.error(err.message); process.exit(1); });
+  main().catch((err) => {
+    // The job may have been claimed (job.start() above) before whatever failed. A fresh
+    // reporter built from the same argv reaches the same file — createJobReporter's own
+    // fail() swallows its own errors, so a broken job file can never mask the real one.
+    try {
+      const failedJobId = parseArgs(process.argv.slice(2)).jobId;
+      if (failedJobId) createJobReporter({ root: ROOT, jobId: failedJobId }).fail(err);
+    } catch { /* a parseArgs failure is itself the error being reported */ }
+    console.error(err.message);
+    process.exit(1);
+  });
 }

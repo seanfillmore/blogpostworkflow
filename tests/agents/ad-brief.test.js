@@ -1,14 +1,19 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   AWARENESS_TO_FORMAT_AWARENESS, formatsForAngle, personaProjection, angleRelevance,
   buildBriefId, parseArgs, gatesFromRejection, assertClusterCoverage, generateBriefs,
 } from '../../agents/ad-brief/index.js';
 import { FORMATS } from '../../agents/ad-studio/formats.js';
 import { readBrief } from '../../lib/ad-brief.js';
+import { createJobReporter } from '../../agents/ad-studio/index.js';
+import { writeJob, readJob } from '../../lib/ad-studio-job.js';
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // ── the awareness join ──────────────────────────────────────────────────────────────
 //
@@ -281,3 +286,126 @@ test('generateBriefs in --dry-run mode calls buildConceptFn zero times and write
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// ── --job-id (code review, 2026-08-17) ──────────────────────────────────────────────
+//
+// Before this, the dashboard route (routes/ad-brief.js) had to write the job's pid and
+// terminal status ITSELF, from 'exit'/'error' listeners on the in-memory ChildProcess,
+// because this agent had no way to claim the job file the way agents/ad-studio/index.js
+// does. That broke under a `pm2 restart` (every deploy runs one): the detached, unref()'d
+// child keeps running, but the route's listeners die with the route's own process, so
+// nobody was left to write the terminal status and a job that finished correctly sat at
+// 'running' forever. Adding --job-id here, wired through createJobReporter — the SAME
+// reporter agents/ad-studio/index.js uses, imported rather than reimplemented — lets this
+// agent claim and finish its own job file, restoring the one-writer contract
+// lib/ad-studio-job.js's header describes.
+
+test('--job-id is parsed, validated the same way as Ad Studio\'s, and defaults to null', () => {
+  assert.equal(parseArgs(['--product', 'coconut-lotion']).jobId, null);
+  assert.equal(parseArgs(['--product', 'coconut-lotion', '--job-id', 'ad-brief-coconut-lotion-123']).jobId, 'ad-brief-coconut-lotion-123');
+  assert.throws(
+    () => parseArgs(['--product', 'coconut-lotion', '--job-id', '../../etc/passwd']),
+    /invalid --job-id/,
+  );
+});
+
+test('with no --job-id, createJobReporter is a no-op and nothing is written to the job store', () => {
+  const root = mkdtempSync(join(tmpdir(), 'ad-brief-job-'));
+  try {
+    const args = parseArgs(['--product', 'coconut-lotion']);
+    assert.equal(args.jobId, null);
+
+    // Every method exercised, exactly as main() would call them across a run's lifecycle.
+    const job = createJobReporter({ root, jobId: args.jobId });
+    job.start({ pid: 12345 });
+    job.event({ stage: 'brief', angleId: 'p1a1' });
+    job.finish({ totals: { briefs: 1 } });
+    job.fail(new Error('simulated'));
+
+    // jobsDir() is `<root>/data/reports/ad-studio/jobs` — it must not even exist, because
+    // a no-op reporter must never create the directory, let alone a file in it.
+    assert.equal(existsSync(join(root, 'data', 'reports', 'ad-studio', 'jobs')), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('with --job-id, job.start() claims the file (status running, pid) and generateBriefs reports per-angle progress', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ad-brief-job-'));
+  try {
+    const args = parseArgs(['--product', 'coconut-lotion', '--job-id', 'test-job-1']);
+
+    // What the ROUTE writes, once, before spawning — updateJob (which job.start() calls
+    // under the hood) requires an existing job file to patch, same as every other job in
+    // this project's history (see lib/ad-studio-job.js's PATCH SEMANTICS doc).
+    writeJob(root, { jobId: 'test-job-1', status: 'pending', createdAt: new Date().toISOString(), pid: null });
+
+    const job = createJobReporter({ root, jobId: args.jobId });
+
+    // What main() does immediately after parseArgs, before .env, before a single network
+    // call — see the source-inspection regression guard below for the ordering proof.
+    job.start({ pid: process.pid });
+
+    const claimed = readJob(root, 'test-job-1');
+    assert.equal(claimed.status, 'running');
+    assert.equal(claimed.pid, process.pid);
+
+    const product = { handle: 'test-product', title: 'Test Product', priceLabel: '$10', variant: null };
+    const persona = { id: 'p9', name: 'Test Persona' };
+    const angle = { id: 'p9a1', label: 'Angle A', awareness: 'problem-aware' };
+    const buildConceptFn = async () => (
+      { ok: true, conceptSlug: 'manifesto', format: { key: 'manifesto' }, zones: { headline: 'H' }, claims: [] }
+    );
+
+    await generateBriefs({
+      selected: [{ persona, angle }], product, pdpBody: '', sourceIndex: {}, reviews: [], seoImpact: null,
+      dryRun: false, anthropic: null, root, now: 1786000000000, buildConceptFn, job,
+    });
+
+    const after = readJob(root, 'test-job-1');
+    assert.equal(after.events.length, 1, 'one angle processed, one progress event');
+    assert.equal(after.events[0].stage, 'brief');
+    assert.equal(after.events[0].angleId, 'p9a1');
+    assert.equal(after.events[0].state, 'ready');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ── Regression guard: main() must claim the job file before it does anything else ───
+//
+// Mirrors tests/agents/ad-studio-orchestrator.test.js's identical guard for
+// agents/ad-studio/index.js almost verbatim — see that file's comment for the full
+// history (a reviewer once deleted the equivalent line there and 75/75 tests still
+// passed). main() here is not exported, loads real personas/manifest/catalog data by a
+// hardcoded ROOT, and reaches the live network via fetchPdpBody — so, like that guard,
+// this reads the source rather than calling main().
+{
+  const SRC = readFileSync(join(REPO_ROOT, 'agents', 'ad-brief', 'index.js'), 'utf8');
+
+  const mainStart = SRC.indexOf('async function main() {');
+  const guardStart = SRC.indexOf('if (process.argv[1] === fileURLToPath(import.meta.url)) {');
+  assert.ok(mainStart > -1, 'sanity: main() must still exist');
+  assert.ok(guardStart > mainStart, 'sanity: the import guard must still exist, after main()');
+  const mainBody = SRC.slice(mainStart, guardStart);
+
+  // The boot claim is the unqualified call — `{ pid: process.pid }`. Matches ad-studio's
+  // own guard test's anchor string exactly.
+  const bootClaimIndex = mainBody.indexOf('job.start({ pid: process.pid });');
+  assert.ok(
+    bootClaimIndex > -1,
+    'main() must claim the job file with job.start({ pid: process.pid }) before anything else',
+  );
+
+  // Anchor: fetchPdpBody() is the first thing in main() that reaches the network. Everything
+  // between the claim and here (loadEnv, personas, the manifest, the catalog, the brand kit)
+  // is a local file read.
+  const anchorIndex = mainBody.indexOf('await fetchPdpBody(site.url, handle);');
+  assert.ok(anchorIndex > -1, 'sanity: the fetchPdpBody call must still exist in main()');
+
+  assert.ok(
+    bootClaimIndex < anchorIndex,
+    'the job-file claim must happen before the first network call (fetchPdpBody) — moving ' +
+    'it later reopens the window where a second /generate call pays for a second run',
+  );
+}
