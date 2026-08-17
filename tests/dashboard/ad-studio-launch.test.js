@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { validateLaunch, buildAgentArgv, MAX_RENDERS_CEILING } from '../../agents/dashboard/routes/ad-studio-launch.js';
+import { EventEmitter } from 'node:events';
+import routes, { validateLaunch, buildAgentArgv, performLaunch, MAX_RENDERS_CEILING } from '../../agents/dashboard/routes/ad-studio-launch.js';
 
 const FORMATS = [{ key: 'manifesto' }, { key: 'us-vs-them' }, { key: 'testimonial' }];
 const PRODUCTS = [{ handle: 'coconut-lotion' }, { handle: 'coconut-oil-deodorant' }];
@@ -105,4 +106,144 @@ test('a dry run passes --dry-run and no render ceiling', () => {
 test('a variant is omitted entirely when there is none', () => {
   const { args } = validateLaunch(good, ctx);
   assert.equal(buildAgentArgv(args, 'job-3').includes('--variant'), false);
+});
+
+// ── performLaunch / POST handler failure paths ──────────────────────────────────────
+//
+// Code review finding (2026-08-17): the POST /launch handler had no try/catch around
+// findActiveJob/writeJob/spawn. lib/router.js's dispatch() calls this async handler
+// without awaiting or .catch()-ing it, and the dashboard registers no
+// 'unhandledRejection' handler, so a throw here — most realistically writeJob hitting
+// ENOSPC, which has already cost this project four days of cron once — would kill the
+// single shared seo-dashboard PM2 process for every tab, not just Ad Studio.
+//
+// Fixed by splitting the findActiveJob/writeJob/spawn sequence into performLaunch(),
+// which the handler now calls inside a try/catch, and by threading `ctx.adStudioDeps`
+// (the router already passes a ctx argument to every handler) through as an injectable
+// override so these two failure paths are reachable without a real full disk or a
+// missing `node` binary.
+
+/** Minimal http.ServerResponse stand-in: captures status + body, nothing else. */
+function makeRes() {
+  const res = { statusCode: null, body: null };
+  res.writeHead = (status) => { res.statusCode = status; };
+  res.end = (body) => { res.body = body; };
+  return res;
+}
+
+/** Minimal IncomingMessage stand-in for readJsonBody(req), which registers 'data' then 'end'. */
+function makeReq(bodyStr) {
+  return {
+    on(event, cb) {
+      if (event === 'data') cb(Buffer.from(bodyStr));
+      if (event === 'end') cb();
+      return this;
+    },
+  };
+}
+
+// This exercises the REAL route handler against the REAL product manifest and REAL
+// FORMATS (unlike the tests above, which inject a fake ctx into validateLaunch) — so
+// `good` has to be a request that is actually valid today: 'coconut-lotion' is a real
+// RSC product handle and 'manifesto' a real format key.
+
+test('performLaunch propagates a writeJob failure rather than swallowing it', () => {
+  const { args } = validateLaunch(good, ctx);
+  const deps = {
+    findActiveJob: () => null,
+    writeJob: () => { throw new Error('ENOSPC: no space left on device, write'); },
+  };
+  assert.throws(() => performLaunch(args, deps), /ENOSPC/);
+});
+
+test('the POST /launch handler answers 500 rather than rejecting when the launch step throws', async () => {
+  const route = routes.find(r => r.method === 'POST' && r.match === '/api/ad-studio/launch');
+  assert.ok(route, 'POST /api/ad-studio/launch route not found');
+
+  const req = makeReq(JSON.stringify(good));
+  const res = makeRes();
+  const failingCtx = {
+    adStudioDeps: {
+      findActiveJob: () => null,
+      writeJob: () => { throw new Error('ENOSPC: no space left on device, write'); },
+    },
+  };
+
+  // The point of the fix: this must resolve, never reject.
+  await assert.doesNotReject(() => route.handler(req, res, failingCtx));
+  assert.equal(res.statusCode, 500);
+  const parsed = JSON.parse(res.body);
+  assert.equal(parsed.ok, false);
+  // No raw exception text, no ENOSPC, no path, no stack — a fixed message only.
+  assert.doesNotMatch(parsed.error, /ENOSPC/);
+  assert.doesNotMatch(parsed.error, /no space left/i);
+});
+
+test('a run still launches normally when performLaunch succeeds (ctx carries no override)', async () => {
+  const route = routes.find(r => r.method === 'POST' && r.match === '/api/ad-studio/launch');
+  const req = makeReq(JSON.stringify(good));
+  const res = makeRes();
+  const calls = [];
+  const okCtx = {
+    adStudioDeps: {
+      findActiveJob: () => null,
+      writeJob: (root, job) => { calls.push(job); },
+      spawn: () => { const child = new EventEmitter(); child.unref = () => {}; return child; },
+    },
+  };
+  await route.handler(req, res, okCtx);
+  assert.equal(res.statusCode, 200);
+  const parsed = JSON.parse(res.body);
+  assert.equal(parsed.ok, true);
+  assert.equal(calls.length, 1, 'writeJob should be called exactly once');
+});
+
+// ── spawn's 'error' event ────────────────────────────────────────────────────────────
+//
+// Node treats an unhandled 'error' event on a ChildProcess as a throw — the same
+// process-killing failure as above, just async (e.g. ENOENT: no `node` on PATH). The
+// fix attaches a listener that records the failure on the job file via updateJob
+// instead of leaving the job stuck 'pending' forever, and wraps that write so the
+// listener itself cannot throw if the job file is *also* broken.
+
+test('a spawn failure is recorded on the job file rather than left silently pending', () => {
+  const { args } = validateLaunch(good, ctx);
+  const calls = [];
+  const fakeChild = new EventEmitter();
+  fakeChild.unref = () => {};
+  const deps = {
+    findActiveJob: () => null,
+    writeJob: () => {},
+    spawn: () => fakeChild,
+    updateJob: (root, jobId, patch) => { calls.push({ jobId, patch }); },
+  };
+
+  const result = performLaunch(args, deps);
+  assert.equal(result.ok, true);
+
+  fakeChild.emit('error', new Error('spawn node ENOENT'));
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].jobId, result.jobId);
+  assert.equal(calls[0].patch.status, 'error');
+  // Fixed message, not the raw ENOENT text.
+  assert.doesNotMatch(calls[0].patch.error, /ENOENT/);
+});
+
+test("the child 'error' listener cannot itself throw even if updateJob is also broken", () => {
+  const { args } = validateLaunch(good, ctx);
+  const fakeChild = new EventEmitter();
+  fakeChild.unref = () => {};
+  const deps = {
+    findActiveJob: () => null,
+    writeJob: () => {},
+    spawn: () => fakeChild,
+    updateJob: () => { throw new Error('job file is also broken'); },
+  };
+
+  performLaunch(args, deps);
+
+  // EventEmitter re-throws synchronously out of emit() if a listener throws and is not
+  // itself caught — this proves the internal try/catch, not just that a listener exists.
+  assert.doesNotThrow(() => fakeChild.emit('error', new Error('spawn node ENOENT')));
 });

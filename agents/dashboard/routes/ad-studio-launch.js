@@ -23,7 +23,7 @@ import { join } from 'node:path';
 import { FORMATS } from '../../ad-studio/formats.js';
 import { selectTargets } from '../../ad-studio/packaging.js';
 import { estimateRenders, USD_PER_RENDER } from '../../../lib/ad-studio-cost.js';
-import { writeJob, readJob, findActiveJob, rendersToday, isValidJobId } from '../../../lib/ad-studio-job.js';
+import { writeJob, readJob, updateJob, findActiveJob, rendersToday, isValidJobId } from '../../../lib/ad-studio-job.js';
 import { respondJson, respondError, readJsonBody } from '../lib/responses.js';
 import { ROOT, PRODUCT_IMAGES_DIR, PRODUCT_MANIFEST_PATH } from '../lib/paths.js';
 
@@ -123,6 +123,70 @@ export function buildAgentArgv(args, jobId) {
   return argv;
 }
 
+/**
+ * The concurrency check, the job-file write, and the spawn — the three steps between a
+ * validated request and a running process. Split out of the route handler so it has a
+ * seam a test can reach: `deps` defaults to the real fs/child_process-backed collaborators
+ * (`findActiveJob`, `writeJob`, `updateJob`, `spawn`), and the router already threads a
+ * `ctx` argument to every handler (see lib/router.js's `dispatch`), so a test can pass
+ * `ctx.adStudioDeps` to substitute a throwing stub for one of them without touching this
+ * function's own logic or the production call site, which passes no override at all.
+ *
+ * Returns a discriminated result rather than writing to `res` itself, so the two ways
+ * this can legitimately fail before a process exists (409 already running, 400 collided
+ * job id) stay ordinary return values, and the two ways it can THROW (writeJob hitting
+ * ENOSPC — not hypothetical on this box, see CLAUDE.md's disk-budget history — or spawn
+ * throwing synchronously on a bad cwd) are left to propagate, for the handler's own
+ * try/catch to turn into a 500 instead of an unhandled rejection that kills the shared
+ * `seo-dashboard` PM2 process.
+ */
+export function performLaunch(args, deps = {}) {
+  const {
+    findActiveJob: findActiveJobFn = findActiveJob,
+    writeJob: writeJobFn = writeJob,
+    updateJob: updateJobFn = updateJob,
+    spawn: spawnFn = spawn,
+  } = deps;
+
+  const active = findActiveJobFn(ROOT);
+  if (active) {
+    return { ok: false, status: 409, error: `a run is already in progress (${active.jobId}) — wait for it or cancel it first` };
+  }
+
+  const jobId = `${args.product}-${Date.now()}`;
+  if (!isValidJobId(jobId)) return { ok: false, status: 400, error: 'could not build a safe job id' };
+
+  // Written ONCE, here. The agent owns this file from the moment it boots.
+  writeJobFn(ROOT, {
+    jobId, status: 'pending', createdAt: new Date().toISOString(),
+    args: { ...args, plan: undefined }, plan: args.plan,
+    runId: null, pid: null, events: [], totals: null, error: null,
+  });
+
+  const child = spawnFn('node', [join(ROOT, 'agents/ad-studio/index.js'), ...buildAgentArgv(args, jobId)], {
+    cwd: ROOT, detached: true, stdio: 'ignore',
+  });
+
+  // An unhandled 'error' event on a child process is a throw in Node — the same
+  // process-killing failure this function's callers guard against, just arriving async
+  // instead of sync (ENOENT: no `node` on PATH, or a bad cwd). Recorded here rather than
+  // only logged, so the operator sees a failed job instead of one stuck "pending"
+  // forever. This write happens BEFORE the agent process could ever have opened the job
+  // file — spawn() has only just returned, nothing has run yet — so it is not a second
+  // writer racing the agent for single-writer status; it is the only writer there will
+  // ever be for a process that never started. The try/catch is not belt-and-braces
+  // dressing: an exception thrown out of an 'error' listener is itself an uncaught
+  // exception, which is the exact failure this whole finding is about avoiding.
+  child.on('error', () => {
+    try {
+      updateJobFn(ROOT, jobId, { status: 'error', error: 'failed to start the render process' });
+    } catch { /* the job file itself may be what's broken (e.g. full disk) — nothing more to do */ }
+  });
+
+  child.unref();
+  return { ok: true, jobId };
+}
+
 export default [
   // GET /api/ad-studio/options — everything the setup form needs, so nothing about the
   // rotation is hardcoded in browser JS.
@@ -157,35 +221,30 @@ export default [
   {
     method: 'POST',
     match: '/api/ad-studio/launch',
-    async handler(req, res) {
+    async handler(req, res, ctx) {
       let body;
       try { body = await readJsonBody(req); } catch { return respondError(res, 400, 'bad JSON body'); }
 
       const verdict = validateLaunch(body, { formats: FORMATS, manifestProducts: manifestProducts() });
       if (!verdict.ok) return respondError(res, 400, verdict.error);
 
-      const active = findActiveJob(ROOT);
-      if (active) {
-        return respondError(res, 409, `a run is already in progress (${active.jobId}) — wait for it or cancel it first`);
+      // findActiveJob/writeJob/spawn are all synchronous fs or process calls that can
+      // throw — most realistically writeJob hitting ENOSPC on a box that has already
+      // lost four days of cron to a full disk. dispatch() in lib/router.js calls this
+      // async handler without awaiting or .catch()-ing it, and nothing in this process
+      // registers an `unhandledRejection` handler, so an uncaught throw here would take
+      // down the whole shared `seo-dashboard` PM2 process — not just this tab. Answer a
+      // fixed 500 instead; never echo the exception (it can carry a raw fs path or a
+      // stack frame, and the job id it's about is not this route's to leak either).
+      let result;
+      try {
+        result = performLaunch(verdict.args, ctx?.adStudioDeps);
+      } catch {
+        return respondError(res, 500, 'failed to launch the run — check server disk space and logs');
       }
 
-      const { args } = verdict;
-      const jobId = `${args.product}-${Date.now()}`;
-      if (!isValidJobId(jobId)) return respondError(res, 400, 'could not build a safe job id');
-
-      // Written ONCE, here. The agent owns this file from the moment it boots.
-      writeJob(ROOT, {
-        jobId, status: 'pending', createdAt: new Date().toISOString(),
-        args: { ...args, plan: undefined }, plan: args.plan,
-        runId: null, pid: null, events: [], totals: null, error: null,
-      });
-
-      const child = spawn('node', [join(ROOT, 'agents/ad-studio/index.js'), ...buildAgentArgv(args, jobId)], {
-        cwd: ROOT, detached: true, stdio: 'ignore',
-      });
-      child.unref();
-
-      respondJson(res, { ok: true, jobId, plan: args.plan });
+      if (!result.ok) return respondError(res, result.status, result.error);
+      respondJson(res, { ok: true, jobId: result.jobId, plan: verdict.args.plan });
     },
   },
 
