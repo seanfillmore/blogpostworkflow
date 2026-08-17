@@ -1669,8 +1669,23 @@ async function main() {
     // the run id so an operator retrying this brief later sees the prior spend instead of
     // a clean 'approved' record with no trace of it. State is untouched: still 'approved',
     // still retryable through the approval boundary above.
-    const current = readBrief(ROOT, handle, brief.briefId) || brief;
-    writeBrief(ROOT, { ...current, failedRunIds: [...(current.failedRunIds || []), runId] });
+    //
+    // NEVER let this throw escape. writeBrief throws on any fs error, and ENOSPC is the
+    // realistic one here — this project has already lost four days of cron to a full
+    // disk. If it threw uncaught, the run would fall into the top-level catch instead of
+    // finishing normally: flushArchive() would never run, and — worse — sweepDiskBudget()
+    // below would never run either, skipping "purge as we go" at exactly the moment disk
+    // pressure is the plausible cause. A bookkeeping write must not be able to suppress
+    // the disk sweep. Same posture archiveRunOutput already takes, for the same reason:
+    // by now the money is spent and the images are on disk, so nothing here may turn a
+    // finished, non-fatal run (zero accepted artifacts is already known and reported) into
+    // a crash.
+    try {
+      const current = readBrief(ROOT, handle, brief.briefId) || brief;
+      writeBrief(ROOT, { ...current, failedRunIds: [...(current.failedRunIds || []), runId] });
+    } catch (err) {
+      console.warn(`ad-studio: could not record failed run id on brief "${brief.briefId}" (${err.message}) — continuing.`);
+    }
     console.warn(
       `ad-studio: brief "${brief.briefId}" was NOT marked "rendered" — this run produced no accepted ` +
       `artifact (a transient render failure or a --max-renders stop). It remains "approved" and can ` +

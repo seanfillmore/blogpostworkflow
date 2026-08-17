@@ -325,3 +325,52 @@ test('a run that produced nothing still leaves a trace of the spend, without cha
     'recording the failed spend must not change state — the brief stays approved and retryable',
   );
 });
+
+// Review finding: the failedRunIds write above had no try/catch — writeBrief throws on
+// any fs error (ENOSPC is the realistic trigger; this project has already lost four days
+// of cron to a full disk), and an uncaught throw here would divert the run into the
+// top-level catch INSTEAD of finishing normally, skipping flushArchive() and — the actual
+// incident — skipping sweepDiskBudget() at exactly the moment disk pressure is the
+// plausible cause. A bookkeeping write must not be able to suppress the disk sweep.
+//
+// This is asserted as a source guard rather than by actually injecting a throwing
+// writeBrief. writeBrief is a plain named import (`import { ..., writeBrief, ... } from
+// '../../lib/ad-brief.js'`), not an injectable parameter, and main() is unexported, hits
+// the network, and is guarded against running on import — so there is no path to this
+// branch that does not go through a real run. Node's test-runner module mocking
+// (`node:test`'s `mock.module`) could reach it, but it requires
+// `--experimental-test-module-mocks`, a flag nothing else in this repo's test suite uses
+// (`npm test` runs plain `node --test`) — adding it here would mean this one test needs a
+// different invocation than every other test in the file to even run, which is worse than
+// the source guard it would replace. The source guard is the honest option: it fails if
+// the try/catch is removed, moved to not cover the writeBrief call, or replaced with a
+// catch that re-throws.
+test('the failedRunIds write is wrapped so it cannot throw out of main() and skip the disk sweep', () => {
+  const SRC = readFileSync(join(ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+  const elseIdx = SRC.indexOf('} else if (brief) {');
+  assert.ok(elseIdx > -1, 'sanity: the "nothing accepted" branch must still exist');
+
+  const tryIdx = SRC.indexOf('try {', elseIdx);
+  const writeBriefIdx = SRC.indexOf('writeBrief(ROOT, { ...current, failedRunIds:', elseIdx);
+  assert.ok(tryIdx > -1, 'the failedRunIds write must be inside a try block');
+  assert.ok(writeBriefIdx > -1, 'sanity: the failedRunIds write must still exist');
+  assert.ok(tryIdx < writeBriefIdx, 'the try must open BEFORE the writeBrief call it is meant to guard');
+
+  const catchMatch = SRC.slice(writeBriefIdx).match(/\} catch \(err\) \{[\s\S]*?\n    \}/);
+  assert.ok(
+    catchMatch,
+    'the try around the failedRunIds write must be followed by a catch — an fs error must ' +
+    'not propagate out of this branch',
+  );
+  const catchBody = catchMatch[0];
+  assert.doesNotMatch(
+    catchBody, /\bthrow\b/,
+    'the catch must not re-throw — a bookkeeping failure must fall through to ' +
+    'flushArchive()/sweepDiskBudget() below, not into the top-level catch that skips them',
+  );
+  assert.match(catchBody, /console\.warn\(/, 'the catch must at least log, so the failure is not silent');
+
+  // Confirm the disk sweep is still reachable after this whole branch, i.e. nothing
+  // between here and sweepDiskBudget() depends on this write having succeeded.
+  assert.match(SRC.slice(elseIdx), /sweepDiskBudget\(\);/, 'sanity: normal completion must still reach the disk sweep');
+});
