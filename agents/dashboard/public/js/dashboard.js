@@ -5577,11 +5577,15 @@ function switchAdStudioView(view) {
   adStudioSetup.view = view;
   document.getElementById('adstudio-new').style.display = view === 'new' ? '' : 'none';
   document.getElementById('adstudio-judge').style.display = view === 'judge' ? '' : 'none';
+  document.getElementById('adstudio-briefs').style.display = view === 'briefs' ? '' : 'none';
   var newBtn = document.getElementById('as-view-new-btn');
   var judgeBtn = document.getElementById('as-view-judge-btn');
+  var briefsBtn = document.getElementById('as-view-briefs-btn');
   if (newBtn) newBtn.classList.toggle('active', view === 'new');
   if (judgeBtn) judgeBtn.classList.toggle('active', view === 'judge');
+  if (briefsBtn) briefsBtn.classList.toggle('active', view === 'briefs');
   if (view === 'judge') refreshAdStudioRuns();
+  else if (view === 'briefs') loadBriefProducts();
   else if (!adStudioSetup.options) loadAdStudioOptions();
 }
 
@@ -5985,4 +5989,357 @@ function exportAdStudioKept() {
   }, function () {
     alert(lines.join('\n'));
   });
+}
+
+// ── Briefs — where copy is judged and approved BEFORE any image renders ────────────
+//
+// A brief carries the FINISHED, gate-passed copy for one persona angle, plus the
+// evidence behind it and a score (lib/ad-brief.js). This is the direct answer to the
+// complaint that started this feature: "The UI makes no sense. I have no way of
+// influencing the ad creatives... I did a dry-run and then nothing." Generation,
+// list and decide all hit the four routes agents/dashboard/routes/ad-brief.js ships.
+// Brief-generation jobs share Ad Studio's own job store (there is no separate
+// ad-brief job route) so progress is polled off the SAME /api/ad-studio/job/<id>
+// adStudioPollJob already uses, just rendered into this view's own elements.
+//
+// Render has no dashboard route to call — only agents/ad-studio/index.js's CLI
+// itself understands `--brief <id>`, and that is deliberate: rendering re-uses the
+// brief's exact stored copy with no second LLM call, and wiring that through the
+// browser is out of this task's scope (see the four-route contract above). The
+// Render button therefore copies the CLI command instead of pretending to spend
+// money it cannot actually authorize yet.
+
+var briefState = { products: [], product: null, briefs: [], busy: false, jobId: null, pollTimer: null };
+
+// Local-only: which format an operator picked for a brief this page load. There is no
+// route to persist `format.chosen` (see the module comment), so this never survives a
+// reload and never changes what --brief actually renders — it exists so the dropdown
+// required by the spec is not decorative, even though it cannot commit anything yet.
+var briefFormatOverrides = {};
+
+async function loadBriefProducts() {
+  var sel = document.getElementById('ab-product');
+  var prevValue = sel.value;
+  try {
+    var res = await fetch('/api/ad-brief/products', { credentials: 'same-origin' });
+    var data = await res.json();
+    briefState.products = data.products || [];
+  } catch (err) {
+    briefState.products = [];
+  }
+  if (!briefState.products.length) {
+    sel.innerHTML = '<option value="">No products</option>';
+    document.getElementById('ab-summary').textContent = '';
+    document.getElementById('ab-list').innerHTML =
+      '<p style="color:var(--muted)">No products available for briefs yet.</p>';
+    return;
+  }
+  sel.innerHTML = briefState.products.map(function (p) {
+    return '<option value="' + adStudioEsc(p.handle) + '">' + adStudioEsc(p.title) +
+      (p.hasBriefs ? '' : ' (no briefs yet)') + '</option>';
+  }).join('');
+  var keep = briefState.products.some(function (p) { return p.handle === prevValue; });
+  sel.value = keep ? prevValue : briefState.products[0].handle;
+  loadBriefs();
+}
+
+function briefProductChanged() {
+  loadBriefs();
+}
+
+async function loadBriefs() {
+  var product = document.getElementById('ab-product').value;
+  var list = document.getElementById('ab-list');
+  briefState.product = product || null;
+  if (!product) { list.innerHTML = ''; return; }
+  list.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
+  try {
+    var res = await fetch('/api/ad-brief/list?product=' + encodeURIComponent(product), { credentials: 'same-origin' });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    briefState.briefs = data.briefs || [];
+  } catch (err) {
+    list.innerHTML = '<p style="color:var(--danger,#f87171)">Could not load briefs: ' + adStudioEsc(err.message) + '</p>';
+    return;
+  }
+  renderBriefs();
+}
+
+function briefStateBadge(state) {
+  var map = {
+    'needs-evidence': ['#7f1d1d', '#fee2e2', 'Needs evidence'],
+    'ready': ['#334155', '#e2e8f0', 'Ready'],
+    'approved': ['#166534', '#dcfce7', 'Approved'],
+    'rejected': ['#78350f', '#fef3c7', 'Rejected'],
+    'rendered': ['#3730a3', '#e0e7ff', 'Rendered']
+  };
+  var m = map[state] || map.ready;
+  return '<span style="background:' + m[1] + ';color:' + m[0] + ';padding:0.1rem 0.45rem;border-radius:4px;' +
+    'font-size:0.72rem;font-weight:600;letter-spacing:0.02em">' + m[2] + '</span>';
+}
+
+// The score, EVERY component broken out — lib/ad-brief-score.js's own docstring: "a
+// score with hidden parts is a black box", and with no ad-performance data behind any
+// of this, a bare total is exactly that.
+function briefScoreLine(score) {
+  var s = score || {};
+  return '<strong style="font-size:0.85rem">score ' + adStudioEsc(s.total != null ? s.total : '—') + '</strong>' +
+    '<span style="font-size:0.76rem;color:var(--muted);margin-left:0.5rem">' +
+    'persona ' + adStudioEsc(s.persona) + ' · proof ' + adStudioEsc(s.proof) +
+    ' · commercial ' + adStudioEsc(s.commercial) + ' · headroom ' + adStudioEsc(s.headroom) + '</span>';
+}
+
+// The finished copy, zone by zone — this is what approving actually commits to.
+function briefZonesHtml(zones) {
+  if (!zones) return '';
+  var html = '<div style="padding:0.5rem;border:1px solid var(--border);border-radius:6px;' +
+    'background:var(--bg);font-size:0.8rem;margin-bottom:0.4rem">';
+  Object.keys(zones).forEach(function (z) {
+    var val = zones[z];
+    html += '<div style="margin-bottom:0.15rem"><span style="color:var(--muted)">' + adStudioEsc(z) + ':</span> ' +
+      adStudioEsc(Array.isArray(val) ? val.join(' · ') : val) + '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// Every claim with the source it was traced to — the operator is approving text that
+// will run publicly, so the evidence has to sit right next to it, not one click away.
+function briefClaimsHtml(claims) {
+  if (!claims || !claims.length) return '';
+  var html = '<div style="font-size:0.76rem;margin-bottom:0.4rem"><strong>Claims</strong>';
+  claims.forEach(function (c) {
+    html += '<div>[' + adStudioEsc(c.zone) + '] &quot;' + adStudioEsc(c.text) + '&quot; — ' +
+      (c.factual
+        ? 'source ' + adStudioEsc(c.sourceId || '?') + ': &quot;' + adStudioEsc(c.evidence || '') + '&quot;'
+        : 'not a factual claim') +
+      '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// needs-evidence: the phrase that failed and which source was searched. gates.health
+// carries {zone,text,match,why} violations (agents/ad-studio/health-claims.js);
+// gates.claims carries {zone,text,reason} (agents/ad-studio/claims.js) — reason names
+// the source that was searched ("unknown source: x" / "evidence not found in source
+// pdp: ..."). An unrecognised rejection shape (gatesFromRejection's third branch)
+// carries no per-item list, only a raw error string, so that is shown instead.
+function briefGateFailureHtml(brief) {
+  if (brief.state !== 'needs-evidence' || !brief.gates) return '';
+  var items = [];
+  if (brief.gates.health && brief.gates.health.violations) {
+    items = items.concat(brief.gates.health.violations.map(function (v) {
+      return { zone: v.zone, phrase: v.match || v.text, reason: v.why || 'disallowed health claim' };
+    }));
+  }
+  if (brief.gates.claims && brief.gates.claims.unsourced) {
+    items = items.concat(brief.gates.claims.unsourced.map(function (v) {
+      return { zone: v.zone, phrase: v.text, reason: v.reason };
+    }));
+  }
+  var html = '<div style="border:1px solid #fca5a5;background:#fef2f2;border-radius:6px;' +
+    'padding:0.5rem;font-size:0.78rem;margin-bottom:0.4rem">';
+  if (items.length) {
+    items.forEach(function (it) {
+      html += '<div>[' + adStudioEsc(it.zone) + '] &quot;' + adStudioEsc(it.phrase) + '&quot; — ' +
+        adStudioEsc(it.reason) + '</div>';
+    });
+  } else {
+    var raw = (brief.gates.health && brief.gates.health.error) ||
+      (brief.gates.claims && brief.gates.claims.error) || 'no detail recorded';
+    html += '<div>' + adStudioEsc(raw) + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// The proposed format, with a dropdown of the alternatives. A null proposed format
+// means no format covers this angle's awareness level (agents/ad-brief/index.js's
+// AWARENESS_TO_FORMAT_AWARENESS — unaware/most-aware map to null on purpose) and the
+// brief cannot be approved: lib/ad-brief.js's writeBrief refuses `approved` without a
+// passing gates block, and a null-format brief never got one.
+function briefFormatHtml(brief) {
+  if (!brief.format || !brief.format.proposed) {
+    return '<div style="color:#b91c1c;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem">' +
+      'no format covers this awareness level</div>';
+  }
+  var opts = [brief.format.proposed].concat(brief.format.alternatives || []);
+  var current = briefFormatOverrides[brief.briefId] || brief.format.proposed;
+  return '<div style="margin-bottom:0.4rem;font-size:0.82rem">Format: ' +
+    '<select onchange="briefFormatChanged(\'' + adStudioEsc(brief.briefId) + '\',this.value)" ' +
+    'class="creatives-select" style="display:inline-block;width:auto">' +
+    opts.map(function (k) {
+      return '<option value="' + adStudioEsc(k) + '"' + (k === current ? ' selected' : '') + '>' +
+        adStudioEsc(k) + '</option>';
+    }).join('') + '</select></div>';
+}
+
+function briefFormatChanged(briefId, formatKey) {
+  // Local UI state only — see the module comment on briefFormatOverrides.
+  briefFormatOverrides[briefId] = formatKey;
+}
+
+function briefCardHtml(brief) {
+  var angle = brief.angle || {};
+  var canApprove = brief.state === 'ready' && !!(brief.gates &&
+    brief.gates.health && brief.gates.health.ok === true &&
+    brief.gates.claims && brief.gates.claims.ok === true);
+
+  var html = '<section style="margin-bottom:1rem;border:1px solid var(--border);border-radius:8px;' +
+    'padding:0.8rem;background:var(--card)">';
+
+  html += '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem">' +
+    briefStateBadge(brief.state) + briefScoreLine(brief.score) + '</div>';
+
+  html += '<div style="margin-bottom:0.4rem"><strong>' +
+    adStudioEsc(brief.personaName || brief.personaId || '(unknown persona)') + '</strong> — ' +
+    adStudioEsc(angle.label || '(untitled angle)') +
+    ' <span style="color:var(--muted);font-size:0.78rem">(' +
+    adStudioEsc(angle.awareness || 'unknown awareness') + ')</span></div>';
+
+  html += briefFormatHtml(brief);
+  html += briefZonesHtml(brief.zones);
+  html += briefClaimsHtml(brief.claims);
+  html += briefGateFailureHtml(brief);
+
+  html += '<div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap">';
+  if (brief.state === 'ready') {
+    html += '<button onclick="briefDecide(\'' + adStudioEsc(brief.briefId) + '\',\'approved\')" ' +
+      (canApprove ? '' : 'disabled') +
+      ' class="btn-sm" style="padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer">Approve</button>';
+  }
+  if (brief.state !== 'rejected' && brief.state !== 'rendered') {
+    html += '<button onclick="briefDecide(\'' + adStudioEsc(brief.briefId) + '\',\'rejected\')" ' +
+      'class="btn-sm" style="padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer">Reject</button>';
+  }
+  // Render only for an approved brief — the whole point of the approval gate.
+  if (brief.state === 'approved') {
+    html += '<button onclick="briefRenderCommand(\'' + adStudioEsc(brief.briefId) + '\')" ' +
+      'class="btn-sm" style="padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer">Render</button>';
+  }
+  html += '</div>';
+
+  html += '</section>';
+  return html;
+}
+
+function renderBriefs() {
+  var list = document.getElementById('ab-list');
+  var briefs = briefState.briefs || [];
+  var summary = document.getElementById('ab-summary');
+  if (summary) summary.textContent = briefs.length + (briefs.length === 1 ? ' brief' : ' briefs');
+  if (!briefs.length) {
+    list.innerHTML = '<p style="color:var(--muted)">No briefs yet for this product — generate some.</p>';
+    return;
+  }
+  // lib/ad-brief.js's listBriefs already ranks highest score first; render in that order.
+  list.innerHTML = briefs.map(function (b) { return briefCardHtml(b); }).join('');
+}
+
+async function briefDecide(briefId, state) {
+  if (briefState.busy) return;
+  var product = document.getElementById('ab-product').value;
+  briefState.busy = true;
+  try {
+    var res = await fetch('/api/ad-brief/decide', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ product: product, briefId: briefId, state: state })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    // Re-read rather than patching local state: the server is the one place the
+    // approval invariant (both gates strictly passing) is actually enforced.
+    await loadBriefs();
+  } catch (err) {
+    alert('Could not save decision: ' + err.message);
+  } finally {
+    briefState.busy = false;
+  }
+}
+
+// No dashboard route renders a brief — see the module comment. Copies the exact CLI
+// invocation instead, mirroring exportAdStudioKept()'s clipboard pattern above.
+function briefRenderCommand(briefId) {
+  var cmd = 'node agents/ad-studio/index.js --brief ' + briefId;
+  navigator.clipboard.writeText(cmd).then(function () {
+    alert('Render command copied:\n\n' + cmd +
+      '\n\nRun this on the server to render this brief\'s exact approved copy — no second copy call.');
+  }, function () {
+    alert(cmd);
+  });
+}
+
+async function briefGenerate() {
+  var err = document.getElementById('ab-generate-error');
+  err.textContent = '';
+  var product = document.getElementById('ab-product').value;
+  if (!product) { err.textContent = 'pick a product first'; return; }
+  document.getElementById('ab-generate-btn').disabled = true;
+  try {
+    var res = await fetch('/api/ad-brief/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ product: product })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    briefPollJob(data.jobId);
+  } catch (e) {
+    err.textContent = e.message;
+    document.getElementById('ab-generate-btn').disabled = false;
+  }
+}
+
+function briefPollJob(jobId) {
+  briefState.jobId = jobId;
+  document.getElementById('ab-progress').style.display = '';
+  if (briefState.pollTimer) clearInterval(briefState.pollTimer);
+  var tick = async function () {
+    var job;
+    try {
+      var res = await fetch('/api/ad-studio/job/' + encodeURIComponent(jobId), { credentials: 'same-origin' });
+      job = await res.json();
+    } catch (e) { return; }
+    briefRenderJobProgress(job);
+    // Same 'alive' reasoning as adStudioPollJob: a job stuck 'running' with its pid
+    // gone (OOM-killed — the box is 961 MB) would otherwise poll forever.
+    var processGone = job.status === 'running' && job.alive === false;
+    if (job.status === 'complete' || job.status === 'error' || job.status === 'cancelled' || processGone) {
+      clearInterval(briefState.pollTimer);
+      briefState.pollTimer = null;
+      document.getElementById('ab-generate-btn').disabled = false;
+      // Briefs land on disk one at a time as the batch runs (writeBrief is called
+      // per-angle, not once at the end — see agents/ad-brief/index.js), so a fresh
+      // list load after the terminal tick picks up everything that was written even
+      // if the batch errored or was cancelled partway through.
+      loadBriefs();
+    }
+  };
+  briefState.pollTimer = setInterval(tick, 2000);
+  tick();
+}
+
+function briefRenderJobProgress(job) {
+  var processGone = job.status === 'running' && job.alive === false;
+  var status = document.getElementById('ab-progress-status');
+  status.textContent = (processGone ? 'stopped — process gone' : job.status);
+  var html = '';
+  if (processGone) {
+    html += '<div style="color:var(--danger,#f87171);margin-bottom:0.4rem">' +
+      'The brief-generation process is no longer running (it may have been killed for memory). ' +
+      'Any briefs it had already written are on disk — refresh the list.</div>';
+  }
+  if (job.error) {
+    html += '<pre style="white-space:pre-wrap;color:var(--danger,#f87171)">' + adStudioEsc(job.error) + '</pre>';
+  }
+  (job.events || []).forEach(function (e) {
+    var colour = e.state === 'needs-evidence' ? 'var(--danger,#f87171)' : 'var(--muted)';
+    html += '<div style="color:' + colour + '">' + adStudioEsc(e.angleId || '') + ' — ' +
+      adStudioEsc(e.state || '') + (e.format ? ' · ' + adStudioEsc(e.format) : ' · no format') + '</div>';
+  });
+  document.getElementById('ab-progress-body').innerHTML = html;
 }
