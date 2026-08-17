@@ -78,6 +78,25 @@ brief whose `gates.health.ok` and `gates.claims.ok` are not both strictly `true`
 missing `gates` block is correctly unapprovable, because there is no copy behind it to
 approve.
 
+**The unrecognised-rejection case.** `gatesFromRejection()` tells health and claims
+rejections apart by matching `result.error`'s message prefix against the exact strings
+`buildConcept` itself checks (`"Health claim gate failed"` / `"Claim gate failed"`) —
+the same coupling `buildConcept` has to `health-claims.js`/`claims.js`'s wording. If a
+future rename ever breaks that match, `gatesFromRejection` does not guess which gate
+"must have" failed and does not trust the one that didn't obviously fail either — it
+marks **both** `ok: false` with `unresolved: true`. A brief whose gate outcome cannot be
+determined must never be indistinguishable from one that passed.
+
+## Per-angle persistence, not a batch write
+
+Each brief is written via `writeBrief()` **immediately** after it is generated, inside
+the per-angle loop (`generateBriefs()`), not accumulated in memory and written once the
+whole batch finishes. If anything throws that is not a gate rejection — a transient API
+error, a malformed copy response — on angle 3 of 5, angles 1 and 2 (already gate-passed,
+already paid for) are still on disk afterward; only the angle in flight is lost. This
+agent's entire premise is being the cheap, safe-to-interrupt step before real render
+spend, so the persistence has to match that premise per-angle, not per-run.
+
 ## The cluster-scoping abort
 
 `data/context/personas.json` carries a single top-level `cluster` (currently `"skin"`)

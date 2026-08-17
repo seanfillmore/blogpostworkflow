@@ -181,21 +181,46 @@ async function fetchPdpBody(siteUrl, handle) {
  *
  * buildConcept runs assertNoHealthClaims BEFORE assertClaimsSourced (see its docstring),
  * so on a rejection exactly one of the two ever ran — the other simply never got a
- * chance to fail. Only the gate that actually rejected is marked false; the other stays
+ * chance to fail. The gate that actually rejected is marked false; the other stays
  * true, which is accurate (it did not fail) and is also what the "record what failed"
  * instruction asks for: name the one gate that did.
+ *
+ * The third branch is the important one under review. buildConcept only ever produces
+ * an ok:false result by catching an error whose message starts with one of the two
+ * known prefixes ("Health claim gate failed" / "Claim gate failed") — anything else it
+ * re-throws uncaught. So in the REAL path this function should only ever see one of the
+ * two known shapes. But the match is a plain string-prefix test against hand-authored
+ * error text in two OTHER files (health-claims.js, claims.js), and nothing pins that
+ * text — a future rename of either message would silently fall through here. Guessing
+ * which gate "must have" failed in that case (or worse, assuming neither failed) would
+ * launder an unverified brief into looking approvable. So an unrecognised shape marks
+ * BOTH gates false rather than picking one to blame or trusting the other: a brief whose
+ * gate outcome is unknown must not be approvable, and must not be mistaken for one that
+ * passed either check.
  */
-function gatesFromRejection(result) {
-  const healthFailed = /^Health claim gate failed/.test(result?.error || '');
+export function gatesFromRejection(result) {
+  const error = result?.error || '';
+  const healthFailed = /^Health claim gate failed/.test(error);
+  const claimsFailed = /^Claim gate failed/.test(error);
+
   if (healthFailed) {
     return {
-      health: { ok: false, violations: result.violations || [], error: result.error },
+      health: { ok: false, violations: result.violations || [], error },
       claims: { ok: true, unsourced: [] },
     };
   }
+  if (claimsFailed) {
+    return {
+      health: { ok: true },
+      claims: { ok: false, unsourced: result?.violations || [], error },
+    };
+  }
+  const unknownError = error || 'unrecognised rejection shape — buildConcept reported ok:false ' +
+    'with an error message matching neither known gate prefix, so it is not possible to tell ' +
+    'which gate (if either) actually failed.';
   return {
-    health: { ok: true },
-    claims: { ok: false, unsourced: result?.violations || [], error: result?.error },
+    health: { ok: false, unresolved: true, error: unknownError },
+    claims: { ok: false, unresolved: true, unsourced: [], error: unknownError },
   };
 }
 
@@ -210,6 +235,116 @@ function allPersonaAngles(personasData) {
   );
 }
 
+/**
+ * The cluster guard. personas.json carries a single top-level `cluster` and NO
+ * per-persona product linkage, so this is the only place "is this product covered by
+ * the personas we have evidence for" can be answered. Extracted to a pure, exported
+ * function so it is directly testable — main()'s abort message is exactly this error.
+ *
+ * Never falls back to another cluster's personas and never invents one: fabricated
+ * audience reasoning underneath a claim-gated ad is what this whole pipeline exists to
+ * prevent.
+ */
+export function assertClusterCoverage(handle, personasData, clusterHandles = CLUSTER_HANDLES) {
+  const cluster = personasData?.cluster;
+  const handles = clusterHandles[cluster];
+  if (!handles || !handles.includes(handle)) {
+    throw new Error(
+      `ad-brief: "${handle}" is not covered by the "${cluster || 'unknown'}" cluster's personas ` +
+      `(data/context/personas.json covers: ${handles ? handles.join(', ') : '(no handles for this cluster)'}). ` +
+      `Run agents/voice-of-customer for "${handle}"'s cluster before briefing it — this agent never ` +
+      `falls back to another cluster's personas and never invents one.`
+    );
+  }
+}
+
+/**
+ * Resolve a format, score, generate + gate copy, and PERSIST — one angle at a time.
+ *
+ * Each brief is written via writeBrief() IMMEDIATELY after it is built, inside this
+ * loop, rather than accumulated in memory and written in a batch after every angle has
+ * been processed. That used to be a real hazard: if anything threw that was not a gate
+ * rejection — a transient API error, a malformed copy response out of
+ * parseCopyResponse, anything outside buildConcept's own try/catch — the exception
+ * would reach main()'s top-level .catch() and discard every brief already generated,
+ * including ones that had already passed both gates and cost real Anthropic spend. This
+ * agent's entire premise is being the cheap step that is safe to interrupt, and
+ * writeBrief is a single atomic file write built exactly for independent per-brief
+ * persistence (see lib/ad-brief.js) — there is no reason not to use it per-angle.
+ *
+ * `buildConceptFn` defaults to the real, imported buildConcept and exists purely so a
+ * test can inject a stub that fails partway through a multi-angle batch without making
+ * a real Anthropic call — the real path never overrides it.
+ *
+ * --dry-run never calls buildConceptFn and never writes: it returns the same shape
+ * (score, proposed format, state) so main() can print an identical summary, each entry
+ * additionally carrying `pending: true`.
+ */
+export async function generateBriefs({
+  selected, product, pdpBody, sourceIndex, reviews, seoImpact, dryRun, anthropic, root,
+  now = Date.now(), buildConceptFn = buildConcept,
+}) {
+  const out = [];
+  for (const { persona, angle } of selected) {
+    const { proposed, alternatives } = formatsForAngle(angle, FORMATS);
+    const score = scoreBrief({ persona, angle, reviews, productHandle: product.handle, seoImpact });
+    const briefId = buildBriefId(product.handle, angle.id, now);
+    const base = {
+      briefId,
+      product: product.handle,
+      variant: product.variant ?? null,
+      personaId: persona.id,
+      personaName: persona.name,
+      angleId: angle.id,
+      angle,
+      format: { proposed, alternatives },
+      score,
+    };
+
+    // Rule 3: an angle with no matching format is still recorded and costs no copy
+    // call — never substitute the nearest format, that would render a broad angle as a
+    // narrow one and hide exactly the gap this is meant to surface.
+    if (!proposed) {
+      const brief = { ...base, zones: null, state: 'ready' };
+      out.push(dryRun ? { ...brief, pending: true } : writeBrief(root, brief));
+      continue;
+    }
+
+    if (dryRun) {
+      // No copy call, no write — --dry-run only previews the plan.
+      out.push({ ...base, zones: null, state: 'ready', pending: true });
+      continue;
+    }
+
+    const format = FORMATS.find(f => f.key === proposed);
+    const result = await buildConceptFn({
+      anthropic, format, product, pdpBody,
+      persona: personaProjection(persona, angle),
+      sourceIndex, reviews,
+    });
+
+    const brief = result.ok
+      ? {
+          ...base,
+          zones: result.zones,
+          claims: result.claims,
+          state: 'ready',
+          gates: { health: { ok: true }, claims: { ok: true, unsourced: [] } },
+        }
+      : {
+          ...base,
+          zones: null,
+          claims: null,
+          state: 'needs-evidence',
+          gates: gatesFromRejection(result),
+        };
+
+    // Persisted before the loop moves to the next angle — see this function's docstring.
+    out.push(writeBrief(root, brief));
+  }
+  return out;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const handle = args.product;
@@ -222,16 +357,7 @@ async function main() {
   // and never invent one — fabricated audience reasoning underneath a claim-gated ad is
   // what this pipeline exists to prevent.
   const personasData = loadJson(join(ROOT, 'data', 'context', 'personas.json'));
-  const cluster = personasData.cluster;
-  const clusterHandles = CLUSTER_HANDLES[cluster];
-  if (!clusterHandles || !clusterHandles.includes(handle)) {
-    throw new Error(
-      `ad-brief: "${handle}" is not covered by the "${cluster || 'unknown'}" cluster's personas ` +
-      `(data/context/personas.json covers: ${clusterHandles ? clusterHandles.join(', ') : '(no handles for this cluster)'}). ` +
-      `Run agents/voice-of-customer for "${handle}"'s cluster before briefing it — this agent never ` +
-      `falls back to another cluster's personas and never invents one.`
-    );
-  }
+  assertClusterCoverage(handle, personasData);
 
   // Step 2: product, exactly as Ad Studio loads it.
   const manifest = loadJson(join(ROOT, 'data', 'product-images', 'manifest.json'));
@@ -259,6 +385,7 @@ async function main() {
     title: catalogEntry.title,
     priceLabel: catalogEntry.priceLabel,
     labelStrings,
+    variant: args.variant,
   };
 
   const site = loadJson(join(ROOT, 'config', 'site.json'));
@@ -301,68 +428,19 @@ async function main() {
   const now = Date.now();
 
   // Steps 6-8: resolve a format per angle, generate + gate copy where one exists, score,
-  // and (outside --dry-run) persist. Each angle is independent — one rejection or error
-  // must not discard the others, the same isolation buildConcepts already gives Ad
-  // Studio's per-format loop.
-  const briefs = [];
-  for (const { persona, angle } of selected) {
-    const { proposed, alternatives } = formatsForAngle(angle, FORMATS);
-    const score = scoreBrief({ persona, angle, reviews, productHandle: handle, seoImpact });
-    const briefId = buildBriefId(handle, angle.id, now);
-    const base = {
-      briefId,
-      product: handle,
-      variant: args.variant,
-      personaId: persona.id,
-      personaName: persona.name,
-      angleId: angle.id,
-      angle,
-      format: { proposed, alternatives },
-      score,
-    };
+  // and (outside --dry-run) persist ONE ANGLE AT A TIME — see generateBriefs' docstring.
+  // Each angle is independent — one rejection or an unrelated error must not discard the
+  // others' already-generated, already-paid-for briefs.
+  const results = await generateBriefs({
+    selected, product, pdpBody, sourceIndex, reviews, seoImpact,
+    dryRun: args.dryRun, anthropic, root: ROOT, now,
+  });
 
-    // Rule 3: an angle with no matching format is still recorded and costs no copy
-    // call — never substitute the nearest format, that would render a broad angle as a
-    // narrow one and hide exactly the gap this is meant to surface.
-    if (!proposed) {
-      briefs.push({ ...base, zones: null, state: 'ready' });
-      continue;
-    }
-
-    if (args.dryRun) {
-      // No copy call, no write — --dry-run only previews the plan.
-      briefs.push({ ...base, zones: null, state: 'ready', pending: true });
-      continue;
-    }
-
-    const format = FORMATS.find(f => f.key === proposed);
-    const result = await buildConcept({
-      anthropic, format, product, pdpBody,
-      persona: personaProjection(persona, angle),
-      sourceIndex, reviews,
-    });
-
-    if (result.ok) {
-      briefs.push({
-        ...base,
-        zones: result.zones,
-        claims: result.claims,
-        state: 'ready',
-        gates: { health: { ok: true }, claims: { ok: true, unsourced: [] } },
-      });
-    } else {
-      briefs.push({
-        ...base,
-        zones: null,
-        claims: null,
-        state: 'needs-evidence',
-        gates: gatesFromRejection(result),
-      });
-    }
-  }
-
-  // Step 9: rank + print. Highest score first, same ordering listBriefs uses on disk.
-  const ranked = [...briefs].sort((a, b) => (b.score?.total ?? -1) - (a.score?.total ?? -1));
+  // Step 9: rank + print, computed from what generateBriefs actually returned (which — on
+  // the real path — is exactly what is now on disk) rather than from a separate
+  // in-main accumulator that a mid-run exception could leave short of the truth.
+  // Highest score first, same ordering listBriefs uses on disk.
+  const ranked = [...results].sort((a, b) => (b.score?.total ?? -1) - (a.score?.total ?? -1));
 
   if (args.dryRun) {
     const callCount = ranked.filter(b => b.format.proposed).length;
@@ -384,12 +462,13 @@ async function main() {
     return { dryRun: true, briefs: ranked };
   }
 
-  const written = ranked.map(b => writeBrief(ROOT, b));
-  console.log(`\n${written.length} brief(s) written for ${product.title} (${handle}${args.variant ? '/' + args.variant : ''}):`);
-  for (const b of written) {
+  // Already written to disk inside generateBriefs, one at a time — this is a summary of
+  // what happened, not the write itself.
+  console.log(`\n${ranked.length} brief(s) written for ${product.title} (${handle}${args.variant ? '/' + args.variant : ''}):`);
+  for (const b of ranked) {
     console.log(`  ${b.briefId} — score ${b.score.total} — ${b.state}${b.format.proposed ? ` (${b.format.proposed})` : ' (no format)'}`);
   }
-  const needsEvidence = written.filter(b => b.state === 'needs-evidence');
+  const needsEvidence = ranked.filter(b => b.state === 'needs-evidence');
   if (needsEvidence.length) {
     console.log(`\n${needsEvidence.length} brief(s) need evidence (gate-rejected):`);
     for (const b of needsEvidence) {
@@ -398,7 +477,7 @@ async function main() {
     }
   }
 
-  return { dryRun: false, briefs: written };
+  return { dryRun: false, briefs: ranked };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
