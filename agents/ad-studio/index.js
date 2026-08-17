@@ -706,6 +706,104 @@ export function parseArgs(argv) {
   return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId, brief };
 }
 
+// ── Brief mode — resolution and the approval boundary ──────────────────────────────
+//
+// Extracted out of main() so this — the security boundary of the whole feature — is
+// unit-testable without executing main() (which is not exported, hits the network, and
+// is guarded against running on import). Small and pure wherever possible.
+
+/**
+ * Resolve a --brief id to the product directory that actually holds it, by SCANNING
+ * listProductsWithBriefs rather than parsing the id. The id embeds the product as a
+ * prefix, but trusting that prefix would let a malformed or hostile id address an
+ * arbitrary path; the directory that genuinely contains the file is the only thing
+ * downstream code (manifest/catalog/photo lookups) may trust as "the product".
+ * @returns {string|null} the product handle, or null if no product's directory holds this id
+ */
+export function findBriefProduct(root, briefId) {
+  return listProductsWithBriefs(root).find(p => readBrief(root, p, briefId)) ?? null;
+}
+
+/**
+ * THE approval boundary. Only `approved` renders — refuse anything else BY NAME, so the
+ * operator knows exactly why: a `ready` brief has not been approved by a human, a
+ * `needs-evidence` one failed a gate outright, a `rejected` one was turned down, a
+ * `rendered` one is already done. Throws rather than returning a verdict — there is no
+ * legitimate caller that wants to proceed past a non-approved brief.
+ */
+export function assertBriefApproved(brief, briefId) {
+  if (brief.state !== 'approved') {
+    throw new Error(
+      `ad-studio: brief "${briefId}" is "${brief.state}", not "approved" — only an approved brief ` +
+      `can render. ` +
+      (brief.state === 'ready' ? 'It has not been approved by a human yet.'
+        : brief.state === 'needs-evidence' ? 'It failed a gate and needs evidence before it can be approved.'
+        : brief.state === 'rejected' ? 'It was rejected.'
+        : brief.state === 'rendered' ? 'It has already been rendered.'
+        : '')
+    );
+  }
+}
+
+/**
+ * The format key a brief will render with — `chosen` (an operator's pick among
+ * alternatives, from a later task's approval UI) if set, else the awareness join's
+ * `proposed` format. Some angles have no matching format at all (their awareness level
+ * has no format that covers it yet) — refuse rather than silently substituting a
+ * different one, naming the awareness level so the gap is legible.
+ * @returns {string} the format key
+ */
+export function resolveBriefFormatKey(brief, briefId) {
+  const formatKey = brief.format?.chosen ?? brief.format?.proposed ?? null;
+  if (!formatKey) {
+    throw new Error(
+      `ad-studio: brief "${briefId}" has no format to render — its angle is ` +
+      `"${brief.angle?.awareness ?? 'unknown'}"-aware, and no format covers that awareness ` +
+      `level yet, so it cannot render.`
+    );
+  }
+  return formatKey;
+}
+
+/**
+ * Attribution: what a future per-creative join needs, and what a human reads off the
+ * report. Recorded now because it can never be reconstructed after the ad has run — the
+ * difference between "ad B won" and "problem-aware, testimonial, persona 1 won".
+ *
+ * `agents/ad-brief/index.js` (the generator) writes `personaId`/`angleId` at the TOP
+ * LEVEL of the record, not nested under a `persona`/`angle` id — reading only
+ * `brief.persona?.id` silently produced `personaId: null` on every real brief, the exact
+ * half-filled stub this task exists to prevent. Both shapes are accepted so a caller is
+ * never punished for reading the field the writer didn't populate.
+ */
+export function buildBriefAttribution(brief, formatKey) {
+  return {
+    briefId: brief.briefId,
+    personaId: brief.personaId ?? brief.persona?.id ?? null,
+    angleId: brief.angleId ?? brief.angle?.id ?? null,
+    awareness: brief.angle?.awareness ?? null,
+    format: formatKey,
+  };
+}
+
+/**
+ * Whether a brief-mode run produced anything worth marking the brief 'rendered' for.
+ *
+ * finalizeRunReport only throws when EVERY concept was rejected by the claim gate
+ * (concepts.length === 0 && rejectedConcepts.length > 0) — never true in brief mode,
+ * which always has exactly one concept and skips the gate entirely. So a run that lost
+ * every render attempt to a transient Gemini outage, or that hit the --max-renders
+ * ceiling before this concept's targets were reached, does NOT throw — it returns a
+ * report with zero accepted artifacts. Accepted-artifact count is therefore the only
+ * honest signal of success. Getting this wrong permanently strands an approved,
+ * gate-passed brief: assertBriefApproved above refuses a 'rendered' brief BY NAME on
+ * every later attempt, so marking one 'rendered' after a run that produced nothing
+ * destroys it exactly as thoroughly as a genuine success would.
+ */
+export function briefRenderSucceeded(report) {
+  return Boolean(report?.totals?.artifacts?.accepted > 0);
+}
+
 function loadEnv() {
   try {
     const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
@@ -1184,54 +1282,21 @@ async function main() {
   // Only an `approved` brief renders — that is the security boundary of the whole
   // feature, enforced upstream by lib/ad-brief.js (an `approved` record cannot even be
   // WRITTEN unless its immutable `gates` block shows both the health and sourcing gates
-  // passed). Refuse anything else BY NAME: a `ready` brief has not been approved by a
-  // human, a `needs-evidence` one failed a gate outright, a `rendered` one is already
-  // done.
-  //
-  // The id embeds the product as a prefix, but it is never parsed out of the id — a
-  // malformed id must not be able to address an arbitrary path. Instead this scans
-  // listProductsWithBriefs for the one directory that actually holds this briefId, and
-  // `handle` below is set from THAT scan result, not from anything self-reported inside
-  // the brief record.
+  // passed) and re-checked here by assertBriefApproved. See the helpers above (right
+  // after parseArgs) for findBriefProduct/assertBriefApproved/resolveBriefFormatKey/
+  // buildBriefAttribution — extracted so this boundary is unit-testable on its own.
   let brief = null;
   let attribution = null;
   let handle = args.product;
   if (args.brief) {
-    const briefProduct = listProductsWithBriefs(ROOT).find(p => readBrief(ROOT, p, args.brief));
+    const briefProduct = findBriefProduct(ROOT, args.brief);
     if (!briefProduct) {
       throw new Error(`ad-studio: no brief found with id "${args.brief}" under any product in data/briefs/ad-studio/`);
     }
     brief = readBrief(ROOT, briefProduct, args.brief);
-    if (brief.state !== 'approved') {
-      throw new Error(
-        `ad-studio: brief "${args.brief}" is "${brief.state}", not "approved" — only an approved brief ` +
-        `can render. ` +
-        (brief.state === 'ready' ? 'It has not been approved by a human yet.'
-          : brief.state === 'needs-evidence' ? 'It failed a gate and needs evidence before it can be approved.'
-          : brief.state === 'rejected' ? 'It was rejected.'
-          : brief.state === 'rendered' ? 'It has already been rendered.'
-          : '')
-      );
-    }
-    // Some angles have no matching format (their awareness level has no format that
-    // covers it) — refuse rather than silently substituting a different one.
-    const formatKey = brief.format?.chosen ?? brief.format?.proposed ?? null;
-    if (!formatKey) {
-      throw new Error(
-        `ad-studio: brief "${args.brief}" has no format to render — its angle is ` +
-        `"${brief.angle?.awareness ?? 'unknown'}"-aware, and no format covers that awareness ` +
-        `level yet, so it cannot render.`
-      );
-    }
-    // Recorded now because it can never be reconstructed after the ad has run — the
-    // difference between "ad B won" and "problem-aware, testimonial, persona 1 won".
-    attribution = {
-      briefId: brief.briefId,
-      personaId: brief.persona?.id ?? null,
-      angleId: brief.angle?.id ?? null,
-      awareness: brief.angle?.awareness ?? null,
-      format: formatKey,
-    };
+    assertBriefApproved(brief, args.brief);
+    const formatKey = resolveBriefFormatKey(brief, args.brief);
+    attribution = buildBriefAttribution(brief, formatKey);
     handle = briefProduct;
   }
 
@@ -1332,6 +1397,19 @@ async function main() {
     // approved and what gets baked into an image.
     const chosenFormat = selectFormats([attribution.format])[0];
     formats = [chosenFormat];
+
+    // The stored `gates.health.ok` records what was true when the brief was generated,
+    // but nothing BINDS that record to `zones` — writeBrief validates the gates block's
+    // shape, never that it was actually computed from the copy sitting beside it on
+    // disk. assertNoHealthClaims is a pure function over strings, no imports, no I/O —
+    // re-proving it here against the copy that is actually about to render is free, and
+    // closes that gap. No override, same as everywhere else this gate runs: a rejection
+    // aborts the run.
+    //
+    // Sourcing (assertClaimsSourced) is deliberately NOT re-run: it needs a sourceIndex
+    // built from a live PDP fetch and Judge.me, which brief mode exists to avoid.
+    assertNoHealthClaims(brief.zones);
+
     concepts = [{ format: chosenFormat, zones: brief.zones, claims: brief.claims || [] }];
     rejectedConcepts = [];
   } else {
@@ -1575,14 +1653,23 @@ async function main() {
   });
   job.finish({ runId, totals: { ...report.totals, renders: budget.used() } });
 
-  // The brief rendered successfully — finalizeRunReport already threw above if nothing
-  // did, so reaching here means at least one artifact came out of this brief's copy.
-  // Mark it 'rendered' and keep a pointer back to the run that consumed it. Two calls,
-  // not one: decideBrief only knows state/note, so the renderedRunIds append goes
-  // through writeBrief directly on the record decideBrief just wrote.
-  if (brief) {
+  // Mark the brief 'rendered' ONLY if this run actually produced an accepted artifact —
+  // see briefRenderSucceeded's docstring for why finalizeRunReport not throwing is not
+  // proof of that (it only throws on a total claim-gate wipeout, which brief mode can
+  // never hit, since it skips the gate). Getting this backwards would permanently strand
+  // an approved brief behind a transient render failure: assertBriefApproved refuses a
+  // 'rendered' brief BY NAME on every subsequent attempt. Two calls when it does
+  // succeed, not one: decideBrief only knows state/note, so the renderedRunIds append
+  // goes through writeBrief directly on the record decideBrief just wrote.
+  if (brief && briefRenderSucceeded(report)) {
     const rendered = decideBrief(ROOT, handle, brief.briefId, { state: 'rendered', note: `rendered by run ${runId}` });
     writeBrief(ROOT, { ...rendered, renderedRunIds: [...(rendered.renderedRunIds || []), runId] });
+  } else if (brief) {
+    console.warn(
+      `ad-studio: brief "${brief.briefId}" was NOT marked "rendered" — this run produced no accepted ` +
+      `artifact (a transient render failure or a --max-renders stop). It remains "approved" and can ` +
+      `be retried with --brief ${brief.briefId}.`
+    );
   }
 
   const at = report.totals.artifacts;
