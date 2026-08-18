@@ -1,6 +1,6 @@
 Product	Alt-tag suffixes (one per variant)
 toothpaste	#flavor_fresh-mint · #flavor_all-natural · #flavor_cinnamon-spice
-deodorant	#scent_geranium-flower · #scent_calming-lavender · #scent_mountain-cedarwood · #scent_wildcrafted-frankincence (note Shopify spelling — "frankincence" not "frankincense")
+deodorant	#scent_geranium-flower · #scent_calming-lavender · #scent_mountain-cedarwood · #scent_wildcrafted-frankincense (Shopify's option value was misspelled "Frankincence" until 2026-08-18; it is now correct. The 4-pack's IMAGE FILENAMES still carry the old slug on purpose — see LEGACY_SLUG in data/brand/frames/deodorant-4-pack/d4-frames.mjs)
 lotion	#scent_pure-unscented · #scent_coconut-breeze · #scent_rose-petal · #scent_lavender-and-rose · #scent_calming-lavender
 cream	#scent_coconut-breeze · #scent_lavender-and-rose · #scent_calming-lavender · #scent_rose-petal · #scent_pure-unscented
 bar-soap	#scent_calming-lavender · #scent_nourishing-tea-tree · #scent_refreshing-lemongrass · #scent_pure-unscented

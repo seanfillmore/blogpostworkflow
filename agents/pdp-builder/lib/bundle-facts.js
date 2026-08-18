@@ -51,11 +51,16 @@ const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
  * Resolves a Shopify component variant title to the canonical scent name in
  * config/ingredients.json.
  *
- * Why this exists: the live deodorant variant is titled "Wildcrafted Frankincence"
- * — a misspelling in Shopify. config/ingredients.json is the source of truth for
- * ingredient and scent naming (and already models this case: `shopify_option` is
- * the misspelling Shopify holds, `name` is the correct spelling), so a typo in a
- * variant title must not propagate into published copy.
+ * Why this exists: the live deodorant variant used to be titled "Wildcrafted
+ * Frankincence" — a misspelling in Shopify, corrected at source on 2026-08-18, so
+ * `shopify_option` and `name` now agree for that scent. The function is NOT dead.
+ * config/ingredients.json remains the source of truth for ingredient and scent
+ * naming, and the old spelling is still reachable: historical orders keep their
+ * original line-item titles, and artifacts generated before the rename (e.g.
+ * data/bundles/descriptions/coconut-deodorant-4-pack.json) still carry it. Such a
+ * title must not propagate into published copy. `shopify_option` stays in the
+ * schema because it is exactly where a FUTURE divergence gets recorded — it is a
+ * general mechanism that happened to have one occupant.
  *
  * Resolution order: exact match on shopify_option or name, then a near-miss on the
  * normalised form (edit distance <= 2). Anything further apart is left verbatim,

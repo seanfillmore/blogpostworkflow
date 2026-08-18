@@ -136,11 +136,11 @@
       "out": "component-deodorant-wildcrafted-frankincence.png",
       "source": "data/brand/reference/coconut-oil-deodorant-wildcrafted-frankincence.jpg",
       "product": "coconut-oil-deodorant",
-      "variant": "Wildcrafted Frankincence",
+      "variant": "Wildcrafted Frankincense",
       "fuzz": 3,
       "seed": "970,900",
       "band": "1700,1764",
-      "note": "Deodorant 4-Pack. The SOURCE PHOTO is spelled 'frankincense'; the Shopify option value is spelled 'Frankincence'. The cutout follows the option value so the slug matches the scope suffix — see the PR for the typo itself. The band is 1700-1764, not the roomy-looking 800-1200: a loose cap is staged to the LEFT of the bottle from row 989 to 1640 and is part of the same connected component, so a band there measures 1104px of bottle-plus-cap. This is the exact trap 6fbe0c0 recorded and it cost a rebuild again."
+      "note": "Deodorant 4-Pack. The Shopify option value USED to be spelled 'Frankincence' and this cutout was named to follow it. The option value was corrected on 2026-08-18; `out` and `source` deliberately were NOT renamed, because the slug is shared by the rendered frames, the media already uploaded to Shopify, and the keys of coconut-deodorant-4-pack.scope.json, which match media by filename. d4-frames.mjs pins it via LEGACY_SLUG. Renaming this file means re-rendering, re-uploading and re-keying the scope file in one change. The band is 1700-1764, not the roomy-looking 800-1200: a loose cap is staged to the LEFT of the bottle from row 989 to 1640 and is part of the same connected component, so a band there measures 1104px of bottle-plus-cap. This is the exact trap 6fbe0c0 recorded and it cost a rebuild again."
     }
   ]
 }

@@ -40,7 +40,14 @@ const APPARENT_CM = 13.0;                       // established by swap-common.mj
 const HANDLE = 'coconut-deodorant-4-pack';
 
 const cutout = (slug) => `data/brand/cutouts/component-deodorant-${slug}.png`;
-const slugOf = (scent) => scent.toLowerCase().replace(/\s+/g, '-');
+
+/**
+ * Artifact slugs are PINNED to the pre-correction spelling. See LEGACY_SLUG.
+ */
+const slugOf = (scent) => {
+  const s = scent.toLowerCase().replace(/\s+/g, '-');
+  return LEGACY_SLUG[s] ?? s;
+};
 
 function natural(slug) {
   const fd = openSync(join(ROOT, cutout(slug)), 'r');
@@ -63,30 +70,54 @@ export const variantFor = (scent) => {
 };
 
 /**
- * The Shopify option value is spelled "Wildcrafted Frankincence". The PRODUCT is
- * not: its label, and the source photograph's own filename, both read
- * "frankincense". So the option value is a typo, and a frame that repeats it
- * prints a misspelling directly beneath a photograph of the correct spelling.
+ * Slug pins, NOT label fixes. This map replaced LABEL_FIX on 2026-08-18.
  *
- * The caption is our text about the product, so it follows the product. The
- * option value is a separate defect on two live products (the component
- * deodorant and this 4-pack) and is flagged rather than silently renamed —
- * changing option values is a merchandising call.
+ * History: the Shopify Scent value used to read "Wildcrafted Frankincence" while
+ * the product's own label and the source photograph's filename both read
+ * "frankincense". LABEL_FIX corrected the option value on its way into a caption,
+ * so a frame would not print a misspelling directly beneath a photograph of the
+ * correct spelling. The option value has now been corrected in Shopify, so every
+ * DISPLAY string is right at source and LABEL_FIX would be a no-op. It is gone.
  *
- * This map must stay tiny. It is a correction of a known typo, not a licence to
- * re-title products in the gallery: verify() asserts each entry differs from the
- * option value by spelling alone.
+ * What did NOT get renamed is every ARTIFACT named after the old value:
+ *
+ *   data/brand/cutouts/component-deodorant-wildcrafted-frankincence.png
+ *   data/brand/bundle-images/frame-0{1,2}-*-d4-4x-wildcrafted-frankincence.jpg
+ *   the same filenames as uploaded to Shopify, and therefore
+ *   the KEYS of data/brand/bundle-images/coconut-deodorant-4-pack.scope.json
+ *
+ * That chain is load-bearing and it is matched by FILENAME, not by option value.
+ * scripts/set-media-variant-scope.mjs keys on a filename fragment, and a fragment
+ * matching no media does not fail — the media it should have described is instead
+ * left out of the scope file, which STRIPS its suffix and renders it for no
+ * variant at all. So the slug must keep the old spelling until a single change
+ * re-renders the frames, re-uploads them, and re-keys the scope file together.
+ *
+ * Hence: display strings follow Shopify; slugs are pinned here. Keep this map
+ * tiny — assertOnlySpelling() still holds it to a spelling-only difference, so it
+ * can never become a way to point a frame at an unrelated asset.
  */
-export const LABEL_FIX = { 'Wildcrafted Frankincence': 'Wildcrafted Frankincense' };
-const display = (s) => LABEL_FIX[s] ?? s;
+export const LEGACY_SLUG = {
+  'wildcrafted-frankincense': 'wildcrafted-frankincence',
+  '4x-wildcrafted-frankincense': '4x-wildcrafted-frankincence',
+};
 
-/** A correction may only fix spelling — same words, same order, ignoring case. */
+/**
+ * A correction may only fix spelling — same words, same order, ignoring case.
+ *
+ * Hyphens count as word separators, not as letters. This guard used to police
+ * space-separated display labels ("Wildcrafted Frankincence"); it now polices
+ * hyphenated slugs ("wildcrafted-frankincence"), where splitting on whitespace
+ * alone would see one word on both sides and let any replacement of similar
+ * LENGTH through — "wildcrafted-frankincense" → "something-else-entirely-here"
+ * passed until this was fixed.
+ */
 export function assertOnlySpelling(from, to) {
   const skeleton = (x) => x.toLowerCase().replace(/[^a-z]/g, '').split('').sort().join('');
-  const words = (x) => x.toLowerCase().split(/\s+/).length;
-  if (words(from) !== words(to)) throw new Error(`LABEL_FIX "${from}" → "${to}" changes the number of words`);
+  const words = (x) => x.toLowerCase().split(/[\s-]+/).filter(Boolean).length;
+  if (words(from) !== words(to)) throw new Error(`"${from}" → "${to}" changes the number of words`);
   if (Math.abs(skeleton(from).length - skeleton(to).length) > 2) {
-    throw new Error(`LABEL_FIX "${from}" → "${to}" is not a spelling correction`);
+    throw new Error(`"${from}" → "${to}" is not a spelling correction`);
   }
 }
 
@@ -132,11 +163,11 @@ export function packFrame(scent) {
     verify(ctx) {
       const { v } = assertVariant(ctx, scent);
       for (const c of v.components) natural(slugOf(c.variant));
-      for (const [from, to] of Object.entries(LABEL_FIX)) assertOnlySpelling(from, to);
+      for (const [from, to] of Object.entries(LEGACY_SLUG)) assertOnlySpelling(from, to);
     },
     alt() {
       const v = variantFor(scent);
-      const parts = v.components.map((c) => `${c.qty} × ${display(c.variant)}`);
+      const parts = v.components.map((c) => `${c.qty} × ${c.variant}`);
       return alt512(`The Real Skin Care coconut deodorant four-pack, ${scent} — ${parts.join(', ')}, 2 fl. oz. each.`);
     },
     html(ctx) {
@@ -158,7 +189,7 @@ export function packFrame(scent) {
                     background:${WASH};border-radius:34px;padding:74px 52px 60px;">
           ${sticks.map((s) => `<div style="display:flex;flex-direction:column;align-items:center;">
             ${stick(ctx.asset(cutout(slugOf(s))), slugOf(s), PX)}
-            ${isVariety ? `<div style="font-family:Cabin;font-weight:700;font-size:34px;color:${INK};margin-top:26px;max-width:300px;line-height:1.2;">${display(s)}</div>` : ''}
+            ${isVariety ? `<div style="font-family:Cabin;font-weight:700;font-size:34px;color:${INK};margin-top:26px;max-width:300px;line-height:1.2;">${s}</div>` : ''}
           </div>`).join('')}
         </div>
         <div>
