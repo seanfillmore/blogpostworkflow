@@ -1005,6 +1005,19 @@ const claimGateSourceIndex = buildSourceIndex({ catalogEntry: { title: 'Six Clea
   );
 }
 
+// buildConcept: the variant, when passed, reaches the copy prompt Anthropic actually
+// sees (fix/ad-brief-variant-copy). Without this, buildCopyPrompt had no way to know
+// which variant a brief was for, so it described the whole product line — including
+// sibling variants' ingredients — off the shared PDP/catalog text.
+{
+  const stub = anthropicCopyStub({ badFormatKey: null, evidenceOk: 'Six Clean Ingredients' });
+  await buildConcept({
+    anthropic: stub, format: formatByKey('us-vs-them'), product: claimGateProduct, pdpBody: '',
+    persona: null, sourceIndex: claimGateSourceIndex, variant: 'pure-unscented',
+  });
+  assert.match(stub.promptsSeen[0], /VARIANT: pure-unscented/, 'buildConcept must pass variant through to buildCopyPrompt');
+}
+
 // buildConcepts: THE isolation test. 3 concepts, the MIDDLE one has an unsourced
 // claim. The other two must still be attempted and still succeed — the whole point
 // of the fix is that one bad concept does not cost the copy already generated (and

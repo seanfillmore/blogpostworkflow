@@ -206,3 +206,69 @@ assert.throws(
   () => parseCopyResponse(JSON.stringify({ zones: { headline: '' }, claims: [] })),
   /empty zone\(s\): headline/,
 );
+
+// ── variant threading (fix/ad-brief-variant-copy) ──────────────────────────────────
+//
+// buildCopyPrompt used to see only the PRODUCT (title/handle/priceLabel), never which
+// VARIANT the copy was for. The PDP body and catalog text describe the whole product
+// line, so on a scentless variant the writer would happily borrow a sibling variant's
+// essential-oil language straight off that shared source text — both gates pass it,
+// because the claim IS true of the line and IS traceable to the PDP, just not true of
+// THIS bottle. An optional `variant` parameter closes that gap.
+
+// No `variant` key at all: every caller in this codebase's history today. The prompt
+// must come out byte-for-byte identical to before this change.
+{
+  const args = {
+    format: formatByKey('problem-aware'),
+    product: { title: 'Coconut Bar Soap', handle: 'coconut-soap', priceLabel: '$12' },
+    pdpBody: 'available in lavender, citrus and pure unscented',
+  };
+  const withoutVariantKey = buildCopyPrompt(args);
+  const withExplicitUndefined = buildCopyPrompt({ ...args, variant: undefined });
+  assert.ok(!/VARIANT:/.test(withoutVariantKey), 'omitting variant must not add a VARIANT block');
+  assert.equal(withoutVariantKey, withExplicitUndefined, 'variant: undefined must behave identically to omitting the key');
+}
+
+// A variant is named: the writer is told which one and told not to borrow an attribute
+// from a sibling variant, even though the PDP/catalog text describes the whole line.
+{
+  const prompt = buildCopyPrompt({
+    format: formatByKey('problem-aware'),
+    product: { title: 'Coconut Bar Soap', handle: 'coconut-soap', priceLabel: '$12' },
+    pdpBody: 'available in lavender, citrus and pure unscented',
+    variant: 'pure-unscented',
+  });
+  assert.match(prompt, /VARIANT: pure-unscented/, 'the prompt must name the variant');
+  assert.match(prompt, /THIS variant ONLY/i, 'the writer must be scoped to this variant');
+  assert.match(prompt, /sibling variant|different variant/i, 'the writer must be told not to borrow a sibling variant\'s attributes');
+}
+
+// An unscented-style variant name gets the operator's exact instruction: no essential
+// oil / scent / fragrance claim, and the absence of fragrance framed as a BENEFIT to
+// lead with — verbatim: "make sure there are no essential oil claims... You can
+// mention no fragrance as a benefit."
+{
+  const prompt = buildCopyPrompt({
+    format: formatByKey('problem-aware'),
+    product: { title: 'Coconut Bar Soap', handle: 'coconut-soap', priceLabel: '$12' },
+    pdpBody: 'available in lavender, citrus and pure unscented',
+    variant: 'pure-unscented',
+  });
+  assert.match(prompt, /no essential oil/i, 'unscented variant must forbid essential oil claims');
+  assert.match(prompt, /BENEFIT/, 'the absence of fragrance must be framed as a benefit to lead with');
+}
+
+// A scented variant's name carries none of "unscented"/"fragrance-free"/"no scent", so
+// it must NOT get the no-fragrance instruction — that instruction only applies to a
+// variant that is actually scentless.
+{
+  const prompt = buildCopyPrompt({
+    format: formatByKey('problem-aware'),
+    product: { title: 'Coconut Bar Soap', handle: 'coconut-soap', priceLabel: '$12' },
+    pdpBody: 'available in lavender, citrus and pure unscented',
+    variant: 'lavender',
+  });
+  assert.match(prompt, /VARIANT: lavender/);
+  assert.ok(!/NO added fragrance/i.test(prompt), 'a scented variant must not get the no-fragrance instruction');
+}

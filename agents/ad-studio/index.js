@@ -344,12 +344,12 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  * @returns {Promise<{ok:true, conceptSlug:string, format:object, zones:object, claims:object[]}
  *                  |{ok:false, conceptSlug:string, format:string, violations:object[], error:string}>}
  */
-export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [] }) {
+export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant }) {
   console.log(`Copy: ${format.key} (${format.name})...`);
   // Prevention as well as detection: a review carrying disease or drug language is
   // dropped before the writer sees it, so it cannot pick one and burn a call on a choice
   // it never needed to make.
-  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews) });
+  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews), variant });
   const msg = await anthropic.messages.create({
     model: CREATIVE_MODELS.adStudio.copy,
     max_tokens: 3000,
@@ -408,11 +408,11 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
  *
  * @returns {Promise<{concepts:{format:object, zones:object, claims:object[]}[], rejectedConcepts:{conceptSlug:string, format:string, violations:object[], error:string}[]}>}
  */
-export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [] }) {
+export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [], variant }) {
   const concepts = [];
   const rejectedConcepts = [];
   for (const format of formats) {
-    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews });
+    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant });
     if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims });
     else rejectedConcepts.push({ conceptSlug: result.conceptSlug, format: result.format, violations: result.violations, error: result.error });
   }
@@ -1476,7 +1476,7 @@ async function main() {
     // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
     // resilience. assertClaimsSourced itself is unchanged: still throws, still no
     // override flag; buildConcept is the caller the isolation belongs in.
-    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews }));
+    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews, variant }));
   }
 
   // A gate rejection is a first-class outcome the UI must show, and it happens before

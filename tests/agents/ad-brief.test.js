@@ -326,6 +326,59 @@ test('a mid-run exception does not discard a brief already written for an earlie
   }
 });
 
+// ── variant threading (fix/ad-brief-variant-copy) ───────────────────────────────────
+//
+// generateBriefs must pass the product's variant through to buildConceptFn so the copy
+// prompt can be scoped to the exact bottle being briefed, not the whole product line.
+
+test('generateBriefs passes product.variant through to buildConceptFn', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ad-brief-test-'));
+  try {
+    const product = { handle: 'coconut-soap', title: 'Coconut Bar Soap', priceLabel: '$12', variant: 'pure-unscented' };
+    const persona = { id: 'p9', name: 'Test Persona' };
+    const angle = { id: 'p9a1', label: 'Angle A', awareness: 'problem-aware' };
+
+    let seenVariant;
+    const buildConceptFn = async ({ variant }) => {
+      seenVariant = variant;
+      return { ok: true, conceptSlug: 'manifesto', format: { key: 'manifesto' }, zones: { headline: 'H' }, claims: [] };
+    };
+
+    await generateBriefs({
+      selected: [{ persona, angle }], product, pdpBody: '', sourceIndex: {}, reviews: [], seoImpact: null,
+      dryRun: false, anthropic: null, root, now: 1786000000000, buildConceptFn,
+    });
+
+    assert.equal(seenVariant, 'pure-unscented');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('generateBriefs passes variant: null through when the product has none', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ad-brief-test-'));
+  try {
+    const product = { handle: 'coconut-lotion', title: 'Coconut Lotion', priceLabel: '$30', variant: null };
+    const persona = { id: 'p9', name: 'Test Persona' };
+    const angle = { id: 'p9a1', label: 'Angle A', awareness: 'problem-aware' };
+
+    let seenVariant = 'not-set';
+    const buildConceptFn = async ({ variant }) => {
+      seenVariant = variant;
+      return { ok: true, conceptSlug: 'manifesto', format: { key: 'manifesto' }, zones: { headline: 'H' }, claims: [] };
+    };
+
+    await generateBriefs({
+      selected: [{ persona, angle }], product, pdpBody: '', sourceIndex: {}, reviews: [], seoImpact: null,
+      dryRun: false, anthropic: null, root, now: 1786000000000, buildConceptFn,
+    });
+
+    assert.equal(seenVariant, null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('generateBriefs in --dry-run mode calls buildConceptFn zero times and writes nothing', async () => {
   const root = mkdtempSync(join(tmpdir(), 'ad-brief-test-'));
   try {
