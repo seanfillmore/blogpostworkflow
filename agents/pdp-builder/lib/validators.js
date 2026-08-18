@@ -2,6 +2,8 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findHealthClaims } from '../../ad-studio/health-claims.js';
+import { allowedMoneyFigures, allowedPercentFigures, allowedSizes, sizeTokens } from './bundle-facts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..', '..');
@@ -249,5 +251,191 @@ export function validateBrandTermExclusion({ text, field }) {
   for (const term of GENERIC_BLOCKLIST) {
     if (containsTermAsWord(lower, term)) errors.push(`${field}: contains generic-blocklist term "${term}"`);
   }
+  return { valid: errors.length === 0, errors };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Bundle-mode validators
+//
+// These are ADDITIONS, not relaxations. Nothing above is loosened to let a
+// bundle through: seoTitle/metaDescription still go through validateLengths
+// unchanged, and validateBrandTermExclusion / validateNoFabricatedIngredients
+// run on bundle prose exactly as they do on a single-SKU PDP. What a bundle
+// needs on top is (a) a longer body bound, because it has to describe several
+// products, (b) a hard health-claim gate, (c) a component-fabrication gate,
+// because the thing most easily invented about a bundle is what is in it, and
+// (d) a savings gate, because the dollar figures are arithmetic and must match.
+// ────────────────────────────────────────────────────────────────────────────
+
+// A bundle description carries an intro, a what's-in-the-box list, a why-the-set
+// beats-piecemeal beat and a CTA. The exemplars measure ~150 words
+// (90-day-clean-swap) to ~250 words (sensitive-skin-starter-set); the band is set
+// around them. LENGTH_BOUNDS.bodyHtml (120-180) is left untouched for product mode.
+const BUNDLE_LENGTH_BOUNDS = {
+  bundleBodyHtml: { min: 150, max: 320, unit: 'words' },
+};
+
+export { BUNDLE_LENGTH_BOUNDS };
+
+/**
+ * Body-length check for bundle mode only. Callers still run validateLengths for
+ * seoTitle and metaDescription, which keep their existing bounds.
+ */
+export function validateBundleLengths({ bodyHtml }) {
+  const errors = [];
+  if (bodyHtml != null) {
+    const wc = wordCount(stripHtml(bodyHtml));
+    const b = BUNDLE_LENGTH_BOUNDS.bundleBodyHtml;
+    if (wc < b.min || wc > b.max) errors.push(`bodyHtml ${wc} ${b.unit} outside ${b.min}-${b.max}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * HARD GATE — cosmetics may describe what they do to the appearance and feel of
+ * skin, never what they treat, heal, cure or prevent. Delegates to the single
+ * source of truth in agents/ad-studio/health-claims.js so there is one pattern
+ * list in the repo, not two that drift.
+ *
+ * Returns { valid, errors } so it composes with the other validators; the
+ * throwing form (assertNoHealthClaims) is used at the write boundary as a
+ * belt-and-braces check.
+ */
+export function validateNoHealthClaims({ text, field }) {
+  const errors = [];
+  for (const hit of findHealthClaims(stripHtml(text))) {
+    errors.push(`${field}: health claim "${hit.match}" (${hit.category}) — ${hit.why}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+// Product nouns a bundle description can plausibly use, mapped to the cluster
+// they name. Only unambiguous phrases are listed: a bare "soap" is deliberately
+// absent because it cannot distinguish a bar from a foaming pump.
+const COMPONENT_NOUNS = [
+  { phrase: 'lip balm',            cluster: 'lip_balm' },
+  { phrase: 'toothpaste',          cluster: 'toothpaste' },
+  { phrase: 'deodorant',           cluster: 'deodorant' },
+  { phrase: 'body cream',          cluster: 'cream' },
+  { phrase: 'body lotion',         cluster: 'lotion' },
+  { phrase: 'bar soap',            cluster: 'bar_soap' },
+  { phrase: 'bar of soap',         cluster: 'bar_soap' },
+  { phrase: 'hand soap',           cluster: 'liquid_soap' },
+  { phrase: 'foaming soap',        cluster: 'liquid_soap' },
+  { phrase: 'foaming hand soap',   cluster: 'liquid_soap' },
+];
+
+/**
+ * Flags any product the copy claims is in the box that is not actually in the
+ * box, and any scent named that this bundle does not ship.
+ *
+ * This is the bundle equivalent of validateNoFabricatedIngredients: the most
+ * likely fabrication on a set page is not an ingredient, it is a component
+ * ("...and a lip balm" on a bundle with no lip balm) or a scent the bundle does
+ * not offer.
+ *
+ * Scent matching is case-SENSITIVE against the canonical option names, so
+ * "lavender" in ingredient prose does not fire while "Calming Lavender" as a
+ * named choice does.
+ *
+ * @param {Object} args
+ * @param {string} args.text
+ * @param {Object} args.facts                 output of buildBundleFacts
+ * @param {Object} args.ingredientsByCluster  parsed config/ingredients.json
+ */
+export function validateBundleComponents({ text, facts, ingredientsByCluster }) {
+  const stripped = stripHtml(text);
+  const lower = stripped.toLowerCase();
+  const errors = [];
+
+  const present = new Set(facts.clusters);
+  for (const { phrase, cluster } of COMPONENT_NOUNS) {
+    if (!lower.includes(phrase)) continue;
+    if (!present.has(cluster)) {
+      errors.push(`bodyHtml: claims component "${phrase}" (${cluster}) that is not in ${facts.handle}`);
+    }
+  }
+
+  const shippedScents = new Set();
+  for (const v of facts.variants) for (const c of v.components) shippedScents.add(c.scent);
+
+  const knownScents = new Set();
+  for (const cluster of facts.clusters) {
+    for (const v of (ingredientsByCluster?.[cluster]?.variations || [])) knownScents.add(v.name);
+  }
+  for (const scent of knownScents) {
+    if (shippedScents.has(scent)) continue;
+    if (stripped.includes(scent)) {
+      errors.push(`bodyHtml: names scent "${scent}", which ${facts.handle} does not ship`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * A product size stated in copy must be one a component's live Shopify product
+ * title actually carries.
+ *
+ * A draft called the toothpaste a "4 fl oz squeeze bottle". That size exists
+ * nowhere — not in Shopify, not in config/ingredients.json, not in the brand
+ * foundation; the model produced a plausible-looking number. A size is a factual
+ * claim on a product page, and the fix is the same as for money: allowlist what
+ * the data supports and reject the rest.
+ */
+export function validateNoFabricatedSizes({ text, facts }) {
+  const allowed = allowedSizes(facts);
+  const errors = [];
+  for (const n of sizeTokens(stripHtml(text))) {
+    if (!allowed.has(n)) {
+      errors.push(`bodyHtml: states size "${n} oz", which no component's Shopify title carries`);
+    }
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Every dollar and percentage figure in the copy must be one this bundle's live
+ * component prices actually produce.
+ *
+ * Two failure modes it closes:
+ *   1. An invented saving ("save $20" on a bundle that saves $10).
+ *   2. Any savings language at all on a bundle that is NOT cheaper than its
+ *      parts. When facts.savings.claimable is false the correct copy says
+ *      nothing about price advantage — that is a pricing problem to report, not
+ *      a copy problem to spin.
+ */
+export function validateSavingsClaim({ text, facts }) {
+  const stripped = stripHtml(text);
+  const lower = stripped.toLowerCase();
+  const errors = [];
+
+  const money = allowedMoneyFigures(facts);
+  for (const m of stripped.matchAll(/\$\s?(\d+(?:\.\d{1,2})?)/g)) {
+    const n = Number(m[1]);
+    if (!money.has(n)) {
+      errors.push(`bodyHtml: dollar figure "$${m[1]}" is not derivable from ${facts.handle}'s live component prices`);
+    }
+  }
+
+  const pcts = allowedPercentFigures(facts);
+  for (const m of stripped.matchAll(/(\d+(?:\.\d+)?)\s?%/g)) {
+    const n = Number(m[1]);
+    if (!pcts.has(n)) {
+      errors.push(`bodyHtml: percentage "${m[1]}%" is not a computed savings figure for ${facts.handle}`);
+    }
+  }
+
+  if (!facts.savings.claimable) {
+    const SAVINGS_LANGUAGE = ['save', 'saving', 'savings', 'less than buying', 'cheaper', '% off', 'discount'];
+    for (const term of SAVINGS_LANGUAGE) {
+      if (lower.includes(term)) {
+        errors.push(
+          `bodyHtml: uses savings language "${term}" but ${facts.handle} is not cheaper than the sum of its parts`,
+        );
+      }
+    }
+  }
+
   return { valid: errors.length === 0, errors };
 }

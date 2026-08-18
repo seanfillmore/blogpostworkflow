@@ -1,0 +1,195 @@
+{
+  "handle": "gift-box",
+  "generated_at": "2026-08-18T12:10:59.463Z",
+  "foundation_version": "4b1c18c",
+  "seoTitle": "Gift Box — Coconut Lotion, Lip Balm, Bar Soap & Deodorant Set",
+  "metaDescription": "A curated set of four coconut-oil essentials — body lotion, lip balm, bar soap, and roll-on deodorant. Save $9 versus buying singly. Choose your scent.",
+  "savings": {
+    "claimable": true,
+    "uniform": true,
+    "minSavings": 9,
+    "maxSavings": 9,
+    "minPct": 13,
+    "maxPct": 13
+  },
+  "variants": [
+    {
+      "title": "Gentle",
+      "price": 62,
+      "unitCount": 4,
+      "pricePerUnit": 15.5,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-lip-balm",
+          "cluster": "lip_balm",
+          "productName": "Lip Balm",
+          "shopifyProductTitle": "Natural Coconut Oil Lip Balm | 0.15oz | Four Pack",
+          "format": "lip balm tube",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-soap",
+          "cluster": "bar_soap",
+          "productName": "Bar Soap",
+          "shopifyProductTitle": "Moisturizing Coconut Soap | 3.4oz",
+          "format": "bar",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 11,
+          "lineTotal": 11
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "shopifyProductTitle": "Best Coconut Oil Deodorant — All Natural Formula | 2oz",
+          "format": "roll-on",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 15,
+          "lineTotal": 15
+        }
+      ],
+      "partsTotal": 71,
+      "savings": 9,
+      "savingsPct": 13
+    },
+    {
+      "title": "Calm",
+      "price": 62,
+      "unitCount": 4,
+      "pricePerUnit": 15.5,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-lip-balm",
+          "cluster": "lip_balm",
+          "productName": "Lip Balm",
+          "shopifyProductTitle": "Natural Coconut Oil Lip Balm | 0.15oz | Four Pack",
+          "format": "lip balm tube",
+          "scent": "Vanilla Dream",
+          "shopifyVariantTitle": "Vanilla Dream",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-soap",
+          "cluster": "bar_soap",
+          "productName": "Bar Soap",
+          "shopifyProductTitle": "Moisturizing Coconut Soap | 3.4oz",
+          "format": "bar",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 11,
+          "lineTotal": 11
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "shopifyProductTitle": "Best Coconut Oil Deodorant — All Natural Formula | 2oz",
+          "format": "roll-on",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 15,
+          "lineTotal": 15
+        }
+      ],
+      "partsTotal": 71,
+      "savings": 9,
+      "savingsPct": 13
+    },
+    {
+      "title": "Fresh",
+      "price": 62,
+      "unitCount": 4,
+      "pricePerUnit": 15.5,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Coconut Breeze",
+          "shopifyVariantTitle": "Coconut Breeze",
+          "unitPrice": 30,
+          "lineTotal": 30
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-lip-balm",
+          "cluster": "lip_balm",
+          "productName": "Lip Balm",
+          "shopifyProductTitle": "Natural Coconut Oil Lip Balm | 0.15oz | Four Pack",
+          "format": "lip balm tube",
+          "scent": "Sweet Tangerine",
+          "shopifyVariantTitle": "Sweet Tangerine",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-soap",
+          "cluster": "bar_soap",
+          "productName": "Bar Soap",
+          "shopifyProductTitle": "Moisturizing Coconut Soap | 3.4oz",
+          "format": "bar",
+          "scent": "Nourishing Tea Tree",
+          "shopifyVariantTitle": "Nourishing Tea Tree",
+          "unitPrice": 11,
+          "lineTotal": 11
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "shopifyProductTitle": "Best Coconut Oil Deodorant — All Natural Formula | 2oz",
+          "format": "roll-on",
+          "scent": "Geranium Flower",
+          "shopifyVariantTitle": "Geranium Flower",
+          "unitPrice": 15,
+          "lineTotal": 15
+        }
+      ],
+      "partsTotal": 71,
+      "savings": 9,
+      "savingsPct": 13
+    }
+  ],
+  "scentCorrections": []
+}

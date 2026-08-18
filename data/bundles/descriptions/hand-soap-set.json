@@ -1,0 +1,390 @@
+{
+  "handle": "hand-soap-set",
+  "generated_at": "2026-08-18T12:11:13.628Z",
+  "foundation_version": "4b1c18c",
+  "seoTitle": "Hand Soap Set — Foaming Coconut Oil Soap Bundle by Real",
+  "metaDescription": "Build a Hand Soap Set with 3 or 4 foaming coconut oil soaps and an optional Body Lotion. Save at least $8 vs buying singly. Made in the USA.",
+  "savings": {
+    "claimable": true,
+    "uniform": false,
+    "minSavings": 8,
+    "maxSavings": 10,
+    "minPct": 12,
+    "maxPct": 15
+  },
+  "variants": [
+    {
+      "title": "4 pumps / Calming Lavender",
+      "price": 44,
+      "unitCount": 4,
+      "pricePerUnit": 11,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 13,
+          "lineTotal": 52
+        }
+      ],
+      "partsTotal": 52,
+      "savings": 8,
+      "savingsPct": 15
+    },
+    {
+      "title": "4 pumps / Orange Zest",
+      "price": 44,
+      "unitCount": 4,
+      "pricePerUnit": 11,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Orange Zest",
+          "shopifyVariantTitle": "Orange Zest",
+          "unitPrice": 13,
+          "lineTotal": 52
+        }
+      ],
+      "partsTotal": 52,
+      "savings": 8,
+      "savingsPct": 15
+    },
+    {
+      "title": "4 pumps / Coconut Breeze",
+      "price": 44,
+      "unitCount": 4,
+      "pricePerUnit": 11,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Coconut Breeze",
+          "shopifyVariantTitle": "Coconut Breeze",
+          "unitPrice": 13,
+          "lineTotal": 52
+        }
+      ],
+      "partsTotal": 52,
+      "savings": 8,
+      "savingsPct": 15
+    },
+    {
+      "title": "4 pumps / Pure Unscented",
+      "price": 44,
+      "unitCount": 4,
+      "pricePerUnit": 11,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 13,
+          "lineTotal": 52
+        }
+      ],
+      "partsTotal": 52,
+      "savings": 8,
+      "savingsPct": 15
+    },
+    {
+      "title": "3 pumps + body lotion / Calming Lavender",
+      "price": 59,
+      "unitCount": 4,
+      "pricePerUnit": 14.75,
+      "components": [
+        {
+          "qty": 3,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 13,
+          "lineTotal": 39
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 69,
+      "savings": 10,
+      "savingsPct": 14
+    },
+    {
+      "title": "3 pumps + body lotion / Orange Zest",
+      "price": 59,
+      "unitCount": 4,
+      "pricePerUnit": 14.75,
+      "components": [
+        {
+          "qty": 3,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Orange Zest",
+          "shopifyVariantTitle": "Orange Zest",
+          "unitPrice": 13,
+          "lineTotal": 39
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 69,
+      "savings": 10,
+      "savingsPct": 14
+    },
+    {
+      "title": "3 pumps + body lotion / Coconut Breeze",
+      "price": 59,
+      "unitCount": 4,
+      "pricePerUnit": 14.75,
+      "components": [
+        {
+          "qty": 3,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Coconut Breeze",
+          "shopifyVariantTitle": "Coconut Breeze",
+          "unitPrice": 13,
+          "lineTotal": 39
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Coconut Breeze",
+          "shopifyVariantTitle": "Coconut Breeze",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 69,
+      "savings": 10,
+      "savingsPct": 14
+    },
+    {
+      "title": "3 pumps + body lotion / Pure Unscented",
+      "price": 59,
+      "unitCount": 4,
+      "pricePerUnit": 14.75,
+      "components": [
+        {
+          "qty": 3,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 13,
+          "lineTotal": 39
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 69,
+      "savings": 10,
+      "savingsPct": 14
+    },
+    {
+      "title": "4 pumps + body lotion / Calming Lavender",
+      "price": 72,
+      "unitCount": 5,
+      "pricePerUnit": 14.4,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 13,
+          "lineTotal": 52
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 82,
+      "savings": 10,
+      "savingsPct": 12
+    },
+    {
+      "title": "4 pumps + body lotion / Orange Zest",
+      "price": 72,
+      "unitCount": 5,
+      "pricePerUnit": 14.4,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Orange Zest",
+          "shopifyVariantTitle": "Orange Zest",
+          "unitPrice": 13,
+          "lineTotal": 52
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 82,
+      "savings": 10,
+      "savingsPct": 12
+    },
+    {
+      "title": "4 pumps + body lotion / Coconut Breeze",
+      "price": 72,
+      "unitCount": 5,
+      "pricePerUnit": 14.4,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Coconut Breeze",
+          "shopifyVariantTitle": "Coconut Breeze",
+          "unitPrice": 13,
+          "lineTotal": 52
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Coconut Breeze",
+          "shopifyVariantTitle": "Coconut Breeze",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 82,
+      "savings": 10,
+      "savingsPct": 12
+    },
+    {
+      "title": "4 pumps + body lotion / Pure Unscented",
+      "price": 72,
+      "unitCount": 5,
+      "pricePerUnit": 14.4,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "organic-foaming-hand-soap",
+          "cluster": "liquid_soap",
+          "productName": "Foaming Liquid Soap",
+          "shopifyProductTitle": "Foaming Liquid Coconut Oil Soap | 8oz",
+          "format": "foaming pump bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 13,
+          "lineTotal": 52
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "shopifyProductTitle": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        }
+      ],
+      "partsTotal": 82,
+      "savings": 10,
+      "savingsPct": 12
+    }
+  ],
+  "scentCorrections": []
+}

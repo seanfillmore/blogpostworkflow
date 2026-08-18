@@ -1,0 +1,134 @@
+{
+  "handle": "coconut-toothpaste-3-pack",
+  "generated_at": "2026-08-18T12:13:34.215Z",
+  "foundation_version": "4b1c18c",
+  "seoTitle": "Coconut Oil Toothpaste 3-Pack — Fluoride Free, Sensitive-Friendly",
+  "metaDescription": "Three tubes of coconut oil toothpaste — Fresh Mint, All Natural, or Cinnamon Spice. No fluoride, no SLS, no titanium dioxide. Save $5 on the set.",
+  "savings": {
+    "claimable": true,
+    "uniform": true,
+    "minSavings": 5,
+    "maxSavings": 5,
+    "minPct": 13,
+    "maxPct": 13
+  },
+  "variants": [
+    {
+      "title": "Variety — one of each",
+      "price": 34,
+      "unitCount": 3,
+      "pricePerUnit": 11.33,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "shopifyProductTitle": "Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free",
+          "format": "squeeze bottle",
+          "scent": "Fresh Mint",
+          "shopifyVariantTitle": "Fresh Mint",
+          "unitPrice": 13,
+          "lineTotal": 13
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "shopifyProductTitle": "Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free",
+          "format": "squeeze bottle",
+          "scent": "All Natural",
+          "shopifyVariantTitle": "All Natural",
+          "unitPrice": 13,
+          "lineTotal": 13
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "shopifyProductTitle": "Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free",
+          "format": "squeeze bottle",
+          "scent": "Cinnamon Spice",
+          "shopifyVariantTitle": "Cinnamon Spice",
+          "unitPrice": 13,
+          "lineTotal": 13
+        }
+      ],
+      "partsTotal": 39,
+      "savings": 5,
+      "savingsPct": 13
+    },
+    {
+      "title": "3x Fresh Mint",
+      "price": 34,
+      "unitCount": 3,
+      "pricePerUnit": 11.33,
+      "components": [
+        {
+          "qty": 3,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "shopifyProductTitle": "Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free",
+          "format": "squeeze bottle",
+          "scent": "Fresh Mint",
+          "shopifyVariantTitle": "Fresh Mint",
+          "unitPrice": 13,
+          "lineTotal": 39
+        }
+      ],
+      "partsTotal": 39,
+      "savings": 5,
+      "savingsPct": 13
+    },
+    {
+      "title": "3x All Natural",
+      "price": 34,
+      "unitCount": 3,
+      "pricePerUnit": 11.33,
+      "components": [
+        {
+          "qty": 3,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "shopifyProductTitle": "Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free",
+          "format": "squeeze bottle",
+          "scent": "All Natural",
+          "shopifyVariantTitle": "All Natural",
+          "unitPrice": 13,
+          "lineTotal": 39
+        }
+      ],
+      "partsTotal": 39,
+      "savings": 5,
+      "savingsPct": 13
+    },
+    {
+      "title": "3x Cinnamon Spice",
+      "price": 34,
+      "unitCount": 3,
+      "pricePerUnit": 11.33,
+      "components": [
+        {
+          "qty": 3,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "shopifyProductTitle": "Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free",
+          "format": "squeeze bottle",
+          "scent": "Cinnamon Spice",
+          "shopifyVariantTitle": "Cinnamon Spice",
+          "unitPrice": 13,
+          "lineTotal": 39
+        }
+      ],
+      "partsTotal": 39,
+      "savings": 5,
+      "savingsPct": 13
+    }
+  ],
+  "scentCorrections": []
+}
