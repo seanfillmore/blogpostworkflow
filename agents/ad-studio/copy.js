@@ -4,7 +4,7 @@
 // Copy is where revenue is made, so this runs on the flagship model.
 
 /**
- * @param {{format:object, product:object, pdpBody:string, persona?:object, tactics?:string[]}} args
+ * @param {{format:object, product:object, pdpBody:string, persona?:object, tactics?:string[], variant?:string}} args
  * @returns {string}
  */
 // How many reviews the writer is shown, and how much of each.
@@ -16,13 +16,33 @@
 const REVIEWS_SHOWN = 12;
 const REVIEW_CHARS = 320;
 
-export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [] }) {
+// A variant slug/name that signals "no fragrance" — the operator's instruction was to
+// treat that absence as a benefit to lead with, never as a gap to paper over with a
+// sibling variant's scent. Matches "pure-unscented", "unscented", "fragrance-free", etc.
+const UNSCENTED_VARIANT_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
+
+export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant }) {
   const zoneList = format.zones
     .map(z => {
       const cap = format.zoneCapacity?.[z];
       return cap ? `  - ${z} (maximum ${cap} items — the layout cannot carry more)` : `  - ${z}`;
     })
     .join('\n');
+  const unscented = variant && UNSCENTED_VARIANT_RE.test(variant);
+  const variantBlock = variant
+    ? `\nVARIANT: ${variant} — this copy is for THIS variant ONLY. The PRODUCT PAGE COPY and ` +
+      `catalog text below describe the whole product line, including sibling variants. Describe ` +
+      `only what is actually in THIS variant — never claim or imply an ingredient, scent, or ` +
+      `attribute that belongs to a different variant of this product, even if the source text ` +
+      `mentions it for the line as a whole.` +
+      (unscented
+        ? ` This variant has NO added fragrance and NO essential oils. That absence is a real ` +
+          `BENEFIT — lead with it ("no fragrance", "unscented", "nothing added to irritate ` +
+          `sensitive skin"). Do NOT claim, name, or imply any essential oil, scent, or fragrance ` +
+          `ingredient for this variant, even where the product line as a whole is built around one.`
+        : '') +
+      '\n'
+    : '';
   return `You are writing the copy for a single static ad for Real Skin Care.
 
 FORMAT: ${format.key} — ${format.name}
@@ -30,7 +50,7 @@ AWARENESS LEVEL: ${format.awareness}
 LAYOUT: ${format.layoutBrief}
 
 PRODUCT: ${product.title} (${product.handle}) — ${product.priceLabel}
-
+${variantBlock}
 PRODUCT PAGE COPY (a source you may cite as "pdp"):
 ${pdpBody}
 

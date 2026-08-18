@@ -299,7 +299,7 @@ export async function generateBriefs({
     const result = await buildConceptFn({
       anthropic, format, product, pdpBody,
       persona: personaProjection(persona, angle),
-      sourceIndex, reviews,
+      sourceIndex, reviews, variant: product.variant,
     });
 
     const brief = result.ok
