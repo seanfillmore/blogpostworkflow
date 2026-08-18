@@ -78,6 +78,20 @@
 // sprig, a scattering of seeds — that is artwork the operator places, and it is literally
 // what went wrong), or a unit count. A scene is a PLACE, not ingredient styling.
 //
+// requiresGiveaway (optional, default false) marks a format whose copy CANNOT be written
+// without a live giveaway to cite. It is not a style flag — it is a sourcing fact. Every
+// factual line such a format asks for ("36 bars", "entries close September 14, 2026") can
+// only be traced to the `giveaway` source, and that source exists only while an Entry Period
+// is open (lib/giveaway-claim-source.js). Offering the format outside that window would spend
+// an Opus copy call on an ad the claim gate is guaranteed to reject.
+//
+// So it is filtered out of the default rotation and out of the awareness join whenever no
+// giveaway is running — see visibleFormats() below and formatsForAngle() in
+// lib/ad-brief-plan.js. With no giveaway live, FORMATS behaves exactly as it did before this
+// flag existed. selectFormats(['giveaway-entry']) still resolves it by name, deliberately:
+// naming a format explicitly is an operator decision, and the gate is the right place for
+// that decision to fail if it was wrong.
+//
 // zoneCapacity (optional) caps how many strings an array-valued zone may carry,
 // keyed by the layoutBrief's own physical description of that zone — a "vertical
 // list running down one side" or "cells split by thin vertical rules" only has room
@@ -282,6 +296,61 @@ export const FORMATS = [
       'No competitor packaging and no award marks.',
     ].join(' '),
   },
+  // ── Added 2026-08-18, for the "Win 36 Free Bars" giveaway ────────────────────────────
+  //
+  // WHY THIS IS A SEPARATE FORMAT AND NOT A TWEAK TO `offer-focused`.
+  //
+  // offer-focused is a SALES ad: its awareness level is product-aware, its headline is
+  // "benefit-driven", and the thing its badge carries is a price. A giveaway ad asks for an
+  // ENTRY. Those two ads differ in the only thing that matters about an ad — what it asks
+  // the reader to do — so widening offer-focused's briefs to mean either would have made the
+  // one format that is currently unambiguous say two things at once, mid-campaign, on a
+  // format that is live. This table is DATA and its header says the extension path is a new
+  // entry; that is what this is.
+  //
+  // It sits BEFORE offer-focused so that while a giveaway is running it is the PROPOSED
+  // format for a product-aware angle, with offer-focused offered as the alternative. Order
+  // is the only thing that decides `proposed` (formatsForAngle takes the first match), and
+  // the whole point of the campaign is that the giveaway is the ask.
+  //
+  // Its zone list is deliberately IDENTICAL to offer-focused's. lib/ad-brief.js's
+  // selectableFormats only allows an operator to switch a brief between formats of the same
+  // zone shape, so matching it is what turns "flexibility on creatives" into a one-click
+  // switch between the entry ad and the sales ad instead of a regenerate. `offerBadge` keeps
+  // its name for the same reason: the entry IS the offer here, and renaming it would break
+  // that switch for nothing.
+  {
+    key: 'giveaway-entry',
+    name: 'Giveaway entry (lead ad)',
+    awareness: 'product',
+    // No copy without a live Entry Period to cite — see the header note.
+    requiresGiveaway: true,
+    pairsImagesWithLabels: false,
+    // The product is shot at hero scale on a clean ground, same as offer-focused.
+    productProminent: true,
+    zones: ['headline', 'subhead', 'offerBadge', 'bottomBar'],
+    layoutBrief: [
+      `The product on a clean ${SAND} background, lit like premium CPG product photography with a soft contact shadow.`,
+      'The headline states the SIZE of the prize and sits top-left, the largest type in the frame, with a short',
+      'supporting line beneath it.',
+      'The entry call to action is the loudest element after the headline: a bold badge or ribbon carrying it,',
+      'placed so it reads within a second at phone size.',
+      'A solid black bar across the bottom carries one line of letterspaced caps holding the closing date and',
+      'the words NO PURCHASE NECESSARY.',
+      'This ad asks for an ENTRY, never a purchase: no price, no discount, no cart, no shipping promise, and',
+      "nothing that implies buying improves anyone's chances of winning.",
+    ].join(' '),
+    // Same reasoning as offer-focused: the loud elements are set by hand, so the plate must
+    // leave the top and the left genuinely empty rather than fill them with product.
+    plateSetting: 'studio',
+    plateBrief: [
+      `A clean warm sand ${SAND} ground filling the whole frame, lit like premium CPG product photography.`,
+      'The product stands upright in the lower right of the frame at hero scale, its base on the lower third,',
+      'with a soft contact shadow.',
+      'The top of the frame and the left side are empty ground, and a clear band runs across the very bottom.',
+      'Nothing else appears in the picture.',
+    ].join(' '),
+  },
   {
     key: 'offer-focused',
     name: 'Offer-focused',
@@ -446,11 +515,29 @@ export function formatByKey(key) {
 }
 
 /**
+ * The rotation as it stands RIGHT NOW — every format minus the ones that cannot be written
+ * without a live giveaway to cite (see requiresGiveaway in the header).
+ *
+ * Declaration order is preserved, which is what keeps `proposed` correct on both sides of
+ * the window: with a giveaway live, `giveaway-entry` precedes `offer-focused` and wins the
+ * product-aware slot; without one it is not in the list at all and `offer-focused` wins it,
+ * exactly as before this format existed.
+ *
+ * @param {{giveawayLive?:boolean}} [opts]
+ * @returns {typeof FORMATS}
+ */
+export function visibleFormats({ giveawayLive = false } = {}) {
+  return FORMATS.filter(f => giveawayLive || !f.requiresGiveaway);
+}
+
+/**
  * @param {string[]} [keys] format keys, in the order wanted. Falsy/empty → the full rotation.
+ *   "Full rotation" means visibleFormats() — a giveaway format is opt-in BY NAME and never
+ *   arrives by default, because the default is the thing you get by accident.
  * @returns {typeof FORMATS}
  */
 export function selectFormats(keys) {
-  if (!keys || keys.length === 0) return [...FORMATS];
+  if (!keys || keys.length === 0) return visibleFormats();
   return keys.map(k => {
     const f = BY_KEY.get(k);
     if (!f) throw new Error(`unknown format: ${k}`);

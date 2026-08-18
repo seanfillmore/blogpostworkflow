@@ -30,7 +30,7 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 |---|---|---|
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`, and its manifest entry must carry a `unitCount` (see below). |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`). **Required.** It used to be optional, and omitting it meant the whole rotation — nine formats today, 54 renders ≈ $7.02 at the current defaults and 243 (≈$31.59) at 3 variations across all 6 targets, from a flag nobody typed. An unknown key is rejected with the valid list. |
+| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`, plus `giveaway-entry` while a giveaway is running — see below). **Required.** It used to be optional, and omitting it meant the whole rotation — nine formats today, 54 renders ≈ $7.02 at the current defaults and 243 (≈$31.59) at 3 variations across all 6 targets, from a flag nobody typed. An unknown key is rejected with the valid list. |
 | `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta`** — all three Meta ratios, see below. |
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
@@ -98,6 +98,20 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    (quote-led), Magic Spoon / MUD\WTR (stats radiating off a centred hero), and a kids'
    supplement before/after. All three were added as **data only**: no zone name is
    hard-coded anywhere downstream, so nine formats cost the same logic as six.
+
+   **`giveaway-entry`, added 2026-08-18, is the tenth — and the first conditional one.**
+   It carries `requiresGiveaway: true`, which is a *sourcing* fact rather than a style flag:
+   every factual line it asks for ("36 bars", "entries close September 14, 2026") can only be
+   traced to the `giveaway` claim source, and that source exists only while an Entry Period is
+   open (`lib/giveaway-claim-source.js`). So it is filtered out of the default rotation and out
+   of the awareness join whenever no giveaway is running — `selectFormats()` with no keys
+   returns nine, exactly as before — while `--formats giveaway-entry` still resolves it by
+   name, because naming a format explicitly is an operator decision and the claim gate is the
+   right place for that decision to fail if it was wrong. It is a **lead ad**: it asks for an
+   entry, never a purchase, and its brief forbids a price, a discount and a cart. It was added
+   rather than folded into `offer-focused` because those two ads differ in the only thing that
+   matters about an ad — what it asks the reader to do — and widening `offer-focused` mid-
+   campaign would have made the one unambiguous format say two things at once.
 
    *Style only.* Several of those references carry visibly garbled machine-generated label
    text — `Zaro Sugar`, `Het Flash Relief`, and `tummy discomrfort` in a live Para Guard

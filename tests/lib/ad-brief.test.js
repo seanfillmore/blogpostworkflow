@@ -355,23 +355,42 @@ test('an APPROVED brief cannot be switched onto an incompatible format either �
   assert.equal(reread.format.chosen, undefined);
 });
 
-test('selectableFormats returns exactly one entry — the proposed format — for every awareness level in the real table', () => {
-  // The honest consequence of the rule, asserted rather than assumed: no two formats at the
-  // same awareness level share a zone shape today, so the operator's dropdown has nothing in
-  // it. If a format is ever added that DOES share a shape, this test fails and is the
-  // reminder that the dropdown becomes live.
+test('the dropdown is live for exactly one pair — the giveaway/sales pair — and empty everywhere else', () => {
+  // THIS TEST USED TO ASSERT THE DROPDOWN WAS ALWAYS EMPTY, and said in so many words that
+  // if a format were ever added that shared a zone shape with a sibling, its failure would
+  // be the reminder that the dropdown had become live. That happened on 2026-08-18:
+  // `giveaway-entry` was added with offer-focused's exact zone list, deliberately, so an
+  // operator can flip a brief between the entry ad and the sales ad in one click instead of
+  // regenerating it. This is that reminder, discharged.
   const byAwareness = new Map();
   for (const f of FORMATS) {
     if (!byAwareness.has(f.awareness)) byAwareness.set(f.awareness, []);
     byAwareness.get(f.awareness).push(f.key);
   }
+
+  // The product-aware pair: both directions selectable, because the zone shapes match.
+  assert.deepEqual(
+    selectableFormats({ format: { proposed: 'giveaway-entry', alternatives: ['offer-focused'] } }),
+    ['giveaway-entry', 'offer-focused'],
+  );
+  assert.deepEqual(
+    selectableFormats({ format: { proposed: 'offer-focused', alternatives: ['giveaway-entry'] } }),
+    ['offer-focused', 'giveaway-entry'],
+  );
+
+  // Every OTHER awareness level is unchanged: still no two formats sharing a zone shape,
+  // so still nothing in the dropdown. A widening beyond the one intended pair fails here.
   for (const [awareness, keys] of byAwareness) {
+    if (awareness === 'product') continue;
     const b = { format: { proposed: keys[0], alternatives: keys.slice(1) } };
     assert.deepEqual(
       selectableFormats(b), [keys[0]],
       `awareness "${awareness}": only the proposed format may be selectable, got ${selectableFormats(b).join(', ')}`,
     );
   }
+
+  // And the product-aware level holds exactly those two — a third would need its own review.
+  assert.deepEqual(byAwareness.get('product'), ['giveaway-entry', 'offer-focused']);
 });
 
 test('selectableFormats is empty for a brief with no proposed format', () => {

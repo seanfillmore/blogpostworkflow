@@ -51,15 +51,26 @@ export function normalizeForMatch(s) {
 }
 
 /**
- * @param {{pdpBody?:string, brandKit?:object, catalogEntry?:object, reviews?:string[]}} sources
+ * `giveaway` is the plain text of the PUBLISHED Official Rules, and only that. It is built
+ * by lib/giveaway-claim-source.js, which also refuses to produce it when config/giveaway.json
+ * and the rules document disagree about the Entry Period dates. Never hand this a summary,
+ * a lander, or a hand-written prize blurb: a giveaway claim is a legal claim, and the only
+ * text an advertiser can stand behind is the document it published.
+ *
+ * The key is absent — exactly like `reviews` on a product with none — whenever no giveaway
+ * is running, so a giveaway claim outside the Entry Period fails as "unknown source:
+ * giveaway" rather than resolving against last season's promotion.
+ *
+ * @param {{pdpBody?:string, brandKit?:object, catalogEntry?:object, reviews?:string[], giveaway?:string}} sources
  * @returns {Record<string,string>} sourceId → normalized searchable text
  */
-export function buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews } = {}) {
+export function buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway } = {}) {
   const index = {};
   if (pdpBody) index.pdp = normalizeForMatch(pdpBody);
   if (brandKit) index.brandKit = normalizeForMatch(JSON.stringify(brandKit));
   if (catalogEntry) index.catalog = normalizeForMatch(JSON.stringify(catalogEntry));
   if (reviews && reviews.length) index.reviews = normalizeForMatch(reviews.join(' '));
+  if (giveaway) index.giveaway = normalizeForMatch(giveaway);
   return index;
 }
 

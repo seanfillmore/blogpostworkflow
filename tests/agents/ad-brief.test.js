@@ -548,3 +548,88 @@ test('with --job-id, job.start() claims the file (status running, pid) and gener
     'it later reopens the window where a second /generate call pays for a second run',
   );
 }
+
+// ── giveaways (added 2026-08-18) ────────────────────────────────────────────────────
+//
+// Three things switch on together while an Entry Period is open, and all three switch off
+// together the moment it closes: the `giveaway` claim source, the giveaway block in the copy
+// prompt, and the `giveaway-entry` format. The tests below pin BOTH states, because "no
+// giveaway means byte-identical to before" is the half that is easy to break silently.
+
+test('with no giveaway, the awareness join is exactly what it always was', () => {
+  // The default is false — every existing caller, and every day outside an Entry Period.
+  assert.equal(formatsForAngle({ awareness: 'product-aware' }, FORMATS).proposed, 'offer-focused');
+  assert.deepEqual(formatsForAngle({ awareness: 'product-aware' }, FORMATS).alternatives, []);
+  // Explicitly false must agree with the default, or the two paths could drift.
+  assert.deepEqual(
+    formatsForAngle({ awareness: 'product-aware' }, FORMATS, { giveawayLive: false }),
+    formatsForAngle({ awareness: 'product-aware' }, FORMATS),
+  );
+  // The other two awareness levels have no giveaway format at all, live or not.
+  for (const live of [false, true]) {
+    assert.equal(formatsForAngle({ awareness: 'problem-aware' }, FORMATS, { giveawayLive: live }).proposed, 'manifesto');
+    assert.equal(formatsForAngle({ awareness: 'solution-aware' }, FORMATS, { giveawayLive: live }).proposed, 'us-vs-them');
+  }
+});
+
+test('with a giveaway live, a product-aware angle proposes the entry ad and keeps the sales ad as an alternative', () => {
+  const { proposed, alternatives } = formatsForAngle({ awareness: 'product-aware' }, FORMATS, { giveawayLive: true });
+  assert.equal(proposed, 'giveaway-entry');
+  assert.deepEqual(alternatives, ['offer-focused'], 'the sales ad stays reachable — flexibility on creatives');
+});
+
+test('generateBriefs hands the giveaway to the copy stage, and picks the giveaway format', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ad-brief-gv-'));
+  try {
+    const product = { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap', priceLabel: '$12', variant: 'pure-unscented' };
+    const persona = { id: 'p5', name: 'Household switcher' };
+    const angle = { id: 'p5a3', label: 'The bar you put out for guests', awareness: 'product-aware' };
+    const giveaway = { name: 'Win 36 Free Bars', closesOn: 'September 14, 2026', text: 'Thirty-six (36) bars' };
+
+    const seen = [];
+    const buildConceptFn = async (args) => {
+      seen.push(args);
+      return { ok: true, conceptSlug: args.format.key, format: { key: args.format.key }, zones: { headline: 'H' }, claims: [] };
+    };
+
+    const [brief] = await generateBriefs({
+      selected: [{ persona, angle }], product, pdpBody: '', sourceIndex: {}, reviews: [],
+      seoImpact: null, dryRun: false, anthropic: null, root, now: 1786000000001, buildConceptFn, giveaway,
+    });
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].giveaway, giveaway, 'the loaded giveaway must reach buildConcept, or the prompt says nothing');
+    assert.equal(seen[0].format.key, 'giveaway-entry', 'and the format resolved must be the entry ad');
+    assert.equal(brief.format.proposed, 'giveaway-entry');
+    assert.deepEqual(brief.format.alternatives, ['offer-focused']);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('generateBriefs with NO giveaway passes null through and proposes the sales ad', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ad-brief-nogv-'));
+  try {
+    const product = { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap', priceLabel: '$12', variant: null };
+    const persona = { id: 'p5', name: 'Household switcher' };
+    const angle = { id: 'p5a3', label: 'The bar you put out for guests', awareness: 'product-aware' };
+
+    const seen = [];
+    const buildConceptFn = async (args) => {
+      seen.push(args);
+      return { ok: true, conceptSlug: args.format.key, format: { key: args.format.key }, zones: { headline: 'H' }, claims: [] };
+    };
+
+    const [brief] = await generateBriefs({
+      selected: [{ persona, angle }], product, pdpBody: '', sourceIndex: {}, reviews: [],
+      seoImpact: null, dryRun: false, anthropic: null, root, now: 1786000000002, buildConceptFn,
+    });
+
+    assert.equal(seen[0].giveaway, null, 'no giveaway must reach the copy prompt as null, not undefined-by-omission');
+    assert.equal(seen[0].format.key, 'offer-focused');
+    assert.equal(brief.format.proposed, 'offer-focused');
+    assert.deepEqual(brief.format.alternatives, [], 'the giveaway format is not even offered as an alternative');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

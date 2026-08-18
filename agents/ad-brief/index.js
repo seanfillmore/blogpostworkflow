@@ -25,6 +25,14 @@
 // evidence behind it and a score. Approving one renders those exact strings with no
 // second LLM call — nothing drifts between what was read and what gets baked in.
 //
+// GIVEAWAYS. While an Entry Period is open (config/giveaway.json), the published Official
+// Rules become a fifth claim source, `giveaway`, alongside pdp/catalog/brandKit/reviews; the
+// copy writer is told the goal is an ENTRY rather than a purchase; and a product-aware angle
+// proposes the `giveaway-entry` format instead of `offer-focused`. All three switch off
+// together the moment the Entry Period closes, and outside one this agent is byte-identical
+// to what it was before. See lib/giveaway-claim-source.js — in particular why it REFUSES to
+// build the source when the config and the published rules disagree about the dates.
+//
 // THE GATES ARE IMPORTED, NEVER REIMPLEMENTED. buildConcept (ad-studio) runs
 // assertNoHealthClaims then assertClaimsSourced on every brief, the same modules in the
 // same order Ad Studio uses. A second copy that drifts from the first would be the worst
@@ -40,8 +48,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '../../lib/anthropic.js';
-import { FORMATS } from '../ad-studio/formats.js';
+import { visibleFormats } from '../ad-studio/formats.js';
 import { buildSourceIndex } from '../ad-studio/claims.js';
+import { loadGiveaway } from '../../lib/giveaway-claim-source.js';
 import { buildConcept, buildLabelStrings, fetchAdReviews, createJobReporter } from '../ad-studio/index.js';
 import { scoreBrief } from '../../lib/ad-brief-score.js';
 import { writeBrief } from '../../lib/ad-brief.js';
@@ -254,14 +263,21 @@ export function gatesFromRejection(result) {
  * (main(), below), each angle reports its own outcome via job.event() as it lands, the
  * same shape Ad Studio's own per-concept reporting uses, so a dashboard watching the job
  * file sees progress angle by angle rather than one lump update at the very end.
+ *
+ * `giveaway` defaults to null, which is the NO-GIVEAWAY path and is byte-identical to this
+ * function's behaviour before giveaways existed: no giveaway source in the copy prompt, and
+ * `giveaway-entry` filtered out of the awareness join so `offer-focused` still wins the
+ * product-aware slot. A non-null one is the loaded Official Rules (lib/giveaway-claim-source.js)
+ * and flips both.
  */
 export async function generateBriefs({
   selected, product, pdpBody, sourceIndex, reviews, seoImpact, dryRun, anthropic, root,
-  now = Date.now(), buildConceptFn = buildConcept, job = createJobReporter(),
+  now = Date.now(), buildConceptFn = buildConcept, job = createJobReporter(), giveaway = null,
 }) {
   const out = [];
+  const formats = visibleFormats({ giveawayLive: Boolean(giveaway) });
   for (const { persona, angle } of selected) {
-    const { proposed, alternatives } = formatsForAngle(angle, FORMATS);
+    const { proposed, alternatives } = formatsForAngle(angle, formats, { giveawayLive: Boolean(giveaway) });
     const score = scoreBrief({ persona, angle, reviews, productHandle: product.handle, seoImpact });
     const briefId = buildBriefId(product.handle, angle.id, now);
     const base = {
@@ -295,11 +311,11 @@ export async function generateBriefs({
       continue;
     }
 
-    const format = FORMATS.find(f => f.key === proposed);
+    const format = formats.find(f => f.key === proposed);
     const result = await buildConceptFn({
       anthropic, format, product, pdpBody,
       persona: personaProjection(persona, angle),
-      sourceIndex, reviews, variant: product.variant,
+      sourceIndex, reviews, variant: product.variant, giveaway,
     });
 
     const brief = result.ok
@@ -388,7 +404,22 @@ async function main() {
   if (reviews.length) console.log(`Reviews on file for ${handle}: ${reviews.length}`);
   else console.warn(`No Judge.me reviews for ${handle} — any angle that quotes a customer will be rejected by the claim gate.`);
 
-  const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews });
+  // A LIVE giveaway is a fifth claim source. Loaded only while its Entry Period is actually
+  // open — outside it, loadGiveaway returns null, the `giveaway` key is absent from the
+  // source index, no giveaway block reaches the copy prompt and no giveaway format is
+  // offered, so this agent behaves exactly as it did before giveaways existed. It throws
+  // rather than returning null if config/giveaway.json and the published Official Rules
+  // disagree about the Entry Period dates: both files are authoritative, and picking one
+  // would let ad copy cite a deadline the published rules contradict.
+  const giveaway = loadGiveaway({ root: ROOT });
+  if (giveaway) {
+    console.log(
+      `Giveaway live: ${giveaway.name} — entries close ${giveaway.closesOn}. ` +
+      `Briefs will be written as ENTRY ads and may cite the "giveaway" source.`
+    );
+  }
+
+  const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
 
   // Step 4: seo-impact, best-effort. Missing (the common case in a local checkout — see
   // CLAUDE.md's snapshot note) scores neutral rather than blocking.
@@ -429,7 +460,7 @@ async function main() {
   // others' already-generated, already-paid-for briefs.
   const results = await generateBriefs({
     selected, product, pdpBody, sourceIndex, reviews, seoImpact,
-    dryRun: args.dryRun, anthropic, root: ROOT, now, job,
+    dryRun: args.dryRun, anthropic, root: ROOT, now, job, giveaway,
   });
 
   // Step 9: rank + print, computed from what generateBriefs actually returned (which — on
@@ -441,7 +472,12 @@ async function main() {
   if (args.dryRun) {
     const callCount = ranked.filter(b => b.format.proposed).length;
     console.log(`\nDRY RUN — ${ranked.length} angle(s) for ${product.title} (${handle}${args.variant ? '/' + args.variant : ''})`);
-    console.log(`Would make ${callCount} Anthropic copy call(s). No Anthropic calls were made.\n`);
+    console.log(`Would make ${callCount} Anthropic copy call(s). No Anthropic calls were made.`);
+    console.log(
+      giveaway
+        ? `Giveaway: LIVE — "${giveaway.name}", entries close ${giveaway.closesOn}. Copy will be ENTRY-focused and may cite sourceId "giveaway".\n`
+        : `Giveaway: none running — no "giveaway" source, no giveaway format.\n`
+    );
     for (const b of ranked) {
       console.log(
         `── ${b.angleId} (${b.personaName}) — score ${b.score.total} ` +

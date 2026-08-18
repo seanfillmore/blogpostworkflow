@@ -243,17 +243,55 @@ sets in quotation marks off the comp. The plate carries no text, so no gate down
 have caught it; it is the one place in this feature that could present authored copy as a
 customer testimonial.
 
-**As of 2026-08-17 no angle has a selectable alternative.** No two formats at the same
-awareness level share a zone shape:
+**The dropdown is live for exactly one pair, and empty everywhere else** (updated
+2026-08-18):
 
-| Awareness | Proposed | Others at that level, and why they are refused |
+| Awareness | Proposed | Others at that level |
 |---|---|---|
-| `problem-aware` | `manifesto` | `problem-aware` (`subhead`), `testimonial` (`attribution`, `trustLine`), `state-contrast` (`beforeLabel`, `afterLabel`) |
-| `solution-aware` | `us-vs-them` | `ingredient-callout` (`listItems`), `top-x-review` (`subhead`), `stat-stack` (`stats`) |
-| `product-aware` | `offer-focused` | none offered |
+| `problem-aware` | `manifesto` | refused: `problem-aware` (`subhead`), `testimonial` (`attribution`, `trustLine`), `state-contrast` (`beforeLabel`, `afterLabel`) |
+| `solution-aware` | `us-vs-them` | refused: `ingredient-callout` (`listItems`), `top-x-review` (`subhead`), `stat-stack` (`stats`) |
+| `product-aware`, giveaway live | `giveaway-entry` | **selectable:** `offer-focused` — identical zone shape, on purpose |
+| `product-aware`, no giveaway | `offer-focused` | none offered — `giveaway-entry` is not in the table at all |
 
-So the view renders the format as a plain label rather than a one-option dropdown. That is
-the correct outcome, not a rule to widen: to run an angle through another format, generate a
-brief against it — the copy has to be authored for the layout. `problem-aware` and
-`top-x-review` do share a zone shape, but they sit at different awareness levels and so are
-never offered together.
+Everywhere except that one pair the view renders the format as a plain label rather than a
+one-option dropdown. That is the correct outcome, not a rule to widen: to run an angle
+through another format, generate a brief against it — the copy has to be authored for the
+layout. `problem-aware` and `top-x-review` do share a zone shape, but they sit at different
+awareness levels and so are never offered together.
+
+`giveaway-entry` was given `offer-focused`'s exact zone list precisely so the switch is
+legal: during a giveaway the operator can flip a brief between the entry ad and the sales ad
+in one click instead of paying for a regenerate. That is the whole reason the zone shape was
+copied rather than designed fresh.
+
+## Giveaways
+
+While an Entry Period is open (`config/giveaway.json`), three things switch on together, and
+all three switch off the moment it closes:
+
+1. **A fifth claim source, `giveaway`** — the plain text of the *published* Official Rules
+   (`data/giveaway/official-rules.html`), alongside `pdp` / `catalog` / `brandKit` /
+   `reviews`. A giveaway claim is traced exactly like a PDP claim: contiguous, verbatim,
+   substring-matched, no override. A prize or a date that is not in the published rules is
+   still rejected before anything renders.
+2. **The copy prompt states the ask** — the prize and the entry deadline are quoted verbatim
+   into `buildCopyPrompt`, along with the instruction that the goal is an ENTRY, not a
+   purchase, and that no purchase is necessary.
+3. **`giveaway-entry` becomes the product-aware format** (see the table above).
+
+**The config and the published rules must agree.** `lib/giveaway-claim-source.js` builds the
+source body from the rules prose *only*, and uses `config/giveaway.json` purely as a
+cross-check: the entry-open and entry-close **calendar dates** must literally appear in the
+published rules or it throws and no giveaway copy is generated at all. Folding the config's
+dates into the searchable body instead would let a writer quote a deadline the published
+rules contradict, as *sourced* evidence — the claim gate defeated through its own front door.
+Disagreement is for a human to reconcile, never for this module to resolve by preferring one
+file. `drawAt` is deliberately neither cross-checked nor included: the rules describe the
+drawing without naming its date, and a date the published rules do not carry is a date ad
+copy must not state.
+
+**Known wart, flagged not fixed:** `config/giveaway.json` stamps `-06:00` and calls it
+store-local, while the rules prose says "CT" (`-05:00` in September). The two therefore
+describe closing *instants* one hour apart. Nothing here normalises that, because this
+module only ever exposes calendar dates — which the two files agree on exactly — and ad copy
+states a date, not a UTC instant. It matters to `close-entry-period.mjs`, not to a headline.

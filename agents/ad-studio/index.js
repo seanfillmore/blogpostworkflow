@@ -33,6 +33,7 @@ import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedString
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
+import { loadGiveaway } from '../../lib/giveaway-claim-source.js';
 import { notify } from '../../lib/notify.js';
 import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
 import { enforceBudget, formatBytes } from '../../lib/creatives-budget.js';
@@ -344,12 +345,17 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  * @returns {Promise<{ok:true, conceptSlug:string, format:object, zones:object, claims:object[]}
  *                  |{ok:false, conceptSlug:string, format:string, violations:object[], error:string}>}
  */
-export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant }) {
+export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null }) {
   console.log(`Copy: ${format.key} (${format.name})...`);
   // Prevention as well as detection: a review carrying disease or drug language is
   // dropped before the writer sees it, so it cannot pick one and burn a call on a choice
   // it never needed to make.
-  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews), variant });
+  //
+  // `giveaway` is null unless an Entry Period is open, and a null one adds nothing at all to
+  // the prompt (buildCopyPrompt's giveawayBlock) — the gates below are unchanged and run in
+  // the same order either way. It buys the writer ONE extra citable source, never a licence
+  // to skip citing.
+  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews), variant, giveaway });
   const msg = await anthropic.messages.create({
     model: CREATIVE_MODELS.adStudio.copy,
     max_tokens: 3000,
@@ -408,11 +414,11 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
  *
  * @returns {Promise<{concepts:{format:object, zones:object, claims:object[]}[], rejectedConcepts:{conceptSlug:string, format:string, violations:object[], error:string}[]}>}
  */
-export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [], variant }) {
+export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null }) {
   const concepts = [];
   const rejectedConcepts = [];
   for (const format of formats) {
-    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant });
+    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway });
     if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims });
     else rejectedConcepts.push({ conceptSlug: result.conceptSlug, format: result.format, violations: result.violations, error: result.error });
   }
@@ -1464,7 +1470,16 @@ async function main() {
     if (reviews.length) console.log(`Reviews on file for ${handle}: ${reviews.length}`);
     else console.warn(`No Judge.me reviews for ${handle} — any format that quotes a customer will be rejected by the claim gate.`);
 
-    const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews });
+    // A running giveaway is a fifth claim source, loaded ONLY while its Entry Period is
+    // open (lib/giveaway-claim-source.js returns null otherwise, and refuses outright if
+    // config/giveaway.json and the published Official Rules disagree about the dates). With
+    // no giveaway live this is null and everything below is exactly what it was.
+    const giveaway = loadGiveaway({ root: ROOT });
+    if (giveaway) {
+      console.log(`Giveaway live: ${giveaway.name} — entries close ${giveaway.closesOn}. "giveaway" is a citable source.`);
+    }
+
+    const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
 
     formats = selectFormats(args.formats.length ? args.formats : undefined);
 
@@ -1476,7 +1491,7 @@ async function main() {
     // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
     // resilience. assertClaimsSourced itself is unchanged: still throws, still no
     // override flag; buildConcept is the caller the isolation belongs in.
-    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews, variant }));
+    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway }));
   }
 
   // A gate rejection is a first-class outcome the UI must show, and it happens before

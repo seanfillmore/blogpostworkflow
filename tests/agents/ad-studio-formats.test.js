@@ -1,19 +1,63 @@
 import { strict as assert } from 'node:assert';
-import { FORMATS, selectFormats, formatByKey } from '../../agents/ad-studio/formats.js';
+import { FORMATS, selectFormats, formatByKey, visibleFormats } from '../../agents/ad-studio/formats.js';
 
-// Nine formats, each with the fields the downstream stages read. Six v1 plus three added
+// Ten formats, each with the fields the downstream stages read. Six v1, three added
 // 2026-08-15 from reference creatives that are actually running (Bonafide, Magic Spoon /
-// MUD\WTR, a kids' supplement before/after).
-assert.equal(FORMATS.length, 9);
+// MUD\WTR, a kids' supplement before/after), and `giveaway-entry` added 2026-08-18.
+assert.equal(FORMATS.length, 10);
 const keys = FORMATS.map(f => f.key);
 assert.deepEqual(
   [...keys].sort(),
   [
-    'ingredient-callout', 'manifesto', 'offer-focused', 'problem-aware', 'stat-stack',
-    'state-contrast', 'testimonial', 'top-x-review', 'us-vs-them',
+    'giveaway-entry', 'ingredient-callout', 'manifesto', 'offer-focused', 'problem-aware',
+    'stat-stack', 'state-contrast', 'testimonial', 'top-x-review', 'us-vs-them',
   ]
 );
-assert.equal(new Set(keys).size, 9, 'format keys must be unique');
+assert.equal(new Set(keys).size, 10, 'format keys must be unique');
+
+// ── giveaway-entry is INVISIBLE unless a giveaway is actually running ────────────────
+//
+// It is the one format whose copy cannot be written without a live Entry Period to cite:
+// every factual line it asks for resolves against the `giveaway` source, which
+// lib/giveaway-claim-source.js only produces while entries are open. Offering it outside
+// that window would spend an Opus copy call on an ad the claim gate is certain to reject.
+{
+  const g = formatByKey('giveaway-entry');
+  assert.equal(g.requiresGiveaway, true, 'the giveaway format must declare its dependency');
+  assert.deepEqual(
+    visibleFormats().map(f => f.key).filter(k => k === 'giveaway-entry'),
+    [],
+    'with no giveaway live the format is not in the rotation at all'
+  );
+  assert.ok(
+    visibleFormats({ giveawayLive: true }).map(f => f.key).includes('giveaway-entry'),
+    'with a giveaway live it joins the rotation'
+  );
+  // Every OTHER format is unconditional — requiresGiveaway must not spread by accident.
+  assert.deepEqual(
+    FORMATS.filter(f => f.requiresGiveaway).map(f => f.key),
+    ['giveaway-entry'],
+  );
+  assert.equal(visibleFormats().length, 9, 'the no-giveaway rotation is exactly the old nine');
+
+  // Declaration order is what makes it the PROPOSED product-aware format while live, and
+  // leaves offer-focused proposed otherwise (formatsForAngle takes the first match).
+  assert.ok(
+    keys.indexOf('giveaway-entry') < keys.indexOf('offer-focused'),
+    'the giveaway format must precede offer-focused, or it can never be proposed'
+  );
+
+  // Identical zone shape to offer-focused, ON PURPOSE: lib/ad-brief.js's selectableFormats
+  // only allows an operator to switch a brief between formats of the same zone shape, so
+  // this is what makes "entry ad <-> sales ad" a one-click switch instead of a regenerate.
+  assert.deepEqual(g.zones, formatByKey('offer-focused').zones);
+
+  // The ask is an ENTRY. A giveaway ad that quotes a price is the failure this format
+  // exists to prevent, and "no purchase necessary" is a legal requirement, not styling.
+  assert.match(g.layoutBrief, /asks for an ENTRY, never a purchase/);
+  assert.match(g.layoutBrief, /NO PURCHASE NECESSARY/);
+  assert.match(g.layoutBrief, /no price/i);
+}
 
 // A format is DATA — nothing downstream branches on a format key, and no zone name is
 // hard-coded anywhere. These three were added without touching a line of logic, which is
@@ -132,9 +176,18 @@ assert.equal(formatByKey('ingredient-callout').productProminent, true);
 assert.equal(formatByKey('top-x-review').productProminent, true);
 assert.equal(formatByKey('offer-focused').productProminent, true);
 
-// selectFormats
-assert.equal(selectFormats().length, 9, 'no args returns the full rotation');
-assert.equal(selectFormats([]).length, 9, 'empty array returns the full rotation');
+assert.equal(formatByKey('giveaway-entry').productProminent, true);
+
+// selectFormats. "Full rotation" means the VISIBLE rotation — a giveaway format is opt-in
+// by name and must never arrive by default, because the default is what you get by accident.
+assert.equal(selectFormats().length, 9, 'no args returns the full visible rotation');
+assert.equal(selectFormats([]).length, 9, 'empty array returns the full visible rotation');
+assert.ok(!selectFormats().some(f => f.key === 'giveaway-entry'), 'the default rotation excludes it');
+assert.deepEqual(
+  selectFormats(['giveaway-entry']).map(f => f.key),
+  ['giveaway-entry'],
+  'but naming it explicitly still resolves it — that is an operator decision, and the gate judges it'
+);
 assert.deepEqual(selectFormats(['manifesto']).map(f => f.key), ['manifesto']);
 assert.deepEqual(
   selectFormats(['manifesto', 'us-vs-them']).map(f => f.key),

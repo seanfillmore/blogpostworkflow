@@ -50,6 +50,8 @@ import {
 // of it — see lib/ad-brief-plan.js's header for why it is a lib rather than an import of
 // the agent (which would pull Anthropic, @google/genai and sharp into this one PM2 process).
 import { clusterCoverage, planBriefs } from '../../../lib/ad-brief-plan.js';
+// Pure fs + string work, no Anthropic/@google/genai/sharp — safe in this single PM2 process.
+import { loadGiveaway } from '../../../lib/giveaway-claim-source.js';
 import { writeJob, updateJob, findActiveJob, isValidJobId } from '../../../lib/ad-studio-job.js';
 import { respondJson, respondError, readJsonBody } from '../lib/responses.js';
 import { ROOT, PRODUCT_MANIFEST_PATH } from '../lib/paths.js';
@@ -435,9 +437,16 @@ export default [
         const entry = manifestProducts().find(p => p.handle === handle);
         if (!entry) return respondError(res, 400, 'unknown product');
 
+        // The SAME giveaway verdict agents/ad-brief/index.js computes, from the same
+        // module. Without it this panel would promise `offer-focused` for a product-aware
+        // angle while the agent spent the call on `giveaway-entry` — the drift
+        // lib/ad-brief-plan.js exists to prevent, arriving from the one input the plan
+        // does not take as an argument.
+        const giveaway = loadGiveaway({ root: ROOT });
         const plan = planBriefs({
           personasData: personasData(),
           product: { handle, title: entry.title || handle },
+          giveawayLive: Boolean(giveaway),
         });
         respondJson(res, {
           ok: true,
@@ -447,6 +456,7 @@ export default [
           angleCount: plan.angleCount,
           copyCalls: plan.copyCalls,
           angles: plan.angles,
+          giveaway: giveaway ? { name: giveaway.name, closesOn: giveaway.closesOn } : null,
         });
       } catch {
         respondError(res, 500, 'failed to plan brief generation');
