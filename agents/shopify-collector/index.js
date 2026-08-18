@@ -15,6 +15,16 @@
  * used to receive both on `rawOrders` and throw them away, which left the fleet
  * inferring organic revenue from GA4 instead of reading it off the orders.
  *
+ * `orders.{count,revenue,aov}` and `topProducts` count ONLY orders whose attribution
+ * record has `countsAsRevenue: true` — i.e. not an admin preview, not a TEST-discount
+ * order, not cancelled, not $0. The raw Shopify aggregate that getOrders() returns is
+ * what the snapshot used to store, and it was inflating every headline revenue figure
+ * the fleet quotes: on 2026-08-12 it recorded 3 orders / $110.15 when the real day was
+ * 2 orders / $71.98, the third being order #2331, an admin preview landing on
+ * /online_store_preview. Across one measured 28-day window the overstatement was ~7%.
+ * Excluded orders are NOT dropped — they stay in `attribution.orders` with
+ * `countsAsRevenue: false`, so the correction is always auditable from the file itself.
+ *
  * `data/snapshots/` is backed up offsite, so attribution records must stay PII-free:
  * never add email, ip, customer or address. tests/lib/order-attribution.test.js
  * asserts that, and tests/agents/shopify-collector.test.js asserts it again on the
@@ -29,7 +39,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getOrders, getAbandonedCheckouts } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
-import { attributionRows, channelRollup } from '../../lib/order-attribution.js';
+import { attributionRows, channelRollup, classifyOrder } from '../../lib/order-attribution.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -102,9 +112,33 @@ export function getYesterdayPT(now = Date.now()) {
   return ptDayOf(new Date((now instanceof Date ? now.getTime() : now) - 86_400_000));
 }
 
+const round2 = (n) => Math.round(n * 100) / 100;
+
+/**
+ * Order totals over the revenue-bearing orders only.
+ *
+ * Takes attribution records (from buildAttribution().orders), not raw orders, so the
+ * snapshot's headline numbers and its per-order evidence can never disagree: both are
+ * the same `countsAsRevenue` decision, made once in lib/order-attribution.js.
+ */
+export function buildOrderTotals(attributionOrders) {
+  const counted = (attributionOrders || []).filter(o => o?.countsAsRevenue);
+  const count = counted.length;
+  const revenue = round2(counted.reduce((sum, o) => sum + (Number(o.total) || 0), 0));
+  return { count, revenue, aov: count > 0 ? round2(revenue / count) : 0 };
+}
+
+/**
+ * Top products by line-item revenue — over revenue-bearing orders only.
+ *
+ * An admin-preview order carries real line items at real prices, so leaving it in put
+ * phantom units and phantom dollars on a product's row (2026-08-12: the lotion showed
+ * 3 orders / $90 when 2 orders / $60 were real).
+ */
 export function buildTopProducts(rawOrders) {
   const map = new Map();
   for (const order of (rawOrders || [])) {
+    if (!classifyOrder(order)?.countsAsRevenue) continue;
     for (const item of (order.line_items || [])) {
       const title = item.title;
       const rev = parseFloat(item.price || 0) * (item.quantity || 1);
@@ -134,11 +168,22 @@ export function buildAttribution(rawOrders) {
 }
 
 /**
- * Assemble the snapshot. Every pre-existing field keeps its exact shape — dashboards
- * and other agents read them — and `attribution` is purely additive.
+ * Assemble the snapshot. Every pre-existing field keeps its exact shape and position —
+ * dashboards and other agents read them — and `attribution` is purely additive.
+ *
+ * `count`/`revenue`/`aov` are the RAW aggregate from getOrders(). They are accepted but
+ * only used as a fallback for the degenerate case where no `rawOrders` array was passed
+ * at all and nothing can be classified; whenever orders are available the headline
+ * numbers are recomputed from the attribution records so test and admin-preview orders
+ * are excluded.
  */
 export function buildSnapshot({ date, count, revenue, aov, abandonedCount, rawOrders }) {
-  const orderCount = count ?? 0;
+  const attribution = buildAttribution(rawOrders);
+  const totals = rawOrders == null
+    ? { count: count ?? 0, revenue: revenue ?? 0, aov: aov ?? 0 }
+    : buildOrderTotals(attribution.orders);
+
+  const orderCount = totals.count;
   const abandoned = abandonedCount ?? 0;
   const cartAbandonmentRate = abandoned + orderCount > 0
     ? Math.round((abandoned / (abandoned + orderCount)) * 100) / 100
@@ -146,11 +191,11 @@ export function buildSnapshot({ date, count, revenue, aov, abandonedCount, rawOr
 
   return {
     date,
-    orders: { count: orderCount, revenue, aov },
+    orders: { count: totals.count, revenue: totals.revenue, aov: totals.aov },
     abandonedCheckouts: { count: abandoned },
     cartAbandonmentRate,
     topProducts: buildTopProducts(rawOrders),
-    attribution: buildAttribution(rawOrders),
+    attribution,
   };
 }
 
@@ -180,6 +225,14 @@ async function main() {
   console.log(`done (${abandonedCount} abandoned)`);
 
   const snapshot = buildSnapshot({ date, count, revenue, aov, abandonedCount, rawOrders });
+
+  const excluded = snapshot.attribution.orders.filter(o => !o.countsAsRevenue);
+  if (excluded.length) {
+    console.log(`  Excluded ${excluded.length} non-revenue order(s): raw ${count}/$${revenue} -> counted ${snapshot.orders.count}/$${snapshot.orders.revenue}`);
+    for (const o of excluded) {
+      console.log(`    ${o.name || o.id}: $${o.total} (${o.channel}${o.isTest ? ', test' : ''}${o.cancelled ? ', cancelled' : ''})`);
+    }
+  }
 
   for (const c of snapshot.attribution.channels) {
     console.log(`  ${c.channel}: ${c.orders} order(s), $${c.revenue}`);
