@@ -1,5 +1,6 @@
 // agents/pdp-builder/lib/load-foundation.js
 import { readFileSync, existsSync } from 'node:fs';
+import { vocForCopy } from '../../../lib/voice-of-customer.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -63,7 +64,11 @@ export function loadFoundation({ root = DEFAULT_ROOT } = {}) {
     { path: join(root, 'data', 'context', 'voice-of-customer.md'), key: 'voiceOfCustomer', type: 'text' },
   ];
   for (const file of optional) {
-    out[file.key] = existsSync(file.path) ? readFileSync(file.path, 'utf8') : '';
+    const raw = existsSync(file.path) ? readFileSync(file.path, 'utf8') : '';
+    // voice-of-customer.md is handed WHOLE to the PDP copy prompt, so it goes
+    // through the health-claims gate on the way out. The file on disk keeps its
+    // research intact; what reaches a copy model does not name conditions.
+    out[file.key] = file.key === 'voiceOfCustomer' ? vocForCopy(raw) : raw;
   }
   return out;
 }

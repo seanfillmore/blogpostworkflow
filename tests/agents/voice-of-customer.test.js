@@ -366,3 +366,104 @@ test('writeArtifacts writes nothing when a later renderer throws', () => {
   assert.equal(existsSync(join(root, 'data', 'context', 'personas.md')), false);
   assert.equal(existsSync(join(root, 'data', 'context', 'voice-of-customer.md')), false);
 });
+
+// ── health claims never reach the persona artifacts ──────────────────────────
+//
+// personas.json is copy input: four agents paste its persona and angle prose into ad-copy
+// prompts, and personas[0].angles[0] is the documented default angle. The corpus this agent
+// reads is full of reviewers saying "eczema", "psoriasis" and "the steroids my doctor gave
+// me", and on 2026-07-27 the model carried that language straight into every copy-facing
+// field of the top-ranked persona.
+//
+// Removal, not rewriting, and no retry: runAnalysis's retry re-sends the SAME prompt with no
+// feedback, so a re-roll at Opus prices has no reason to come back clean, and snipping the
+// offending clause (or asking a model to) would be this agent inventing research.
+
+function dirtyAnalysis(over = {}) {
+  const base = fixtureAnalysis();
+  return { ...base, personas: base.personas.map((p) => ({ ...p })), ...over };
+}
+
+test('writeArtifacts deletes an angle whose copy-facing field carries a health claim', () => {
+  const root = mkdtempSync(join(tmpdir(), 'voc-'));
+  mkdirSync(join(root, 'data', 'context'), { recursive: true });
+  mkdirSync(join(root, 'data', 'reports', 'voice-of-customer'), { recursive: true });
+
+  const analysis = dirtyAnalysis();
+  analysis.personas[1] = {
+    ...analysis.personas[1],
+    angles: [
+      { ...analysis.personas[1].angles[0], id: 'a2', proof: 'A reviewer with severe eczema.' },
+      { id: 'a3', label: 'Clean', awareness: 'solution-aware', objection_addressed: 'o',
+        proof: 'p', hook_examples: ['h'], source_quotes: [SOURCED] },
+    ],
+  };
+
+  const paths = writeArtifacts({ analysis, corpus: CORPUS, root });
+  const json = JSON.parse(readFileSync(paths.personasJsonPath, 'utf8'));
+  const high = json.personas.find((p) => p.id === 'high');
+  assert.deepEqual(high.angles.map((a) => a.id), ['a3'], 'the eczema angle must not be written');
+  assert.equal(json.health_claim_drops.length, 1, 'and the loss is recorded in the artifact itself');
+  assert.equal(json.health_claim_drops[0].angleId, 'a2');
+  assert.equal(json.health_claim_drops[0].category, 'disease');
+
+  // personas.md is rendered from the SAME sanitized set — the two must never disagree.
+  assert.doesNotMatch(readFileSync(paths.personasMdPath, 'utf8'), /eczema/i);
+  assert.equal(paths.drops.length, 1);
+});
+
+test('writeArtifacts deletes a persona whose own name or summary carries a health claim', () => {
+  const root = mkdtempSync(join(tmpdir(), 'voc-'));
+  mkdirSync(join(root, 'data', 'context'), { recursive: true });
+  mkdirSync(join(root, 'data', 'reports', 'voice-of-customer'), { recursive: true });
+
+  const analysis = dirtyAnalysis();
+  analysis.personas[1] = { ...analysis.personas[1], name: 'The Eczema-Exhausted Parent' };
+
+  const paths = writeArtifacts({ analysis, corpus: CORPUS, root });
+  const json = JSON.parse(readFileSync(paths.personasJsonPath, 'utf8'));
+  assert.deepEqual(json.personas.map((p) => p.id), ['low'], 'a disease cannot be the audience');
+  assert.equal(json.personas.length, paths.personaCount);
+});
+
+test('writeArtifacts keeps source_quotes verbatim — they are evidence, not copy', () => {
+  const root = mkdtempSync(join(tmpdir(), 'voc-'));
+  mkdirSync(join(root, 'data', 'context'), { recursive: true });
+  mkdirSync(join(root, 'data', 'reports', 'voice-of-customer'), { recursive: true });
+
+  // The real 2026-08-16 quote. It must survive intact: findUnsourcedQuotes matches it
+  // against the corpus, and no consumer feeds source_quotes to a copy writer.
+  const quote = 'I have tried prescription strength lotions, steroids, you name it.';
+  const analysis = dirtyAnalysis();
+  analysis.personas[1] = {
+    ...analysis.personas[1],
+    angles: [{ ...analysis.personas[1].angles[0], source_quotes: [quote] }],
+  };
+
+  const paths = writeArtifacts({ analysis, corpus: CORPUS, root });
+  const json = JSON.parse(readFileSync(paths.personasJsonPath, 'utf8'));
+  assert.deepEqual(json.personas.find((p) => p.id === 'high').angles[0].source_quotes, [quote]);
+  assert.deepEqual(json.health_claim_drops, []);
+});
+
+test('writeArtifacts refuses to write an empty persona set rather than blanking the context files', () => {
+  const root = mkdtempSync(join(tmpdir(), 'voc-'));
+  mkdirSync(join(root, 'data', 'context'), { recursive: true });
+  mkdirSync(join(root, 'data', 'reports', 'voice-of-customer'), { recursive: true });
+  writeFileSync(join(root, 'data', 'context', 'personas.json'), '{"personas":"LAST MONTH"}', 'utf8');
+
+  const analysis = dirtyAnalysis();
+  analysis.personas = analysis.personas.map((p) => ({ ...p, summary: 'Burned through prescription steroids.' }));
+
+  assert.throws(() => writeArtifacts({ analysis, corpus: CORPUS, root }), /health claim/i);
+  assert.equal(readFileSync(join(root, 'data', 'context', 'personas.json'), 'utf8'), '{"personas":"LAST MONTH"}',
+    'last month\'s artifacts stay in place');
+});
+
+test('the analysis prompt tells the model the rule before it costs a call to enforce it', () => {
+  const prompt = buildAnalysisPrompt(CORPUS);
+  assert.match(prompt, /HEALTH-CLAIM RULE/);
+  assert.match(prompt, /eczema/, 'name the disease words so the model can avoid them');
+  assert.match(prompt, /steroids/, 'and the drug words');
+  assert.match(prompt, /source_quotes` is the ONE exception/, 'without this it would launder quotes to comply');
+});

@@ -14,6 +14,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { scanSkillInventory, renderContextMirror } from '../../lib/marketing-learner.js';
+import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
 import { archiveRunOutput } from '../../lib/archive-run-output.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -97,15 +98,34 @@ Return only the image prompt as plain text — no JSON, no explanation.`;
  * TypeError inside a live creative job with no persona id in the message. If
  * that leaves nothing, return null and take the same degradation path as a
  * missing file.
+ *
+ * HEALTH CLAIMS ARE FILTERED HERE TOO, not only where the file is generated.
+ * buildCopyBrief hands persona.name, persona.summary, angle.label,
+ * objection_addressed, proof and hook_examples to the copy writer verbatim. The
+ * 2026-07-27 file put "steroids", "eczema" and "prescriptions" in every one of
+ * those fields on persona p1 — the DEFAULT. personas.json is regenerated monthly,
+ * so a generator-side fix alone would leave a bad file live for up to a month and
+ * would not survive a future regression. An angle or persona that fails
+ * agents/ad-studio/health-claims.js is removed before it can reach a prompt; if
+ * that empties the top persona the next one becomes the default, and if it empties
+ * every persona this returns null and takes the documented no-personas path.
  */
 export function loadPersonas(root = ROOT) {
   try {
     const raw = readFileSync(join(root, 'data', 'context', 'personas.json'), 'utf8');
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.personas)) return null;
-    const usable = parsed.personas.filter((p) => Array.isArray(p?.angles) && p.angles.length > 0);
-    if (usable.length !== parsed.personas.length) {
-      const dropped = parsed.personas
+    const { personas: safe, drops } = sanitizePersonas(parsed.personas);
+    if (drops.length) {
+      console.warn(`loadPersonas: withheld ${drops.length} health-claim violation(s) from the copy writer:`);
+      console.warn(formatPersonaDrops(drops));
+    }
+    // Counted against `safe`, not `parsed.personas` — a persona sanitizePersonas already
+    // removed for a health claim was reported above with its reason, and re-reporting it
+    // here as "no angles" would name the wrong cause.
+    const usable = safe.filter((p) => Array.isArray(p?.angles) && p.angles.length > 0);
+    if (usable.length !== safe.length) {
+      const dropped = safe
         .filter((p) => !(Array.isArray(p?.angles) && p.angles.length > 0))
         .map((p) => p?.id || '(no id)');
       console.warn(`loadPersonas: dropped ${dropped.length} persona(s) with no angles: ${dropped.join(', ')}`);

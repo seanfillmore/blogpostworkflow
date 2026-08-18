@@ -58,8 +58,17 @@ test('the writer slice drops the disqualifier and provenance sections', () => {
 });
 
 test('blog-post-writer slices the doc rather than injecting the whole file', () => {
-  assert.match(SRC, /import \{ sliceVocSections, BLOG_VOC_HEADINGS \} from '\.\.\/\.\.\/lib\/voice-of-customer\.js'/);
+  assert.match(SRC, /import \{ sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy \} from '\.\.\/\.\.\/lib\/voice-of-customer\.js'/);
   assert.match(SRC, /sliceVocSections\(raw, BLOG_VOC_HEADINGS\)/);
+});
+
+test('blog-post-writer gates the VOC text through the health-claims filter', () => {
+  // The research sections legitimately name conditions — "CeraVe is the default
+  // recommendation for eczema" is competitive intel that stays on disk. This
+  // agent writes live storefront copy for a COSMETIC and auto-publishes via
+  // calendar-runner → editor → publisher with no human in the loop, so nothing
+  // ungated may reach the prompt.
+  assert.match(SRC, /vocForCopy\(sliceVocSections\(raw, BLOG_VOC_HEADINGS\)\)/);
 });
 
 test('blog-post-writer frames the block as internal research, not copy to reuse', () => {

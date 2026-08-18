@@ -17,7 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   CLUSTER_HANDLES, clusterCoverage, assertClusterCoverage, planBriefs, formatsForAngle,
-  angleRelevance,
+  angleRelevance, allPersonaAngles, withheldAngleIds, withheldNote,
 } from '../../lib/ad-brief-plan.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -157,11 +157,84 @@ test('p3a2 ("The first lotion that didn\'t react") is lotion-relevant and not so
   assert.equal(angleRelevance(p3a2, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap | 3.4oz' }), false);
 });
 
-test('p1a1 ("After prescriptions failed") names no product and stays relevant to both', () => {
+// Was labelled "After prescriptions failed" until 2026-08-17, when the label, objection and
+// proof were re-worded to drop the drug and disease names a cosmetic may not use. The
+// relevance behaviour is unchanged and is the point of this test: the label still names no
+// product, and the re-worded objection still only reaches "lotion"/"balms" inside the
+// customer's own rhetorical aside, with nothing in `proof` to corroborate it.
+test('p1a1 ("After everything else failed") names no product and stays relevant to both', () => {
   const p1a1 = PERSONAS.personas.flatMap(p => p.angles).find(a => a.id === 'p1a1');
+  assert.equal(p1a1.label, 'After everything else failed', 'sanity: the repaired label');
   assert.equal(
     angleRelevance(p1a1, { handle: 'coconut-lotion', title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' }),
     true
   );
   assert.equal(angleRelevance(p1a1, { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap | 3.4oz' }), true);
+});
+
+// ── health-claim withholding, before a click can spend on it ──────────────────
+//
+// allPersonaAngles is the ONE flattening both this module's planBriefs() and the agent's
+// main() select from. An angle whose copy-facing prose names a disease or a drug is not
+// briefable: ad-studio's health-claims gate will hard-fail the copy it produces, AFTER the
+// Opus call is paid for. So it is withheld here, which keeps the Briefs tab's angle list,
+// the dry-run count and the agent's real spend agreeing about which angles exist.
+
+const DIRTY = {
+  cluster: 'skin',
+  personas: [
+    {
+      id: 'p1', name: 'The tried-everything buyer', summary: 'Nothing worked.',
+      angles: [
+        { id: 'p1a1', label: 'After prescriptions failed', awareness: 'problem-aware',
+          objection_addressed: 'Why would this be different?', proof: 'Reviewers say it lasts',
+          hook_examples: [], source_quotes: ['q'] },
+        { id: 'p1a2', label: 'Tried everything', awareness: 'problem-aware',
+          objection_addressed: 'Why would this be different?', proof: 'Reviewers say it lasts',
+          hook_examples: [], source_quotes: ['q'] },
+      ],
+    },
+  ],
+};
+
+test('allPersonaAngles withholds an angle whose copy-facing prose carries a health claim', () => {
+  assert.deepEqual(allPersonaAngles(DIRTY).map(pa => pa.angle.id), ['p1a2']);
+  assert.deepEqual(withheldAngleIds(DIRTY), ['p1a1']);
+});
+
+test('planBriefs never offers — or charges for — a withheld angle', () => {
+  const plan = planBriefs({ personasData: DIRTY, product: { handle: 'coconut-lotion', title: 'Coconut Lotion' } });
+  assert.deepEqual(plan.angles.map(a => a.angleId), ['p1a2']);
+  assert.equal(plan.angleCount, 1);
+  assert.equal(plan.copyCalls, 1, 'the withheld angle must not appear in the cost the button shows');
+});
+
+test('naming a withheld angle by hand says "withheld", not "unknown"', () => {
+  // Without this the only feedback for --angles p1a1 is a message asserting the id does not
+  // exist, which sends the reader hunting a typo that is not there.
+  const plan = planBriefs({ personasData: DIRTY, product: { handle: 'coconut-lotion' }, angleIds: ['p1a1'] });
+  assert.equal(plan.angleCount, 0);
+  assert.match(plan.reason, /p1a1/);
+  assert.match(plan.reason, /health claim/);
+  assert.match(plan.reason, /health-claims\.js/, 'and points at the gate that decided');
+});
+
+test('withheldNote stays silent for an id that is genuinely unknown', () => {
+  assert.equal(withheldNote(['p99a99'], DIRTY), '');
+  assert.match(planBriefs({ personasData: DIRTY, product: { handle: 'coconut-lotion' }, angleIds: ['p99a99'] }).reason,
+    /^unknown angle id\(s\): p99a99$/);
+});
+
+test('a persona whose every angle is withheld disappears without breaking the plan', () => {
+  const allDirty = { cluster: 'skin', personas: [{ ...DIRTY.personas[0], angles: [DIRTY.personas[0].angles[0]] }] };
+  const plan = planBriefs({ personasData: allDirty, product: { handle: 'coconut-lotion' } });
+  assert.equal(plan.covered, true, 'the product is still covered — there is simply nothing to brief');
+  assert.equal(plan.angleCount, 0);
+  assert.equal(plan.copyCalls, 0);
+});
+
+// The real file, which is what the Briefs tab actually plans against.
+test('no angle in the committed personas.json is withheld', () => {
+  assert.deepEqual(withheldAngleIds(PERSONAS), [],
+    'a withheld angle is an angle the ad pipeline can never brief — repair personas.json instead');
 });
