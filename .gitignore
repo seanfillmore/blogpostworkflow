@@ -129,6 +129,11 @@ data/reports/ads-conversions/
 # Shopping calibrator run reports (per-run, server-generated)
 data/reports/shopping-calibrator/
 
+# SEO impact run reports — server-authoritative (cron owns them) and never tracked, but
+# a local `node agents/seo-impact/index.js` writes here and they showed up as untracked
+# files waiting for someone's `git add .`
+data/reports/seo-impact/
+
 # Ad Studio run output — one default run writes ~137 MB of 2K renders (a single
 # variation is ~7.6 MB × 6 platform targets). Regenerable and reviewed as images, never
 # in a diff. Scoped to the ad-studio subtree so the already-tracked data/creatives/

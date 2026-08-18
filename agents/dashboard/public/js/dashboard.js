@@ -1697,10 +1697,7 @@ function renderSeoImpact(d) {
     '<div style="color:#6b7280;font-size:12px;margin-bottom:8px">' +
       (s.revenue_source === 'shopify-orders'
         ? (t.organic_conversions || 0) + ' Shopify orders (landing_site ground truth)'
-          + (t.organic_revenue_ga4 != null
-              ? ' &middot; GA4 modelled ' + money(t.organic_revenue_ga4)
-                + ' (' + ((t.ga4_gap || 0) >= 0 ? '+' : '−') + money(Math.abs(t.ga4_gap || 0)) + ')'
-              : '')
+          + (t.organic_sessions != null ? ' &middot; ' + t.organic_sessions + ' organic sessions' : '')
         : (t.organic_conversions || 0) + ' conversion events (GA4 key events, not purchases)') +
       '</div>' +
     chart +
