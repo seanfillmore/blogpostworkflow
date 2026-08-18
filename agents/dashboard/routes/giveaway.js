@@ -225,6 +225,11 @@ export function entryProperties(existing, value = {}) {
     // clicked the double-opt-in link. No request may set it.
     properties.gv_breakdown = { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false };
     properties.gv_entries = 1;
+    // Stamped on FIRST entry only, and never rewritten on a resubmit — the
+    // cohort denominator in lib/giveaway/cohort.js dates every window from it,
+    // so a resubmit moving it forward would reset that entrant's clock and make
+    // a real conversion look like it happened before entry.
+    properties.gv_entered_at = new Date().toISOString();
   }
   // First referrer wins. Without this guard, re-entering lets someone swap in a
   // different referrer after the fact.
