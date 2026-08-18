@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  classifyOrder, attributionRows, shopifyRevenueByPage, SEARCH_HOSTS,
+  classifyOrder, attributionRows, shopifyRevenueByPage, channelRollup, SEARCH_HOSTS, AI_ASSISTANT_HOSTS,
 } from '../../lib/order-attribution.js';
 
 // Fixtures lifted verbatim from live orders on 2026-08-17 so the classifier is
@@ -223,4 +223,90 @@ test('shopifyRevenueByPage can include every channel when asked', () => {
   const m = shopifyRevenueByPage(attributionRows([DIRECT, ORGANIC_FREE_LISTING]), { channels: null });
   assert.equal(m.has('/products/coconut-lotion'), true);
   assert.equal(m.has('/products/organic-foaming-hand-soap'), true);
+});
+
+// ── AI assistants are their own channel, not search ───────────────────────────
+// Regression: chatgpt.com et al were originally listed in SEARCH_HOSTS, so every
+// AI-referred order was booked as `organic-search`. That credited $383.61 of AI
+// revenue to SEO and, once seo-impact began importing SEARCH_HOSTS to rescue
+// misfiled sessions, rescued AI sessions as organic ones too. Both halves of the
+// SEO number were wrong in the same direction.
+
+const CHATGPT_CARD = {
+  id: 30, name: '#2290', created_at: '2026-04-02T10:00:00-06:00', total_price: '35.99',
+  source_name: 'web',
+  landing_site: '/products/coconut-lotion?utm_source=chatgpt.com&utm_medium=feed',
+  referring_site: 'https://chatgpt.com/', discount_codes: [], note_attributes: [],
+};
+
+test('AI assistant hosts are NOT search engines', () => {
+  for (const h of ['chatgpt.com', 'chat.openai.com', 'claude.ai', 'perplexity.ai',
+    'gemini.google.com', 'copilot.microsoft.com']) {
+    assert.equal(SEARCH_HOSTS.has(h), false, `${h} must not be in SEARCH_HOSTS`);
+    assert.equal(AI_ASSISTANT_HOSTS.has(h), true, `${h} must be an AI assistant host`);
+  }
+});
+
+test('a ChatGPT referral is ai-assistant, not organic-search', () => {
+  const c = classifyOrder(CHATGPT_CARD);
+  assert.equal(c.channel, 'ai-assistant');
+  assert.equal(c.paid, false);
+});
+
+test('utm_source identifies an AI order when the referrer is stale', () => {
+  // Real shape: the referrer header survives from an earlier tab
+  // (swansonvitamins.com was observed) while utm_source is the truth.
+  const stale = { ...CHATGPT_CARD, referring_site: 'https://www.swansonvitamins.com/' };
+  assert.equal(classifyOrder(stale).channel, 'ai-assistant');
+});
+
+test('utm_source identifies an AI order when there is NO referrer', () => {
+  const bare = { ...CHATGPT_CARD, referring_site: null };
+  assert.equal(classifyOrder(bare).channel, 'ai-assistant');
+});
+
+test('utm_source rescues a search order whose referrer was stripped', () => {
+  const c = classifyOrder({
+    ...CHATGPT_CARD,
+    landing_site: '/products/coconut-lotion?utm_source=duckduckgo.com',
+    referring_site: null,
+  });
+  assert.equal(c.channel, 'organic-search');
+});
+
+test('a paid click stays paid even when utm_source names an AI host', () => {
+  // Precedence guard: paid detection must outrank source attribution, or a
+  // gclid-carrying order could be laundered into an earned channel.
+  const c = classifyOrder({
+    ...CHATGPT_CARD,
+    landing_site: '/products/coconut-lotion?utm_source=chatgpt.com&gclid=CjwKCAjw1vXTBhB-EiwAEKr_k',
+  });
+  assert.equal(c.channel, 'paid-search');
+  assert.equal(c.paid, true);
+});
+
+test('utm_source does not override an admin preview', () => {
+  const c = classifyOrder({
+    ...CHATGPT_CARD, landing_site: '/online_store_preview?utm_source=chatgpt.com',
+  });
+  assert.equal(c.channel, 'admin-preview');
+  assert.equal(c.isTest, true);
+});
+
+test('AI revenue is excluded from organic-search by default', () => {
+  const m = shopifyRevenueByPage(attributionRows([CHATGPT_CARD, ORGANIC_FREE_LISTING]));
+  assert.equal(m.has('/products/coconut-lotion'), false, 'AI order leaked into organic');
+  assert.equal(m.has('/products/organic-foaming-hand-soap'), true);
+});
+
+test('AI revenue is reportable when asked for explicitly', () => {
+  const m = shopifyRevenueByPage(attributionRows([CHATGPT_CARD]), { channels: ['ai-assistant'] });
+  assert.equal(m.get('/products/coconut-lotion').revenue, 35.99);
+});
+
+test('channelRollup reports ai-assistant separately', () => {
+  const r = channelRollup(attributionRows([CHATGPT_CARD, ORGANIC_FREE_LISTING]));
+  const ai = r.find((x) => x.channel === 'ai-assistant');
+  assert.equal(ai.revenue, 35.99);
+  assert.equal(r.find((x) => x.channel === 'organic-search').revenue, 62.40);
 });
