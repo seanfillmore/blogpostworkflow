@@ -27,5 +27,8 @@
       "messageId": "01M002YFFDCQ21CF26TWQWY233",
       "sendAt": "2026-09-13T14:00:00.000Z"
     }
-  }
+  },
+  "metaAdAccountId": "act_946015593265647",
+  "metaCampaignId": "120248756571100173",
+  "_metaCampaignNote": "Soap Giveaway 2026-09 | Leads | US — objective OUTCOME_LEADS. Spend is read from this campaign by lib/giveaway/meta-spend.js for the daily spend gate. Recorded explicitly rather than discovered by name each run: four ad accounts exist on this token and name-matching would silently pick the wrong one if the campaign is ever renamed or duplicated."
 }
