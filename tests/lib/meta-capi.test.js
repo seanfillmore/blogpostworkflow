@@ -20,8 +20,21 @@ function stubFetch(status = 200, body = { events_received: 1 }) {
 
 const sha256 = (v) => createHash('sha256').update(v).digest('hex');
 
-beforeEach(() => { calls = []; });
-afterEach(() => { globalThis.fetch = realFetch; });
+let alerts = [];
+
+beforeEach(async () => {
+  calls = [];
+  alerts = [];
+  const m = await import('../../lib/meta-capi.js');
+  m.__resetLeadAlertThrottle();
+  m.__setLeadNotifier(async (n) => { alerts.push(n); });
+});
+
+afterEach(async () => {
+  globalThis.fetch = realFetch;
+  const m = await import('../../lib/meta-capi.js');
+  m.__setLeadNotifier(null);
+});
 
 test('the email is normalised then SHA-256 hashed — raw PII must never leave this process', async () => {
   stubFetch();
@@ -93,5 +106,92 @@ test('missing configuration is a no-op, so an unconfigured environment cannot br
   stubFetch();
   const { sendLeadEvent } = await import('../../lib/meta-capi.js');
   assert.equal(await sendLeadEvent({ email: 'a@b.com', pixelId: null, accessToken: 'T' }), false);
-  assert.equal(calls.length, 0, 'no request attempted without a pixel id');
+  assert.equal(
+    calls.filter((c) => c.url.includes('graph.facebook.com')).length, 0,
+    'no request attempted without a pixel id',
+  );
+});
+
+// ── failure alerting ────────────────────────────────────────────────────────
+// A failed Lead used to reach console.error and stop there. The ad set optimises
+// on LEAD, so a Lead that stops landing means budget is spent against a signal
+// that cannot arrive — at $30/day, discovered a weekend later.
+
+test('a rejected Lead raises an immediate alert, not just a log line', async () => {
+  stubFetch(400, { error: { message: 'Invalid OAuth access token' } });
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  await sendLeadEvent({ email: 'a@b.com', pixelId: 'PX', accessToken: 'expired' });
+
+  assert.equal(alerts.length, 1, 'the operator is told');
+  assert.match(alerts[0].subject, /Lead event FAILED/);
+  assert.equal(alerts[0].status, 'error');
+  assert.equal(alerts[0].immediate, true, 'must not wait for the 5 AM digest — spend continues meanwhile');
+  assert.match(alerts[0].body, /Invalid OAuth access token/, 'the actual Meta message is what identifies the cause');
+});
+
+test('a 200 with events_received: 0 alerts — the silent drop is the whole point', async () => {
+  // Meta accepts a malformed event with a 200 and discards it. Nothing throws,
+  // nothing logs at the HTTP layer, and the event simply never appears.
+  stubFetch(200, { events_received: 0 });
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  assert.equal(await sendLeadEvent({ email: 'a@b.com', pixelId: 'PX', accessToken: 'T' }), false);
+  assert.equal(alerts.length, 1);
+  assert.match(alerts[0].subject, /accepted but dropped/);
+});
+
+test('a network failure alerts', async () => {
+  globalThis.fetch = async () => { throw new Error('ECONNRESET'); };
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  await sendLeadEvent({ email: 'a@b.com', pixelId: 'PX', accessToken: 'T' });
+  assert.equal(alerts.length, 1);
+  assert.match(alerts[0].body, /ECONNRESET/);
+});
+
+test('an entrant arriving with no credentials configured alerts — that is an outage, not a no-op', async () => {
+  // Distinct from a caller bug: an email WITH missing credentials means a real
+  // entrant came through and no Lead was even attempted. That is the exact state
+  // the giveaway shipped in before 2026-08-13.
+  stubFetch();
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  await sendLeadEvent({ email: 'a@b.com', pixelId: null, accessToken: null });
+  assert.equal(alerts.length, 1);
+  assert.match(alerts[0].subject, /not configured/);
+});
+
+test('no email is a caller bug and stays silent — it must not page anyone', async () => {
+  stubFetch();
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  assert.equal(await sendLeadEvent({ pixelId: 'PX', accessToken: 'T' }), false);
+  assert.equal(alerts.length, 0);
+});
+
+test('alerts are throttled per reason — an expired token fails EVERY entry', async () => {
+  // Unthrottled, one outage becomes an inbox flood and gets muted, which is the
+  // same as having no alert at all.
+  stubFetch(400, { error: { message: 'bad token' } });
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  for (let i = 0; i < 5; i++) {
+    await sendLeadEvent({ email: `e${i}@b.com`, pixelId: 'PX', accessToken: 'T' });
+  }
+  assert.equal(alerts.length, 1, 'five failures, one email');
+});
+
+test('a different failure reason is not suppressed by an unrelated one', async () => {
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  stubFetch(400, { error: { message: 'bad token' } });
+  await sendLeadEvent({ email: 'a@b.com', pixelId: 'PX', accessToken: 'T' });
+  stubFetch(200, { events_received: 0 });
+  await sendLeadEvent({ email: 'b@b.com', pixelId: 'PX', accessToken: 'T' });
+
+  assert.equal(alerts.length, 2, 'throttling is per reason, so a NEW failure still gets through');
+});
+
+test('an alert that fails to send cannot break the entry', async () => {
+  stubFetch(400, { error: { message: 'bad' } });
+  const m = await import('../../lib/meta-capi.js');
+  m.__setLeadNotifier(async () => { throw new Error('Resend down'); });
+  assert.equal(
+    await m.sendLeadEvent({ email: 'a@b.com', pixelId: 'PX', accessToken: 'T' }), false,
+    'resolves false rather than rejecting — the entry is the paid-for thing',
+  );
 });
