@@ -43,6 +43,8 @@ const ROOT = join(__dirname, '..', '..');
 
 const PRIORITY_CFG = (() => { try { return JSON.parse(readFileSync(join(ROOT, 'config', 'pipeline-priority.json'), 'utf8')); } catch { return { buffer: { days: 7 } }; } })();
 const BUFFER_DAYS = PRIORITY_CFG.buffer?.days ?? 7;
+// Days without a draft that mean the pipeline is broken rather than idle.
+const STALL_DAYS = PRIORITY_CFG.buffer?.stallDays ?? 10;
 
 const CALENDAR_PATH    = join(ROOT, 'data', 'reports', 'content-strategist', 'content-calendar.md');
 const STATE_DIR        = join(ROOT, 'data', 'reports', 'calendar-runner');
@@ -165,6 +167,70 @@ function getItemStatus(item) {
   if (htmlExists) return 'written';
   if (briefExists) return 'briefed';
   return 'pending';
+}
+
+/**
+ * Split the calendar into what to draft now and what is merely not due yet.
+ *
+ * Lead-window guard (JIT): only draft items whose publish date is within
+ * BUFFER_DAYS. Promoted ideas get a near-term slot from the prioritizer; ideas
+ * dated further out wait. A keyword-targeted run is an explicit override.
+ *
+ * `deferred` is sorted earliest-first and exists so the caller can say WHY it
+ * has nothing to do — an empty selection used to be indistinguishable from an
+ * empty calendar.
+ */
+export function selectWorkItems(items, {
+  now = new Date(),
+  bufferDays = BUFFER_DAYS,
+  keyword = null,
+  statusOf = getItemStatus,
+} = {}) {
+  const unfinished = items.filter((i) => !['published', 'scheduled'].includes(statusOf(i)));
+
+  if (keyword) {
+    return {
+      workItems: unfinished.filter((i) => i.keyword.toLowerCase() === keyword.toLowerCase()),
+      deferred: [],
+    };
+  }
+
+  const cutoff = new Date(now.getTime() + bufferDays * 86400000);
+  const due = (i) => i.adjustedDate || i.publishDate;
+  return {
+    workItems: unfinished.filter((i) => due(i) <= cutoff),
+    deferred: unfinished.filter((i) => due(i) > cutoff).sort((a, b) => due(a) - due(b)),
+  };
+}
+
+/**
+ * Has drafting stopped? Pure — the caller supplies the two facts.
+ *
+ * At the calendar's 2-posts-per-week pacing the largest legitimate gap between
+ * drafts is about four days, so a gap past `maxIdleDays` with unwritten items
+ * waiting is not a quiet week, it is a broken pipeline. This exists because the
+ * 2026-08 stall ran twelve days while every daily run logged "✓ complete", and a
+ * more honest log line would not have been read either.
+ */
+export function detectDraftStall({ lastDraftedAt, pendingCount, now = new Date(), maxIdleDays = STALL_DAYS }) {
+  if (!pendingCount) return { stalled: false, idleDays: null };
+  if (!lastDraftedAt) return { stalled: true, idleDays: null };
+  const idleDays = Math.floor((now - lastDraftedAt) / 86400000);
+  return { stalled: idleDays > maxIdleDays, idleDays };
+}
+
+/** Newest `generated_at` across every post on disk, or null if there are none. */
+function lastDraftedAt() {
+  let newest = null;
+  for (const slug of listAllSlugs()) {
+    try {
+      const at = readPostMeta(slug)?.generated_at;
+      if (!at) continue;
+      const d = new Date(at);
+      if (!isNaN(d) && (!newest || d > newest)) newest = d;
+    } catch { /* skip */ }
+  }
+  return newest;
 }
 
 // ── GSC / rank feedback ───────────────────────────────────────────────────────
@@ -586,25 +652,43 @@ async function main() {
     return;
   }
 
-  // Lead-window guard (JIT): only draft items whose publish date is within
-  // BUFFER_DAYS. Promoted ideas get a near-term slot from the prioritizer; ideas
-  // dated further out (or undated backlog) wait. Keyword-targeted runs bypass this.
-  const leadCutoff = new Date(Date.now() + BUFFER_DAYS * 86400000);
-  let workItems = items.filter(i =>
-    !['published', 'scheduled'].includes(getItemStatus(i)) &&
-    (kwArg || (i.adjustedDate || i.publishDate) <= leadCutoff)
-  );
+  const { workItems, deferred } = selectWorkItems(items, { keyword: kwArg });
 
-  if (kwArg) {
-    workItems = workItems.filter(i => i.keyword.toLowerCase() === kwArg.toLowerCase());
-    if (workItems.length === 0) {
-      console.log(`No pending calendar item found for keyword: "${kwArg}"`);
-      process.exit(1);
-    }
+  if (kwArg && workItems.length === 0) {
+    console.log(`No pending calendar item found for keyword: "${kwArg}"`);
+    process.exit(1);
   }
 
   if (workItems.length === 0) {
-    console.log('All calendar items are published or scheduled. Nothing to do.');
+    // Distinguish "no work exists" from "work exists but is not due yet". These
+    // printed the same line until 2026-08-18, so twelve consecutive days of the
+    // scheduler drafting nothing looked identical to a finished calendar.
+    if (deferred.length > 0) {
+      const next = deferred[0];
+      const nextDue = next.adjustedDate || next.publishDate;
+      const dueIn = Math.ceil((nextDue - Date.now()) / 86400000);
+      console.log(`${deferred.length} item(s) pending, none within the ${BUFFER_DAYS}-day lead window.`);
+      console.log(`  Next up: "${next.keyword}" in ${dueIn} day(s) (${nextDue.toISOString().slice(0, 10)}).`);
+      console.log(`  Run with --keyword "${next.keyword}" to draft it now.`);
+
+      const stall = detectDraftStall({ lastDraftedAt: lastDraftedAt(), pendingCount: deferred.length });
+      if (stall.stalled) {
+        const idle = stall.idleDays === null ? 'ever' : `${stall.idleDays} days`;
+        console.log(`\n  ⚠ No post drafted in ${idle} while ${deferred.length} item(s) wait.`);
+        const { notify } = await import('../../lib/notify.js');
+        await notify({
+          subject: `Content pipeline stalled — nothing drafted in ${idle}`,
+          body: `${deferred.length} calendar item(s) are pending but none fall inside the ${BUFFER_DAYS}-day lead window, `
+              + `so calendar-runner has drafted nothing.\n\n`
+              + `Next up: "${next.keyword}" on ${nextDue.toISOString().slice(0, 10)} (${dueIn} days out).\n\n`
+              + `Draft it now:\n  node agents/calendar-runner/index.js --keyword "${next.keyword}" --run\n`,
+          status: 'error',
+          category: 'pipeline',
+        }).catch(() => {});
+      }
+    } else {
+      console.log('All calendar items are published or scheduled. Nothing to do.');
+    }
     return;
   }
 

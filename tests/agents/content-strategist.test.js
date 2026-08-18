@@ -91,3 +91,144 @@ test('briefQueueToCalendarItems handles empty queue', () => {
   const items = briefQueueToCalendarItems([], null);
   assert.deepEqual(items, []);
 });
+
+// ── date-drift guard ──────────────────────────────────────────────────────────
+// The strategist re-plans on every run and used to re-date every item from
+// "next Monday", so an item that stayed at queue position 0 slid forward one
+// week per week and never arrived. Combined with calendar-runner's 7-day lead
+// window that stalled the writer for 12 days (2026-08-06 → 2026-08-18).
+// An item already on the calendar must keep its date.
+
+// 2026-08-17 is a Monday, so the next free slot is Monday 2026-08-24.
+const MONDAY = new Date('2026-08-17T00:00:00Z');
+
+test('briefQueueToCalendarItems keeps the date of an item already on the calendar', () => {
+  const existing = [{ slug: 'a', keyword: 'a', publish_date: '2026-08-10T15:00:00.000Z' }];
+  const items = briefQueueToCalendarItems([{ keyword: 'a', title: 'A' }], null, MONDAY, existing);
+  assert.equal(items[0].publish_date, '2026-08-10T15:00:00.000Z');
+});
+
+test('briefQueueToCalendarItems does not re-date a far-future item either', () => {
+  const existing = [{ slug: 'a', keyword: 'a', publish_date: '2026-10-01T15:00:00.000Z' }];
+  const items = briefQueueToCalendarItems([{ keyword: 'a', title: 'A' }], null, MONDAY, existing);
+  assert.equal(items[0].publish_date, '2026-10-01T15:00:00.000Z');
+});
+
+test('briefQueueToCalendarItems gives a brand-new item the next free slot', () => {
+  const items = briefQueueToCalendarItems([{ keyword: 'new', title: 'N' }], null, MONDAY, []);
+  assert.equal(items[0].publish_date, '2026-08-24T15:00:00.000Z');
+});
+
+test('briefQueueToCalendarItems does not put a new item on a date an existing item holds', () => {
+  const existing = [{ slug: 'held', keyword: 'held', publish_date: '2026-08-24T15:00:00.000Z' }];
+  const queue = [{ keyword: 'new', title: 'N' }, { keyword: 'held', title: 'H' }];
+  const items = briefQueueToCalendarItems(queue, null, MONDAY, existing);
+  const dates = items.map((i) => i.publish_date);
+  assert.equal(new Set(dates).size, 2, 'every item needs its own publish date');
+  assert.equal(items[1].publish_date, '2026-08-24T15:00:00.000Z', 'existing item keeps its slot');
+  assert.equal(items[0].publish_date, '2026-08-27T15:00:00.000Z', 'new item takes the next free slot');
+});
+
+test('briefQueueToCalendarItems derives week from the final date, not queue position', () => {
+  const existing = [{ slug: 'a', keyword: 'a', publish_date: '2026-09-07T15:00:00.000Z' }];
+  const items = briefQueueToCalendarItems([{ keyword: 'a', title: 'A' }], null, MONDAY, existing);
+  // Aug 24 is week 1, so Sep 7 is week 3.
+  assert.equal(items[0].week, 3);
+});
+
+test('briefQueueToCalendarItems clamps an overdue item to week 1', () => {
+  const existing = [{ slug: 'a', keyword: 'a', publish_date: '2026-07-01T15:00:00.000Z' }];
+  const items = briefQueueToCalendarItems([{ keyword: 'a', title: 'A' }], null, MONDAY, existing);
+  assert.equal(items[0].week, 1);
+});
+
+// ── duplicate keywords ────────────────────────────────────────────────────────
+// The semantic dedupe explicitly let EXACT matches through, so keywords with a
+// live post ("natural antiperspirant") were re-scheduled. The exemption exists
+// because the candidate list includes the calendar's own items — an item must
+// not match itself — but it must not extend to published posts.
+
+import { findScheduledDuplicate } from '../../agents/content-strategist/index.js';
+
+test('findScheduledDuplicate blocks a keyword that exactly matches a published post', () => {
+  const dup = findScheduledDuplicate('natural antiperspirant', {
+    publishedKeywords: ['natural antiperspirant'],
+  });
+  assert.equal(dup, 'natural antiperspirant');
+});
+
+test('findScheduledDuplicate ignores case when matching a published post', () => {
+  const dup = findScheduledDuplicate('sls sensitivity toothpaste', {
+    publishedKeywords: ['SLS sensitivity toothpaste'],
+  });
+  assert.equal(dup, 'SLS sensitivity toothpaste');
+});
+
+test('findScheduledDuplicate blocks a near-duplicate of a published post', () => {
+  const dup = findScheduledDuplicate('toothpaste without sls', {
+    publishedKeywords: ['sls free toothpaste'],
+  });
+  assert.equal(dup, 'sls free toothpaste');
+});
+
+test('findScheduledDuplicate lets a calendar item match itself', () => {
+  const dup = findScheduledDuplicate('vegan soap', { calendarKeywords: ['vegan soap'] });
+  assert.equal(dup, null);
+});
+
+test('findScheduledDuplicate still blocks a near-duplicate of another calendar item', () => {
+  const dup = findScheduledDuplicate('toothpaste without sls', {
+    calendarKeywords: ['sls free toothpaste'],
+  });
+  assert.equal(dup, 'sls free toothpaste');
+});
+
+test('findScheduledDuplicate returns null when nothing matches', () => {
+  const dup = findScheduledDuplicate('oatmeal soap', {
+    publishedKeywords: ['natural antiperspirant'],
+    calendarKeywords: ['vegan soap'],
+  });
+  assert.equal(dup, null);
+});
+
+test('findScheduledDuplicate keeps a deliberate audience split', () => {
+  // cannibalization-guard treats "for men" as a separate segment, not a duplicate.
+  const dup = findScheduledDuplicate('aluminum free deodorant for men', {
+    publishedKeywords: ['aluminum free deodorant for women'],
+  });
+  assert.equal(dup, null);
+});
+
+// ── review items survive a re-plan ────────────────────────────────────────────
+// content-strategist replaces the whole calendar with its brief queue. Items in
+// `review` (promoted by gsc-opportunity, awaiting approval in the dashboard
+// Ideas inbox) are not in that queue, so they survived only when the LLM
+// happened to re-emit the same keyword.
+
+import { mergeReviewItems } from '../../agents/content-strategist/index.js';
+
+test('mergeReviewItems carries a review item the brief queue dropped', () => {
+  const merged = mergeReviewItems(
+    [{ slug: 'a', keyword: 'a' }],
+    [{ slug: 'idea', keyword: 'idea', status: 'review' }],
+  );
+  assert.equal(merged.length, 2);
+  assert.equal(merged[1].slug, 'idea');
+  assert.equal(merged[1].status, 'review');
+});
+
+test('mergeReviewItems does not duplicate a review item the queue re-emitted', () => {
+  const merged = mergeReviewItems(
+    [{ slug: 'idea', keyword: 'idea' }],
+    [{ slug: 'idea', keyword: 'idea', status: 'review' }],
+  );
+  assert.equal(merged.length, 1);
+});
+
+test('mergeReviewItems leaves non-review items behind', () => {
+  const merged = mergeReviewItems(
+    [{ slug: 'a', keyword: 'a' }],
+    [{ slug: 'stale', keyword: 'stale', status: null }],
+  );
+  assert.deepEqual(merged.map((i) => i.slug), ['a']);
+});

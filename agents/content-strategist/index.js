@@ -16,7 +16,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
-import { writeCalendar } from '../../lib/calendar-store.js';
+import { loadCalendar, writeCalendar } from '../../lib/calendar-store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -460,21 +460,58 @@ function extractNonScheduleSections(markdown) {
  * column layout from run to run.
  *
  * Validation_source is stamped via the keyword-index lookup.
+ *
+ * `existingItems` is the calendar as it stands. An item already on it KEEPS its
+ * publish_date — only brand-new items are assigned a slot. This is not a nicety:
+ * dates used to be re-derived from queue position on every run, and because
+ * `start` is always "next Monday", an item that held position 0 slid a week
+ * later every week and never came due. Paired with calendar-runner's 7-day lead
+ * window that stalled the writer completely — last post written 2026-08-06,
+ * discovered 2026-08-18, twelve daily runs reporting success in between.
  */
-export function briefQueueToCalendarItems(briefQueue, index, today = new Date()) {
+export function briefQueueToCalendarItems(briefQueue, index, today = new Date(), existingItems = []) {
   const start = new Date(today);
   const daysUntilMon = ((1 + 7 - start.getUTCDay()) % 7) || 7;
   start.setUTCDate(start.getUTCDate() + daysUntilMon);
   start.setUTCHours(15, 0, 0, 0); // 8 AM PT (PDT). Close enough across DST.
 
-  const nowIso = new Date().toISOString();
-  return briefQueue.map((item, i) => {
-    const week = Math.floor(i / 2) + 1;
-    const dayInWeek = i % 2; // 0 = Mon, 1 = Thu
-    const publish = new Date(start);
-    publish.setUTCDate(start.getUTCDate() + (week - 1) * 7 + (dayInWeek === 0 ? 0 : 3));
+  const existingBySlug = new Map(
+    (existingItems || []).filter((i) => i?.slug && i.publish_date).map((i) => [i.slug, i]),
+  );
 
+  // Dates already spoken for. Reserved up front — a new item must never be
+  // dropped onto a slot an existing item holds, and resolving that collision by
+  // moving the EXISTING item would reintroduce the drift this function exists to
+  // stop. Two posts on one day also violates the staggered-publishing rule.
+  const taken = new Set();
+  for (const item of briefQueue) {
+    const prev = existingBySlug.get(item.slug || slugify(item.keyword));
+    if (prev) taken.add(new Date(prev.publish_date).getTime());
+  }
+
+  // Mon/Thu at 8 AM PT, walking forward from the first Monday after `today`.
+  let cursor = 0;
+  const nextFreeSlot = () => {
+    for (;;) {
+      const week = Math.floor(cursor / 2);
+      const publish = new Date(start);
+      publish.setUTCDate(start.getUTCDate() + week * 7 + (cursor % 2 === 0 ? 0 : 3));
+      cursor++;
+      if (!taken.has(publish.getTime())) return publish;
+    }
+  };
+
+  const nowIso = new Date().toISOString();
+  return briefQueue.map((item) => {
     const slug = item.slug || slugify(item.keyword);
+    const prev = existingBySlug.get(slug);
+    const publish = prev ? new Date(prev.publish_date) : nextFreeSlot();
+    taken.add(publish.getTime());
+
+    // Week is a display grouping derived from the date, not from queue position.
+    // An overdue item lands in week 1 rather than a negative week.
+    const week = Math.max(1, Math.floor((publish - start) / (7 * 86400000)) + 1);
+
     const tag = validationTag(lookupByKeyword(index, item.keyword));
     return {
       slug,
@@ -492,6 +529,50 @@ export function briefQueueToCalendarItems(briefQueue, index, today = new Date())
       added_at: nowIso,
     };
   });
+}
+
+/**
+ * Is `keyword` already covered? Returns the colliding keyword, or null.
+ *
+ * Two candidate pools, deliberately different rules:
+ *   - publishedKeywords (target_keyword of every post on disk, plus
+ *     published.json): an EXACT match is the strongest possible duplicate.
+ *   - calendarKeywords (items already scheduled): an exact match is the item
+ *     matching ITSELF on a re-plan, which is expected and must not block.
+ *
+ * These used to share one call with a blanket `dup !== keyword` exemption, so
+ * the self-match escape hatch applied to published posts too — near-duplicates
+ * were rejected while exact duplicates sailed through. That is how "natural
+ * antiperspirant" and "sls sensitivity toothpaste" were scheduled on 2026-08-17
+ * with live posts carrying those exact target keywords.
+ */
+export function findScheduledDuplicate(keyword, { publishedKeywords = [], calendarKeywords = [] } = {}) {
+  if (!keyword) return null;
+  const kw = keyword.toLowerCase();
+
+  const exact = publishedKeywords.find((k) => String(k).toLowerCase() === kw);
+  if (exact) return exact;
+
+  const publishedDup = findSemanticDuplicate(keyword, publishedKeywords, { threshold: 0.6 });
+  if (publishedDup) return publishedDup;
+
+  const calendarDup = findSemanticDuplicate(keyword, calendarKeywords, { threshold: 0.6 });
+  if (calendarDup && calendarDup.toLowerCase() !== kw) return calendarDup;
+
+  return null;
+}
+
+/**
+ * The strategist replaces the calendar with its brief queue, which does not
+ * contain `review` items — ideas promoted by gsc-opportunity that are waiting
+ * for a human in the dashboard Ideas inbox. They previously survived a re-plan
+ * only when the LLM happened to re-emit the same keyword; otherwise the idea
+ * disappeared with no trace. Carry them across explicitly.
+ */
+export function mergeReviewItems(newItems, existingItems = []) {
+  const slugs = new Set(newItems.map((i) => i.slug));
+  const carried = (existingItems || []).filter((i) => i?.status === 'review' && !slugs.has(i.slug));
+  return [...newItems, ...carried];
 }
 
 /**
@@ -695,31 +776,29 @@ ${calendarMd}`;
     messages: [{ role: 'user', content: extractPrompt }],
   });
 
-  // Build the set of existing keywords for semantic cannibalization detection.
-  // Collect target_keyword from all published posts, existing briefs, and any
-  // calendar items already loaded. The inventory Set has slugified forms; we
-  // de-slugify them loosely (replace hyphens with spaces) for similarity matching.
-  const existingKeywords = [];
+  // Two candidate pools for cannibalization detection, kept SEPARATE because the
+  // exact-match rule differs — see findScheduledDuplicate(). Merging them is what
+  // let keywords with a live post back onto the calendar.
+  const publishedKeywords = [];
   for (const slug of listAllSlugs()) {
     try {
       const meta = getPostMetaLib(slug);
-      if (meta?.target_keyword) existingKeywords.push(meta.target_keyword);
+      if (meta?.target_keyword) publishedKeywords.push(meta.target_keyword);
     } catch { /* skip */ }
   }
   if (existsSync(join(ROOT, 'data', 'published.json'))) {
     try {
       const pub = JSON.parse(readFileSync(join(ROOT, 'data', 'published.json'), 'utf8'));
-      for (const e of pub) { if (e.keyword) existingKeywords.push(e.keyword); }
+      for (const e of pub) { if (e.keyword) publishedKeywords.push(e.keyword); }
     } catch { /* ignore */ }
   }
-  // Also collect from the calendar JSON if it exists (queued items not yet published)
-  const calendarJsonPath = join(ROOT, 'data', 'calendar', 'calendar.json');
-  if (existsSync(calendarJsonPath)) {
-    try {
-      const cal = JSON.parse(readFileSync(calendarJsonPath, 'utf8'));
-      for (const item of (cal.items || [])) { if (item.keyword) existingKeywords.push(item.keyword); }
-    } catch { /* ignore */ }
-  }
+
+  // Items already queued. An exact match here is an item matching itself on a
+  // re-plan, which is expected.
+  const existingCalendarItems = (() => {
+    try { return loadCalendar().items || []; } catch { return []; }
+  })();
+  const calendarKeywords = existingCalendarItems.map((i) => i.keyword).filter(Boolean);
 
   let briefQueue = [];
   try {
@@ -742,11 +821,11 @@ ${calendarMd}`;
         appendRejection(item.keyword, 'no product mapping');
         return false;
       }
-      // Semantic cannibalization check: skip if a near-duplicate keyword is
-      // already covered (threshold 0.6 Jaccard on core tokens).
-      const dup = findSemanticDuplicate(item.keyword, existingKeywords, { threshold: 0.6 });
-      if (dup && dup.toLowerCase() !== item.keyword.toLowerCase()) {
-        console.log(`  [SKIP] semantic cannibalization: "${item.keyword}" ~ existing "${dup}"`);
+      // Cannibalization check: exact against published posts, near-duplicate
+      // against both pools. Self-matches on the calendar are allowed through.
+      const dup = findScheduledDuplicate(item.keyword, { publishedKeywords, calendarKeywords });
+      if (dup) {
+        console.log(`  [SKIP] already covered: "${item.keyword}" ~ existing "${dup}"`);
         return false;
       }
       return true;
@@ -764,7 +843,7 @@ ${calendarMd}`;
 
   let extractedItems;
   if (briefQueue.length > 0) {
-    extractedItems = briefQueueToCalendarItems(briefQueue, idx, new Date());
+    extractedItems = briefQueueToCalendarItems(briefQueue, idx, new Date(), existingCalendarItems);
     const tagged = extractedItems.filter((i) => i.validation_source).length;
     console.log(`  Built ${extractedItems.length} calendar items from brief queue (${tagged} validation-tagged)`);
   } else {
@@ -776,14 +855,20 @@ ${calendarMd}`;
   // Preserve any existing supporting sections (clusters, brief queue) in the markdown view
   const markdownExtras = extractNonScheduleSections(calendarMd);
 
+  // Carry across ideas awaiting human review — they are not in the brief queue,
+  // so writing `extractedItems` alone would silently drop them from the inbox.
+  const calendarItems = mergeReviewItems(extractedItems, existingCalendarItems);
+  const carried = calendarItems.length - extractedItems.length;
+
   // Write JSON as source of truth + regenerate markdown view automatically
   writeCalendar({
-    items: extractedItems,
+    items: calendarItems,
     regenerated_at: new Date().toISOString(),
     preserve_metadata: true,
     markdown_extras: markdownExtras,
   });
   console.log(`\n  Calendar saved: data/calendar/calendar.json (+ markdown view)`);
+  if (carried > 0) console.log(`  Carried ${carried} item(s) awaiting review in the Ideas inbox`);
 
   // ── Step 4: Generate briefs (optional) ───────────────────────────────────────
 
@@ -817,7 +902,7 @@ ${calendarMd}`;
   // ── Summary ───────────────────────────────────────────────────────────────────
 
   console.log('\n── Summary ──────────────────────────────────────────────────────────────────');
-  console.log(`  Calendar:  data/calendar/calendar.json (${extractedItems.length} items)`);
+  console.log(`  Calendar:  data/calendar/calendar.json (${calendarItems.length} items)`);
   if (briefQueue.length > 0) {
     console.log(`\n  Brief Queue (top ${Math.min(briefQueue.length, 10)}):`);
     briefQueue.slice(0, 10).forEach((item, i) => {
