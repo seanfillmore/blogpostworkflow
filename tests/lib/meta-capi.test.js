@@ -195,3 +195,38 @@ test('an alert that fails to send cannot break the entry', async () => {
     'resolves false rather than rejecting — the entry is the paid-for thing',
   );
 });
+
+// ── token resolution ─────────────────────────────────────────────────────────
+// The dashboard runs under PM2, which does NOT source .env. Verified 2026-08-17
+// on the production box: FACEBOOK_ACCESS_TOKEN was absent from
+// /proc/<pid>/environ, so the entry route's `process.env.FACEBOOK_ACCESS_TOKEN`
+// was undefined and EVERY live entry called sendLeadEvent with no token. It
+// returned a silent false. The Lead events that existed in the dataset came from
+// hand-run scripts, which DO load .env — which is precisely why the endpoint
+// looked verified and was not.
+
+test('resolveLeadAccessToken prefers process.env', async () => {
+  const { resolveLeadAccessToken } = await import('../../lib/meta-capi.js');
+  assert.equal(resolveLeadAccessToken({ FACEBOOK_ACCESS_TOKEN: 'from-process' }), 'from-process');
+});
+
+test('a caller passing no token still sends, by falling back to .env', async () => {
+  // This is THE regression. Before the fix this path alerted "not configured"
+  // and sent nothing.
+  stubFetch();
+  const { sendLeadEvent, resolveLeadAccessToken } = await import('../../lib/meta-capi.js');
+  const onDisk = resolveLeadAccessToken({});
+  if (!onDisk) return; // no .env in this checkout; nothing to assert against
+
+  const ok = await sendLeadEvent({ email: 'a@b.com', pixelId: 'PX' }); // note: no accessToken
+  assert.equal(ok, true, 'a missing argument must not mean a missing Lead');
+  assert.equal(alerts.length, 0, 'and it must not page anyone for a non-problem');
+  assert.match(calls[0].url, /access_token=/, 'the resolved token reaches the request');
+});
+
+test('an explicitly passed token still wins over the file', async () => {
+  stubFetch();
+  const { sendLeadEvent } = await import('../../lib/meta-capi.js');
+  await sendLeadEvent({ email: 'a@b.com', pixelId: 'PX', accessToken: 'explicit-token' });
+  assert.match(calls[0].url, /access_token=explicit-token/);
+});
