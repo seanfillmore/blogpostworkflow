@@ -2,14 +2,16 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import {
   pathOf,
-  organicByPage,
+  isSearchEngineSource,
+  isOrganicSessionRow,
+  organicSessionsByPage,
   mergeRevenueSources,
   buildPageImpacts,
   clusterRollup,
   actionWins,
   rankBy,
 } from '../../lib/seo-impact.js';
-import { shopifyRevenueByPage, attributionRows } from '../../lib/order-attribution.js';
+import { shopifyRevenueByPage, attributionRows, SEARCH_HOSTS } from '../../lib/order-attribution.js';
 
 // ── pathOf: normalize URLs/paths to a single join key ─────────────────────────
 
@@ -21,28 +23,97 @@ test('pathOf: strips origin and trailing slash, lowercases', () => {
   assert.equal(pathOf(null), null);
 });
 
-// ── organicByPage: isolate organic revenue per landing page ───────────────────
-
-test('organicByPage: keeps only the organic channel and aggregates by page', () => {
-  const rows = [
-    { page: '/blogs/news/a', channel: 'Organic Search', sessions: 10, conversions: 1, revenue: 50 },
-    { page: '/blogs/news/a', channel: 'Direct',         sessions: 5,  conversions: 0, revenue: 0 },
-    { page: '/blogs/news/b', channel: 'Organic Search', sessions: 8,  conversions: 2, revenue: 80 },
-  ];
-  const m = organicByPage(rows);
-  assert.equal(m.get('/blogs/news/a').revenue, 50);   // direct row excluded
-  assert.equal(m.get('/blogs/news/b').revenue, 80);
-  assert.equal(m.has('/blogs/news/a'), true);
+test('pathOf: GA4 bucket labels are not pages', () => {
+  // `(not set)` was reaching the report's "high traffic, $0 revenue" action list with
+  // 35 sessions, as though there were a page there to go and fix.
+  assert.equal(pathOf('(not set)'), null);
+  assert.equal(pathOf('(other)'), null);
+  assert.equal(pathOf(' (not set) '), null);
+  // A real path that merely contains parentheses is untouched.
+  assert.equal(pathOf('/blogs/news/x-(2026)'), '/blogs/news/x-(2026)');
 });
 
-test('organicByPage: sums duplicate organic rows for the same page', () => {
+test('pathOf: dropping (not set) also keeps it out of the page aggregate', () => {
+  const m = organicSessionsByPage([
+    { page: '(not set)', channel: 'Organic Search', source: 'google', sessions: 35 },
+    { page: '/blogs/news/a', channel: 'Organic Search', source: 'google', sessions: 12 },
+  ]);
+  assert.deepEqual([...m.keys()], ['/blogs/news/a']);
+});
+
+// ── search-source rescue: engines GA4 misfiles as Referral ────────────────────
+
+test('isSearchEngineSource: recognises hosts from order-attribution SEARCH_HOSTS', () => {
+  assert.equal(isSearchEngineSource('search.brave.com'), true);
+  assert.equal(isSearchEngineSource('duckduckgo.com'), true);
+  assert.equal(isSearchEngineSource('www.ecosia.org'), true);
+  assert.equal(isSearchEngineSource('https://search.brave.com/'), true);
+  // GA4 normalizes some sources to a bare engine name rather than a hostname.
+  assert.equal(isSearchEngineSource('brave'), true);
+  assert.equal(isSearchEngineSource('google'), true);
+  // Not search engines.
+  assert.equal(isSearchEngineSource('reddit.com'), false);
+  assert.equal(isSearchEngineSource('(direct)'), false);
+  assert.equal(isSearchEngineSource(''), false);
+  assert.equal(isSearchEngineSource(null), false);
+});
+
+test('isSearchEngineSource is driven by SEARCH_HOSTS, not a second hardcoded list', () => {
+  // Every host the order classifier calls organic must also make its sessions organic,
+  // or a page shows revenue with no traffic behind it.
+  for (const host of SEARCH_HOSTS) {
+    assert.equal(isSearchEngineSource(host), true, `${host} must count as an organic source`);
+  }
+});
+
+test('isOrganicSessionRow: Brave arrives as Referral and is still organic', () => {
+  assert.equal(isOrganicSessionRow(
+    { channel: 'Referral', source: 'search.brave.com' }), true);
+  assert.equal(isOrganicSessionRow(
+    { channel: 'Organic Search', source: 'google' }), true);
+  // A plain referral is still a referral.
+  assert.equal(isOrganicSessionRow({ channel: 'Referral', source: 'reddit.com' }), false);
+});
+
+test('isOrganicSessionRow: a PAID google click is never rescued as organic', () => {
+  // The trap in widening the filter: `google` is a search host, and Paid Search sessions
+  // carry it as their source. Only the Referral channel is eligible for rescue.
+  assert.equal(isOrganicSessionRow({ channel: 'Paid Search', source: 'google' }), false);
+  assert.equal(isOrganicSessionRow({ channel: 'Cross-network', source: 'google' }), false);
+  assert.equal(isOrganicSessionRow({ channel: 'Display', source: 'google' }), false);
+  assert.equal(isOrganicSessionRow(null), false);
+});
+
+// ── organicSessionsByPage: organic SESSIONS per landing page ──────────────────
+
+test('organicSessionsByPage: keeps only organic rows and aggregates by page', () => {
   const rows = [
-    { page: '/x', channel: 'Organic Search', sessions: 3, conversions: 1, revenue: 30 },
-    { page: '/x', channel: 'Organic Search', sessions: 2, conversions: 0, revenue: 10 },
+    { page: '/blogs/news/a', channel: 'Organic Search', source: 'google', sessions: 10 },
+    { page: '/blogs/news/a', channel: 'Direct',         source: '(direct)', sessions: 5 },
+    { page: '/blogs/news/b', channel: 'Organic Search', source: 'bing', sessions: 8 },
   ];
-  const m = organicByPage(rows);
-  assert.equal(m.get('/x').sessions, 5);
-  assert.equal(m.get('/x').revenue, 40);
+  const m = organicSessionsByPage(rows);
+  assert.equal(m.get('/blogs/news/a').sessions, 10);   // direct row excluded
+  assert.equal(m.get('/blogs/news/b').sessions, 8);
+});
+
+test('organicSessionsByPage: sums duplicate organic rows for the same page', () => {
+  const rows = [
+    { page: '/x', channel: 'Organic Search', source: 'google', sessions: 3 },
+    { page: '/x', channel: 'Organic Search', source: 'bing', sessions: 2 },
+  ];
+  assert.equal(organicSessionsByPage(rows).get('/x').sessions, 5);
+});
+
+test('organicSessionsByPage: Brave sessions land on the same page as its Google sessions', () => {
+  // The defect: Brave revenue was counted (Shopify) while Brave traffic was not (GA4),
+  // so the page reported dollars against a session count that was too low.
+  const rows = [
+    { page: '/collections/sensitive-skin', channel: 'Organic Search', source: 'google', sessions: 40 },
+    { page: '/collections/sensitive-skin', channel: 'Referral', source: 'search.brave.com', sessions: 6 },
+    { page: '/collections/sensitive-skin', channel: 'Referral', source: 'reddit.com', sessions: 25 },
+  ];
+  assert.equal(organicSessionsByPage(rows).get('/collections/sensitive-skin').sessions, 46);
 });
 
 // ── mergeRevenueSources: Shopify dollars + GA4 sessions ───────────────────────
@@ -51,15 +122,26 @@ const mapOf = (obj) => new Map(Object.entries(obj));
 
 test('mergeRevenueSources: revenue and conversions come from Shopify, sessions from GA4', () => {
   const merged = mergeRevenueSources(
-    mapOf({ '/a': { sessions: 120, conversions: 4, revenue: 310.5 } }),   // GA4, modelled
+    mapOf({ '/a': { sessions: 120 } }),                                  // GA4: traffic only
     mapOf({ '/a': { sessions: 0, conversions: 2, revenue: 99.98 } }),     // Shopify, truth
   );
   const a = merged.get('/a');
   assert.equal(a.revenue, 99.98);        // Shopify wins the dollars
   assert.equal(a.conversions, 2);        // Shopify wins the order count
   assert.equal(a.sessions, 120);         // GA4 keeps sessions — Shopify has none
-  assert.equal(a.revenueGa4, 310.5);     // GA4 figure preserved, not dropped
-  assert.equal(a.conversionsGa4, 4);
+});
+
+test('mergeRevenueSources: GA4 revenue is not carried, even when the map still has it', () => {
+  // The modelled figure rode along for one release so the gap could be measured. It was
+  // (GA4 understated 28d organic revenue by 71%), so nothing downstream may read it again.
+  const merged = mergeRevenueSources(
+    mapOf({ '/a': { sessions: 120, conversions: 4, revenue: 310.5 } }),
+    mapOf({ '/a': { conversions: 2, revenue: 99.98 } }),
+  );
+  const a = merged.get('/a');
+  assert.equal(a.revenueGa4, undefined);
+  assert.equal(a.conversionsGa4, undefined);
+  assert.deepEqual(Object.keys(a).sort(), ['conversions', 'revenue', 'sessions']);
 });
 
 test('mergeRevenueSources: a page with orders but no GA4 row still reports its revenue', () => {
@@ -80,8 +162,7 @@ test('mergeRevenueSources: GA4 traffic with no Shopify order is $0, not GA4-mode
   );
   const r = merged.get('/blogs/news/toothpaste');
   assert.equal(r.revenue, 0);          // no order was placed, so no revenue
-  assert.equal(r.revenueGa4, 85);      // ...but we can still see what GA4 claimed
-  assert.equal(r.sessions, 240);       // and the traffic, so "not converting" still fires
+  assert.equal(r.sessions, 240);       // the traffic survives, so "not converting" fires
 });
 
 test('mergeRevenueSources: tolerates missing maps', () => {
@@ -94,8 +175,8 @@ test('a GA4-only revenue page is still detected as high-traffic-no-sales', () =>
   // The regression this whole change guards against: GA4 crediting a blog post with
   // revenue used to hide it from the "traffic, no sales" list, which is the single
   // report the Prime Directive cares about most.
-  const ga4 = organicByPage([
-    { page: '/blogs/news/toothpaste', channel: 'Organic Search', sessions: 240, conversions: 3, revenue: 85 },
+  const ga4 = organicSessionsByPage([
+    { page: '/blogs/news/toothpaste', channel: 'Organic Search', source: 'google', sessions: 240 },
   ]);
   const shopify = shopifyRevenueByPage(attributionRows([
     // A real organic order — but it landed on the collection, not the blog post.
@@ -144,7 +225,7 @@ test('buildPageImpacts: a brand-new page (no prior) shows full revenue as the de
   assert.equal(r.clicksPrev, 0);
 });
 
-test('buildPageImpacts: carries GA4 revenue through both windows without letting it move the delta', () => {
+test('buildPageImpacts: emits no GA4 revenue fields for any consumer to read', () => {
   const impacts = buildPageImpacts({
     current: mapOf({ '/a': { sessions: 10, conversions: 1, revenue: 50, revenueGa4: 400 } }),
     prior:   mapOf({ '/a': { sessions: 8,  conversions: 0, revenue: 0,  revenueGa4: 300 } }),
@@ -152,17 +233,8 @@ test('buildPageImpacts: carries GA4 revenue through both windows without letting
   const a = impacts[0];
   assert.equal(a.revenue, 50);
   assert.equal(a.revenueDelta, 50);      // driven by Shopify (50-0), NOT GA4 (400-300)
-  assert.equal(a.revenueGa4, 400);
-  assert.equal(a.revenueGa4Prev, 300);
-});
-
-test('buildPageImpacts: a page with no GA4 figure reports revenueGa4 0, not undefined', () => {
-  const impacts = buildPageImpacts({
-    current: mapOf({ '/a': { sessions: 0, conversions: 1, revenue: 25 } }),
-    prior: new Map(),
-  });
-  assert.equal(impacts[0].revenueGa4, 0);
-  assert.equal(impacts[0].revenueGa4Prev, 0);
+  assert.equal('revenueGa4' in a, false);
+  assert.equal('revenueGa4Prev' in a, false);
 });
 
 test('buildPageImpacts: attaches the SEO action taken on a page during the window', () => {
@@ -206,14 +278,15 @@ test('clusterRollup: aggregates revenue by cluster and sorts by revenue', () => 
   assert.equal(toothpaste.pages, 2);
 });
 
-test('clusterRollup: aggregates the GA4 comparison figure alongside Shopify revenue', () => {
+test('clusterRollup: reports clicks beside revenue, and no GA4 figure', () => {
   const impacts = [
-    { path: '/blogs/news/best-toothpaste', revenue: 0, revenuePrev: 0, revenueGa4: 120 },
-    { path: '/blogs/news/sls-free-toothpaste', revenue: 0, revenuePrev: 0, revenueGa4: 30 },
+    { path: '/blogs/news/best-toothpaste', revenue: 0, revenuePrev: 0, revenueGa4: 120, clicks: 200 },
+    { path: '/blogs/news/sls-free-toothpaste', revenue: 0, revenuePrev: 0, revenueGa4: 30, clicks: 68 },
   ];
   const rollup = clusterRollup(impacts, (p) => (p.includes('toothpaste') ? 'toothpaste' : null));
   assert.equal(rollup[0].revenue, 0);        // the real number: this cluster earns nothing
-  assert.equal(rollup[0].revenueGa4, 150);   // what GA4 claimed it earned
+  assert.equal(rollup[0].clicks, 268);       // ...on this much visibility
+  assert.equal('revenueGa4' in rollup[0], false);
 });
 
 // ── rankBy ────────────────────────────────────────────────────────────────────
