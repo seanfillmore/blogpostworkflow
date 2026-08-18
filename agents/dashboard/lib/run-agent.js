@@ -13,7 +13,7 @@ export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/cro-analyzer/index.js',
   'agents/competitor-intelligence/index.js',
   'agents/ads-optimizer/index.js',
-  'scripts/create-meta-test.js',
+  'scripts/create-meta-ab.js',
   'scripts/ads-weekly-recap.js',
   'agents/campaign-creator/index.js',
   'agents/campaign-analyzer/index.js',

@@ -6,8 +6,8 @@
  * and applies Variant B via Shopify's global.title_tag metafield.
  *
  * Usage:
- *   node scripts/create-meta-test.js <slug>
- *   node scripts/create-meta-test.js <slug> --dry-run
+ *   node scripts/create-meta-ab.js <slug>
+ *   node scripts/create-meta-ab.js <slug> --dry-run
  *
  * Requires: ANTHROPIC_API_KEY in .env
  */
@@ -44,7 +44,7 @@ const slug = args.find(a => !a.startsWith('--'));
 const dryRun = args.includes('--dry-run');
 
 if (!slug) {
-  console.error('Usage: node scripts/create-meta-test.js <slug> [--dry-run]');
+  console.error('Usage: node scripts/create-meta-ab.js <slug> [--dry-run]');
   process.exit(1);
 }
 
