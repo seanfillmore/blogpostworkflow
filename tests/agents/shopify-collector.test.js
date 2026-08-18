@@ -5,12 +5,15 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  buildSnapshot, buildAttribution, buildTopProducts,
+  buildSnapshot, buildAttribution, buildTopProducts, buildOrderTotals,
   ptOffsetFor, ptDayBounds, ptDayOf, getYesterdayPT, ATTRIBUTION_VERSION,
 } from '../../agents/shopify-collector/index.js';
 import {
   datesInWindow, bucketOrdersByPtDay, mergeAttribution,
 } from '../../scripts/backfill-order-attribution.mjs';
+import {
+  planCleanRevenue, excludedOrders, parseArgs,
+} from '../../scripts/backfill-clean-order-revenue.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -43,6 +46,39 @@ const TEST_ORDER = {
   discount_codes: [{ code: 'TEST100' }], note_attributes: [],
   line_items: [{ title: 'Deodorant', price: '0.00', quantity: 1 }],
 };
+
+// The real 2026-08-12 day, rebuilt from the order shapes that produced
+// data/snapshots/shopify/2026-08-12.json on the production server. Three orders, of
+// which #2331 is an admin preview: the snapshot recorded 3 / $110.15 / aov $36.72 and
+// topProducts 3 orders / $90 when only 2 orders / $71.98 / $60 of product were real.
+const AUG12_PREVIEW = {
+  id: 7445531656362, name: '#2331', created_at: '2026-08-12T22:09:49-06:00',
+  total_price: '38.17', source_name: 'web',
+  landing_site: 'https://www.realskincare.com/online_store_preview?preview_key=abc123',
+  referring_site: 'https://admin.shopify.com/store/realskincare/products',
+  discount_codes: [], note_attributes: [],
+  line_items: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', price: '30.00', quantity: 1 }],
+};
+
+const AUG12_ORGANIC = {
+  id: 7444581974186, name: '#2330', created_at: '2026-08-12T10:14:14-06:00',
+  total_price: '35.99', source_name: 'web',
+  landing_site: '/blogs/news/best-non-toxic-body-lotion-2025',
+  referring_site: 'https://search.brave.com/',
+  discount_codes: [], note_attributes: [],
+  line_items: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', price: '30.00', quantity: 1 }],
+};
+
+const AUG12_PAID = {
+  id: 7444304101546, name: '#2329', created_at: '2026-08-12T06:24:57-06:00',
+  total_price: '35.99', source_name: 'web',
+  landing_site: '/products/coconut-lotion?gbraid=0AAAAAosZu9vrDsIv2dFxV_X3CiCYneab2',
+  referring_site: 'https://www.google.com/',
+  discount_codes: [], note_attributes: [],
+  line_items: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', price: '30.00', quantity: 1 }],
+};
+
+const AUG12_ORDERS = [AUG12_PREVIEW, AUG12_ORGANIC, AUG12_PAID];
 
 // ── PT day helpers ───────────────────────────────────────────────────────────
 
@@ -114,19 +150,87 @@ const SNAPSHOT_ARGS = {
   abandonedCount: 1, rawOrders: [ORGANIC_ORDER, PAID_ORDER, TEST_ORDER],
 };
 
-test('buildSnapshot keeps every pre-existing field unchanged and adds attribution', () => {
+test('buildSnapshot keeps every field name and position, and counts only real orders', () => {
   const snap = buildSnapshot(SNAPSHOT_ARGS);
-  // Field-for-field against the shape the collector emitted before attribution existed.
   assert.equal(snap.date, '2026-08-17');
-  assert.deepEqual(snap.orders, { count: 3, revenue: 99.89, aov: 33.3 });
+  // count drops 3 -> 2: the $0 TEST100 order is recorded but not counted. aov is
+  // recomputed over the counted orders, NOT copied from the raw getOrders aggregate.
+  assert.deepEqual(snap.orders, { count: 2, revenue: 99.89, aov: 49.95 });
   assert.deepEqual(snap.abandonedCheckouts, { count: 1 });
-  assert.equal(snap.cartAbandonmentRate, 0.25);
+  assert.equal(snap.cartAbandonmentRate, 0.33, 'abandonment rate follows the counted order count');
   assert.deepEqual(snap.topProducts, buildTopProducts(SNAPSHOT_ARGS.rawOrders));
   assert.deepEqual(
     Object.keys(snap),
     ['date', 'orders', 'abandonedCheckouts', 'cartAbandonmentRate', 'topProducts', 'attribution'],
-    'attribution must be purely additive and appended last',
+    'field names and order must not change — dashboards and agents read them',
   );
+  assert.deepEqual(Object.keys(snap.orders), ['count', 'revenue', 'aov']);
+});
+
+// ── the real 2026-08-12 regression ───────────────────────────────────────────
+
+test('2026-08-12: an admin-preview order is no longer counted as store revenue', () => {
+  // What the collector actually stored that day, and what it must store now.
+  const snap = buildSnapshot({
+    date: '2026-08-12', count: 3, revenue: 110.15, aov: 36.72,
+    abandonedCount: 0, rawOrders: AUG12_ORDERS,
+  });
+
+  assert.deepEqual(snap.orders, { count: 2, revenue: 71.98, aov: 35.99 });
+
+  // topProducts loses the preview order's phantom unit and its $30.
+  assert.deepEqual(snap.topProducts, [{
+    title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients',
+    revenue: 60, orders: 2,
+  }]);
+
+  // The excluded order is still on file — the correction stays auditable.
+  const preview = snap.attribution.orders.find(o => o.name === '#2331');
+  assert.equal(preview.landingPath, '/online_store_preview');
+  assert.equal(preview.channel, 'admin-preview');
+  assert.equal(preview.total, 38.17);
+  assert.equal(preview.countsAsRevenue, false);
+  assert.equal(snap.attribution.orders.length, 3, 'no order is dropped from the record');
+
+  // Headline totals and the channel rollup must agree to the cent.
+  const rolledUp = snap.attribution.channels.reduce((s, c) => s + c.revenue, 0);
+  assert.equal(Math.round(rolledUp * 100) / 100, snap.orders.revenue);
+});
+
+test('buildOrderTotals sums only countsAsRevenue rows and derives aov from them', () => {
+  const rows = buildAttribution(AUG12_ORDERS).orders;
+  assert.deepEqual(buildOrderTotals(rows), { count: 2, revenue: 71.98, aov: 35.99 });
+
+  assert.deepEqual(buildOrderTotals([]), { count: 0, revenue: 0, aov: 0 });
+  assert.deepEqual(buildOrderTotals(null), { count: 0, revenue: 0, aov: 0 }, 'no divide by zero');
+  assert.deepEqual(
+    buildOrderTotals([{ total: 10, countsAsRevenue: false }, { total: 20, countsAsRevenue: false }]),
+    { count: 0, revenue: 0, aov: 0 },
+    'a day of nothing but test orders is a zero day, not a $30 day',
+  );
+  // Thirds must not leak a floating-point tail into the snapshot.
+  assert.deepEqual(
+    buildOrderTotals([
+      { total: 10, countsAsRevenue: true }, { total: 10, countsAsRevenue: true },
+      { total: 10.01, countsAsRevenue: true },
+    ]),
+    { count: 3, revenue: 30.01, aov: 10 },
+  );
+});
+
+test('buildTopProducts drops line items from test, preview and cancelled orders', () => {
+  assert.deepEqual(buildTopProducts([AUG12_PREVIEW]), [], 'a preview-only day sells nothing');
+  assert.deepEqual(buildTopProducts([TEST_ORDER]), [], 'a TEST-discount order sells nothing');
+  assert.deepEqual(
+    buildTopProducts([{ ...AUG12_ORGANIC, cancelled_at: '2026-08-13T01:00:00Z' }]),
+    [],
+    'a cancelled order sells nothing',
+  );
+  assert.deepEqual(buildTopProducts([AUG12_ORGANIC, AUG12_PAID]), [{
+    title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients',
+    revenue: 60, orders: 2,
+  }]);
+  assert.deepEqual(buildTopProducts(null), []);
 });
 
 test('buildSnapshot handles a zero-order, zero-abandon day without dividing by zero', () => {
@@ -142,6 +246,17 @@ test('buildSnapshot tolerates a missing rawOrders array', () => {
   const snap = buildSnapshot({ date: '2026-08-10', count: 0, revenue: 0, aov: 0, abandonedCount: 0 });
   assert.deepEqual(snap.topProducts, []);
   assert.deepEqual(snap.attribution.orders, []);
+});
+
+test('buildSnapshot falls back to the raw aggregate only when there is nothing to classify', () => {
+  // No rawOrders at all: nothing can be classified, so the caller's numbers stand
+  // rather than being silently zeroed into a fake no-sales day.
+  const noOrders = buildSnapshot({ date: '2026-08-10', count: 4, revenue: 120, aov: 30, abandonedCount: 0 });
+  assert.deepEqual(noOrders.orders, { count: 4, revenue: 120, aov: 30 });
+
+  // An EMPTY array is real information — a genuine zero-order day — and overrides.
+  const empty = buildSnapshot({ date: '2026-08-10', count: 4, revenue: 120, aov: 30, abandonedCount: 0, rawOrders: [] });
+  assert.deepEqual(empty.orders, { count: 0, revenue: 0, aov: 0 });
 });
 
 test('the snapshot attribution block carries no PII', () => {
@@ -246,4 +361,121 @@ test('mergeAttribution skips a snapshot that already has a block, unless forced'
   assert.equal(forced.snapshot.attribution.orders.length, 1);
   assert.equal(forced.snapshot.date, '2026-08-17');
   assert.deepEqual(existing.attribution.orders, [], 'force must not mutate the input either');
+});
+
+// ── clean-revenue backfill helpers ───────────────────────────────────────────
+
+/** The 2026-08-12 snapshot exactly as it sits on the production server today. */
+function aug12SnapshotAsStored() {
+  return {
+    date: '2026-08-12',
+    orders: { count: 3, revenue: 110.15, aov: 36.72 },
+    abandonedCheckouts: { count: 0 },
+    cartAbandonmentRate: 0,
+    topProducts: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', revenue: 90, orders: 3 }],
+    attribution: buildAttribution(AUG12_ORDERS),
+  };
+}
+
+test('excludedOrders lists the non-revenue orders, and tolerates a missing block', () => {
+  assert.deepEqual(excludedOrders(aug12SnapshotAsStored()).map(o => o.name), ['#2331']);
+  assert.deepEqual(excludedOrders({ date: '2026-08-12' }), []);
+  assert.deepEqual(excludedOrders(null), []);
+});
+
+test('planCleanRevenue corrects the stored 2026-08-12 snapshot from its own attribution block', () => {
+  const existing = aug12SnapshotAsStored();
+  const topProducts = buildTopProducts(AUG12_ORDERS);
+  const { action, snapshot, before, after } = planCleanRevenue(existing, { topProducts });
+
+  assert.equal(action, 'update');
+  assert.deepEqual(before, { count: 3, revenue: 110.15, aov: 36.72 });
+  assert.deepEqual(after, { count: 2, revenue: 71.98, aov: 35.99 });
+  assert.deepEqual(snapshot.orders, { count: 2, revenue: 71.98, aov: 35.99 });
+  assert.deepEqual(snapshot.topProducts, [{
+    title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', revenue: 60, orders: 2,
+  }]);
+  assert.deepEqual(existing.orders, { count: 3, revenue: 110.15, aov: 36.72 }, 'input must not be mutated');
+});
+
+test('planCleanRevenue merges — it never drops a field or reorders keys', () => {
+  const existing = { ...aug12SnapshotAsStored(), someFutureField: { keepMe: true } };
+  const keysBefore = Object.keys(existing);
+  const { snapshot } = planCleanRevenue(existing, { topProducts: buildTopProducts(AUG12_ORDERS) });
+
+  assert.deepEqual(Object.keys(snapshot), keysBefore, 'key order must survive');
+  assert.deepEqual(snapshot.someFutureField, { keepMe: true });
+  assert.deepEqual(snapshot.abandonedCheckouts, existing.abandonedCheckouts);
+  assert.equal(snapshot.attribution, existing.attribution, 'the attribution block is left alone');
+  assert.deepEqual(Object.keys(snapshot.orders), ['count', 'revenue', 'aov']);
+});
+
+test('planCleanRevenue leaves topProducts alone when no rebuild was supplied', () => {
+  const existing = aug12SnapshotAsStored();
+  const { action, snapshot, needsProducts } = planCleanRevenue(existing);
+  assert.equal(action, 'update', 'orders.* is still corrected without the Shopify fetch');
+  assert.equal(needsProducts, true, 'and the day is flagged as still needing a rebuild');
+  assert.deepEqual(snapshot.orders, { count: 2, revenue: 71.98, aov: 35.99 });
+  assert.deepEqual(snapshot.topProducts, existing.topProducts);
+});
+
+test('planCleanRevenue skips a clean day instead of rewriting it', () => {
+  const clean = {
+    date: '2026-08-13',
+    orders: { count: 1, revenue: 35.99, aov: 35.99 },
+    topProducts: [{ title: 'Coconut Lotion', revenue: 30, orders: 1 }],
+    attribution: buildAttribution([AUG12_ORGANIC]),
+  };
+  const { action, needsProducts } = planCleanRevenue(clean, { topProducts: clean.topProducts });
+  assert.equal(action, 'skip-unchanged');
+  assert.equal(needsProducts, false);
+});
+
+test('planCleanRevenue skips a snapshot with no attribution block rather than guessing', () => {
+  const legacy = { date: '2026-05-20', orders: { count: 2, revenue: 80, aov: 40 }, topProducts: [] };
+  const { action, snapshot, before, after } = planCleanRevenue(legacy);
+  assert.equal(action, 'skip-no-attribution');
+  assert.equal(snapshot, legacy, 'untouched');
+  assert.deepEqual(after, before, 'and it contributes its stored numbers to the totals unchanged');
+});
+
+test('planCleanRevenue zeroes a day whose only order was a test order', () => {
+  const testOnly = {
+    date: '2026-08-14',
+    orders: { count: 1, revenue: 0, aov: 0 },
+    topProducts: [{ title: 'Deodorant', revenue: 0, orders: 1 }],
+    attribution: buildAttribution([TEST_ORDER]),
+  };
+  const { action, snapshot } = planCleanRevenue(testOnly, { topProducts: buildTopProducts([TEST_ORDER]) });
+  assert.equal(action, 'update');
+  assert.deepEqual(snapshot.orders, { count: 0, revenue: 0, aov: 0 });
+  assert.deepEqual(snapshot.topProducts, []);
+});
+
+test('backfill parseArgs is dry-run by default and reads its flags', () => {
+  const base = parseArgs(['node', 'x']);
+  assert.equal(base.apply, false, 'dry run by default');
+  assert.equal(base.noFetch, false);
+  assert.equal(base.days, 90);
+  assert.ok(base.snapshotsDir.endsWith(join('data', 'snapshots', 'shopify')));
+
+  const flags = parseArgs(['node', 'x', '--apply', '--no-fetch', '--days', '30', '--snapshots-dir', '/tmp/copy']);
+  assert.equal(flags.apply, true);
+  assert.equal(flags.noFetch, true);
+  assert.equal(flags.days, 30);
+  assert.equal(flags.snapshotsDir, '/tmp/copy');
+
+  assert.deepEqual(parseArgs(['node', 'x', '--days=7']).days, 7);
+  assert.equal(parseArgs(['node', 'x', '--snapshots-dir=/tmp/c']).snapshotsDir, '/tmp/c');
+  assert.throws(() => parseArgs(['node', 'x', '--days', '0']), /Invalid --days/);
+  assert.throws(() => parseArgs(['node', 'x', '--days', 'abc']), /Invalid --days/);
+});
+
+test('importing the clean-revenue backfill does not run it', () => {
+  const out = execFileSync(process.execPath, [
+    '--input-type=module', '-e',
+    `await import(${JSON.stringify(join(ROOT, 'scripts/backfill-clean-order-revenue.mjs'))}); console.log('imported-clean');`,
+  ], { encoding: 'utf8', cwd: ROOT });
+  assert.equal(out.trim(), 'imported-clean');
+  assert.ok(!out.includes('Backfill clean order revenue'), 'main() ran on import');
 });
