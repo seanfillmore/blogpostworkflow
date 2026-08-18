@@ -10,8 +10,13 @@ import {
   clusterRollup,
   actionWins,
   rankBy,
+  weeklyRevenueTrend,
 } from '../../lib/seo-impact.js';
 import { shopifyRevenueByPage, attributionRows, SEARCH_HOSTS } from '../../lib/order-attribution.js';
+// The real Pacific day resolver the agent injects — DST-correct, and the same one the
+// daily Shopify snapshots bucket by. Importing the collector is safe: its main() is
+// behind a direct-invocation guard (tests/agents/shopify-collector.test.js asserts that).
+import { ptDayOf } from '../../agents/shopify-collector/index.js';
 
 // ── pathOf: normalize URLs/paths to a single join key ─────────────────────────
 
@@ -295,4 +300,157 @@ test('rankBy: sorts descending by the given key and respects limit', () => {
   const rows = [{ r: 1 }, { r: 9 }, { r: 5 }];
   assert.deepEqual(rankBy(rows, 'r').map((x) => x.r), [9, 5, 1]);
   assert.deepEqual(rankBy(rows, 'r', 2).map((x) => x.r), [9, 5]);
+});
+
+// ── weeklyRevenueTrend ────────────────────────────────────────────────────────
+//
+// The dashboard's 12-week chart. It was GA4's modelled organic revenue and reported
+// $58.50 for a 28-day window Shopify measured at $230.29, sitting directly beside that
+// headline. These tests hold the two together.
+
+const REFERRERS = {
+  organic: 'https://www.google.com/',
+  ai: 'https://chatgpt.com/',
+  referral: 'https://www.somepartner.com/',
+};
+
+let orderSeq = 5000;
+function rawOrder({ at, total = 40, via = 'organic', landing = '/products/deodorant', discount, cancelled }) {
+  return {
+    id: ++orderSeq,
+    name: `#${orderSeq}`,
+    created_at: at,
+    total_price: String(total),
+    source_name: 'web',
+    landing_site: landing,
+    referring_site: REFERRERS[via] ?? null,
+    discount_codes: discount ? [{ code: discount }] : [],
+    cancelled_at: cancelled || null,
+  };
+}
+const trendOf = (orders, opts) => weeklyRevenueTrend(attributionRows(orders), { dayOf: ptDayOf, ...opts });
+
+test('weeklyRevenueTrend: buckets are 7 PT days and the newest ends on the window end', () => {
+  const t = trendOf([], { endDate: '2026-08-15', weeks: 4 });
+  assert.equal(t.length, 4);
+  assert.deepEqual(t.map((b) => [b.week, b.week_end]), [
+    ['2026-07-19', '2026-07-25'],
+    ['2026-07-26', '2026-08-01'],
+    ['2026-08-02', '2026-08-08'],
+    ['2026-08-09', '2026-08-15'],
+  ]);
+  // 12 weeks is the production shape: 84 days ending on the window end.
+  const twelve = trendOf([], { endDate: '2026-08-15' });
+  assert.equal(twelve.length, 12);
+  assert.equal(twelve[11].week_end, '2026-08-15');
+  assert.equal(twelve[0].week, '2026-05-24');
+});
+
+test('weeklyRevenueTrend: organic is the series, all channels ride alongside as context', () => {
+  const t = trendOf([
+    rawOrder({ at: '2026-08-14T18:00:00Z', total: 50, via: 'organic' }),
+    rawOrder({ at: '2026-08-13T18:00:00Z', total: 30, via: 'ai' }),
+    rawOrder({ at: '2026-08-12T18:00:00Z', total: 20, via: 'referral' }),
+  ], { endDate: '2026-08-15', weeks: 2 });
+  const last = t[1];
+  assert.equal(last.revenue, 50);                  // organic search only
+  assert.equal(last.orders, 1);
+  assert.equal(last.revenue_all_channels, 100);    // organic + AI assistant + referral
+  assert.equal(last.orders_all_channels, 3);
+  // AI-assistant revenue is NOT organic search — it was booked as SEO once already.
+  assert.equal(t[0].revenue, 0);
+});
+
+test('weeklyRevenueTrend: test, preview, cancelled and $0 orders never reach the chart', () => {
+  const t = trendOf([
+    rawOrder({ at: '2026-08-14T18:00:00Z', total: 60, via: 'organic' }),
+    rawOrder({ at: '2026-08-14T18:00:00Z', total: 99, via: 'organic', landing: '/online_store_preview?x=1' }),
+    rawOrder({ at: '2026-08-14T18:00:00Z', total: 99, via: 'organic', discount: 'TEST100' }),
+    rawOrder({ at: '2026-08-14T18:00:00Z', total: 99, via: 'organic', cancelled: '2026-08-15T00:00:00Z' }),
+    rawOrder({ at: '2026-08-14T18:00:00Z', total: 0, via: 'organic' }),
+  ], { endDate: '2026-08-15', weeks: 1 });
+  assert.equal(t[0].revenue, 60);
+  assert.equal(t[0].orders, 1);
+  assert.equal(t[0].revenue_all_channels, 60);
+  assert.equal(t[0].orders_all_channels, 1);
+});
+
+test('weeklyRevenueTrend: buckets by PACIFIC day, not UTC day', () => {
+  // 2026-08-16T05:00:00Z is 22:00 on 2026-08-15 in PT — the last day of the window, and
+  // of the newest bucket. Bucketing this by its UTC date would push it out of the trend
+  // entirely and understate the newest week.
+  const t = trendOf([rawOrder({ at: '2026-08-16T05:00:00Z', total: 45, via: 'organic' })],
+    { endDate: '2026-08-15', weeks: 2 });
+  assert.equal(t[1].revenue, 45);
+  // ...and the mirror: 2026-08-09T06:00:00Z is 23:00 on 2026-08-08 PT, the last day of
+  // the OLDER bucket, so it must not slide forward into the newest one.
+  const t2 = trendOf([rawOrder({ at: '2026-08-09T06:00:00Z', total: 45, via: 'organic' })],
+    { endDate: '2026-08-15', weeks: 2 });
+  assert.equal(t2[0].revenue, 45);
+  assert.equal(t2[1].revenue, 0);
+});
+
+test('weeklyRevenueTrend: bucketing survives the PST/PDT switch', () => {
+  // 2026-11-01 is the fall-back day. 2026-11-01T08:30:00Z is 01:30 PDT on 11-01 (the
+  // repeated hour is still the 1st); 2026-11-02T07:30:00Z is 23:30 PST on 11-01.
+  const t = trendOf([
+    rawOrder({ at: '2026-11-01T08:30:00Z', total: 10, via: 'organic' }),
+    rawOrder({ at: '2026-11-02T07:30:00Z', total: 15, via: 'organic' }),
+    rawOrder({ at: '2026-11-02T08:30:00Z', total: 25, via: 'organic' }), // 00:30 PST on 11-02
+  ], { endDate: '2026-11-08', weeks: 2 });
+  assert.equal(t[0].week_end, '2026-11-01');
+  assert.equal(t[0].revenue, 25);   // both 11-01 PT orders
+  assert.equal(t[1].revenue, 25);   // the 11-02 PT order alone
+});
+
+test('weeklyRevenueTrend: the newest 4 weeks sum EXACTLY to the 28-day headline', () => {
+  // The reconciliation the chart exists to satisfy. Same records, same channel filter,
+  // same Pacific days — so summing four buckets must reproduce the headline to the cent.
+  const orders = [
+    rawOrder({ at: '2026-08-15T16:00:00Z', total: 46.8, via: 'organic' }),
+    rawOrder({ at: '2026-08-02T16:00:00Z', total: 30.55, via: 'organic' }),
+    rawOrder({ at: '2026-07-25T16:00:00Z', total: 52.99, via: 'organic' }),  // in window (day 1)
+    rawOrder({ at: '2026-07-18T16:00:00Z', total: 99.99, via: 'organic' }),  // BEFORE the window
+    rawOrder({ at: '2026-08-10T16:00:00Z', total: 61.2, via: 'ai' }),        // not organic
+  ];
+  const rows = attributionRows(orders);
+  const t = weeklyRevenueTrend(rows, { endDate: '2026-08-15', weeks: 12, dayOf: ptDayOf });
+
+  // The headline, computed the way the agent computes it: organic revenue per landing
+  // page over the 28 PT days 2026-07-19 → 2026-08-15.
+  const inWindow = rows.filter((r) => ptDayOf(r.created_at) >= '2026-07-19' && ptDayOf(r.created_at) <= '2026-08-15');
+  const byPage = shopifyRevenueByPage(inWindow, { channels: ['organic-search'] });
+  const headline = Math.round([...byPage.values()].reduce((s, v) => s + v.revenue, 0) * 100) / 100;
+
+  const tail = t.slice(-4);
+  const tailRevenue = Math.round(tail.reduce((s, b) => s + b.revenue, 0) * 100) / 100;
+  assert.equal(headline, 130.34);
+  assert.equal(tailRevenue, headline);
+  assert.equal(tail.reduce((s, b) => s + b.orders, 0), 3);
+  // The out-of-window order is still in the chart's older weeks — it just isn't in the tail.
+  assert.equal(Math.round(t.reduce((s, b) => s + b.revenue, 0) * 100) / 100, 230.33);
+});
+
+test('weeklyRevenueTrend: orders outside the 12-week range are ignored', () => {
+  const t = trendOf([
+    rawOrder({ at: '2026-05-23T18:00:00Z', total: 500, via: 'organic' }),  // day before the range
+    rawOrder({ at: '2026-08-16T18:00:00Z', total: 500, via: 'organic' }),  // day after the range
+  ], { endDate: '2026-08-15' });
+  assert.equal(t.reduce((s, b) => s + b.revenue_all_channels, 0), 0);
+});
+
+test('weeklyRevenueTrend: refuses to guess a timezone or a window end', () => {
+  // No UTC default for dayOf: a silent fallback is how a timezone bug hides.
+  assert.throws(() => weeklyRevenueTrend([], { endDate: '2026-08-15' }), /dayOf/);
+  assert.throws(() => weeklyRevenueTrend([], { dayOf: ptDayOf }), /endDate/);
+  assert.throws(() => weeklyRevenueTrend([], { endDate: '15/08/2026', dayOf: ptDayOf }), /endDate/);
+});
+
+test('weeklyRevenueTrend: channels:null gives the whole store as the series', () => {
+  const t = trendOf([
+    rawOrder({ at: '2026-08-14T18:00:00Z', total: 50, via: 'organic' }),
+    rawOrder({ at: '2026-08-13T18:00:00Z', total: 30, via: 'ai' }),
+  ], { endDate: '2026-08-15', weeks: 1, channels: null });
+  assert.equal(t[0].revenue, 80);
+  assert.equal(t[0].revenue_all_channels, 80);
 });

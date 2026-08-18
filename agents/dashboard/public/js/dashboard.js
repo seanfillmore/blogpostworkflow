@@ -1644,22 +1644,50 @@ function renderSeoImpact(d) {
     + (s.revenue_source === 'shopify-orders' ? ', Shopify orders' : '') + ')';
 
   // ── weekly revenue trend: inline SVG bars ──
+  // Bars are ORGANIC SEARCH revenue from Shopify orders — the same source and the same
+  // channel as the headline above it, so the last four bars sum to the headline. The
+  // faint bar behind each one is all-channel revenue for the same week, so an organic
+  // bar is never mistaken for the whole store. This series was GA4-modelled until
+  // 2026-08-17 and disagreed with the headline four-fold; the caption is not decoration.
   var trend = (s.revenue_trend || []);
+  var tmeta = s.revenue_trend_meta || {};
   var chart = '';
   if (trend.length) {
-    var maxRev = Math.max.apply(null, trend.map(function(x) { return x.revenue; }).concat([1]));
+    var hasAll = trend.some(function(x) { return x.revenue_all_channels != null; });
+    var maxRev = Math.max.apply(null, trend.map(function(x) {
+      return Math.max(x.revenue || 0, hasAll ? (x.revenue_all_channels || 0) : 0);
+    }).concat([1]));
     var W = 520, H = 90, pad = 4, n = trend.length;
     var bw = (W - pad * 2) / n;
+    var barH = function(v) { return Math.max(1, Math.round(((v || 0) / maxRev) * (H - 24))); };
     var bars = trend.map(function(x, i) {
-      var h = Math.max(1, Math.round((x.revenue / maxRev) * (H - 24)));
       var bx = pad + i * bw;
-      var by = H - 16 - h;
+      var w = Math.max(1, bw - 2).toFixed(1);
       var last = i === n - 1;
-      return '<rect x="' + (bx + 1).toFixed(1) + '" y="' + by + '" width="' + Math.max(1, bw - 2).toFixed(1) + '" height="' + h + '" rx="2" fill="' + (last ? '#2563eb' : '#93c5fd') + '"><title>' + x.week + ': ' + money(x.revenue) + '</title></rect>';
+      var label = (x.week_end ? 'week ending ' + x.week_end : x.week) + ': ' + money(x.revenue) +
+        ' organic (' + (x.orders || 0) + ' orders)' +
+        (hasAll ? ' · ' + money(x.revenue_all_channels) + ' all channels' : '');
+      var ctx = '';
+      if (hasAll) {
+        var ha = barH(x.revenue_all_channels);
+        ctx = '<rect x="' + (bx + 1).toFixed(1) + '" y="' + (H - 16 - ha) + '" width="' + w + '" height="' + ha + '" rx="2" fill="#e5e7eb"></rect>';
+      }
+      var h = barH(x.revenue);
+      return ctx + '<rect x="' + (bx + 1).toFixed(1) + '" y="' + (H - 16 - h) + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (last ? '#2563eb' : '#93c5fd') + '"><title>' + esc(label) + '</title></rect>';
     }).join('');
-    var labels = '<text x="' + pad + '" y="' + (H - 2) + '" font-size="9" fill="#9ca3af">' + esc(trend[0].week) + '</text>' +
-      '<text x="' + (W - pad) + '" y="' + (H - 2) + '" font-size="9" fill="#9ca3af" text-anchor="end">' + esc(trend[n - 1].week) + '</text>';
-    chart = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:90px;margin:4px 0 10px">' + bars + labels + '</svg>';
+    var firstLbl = trend[0].week, lastLbl = trend[n - 1].week_end || trend[n - 1].week;
+    var labels = '<text x="' + pad + '" y="' + (H - 2) + '" font-size="9" fill="#9ca3af">' + esc(firstLbl) + '</text>' +
+      '<text x="' + (W - pad) + '" y="' + (H - 2) + '" font-size="9" fill="#9ca3af" text-anchor="end">' + esc(lastLbl) + '</text>';
+    var isShopifyTrend = tmeta.source === 'shopify-orders';
+    var caption = isShopifyTrend
+      ? 'Weekly <strong>organic-search</strong> revenue (Shopify orders) &mdash; weeks of 7 days ending ' +
+        esc(trend[n - 1].week_end || '') + ' PT' +
+        (hasAll ? '. Grey bars: all channels.' : '.') +
+        (tmeta.ties_out === false ? ' <span style="color:#b91c1c;font-weight:600">Does not reconcile with the headline.</span>' : '') +
+        (tmeta.truncated ? ' <span style="color:#b91c1c;font-weight:600">Truncated at the 250-order page cap.</span>' : '')
+      : 'Weekly organic revenue &mdash; <strong>GA4-modelled</strong>, does not tie out to the figure above.';
+    chart = '<div style="font-size:11px;color:#6b7280;margin-top:6px">' + caption + '</div>' +
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:90px;margin:2px 0 10px">' + bars + labels + '</svg>';
   }
 
   // ── top revenue pages ──
