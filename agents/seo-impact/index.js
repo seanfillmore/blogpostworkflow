@@ -24,7 +24,14 @@
  * question is closed.
  *
  * The window still ends 2 days back — GA4 monetization data needs that to finalize, and
- * both sources must cover the identical range or the comparison is meaningless.
+ * both sources must cover the identical range or the comparison is meaningless. Order
+ * windows are PACIFIC calendar days (agents/shopify-collector's DST-correct helpers), the
+ * same days the daily snapshots bucket by.
+ *
+ * The dashboard's 12-week `revenue_trend` is built from the same Shopify records, in
+ * 7-Pacific-day buckets aligned to the window end, so its newest WINDOW/7 buckets sum
+ * exactly to `organic_revenue`. It was GA4's modelled revenue until 2026-08-17 and
+ * disagreed with the headline beside it four-fold ($58.50 vs $230.29 over 28 days).
  *
  * Outputs:
  *   data/reports/seo-impact/YYYY-MM-DD.md   — human-readable
@@ -39,13 +46,18 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
-import { fetchLandingPagesByChannel, fetchOrganicRevenueByDate } from '../../lib/ga4.js';
-import { getOrders } from '../../lib/shopify.js';
+import { fetchLandingPagesByChannel } from '../../lib/ga4.js';
+import { getAllOrders } from '../../lib/shopify.js';
 import { attributionRows, shopifyRevenueByPage, channelRollup } from '../../lib/order-attribution.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
+// ptDayOf/ptDayBounds are DST-correct Pacific day helpers owned by the shopify-collector
+// (PR #510 fixed a real DST bug in them). Importing that agent is safe — its main() is
+// behind a direct-invocation guard — and reusing them is what keeps this agent's windows
+// on the same calendar days as the daily Shopify snapshots.
+import { ptDayOf, ptDayBounds } from '../shopify-collector/index.js';
 import {
   pathOf, organicSessionsByPage, isSearchEngineSource, mergeRevenueSources, buildPageImpacts,
-  clusterRollup, actionWins, rankBy,
+  clusterRollup, actionWins, rankBy, weeklyRevenueTrend,
 } from '../../lib/seo-impact.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -55,6 +67,12 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'seo-impact');
 
 const args = process.argv.slice(2);
 const WINDOW = (() => { const i = args.indexOf('--window'); return i !== -1 ? parseInt(args[i + 1], 10) : 28; })();
+
+// Weeks in the dashboard trend. 12 × 7 = an 84-day orders pull.
+const TREND_WEEKS = 12;
+// Orders come through getAllOrders(), which cursor-paginates and reports its own
+// `truncated` flag. A silent truncation would understate revenue with no symptom at
+// all, so that flag is propagated into revenue_trend_meta rather than swallowed.
 
 // ── date helpers ──────────────────────────────────────────────────────────────
 const DAY = 86400000;
@@ -124,18 +142,32 @@ function actionsByPath({ start, end }) {
   return m;
 }
 
-// ── Shopify orders → organic revenue per landing page (GROUND TRUTH) ───────────
-// getOrders() interpolates its arguments straight into created_at_min/max. A bare
+// ── Shopify orders → attribution records over a PT date range ──────────────────
+// getAllOrders() interpolates its arguments straight into created_at_min/max. A bare
 // YYYY-MM-DD as created_at_max means that day's MIDNIGHT, which silently drops the whole
-// last day of the window — so pass an explicit end-of-day instant.
+// last day of the window — so pass explicit day bounds. They are PACIFIC bounds, from
+// the shopify-collector's DST-correct helpers, so a window here covers exactly the same
+// calendar days the daily snapshots do, and so the headline and the weekly trend below
+// can be reconciled order-for-order instead of approximately.
+let ordersTruncated = false;
+async function fetchOrderRows({ start, end }) {
+  const res = await getAllOrders(ptDayBounds(start).dayStart, ptDayBounds(end).dayEnd);
+  const rawOrders = res.orders || [];
+  const fetched = rawOrders.length;
+  if (res.truncated) {
+    ordersTruncated = true;
+    console.error(`  WARNING: getAllOrders() hit its page ceiling for ${start} → ${end} after ${fetched} orders. Revenue for this range is TRUNCATED.`);
+  }
+  return { rows: attributionRows(rawOrders), fetched };
+}
+
 async function shopifyOrganic({ start, end }) {
-  const { rawOrders } = await getOrders(`${start}T00:00:00Z`, `${end}T23:59:59Z`);
-  const rows = attributionRows(rawOrders || []);
+  const { rows, fetched } = await fetchOrderRows({ start, end });
   const real = rows.filter((r) => r.countsAsRevenue);
   return {
     byPage: shopifyRevenueByPage(rows, { channels: ['organic-search'] }),
     channels: channelRollup(rows),
-    fetched: (rawOrders || []).length,
+    fetched,
     orders: real.length,
     revenueAll: round2(real.reduce((s, r) => s + r.total, 0)),
   };
@@ -208,24 +240,41 @@ async function main() {
     impacts.filter(i => i.sessions >= 30 && i.revenue === 0), 'sessions', 10,
   );
 
-  // Weekly organic-revenue trend (last 12 weeks) for the dashboard chart.
+  // Weekly revenue trend (last 12 weeks) for the dashboard chart — SHOPIFY ORDERS,
+  // the same records as the headline above. It used to be GA4's modelled organic
+  // revenue, which reported $58.50 for a 28-day window Shopify measured at $230.29;
+  // two contradictory revenue numbers on one screen is worse than either bug alone.
   //
-  // NOTE: this series is still GA4's MODELLED revenue — the only figure in this agent
-  // that is. It is a shape, not a total, and it will not tie out to organic_revenue
-  // above (measured here at $230.29 against GA4's $58.50 for the same 28 days). Rebuilding
-  // it from Shopify orders needs an 84-day getOrders() pull and is the obvious next step.
+  // The series is ORGANIC SEARCH, matching `organic_revenue`, with all-channel revenue
+  // carried alongside as context (this store's organic share swings a lot week to week,
+  // and an organic-only chart read as "the store" is the same misreading in a new place).
+  // Buckets are 7 Pacific days ending on the window end, so the last WINDOW/7 of them
+  // sum exactly to the headline — see weeklyRevenueTrend() for why not calendar weeks.
   let revenueTrend = [];
+  let trendWindow = null;
   try {
-    const trendStart = ymd(Date.parse(w.current.end) - (12 * 7 - 1) * DAY);
-    const daily = await fetchOrganicRevenueByDate(trendStart, w.current.end);
-    const buckets = new Map();
-    for (const d of daily) {
-      const wk = ymd(Date.parse(trendStart) + Math.floor((Date.parse(d.date) - Date.parse(trendStart)) / DAY / 7) * 7 * DAY);
-      buckets.set(wk, round2((buckets.get(wk) || 0) + d.revenue));
-    }
-    revenueTrend = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([week, revenue]) => ({ week, revenue }));
+    const trendEnd = w.current.end;
+    const trendStart = ymd(Date.parse(trendEnd) - (TREND_WEEKS * 7 - 1) * DAY);
+    const { rows: trendRows, fetched } = await fetchOrderRows({ start: trendStart, end: trendEnd });
+    revenueTrend = weeklyRevenueTrend(trendRows, {
+      endDate: trendEnd, weeks: TREND_WEEKS, dayOf: ptDayOf, channels: ['organic-search'],
+    });
+    trendWindow = { start: trendStart, end: trendEnd };
+    console.log(`  Trend: ${TREND_WEEKS} weeks from ${fetched} Shopify orders (${trendStart} → ${trendEnd} PT)`);
   } catch (err) {
-    console.error('  Trend fetch failed (non-fatal):', err.message);
+    console.error('  Trend build failed (non-fatal):', err.message);
+  }
+
+  // Reconciliation: the trend's newest WINDOW/7 buckets ARE the headline window, so they
+  // must sum to organic_revenue to the cent. Checked out loud every run — an assertion
+  // nobody reads is how the GA4 series drifted four-fold without anyone noticing.
+  let trendTiesOut = null;
+  if (revenueTrend.length && WINDOW % 7 === 0 && WINDOW / 7 <= TREND_WEEKS) {
+    const tail = revenueTrend.slice(-(WINDOW / 7));
+    const tailRevenue = round2(tail.reduce((s, b) => s + b.revenue, 0));
+    const tailOrders = tail.reduce((s, b) => s + b.orders, 0);
+    trendTiesOut = tailRevenue === organicRevenue;
+    console.log(`  Trend reconciliation: last ${WINDOW / 7} weeks = $${tailRevenue} / ${tailOrders} orders vs headline $${organicRevenue} / ${organicConversions} orders — ${trendTiesOut ? 'TIES OUT' : 'MISMATCH'}`);
   }
 
   console.log(`\n  Organic revenue (Shopify): $${organicRevenue} (prior $${organicRevenuePrev}, ${organicRevenue >= organicRevenuePrev ? '+' : ''}$${round2(organicRevenue - organicRevenuePrev)}) from ${organicConversions} orders`);
@@ -267,6 +316,18 @@ async function main() {
     action_wins: wins,
     not_converting: notConverting,
     revenue_trend: revenueTrend,
+    // Everything a reader needs to know what the chart's bars actually mean. The bug
+    // this replaced was an UNLABELLED number that meant something other than assumed.
+    revenue_trend_meta: {
+      source: 'shopify-orders',
+      channel: 'organic-search',
+      weeks: TREND_WEEKS,
+      window: trendWindow,
+      timezone: 'America/Los_Angeles',
+      bucket: 'weeks of 7 Pacific days, each ending on week_end; the newest ends on the report window end',
+      ties_out: trendTiesOut,          // null when the window is not a whole number of weeks
+      truncated: ordersTruncated,      // getAllOrders() hit its page ceiling — figures understated
+    },
   };
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify(payload, null, 2));
   writeFileSync(join(REPORTS_DIR, `${ymd(Date.now())}.md`), buildReport(payload));
@@ -294,6 +355,7 @@ function buildReport(p) {
   L.push('_Revenue and order counts are **Shopify per-order ground truth**: every order carries the exact entry page (`landing_site`) and referrer, and an order counts as organic only when the referrer is an unpaid search engine and no click id is present. Sessions come from GA4 (Shopify has no sessions); clicks from Search Console._');
   L.push('');
   L.push(...storeContextSection(p));
+  L.push(...revenueTrendSection(p));
   L.push('## Top organic-revenue pages');
   L.push('');
   L.push('| Page | Revenue | Δ vs prior | Orders | Sessions | Clicks Δ | Action |');
@@ -331,6 +393,38 @@ function buildReport(p) {
     L.push('');
   }
   return L.join('\n');
+}
+
+/** The weekly trend, spelled out so the chart's bars can never be read as something else. */
+function revenueTrendSection(p) {
+  const trend = p.revenue_trend || [];
+  const meta = p.revenue_trend_meta || {};
+  if (!trend.length) return [];
+  const money = (n) => `$${(Math.round((Number(n) || 0) * 100) / 100).toFixed(2)}`;
+  const days = Math.round((Date.parse(p.window.end) - Date.parse(p.window.start)) / 86400000) + 1;
+  const tieOut = days % 7 === 0 && days / 7 <= trend.length
+    ? `the newest week ends on the window end, so the last ${days / 7} weeks sum to the headline exactly`
+    : `the newest week ends on the window end (the ${days}-day window is not a whole number of weeks, so no run of weeks reproduces the headline exactly)`;
+  const L = [];
+  L.push(`## Weekly organic-search revenue — last ${trend.length} weeks`);
+  L.push('');
+  L.push(`_Shopify orders, **organic search only** (the same figure as the headline above), with all-channel revenue as context. Each week is 7 Pacific calendar days ending on the date shown; ${tieOut}._`);
+  L.push('');
+  L.push('| Week ending | Organic revenue | Organic orders | All channels |');
+  L.push('|-------------|----------------:|---------------:|-------------:|');
+  for (const b of trend) {
+    L.push(`| ${b.week_end} | ${money(b.revenue)} | ${b.orders} | ${money(b.revenue_all_channels)} |`);
+  }
+  L.push('');
+  if (meta.ties_out === false) {
+    L.push('> **The trend does not reconcile with the headline.** The newest weeks should sum to organic revenue exactly; they do not. Treat both numbers as suspect until this is explained.');
+    L.push('');
+  }
+  if (meta.truncated) {
+    L.push('> **Truncated:** a Shopify orders page hit the un-paginated 250-order cap. Revenue here is understated.');
+    L.push('');
+  }
+  return L;
 }
 
 /** Organic search read as a share of the whole store, plus the full channel mix. */
