@@ -1,5 +1,6 @@
 {
   "_comment": "Single option. EVERY media is scoped: an unscoped media is only safe first, and a first-and-unscoped media pins the main image for all variants. Pack frames lead so the main image follows the Scent dropdown.",
+  "_comment_frankincence_keys": "The two frankincence KEYS keep the pre-2026-08-18 spelling on purpose. Keys match by FILENAME FRAGMENT against media already uploaded to Shopify, and those files are named frame-*-d4-4x-wildcrafted-frankincence.jpg. The VALUES are the live option value and were corrected with it. A key that matches no media is not inert: this file must describe every scoped media, so an unmatched media has its suffix STRIPPED and then renders for no variant at all. Renaming the keys therefore requires re-rendering and re-uploading the frames in the same change.",
   "product": "coconut-deodorant-4-pack",
   "option": "Scent",
   "scope": {
@@ -7,11 +8,11 @@
     "frame-01-pack-d4-4x-geranium-flower": "4x Geranium Flower",
     "frame-01-pack-d4-4x-calming-lavender": "4x Calming Lavender",
     "frame-01-pack-d4-4x-mountain-cedarwood": "4x Mountain Cedarwood",
-    "frame-01-pack-d4-4x-wildcrafted-frankincence": "4x Wildcrafted Frankincence",
+    "frame-01-pack-d4-4x-wildcrafted-frankincence": "4x Wildcrafted Frankincense",
     "frame-02-value-d4-variety--one-of-each": "Variety — one of each",
     "frame-02-value-d4-4x-geranium-flower": "4x Geranium Flower",
     "frame-02-value-d4-4x-calming-lavender": "4x Calming Lavender",
     "frame-02-value-d4-4x-mountain-cedarwood": "4x Mountain Cedarwood",
-    "frame-02-value-d4-4x-wildcrafted-frankincence": "4x Wildcrafted Frankincence"
+    "frame-02-value-d4-4x-wildcrafted-frankincence": "4x Wildcrafted Frankincense"
   }
 }

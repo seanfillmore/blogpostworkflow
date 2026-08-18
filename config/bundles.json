@@ -1297,7 +1297,7 @@
             "4x Geranium Flower",
             "4x Calming Lavender",
             "4x Mountain Cedarwood",
-            "4x Wildcrafted Frankincence"
+            "4x Wildcrafted Frankincense"
           ]
         }
       ],
@@ -1308,7 +1308,7 @@
           },
           "price": 53,
           "compareAtPrice": 60,
-          "contents": "1 × Geranium Flower (geranium & cedarwood)\n1 × Calming Lavender (lavender, lemon & rosemary)\n1 × Mountain Cedarwood (cedarwood & geranium)\n1 × Wildcrafted Frankincence (frankincense & sandalwood)",
+          "contents": "1 × Geranium Flower (geranium & cedarwood)\n1 × Calming Lavender (lavender, lemon & rosemary)\n1 × Mountain Cedarwood (cedarwood & geranium)\n1 × Wildcrafted Frankincense (frankincense & sandalwood)",
           "components": [
             {
               "product": "coconut-oil-deodorant",
@@ -1327,7 +1327,7 @@
             },
             {
               "product": "coconut-oil-deodorant",
-              "variant": "Wildcrafted Frankincence",
+              "variant": "Wildcrafted Frankincense",
               "qty": 1
             }
           ]
@@ -1379,15 +1379,15 @@
         },
         {
           "options": {
-            "Scent": "4x Wildcrafted Frankincence"
+            "Scent": "4x Wildcrafted Frankincense"
           },
           "price": 53,
           "compareAtPrice": 60,
-          "contents": "4 × Wildcrafted Frankincence (frankincense & sandalwood)",
+          "contents": "4 × Wildcrafted Frankincense (frankincense & sandalwood)",
           "components": [
             {
               "product": "coconut-oil-deodorant",
-              "variant": "Wildcrafted Frankincence",
+              "variant": "Wildcrafted Frankincense",
               "qty": 4
             }
           ]

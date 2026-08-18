@@ -114,10 +114,27 @@ test('buildBundleFacts: throws when a variant has no bundle components', () => {
   assert.throws(() => buildBundleFacts({ product: plain, ingredientsByCluster: INGREDIENTS }), /not a Shopify bundle variant/);
 });
 
-test('canonicalScent: corrects the live "Frankincence" misspelling from config', () => {
+// The Shopify option value was corrected to "Frankincense" on 2026-08-18, and
+// config/ingredients.json's `shopify_option` was corrected with it. This test is
+// deliberately KEPT: the typo is still reachable — historical orders keep their
+// old line-item titles, and generated artifacts such as
+// data/bundles/descriptions/coconut-deodorant-4-pack.json were written while
+// Shopify still held it. What changed is which branch resolves it. It used to hit
+// the exact-match on `shopify_option`; that entry is gone, so it now falls
+// through to the Levenshtein arm ("cence" → "cense" is distance 1). Both arms
+// must keep working, so the assertion is unchanged.
+test('canonicalScent: still resolves the historical "Frankincence" misspelling', () => {
   const { name, corrected } = canonicalScent('Wildcrafted Frankincence', INGREDIENTS.deodorant);
   assert.equal(name, 'Wildcrafted Frankincense');
   assert.deepEqual(corrected, { from: 'Wildcrafted Frankincence', to: 'Wildcrafted Frankincense' });
+});
+
+test('canonicalScent: the corrected live spelling needs no correction', () => {
+  // The post-rename reality: what Shopify now sends must pass through untouched,
+  // so pdp-builder stops reporting a correction that no longer exists.
+  const { name, corrected } = canonicalScent('Wildcrafted Frankincense', INGREDIENTS.deodorant);
+  assert.equal(name, 'Wildcrafted Frankincense');
+  assert.equal(corrected, null);
 });
 
 test('canonicalScent: leaves an exact match alone and reports no correction', () => {
@@ -132,6 +149,9 @@ test('canonicalScent: does not "correct" a genuinely different name', () => {
   assert.equal(corrected, null);
 });
 
+// Fixture titles keep the OLD spelling on purpose — this is the stale-data path
+// (historical orders, artifacts generated before the 2026-08-18 rename), which is
+// exactly the case scentCorrections exists to surface.
 test('buildBundleFacts: surfaces scent corrections on the facts', () => {
   const deo = {
     handle: 'coconut-deodorant-4-pack',
