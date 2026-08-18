@@ -1,0 +1,183 @@
+{
+  "handle": "clean-swap",
+  "generated_at": "2026-08-18T12:07:15.605Z",
+  "foundation_version": "4b1c18c",
+  "seoTitle": "The Clean Swap Bundle — Toothpaste, Deodorant, Lotion, Soap",
+  "metaDescription": "Swap four bathroom staples at once. Toothpaste, deodorant, lotion, and bar soap — cold-pressed virgin coconut oil, no SLS, no aluminum. Save $10.",
+  "savings": {
+    "claimable": true,
+    "uniform": true,
+    "minSavings": 10,
+    "maxSavings": 10,
+    "minPct": 14,
+    "maxPct": 14
+  },
+  "variants": [
+    {
+      "title": "Gentle",
+      "price": 59,
+      "unitCount": 4,
+      "pricePerUnit": 14.75,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "format": "squeeze bottle",
+          "scent": "Fresh Mint",
+          "shopifyVariantTitle": "Fresh Mint",
+          "unitPrice": 13,
+          "lineTotal": 13
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-soap",
+          "cluster": "bar_soap",
+          "productName": "Bar Soap",
+          "format": "bar",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 11,
+          "lineTotal": 11
+        }
+      ],
+      "partsTotal": 69,
+      "savings": 10,
+      "savingsPct": 14
+    },
+    {
+      "title": "Calm",
+      "price": 59,
+      "unitCount": 4,
+      "pricePerUnit": 14.75,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "format": "squeeze bottle",
+          "scent": "Pure Unscented",
+          "shopifyVariantTitle": "Pure Unscented",
+          "unitPrice": 30,
+          "lineTotal": 30
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "format": "squeeze bottle",
+          "scent": "Fresh Mint",
+          "shopifyVariantTitle": "Fresh Mint",
+          "unitPrice": 13,
+          "lineTotal": 13
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-soap",
+          "cluster": "bar_soap",
+          "productName": "Bar Soap",
+          "format": "bar",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 11,
+          "lineTotal": 11
+        }
+      ],
+      "partsTotal": 69,
+      "savings": 10,
+      "savingsPct": 14
+    },
+    {
+      "title": "Fresh",
+      "price": 59,
+      "unitCount": 4,
+      "pricePerUnit": 14.75,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-lotion",
+          "cluster": "lotion",
+          "productName": "Body Lotion",
+          "format": "squeeze bottle",
+          "scent": "Coconut Breeze",
+          "shopifyVariantTitle": "Coconut Breeze",
+          "unitPrice": 30,
+          "lineTotal": 30
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Geranium Flower",
+          "shopifyVariantTitle": "Geranium Flower",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-toothpaste",
+          "cluster": "toothpaste",
+          "productName": "Natural Toothpaste",
+          "format": "squeeze bottle",
+          "scent": "Fresh Mint",
+          "shopifyVariantTitle": "Fresh Mint",
+          "unitPrice": 13,
+          "lineTotal": 13
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-soap",
+          "cluster": "bar_soap",
+          "productName": "Bar Soap",
+          "format": "bar",
+          "scent": "Nourishing Tea Tree",
+          "shopifyVariantTitle": "Nourishing Tea Tree",
+          "unitPrice": 11,
+          "lineTotal": 11
+        }
+      ],
+      "partsTotal": 69,
+      "savings": 10,
+      "savingsPct": 14
+    }
+  ],
+  "scentCorrections": []
+}

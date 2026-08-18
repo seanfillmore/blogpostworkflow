@@ -1,0 +1,167 @@
+{
+  "handle": "coconut-deodorant-4-pack",
+  "generated_at": "2026-08-18T12:08:49.988Z",
+  "foundation_version": "4b1c18c",
+  "seoTitle": "Coconut Deodorant 4-Pack — Roll-On Set for Sensitive Skin",
+  "metaDescription": "Four coconut oil roll-on deodorants made for sensitive underarms. Pick one scent or a variety of all four. Save $7 versus buying singly today.",
+  "savings": {
+    "claimable": true,
+    "uniform": true,
+    "minSavings": 7,
+    "maxSavings": 7,
+    "minPct": 12,
+    "maxPct": 12
+  },
+  "variants": [
+    {
+      "title": "Variety — one of each",
+      "price": 53,
+      "unitCount": 4,
+      "pricePerUnit": 13.25,
+      "components": [
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Geranium Flower",
+          "shopifyVariantTitle": "Geranium Flower",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Mountain Cedarwood",
+          "shopifyVariantTitle": "Mountain Cedarwood",
+          "unitPrice": 15,
+          "lineTotal": 15
+        },
+        {
+          "qty": 1,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Wildcrafted Frankincense",
+          "shopifyVariantTitle": "Wildcrafted Frankincence",
+          "unitPrice": 15,
+          "lineTotal": 15
+        }
+      ],
+      "partsTotal": 60,
+      "savings": 7,
+      "savingsPct": 12
+    },
+    {
+      "title": "4x Geranium Flower",
+      "price": 53,
+      "unitCount": 4,
+      "pricePerUnit": 13.25,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Geranium Flower",
+          "shopifyVariantTitle": "Geranium Flower",
+          "unitPrice": 15,
+          "lineTotal": 60
+        }
+      ],
+      "partsTotal": 60,
+      "savings": 7,
+      "savingsPct": 12
+    },
+    {
+      "title": "4x Calming Lavender",
+      "price": 53,
+      "unitCount": 4,
+      "pricePerUnit": 13.25,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Calming Lavender",
+          "shopifyVariantTitle": "Calming Lavender",
+          "unitPrice": 15,
+          "lineTotal": 60
+        }
+      ],
+      "partsTotal": 60,
+      "savings": 7,
+      "savingsPct": 12
+    },
+    {
+      "title": "4x Mountain Cedarwood",
+      "price": 53,
+      "unitCount": 4,
+      "pricePerUnit": 13.25,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Mountain Cedarwood",
+          "shopifyVariantTitle": "Mountain Cedarwood",
+          "unitPrice": 15,
+          "lineTotal": 60
+        }
+      ],
+      "partsTotal": 60,
+      "savings": 7,
+      "savingsPct": 12
+    },
+    {
+      "title": "4x Wildcrafted Frankincence",
+      "price": 53,
+      "unitCount": 4,
+      "pricePerUnit": 13.25,
+      "components": [
+        {
+          "qty": 4,
+          "handle": "coconut-oil-deodorant",
+          "cluster": "deodorant",
+          "productName": "Natural Deodorant",
+          "format": "roll-on",
+          "scent": "Wildcrafted Frankincense",
+          "shopifyVariantTitle": "Wildcrafted Frankincence",
+          "unitPrice": 15,
+          "lineTotal": 60
+        }
+      ],
+      "partsTotal": 60,
+      "savings": 7,
+      "savingsPct": 12
+    }
+  ],
+  "scentCorrections": [
+    {
+      "from": "Wildcrafted Frankincence",
+      "to": "Wildcrafted Frankincense",
+      "handle": "coconut-oil-deodorant"
+    }
+  ]
+}
