@@ -251,7 +251,9 @@ day 30, so there is no revenue number to read until then, and the answer mix plu
 ladder participation are what the day-5 and day-10 budget decisions are made from.
 It used to print those gates to stdout with nothing scheduling it, which meant no
 gate would ever have been read. It now goes through `lib/notify.js` like every
-other agent in this fleet; `NOTIFY_DEFERRED=1` is what routes it into the digest
+other agent in this fleet; deferral into the digest is unconditional in
+`lib/notify.js` (the `NOTIFY_DEFERRED=1` in the cron line is vestigial — nothing
+reads it), so the report lands in the 5 AM digest
 rather than sending its own email.
 
 ✅ **INSTALLED 2026-08-12** (both lines, 08:30 and 08:45 UTC — server is UTC, so

@@ -52,3 +52,103 @@ test('past date advances to future Mon/Wed/Fri', () => {
   assert.ok([1, 3, 5].includes(day), `Expected Mon/Wed/Fri, got day ${day}`);
   assert.ok(d >= fixedNow, 'Result must not be before the anchor');
 });
+
+// ── lead-window reporting ─────────────────────────────────────────────────────
+// The runner drafts only items whose publish date is inside the BUFFER_DAYS lead
+// window, but reported an empty selection as "All calendar items are published or
+// scheduled. Nothing to do." — indistinguishable from a genuinely empty calendar.
+// That message hid a 12-day stall (last post written 2026-08-06) behind a daily
+// "✓ calendar-runner --run complete" in the scheduler log.
+
+import { selectWorkItems } from '../../agents/calendar-runner/index.js';
+
+const NOW = new Date('2026-08-18T00:00:00Z');
+const pending = (keyword, iso) => ({ keyword, slug: keyword, publishDate: new Date(iso) });
+
+test('selectWorkItems returns items inside the lead window', () => {
+  const items = [pending('a', '2026-08-20T15:00:00Z')];
+  const { workItems, deferred } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, statusOf: () => 'briefed',
+  });
+  assert.equal(workItems.length, 1);
+  assert.equal(deferred.length, 0);
+});
+
+test('selectWorkItems reports out-of-window items as deferred, not as nothing', () => {
+  const items = [pending('a', '2026-09-03T15:00:00Z')];
+  const { workItems, deferred } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, statusOf: () => 'briefed',
+  });
+  assert.equal(workItems.length, 0);
+  assert.equal(deferred.length, 1, 'a pending item outside the window is deferred, not absent');
+  assert.equal(deferred[0].keyword, 'a');
+});
+
+test('selectWorkItems excludes published and scheduled items entirely', () => {
+  const items = [pending('done', '2026-08-20T15:00:00Z'), pending('queued', '2026-08-20T15:00:00Z')];
+  const statusOf = (i) => (i.keyword === 'done' ? 'published' : 'scheduled');
+  const { workItems, deferred } = selectWorkItems(items, { now: NOW, bufferDays: 7, statusOf });
+  assert.equal(workItems.length, 0);
+  assert.equal(deferred.length, 0, 'finished items are not a backlog');
+});
+
+test('selectWorkItems sorts deferred items earliest-first so the report names the true next item', () => {
+  const items = [pending('later', '2026-10-01T15:00:00Z'), pending('sooner', '2026-09-03T15:00:00Z')];
+  const { deferred } = selectWorkItems(items, { now: NOW, bufferDays: 7, statusOf: () => 'briefed' });
+  assert.equal(deferred[0].keyword, 'sooner');
+});
+
+test('selectWorkItems ignores the lead window for a keyword-targeted run', () => {
+  const items = [pending('faraway', '2026-12-01T15:00:00Z')];
+  const { workItems } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, keyword: 'faraway', statusOf: () => 'briefed',
+  });
+  assert.equal(workItems.length, 1, '--keyword is an explicit override of JIT drafting');
+});
+
+test('selectWorkItems prefers an adjusted date over the calendar date', () => {
+  const item = { ...pending('a', '2026-09-03T15:00:00Z'), adjustedDate: new Date('2026-08-20T15:00:00Z') };
+  const { workItems } = selectWorkItems([item], { now: NOW, bufferDays: 7, statusOf: () => 'briefed' });
+  assert.equal(workItems.length, 1);
+});
+
+// ── stall detection ───────────────────────────────────────────────────────────
+// The 12-day stall was invisible because every daily run printed "✓ complete".
+// An honest log line is not enough on its own — nobody reads the scheduler log.
+// This is the condition worth an email: unwritten work exists AND nothing has
+// been drafted for longer than the calendar's own pacing would ever explain.
+
+import { detectDraftStall } from '../../agents/calendar-runner/index.js';
+
+const NOW2 = new Date('2026-08-18T00:00:00Z');
+
+test('detectDraftStall fires when nothing has been drafted and work is waiting', () => {
+  const stall = detectDraftStall({
+    lastDraftedAt: new Date('2026-08-06T00:00:00Z'),
+    pendingCount: 7, now: NOW2, maxIdleDays: 10,
+  });
+  assert.equal(stall.stalled, true);
+  assert.equal(stall.idleDays, 12);
+});
+
+test('detectDraftStall stays quiet while drafting is keeping pace', () => {
+  const stall = detectDraftStall({
+    lastDraftedAt: new Date('2026-08-15T00:00:00Z'),
+    pendingCount: 7, now: NOW2, maxIdleDays: 10,
+  });
+  assert.equal(stall.stalled, false);
+});
+
+test('detectDraftStall stays quiet when there is genuinely nothing to write', () => {
+  const stall = detectDraftStall({
+    lastDraftedAt: new Date('2026-06-01T00:00:00Z'),
+    pendingCount: 0, now: NOW2, maxIdleDays: 10,
+  });
+  assert.equal(stall.stalled, false, 'an empty calendar is not a stall');
+});
+
+test('detectDraftStall treats a never-drafted pipeline with pending work as stalled', () => {
+  const stall = detectDraftStall({ lastDraftedAt: null, pendingCount: 3, now: NOW2, maxIdleDays: 10 });
+  assert.equal(stall.stalled, true);
+  assert.equal(stall.idleDays, null);
+});
