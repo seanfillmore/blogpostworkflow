@@ -23,7 +23,7 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
-import { sliceVocSections, BLOG_VOC_HEADINGS } from '../../lib/voice-of-customer.js';
+import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
@@ -81,7 +81,11 @@ function loadAgentFeedback(agentName) {
 function loadVoiceOfCustomer() {
   try {
     const raw = readFileSync(join(ROOT, 'data', 'context', 'voice-of-customer.md'), 'utf8');
-    return sliceVocSections(raw, BLOG_VOC_HEADINGS).trim();
+    // vocForCopy before the text reaches an LLM that writes live storefront copy
+    // for a COSMETIC. The research sections legitimately name conditions
+    // ("CeraVe is the default recommendation for eczema") and that intel is kept
+    // on disk — but it must not be handed to a writer. See lib/voice-of-customer.js.
+    return vocForCopy(sliceVocSections(raw, BLOG_VOC_HEADINGS)).trim();
   } catch { return ''; }
 }
 

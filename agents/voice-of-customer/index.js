@@ -36,6 +36,8 @@ import {
   validateAnalysis,
   findUnsourcedQuotes,
   rankPersonas,
+  sanitizePersonas,
+  formatPersonaDrops,
   renderPersonasMarkdown,
   renderVoiceOfCustomerMarkdown,
 } from '../../lib/voice-of-customer.js';
@@ -272,6 +274,20 @@ export function buildAnalysisPrompt(corpus) {
     '  - Write every entry so it stands alone: someone reading that one line, with no',
     '    surrounding context, should understand it. Do not refer to a previous entry.',
     '',
+    '  HEALTH-CLAIM RULE — this one is enforced, not advisory. personas.json is copy input:',
+    '  its persona `name`/`summary` and its angle `label`/`objection_addressed`/`proof`/',
+    '  `hook_examples` are pasted straight into ad-copy prompts for a COSMETIC brand. Any of',
+    '  those fields that names a disease (eczema, psoriasis, dermatitis, rosacea, acne,',
+    '  infection, wound...), names a drug or prescription treatment (steroids, cortisone,',
+    '  prescription, medicated, over-the-counter...), claims to heal/cure/treat/prevent/remedy,',
+    '  or asserts clinical, dermatologist or FDA backing WILL BE DELETED before the file is',
+    '  written — the angle, or the whole persona if it is the name or summary. Say the same',
+    '  thing in cosmetic terms instead: "already tried everything and nothing worked",',
+    '  "chronically dry, itchy, cracked skin", "went from reapplying hourly to twice a day".',
+    '  `source_quotes` is the ONE exception and stays verbatim — it is the evidence record,',
+    '  not copy, so quote the reviewer exactly there and never launder a quote to survive',
+    '  this rule.',
+    '',
     `CORPUS (${corpus.records.length} records${corpus.partial ? ', PARTIAL — external sources incomplete' : ''}):`,
     '',
   ];
@@ -338,9 +354,43 @@ export async function runAnalysis({ corpus, client, root = ROOT }) {
 
 // ── artifacts ────────────────────────────────────────────────────────────────
 
+/**
+ * WHY THE SANITIZE IS HERE AND NOT A RETRY.
+ *
+ * runAnalysis retries on invalid or unsourced output, but the retry sends the SAME
+ * prompt with no feedback about what went wrong — it is a re-roll, not a correction.
+ * Health claims in the persona fields are not a random slip: the corpus is full of
+ * reviewers saying "eczema" and "steroids", so the model reaching for that language is
+ * systematic and a re-roll at Opus prices has no particular reason to come back clean.
+ * So prevention goes in the prompt (see buildAnalysisPrompt's HEALTH-CLAIM RULE) and
+ * enforcement is deterministic here: remove, never rewrite. Rewriting a violating angle
+ * — by a second LLM call or by snipping the offending clause — would have this agent
+ * inventing research to fill the hole, which is worse than losing an angle. The loss is
+ * loud: it is printed, notified, and recorded in personas.json itself.
+ *
+ * Applied to `analysis.personas` ONCE, before either renderer runs, so personas.json and
+ * personas.md cannot disagree about what survived.
+ */
 export function writeArtifacts({ analysis, corpus, root = ROOT }) {
   const contextDir = join(root, CONTEXT_DIR);
   mkdirSync(contextDir, { recursive: true });
+
+  const { personas: safePersonas, drops } = sanitizePersonas(analysis.personas || []);
+  if (drops.length) {
+    console.warn(`  ${drops.length} health-claim violation(s) removed from the persona set:`);
+    console.warn(formatPersonaDrops(drops));
+  }
+  if (!safePersonas.length) {
+    throw new Error(
+      `voice-of-customer: every persona carried a health claim in a copy-facing field, so nothing ` +
+      `is safe to write. Refusing to overwrite data/context/ with an empty persona set — last ` +
+      `month's artifacts stay in place.\n${formatPersonaDrops(drops)}`
+    );
+  }
+  // Both renderers read the sanitized set. renderPersonasMarkdown takes the whole
+  // analysis object, so hand it a shallow copy with the personas swapped rather than
+  // mutating the caller's analysis.
+  const safeAnalysis = { ...analysis, personas: safePersonas };
 
   const day = corpus.generated_at.slice(0, 10);
   const personasJson = {
@@ -348,7 +398,11 @@ export function writeArtifacts({ analysis, corpus, root = ROOT }) {
     corpus_ref: `corpus-${day}.json`,
     cluster: corpus.cluster,
     partial: corpus.partial,
-    personas: rankPersonas(analysis.personas),
+    // Recorded in the artifact, not only in the log: a month from now the only evidence
+    // that an angle existed and was removed is this file. Additive key — every consumer
+    // reads `.personas` and `.cluster` and ignores the rest.
+    health_claim_drops: drops,
+    personas: rankPersonas(safePersonas),
   };
 
   const personasJsonPath = join(contextDir, 'personas.json');
@@ -359,8 +413,8 @@ export function writeArtifacts({ analysis, corpus, root = ROOT }) {
   // renderer used to leave personas.json fresh and the two markdown files from
   // last month — three artifacts that are supposed to agree, silently skewed.
   const personasJsonBody = JSON.stringify(personasJson, null, 2);
-  const personasMdBody = renderPersonasMarkdown(analysis);
-  const vocMdBody = renderVoiceOfCustomerMarkdown(analysis, { partial: corpus.partial });
+  const personasMdBody = renderPersonasMarkdown(safeAnalysis);
+  const vocMdBody = renderVoiceOfCustomerMarkdown(safeAnalysis, { partial: corpus.partial });
 
   writeFileSync(personasJsonPath, personasJsonBody, 'utf8');
   writeFileSync(personasMdPath, personasMdBody, 'utf8');
@@ -374,9 +428,10 @@ export function writeArtifacts({ analysis, corpus, root = ROOT }) {
     record_count: corpus.records.length,
     persona_count: personasJson.personas.length,
     objection_count: (analysis.objections || []).length,
+    health_claim_drops: drops.length,
   }, null, 2), 'utf8');
 
-  return { personasJsonPath, personasMdPath, vocMdPath };
+  return { personasJsonPath, personasMdPath, vocMdPath, personaCount: personasJson.personas.length, drops };
 }
 
 // ── failure detection ────────────────────────────────────────────────────────
@@ -443,9 +498,17 @@ async function main() {
     console.log(`  wrote ${paths.vocMdPath}`);
 
     await notify({
-      subject: `Voice-of-customer refreshed — ${analysis.personas.length} personas`,
+      subject: `Voice-of-customer refreshed — ${paths.personaCount} personas`,
       body: `Corpus: ${corpus.records.length} records${corpus.partial ? ' (PARTIAL — external sources incomplete)' : ''}.\n`
-          + `Personas: ${analysis.personas.length}. Objections: ${(analysis.objections || []).length}.\n`
+          + `Personas: ${paths.personaCount} written of ${analysis.personas.length} produced. `
+          + `Objections: ${(analysis.objections || []).length}.\n`
+          // Never a silent loss: an angle removed here is an angle the ad pipeline can
+          // never brief, and the whole persona can go with it.
+          + (paths.drops.length
+            ? `\nHEALTH-CLAIM REMOVALS — ${paths.drops.length}. A cosmetic may not name a disease, a\n`
+              + `drug, or claim to treat/heal/cure/prevent, so these were deleted before writing:\n`
+              + `${formatPersonaDrops(paths.drops)}\n\n`
+            : '')
           + `Review data/context/personas.md, then git diff data/context/ to see what changed.`,
       status: 'success',
       category: 'voice-of-customer',

@@ -53,7 +53,7 @@ import { isValidJobId } from '../../lib/ad-studio-job.js';
 // every existing caller and test, is unchanged. See lib/ad-brief-plan.js's header.
 import {
   AWARENESS_TO_FORMAT_AWARENESS, formatsForAngle, angleRelevance,
-  allPersonaAngles, assertClusterCoverage,
+  allPersonaAngles, assertClusterCoverage, withheldNote,
 } from '../../lib/ad-brief-plan.js';
 
 export {
@@ -405,7 +405,10 @@ async function main() {
     const byId = new Map(all.map(pa => [pa.angle.id, pa]));
     const missing = args.angles.filter(id => !byId.has(id));
     if (missing.length) {
-      throw new Error(`ad-brief: unknown angle id(s): ${missing.join(', ')} — known ids: ${all.map(pa => pa.angle.id).join(', ')}`);
+      throw new Error(
+        `ad-brief: unknown angle id(s): ${missing.join(', ')} — known ids: ${all.map(pa => pa.angle.id).join(', ')}` +
+        withheldNote(missing, personasData)
+      );
     }
     selected = args.angles.map(id => byId.get(id));
   } else {

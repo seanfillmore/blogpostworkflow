@@ -32,6 +32,7 @@ import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js'
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
+import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
 import { notify } from '../../lib/notify.js';
 import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
 import { enforceBudget, formatBytes } from '../../lib/creatives-budget.js';
@@ -1172,6 +1173,39 @@ function extractVolumeMarkings(text) {
  * because an empty list is exactly how the image model invents a volume that was
  * never on the bottle (design probe: "6 fl. oz." rendered on a 2 fl oz bottle).
  */
+/**
+ * personas.json → the { name, angles: [flat strings] } shape copy.js's buildCopyPrompt
+ * renders as "WHAT THEY ALREADY TRIED", with every health claim withheld first.
+ *
+ * SANITIZE BEFORE PROJECTING. personas.json is copy input, written by an LLM reading real
+ * customer reviews — and real reviewers talk about their eczema and the steroids their
+ * doctor prescribed. The 2026-07-27 file did exactly that in persona p1, the top-ranked
+ * one, whose angles[0] is the documented default angle. So this projection was handing
+ * this very file's health-claims gate the language it exists to reject, one paid copy call
+ * at a time. Same posture as selectQuotableReviews: withhold up front rather than detect
+ * after paying.
+ *
+ * personas[0] becomes the first persona with a surviving angle, so an unusable top persona
+ * falls through to the next rather than emptying the brief. A null persona — every persona
+ * withheld, or no personas.json at all — is already this caller's degradation path.
+ *
+ * Exported and pure so the withholding is unit-testable without running main().
+ *
+ * @returns {{persona: {name:string, angles:string[]}|null, drops: object[]}}
+ */
+export function projectPersonaForCopy(personasData) {
+  const { personas, drops } = sanitizePersonas(personasData?.personas || []);
+  const chosen = personas.find(p => (p.angles || []).length > 0) || null;
+  if (!chosen) return { persona: null, drops };
+  return {
+    persona: {
+      name: chosen.name,
+      angles: (chosen.angles || []).map(a => a.objection_addressed || a.label).filter(Boolean),
+    },
+    drops,
+  };
+}
+
 export function buildLabelStrings({ manifestEntry, variant }) {
   const set = new Set();
   for (const s of extractQuotedLabelText(manifestEntry?.productDescription)) set.add(s);
@@ -1327,16 +1361,12 @@ async function main() {
   let pdpBody = '';
   if (!brief) {
     const personasData = loadJson(join(ROOT, 'data', 'context', 'personas.json'));
-    const rawPersona = personasData.personas?.[0] || null;
-    // copy.js's buildCopyPrompt expects persona.angles as flat strings ("WHAT THEY
-    // ALREADY TRIED"); personas.json's angles are objects, so project the field that
-    // best matches that label.
-    persona = rawPersona
-      ? {
-          name: rawPersona.name,
-          angles: (rawPersona.angles || []).map(a => a.objection_addressed || a.label).filter(Boolean),
-        }
-      : null;
+    const projected = projectPersonaForCopy(personasData);
+    if (projected.drops.length) {
+      console.warn(`  withheld ${projected.drops.length} health-claim violation(s) from the copy prompt:`);
+      console.warn(formatPersonaDrops(projected.drops));
+    }
+    persona = projected.persona;
 
     const site = loadJson(join(ROOT, 'config', 'site.json'));
     pdpBody = await fetchPdpBody(site.url, handle);

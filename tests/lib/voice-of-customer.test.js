@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   SKIN_CLUSTER_HANDLES,
   normalizeJudgemeReview,
@@ -10,12 +13,17 @@ import {
   AWARENESS_LEVELS,
   validateAnalysis,
   findUnsourcedQuotes,
+  sanitizeVocMarkdown,
+  vocForCopy,
+  sanitizeVocMarkdownWithReport,
   rankPersonas,
   renderPersonasMarkdown,
   renderVoiceOfCustomerMarkdown,
   sliceVocSections,
   BLOG_VOC_HEADINGS,
 } from '../../lib/voice-of-customer.js';
+
+const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // ── cluster definition ──────────────────────────────────────────────────────
 test('SKIN_CLUSTER_HANDLES is the exact five-handle list', () => {
@@ -465,4 +473,89 @@ test('findUnsourcedQuotes leaves empty quotes to validateAnalysis', () => {
   const out = findUnsourcedQuotes(analysis, PROVENANCE_CORPUS);
   assert.deepEqual(out, [], 'an empty quote is not an unsourced quote');
   assert.equal(validateAnalysis(analysis).ok, false, 'validateAnalysis is what rejects it');
+});
+
+// ── the VOC markdown reaches live storefront copy, so it needs the same gate ───
+// Found 2026-08-17: data/context/voice-of-customer.md carried the exact quote
+// from the 2026-08-16 incident ("prescription strength lotions, steroids...")
+// under "## Golden-nugget phrases" — a section defined as language worth using
+// in an ad VERBATIM. BLOG_VOC_HEADINGS is every section but `not_for`, so it
+// reached agents/blog-post-writer, and agents/pdp-builder is handed the whole
+// file. Both write live storefront copy for a COSMETIC; neither has a gate.
+// A verbatim review can be correctly sourced and still be an illegal claim.
+
+test('sanitizeVocMarkdown drops a bullet carrying a health claim', () => {
+  const md = [
+    '## Golden-nugget phrases',
+    '',
+    "- **'I have tried prescription strength lotions, steroids, you name it... to no avail.'** — 1 mention. > \"...Until Real Skin Care!!!!\"",
+    "- **'Zero crap added.'** — 2 mentions. > \"minimal, natural ingredients\"",
+    '',
+  ].join('\n');
+  const out = sanitizeVocMarkdown(md);
+  assert.ok(!out.includes('prescription'), 'claim survived');
+  assert.ok(!out.includes('steroids'), 'claim survived');
+  assert.ok(out.includes('Zero crap added.'), 'clean bullet was destroyed');
+  assert.ok(out.includes('## Golden-nugget phrases'), 'heading must survive');
+});
+
+test('sanitizeVocMarkdown keeps headings even when every bullet drops', () => {
+  const md = '## Objections\n\n- **eczema flare** — 3 mentions.\n';
+  const out = sanitizeVocMarkdown(md);
+  assert.ok(out.includes('## Objections'));
+  assert.ok(!out.includes('eczema'));
+});
+
+test('sanitizeVocMarkdown reports what it dropped', () => {
+  const md = '## Objections\n\n- **cures my eczema** — 1 mention.\n- **smells nice** — 4 mentions.\n';
+  const { markdown, dropped } = sanitizeVocMarkdownWithReport(md);
+  assert.equal(dropped.length, 1);
+  assert.match(dropped[0].reason, /disease|drug|therapeutic/);
+  assert.ok(markdown.includes('smells nice'));
+});
+
+test('sanitizeVocMarkdown leaves clean documents byte-identical', () => {
+  const md = '## Objections\n\n- **too greasy** — 5 mentions.\n\n## Trigger points\n\n- **winter** — 2 mentions.\n';
+  assert.equal(sanitizeVocMarkdown(md), md);
+});
+
+test('REGRESSION: the committed Golden-nugget section carries no health claim', () => {
+  // Scoped to Golden-nugget deliberately. The other VOC sections are RESEARCH —
+  // "CeraVe is the default recommendation for eczema" is competitive intel, and
+  // destroying it would throw away analysis the generator paid for. Those are
+  // handled at the consumer boundary instead (see the vocForCopy tests below).
+  //
+  // Golden-nugget is different in kind: its stated contract is "striking customer
+  // language worth putting in an ad VERBATIM". A claim sitting there is not
+  // context a writer might misuse — it is an instruction to publish it.
+  const p = join(ROOT_DIR, 'data', 'context', 'voice-of-customer.md');
+  if (!existsSync(p)) return; // not generated on a fresh checkout
+  const golden = sliceVocSections(readFileSync(p, 'utf8'), ['## Golden-nugget phrases']);
+  const { dropped } = sanitizeVocMarkdownWithReport(golden);
+  assert.deepEqual(
+    dropped.map((d) => d.text.slice(0, 70)), [],
+    'Golden-nugget phrases carries a health claim and that section is used verbatim in ads',
+  );
+});
+
+test('vocForCopy gates every section, not just Golden-nugget', () => {
+  // The consumer boundary. blog-post-writer takes BLOG_VOC_HEADINGS (every
+  // section but not_for) and pdp-builder takes the file WHOLE, so research
+  // sections reach a copy model too and must be gated on the way out.
+  const md = [
+    '## Objections', '',
+    '- **CeraVe is the default recommendation for eczema** — 9 mentions.',
+    '- **too greasy** — 5 mentions.', '',
+  ].join('\n');
+  const out = vocForCopy(md);
+  assert.ok(!out.includes('eczema'), 'research claim reached the copy writer');
+  assert.ok(out.includes('too greasy'));
+  assert.ok(out.includes('## Objections'));
+});
+
+test('vocForCopy on the real committed file is claim-free', () => {
+  const p = join(ROOT_DIR, 'data', 'context', 'voice-of-customer.md');
+  if (!existsSync(p)) return;
+  const { dropped } = sanitizeVocMarkdownWithReport(vocForCopy(readFileSync(p, 'utf8')));
+  assert.deepEqual(dropped.map((d) => d.text.slice(0, 70)), []);
 });

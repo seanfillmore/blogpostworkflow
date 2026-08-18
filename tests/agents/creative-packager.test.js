@@ -310,4 +310,52 @@ test('loadPersonas returns null when personas.json is absent', () => {
   assert.equal(loadPersonas(mkdtempSync(join(tmpdir(), 'packager-'))), null);
 });
 
+// ── health claims are withheld from the copy writer, on the way IN ────────────
+//
+// buildCopyBrief hands persona.name, persona.summary, angle.label, objection_addressed,
+// proof and hook_examples straight to Claude. personas.json is generated monthly by an LLM
+// reading real reviews, and the live 2026-07-27 file named steroids, prescriptions and
+// eczema in every one of those fields on its TOP-RANKED persona — the default. Catching
+// that at the health-claims gate after the copy call is detection without prevention; the
+// same lesson selectQuotableReviews already encodes for reviews.
+//
+// The fixture above is deliberately that shape: "The eczema flare parent" whose only angle
+// is "The steroid-cream off-ramp".
+
+test('loadPersonas withholds a persona whose name and angles carry health claims', () => {
+  const root = personasRoot(PERSONAS);
+  const loaded = loadPersonas(root);
+  assert.deepEqual(loaded.personas.map((p) => p.id), ['ingredient-reader'],
+    'the eczema/steroid persona must never reach a copy prompt');
+  // Fall back to the NEXT persona rather than to no persona at all.
+  const brief = buildCopyBrief(AD, { personas: loaded });
+  assert.equal(brief.angle, 'Four ingredients, that is it');
+  assert.equal(brief.persona, 'The ingredient reader');
+  assert.ok(!buildCopyPrompt(brief).match(/steroid|eczema/i), 'nothing withheld may survive into the prompt');
+});
+
+test('loadPersonas strips only the offending hook and keeps the angle', () => {
+  const root = personasRoot({
+    personas: [{
+      id: 'p1', name: 'The dry skin buyer', summary: 'Nothing has worked.',
+      angles: [{
+        id: 'p1a1', label: 'Tried everything', awareness: 'problem-aware',
+        objection_addressed: 'Why would this be different?', proof: 'Reviewers say it lasts all day',
+        hook_examples: ['I tried everything — until this.', 'It healed my cracked hands.'],
+        source_quotes: ['q'],
+      }],
+    }],
+  });
+  const loaded = loadPersonas(root);
+  assert.deepEqual(loaded.personas[0].angles[0].hook_examples, ['I tried everything — until this.']);
+  assert.match(buildCopyPrompt(buildCopyBrief(AD, { personas: loaded })), /I tried everything/);
+});
+
+test('loadPersonas returns null when EVERY persona is withheld, so callers degrade', () => {
+  const root = personasRoot({ personas: [PERSONAS.personas[0]] });
+  assert.equal(loadPersonas(root), null, 'never an empty persona set, never a throw');
+  // Same documented degradation as a missing file: the competitor angle.
+  assert.equal(buildCopyBrief(AD, { personas: loadPersonas(root) }).angle, 'competitor-derived angle');
+});
+
 console.log('✓ creative-packager unit tests pass');

@@ -20,7 +20,6 @@
 
 ## Golden-nugget phrases
 
-- **'I have tried prescription strength lotions, steroids, you name it... to no avail.'** — 1 mention. > "I have tried prescription strength lotions, steroids, you name it, and everything under the sun over the counter to no avail.... Until Real Skin Care!!!!"
 - **'dude as soon as you put it on it just ABSORBS.'** — 1 mention. > "dude as soon as you put it on it just ABSORBS. My hands are in water a lot at my job and this locks moisture in better than any B & B Works or Body shop product. It also doesn't burn my cuts."
 - **'Zero crap added.'** — 2 mentions. > "I prefer anything with minimal, natural ingredients and this lotion definitely is a home run there. Zero crap added."
 - **'Finally, a soap without anything added.'** — 1 mention. > "this soap is absolutely the BEST. Finally, a soap without anything added. For those with sensitivity issues this soap is a huge blessing. Nothing but pure coconut."
@@ -29,7 +28,7 @@
 - **'It just glides onto the skin like butter!'** — 1 mention. > "The smell is perfect & it just glides onto the skin like butter! It doesnt leave a greasy residue like some other brands!"
 - **'THE moisturizer for Wisconsin winters for my whole family.'** — 1 mention. > "I'm obsessed with all things Real Skin Care. This is THE moisturizer for Wisconsin winters for my whole family."
 - **'It maybe be a tiny 4oz jar but has the power of big bottle of lotion.'** — 1 mention. > "It maybe be a tiny 4oz jar but has the power of big bottle of lotionA little bit on my heels and instantly moisture"
-- **'Worth every cent.' — a mother after a month of before/after eczema photos** — 2 mentions. > "I am so glad that after months of struggling to find relief for her, we were recommended this product. Worth every cent."
+- **'Worth every cent.' — a mother after a month of before/after photos** — 2 mentions. > "I am so glad that after months of struggling to find relief for her, we were recommended this product. Worth every cent."
 - **'A lot of companies talk the environmental talk, but don't walk the walk. This company walks the walk.'** — 2 mentions. > "A lot of companies talk the environmental talk, but don't walk the walk. By this, I mean they package their soap in paper and then in boxes. This company, real SKIN CARE, walks the walk."
 - **'It's so fluffy!!!' — on the foaming hand soap lather** — 2 mentions. > "It's so fluffy!!! This soap provided a nice foamy lather. One pump was sufficient enough to get the job done."
 - **'It's not some fake perfumey fragrance.'** — 2 mentions. > "The lavender scent is just enough and smells like a quality essential oil that was used. It's not some fake perfumey fragrance."
