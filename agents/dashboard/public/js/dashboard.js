@@ -1640,7 +1640,8 @@ function renderSeoImpact(d) {
   var dStr = (dlt >= 0 ? '+' : '−') + money(Math.abs(dlt));
 
   document.getElementById('seo-impact-note').textContent =
-    (win.start || '') + ' → ' + (win.end || '') + ' (' + days + 'd, organic search)';
+    (win.start || '') + ' → ' + (win.end || '') + ' (' + days + 'd, organic search'
+    + (s.revenue_source === 'shopify-orders' ? ', Shopify orders' : '') + ')';
 
   // ── weekly revenue trend: inline SVG bars ──
   var trend = (s.revenue_trend || []);
@@ -1693,7 +1694,15 @@ function renderSeoImpact(d) {
   document.getElementById('seo-impact-body').innerHTML =
     '<div style="font-size:22px;font-weight:700;margin-bottom:2px">' + money(t.organic_revenue) +
       ' <span style="font-size:14px;font-weight:600;color:' + dColor + '">' + dStr + ' vs prior</span></div>' +
-    '<div style="color:#6b7280;font-size:12px;margin-bottom:8px">' + (t.organic_conversions || 0) + ' conversion events (GA4 key events, not purchases)</div>' +
+    '<div style="color:#6b7280;font-size:12px;margin-bottom:8px">' +
+      (s.revenue_source === 'shopify-orders'
+        ? (t.organic_conversions || 0) + ' Shopify orders (landing_site ground truth)'
+          + (t.organic_revenue_ga4 != null
+              ? ' &middot; GA4 modelled ' + money(t.organic_revenue_ga4)
+                + ' (' + ((t.ga4_gap || 0) >= 0 ? '+' : '−') + money(Math.abs(t.ga4_gap || 0)) + ')'
+              : '')
+        : (t.organic_conversions || 0) + ' conversion events (GA4 key events, not purchases)') +
+      '</div>' +
     chart +
     table +
     (clusters ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">Revenue by cluster &mdash; where to push harder</div>' + clusters + '</div>' : '') +

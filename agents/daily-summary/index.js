@@ -490,7 +490,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     seoImpactSection = `
       <div class="section quick-wins">
         <div class="section-title">&#128200; What's Working &mdash; Organic Revenue (last ${windowDays} days)</div>
-        <p style="font-size:13px;margin:0 0 12px 0;"><strong>${money(t.organic_revenue)}</strong> organic revenue &middot; <span style="color:${deltaColor};font-weight:600;">${deltaStr}</span> vs prior period &middot; ${t.organic_conversions} conversion events</p>
+        <p style="font-size:13px;margin:0 0 12px 0;"><strong>${money(t.organic_revenue)}</strong> organic revenue &middot; <span style="color:${deltaColor};font-weight:600;">${deltaStr}</span> vs prior period &middot; ${t.organic_conversions} ${seoImpact.revenue_source === 'shopify-orders' ? 'Shopify orders' : 'conversion events'}${seoImpact.revenue_source === 'shopify-orders' && t.organic_revenue_ga4 != null ? ` &middot; <span style="color:#6b7280;">GA4 modelled ${money(t.organic_revenue_ga4)}</span>` : ''}</p>
         ${topPages}
         ${topClusters ? `<div class="qw-meta" style="margin-top:10px;"><strong>By cluster:</strong> ${topClusters}</div>` : ''}
         ${notConv ? `<div class="qw-meta" style="margin-top:6px;color:#92400e;"><strong>Traffic, no sales:</strong> ${notConv} &mdash; conversion opportunities</div>` : ''}
