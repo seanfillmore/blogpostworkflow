@@ -238,3 +238,27 @@ test('no angle in the committed personas.json is withheld', () => {
   assert.deepEqual(withheldAngleIds(PERSONAS), [],
     'a withheld angle is an angle the ad pipeline can never brief — repair personas.json instead');
 });
+
+// planBriefs must give the SAME format answer the agent will act on. The dashboard panel
+// tells the operator what a Generate click is about to do, and a panel that promises
+// `offer-focused` while the agent spends the call on `giveaway-entry` is the drift this
+// whole module exists to prevent — arriving through the one input the plan does not read
+// from disk. The caller supplies the giveaway verdict; both callers get it from
+// lib/giveaway-claim-source.js.
+test('planBriefs reflects a live giveaway in the format it promises', () => {
+  const product = { handle: 'coconut-soap', title: 'Coconut Soap' };
+  const off = planBriefs({ personasData: PERSONAS, product });
+  const on = planBriefs({ personasData: PERSONAS, product, giveawayLive: true });
+
+  assert.equal(on.copyCalls, off.copyCalls, 'a giveaway changes WHICH format, never how many calls');
+  assert.equal(on.angleCount, off.angleCount);
+
+  const productAware = on.angles.filter(a => a.awareness === 'product-aware');
+  assert.ok(productAware.length, 'this product has a product-aware angle to check');
+  for (const a of productAware) assert.equal(a.format, 'giveaway-entry');
+  for (const a of off.angles.filter(x => x.awareness === 'product-aware')) assert.equal(a.format, 'offer-focused');
+
+  // Nothing else moves.
+  const unchanged = (plan) => plan.angles.filter(a => a.awareness !== 'product-aware').map(a => [a.angleId, a.format]);
+  assert.deepEqual(unchanged(on), unchanged(off));
+});

@@ -272,3 +272,61 @@ assert.throws(
   assert.match(prompt, /VARIANT: lavender/);
   assert.ok(!/NO added fragrance/i.test(prompt), 'a scented variant must not get the no-fragrance instruction');
 }
+
+// ── the optional giveaway block (added 2026-08-18) ───────────────────────────────────
+//
+// Modelled on `variant` above, deliberately: an optional block that contributes NOTHING
+// when absent. The no-giveaway prompt is the one every existing concept is written from, so
+// it must not drift by so much as a newline just because giveaways became possible.
+{
+  const base = {
+    format: formatByKey('offer-focused'),
+    product: { title: 'Coconut Bar Soap', handle: 'coconut-soap', priceLabel: '$12' },
+    pdpBody: 'saponified coconut oil, nothing else',
+    persona: { name: 'Household switcher', angles: ['the bar you put out for guests'] },
+    variant: 'pure-unscented',
+    reviews: ['It lasts for ages.'],
+  };
+
+  // BYTE-IDENTICAL when no giveaway is passed. Compared against a prompt built from an
+  // explicit `giveaway: null` and from omitting the key entirely — both are "no giveaway".
+  const without = buildCopyPrompt(base);
+  assert.equal(buildCopyPrompt({ ...base, giveaway: null }), without, 'giveaway: null must change nothing');
+  assert.equal(buildCopyPrompt({ ...base, giveaway: undefined }), without, 'giveaway: undefined must change nothing');
+  assert.ok(!/GIVEAWAY/.test(without), 'no giveaway language leaks into an ordinary prompt');
+  assert.match(without, /from: pdp, catalog, brandKit, reviews —/, 'the source list is unchanged');
+
+  // With a giveaway, the writer is told the three things it cannot get wrong: what the
+  // prize is, when entries close, and that the ask is an ENTRY rather than a purchase.
+  const giveaway = {
+    name: 'Official Rules — "Win 36 Free Bars" Giveaway',
+    closesOn: 'September 14, 2026',
+    prizes: 'Thirty-six (36) bars of Pure Unscented Moisturizing Coconut Soap, shipped over three (3) years.',
+    entryPeriod: 'The Promotion begins at 12:00 AM CT on August 18, 2026 and ends at 11:59 PM CT on September 14, 2026.',
+    howToEnter: 'No purchase necessary. To enter, submit your email address and first name.',
+    eligibility: 'Open to legal residents of the fifty (50) United States who are eighteen (18) years of age or older.',
+  };
+  const withGiveaway = buildCopyPrompt({ ...base, giveaway });
+
+  assert.match(withGiveaway, /Thirty-six \(36\) bars/, 'the prize is stated, verbatim from the rules');
+  assert.match(withGiveaway, /three \(3\) years/, 'including its duration — the strong hook');
+  assert.match(withGiveaway, /Entries close September 14, 2026/, 'the deadline is stated');
+  assert.match(withGiveaway, /ENTRY \(an email address\), NOT a purchase/, 'the goal is an entry, not a sale');
+  assert.match(withGiveaway, /NO PURCHASE NECESSARY/);
+  assert.match(withGiveaway, /Open to legal residents of the fifty \(50\) United States/, 'eligibility is quoted too');
+
+  // The claim instruction must actually OFFER the new sourceId, or the writer would cite a
+  // source it was never told it had — and the gate would reject copy that was correct.
+  assert.match(withGiveaway, /from: pdp, catalog, brandKit, reviews, giveaway —/);
+
+  // A call to action asserts no fact. Without this the writer marks "Enter to win" factual
+  // and burns the concept looking for a quote that does not exist in a legal document.
+  assert.match(withGiveaway, /"Enter to win".*factual: false/s);
+  // ...but a DATE is a fact, and must not get swept into the same exemption.
+  assert.match(withGiveaway, /A DATE is a fact/);
+
+  // The block is additive: everything the ordinary prompt said is still said.
+  assert.match(withGiveaway, /VARIANT: pure-unscented/);
+  assert.match(withGiveaway, /NO HEALTH CLAIMS/);
+  assert.match(withGiveaway, /saponified coconut oil, nothing else/);
+}

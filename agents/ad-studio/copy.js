@@ -4,7 +4,8 @@
 // Copy is where revenue is made, so this runs on the flagship model.
 
 /**
- * @param {{format:object, product:object, pdpBody:string, persona?:object, tactics?:string[], variant?:string}} args
+ * @param {{format:object, product:object, pdpBody:string, persona?:object, tactics?:string[],
+ *          variant?:string, giveaway?:object}} args
  * @returns {string}
  */
 // How many reviews the writer is shown, and how much of each.
@@ -21,7 +22,54 @@ const REVIEW_CHARS = 320;
 // sibling variant's scent. Matches "pure-unscented", "unscented", "fragrance-free", etc.
 const UNSCENTED_VARIANT_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
 
-export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant }) {
+// The four sources claims.js has always held. `giveaway` joins them ONLY while an Entry
+// Period is open (lib/giveaway-claim-source.js decides), so with no giveaway running this
+// list — and therefore the whole prompt — is byte-identical to what it has always been.
+const BASE_SOURCE_IDS = ['pdp', 'catalog', 'brandKit', 'reviews'];
+
+/**
+ * The giveaway instruction block, or '' when no giveaway is running.
+ *
+ * Shaped exactly like variantBlock above, and for the same reason: an optional block that
+ * contributes NOTHING when absent, so the no-giveaway prompt cannot drift by so much as a
+ * newline. It is interpolated immediately after variantBlock, on the same line.
+ *
+ * Everything factual it puts in front of the writer is a VERBATIM section of the published
+ * Official Rules, quoted rather than summarised. That is the whole discipline: the writer is
+ * never told "the prize is a three-year supply of soap" in this file's own words, because a
+ * sentence written here is a sentence no source contains, and the writer would quite
+ * reasonably repeat it into an ad. It is pointed at the prize text and told to quote it.
+ */
+function buildGiveawayBlock(giveaway) {
+  if (!giveaway) return '';
+  return `
+GIVEAWAY RUNNING — THIS IS A LEAD AD, NOT A SALES AD.
+The thing this ad asks for is an ENTRY (an email address), NOT a purchase. Do not ask anyone
+to buy, do not lead with a price, and never imply that buying helps: NO PURCHASE NECESSARY,
+and a purchase does not improve anyone's chances of winning. Entries close ${giveaway.closesOn}.
+The SIZE of the prize is the hook — quote its full quantity and duration out of the PRIZES
+text below rather than settling for "a free bar".
+
+OFFICIAL RULES (a source you may cite as "giveaway") — verbatim, and the ONLY authority for
+what the prize is, who may enter, and when entries close:
+
+  PRIZES: ${giveaway.prizes}
+
+  ENTRY PERIOD: ${giveaway.entryPeriod}
+
+  HOW TO ENTER: ${giveaway.howToEnter}
+
+  ELIGIBILITY: ${giveaway.eligibility}
+
+Every prize detail, quantity, value and date you state must be quoted from the text above
+with sourceId "giveaway", under the same contiguous-verbatim-substring rule as every other
+source. A prize or a date that is not in that text is rejected before anything renders.
+A call to action asserts no fact — "Enter to win", "Enter free", "Free to enter" are
+factual: false. So is urgency with no number in it ("Closing soon"). A DATE is a fact.
+`;
+}
+
+export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway }) {
   const zoneList = format.zones
     .map(z => {
       const cap = format.zoneCapacity?.[z];
@@ -43,6 +91,8 @@ export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, re
         : '') +
       '\n'
     : '';
+  const giveawayBlock = buildGiveawayBlock(giveaway);
+  const sourceIds = giveaway ? [...BASE_SOURCE_IDS, 'giveaway'] : BASE_SOURCE_IDS;
   return `You are writing the copy for a single static ad for Real Skin Care.
 
 FORMAT: ${format.key} — ${format.name}
@@ -50,7 +100,7 @@ AWARENESS LEVEL: ${format.awareness}
 LAYOUT: ${format.layoutBrief}
 
 PRODUCT: ${product.title} (${product.handle}) — ${product.priceLabel}
-${variantBlock}
+${variantBlock}${giveawayBlock}
 PRODUCT PAGE COPY (a source you may cite as "pdp"):
 ${pdpBody}
 
@@ -80,7 +130,7 @@ RULES:
   only quote that fits carries such language, pick a different quote.
 - Do not invent counts, percentages, volumes, timeframes, awards or third-party endorsements.
 - EVERY factual statement must be traceable. For each, set factual: true, name a sourceId
-  from: pdp, catalog, brandKit, reviews — and quote the exact supporting phrase in evidence.
+  from: ${sourceIds.join(', ')} — and quote the exact supporting phrase in evidence.
   The evidence must be a CONTIGUOUS, VERBATIM SUBSTRING copied from that ONE named source —
   never assembled, never joined from two places, never reworded, and never spanning two
   separate facts. It is checked before anything renders, by exact substring match, and
