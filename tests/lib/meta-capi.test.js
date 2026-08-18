@@ -197,13 +197,12 @@ test('an alert that fails to send cannot break the entry', async () => {
 });
 
 // ── token resolution ─────────────────────────────────────────────────────────
-// The dashboard runs under PM2, which does NOT source .env. Verified 2026-08-17
-// on the production box: FACEBOOK_ACCESS_TOKEN was absent from
-// /proc/<pid>/environ, so the entry route's `process.env.FACEBOOK_ACCESS_TOKEN`
-// was undefined and EVERY live entry called sendLeadEvent with no token. It
-// returned a silent false. The Lead events that existed in the dataset came from
-// hand-run scripts, which DO load .env — which is precisely why the endpoint
-// looked verified and was not.
+// Defence in depth for a caller with no hydration step. The dashboard itself is
+// fine — it calls hydrateProcessEnv(loadEnvAuth()) at bootstrap, and a real entry
+// through the live endpoint took the dataset's Lead count 6 -> 7 on 2026-08-17.
+// But a cron script or one-off passing a bare process.env value through would get
+// undefined, and without this fallback that is a silent false and a lost
+// conversion.
 
 test('resolveLeadAccessToken prefers process.env', async () => {
   const { resolveLeadAccessToken } = await import('../../lib/meta-capi.js');
