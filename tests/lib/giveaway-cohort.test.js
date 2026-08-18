@@ -8,7 +8,10 @@ import { computeEntryPurchaseCohort, entryValue } from '../../lib/giveaway/cohor
 const NOW = new Date('2026-12-01T00:00:00Z');
 const daysAgo = (n) => new Date(NOW.getTime() - n * 86400000).toISOString();
 const entrant = (email, enteredDaysAgo) => ({ email, properties: { gv_entered_at: daysAgo(enteredDaysAgo) } });
-const order = (email, atDaysAgo, total) => ({ email, created_at: daysAgo(atDaysAgo), total_price: String(total) });
+const order = (email, atDaysAgo, total, extra = {}) => ({
+  id: Math.floor(Math.random() * 1e9), email, created_at: daysAgo(atDaysAgo),
+  total_price: String(total), source_name: 'web', landing_site: '/', ...extra,
+});
 
 test('an entrant whose window has not elapsed is excluded from that window entirely', async () => {
   // The trap: counting them as a non-purchaser drives the rate toward zero
@@ -100,14 +103,14 @@ test('rates are percentages and revenue-per-entrant divides by the MATURED denom
 test('entryValue prefers the widest matured window and says which basis it used', async () => {
   const profiles = [entrant('a@b.com', 100), entrant('b@b.com', 100)];
   const c = computeEntryPurchaseCohort(profiles, [order('a@b.com', 20, 80)], { now: NOW });
-  const v = entryValue(c);
+  const v = entryValue(c, { segment: 'blended' });
   assert.equal(v.basis, '90d', 'the widest matured window is the most complete picture');
   assert.equal(v.value, 40, '80 over 2 matured entrants');
 });
 
 test('entryValue falls back to since-entry when nothing has matured, and labels it', async () => {
   const c = computeEntryPurchaseCohort([entrant('a@b.com', 3)], [order('a@b.com', 1, 20)], { now: NOW });
-  const v = entryValue(c);
+  const v = entryValue(c, { segment: 'blended' });
   assert.match(v.basis, /no window matured/, 'the caller must not mistake this for a 90-day figure');
   assert.equal(v.value, 20);
 });
@@ -117,4 +120,100 @@ test('an empty campaign returns nulls rather than NaN or 0%', async () => {
   assert.equal(c.sinceEntry.rate, null);
   assert.equal(c.windows[30].rate, null);
   assert.equal(c.windows[90].revenuePerEntrant, null);
+});
+
+
+// ── existing customers ───────────────────────────────────────────────────────
+// A giveaway advertised to a warm audience always pulls in people who have
+// already bought. They repurchase at the brand's ~18-22.5% baseline whether or
+// not they saw the ad, so blending them inflates the rate and corrupts CAC —
+// paying to "acquire" an existing customer is not acquisition.
+
+test('an entrant with a prior order is segmented as existing, not new', async () => {
+  const c = computeEntryPurchaseCohort(
+    [entrant('old@b.com', 40), entrant('fresh@b.com', 40)],
+    [order('old@b.com', 200, 50)],
+    { now: NOW },
+  );
+  assert.equal(c.segments.existing.entrants, 1);
+  assert.equal(c.segments.new.entrants, 1);
+});
+
+test('the blended rate hides what the segments show — this is the whole point', async () => {
+  // Existing customer buys after entering (they were going to anyway); the new
+  // entrant does not. Blended reads 50%; acquisition is actually 0%.
+  const c = computeEntryPurchaseCohort(
+    [entrant('old@b.com', 40), entrant('fresh@b.com', 40)],
+    [order('old@b.com', 200, 50), order('old@b.com', 20, 60)],
+    { now: NOW },
+  );
+  assert.equal(c.windows[30].rate, 50, 'blended looks like a 50% conversion rate');
+  assert.equal(c.segments.new.windows[30].rate, 0, 'but nobody NEW converted');
+  assert.equal(c.segments.existing.windows[30].rate, 100);
+});
+
+test('entryValue defaults to the NEW segment, because that is what sets a CAC ceiling', async () => {
+  const c = computeEntryPurchaseCohort(
+    [entrant('old@b.com', 40), entrant('fresh@b.com', 40)],
+    [order('old@b.com', 200, 50), order('old@b.com', 20, 60)],
+    { now: NOW },
+  );
+  assert.equal(entryValue(c).segment, 'new');
+  assert.equal(entryValue(c).value, 0, 'a returning buyer must not inflate the acquisition value');
+  assert.equal(entryValue(c, { segment: 'blended' }).value, 30, '60 over 2 blended entrants');
+});
+
+test('a prior order beyond the lookback does not mark someone existing, and the bound is published', async () => {
+  const c = computeEntryPurchaseCohort([entrant('a@b.com', 1)], [order('a@b.com', 900, 40)], { now: NOW });
+  assert.equal(c.segments.existing.entrants, 0, '900 days is past the 730-day lookback');
+  assert.equal(c.segments.new.entrants, 1);
+  assert.equal(c.priorLookbackDays, 730, 'the boundary must never be invisible');
+});
+
+// ── junk orders ──────────────────────────────────────────────────────────────
+// Raw Shopify orders include admin previews, TEST-discount orders, cancellations
+// and $0 orders. lib/order-attribution.js states counting them is never allowed.
+
+test('a cancelled order is not a conversion', async () => {
+  const c = computeEntryPurchaseCohort(
+    [entrant('a@b.com', 40)],
+    [order('a@b.com', 30, 50, { cancelled_at: daysAgo(29) })],
+    { now: NOW },
+  );
+  assert.equal(c.windows[30].purchasers, 0);
+  assert.equal(c.excludedJunkOrders, 1, 'excluded visibly, not silently');
+});
+
+test('a $0 order is not a conversion', async () => {
+  const c = computeEntryPurchaseCohort([entrant('a@b.com', 40)], [order('a@b.com', 30, 0)], { now: NOW });
+  assert.equal(c.windows[30].purchasers, 0);
+  assert.equal(c.excludedJunkOrders, 1);
+});
+
+test('an admin-preview order is not a conversion', async () => {
+  const c = computeEntryPurchaseCohort(
+    [entrant('a@b.com', 40)],
+    [order('a@b.com', 30, 50, { landing_site: '/online_store_preview?x=1' })],
+    { now: NOW },
+  );
+  assert.equal(c.windows[30].purchasers, 0);
+  assert.equal(c.excludedJunkOrders, 1);
+});
+
+test('a junk order before entry does not make someone an existing customer either', async () => {
+  const c = computeEntryPurchaseCohort(
+    [entrant('a@b.com', 40)],
+    [order('a@b.com', 200, 0)],
+    { now: NOW },
+  );
+  assert.equal(c.segments.existing.entrants, 0, 'a $0 order is not a purchase history');
+  assert.equal(c.segments.new.entrants, 1);
+});
+
+test('contact_email and customer.email are joined when the top-level email is absent', async () => {
+  const base = order('x@b.com', 30, 40);
+  delete base.email;
+  base.contact_email = 'a@b.com';
+  const c = computeEntryPurchaseCohort([entrant('a@b.com', 40)], [base], { now: NOW });
+  assert.equal(c.windows[30].purchasers, 1, 'Shopify does not always populate the top-level email');
 });

@@ -17,12 +17,14 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listProfilesWithConsent } from '../../lib/klaviyo-profiles.js';
 import { summarizeEntrants } from '../../lib/giveaway/summarize.js';
-import { computeEntryPurchaseCohort, entryValue } from '../../lib/giveaway/cohort.js';
-import { getOrders } from '../../lib/shopify.js';
+import { computeEntryPurchaseCohort, entryValue, PRIOR_LOOKBACK_DAYS } from '../../lib/giveaway/cohort.js';
+import { fetchCampaignSpend, evaluateSpendGate, resolveAccessToken } from '../../lib/giveaway/meta-spend.js';
+import { getAllOrders } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const { listId } = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
+const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
+const { listId, metaCampaignId } = config;
 const OUT_DIR = join(ROOT, 'data', 'reports', 'giveaway');
 
 const profiles = await listProfilesWithConsent(listId);
@@ -35,22 +37,46 @@ const summary = summarizeEntrants(profiles);
 // to email rather than Meta. See lib/giveaway/cohort.js.
 //
 // A Shopify outage must not cost the daily entrant report, so this degrades to
-// null rather than throwing. 120 days covers the widest window plus headroom.
+// null rather than throwing.
+//
+// The lookback is PRIOR_LOOKBACK_DAYS, not the widest measurement window: the
+// cohort has to see orders from BEFORE each entry to tell a first-time buyer
+// from a returning one. That is far more than 250 orders, so it uses the
+// paginating getAllOrders — getOrders takes one page and stops at 250 with no
+// error, which would silently mark long-standing customers as new.
 let cohort = null;
+let ordersTruncated = false;
 try {
   const to = new Date();
-  const from = new Date(to.getTime() - 120 * 86400000);
-  const { rawOrders } = await getOrders(from.toISOString(), to.toISOString());
-  cohort = computeEntryPurchaseCohort(profiles, rawOrders, { now: to });
+  const from = new Date(to.getTime() - PRIOR_LOOKBACK_DAYS * 86400000);
+  const { orders, truncated } = await getAllOrders(from.toISOString(), to.toISOString());
+  ordersTruncated = truncated;
+  cohort = computeEntryPurchaseCohort(profiles, orders, { now: to });
 } catch (e) {
   console.error('[giveaway] cohort skipped:', e.message);
 }
+
+// Actual spend, not budget x days. See lib/giveaway/meta-spend.js.
+const spend = await fetchCampaignSpend({
+  campaignId: metaCampaignId,
+  accessToken: resolveAccessToken(),
+});
+const spendGate = spend && !spend.error && cohort
+  ? evaluateSpendGate({
+    spend: spend.spend,
+    entrants: summary.total,
+    entryValue: entryValue(cohort),
+  })
+  : null;
 
 const report = {
   generatedAt: new Date().toISOString(),
   stillSubscribed: subscribed,
   ...summary,
   cohort,
+  ordersTruncated,
+  spend: spend ?? null,
+  spendGate: spendGate ?? null,
 };
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -76,13 +102,24 @@ function cohortLines(c) {
       ? `  ${d}d: ${w.note}`
       : `  ${d}d: ${w.purchasers}/${w.matured} matured = ${w.rate}%  ($${w.revenue}, $${w.revenuePerEntrant}/entrant)`);
   }
-  out.push(`  value per entry: ${v.value === null ? 'n/a' : '$' + v.value} (${v.basis})`);
+  out.push(`  value per NEW entrant: ${v.value === null ? 'n/a' : '$' + v.value} (${v.basis}, ${v.matured} matured)`);
+  const seg = (label, m) => {
+    const w = m.windows[30];
+    out.push(`  ${label}: ${m.entrants} entrant(s)` + (w.rate === null ? ' — 30d not matured' : `, 30d ${w.rate}% -> $${w.revenue}`));
+  };
+  seg('new customers     ', c.segments.new);
+  seg('existing customers', c.segments.existing);
+  out.push('  (existing-customer conversions are NOT incremental — they repurchase anyway)');
   if (c.entrantsUndated) out.push(`  ${c.entrantsUndated} entrant(s) have no entry date and are excluded`);
   if (c.unjoinableOrders) out.push(`  ${c.unjoinableOrders} order(s) could not be joined to an entrant`);
   return out;
 }
 
 const gates = [];
+if (spendGate?.verdict === 'over') gates.push(spendGate.line);
+if (ordersTruncated) {
+  gates.push('GATE: Shopify order lookback truncated — the new-vs-existing split is unreliable this run.');
+}
 if (answered >= 50 && reactiveShare < 0.5) {
   gates.push('GATE: answer mix is drifting off the fragrance-free angle — shift budget to creative #3.');
 }
@@ -100,6 +137,8 @@ if (cohort) {
     console.log(`  ${d}d: ${w.rate === null ? w.note : `${w.rate}% of ${w.matured} -> $${w.revenue}`}`);
   }
 }
+if (spendGate) console.log(spendGate.line);
+if (ordersTruncated) console.log('WARNING: the Shopify order lookback was truncated — new/existing split may be wrong.');
 for (const gate of gates) console.log(gate);
 
 // A gate that nobody reads decides nothing, so the gates are the subject line
