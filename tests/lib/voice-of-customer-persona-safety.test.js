@@ -18,6 +18,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
+import { loadOperatorAngles } from '../../lib/operator-angles.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -206,12 +207,19 @@ test('formatPersonaDrops names the persona, the angle, the field and the reason'
 test('the committed data/context/personas.json carries no health claim in any copy-facing field', () => {
   const raw = JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8'));
   const found = [];
+  // RETIRED angles are skipped, and only retired ones. This test stays deliberately raw —
+  // going through sanitizePersonas would pass by construction — but an angle the operator
+  // has explicitly retired is one we have already decided never to brief, so holding the
+  // committed file to account for it would make this permanently red for a decision that was
+  // correct. p2a2 is the live case: retired 2026-08-18 precisely BECAUSE of the language the
+  // systemic-absorption and toxicity categories now catch. Everything still live is scanned.
+  const retiredIds = new Set(loadOperatorAngles({ root: ROOT }).retired.map(r => r.id || r));
 
   for (const persona of raw.personas || []) {
     for (const hit of findPersonaFieldHealthClaims(persona)) {
       found.push(`${persona.id}.${hit.field}: "${hit.match}" (${hit.category}) — ${hit.why}`);
     }
-    for (const angle of persona.angles || []) {
+    for (const angle of (persona.angles || []).filter(a => !retiredIds.has(a?.id))) {
       for (const hit of findAngleHealthClaims(angle)) {
         found.push(`${persona.id}.${angle.id}.${hit.field}: "${hit.match}" (${hit.category}) — ${hit.why}`);
       }

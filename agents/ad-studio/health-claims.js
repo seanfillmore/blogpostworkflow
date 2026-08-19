@@ -62,6 +62,51 @@ export const HEALTH_CLAIM_PATTERNS = [
     pattern: /\b(heals?|healed|healing|cures?|cured|curing|treats?|treated|treating|treatment|remedy|remedies|reverses?|reversed|reversing|prevents?|prevented|preventing|prevention|therapeutic|therapy|diagnos\w*)\b/i,
   },
   {
+    category: 'systemic-absorption',
+    why: 'claims the product or its ingredients enter the body — a cosmetic acts on the surface of the skin by definition, and a product claimed to be absorbed into the bloodstream is making a drug claim about itself',
+    // ADDED 2026-08-18, from persona angle p2a2. Its proof and source_quotes ran on "what
+    // goes on our skin goes into the blood stream and every organ and cell" — and the angle
+    // passed sanitizeAngle with ZERO drops, because the existing four categories cover
+    // diseases, drugs, therapeutic verbs and substantiation, and none of them cover this.
+    // The scope was never the problem: `proof` was already screened. The VOCABULARY was.
+    //
+    // "YOUR SKIN IS YOUR LARGEST ORGAN" WAS IN THIS PATTERN AND WAS TAKEN BACK OUT.
+    // The argument for it was that it is never a standalone fact in this category — it
+    // exists to set up the absorption claim after it. The argument is real but the phrase
+    // is not itself a claim: it is a true anatomical statement, and the absorption claims it
+    // sets up are all caught on their own by the alternations below. Measured against the
+    // live persona file it dropped persona p2 WHOLE (the string is in its `summary`, and a
+    // persona whose own summary violates is unusable) — taking p2a1, p2a3 and p2a4 with it,
+    // which is the second-highest-scoring angle on file plus the replacement authored for
+    // the retired p2a2. Highest collateral damage of any alternation here, weakest signal of
+    // any: cut. Do not re-add it without re-measuring that blast radius.
+    //
+    // NARROW ON PURPOSE. Bare "absorb" is explicitly ALLOWED (see the header's
+    // not-blocked list) and is one of the most useful words this catalogue has —
+    // "absorbs quickly", "fast-absorbing" are ordinary cosmetic performance language about
+    // the surface of the skin. Only absorption INTO the body is a claim, so every
+    // alternation below requires the destination.
+    pattern: /\b(blood\s?stream|into (?:the|your|our) blood|absorbed into (?:the|your|our) (?:blood|body|system|organs?)|enters? (?:the|your|our) (?:blood|body|blood\s?stream)|systemically)\b/i,
+  },
+  {
+    category: 'toxicity',
+    why: 'asserts that products or ingredients are poisonous or cause harm — a safety claim about a whole category that would have to be substantiated exactly as worded, and one the FTC and FDA both police',
+    // Same origin as systemic-absorption: p2a2's evidence called competitor products
+    // "unnecessary toxic chemicals" and "harmful chemicals".
+    //
+    // "non-toxic" IS included, and that is a deliberate cost. FTC Green Guides treat it as
+    // a claim requiring substantiation that the product is non-toxic to BOTH humans and the
+    // environment — a far broader promise than the reassurance it reads as, and one this
+    // business holds no testing behind. It is also the single most common way the claim
+    // arrives, so exempting it would leave the category mostly decorative.
+    //
+    // What this does NOT block, because it is the honest version of the same idea: naming
+    // an ingredient this product does not contain ("no SLS", "no parabens", "no added
+    // fragrance"). An absence is verifiable from the formula. A verdict on what that
+    // ingredient DOES to people is not.
+    pattern: /\b(toxins?|toxic|toxicity|non[- ]?toxic|nontoxic|poisons?|poisonous|carcinogens?|carcinogenic|(?:endocrine|hormone)[- ]disrupt\w*|(?:harmful|dangerous|nasty) (?:chemicals?|ingredients?))\b/i,
+  },
+  {
     category: 'substantiation',
     why: 'asserts clinical or regulatory backing that would have to be substantiated exactly as worded',
     pattern: /\b(clinically\s+(proven|tested|shown)|dermatologist[- ]?(tested|approved|recommended)|fda[- ]?(approved|cleared)|medically\s+(proven|approved)|doctor[- ]?(approved|recommended))\b/i,

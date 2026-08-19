@@ -1,4 +1,7 @@
 import { strict as assert } from 'node:assert';
+import { test } from 'node:test';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   HEALTH_CLAIM_PATTERNS,
   findHealthClaims,
@@ -151,3 +154,97 @@ for (const p of HEALTH_CLAIM_PATTERNS) {
   assert.ok(p.why && p.why.length > 20, `${p.category} needs a reason a human can act on`);
   assert.ok(p.pattern instanceof RegExp);
 }
+
+// ── systemic-absorption and toxicity (added 2026-08-18) ─────────────────────────────
+//
+// WHY THESE EXIST. Persona angle p2a2 ran on "what goes on our skin goes into the blood
+// stream and every organ and cell" and called competitor products "unnecessary toxic
+// chemicals" — and it passed sanitizeAngle with ZERO drops. The four original categories
+// cover diseases, drugs, therapeutic verbs and substantiation; none covered this. The
+// filter's SCOPE was never the problem (`proof` was already screened) — its VOCABULARY was.
+
+test('systemic-absorption catches claims that the product enters the body', () => {
+  for (const s of [
+    'what goes on our skin goes into the blood stream',
+    'it absorbs into your bloodstream',
+    'absorbed into your body within minutes',
+    'enters the blood stream',
+    'acts systemically',
+  ]) {
+    const hits = findHealthClaims(s);
+    assert.ok(hits.length, `must catch: ${s}`);
+    assert.equal(hits[0].category, 'systemic-absorption');
+  }
+});
+
+// THE LOAD-BEARING NEGATIVE. Bare "absorb" is one of the most useful words this catalogue
+// has and is explicitly on the allowed list — a cosmetic absorbing INTO SKIN is ordinary
+// performance language. Only absorption into the BODY is a claim, so every alternation
+// requires the destination. If this test starts failing, the pattern has been widened into
+// the product's own vocabulary.
+test('systemic-absorption does NOT fire on ordinary absorption language', () => {
+  for (const s of [
+    'absorbs quickly, never greasy',
+    'a fast-absorbing coconut oil lotion',
+    'absorbs into skin without residue',
+    'fully absorbed in seconds',
+  ]) {
+    assert.deepEqual(findHealthClaims(s), [], `must NOT fire on: ${s}`);
+  }
+});
+
+// "Your skin is your largest organ" was in this pattern and was deliberately removed:
+// it is a true anatomical statement rather than a claim, the absorption claims it sets up
+// are each caught on their own, and it dropped persona p2 WHOLE via its summary — taking
+// the second-highest-scoring angle on file and the authored replacement for p2a2 with it.
+test('"largest organ" is deliberately NOT blocked — measured collateral, weakest signal', () => {
+  assert.deepEqual(findHealthClaims('your skin is your largest organ'), []);
+});
+
+test('toxicity catches safety verdicts about ingredients', () => {
+  for (const s of [
+    'rubbing unnecessary toxic chemicals onto your skin',
+    'none of the harmful chemicals',
+    'free from nasty ingredients',
+    'a non-toxic formula',
+    'nontoxic and safe',
+    'known carcinogens',
+    'endocrine disrupting compounds',
+  ]) {
+    const hits = findHealthClaims(s);
+    assert.ok(hits.length, `must catch: ${s}`);
+    assert.equal(hits[0].category, 'toxicity');
+  }
+});
+
+// The HONEST version of the same idea stays legal: naming an ingredient the product does
+// not contain is verifiable from the formula. A verdict on what that ingredient does to
+// people is not. This distinction is the whole category — if it breaks, the gate has
+// started rejecting this catalogue's core positioning.
+test('toxicity does NOT block naming absent ingredients', () => {
+  for (const s of [
+    'no SLS, no SLES, no EDTA, no sodium tallowate',
+    'no parabens, no dyes, no triclosan',
+    'no added fragrance and no essential oils',
+    'one ingredient: saponified organic virgin coconut oil',
+  ]) {
+    assert.deepEqual(findHealthClaims(s), [], `must NOT fire on: ${s}`);
+  }
+});
+
+// BLAST RADIUS, pinned against the REAL persona file plus the operator overlay. Widening a
+// compliance vocabulary is only safe if you know what it costs; this is that number, and it
+// is what stopped "largest organ" from shipping.
+test('the live persona roster survives the widened vocabulary intact', async () => {
+  const { sanitizePersonas } = await import('../../lib/voice-of-customer.js');
+  const { overlayPersonas } = await import('../../lib/operator-angles.js');
+  const personas = (await import('../../data/context/personas.json', { with: { type: 'json' } })).default;
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+  const { personas: kept, drops } = sanitizePersonas(overlayPersonas(personas, { root }).personas);
+  assert.equal(drops.length, 0, `no live persona or angle may be dropped: ${JSON.stringify(drops)}`);
+  assert.equal(kept.length, personas.personas.length, 'every persona survives');
+  assert.ok(
+    kept.some(p => (p.angles || []).some(a => a.id === 'p2a4')),
+    'the authored replacement angle must survive — it exists because of this very gate',
+  );
+});
