@@ -297,6 +297,15 @@ if (new Date().getDay() === 0) {
   // Sunday's work reads freshly-synthesized guidance.
   runStep('insight-aggregator', `"${NODE}" agents/insight-aggregator/index.js`, { indent: '    ' });
 
+  // Bing Webmaster snapshot → data/snapshots/bing/. WEEKLY because Bing's own data
+  // refreshes weekly: GetQueryStats returns ~26 distinct dates across a 177-day
+  // traffic window, so a daily job would write six identical files a week. Lives in
+  // the scheduler rather than in its own 13:xx crontab entry with the daily
+  // collectors — this feed is not a daily one and does not belong in that row.
+  // Cheap (3 GETs, no LLM). It is the only query-level view of the index DuckDuckGo
+  // serves from, and holds ~6 months of history where GA4 now retains 2.
+  runStep('bing-collector', `"${NODE}" agents/bing-collector/index.js`, { indent: '    ' });
+
   // Amazon explore scripts — feed the keyword-index-builder's Stage 1.
   // These run weekly because BA is multi-GB and SQP is rate-limited.
   // The keyword-index-builder reads the latest dump from data/amazon-explore/.
