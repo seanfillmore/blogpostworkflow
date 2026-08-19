@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from '../../agents/ad-studio/copy.js';
-import { formatByKey } from '../../agents/ad-studio/formats.js';
+import { formatByKey, FORMATS } from '../../agents/ad-studio/formats.js';
+import { buildSourceIndex } from '../../agents/ad-studio/claims.js';
 
 // buildCopyPrompt names the format's zones and forbids unsourced claims.
 const prompt = buildCopyPrompt({
@@ -386,4 +387,54 @@ assert.throws(
     assert.match(p, /from: pdp, catalog, brandKit, reviews, giveaway —/);
     assert.match(p, /SHIPPING SCHEDULE/);
   }
+}
+
+// ── every citable source must be VISIBLE to the writer (2026-08-18) ──────────────────
+//
+// THE BUG. `pdp` and `reviews` had their text in the prompt; `brandKit` and `catalog` were
+// named in the "cite one of these" list and their content was never shown. A writer cannot
+// quote a contiguous verbatim substring of a source it has never seen, so those two were
+// nameable but uncitable — and naming them was WORSE than omitting them, because the writer
+// attributes a real fact to the wrong source and the gate rejects correct copy. Live on
+// 2026-08-18: the EWG ingredient figure sat in brand-kit.json, the writer could only see the
+// PDP, so it cited `pdp` and the run died with the evidence in the index the whole time.
+// Same class as PR #491's `reviews` — an accepted sourceId nothing populated.
+{
+  const brandKit = { marker: 'BRANDKITMARKER' };
+  const catalogEntry = { marker: 'CATALOGMARKER' };
+  const sourceIndex = buildSourceIndex({
+    pdpBody: 'PDPMARKER', brandKit, catalogEntry, reviews: ['REVIEWMARKER'],
+  });
+  const p = buildCopyPrompt({
+    format: FORMATS[0], product: { title: 'T', handle: 'h', priceLabel: '$1' },
+    pdpBody: 'PDPMARKER', persona: { name: 'N', angles: ['a'] }, reviews: ['REVIEWMARKER'],
+    sourceIndex, brandKit, catalogEntry,
+  });
+  for (const marker of ['PDPMARKER', 'REVIEWMARKER', 'BRANDKITMARKER', 'CATALOGMARKER']) {
+    assert.ok(p.includes(marker), `${marker} must be visible to the writer, not merely citable`);
+  }
+
+  // Rendered from the ORIGINAL object, never sourceIndex[id]: normalizeForMatch lowercases
+  // and strips punctuation, so the index holds "{markerbrandkitmarker}". Showing that would
+  // hand the writer mangled text to quote and teach it to write lowercase copy.
+  assert.ok(!p.includes('{markerbrandkitmarker}'), 'the normalised index text must not be shown');
+
+  // OFFER ONLY WHAT EXISTS. Telling the writer it may cite `catalog` on a run with no
+  // catalog entry is an invitation to attribute a true statement to a source that is not
+  // there for this product.
+  const pdpOnly = buildCopyPrompt({
+    format: FORMATS[0], product: { title: 'T', handle: 'h', priceLabel: '$1' },
+    pdpBody: 'P', persona: { name: 'N', angles: ['a'] },
+    sourceIndex: buildSourceIndex({ pdpBody: 'P' }),
+  });
+  assert.match(pdpOnly, /from: pdp —/, 'a pdp-only run must offer only pdp');
+  assert.ok(!/BRAND KIT \(a source/.test(pdpOnly), 'and must not render an absent source block');
+
+  // Callers that pass no sourceIndex keep the old fixed list, so anything not yet updated
+  // behaves exactly as before.
+  const legacy = buildCopyPrompt({
+    format: FORMATS[0], product: { title: 'T', handle: 'h', priceLabel: '$1' },
+    pdpBody: 'P', persona: { name: 'N', angles: ['a'] },
+  });
+  assert.match(legacy, /from: pdp, catalog, brandKit, reviews —/, 'no sourceIndex keeps the legacy list');
 }

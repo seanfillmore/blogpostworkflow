@@ -300,6 +300,7 @@ export function gatesFromRejection(result) {
 export async function generateBriefs({
   selected, product, pdpBody, sourceIndex, reviews, seoImpact, dryRun, anthropic, root,
   now = Date.now(), buildConceptFn = buildConcept, job = createJobReporter(), giveaway = null,
+  brandKit = null, catalogEntry = null,
 }) {
   const out = [];
   const formats = visibleFormats({ giveawayLive: Boolean(giveaway) });
@@ -342,7 +343,7 @@ export async function generateBriefs({
     const result = await buildConceptFn({
       anthropic, format, product, pdpBody,
       persona: personaProjection(persona, angle),
-      sourceIndex, reviews, variant: product.variant, giveaway,
+      sourceIndex, reviews, variant: product.variant, giveaway, brandKit, catalogEntry,
     });
 
     const brief = result.ok
@@ -505,7 +506,7 @@ async function main() {
   // others' already-generated, already-paid-for briefs.
   const results = await generateBriefs({
     selected, product, pdpBody, sourceIndex, reviews, seoImpact,
-    dryRun: args.dryRun, anthropic, root: ROOT, now, job, giveaway,
+    dryRun: args.dryRun, anthropic, root: ROOT, now, job, giveaway, brandKit, catalogEntry,
   });
 
   // Step 9: rank + print, computed from what generateBriefs actually returned (which — on

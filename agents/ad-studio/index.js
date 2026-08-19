@@ -345,7 +345,7 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  * @returns {Promise<{ok:true, conceptSlug:string, format:object, zones:object, claims:object[]}
  *                  |{ok:false, conceptSlug:string, format:string, violations:object[], error:string}>}
  */
-export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null }) {
+export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null }) {
   console.log(`Copy: ${format.key} (${format.name})...`);
   // Prevention as well as detection: a review carrying disease or drug language is
   // dropped before the writer sees it, so it cannot pick one and burn a call on a choice
@@ -355,7 +355,13 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
   // the prompt (buildCopyPrompt's giveawayBlock) — the gates below are unchanged and run in
   // the same order either way. It buys the writer ONE extra citable source, never a licence
   // to skip citing.
-  const prompt = buildCopyPrompt({ format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews), variant, giveaway });
+  // sourceIndex goes to the WRITER as well as the gate now. It is what validateClaims
+  // searches, so handing the writer the same object is what stops it citing a fact to a
+  // source that does not hold it — see buildCopyPrompt's sourceBlock for the run that cost.
+  const prompt = buildCopyPrompt({
+    format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews), variant, giveaway,
+    sourceIndex, brandKit, catalogEntry,
+  });
   const msg = await anthropic.messages.create({
     model: CREATIVE_MODELS.adStudio.copy,
     max_tokens: 3000,
@@ -414,11 +420,11 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
  *
  * @returns {Promise<{concepts:{format:object, zones:object, claims:object[]}[], rejectedConcepts:{conceptSlug:string, format:string, violations:object[], error:string}[]}>}
  */
-export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null }) {
+export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null }) {
   const concepts = [];
   const rejectedConcepts = [];
   for (const format of formats) {
-    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway });
+    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway, brandKit, catalogEntry });
     if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims });
     else rejectedConcepts.push({ conceptSlug: result.conceptSlug, format: result.format, violations: result.violations, error: result.error });
   }
@@ -1491,7 +1497,7 @@ async function main() {
     // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
     // resilience. assertClaimsSourced itself is unchanged: still throws, still no
     // override flag; buildConcept is the caller the isolation belongs in.
-    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway }));
+    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway, brandKit, catalogEntry }));
   }
 
   // A gate rejection is a first-class outcome the UI must show, and it happens before
