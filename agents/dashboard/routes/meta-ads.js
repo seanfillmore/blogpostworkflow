@@ -64,7 +64,19 @@ export default [
       const host = req.headers.host || 'localhost:4242';
       const proto = req.headers['x-forwarded-proto'] || (host.startsWith('localhost') ? 'http' : 'https');
       const redirectUri = `${proto}://${host}/api/meta-ads/callback`;
-      const scope = 'ads_read';
+      // ads_read alone is enough to REPORT on ads and nothing else. The stored token
+      // happens to carry ads_management from an earlier grant, which hid the gap until
+      // 2026-08-19: campaign and ad set edits worked, and creating an AD did not, because
+      // every Meta ad creative requires `object_story_spec.page_id` and this token could
+      // not see a single Page — `me/accounts` returned zero and the ad account's
+      // `promote_pages` came back empty.
+      //
+      // pages_show_list finds the Page, pages_read_engagement lets a creative be published
+      // as it, business_management covers a Page owned by a Business rather than by the
+      // user directly (which is how this one is set up). ads_management is named
+      // explicitly rather than relied on: a re-auth that requested only ads_read would
+      // narrow the token that is currently working.
+      const scope = 'ads_management,ads_read,pages_show_list,pages_read_engagement,business_management';
       const authUrl = `https://www.facebook.com/${FB_API_VERSION}/dialog/oauth?`
         + `client_id=${encodeURIComponent(clientId)}`
         + `&redirect_uri=${encodeURIComponent(redirectUri)}`
