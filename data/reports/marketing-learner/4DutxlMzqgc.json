@@ -1,0 +1,165 @@
+{
+  "sourceId": "4DutxlMzqgc",
+  "creator": "Professor Charley T",
+  "title": "The Simple Facebook Ads Strategy Dominating in 2026",
+  "summary": "A structural argument that constant new-ad launching is what stalls Meta accounts: because every new ad starts with no estimated-action-rate history, Meta hands it the warmest bottom-of-funnel audience to learn from, which makes existing upper-funnel ads look like they suddenly died. Operators then kill the ads that were building the audience, concentrate spend lower in the funnel, and enter a 'doom cycle'. The proposed replacement is deliberate simplicity: five distinct creative concepts each with a defined job (three cold 'hello' concepts, two lower-funnel 'close' concepts), each built as a 3-2-2 Flexible Ad (three same-format creatives, two meaningfully different primary texts, two meaningfully different headlines = 12 combinations sharing one learning pool), run inside one CBO campaign with a control ad set plus two test ad sets. Operating rules follow: judge the flexible ad as a whole rather than hunting the winning permutation, harvest an obvious 'unicorn' permutation by copying its post ID into the control set without switching the source off, scale by 5% or less at campaign level whenever the last seven days beat target, and when off target replace only the worst-performing highest-spend ring with one new test.",
+  "recencySignals": "Published 2026-08-10, title says 2026. References Meta's Andromeda ranking/delivery system, 'flexible ad' as the format that replaced dynamic creative, estimated action rate, CBO vs ABO, and Alex Schultz as Meta CMO. All current platform vocabulary as of the publish date — roughly one week old relative to the 2026-08-17 operating date.",
+  "tactics": [
+    {
+      "claim": "Stop continuously launching new ads — every new ad is handed your warmest bottom-of-funnel audience to learn from, which makes your existing upper-funnel ads look like they died, so you kill the ads that were actually building your audience.",
+      "mechanism": "Every ad starts at zero estimated action rate, so Meta seeks the fastest path to useful data by serving it to the highest-intent, most-engaged pool. That pool is pulled away from existing ads, whose reported performance immediately worsens. The operator reads this as fatigue, turns off the upper-funnel ads, and concentrates ever more spend on the least incremental bottom-of-funnel placements — a self-reinforcing decline the creator calls the doom cycle.",
+      "evidence": "Assertion plus a claimed billion-plus dollars of managed spend across his agency, his own brands and students. No account data, no before/after, no controlled comparison.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Platform-mechanics class but published 2026-08-10, so no decay discount — and it lands directly on the campaign being stood up this week at $30/day. This is the specific failure mode a solo operator checking a brand-new giveaway campaign daily will walk into: performance dips on day three, the instinct is to launch something new, and the launch itself makes the reported numbers worse. It is additive to the existing learning-phase edit freeze rather than a duplicate: the freeze says don't edit what is running, this says don't add anything alongside it, and gives the delivery mechanism for why adding hurts. At $30/day the cost is concrete — every extra ad competing for the same tiny budget slows the ~84 entries/week that let the learning phase exit at all."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when configuring, reading, or deciding whether to change a small-budget Meta campaign — covers campaign objective and budget structure, what to do when performance dips in the first weeks, when to leave the account alone versus launch something new, and how to scale a working campaign without breaking it."
+      }
+    },
+    {
+      "claim": "Read a new ad's early frequency as evidence it is still learning, not as fatigue — high frequency and low spend in the first days means Meta is recycling a small warm pool, and the later pattern of rising spend with falling frequency is the ad moving up the funnel to genuinely new people.",
+      "mechanism": "During learning, delivery is concentrated on a small high-signal audience, so the same people are hit repeatedly. Once learning resolves, delivery broadens, spend rises and frequency falls — which looks like decay on a dashboard but is actually the ad reaching new people for the first time.",
+      "evidence": "Assertion, illustrated with frequency arithmetic that is stated loosely and incorrectly ('a frequency of 1.6 means 60% of people saw that ad twice in a single day'). No account screenshots.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Platform-mechanics class, freshly published, so age is not the limiter. Useful as the counterpart to the frequency-above-5 exhaustion rule already recorded: that rule says a high sustained frequency means the pool is exhausted, this says a high frequency in the first days of a brand-new ad means the opposite and should not trigger a kill. On $30/day driving giveaway entries that distinction decides whether a creative gets three days or ten. Held at 5 because the creator's own frequency arithmetic is wrong, which undercuts confidence in the specific numbers, and because this is an interpretive guardrail rather than a revenue mechanism — take the direction, ignore the percentages."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when reading Meta Ads Manager numbers on a small-budget campaign and deciding whether an ad is dying or still learning — covers frequency, reach, cost per result, which metrics justify a budget change, and which are only explanatory."
+      }
+    },
+    {
+      "claim": "Build a 3-2-2 Flexible Ad — three creatives of the same format and aspect ratio, two meaningfully different primary texts, two meaningfully different headlines — so twelve combinations share a single learning pool and Meta allocates spend among them itself.",
+      "mechanism": "Splitting the same creative ideas across many separate ads splits the data, so each ad accumulates signal slowly and every impression informs only its own tiny pool. Consolidating them into one flexible ad means every impression feeds one shared bucket, so the system reaches confident allocation faster. Keeping all three creatives the same format and ratio means the system is answering one comparison question rather than two at once, and the texts and headlines must be genuinely different angles rather than reworded versions or there is nothing to learn between them.",
+      "evidence": "Live Ads Manager walkthrough of the setup; the combinatorial arithmetic (3 x 2 x 2 = 12) is definitional. The claim that consolidated learning outperforms split learning is assertion only, with no test against separate ads.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "The single most useful item here for a $30/day hand-run campaign, and the opposite of the disqualifying '20-creative test cell' pattern — it concentrates a thin budget into one learning pool rather than starving several. The inputs are within reach for a solo operator with no designer: three static plates from the existing ad-studio pipeline, two entry angles and two headlines drawn from the awareness-level and copy-angle work already done. It also fits the arithmetic — one flexible ad in one ad set keeps all ~84 modelled weekly entries in a single bucket, which is what makes learning-phase exit reachable at all. Platform-mechanics class published seven days before the operating date, so current; verify the 'flexible ad' label in the live interface as it is exactly the name Meta renames."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when building the actual ads for a small-budget Meta campaign — how many creatives, headlines and primary texts to put in one ad, whether to split variations across separate ads or consolidate them, and how to keep a thin daily budget from starving the learning phase."
+      }
+    },
+    {
+      "claim": "Judge a flexible ad as a single unit — you will never see per-permutation reporting, and the only question is whether the ad as a whole is good enough to scale.",
+      "mechanism": "Each creative runs against two headlines and two texts, so no permutation has an isolatable result; the absence of a breakdown is deliberate, because the shared pool is what makes allocation work. Trying to identify the winning permutation reintroduces the micromanagement the structure was built to remove.",
+      "evidence": "Assertion, framed as 'a feature, not a limitation'. No data.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Measurement discipline, durable in substance even though it describes a specific reporting surface. It matters more here than at agency scale: at ~54 orders/month and a giveaway modelled at ~$2.50 per entry, twelve permutations would never accumulate enough events to separate anyway, so the honest unit of decision is the whole ad. It also protects against the hand-forcing instinct already warned about under the breakdown effect. Held at 7 because it prevents a wasted analysis rather than producing revenue."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when deciding what a Meta campaign's numbers actually license you to conclude at low order volume — which unit of analysis is readable, which comparisons are noise, and when a result is directional rather than significant."
+      }
+    },
+    {
+      "claim": "Cover distinct creative jobs rather than creative volume: a small set of concepts where several open the conversation with cold audiences in genuinely different ways and one or two close it for people already touched, so no two ads chase the same person.",
+      "mechanism": "Creative diversity is a delivery-sequencing problem, not a volume problem — the system needs to know which message suits which person at which point, and it can only do that if each ad has a distinguishable job. Three different cold openings catch three different people who each ignored the others; the closing ads pick up the conversation those openings started. Many near-identical ads all compete to be the last touch on the same sale instead.",
+      "evidence": "Framework assertion with a football-team analogy and a paraphrase of Meta CMO Alex Schultz on personalization being about the whole feed experience rather than per-person creative. No campaign data, no comparison against a flat structure.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable-principle class in its core claim (distinct jobs beat volume), and that half is right for a solo operator who cannot produce many assets anyway. The full five-ring, two-funnel version does not survive the standing constraints: $30/day cannot fund five concepts across prospecting and closing stages, and there is no designer or media buyer to produce and maintain them. The honest scaled-down version is two or three distinct cold angles for the giveaway — a founder-voice ad, a taboo/problem angle, a proof or testimonial angle — inside one flexible ad, with the 'close' job handled by the post-entry email sequence rather than a second ad tier, since retention flows are the owned surface and cost nothing to run. Scored 5 with that scale-down stated rather than adopted at full size."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when deciding how many distinct ad concepts to run and what job each one should do — covers separating cold-audience opening angles from closing angles, avoiding near-duplicate creatives that compete for the same buyer, and scaling the concept count down to what one operator can actually produce."
+      }
+    },
+    {
+      "claim": "Run one CBO campaign rather than per-ad-set budgets, make budget changes at campaign level, and if the account cannot get multiple ad sets out of the learning phase, collapse everything into a single ad set with four to eight ads.",
+      "mechanism": "Ad-set-level budgeting is described as a folder of single-ad-set campaigns — more structures to manage for no additional benefit. One campaign budget lets the system allocate across ad sets, and campaign-level edits avoid resetting learning on each individual ad set. Below a certain volume, splitting the budget means no ad set ever accumulates enough conversions to exit learning at all, so consolidation is the only workable form.",
+      "evidence": "Practitioner assertion with a live account walkthrough of the structure. No comparison of CBO against ABO outcomes, and no stated volume threshold for when the collapse applies.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Platform-mechanics class, one week old, so current — verify the CBO/ABO labelling in the live interface. The valuable part for this business is the creator's own fallback, which is the version that applies: $30/day split across three ad sets is $10/day each, and at a modelled ~$2.50 per entry that is roughly 28 entries per ad set per week, well under the ~50 conversions Meta wants to exit learning. Consolidated into one ad set it is ~84/week and learning can actually exit. So the instruction here is: one campaign, one ad set, campaign-level budget edits — not the three-ad-set architecture demonstrated. Held at 6 because it is account plumbing rather than a revenue mechanism, and because the demonstrated structure has to be discarded rather than followed."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when setting up the campaign and ad set structure for a Meta campaign on a small daily budget — how many ad sets to run, whether to put the budget at campaign or ad set level, where to make budget edits, and when to collapse everything into one container so the learning phase can exit."
+      }
+    },
+    {
+      "claim": "Scale by raising the campaign budget 5% or less whenever the last seven days beat your target cost per result, and expect the cost per result to look temporarily worse afterwards — that is arithmetic, not failure.",
+      "mechanism": "If you are already beating target, a small budget increase buys extra impressions with enough margin that even zero incremental conversions still leaves you at or under target. And because the increment is smaller than one conversion's worth of spend, the average cost per result rises before the next conversion lands, so the dip is a denominator effect rather than degradation.",
+      "evidence": "Worked arithmetic example ($50 target, $45 actual, therefore scale 5%). Assertion, no account data on outcomes of the increment rule.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable in its logic (scale in increments smaller than your margin of safety; a short-term average-cost rise after a budget bump is a denominator artifact). Directly usable on the live giveaway once a cost-per-entry baseline exists, and the interpretive half is the part that earns its place — a solo operator watching a $30/day campaign daily will see cost per entry rise the day after a budget bump and be tempted to reverse it. Two adjustments: a 5% step on $30/day is $1.50, so the meaningful move is a step every week or two rather than a nightly nudge, and 'target' here is cost per entry, which is only interpretable against the entry-to-purchase rate the post-entry email flow produces. Not higher because the seven-day window at this spend is directional, not significant."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when deciding whether and how much to raise a Meta campaign budget — covers scaling in increments against a target cost per result, why cost per result temporarily worsens after a budget increase, and where to make the edit."
+      }
+    },
+    {
+      "claim": "Before changing anything, ask 'can I spend more money and stay profitable right now?' — if yes, raise the budget and touch nothing else; if no, find the ad taking the most spend with the worst results and replace only that one, changing one variable.",
+      "mechanism": "Most instinctive responses to a performance dip — launching new ads, restructuring, testing something new — reintroduce the complexity that caused the decline. A single gating question stops the tinkering, and when action is warranted, isolating the highest-spend worst-performing element and changing one variable makes the result attributable rather than a rebuild that teaches nothing.",
+      "evidence": "Assertion, framed as a two-question diagnostic. No worked example from an account.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Durable-principle class (decision discipline), and it matches the prime directive that revenue rather than ratios decides action. It also extends the sort-by-spend triage habit already recorded: that rule says look at the biggest spender first, this adds what to do next — replace it with one targeted alternative rather than deleting it or rebuilding. Genuinely load-bearing for one person hand-running $30/day, where the whole triage procedure has to fit in a few minutes. Held at 6 because it partly overlaps the existing edit-freeze and sort-by-spend rules, and because 'stay profitable' is not directly answerable on a giveaway campaign until entry-to-purchase conversion is known — substitute 'is cost per entry inside the ceiling my email flow justifies'."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when a Meta campaign's performance drops and you are deciding what to change — covers the gating question that determines whether to act at all, how to find the weakest element by spend, and why to change one variable at a time instead of rebuilding."
+      }
+    },
+    {
+      "claim": "When one specific combination inside a flexible ad visibly dominates — spend consolidating on it plus disproportionate comments and reactions — copy its post ID into a separate ad rather than rebuilding it, and leave the original flexible ad running.",
+      "mechanism": "Reusing the post ID carries the accumulated engagement and social proof with the ad instead of resetting it, so the winner starts with history rather than at zero. Turning off the source is a separate decision from harvesting from it — the flexible ad is performing, which is why it produced the winner in the first place.",
+      "evidence": "Assertion with a described procedure (find it in the inbox, click the timestamp, copy the post ID from the URL), plus the caution that a harvested post ID will not perform identically once separated from the shared pool. No data.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Platform-mechanics class, current, and the post-ID reuse mechanic is cheap and real — accumulated likes and comments are free social proof a solo operator otherwise throws away every time an ad is rebuilt. A giveaway also generates engagement more readily than a purchase campaign, so the 'you will see it in your comments' signal is plausible here. Held at 5 because the surrounding architecture it belongs to — a standing control ad set of harvested winners — cannot run on $30/day without splitting the budget below the learning threshold, so only the post-ID reuse half transfers, and the creator himself concedes the harvested ad performs differently once separated. Treat it as: if a creative visibly wins, reuse its post ID; do not build a second ad set to house it."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-acquisition-scaling",
+        "action": "edit",
+        "description": "Use when a Meta ad is clearly outperforming and you want to keep it running or reuse it elsewhere — covers reusing the existing post ID to carry accumulated engagement instead of rebuilding the ad from scratch, and why not to switch off the source that produced it."
+      }
+    },
+    {
+      "claim": "For deeper diagnosis beyond the two-question process, use the '4PI analysis' framework.",
+      "mechanism": "None given — the framework is named and deferred to other videos and a paid community tier.",
+      "evidence": "None. Referenced as existing elsewhere.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "No stated mechanism, no steps, nothing testable — it is a pointer to a paid course, not a tactic. Rejecting on the 'motivational framing with no stated mechanism' rule rather than on any constraint of this business."
+      },
+      "verdict": "reject",
+      "rejectReason": "Named framework with no mechanism, no procedure and no evidence — it is an upsell reference to a paid membership, not an actionable tactic.",
+      "targetSkill": null
+    }
+  ]
+}
