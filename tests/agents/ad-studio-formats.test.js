@@ -154,6 +154,16 @@ for (const f of FORMATS) {
     !/\b(single|one|two|three|four)\s+(unit|bottle|tube|jar|item|piece)/i.test(f.plateBrief),
     `${f.key}'s plate brief must not fix a unit count — that is product.unitCount's job`
   );
+
+  // The same rule, caught by a DIFFERENT phrasing. "The product appears exactly once" states
+  // a unit count without using any noun the regex above looks for — it was written into
+  // manifesto's plate brief on 2026-08-18 and removed before it shipped. Four RSC products
+  // are genuinely multi-unit (foam soap bundle: three bottles; lip balm: four tubes), so a
+  // count baked into a FORMAT rejects every correct render of them.
+  assert.ok(
+    !/\b(appears?|shown|rendered|pictured)\s+(exactly\s+)?(once|twice|a single time)\b/i.test(f.plateBrief),
+    `${f.key}'s plate brief states a unit count in prose — unit count belongs to product.unitCount`
+  );
 }
 
 // Which formats keep a setting, and why: these two are the ones whose whole value IS the
