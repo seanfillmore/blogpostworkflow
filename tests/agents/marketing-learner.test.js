@@ -675,6 +675,71 @@ await assert.rejects(
   'the merge cannot rename the skill'
 );
 
+// ── a Stage marker on an OPEN gate is live content, not a parked one ─────────
+// The merge prompt used to list every Stage-marked section as "currently parked",
+// and separately forbid mentioning a parked tactic in the frontmatter description.
+// So on 2026-08-19, with the traffic gate open, a merge obediently stripped four
+// LIVE sections (breakeven CAC, campaign objectives, the edit freeze, breakthrough-ad
+// dissection) out of the description — the trigger text — because it had been told
+// no reader would find them. stripParkedSections keeps open-gate sections; the prompt
+// has to agree with it. Assert on the prompt itself: nothing downstream can see this.
+{
+  const STAGED_SKILL = [
+    '---',
+    'name: marketing-staged-example',
+    'description: Existing skill',
+    '---',
+    '',
+    '## Open-gate tactic',
+    '',
+    '**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.',
+    '',
+    'x'.repeat(400),
+    '',
+    '## Closed-gate tactic',
+    '',
+    '**Stage:** offer-aov — parked until the offer-aov phase opens.',
+    '',
+    'y'.repeat(400),
+  ].join('\n');
+
+  function capturingClient(payload) {
+    const seen = {};
+    return {
+      seen,
+      messages: {
+        stream: (params) => {
+          seen.prompt = params.messages[0].content;
+          return { finalMessage: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: payload }] }) };
+        },
+      },
+    };
+  }
+
+  // currentStage: 'cro' — traffic and offer-aov are both still ahead, so BOTH are parked.
+  const closed = capturingClient(JSON.stringify({ content: STAGED_SKILL, supersedes: null }));
+  await mergeSkillContent({
+    existingContent: STAGED_SKILL, tactics: NEW_TACTICS, client: closed, currentStage: 'cro',
+  });
+  assert.match(closed.seen.prompt, /Currently PARKED \(gate still closed\):[^\n]*Open-gate tactic/,
+    'a gate the business has not reached is named as parked');
+  assert.doesNotMatch(closed.seen.prompt, /their gate is already OPEN/,
+    'no open-gate clause when nothing is open');
+
+  // currentStage: 'traffic' — the real one today. traffic is open, offer-aov is earlier
+  // so it is open too; nothing is parked and the description must promise both.
+  const open = capturingClient(JSON.stringify({ content: STAGED_SKILL, supersedes: null }));
+  await mergeSkillContent({
+    existingContent: STAGED_SKILL, tactics: NEW_TACTICS, client: open, currentStage: 'traffic',
+  });
+  assert.match(open.seen.prompt, /Nothing here is currently parked\./,
+    'an open gate is never reported as parked');
+  assert.match(open.seen.prompt, /their gate is already OPEN, so they are LIVE:[^\n]*Open-gate tactic/,
+    'the open-gate section is named as live so it stays in the description');
+  assert.doesNotMatch(open.seen.prompt, /Currently PARKED/,
+    'nothing is listed as parked once every gate is open');
+}
+
 import { falsifyTactic, extractFalsifiedClaims } from '../../lib/marketing-learner.js';
 
 const LIVE_SKILL = [
