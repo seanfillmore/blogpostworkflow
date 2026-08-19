@@ -284,3 +284,10 @@ test('buildNonEarningSection is empty when every cluster earns or is untested', 
   ]));
   assert.equal(out, '');
 });
+
+test('buildPrepaidSection lets a validated new topic jump the pre-paid queue', () => {
+  const out = buildPrepaidSection(['vegan-soap']);
+  // Backlog-first is the default, not a lock: a keyword with proven commercial
+  // demand should still be able to bump up.
+  assert.match(out, /validated demand/i);
+});
