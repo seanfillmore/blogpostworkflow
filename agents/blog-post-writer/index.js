@@ -196,15 +196,30 @@ function detectProductIngredients(keyword) {
 
 // The pattern lists this used to hold inline now live in lib/search-intent.js, so
 // agents/bing-keyword-gap can ask the same question without importing this agent
-// (which would run it). Behaviour is unchanged: 'diy' and 'informational' still take
-// the light-touch CTA, 'product' still takes the heavier ones.
+// (which would run it). 'diy' and 'informational' take the light-touch CTA, 'product'
+// takes the heavier ones, and 'supply' (added 2026-08-18) takes NO sales CTA at all —
+// that reader is sourcing lye and base oils, which we do not sell.
 function detectPostType(brief) {
   const kw = (brief?.target_keyword || '').toLowerCase();
   const title = (brief?.recommended_title || '').toLowerCase();
   return classifySearchIntent(kw + ' ' + title);
 }
 
+// Every value classifySearchIntent can return gets an explicit label here. The lookup
+// exists so a new intent type CANNOT fall through to the product branch and pick up buy
+// CTAs by accident — that silent fallthrough is exactly the defect 'supply' was added to
+// fix. An unknown type throws rather than guessing.
+const POST_TYPE_LABELS = {
+  product: 'PRODUCT-FOCUSED',
+  diy: 'DIY / HOW-TO / TUTORIAL',
+  informational: 'INFORMATIONAL / EDUCATIONAL',
+  supply: 'SUPPLY / MAKER-SOURCING',
+};
+
 function buildSystemPrompt(productIngredients, postType, contentDepth, format) {
+  if (!POST_TYPE_LABELS[postType]) {
+    throw new Error(`buildSystemPrompt: unhandled post type "${postType}" — add it to POST_TYPE_LABELS and give it explicit CTA rules; do not let it fall through to the product branch`);
+  }
   // Resolve depth — fall back to word-count heuristic for briefs without content_depth
   const depth = contentDepth || 'standard';
   // Format axis (independent of depth/postType): the brief's content_type maps
@@ -305,8 +320,17 @@ POST TYPE: ${postType.toUpperCase()}
 ═══════════════════════════════════
 ${postType === 'product' ? `
 This is a PRODUCT-FOCUSED post (product comparisons, "best X" roundups, product category guides). The reader is in buying mode. Heavier CTAs are appropriate where each serves a distinct purpose.
+` : postType === 'supply' ? `
+This is a SUPPLY / MAKER-SOURCING post. The reader is sourcing RAW MATERIALS to make the product themselves — soap base, base oils, lye, melt-and-pour, cold-process supplies. ${config.name} sells FINISHED personal-care products and does not sell any making supplies, so the thing this reader came to buy is not something we stock.
+
+CRITICAL CTA RULES for this post type:
+- **DO NOT place any sales CTA block anywhere in this post** — no above-the-fold CTA, no mid-article CTA, no conversion CTA, no styled <section>, no button, no "Add to Cart".
+- **DO NOT offer a finished product as a "shortcut".** It is not one: a finished bar of soap does not substitute for the soap base or base oil this reader is shopping for. That framing is bait-and-switch and is explicitly forbidden here.
+- **Deliver the sourcing/technical information the reader came for, completely and honestly**, including where the material is normally bought, even though that is not us.
+- **EXACTLY ONE plain inline mention** of our finished product, in the body, placed where it is genuinely relevant — a single ordinary sentence carrying one link, no styling, no pitch, no button. One is the maximum and also the minimum: the post still needs one honest path to the store, it just does not get a sales block.
+- Never imply the reader can buy an ingredient, base or making supply from us.
 ` : `
-This is a ${postType === 'diy' ? 'DIY / HOW-TO / TUTORIAL' : 'INFORMATIONAL / EDUCATIONAL'} post. The reader came to LEARN or MAKE something. You must respect that intent.
+This is a ${POST_TYPE_LABELS[postType]} post. The reader came to LEARN or MAKE something. You must respect that intent.
 
 CRITICAL CTA RULES for this post type:
 - **DO NOT place a sales CTA above or near the intro.** The intro sets up the guide — it does not sell.
@@ -419,7 +443,13 @@ POST STRUCTURE:
 
 2. CONTENT SECTIONS — Follow the outline. Use <h2>/<h3>, <p>, <ul>/<ol>. Deliver the full value of the guide. List items use <li><strong>Term:</strong> Explanation</li>. Never start a section with an H2 tag immediately — always follow with a <p>.
 
-3. SINGLE SHORTCUT CTA (ONE only, placed after the main content and BEFORE the FAQ):
+${postType === 'supply' ? `3. NO CTA BLOCK. This reader is sourcing a material we do not sell, so there is no CTA slot in this post at all. Instead, exactly ONE plain <p> sentence in the body notes that <a href="[PRODUCT_URL]">[Product Name]</a> is our finished version for readers who decide not to make their own. No <section>, no styles, no button, no pitch language, and no second product link anywhere.
+
+4. FAQ SECTION (always include, minimum 4 Q&As):
+<h2>Frequently Asked Questions</h2>
+<p><strong>[Question?]</strong><br>[Concise, direct answer in 1-3 sentences.]</p>
+
+That single optional inline sentence is the entire commerce placement for this post. Do NOT repeat product links throughout the body content.` : `3. SINGLE SHORTCUT CTA (ONE only, placed after the main content and BEFORE the FAQ):
 <section style="${CTA_STYLES.midArticle}">
   <p style="${CTA_STYLES.p}">Prefer a shortcut? If you'd rather skip the [mixing/measuring/making], <a href="[PRODUCT_URL]">[Product Name]</a> uses the same clean ingredients and is ready to use.</p>
 </section>
@@ -428,7 +458,7 @@ POST STRUCTURE:
 <h2>Frequently Asked Questions</h2>
 <p><strong>[Question?]</strong><br>[Concise, direct answer in 1-3 sentences.]</p>
 
-No second CTA block, no conversion CTA. The single shortcut CTA above is the entire commerce placement for this post. Do NOT repeat product links throughout the body content.
+No second CTA block, no conversion CTA. The single shortcut CTA above is the entire commerce placement for this post. Do NOT repeat product links throughout the body content.`}
 `}
 CTA BUTTON COPY RULES:
 - Link to a specific product page (/products/...) → use "Add to Cart"
@@ -526,7 +556,12 @@ WRITER NOTES:
 ${brief.writer_notes || 'Follow brand voice guidelines above.'}${benchmarkLine}${citationLine}
 ${loadInternalLinksContext()}---
 
-Write the complete post now following the POST STRUCTURE from the system prompt exactly. Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections. Write no more than ${brief.target_word_count} words. When you approach this limit, wrap up the current section and move to the conclusion — do not keep adding content. A focused post that fully answers the question at ${brief.target_word_count} words is better than a padded post that runs long. Stop when you have said everything useful, not when you have filled a quota.`;
+Write the complete post now following the POST STRUCTURE from the system prompt exactly. ${detectPostType(brief) === 'product'
+    ? 'Start with the above-the-fold CTA section, then the intro paragraph(s), then content. Include the mid-article CTA, FAQ, conversion CTA, and related posts sections.'
+    // Non-product post types have their own CTA rules in the system prompt (at most one
+    // light-touch CTA for diy/informational, none for supply). Naming the product post's
+    // CTA slots here would contradict them, and the contradiction reads as an instruction.
+    : 'Use exactly the CTA placement its POST TYPE section specifies — do not add CTA slots it does not list. Include the intro, content sections, FAQ and related posts sections.'} Write no more than ${brief.target_word_count} words. When you approach this limit, wrap up the current section and move to the conclusion — do not keep adding content. A focused post that fully answers the question at ${brief.target_word_count} words is better than a padded post that runs long. Stop when you have said everything useful, not when you have filled a quota.`;
 }
 
 // ── stream the post ───────────────────────────────────────────────────────────
@@ -661,8 +696,12 @@ ${badIntro?.html || ''}`,
       throw new Error(`Answer-first check failed and repair failed: ${repairErr.message}`);
     }
   }
-  if (!hasCTA) {
+  // A supply post is SUPPOSED to have no CTA block — the reader is sourcing a raw
+  // material we do not sell. Warning there would train the operator to ignore the warning.
+  if (!hasCTA && detectPostType(brief) !== 'supply') {
     console.warn('  Warning: No CTA section blocks detected. Editor will flag this.');
+  } else if (hasCTA && detectPostType(brief) === 'supply') {
+    console.warn('  Warning: supply-intent post contains a styled CTA section — it should have none. Check the output before publishing.');
   }
 
   console.log(` done (${wordCount} words, ${outputTokens} tokens)`);

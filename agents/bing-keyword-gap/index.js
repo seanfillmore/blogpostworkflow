@@ -111,6 +111,7 @@ export function buildReport({ snapshot, index, siteConfig, blogIndex, limit = 25
       non_branded_click_share: Math.round(nonBrandedClickShare * 1000) / 1000,
       already_targeted: joined.filter((r) => r.targeted).length,
       commercial_intent: nonBranded.filter((r) => r.commercial).length,
+      supply_intent: nonBranded.filter((r) => r.intent === 'supply').length,
       gaps: gaps.length,
       clean_angle_gaps: cleanGaps.length,
       phantom_queries: phantoms.length,
@@ -201,12 +202,13 @@ export function renderMarkdown(r) {
   L.push(`| Branded (excluded — we rank #1 for ourselves) | ${T.branded_queries} | ${T.branded_clicks} |`);
   L.push(`| Non-branded | ${T.non_branded_queries} | ${T.non_branded_clicks} |`);
   L.push(`| — of which commercial intent | ${T.commercial_intent} | |`);
+  L.push(`| — of which soap-making supply (excluded) | ${T.supply_intent ?? 0} | |`);
   L.push(`| — already in keyword-index.json | ${T.already_targeted} | |`);
   L.push(`| — phantom (excluded) | ${T.phantom_queries} | 0 |`);
   L.push(`| **Genuine gaps** | **${T.gaps}** | |`);
   L.push(`| — carrying the clean-ingredient angle | ${T.clean_angle_gaps} | |`);
   L.push('');
-  L.push('Commercial intent uses the fleet\'s existing taxonomy (`lib/search-intent.js`, extracted from the blog writer): `diy` and `informational` wording is excluded, `product` wording is kept. "Already targeted" is membership of `data/keyword-index.json`, joined on that file\'s own `slug()` key — anything in the index has already cleared its behavioural validation bar, so this report does not re-derive commercial intent for those.');
+  L.push('Commercial intent uses the fleet\'s existing taxonomy (`lib/search-intent.js`, extracted from the blog writer): `diy`, `informational` and `supply` wording is excluded, `product` wording is kept. "Already targeted" is membership of `data/keyword-index.json`, joined on that file\'s own `slug()` key — anything in the index has already cleared its behavioural validation bar, so this report does not re-derive commercial intent for those.');
   L.push('');
 
   L.push(`## The gap list — top ${r.gaps.length} by plausible revenue`);
@@ -228,7 +230,7 @@ export function renderMarkdown(r) {
   L.push('');
   L.push('"Expected clicks/period" is over the **sampled** weeks, not the full window — it is a ranking quantity, not a forecast. Do not annualise it.');
   L.push('');
-  L.push('**Caveat on the top of this list, not corrected here.** Several high-ranked rows (`coconut oil soap base`, `coconut oil for soap making`, `what percentage of coconut oil should there be in a cold process ginger juice soap`) are soap-*making* supply queries — those searchers want lye and base oils, which we do not sell. `lib/search-intent.js` files them as `product` because its DIY patterns key on `how to make` / `recipe` / `diy` and none of those appear; phrasings like "X base", "for X making" and "cold process" slip through. That is a real hole in the shared taxonomy which also affects the blog writer\'s CTA weighting, and it is reported rather than patched here: fixing it would change `agents/blog-post-writer` behaviour, and it moves nothing in this report\'s conclusion (the rows in question are worth ~1.3 expected clicks in total). Flagged for a separate decision.');
+  L.push('**Soap-making supply queries are no longer in this list.** Earlier runs ranked rows like `coconut oil soap base`, `coconut oil for soap making` and `what percentage of coconut oil should there be in a cold process ginger juice soap` as commercial gaps — those searchers want lye and base oils, which we do not sell. `lib/search-intent.js` classified them as `product` because its DIY patterns key on `how to make` / `recipe` / `diy` and none of those phrases appear. That hole was closed on 2026-08-18 with a `supply` intent type keyed on the material and process words themselves ("X base", "for X making", "cold process", "lye", "melt and pour"); `supply` is not commercial, so those rows are excluded here and counted on the "soap-making supply" line above. The same fix removes the buy-CTA weighting they used to get in `agents/blog-post-writer`.');
   L.push('');
 
   L.push('## So what for Shopify revenue');
