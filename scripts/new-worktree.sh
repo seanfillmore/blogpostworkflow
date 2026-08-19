@@ -64,6 +64,28 @@ for f in .env node_modules; do
   fi
 done
 
+# data/product-images/ is the same problem with a twist: the DIRECTORY is gitignored but
+# data/product-images/manifest.json is tracked, so the parent cannot be replaced with one
+# symlink — doing that deletes a tracked file and turns the next `git merge origin/main`
+# into a modify/delete conflict. Link each PRODUCT subdirectory instead and leave the
+# manifest as the real tracked file git checked out.
+#
+# Worth the trouble because the failure is expensive and silent: ad-studio warns "no
+# reference photos found" and renders anyway, the fidelity gate then rejects every plate
+# for not matching a product it was never shown, and the run bills full price for
+# guaranteed rejects. That cost $1.17 on 2026-08-19 before anyone noticed the warning.
+PHOTOS="data/product-images"
+if [ -d "$MAIN_REPO/$PHOTOS" ]; then
+  linked=0
+  for dir in "$MAIN_REPO/$PHOTOS"/*/; do
+    [ -d "$dir" ] || continue
+    ln -s "${dir%/}" "$DEST/$PHOTOS/$(basename "$dir")" 2>/dev/null && linked=$((linked + 1))
+  done
+  echo "  linked $linked product image dir(s)"
+else
+  echo "  warning: $MAIN_REPO/$PHOTOS not found — ad-studio runs will render without reference photos" >&2
+fi
+
 cat <<EOF
 
 Worktree ready.

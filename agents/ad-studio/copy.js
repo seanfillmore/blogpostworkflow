@@ -55,8 +55,16 @@ const BASE_SOURCE_IDS = ['pdp', 'catalog', 'brandKit', 'reviews'];
  * A/B knob, not a compliance one: both framings are quoted from the same rules text and both
  * face the same gate. Absent (the default) it contributes nothing and the writer chooses, so
  * the prompt is byte-identical to what it was before this option existed.
+ *
+ * EXPORTED so the ad-level writer in flexible.js uses THIS block rather than a second,
+ * thinner one. Its first version merely told the writer that "giveaway" was citable and
+ * never showed it the rules — so every deadline it produced was a plausible invention that
+ * the claim gate then rejected, three runs in a row. It also injected a synthesized line
+ * ("entries close September 14, 2026") which the model dutifully quoted back as evidence:
+ * prompt-manufactured text masquerading as source, which is precisely the failure
+ * lib/giveaway-claim-source.js exists to prevent at the other end.
  */
-function buildGiveawayBlock(giveaway) {
+export function buildGiveawayBlock(giveaway) {
   if (!giveaway) return '';
   const framing = {
     soap: `
@@ -365,4 +373,68 @@ export function expectedStrings(zones) {
     else if (typeof value === 'string' && value.trim()) out.push(value);
   }
   return out;
+}
+
+// ── Prize-duration claims ───────────────────────────────────────────────────────────
+//
+// "Thirty-six (36) bars ... SHIPPED OVER three (3) years" is a fulfilment schedule.
+// "A three-year supply", "a year of soap", "lasts three years" are claims about how fast
+// the winner uses soap — unsubstantiated, and no source can support them.
+//
+// NEITHER GATE CAN SEE THIS. Every word of "Win a three-year supply" traces to the rules
+// prose, so claims.js passes it; it names no disease, so health-claims.js passes it. The
+// conversion is semantic. buildGiveawayBlock has forbidden it in prose since 2026-08-18 —
+// and the writer did it again on 2026-08-19 ("Enter to win a year of clean coconut soap"),
+// through a prompt that contained the prohibition. Instruction without detection is the
+// mirror of the mistake selectQuotableReviews fixed, and it fails the same way.
+//
+// SCOPED TO GIVEAWAY COPY on purpose. A duration attached to a PRIZE is always a use-rate
+// claim, because the prize is a quantity and a shipping schedule. Ordinary product copy can
+// legitimately carry durations ("6-month shelf life"), so widening this to every ad would
+// trade a real catch for false rejections of correct copy.
+const SUPPLY_DURATION_PATTERNS = [
+  // "a year of soap", "a month's worth", "one year of"
+  /\b(?:a|an|one)\s+(?:year|month|week)(?:'s)?\s+(?:of|worth|supply)\b/i,
+  // "three-year supply", "3 years' worth", "12 month supply", "Three (3) years worth".
+  // The parenthetical numeral is how the Official Rules themselves write every quantity, so
+  // the writer echoes that style — and without allowing for it this pattern missed exactly
+  // the phrasing most likely to be produced.
+  /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)(?:\s*\(\d+\))?[\s-]*(?:year|month|week)s?['’]?[\s-]*(?:supply|worth)\b/i,
+  // "lasts three years", "will last a year"
+  /\blasts?\b[^.!?]{0,20}\b(?:\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:year|month|week)s?\b/i,
+  // "supply of three years"
+  /\bsupply\s+of\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:year|month|week)s?\b/i,
+];
+
+/** @returns {string[]} the offending phrases, empty when clean */
+export function findSupplyDurationClaims(text) {
+  const s = String(text || '');
+  const hits = [];
+  for (const re of SUPPLY_DURATION_PATTERNS) {
+    const m = s.match(re);
+    if (m) hits.push(m[0].trim());
+  }
+  return [...new Set(hits)];
+}
+
+/**
+ * Throws on any prize-duration claim in a zones/fields object. Called only when a giveaway
+ * is live — see the scoping note above.
+ */
+export function assertNoSupplyDurationClaims(zones) {
+  const violations = [];
+  for (const [zone, value] of Object.entries(zones || {})) {
+    for (const item of Array.isArray(value) ? value : [value]) {
+      for (const hit of findSupplyDurationClaims(item)) {
+        violations.push(`[${zone}] "${hit}" in: ${String(item).slice(0, 140)}`);
+      }
+    }
+  }
+  if (violations.length) {
+    throw new Error(
+      'ad-studio: prize copy states a SUPPLY DURATION, which no source supports. The rules give a ' +
+      'quantity and a shipping schedule ("36 bars shipped over 3 years"); how long that lasts anyone ' +
+      'is a claim about their rate of use.\n  ' + violations.join('\n  ')
+    );
+  }
 }

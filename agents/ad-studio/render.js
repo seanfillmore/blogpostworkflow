@@ -71,11 +71,49 @@ export function buildRenderPrompt({ format, zones, product, brandKit, mode, rati
   // detection here for the usual reason: a rejected plate costs the full retry budget.
   const physical = String(product.physicalDescription || '').trim();
   const unscented = UNSCENTED_VARIANT_RE.test(String(product.variant || ''));
+
+  // REWRITTEN 2026-08-19 against the reference photographs, because BOTH of the sweeping
+  // rules that have lived here were false for half the catalogue:
+  //
+  //   coconut-soap/pure-unscented    badge: MADE WITH / ORGANIC COCONUT OIL
+  //   coconut-lotion/pure-unscented  badge: MADE WITH / ORGANIC COCONUT OIL / + ESSENTIAL OILS
+  //
+  // The previous version asserted the first shape for every unscented variant ("names ONLY
+  // the coconut oil — never '+ Essential Oils'"), which is right for the soap and wrong for
+  // the lotion. Asserting the opposite is wrong the other way round. It also claimed an
+  // unscented variant carries no botanical illustration; both photographs show the same
+  // green leaf as the scented ones.
+  //
+  // The badge is per-VARIANT packaging data. It is not derivable from the proposition that
+  // an unscented product has no essential oils, and the per-PRODUCT manifest prose cannot
+  // express it either. So the prose stops asserting, and the exact string comes from
+  // `badgeStrings` — resolved per variant, from a photograph — in the block below.
+  //
+  // What IS true of the variant is a COPY question, and copy.js's variantBlock already owns
+  // it: the ad may not claim a scent or an essential-oil benefit this variant lacks. The
+  // bottle still says what the bottle says.
   const variantCorrection = unscented ? `
-THIS IS THE UNSCENTED VARIANT, and the description above covers the whole product line. It
-has NO essential oils and NO fragrance. Any badge on the label names ONLY the coconut oil —
-never "+ Essential Oils" — and no botanical illustration stands for a scent this variant does
-not have. Where the description and this paragraph disagree, THIS paragraph is correct.
+THIS IS THE UNSCENTED VARIANT, and the description above covers the whole product line. The
+variant name printed on the label is the one given below, and the badge text given below is
+the one printed on THIS variant — which may differ from other variants in the line. Render
+those words exactly as given; do not add or remove any, and do not reason about what an
+unscented product "should" say. Otherwise the packaging matches the reference photographs,
+including any botanical illustration on the label.
+` : '';
+
+  // Rendered as its own block, never folded into labelStrings: these words must be DRAWN
+  // but are deliberately not demanded back by the verifier, which cannot read 8px arc type
+  // reliably. Naming them here is the only thing standing between the model and inventing
+  // them — which is exactly what it did before this block existed.
+  const badges = (product.badgeStrings || []).map(s => `  - "${s}"`).join('\n');
+  const badgeBlock = badges ? `
+
+TEXT PRINTED ON THE CIRCULAR BADGE — render these words EXACTLY, spelled correctly:
+${badges}
+Set them in the small arc-and-stack layout the reference photographs show. If the badge
+would be too small at this crop to render as legible, correctly-spelled words, render the
+badge as a plain circular outline with no text rather than approximating the letterforms.
+Invented or misspelled words on the label are a hard failure; an empty badge is not.
 ` : '';
   const physicalBlock = physical ? `
 PHYSICAL FORM — the product on file is described as:
@@ -89,9 +127,10 @@ ${variantCorrection}` : variantCorrection;
 The supplied photographs are the SAME product from multiple angles. Study them and reproduce
 it exactly: proportions, cap, finish, and every element of the printed label in the correct
 order, at the correct relative size, with correct spelling.
-${physicalBlock}The label carries exactly these strings and no others:
+${physicalBlock}The label carries exactly these strings:
 ${labels}
-Never render any other volume, size or count on the product.
+${badgeBlock}Apart from the strings listed above (including the badge), render NO other words on the
+product. Never render any other volume, size or count on the product.
 The product must be generated as part of the scene, lit and shadowed to match it, resting
 naturally on the surface. Do not paste it in flat. No human hands or faces.`;
 
