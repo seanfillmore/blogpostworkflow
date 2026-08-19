@@ -25,6 +25,12 @@ import { estimateShipping, contribution } from '../lib/shipping-costs.js';
 
 const CAC = Number(process.env.CAC ?? 25);
 
+// Every Shopify variant whose title matched no roster variant. Collected rather than
+// thrown on first sight: one rerun per broken bundle is a bad loop, and an operator
+// fixing config/bundles.json wants the whole list. Throws at the end, so the report is
+// still fully printed and the process still exits non-zero.
+const unmatched = [];
+
 /**
  * Freight is only OUR cost when the order clears the free-shipping threshold. Below it the
  * customer pays, so charging the bundle for freight understates its contribution by the
@@ -86,7 +92,26 @@ for (const b of loadRoster().bundles) {
       continue;
     }
 
-    const rv = b.variants.find((x) => Object.values(x.options).join(' / ') === v.title) ?? b.variants[0];
+    // NO FALLBACK. This used to end `?? b.variants[0]`, which silently substituted the
+    // FIRST roster variant — usually the "Variety — one of each" basket — whenever a
+    // title failed to match. Unit count comes from that variant's components, so a
+    // mismatch quietly produced the wrong units, hence the wrong box, the wrong freight
+    // and the wrong contribution. The report still printed a confident number, and this
+    // is the number pricing and discount-floor decisions are made from.
+    //
+    // Titles drift for ordinary reasons — an option renamed in Shopify (the
+    // "Frankincence" → "Frankincense" correction did exactly this), an option reordered,
+    // a variant added in the admin but not in config/bundles.json.
+    const rv = b.variants.find((x) => Object.values(x.options).join(' / ') === v.title);
+    if (!rv) {
+      unmatched.push({
+        handle: b.handle,
+        shopifyTitle: v.title,
+        rosterTitles: b.variants.map((x) => Object.values(x.options).join(' / ')),
+      });
+      console.log(`${b.handle.padEnd(28)}$${String(price).padEnd(8)}${'—'.padEnd(7)}NO ROSTER VARIANT for "${v.title}"`);
+      continue;
+    }
     const units = (rv.components ?? []).reduce((s, c) => s + (c.qty ?? 1), 0) || 1;
     const box = estimateShipping({ units, pounds: oz / 16 });
     const ship = weBearFreight(price) ? box : 0; // below the threshold the customer pays
@@ -105,3 +130,16 @@ for (const b of loadRoster().bundles) {
 }
 
 console.log('\nBelow the free-shipping threshold the customer pays freight, so it is not our cost. Those bundles are attach vehicles: sitting just under the threshold nudges an add-on, which lifts AOV.');
+
+if (unmatched.length) {
+  console.error(`\n${unmatched.length} Shopify variant(s) matched no roster variant in config/bundles.json:\n`);
+  for (const u of unmatched) {
+    console.error(`  ${u.handle}`);
+    console.error(`    shopify : "${u.shopifyTitle}"`);
+    console.error(`    roster  : ${u.rosterTitles.map((t) => `"${t}"`).join(', ') || '(none)'}`);
+  }
+  throw new Error(
+    `${unmatched.length} unmatched variant(s) — the rows above are MISSING from the report, not wrong. `
+    + 'Reconcile config/bundles.json with Shopify (scripts/roster-from-shopify.mjs regenerates it) and re-run.',
+  );
+}
