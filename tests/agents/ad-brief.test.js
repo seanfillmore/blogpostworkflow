@@ -40,14 +40,35 @@ test('a product-aware angle proposes a product-awareness format', () => {
   assert.equal(FORMATS.find(f => f.key === proposed).awareness, 'product');
 });
 
-// THE KNOWN GAP, pinned so it is countable rather than inferred. No format covers
-// `unaware` or `most-aware`, and by the headroom argument those are the most valuable
-// angles we hold. When a format is finally built for either level, this test tells you.
-test('unaware and most-aware angles have NO format and say so', () => {
-  assert.equal(formatsForAngle({ awareness: 'unaware' }, FORMATS).proposed, null);
-  assert.equal(formatsForAngle({ awareness: 'most-aware' }, FORMATS).proposed, null);
-  assert.equal(AWARENESS_TO_FORMAT_AWARENESS['unaware'], null);
-  assert.equal(AWARENESS_TO_FORMAT_AWARENESS['most-aware'], null);
+// THE GAP IS CLOSED (2026-08-18). This test used to pin `unaware` and `most-aware` to NO
+// format, and its own comment said that when a format was finally built for either level
+// this test is what would tell you. It did. `fact-hook` and `spec-panel` now cover them, so
+// the assertion is inverted rather than deleted: every Schwartz level must resolve to a
+// format, because a level silently falling back to null is how the highest-scoring angle we
+// hold went unrenderable for a month without anything failing.
+test('every awareness level resolves to a format — no level is unrenderable', () => {
+  for (const level of Object.keys(AWARENESS_TO_FORMAT_AWARENESS)) {
+    const { proposed } = formatsForAngle({ awareness: level }, FORMATS);
+    assert.ok(proposed, `"${level}" must resolve to a format`);
+    assert.equal(
+      FORMATS.find(f => f.key === proposed).awareness,
+      AWARENESS_TO_FORMAT_AWARENESS[level],
+      `"${level}" must propose a format tagged for its own awareness level, never a near neighbour`,
+    );
+  }
+});
+
+// The two new levels each have exactly ONE format, so `proposed` is forced and there is no
+// alternative to offer. Pinned because the moment a second format joins either level, the
+// zone-shape rule in lib/ad-brief.js decides whether it is switchable — and that is a
+// decision someone has to make deliberately rather than discover from a dropdown.
+test('unaware and most-aware each resolve to their single dedicated format', () => {
+  assert.deepEqual(formatsForAngle({ awareness: 'unaware' }, FORMATS), {
+    proposed: 'fact-hook', alternatives: [],
+  });
+  assert.deepEqual(formatsForAngle({ awareness: 'most-aware' }, FORMATS), {
+    proposed: 'spec-panel', alternatives: [],
+  });
 });
 
 test('the proposal is deterministic — the same angle always proposes the same format', () => {

@@ -1,19 +1,21 @@
 import { strict as assert } from 'node:assert';
 import { FORMATS, selectFormats, formatByKey, visibleFormats } from '../../agents/ad-studio/formats.js';
 
-// Ten formats, each with the fields the downstream stages read. Six v1, three added
+// Twelve formats, each with the fields the downstream stages read. Six v1, three added
 // 2026-08-15 from reference creatives that are actually running (Bonafide, Magic Spoon /
-// MUD\WTR, a kids' supplement before/after), and `giveaway-entry` added 2026-08-18.
-assert.equal(FORMATS.length, 10);
+// MUD\WTR, a kids' supplement before/after), `giveaway-entry` added 2026-08-18, and
+// `fact-hook` / `spec-panel` the same day to close the unaware / most-aware gap.
+assert.equal(FORMATS.length, 12);
 const keys = FORMATS.map(f => f.key);
 assert.deepEqual(
   [...keys].sort(),
   [
-    'giveaway-entry', 'ingredient-callout', 'manifesto', 'offer-focused', 'problem-aware',
-    'stat-stack', 'state-contrast', 'testimonial', 'top-x-review', 'us-vs-them',
+    'fact-hook', 'giveaway-entry', 'ingredient-callout', 'manifesto', 'offer-focused',
+    'problem-aware', 'spec-panel', 'stat-stack', 'state-contrast', 'testimonial',
+    'top-x-review', 'us-vs-them',
   ]
 );
-assert.equal(new Set(keys).size, 10, 'format keys must be unique');
+assert.equal(new Set(keys).size, 12, 'format keys must be unique');
 
 // ── giveaway-entry is INVISIBLE unless a giveaway is actually running ────────────────
 //
@@ -38,7 +40,11 @@ assert.equal(new Set(keys).size, 10, 'format keys must be unique');
     FORMATS.filter(f => f.requiresGiveaway).map(f => f.key),
     ['giveaway-entry'],
   );
-  assert.equal(visibleFormats().length, 9, 'the no-giveaway rotation is exactly the old nine');
+  // 11 since 2026-08-18 (fact-hook, spec-panel). The point of this assertion is unchanged:
+  // requiresGiveaway must gate exactly one format, so the rotation with no giveaway live is
+  // every format except giveaway-entry.
+  assert.equal(visibleFormats().length, FORMATS.length - 1, 'the no-giveaway rotation is everything but the giveaway format');
+  assert.equal(visibleFormats().length, 11, 'and that is 11 formats today');
 
   // Declaration order is what makes it the PROPOSED product-aware format while live, and
   // leaves offer-focused proposed otherwise (formatsForAngle takes the first match).
@@ -91,7 +97,13 @@ assert.ok(
 
 for (const f of FORMATS) {
   assert.ok(f.name, `${f.key} needs a name`);
-  assert.ok(['problem', 'solution', 'product'].includes(f.awareness), `${f.key} needs an awareness level`);
+  // 'unaware' and 'most-aware' joined 2026-08-18 with fact-hook and spec-panel. This list
+  // is the whitelist AND the contract with lib/ad-brief-plan.js's join — a format tagged
+  // with anything outside it is unreachable from any angle, silently.
+  assert.ok(
+    ['unaware', 'problem', 'solution', 'product', 'most-aware'].includes(f.awareness),
+    `${f.key} needs an awareness level`,
+  );
   assert.equal(typeof f.pairsImagesWithLabels, 'boolean', `${f.key} must declare image/label pairing`);
   assert.equal(typeof f.productProminent, 'boolean', `${f.key} must declare whether its product label is legible`);
   assert.ok(Array.isArray(f.zones) && f.zones.length > 0, `${f.key} needs zones`);
@@ -178,10 +190,16 @@ assert.equal(formatByKey('offer-focused').productProminent, true);
 
 assert.equal(formatByKey('giveaway-entry').productProminent, true);
 
+// fact-hook renders the product "small and understated ... like a footnote", so its label is
+// deliberately NOT legible and the gate must not demand it back. spec-panel is the inverse:
+// a transparency pitch whose own label cannot be read defeats itself.
+assert.equal(formatByKey('fact-hook').productProminent, false);
+assert.equal(formatByKey('spec-panel').productProminent, true);
+
 // selectFormats. "Full rotation" means the VISIBLE rotation — a giveaway format is opt-in
 // by name and must never arrive by default, because the default is what you get by accident.
-assert.equal(selectFormats().length, 9, 'no args returns the full visible rotation');
-assert.equal(selectFormats([]).length, 9, 'empty array returns the full visible rotation');
+assert.equal(selectFormats().length, 11, 'no args returns the full visible rotation');
+assert.equal(selectFormats([]).length, 11, 'empty array returns the full visible rotation');
 assert.ok(!selectFormats().some(f => f.key === 'giveaway-entry'), 'the default rotation excludes it');
 assert.deepEqual(
   selectFormats(['giveaway-entry']).map(f => f.key),
