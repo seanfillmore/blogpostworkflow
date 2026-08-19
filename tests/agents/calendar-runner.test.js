@@ -196,3 +196,33 @@ test('revenueAdjustment never accelerates a dud even when it ranks', () => {
   const adj = revenueAdjustment('toothpaste', CLASSIFIED);
   assert.ok(adj.days >= 0);
 });
+
+// ── runner and brief triage must bucket a topic the same way ─────────────────
+// The runner looked the calendar item's `category` up directly; the brief triage
+// ran clusterForText() over the KEYWORD. seo-impact carries 'bar soap' and 'soap'
+// as separate clusters with different verdicts, so "oatmeal soap" had its brief
+// deleted as soap ($0, 180 clicks) while its calendar item sailed through
+// labelled "Bar Soap" (unproven). Same topic, two answers, depending on which
+// field happened to be read.
+
+const SOAP = classifyClusters([
+  { cluster: 'soap',      revenue: 0, clicks: 180, pages: 20 },
+  { cluster: 'bar soap',  revenue: 0, clicks: 10,  pages: 4  },
+  { cluster: 'deodorant', revenue: 17.26, clicks: 109, pages: 21 },
+]);
+
+test('revenueAdjustment judges on the keyword, matching what the brief triage does', () => {
+  const adj = revenueAdjustment('Bar Soap', SOAP, 'oatmeal soap');
+  assert.ok(adj.days > 0, 'clusterForText("oatmeal soap") is soap — a dud — whatever the LLM labelled it');
+  assert.match(adj.reason, /soap/);
+});
+
+test('revenueAdjustment still honours a genuinely distinct sub-cluster', () => {
+  const adj = revenueAdjustment('Bar Soap', SOAP, 'organic bar soap');
+  assert.equal(adj.days, 0, '"bar soap" wins by list order and is untested — leave it alone');
+});
+
+test('revenueAdjustment falls back to the category when there is no keyword', () => {
+  const adj = revenueAdjustment('Deodorant', SOAP, null);
+  assert.ok(adj.days < 0);
+});
