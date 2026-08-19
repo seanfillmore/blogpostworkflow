@@ -1,6 +1,8 @@
 import { strict as assert } from 'node:assert';
+import { test } from 'node:test';
 import {
   buildVerifyPrompt,
+  scentVerdict,
   parseVerifyResponse,
   diffTranscript,
   evaluateChecks,
@@ -1455,3 +1457,73 @@ assert.equal(
   assert.equal(v.status, 'unreported');
   assert.equal(v.unresolved.length, 1);
 }
+
+// ── scent on an unscented label (2026-08-18) ────────────────────────────────────────
+//
+// A manifesto 9:16 plate came back with the badge reading "ORGANIC COCONUT OIL + ESSENTIAL
+// OILS" on the PURE UNSCENTED bar — a variant whose entire proposition is that it has none.
+// It passed every gate: labelGraphics is deliberately narrowed to shape and placement
+// (badge micro-copy garbles often enough that checking it literally rejected good frames),
+// and nothing else reads the badge. That narrowing is still right for GARBLED text, which is
+// illegible noise; this is legible, plausible and false.
+//
+// Shape is copied from volumeVerdict on purpose: TOLERATE ILLEGIBILITY, REFUSE FALSEHOOD.
+
+test('scentVerdict fails a legible scent reading on an unscented variant', () => {
+  const v = scentVerdict('ORGANIC COCONUT OIL + ESSENTIAL OILS', { variant: 'pure-unscented' });
+  assert.equal(v.ok, false);
+  assert.equal(v.status, 'scent-on-unscented');
+  assert.match(v.read, /ESSENTIAL OILS/);
+});
+
+// ILLEGIBLE is the accepted cost of badge-sized type — the same bargain volumeVerdict
+// strikes. Failing on it would reject the many correct frames whose badge simply cannot be
+// resolved, which is exactly why labelGraphics was narrowed in the first place.
+test('scentVerdict tolerates an unreadable or empty badge', () => {
+  for (const read of ['ILLEGIBLE', '', '   ', 'NONE', 'none']) {
+    assert.equal(scentVerdict(read, { variant: 'pure-unscented' }).ok, true, `must pass: "${read}"`);
+  }
+});
+
+// On a SCENTED variant a badge naming its oil is correct, and there is no truth on file to
+// compare a specific oil against — so the check does not run at all rather than guessing.
+test('scentVerdict does not run on a scented variant', () => {
+  const v = scentVerdict('ESSENTIAL OILS', { variant: 'coconut-breeze' });
+  assert.equal(v.ok, true);
+  assert.equal(v.status, 'not-unscented');
+});
+
+test('scentVerdict recognises every unscented variant spelling and named oils', () => {
+  for (const variant of ['pure-unscented', 'Unscented', 'fragrance-free', 'fragrance free', 'no-scent']) {
+    assert.equal(scentVerdict('lavender essential oil', { variant }).ok, false, `must fire for: ${variant}`);
+  }
+  for (const read of ['Fragrance', 'parfum', 'peppermint', 'tea tree oil', 'Scented']) {
+    assert.equal(scentVerdict(read, { variant: 'pure-unscented' }).ok, false, `must catch: ${read}`);
+  }
+});
+
+// A legible reading naming nothing we recognise as a scent is not a falsehood we can prove,
+// so it passes. The check only ever fails on evidence, never on absence of it.
+test('scentVerdict passes a legible badge that names no scent', () => {
+  assert.equal(scentVerdict('ORGANIC COCONUT OIL', { variant: 'pure-unscented' }).ok, true);
+  assert.equal(scentVerdict('MADE WITH ORGANIC COCONUT OIL', { variant: 'pure-unscented' }).ok, true);
+});
+
+// End to end through verdictFor: a scent falsehood must actually fail a render, because
+// Photoshop cannot repaint a product label.
+test('verdictFor rejects a plate whose label names a scent on an unscented variant', () => {
+  const bad = verdictFor({
+    expected: [], checks: [], format: formatByKey('manifesto'), mode: 'plate',
+    labelScent: 'ORGANIC COCONUT OIL + ESSENTIAL OILS', variant: 'pure-unscented',
+  });
+  assert.equal(bad.ok, false);
+  assert.ok(bad.reasons.some(r => /names a scent ingredient on an UNSCENTED variant/.test(r)),
+    `reasons must name the failure: ${JSON.stringify(bad.reasons)}`);
+  assert.equal(bad.scent.ok, false);
+
+  const good = verdictFor({
+    expected: [], checks: [], format: formatByKey('manifesto'), mode: 'plate',
+    labelScent: 'ILLEGIBLE', variant: 'pure-unscented',
+  });
+  assert.equal(good.scent.ok, true);
+});

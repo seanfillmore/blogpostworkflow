@@ -94,17 +94,28 @@ export const HEALTH_CLAIM_PATTERNS = [
     // Same origin as systemic-absorption: p2a2's evidence called competitor products
     // "unnecessary toxic chemicals" and "harmful chemicals".
     //
-    // "non-toxic" IS included, and that is a deliberate cost. FTC Green Guides treat it as
-    // a claim requiring substantiation that the product is non-toxic to BOTH humans and the
-    // environment — a far broader promise than the reassurance it reads as, and one this
-    // business holds no testing behind. It is also the single most common way the claim
-    // arrives, so exempting it would leave the category mostly decorative.
+    // "NON-TOXIC" IS DELIBERATELY ALLOWED (operator's call, 2026-08-18: "pretty generic,
+    // I can't imagine we have to be super strict"). It shipped blocked for a few hours on
+    // the FTC Green Guides argument — that it is a substantiation-heavy promise about both
+    // human and environmental toxicity — and that argument is still true on paper. It lost
+    // to how the phrase actually reads in this category, where it is a generic reassurance
+    // rather than a safety finding about anything in particular.
+    //
+    // The distinction the pattern now draws: SAYING THIS PRODUCT IS NON-TOXIC is allowed;
+    // SAYING SOMETHING ELSE IS TOXIC is not. The second is a safety verdict on other
+    // people's products, which is the claim that actually needs substantiating and the one
+    // p2a2 was making ("unnecessary toxic chemicals").
+    //
+    // That needs a lookbehind, not a deletion: `\btoxic\b` matches INSIDE "non-toxic",
+    // because the hyphen is a word boundary. Removing the "non-toxic" alternation alone
+    // would have left the phrase blocked by the bare `toxic` branch and looked like it had
+    // been relaxed. Tests pin both directions.
     //
     // What this does NOT block, because it is the honest version of the same idea: naming
     // an ingredient this product does not contain ("no SLS", "no parabens", "no added
     // fragrance"). An absence is verifiable from the formula. A verdict on what that
     // ingredient DOES to people is not.
-    pattern: /\b(toxins?|toxic|toxicity|non[- ]?toxic|nontoxic|poisons?|poisonous|carcinogens?|carcinogenic|(?:endocrine|hormone)[- ]disrupt\w*|(?:harmful|dangerous|nasty) (?:chemicals?|ingredients?))\b/i,
+    pattern: /\b(toxins?|(?<!non[- ])toxic|(?<!non[- ])toxicity|poisons?|poisonous|carcinogens?|carcinogenic|(?:endocrine|hormone)[- ]disrupt\w*|(?:harmful|dangerous|nasty) (?:chemicals?|ingredients?))\b/i,
   },
   {
     category: 'substantiation',

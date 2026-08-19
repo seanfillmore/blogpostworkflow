@@ -231,7 +231,7 @@ export async function renderVariationWithBackoff(gemini, args, { tries = 3, dela
   throw lastErr;
 }
 
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null, variant = null }) {
   // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
   // can compare the product it got against the product it asked for. Capped below what
   // the renderer gets: two angles are enough to judge silhouette, cap and label order,
@@ -303,10 +303,11 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
       );
     }
 
-    const { checks, productVolume, defects, transcript, pairings, fidelity, sceneInventory } = parseVerifyResponse(textOf(msg));
+    const { checks, productVolume, labelScent, defects, transcript, pairings, fidelity, sceneInventory } = parseVerifyResponse(textOf(msg));
     lastProof = verdictFor({
       expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings,
       fidelity, hasReference: referencePhotos.length > 0, sceneInventory, unitCount,
+      labelScent, variant,
     });
     lastProof.transcript = transcript;
 
@@ -878,7 +879,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
     const r = await renderWithRetry({
       gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected: expectedPlate, format,
       zones, deliveryRatio: target.ratio,
-      mode: 'plate', volumeStrings, physicalDescription: product.physicalDescription,
+      mode: 'plate', volumeStrings, physicalDescription: product.physicalDescription, variant: product.variant,
       unitCount: product.unitCount, budget,
     });
 

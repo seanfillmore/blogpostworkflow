@@ -466,6 +466,16 @@ ${list}
    what this question exists to surface; reporting it is never a mistake. Do not answer
    "ILLEGIBLE" for a marking you are able to transcribe anywhere else in this response.
 
+2b. SCENT INGREDIENTS ON THE LABEL — look at the product's own printed label, including
+   any circular badge, and report in "labelScent" the literal text of anything naming a
+   scent ingredient: "essential oil", "essential oils", "fragrance", "parfum", "scented",
+   or a named botanical oil (lavender, peppermint, eucalyptus, citrus...). Quote it
+   exactly as printed. If the label names no such thing, answer exactly "NONE". If the
+   label text is too small, blurred or angled to read, answer exactly "ILLEGIBLE".
+
+   Do not infer this from the product's colour, from a leaf illustration, or from what
+   this kind of product usually contains. Report only what is PRINTED.
+
 ${wantsFidelity ? `${fidelitySection}
 
 ` : ''}${defectsSection}
@@ -479,7 +489,8 @@ ${nPairings}. PAIRINGS — this layout pairs a picture with each label. For ever
 ${inventorySection}Respond with JSON only:
 {
   "checks": [{ "expected": "...", "found": true, "rendered": "..." }],
-  "productVolume": "...",${wantsFidelity ? `
+  "productVolume": "...",
+  "labelScent": "...",${wantsFidelity ? `
   "fidelity": [{ "attribute": "${FIDELITY_ATTRIBUTES[0].key}", "verdict": "MATCH", "detail": "..." }],` : ''}
   "defects": [{ "text": "...", "issue": "${isPlate ? 'stray-text' : 'obscured'}", "detail": "..." }],
   "transcript": ["...", "..."]${wantsPairings ? `,
@@ -525,6 +536,7 @@ export function parseVerifyResponse(raw) {
   return {
     checks: obj.checks,
     productVolume: typeof obj.productVolume === 'string' ? obj.productVolume : '',
+    labelScent: typeof obj.labelScent === 'string' ? obj.labelScent : '',
     defects: Array.isArray(obj.defects) ? obj.defects : [],
     transcript: Array.isArray(obj.transcript) ? obj.transcript : [],
     pairings: Array.isArray(obj.pairings) ? obj.pairings : [],
@@ -764,6 +776,49 @@ export function selectVolumeStrings(labelStrings) {
  *
  * @returns {{ok:boolean, status:string, read:string, source:string, expected:string[]}}
  */
+/**
+ * Does the rendered LABEL name a scent ingredient on a variant that has none?
+ *
+ * WHY THIS EXISTS (2026-08-18). A manifesto 9:16 plate came back with the badge reading
+ * "ORGANIC COCONUT OIL + ESSENTIAL OILS" on the PURE UNSCENTED bar — a variant whose whole
+ * proposition is that it contains no essential oils and no fragrance. It passed every gate:
+ * `labelGraphics` is deliberately narrowed to shape and placement (badge micro-copy renders
+ * garbled often enough that checking it literally rejected good frames), and nothing else
+ * reads the badge at all.
+ *
+ * That narrowing is still right for GARBLED text — "ORGANIC GONFONT OIL" is illegible noise
+ * a viewer skips. This is a different failure: legible, plausible, and false. The operator's
+ * call was unambiguous — "we should not have essential oil copy on unscented products".
+ *
+ * SHAPE IS COPIED FROM volumeVerdict, deliberately: tolerate illegibility, refuse falsehood.
+ * ILLEGIBLE passes (the accepted cost of small badge type), NONE passes, and only a definite
+ * reading naming a scent on an unscented variant fails. It is asked as a POINTED question
+ * about one specific thing rather than by searching the transcript, because a vision model
+ * asked to transcribe silently auto-corrects — the lesson that cost five fix rounds here
+ * already.
+ *
+ * Runs ONLY on unscented variants. On a scented one the badge naming its oil is correct,
+ * and there is no truth on file to compare a specific oil against.
+ */
+export const UNSCENTED_VARIANT_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
+
+const SCENT_ON_LABEL_RE = /\b(essential\s+oils?|fragrance|parfum|scented|lavender|peppermint|eucalyptus|citrus|lemongrass|rosemary|tea\s+tree)\b/i;
+
+export function scentVerdict(labelScent, { variant } = {}) {
+  const read = String(labelScent || '').trim();
+  const unscented = UNSCENTED_VARIANT_RE.test(String(variant || ''));
+
+  if (!unscented) return { ok: true, status: 'not-unscented', read, variant: variant || null };
+  // No answer at all, or an explicit "none" — nothing to falsify.
+  if (!read || /^none$/i.test(read)) return { ok: true, status: 'clean', read, variant };
+  // Illegible is the accepted cost of badge-sized type, same as an unreadable volume.
+  if (ILLEGIBLE_RE.test(read)) return { ok: true, status: 'illegible', read, variant };
+  // A legible reading that names a scent on a variant defined by having none.
+  if (SCENT_ON_LABEL_RE.test(read)) return { ok: false, status: 'scent-on-unscented', read, variant };
+  // Legible but naming nothing we recognise as a scent — not a falsehood we can prove.
+  return { ok: true, status: 'clean', read, variant };
+}
+
 export function volumeVerdict(productVolume, volumeStrings, transcript = []) {
   const read = String(productVolume || '').trim();
   const truths = (volumeStrings || []).map(readVolume).filter(hasVolumeReading);
@@ -1086,6 +1141,7 @@ export function verdictFor({
   expected, checks, productVolume = '', defects = [], transcript = [],
   pairings, format, mode = 'finished', volumeStrings = [],
   fidelity = [], hasReference = false, sceneInventory = [], unitCount = 1,
+  labelScent = '', variant = null,
 }) {
   const reasons = [];
 
@@ -1106,6 +1162,18 @@ export function verdictFor({
         `transcribed "${volume.read}" off the frame; the product is ${volume.expected.join(' / ')}`
       : `product volume marking is WRONG — the render shows "${volume.read}", ` +
         `the product is ${volume.expected.join(' / ')}`
+    );
+  }
+
+  // 2c. Scent on an unscented label. Same shape as the volume check — illegible passes,
+  //     a legible falsehood fails — and it exists because a plate shipped a badge reading
+  //     "ORGANIC COCONUT OIL + ESSENTIAL OILS" on the PURE UNSCENTED bar. Photoshop cannot
+  //     repaint a product label, so this has to fail the render rather than warn.
+  const scent = scentVerdict(labelScent, { variant });
+  if (!scent.ok) {
+    reasons.push(
+      `the product label names a scent ingredient on an UNSCENTED variant — the render's ` +
+      `label reads "${scent.read}", but "${scent.variant}" contains no essential oils or fragrance`
     );
   }
 
@@ -1180,6 +1248,7 @@ export function verdictFor({
     missing,
     checkDetails: details,
     volume,
+    scent,
     fidelity: productFidelity,
     inventory,
     defects: reportedDefects,
