@@ -31,6 +31,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { getMainThemeId, getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const APPLY = process.argv.includes('--apply');
@@ -70,7 +71,7 @@ console.log(`\n  total ${Math.round(totalBefore / 1024)} KB → ${Math.round(tot
 if (!APPLY) { console.log('\ndry run — pass --apply'); process.exit(0); }
 
 for (const p of payloads) {
-  const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/2025-01/themes/${themeId}/assets.json`, {
+  const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/themes/${themeId}/assets.json`, {
     method: 'PUT',
     headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
     body: JSON.stringify({ asset: { key: p.key, attachment: p.attachment } }),

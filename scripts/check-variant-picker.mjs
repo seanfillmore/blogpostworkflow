@@ -21,6 +21,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer';
 import { getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = Object.fromEntries(
@@ -33,7 +34,7 @@ const only = argv.includes('--handle') ? argv[argv.indexOf('--handle') + 1] : nu
 const asJson = argv.includes('--json');
 
 const token = await getAccessToken();
-const data = await (await fetch(`https://${env.SHOPIFY_STORE}/admin/api/2025-01/graphql.json`, {
+const data = await (await fetch(`https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/graphql.json`, {
   method: 'POST',
   headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
   body: JSON.stringify({ query: `{ products(first: 100, query: "status:active") { edges { node {

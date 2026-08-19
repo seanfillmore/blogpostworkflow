@@ -25,9 +25,10 @@ const env = Object.fromEntries(
     .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])
 );
 import { getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const STORE = env.SHOPIFY_STORE;
-const API = `https://${STORE}/admin/api/2025-01`;
+const API = `https://${STORE}/admin/api/${API_VERSION}`;
 const HEADERS = async () => ({ 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' });
 
 const ROBOTS_LIQUID = `# robots.txt — managed by scripts/update-robots-txt.js

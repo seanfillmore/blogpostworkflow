@@ -17,6 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { getMetaPath } from '../lib/posts.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -133,7 +134,7 @@ Reply with ONLY the title tag text, no quotes, no explanation.`;
 
 async function applyMetafield(articleId, blogId, titleTag) {
   // Shopify metafield: global.title_tag on article
-  const url = `https://${SHOPIFY_STORE}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}/metafields.json`;
+  const url = `https://${SHOPIFY_STORE}/admin/api/${API_VERSION}/blogs/${blogId}/articles/${articleId}/metafields.json`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {

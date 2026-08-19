@@ -27,6 +27,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const APPLY = process.argv.includes('--apply');
@@ -43,7 +44,7 @@ const token = await getAccessToken();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function rest(path, init) {
   for (let attempt = 0; attempt < 6; attempt++) {
-    const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/2025-01/${path}`, {
+    const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/${path}`, {
       ...init,
       headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
       signal: AbortSignal.timeout(60_000),

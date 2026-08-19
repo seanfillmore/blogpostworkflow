@@ -25,11 +25,11 @@ function loadEnv() {
   return env;
 }
 import { getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const env = loadEnv();
 
 const STORE   = env.SHOPIFY_STORE;
-const API_VER = '2025-01';
 if (!STORE) {
   console.error('Missing SHOPIFY_STORE in .env');
   process.exit(1);
@@ -43,7 +43,7 @@ if (!filenames.length) {
   process.exit(1);
 }
 
-const GQL_URL = `https://${STORE}/admin/api/${API_VER}/graphql.json`;
+const GQL_URL = `https://${STORE}/admin/api/${API_VERSION}/graphql.json`;
 
 async function gql(query, variables = {}) {
   const res = await fetch(GQL_URL, {

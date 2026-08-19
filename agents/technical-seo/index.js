@@ -35,6 +35,7 @@ import { notify } from '../../lib/notify.js';
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, statSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
+import { API_VERSION } from '../../lib/shopify-api-version.js';
 import {
   getBlogs, getArticles, getArticle, updateArticle,
   getPages, getPage, updatePage,
@@ -238,7 +239,7 @@ async function getCollectionIndex() {
   const SHOP = env.SHOPIFY_STORE;
   const index = {};
   for (const type of ['custom_collections', 'smart_collections']) {
-    const res = await fetch(`https://${SHOP}/admin/api/2025-01/${type}.json?limit=250`, {
+    const res = await fetch(`https://${SHOP}/admin/api/${API_VERSION}/${type}.json?limit=250`, {
       headers: { 'X-Shopify-Access-Token': await getAccessToken() },
     });
     if (!res.ok) continue;
@@ -1953,7 +1954,7 @@ async function fixAiContent({ dryRun = false } = {}) {
     if (type === 'collection') {
       // Try both collection types
       for (const ct of ['custom_collections', 'smart_collections']) {
-        const res = await fetch(`https://${SHOP}/admin/api/2025-01/${ct}.json?handle=${handle}`, {
+        const res = await fetch(`https://${SHOP}/admin/api/${API_VERSION}/${ct}.json?handle=${handle}`, {
           headers: { 'X-Shopify-Access-Token': await getAccessToken() },
         });
         const data = await res.json();
@@ -1963,7 +1964,7 @@ async function fixAiContent({ dryRun = false } = {}) {
     } else {
       const entry = pageIdx[path];
       if (!entry) { console.log(`  [SKIP] Page not found: ${path}`); continue; }
-      const res = await fetch(`https://${SHOP}/admin/api/2025-01/pages/${entry.pageId}.json`, {
+      const res = await fetch(`https://${SHOP}/admin/api/${API_VERSION}/pages/${entry.pageId}.json`, {
         headers: { 'X-Shopify-Access-Token': await getAccessToken() },
       });
       const data = await res.json();
@@ -2023,13 +2024,13 @@ ${contentOnly}`,
     try {
       if (type === 'collection') {
         const colType = resourceType === 'custom_collections' ? 'custom_collections' : 'smart_collections';
-        await fetch(`https://${SHOP}/admin/api/2025-01/${colType}/${resourceId}.json`, {
+        await fetch(`https://${SHOP}/admin/api/${API_VERSION}/${colType}/${resourceId}.json`, {
           method: 'PUT',
           headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ [colType.slice(0, -1)]: { id: resourceId, body_html: newBody } }),
         });
       } else {
-        await fetch(`https://${SHOP}/admin/api/2025-01/pages/${resourceId}.json`, {
+        await fetch(`https://${SHOP}/admin/api/${API_VERSION}/pages/${resourceId}.json`, {
           method: 'PUT',
           headers: { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ page: { id: resourceId, body_html: newBody } }),

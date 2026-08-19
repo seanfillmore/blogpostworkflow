@@ -35,10 +35,13 @@ function loadEnv() {
 }
 
 import { getAccessToken } from '../lib/shopify.js';
+// The version comes from the fleet-wide constant, never from `.env`. An env
+// override is the same bug as a stale hardcoded pin: it lets one process run a
+// different API version than the rest of the fleet with nothing to show for it.
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const env = loadEnv();
 const STORE = env.SHOPIFY_STORE;
-const API_VERSION = env.SHOPIFY_API_VERSION || '2024-10';
 if (!STORE) {
   console.error('Missing SHOPIFY_STORE in .env');
   process.exit(1);

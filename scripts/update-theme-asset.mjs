@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = Object.fromEntries(
@@ -31,7 +32,7 @@ if (!mode || !key) { console.error('usage: update-theme-asset.mjs get|put <asset
 
 const token = await getAccessToken();
 const rest = async (path, init) => {
-  const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/2025-01/${path}`, {
+  const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/${path}`, {
     ...init,
     headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     signal: AbortSignal.timeout(60_000),
