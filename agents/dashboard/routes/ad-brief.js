@@ -55,6 +55,7 @@ import { loadGiveaway } from '../../../lib/giveaway-claim-source.js';
 import { writeJob, updateJob, findActiveJob, isValidJobId } from '../../../lib/ad-studio-job.js';
 import { respondJson, respondError, readJsonBody } from '../lib/responses.js';
 import { ROOT, PRODUCT_MANIFEST_PATH } from '../lib/paths.js';
+import { overlayPersonas } from '../../../lib/operator-angles.js';
 
 /**
  * The catalog products a brief can be generated for. Deliberately re-read here rather
@@ -81,7 +82,15 @@ function manifestProducts() {
  */
 function personasData() {
   try {
-    return JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8'));
+    // Overlaid at load, exactly as agents/ad-brief does it — the Briefs tab's angle list and
+    // the agent's actual spend have to agree about which angles exist, and a retired angle
+    // still offered in the UI is a paid click on a brief nobody wanted. A malformed overlay
+    // throws here and is caught below as "no personas", which is the correct loud failure:
+    // silently degrading to the un-overlaid list would re-enable retired angles.
+    return overlayPersonas(
+      JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8')),
+      { root: ROOT },
+    );
   } catch {
     return null;
   }

@@ -51,6 +51,7 @@ import Anthropic from '../../lib/anthropic.js';
 import { visibleFormats } from '../ad-studio/formats.js';
 import { buildSourceIndex } from '../ad-studio/claims.js';
 import { loadGiveaway } from '../../lib/giveaway-claim-source.js';
+import { overlayPersonas } from '../../lib/operator-angles.js';
 import { buildConcept, buildLabelStrings, fetchAdReviews, createJobReporter } from '../ad-studio/index.js';
 import { scoreBrief } from '../../lib/ad-brief-score.js';
 import { writeBrief } from '../../lib/ad-brief.js';
@@ -390,7 +391,14 @@ async function main() {
   // Step 1: personas + the cluster guard. Never fall back to another cluster's personas
   // and never invent one — fabricated audience reasoning underneath a claim-gated ad is
   // what this pipeline exists to prevent.
-  const personasData = loadJson(join(ROOT, 'data', 'context', 'personas.json'));
+  // The operator overlay is applied HERE, at load, so every consumer below — the flatten,
+  // planBriefs, the dry-run count, angle selection — sees one already-overlaid object and
+  // no call site can forget to apply it. See lib/operator-angles.js for why retirements and
+  // authored angles cannot just be edited into personas.json.
+  const personasData = overlayPersonas(
+    loadJson(join(ROOT, 'data', 'context', 'personas.json')),
+    { root: ROOT },
+  );
   assertClusterCoverage(handle, personasData);
 
   // Step 2: product, exactly as Ad Studio loads it.
