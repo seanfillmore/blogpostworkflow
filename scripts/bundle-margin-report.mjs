@@ -67,11 +67,23 @@ const Q = `query($handle:String!){ productByHandle(handle:$handle){ title
   variants(first:100){edges{node{ title price compareAtPrice
     inventoryItem{ unitCost{amount} measurement{weight{value unit}} } }}} }}`;
 
-/** Lowest price clearing `target` contribution, solved for the 2.9% + $0.30 fee. */
-const priceFor = (target, cogs, ship) => Math.ceil(((target + cogs + ship + 0.30) / (1 - 0.029)) * 100) / 100;
+/**
+ * Lowest price clearing `target` contribution, solved for the 2.9% + $0.30 fee.
+ *
+ * Inverts contribution() exactly:
+ *   contribution = price - cogs - ship - packaging - (price*rate + fixed)
+ *   target       = price*(1 - rate) - cogs - ship - packaging - fixed
+ *   price        = (target + cogs + ship + packaging + fixed) / (1 - rate)
+ *
+ * `packaging` was missing from this formula, which understated the floor for any
+ * bundle carrying a packaging cost (gift-box is $1). The helper was also never
+ * called — the file's own docstring promised a `floor` column that did not exist.
+ */
+const priceFor = (target, cogs, ship, packaging = 0) =>
+  Math.ceil(((target + cogs + ship + packaging + 0.30) / (1 - 0.029)) * 100) / 100;
 
 console.log(`CAC $${CAC} · 2× threshold $${CAC * 2} · freight from lib/shipping-costs.js\n`);
-console.log(`${'bundle'.padEnd(28)}${'price'.padEnd(9)}${'off'.padEnd(7)}${'cost'.padEnd(9)}${'frt'.padEnd(7)}${'contrib'.padEnd(10)}${'margin'.padEnd(8)}${'xCAC'.padEnd(7)}freight`);
+console.log(`${'bundle'.padEnd(28)}${'price'.padEnd(9)}${'off'.padEnd(7)}${'cost'.padEnd(9)}${'frt'.padEnd(7)}${'contrib'.padEnd(10)}${'margin'.padEnd(8)}${'xCAC'.padEnd(7)}${'2xfloor'.padEnd(10)}${'gap'.padEnd(9)}freight`);
 
 for (const b of loadRoster().bundles) {
   const p = (await gql(Q, { handle: b.handle }))?.productByHandle;
@@ -120,11 +132,21 @@ for (const b of loadRoster().bundles) {
     const off = cmp ? `${Math.round((1 - price / cmp) * 100)}%` : '—';
     const mult = contrib / CAC;
     const flag = mult >= 2 ? '✅' : mult >= 1 ? '🟡' : '🔴';
+    // The floor is a MOVING target: crossing the free-shipping threshold makes
+    // freight ours, so solving at the current freight can land under the
+    // threshold-adjusted answer. Solve, then re-solve if the answer flips which
+    // side of the threshold we are on.
+    let floor = priceFor(CAC * 2, cost, ship, b.packaging ?? 0);
+    if (weBearFreight(floor) !== weBearFreight(price)) {
+      floor = priceFor(CAC * 2, cost, weBearFreight(floor) ? box : 0, b.packaging ?? 0);
+    }
+    const gap = Math.round((floor - price) * 100) / 100;
 
     console.log(
       `${b.handle.padEnd(28)}$${String(price).padEnd(8)}${off.padEnd(7)}$${String(cost).padEnd(8)}$${String(ship).padEnd(6)}`
       + `$${String(contrib).padEnd(9)}${(Math.round(contrib / price * 100) + '%').padEnd(8)}`
-      + `${(mult.toFixed(1) + 'x').padEnd(7)}${(weBearFreight(price) ? 'we pay' : 'cust pays').padEnd(10)}${flag}`,
+      + `${(mult.toFixed(1) + 'x').padEnd(7)}$${String(floor).padEnd(9)}${((gap > 0 ? '+$' : '$') + gap).padEnd(9)}`
+      + `${(weBearFreight(price) ? 'we pay' : 'cust pays').padEnd(10)}${flag}`,
     );
   }
 }
