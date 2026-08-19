@@ -14,9 +14,13 @@
  *   scheduled → has a publish date
  *   published → live
  *
- * GSC feedback signals (re-evaluated each run):
- *   - Cluster with page-1 post → accelerate remaining cluster items by 2 days
- *   - Cluster with all posts > 30 days old, none ranking → push cluster items out 5 days
+ * Revenue feedback (re-evaluated each run, from data/reports/seo-impact/latest.json):
+ *   - Cluster that earned money        → accelerate its items by 2 days
+ *   - Cluster with traffic and $0      → defer its items 14 days, behind work that earns
+ *   - Cluster with too little traffic  → left alone, so a new category can be tested
+ * Priority used to key on RANKING here. It does not any more: toothpaste ranks
+ * well enough for 725 clicks across 26 pages and returns $0, and rank-keyed
+ * priority kept pulling more toothpaste posts forward.
  *
  * USAGE:
  *   node agents/calendar-runner/index.js               # print calendar status
@@ -34,6 +38,7 @@ import { loadCalendar } from '../../lib/calendar-store.js';
 import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { formatPublishAt } from '../../lib/publish-schedule.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
+import { classifyClusters, clusterStatus } from '../../lib/cluster-revenue.js';
 // Re-export for back-compat: formatPublishAt used to be defined in this file; tests
 // and callers that import it from calendar-runner keep working post-extraction.
 export { formatPublishAt } from '../../lib/publish-schedule.js';
@@ -45,11 +50,13 @@ const PRIORITY_CFG = (() => { try { return JSON.parse(readFileSync(join(ROOT, 'c
 const BUFFER_DAYS = PRIORITY_CFG.buffer?.days ?? 7;
 // Days without a draft that mean the pipeline is broken rather than idle.
 const STALL_DAYS = PRIORITY_CFG.buffer?.stallDays ?? 10;
+// Cluster priority is keyed on revenue, not ranking — see lib/cluster-revenue.js.
+const ACCELERATE_DAYS = PRIORITY_CFG.revenue?.accelerateDays ?? 2;
+const DEFER_DAYS      = PRIORITY_CFG.revenue?.deferDays ?? 14;
 
 const CALENDAR_PATH    = join(ROOT, 'data', 'reports', 'content-strategist', 'content-calendar.md');
 const STATE_DIR        = join(ROOT, 'data', 'reports', 'calendar-runner');
 const STATE_PATH       = join(STATE_DIR, 'calendar-state.json');
-const RANK_REPORT_PATH = join(ROOT, 'data', 'reports', 'rank-tracker', 'rank-tracker-report.md');
 
 const BRIEFS_DIR       = join(ROOT, 'data', 'briefs');
 
@@ -233,53 +240,48 @@ function lastDraftedAt() {
   return newest;
 }
 
-// ── GSC / rank feedback ───────────────────────────────────────────────────────
+// ── revenue feedback ──────────────────────────────────────────────────────────
 
-function loadRankSignals() {
-  // Returns { [cluster]: { page1Count, notRankingOldCount } }
-  const signals = {};
+/** Days to shift an item, keyed on what its cluster EARNS. Pure. */
+export function revenueAdjustment(category, classified) {
+  const status = clusterStatus(classified, category);
+  const c = classified?.[String(category || '').trim().toLowerCase()];
 
-  if (!existsSync(RANK_REPORT_PATH)) return signals;
-  const report = readFileSync(RANK_REPORT_PATH, 'utf8');
-
-  // Parse cluster performance table
-  const clusterRegex = /\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/g;
-  for (const m of report.matchAll(clusterRegex)) {
-    const cluster = m[1].trim();
-    if (cluster === 'Cluster' || cluster === '---') continue;
-    const page1 = parseInt(m[4], 10) || 0;
-    signals[cluster.toLowerCase()] = { page1Count: page1 };
+  if (status === 'earning') {
+    return { days: -ACCELERATE_DAYS, reason: `${category} cluster earned $${c.revenue.toFixed(2)} — accelerated ${ACCELERATE_DAYS} days` };
   }
-
-  return signals;
+  if (status === 'proven_dud') {
+    return { days: DEFER_DAYS, reason: `${category} cluster: ${c.clicks} clicks, $0.00 revenue across ${c.pages} pages — deferred ${DEFER_DAYS} days behind work that earns` };
+  }
+  // Unproven: too little traffic to judge. Left alone on purpose — deprioritising
+  // an untested category is how a category never gets tested.
+  return { days: 0, reason: null };
 }
 
-function applyFeedbackAdjustments(items, signals) {
+function applyFeedbackAdjustments(items, classified = loadClusterRevenue()) {
   const state = loadState();
 
   return items.map(item => {
-    const category = item.category.toLowerCase();
-    const sig = signals[category];
-
     // Check if we have a manually adjusted date in state
     const saved = state[item.keyword];
     const baseDate = saved?.adjustedDate
       ? new Date(saved.adjustedDate)
       : item.publishDate;
 
-    let adjustedDate = new Date(baseDate);
-    let adjustmentReason = null;
+    const { days, reason } = revenueAdjustment(item.category, classified);
+    const adjustedDate = new Date(baseDate.getTime() + days * 86400000);
 
-    if (sig) {
-      if (sig.page1Count > 0) {
-        // Cluster has page-1 post — accelerate by 2 days
-        adjustedDate = new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000);
-        adjustmentReason = `${item.category} cluster has page-1 ranking — accelerated 2 days`;
-      }
-    }
-
-    return { ...item, adjustedDate, adjustmentReason };
+    return { ...item, adjustedDate, adjustmentReason: reason };
   });
+}
+
+/** Per-cluster revenue from the latest seo-impact run; {} when it has not run. */
+function loadClusterRevenue() {
+  try {
+    const p = join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json');
+    if (!existsSync(p)) return {};
+    return classifyClusters(JSON.parse(readFileSync(p, 'utf8')).clusters);
+  } catch { return {}; }
 }
 
 // ── state persistence ─────────────────────────────────────────────────────────
@@ -640,9 +642,8 @@ async function main() {
   console.log('\nCalendar Runner — Real Skin Care\n');
 
   const rawItems  = parseCalendar();
-  const signals   = loadRankSignals();
   const rejections = loadRejections();
-  const allItems  = applyFeedbackAdjustments(rawItems, signals);
+  const allItems  = applyFeedbackAdjustments(rawItems);
   const items     = allItems.filter(i => !isRejectedKw(i.keyword, rejections));
   const skipped   = allItems.length - items.length;
   if (skipped > 0) console.log(`  Skipping ${skipped} rejected keyword(s).`);

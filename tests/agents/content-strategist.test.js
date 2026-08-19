@@ -232,3 +232,55 @@ test('mergeReviewItems leaves non-review items behind', () => {
   );
   assert.deepEqual(merged.map((i) => i.slug), ['a']);
 });
+
+// ── pre-paid briefs surfaced to the planner ───────────────────────────────────
+
+import { buildPrepaidSection, buildNonEarningSection } from '../../agents/content-strategist/index.js';
+
+test('buildPrepaidSection tells the planner to schedule briefed work first', () => {
+  const out = buildPrepaidSection(['vegan-soap', 'oatmeal-soap']);
+  assert.match(out, /vegan-soap/);
+  assert.match(out, /SCHEDULE THESE FIRST/);
+});
+
+test('buildPrepaidSection is empty when there is no pre-paid work', () => {
+  assert.equal(buildPrepaidSection([]), '');
+  assert.equal(buildPrepaidSection(null), '');
+});
+
+test('buildPrepaidSection caps the list so an 8-week plan is not swamped', () => {
+  const many = Array.from({ length: 40 }, (_, i) => `topic-${i}`);
+  const out = buildPrepaidSection(many, 5);
+  assert.match(out, /topic-0/);
+  assert.ok(!out.includes('topic-9'), 'past the cap is not listed');
+  assert.match(out, /\+35 more/);
+});
+
+// ── clusters that do not earn ─────────────────────────────────────────────────
+
+import { classifyClusters } from '../../lib/cluster-revenue.js';
+
+const CLUSTERS = classifyClusters([
+  { cluster: 'body lotion', revenue: 87.09, clicks: 34,  pages: 20 },
+  { cluster: 'toothpaste',  revenue: 0,     clicks: 725, pages: 26 },
+  { cluster: 'hand soap',   revenue: 0,     clicks: 1,   pages: 2  },
+]);
+
+test('buildNonEarningSection forbids new posts in a cluster with traffic and no revenue', () => {
+  const out = buildNonEarningSection(CLUSTERS);
+  assert.match(out, /toothpaste/i);
+  assert.match(out, /DO NOT propose/i);
+  assert.match(out, /725 clicks/);
+});
+
+test('buildNonEarningSection does not condemn an untested cluster', () => {
+  const out = buildNonEarningSection(CLUSTERS);
+  assert.ok(!/hand soap/i.test(out), 'one click is not evidence — it would never get tested');
+});
+
+test('buildNonEarningSection is empty when every cluster earns or is untested', () => {
+  const out = buildNonEarningSection(classifyClusters([
+    { cluster: 'body lotion', revenue: 87.09, clicks: 34, pages: 20 },
+  ]));
+  assert.equal(out, '');
+});

@@ -18,13 +18,14 @@
   },
   "shopify_blog_id": 48998449187,
   "shopify_blog_handle": "news",
-  "shopify_article_id": 563457097898,
   "shopify_handle": "best-natural-bar-soap-for-women-clean-picks-that-work-1",
   "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-natural-bar-soap-for-women-clean-picks-that-work-1",
-  "shopify_status": "scheduled",
-  "shopify_publish_at": "2026-04-10T15:00:00.000Z",
+  "shopify_status": "redirected",
   "uploaded_at": "2026-04-09T15:04:58.445Z",
   "legacy_bucket": "flop",
   "legacy_triage_reason": "Not indexed (state: unknown). Needs rewrite or technical investigation.",
-  "legacy_triaged_at": "2026-08-04T03:55:46.656Z"
+  "legacy_triaged_at": "2026-08-04T04:03:39.568Z",
+  "redirected_to": "natural-soap-bar-the-clean-skin-guide-you-need",
+  "redirected_at": "2026-08-18",
+  "redirect_note": "Article 563457097898 deleted in Shopify; handle 301s to the winner. Do not reschedule."
 }
