@@ -934,6 +934,11 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
         budgetStopped: Boolean(r.budgetStopped),
         ok: r.proof.ok, reasons: r.proof.reasons, missing: r.proof.missing,
         checkDetails: r.proof.checkDetails, volume: r.proof.volume, fidelity: r.proof.fidelity,
+        // Persisted for the same reason `volume` is: a verdict that decided a paid frame's
+        // fate has to stay readable after the run. proofEntry copies named fields, so a new
+        // check is invisible on disk until it is added here — which is how the scent check
+        // looked like it had never run.
+        scent: r.proof.scent,
         defects: r.proof.defects, mismatchedPairs: r.proof.mismatchedPairs,
         // The inventory is persisted in full, not just as a pass/fail. On a SCENE plate
         // strays never fail the frame, so this list is the only way a human sees that a
@@ -1401,6 +1406,12 @@ async function main() {
     title: catalogEntry.title,
     priceLabel: catalogEntry.priceLabel,
     labelStrings,
+    // The VARIANT, carried on the product so the verify gate can reach it. Without this
+    // scentVerdict receives undefined, reads "not an unscented variant", and passes every
+    // frame — a gate that is unit-tested, wired into verdictFor, and completely inert. It
+    // shipped that way in PR #541 and was caught by reading a real proof.json rather than a
+    // test: "the function is tested" is assurance that it works, not that it is reached.
+    variant,
     // R4. The manifest's prose description of the PHYSICAL product — "tall, slim lotion
     // bottle shape", "a black horizontal accent bar behind the variant name text". It was
     // being mined for label strings and volume markings and then dropped on the floor, so
