@@ -39,16 +39,45 @@ const BASE_SOURCE_IDS = ['pdp', 'catalog', 'brandKit', 'reviews'];
  * never told "the prize is a three-year supply of soap" in this file's own words, because a
  * sentence written here is a sentence no source contains, and the writer would quite
  * reasonably repeat it into an ad. It is pointed at the prize text and told to quote it.
+ *
+ * A SHIPPING SCHEDULE IS NOT A SUPPLY DURATION, and this block used to invite the confusion.
+ * It asked the writer to quote the prize's "quantity and duration", and the first live
+ * giveaway run (coconut-soap, 2026-08-18) duly returned "Win a three-year SUPPLY" — from
+ * rules that say only "thirty-six (36) bars ... SHIPPED OVER three (3) years". Both gates
+ * passed it, correctly: every word traced to the rules prose. What no gate can catch is the
+ * semantic conversion, because "shipped over 3 years" is a fact about fulfilment while "a
+ * 3-year supply" is a claim about how fast the winner uses soap — unsubstantiated, and
+ * weakest against the whole-family persona the ad was aimed at. Same class as the invented
+ * 90-day supply on the bundle lander. So the instruction now names the schedule explicitly
+ * and forbids restating it as a duration of use.
+ *
+ * `prizeFraming` decides WHICH parts of a multi-component prize the ad leads with. It is an
+ * A/B knob, not a compliance one: both framings are quoted from the same rules text and both
+ * face the same gate. Absent (the default) it contributes nothing and the writer chooses, so
+ * the prompt is byte-identical to what it was before this option existed.
  */
 function buildGiveawayBlock(giveaway) {
   if (!giveaway) return '';
+  const framing = {
+    soap: `
+PRIZE FRAMING FOR THIS AD: lead with the SOAP portion of the prize only. Do not mention the
+Sensitive Skin Moisturizing Sets. Understating a prize is permitted; overstating one is not.`,
+    full: `
+PRIZE FRAMING FOR THIS AD: name BOTH components of the prize — the soap AND the Sensitive
+Skin Moisturizing Sets — quoting each one's quantity from the PRIZES text.`,
+  }[giveaway.prizeFraming] || '';
   return `
 GIVEAWAY RUNNING — THIS IS A LEAD AD, NOT A SALES AD.
 The thing this ad asks for is an ENTRY (an email address), NOT a purchase. Do not ask anyone
 to buy, do not lead with a price, and never imply that buying helps: NO PURCHASE NECESSARY,
 and a purchase does not improve anyone's chances of winning. Entries close ${giveaway.closesOn}.
-The SIZE of the prize is the hook — quote its full quantity and duration out of the PRIZES
-text below rather than settling for "a free bar".
+The SIZE of the prize is the hook — quote its full quantity out of the PRIZES text below
+rather than settling for "a free bar".
+
+State the prize as a QUANTITY and, if you give a timeframe, as the SHIPPING SCHEDULE the
+rules actually describe. You may say bars are shipped over a period; you may NOT convert that
+into how long they will last anyone — "a three-year supply", "lasts three years", "three
+years' worth" are all claims about the winner's rate of use that no source supports.${framing}
 
 OFFICIAL RULES (a source you may cite as "giveaway") — verbatim, and the ONLY authority for
 what the prize is, who may enter, and when entries close:

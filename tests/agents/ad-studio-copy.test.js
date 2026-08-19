@@ -329,4 +329,61 @@ assert.throws(
   assert.match(withGiveaway, /VARIANT: pure-unscented/);
   assert.match(withGiveaway, /NO HEALTH CLAIMS/);
   assert.match(withGiveaway, /saponified coconut oil, nothing else/);
+
+  // ── a shipping schedule is not a supply duration ───────────────────────────────────
+  //
+  // THE INCIDENT. This block used to ask the writer to quote the prize's "quantity and
+  // duration", and the first live giveaway run returned "Win a three-year SUPPLY" from rules
+  // saying only "shipped over three (3) years". Both gates passed it — every word traced to
+  // the rules prose — because the failure is a SEMANTIC conversion no string matcher sees:
+  // "shipped over 3 years" is a fact about fulfilment, "a 3-year supply" is a claim about
+  // how fast the winner uses soap. Nothing sources that.
+  assert.match(withGiveaway, /SHIPPING SCHEDULE/, 'the writer must be told to state the schedule');
+  assert.match(
+    withGiveaway,
+    /may NOT convert that\s+into how long they will last anyone/,
+    'and told explicitly not to convert it into a duration of use',
+  );
+  // Compared against a whitespace-normalised prompt: the block hard-wraps, so the phrases it
+  // names can straddle a newline. What matters is that each one is spelled out rather than
+  // gestured at — "do not overstate" would not have stopped the run that caused this.
+  const flat = withGiveaway.replace(/\s+/g, ' ');
+  for (const banned of ['a three-year supply', 'lasts three years', "three years' worth"]) {
+    assert.ok(flat.includes(banned), `the banned phrasing "${banned}" must be named, not implied`);
+  }
+
+  // ── prizeFraming: an A/B knob over a multi-component prize ─────────────────────────
+  //
+  // Absent, it contributes NOTHING — same discipline as the giveaway block itself. A default
+  // here would silently re-frame every giveaway ad the fleet already generates.
+  assert.ok(!/PRIZE FRAMING/.test(withGiveaway), 'no framing instruction without the option');
+  assert.equal(
+    buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: undefined } }),
+    withGiveaway,
+    'an undefined framing must be byte-identical to no framing',
+  );
+  assert.equal(
+    buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'nonsense' } }),
+    withGiveaway,
+    'an unrecognised framing falls back to no instruction rather than emitting a broken one — '
+    + 'parseArgs is what rejects a bad value, and it does so by name before any spend',
+  );
+
+  const soapOnly = buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'soap' } });
+  assert.match(soapOnly, /lead with the SOAP portion of the prize only/);
+  assert.match(soapOnly, /Do not mention the\s+Sensitive Skin Moisturizing Sets/);
+  // Understating a prize is safe; overstating is not. The asymmetry is stated so nobody
+  // "balances" it later into permission to inflate.
+  assert.match(soapOnly, /Understating a prize is permitted; overstating one is not/);
+
+  const fullPrize = buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'full' } });
+  assert.match(fullPrize, /name BOTH components of the prize/);
+  assert.match(fullPrize, /Sensitive\s+Skin Moisturizing Sets/);
+  // Both framings still quote the SAME rules text and face the SAME gate — the knob decides
+  // emphasis, never what counts as sourced.
+  for (const p of [soapOnly, fullPrize]) {
+    assert.match(p, /Thirty-six \(36\) bars/);
+    assert.match(p, /from: pdp, catalog, brandKit, reviews, giveaway —/);
+    assert.match(p, /SHIPPING SCHEDULE/);
+  }
 }

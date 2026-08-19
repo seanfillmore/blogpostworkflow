@@ -61,6 +61,26 @@ and to one tagged for its own level.
 now every angle does — so nothing is exempt any more. A full `coconut-soap` run went from 8
 paid copy calls to 11. `--dry-run` still prints the count before you authorize it.
 
+## A shipping schedule is not a supply duration
+
+The giveaway block in `agents/ad-studio/copy.js` used to ask the writer for the prize's
+"quantity and duration". The first live giveaway run (`coconut-soap`, 2026-08-18) returned
+**"Win a three-year supply"** from rules that say only *"thirty-six (36) bars … **shipped
+over** three (3) years"*.
+
+**Both gates passed it, correctly.** Every word traced to the rules prose, so `claims.js`
+was satisfied, and nothing in it is a health claim. The failure is a *semantic conversion*
+no string matcher can see: "shipped over 3 years" is a fact about fulfilment, while "a
+3-year supply" is a claim about how fast the winner uses soap — which no source supports,
+and which was weakest against the whole-family persona the ad was aimed at. Same class as
+the invented 90-day supply on the bundle lander.
+
+The block now names the shipping schedule explicitly and forbids restating it as a duration
+of use, spelling out the phrasings rather than gesturing at them ("do not overstate" would
+not have stopped that run). **This is prompt guidance, not a gate** — a writer can still
+find a new way to phrase a usage claim, so giveaway and bundle copy is still worth reading
+for it by hand.
+
 ## Why the gates are imported, never reimplemented
 
 `buildConcept` (`agents/ad-studio/index.js`) runs `assertNoHealthClaims` then
@@ -222,6 +242,14 @@ need real data to mean anything.
 --angles p1a1,p5a3      optional; comma-separated angle ids. Default: every angle
                         passing angleRelevance() for this product.
 --dry-run               preview only — no Anthropic calls, no writes
+--prize-framing soap|full
+                        which components of a multi-component prize the ad leads with.
+                        Only meaningful while a giveaway is live (it throws otherwise).
+                        Omitted, the copy prompt is byte-identical to what it was before
+                        this option existed and the writer chooses its own emphasis —
+                        there is deliberately no default. An unknown value is rejected by
+                        name rather than ignored, because a run that quietly is not the
+                        framing you asked for corrupts the A/B it exists to serve.
 --job-id <id>           optional; progress reporting into
                         data/reports/ad-studio/jobs/<id>.json, claimed at boot via the
                         same createJobReporter Ad Studio uses. The dashboard's

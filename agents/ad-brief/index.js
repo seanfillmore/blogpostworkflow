@@ -99,6 +99,19 @@ export function buildBriefId(product, angleId, now = Date.now()) {
  * boundary; this is the same refusal for argv that arrives from a shell. (Code review,
  * 2026-08-17.)
  */
+/**
+ * Which components of a multi-component prize an ad leads with. Not a compliance control —
+ * both framings are quoted from the same published Official Rules and both face the same
+ * claim gate — but an A/B knob, because "36 free bars" and "36 free bars plus three
+ * Sensitive Skin Sets" are different offers and which one pulls better is an empirical
+ * question this pipeline could not previously ask.
+ *
+ * Deliberately NOT defaulted. Absent, the copy prompt is byte-identical to what it was
+ * before this option existed and the writer chooses its own emphasis; picking a default here
+ * would silently re-frame every giveaway ad the fleet has already been generating.
+ */
+export const PRIZE_FRAMINGS = ['soap', 'full'];
+
 function assertNotFlagShaped(name, value) {
   if (value !== undefined && value !== null && String(value).startsWith('-')) {
     throw new Error(
@@ -127,12 +140,25 @@ export function parseArgs(argv) {
   if (jobId !== null && !isValidJobId(jobId)) {
     throw new Error(`ad-brief: invalid --job-id "${jobId}" — letters, digits, dot, dash and underscore only`);
   }
+  // Which components of a multi-component prize the ad leads with. An A/B knob, not a
+  // compliance one — both framings are quoted from the same published rules and both face
+  // the same claim gate. Rejected by name rather than ignored: a typo'd --prize-framing
+  // silently falling back to "writer chooses" would produce a run indistinguishable from the
+  // one asked for, and the whole point is running two framings against each other.
+  const prizeFraming = get('--prize-framing') || null;
+  assertNotFlagShaped('--prize-framing', prizeFraming);
+  if (prizeFraming !== null && !PRIZE_FRAMINGS.includes(prizeFraming)) {
+    throw new Error(
+      `ad-brief: unknown --prize-framing "${prizeFraming}" — one of: ${PRIZE_FRAMINGS.join(', ')}`,
+    );
+  }
   return {
     product,
     variant,
     angles,
     dryRun: argv.includes('--dry-run'),
     jobId,
+    prizeFraming,
   };
 }
 
@@ -411,12 +437,23 @@ async function main() {
   // rather than returning null if config/giveaway.json and the published Official Rules
   // disagree about the Entry Period dates: both files are authoritative, and picking one
   // would let ad copy cite a deadline the published rules contradict.
+  // --prize-framing rides on the giveaway object rather than through four call signatures.
+  // It is prompt guidance, it is only meaningful when a giveaway is live, and buildGiveawayBlock
+  // is already the one place that reads this object — threading a parallel argument through
+  // generateBriefs -> buildConcept -> buildCopyPrompt would add three signatures that exist
+  // only to carry it, and every one of them would be a place for it to be dropped silently.
   const giveaway = loadGiveaway({ root: ROOT });
   if (giveaway) {
+    if (args.prizeFraming) giveaway.prizeFraming = args.prizeFraming;
     console.log(
       `Giveaway live: ${giveaway.name} — entries close ${giveaway.closesOn}. ` +
       `Briefs will be written as ENTRY ads and may cite the "giveaway" source.`
     );
+    if (args.prizeFraming === 'soap') console.log('Prize framing: SOAP ONLY — the Sensitive Skin Sets will not be mentioned.');
+    if (args.prizeFraming === 'full') console.log('Prize framing: FULL — both the soap and the Sensitive Skin Sets will be named.');
+  } else if (args.prizeFraming) {
+    // Silently ignoring it would produce a run that looks like the one that was asked for.
+    throw new Error('ad-brief: --prize-framing was given but no giveaway Entry Period is open, so there is no prize to frame.');
   }
 
   const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
