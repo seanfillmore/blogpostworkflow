@@ -1,5 +1,10 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 import {
   buildVerifyPrompt,
   scentVerdict,
@@ -1526,4 +1531,53 @@ test('verdictFor rejects a plate whose label names a scent on an unscented varia
     labelScent: 'ILLEGIBLE', variant: 'pure-unscented',
   });
   assert.equal(good.scent.ok, true);
+});
+
+// ── the scent gate must be REACHED, not merely correct (2026-08-18) ─────────────────
+//
+// PR #541 shipped scentVerdict unit-tested, wired into verdictFor, and COMPLETELY INERT:
+// the `product` object main() builds carried no `variant`, so renderTarget passed
+// `product.variant === undefined`, scentVerdict read "not an unscented variant", and every
+// frame passed. Six real plates went through it before a proof.json showed `scent:
+// undefined` and gave it away.
+//
+// "The function is tested" is assurance that it works, not that it is reached. These two
+// assertions are about REACHABILITY, so they fail if the wiring is removed even though
+// scentVerdict itself stays green.
+
+// 1. The verdict must carry `scent` — proofEntry copies NAMED fields, so a check missing
+//    from the persisted record is a check nobody can audit after the run.
+test('verdictFor returns a scent verdict that the proof record can persist', () => {
+  const v = verdictFor({
+    expected: [], checks: [], format: formatByKey('giveaway-entry'), mode: 'plate',
+    labelScent: 'NONE', variant: 'pure-unscented',
+  });
+  assert.ok('scent' in v, 'verdictFor must expose `scent` or proofEntry cannot record it');
+  assert.equal(v.scent.status, 'clean');
+});
+
+// 2. THE INERTNESS TEST. Drop the variant — exactly what the missing product key did — and
+//    the identical falsehood must stop failing. If this ever asserts `ok: false`, the gate
+//    has started firing without a variant and the guard below has lost its meaning.
+test('without a variant the gate is inert — which is why product must carry one', () => {
+  const args = {
+    expected: [], checks: [], format: formatByKey('giveaway-entry'), mode: 'plate',
+    labelScent: 'ORGANIC COCONUT OIL + ESSENTIAL OILS',
+  };
+  assert.equal(verdictFor({ ...args, variant: undefined }).scent.ok, true,
+    'no variant means nothing to falsify — this is the bug shape, pinned so it stays visible');
+  assert.equal(verdictFor({ ...args, variant: 'pure-unscented' }).scent.ok, false,
+    'with the variant the same label text must fail');
+});
+
+// 3. THE SOURCE GUARD. The two above pass whether or not main() actually sets it, so this
+//    reads the source and proves the product object carries `variant`. Delete that line and
+//    this test goes red — which the unit tests above would not.
+test('main() builds a product object that carries its variant', () => {
+  const src = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+  const block = src.slice(src.indexOf('const product = {'), src.indexOf('const product = {') + 1400);
+  assert.match(block, /^\s*variant,\s*$/m,
+    'the product object must carry `variant`, or scentVerdict can never see an unscented variant');
+  assert.match(src, /scent: r\.proof\.scent,/,
+    'proofEntry must persist the scent verdict, or the check is invisible on disk');
 });
