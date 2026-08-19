@@ -248,7 +248,7 @@ export async function renderVariationWithBackoff(gemini, args, { tries = 3, dela
   throw lastErr;
 }
 
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null, variant = null }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null, variant = null, expectedLabelInk = null }) {
   // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
   // can compare the product it got against the product it asked for. Capped below what
   // the renderer gets: two angles are enough to judge silhouette, cap and label order,
@@ -320,11 +320,11 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
       );
     }
 
-    const { checks, productVolume, labelScent, defects, transcript, pairings, fidelity, sceneInventory } = parseVerifyResponse(textOf(msg));
+    const { checks, productVolume, labelScent, labelInk, defects, transcript, pairings, fidelity, sceneInventory } = parseVerifyResponse(textOf(msg));
     lastProof = verdictFor({
       expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings,
       fidelity, hasReference: referencePhotos.length > 0, sceneInventory, unitCount,
-      labelScent, variant,
+      labelScent, variant, labelInk, expectedLabelInk,
     });
     lastProof.transcript = transcript;
 
@@ -984,6 +984,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
       gemini, anthropic, prompt, photoPaths, ratio: requestRatio, expected: expectedPlate, format,
       zones, deliveryRatio: target.ratio,
       mode: 'plate', volumeStrings, physicalDescription: product.physicalDescription, variant: product.variant,
+      expectedLabelInk: product.labelInk || null,
       unitCount: product.unitCount, budget,
     });
 
@@ -1043,6 +1044,7 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
         // check is invisible on disk until it is added here — which is how the scent check
         // looked like it had never run.
         scent: r.proof.scent,
+        ink: r.proof.ink,
         defects: r.proof.defects, mismatchedPairs: r.proof.mismatchedPairs,
         // The inventory is persisted in full, not just as a pass/fail. On a SCENE plate
         // strays never fail the frame, so this list is the only way a human sees that a
@@ -1516,6 +1518,9 @@ async function main() {
     // shipped that way in PR #541 and was caught by reading a real proof.json rather than a
     // test: "the function is tested" is assurance that it works, not that it is reached.
     variant,
+    // The colour this product's label TYPE is printed in, when it has been verified. Absent
+    // means the ink check no-ops rather than guessing — see verify.js's labelInkVerdict.
+    labelInk: manifestEntry.labelInk || null,
     // R4. The manifest's prose description of the PHYSICAL product — "tall, slim lotion
     // bottle shape", "a black horizontal accent bar behind the variant name text". It was
     // being mined for label strings and volume markings and then dropped on the floor, so
