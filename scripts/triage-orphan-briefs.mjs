@@ -25,10 +25,13 @@ import { fileURLToPath } from 'node:url';
 import { triageOrphanBrief } from '../lib/brief-triage.js';
 import { listAllSlugs, getPostMeta, getContentPath } from '../lib/posts.js';
 import { isInProductScope } from '../lib/product-scope.js';
+import { classifyClusters } from '../lib/cluster-revenue.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 const APPLY = process.argv.includes('--apply');
+// Off by default: it deletes work in bulk on a cluster judgement, so it is opt-in.
+const DROP_NON_EARNING = process.argv.includes('--drop-non-earning');
 
 function readJson(p, fallback) {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return fallback; }
@@ -49,6 +52,14 @@ for (const slug of listAllSlugs()) {
 const rejectedKeywords = (readJson(join(ROOT, 'data', 'rejected-keywords.json'), []) || [])
   .map((r) => r.keyword).filter(Boolean);
 const brandTerms = (readJson(join(ROOT, 'config', 'site.json'), {}).brand_terms || []);
+
+const clusterRevenue = DROP_NON_EARNING
+  ? classifyClusters(readJson(join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'), {}).clusters)
+  : null;
+if (DROP_NON_EARNING && !clusterRevenue) {
+  console.error('--drop-non-earning needs data/reports/seo-impact/latest.json. Run agents/seo-impact first.');
+  process.exit(1);
+}
 
 // ── walk the orphans ─────────────────────────────────────────────────────────
 
@@ -72,7 +83,7 @@ for (const file of briefFiles) {
 
   const keyword = brief.target_keyword || brief.keyword || slug.replace(/-/g, ' ');
   const verdict = triageOrphanBrief(keyword, {
-    publishedKeywords, rejectedKeywords, brandTerms, inScope: isInProductScope,
+    publishedKeywords, rejectedKeywords, brandTerms, inScope: isInProductScope, clusterRevenue,
   });
   (verdict.keep ? keep : drop).push({ slug, path, keyword, reason: verdict.reason });
 }
@@ -89,6 +100,9 @@ for (const k of keep) console.log(`  ${k.slug}  "${k.keyword}"`);
 
 if (!APPLY) {
   console.log(`\nDry run. Re-run with --apply to delete the ${drop.length} drop(s).`);
+  if (!DROP_NON_EARNING) {
+    console.log('Add --drop-non-earning to also drop briefs in clusters that have proven they do not earn.');
+  }
   process.exit(0);
 }
 

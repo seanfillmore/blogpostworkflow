@@ -69,3 +69,36 @@ test('revenue is carried through so callers can report dollars, not just a label
   assert.equal(c.toothpaste.clicks, 725);
   assert.equal(c['body lotion'].revenue, 87.09);
 });
+
+// ── clusterForText ────────────────────────────────────────────────────────────
+// Lifted verbatim out of agents/seo-impact so the revenue numbers and anything
+// that acts on them use ONE taxonomy. A second copy that drifted would classify
+// a brief into a cluster whose revenue figure was computed a different way.
+
+import { clusterForText } from '../../lib/cluster-revenue.js';
+
+test('clusterForText maps a keyword to the same cluster seo-impact reports on', () => {
+  assert.equal(clusterForText('toothpaste for canker sores'), 'toothpaste');
+  assert.equal(clusterForText('oatmeal soap'), 'soap');
+  assert.equal(clusterForText('best natural deodorant for men'), 'deodorant');
+});
+
+test('clusterForText is first-match-wins in list order, not longest-match', () => {
+  // 'deodorant' precedes 'coconut oil', so this is a deodorant post.
+  assert.equal(clusterForText('coconut oil deodorant for men'), 'deodorant');
+  // 'bar soap' precedes bare 'soap'.
+  assert.equal(clusterForText('organic bar soap'), 'bar soap');
+  // Nothing earlier matches, so this lands on 'soap' — not 'coconut oil'.
+  assert.equal(clusterForText('coconut oil soap benefits'), 'soap');
+});
+
+test('clusterForText normalises hyphenated and joined spellings', () => {
+  assert.equal(clusterForText('best-lip-balm-2026'), 'lip balm');
+  assert.equal(clusterForText('bodylotion guide'), 'body lotion');
+});
+
+test('clusterForText returns null when nothing matches', () => {
+  assert.equal(clusterForText('dry brushing technique'), null);
+  assert.equal(clusterForText(''), null);
+  assert.equal(clusterForText(null), null);
+});

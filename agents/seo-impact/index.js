@@ -59,6 +59,7 @@ import {
   pathOf, organicSessionsByPage, isSearchEngineSource, mergeRevenueSources, buildPageImpacts,
   clusterRollup, actionWins, rankBy, weeklyRevenueTrend,
 } from '../../lib/seo-impact.js';
+import { clusterForText } from '../../lib/cluster-revenue.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -90,20 +91,9 @@ function windows(windowDays) {
 }
 
 // ── cluster mapping (path → product cluster) ───────────────────────────────────
-const CLUSTERS = [
-  'deodorant', 'toothpaste', 'lip balm', 'lip-balm', 'body lotion', 'body-lotion',
-  'lotion', 'moisturizer', 'hand soap', 'hand-soap', 'bar soap', 'bar-soap',
-  'foaming', 'soap', 'body cream', 'body-cream', 'cream', 'coconut oil', 'coconut-oil',
-];
-function clusterFor(path) {
-  const t = (path || '').toLowerCase();
-  for (const c of CLUSTERS) {
-    if (t.includes(c) || t.includes(c.replace(/[- ]/g, '-')) || t.includes(c.replace(/[- ]/g, ''))) {
-      return c.replace(/-/g, ' ');
-    }
-  }
-  return null;
-}
+// The cluster taxonomy lives in lib/cluster-revenue.js so that everything acting
+// on these revenue numbers buckets pages the same way this report did.
+const clusterFor = clusterForText;
 
 // ── GSC clicks/impressions per path over a date window (from stored snapshots) ──
 function gscByPath({ start, end }) {

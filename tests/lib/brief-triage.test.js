@@ -89,3 +89,48 @@ test('triageOrphanBrief drops a near-duplicate of a published post, not just an 
   assert.equal(r.keep, false);
   assert.match(r.reason, /already covered/i);
 });
+
+// ── non-earning clusters ──────────────────────────────────────────────────────
+// "Key on revenue — if a cluster is not earning then we don't add to it." A brief
+// in a cluster the planner is now forbidden to schedule will never be written,
+// so it is limbo, not backlog.
+
+import { classifyClusters } from '../../lib/cluster-revenue.js';
+
+const REVENUE = classifyClusters([
+  { cluster: 'deodorant',  revenue: 17.26, clicks: 109, pages: 21 },
+  { cluster: 'toothpaste', revenue: 0,     clicks: 725, pages: 26 },
+  { cluster: 'soap',       revenue: 0,     clicks: 180, pages: 20 },
+  { cluster: 'coconut oil',revenue: 0,     clicks: 12,  pages: 7  },
+]);
+
+test('triageOrphanBrief drops a brief in a cluster that has proven it does not earn', () => {
+  const r = triageOrphanBrief('toothpaste for canker sores', { ...CTX, clusterRevenue: REVENUE });
+  assert.equal(r.keep, false);
+  assert.match(r.reason, /toothpaste/);
+  assert.match(r.reason, /does not earn/i);
+});
+
+test('triageOrphanBrief keeps a brief in a cluster that earns', () => {
+  const r = triageOrphanBrief('chlorophyll deodorant', { ...CTX, clusterRevenue: REVENUE });
+  assert.equal(r.keep, true);
+});
+
+test('triageOrphanBrief keeps a brief in an untested cluster', () => {
+  const r = triageOrphanBrief('coconut oil fatty acids', { ...CTX, clusterRevenue: REVENUE });
+  assert.equal(r.keep, true, '12 clicks is not evidence the cluster cannot earn');
+});
+
+test('triageOrphanBrief ignores clusters entirely when no revenue data is supplied', () => {
+  // Without the seo-impact report the gate must not fire — absent data is not
+  // evidence of $0, and deleting a brief is irreversible.
+  const r = triageOrphanBrief('toothpaste for canker sores', CTX);
+  assert.equal(r.keep, true);
+});
+
+test('triageOrphanBrief buckets a brief the same way seo-impact bucketed the revenue', () => {
+  // 'soap' wins over 'coconut oil' by list order, so this is judged on soap's $0.
+  const r = triageOrphanBrief('coconut oil soap benefits', { ...CTX, clusterRevenue: REVENUE });
+  assert.equal(r.keep, false);
+  assert.match(r.reason, /soap/);
+});
