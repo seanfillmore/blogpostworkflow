@@ -16,6 +16,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
+import { overlayPersonas } from '../../lib/operator-angles.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { projectPersonaForCopy } from '../../agents/ad-studio/index.js';
@@ -81,7 +82,13 @@ test('missing, empty and malformed persona data degrade to null rather than thro
 // The end-to-end claim, on the real file: whatever main() would project today, no string in
 // it can fail the gate that runs a few hundred lines later.
 test('the real personas.json projects to strings that all pass the health-claims gate', () => {
-  const raw = JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8'));
+  // OVERLAID: main() applies lib/operator-angles.js at load, so the raw file is not what it
+  // projects. The raw file still carries retired p2a2 ("goes into the bloodstream", "toxic
+  // chemicals") — correctly rejected since 2026-08-18, and correctly never briefed.
+  const raw = overlayPersonas(
+    JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8')),
+    { root: ROOT },
+  );
   const { persona, drops } = projectPersonaForCopy(raw);
   assert.deepEqual(drops, [], 'nothing should need withholding from the committed file');
   assert.ok(persona.angles.length, 'and the default persona must still have angles to brief');

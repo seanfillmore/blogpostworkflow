@@ -13,6 +13,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
+import { overlayPersonas } from '../../lib/operator-angles.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -21,7 +22,17 @@ import {
 } from '../../lib/ad-brief-plan.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const PERSONAS = JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8'));
+// OVERLAID, because that is what every consumer reads. agents/ad-brief and the dashboard
+// route both apply lib/operator-angles.js at load, so the raw file is not what any of them
+// plans against. It still carries retired p2a2, whose proof says "goes into the bloodstream"
+// and whose quotes say "toxic chemicals" — language the systemic-absorption and toxicity
+// categories (added 2026-08-18) correctly reject. Asserting the RAW file here would demand
+// that research never contain a claim, which is not research's job; sanitizePersonas filtering
+// it at read time IS the design.
+const PERSONAS = overlayPersonas(
+  JSON.parse(readFileSync(join(ROOT, 'data', 'context', 'personas.json'), 'utf8')),
+  { root: ROOT },
+);
 
 test('clusterCoverage says yes for a skin-cluster handle and carries no reason', () => {
   const v = clusterCoverage('coconut-lotion', PERSONAS);
