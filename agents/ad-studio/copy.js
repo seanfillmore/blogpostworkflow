@@ -98,7 +98,35 @@ factual: false. So is urgency with no number in it ("Closing soon"). A DATE is a
 `;
 }
 
-export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway }) {
+/**
+ * A source the writer may cite, rendered with its CONTENT.
+ *
+ * THE BUG THIS FIXES. `pdp` and `reviews` had their text in the prompt; `brandKit` and
+ * `catalog` were named in the "cite one of these" list and their content was never shown.
+ * A writer cannot quote a contiguous verbatim substring of a source it has never seen, so
+ * those two were nameable but uncitable — and naming them made it worse than omitting them,
+ * because the writer confidently attributes a real fact to the wrong source and the gate
+ * rejects correct copy. Exactly what happened on 2026-08-18: the EWG ingredient figure was
+ * sitting in brand-kit.json, the writer could only see the PDP, so it cited `pdp` and the
+ * run died with the evidence present in the index the whole time. Same class as PR #491's
+ * `reviews` — an accepted sourceId that nothing populated.
+ *
+ * It renders the ORIGINAL object, not `sourceIndex[id]`. The index looked like the tempting
+ * choice — it is literally what validateClaims searches — but normalizeForMatch lowercases
+ * and strips punctuation, so the index holds `{markerbrandkitmarker}`. Showing that would
+ * hand the writer mangled text to quote from and teach it to write lowercase, unpunctuated
+ * copy. Quoting the real object is safe because the gate normalises the writer's evidence
+ * and the source the SAME way before comparing, so a correctly-quoted pretty string still
+ * matches. What must agree between prompt and gate is WHICH sources exist, not their casing
+ * — and that is handled by deriving sourceIds from the index below.
+ */
+function sourceBlock(value, id, label) {
+  if (!value || (typeof value === 'object' && !Object.keys(value).length)) return '';
+  const body = typeof value === 'string' ? value : JSON.stringify(value, null, 1);
+  return `\n${label} (a source you may cite as "${id}"):\n${body}\n`;
+}
+
+export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry }) {
   const zoneList = format.zones
     .map(z => {
       const cap = format.zoneCapacity?.[z];
@@ -121,7 +149,18 @@ export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, re
       '\n'
     : '';
   const giveawayBlock = buildGiveawayBlock(giveaway);
-  const sourceIds = giveaway ? [...BASE_SOURCE_IDS, 'giveaway'] : BASE_SOURCE_IDS;
+  const brandKitBlock = sourceBlock(brandKit, 'brandKit', 'BRAND KIT');
+  const catalogBlock = sourceBlock(catalogEntry, 'catalog', 'CATALOG ENTRY');
+  // OFFER ONLY WHAT IS ACTUALLY THERE. This used to be a fixed list, so the writer was told
+  // it could cite `catalog` on every run including the ones with no catalog entry in the
+  // index — an invitation to attribute a true statement to a source that does not exist for
+  // this product, which the gate then rejects. When a sourceIndex is supplied it is the
+  // authority on what may be cited, because it is the authority on what will be accepted.
+  // Callers that pass none keep the old fixed list, so nothing that has not been updated
+  // changes behaviour.
+  const sourceIds = sourceIndex
+    ? Object.keys(sourceIndex)
+    : (giveaway ? [...BASE_SOURCE_IDS, 'giveaway'] : BASE_SOURCE_IDS);
   return `You are writing the copy for a single static ad for Real Skin Care.
 
 FORMAT: ${format.key} — ${format.name}
@@ -136,6 +175,7 @@ ${pdpBody}
 ${reviews.length ? `CUSTOMER REVIEWS (a source you may cite as "reviews") — real, verbatim, 4 and 5 star:
 ${reviews.slice(0, REVIEWS_SHOWN).map((r, i) => `  [${i + 1}] ${String(r).slice(0, REVIEW_CHARS)}`).join('\n')}
 ` : ''}
+${brandKitBlock}${catalogBlock}
 ${persona ? `BUYER: ${persona.name}\nWHAT THEY ALREADY TRIED: ${(persona.angles || []).join('; ')}` : ''}
 
 ${tactics && tactics.length ? `COPY TACTICS AVAILABLE:\n${tactics.map(t => `  - ${t}`).join('\n')}` : ''}
