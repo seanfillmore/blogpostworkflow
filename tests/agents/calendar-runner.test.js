@@ -152,3 +152,47 @@ test('detectDraftStall treats a never-drafted pipeline with pending work as stal
   assert.equal(stall.stalled, true);
   assert.equal(stall.idleDays, null);
 });
+
+// ── revenue-keyed prioritisation ──────────────────────────────────────────────
+// Acceleration used to key on RANKING: any cluster with a page-1 post was pulled
+// forward two days. Under the Prime Directive that is backwards — the toothpaste
+// cluster ranks well enough for 725 clicks across 26 pages and has returned $0,
+// so rank-keyed priority kept pulling more toothpaste posts forward. Dollars now.
+
+import { revenueAdjustment } from '../../agents/calendar-runner/index.js';
+import { classifyClusters } from '../../lib/cluster-revenue.js';
+
+const CLASSIFIED = classifyClusters([
+  { cluster: 'body lotion', revenue: 87.09, clicks: 34,  pages: 20 },
+  { cluster: 'toothpaste',  revenue: 0,     clicks: 725, pages: 26 },
+  { cluster: 'hand soap',   revenue: 0,     clicks: 1,   pages: 2  },
+]);
+
+test('revenueAdjustment accelerates a cluster that earns', () => {
+  const adj = revenueAdjustment('Body Lotion', CLASSIFIED);
+  assert.ok(adj.days < 0, 'earning clusters move earlier');
+  assert.match(adj.reason, /\$87\.09/, 'the reason states the dollars, not the ranking');
+});
+
+test('revenueAdjustment defers a cluster with traffic and no revenue', () => {
+  const adj = revenueAdjustment('Toothpaste', CLASSIFIED);
+  assert.ok(adj.days > 0, 'a proven dud moves later, behind work that earns');
+  assert.match(adj.reason, /725 clicks/);
+});
+
+test('revenueAdjustment leaves an untested cluster alone', () => {
+  const adj = revenueAdjustment('Hand Soap', CLASSIFIED);
+  assert.equal(adj.days, 0, 'blocking an untested category means never testing it');
+  assert.equal(adj.reason, null);
+});
+
+test('revenueAdjustment leaves a cluster absent from the report alone', () => {
+  const adj = revenueAdjustment('Brand New Thing', CLASSIFIED);
+  assert.equal(adj.days, 0);
+});
+
+test('revenueAdjustment never accelerates a dud even when it ranks', () => {
+  // The whole point: ranking is not the signal any more.
+  const adj = revenueAdjustment('toothpaste', CLASSIFIED);
+  assert.ok(adj.days >= 0);
+});

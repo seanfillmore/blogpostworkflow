@@ -23,8 +23,10 @@ const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-strategist');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
-import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, POSTS_DIR } from '../../lib/posts.js';
 import { findSemanticDuplicate } from '../../lib/cannibalization-guard.js';
+import { splitInventory } from '../../lib/brief-triage.js';
+import { classifyClusters, provenDuds } from '../../lib/cluster-revenue.js';
 import { clusterPenalties } from '../../lib/cluster-performance.js';
 import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
@@ -66,6 +68,15 @@ const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : null;
 
 function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/** Per-cluster revenue from the latest seo-impact run; {} when it has not run. */
+function loadClusterRevenue() {
+  try {
+    const p = join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json');
+    if (!existsSync(p)) return {};
+    return classifyClusters(JSON.parse(readFileSync(p, 'utf8')).clusters);
+  } catch { return {}; }
 }
 
 function loadLatestRankReport() {
@@ -371,39 +382,47 @@ export function buildRejectionSection(rejections) {
   return `\n## Rejected Keywords\nDo not schedule or suggest content related to these topics:\n${lines.join('\n')}\n`;
 }
 
+/**
+ * Everything we know about, split by whether a POST actually exists.
+ *
+ * `covered` is what the planner must not propose again. `prepaid` is briefed but
+ * unwritten — the planner must SCHEDULE those, not skip them. These used to be
+ * one Set handed over as "already published or briefed — DO NOT include these",
+ * which meant generating a brief permanently removed the topic from every future
+ * calendar. See lib/brief-triage.js.
+ */
 function loadInventory() {
-  const existing = new Set();
+  const briefSlugs = existsSync(BRIEFS_DIR)
+    ? readdirSync(BRIEFS_DIR).filter((f) => f.endsWith('.json')).map((f) => basename(f, '.json'))
+    : [];
 
-  // Existing briefs
-  if (existsSync(BRIEFS_DIR)) {
-    readdirSync(BRIEFS_DIR)
-      .filter((f) => f.endsWith('.json'))
-      .forEach((f) => existing.add(basename(f, '.json')));
-  }
+  const contentSlugs = new Set();
 
-  // Published posts (local meta.json files)
+  // Posts on disk. A post directory with no content.html is a pipeline that died
+  // partway, not a covered topic — require the HTML or a Shopify record.
   for (const slug of listAllSlugs()) {
-    existing.add(slug);
-    // Also try to extract target_keyword for broader matching
-    try {
-      const meta = getPostMetaLib(slug);
-      if (meta?.target_keyword) existing.add(slugify(meta.target_keyword));
-    } catch {}
+    let meta = null;
+    try { meta = getPostMetaLib(slug); } catch { /* skip */ }
+    if (!existsSync(getContentPath(slug)) && !meta?.shopify_article_id) continue;
+    contentSlugs.add(slug);
+    if (meta?.target_keyword) contentSlugs.add(slugify(meta.target_keyword));
   }
 
   // Published registry (written by scheduler after successful pipeline runs)
   const publishedPath = join(ROOT, 'data', 'published.json');
   if (existsSync(publishedPath)) {
     try {
-      const published = JSON.parse(readFileSync(publishedPath, 'utf8'));
-      for (const entry of published) {
-        if (entry.slug) existing.add(entry.slug);
-        if (entry.keyword) existing.add(slugify(entry.keyword));
+      for (const entry of JSON.parse(readFileSync(publishedPath, 'utf8'))) {
+        if (entry.slug) contentSlugs.add(entry.slug);
+        if (entry.keyword) contentSlugs.add(slugify(entry.keyword));
       }
     } catch {}
   }
 
-  return existing;
+  const { covered, prepaid } = splitInventory({ briefSlugs, contentSlugs: [...contentSlugs] });
+  // `all` preserves the old merged view for callers that just need "do we know
+  // about this slug" (unmappedIndexEntries), where a brief IS enough to say yes.
+  return { covered, prepaid, all: new Set([...covered, ...prepaid]) };
 }
 
 // ── schedule extraction ───────────────────────────────────────────────────────
@@ -575,6 +594,55 @@ export function mergeReviewItems(newItems, existingItems = []) {
   return [...newItems, ...carried];
 }
 
+/** Max pre-paid briefs to push at the planner at once, so an 8-week plan is not swamped. */
+const PREPAID_LIMIT = 12;
+
+/**
+ * Tell the planner about briefs it has already paid for.
+ *
+ * Without this section a briefed topic simply vanished: it was listed under
+ * "already published or briefed — DO NOT include these", so it was never
+ * scheduled and never written. Exported for tests.
+ */
+export function buildPrepaidSection(prepaid, limit = PREPAID_LIMIT) {
+  if (!prepaid || prepaid.length === 0) return '';
+  const shown = prepaid.slice(0, limit);
+  const more = prepaid.length - shown.length;
+  return `
+ALREADY BRIEFED BUT NOT YET WRITTEN — research is paid for, the post is not:
+${shown.join('\n')}${more > 0 ? `\n(+${more} more)` : ''}
+
+SCHEDULE THESE FIRST. They are the cheapest posts we can ship — the expensive
+research step is already done and is wasted until the post exists. Put them in
+the earliest weeks of the schedule ahead of any brand-new topic, unless a topic
+belongs to a cluster listed below as not earning.
+`;
+}
+
+/**
+ * Forbid new posts in clusters that have had a fair shot and returned nothing.
+ *
+ * Prime Directive: a cluster with traffic and $0 is not an SEO win to extend, it
+ * is spend to stop. Toothpaste holds 26 pages pulling 725 clicks for $0 — every
+ * additional toothpaste post has been adding to that. Untested clusters are
+ * deliberately NOT listed; blocking them is how a category never gets tested.
+ * Exported for tests.
+ */
+export function buildNonEarningSection(classified) {
+  const duds = provenDuds(classified);
+  if (duds.length === 0) return '';
+  return `
+## Clusters that do not earn — DO NOT propose new posts here
+
+These have had a fair shot (real traffic, several pages) and returned $0 in the
+attribution window. Adding content to them costs money and returns none. Do not
+schedule new posts in these clusters; if you see an opportunity there, it belongs
+in a rewrite or a conversion-path fix, not a new article.
+
+${duds.map((d) => `- **${d.cluster}** — ${d.clicks} clicks across ${d.pages} pages, $0.00 revenue`).join('\n')}
+`;
+}
+
 /**
  * Tag each calendar item with the keyword-index validation_source for the
  * matching keyword (or null when no match). Pure — exported for tests.
@@ -637,13 +705,14 @@ async function main() {
   const gapReport = readFileSync(gapReportPath, 'utf8');
   const inventory = loadInventory();
   const idx = loadIndex(ROOT);
-  const unmappedFromIndex = unmappedIndexEntries(idx, inventory, { limit: 25 });
+  const unmappedFromIndex = unmappedIndexEntries(idx, inventory.all, { limit: 25 });
   if (idx) {
     const amzCount = unmappedFromIndex.filter((e) => e.validation_source === 'amazon').length;
     console.log(`  Keyword-index: ${unmappedFromIndex.length} unmapped (${amzCount} Amazon-validated)`);
   }
   const rankReport = loadLatestRankReport();
   const clusterPerf = loadClusterPerformance();
+  const clusterRevenue = loadClusterRevenue();
 
   // Load latest GSC opportunity report (unmapped queries are net-new topic candidates)
   let gscOpps = null;
@@ -668,7 +737,7 @@ async function main() {
   }
 
   console.log(`  Gap report: ${gapReportPath}`);
-  console.log(`  Existing content: ${inventory.size} slugs found (briefs + posts)`);
+  console.log(`  Existing content: ${inventory.covered.length} written, ${inventory.prepaid.length} briefed-not-written`);
   if (generateBriefs) {
     console.log(`  Mode: plan + generate briefs${limit ? ` (top ${limit})` : ''}`);
   } else {
@@ -701,10 +770,11 @@ You have been given a content gap analysis report. Your job is to produce a deta
 4. Considers the buyer journey — ensure each category has TOF, MOF, and BOF coverage over time
 5. Specifies the exact keyword, suggested title, content type, and target publish week for each piece
 
-EXISTING CONTENT (already published or briefed — DO NOT include these):
-${[...inventory].sort().join('\n')}
-
+ALREADY WRITTEN — DO NOT propose any of these again:
+${inventory.covered.join('\n')}
+${buildPrepaidSection(inventory.prepaid)}
 ${buildClusterWeightSection(clusterPerf)}
+${buildNonEarningSection(clusterRevenue)}
 ${competitorSignals && Object.keys(competitorSignals.cluster_boosts || {}).length ? `\n## Competitor Activity Signals\nCompetitors have recently published in the following clusters. Treat these as a +1 priority boost — keep our cluster fresh and reinforce authority before the competitor post gains traction.\n${Object.entries(competitorSignals.cluster_boosts).map(([cl, n]) => `- **${cl}** — ${n} new competitor post${n > 1 ? 's' : ''}`).join('\n')}\n` : ''}
 ${gscOpps && (gscOpps.unmapped?.length || gscOpps.low_ctr?.length) ? `\n## GSC Opportunity Signals\nUse these to inform new-topic and rewrite priorities.\n\n**Unmapped high-impression queries (no current page targets these — strong new-topic candidates):**\n${(gscOpps.unmapped || []).slice(0, 15).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, position ${r.position.toFixed(1)}`).join('\n')}\n\n**Low-CTR queries (existing pages need title/meta rewrites — do not schedule as new posts):**\n${(gscOpps.low_ctr || []).slice(0, 10).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n` : ''}
 ${buildValidatedDemandSection(unmappedFromIndex)}
