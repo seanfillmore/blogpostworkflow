@@ -387,6 +387,14 @@ export const FORMATS = [
     // these run light-to-dark and include one high-contrast dark treatment. Do not add a
     // "text colour" variant here; it would describe something the render cannot contain.
     //
+    // Which colours each ground can actually carry is MEASURED, in
+    // docs/typesetting-plates.md. The short version, because it is counter-intuitive: sand,
+    // green and grey are all light neutrals and sit at 1.1-1.5:1 against every light ground —
+    // invisible, not merely weak. Black is the only usable type colour on three of these five
+    // treatments; `charcoal-contrast` is the only one where the palette opens up. Colour
+    // reaches a light plate by being reversed out of the black badge or bottom bar this
+    // format's layoutBrief already calls for.
+    //
     // Grounds stay inside the brand palette (brand-kit.json's palette_hexes: black, sand,
     // green, grey) — a giveaway ad is still a brand ad, and inventing a sixth colour here
     // would put an off-brand frame into the one campaign that reaches cold audiences.
