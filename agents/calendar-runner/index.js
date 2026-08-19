@@ -38,7 +38,7 @@ import { loadCalendar } from '../../lib/calendar-store.js';
 import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { formatPublishAt } from '../../lib/publish-schedule.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
-import { classifyClusters, clusterStatus } from '../../lib/cluster-revenue.js';
+import { classifyClusters, clusterForText } from '../../lib/cluster-revenue.js';
 // Re-export for back-compat: formatPublishAt used to be defined in this file; tests
 // and callers that import it from calendar-runner keep working post-extraction.
 export { formatPublishAt } from '../../lib/publish-schedule.js';
@@ -242,16 +242,26 @@ function lastDraftedAt() {
 
 // ── revenue feedback ──────────────────────────────────────────────────────────
 
-/** Days to shift an item, keyed on what its cluster EARNS. Pure. */
-export function revenueAdjustment(category, classified) {
-  const status = clusterStatus(classified, category);
-  const c = classified?.[String(category || '').trim().toLowerCase()];
+/**
+ * Days to shift an item, keyed on what its cluster EARNS. Pure.
+ *
+ * Bucketed from the KEYWORD first, falling back to the calendar's `category`
+ * label. Both go through clusterForText so this agrees with what the brief
+ * triage decided about the same topic — seo-impact keeps 'bar soap' and 'soap'
+ * as separate clusters with different verdicts, so reading the LLM's "Bar Soap"
+ * label had "oatmeal soap" judged untested here while its brief was being
+ * deleted as a $0 soap topic.
+ */
+export function revenueAdjustment(category, classified, keyword = null) {
+  const cluster = clusterForText(keyword) || clusterForText(category);
+  const c = cluster ? classified?.[cluster] : null;
+  const status = c?.status || 'unproven';
 
   if (status === 'earning') {
-    return { days: -ACCELERATE_DAYS, reason: `${category} cluster earned $${c.revenue.toFixed(2)} — accelerated ${ACCELERATE_DAYS} days` };
+    return { days: -ACCELERATE_DAYS, reason: `${cluster} cluster earned $${c.revenue.toFixed(2)} — accelerated ${ACCELERATE_DAYS} days` };
   }
   if (status === 'proven_dud') {
-    return { days: DEFER_DAYS, reason: `${category} cluster: ${c.clicks} clicks, $0.00 revenue across ${c.pages} pages — deferred ${DEFER_DAYS} days behind work that earns` };
+    return { days: DEFER_DAYS, reason: `${cluster} cluster: ${c.clicks} clicks, $0.00 revenue across ${c.pages} pages — deferred ${DEFER_DAYS} days behind work that earns` };
   }
   // Unproven: too little traffic to judge. Left alone on purpose — deprioritising
   // an untested category is how a category never gets tested.
@@ -268,7 +278,7 @@ function applyFeedbackAdjustments(items, classified = loadClusterRevenue()) {
       ? new Date(saved.adjustedDate)
       : item.publishDate;
 
-    const { days, reason } = revenueAdjustment(item.category, classified);
+    const { days, reason } = revenueAdjustment(item.category, classified, item.keyword);
     const adjustedDate = new Date(baseDate.getTime() + days * 86400000);
 
     return { ...item, adjustedDate, adjustmentReason: reason };
