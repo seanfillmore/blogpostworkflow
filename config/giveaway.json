@@ -28,6 +28,8 @@
       "sendAt": "2026-09-13T14:00:00.000Z"
     }
   },
+  "provisionalCostPerEntryTargetUsd": 2.50,
+  "_provisionalCostPerEntryNote": "A PLACEHOLDER, to be replaced by measurement — not a finding. The spend gate compares cost per entry against what a NEW entrant is measurably worth, but no entrant is 30 days old until mid-September, so without this the gate can only say 'not measurable yet' for the whole entry window while $30/day goes out. $2.50 is the figure the adopted paid-acquisition tactics already model against ($30/day ≈ 84 entries/week, which is what puts one consolidated ad set over Meta's ~50-conversion learning threshold); it is chosen for consistency with that arithmetic, not derived from RSC data. Sanity check on how aggressive it is: at $2.50/entry, breaking even on the FIRST purchase needs roughly an 8% entrant-to-purchase rate against the $50.46 trailing-90d AOV at ~60% gross margin. That is a high bar for a giveaway list, so expect the payoff to come from repeat purchase and LTV rather than first order — and expect to lower this number once real data lands. evaluateSpendGate uses measured value the moment one 30-day window closes and ignores this entirely from then on; it labels every verdict built on this number 'provisional' in the report line.",
   "metaAdAccountId": "act_946015593265647",
   "metaCampaignId": "120248756571100173",
   "_metaCampaignNote": "Soap Giveaway 2026-09 | Leads | US — objective OUTCOME_LEADS. Spend is read from this campaign by lib/giveaway/meta-spend.js for the daily spend gate. Recorded explicitly rather than discovered by name each run: four ad accounts exist on this token and name-matching would silently pick the wrong one if the campaign is ever renamed or duplicated."

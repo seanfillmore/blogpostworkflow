@@ -34,6 +34,7 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 | `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta`** — all three Meta ratios, see below. |
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
+| `--flexible` | no | Build ONE Meta **flexible ad** rather than a loose set of plates. See below. Mutually exclusive with `--brief`. |
 | `--dry-run` | no | Generates copy and runs the claim gate, prints the result, and exits before any image is rendered. See below. |
 | `--job-id` | no | Progress reporting for the dashboard. Writes stage-by-stage state into `data/reports/ad-studio/jobs/<id>.json`, which the Ad Studio tab polls. Set by the dashboard's launch route; a human never types it. The file is CLAIMED (status `running`, this process's pid) immediately after argument parsing, before any network call — the route refuses a second launch only while a job is pending-and-fresh or claimed-and-alive, so claiming late is how two paid runs start at once. **With no `--job-id` nothing is written and the CLI behaves exactly as before.** |
 
@@ -56,6 +57,49 @@ Example — the one-concept proving run used before any batch:
 node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze \
   --formats ingredient-callout --dry-run
 ```
+
+### `--flexible` — the 3-2-2 flexible ad
+
+```bash
+node agents/ad-studio/index.js --product foaming-hand-soap \
+  --flexible --formats problem-aware,testimonial,manifesto
+```
+
+Produces **3 plates + 2 primary texts + 2 headlines** as one deliverable: `flexible-ad.json`
+and `flexible-ad.md` alongside `run.json`. Six renders ≈ $0.78, same as the default run.
+
+**Why this shape.** Twelve combinations (3 × 2 × 2) share a **single learning pool**, so
+every impression feeds one bucket instead of splitting signal across twelve ads that each
+accumulate too slowly to mean anything. At $30/day and a modelled ~$2.50 per entry, three
+ad sets is ~28 entries/ad set/week — under the ~50 conversions Meta wants to exit the
+learning phase. Consolidated it is ~84/week, and learning can actually exit. That
+arithmetic is the entire argument; see
+`.claude/skills/marketing-paid-acquisition-scaling/SKILL.md` for the source.
+
+The mode **narrows** the run rather than widening it, and refuses anything that would
+quietly produce a different structure:
+
+| Constraint | Why |
+|---|---|
+| exactly 3 `--formats` | Three *distinct* cold openings, so no two ads chase the same person. Three variations of one format would be three ads competing for one buyer. |
+| exactly 1 target (default `meta=4:5`) | All three plates share one aspect ratio. Mixing ratios asks Meta to decide creative *and* shape at once, which this budget cannot separate. 4:5 is the tallest ratio served in-feed without giving up the ~14%/~20% margins 9:16 loses to UI. |
+| `--variations` fixed at 1 | Each format contributes exactly one plate. |
+| Meta only | Demand Gen has no flexible-ad equivalent. |
+| 2 primary texts, 2 headlines, all distinct | Two *phrasings* of one angle give the shared pool nothing to learn — that is the whole reason for writing two. Case-insensitive duplicates are rejected. |
+| ≤40 char headlines, ≤125 char primary texts | Meta truncates rather than wrapping, and a truncated headline is a different headline. |
+
+The ad-level copy is a **second copy call** through the **same two gates**
+(`assertNoHealthClaims`, then `assertClaimsSourced`) with no relaxation — it is the text
+Meta renders to a buyer, so if anything it is more exposed than type an operator sets by
+hand. The rules block itself lives once, in `copy.js`'s `buildClaimRules`, and is shared
+with the plate path.
+
+A plate that failed verification still appears in the manifest, flagged — you have two
+usable plates, not a silent 2-2-2, and you need to know which.
+
+**This never touches Meta.** It writes a manifest a human carries into Ads Manager. Build
+it as ONE ad with all three images attached; three ads split the data three ways, which is
+the failure the structure exists to avoid.
 
 ## The stages
 

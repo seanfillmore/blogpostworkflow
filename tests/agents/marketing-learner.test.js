@@ -740,6 +740,25 @@ await assert.rejects(
     'nothing is listed as parked once every gate is open');
 }
 
+// ── the size warning fires before the budget does, not after ────────────────
+{
+  const { skillSizeWarning } = await import('../../lib/marketing-learner.js');
+
+  assert.equal(skillSizeWarning({ content: 'x'.repeat(4000), maxTokens: 32000 }), null,
+    'a small skill says nothing');
+
+  // The empirical anchor: the file that broke a 16k budget was ~29,000 chars. Against the
+  // current 32k budget that is ~23% — still quiet, which is the point of the raise.
+  assert.equal(skillSizeWarning({ content: 'x'.repeat(29000), maxTokens: 32000 }), null,
+    'the file that broke 16k is comfortably inside 32k');
+  assert.match(skillSizeWarning({ content: 'x'.repeat(29000), maxTokens: 16000 }), /45% of the 16,000-token/,
+    'against the OLD budget the same file would have been flagged well before it failed');
+
+  const warn = skillSizeWarning({ content: 'x'.repeat(40000), maxTokens: 32000, name: 'marketing-big' });
+  assert.match(warn, /^marketing-big is ~10,000 tokens, 31%/);
+  assert.match(warn, /re-emits the WHOLE file/, 'says why size matters here specifically');
+}
+
 import { falsifyTactic, extractFalsifiedClaims } from '../../lib/marketing-learner.js';
 
 const LIVE_SKILL = [
