@@ -1,5 +1,5 @@
 import { strict as assert } from 'node:assert';
-import { FORMATS, selectFormats, formatByKey, visibleFormats } from '../../agents/ad-studio/formats.js';
+import { FORMATS, selectFormats, formatByKey, visibleFormats, formatForVariation } from '../../agents/ad-studio/formats.js';
 
 // Twelve formats, each with the fields the downstream stages read. Six v1, three added
 // 2026-08-15 from reference creatives that are actually running (Bonafide, Magic Spoon /
@@ -263,4 +263,83 @@ assert.equal(formatByKey('nope'), undefined);
   // Enlarging the product on the plate must NOT flip productProminent — that flag is
   // permission for the gate to demand the label back, and turning it on buys retries.
   assert.equal(m.productProminent, false);
+}
+
+// ── plateVariants (added 2026-08-18) ────────────────────────────────────────────────
+//
+// EVERY VARIANT IS A PLATE BRIEF AND IS HELD TO EVERY PLATE-BRIEF RULE. The loop above
+// validates `f.plateBrief` only; a variant is rendered in exactly the same way and reaches
+// exactly the same paid image call, so a variant naming ad furniture or a unit count would
+// be the 2026-08-15 incident again through a door the checks do not watch.
+for (const f of FORMATS) {
+  for (const v of f.plateVariants || []) {
+    const where = `${f.key}/${v.key}`;
+    assert.ok(v.plateBrief.length > 100, `${where} needs a real plate brief`);
+    assert.notEqual(v.plateBrief, f.layoutBrief, `${where}'s plate brief must not be the layout brief`);
+    assert.ok(!/#C1DF6D/i.test(v.plateBrief), `${where} must not use the retired green`);
+    assert.ok(
+      !/\b(column|badge|headline|icon|checklist|pictogram|cut-?out)\b/i.test(v.plateBrief),
+      `${where} names finished-ad furniture`
+    );
+    assert.ok(
+      !/\b(ingredients?|coconuts?|fruits?|nuts?|seeds?|sprigs?|greenery|botanicals?|wood slices?)\b/i.test(v.plateBrief),
+      `${where} names ingredient or botanical styling`
+    );
+    assert.ok(
+      !/\b(single|one|two|three|four)\s+(unit|bottle|tube|jar|item|piece)/i.test(v.plateBrief),
+      `${where} fixes a unit count — that is product.unitCount's job`
+    );
+    assert.ok(
+      !/\b(appears?|shown|rendered|pictured)\s+(exactly\s+)?(once|twice|a single time)\b/i.test(v.plateBrief),
+      `${where} states a unit count in prose`
+    );
+    if (f.plateSetting === 'studio') {
+      assert.ok(/nothing else appears/i.test(v.plateBrief), `${where} studio variant must exclude everything else`);
+    }
+  }
+}
+
+// giveaway-entry carries the five launch treatments. They vary GROUND COLOUR and PRODUCT
+// SCALE/POSITION — the two things `--variations` alone cannot change, because both are
+// written into the brief. Every ground stays inside the brand palette: a giveaway ad is the
+// one asset that reaches cold audiences, and an off-brand frame there is the worst place for
+// one.
+{
+  const g = formatByKey('giveaway-entry');
+  assert.equal(g.plateVariants.length, 5, 'five launch treatments');
+  assert.deepEqual(
+    g.plateVariants.map(v => v.key),
+    ['sand-hero', 'sand-large-centered', 'green-small', 'charcoal-contrast', 'grey-flatlay'],
+  );
+  const palette = ['#EDE5D8', '#000000', '#AEDEAC', '#EDEDED'];
+  for (const v of g.plateVariants) {
+    const hexes = v.plateBrief.match(/#[0-9A-F]{6}/gi) || [];
+    assert.ok(hexes.length, `${v.key} must name its ground colour explicitly`);
+    for (const h of hexes) {
+      assert.ok(palette.includes(h.toUpperCase()), `${v.key} uses ${h}, which is outside the brand palette`);
+    }
+  }
+  // The first treatment reproduces the original plate, so variation 1 of a 5-variation run
+  // is the frame the format has always produced and the set stays comparable to what shipped.
+  assert.equal(g.plateVariants[0].plateBrief, g.plateBrief, 'variant 1 must equal the base brief');
+}
+
+// formatForVariation resolves the treatment at the boundary — so no downstream signature
+// changes, and no call site can forget the index and silently render treatment one N times.
+{
+  const g = formatByKey('giveaway-entry');
+  assert.equal(formatForVariation(g, 1).plateVariantKey, 'sand-hero');
+  assert.equal(formatForVariation(g, 4).plateVariantKey, 'charcoal-contrast');
+  // CYCLES rather than clamps: more variations than treatments wraps, which is the useful
+  // reading of --variations 7 against five treatments.
+  assert.equal(formatForVariation(g, 6).plateVariantKey, 'sand-hero');
+  assert.equal(formatForVariation(g, 6).plateBrief, formatForVariation(g, 1).plateBrief);
+  // Defensive: a missing or nonsense index must not throw mid-run.
+  assert.equal(formatForVariation(g).plateVariantKey, 'sand-hero');
+  assert.equal(formatForVariation(g, 0).plateVariantKey, 'sand-hero');
+
+  // A format with no plateVariants is returned UNCHANGED — identity, not a copy — so every
+  // format that has not opted in behaves exactly as it did before this existed.
+  const m = formatByKey('manifesto');
+  assert.equal(formatForVariation(m, 3), m);
 }
