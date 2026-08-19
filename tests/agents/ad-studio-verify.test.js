@@ -8,6 +8,7 @@ const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 import {
   buildVerifyPrompt,
   scentVerdict,
+  labelInkVerdict,
   parseVerifyResponse,
   diffTranscript,
   evaluateChecks,
@@ -21,6 +22,7 @@ import {
   isUnresolvedObject,
 } from '../../agents/ad-studio/verify.js';
 import { formatByKey } from '../../agents/ad-studio/formats.js';
+import { buildRenderPrompt } from '../../agents/ad-studio/render.js';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 
 const pairingFormat = formatByKey('ingredient-callout');   // pairsImagesWithLabels: true
@@ -1628,3 +1630,72 @@ test('an unreported dimension is still not a mismatch', () => {
   assert.equal(volumeVerdict('8 fl. oz.', ['8 fl. oz. (236ml)'], []).ok, true);
   assert.equal(volumeVerdict('ILLEGIBLE', ['3.4 oz • 84g'], []).ok, true);
 });
+
+// ── label ink colour (2026-08-19) ───────────────────────────────────────────────────
+//
+// A charcoal-contrast 4:5 plate rendered EVERY label string in BROWN on a product whose type
+// is black — alongside a wrong badge and garbled rim text — and PASSED. labelGraphics is
+// narrowed to shape and placement, containerColour judges the CONTAINER, so nothing looked at
+// the ink. Brown is not even in the brand palette.
+
+test('labelInkVerdict fails a definite wrong ink and tolerates the rest', () => {
+  assert.equal(labelInkVerdict('brown', { expected: 'black' }).ok, false);
+  assert.equal(labelInkVerdict('dark brown', { expected: 'black' }).ok, false);
+  assert.equal(labelInkVerdict('navy', { expected: 'black' }).ok, false);
+  assert.equal(labelInkVerdict('black', { expected: 'black' }).ok, true);
+  // Synonyms that mean the same ink must not fail a correct render.
+  assert.equal(labelInkVerdict('charcoal', { expected: 'black' }).ok, true);
+  assert.equal(labelInkVerdict('gray', { expected: 'grey' }).ok, true);
+});
+
+// NO TRUTH ON FILE IS NOT A FAILURE — volumeVerdict's rule, and the reason the check can ship
+// for one product without asserting a colour for the ten nobody has verified. Guessing
+// "probably black" would invent a truth, and a false positive costs the full retry budget.
+test('labelInkVerdict no-ops without a recorded ink, and on an unreadable one', () => {
+  assert.equal(labelInkVerdict('brown', {}).status, 'no-ink-on-file');
+  assert.equal(labelInkVerdict('brown', { expected: '' }).ok, true);
+  assert.equal(labelInkVerdict('ILLEGIBLE', { expected: 'black' }).status, 'illegible');
+  assert.equal(labelInkVerdict('', { expected: 'black' }).ok, true);
+});
+
+test('verdictFor rejects a plate whose label type is the wrong colour', () => {
+  const bad = verdictFor({
+    expected: [], checks: [], format: formatByKey('giveaway-entry'), mode: 'plate',
+    labelInk: 'brown', expectedLabelInk: 'black',
+  });
+  assert.equal(bad.ok, false);
+  assert.ok(bad.reasons.some(r => /printed type is the WRONG COLOUR/.test(r)), JSON.stringify(bad.reasons));
+  assert.equal(bad.ink.ok, false);
+  // And the verdict must expose `ink`, or proofEntry — which copies named fields — cannot
+  // record it. That is exactly how the scent check shipped inert.
+  assert.ok('ink' in bad);
+});
+
+// ── the render prompt must describe the VARIANT, not the product line ───────────────
+//
+// THE ROOT CAUSE behind the essential-oils badge. Five RSC manifest entries describe a badge
+// reading "Made with Organic Coconut Oil + Essential Oils" and a "botanical illustration
+// matching the scent" — true of the LINE, false of its unscented variant. Handing that prose
+// to the renderer for `pure-unscented` instructs it to print a claim the product does not
+// make, and it did. copy.js has warned the COPY writer about this for a while; the renderer
+// never got the same warning, so a gate downstream was catching a defect this prompt asked
+// for.
+{
+  const lineDescription = 'A round bar. A circular badge noting "Made with Organic Coconut Oil + Essential Oils" '
+    + 'and a botanical illustration matching the scent.';
+  const base = {
+    format: formatByKey('giveaway-entry'), zones: {}, brandKit: {}, mode: 'plate',
+    product: { title: 'T', handle: 'h', labelStrings: ['real'], physicalDescription: lineDescription, unitCount: 1 },
+  };
+  const unscented = buildRenderPrompt({ ...base, product: { ...base.product, variant: 'pure-unscented' } });
+  assert.match(unscented, /THIS IS THE UNSCENTED VARIANT/);
+  assert.match(unscented, /names ONLY the coconut oil/);
+  assert.match(unscented, /Where the description and this paragraph disagree, THIS paragraph is correct/,
+    'the correction must outrank the line description it contradicts');
+
+  // A scented variant keeps the line description untouched — its badge really does name an
+  // oil, and there is nothing to correct.
+  const scented = buildRenderPrompt({ ...base, product: { ...base.product, variant: 'coconut-breeze' } });
+  assert.ok(!/THIS IS THE UNSCENTED VARIANT/.test(scented), 'must not fire on a scented variant');
+  assert.match(scented, /Essential Oils/, 'the line description still reaches a scented render');
+}

@@ -476,6 +476,12 @@ ${list}
    Do not infer this from the product's colour, from a leaf illustration, or from what
    this kind of product usually contains. Report only what is PRINTED.
 
+2c. LABEL INK COLOUR — report in "labelInk" the colour of the PRINTED TEXT on the product's
+   label (the brand name, the product type, the small print), as one plain colour word:
+   "black", "brown", "grey", "navy", "green", and so on. Judge the type itself, not the
+   label background and not any photograph or illustration printed on it. If the type is too
+   small or too dark to distinguish a hue, answer exactly "ILLEGIBLE".
+
 ${wantsFidelity ? `${fidelitySection}
 
 ` : ''}${defectsSection}
@@ -490,7 +496,8 @@ ${inventorySection}Respond with JSON only:
 {
   "checks": [{ "expected": "...", "found": true, "rendered": "..." }],
   "productVolume": "...",
-  "labelScent": "...",${wantsFidelity ? `
+  "labelScent": "...",
+  "labelInk": "...",${wantsFidelity ? `
   "fidelity": [{ "attribute": "${FIDELITY_ATTRIBUTES[0].key}", "verdict": "MATCH", "detail": "..." }],` : ''}
   "defects": [{ "text": "...", "issue": "${isPlate ? 'stray-text' : 'obscured'}", "detail": "..." }],
   "transcript": ["...", "..."]${wantsPairings ? `,
@@ -537,6 +544,7 @@ export function parseVerifyResponse(raw) {
     checks: obj.checks,
     productVolume: typeof obj.productVolume === 'string' ? obj.productVolume : '',
     labelScent: typeof obj.labelScent === 'string' ? obj.labelScent : '',
+    labelInk: typeof obj.labelInk === 'string' ? obj.labelInk : '',
     defects: Array.isArray(obj.defects) ? obj.defects : [],
     transcript: Array.isArray(obj.transcript) ? obj.transcript : [],
     pairings: Array.isArray(obj.pairings) ? obj.pairings : [],
@@ -833,6 +841,41 @@ export function selectVolumeStrings(labelStrings) {
 export const UNSCENTED_VARIANT_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
 
 const SCENT_ON_LABEL_RE = /\b(essential\s+oils?|fragrance|parfum|scented|lavender|peppermint|eucalyptus|citrus|lemongrass|rosemary|tea\s+tree)\b/i;
+
+/**
+ * Is the label's printed type the colour this product's type actually is?
+ *
+ * WHY (2026-08-19). A charcoal-contrast 4:5 plate rendered EVERY label string in BROWN on a
+ * product whose type is black, alongside a wrong badge and garbled rim text — and passed.
+ * `labelGraphics` is narrowed to shape and placement (badge micro-copy garbles often enough
+ * that checking it literally rejected good frames) and `containerColour` judges the CONTAINER,
+ * so nothing looked at the ink. Brown is not even in the brand palette.
+ *
+ * SHAPE IS volumeVerdict's, deliberately: no truth on file is not a failure, ILLEGIBLE is not
+ * a failure, and only a definite reading that CONTRADICTS the recorded ink fails. It is asked
+ * as a pointed question about one attribute rather than read out of a transcript, because a
+ * vision model asked to describe freely will reconcile what it sees with what it expects.
+ *
+ * `expected` comes from the product manifest (`labelInk`). Absent, the check no-ops — there
+ * is no claim to falsify, and guessing "probably black" would invent a truth for products
+ * nobody has verified. Populate it per product as each one is first rendered and checked.
+ */
+const INK_SYNONYMS = { charcoal: 'black', ink: 'black', jet: 'black', gray: 'grey', slate: 'grey' };
+
+export function labelInkVerdict(labelInk, { expected } = {}) {
+  const want = String(expected || '').trim().toLowerCase();
+  const read = String(labelInk || '').trim();
+  if (!want) return { ok: true, status: 'no-ink-on-file', read, expected: null };
+  if (!read || ILLEGIBLE_RE.test(read)) return { ok: true, status: 'illegible', read, expected: want };
+
+  // One plain colour word, normalised through the few spellings that mean the same ink.
+  const got = read.toLowerCase().replace(/[^a-z ]/g, ' ').trim().split(/\s+/)
+    .map(w => INK_SYNONYMS[w] || w)
+    .find(w => w.length > 2) || '';
+  if (!got) return { ok: true, status: 'illegible', read, expected: want };
+  if (got === (INK_SYNONYMS[want] || want)) return { ok: true, status: 'match', read, expected: want };
+  return { ok: false, status: 'mismatch', read, expected: want };
+}
 
 export function scentVerdict(labelScent, { variant } = {}) {
   const read = String(labelScent || '').trim();
@@ -1171,7 +1214,7 @@ export function verdictFor({
   expected, checks, productVolume = '', defects = [], transcript = [],
   pairings, format, mode = 'finished', volumeStrings = [],
   fidelity = [], hasReference = false, sceneInventory = [], unitCount = 1,
-  labelScent = '', variant = null,
+  labelScent = '', variant = null, labelInk = '', expectedLabelInk = null,
 }) {
   const reasons = [];
 
@@ -1204,6 +1247,17 @@ export function verdictFor({
     reasons.push(
       `the product label names a scent ingredient on an UNSCENTED variant — the render's ` +
       `label reads "${scent.read}", but "${scent.variant}" contains no essential oils or fragrance`
+    );
+  }
+
+  // 2d. Label ink colour. Same shape again — no truth on file passes, illegible passes, a
+  //     contradiction fails — because a plate whose label type is the wrong colour cannot be
+  //     repainted in Photoshop any more than a wrong volume can.
+  const ink = labelInkVerdict(labelInk, { expected: expectedLabelInk });
+  if (!ink.ok) {
+    reasons.push(
+      `the product label's printed type is the WRONG COLOUR — the render reads "${ink.read}", ` +
+      `this product's label type is ${ink.expected}`
     );
   }
 
@@ -1279,6 +1333,7 @@ export function verdictFor({
     checkDetails: details,
     volume,
     scent,
+    ink,
     fidelity: productFidelity,
     inventory,
     defects: reportedDefects,
