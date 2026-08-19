@@ -230,7 +230,30 @@ export const FORMATS = [
       `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, no texture and no vignette.`,
       'The product stands upright in the BOTTOM RIGHT of the frame, resting on the surface, occupying roughly',
       'the bottom third of the frame height — understated, but large enough to read clearly at phone size.',
-      'The whole left side and the top of the frame are empty ground. Nothing else appears in the picture.',
+      // THE 9:16 GHOST LABEL, 2026-08-18. This said "The whole left side and the top of the
+      // frame are empty ground", and on 9:16 that failed the stray-text gate 3 times out of
+      // 3: the model filled the tall upper region with a half-faded DUPLICATE of the product
+      // label — "pure unscented", "3.4 oz - 84g", "realskincare.com" floating with no wrapper
+      // beneath them. Same ghost-duplicate failure as 2026-08-15, and manifesto is the format
+      // most exposed to it because its product is deliberately small, which on the tallest
+      // ratio leaves the most unexplained space.
+      //
+      // The fix is NOT to enlarge the product — being understated is the whole format, and
+      // the operator wants that look tested rather than compromised to satisfy a gate. It is
+      // to stop describing that region as an ABSENCE. "Empty ground" names a hole and invites
+      // the model to fill it; the header's own lesson is that a negative instruction loses to
+      // a vivid positive one. So the region is now described as a POSITIVE surface — a
+      // continuous, unbroken expanse of the same sand — which is a thing to render rather
+      // than a space to populate.
+      'Above and to the left of it, that same sand surface continues unbroken to the edges of the frame as one',
+      'smooth, uninterrupted expanse — a single continuous field of colour, evenly lit corner to corner.',
+      // NOT "the product appears exactly once", which was written here and taken back out:
+      // that is a UNIT COUNT, and unit count is a property of the PRODUCT (render.js emits it
+      // from product.unitCount), never of the format. Baked in here it would reject every
+      // correct render of the four multi-unit products — the foam soap bundle is three
+      // bottles, the lip balm four tubes. The test regex does not catch this phrasing; the
+      // rule in this file's header does.
+      'Nothing else appears in the picture.',
     ].join(' '),
   },
   {
