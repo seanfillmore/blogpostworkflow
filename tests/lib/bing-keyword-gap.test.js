@@ -233,6 +233,34 @@ test('joinAgainstIndex tags branded, intent, cluster, clean angle and phantom', 
   assert.equal(byKey['natural deodorant no aluminum'].cluster, 'deodorant');
 });
 
+test('a soap-making supply query is tagged supply and never reaches the gap list', () => {
+  // The defect this guards (fixed 2026-08-18): rows like these classified as `product`,
+  // so they ranked here as commercial demand and took buy-CTAs in agents/blog-post-writer.
+  // The searcher wants lye and base oils; we sell finished soap. Its neighbour, a genuine
+  // finished-goods query, must be untouched — that is the half a blunt fix would break.
+  const rows = aggregateQueries({
+    queries: [
+      { query: 'coconut oil soap base', date: '2026-02-20', clicks: 2, impressions: 100, ctr: 0.02, impressionPosition: 2, clickPosition: null },
+      { query: 'base oils for soap making', date: '2026-02-20', clicks: 1, impressions: 60, ctr: 0.017, impressionPosition: 3, clickPosition: null },
+      { query: 'coconut oil soap', date: '2026-02-20', clicks: 3, impressions: 80, ctr: 0.0375, impressionPosition: 3, clickPosition: null },
+    ],
+  });
+  const joined = joinAgainstIndex(rows, null, { brandTerms: BRAND_TERMS });
+  const byKey = Object.fromEntries(joined.map((r) => [r.key, r]));
+
+  assert.equal(byKey['coconut oil soap base'].intent, 'supply');
+  assert.equal(byKey['coconut oil soap base'].commercial, false);
+  assert.equal(byKey['base oils for soap making'].intent, 'supply');
+  assert.equal(byKey['base oils for soap making'].commercial, false);
+  assert.equal(byKey['coconut oil soap'].intent, 'product');
+  assert.equal(byKey['coconut oil soap'].commercial, true);
+
+  const keys = rankGaps(joined).map((g) => g.key);
+  assert.ok(!keys.includes('coconut oil soap base'), 'supply row must not rank as a gap');
+  assert.ok(!keys.includes('base oils for soap making'), 'supply row must not rank as a gap');
+  assert.ok(keys.includes('coconut oil soap'), 'the finished-goods query beside it still ranks');
+});
+
 test('joinAgainstIndex tolerates a missing index rather than throwing', () => {
   const joined = joinAgainstIndex(aggregateQueries(SNAPSHOT), null, { brandTerms: BRAND_TERMS });
   assert.equal(joined.every((r) => r.targeted === false), true);
