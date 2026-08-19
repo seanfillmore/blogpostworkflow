@@ -6,7 +6,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   AWARENESS_TO_FORMAT_AWARENESS, formatsForAngle, personaProjection, angleRelevance,
-  buildBriefId, parseArgs, gatesFromRejection, assertClusterCoverage, generateBriefs,
+  buildBriefId, parseArgs, gatesFromRejection, assertClusterCoverage, generateBriefs, PRIZE_FRAMINGS,
 } from '../../agents/ad-brief/index.js';
 import { FORMATS } from '../../agents/ad-studio/formats.js';
 import { readBrief } from '../../lib/ad-brief.js';
@@ -216,6 +216,37 @@ test('--angles is parsed as a list and defaults to empty (meaning all relevant)'
 test('--dry-run is off by default', () => {
   assert.equal(parseArgs(['--product', 'coconut-lotion']).dryRun, false);
   assert.equal(parseArgs(['--product', 'coconut-lotion', '--dry-run']).dryRun, true);
+});
+
+// --prize-framing decides which components of a multi-component prize an ad leads with.
+// Null by default: absent, the copy prompt is byte-identical to what it was before the
+// option existed, and the writer picks its own emphasis.
+test('--prize-framing defaults to null and accepts only known values', () => {
+  assert.equal(parseArgs(['--product', 'coconut-soap']).prizeFraming, null);
+  for (const v of PRIZE_FRAMINGS) {
+    assert.equal(parseArgs(['--product', 'coconut-soap', '--prize-framing', v]).prizeFraming, v);
+  }
+});
+
+// Rejected BY NAME rather than ignored. A typo'd framing that silently fell back to
+// "writer chooses" would produce a run indistinguishable from the one asked for — and the
+// entire point of the option is running two framings against each other, so a run that
+// quietly is not the framing you named corrupts the comparison it exists to serve.
+test('an unknown --prize-framing throws and names the valid values', () => {
+  assert.throws(
+    () => parseArgs(['--product', 'coconut-soap', '--prize-framing', 'both']),
+    /unknown --prize-framing "both" — one of: soap, full/,
+  );
+});
+
+// The flag-shaped-value rule applies here like every other value flag: `--prize-framing
+// --dry-run` shifts the whole argument list by one, which is how a job file called
+// `--job-id.json` got claimed while the real job sat pending.
+test('--prize-framing refuses a flag-shaped value', () => {
+  assert.throws(
+    () => parseArgs(['--product', 'coconut-soap', '--prize-framing', '--dry-run']),
+    /that is a flag, not a value/,
+  );
 });
 
 // ── gates ───────────────────────────────────────────────────────────────────────────
