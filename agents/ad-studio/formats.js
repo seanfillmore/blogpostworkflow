@@ -488,6 +488,90 @@ export const FORMATS = [
       'Nothing else appears in the picture.',
     ].join(' '),
   },
+  // ── Added 2026-08-18: the two awareness levels that had no format ────────────────────
+  //
+  // Until now `unaware` and `most-aware` mapped to null, so 4 of the 15 angles on file
+  // could be briefed but never rendered — including the HIGHEST-SCORING angle we hold
+  // (p2a2 "125 chemicals a day", 81). That gap was deliberate and documented rather than
+  // papered over by aliasing the two levels onto `problem`/`product`; these two entries
+  // close it the way the header prescribes, as new data rows.
+  //
+  // They introduce two NEW awareness values rather than reusing the existing three. The
+  // join in lib/ad-brief-plan.js is what makes a level renderable, and mapping `unaware`
+  // onto `problem` would have silently briefed a problem-aware ad — an ad that assumes the
+  // reader already knows they have a problem — against a reader who by definition does not.
+  // That is the exact "closest available format" substitution the ad-brief README refuses.
+  {
+    key: 'fact-hook',
+    name: 'Fact hook (unaware)',
+    awareness: 'unaware',
+    pairsImagesWithLabels: false,
+    // The number is the hero and the product is deliberately incidental and small, so its
+    // label cannot be read back — same declaration as manifesto and problem-aware, and for
+    // the same reason: demanding a 6pt brand mark off it would burn retries at ~$0.13.
+    productProminent: false,
+    // No list-shaped zone — every zone here is a single string. `headline` carries the
+    // FIGURE itself and is the largest type in the frame; that is what a headline is here,
+    // and it keeps this format inside the invariant that every format has one.
+    zones: ['headline', 'statContext', 'subhead', 'bottomBar'],
+    layoutBrief: [
+      'An editorial, information-first composition that reads like a public-interest fact rather than an ad.',
+      `The headline is a single arresting figure and dominates the upper half on a warm sand ${SAND} ground,`,
+      'set in heavy black type, with a short caption directly beneath it naming what the figure counts.',
+      'A supporting line below that turns the fact toward the reader.',
+      'The product sits small and incidental in the lower right, resting on the surface like a footnote.',
+      'A single restrained line of caps runs across the bottom.',
+      'The number must be a figure quoted from a named source — never an invented or rounded-up statistic.',
+      'No before/after split and no depiction of a skin condition — those are restricted in health and beauty.',
+    ].join(' '),
+    // A giant numeral needs a genuinely flat, uninterrupted field to sit on, which is why
+    // this is 'studio' and not a scene: a bathroom counter would put texture and edges
+    // exactly where the largest type in the frame has to land. The product goes to the
+    // lower RIGHT corner rather than manifesto's bottom centre, so the whole upper-left
+    // field stays clear for the number.
+    plateSetting: 'studio',
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame, smooth and free of texture.`,
+      'The product stands upright in the lower right corner, small and understated — occupying roughly a fifth',
+      'of the frame height — resting on the surface with a soft contact shadow.',
+      'The entire upper half of the frame and the whole left side are empty, even ground with nothing in them.',
+      'Nothing else appears in the picture.',
+    ].join(' '),
+  },
+  {
+    key: 'spec-panel',
+    name: 'Spec panel (most-aware)',
+    awareness: 'most-aware',
+    pairsImagesWithLabels: false,
+    // Label legibility IS the ad here — a transparency pitch whose own product label cannot
+    // be read is self-defeating — so this one genuinely wants the verify gate reading it back.
+    productProminent: true,
+    zones: ['headline', 'specRows', 'closingLine', 'bottomBar'],
+    // specRows is a plain vertical list occupying one half of the frame, with no paired
+    // imagery to crowd it; five short rows is what that column holds at phone width before
+    // the type has to shrink below comfortable reading size.
+    zoneCapacity: { specRows: 5 },
+    layoutBrief: [
+      'A calm, factual composition that reads like a specification sheet rather than a pitch — the reader has',
+      'already decided they want this kind of product and wants the plain facts to act on.',
+      `A restrained headline across the top on a ${SAND} ground.`,
+      'A vertical list of short factual rows runs down one half of the frame, each row a single plain statement',
+      'separated from the next by a thin hairline rule, with no icons and no illustration.',
+      'The product stands large on the opposite side as the hero, lit like premium product photography with a',
+      'soft contact shadow, close enough that its printed label is legible.',
+      'One short closing line sits beneath the list.',
+      'A solid bar across the very bottom carries one line of letterspaced caps.',
+      'Every row must be a plain verifiable fact about the product — never a benefit promise or a claim of effect.',
+    ].join(' '),
+    plateSetting: 'studio',
+    plateBrief: [
+      `A flat, evenly lit warm sand ${SAND} ground filling the whole frame.`,
+      'The product stands upright on the RIGHT side of the frame at hero scale, its base on the lower third and',
+      'its height filling roughly the middle half of the frame, with a soft contact shadow.',
+      'The entire left half of the frame is empty, even ground, and a clear band runs across the very bottom.',
+      'Nothing else appears in the picture.',
+    ].join(' '),
+  },
 ];
 
 // A format with no plateBrief must not silently fall back to layoutBrief — that fallback

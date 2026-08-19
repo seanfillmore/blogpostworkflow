@@ -71,13 +71,18 @@ test('planBriefs counts one copy call per angle THAT HAS A FORMAT, never per ang
   assert.ok(plan.angleCount > 0);
   assert.equal(plan.angles.length, plan.angleCount);
 
-  // An angle whose awareness level no format covers (unaware / most-aware) is recorded as a
-  // brief with no render target and costs nothing — same rule generateBriefs applies. The
-  // count must therefore be strictly the angles with a format, which for this product's
-  // personas is fewer than the total.
+  // THE RULE, which is what this test is really for: a copy call is spent on an angle if and
+  // only if a format can render it. An angle with no format is recorded as a brief with no
+  // render target and costs nothing.
   const withFormat = plan.angles.filter(a => a.format).length;
   assert.equal(plan.copyCalls, withFormat);
-  assert.ok(plan.copyCalls < plan.angleCount, 'this product has unaware/most-aware angles that cost nothing');
+
+  // Until 2026-08-18 this also asserted copyCalls < angleCount, because `unaware` and
+  // `most-aware` had no format and so were free. fact-hook and spec-panel closed that, so
+  // every angle is now renderable and every angle now COSTS — which is a real spend change,
+  // not a neutral one: this product went from 8 paid copy calls per full run to 11. The
+  // rule above is unchanged; what changed is that nothing is exempt from it any more.
+  assert.equal(plan.copyCalls, plan.angleCount, 'every awareness level has a format, so every angle costs a call');
 });
 
 test('every planned angle names itself, its persona, its awareness and its resolved format', () => {

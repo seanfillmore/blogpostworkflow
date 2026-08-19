@@ -30,7 +30,7 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 |---|---|---|
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`, and its manifest entry must carry a `unitCount` (see below). |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`, plus `giveaway-entry` while a giveaway is running — see below). **Required.** It used to be optional, and omitting it meant the whole rotation — nine formats today, 54 renders ≈ $7.02 at the current defaults and 243 (≈$31.59) at 3 variations across all 6 targets, from a flag nobody typed. An unknown key is rejected with the valid list. |
+| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`, `fact-hook`, `spec-panel`, plus `giveaway-entry` while a giveaway is running — see below). **Required.** It used to be optional, and omitting it meant the whole rotation — eleven formats today, 66 renders ≈ $8.58 at the current defaults and 297 (≈$38.61) at 3 variations across all 6 targets, from a flag nobody typed. An unknown key is rejected with the valid list. |
 | `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta`** — all three Meta ratios, see below. |
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
@@ -97,7 +97,7 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    **Three formats added 2026-08-15 from reference creatives that are running** — Bonafide
    (quote-led), Magic Spoon / MUD\WTR (stats radiating off a centred hero), and a kids'
    supplement before/after. All three were added as **data only**: no zone name is
-   hard-coded anywhere downstream, so nine formats cost the same logic as six.
+   hard-coded anywhere downstream, so twelve formats cost the same logic as six.
 
    **`giveaway-entry`, added 2026-08-18, is the tenth — and the first conditional one.**
    It carries `requiresGiveaway: true`, which is a *sourcing* fact rather than a style flag:
@@ -105,7 +105,7 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    traced to the `giveaway` claim source, and that source exists only while an Entry Period is
    open (`lib/giveaway-claim-source.js`). So it is filtered out of the default rotation and out
    of the awareness join whenever no giveaway is running — `selectFormats()` with no keys
-   returns nine, exactly as before — while `--formats giveaway-entry` still resolves it by
+   returns every format except this one — while `--formats giveaway-entry` still resolves it by
    name, because naming a format explicitly is an operator decision and the claim gate is the
    right place for that decision to fail if it was wrong. It is a **lead ad**: it asks for an
    entry, never a purchase, and its brief forbids a price, a discount and a cart. It was added
@@ -123,6 +123,21 @@ node agents/ad-studio/index.js --product coconut-lotion --variant coconut-breeze
    | `testimonial` | big customer quote, attribution, product small beneath, star/credibility line | The quote **must be a verbatim review** — `claims.js` enforces it via the `reviews` source. An invented testimonial is the worst thing this pipeline could emit. A supplement disclaimer is required in the finished ad and is set by hand. |
    | `stat-stack` | centred hero with four stats in the corners, joined by hand-drawn arrows | `zoneCapacity: { stats: 4 }` — the references run 4–6 and six crowds a phone-width frame into the product. |
    | `state-contrast` | illustrated before → after with the product between | **Compliance-shaped.** Meta prohibits before-and-after imagery in health and beauty, and `problem-aware`'s brief already encodes that. The reference only gets away with the shape because its states are cartoons. So both states are flat illustration of the *experience* — never a photograph of skin, a body, a face, or a depiction of a condition — and because illustrations are artwork, the operator draws them; the plate is just the product with both state areas empty. |
+
+   **`fact-hook` and `spec-panel`, added 2026-08-18, close the awareness gap.** Until then
+   `unaware` and `most-aware` mapped to `null` in `lib/ad-brief-plan.js` — 4 of the 15 angles
+   on file could be briefed but never rendered, including the highest-scoring angle we hold
+   (`p2a2` "125 chemicals a day", 81). They introduce **two new `awareness` values** rather
+   than aliasing onto the existing three, because routing an `unaware` angle to a `problem`
+   format would show an ad premised on the reader knowing they have a problem to a reader who
+   by definition does not — the "closest available format" substitution the ad-brief README
+   refuses. **Cost consequence:** every angle is now renderable, so every angle now spends a
+   copy call. A full `coconut-soap` brief run went from 8 paid calls to 11.
+
+   | key | shape | notes |
+   |---|---|---|
+   | `fact-hook` | one arresting figure dominating the upper half, caption beneath, product small in the lower right like a footnote | `productProminent: false` — the number is the hero and the label is deliberately unreadable, so the verify gate must not demand it back. `headline` carries the **figure itself**. The brief requires the figure be quoted from a named source, never invented, and repeats `problem-aware`'s ban on depicting a skin condition. Studio, not scene: a giant numeral needs a flat field, and a counter would put texture exactly where the largest type lands. |
+   | `spec-panel` | restrained headline, a vertical list of plain factual rows down one half, product hero opposite with its label legible | `productProminent: true` — a transparency pitch whose own label cannot be read defeats itself. `zoneCapacity: { specRows: 5 }`. Every row must be a plain verifiable fact, never a benefit promise or a claim of effect; the most-aware reader has already decided and wants facts to act on. |
 
 2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
@@ -452,7 +467,7 @@ free crops of the Meta frames.
 | One format, `--variations 3`, Meta | 18 | $2.34 |
 | One format, one variation, `--targets all` | 9 | $1.17 |
 | One format, `--variations 3`, `--targets all` | 27 | $3.51 |
-| Nine formats, `--variations 3`, `--targets all` | 243 | $31.59 |
+| Eleven formats, `--variations 3`, `--targets all` | 297 | $38.61 |
 | `--max-renders` default ceiling | 120 | $15.60 |
 
 **A Meta target bills two renders.** The plate is rendered and gated, then a comp is

@@ -35,21 +35,31 @@ Each brief carries:
 
 ## The awareness join
 
-`agents/ad-studio/formats.js` tags each ad format `problem` / `solution` / `product`
-awareness. `data/context/personas.json` angles carry the finer five-level
-Schwartz scale: `unaware`, `problem-aware`, `solution-aware`, `product-aware`,
-`most-aware`. `formatsForAngle()` is the join between the two — it lets a brief
-propose its own format instead of a fixed rotation choosing one for it.
+`agents/ad-studio/formats.js` tags each ad format with an awareness level.
+`data/context/personas.json` angles carry the five-level Schwartz scale: `unaware`,
+`problem-aware`, `solution-aware`, `product-aware`, `most-aware`. `formatsForAngle()` is
+the join between the two — it lets a brief propose its own format instead of a fixed
+rotation choosing one for it.
 
-**The known gap:** `unaware` and `most-aware` map to `null` — no format built so far
-covers either. As of 2026-08, that is 4 of the 15 angles on file
-(`AWARENESS_TO_FORMAT_AWARENESS`). By the headroom argument below, those are among the
-most valuable angles this project holds evidence for, and by design this agent does
-**not** paper over the gap: an unmatched angle is still recorded (`format.proposed:
-null`, `state: 'ready'`, no copy call spent), so the gap stays countable instead of
-silently disappearing into "closest available format." The moment a format is built for
-either level, `formatsForAngle()`'s test suite (`tests/agents/ad-brief.test.js`) will
-start failing the "no format" assertions — that's the signal to widen the map.
+**The gap is closed (2026-08-18).** `unaware` and `most-aware` used to map to `null` — no
+format covered either, which left 4 of the 15 angles on file briefable but unrenderable,
+including the highest-scoring angle this project holds (`p2a2` "125 chemicals a day", 81).
+`fact-hook` and `spec-panel` now cover them, tagged with **their own** awareness values
+rather than aliased onto the nearest of the original three: routing an `unaware` angle to a
+`problem` format would show an ad premised on the reader knowing they have a problem to a
+reader who by definition does not, which is exactly the "closest available format"
+substitution this section used to refuse.
+
+The mechanism that surfaced it worked as designed — an unmatched angle was recorded
+(`format.proposed: null`, `state: 'ready'`, no copy call spent) rather than silently
+dropped, so the gap stayed countable until it was worth closing, and
+`tests/agents/ad-brief.test.js`'s pinned "no format" assertions are what failed to announce
+it. Those assertions are now inverted: **every** Schwartz level must resolve to a format,
+and to one tagged for its own level.
+
+**This changed what a run costs.** A copy call is spent per angle *that has a format*, and
+now every angle does — so nothing is exempt any more. A full `coconut-soap` run went from 8
+paid copy calls to 11. `--dry-run` still prints the count before you authorize it.
 
 ## Why the gates are imported, never reimplemented
 
@@ -248,10 +258,12 @@ customer testimonial.
 
 | Awareness | Proposed | Others at that level |
 |---|---|---|
+| `unaware` | `fact-hook` | none — sole format at this level |
 | `problem-aware` | `manifesto` | refused: `problem-aware` (`subhead`), `testimonial` (`attribution`, `trustLine`), `state-contrast` (`beforeLabel`, `afterLabel`) |
 | `solution-aware` | `us-vs-them` | refused: `ingredient-callout` (`listItems`), `top-x-review` (`subhead`), `stat-stack` (`stats`) |
 | `product-aware`, giveaway live | `giveaway-entry` | **selectable:** `offer-focused` — identical zone shape, on purpose |
 | `product-aware`, no giveaway | `offer-focused` | none offered — `giveaway-entry` is not in the table at all |
+| `most-aware` | `spec-panel` | none — sole format at this level |
 
 Everywhere except that one pair the view renders the format as a plain label rather than a
 one-option dropdown. That is the correct outcome, not a rule to widen: to run an angle
