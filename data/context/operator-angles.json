@@ -1,0 +1,33 @@
+{
+  "_comment": "Operator overlay on data/context/personas.json. That file is RESEARCH, regenerated monthly by agents/voice-of-customer — edit it and the change silently reverts, and authored copy becomes indistinguishable from mined evidence. Retirements and operator-authored angles live here instead. Applied at load by agents/ad-brief and the dashboard's ad-brief route via lib/operator-angles.js. This file is NEVER written by an agent.",
+
+  "retired": [
+    {
+      "id": "p2a2",
+      "label": "125 chemicals a day",
+      "retired_on": "2026-08-18",
+      "why": "Unrenderable for two independent reasons, and its score of 81 — the highest on file — made that invisible. (1) THE NUMBER IS WRONG. '125+' traces to a single customer's own figure in a lotion review, not to a study. The real source is EWG: 126 unique ingredients in 2004, revised DOWN to 112 in their 2023 re-run (see brand-kit.json's category_ingredient_load). So the angle cited a stale number AND stated the trend backwards. (2) THE FRAMING IS A HEALTH CLAIM. Its proof and source_quotes run on 'cleaning up your health', 'toxic chemicals' and 'what goes on skin goes into the bloodstream' — systemic-absorption and toxicity claims a cosmetic may not make, which is what the copy writer kept reaching for. Replaced by p2a4, which keeps the ingredient-count contrast and drops the toxicity. Retired rather than edited: rewriting a mined angle in place would make authored copy look like customer research."
+    }
+  ],
+
+  "angles": [
+    {
+      "personaId": "p2",
+      "id": "p2a4",
+      "label": "112 ingredients, or one",
+      "awareness": "unaware",
+      "authored_on": "2026-08-18",
+      "authored_why": "Replaces retired p2a2. Same job — the unaware reader who has never counted what goes on their skin — rebuilt on a real, current, citable statistic and on an INGREDIENT-COUNT contrast rather than a toxicity claim. 'Chemical' is not a synonym for 'harmful' and saponified coconut oil is one too; the contrast that actually differentiates this catalogue is how MANY, not how dangerous. Every figure below is a contiguous verbatim substring of brand-kit.json's category_ingredient_load, so it is sourceable as brandKit.",
+      "objection_addressed": "'I have never actually thought about how many different ingredients I put on my skin in a morning.'",
+      "proof": "The average adult uses 12 personal care products a day, made with as many as 112 unique chemical ingredients, per an EWG / Morning Consult survey of 2,200 U.S. adults in 2023. Pure Unscented is saponified organic virgin coconut oil and nothing else — one ingredient against a routine that averages 112.",
+      "hook_examples": [
+        "12 products. As many as 112 unique chemical ingredients. Before you have left the house.",
+        "Count the ingredients in this morning's routine. Now count this bar's.",
+        "The average adult's day starts with 12 personal care products. This is one ingredient."
+      ],
+      "source_quotes": [
+        "The average adult uses 12 personal care products a day, made with as many as 112 unique chemical ingredients — EWG / Morning Consult survey of 2,200 U.S. adults, 2023"
+      ]
+    }
+  ]
+}
