@@ -1689,9 +1689,17 @@ test('verdictFor rejects a plate whose label type is the wrong colour', () => {
   };
   const unscented = buildRenderPrompt({ ...base, product: { ...base.product, variant: 'pure-unscented' } });
   assert.match(unscented, /THIS IS THE UNSCENTED VARIANT/);
-  assert.match(unscented, /names ONLY the coconut oil/);
-  assert.match(unscented, /Where the description and this paragraph disagree, THIS paragraph is correct/,
-    'the correction must outrank the line description it contradicts');
+  // REVISED 2026-08-19. This used to assert the paragraph told the renderer the badge
+  // "names ONLY the coconut oil — never '+ Essential Oils'". Checked against the reference
+  // photographs, that is true of coconut-soap/pure-unscented and FALSE of
+  // coconut-lotion/pure-unscented, whose bottle really does print "+ ESSENTIAL OILS". No
+  // rule inferred from the word "unscented" can be right for both, so the prompt no longer
+  // asserts either: it defers to the per-variant badge string, and says so.
+  assert.match(unscented, /badge text given below is\s+the one printed on THIS variant/,
+    'the prompt defers to per-variant data instead of reasoning from the variant name');
+  assert.match(unscented, /do not reason about what an\s+unscented product "should" say/);
+  assert.ok(!/names ONLY the coconut oil/.test(unscented),
+    'the old blanket rule is gone — it invented packaging for half the catalogue');
 
   // A scented variant keeps the line description untouched — its badge really does name an
   // oil, and there is nothing to correct.

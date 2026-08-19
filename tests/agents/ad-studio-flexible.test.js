@@ -239,3 +239,182 @@ assert.throws(() => parseFlexibleCopyResponse('not json at all'), /was not JSON/
 }
 
 console.log('✓ ad-studio flexible-ad tests pass');
+
+// ── --objective: what the ad is FOR ─────────────────────────────────────────
+// The first real run got this wrong in a way no gate could catch: the campaign optimises
+// on LEAD (a giveaway entry) and the copy sold the lotion, so Meta would have been asked
+// to find people likely to enter a giveaway using an ad that never mentioned one.
+{
+  const { assertObjective, OBJECTIVES, DEFAULT_OBJECTIVE, buildFlexibleCopyPrompt } =
+    await import('../../agents/ad-studio/flexible.js');
+
+  assert.equal(DEFAULT_OBJECTIVE, 'sale', 'selling stays the default; entry is opted into');
+  assert.deepEqual(OBJECTIVES, ['sale', 'entry']);
+
+  assert.doesNotThrow(() => assertObjective('sale'));
+  assert.doesNotThrow(() => assertObjective('entry', { giveaway: { name: 'X' } }));
+  assert.throws(() => assertObjective('lead'), /unknown --objective "lead"/);
+
+  // Entry copy with no Entry Period open would fail the claim gate on every prize and
+  // deadline anyway — fail earlier, and say why.
+  assert.throws(() => assertObjective('entry', { giveaway: null }),
+    /needs a live giveaway.*not a citable source/s);
+
+  const base = {
+    product: { title: 'Lotion', handle: 'coconut-lotion', priceLabel: '$30' },
+    concepts: [{ format: { key: 'giveaway-entry', name: 'Giveaway entry', awareness: 'unaware' } }],
+    sourceIds: ['pdp', 'giveaway'],
+  };
+  const sale = buildFlexibleCopyPrompt({ ...base });
+  assert.match(sale, /THE JOB OF THIS AD: sell the product/);
+  assert.doesNotMatch(sale, /GIVEAWAY ENTRY/);
+
+  const entry = buildFlexibleCopyPrompt({
+    ...base, objective: 'entry',
+    giveaway: {
+      name: 'Win 36 Free Bars', closesOn: 'September 14, 2026',
+      prizes: 'Thirty-six (36) bars of Pure Unscented Moisturizing Coconut Soap, shipped over three (3) years',
+      entryPeriod: 'ends at 11:59 PM CT on September 14, 2026',
+      howToEnter: 'No purchase necessary.', eligibility: 'US residents 18+',
+    },
+  });
+  assert.match(entry, /THE JOB OF THIS AD: get a GIVEAWAY ENTRY\. Not a sale — an entry\./);
+  assert.match(entry, /call to action is to ENTER, in both primary texts/);
+
+  // The writer gets the VERBATIM rules, not a sentence this file wrote. Three runs failed
+  // the claim gate because the prompt named "giveaway" as citable, never showed the rules,
+  // and separately injected a tidy "entries close September 14, 2026" that the model quoted
+  // straight back as evidence — prompt-manufactured text masquerading as source.
+  assert.match(entry, /OFFICIAL RULES \(a source you may cite as "giveaway"\)/,
+    'the rules text itself is in the prompt, so a verbatim quote is possible at all');
+  assert.match(entry, /ends at 11:59 PM CT on September 14, 2026/,
+    'the deadline appears only in its real wording');
+  assert.match(entry, /Do not restate a deadline in your own words and cite that/);
+}
+
+// ── the badge text reaches the renderer ─────────────────────────────────────
+// Badge micro-copy is excluded from labelStrings because the VERIFIER cannot read 8px arc
+// type back. That is right, and it silently starved the RENDER prompt too — so the model
+// invented the words. Two live plates read "SBGAWID CODDA&T OIL" and "HYDENTIAL OILS", and
+// the gate passed both, because a vision model auto-corrects while transcribing.
+{
+  const { extractBadgeText, buildLabelStrings } = await import('../../agents/ad-studio/index.js');
+  const prose = 'A white bottle with the brand name "real SKIN CARE" near the top, a small '
+    + 'circular badge noting "Organic Coconut Oil + Essential Oils," and "moisturizing body lotion" below.';
+
+  assert.deepEqual(extractBadgeText(prose), ['Organic Coconut Oil + Essential Oils']);
+
+  // The two selections are exact complements — a string belongs to one list or the other,
+  // never both, or the verifier would start demanding back what it cannot read.
+  const labels = buildLabelStrings({ manifestEntry: { productDescription: prose }, variant: 'pure-unscented' });
+  assert.ok(!labels.includes('Organic Coconut Oil + Essential Oils'),
+    'badge text stays OUT of the strings the verifier demands back');
+  assert.ok(labels.includes('real SKIN CARE') && labels.includes('moisturizing body lotion'),
+    'spec-bearing strings are unaffected');
+
+  assert.deepEqual(extractBadgeText('A bottle with "real SKIN CARE" on it.'), [],
+    'no badge named, nothing claimed');
+}
+
+// ── the badge is per-VARIANT, and no rule about "unscented" can infer it ────
+// Verified against the reference photographs, which disagree with each other:
+//   coconut-soap/pure-unscented    MADE WITH / ORGANIC COCONUT OIL
+//   coconut-lotion/pure-unscented  MADE WITH / ORGANIC COCONUT OIL / + ESSENTIAL OILS
+// The render prompt asserted the first shape for every unscented variant for one round and
+// (briefly, in this branch) the second for another. Both invent packaging for half the
+// catalogue. It is data, so it comes from data.
+{
+  const { resolveBadgeStrings } = await import('../../agents/ad-studio/index.js');
+  const entry = {
+    productDescription: 'A bar with a circular badge noting "Organic Coconut Oil + Essential Oils".',
+    variantBadges: { 'pure-unscented': 'Made with Organic Coconut Oil' },
+  };
+  assert.deepEqual(resolveBadgeStrings({ manifestEntry: entry, variant: 'pure-unscented' }),
+    ['Made with Organic Coconut Oil'], 'the variant override wins over the product prose');
+  assert.deepEqual(resolveBadgeStrings({ manifestEntry: entry, variant: 'calming-lavender' }),
+    ['Organic Coconut Oil + Essential Oils'], 'a variant with no override uses the product badge');
+  assert.deepEqual(resolveBadgeStrings({ manifestEntry: entry, variant: null }),
+    ['Organic Coconut Oil + Essential Oils'], 'no variant, no override');
+
+  // "" means this variant carries NO badge — distinct from having no override at all.
+  assert.deepEqual(resolveBadgeStrings({
+    manifestEntry: { ...entry, variantBadges: { plain: '' } }, variant: 'plain',
+  }), [], 'an empty override means no badge, not "fall back"');
+}
+
+// ── the scent gate defers to the variant's real badge ───────────────────────
+// It reasoned purely from the word "unscented" and rejected any scent ingredient read off
+// the label. Right for coconut-soap/pure-unscented (MADE WITH / ORGANIC COCONUT OIL);
+// wrong for coconut-lotion/pure-unscented, whose bottle prints "+ ESSENTIAL OILS". On
+// 2026-08-19 it rejected three plates for faithfully reproducing the reference photographs
+// they were handed as ground truth — a product on which no correct render could pass.
+{
+  const { scentVerdict } = await import('../../agents/ad-studio/verify.js');
+  const LOTION = ['Made with Organic Coconut Oil + Essential Oils'];
+  const SOAP = ['Made with Organic Coconut Oil'];
+
+  const good = scentVerdict('ORGANIC COCONUT OIL + ESSENTIAL OILS',
+    { variant: 'pure-unscented', expectedBadge: LOTION });
+  assert.equal(good.ok, true, 'the real bottle says it, so the render is accurate');
+  assert.equal(good.status, 'on-variant-badge');
+
+  const invented = scentVerdict('ORGANIC COCONUT OIL + ESSENTIAL OILS',
+    { variant: 'pure-unscented', expectedBadge: SOAP });
+  assert.equal(invented.ok, false, 'the soap badge does NOT say it — still a hard reject');
+  assert.equal(invented.status, 'scent-on-unscented');
+
+  // No badge on file → unchanged from before, so nothing that was passing starts failing.
+  assert.equal(scentVerdict('ESSENTIAL OILS', { variant: 'pure-unscented' }).ok, false);
+  assert.equal(scentVerdict('LAVENDER', { variant: 'calming-lavender' }).status, 'not-unscented');
+
+  // Every scent word must be on the badge — a badge naming one does not license another.
+  const partly = scentVerdict('ESSENTIAL OILS + LAVENDER',
+    { variant: 'pure-unscented', expectedBadge: LOTION });
+  assert.equal(partly.ok, false, 'lavender is not on the badge, so it was invented');
+
+  // Illegible badge type stays acceptable — that is the cost of 8px arc text, not a lie.
+  assert.equal(scentVerdict('illegible', { variant: 'pure-unscented', expectedBadge: SOAP }).ok, true);
+}
+
+// ── prize-duration claims: instruction was never enough ─────────────────────
+// "36 bars SHIPPED OVER three years" is a fulfilment schedule; "a three-year supply" is a
+// claim about how fast the winner uses soap. Neither gate can see the difference — every
+// word traces to the rules, and none of it names a disease. buildGiveawayBlock has
+// forbidden it in prose since 2026-08-18, and on 2026-08-19 the ad-level writer produced
+// "Enter to win a year of clean coconut soap" through a prompt containing that prohibition.
+{
+  const { findSupplyDurationClaims, assertNoSupplyDurationClaims } =
+    await import('../../agents/ad-studio/copy.js');
+
+  for (const bad of [
+    'Enter to win a year of clean coconut soap',   // the one that actually happened
+    'Win a three-year supply',                     // the 2026-08-18 one
+    'Three (3) years worth of soap',               // the rules' own numeral style
+    '36 bars that last three years',
+    'a 3 year supply',
+  ]) {
+    assert.ok(findSupplyDurationClaims(bad).length, `must catch: ${bad}`);
+  }
+
+  // What the rules actually say must pass, or the guard blocks correct copy.
+  for (const ok of [
+    'Thirty-six (36) bars of soap, shipped over three (3) years',
+    'Enter to win 36 bars',
+    'No purchase necessary',
+    '6-month shelf life',                          // a product fact, not a use-rate claim
+  ]) {
+    assert.deepEqual(findSupplyDurationClaims(ok), [], `must not fire on: ${ok}`);
+  }
+
+  assert.throws(
+    () => assertNoSupplyDurationClaims({ primaryText1: 'Enter to win a year of soap', headline1: 'fine' }),
+    /SUPPLY DURATION.*rate of use/s,
+  );
+  assert.doesNotThrow(() => assertNoSupplyDurationClaims({
+    primaryText1: 'Win 36 bars, shipped over three (3) years', headline1: 'Enter free',
+  }));
+
+  // Array-valued zones (the manifesto format's `rows`) are checked item by item.
+  assert.throws(() => assertNoSupplyDurationClaims({ rows: ['No parabens.', 'A year of soap.'] }),
+    /\[rows\]/);
+}

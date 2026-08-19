@@ -37,7 +37,7 @@ import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './c
 import { selectFormats, FORMATS, formatForVariation } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
-import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
+import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings, assertNoSupplyDurationClaims } from './copy.js';
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
@@ -50,7 +50,7 @@ import { updateJob, appendEvent, isValidJobId } from '../../lib/ad-studio-job.js
 import { readBrief, writeBrief, isValidBriefId, listProductsWithBriefs, decideBrief } from '../../lib/ad-brief.js';
 import {
   assertFlexibleArgs, buildFlexibleCopyPrompt, parseFlexibleCopyResponse,
-  flexibleZones, renderFlexibleManifest,
+  flexibleZones, renderFlexibleManifest, assertObjective, OBJECTIVES, DEFAULT_OBJECTIVE,
 } from './flexible.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -248,7 +248,7 @@ export async function renderVariationWithBackoff(gemini, args, { tries = 3, dela
   throw lastErr;
 }
 
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null, variant = null, expectedLabelInk = null }) {
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null, variant = null, expectedLabelInk = null, expectedBadge = [] }) {
   // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
   // can compare the product it got against the product it asked for. Capped below what
   // the renderer gets: two angles are enough to judge silhouette, cap and label order,
@@ -324,7 +324,7 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
     lastProof = verdictFor({
       expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings,
       fidelity, hasReference: referencePhotos.length > 0, sceneInventory, unitCount,
-      labelScent, variant, labelInk, expectedLabelInk,
+      labelScent, variant, labelInk, expectedLabelInk, expectedBadge,
     });
     lastProof.transcript = transcript;
 
@@ -406,6 +406,10 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
     //
     // Health runs FIRST because it is the cheaper answer and the more serious failure.
     assertNoHealthClaims(zones);
+    // Third check, and only while a giveaway is live: a prize stated as a DURATION is a
+    // claim about the winner's rate of use that neither gate above can see, because every
+    // word of it traces to the rules and none of it names a disease. See copy.js.
+    if (giveaway) assertNoSupplyDurationClaims(zones);
     // Hard stop, unchanged — no override flag. Runs on the TRUNCATED copy above.
     assertClaimsSourced(claims, sourceIndex);
   } catch (err) {
@@ -622,24 +626,50 @@ export function collectFlexiblePlates({ runId, results, target, root = ROOT }) {
 export async function writeFlexibleManifest({
   anthropic, runDir, runId, product, variant, concepts, results, target,
   sourceIndex, pdpBody, reviews = [], persona = null, giveaway = null, root = ROOT,
+  objective = DEFAULT_OBJECTIVE,
 }) {
+  // Re-checked here, not just in main(): this is the function that turns the objective into
+  // a prompt, so it is the boundary that must not be reachable with an impossible pairing.
+  assertObjective(objective, { giveaway });
   const prompt = buildFlexibleCopyPrompt({
     product, concepts, sourceIds: Object.keys(sourceIndex),
+    objective, giveaway,
     persona, pdpBody, reviews: selectQuotableReviews(reviews),
     giveawayBlock: giveaway ? `\nAN ENTRY PERIOD IS OPEN. You may cite the published Official Rules as "giveaway".\n` : '',
   });
-  const msg = await anthropic.messages.create({
-    model: CREATIVE_MODELS.adStudio.copy,
-    max_tokens: 2000,
-    messages: [{ role: 'user', content: prompt }],
-  });
-  const { primaryTexts, headlines, claims } = parseFlexibleCopyResponse(textOf(msg));
+  // ONE retry, and only for SHAPE failures — a count that is not 2, two texts that say the
+  // same thing, or a field over Meta's character limit. Those are formatting mistakes the
+  // model corrects immediately when told which string broke and by how much, and losing an
+  // otherwise finished run (three accepted plates, already paid for) to a 12-character
+  // overrun is a bad trade for one cheap copy call.
+  //
+  // The two GATES are deliberately outside this loop and stay fatal on the first failure.
+  // Re-prompting a claim or health rejection would be asking the model to try again until
+  // it produces something the gate accepts, which is the shape of an override even when
+  // each individual attempt is honest. Those stop the run, as they always have.
+  const call = async (extra) => {
+    const msg = await anthropic.messages.create({
+      model: CREATIVE_MODELS.adStudio.copy,
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: extra ? `${prompt}\n\nYOUR PREVIOUS ATTEMPT WAS REJECTED:\n${extra}\nFix exactly that and return the whole JSON again.` : prompt }],
+    });
+    return parseFlexibleCopyResponse(textOf(msg));
+  };
+  let parsed;
+  try {
+    parsed = await call(null);
+  } catch (err) {
+    console.warn(`  flexible copy rejected (${err.message.split('\n')[0]}) — one retry.`);
+    parsed = await call(err.message);
+  }
+  const { primaryTexts, headlines, claims } = parsed;
 
   // Health first, then sourcing — the same order and the same reasoning as buildConcept:
   // the cheaper answer and the more serious failure goes first.
   const zones = flexibleZones({ primaryTexts, headlines });
   assertNoHealthClaims(zones);
   assertClaimsSourced(claims, sourceIndex);
+  if (giveaway) assertNoSupplyDurationClaims(zones);
 
   const plates = collectFlexiblePlates({ runId, results, target, root });
   const { json, md } = renderFlexibleManifest({
@@ -790,6 +820,13 @@ export function parseArgs(argv) {
   // of DEFAULT_TARGETS' three. An explicit --targets still wins, and assertFlexibleArgs
   // rejects it if it does not resolve to exactly one Meta ratio.
   const flexible = argv.includes('--flexible');
+  // What the ad is FOR. Validated against a live giveaway later in main(), where one has
+  // actually been loaded — assertObjective is called there rather than here so the error
+  // can say whether an Entry Period is open, which parseArgs cannot know.
+  const objective = getFlag('--objective') || DEFAULT_OBJECTIVE;
+  if (!OBJECTIVES.includes(objective)) {
+    throw new Error(`ad-studio: unknown --objective "${objective}". Valid: ${OBJECTIVES.join(', ')}.`);
+  }
   const targets = selectTargets(getFlag('--targets') || (flexible ? FLEXIBLE_DEFAULT_TARGET : DEFAULT_TARGETS));
 
   const variationsRaw = getFlag('--variations');
@@ -831,7 +868,7 @@ export function parseArgs(argv) {
   }
   if (flexible) assertFlexibleArgs({ formats, targets, variations });
 
-  return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId, brief, flexible };
+  return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId, brief, flexible, objective };
 }
 
 // ── Brief mode — resolution and the approval boundary ──────────────────────────────
@@ -995,6 +1032,9 @@ export async function renderTarget({ gemini, anthropic, target, format, zones, p
       zones, deliveryRatio: target.ratio,
       mode: 'plate', volumeStrings, physicalDescription: product.physicalDescription, variant: product.variant,
       expectedLabelInk: product.labelInk || null,
+      // Per-variant badge, so the scent gate can distinguish a render that faithfully
+      // reproduces a bottle printing "+ ESSENTIAL OILS" from one that invented it.
+      expectedBadge: product.badgeStrings || [],
       unitCount: product.unitCount, budget,
     });
 
@@ -1256,6 +1296,55 @@ const BADGE_NOUNS = 'badge|seal|emblem|roundel|medallion';
 const BADGE_BEFORE_RE = new RegExp(`\\b(?:${BADGE_NOUNS})\\b(?:\\s+(?:noting|reading|stating|saying|that reads))?[\\s,]*$`, 'i');
 // noun directly follows the quote: ..."..." badge, a botanical illustration...
 const BADGE_AFTER_RE = new RegExp(`^[\\s,]*\\b(?:${BADGE_NOUNS})\\b`, 'i');
+
+/**
+ * The badge inscription — the opposite selection to extractQuotedLabelText, using the same
+ * anchored cues so the two can never both claim a string.
+ *
+ * Badge text is excluded from labelStrings because the VERIFIER cannot read 8px arc
+ * micro-copy back reliably (see above; it transcribed a correct badge as three truncated
+ * words). That reasoning is about verification and remains right. It was silently applied
+ * to the RENDER prompt too, though, because render.js reads `labelStrings` — so the model
+ * was never told what the badge says and invented it. Two live plates on 2026-08-19 came
+ * back reading "SBGAWID CODDA&T OIL + UESENTIAL SC*L" and "ORGANIC COCONUT OIL + HYDENTIAL
+ * OILS", and the gate passed both, because a vision model auto-corrects while transcribing
+ * and read them as the words it expected.
+ *
+ * So: tell the renderer exactly what to draw, and keep demanding nothing back. Prevention
+ * where detection provably cannot reach.
+ */
+export function extractBadgeText(text) {
+  const prose = String(text || '');
+  const out = [];
+  for (const m of prose.matchAll(/"([^"]+)"/g)) {
+    const lead = prose.slice(0, m.index).split('"').pop();
+    const trail = prose.slice(m.index + m[0].length).split('"')[0];
+    if (!BADGE_BEFORE_RE.test(lead) && !BADGE_AFTER_RE.test(trail)) continue;
+    const s = m[1].replace(/,\s*$/, '').trim();
+    if (s) out.push(s);
+  }
+  return out;
+}
+
+/**
+ * The badge text for THIS variant.
+ *
+ * `variantBadges` on the manifest entry wins, because the badge is per-variant packaging
+ * and the entry's prose is per-product. Verified against reference photographs:
+ * coconut-soap/pure-unscented prints "Made with Organic Coconut Oil" while
+ * coconut-lotion/pure-unscented prints "Made with Organic Coconut Oil + Essential Oils" —
+ * so no rule inferred from the word "unscented" can be right for both, and for two rounds
+ * the render prompt asserted one of them at the other's expense.
+ *
+ * Falls back to the prose badge, which is correct wherever a variant does not deviate.
+ * An entry may map a variant to "" to say this variant carries NO badge at all — distinct
+ * from having no override, which means "use the product's".
+ */
+export function resolveBadgeStrings({ manifestEntry, variant }) {
+  const override = variant ? manifestEntry?.variantBadges?.[variant] : undefined;
+  if (override !== undefined) return override ? [override] : [];
+  return extractBadgeText(manifestEntry?.productDescription);
+}
 
 function extractQuotedLabelText(text) {
   const prose = String(text || '');
@@ -1522,6 +1611,10 @@ async function main() {
     title: catalogEntry.title,
     priceLabel: catalogEntry.priceLabel,
     labelStrings,
+    // The badge inscription — fed to the RENDERER so it draws the right words, and
+    // deliberately NOT added to labelStrings, so the verifier still demands nothing back.
+    // See extractBadgeText for why those two have to be separate lists.
+    badgeStrings: resolveBadgeStrings({ manifestEntry, variant }),
     // The VARIANT, carried on the product so the verify gate can reach it. Without this
     // scentVerdict receives undefined, reads "not an unscented variant", and passes every
     // frame — a gate that is unit-tested, wired into verdictFor, and completely inert. It
@@ -1621,6 +1714,11 @@ async function main() {
     if (giveaway) {
       console.log(`Giveaway live: ${giveaway.name} — entries close ${giveaway.closesOn}. "giveaway" is a citable source.`);
     }
+
+    // Checked HERE — the first point at which a live giveaway is actually known, and still
+    // before any paid call. --objective entry with no open Entry Period would otherwise
+    // render three plates and only fail at the manifest, after the money was spent.
+    if (args.flexible) assertObjective(args.objective, { giveaway });
 
     sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
 
@@ -1767,7 +1865,25 @@ async function main() {
     : join(ROOT, 'data', 'product-images', manifestEntry.imageDir);
   const photoPaths = selectReferencePhotos(photoDir);
   if (photoPaths.length === 0) {
-    console.warn(`ad-studio: no reference photos found under ${photoDir} — rendering with zero product photos.`);
+    // THROW, do not warn. This was a warn-and-continue for a long time, and it is the most
+    // expensive warning in the agent: product fidelity is a hard gate, the reference
+    // photographs ARE the thing a render is checked against, so a plate rendered without
+    // them cannot pass. The run then bills the full retry budget for guaranteed rejects —
+    // 9 renders ≈ $1.17 apiece, twice on 2026-08-19 alone, both times because a fresh
+    // worktree had no data/product-images/ (the directory is gitignored, so git does not
+    // carry it) and the warning scrolled past above three FAILED lines that looked like an
+    // ordinary bad run.
+    //
+    // There is no legitimate caller that wants to render a product it cannot show the
+    // model. Failing here costs nothing; continuing costs the whole run.
+    throw new Error(
+      `ad-studio: no reference photos under ${photoDir}. A plate rendered without them cannot pass the ` +
+      `fidelity gate, so this run would bill for guaranteed rejects.\n` +
+      `  In a worktree this usually means data/product-images/ was never linked — it is gitignored, so a ` +
+      `fresh worktree has none. scripts/new-worktree.sh links them; an older worktree predates that and ` +
+      `needs:\n    ln -s "$(git rev-parse --git-common-dir)/../data/product-images/${manifestEntry.imageDir}" ` +
+      `data/product-images/${manifestEntry.imageDir}`
+    );
   }
 
   const budget = createRenderBudget(args.maxRenders);
@@ -1868,6 +1984,7 @@ async function main() {
       await writeFlexibleManifest({
         anthropic, runDir, runId, product, variant, concepts, results,
         target: args.targets[0], sourceIndex, pdpBody, reviews, persona, giveaway,
+        objective: args.objective,
       });
     } catch (err) {
       console.warn(

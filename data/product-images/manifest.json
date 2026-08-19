@@ -84,7 +84,10 @@
     "imageDir": "coconut-soap",
     "productDescription": "A round, puck-shaped bar of soap wrapped in white pleated paper with crimped edges, resembling a hotel-style wrapped soap disc. The flat top features a circular white label with clean, minimalist typography in black: the brand name \"real SKIN CARE\" at the top, a circular badge noting \"Made with Organic Coconut Oil + Essential Oils\" below it, a botanical illustration matching the scent as the central visual element, the scent name in bold lowercase type, \"hand & body soap\" in lighter text beneath it, and the net weight \"3.4 oz • 84g\" in small type near the lower edge above \"realskincare.com\". Small text runs along the label's circular border noting ingredients and claims. The overall finish is clean white and matte, with a soft, natural aesthetic.",
     "labelInk": "black",
-    "_labelInkNote": "Verified by eye across 14 rendered plates and stated in productDescription (\"typography in black\"). Consumed by verify.js labelInkVerdict, which no-ops for products without this field rather than guessing — a false positive costs the full retry budget. Add it per product as each is first rendered and checked."
+    "_labelInkNote": "Verified by eye across 14 rendered plates and stated in productDescription (\"typography in black\"). Consumed by verify.js labelInkVerdict, which no-ops for products without this field rather than guessing — a false positive costs the full retry budget. Add it per product as each is first rendered and checked.",
+    "variantBadges": {
+      "pure-unscented": "Made with Organic Coconut Oil"
+    }
   },
   {
     "handle": "coconut-oil-lip-balm",
@@ -113,7 +116,10 @@
       "vegan body lotion"
     ],
     "imageDir": "coconut-lotion",
-    "productDescription": "An 8 fl. oz. (236ml) white plastic cylindrical squeeze bottle with a smooth, slightly glossy finish and a black flip-top or disc cap. The bottle has a clean, minimalist white label featuring the brand name \"real SKIN CARE\" in simple black lowercase/uppercase text near the top, a small circular badge noting \"Organic Coconut Oil + Essential Oils,\" a centered botanical or ingredient illustration, and the scent/variant name in bold black lowercase text above \"moisturizing body lotion\" in smaller type. The overall proportions are a standard tall, slim lotion bottle shape, roughly 7–8 inches tall, with the label covering most of the front surface and a black horizontal accent bar behind the variant name text. The design aesthetic is clean, natural, and modern with a predominantly white, black, and green color palette."
+    "productDescription": "An 8 fl. oz. (236ml) white plastic cylindrical squeeze bottle with a smooth, slightly glossy finish and a black flip-top or disc cap. The bottle has a clean, minimalist white label featuring the brand name \"real SKIN CARE\" in simple black lowercase/uppercase text near the top, a small circular badge noting \"Organic Coconut Oil + Essential Oils,\" a centered botanical or ingredient illustration, and the scent/variant name in bold black lowercase text above \"moisturizing body lotion\" in smaller type. The overall proportions are a standard tall, slim lotion bottle shape, roughly 7–8 inches tall, with the label covering most of the front surface and a black horizontal accent bar behind the variant name text. The design aesthetic is clean, natural, and modern with a predominantly white, black, and green color palette.",
+    "variantBadges": {
+      "pure-unscented": "Made with Organic Coconut Oil + Essential Oils"
+    }
   },
   {
     "handle": "sensitive-skin-starter-set",

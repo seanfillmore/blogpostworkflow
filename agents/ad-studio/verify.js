@@ -841,6 +841,9 @@ export function selectVolumeStrings(labelStrings) {
 export const UNSCENTED_VARIANT_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
 
 const SCENT_ON_LABEL_RE = /\b(essential\s+oils?|fragrance|parfum|scented|lavender|peppermint|eucalyptus|citrus|lemongrass|rosemary|tea\s+tree)\b/i;
+// Same pattern, global — needed to enumerate EVERY scent word a reading contains, so that
+// "essential oils + lavender" is not waved through by a badge that only names the first.
+const SCENT_ON_LABEL_RE_G = new RegExp(SCENT_ON_LABEL_RE.source, 'gi');
 
 /**
  * Is the label's printed type the colour this product's type actually is?
@@ -877,7 +880,7 @@ export function labelInkVerdict(labelInk, { expected } = {}) {
   return { ok: false, status: 'mismatch', read, expected: want };
 }
 
-export function scentVerdict(labelScent, { variant } = {}) {
+export function scentVerdict(labelScent, { variant, expectedBadge = [] } = {}) {
   const read = String(labelScent || '').trim();
   const unscented = UNSCENTED_VARIANT_RE.test(String(variant || ''));
 
@@ -886,6 +889,31 @@ export function scentVerdict(labelScent, { variant } = {}) {
   if (!read || /^none$/i.test(read)) return { ok: true, status: 'clean', read, variant };
   // Illegible is the accepted cost of badge-sized type, same as an unreadable volume.
   if (ILLEGIBLE_RE.test(read)) return { ok: true, status: 'illegible', read, variant };
+
+  // THE PRINTED LABEL OUTRANKS THE VARIANT NAME. This gate used to reason purely from the
+  // word "unscented" and reject any scent ingredient read off the label. Checked against
+  // the reference photographs, that is right for coconut-soap/pure-unscented (badge: MADE
+  // WITH / ORGANIC COCONUT OIL) and WRONG for coconut-lotion/pure-unscented, whose bottle
+  // really does print "+ ESSENTIAL OILS". On 2026-08-19 it rejected three correct plates
+  // for faithfully reproducing the photographs they were given as ground truth — 9 renders
+  // ≈ $1.17, on a product where a correct render could never have passed.
+  //
+  // So: if this VARIANT's own badge names the thing that was read, the render is accurate
+  // and the gate has nothing to falsify. The badge is per-variant packaging data
+  // (`variantBadges` in the image manifest); absent one, behaviour is exactly as before.
+  //
+  // Note what this does NOT relax: whether an unscented product may CLAIM a scent benefit
+  // in its ad copy is a different question, owned by copy.js's variantBlock. This gate only
+  // ever asked whether the rendered bottle matches the real bottle.
+  const badge = (Array.isArray(expectedBadge) ? expectedBadge : [expectedBadge])
+    .filter(Boolean).join(' ').toLowerCase();
+  if (badge && SCENT_ON_LABEL_RE.test(read)) {
+    const readTokens = [...String(read).toLowerCase().matchAll(SCENT_ON_LABEL_RE_G)].map(m => m[0]);
+    if (readTokens.every(t => badge.includes(String(t).toLowerCase()))) {
+      return { ok: true, status: 'on-variant-badge', read, variant, expectedBadge };
+    }
+  }
+
   // A legible reading that names a scent on a variant defined by having none.
   if (SCENT_ON_LABEL_RE.test(read)) return { ok: false, status: 'scent-on-unscented', read, variant };
   // Legible but naming nothing we recognise as a scent — not a falsehood we can prove.
@@ -1215,6 +1243,9 @@ export function verdictFor({
   pairings, format, mode = 'finished', volumeStrings = [],
   fidelity = [], hasReference = false, sceneInventory = [], unitCount = 1,
   labelScent = '', variant = null, labelInk = '', expectedLabelInk = null,
+  // The badge printed on THIS variant. Lets the scent gate tell a render that faithfully
+  // reproduces the real bottle from one that invented a scent — see scentVerdict.
+  expectedBadge = [],
 }) {
   const reasons = [];
 
@@ -1242,7 +1273,7 @@ export function verdictFor({
   //     a legible falsehood fails — and it exists because a plate shipped a badge reading
   //     "ORGANIC COCONUT OIL + ESSENTIAL OILS" on the PURE UNSCENTED bar. Photoshop cannot
   //     repaint a product label, so this has to fail the render rather than warn.
-  const scent = scentVerdict(labelScent, { variant });
+  const scent = scentVerdict(labelScent, { variant, expectedBadge });
   if (!scent.ok) {
     reasons.push(
       `the product label names a scent ingredient on an UNSCENTED variant — the render's ` +

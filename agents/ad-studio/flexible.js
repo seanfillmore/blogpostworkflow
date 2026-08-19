@@ -19,7 +19,7 @@
 // WHAT THIS MODULE DOES NOT DO: it never creates, edits or launches anything on Meta. It
 // writes a manifest a human carries into Ads Manager. Spend is a human decision.
 
-import { buildClaimRules } from './copy.js';
+import { buildClaimRules, buildGiveawayBlock } from './copy.js';
 
 /** The 3, the 2 and the 2. Named because "3" appears three times below and they are not the same 3. */
 export const PLATE_COUNT = 3;
@@ -75,19 +75,78 @@ export function assertFlexibleArgs({ formats, targets, variations }) {
 }
 
 /**
+ * What the ad is FOR. Not decoration — it decides what the copy asks the reader to do, and
+ * getting it wrong wastes the whole budget in a way no gate can catch.
+ *
+ * The first real run made exactly that mistake: the campaign optimises on `LEAD` (a
+ * giveaway entry), and the copy sold the lotion. Meta would have been asked to find people
+ * likely to enter a giveaway, using an ad that never mentioned one. The plates carried
+ * giveaway CTAs — because a live giveaway is a citable source — while the primary text and
+ * headline, which are the fields Meta actually renders, did not.
+ */
+export const OBJECTIVES = Object.freeze(['sale', 'entry']);
+export const DEFAULT_OBJECTIVE = 'sale';
+
+/**
+ * `entry` requires a live giveaway, and says so rather than quietly writing entry copy with
+ * nothing to enter. Outside an Entry Period `sourceId: "giveaway"` is not even a valid
+ * source, so every deadline and prize detail would fail the claim gate anyway — this just
+ * fails it earlier, and legibly.
+ */
+export function assertObjective(objective, { giveaway = null } = {}) {
+  if (!OBJECTIVES.includes(objective)) {
+    throw new Error(`ad-studio: unknown --objective "${objective}". Valid: ${OBJECTIVES.join(', ')}.`);
+  }
+  if (objective === 'entry' && !giveaway) {
+    throw new Error(
+      'ad-studio: --objective entry needs a live giveaway, and no Entry Period is open. ' +
+      'Outside one, "giveaway" is not a citable source, so every prize and deadline in the copy would ' +
+      'fail the claim gate. Check config/giveaway.json against the published Official Rules.'
+    );
+  }
+}
+
+function objectiveBrief(objective, giveaway) {
+  if (objective !== 'entry') {
+    return `THE JOB OF THIS AD: sell the product. The reader should want to buy it.`;
+  }
+  return `THE JOB OF THIS AD: get a GIVEAWAY ENTRY. Not a sale — an entry.
+
+The campaign behind this ad optimises for the lead event that fires when someone enters, so
+the copy has to ask for exactly that. Lead with the prize and make entering the obvious next
+action. The product is the reason the prize is worth having, not the thing being sold here.
+
+- Name the prize and the deadline. Both are in the Official Rules, citable as "giveaway".
+- "No purchase necessary" is in the rules and is worth saying — it removes the main hesitation.
+- The call to action is to ENTER, in both primary texts. A reader who finishes the copy
+  wanting to buy a bottle has been sent to the wrong place.
+
+Quote every date, quantity and prize detail from the OFFICIAL RULES text below, exactly as
+it is written there. Do not restate a deadline in your own words and cite that — the gate
+matches contiguous verbatim substrings against the rules, so a tidier phrasing is an
+unsourced claim no matter how true it is.`;
+}
+
+/**
  * Ad-level copy is NOT plate copy. The plate carries no type at all — the operator sets
  * that in Photoshop — whereas primary text and headline are fields Meta renders itself,
- * above and below the image. They are written together, in one call, because the two
- * texts have to be genuinely different ANGLES rather than two phrasings of one idea:
- * asking twice independently reliably produces the latter, and then there is nothing for
- * the shared learning pool to learn.
+ * above and below the image. They are written together, in one call, because the two texts
+ * have to be genuinely different ANGLES rather than two phrasings of one idea: asking twice
+ * independently reliably produces the latter, and then the shared pool has nothing to learn.
  */
-export function buildFlexibleCopyPrompt({ product, concepts, sourceIds, persona, giveawayBlock = '', pdpBody = '', reviews = [] }) {
+export function buildFlexibleCopyPrompt({
+  product, concepts, sourceIds, persona, pdpBody = '', reviews = [],
+  objective = DEFAULT_OBJECTIVE, giveaway = null,
+}) {
+  // The SAME block the plate writer gets — verbatim Official Rules, prize framing and all.
+  const giveawayBlock = buildGiveawayBlock(giveaway);
   const angles = concepts
     .map((c, i) => `  ${i + 1}. ${c.format.key} — ${c.format.name} (awareness: ${c.format.awareness})`)
     .join('\n');
 
   return `You are writing the AD-LEVEL copy for one Meta "flexible ad" for Real Skin Care.
+
+${objectiveBrief(objective, giveaway)}
 
 This is not copy that appears on the image. The three images carry no text at all. You are
 writing the fields Meta renders around the image: the PRIMARY TEXT (above it) and the
