@@ -5,6 +5,7 @@
  */
 import { readFileSync } from 'fs';
 import { getAccessToken } from '../../lib/shopify.js';
+import { API_VERSION } from '../../lib/shopify-api-version.js';
 
 const env = {};
 for (const l of readFileSync(new URL('../../.env', import.meta.url), 'utf8').split('\n')) {
@@ -30,7 +31,7 @@ const variables = {
     appliesOncePerCustomer: true,
   },
 };
-const res = await fetch(`https://${STORE}/admin/api/2025-01/graphql.json`, {
+const res = await fetch(`https://${STORE}/admin/api/${API_VERSION}/graphql.json`, {
   method: 'POST',
   headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
   body: JSON.stringify({ query: mutation, variables }),

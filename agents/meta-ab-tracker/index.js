@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { upsertMetafield } from '../../lib/shopify.js';
 import { findActiveWindow } from '../../lib/change-log.js';
+import { API_VERSION } from '../../lib/shopify-api-version.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -106,7 +107,7 @@ async function revertMetafield(test) {
     const token = process.env.SHOPIFY_ACCESS_TOKEN || env.SHOPIFY_ACCESS_TOKEN;
     const store = process.env.SHOPIFY_STORE_DOMAIN || env.SHOPIFY_STORE_DOMAIN;
     if (!token || !store || !blogId) { console.warn('  Skipping article revert: missing credentials or blogId'); return; }
-    const url = `https://${store}/admin/api/2024-01/blogs/${blogId}/articles/${resourceId}/metafields.json`;
+    const url = `https://${store}/admin/api/${API_VERSION}/blogs/${blogId}/articles/${resourceId}/metafields.json`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },

@@ -34,6 +34,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const THEME = 147480051882;
@@ -46,7 +47,7 @@ const env = Object.fromEntries(
     .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }),
 );
 const token = await getAccessToken();
-const base = `https://${env.SHOPIFY_STORE}/admin/api/2025-01/themes/${THEME}/assets.json`;
+const base = `https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/themes/${THEME}/assets.json`;
 
 const current = (await (await fetch(`${base}?asset[key]=${encodeURIComponent(KEY)}`, {
   headers: { 'X-Shopify-Access-Token': token },

@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { getAccessToken } from '../lib/shopify.js';
 import { loadRoster } from '../lib/bundle-roster.js';
 import { estimateShipping, contribution } from '../lib/shipping-costs.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const CAC = Number(process.env.CAC ?? 25);
 
@@ -52,7 +53,7 @@ const env = Object.fromEntries(
 
 const token = await getAccessToken();
 const gql = async (query, variables) => {
-  const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/2025-01/graphql.json`, {
+  const r = await fetch(`https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/graphql.json`, {
     method: 'POST',
     headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),

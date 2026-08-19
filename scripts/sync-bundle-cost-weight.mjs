@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { getAccessToken } from '../lib/shopify.js';
 import { loadRoster } from '../lib/bundle-roster.js';
 import { computeTotals } from '../lib/bundle-cost-weight.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = Object.fromEntries(
@@ -39,7 +40,7 @@ const APPLY = args.includes('--apply');
 const only = args.filter((a) => !a.startsWith('--'));
 
 const token = await getAccessToken();
-const API = `https://${env.SHOPIFY_STORE}/admin/api/2025-01/graphql.json`;
+const API = `https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/graphql.json`;
 
 async function gql(query, variables) {
   const res = await fetch(API, {

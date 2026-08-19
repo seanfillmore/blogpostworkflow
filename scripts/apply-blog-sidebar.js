@@ -34,12 +34,13 @@ function loadEnv() {
 }
 
 import { getAccessToken } from '../lib/shopify.js';
+import { API_VERSION } from '../lib/shopify-api-version.js';
 
 const env = loadEnv();
 const { SHOPIFY_STORE } = env;
 if (!SHOPIFY_STORE) throw new Error('Missing SHOPIFY_STORE in .env');
 
-const API_BASE = `https://${SHOPIFY_STORE}/admin/api/2025-01`;
+const API_BASE = `https://${SHOPIFY_STORE}/admin/api/${API_VERSION}`;
 
 async function shopifyGet(path) {
   const res = await fetch(`${API_BASE}${path}`, {
