@@ -11,7 +11,9 @@
       "vegan deodorant"
     ],
     "imageDir": "coconut-oil-deodorant",
-    "productDescription": "A compact roll-on deodorant bottle, approximately 2 fl oz (60ml), with a tall, slim cylindrical shape and a smooth white snap-on cap that sits flush with the body. The container is white with a matte plastic finish, featuring a clean minimalist label with the brand name \"real SKIN CARE\" in lowercase serif/sans-serif text near the top, a botanical illustration in the center representing the scent, and the product name in bold lowercase text above \"natural deodorant\" in smaller type, all set against a white background with a black band at the bottom of the label. The overall proportions are roughly 4-5 inches tall and about 1.5 inches in diameter, giving it a sleek, modern personal-care aesthetic. The cap is a solid white dome shape that is slightly wider than the bottle body, and the overall look is clean, minimal, and wellness-oriented."
+    "productDescription": "A compact roll-on deodorant bottle, approximately 2 fl oz (60ml), with a tall, slim cylindrical shape and a smooth white snap-on cap that sits flush with the body. The container is white with a matte plastic finish, featuring a clean minimalist label with the brand name \"real SKIN CARE\" in lowercase serif/sans-serif text near the top, a botanical illustration in the center representing the scent, and the product name in bold lowercase text above \"natural deodorant\" in smaller type, all set against a white background with a black band at the bottom of the label. The overall proportions are roughly 4-5 inches tall and about 1.5 inches in diameter, giving it a sleek, modern personal-care aesthetic. The cap is a solid white dome shape that is slightly wider than the bottle body, and the overall look is clean, minimal, and wellness-oriented.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "coconut-moisturizer",
@@ -26,7 +28,9 @@
       "popular"
     ],
     "imageDir": "coconut-moisturizer",
-    "productDescription": "A short, wide-mouth plastic jar approximately 4 oz in size with a flat, ribbed black screw-on cap. The jar body is white with a matte finish and features a white label with a coconut illustration, the brand name \"real SKIN CARE\" in small text above the product name \"coconut breeze\" in lowercase bold black lettering, with \"moisturizing body cream\" in smaller text beneath and \"4 fl. oz • 118ml\" at the bottom. The jar has a squat, cylindrical proportion where the width is noticeably greater than the height, giving it a compact, sturdy appearance. A thick black horizontal band runs across the middle of the label separating the brand logo area from the product name."
+    "productDescription": "A short, wide-mouth plastic jar approximately 4 oz in size with a flat, ribbed black screw-on cap. The jar body is white with a matte finish and features a white label with a coconut illustration, the brand name \"real SKIN CARE\" in small text above the product name \"coconut breeze\" in lowercase bold black lettering, with \"moisturizing body cream\" in smaller text beneath and \"4 fl. oz • 118ml\" at the bottom. The jar has a squat, cylindrical proportion where the width is noticeably greater than the height, giving it a compact, sturdy appearance. A thick black horizontal band runs across the middle of the label separating the brand logo area from the product name.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "coconut-oil-toothpaste",
@@ -40,7 +44,9 @@
       "vegan toothpaste"
     ],
     "imageDir": "coconut-oil-toothpaste",
-    "productDescription": "A white, opaque plastic squeeze bottle with a black flip-top cap, approximately the size of a travel-sized lotion bottle with slim, cylindrical proportions. The label features a clean, minimalist white design with the brand name \"real SKIN CARE\" in lowercase serif/sans-serif text at the top, a small circular emblem in the center, a botanical/spice illustration in the middle, and bold lowercase product name text above the word \"toothpaste\" separated by a black horizontal band, with \"4 fl. oz • 118ml\" printed in the black band near the bottom. The bottle has a smooth, semi-matte plastic finish and stands about 5 inches tall with a straight-sided, narrow profile."
+    "productDescription": "A white, opaque plastic squeeze bottle with a black flip-top cap, approximately the size of a travel-sized lotion bottle with slim, cylindrical proportions. The label features a clean, minimalist white design with the brand name \"real SKIN CARE\" in lowercase serif/sans-serif text at the top, a small circular emblem in the center, a botanical/spice illustration in the middle, and bold lowercase product name text above the word \"toothpaste\" separated by a black horizontal band, with \"4 fl. oz • 118ml\" printed in the black band near the bottom. The bottle has a smooth, semi-matte plastic finish and stands about 5 inches tall with a straight-sided, narrow profile.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "foam-soap-bundle",
@@ -48,7 +54,9 @@
     "unitCount": 3,
     "tags": [],
     "imageDir": "foam-soap-bundle",
-    "productDescription": "A bundle of three bottles: two smaller 8 fl. oz. foaming pump bottles flanking one larger 32 fl. oz. refill bottle in the center. All bottles are translucent/frosted white plastic with a semi-glossy finish; the two smaller bottles have dark charcoal-gray foam pump dispensers, while the larger refill bottle has a simple black screw-on cap. Each bottle features a clean white label with the brand name \"real SKIN CARE\" in minimalist lowercase serif typography at the top, a circular \"Organic Coconut Oil + Essential Oils\" badge, a realistic fruit or botanical illustration (varying by scent), and the scent name in large bold lowercase text above \"hand soap\" in a lighter weight. The overall aesthetic is modern, minimal, and clean with a white-dominant color palette accented only by the dark pump tops and the natural-colored botanical imagery on the labels."
+    "productDescription": "A bundle of three bottles: two smaller 8 fl. oz. foaming pump bottles flanking one larger 32 fl. oz. refill bottle in the center. All bottles are translucent/frosted white plastic with a semi-glossy finish; the two smaller bottles have dark charcoal-gray foam pump dispensers, while the larger refill bottle has a simple black screw-on cap. Each bottle features a clean white label with the brand name \"real SKIN CARE\" in minimalist lowercase serif typography at the top, a circular badge reading \"Organic Coconut Oil + Essential Oils\" on a scented variant — an unscented variant's badge names the coconut oil alone and never an essential oil, a realistic fruit or botanical illustration varying by variant (a scented variant matches its scent; an unscented variant carries no fruit and no scent-specific botanical), and the scent name in large bold lowercase text above \"hand soap\" in a lighter weight. The overall aesthetic is modern, minimal, and clean with a white-dominant color palette accented only by the dark pump tops and the natural-colored botanical imagery on the labels.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "foam-soap-refill-32oz",
@@ -56,7 +64,9 @@
     "unitCount": 1,
     "tags": [],
     "imageDir": "foam-soap-refill-32oz",
-    "productDescription": "A tall, cylindrical 32oz white plastic refill bottle with a flat black screw-on cap and smooth, glossy finish. The bottle has a clean, minimalist white label centered on the front featuring the brand name \"real SKIN CARE\" in a rounded lowercase sans-serif wordmark, a small circular badge noting \"Organic Coconut Oil + Essential Oils\", a botanical/fruit illustration specific to the scent variant, the scent name in bold lowercase type, \"hand soap\" in lighter text below, the volume marking \"32 fl. oz. • 950ml\" in small type beneath that, and \"refill bottle\" in a small outlined box near the bottom. The bottle has a slightly squared-off cylindrical shape with subtle vertical panel ridges visible on the sides, and the overall aesthetic is clean, modern, and pharmacy-minimal with a predominantly white-on-white color scheme."
+    "productDescription": "A tall, cylindrical 32oz white plastic refill bottle with a flat black screw-on cap and smooth, glossy finish. The bottle has a clean, minimalist white label centered on the front featuring the brand name \"real SKIN CARE\" in a rounded lowercase sans-serif wordmark, a small circular badge noting \"Organic Coconut Oil + Essential Oils\" on a scented variant — an unscented variant's badge names the coconut oil alone and never an essential oil, a botanical or fruit illustration specific to the variant (a scented variant matches its scent; an unscented variant carries no fruit and no scent-specific botanical), the scent name in bold lowercase type, \"hand soap\" in lighter text below, the volume marking \"32 fl. oz. • 950ml\" in small type beneath that, and \"refill bottle\" in a small outlined box near the bottom. The bottle has a slightly squared-off cylindrical shape with subtle vertical panel ridges visible on the sides, and the overall aesthetic is clean, modern, and pharmacy-minimal with a predominantly white-on-white color scheme.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "organic-foaming-hand-soap",
@@ -68,7 +78,9 @@
       "vegan soap"
     ],
     "imageDir": "organic-foaming-hand-soap",
-    "productDescription": "A frosted semi-transparent plastic foaming pump bottle with a tall, slim cylindrical shape. The bottle has a black foaming pump dispenser with a clear protective overcap. The label is white with a clean, minimalist design featuring the brand name \"real SKIN CARE\" in lowercase serif/sans-serif typography at the top, a small circular \"Organic Coconut Oil & Essential Oils\" badge in the center, a fruit or botanical illustration corresponding to the scent variant, and the scent name in bold lowercase text above \"hand soap\" in smaller type, with a black horizontal accent bar separating the scent name from the product type. The bottom of the bottle features a black band area reading \"8 fl. oz • 236ml\", and the overall aesthetic is modern, clean, and spa-like with a matte-to-satin finish on the bottle body."
+    "productDescription": "A frosted semi-transparent plastic foaming pump bottle with a tall, slim cylindrical shape. The bottle has a black foaming pump dispenser with a clear protective overcap. The label is white with a clean, minimalist design featuring the brand name \"real SKIN CARE\" in lowercase serif/sans-serif typography at the top, a small circular badge reading \"Organic Coconut Oil & Essential Oils\" on a scented variant — an unscented variant's badge names the coconut oil alone and never an essential oil in the center, a fruit or botanical illustration corresponding to the variant (a scented variant matches its scent; an unscented variant carries no fruit and no scent-specific botanical), and the scent name in bold lowercase text above \"hand soap\" in smaller type, with a black horizontal accent bar separating the scent name from the product type. The bottom of the bottle features a black band area reading \"8 fl. oz • 236ml\", and the overall aesthetic is modern, clean, and spa-like with a matte-to-satin finish on the bottle body.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "coconut-soap",
@@ -82,9 +94,9 @@
       "vegan soap"
     ],
     "imageDir": "coconut-soap",
-    "productDescription": "A round, puck-shaped bar of soap wrapped in white pleated paper with crimped edges, resembling a hotel-style wrapped soap disc. The flat top features a circular white label with clean, minimalist typography in black: the brand name \"real SKIN CARE\" at the top, a circular badge noting \"Made with Organic Coconut Oil + Essential Oils\" below it, a botanical illustration matching the scent as the central visual element, the scent name in bold lowercase type, \"hand & body soap\" in lighter text beneath it, and the net weight \"3.4 oz • 84g\" in small type near the lower edge above \"realskincare.com\". Small text runs along the label's circular border noting ingredients and claims. The overall finish is clean white and matte, with a soft, natural aesthetic.",
+    "productDescription": "A round, puck-shaped bar of soap wrapped in white pleated paper with crimped edges, resembling a hotel-style wrapped soap disc. The flat top features a circular white label with clean, minimalist typography in black: the brand name \"real SKIN CARE\" at the top, a circular badge below it noting \"Made with Organic Coconut Oil + Essential Oils\" on a scented variant — an unscented variant's badge names the coconut oil alone and never an essential oil (the pure-unscented variant reads simply Made with Organic Coconut Oil), a botanical illustration as the central visual element, matching the scent on a scented variant and a plain broad dew-covered green leaf on the pure-unscented variant, the scent name in bold lowercase type, \"hand & body soap\" in lighter text beneath it, and the net weight \"3.4 oz • 84g\" in small type near the lower edge above \"realskincare.com\". Small text runs along the label's circular border noting ingredients and claims. The overall finish is clean white and matte, with a soft, natural aesthetic.",
     "labelInk": "black",
-    "_labelInkNote": "Verified by eye across 14 rendered plates and stated in productDescription (\"typography in black\"). Consumed by verify.js labelInkVerdict, which no-ops for products without this field rather than guessing — a false positive costs the full retry budget. Add it per product as each is first rendered and checked.",
+    "_labelInkNote": "Verified by eye across 14 rendered plates and stated in productDescription.",
     "variantBadges": {
       "pure-unscented": "Made with Organic Coconut Oil"
     }
@@ -101,7 +113,9 @@
       "vegan lip balm"
     ],
     "imageDir": "coconut-oil-lip-balm",
-    "productDescription": "A set of four standard-sized lip balm twist-up tubes with smooth, matte white plastic bodies and black plastic caps. Each tube features a clean, minimalist white label with the brand name \"real SKIN CARE\" in lowercase modern typography, along with a small illustrative icon matching the scent (coconut, vanilla, leaf, tangerine), the scent name printed vertically in lowercase brown/black text, and a black band near the base reading \"0.15 oz • 4.25g\". The tubes are slim, cylindrical, and approximately 2.75 inches tall with a standard lip balm diameter. The overall aesthetic is natural, clean, and modern with a white-and-black color scheme accented by subtle fruit/botanical illustrations."
+    "productDescription": "A set of four standard-sized lip balm twist-up tubes with smooth, matte white plastic bodies and black plastic caps. Each tube features a clean, minimalist white label with the brand name \"real SKIN CARE\" in lowercase modern typography, along with a small illustrative icon matching the scent (coconut, vanilla, leaf, tangerine), the scent name printed vertically in lowercase brown/black text, and a black band near the base reading \"0.15 oz • 4.25g\". The tubes are slim, cylindrical, and approximately 2.75 inches tall with a standard lip balm diameter. The overall aesthetic is natural, clean, and modern with a white-and-black color scheme accented by subtle fruit/botanical illustrations.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "coconut-lotion",
@@ -116,10 +130,12 @@
       "vegan body lotion"
     ],
     "imageDir": "coconut-lotion",
-    "productDescription": "An 8 fl. oz. (236ml) white plastic cylindrical squeeze bottle with a smooth, slightly glossy finish and a black flip-top or disc cap. The bottle has a clean, minimalist white label featuring the brand name \"real SKIN CARE\" in simple black lowercase/uppercase text near the top, a small circular badge noting \"Organic Coconut Oil + Essential Oils,\" a centered botanical or ingredient illustration, and the scent/variant name in bold black lowercase text above \"moisturizing body lotion\" in smaller type. The overall proportions are a standard tall, slim lotion bottle shape, roughly 7–8 inches tall, with the label covering most of the front surface and a black horizontal accent bar behind the variant name text. The design aesthetic is clean, natural, and modern with a predominantly white, black, and green color palette.",
+    "productDescription": "An 8 fl. oz. (236ml) white plastic cylindrical squeeze bottle with a smooth, slightly glossy finish and a black flip-top or disc cap. The bottle has a clean, minimalist white label featuring the brand name \"real SKIN CARE\" in simple black lowercase/uppercase text near the top, a small circular badge noting \"Organic Coconut Oil + Essential Oils\" on a scented variant — an unscented variant's badge names the coconut oil alone and never an essential oil, a centered botanical or ingredient illustration (matching the scent on a scented variant; an unscented variant carries no scent-specific botanical), and the scent/variant name in bold black lowercase text above \"moisturizing body lotion\" in smaller type. The overall proportions are a standard tall, slim lotion bottle shape, roughly 7–8 inches tall, with the label covering most of the front surface and a black horizontal accent bar behind the variant name text. The design aesthetic is clean, natural, and modern with a predominantly white, black, and green color palette.",
     "variantBadges": {
       "pure-unscented": "Made with Organic Coconut Oil + Essential Oils"
-    }
+    },
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "sensitive-skin-starter-set",
@@ -127,7 +143,9 @@
     "unitCount": 3,
     "tags": [],
     "imageDir": "sensitive-skin-starter-set",
-    "productDescription": "**Sensitive Skin Starter Set by Real Skin Care — Pure Unscented:**\n\nThe set consists of three items: a tall, slim cylindrical squeeze bottle (8 fl oz) of moisturizing body lotion with a black flip-top cap; a short, wide cylindrical jar (4 fl oz) of moisturizing body cream with a black screw-on lid; and a round, flat disc-shaped hand & body soap bar wrapped in white packaging. All containers are white with a clean, minimalist matte-finish label featuring the \"real SKIN CARE\" brand name in lowercase black serif/sans-serif typography, a small green leaf illustration with a water droplet, and a dark charcoal-gray banner strip across the middle reading \"pure unscented\" in white text. The overall aesthetic is clinical yet natural, with smooth white plastic containers that convey a fragrance-free, sensitive-skin focus."
+    "productDescription": "**Sensitive Skin Starter Set by Real Skin Care — Pure Unscented:**\n\nThe set consists of three items: a tall, slim cylindrical squeeze bottle (8 fl oz) of moisturizing body lotion with a black flip-top cap; a short, wide cylindrical jar (4 fl oz) of moisturizing body cream with a black screw-on lid; and a round, flat disc-shaped hand & body soap bar wrapped in white packaging. All containers are white with a clean, minimalist matte-finish label featuring the \"real SKIN CARE\" brand name in lowercase black serif/sans-serif typography, a small green leaf illustration with a water droplet, and a dark charcoal-gray banner strip across the middle reading \"pure unscented\" in white text. The overall aesthetic is clinical yet natural, with smooth white plastic containers that convey a fragrance-free, sensitive-skin focus.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "skincare-starter-set",
@@ -135,7 +153,9 @@
     "unitCount": 2,
     "tags": [],
     "imageDir": "skincare-starter-set",
-    "productDescription": "The set includes two products: a tall, slim cylindrical squeeze bottle (8 fl. oz / 236ml) of moisturizing body lotion with a black flip-top cap, and a shorter, wide-mouth round jar (4 fl. oz / 118ml) of moisturizing body cream with a black ribbed screw-on lid. Both containers are white/translucent plastic with a clean, minimalist label design featuring the \"real SKIN CARE\" brand in black script and sans-serif font, the product name \"coconut breeze\" in lowercase black text, a black horizontal stripe accent, and realistic coconut imagery with green leaves. The overall aesthetic is modern and minimal with a monochromatic black-and-white color scheme, matte-finish containers, and a cohesive visual identity across both pieces."
+    "productDescription": "The set includes two products: a tall, slim cylindrical squeeze bottle (8 fl. oz / 236ml) of moisturizing body lotion with a black flip-top cap, and a shorter, wide-mouth round jar (4 fl. oz / 118ml) of moisturizing body cream with a black ribbed screw-on lid. Both containers are white/translucent plastic with a clean, minimalist label design featuring the \"real SKIN CARE\" brand in black script and sans-serif font, the product name \"coconut breeze\" in lowercase black text, a black horizontal stripe accent, and realistic coconut imagery with green leaves. The overall aesthetic is modern and minimal with a monochromatic black-and-white color scheme, matte-finish containers, and a cohesive visual identity across both pieces.",
+    "labelInk": "black",
+    "_labelInkNote": "From this entry's own productDescription, which states the label type is black. NOT yet confirmed against a rendered plate — if a correct render is ever rejected for ink, check the real product before assuming the render is wrong."
   },
   {
     "handle": "culina-brush",

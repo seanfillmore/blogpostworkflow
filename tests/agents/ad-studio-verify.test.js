@@ -1707,3 +1707,40 @@ test('verdictFor rejects a plate whose label type is the wrong colour', () => {
   assert.ok(!/THIS IS THE UNSCENTED VARIANT/.test(scented), 'must not fire on a scented variant');
   assert.match(scented, /Essential Oils/, 'the line description still reaches a scented render');
 }
+
+// ── the manifest describes VARIANTS, not just the product line (2026-08-19) ─────────
+//
+// Five entries described a badge reading "Organic Coconut Oil + Essential Oils" and a
+// botanical illustration "matching the scent". buildRenderPrompt hands that prose to the
+// image model verbatim, so rendering an UNSCENTED variant was instructing it to print a
+// claim the product does not make — and it did. The prompt-level correction (above) is the
+// backstop; this pins the source, because a description that asserts the line's ingredients
+// as if they were every variant's is wrong wherever it is read.
+test('no manifest description asserts essential oils as if every variant had them', () => {
+  const m = JSON.parse(readFileSync(join(REPO_ROOT, 'data', 'product-images', 'manifest.json'), 'utf8'));
+  const list = Array.isArray(m) ? m : m.products;
+  const bad = list.filter(p => {
+    const d = p.productDescription || '';
+    if (/culina|cast iron/i.test(p.handle || '')) return false;
+    // The marker is the variant caveat itself: an entry may name essential oils only if it
+    // also says what an UNSCENTED variant's label does instead.
+    return /essential oils?/i.test(d) && !/unscented variant/i.test(d);
+  });
+  assert.deepEqual(bad.map(p => p.handle), [],
+    'these describe the LINE as if it were the variant being rendered');
+});
+
+// labelInk is what turns labelInkVerdict on for a product. A product with a description that
+// states its type colour but no labelInk field is a check silently not running — the same
+// shape of gap as the scent gate shipping inert.
+test('every RSC product whose description states black type records it as labelInk', () => {
+  const m = JSON.parse(readFileSync(join(REPO_ROOT, 'data', 'product-images', 'manifest.json'), 'utf8'));
+  const list = Array.isArray(m) ? m : m.products;
+  for (const p of list) {
+    if (/culina|cast iron/i.test(p.handle || '')) continue;
+    const d = p.productDescription || '';
+    if (!d || !/black/i.test(d)) continue;
+    assert.equal(p.labelInk, 'black', `${p.handle} states black type but does not record labelInk`);
+    assert.ok(p._labelInkNote, `${p.handle} must record where its ink truth came from`);
+  }
+});
