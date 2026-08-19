@@ -86,8 +86,8 @@ test('clusterForText maps a keyword to the same cluster seo-impact reports on', 
 test('clusterForText is first-match-wins in list order, not longest-match', () => {
   // 'deodorant' precedes 'coconut oil', so this is a deodorant post.
   assert.equal(clusterForText('coconut oil deodorant for men'), 'deodorant');
-  // 'bar soap' precedes bare 'soap'.
-  assert.equal(clusterForText('organic bar soap'), 'bar soap');
+  // 'hand soap' precedes bare 'soap'.
+  assert.equal(clusterForText('natural hand soap refill'), 'hand soap');
   // Nothing earlier matches, so this lands on 'soap' — not 'coconut oil'.
   assert.equal(clusterForText('coconut oil soap benefits'), 'soap');
 });
@@ -101,4 +101,19 @@ test('clusterForText returns null when nothing matches', () => {
   assert.equal(clusterForText('dry brushing technique'), null);
   assert.equal(clusterForText(''), null);
   assert.equal(clusterForText(null), null);
+});
+
+// ── bar soap folded into soap ─────────────────────────────────────────────────
+// They were separate clusters with opposite verdicts — soap a $0 dud at 180
+// clicks, bar soap "untested" at 10 — which split one category's evidence in two
+// and let bar-soap-labelled work escape the dud rule. One soap cluster now.
+
+test('clusterForText folds bar soap into soap', () => {
+  assert.equal(clusterForText('organic bar soap'), 'soap');
+  assert.equal(clusterForText('best natural bar soap for men'), 'soap');
+  assert.equal(clusterForText('oatmeal soap'), 'soap');
+});
+
+test('clusterForText keeps hand soap separate — it is its own product line', () => {
+  assert.equal(clusterForText('natural liquid hand soap'), 'hand soap');
 });

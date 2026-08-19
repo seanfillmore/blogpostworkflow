@@ -26,7 +26,7 @@ const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 import { listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, POSTS_DIR } from '../../lib/posts.js';
 import { findSemanticDuplicate } from '../../lib/cannibalization-guard.js';
 import { splitInventory } from '../../lib/brief-triage.js';
-import { classifyClusters, provenDuds } from '../../lib/cluster-revenue.js';
+import { classifyClusters, provenDuds, clusterForText } from '../../lib/cluster-revenue.js';
 import { clusterPenalties } from '../../lib/cluster-performance.js';
 import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
@@ -612,10 +612,14 @@ export function buildPrepaidSection(prepaid, limit = PREPAID_LIMIT) {
 ALREADY BRIEFED BUT NOT YET WRITTEN — research is paid for, the post is not:
 ${shown.join('\n')}${more > 0 ? `\n(+${more} more)` : ''}
 
-SCHEDULE THESE FIRST. They are the cheapest posts we can ship — the expensive
-research step is already done and is wasted until the post exists. Put them in
-the earliest weeks of the schedule ahead of any brand-new topic, unless a topic
-belongs to a cluster listed below as not earning.
+SCHEDULE THESE FIRST by default. They are the cheapest posts we can ship — the
+expensive research step is already done and is wasted until the post exists.
+
+This is a default, not a lock. A brand-new topic MAY jump ahead of them when it
+carries validated demand (an Amazon- or GSC/GA4-validated keyword from the
+sections above, or a query already earning revenue) — those are worth bumping
+up. What must never jump ahead, or be scheduled at all, is a topic in a cluster
+listed below as not earning.
 `;
 }
 
@@ -896,6 +900,16 @@ ${calendarMd}`;
       const dup = findScheduledDuplicate(item.keyword, { publishedKeywords, calendarKeywords });
       if (dup) {
         console.log(`  [SKIP] already covered: "${item.keyword}" ~ existing "${dup}"`);
+        return false;
+      }
+      // Clusters that have proven they do not earn. This is a HARD filter, not
+      // just the prompt instruction above it — the planner is an LLM and the
+      // prompt is a request. Dropping the proposal here is also what clears
+      // existing items out of the calendar on the next re-plan.
+      const dudCluster = clusterForText(item.keyword) || clusterForText(item.category);
+      if (clusterRevenue[dudCluster]?.status === 'proven_dud') {
+        const c = clusterRevenue[dudCluster];
+        console.log(`  [SKIP] ${dudCluster} cluster does not earn (${c.clicks} clicks, $0.00): "${item.keyword}"`);
         return false;
       }
       return true;

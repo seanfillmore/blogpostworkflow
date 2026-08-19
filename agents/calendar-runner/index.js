@@ -16,7 +16,8 @@
  *
  * Revenue feedback (re-evaluated each run, from data/reports/seo-impact/latest.json):
  *   - Cluster that earned money        → accelerate its items by 2 days
- *   - Cluster with traffic and $0      → defer its items 14 days, behind work that earns
+ *   - Cluster with traffic and $0      → NOT DRAFTED AT ALL. Deferring only moved
+ *                                        the post to October; it still got written.
  *   - Cluster with too little traffic  → left alone, so a new category can be tested
  * Priority used to key on RANKING here. It does not any more: toothpaste ranks
  * well enough for 725 clicks across 26 pages and returns $0, and rank-keyed
@@ -192,21 +193,44 @@ export function selectWorkItems(items, {
   bufferDays = BUFFER_DAYS,
   keyword = null,
   statusOf = getItemStatus,
+  clusterRevenue = null,
 } = {}) {
   const unfinished = items.filter((i) => !['published', 'scheduled'].includes(statusOf(i)));
 
   if (keyword) {
+    // Naming an item by hand is a deliberate override of every rule below.
     return {
       workItems: unfinished.filter((i) => i.keyword.toLowerCase() === keyword.toLowerCase()),
-      deferred: [],
+      deferred: [], blocked: [],
     };
+  }
+
+  // Clusters we have decided not to add to. Deferring these only moved the post
+  // down the calendar — it still got written, just in October. Only fires when
+  // revenue data was actually supplied; absent data is not evidence of $0.
+  const blocked = [];
+  const open = [];
+  for (const i of unfinished) {
+    const cluster = clusterRevenue
+      ? (clusterForText(i.keyword) || clusterForText(i.category))
+      : null;
+    const c = cluster ? clusterRevenue[cluster] : null;
+    if (c?.status === 'proven_dud') {
+      blocked.push({ ...i, blockedReason: `${cluster} cluster does not earn (${c.clicks} clicks across ${c.pages} pages, $0.00)` });
+    } else {
+      open.push(i);
+    }
   }
 
   const cutoff = new Date(now.getTime() + bufferDays * 86400000);
   const due = (i) => i.adjustedDate || i.publishDate;
   return {
-    workItems: unfinished.filter((i) => due(i) <= cutoff),
-    deferred: unfinished.filter((i) => due(i) > cutoff).sort((a, b) => due(a) - due(b)),
+    workItems: open.filter((i) => due(i) <= cutoff),
+    // Blocked items are NOT deferred — work we have decided not to do is not
+    // work waiting, and counting it as backlog would fire the stall alert
+    // forever on a calendar that is functioning as intended.
+    deferred: open.filter((i) => due(i) > cutoff).sort((a, b) => due(a) - due(b)),
+    blocked,
   };
 }
 
@@ -663,11 +687,17 @@ async function main() {
     return;
   }
 
-  const { workItems, deferred } = selectWorkItems(items, { keyword: kwArg });
+  const { workItems, deferred, blocked } = selectWorkItems(items, { keyword: kwArg, clusterRevenue: loadClusterRevenue() });
 
   if (kwArg && workItems.length === 0) {
     console.log(`No pending calendar item found for keyword: "${kwArg}"`);
     process.exit(1);
+  }
+
+  if (blocked.length > 0) {
+    console.log(`  ${blocked.length} item(s) not drafted — cluster closed:`);
+    for (const b of blocked) console.log(`    "${b.keyword}" — ${b.blockedReason}`);
+    console.log('');
   }
 
   if (workItems.length === 0) {

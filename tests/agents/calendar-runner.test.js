@@ -217,12 +217,65 @@ test('revenueAdjustment judges on the keyword, matching what the brief triage do
   assert.match(adj.reason, /soap/);
 });
 
-test('revenueAdjustment still honours a genuinely distinct sub-cluster', () => {
+test('revenueAdjustment folds a bar-soap topic into the soap verdict', () => {
+  // 'bar soap' was merged into 'soap' on 2026-08-18 — keeping them apart split
+  // one category's evidence and let bar-soap-labelled work escape the dud rule.
   const adj = revenueAdjustment('Bar Soap', SOAP, 'organic bar soap');
-  assert.equal(adj.days, 0, '"bar soap" wins by list order and is untested — leave it alone');
+  assert.ok(adj.days > 0);
+  assert.match(adj.reason, /soap/);
 });
 
 test('revenueAdjustment falls back to the category when there is no keyword', () => {
   const adj = revenueAdjustment('Deodorant', SOAP, null);
   assert.ok(adj.days < 0);
+});
+
+// ── a cluster we have decided not to add to is not "later", it is "no" ────────
+// Deferring a proven dud only moved it down the calendar — the post still got
+// written, just in October. "We have an abundance of soap content so no need to
+// produce more" means it must not be drafted at all.
+
+test('selectWorkItems will not draft an item in a cluster that has proven it does not earn', () => {
+  const items = [pending('oatmeal soap', '2026-08-20T15:00:00Z')];
+  const { workItems, blocked } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, statusOf: () => 'briefed', clusterRevenue: SOAP,
+  });
+  assert.equal(workItems.length, 0, 'in-window is not enough — the cluster is closed');
+  assert.equal(blocked.length, 1);
+  assert.match(blocked[0].blockedReason, /soap/);
+});
+
+test('selectWorkItems does not count a blocked item as a stall backlog', () => {
+  const items = [pending('oatmeal soap', '2026-08-20T15:00:00Z')];
+  const { deferred, blocked } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, statusOf: () => 'briefed', clusterRevenue: SOAP,
+  });
+  assert.equal(deferred.length, 0, 'work we have decided not to do is not work waiting');
+  assert.equal(blocked.length, 1);
+});
+
+test('selectWorkItems still drafts an earning cluster normally', () => {
+  const items = [pending('chlorophyll deodorant', '2026-08-20T15:00:00Z')];
+  const { workItems, blocked } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, statusOf: () => 'briefed', clusterRevenue: SOAP,
+  });
+  assert.equal(workItems.length, 1);
+  assert.equal(blocked.length, 0);
+});
+
+test('selectWorkItems blocks nothing when no revenue data is supplied', () => {
+  const items = [pending('oatmeal soap', '2026-08-20T15:00:00Z')];
+  const { workItems, blocked } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, statusOf: () => 'briefed',
+  });
+  assert.equal(workItems.length, 1, 'absent data is not evidence of $0');
+  assert.equal(blocked.length, 0);
+});
+
+test('an explicit --keyword run still overrides the cluster block', () => {
+  const items = [pending('oatmeal soap', '2026-08-20T15:00:00Z')];
+  const { workItems } = selectWorkItems(items, {
+    now: NOW, bufferDays: 7, keyword: 'oatmeal soap', statusOf: () => 'briefed', clusterRevenue: SOAP,
+  });
+  assert.equal(workItems.length, 1, 'naming an item by hand is a deliberate override');
 });
