@@ -177,16 +177,31 @@ assert.throws(() => parseFlexibleCopyResponse('not json at all'), /was not JSON/
 // ── collectFlexiblePlates ───────────────────────────────────────────────────
 {
   const root = mkdtempSync(join(tmpdir(), 'flex-'));
+  // .jpg, NOT .png. artifactName() ends in ".png" because it is a placement-format label;
+  // artifactFilename() rewrites the extension to whatever Gemini actually returned, and
+  // the recorded artifact is the real filename. The first version of this fixture used
+  // .png — my assumption rather than reality — so it passed while the live run reported
+  // all three plates unverified against a run.json that said 2 of 3 passed.
   const results = [
-    { conceptSlug: 'us-vs-them', format: 'us-vs-them', variations: [{ n: 1, ok: true, artifacts: [{ artifact: 'meta-plate-4x5.png', ok: true }] }] },
-    { conceptSlug: 'manifesto', format: 'manifesto', variations: [{ n: 1, ok: false, artifacts: [{ artifact: 'meta-plate-4x5.png', ok: false }] }] },
-    { conceptSlug: 'testimonial', format: 'testimonial', variations: [{ n: 1, ok: true, artifacts: [{ artifact: 'meta-plate-4x5.png', ok: true }] }] },
+    { conceptSlug: 'us-vs-them', format: 'us-vs-them', variations: [{ n: 1, ok: true, artifacts: [{ artifact: 'meta-plate-4x5.jpg', ok: true }] }] },
+    { conceptSlug: 'manifesto', format: 'manifesto', variations: [{ n: 1, ok: false, artifacts: [{ artifact: 'meta-plate-4x5.jpg', ok: false }] }] },
+    { conceptSlug: 'testimonial', format: 'testimonial', variations: [{ n: 1, ok: true, artifacts: [{ artifact: 'meta-plate-4x5.webp', ok: true }] }] },
   ];
   const plates = collectFlexiblePlates({ runId: 'r1', results, target: META45, root });
   assert.equal(plates.length, 3);
   assert.deepEqual(plates.map(p => p.verified), [true, false, true],
     'a rejected plate is still listed — the operator has two usable plates and must be told, not silently handed a 2-2-2');
-  assert.match(plates[0].file, /r1\/us-vs-them\/v1\/meta-plate-4x5\.png$/);
+  assert.match(plates[0].file, /r1\/us-vs-them\/v1\/meta-plate-4x5\.jpg$/,
+    'the path carries the REAL extension, taken from the recorded artifact rather than rebuilt from the label');
+  assert.match(plates[2].file, /meta-plate-4x5\.webp$/, 'any media type Gemini returns is matched');
+
+  // A concept whose target errored before writing anything has no file to point at.
+  const errored = collectFlexiblePlates({
+    runId: 'r1', target: META45, root,
+    results: [{ conceptSlug: 'ghosted', format: 'ghosted', variations: [{ n: 1, ok: false, artifacts: [] }] }],
+  });
+  assert.equal(errored[0].file, null, 'no invented path for an artifact that was never written');
+  assert.equal(errored[0].verified, false);
 
   // A stray file from an earlier run in the same directory must never be picked up:
   // the list comes from what this run recorded, not from readdir.
@@ -204,9 +219,9 @@ assert.throws(() => parseFlexibleCopyResponse('not json at all'), /was not JSON/
     variant: null,
     target: META45,
     plates: [
-      { format: 'us-vs-them', file: '/tmp/a.png', verified: true },
-      { format: 'manifesto', file: '/tmp/b.png', verified: false },
-      { format: 'testimonial', file: '/tmp/c.png', verified: true },
+      { format: 'us-vs-them', file: '/tmp/a.jpg', verified: true },
+      { format: 'manifesto', file: '/tmp/b.jpg', verified: false },
+      { format: 'testimonial', file: null, verified: false },
     ],
     primaryTexts: ['one', 'two'],
     headlines: ['three', 'four'],
@@ -218,7 +233,8 @@ assert.throws(() => parseFlexibleCopyResponse('not json at all'), /was not JSON/
   assert.equal(json.placement.ratio, '4:5');
   assert.match(md, /12 combinations sharing one learning pool/);
   assert.match(md, /Do not create three ads/, 'the instruction that makes or breaks the structure is in the deliverable');
-  assert.match(md, /did not pass verification/, 'the unverified plate is flagged where the operator will see it');
+  assert.match(md, /did not pass verification — do not ship/, 'the unverified plate is flagged where the operator will see it');
+  assert.match(md, /no artifact produced/, 'a concept that rendered nothing says so rather than listing a path that does not exist');
   assert.match(md, /harvest it by copying its post ID/, 'the winner-harvesting rule travels with the ad');
 }
 

@@ -252,7 +252,11 @@ export function renderFlexibleManifest({ runId, product, variant, target, plates
     '',
     '## Images',
     '',
-    ...plates.map((p, i) => `${i + 1}. \`${p.file}\` — ${p.format}${p.verified ? '' : '  ⚠️ did not pass verification'}`),
+    ...plates.map((p, i) => (
+      p.file
+        ? `${i + 1}. \`${p.file}\` — ${p.format}${p.verified ? '' : '  ⚠️ did not pass verification — do not ship'}`
+        : `${i + 1}. **no artifact produced** — ${p.format}  ⚠️ nothing rendered for this concept`
+    )),
     '',
     '## Primary texts',
     '',

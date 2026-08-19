@@ -588,13 +588,23 @@ export const SCORES_PATH = join('data', 'reports', 'ad-studio', 'scores.jsonl');
  * Exported for the test; there is no other caller.
  */
 export function collectFlexiblePlates({ runId, results, target, root = ROOT }) {
-  const wanted = artifactName(target.platform, target.ratio, 'plate');
+  // Match on the STEM, not the full name. artifactName() always ends in ".png" because it
+  // is a placement-format label, not a promise about file bytes — Gemini returns JPEG and
+  // artifactFilename() rewrites the extension to match, so the recorded artifact is
+  // "meta-plate-4x5.jpg". Comparing the full names found nothing, and every plate in the
+  // first real run was reported unverified while run.json correctly said 2 of 3 passed.
+  // The file path likewise comes from the recorded artifact rather than being rebuilt from
+  // the label, so the manifest points at a file that exists.
+  const stem = artifactName(target.platform, target.ratio, 'plate').replace(/\.png$/, '');
   return results.map(r => {
     const v1 = (r.variations || []).find(v => v.n === 1);
-    const art = (v1?.artifacts || []).find(a => a.artifact === wanted);
+    const art = (v1?.artifacts || []).find(a => String(a.artifact).replace(/\.[^.]+$/, '') === stem);
     return {
       format: r.format,
-      file: join(variationDir(root, runId, r.conceptSlug, 1), wanted),
+      // null, not a guessed path: a concept whose target never produced an artifact at all
+      // (an API error before any file was written) has no file to point at, and inventing
+      // one would put a path in the manifest that 404s in Finder.
+      file: art ? join(variationDir(root, runId, r.conceptSlug, 1), art.artifact) : null,
       verified: Boolean(art?.ok),
     };
   });
