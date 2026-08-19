@@ -373,6 +373,77 @@ export const FORMATS = [
       'The top of the frame and the left side are empty ground, and a clear band runs across the very bottom.',
       'Nothing else appears in the picture.',
     ].join(' '),
+    // FIVE DELIBERATE TREATMENTS, added 2026-08-18 for the giveaway launch.
+    //
+    // `--variations 5` on its own re-renders the SAME brief five times and buys only seed
+    // noise: the ground colour and the product's scale and position are written into the
+    // brief, so they cannot differ between variations. These are the axes an operator
+    // actually wants to test on a lead ad, so they are DATA — one entry per treatment,
+    // cycled by variation index (formatForVariation below).
+    //
+    // WHAT IS NOT HERE, and cannot be: TEXT COLOUR. A plate carries no text. Type is set in
+    // Photoshop, so the headline's colour is an operator decision made after this stage —
+    // what a plate can offer is a GROUND that makes a given text colour work, which is why
+    // these run light-to-dark and include one high-contrast dark treatment. Do not add a
+    // "text colour" variant here; it would describe something the render cannot contain.
+    //
+    // Grounds stay inside the brand palette (brand-kit.json's palette_hexes: black, sand,
+    // green, grey) — a giveaway ad is still a brand ad, and inventing a sixth colour here
+    // would put an off-brand frame into the one campaign that reaches cold audiences.
+    // Each keeps its own empty region for type, and each still ends with the studio rule.
+    plateVariants: [
+      {
+        key: 'sand-hero',
+        plateBrief: [
+          `A clean warm sand ${SAND} ground filling the whole frame, lit like premium CPG product photography.`,
+          'The product stands upright in the lower right of the frame at hero scale, its base on the lower third,',
+          'with a soft contact shadow.',
+          'The top of the frame and the left side are empty ground, and a clear band runs across the very bottom.',
+          'Nothing else appears in the picture.',
+        ].join(' '),
+      },
+      {
+        key: 'sand-large-centered',
+        plateBrief: [
+          `A clean warm sand ${SAND} ground filling the whole frame, evenly lit.`,
+          'The product stands upright, centred left to right, LARGE — its base on the lower third and its top',
+          'reaching well past the middle of the frame, dominating the composition.',
+          'A generous band of empty ground runs across the top of the frame and another across the very bottom.',
+          'Nothing else appears in the picture.',
+        ].join(' '),
+      },
+      {
+        key: 'green-small',
+        plateBrief: [
+          `A flat, evenly lit soft green ${GREEN} ground filling the whole frame, smooth and free of texture.`,
+          'The product stands upright in the lower right, SMALL and understated — occupying roughly a quarter of',
+          'the frame height — resting on the surface with a soft contact shadow.',
+          'The upper half of the frame and the whole left side are one continuous, unbroken field of that green.',
+          'Nothing else appears in the picture.',
+        ].join(' '),
+      },
+      {
+        key: 'charcoal-contrast',
+        plateBrief: [
+          `A deep near-black ${BLACK} ground filling the whole frame, lit like premium CPG product photography so`,
+          'the pale product separates sharply from the dark surface.',
+          'The product stands upright in the lower right at hero scale, its base on the lower third, with a soft',
+          'contact shadow and a gentle rim of light along its edge.',
+          'The top of the frame and the left side are unbroken dark ground.',
+          'Nothing else appears in the picture.',
+        ].join(' '),
+      },
+      {
+        key: 'grey-flatlay',
+        plateBrief: [
+          `A pale grey ${GREY} surface filling the whole frame, shot straight down from directly above in soft,`,
+          'even daylight with a faint natural shadow.',
+          'The product lies flat on that surface in the lower right, label upward, at moderate scale.',
+          'The upper half of the frame and the left side are one continuous expanse of that grey.',
+          'Nothing else appears in the picture.',
+        ].join(' '),
+      },
+    ],
   },
   {
     key: 'offer-focused',
@@ -607,12 +678,48 @@ for (const f of FORMATS) {
   for (const field of ['layoutBrief', 'plateBrief']) {
     if (!String(f[field] || '').trim()) throw new Error(`ad-studio format "${f.key}" is missing ${field}`);
   }
+  // Every plateVariant is a plateBrief and is held to the SAME load-time contract. Without
+  // this a variant could ship empty, or without a key, and the failure would arrive halfway
+  // through a paid multi-variation run rather than at import.
+  for (const [i, v] of (f.plateVariants || []).entries()) {
+    if (!String(v?.key || '').trim()) throw new Error(`ad-studio format "${f.key}" plateVariants[${i}] is missing key`);
+    if (!String(v?.plateBrief || '').trim()) {
+      throw new Error(`ad-studio format "${f.key}" plateVariant "${v.key}" is missing plateBrief`);
+    }
+  }
+  const variantKeys = (f.plateVariants || []).map(v => v.key);
+  if (new Set(variantKeys).size !== variantKeys.length) {
+    throw new Error(`ad-studio format "${f.key}" has duplicate plateVariant keys`);
+  }
   // No default. 'studio' would silently strip the setting off a format that wants one and
   // 'scene' would silently license props on one that does not; both are decisions, and a
   // default is how a decision gets made by nobody.
   if (!PLATE_SETTINGS.includes(f.plateSetting)) {
     throw new Error(`ad-studio format "${f.key}" needs plateSetting: one of ${PLATE_SETTINGS.join(' | ')}`);
   }
+}
+
+/**
+ * The format to render for variation N (1-based), with its plate treatment selected.
+ *
+ * Resolved HERE, at the boundary, and handed downstream as an ordinary format object — so
+ * renderVariationTargets, renderTarget and buildRenderPrompt need no new argument and there
+ * is no call site that can forget to pass the variation index and silently render treatment
+ * one five times. Same reasoning as applying the persona overlay at load.
+ *
+ * A format with no plateVariants is returned UNCHANGED (identity, not a copy), so every
+ * format that has not opted in behaves exactly as it did before this existed.
+ *
+ * Cycles rather than clamps: --variations 7 against five treatments gives 1,2,3,4,5,1,2,
+ * which is the useful reading of "more variations than treatments". `plateVariantKey` is
+ * stamped on the returned object so run.json and proof.json can say which one a frame is.
+ */
+export function formatForVariation(format, variation = 1) {
+  const variants = format?.plateVariants;
+  if (!variants || !variants.length) return format;
+  const i = (Math.max(1, Number(variation) || 1) - 1) % variants.length;
+  const chosen = variants[i];
+  return { ...format, plateBrief: chosen.plateBrief, plateVariantKey: chosen.key };
 }
 
 const BY_KEY = new Map(FORMATS.map(f => [f.key, f]));

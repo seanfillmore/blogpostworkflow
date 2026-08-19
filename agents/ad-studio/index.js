@@ -26,7 +26,7 @@ import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { renderVariation, buildRenderPrompt, buildCompPrompt, selectReferencePhotos } from './render.js';
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings } from './verify.js';
 import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './critique.js';
-import { selectFormats, FORMATS } from './formats.js';
+import { selectFormats, FORMATS, formatForVariation } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings } from './copy.js';
@@ -1657,8 +1657,14 @@ async function main() {
       const dir = variationDir(ROOT, runId, conceptSlug, n);
       mkdirSync(dir, { recursive: true });
 
+      // The plate TREATMENT for this variation — ground colour, product scale and position.
+      // Resolved here at the boundary and handed down as an ordinary format object, so no
+      // downstream signature changes and no call site can forget the variation index and
+      // silently render treatment one N times. Identity for formats with no plateVariants.
+      const variationFormat = formatForVariation(format, n);
+
       const { proofByArtifact, artifacts, ok: allOk, skipped } = await renderVariationTargets({
-        gemini, anthropic, targets: args.targets, format, zones, product, brandKit, photoPaths,
+        gemini, anthropic, targets: args.targets, format: variationFormat, zones, product, brandKit, photoPaths,
         expectedFinished, expectedPlate, volumeStrings, budget,
         onProgress: ({ artifact, result, skipped: wasSkipped }) => {
           if (wasSkipped) {
