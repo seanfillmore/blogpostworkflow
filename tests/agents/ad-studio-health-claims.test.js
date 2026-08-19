@@ -206,8 +206,6 @@ test('toxicity catches safety verdicts about ingredients', () => {
     'rubbing unnecessary toxic chemicals onto your skin',
     'none of the harmful chemicals',
     'free from nasty ingredients',
-    'a non-toxic formula',
-    'nontoxic and safe',
     'known carcinogens',
     'endocrine disrupting compounds',
   ]) {
@@ -221,6 +219,23 @@ test('toxicity catches safety verdicts about ingredients', () => {
 // not contain is verifiable from the formula. A verdict on what that ingredient does to
 // people is not. This distinction is the whole category — if it breaks, the gate has
 // started rejecting this catalogue's core positioning.
+// "non-toxic" is DELIBERATELY allowed (operator's call, 2026-08-18). It shipped blocked on
+// the FTC Green Guides argument and was relaxed the same day: in this category it reads as
+// generic reassurance, not a safety finding about anything in particular.
+//
+// The distinction the pattern draws — and the reason this needs a lookbehind rather than
+// deleting an alternation — is that `\btoxic\b` matches INSIDE "non-toxic", since the hyphen
+// is a word boundary. Both directions are pinned here because getting one right while
+// silently breaking the other is the whole hazard.
+test('saying OUR product is non-toxic is allowed; calling something else toxic is not', () => {
+  for (const s of ['a non-toxic formula', 'nontoxic and gentle', 'non toxic ingredients']) {
+    assert.deepEqual(findHealthClaims(s), [], `must allow: ${s}`);
+  }
+  for (const s of ['unnecessary toxic chemicals', 'rubbing toxic ingredients on your skin', 'removes toxins']) {
+    assert.ok(findHealthClaims(s).length, `must still block: ${s}`);
+  }
+});
+
 test('toxicity does NOT block naming absent ingredients', () => {
   for (const s of [
     'no SLS, no SLES, no EDTA, no sodium tallowate',

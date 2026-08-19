@@ -205,6 +205,10 @@ RULES:
   separate facts. It is checked before anything renders, by exact substring match, and
   there is no override — a paraphrased or synthesized quote fails the gate and stops the
   run entirely, including every OTHER concept's copy already written.
+- KEEP THE SOURCE'S HEDGE. If the source says "as many as 112", "up to 30 days", "about
+  half", the qualifier is part of the fact and the ad must carry it. Stating a hedged upper
+  bound as a flat figure ("the number of ingredients is 112") overstates what the source
+  actually found, and the gate cannot catch it — "112" is a substring either way.
 - If an ad line combines two facts (e.g. an ingredient count AND a price), split it into
   TWO claims in the claims array, each with its own sourceId and its own verbatim evidence
   quote — one claim per fact, never one evidence string built by concatenating both. For
