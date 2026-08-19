@@ -24,23 +24,9 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { upsertMetafield } from '../../lib/shopify.js';
 import { findActiveWindow } from '../../lib/change-log.js';
-import { API_VERSION } from '../../lib/shopify-api-version.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
-
-function loadEnv() {
-  try {
-    const lines = readFileSync(join(ROOT, '.env'), 'utf8').split('\n');
-    const e = {};
-    for (const l of lines) {
-      const t = l.trim(); if (!t || t.startsWith('#')) continue;
-      const i = t.indexOf('='); if (i === -1) continue;
-      e[t.slice(0, i).trim()] = t.slice(i + 1).trim();
-    }
-    return e;
-  } catch { return {}; }
-}
 
 const META_TESTS_DIR = join(ROOT, 'data', 'meta-tests');
 const GSC_DIR        = join(ROOT, 'data', 'snapshots', 'gsc');
@@ -94,31 +80,26 @@ function mean(arr) {
  * PUT (verified against the live store), so there is no need to look the type up.
  */
 export function metafieldResource(resourceType) {
-  return { product: 'products', collection: 'collections', page: 'pages' }[resourceType] ?? null;
+  return { product: 'products', collection: 'collections', page: 'pages', article: 'articles' }[resourceType] ?? null;
 }
 
 async function revertMetafield(test) {
   const { resourceType, resourceId, blogId, variantA } = test;
   if (!resourceId) { console.warn('  Skipping revert: no resourceId'); return; }
 
-  if (resourceType === 'article' || (!resourceType && blogId)) {
-    // Legacy blog post revert
-    const env = loadEnv();
-    const token = process.env.SHOPIFY_ACCESS_TOKEN || env.SHOPIFY_ACCESS_TOKEN;
-    const store = process.env.SHOPIFY_STORE_DOMAIN || env.SHOPIFY_STORE_DOMAIN;
-    if (!token || !store || !blogId) { console.warn('  Skipping article revert: missing credentials or blogId'); return; }
-    const url = `https://${store}/admin/api/${API_VERSION}/blogs/${blogId}/articles/${resourceId}/metafields.json`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ metafield: { namespace: 'global', key: 'title_tag', value: variantA, type: 'single_line_text_field' } }),
-    });
-    if (!res.ok) console.warn(`  Article revert failed: ${res.status}`);
-  } else {
-    const resource = metafieldResource(resourceType);
-    if (!resource) { console.warn(`  Unknown resourceType: ${resourceType}`); return; }
-    await upsertMetafield(resource, resourceId, 'global', 'title_tag', variantA);
-  }
+  // Articles used to take a separate path: a raw POST to
+  // /blogs/{blogId}/articles/{id}/metafields.json authenticated with
+  // SHOPIFY_ACCESS_TOKEN + SHOPIFY_STORE_DOMAIN. Neither variable exists in .env,
+  // so that branch bailed on "missing credentials" every run — the article reverts
+  // were dead code, silently. Everything else already went through the OAuth client.
+  //
+  // The type-agnostic /articles/{id}/metafields.json path serves articles without
+  // needing the parent blog id (verified against the live store), so both branches
+  // now share one helper. That also buys real upsert semantics: the old raw POST
+  // created a second metafield rather than updating the existing one.
+  const resource = metafieldResource(resourceType) ?? (blogId ? 'articles' : null);
+  if (!resource) { console.warn(`  Unknown resourceType: ${resourceType}`); return; }
+  await upsertMetafield(resource, resourceId, 'global', 'title_tag', variantA);
 }
 
 // ── main ──────────────────────────────────────────────────────────────────

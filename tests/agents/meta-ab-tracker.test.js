@@ -53,3 +53,26 @@ test('returns null when either value is null', () => {
   assert.equal(computeCTRDelta(0.04, null), null);
   assert.equal(computeCTRDelta(null, null), null);
 });
+
+// The article revert was DEAD CODE and nobody noticed. It took a separate path — a
+// raw POST to /blogs/{blogId}/articles/{id}/metafields.json authenticated with
+// SHOPIFY_ACCESS_TOKEN + SHOPIFY_STORE_DOMAIN — and neither variable is in .env, so
+// every run hit `if (!token || !store) { warn; return; }` and skipped. It failed as a
+// console.warn, not an error, so an operator reading the log saw a line go by and the
+// title stayed on the losing variant forever.
+//
+// Both branches now share the OAuth client via upsertMetafield. This test pins the
+// mapping so a future edit cannot quietly drop `article` back onto a bespoke path.
+test('article resolves through the shared metafield path, not a bespoke one', () => {
+  assert.equal(metafieldResource('article'), 'articles');
+});
+
+test('every A/B resource type maps to a plural REST collection', () => {
+  // Guards the whole map: a null here means revertMetafield warns and skips, which is
+  // exactly how the article case stayed broken without anyone seeing an error.
+  for (const t of ['product', 'collection', 'page', 'article']) {
+    const r = metafieldResource(t);
+    assert.ok(r, `${t} must resolve to a resource path, got ${r}`);
+    assert.ok(r.endsWith('s'), `${t} -> ${r} should be a plural REST collection`);
+  }
+});

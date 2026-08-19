@@ -17,7 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { getMetaPath } from '../lib/posts.js';
-import { API_VERSION } from '../lib/shopify-api-version.js';
+import { upsertMetafield } from '../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -37,8 +37,6 @@ function loadEnv() {
 
 const env = loadEnv();
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY;
-const SHOPIFY_TOKEN     = process.env.SHOPIFY_ACCESS_TOKEN || env.SHOPIFY_ACCESS_TOKEN;
-const SHOPIFY_STORE     = process.env.SHOPIFY_STORE_DOMAIN || env.SHOPIFY_STORE_DOMAIN;
 
 const args = process.argv.slice(2);
 const slug = args.find(a => !a.startsWith('--'));
@@ -133,25 +131,13 @@ Reply with ONLY the title tag text, no quotes, no explanation.`;
 // ── apply metafield to Shopify ────────────────────────────────────────────
 
 async function applyMetafield(articleId, blogId, titleTag) {
-  // Shopify metafield: global.title_tag on article
-  const url = `https://${SHOPIFY_STORE}/admin/api/${API_VERSION}/blogs/${blogId}/articles/${articleId}/metafields.json`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'X-Shopify-Access-Token': SHOPIFY_TOKEN,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      metafield: {
-        namespace: 'global',
-        key: 'title_tag',
-        value: titleTag,
-        type: 'single_line_text_field',
-      },
-    }),
-  });
-  if (!res.ok) throw new Error(`Shopify metafield update failed: ${res.status} ${await res.text()}`);
-  return await res.json();
+  // Was a raw POST to /blogs/{blogId}/articles/{id}/metafields.json using
+  // SHOPIFY_ACCESS_TOKEN + SHOPIFY_STORE_DOMAIN. Neither is in .env, so this bailed
+  // on every run. The OAuth client mints its own token, and the type-agnostic
+  // /articles/{id}/metafields.json path needs no parent blog id — blogId is kept in
+  // the signature because callers pass it and it stays useful for logging.
+  // upsertMetafield also updates in place; the old POST created a duplicate.
+  await upsertMetafield('articles', articleId, 'global', 'title_tag', titleTag);
 }
 
 // ── main ──────────────────────────────────────────────────────────────────
@@ -192,11 +178,12 @@ async function main() {
   writeFileSync(testPath, JSON.stringify(testData, null, 2));
   console.log(`Test file written: ${testPath}`);
 
-  // Apply to Shopify
-  if (!SHOPIFY_TOKEN || !SHOPIFY_STORE) {
-    console.warn('Shopify credentials not set — skipping metafield update.');
-    return;
-  }
+  // Apply to Shopify. The old guard here checked SHOPIFY_TOKEN/SHOPIFY_STORE and
+  // returned early — and since neither variable is in .env, it returned early EVERY
+  // time. The test file was written, the operator saw "Test file written", and the
+  // variant never reached the storefront. lib/shopify.js mints its own OAuth token
+  // from SHOPIFY_CLIENT_ID/SECRET and throws loudly at import if those are missing,
+  // so a missing-credential case now fails visibly instead of skipping in a warning.
   console.log('Applying Variant B to Shopify (global.title_tag)...');
   await applyMetafield(meta.shopify_article_id, meta.shopify_blog_id, variantB);
   console.log('Done. Variant B is now live.');
