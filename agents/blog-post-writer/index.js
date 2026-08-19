@@ -24,6 +24,7 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
+import { classifySearchIntent } from '../../lib/search-intent.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
@@ -193,29 +194,14 @@ function detectProductIngredients(keyword) {
   return { name: 'our products', ingredients: all };
 }
 
+// The pattern lists this used to hold inline now live in lib/search-intent.js, so
+// agents/bing-keyword-gap can ask the same question without importing this agent
+// (which would run it). Behaviour is unchanged: 'diy' and 'informational' still take
+// the light-touch CTA, 'product' still takes the heavier ones.
 function detectPostType(brief) {
   const kw = (brief?.target_keyword || '').toLowerCase();
   const title = (brief?.recommended_title || '').toLowerCase();
-  const text = kw + ' ' + title;
-
-  // DIY/educational signals — light-touch CTA pattern
-  const diyPatterns = [
-    /\bhow to make\b/, /\bhow to\s+(do|apply|use)\b/, /\brecipe\b/,
-    /\bdiy\b/, /\bat home\b/, /\bhomemade\b/, /\btutorial\b/,
-    /\bstep-by-step\b/, /\bguide to (making|building|creating)\b/,
-  ];
-  if (diyPatterns.some((p) => p.test(text))) return 'diy';
-
-  // Informational/concept posts — light-touch CTA pattern
-  const infoPatterns = [
-    /^why\b/, /^what (is|are|does)\b/, /^when (was|did|is)\b/,
-    /^is\b.*\?/, /^are\b.*\?/, /^can\b.*\?/, /^should\b.*\?/,
-    /\bbenefits of\b/, /\bhow does\b/,
-  ];
-  if (infoPatterns.some((p) => p.test(text))) return 'informational';
-
-  // Default: product-focused ("best X", "X for Y", product comparisons, etc.) — heavier CTAs OK
-  return 'product';
+  return classifySearchIntent(kw + ' ' + title);
 }
 
 function buildSystemPrompt(productIngredients, postType, contentDepth, format) {
