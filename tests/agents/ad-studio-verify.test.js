@@ -1581,3 +1581,50 @@ test('main() builds a product object that carries its variant', () => {
   assert.match(src, /scent: r\.proof\.scent,/,
     'proofEntry must persist the scent verdict, or the check is invisible on disk');
 });
+
+// ── R2d: a wrong UNIT is a falsehood, not a missing reading (2026-08-19) ────────────
+//
+// A live green-small plate rendered "3.4 oz • 8kg" on an 84g bar and volumeVerdict returned
+// MATCH. The comparison logic was fine: `kg` matched no pattern, `g` came back null, and
+// null means "this dimension was not reported" — a deliberate rule, because reading the oz
+// off a bottle whose ml marking is turned away is a correct read, not a mismatch.
+//
+// The unintended consequence: an unrecognised UNIT was indistinguishable from an unreadable
+// one. A wrong unit PASSED while a wrong number in the right unit FAILED — the exact inverse
+// of "tolerates illegibility but not falsehood". Caught by looking at the frame, not by a
+// test, on a plate the gate had already accepted.
+test('a unit swap contradicts rather than vanishing', () => {
+  const truth = ['3.4 oz • 84g'];
+  for (const read of ['3.4 oz • 8kg', '3.4 oz • 84 mg', '8 kg']) {
+    const v = volumeVerdict(read, truth, []);
+    assert.equal(v.ok, false, `"${read}" must contradict 84g`);
+    assert.equal(v.status, 'mismatch');
+  }
+});
+
+test('units canonicalise so they can be compared at all', () => {
+  assert.equal(readVolume('8kg').g, 8000, 'kg becomes grams');
+  assert.equal(readVolume('84 mg').g, 0.084, 'mg becomes grams');
+  assert.equal(readVolume('1.5 L').ml, 1500, 'litres become millilitres');
+  // kg/mg are consumed BEFORE G_RE runs, or "8kg" would also satisfy /(\d+)\s*g\b/ via its
+  // own "g" and report 8 grams instead of 8000.
+  assert.equal(readVolume('3.4 oz • 8kg').g, 8000, 'kg must not be read as grams');
+});
+
+// The tolerant separator handling is why this matcher exists at all — three correct targets
+// were rejected in one run for carrying a correct volume punctuated differently. Widening
+// the unit vocabulary must not narrow that.
+test('the separator tolerance that motivated this matcher still holds', () => {
+  const truth = ['8 fl. oz. (236ml)'];
+  for (const read of ['8 fl. oz. (236ml)', '8 fl. oz - 236ml', '8 fl. oz • 236ml', '8 fl oz ~ 236 ml']) {
+    assert.equal(volumeVerdict(read, truth, []).ok, true, `"${read}" is the same volume`);
+  }
+});
+
+// And a genuinely absent dimension must still be absent — reading the oz off a bottle whose
+// ml marking is turned away is a correct read. If this breaks, the fix has turned a
+// tolerance into a false positive.
+test('an unreported dimension is still not a mismatch', () => {
+  assert.equal(volumeVerdict('8 fl. oz.', ['8 fl. oz. (236ml)'], []).ok, true);
+  assert.equal(volumeVerdict('ILLEGIBLE', ['3.4 oz • 84g'], []).ok, true);
+});

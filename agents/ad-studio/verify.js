@@ -714,6 +714,25 @@ const ML_RE = /(\d+(?:\.\d+)?)\s*m\s*l\b/i;
 const WT_OZ_RE = /(\d+(?:\.\d+)?)\s*oz/i;
 const G_RE = /(\d+(?:\.\d+)?)\s*g\b/i;
 
+// R2d. WRONG UNIT, RIGHT NUMBER — the hole a live run found on 2026-08-19.
+//
+// A green-small plate rendered "3.4 oz • 8kg" on an 84g bar and volumeVerdict returned
+// MATCH. Nothing was wrong with its comparison logic: `kg` matched no pattern, so `g` came
+// back null, and null means "this dimension was not reported" — a deliberate rule, because
+// reading the oz off a bottle whose ml marking is turned away is a correct read, not a
+// mismatch. The unintended consequence is that an unrecognised UNIT was indistinguishable
+// from an unreadable one, so a wrong unit PASSED while a wrong number in the right unit
+// failed. "3.4 oz • 84 mg" passed too, and a bare "8 kg" was even classified ILLEGIBLE —
+// a perfectly legible reading called unreadable.
+//
+// The fix is to make the parser COMPLETE rather than to blocklist units: recognise the
+// neighbouring units and convert them into the canonical one, so 8kg becomes 8000g and is
+// compared — and contradicts — instead of vanishing. Ordered longest-first (kg and mg
+// before g, ml before l) because `G_RE` would otherwise claim the "g" in "kg".
+const KG_RE = /(\d+(?:\.\d+)?)\s*kg\b/i;
+const MG_RE = /(\d+(?:\.\d+)?)\s*mg\b/i;
+const L_RE = /(\d+(?:\.\d+)?)\s*l\b/i;
+
 /** Does this parse carry any readable marking at all? */
 function hasVolumeReading(v) {
   return v.oz !== null || v.ml !== null || v.wtOz !== null || v.g !== null;
@@ -728,14 +747,25 @@ const ILLEGIBLE_RE = /^(illegible|unreadable|not\s*(visible|legible|readable|pre
 export function readVolume(text) {
   const s = String(text || '');
   const oz = s.match(OZ_RE);
-  const ml = s.match(ML_RE);
   const wtOz = s.match(WT_OZ_RE);
-  const g = s.match(G_RE);
+
+  // Mass, canonicalised to GRAMS. kg and mg are checked first and their match is removed
+  // before G_RE runs, or "8kg" would also satisfy /(\d+)\s*g\b/ via its own "g".
+  const kg = s.match(KG_RE);
+  const mg = s.match(MG_RE);
+  const gramsFrom = kg ? Number(kg[1]) * 1000 : (mg ? Number(mg[1]) / 1000 : null);
+  const gRest = s.replace(KG_RE, ' ').replace(MG_RE, ' ');
+  const g = gramsFrom !== null ? null : gRest.match(G_RE);
+
+  // Volume, canonicalised to MILLILITRES, same ordering rule for l vs ml.
+  const ml = s.match(ML_RE);
+  const litres = ml ? null : s.match(L_RE);
+
   return {
     oz: oz ? Number(oz[1]) : null,
-    ml: ml ? Number(ml[1]) : null,
+    ml: ml ? Number(ml[1]) : (litres ? Number(litres[1]) * 1000 : null),
     wtOz: wtOz ? Number(wtOz[1]) : null,
-    g: g ? Number(g[1]) : null,
+    g: gramsFrom !== null ? gramsFrom : (g ? Number(g[1]) : null),
   };
 }
 
