@@ -7,6 +7,14 @@
 //                                 [--formats us-vs-them,manifesto] [--variations 3]
 //                                 [--max-renders 120] [--dry-run]
 //
+//   --flexible   Build ONE Meta flexible ad instead of a loose set of plates: exactly 3
+//                formats, 1 variation, 1 Meta ratio (default meta=4:5), plus a second copy
+//                call for 2 primary texts and 2 headlines through the same two gates. 12
+//                combinations share one learning pool — which is what makes a $30/day
+//                campaign able to exit the learning phase at all. Writes flexible-ad.json
+//                and flexible-ad.md next to run.json; creates nothing on Meta. 6 renders
+//                ≈ $0.78. Mutually exclusive with --brief.
+//
 // A default run is the cheapest useful one — ONE format (--formats is required), one
 // variation, the three Meta placements — 6 renders ≈ $0.78 before retries, because a Meta
 // target bills the plate and the comp derived from it. The full rotation is nine formats
@@ -40,6 +48,10 @@ import { enforceBudget, formatBytes } from '../../lib/creatives-budget.js';
 import { USD_PER_RENDER } from '../../lib/ad-studio-cost.js';
 import { updateJob, appendEvent, isValidJobId } from '../../lib/ad-studio-job.js';
 import { readBrief, writeBrief, isValidBriefId, listProductsWithBriefs, decideBrief } from '../../lib/ad-brief.js';
+import {
+  assertFlexibleArgs, buildFlexibleCopyPrompt, parseFlexibleCopyResponse,
+  flexibleZones, renderFlexibleManifest,
+} from './flexible.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -81,6 +93,11 @@ export const DEFAULT_VARIATIONS = 1;
 // The three Demand Gen plates stay opt-in (`--targets all`) — they are useful only when a
 // Demand Gen campaign is actually running.
 export const DEFAULT_TARGETS = 'meta';
+
+// --flexible's default placement. 4:5 rather than 1:1 because it is the tallest ratio Meta
+// serves in-feed without reserving the top ~14% and bottom ~20% that 9:16 gives up to UI —
+// the most pixels per impression, on the placement a $30/day campaign actually gets.
+export const FLEXIBLE_DEFAULT_TARGET = 'meta=4:5';
 
 /**
  * Counts every render ATTEMPT, retries included — retries are what make the worst case
@@ -560,6 +577,76 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
  */
 export const SCORES_PATH = join('data', 'reports', 'ad-studio', 'scores.jsonl');
 
+/**
+ * Which plate file each concept produced, and whether it passed verification.
+ *
+ * Reads `results` (what the run recorded) rather than the filesystem, so a stray PNG left
+ * by an earlier interrupted run in the same directory can never be listed as this ad's
+ * creative. A concept whose only artifact failed still appears — flagged — because the
+ * operator needs to see that they have two usable plates, not silently receive a 2-2-2.
+ *
+ * Exported for the test; there is no other caller.
+ */
+export function collectFlexiblePlates({ runId, results, target, root = ROOT }) {
+  const wanted = artifactName(target.platform, target.ratio, 'plate');
+  return results.map(r => {
+    const v1 = (r.variations || []).find(v => v.n === 1);
+    const art = (v1?.artifacts || []).find(a => a.artifact === wanted);
+    return {
+      format: r.format,
+      file: join(variationDir(root, runId, r.conceptSlug, 1), wanted),
+      verified: Boolean(art?.ok),
+    };
+  });
+}
+
+/**
+ * Write the flexible-ad manifest: one extra copy call for the ad-level fields, both gates,
+ * then flexible-ad.json and flexible-ad.md next to run.json.
+ *
+ * The gates are the SAME two functions the plate copy goes through, in the same order and
+ * with no relaxation. Ad-level copy is the text Meta actually renders to a buyer — if
+ * anything it is more exposed than type an operator sets by hand in Photoshop, since
+ * nobody reads it again between here and delivery.
+ */
+export async function writeFlexibleManifest({
+  anthropic, runDir, runId, product, variant, concepts, results, target,
+  sourceIndex, pdpBody, reviews = [], persona = null, giveaway = null, root = ROOT,
+}) {
+  const prompt = buildFlexibleCopyPrompt({
+    product, concepts, sourceIds: Object.keys(sourceIndex),
+    persona, pdpBody, reviews: selectQuotableReviews(reviews),
+    giveawayBlock: giveaway ? `\nAN ENTRY PERIOD IS OPEN. You may cite the published Official Rules as "giveaway".\n` : '',
+  });
+  const msg = await anthropic.messages.create({
+    model: CREATIVE_MODELS.adStudio.copy,
+    max_tokens: 2000,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  const { primaryTexts, headlines, claims } = parseFlexibleCopyResponse(textOf(msg));
+
+  // Health first, then sourcing — the same order and the same reasoning as buildConcept:
+  // the cheaper answer and the more serious failure goes first.
+  const zones = flexibleZones({ primaryTexts, headlines });
+  assertNoHealthClaims(zones);
+  assertClaimsSourced(claims, sourceIndex);
+
+  const plates = collectFlexiblePlates({ runId, results, target, root });
+  const { json, md } = renderFlexibleManifest({
+    runId, product, variant, target, plates, primaryTexts, headlines, claims,
+  });
+  writeFileSync(join(runDir, 'flexible-ad.json'), JSON.stringify(json, null, 2));
+  writeFileSync(join(runDir, 'flexible-ad.md'), md);
+
+  const unverified = plates.filter(p => !p.verified);
+  console.log(`\nFlexible ad: ${plates.length} plates × ${primaryTexts.length} texts × ${headlines.length} headlines = ${json.structure.combinations} combinations.`);
+  if (unverified.length) {
+    console.warn(`  ⚠️  ${unverified.length} plate(s) did not pass verification: ${unverified.map(p => p.format).join(', ')} — do not ship those.`);
+  }
+  console.log(`  ${join(runDir, 'flexible-ad.md')}`);
+  return json;
+}
+
 export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts, attribution = null, root = ROOT }) {
   // The rolling baseline is READ before this run's rows are appended, so a run is never
   // compared against a baseline that already contains it.
@@ -687,7 +774,13 @@ export function parseArgs(argv) {
     );
   }
 
-  const targets = selectTargets(getFlag('--targets') || DEFAULT_TARGETS);
+  // --flexible builds ONE Meta flexible ad: 3 plates, 2 primary texts, 2 headlines. It
+  // narrows the run rather than widening it, so its default target is a single placement
+  // (4:5 — the tallest Meta serves in-feed without reserving the 9:16 UI margins) instead
+  // of DEFAULT_TARGETS' three. An explicit --targets still wins, and assertFlexibleArgs
+  // rejects it if it does not resolve to exactly one Meta ratio.
+  const flexible = argv.includes('--flexible');
+  const targets = selectTargets(getFlag('--targets') || (flexible ? FLEXIBLE_DEFAULT_TARGET : DEFAULT_TARGETS));
 
   const variationsRaw = getFlag('--variations');
   const variations = variationsRaw === undefined ? DEFAULT_VARIATIONS : parseInt(variationsRaw, 10);
@@ -717,7 +810,18 @@ export function parseArgs(argv) {
     throw new Error(`ad-studio: invalid --job-id "${jobId}" — letters, digits, dot, dash and underscore only`);
   }
   const dryRun = argv.includes('--dry-run');
-  return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId, brief };
+
+  // Checked LAST, so its errors — which explain the 3-2-2 structure — are what the
+  // operator sees, rather than a generic --formats message they then have to reinterpret.
+  if (flexible && brief) {
+    throw new Error(
+      'ad-studio: --flexible and --brief are mutually exclusive. A brief carries ONE approved concept; ' +
+      'a flexible ad needs three distinct ones. Render the three briefs separately, or run --flexible with --formats.'
+    );
+  }
+  if (flexible) assertFlexibleArgs({ formats, targets, variations });
+
+  return { product, variant, formats, targets, variations, maxRenders, dryRun, jobId, brief, flexible };
 }
 
 // ── Brief mode — resolution and the approval boundary ──────────────────────────────
@@ -1443,7 +1547,13 @@ async function main() {
     );
   }
 
+  // reviews/giveaway/sourceIndex are declared out here, not inside the else, because the
+  // flexible manifest needs them AFTER the render loop — it makes a second copy call and
+  // must run it against exactly the sources the first one was gated on. Brief mode leaves
+  // them at their empty defaults and never reaches that code (a brief carries one approved
+  // concept; --flexible needs three, and parseArgs rejects the combination by name).
   let formats, concepts, rejectedConcepts;
+  let reviews = [], giveaway = null, sourceIndex = {};
   if (brief) {
     // Skip concept generation ENTIRELY — no buildConcepts, no copy model call. The
     // brief already carries the finished, gate-passed strings; rendering exactly those
@@ -1484,7 +1594,7 @@ async function main() {
     // `env`, not process.env: loadEnv() parses .env into a local object and deliberately
     // never populates process.env, so a default of process.env silently finds no token and
     // reports "no reviews" on a product that has 26 of them.
-    const reviews = await fetchAdReviews(handle, { env });
+    reviews = await fetchAdReviews(handle, { env });
     if (reviews.length) console.log(`Reviews on file for ${handle}: ${reviews.length}`);
     else console.warn(`No Judge.me reviews for ${handle} — any format that quotes a customer will be rejected by the claim gate.`);
 
@@ -1492,12 +1602,12 @@ async function main() {
     // open (lib/giveaway-claim-source.js returns null otherwise, and refuses outright if
     // config/giveaway.json and the published Official Rules disagree about the dates). With
     // no giveaway live this is null and everything below is exactly what it was.
-    const giveaway = loadGiveaway({ root: ROOT });
+    giveaway = loadGiveaway({ root: ROOT });
     if (giveaway) {
       console.log(`Giveaway live: ${giveaway.name} — entries close ${giveaway.closesOn}. "giveaway" is a citable source.`);
     }
 
-    const sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
+    sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
 
     formats = selectFormats(args.formats.length ? args.formats : undefined);
 
@@ -1729,6 +1839,29 @@ async function main() {
     rejectedConcepts, concepts, attribution,
   });
   job.finish({ runId, totals: { ...report.totals, renders: budget.used() } });
+
+  // The flexible-ad manifest. AFTER finalizeRunReport, so run.json — the record of what
+  // was paid for — is on disk before this can fail, and so the manifest can report which
+  // plates actually passed verification rather than which were attempted.
+  //
+  // Wrapped: by this point the renders are paid for and on disk. A manifest is a
+  // convenience over artifacts that already exist and can be rebuilt by hand from
+  // run.json; it must never turn a finished, paid run into a crash. Same posture as
+  // archiveRunOutput and the brief bookkeeping above.
+  if (args.flexible) {
+    try {
+      await writeFlexibleManifest({
+        anthropic, runDir, runId, product, variant, concepts, results,
+        target: args.targets[0], sourceIndex, pdpBody, reviews, persona, giveaway,
+      });
+    } catch (err) {
+      console.warn(
+        `ad-studio: flexible manifest not written (${err.message}) — the plates and run.json are ` +
+        `intact in ${runDir}; rerun with --flexible or assemble the ad by hand.`
+      );
+      job.event({ stage: 'flexible', state: 'errored', reasons: [err.message] });
+    }
+  }
 
   // Mark the brief 'rendered' ONLY if this run actually produced an accepted artifact —
   // see briefRenderSucceeded's docstring for why finalizeRunReport not throwing is not

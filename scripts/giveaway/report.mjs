@@ -24,7 +24,7 @@ import { notify } from '../../lib/notify.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
-const { listId, metaCampaignId } = config;
+const { listId, metaCampaignId, provisionalCostPerEntryTargetUsd } = config;
 const OUT_DIR = join(ROOT, 'data', 'reports', 'giveaway');
 
 const profiles = await listProfilesWithConsent(listId);
@@ -66,6 +66,10 @@ const spendGate = spend && !spend.error && cohort
     spend: spend.spend,
     entrants: summary.total,
     entryValue: entryValue(cohort),
+    // Used only while measured entrant value is unavailable, and labelled 'provisional'
+    // in the line when it is. See config/giveaway.json's note for what the number is and
+    // is not.
+    provisionalTarget: provisionalCostPerEntryTargetUsd ?? null,
   })
   : null;
 

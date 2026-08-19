@@ -126,6 +126,56 @@ function sourceBlock(value, id, label) {
   return `\n${label} (a source you may cite as "${id}"):\n${body}\n`;
 }
 
+/**
+ * The two-gate rules block, in ONE place because there are now two writers behind the
+ * same two gates: the per-format plate copy below, and the ad-level primary text and
+ * headlines in flexible.js. A second hand-maintained copy of these paragraphs is how the
+ * health-claim rule ends up strict in one prompt and lax in the other — the same shape of
+ * failure as personas.json feeding a second path around a gate, which this project has
+ * already paid for once.
+ *
+ * The prose is unchanged from the version that has been running; only `unit` is
+ * parameterised, because "in any zone" is the right noun for a plate and the wrong one
+ * for a Meta primary text.
+ *
+ * This is prompt text, not enforcement. assertNoHealthClaims and assertClaimsSourced are
+ * what actually stop a run; stating the rules here only saves the retries.
+ *
+ * @param {{sourceIds: string[], unit?: string}} o
+ */
+export function buildClaimRules({ sourceIds, unit = 'zone' }) {
+  return `- Never claim a manufacturing origin other than "made in the USA".
+- NO HEALTH CLAIMS, in any ${unit}, including inside a customer quote. This product is a
+  COSMETIC. You may say what it does to the appearance and feel of skin — moisturizes,
+  absorbs, softens, soothes, non-greasy, for dry or sensitive skin. You may NOT name a
+  disease or condition (eczema, psoriasis, dermatitis, rosacea, acne, infection, rash),
+  name a drug or prescription treatment (steroid, cortisone, prescription, antibiotic,
+  over-the-counter), or say the product heals, cures, treats, prevents, reverses or
+  remedies anything. Do not claim clinical, dermatologist or FDA backing.
+  A verbatim customer review is NOT an exception: an advertiser is responsible for the
+  claims an endorsement conveys, so a quote naming a disease makes it our claim. If the
+  only quote that fits carries such language, pick a different quote.
+- Do not invent counts, percentages, volumes, timeframes, awards or third-party endorsements.
+- EVERY factual statement must be traceable. For each, set factual: true, name a sourceId
+  from: ${sourceIds.join(', ')} — and quote the exact supporting phrase in evidence.
+  The evidence must be a CONTIGUOUS, VERBATIM SUBSTRING copied from that ONE named source —
+  never assembled, never joined from two places, never reworded, and never spanning two
+  separate facts. It is checked before anything renders, by exact substring match, and
+  there is no override — a paraphrased or synthesized quote fails the gate and stops the
+  run entirely, including every OTHER concept's copy already written.
+- KEEP THE SOURCE'S HEDGE. If the source says "as many as 112", "up to 30 days", "about
+  half", the qualifier is part of the fact and the ad must carry it. Stating a hedged upper
+  bound as a flat figure ("the number of ingredients is 112") overstates what the source
+  actually found, and the gate cannot catch it — "112" is a substring either way.
+- If an ad line combines two facts (e.g. an ingredient count AND a price), split it into
+  TWO claims in the claims array, each with its own sourceId and its own verbatim evidence
+  quote — one claim per fact, never one evidence string built by concatenating both. For
+  example "6 CLEAN INGREDIENTS — $30" is two claims: the ingredient count sourced against
+  catalog with its own quote, and the price sourced against catalog with its own separate
+  quote — not one evidence string joining a title fragment and a price with a dash.
+- Pure persuasion with no factual assertion is fine: set factual: false and omit sourceId.`;
+}
+
 export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry }) {
   const zoneList = format.zones
     .map(z => {
@@ -186,36 +236,7 @@ ${zoneList}
 RULES:
 - Write the literal strings that will be rendered into the image. No placeholders.
 - Headlines are short enough to read at phone size in one second.
-- Never claim a manufacturing origin other than "made in the USA".
-- NO HEALTH CLAIMS, in any zone, including inside a customer quote. This product is a
-  COSMETIC. You may say what it does to the appearance and feel of skin — moisturizes,
-  absorbs, softens, soothes, non-greasy, for dry or sensitive skin. You may NOT name a
-  disease or condition (eczema, psoriasis, dermatitis, rosacea, acne, infection, rash),
-  name a drug or prescription treatment (steroid, cortisone, prescription, antibiotic,
-  over-the-counter), or say the product heals, cures, treats, prevents, reverses or
-  remedies anything. Do not claim clinical, dermatologist or FDA backing.
-  A verbatim customer review is NOT an exception: an advertiser is responsible for the
-  claims an endorsement conveys, so a quote naming a disease makes it our claim. If the
-  only quote that fits carries such language, pick a different quote.
-- Do not invent counts, percentages, volumes, timeframes, awards or third-party endorsements.
-- EVERY factual statement must be traceable. For each, set factual: true, name a sourceId
-  from: ${sourceIds.join(', ')} — and quote the exact supporting phrase in evidence.
-  The evidence must be a CONTIGUOUS, VERBATIM SUBSTRING copied from that ONE named source —
-  never assembled, never joined from two places, never reworded, and never spanning two
-  separate facts. It is checked before anything renders, by exact substring match, and
-  there is no override — a paraphrased or synthesized quote fails the gate and stops the
-  run entirely, including every OTHER concept's copy already written.
-- KEEP THE SOURCE'S HEDGE. If the source says "as many as 112", "up to 30 days", "about
-  half", the qualifier is part of the fact and the ad must carry it. Stating a hedged upper
-  bound as a flat figure ("the number of ingredients is 112") overstates what the source
-  actually found, and the gate cannot catch it — "112" is a substring either way.
-- If an ad line combines two facts (e.g. an ingredient count AND a price), split it into
-  TWO claims in the claims array, each with its own sourceId and its own verbatim evidence
-  quote — one claim per fact, never one evidence string built by concatenating both. For
-  example "6 CLEAN INGREDIENTS — $30" is two claims: the ingredient count sourced against
-  catalog with its own quote, and the price sourced against catalog with its own separate
-  quote — not one evidence string joining a title fragment and a price with a dash.
-- Pure persuasion with no factual assertion is fine: set factual: false and omit sourceId.
+${buildClaimRules({ sourceIds })}
 
 Respond with JSON only, no commentary:
 {

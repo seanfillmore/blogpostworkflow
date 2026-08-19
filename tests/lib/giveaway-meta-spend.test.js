@@ -89,3 +89,38 @@ test('a campaign that has never delivered is zero spend, not an error', async ()
 test('resolveAccessToken prefers process.env over the .env file', async () => {
   assert.equal(resolveAccessToken({ FACEBOOK_ACCESS_TOKEN: 'from-env' }), 'from-env');
 });
+
+// ── the provisional target covers the window before measurement exists ──────
+// Without it the gate says "not measurable yet" for the entire 28-day entry window while
+// $30/day goes out — correct, and useless. With it the verdict is actionable from day one,
+// and the line never disguises a guess as a measurement.
+test('provisional target is used only until measured value exists, and is labelled', () => {
+  const noValue = { value: null, matured: 0, basis: 'no entrant is 30 days old yet' };
+
+  const provisional = evaluateSpendGate({ spend: 100, entrants: 25, entryValue: noValue, provisionalTarget: 2.5 });
+  assert.equal(provisional.verdict, 'over', '$4/entry is over a $2.50 target');
+  assert.equal(provisional.basis, 'provisional');
+  assert.equal(provisional.costPerEntry, 4);
+  assert.match(provisional.line, /ASSUMPTION, not a measurement/);
+
+  const under = evaluateSpendGate({ spend: 50, entrants: 25, entryValue: noValue, provisionalTarget: 2.5 });
+  assert.equal(under.verdict, 'ok');
+  assert.equal(under.basis, 'provisional');
+
+  // Measurement WINS. The provisional number must never override real data, even when
+  // the two disagree — here $2.50 would say 'ok' and the measured $1 says 'over'.
+  const measured = evaluateSpendGate({
+    spend: 50, entrants: 25,
+    entryValue: { value: 1, matured: 12, basis: '30d new-customer revenue' },
+    provisionalTarget: 2.5,
+  });
+  assert.equal(measured.verdict, 'over');
+  assert.equal(measured.basis, 'measured');
+  assert.doesNotMatch(measured.line, /provisional/i);
+
+  // No target configured keeps the old behaviour exactly.
+  const none = evaluateSpendGate({ spend: 100, entrants: 25, entryValue: noValue });
+  assert.equal(none.verdict, 'unknown');
+  assert.equal(none.basis, 'none');
+  assert.match(none.line, /do not judge the campaign on cost alone/);
+});
