@@ -8,6 +8,7 @@
 // transparent cutout onto a generated background reads as a sticker: wrong light, wrong
 // contact shadow, wrong perspective.
 
+import { UNSCENTED_VARIANT_RE } from './verify.js';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
@@ -56,14 +57,33 @@ export function buildRenderPrompt({ format, zones, product, brandKit, mode, rati
   // (PR #314, "faithful product renders ... pass product descriptions"); this is the
   // same lesson applied here. Omitted entirely when a product has none on file, rather
   // than rendered as an empty heading.
+  // THE DESCRIPTION IS PER-PRODUCT; THE RENDER IS PER-VARIANT. Five RSC manifest entries
+  // describe a badge reading "Made with Organic Coconut Oil + Essential Oils" and a
+  // "botanical illustration matching the scent" — true of the product LINE, false of its
+  // unscented variant, whose entire proposition is that it contains neither. Handing that
+  // prose to the renderer for `pure-unscented` is instructing it to print a claim the
+  // product does not make, and on 2026-08-18 it did exactly that: a plate came back with
+  // "ORGANIC COCONUT OIL + ESSENTIAL OILS" on the unscented bar.
+  //
+  // copy.js has carried a variantBlock for this for a while — the COPY writer is told not to
+  // claim a sibling variant's ingredients. The renderer never got the same warning, so the
+  // gate downstream was catching a defect this prompt had asked for. Prevention beats
+  // detection here for the usual reason: a rejected plate costs the full retry budget.
   const physical = String(product.physicalDescription || '').trim();
+  const unscented = UNSCENTED_VARIANT_RE.test(String(product.variant || ''));
+  const variantCorrection = unscented ? `
+THIS IS THE UNSCENTED VARIANT, and the description above covers the whole product line. It
+has NO essential oils and NO fragrance. Any badge on the label names ONLY the coconut oil —
+never "+ Essential Oils" — and no botanical illustration stands for a scent this variant does
+not have. Where the description and this paragraph disagree, THIS paragraph is correct.
+` : '';
   const physicalBlock = physical ? `
 PHYSICAL FORM — the product on file is described as:
 ${physical}
 Match that description as well as the photographs. Bottle proportions, the height and shape
 of the cap, and any solid colour bars or blocks on the label are part of the product's
 identity, not styling you may reinterpret.
-` : '';
+${variantCorrection}` : variantCorrection;
 
   const fidelity = `PRODUCT FIDELITY IS THE HIGHEST PRIORITY.
 The supplied photographs are the SAME product from multiple angles. Study them and reproduce
