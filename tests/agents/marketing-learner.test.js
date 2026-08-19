@@ -597,8 +597,17 @@ const NEW_TACTICS = [{
   source: { creator: 'Some Operator', title: 'Retention Playbook', locator: 'abc12345678' },
 }];
 
+// stream().finalMessage(), not create() — the merge budget (32k) is past the point
+// where the SDK accepts a non-streaming request. A stub still shaped like create()
+// would pass by throwing "not a function" into whatever assert.rejects() expected.
 function mergeClient(payload, stop = 'end_turn') {
-  return { messages: { create: async () => ({ stop_reason: stop, content: [{ type: 'text', text: payload }] }) } };
+  return {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => ({ stop_reason: stop, content: [{ type: 'text', text: payload }] }),
+      }),
+    },
+  };
 }
 
 // ── happy path ──────────────────────────────────────────────────────────────

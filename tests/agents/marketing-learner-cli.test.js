@@ -78,11 +78,15 @@ assert.equal(pkg.scripts.learn, 'node agents/marketing-learner/index.js', 'npm r
   writeFileSync(existingPath, existingContent);
 
   const mergedContent = existingContent + '\n\n## New tactic\n\nMore body.\n';
+  // mergeSkillContent streams — its 32k budget is past the point where the SDK
+  // accepts a non-streaming request. A create()-shaped stub throws instead of merging.
   const fakeClient = {
     messages: {
-      create: async () => ({
-        stop_reason: 'end_turn',
-        content: [{ type: 'text', text: JSON.stringify({ content: mergedContent, supersedes: null }) }],
+      stream: () => ({
+        finalMessage: async () => ({
+          stop_reason: 'end_turn',
+          content: [{ type: 'text', text: JSON.stringify({ content: mergedContent, supersedes: null }) }],
+        }),
       }),
     },
   };
