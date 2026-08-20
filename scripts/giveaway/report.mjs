@@ -15,7 +15,7 @@
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listProfilesWithConsent } from '../../lib/klaviyo-profiles.js';
+import { listProfilesWithConsent, listEntrantProfiles } from '../../lib/klaviyo-profiles.js';
 import { summarizeEntrants } from '../../lib/giveaway/summarize.js';
 import { computeEntryPurchaseCohort, entryValue, PRIOR_LOOKBACK_DAYS } from '../../lib/giveaway/cohort.js';
 import { fetchCampaignSpend, evaluateSpendGate, resolveAccessToken } from '../../lib/giveaway/meta-spend.js';
@@ -30,6 +30,27 @@ const OUT_DIR = join(ROOT, 'data', 'reports', 'giveaway');
 const profiles = await listProfilesWithConsent(listId);
 const subscribed = profiles.filter((p) => p.subscribed).length;
 const summary = summarizeEntrants(profiles);
+
+// SUBMISSIONS vs CONFIRMATIONS — two different questions, and reporting only the second
+// as "entrants" hid a 27% confirmation rate on day one of the paid campaign. `profiles`
+// above is list membership, which under double opt-in means CONFIRMED. This is everyone
+// who submitted the form. See listEntrantProfiles.
+//
+// Never fatal: the daily report must survive Klaviyo being slow or this filter changing
+// shape. A null funnel renders as "unavailable", exactly like the spend block does.
+let funnel = null;
+try {
+  const submitted = await listEntrantProfiles(config.entryOpensAt);
+  const confirmed = summary.total;
+  funnel = {
+    submitted: submitted.length,
+    confirmed,
+    unconfirmed: Math.max(0, submitted.length - confirmed),
+    confirmationRate: submitted.length ? Math.round((confirmed / submitted.length) * 100) / 100 : null,
+  };
+} catch (e) {
+  console.error('[giveaway] submission funnel unavailable:', e.message);
+}
 
 // Entry -> purchase, the number that makes cost per entry mean anything. Meta
 // cannot supply it: it attributes on 7-day click / 1-day view, and this
@@ -74,6 +95,7 @@ const spendGate = spend && !spend.error && cohort
   : null;
 
 const report = {
+  funnel,
   generatedAt: new Date().toISOString(),
   stillSubscribed: subscribed,
   ...summary,
@@ -132,6 +154,17 @@ if (summary.total >= 50 && summary.ladder.entrantsWithReferrals === 0) {
 }
 
 console.log(`Entrants: ${summary.total}  Entries: ${summary.entriesTotal}  Still subscribed: ${subscribed}`);
+if (funnel) {
+  console.log(
+    `Funnel: ${funnel.submitted} submitted -> ${funnel.confirmed} confirmed `
+    + `(${funnel.confirmationRate == null ? '—' : Math.round(funnel.confirmationRate * 100) + '%'}), `
+    + `${funnel.unconfirmed} awaiting confirmation`
+  );
+  if (spend?.spend > 0 && funnel.submitted) {
+    console.log(`  cost per submission $${(spend.spend / funnel.submitted).toFixed(2)}`
+      + (funnel.confirmed ? ` | per confirmed $${(spend.spend / funnel.confirmed).toFixed(2)}` : ''));
+  }
+}
 console.log(`Reactive/fragrance share: ${(reactiveShare * 100).toFixed(0)}%`);
 if (cohort) {
   const v = entryValue(cohort);
