@@ -5,6 +5,18 @@ import { loadEnvAuth } from '../lib/env.js';
 
 const FB_API_VERSION = 'v21.0';
 
+// The permissions this integration needs, in ONE place. It was declared inside the /auth
+// handler and referenced from the /callback handler, which is a different closure — so the
+// callback threw "scope is not defined" AFTER writeToken had already saved a perfectly good
+// token, and rendered "Token exchange failed" over a grant that had in fact succeeded.
+//
+// ads_read alone cannot create an ad: every ad creative requires object_story_spec.page_id.
+// pages_show_list finds the Page, pages_read_engagement publishes a creative as it, and
+// business_management covers a Page owned by a Business rather than by the user directly.
+const REQUIRED_SCOPES = [
+  'ads_management', 'ads_read', 'pages_show_list', 'pages_read_engagement', 'business_management',
+];
+
 function writeToken(rootDir, token) {
   const envPath = join(rootDir, '.env');
   let content = readFileSync(envPath, 'utf8');
@@ -76,7 +88,7 @@ export default [
       // user directly (which is how this one is set up). ads_management is named
       // explicitly rather than relied on: a re-auth that requested only ads_read would
       // narrow the token that is currently working.
-      const scope = 'ads_management,ads_read,pages_show_list,pages_read_engagement,business_management';
+      const scope = REQUIRED_SCOPES.join(',');
       // auth_type=rerequest is NOT optional here. Facebook skips the consent dialog for an
       // app that already holds an active grant and hands back a token carrying the OLD
       // scopes — silently, with no error and no visible difference: the dashboard says
@@ -148,7 +160,7 @@ export default [
           const dbg = await fbGet('debug_token', `${env.FACEBOOK_APP_ID}|${env.FACEBOOK_APP_SECRET}`, { input_token: finalToken });
           granted = dbg?.data?.scopes || [];
         } catch { /* the token is saved and usable; this check is diagnostic only */ }
-        const requested = scope.split(',');
+        const requested = REQUIRED_SCOPES;
         const missing = requested.filter(s => !granted.includes(s));
         const esc = (t) => String(t).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 
