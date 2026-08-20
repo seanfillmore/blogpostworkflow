@@ -77,10 +77,21 @@ export default [
       // explicitly rather than relied on: a re-auth that requested only ads_read would
       // narrow the token that is currently working.
       const scope = 'ads_management,ads_read,pages_show_list,pages_read_engagement,business_management';
+      // auth_type=rerequest is NOT optional here. Facebook skips the consent dialog for an
+      // app that already holds an active grant and hands back a token carrying the OLD
+      // scopes — silently, with no error and no visible difference: the dashboard says
+      // "Connected as Sean Fillmore", the ad account list populates, and debug_token still
+      // reports the previous scope set. That is exactly what happened on 2026-08-19 after
+      // the scope list was widened for Pages; the reconnect looked successful and granted
+      // nothing, so ad creation stayed impossible for the same reason as before.
+      //
+      // rerequest forces the dialog to reappear and ask for the permissions that are in
+      // `scope` but not yet granted. It is harmless when there is nothing new to ask for.
       const authUrl = `https://www.facebook.com/${FB_API_VERSION}/dialog/oauth?`
         + `client_id=${encodeURIComponent(clientId)}`
         + `&redirect_uri=${encodeURIComponent(redirectUri)}`
         + `&scope=${encodeURIComponent(scope)}`
+        + `&auth_type=rerequest`
         + `&response_type=code`;
       res.writeHead(302, { Location: authUrl });
       res.end();
@@ -126,9 +137,29 @@ export default [
         const finalToken = longBody.access_token || shortBody.access_token;
 
         writeToken(ctx.ROOT, finalToken);
+
+        // REPORT WHAT WAS ACTUALLY GRANTED, not what was asked for. A grant that silently
+        // returns the previous, narrower scope set is indistinguishable from a successful
+        // one at this point — same 200, same token, same working ad account list — and the
+        // page said "connected" either way. That cost a full round trip on 2026-08-19:
+        // the reconnect was performed, the dashboard confirmed it, and nothing had changed.
+        let granted = [];
+        try {
+          const dbg = await fbGet('debug_token', `${env.FACEBOOK_APP_ID}|${env.FACEBOOK_APP_SECRET}`, { input_token: finalToken });
+          granted = dbg?.data?.scopes || [];
+        } catch { /* the token is saved and usable; this check is diagnostic only */ }
+        const requested = scope.split(',');
+        const missing = requested.filter(s => !granted.includes(s));
+        const esc = (t) => String(t).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(`<h2>Meta Ads connected</h2>
-          <p>Access token saved. The dashboard can now read your ad account data.</p>
+          <p>Access token saved.</p>
+          <p><strong>Granted:</strong> ${granted.length ? esc(granted.join(', ')) : '(could not read)'}</p>
+          ${missing.length ? `<p style="color:#b00"><strong>NOT granted:</strong> ${esc(missing.join(', '))}<br>
+            Ad creation needs the Pages permissions — every ad creative requires a Page id.
+            Re-run Connect and approve the Pages step, or grant the app a role that allows it.</p>`
+            : '<p style="color:#080">All requested permissions granted — ads can be created.</p>'}
           <p><a href="/#tab=my-meta-ads">Back to dashboard</a></p>`);
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'text/html' });
