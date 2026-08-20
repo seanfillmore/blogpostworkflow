@@ -1774,3 +1774,37 @@ test('coconut-soap records what the bare bar looks like', () => {
     'it must forbid invented markings — a bare bar carries none, and that is the thing a model adds');
   assert.ok(soap.unwrapped.imageDir, 'and a directory its own reference photographs live in');
 });
+
+// ── the bare bar is PRODUCT-level, not per-variant (2026-08-20) ─────────────────────
+//
+// Sean: the raw bar is the same for every scent — variants differ in what goes into the
+// batch and what is printed on the wrapper, not in how the bare puck looks. So one
+// reference set serves all four scents, and index.js reads unwrapped.imageDir WITHOUT
+// appending a variant. The directory was first named `pure-unscented-unwrapped`, which
+// wrongly implied the opposite and would have had someone shooting the same bar four times.
+test('one unwrapped reference set serves every scent variant of the bar', () => {
+  const m = JSON.parse(readFileSync(join(REPO_ROOT, 'data', 'product-images', 'manifest.json'), 'utf8'));
+  const list = Array.isArray(m) ? m : m.products;
+  const soap = list.find(p => p.handle === 'coconut-soap');
+  assert.equal(soap.unwrapped.imageDir, 'coconut-soap/unwrapped',
+    'the path must not name a scent variant');
+  assert.ok(!/pure-unscented|lavender|tea-tree|lemongrass/.test(soap.unwrapped.imageDir));
+
+  // index.js must not append the variant to this path — pinned at the source, because the
+  // behaviour is correct today and a later "consistency" edit is exactly how it would break.
+  const src = readFileSync(join(REPO_ROOT, 'agents', 'ad-studio', 'index.js'), 'utf8');
+  assert.match(src, /join\(ROOT, 'data', 'product-images', unwrapped\.imageDir\)/,
+    'the unwrapped reference dir is read whole, never scoped by variant');
+});
+
+// ONLY A BAR HAS AN UNWRAPPED FORM. Every other RSC product is a bottle or a pump — there is
+// no wrapper to be off, so an `unwrapped` block on one would describe something that does not
+// exist. (I proposed adding them to four bottles; that was wrong.)
+test('only the bar soap declares an unwrapped form', () => {
+  const m = JSON.parse(readFileSync(join(REPO_ROOT, 'data', 'product-images', 'manifest.json'), 'utf8'));
+  const list = Array.isArray(m) ? m : m.products;
+  assert.deepEqual(
+    list.filter(p => p.unwrapped).map(p => p.handle),
+    ['coconut-soap'],
+  );
+});
