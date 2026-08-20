@@ -382,3 +382,34 @@ for (const f of FORMATS) {
     assert.equal(f.productProminent, false);
   }
 }
+
+// ── product FORM: the bare bar is not the package (2026-08-20) ──────────────────────
+//
+// Operator caught this on a live plate: a wrapped bar being lathered, and a wrapped bar
+// sitting wet on a soap dish, are both physically incoherent — you unwrap soap before you
+// use it. The plates showed the PACKAGE in use rather than the soap.
+//
+// It is not a render glitch, it is structural: every reference photograph is the wrapped
+// product and productDescription describes the wrapper and its printed label, so the
+// fidelity gate would REJECT a correctly-unwrapped bar as "not our product" while passing
+// the nonsense one. `productForm` is the seam — a property of the DEPICTION, not of the
+// product, which is why it lives on the format.
+{
+  const inUse = FORMATS.filter(f => f.productForm === 'unwrapped').map(f => f.key).sort();
+  assert.deepEqual(inUse, ['in-use-handwash', 'shower-shelf'],
+    'exactly the in-use scenes depict the bare bar');
+
+  // Everything else is the product AS SOLD, which is what the references show. Absent means
+  // wrapped — the default has to be the form the whole pipeline was built around.
+  for (const f of FORMATS) {
+    if (inUse.includes(f.key)) continue;
+    assert.equal(f.productForm, undefined, `${f.key} must not declare a form — wrapped is the default`);
+  }
+
+  // The plate briefs must say BARE, or the model renders the wrapper it has seen in every
+  // reference photograph it was ever given for this product.
+  for (const key of inUse) {
+    assert.match(formatByKey(key).plateBrief, /bare unwrapped bar/i,
+      `${key}'s plate brief must ask for the bare bar explicitly`);
+  }
+}

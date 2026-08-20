@@ -614,6 +614,12 @@ export const FORMATS = [
     key: 'in-use-handwash',
     name: 'In use — hand wash',
     awareness: 'solution',
+    // THE BARE BAR, not the package. A wrapped bar being lathered is physically incoherent —
+    // you unwrap soap before you use it — and the fidelity gate cannot catch that, because
+    // every reference photograph IS the wrapped product, so a correct unwrapped render would
+    // be REJECTED as "not our product" while the nonsense one passes. index.js resolves the
+    // description, the reference photos, and the absence of label/volume/ink from this flag.
+    productForm: 'unwrapped',
     pairsImagesWithLabels: false,
     // Hands and lather cover part of the label by design, so the gate must not demand the
     // brand mark be read back off it — the same declaration manifesto and problem-aware
@@ -637,7 +643,7 @@ export const FORMATS = [
       'the basin, with soft white suds and a little water.',
       'The hands are cropped at the wrist by the frame edge and are partly covered by lather and by the product',
       'itself, so only fingers and the backs of the hands read clearly.',
-      'The product is held so it stays recognisable, occupying about a fifth of the frame height.',
+      'The bare unwrapped bar is held so it stays recognisable, occupying about a fifth of the frame height.',
       'No face, no arms, no body and no second person.',
       'Ordinary healthy skin only — no redness, no irritation, no visible skin condition of any kind.',
       'The upper third of the frame is quiet, evenly lit wall or air with nothing in it, so type can be set',
@@ -648,6 +654,8 @@ export const FORMATS = [
     key: 'shower-shelf',
     name: 'Shower shelf',
     awareness: 'problem',
+    // Same reasoning as in-use-handwash: wet paper in a running shower is not a product shot.
+    productForm: 'unwrapped',
     pairsImagesWithLabels: false,
     // Wet, in a niche, at moderate scale — the label is legible enough to recognise but not
     // to transcribe through water droplets.
@@ -665,10 +673,10 @@ export const FORMATS = [
     plateBrief: [
       'A real shower interior in soft, diffused daylight — plain matte tile in a pale neutral tone, a simple',
       'recessed niche or ledge, shot like clean editorial interiors photography with a shallow depth of field.',
-      'The product rests on a simple undecorated ceramic soap dish on that ledge, visibly WET: fine water',
-      'droplets across its surface, a damp sheen, a little water pooled in the dish.',
-      'It sits in the lower right at moderate scale, occupying roughly a quarter of the frame height, label',
-      'turned toward the camera so the product stays recognisable.',
+      'The bare unwrapped bar rests on a simple undecorated ceramic soap dish on that ledge, visibly WET:',
+      'fine water droplets across its surface, a damp sheen, a little water pooled in the dish.',
+      'It sits in the lower right at moderate scale, occupying roughly a quarter of the frame height, its',
+      'flat face turned toward the camera.',
       'The upper half of the frame is quiet, evenly lit tile with nothing on it, so type can be set over it later.',
       'No people, no hands, no towels, no bottles and no other products.',
     ].join(' '),
