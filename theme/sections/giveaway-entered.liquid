@@ -18,8 +18,24 @@
 {{ 'giveaway.css' | asset_url | stylesheet_tag }}
 
 <section class="gv-entered" data-gv-entered>
-  <h1>You're in.</h1>
-  <p class="gv-lead">We'll email you to confirm — <strong>click that link</strong> and you get 2 bonus entries.</p>
+  {%- comment -%}
+    This used to read "You're in." — true (submitting earns the base entry) and precisely
+    the phrase that tells someone they are finished. Measured on day one of the paid
+    campaign: 11 people submitted, 3 clicked the confirmation link. 27%.
+
+    Confirming is worth +2 entries — triple the base entry — and it is what puts the
+    profile on the list at all, so an unconfirmed entrant receives no nurture email and
+    cannot be credited as anyone's referrer. So the headline now names the step that is
+    still outstanding, and the base entry is reassurance underneath rather than the
+    headline. Do not restore a headline that implies completion.
+  {%- endcomment -%}
+  <h1>One more step — check your email.</h1>
+  <p class="gv-lead">
+    We just sent a confirmation link. <strong>Click it and you get 2 bonus entries</strong> —
+    three times what entering just earned you. It can take a minute to arrive, and it
+    sometimes lands in spam or Promotions.
+  </p>
+  <p class="gv-lead-sub">Your entry is already counted. Confirming is what multiplies it.</p>
 
   <form class="gv-survey" data-step="required">
     <fieldset>
