@@ -1,21 +1,22 @@
 import { strict as assert } from 'node:assert';
 import { FORMATS, selectFormats, formatByKey, visibleFormats, formatForVariation } from '../../agents/ad-studio/formats.js';
 
-// Twelve formats, each with the fields the downstream stages read. Six v1, three added
+// Fourteen formats, each with the fields the downstream stages read. Six v1, three added
 // 2026-08-15 from reference creatives that are actually running (Bonafide, Magic Spoon /
-// MUD\WTR, a kids' supplement before/after), `giveaway-entry` added 2026-08-18, and
-// `fact-hook` / `spec-panel` the same day to close the unaware / most-aware gap.
-assert.equal(FORMATS.length, 12);
+// MUD\WTR, a kids' supplement before/after), `giveaway-entry` added 2026-08-18,
+// `fact-hook` / `spec-panel` the same day to close the unaware / most-aware gap, and
+// `in-use-handwash` / `shower-shelf` on 2026-08-19 — the first plates with people in them.
+assert.equal(FORMATS.length, 14);
 const keys = FORMATS.map(f => f.key);
 assert.deepEqual(
   [...keys].sort(),
   [
-    'fact-hook', 'giveaway-entry', 'ingredient-callout', 'manifesto', 'offer-focused',
-    'problem-aware', 'spec-panel', 'stat-stack', 'state-contrast', 'testimonial',
-    'top-x-review', 'us-vs-them',
+    'fact-hook', 'giveaway-entry', 'in-use-handwash', 'ingredient-callout', 'manifesto',
+    'offer-focused', 'problem-aware', 'shower-shelf', 'spec-panel', 'stat-stack',
+    'state-contrast', 'testimonial', 'top-x-review', 'us-vs-them',
   ]
 );
-assert.equal(new Set(keys).size, 12, 'format keys must be unique');
+assert.equal(new Set(keys).size, 14, 'format keys must be unique');
 
 // ── giveaway-entry is INVISIBLE unless a giveaway is actually running ────────────────
 //
@@ -44,7 +45,7 @@ assert.equal(new Set(keys).size, 12, 'format keys must be unique');
   // requiresGiveaway must gate exactly one format, so the rotation with no giveaway live is
   // every format except giveaway-entry.
   assert.equal(visibleFormats().length, FORMATS.length - 1, 'the no-giveaway rotation is everything but the giveaway format');
-  assert.equal(visibleFormats().length, 11, 'and that is 11 formats today');
+  assert.equal(visibleFormats().length, 13, 'and that is 13 formats today');
 
   // Declaration order is what makes it the PROPOSED product-aware format while live, and
   // leaves offer-focused proposed otherwise (formatsForAngle takes the first match).
@@ -166,12 +167,15 @@ for (const f of FORMATS) {
   );
 }
 
-// Which formats keep a setting, and why: these two are the ones whose whole value IS the
-// context — an everyday moment and an editorial still life. The other four are studio
-// shots as finished ads too, so a setting there would be invention, not fidelity.
+// Which formats keep a setting, and why: each one's whole value IS the context — an
+// everyday moment, an editorial still life, and (2026-08-19) two in-use scenes where the
+// product is being handled or is sitting wet where it is actually used. Every other format
+// is a studio shot as a finished ad too, so a setting there would be invention, not
+// fidelity. Pinned as an exact set so a scene is never added by accident: `plateSetting`
+// has no default precisely because 'scene' quietly licenses props.
 assert.deepEqual(
   FORMATS.filter(f => f.plateSetting === 'scene').map(f => f.key).sort(),
-  ['problem-aware', 'top-x-review'],
+  ['in-use-handwash', 'problem-aware', 'shower-shelf', 'top-x-review'],
 );
 // A scene plate still has to leave clear space for the type the operator sets by hand —
 // otherwise "keep the scene" quietly becomes "there is nowhere to put the headline".
@@ -208,8 +212,8 @@ assert.equal(formatByKey('spec-panel').productProminent, true);
 
 // selectFormats. "Full rotation" means the VISIBLE rotation — a giveaway format is opt-in
 // by name and must never arrive by default, because the default is what you get by accident.
-assert.equal(selectFormats().length, 11, 'no args returns the full visible rotation');
-assert.equal(selectFormats([]).length, 11, 'empty array returns the full visible rotation');
+assert.equal(selectFormats().length, 13, 'no args returns the full visible rotation');
+assert.equal(selectFormats([]).length, 13, 'empty array returns the full visible rotation');
 assert.ok(!selectFormats().some(f => f.key === 'giveaway-entry'), 'the default rotation excludes it');
 assert.deepEqual(
   selectFormats(['giveaway-entry']).map(f => f.key),
@@ -342,4 +346,39 @@ for (const f of FORMATS) {
   // format that has not opted in behaves exactly as it did before this existed.
   const m = formatByKey('manifesto');
   assert.equal(formatForVariation(m, 3), m);
+}
+
+// ── the in-use formats carry people, by operator override (2026-08-19) ──────────────
+//
+// The "No people and no hands" line in problem-aware's plateBrief is overridden for these
+// two and for these two only. What must NOT be overridden is the compliance half, which is
+// about the medium rather than the composition: Meta restricts before/after and skin-
+// condition depiction in health and beauty, and these are the first formats where a human
+// body is in frame at all, so they are the formats most able to break it.
+{
+  const handwash = formatByKey('in-use-handwash');
+  const shower = formatByKey('shower-shelf');
+
+  assert.match(handwash.plateBrief, /Ordinary healthy skin only/, 'no skin condition may be depicted');
+  assert.match(handwash.layoutBrief, /no depiction of a skin condition/i);
+  assert.match(handwash.layoutBrief, /No before\/after split/i);
+  assert.match(shower.layoutBrief, /no depiction of a skin condition/i);
+
+  // ANATOMY IS UNGATED. Nothing in verify.js looks at hands, so the brief reduces the odds
+  // instead: cropped at the wrist, partly covered, no face or body. If these constraints are
+  // relaxed, the only remaining check on a malformed hand is a person looking at the frame.
+  assert.match(handwash.plateBrief, /cropped at the wrist/);
+  assert.match(handwash.plateBrief, /partly covered by lather/);
+  assert.match(handwash.plateBrief, /No face, no arms, no body/);
+
+  // The shower scene has no people at all — it is the lower-risk half of the pair, and that
+  // is a property worth pinning so it is not quietly widened later.
+  assert.match(shower.plateBrief, /No people, no hands/);
+
+  // Both are scenes with the product NOT label-legible: hands and water obscure it, so the
+  // gate must not demand the brand mark be read back at ~$0.13 a retry.
+  for (const f of [handwash, shower]) {
+    assert.equal(f.plateSetting, 'scene');
+    assert.equal(f.productProminent, false);
+  }
 }
