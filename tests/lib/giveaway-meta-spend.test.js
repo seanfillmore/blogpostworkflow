@@ -5,7 +5,11 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { evaluateSpendGate, fetchCampaignSpend, resolveAccessToken } from '../../lib/giveaway/meta-spend.js';
 
-const value = (v, matured = 10, basis = '30d') => ({ value: v, matured, basis, segment: 'new' });
+// A MEASURED value — i.e. a window that has actually closed. windowMatured is what the gate
+// reads; `matured` alone is ambiguous, because entryValue()'s no-window fallback reuses that
+// name for a plain entrant count. Every test below means "a matured 30d window".
+const value = (v, matured = 10, basis = '30d') =>
+  ({ value: v, matured, basis, segment: 'new', windowMatured: true });
 
 test('cost below value passes', async () => {
   const g = evaluateSpendGate({ spend: 100, entrants: 50, entryValue: value(5) });
@@ -111,7 +115,7 @@ test('provisional target is used only until measured value exists, and is labell
   // the two disagree — here $2.50 would say 'ok' and the measured $1 says 'over'.
   const measured = evaluateSpendGate({
     spend: 50, entrants: 25,
-    entryValue: { value: 1, matured: 12, basis: '30d new-customer revenue' },
+    entryValue: { value: 1, matured: 12, basis: '30d new-customer revenue', windowMatured: true },
     provisionalTarget: 2.5,
   });
   assert.equal(measured.verdict, 'over');
@@ -123,4 +127,32 @@ test('provisional target is used only until measured value exists, and is labell
   assert.equal(none.verdict, 'unknown');
   assert.equal(none.basis, 'none');
   assert.match(none.line, /do not judge the campaign on cost alone/);
+});
+
+// ── a $0 "measured" value from brand-new entrants is not a measurement ──────
+// entryValue() falls back to a since-entry figure when no window has closed, and reports
+// `matured: <entrant count>` — a DIFFERENT quantity from the matured-entrant count it
+// reports in the window branch. The gate keyed on that name and, on 2026-08-20, read two
+// hours-old entrants with zero revenue as "a new entrant is measurably worth $0". Verdict:
+// over, against a ceiling of $0, which no cost per entry can ever beat — telling the
+// operator to fix creative on day one of a campaign that was doing fine.
+test('a since-entry $0 falls back to the provisional target, not a $0 ceiling', () => {
+  const live = { value: 0, matured: 2, basis: 'since-entry (no window matured)', windowMatured: false };
+
+  const g = evaluateSpendGate({ spend: 20.26, entrants: 2, entryValue: live, provisionalTarget: 2.5 });
+  assert.equal(g.basis, 'provisional', 'must not treat $0-from-nobody as measured');
+  assert.match(g.line, /ASSUMPTION, not a measurement/);
+
+  // With no provisional configured it must say "unknown" — never 'over' against $0.
+  const none = evaluateSpendGate({ spend: 20.26, entrants: 2, entryValue: live });
+  assert.equal(none.verdict, 'unknown');
+  assert.notEqual(none.verdict, 'over');
+
+  // A genuinely matured window still wins, including a real measured zero.
+  const matured = evaluateSpendGate({
+    spend: 20, entrants: 2, provisionalTarget: 2.5,
+    entryValue: { value: 0, matured: 40, basis: '30d', windowMatured: true },
+  });
+  assert.equal(matured.basis, 'measured');
+  assert.equal(matured.verdict, 'over', 'once 40 entrants have matured at $0, over IS the finding');
 });
