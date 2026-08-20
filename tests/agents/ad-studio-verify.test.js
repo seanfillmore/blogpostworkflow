@@ -1744,3 +1744,33 @@ test('every RSC product whose description states black type records it as labelI
     assert.ok(p._labelInkNote, `${p.handle} must record where its ink truth came from`);
   }
 });
+
+// ── an unwrapped bar carries no label, so three checks switch off together ──────────
+//
+// labelStrings (the expected-text set), the printed volume, and the ink colour all read a
+// LABEL. A bare bar has none, so leaving any of them on would reject a correct render for
+// failing to show printing the product does not have. Pinned at the verdict level because
+// that is where the three meet.
+test('the label-reading checks all no-op for a product with no label', () => {
+  const v = verdictFor({
+    expected: [], checks: [], format: formatByKey('in-use-handwash'), mode: 'plate',
+    volumeStrings: [], labelInk: '', expectedLabelInk: null, labelScent: '', variant: 'pure-unscented',
+  });
+  assert.equal(v.volume.status, 'no-volume-on-file');
+  assert.equal(v.ink.status, 'no-ink-on-file');
+  assert.ok(v.scent.ok);
+});
+
+// AND the manifest must actually carry the bare bar's description, or an in-use render is
+// the model inventing what unwrapped soap looks like — the fiction this pipeline exists to
+// prevent. index.js throws rather than guessing; this pins the data it throws without.
+test('coconut-soap records what the bare bar looks like', () => {
+  const m = JSON.parse(readFileSync(join(REPO_ROOT, 'data', 'product-images', 'manifest.json'), 'utf8'));
+  const list = Array.isArray(m) ? m : m.products;
+  const soap = list.find(p => p.handle === 'coconut-soap');
+  assert.ok(soap.unwrapped, 'coconut-soap needs an unwrapped block');
+  assert.ok(soap.unwrapped.productDescription.length > 200, 'and a real description of it');
+  assert.match(soap.unwrapped.productDescription, /NO printing, NO stamp/,
+    'it must forbid invented markings — a bare bar carries none, and that is the thing a model adds');
+  assert.ok(soap.unwrapped.imageDir, 'and a directory its own reference photographs live in');
+});

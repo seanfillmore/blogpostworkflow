@@ -34,7 +34,7 @@ import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { renderVariation, buildRenderPrompt, buildCompPrompt, selectReferencePhotos } from './render.js';
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings } from './verify.js';
 import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './critique.js';
-import { selectFormats, FORMATS, formatForVariation } from './formats.js';
+import { selectFormats, FORMATS, formatForVariation, formatByKey } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings, assertNoSupplyDurationClaims } from './copy.js';
@@ -1595,9 +1595,48 @@ async function main() {
     pdpBody = await fetchPdpBody(site.url, handle);
   }
 
-  const labelStrings = buildLabelStrings({ manifestEntry, variant });
-  // ABORT — see buildLabelStrings' docstring. Not recoverable, no override flag.
-  if (labelStrings.length === 0) {
+  // WHICH FORM OF THE PRODUCT IS BEING DEPICTED. Every format except the in-use scenes shows
+  // the product AS SOLD — wrapped, label forward — which is what every reference photograph
+  // and the main productDescription describe. An in-use scene shows the BARE BAR, because a
+  // wrapped bar being lathered, or sitting wet on a soap dish, is the package rather than the
+  // soap. Sean, 2026-08-20.
+  //
+  // Mixing forms in one run is refused rather than resolved per-format: `product` is built
+  // once here and threaded everywhere, so a mixed run would silently hand one form's
+  // description and reference photos to the other's render.
+  //
+  // Resolved from the format KEYS, which are known here — the format objects are not built
+  // until later, and `product` has to exist before them. Brief mode is covered because
+  // `attribution.format` is already resolved above.
+  const formKeysForForm = attribution ? [attribution.format] : selectFormats(args.formats.length ? args.formats : undefined).map(f => f.key);
+  const forms = [...new Set(formKeysForForm.map(k => formatByKey(k)?.productForm || 'wrapped'))];
+  if (forms.length > 1) {
+    throw new Error(
+      `ad-studio: --formats mixes product forms (${forms.join(' + ')}). The bare bar and the ` +
+      `wrapped bar are different products to the renderer and to the gate, so they cannot share ` +
+      `one run. Render the in-use formats separately.`
+    );
+  }
+  const productForm = forms[0];
+  const unwrapped = productForm === 'unwrapped' ? (manifestEntry.unwrapped || null) : null;
+  if (productForm === 'unwrapped' && !unwrapped) {
+    throw new Error(
+      `ad-studio: "${handle}" has no \`unwrapped\` block in the manifest, so an in-use format ` +
+      `cannot be rendered for it. Add one describing the bare bar — inventing what unwrapped ` +
+      `soap looks like is exactly the fiction this pipeline exists to prevent.`
+    );
+  }
+
+  // A BARE BAR HAS NO LABEL, so the three checks that read one all switch OFF together:
+  // labelStrings (the expected-text set), the volume marking, and the ink colour. Leaving any
+  // of them on would demand the render show printing that does not exist on the product.
+  const labelStrings = unwrapped ? [] : buildLabelStrings({ manifestEntry, variant });
+  // ABORT — see buildLabelStrings' docstring. Not recoverable, no override flag. It does not
+  // apply to the bare bar: the abort exists because an unnamed LABEL is how the model invents
+  // a volume, and there is no label here. The equivalent protection for this form is positive
+  // rather than negative — the unwrapped productDescription states in terms that cannot be
+  // misread that the bar carries no printing, stamp, embossing or lettering at all.
+  if (!unwrapped && labelStrings.length === 0) {
     throw new Error(
       `ad-studio: labelStrings is empty for "${handle}" — refusing to render. An empty list ` +
       `is exactly how the image model invents a volume that was never on the bottle. Add ` +
@@ -1623,13 +1662,15 @@ async function main() {
     variant,
     // The colour this product's label TYPE is printed in, when it has been verified. Absent
     // means the ink check no-ops rather than guessing — see verify.js's labelInkVerdict.
-    labelInk: manifestEntry.labelInk || null,
+    // No printing on a bare bar, so there is no ink to check — leaving it set would reject a
+    // correct render for not showing black type the product does not have.
+    labelInk: unwrapped ? null : (manifestEntry.labelInk || null),
     // R4. The manifest's prose description of the PHYSICAL product — "tall, slim lotion
     // bottle shape", "a black horizontal accent bar behind the variant name text". It was
     // being mined for label strings and volume markings and then dropped on the floor, so
     // the renderer knew what the label said and nothing about what the bottle was, and
     // the gate had nothing to compare a shape against. Both now read it.
-    physicalDescription: manifestEntry.productDescription || '',
+    physicalDescription: (unwrapped ? unwrapped.productDescription : manifestEntry.productDescription) || '',
     // How many physical units this product IS. The plate render is told to put exactly
     // this many in the frame and nothing else, and the verifier is told the same number
     // when it inventories the scene.
@@ -1863,7 +1904,22 @@ async function main() {
   const photoDir = variant
     ? join(ROOT, 'data', 'product-images', manifestEntry.imageDir, variant)
     : join(ROOT, 'data', 'product-images', manifestEntry.imageDir);
-  const photoPaths = selectReferencePhotos(photoDir);
+  // The bare bar has its OWN reference photographs — the wrapped ones would tell both the
+  // renderer and the verifier to expect a pleated wrapper and a printed label. If that
+  // directory is missing the run continues on the prose description alone and says so
+  // loudly: verdictFor's hasReference then switches the fidelity check OFF, so the product
+  // is UNVERIFIED rather than wrongly verified.
+  const photoDirForForm = unwrapped
+    ? join(ROOT, 'data', 'product-images', unwrapped.imageDir)
+    : photoDir;
+  const photoPaths = selectReferencePhotos(photoDirForForm);
+  if (unwrapped && photoPaths.length === 0) {
+    console.warn(
+      `\n  ⚠ No reference photographs for the BARE BAR at data/product-images/${unwrapped.imageDir}.\n` +
+      `    Rendering on the written description alone — product fidelity will NOT be checked on\n` +
+      `    these frames. Add real photographs of the unwrapped bar to turn the check back on.\n`
+    );
+  }
   if (photoPaths.length === 0) {
     // THROW, do not warn. This was a warn-and-continue for a long time, and it is the most
     // expensive warning in the agent: product fidelity is a hard gate, the reference
