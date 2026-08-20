@@ -590,6 +590,89 @@ export const FORMATS = [
       'Nothing else appears in the picture.',
     ].join(' '),
   },
+  // ── Added 2026-08-19: IN-USE scenes, and the first plates with people in them ────────
+  //
+  // Operator decision, 2026-08-19: the "No people and no hands" line in problem-aware's
+  // plateBrief is overridden for these two. It is recorded rather than deleted, because the
+  // rule still holds for every format that has it — this is an exception with a name, not a
+  // policy change.
+  //
+  // WHAT NO GATE COVERS, and why these two need a human before they ship. verify.js checks
+  // product fidelity, volume, label ink, scent wording and stray TEXT. It checks nothing
+  // about human anatomy. A hand with six fingers, or two fused, passes every check in this
+  // pipeline and reaches a live ad looking exactly as wrong as it is. So `in-use-handwash`
+  // is written to make the failure less likely rather than to detect it afterwards: hands
+  // enter from the frame edge and are partly hidden by lather and by the bar itself, which
+  // is the pose image models render most reliably, and no face or full body appears.
+  //
+  // COMPLIANCE CARRIES OVER UNCHANGED. These are lifestyle scenes of a COSMETIC in ordinary
+  // use. Neither may depict a skin condition, and neither may imply a before/after — Meta
+  // restricts both in health and beauty, and problem-aware's layoutBrief already encodes the
+  // rule for this catalogue. Wet, sudsy, ordinary skin is use; visible irritation is a
+  // condition, and that is the line.
+  {
+    key: 'in-use-handwash',
+    name: 'In use — hand wash',
+    awareness: 'solution',
+    pairsImagesWithLabels: false,
+    // Hands and lather cover part of the label by design, so the gate must not demand the
+    // brand mark be read back off it — the same declaration manifesto and problem-aware
+    // carry, for the same ~$0.13-a-retry reason.
+    productProminent: false,
+    zones: ['headline', 'subhead', 'bottomBar'],
+    layoutBrief: [
+      'A warm, real lifestyle composition showing the product actually being used rather than presented.',
+      `A short headline occupies the upper third over quiet background, black on the scene, with a supporting`,
+      'line beneath it.',
+      'The lower two thirds is the photograph: hands lathering the bar over a basin, shot like clean editorial',
+      'lifestyle photography in soft daylight.',
+      'A single restrained line of caps runs across the bottom.',
+      'No before/after split and no depiction of a skin condition — those are restricted in health and beauty.',
+    ].join(' '),
+    plateSetting: 'scene',
+    plateBrief: [
+      'A real domestic bathroom basin in soft daylight, shot like clean editorial lifestyle photography,',
+      'muted and uncluttered with a shallow depth of field.',
+      'A pair of adult hands enters from the lower edge of the frame, lathering the product between them over',
+      'the basin, with soft white suds and a little water.',
+      'The hands are cropped at the wrist by the frame edge and are partly covered by lather and by the product',
+      'itself, so only fingers and the backs of the hands read clearly.',
+      'The product is held so it stays recognisable, occupying about a fifth of the frame height.',
+      'No face, no arms, no body and no second person.',
+      'Ordinary healthy skin only — no redness, no irritation, no visible skin condition of any kind.',
+      'The upper third of the frame is quiet, evenly lit wall or air with nothing in it, so type can be set',
+      'over it later.',
+    ].join(' '),
+  },
+  {
+    key: 'shower-shelf',
+    name: 'Shower shelf',
+    awareness: 'problem',
+    pairsImagesWithLabels: false,
+    // Wet, in a niche, at moderate scale — the label is legible enough to recognise but not
+    // to transcribe through water droplets.
+    productProminent: false,
+    zones: ['headline', 'subhead', 'bottomBar'],
+    layoutBrief: [
+      'A calm, atmospheric composition placing the product where it is actually used.',
+      `A short headline sits in the upper third over quiet tile, with a supporting line beneath it.`,
+      'The scene below is a shower niche in soft daylight, the wet bar resting on a simple dish, shot like clean',
+      'editorial interiors photography.',
+      'A single restrained line of caps runs across the bottom.',
+      'No people, and no depiction of a skin condition.',
+    ].join(' '),
+    plateSetting: 'scene',
+    plateBrief: [
+      'A real shower interior in soft, diffused daylight — plain matte tile in a pale neutral tone, a simple',
+      'recessed niche or ledge, shot like clean editorial interiors photography with a shallow depth of field.',
+      'The product rests on a simple undecorated ceramic soap dish on that ledge, visibly WET: fine water',
+      'droplets across its surface, a damp sheen, a little water pooled in the dish.',
+      'It sits in the lower right at moderate scale, occupying roughly a quarter of the frame height, label',
+      'turned toward the camera so the product stays recognisable.',
+      'The upper half of the frame is quiet, evenly lit tile with nothing on it, so type can be set over it later.',
+      'No people, no hands, no towels, no bottles and no other products.',
+    ].join(' '),
+  },
   // ── Added 2026-08-18: the two awareness levels that had no format ────────────────────
   //
   // Until now `unaware` and `most-aware` mapped to null, so 4 of the 15 angles on file
