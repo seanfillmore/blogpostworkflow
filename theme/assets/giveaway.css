@@ -54,6 +54,16 @@
   --gv-green: #AEDEAC;
   --gv-line: #EDEDED;
   --gv-muted: #5b5b5b;
+  /* Corner rounding for every CONTROL on these pages — inputs, buttons, the
+   * button-shaped CTA anchor, and the tappable option rows. It defers to the
+   * theme's own `--button-radius` — a theme setting, currently 8px, emitted on
+   * :root by the theme's settings style block and applied by base.css to every
+   * `.button` on the storefront — so these pages track the site instead of
+   * restating a number that will drift out of step with it. The 8px fallback
+   * covers a preview theme where the setting is absent. Panels (.gv-shot, .gv-stack, .gv-ladder ul, .gv-next) are NOT
+   * controls and keep their own 3-4px — the theme's card token is 0px, so
+   * there is nothing site-wide for them to match. */
+  --gv-radius: var(--button-radius, 8px);
   max-width: 1080px;
   margin: 0 auto;
   padding: 24px 20px 64px;
@@ -103,7 +113,7 @@
   font-size: 1.6rem;
   padding: 14px;
   border: 1px solid var(--gv-line);
-  border-radius: 3px;
+  border-radius: var(--gv-radius);
   background: #fff;
   color: var(--gv-ink);
 }
@@ -123,7 +133,7 @@
   padding: 17px 20px;
   width: 100%;
   border: 0;
-  border-radius: 3px;
+  border-radius: var(--gv-radius);
   background: var(--gv-ink);
   color: #fff;
   cursor: pointer;
@@ -154,8 +164,17 @@
 
 .gv-grid { display: grid; gap: 22px; }
 
+/* The hero is a stock white-background product photograph. It used to sit on a
+ * sand panel with `mix-blend-mode: multiply`, which let the sand through the
+ * white and tinted the ENTIRE shot beige — the bar, the lather, the Made in the
+ * USA seal, all of it. That is not the product as it is photographed anywhere
+ * else on the site or in the ads, so the panel is white and the blend mode is
+ * gone: the photo now renders exactly as shipped. Do not reintroduce a coloured
+ * ground behind this image without first cutting the product out — multiply
+ * over a white-background JPEG recolours the product, not just its background.
+ * .gv-next-shot on the entered page is white for the same reason. */
 .gv-shot {
-  background: var(--gv-sand);
+  background: #fff;
   border-radius: 4px;
   aspect-ratio: 4 / 3;
   display: flex;
@@ -163,7 +182,7 @@
   justify-content: center;
   overflow: hidden;
 }
-.gv-shot img { width: 86%; height: auto; mix-blend-mode: multiply; }
+.gv-shot img { width: 86%; height: auto; }
 
 .gv-form { display: grid; gap: 14px; margin: 0 0 24px; }
 .gv-form label,
@@ -218,7 +237,7 @@
   padding: 13px 15px;
   margin: 0 0 8px;
   border: 1px solid var(--gv-line);
-  border-radius: 3px;
+  border-radius: var(--gv-radius);
   font-size: 1.6rem;
   cursor: pointer;
   transition: border-color 120ms ease, background-color 120ms ease;
@@ -261,7 +280,7 @@
   font-size: 1.5rem;
   padding: 12px;
   border: 1px dashed #c9c9c9;
-  border-radius: 3px;
+  border-radius: var(--gv-radius);
   background: #fff;
 }
 .gv-bonus input[type="file"]::file-selector-button {
@@ -271,7 +290,7 @@
   margin-right: 12px;
   padding: 8px 12px;
   border: 1px solid var(--gv-ink);
-  border-radius: 3px;
+  border-radius: var(--gv-radius);
   background: #fff;
   color: var(--gv-ink);
   cursor: pointer;
@@ -286,7 +305,7 @@
   margin: 6px 0 4px;
   padding: 13px 15px;
   border: 1px solid var(--gv-line);
-  border-radius: 3px;
+  border-radius: var(--gv-radius);
   font-size: 1.5rem;
   line-height: 1.45;
   text-transform: none;
@@ -397,7 +416,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   padding: 17px 20px;
-  border-radius: 3px;
+  border-radius: var(--gv-radius);
   background: var(--gv-ink);
   color: #fff;
   transition: background-color 140ms ease, color 140ms ease;
