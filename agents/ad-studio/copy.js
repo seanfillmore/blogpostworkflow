@@ -393,8 +393,13 @@ export function expectedStrings(zones) {
 // legitimately carry durations ("6-month shelf life"), so widening this to every ad would
 // trade a real catch for false rejections of correct copy.
 const SUPPLY_DURATION_PATTERNS = [
-  // "a year of soap", "a month's worth", "one year of"
-  /\b(?:a|an|one)\s+(?:year|month|week)(?:'s)?\s+(?:of|worth|supply)\b/i,
+  // "a year of soap", "a month's worth", "one year of", "3 YEAR OF SOAP", "2 years of soap".
+  // The bare-numeral form was the gap: this pattern originally required a/an/one, and the
+  // "supply|worth" pattern below requires that noun to follow, so "3 YEAR OF SOAP - FREE" —
+  // a real headline, on a real finished ad, on 2026-08-19 — slipped between the two. Note
+  // the singular "YEAR" as well: the phrasing does not have to be grammatical to be a
+  // use-rate claim.
+  /\b(?:a|an|one|\d+|two|three|four|five|six|seven|eight|nine|ten)\s*[-–]?\s*(?:year|month|week)s?(?:['’]s)?\s+(?:of|worth|supply)\b/i,
   // "three-year supply", "3 years' worth", "12 month supply", "Three (3) years worth".
   // The parenthetical numeral is how the Official Rules themselves write every quantity, so
   // the writer echoes that style — and without allowing for it this pattern missed exactly

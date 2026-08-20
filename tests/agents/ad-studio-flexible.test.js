@@ -390,6 +390,9 @@ console.log('✓ ad-studio flexible-ad tests pass');
     'Enter to win a year of clean coconut soap',   // the one that actually happened
     'Win a three-year supply',                     // the 2026-08-18 one
     'Three (3) years worth of soap',               // the rules' own numeral style
+    '3 YEAR OF SOAP - FREE',                       // a real finished ad, 2026-08-19
+    '3 YEARS OF SOAP',
+    '2 years of soap free',
     '36 bars that last three years',
     'a 3 year supply',
   ]) {
@@ -402,6 +405,9 @@ console.log('✓ ad-studio flexible-ad tests pass');
     'Enter to win 36 bars',
     'No purchase necessary',
     '6-month shelf life',                          // a product fact, not a use-rate claim
+    // The rules' own prize wording contains the substring "per year of four (4) bars",
+    // so a pattern keyed loosely on "year of" would reject the source text itself.
+    'shipped over three (3) years in three (3) shipments per year of four (4) bars each',
   ]) {
     assert.deepEqual(findSupplyDurationClaims(ok), [], `must not fire on: ${ok}`);
   }
