@@ -16,7 +16,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listProfilesWithConsent, listEntrantProfiles } from '../../lib/klaviyo-profiles.js';
-import { summarizeEntrants } from '../../lib/giveaway/summarize.js';
+import { summarizeEntrants, confirmationFunnel } from '../../lib/giveaway/summarize.js';
 import { computeEntryPurchaseCohort, entryValue, PRIOR_LOOKBACK_DAYS } from '../../lib/giveaway/cohort.js';
 import { fetchCampaignSpend, evaluateSpendGate, resolveAccessToken } from '../../lib/giveaway/meta-spend.js';
 import { getAllOrders } from '../../lib/shopify.js';
@@ -41,13 +41,10 @@ const summary = summarizeEntrants(profiles);
 let funnel = null;
 try {
   const submitted = await listEntrantProfiles(config.entryOpensAt);
-  const confirmed = summary.total;
-  funnel = {
-    submitted: submitted.length,
-    confirmed,
-    unconfirmed: Math.max(0, submitted.length - confirmed),
-    confirmationRate: submitted.length ? Math.round((confirmed / submitted.length) * 100) / 100 : null,
-  };
+  const confirmedEmails = new Set(
+    profiles.map((p) => String(p.email || '').toLowerCase().trim()).filter(Boolean),
+  );
+  funnel = confirmationFunnel({ submitted, confirmedEmails, now: Date.now() });
 } catch (e) {
   console.error('[giveaway] submission funnel unavailable:', e.message);
 }
@@ -155,11 +152,25 @@ if (summary.total >= 50 && summary.ladder.entrantsWithReferrals === 0) {
 
 console.log(`Entrants: ${summary.total}  Entries: ${summary.entriesTotal}  Still subscribed: ${subscribed}`);
 if (funnel) {
+  // Lead with the MATURED rate. The raw one moves with how fast entrants arrive,
+  // so on a running campaign it reads as a collapsing funnel when nothing is wrong.
+  const pct = (r) => (r == null ? '—' : `${Math.round(r * 100)}%`);
   console.log(
-    `Funnel: ${funnel.submitted} submitted -> ${funnel.confirmed} confirmed `
-    + `(${funnel.confirmationRate == null ? '—' : Math.round(funnel.confirmationRate * 100) + '%'}), `
+    `Funnel: ${funnel.submitted} submitted -> ${funnel.confirmed} confirmed, `
     + `${funnel.unconfirmed} awaiting confirmation`
   );
+  console.log(
+    funnel.matured.submitted
+      ? `  confirmation ${pct(funnel.matured.rate)} `
+        + `(${funnel.matured.confirmed}/${funnel.matured.submitted} past ${funnel.maturityHours}h) `
+        + `· ${funnel.pending} still inside the window · raw ${pct(funnel.confirmationRate)}`
+      : `  confirmation not yet readable — no entrant has reached ${funnel.maturityHours}h, `
+        + `so the nudge has not had its first chance. ${funnel.pending} still inside the window. `
+        + `Raw ${pct(funnel.confirmationRate)} measures recency, not consent.`
+  );
+  if (funnel.undateable) {
+    console.log(`  ${funnel.undateable} entrant(s) have no gv_entered_at and are excluded from the rate`);
+  }
   if (spend?.spend > 0 && funnel.submitted) {
     console.log(`  cost per submission $${(spend.spend / funnel.submitted).toFixed(2)}`
       + (funnel.confirmed ? ` | per confirmed $${(spend.spend / funnel.confirmed).toFixed(2)}` : ''));
