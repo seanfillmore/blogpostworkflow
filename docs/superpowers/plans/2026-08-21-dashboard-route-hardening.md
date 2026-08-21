@@ -279,7 +279,7 @@ Expected: all six pass, `# fail 0`, `# cancelled 0`.
 - [ ] **Step 5: Run the existing dashboard suite for regressions**
 
 ```bash
-node --test tests/dashboard/
+node --test 'tests/dashboard/*.test.js'
 ```
 
 Expected: no new failures. Note the pre-existing pass/fail counts — you will compare against them in Task 10.
@@ -1121,7 +1121,7 @@ This was decided explicitly (2026-08-21), not overlooked: a corrupt campaign fil
 
 ```bash
 node --test tests/dashboard/json-body-hardening.test.js
-node --test tests/dashboard/
+node --test 'tests/dashboard/*.test.js'
 ```
 
 Expected: `# fail 0`, `# cancelled 0`. The `giveaway-routes.test.js` suite must still pass unchanged — if it does not, a status code moved and the migration was not behaviour-preserving.
@@ -1302,7 +1302,7 @@ git -C /Users/seanfillmore/Code/Claude/.claude/worktrees/route-hardening commit 
 cd /Users/seanfillmore/Code/Claude/.claude/worktrees/route-hardening
 nvm use
 node --version   # must print v22.x
-node --test tests/
+npm test
 ```
 
 Expected: `# fail 0` **and** `# cancelled 0`. Compare pass counts against the baseline recorded in Task 1 Step 5. A drop in total tests run means something stopped being collected.
