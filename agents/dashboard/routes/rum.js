@@ -18,6 +18,7 @@
 import { appendFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT } from '../lib/paths.js';
+import { readJsonBody } from '../lib/responses.js';
 
 // NB: paths.js exports SNAPSHOTS_DIR as data/rank-snapshots, which is a
 // different tree. RUM belongs with the daily metric feeds under data/snapshots.
@@ -54,25 +55,6 @@ function corsHeaders(req) {
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
-}
-
-/** Read the body with a hard byte cap, destroying the socket if exceeded. */
-function readCappedBody(req) {
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    const chunks = [];
-    req.on('data', (chunk) => {
-      size += chunk.length;
-      if (size > MAX_BODY_BYTES) {
-        reject(new Error('body too large'));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    req.on('error', reject);
-  });
 }
 
 function classifyDevice(ua = '') {
@@ -185,18 +167,26 @@ export default [
     match: (url) => url.split('?')[0] === '/api/rum',
     handler: async (req, res) => {
       const headers = { ...corsHeaders(req), 'Content-Type': 'application/json' };
-      let raw;
-      try {
-        raw = await readCappedBody(req);
-      } catch {
-        if (!res.headersSent) { res.writeHead(413, headers); res.end(JSON.stringify({ ok: false })); }
-        return;
-      }
-
       let payload;
-      try { payload = JSON.parse(raw); } catch {
-        res.writeHead(400, headers);
-        res.end(JSON.stringify({ ok: false, error: 'bad json' }));
+      // ACCEPTED DEVIATION (Task 7 fix-round-1 review): an EMPTY body used to be 400
+      // 'bad json' — the old reader's inline `JSON.parse('')` threw on a zero-byte
+      // string. readJsonBody resolves `{}` for an empty body instead (its documented,
+      // pre-existing contract), so an empty POST now falls through to validateBeacon({}),
+      // which fails its own `path` check and answers 422 'no usable metrics' instead.
+      // Both are refusals — this never turns an error into a success — but it IS a
+      // status-code change (400 -> 422) on this process's public, unauthenticated beacon
+      // route. Left as-is rather than special-cased: theme/snippets/rsc-rum.liquid's
+      // sendBeacon call always sends a non-empty JSON body, so this path is not reachable
+      // from the real sender, only from a client hitting the endpoint directly.
+      try {
+        payload = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES });
+      } catch (e) {
+        if (e?.code === 'BODY_TOO_LARGE') {
+          if (!res.headersSent) { res.writeHead(413, headers); res.end(JSON.stringify({ ok: false })); }
+        } else {
+          res.writeHead(400, headers);
+          res.end(JSON.stringify({ ok: false, error: 'bad json' }));
+        }
         return;
       }
 

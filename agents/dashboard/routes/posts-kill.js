@@ -4,6 +4,7 @@
 // lib/post-kill.js so the same logic powers the CLI script.
 
 import { killPost } from '../../../lib/post-kill.js';
+import { readJsonBody } from '../lib/responses.js';
 
 function respondJson(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -16,19 +17,15 @@ export default [
     match: (url) => /^\/api\/posts\/[^/]+\/kill$/.test(url),
     async handler(req, res, ctx) {
       const slug = decodeURIComponent(req.url.split('/')[3]);
-      const chunks = [];
-      req.on('data', (d) => chunks.push(d));
-      req.on('end', async () => {
-        try {
-          const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString() || '{}') : {};
-          const reason = body.reason || 'killed via dashboard';
-          const result = await killPost(slug, { reason });
-          ctx.invalidateDataCache();
-          respondJson(res, { ok: true, slug, ...result });
-        } catch (err) {
-          respondJson(res, { ok: false, error: err.message }, 500);
-        }
-      });
+      try {
+        const body = await readJsonBody(req);
+        const reason = body.reason || 'killed via dashboard';
+        const result = await killPost(slug, { reason });
+        ctx.invalidateDataCache();
+        respondJson(res, { ok: true, slug, ...result });
+      } catch (err) {
+        respondJson(res, { ok: false, error: err.message }, 500);
+      }
     },
   },
 ];

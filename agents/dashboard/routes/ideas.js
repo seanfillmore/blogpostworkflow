@@ -31,12 +31,14 @@ export default [
   {
     method: 'PATCH',
     match: (url) => /^\/api\/ideas\/[^/]+$/.test(url),
-    // lib/router.js's dispatch() calls this async handler without awaiting it and nothing
-    // in this process registers 'unhandledRejection', so ANY throw in here takes down the
-    // whole shared seo-dashboard PM2 process rather than failing one request. This handler
-    // had three ways to do that: an unguarded `await readJsonBody` (malformed JSON), a
-    // destructure of a `null` body, and `keyword.trim()` on a non-string. Guarded the same
-    // "whole handler body" way routes/ad-brief.js documents.
+    // lib/router.js's dispatch() guards the promise this handler returns (a rejection gets
+    // a fixed 500) and lib/fatal-reporter.js backstops anything that still escapes as an
+    // unhandledRejection/uncaughtException, so an unguarded throw here would no longer take
+    // down the shared seo-dashboard PM2 process — but it would still fail this request with
+    // the router's generic, non-specific error. This handler had three ways to throw: an
+    // unguarded `await readJsonBody` (malformed JSON), a destructure of a `null` body, and
+    // `keyword.trim()` on a non-string. Guarded the same "whole handler body" way
+    // routes/ad-brief.js documents, so each failure mode gets its own status and message.
     async handler(req, res) {
       try {
         const slug = decodeURIComponent(req.url.split('/').pop());

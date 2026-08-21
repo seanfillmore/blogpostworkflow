@@ -2,13 +2,18 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { readJsonBody } from '../lib/responses.js';
 
 export default [
   {
     method: 'POST',
     match: '/run-agent',
+    // MUST return the call: ctx.runAgent is async (readJsonBody), and dispatch() in
+    // lib/router.js only guards a rejection it can see on the value THIS handler
+    // returns. Calling without returning would let a body-read rejection become an
+    // unhandled rejection outside the guard's reach.
     handler(req, res, ctx) {
-      ctx.runAgent(req, res);
+      return ctx.runAgent(req, res);
     },
   },
   {
@@ -16,40 +21,40 @@ export default [
     // poll /run-job for output. Avoids the proxy's ~100s 524 on SSE runs.
     method: 'POST',
     match: '/run-agent-bg',
+    // MUST return — same reason as /run-agent above.
     handler(req, res, ctx) {
-      ctx.bgRunStart(req, res);
+      return ctx.bgRunStart(req, res);
     },
   },
   {
     method: 'GET',
     match: (url) => url.startsWith('/run-job'),
+    // Returned for consistency with /run-agent and /run-agent-bg above, even though
+    // ctx.bgRunPoll is fully synchronous today (no rejection dispatch() could miss) —
+    // it is the shape the next change to bgRunPoll must not have to remember to add.
     handler(req, res, ctx) {
-      ctx.bgRunPoll(req, res);
+      return ctx.bgRunPoll(req, res);
     },
   },
   {
     method: 'POST',
     match: (url) => url.startsWith('/brief/'),
-    handler(req, res, ctx) {
+    async handler(req, res, ctx) {
       const parts = req.url.split('/'); // ['', 'brief', slug, 'change', id]
       const slug = parts[2], id = parts[4];
       if (!slug || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing slug or id' })); return; }
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let status;
-        try { ({ status } = JSON.parse(body)); } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
-        if (!['approved', 'rejected'].includes(status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
-        const briefPath = join(ctx.COMP_BRIEFS_DIR, `${slug}.json`);
-        if (!existsSync(briefPath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Brief not found' })); return; }
-        const brief = JSON.parse(readFileSync(briefPath, 'utf8'));
-        const change = brief.proposed_changes?.find(c => c.id === id);
-        if (!change) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Change not found' })); return; }
-        change.status = status;
-        writeFileSync(briefPath, JSON.stringify(brief, null, 2));
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, change }));
-      });
+      let status;
+      try { ({ status } = await readJsonBody(req)); } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
+      if (!['approved', 'rejected'].includes(status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
+      const briefPath = join(ctx.COMP_BRIEFS_DIR, `${slug}.json`);
+      if (!existsSync(briefPath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Brief not found' })); return; }
+      const brief = JSON.parse(readFileSync(briefPath, 'utf8'));
+      const change = brief.proposed_changes?.find(c => c.id === id);
+      if (!change) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Change not found' })); return; }
+      change.status = status;
+      writeFileSync(briefPath, JSON.stringify(brief, null, 2));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, change }));
     },
   },
   {

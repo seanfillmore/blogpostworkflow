@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import Anthropic from '../../lib/anthropic.js';
 import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
+import { notify } from '../../lib/notify.js';
 
 import { serveStatic } from './lib/static.js';
 import { loadEnvAuth, hydrateProcessEnv } from './lib/env.js';
@@ -25,6 +26,7 @@ import { ensureDir } from './lib/fs-helpers.js';
 import { loadData, invalidateDataCache } from './lib/data-loader.js';
 import { createRunAgentHandler, createBackgroundRunHandlers } from './lib/run-agent.js';
 import { dispatch } from './lib/router.js';
+import { createFatalReporter } from './lib/fatal-reporter.js';
 import * as paths from './lib/paths.js';
 
 import dataRoutes from './routes/data.js';
@@ -157,6 +159,13 @@ const BOT_LANDING_HTML = `<!doctype html>
 </html>
 `;
 
+// LAST RESORT, NOT THE FIX — see agents/dashboard/lib/fatal-reporter.js for the full
+// rationale (why it notifies immediately, why the process keeps serving, and why the
+// notify() call is chained rather than awaited-in-a-try/catch).
+const reportFatal = createFatalReporter({ notify });
+process.on('unhandledRejection', (reason) => reportFatal('unhandledRejection', reason));
+process.on('uncaughtException', (err) => reportFatal('uncaughtException', err));
+
 const server = http.createServer((req, res) => {
   const urlPath = (req.url || '/').split('?')[0];
   const ua = req.headers['user-agent'] || '';
@@ -192,7 +201,27 @@ const server = http.createServer((req, res) => {
   res.end('Not found');
 });
 
+// The fatal reporter above intentionally never exits — a request-scoped fault must not
+// take the shared process (and every other tab) down. A BOOT fault is the opposite case:
+// `server.listen()` emits `'error'` synchronously (e.g. EADDRINUSE, EACCES) and with no
+// listener that throws, gets caught by `reportFatal`, and leaves the process "online" in
+// PM2 with no listening socket — a zombie that answers nothing while `pm2 status` still
+// says `online` and the only signal is one deferred email. `listening` distinguishes the
+// two cases: before the listen callback fires, any 'error' is a boot failure and must
+// stay loud (`process.exit(1)`, the only `process.exit` in this module, deliberately
+// contradicting the fatal reporter's never-exit rule) so PM2's restart loop and its
+// `errored` status — the thing meant to catch this — actually sees it. After the callback
+// fires, an 'error' here is request-scoped (e.g. a client resetting a connection) and
+// must not exit, so it just logs.
+let listening = false;
+server.on('error', (err) => {
+  if (listening) { console.error('[dashboard] server error:', err); return; }
+  console.error('[dashboard] failed to bind', BIND, PORT, err);
+  process.exit(1);
+});
+
 server.listen(PORT, BIND, () => {
+  listening = true;
   const url = `http://localhost:${PORT}`;
   console.log(`\nSEO Dashboard — ${config.name}`);
   console.log(`  ${url}`);

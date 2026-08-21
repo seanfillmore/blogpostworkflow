@@ -23,6 +23,7 @@ import { createHash } from 'node:crypto';
 import { join, basename, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { ROOT } from '../lib/paths.js';
+import { readJsonBody } from '../lib/responses.js';
 import { createRateLimiter, getClientIp } from '../lib/rate-limit.js';
 import { entryTotal, normalizeEmail } from '../../../lib/giveaway/entries.js';
 import { uploadImageToShopifyCDN } from '../../../lib/shopify.js';
@@ -266,42 +267,6 @@ function corsHeaders(req) {
 }
 
 /**
- * Read the body with a hard byte cap.
- *
- * Rejects with code BODY_TOO_LARGE once the cap is passed, and deliberately
- * does NOT destroy the socket here. Destroying it at this point reset the
- * connection before the error response could flush, so nginx logged
- *   recv() failed (104: Connection reset by peer) while reading response
- *   header from upstream ... POST /api/giveaway/upload
- * and served the entrant a bare 502 with no message. Teardown belongs after
- * the response is written — see refuseBody.
- *
- * Further chunks are dropped rather than buffered, so an oversized body costs
- * bounded memory even though we stop reading it.
- */
-function readCappedBody(req, cap = MAX_BODY_BYTES) {
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    let overflowed = false;
-    const chunks = [];
-    req.on('data', (c) => {
-      if (overflowed) return;
-      size += c.length;
-      if (size > cap) {
-        overflowed = true;
-        const e = new Error('body too large');
-        e.code = 'BODY_TOO_LARGE';
-        reject(e);
-        return;
-      }
-      chunks.push(c);
-    });
-    req.on('end', () => { if (!overflowed) resolve(Buffer.concat(chunks).toString('utf8')); });
-    req.on('error', reject);
-  });
-}
-
-/**
  * Turn a body-read failure into a response.
  *
  * An oversized body is 413 with a message the entrant can act on, not a
@@ -335,7 +300,7 @@ export default [
     match: (url) => url.split('?')[0] === '/api/giveaway/enter',
     handler: withRateLimit(enterLimiter, async (req, res) => {
       let parsed;
-      try { parsed = JSON.parse(await readCappedBody(req)); }
+      try { parsed = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES, destroyOnOverflow: false }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
 
       const v = validateEntryPayload(parsed);
@@ -384,7 +349,7 @@ export default [
     match: (url) => url.split('?')[0] === '/api/giveaway/answers',
     handler: withRateLimit(mutateLimiter, async (req, res) => {
       let parsed;
-      try { parsed = JSON.parse(await readCappedBody(req)); }
+      try { parsed = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES, destroyOnOverflow: false }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
       let email;
       try { email = normalizeEmail(parsed.email); }
@@ -422,7 +387,7 @@ export function createUploadHandler({
 } = {}) {
   return async (req, res) => {
     let parsed;
-    try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
+    try { parsed = await readJsonBody(req, { maxBytes: MAX_UPLOAD_BASE64 + 2048, destroyOnOverflow: false }); }
     catch (e) { return refuseBody(req, res, e, 'that file is too large (6MB max)'); }
 
     const v = validateUpload(parsed);
@@ -470,13 +435,15 @@ export function createEntriesHandler({ getProfileByEmail: getProfile = getProfil
     let email;
     try { email = normalizeEmail(url.searchParams.get('email')); }
     catch { return json(res, req, 400, { ok: false, error: 'a valid email is required' }); }
-    // MUST be wrapped. dispatch() in agents/dashboard/lib/router.js calls the
-    // handler without awaiting it, and this codebase installs no
-    // unhandledRejection hook — so an un-caught throw here terminates the
-    // whole PM2 process under Node 22's defaults, taking every other
-    // dashboard function down with it. This route is public and
-    // unauthenticated, and klaviyoRequest throws on any non-2xx, so a routine
-    // Klaviyo 5xx or rate-limit would be enough to do it.
+    // MUST be wrapped. dispatch() in agents/dashboard/lib/router.js guards the
+    // promise this handler returns (an escaping rejection gets a fixed 500),
+    // and lib/fatal-reporter.js is the process-level net for anything that
+    // still gets past that, wired to unhandledRejection/uncaughtException in
+    // index.js — so an un-caught throw here no longer terminates the shared
+    // PM2 process. This route is public and unauthenticated, and
+    // klaviyoRequest throws on any non-2xx, so a routine Klaviyo 5xx or
+    // rate-limit is a near-certainty here; this try/catch exists to answer
+    // that with a clean response instead of the router's generic 500.
     try {
       const profile = await getProfile(email);
       // Answer only for GIVEAWAY ENTRANTS, not for "any address Klaviyo knows".

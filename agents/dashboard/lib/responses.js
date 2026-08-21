@@ -9,6 +9,12 @@ export function respondError(res, status, message) {
   res.end(JSON.stringify({ ok: false, error: message }));
 }
 
+/** 1 MB. Generous for every authenticated JSON body (chat caps its message at 2000
+ *  chars; creatives passes filenames and session ids, never image bytes) and far below
+ *  a memory problem. The one route that receives image bytes, POST /api/creatives/generate,
+ *  is multipart via multer and never reaches this function. */
+export const DEFAULT_MAX_BYTES = 1024 * 1024;
+
 /**
  * Resolves the parsed JSON body, or REJECTS — it never resolves something a validator
  * will throw on.
@@ -43,12 +49,58 @@ export function respondError(res, status, message) {
  *
  * An absent body still resolves `{}` — a GET-shaped POST with no fields is an ordinary
  * request, and that behaviour predates this change.
+ *
+ * THE CAP. This is the single body reader for all twelve route modules, and two of them
+ * — /api/rum and /api/giveaway/* — are deliberately UNAUTHENTICATED. They capped their
+ * bodies before this unification, so the cap is a per-call option and those callers pass
+ * their own existing values (8 KB, 4 KB, and MAX_UPLOAD_BASE64 + 2048 respectively).
+ * A single shared constant would have silently raised the limit on the two routes that
+ * most need one. `err.code = 'BODY_TOO_LARGE'` is load-bearing: giveaway.js branches on
+ * that exact string to answer 413 rather than 400.
+ *
+ * `destroyOnOverflow` (default `true`): whether the overflow path calls `req.destroy()`
+ * itself. Destroying immediately is right for every already-migrated caller — it stops a
+ * client from streaming megabytes into a request that has already been refused — which is
+ * why the default is `true`. The default is `true` ONLY because it preserves every already
+ * -migrated caller's behaviour, not because destroying eagerly is the better choice; it is
+ * simply the one this function cannot change out from under callers that already depend on
+ * it (rum.js keeps the default for exactly this reason). giveaway.js's three call sites
+ * pass `destroyOnOverflow: false`: destroying the socket the moment the cap is exceeded
+ * means the 413 response never reaches the client — the connection resets before it can
+ * flush — and nginx serves the entrant a bare 502 with no message instead, on a public,
+ * unauthenticated, paid-traffic route. `tests/dashboard/giveaway-routes.test.js:182` pins
+ * the fix: the socket must not be destroyed before the response is written. The rejection
+ * still carries `err.code = 'BODY_TOO_LARGE'` either way — callers that opt out of the
+ * eager destroy are expected to tear the socket down themselves once their own response has
+ * flushed (see giveaway.js's `refuseBody`, which does exactly that via `res.on('finish', ...)`).
+ *
+ * Chunks are buffered and concatenated as Buffers, never accumulated with `body += chunk`.
+ * The latter calls toString() per chunk and corrupts any UTF-8 sequence that straddles a
+ * chunk boundary — which every hand-rolled reader this replaces was doing.
  */
-export function readJsonBody(req) {
+export function readJsonBody(req, { maxBytes = DEFAULT_MAX_BYTES, destroyOnOverflow = true } = {}) {
   return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (d) => { body += d; });
+    let size = 0;
+    let overflowed = false;
+    const chunks = [];
+
+    req.on('data', (chunk) => {
+      if (overflowed) return;
+      size += chunk.length;
+      if (size > maxBytes) {
+        overflowed = true;
+        const err = new Error('request body too large');
+        err.code = 'BODY_TOO_LARGE';
+        reject(err);
+        if (destroyOnOverflow) req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+
     req.on('end', () => {
+      if (overflowed) return;
+      const body = Buffer.concat(chunks).toString('utf8');
       if (!body) return resolve({});
       let parsed;
       try { parsed = JSON.parse(body); } catch (err) { return reject(err); }
@@ -59,6 +111,7 @@ export function readJsonBody(req) {
       }
       resolve(parsed);
     });
+
     req.on('error', reject);
   });
 }

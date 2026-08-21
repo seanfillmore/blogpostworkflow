@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { readJsonBody } from '../lib/responses.js';
 
 function campaignsDir(ctx) {
   return join(ctx.ROOT, 'data', 'campaigns');
@@ -13,17 +14,6 @@ function notFound(res) {
   res.end(JSON.stringify({ ok: false, error: 'Not found' }));
 }
 
-function readJson(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (d) => { body += d; });
-    req.on('end', () => {
-      try { resolve(body ? JSON.parse(body) : {}); } catch (err) { reject(err); }
-    });
-    req.on('error', reject);
-  });
-}
-
 export default [
   // Order matters: more-specific (longer) patterns must come before the bare `/:id` match.
   {
@@ -32,7 +22,7 @@ export default [
     async handler(req, res, ctx) {
       const id = req.url.split('/')[3];
       try {
-        const { approvedBudget } = await readJson(req);
+        const { approvedBudget } = await readJsonBody(req);
         if (!approvedBudget || approvedBudget <= 0) throw new Error('approvedBudget must be a positive number');
         const file = join(campaignsDir(ctx), `${id}.json`);
         if (!existsSync(file)) return notFound(res);
@@ -68,7 +58,7 @@ export default [
     async handler(req, res, ctx) {
       const id = req.url.split('/')[3];
       try {
-        const { clarificationResponse } = await readJson(req);
+        const { clarificationResponse } = await readJsonBody(req);
         if (typeof clarificationResponse !== 'string' || !clarificationResponse.trim()) throw new Error('clarificationResponse must be a non-empty string');
         const file = join(campaignsDir(ctx), `${id}.json`);
         if (!existsSync(file)) return notFound(res);

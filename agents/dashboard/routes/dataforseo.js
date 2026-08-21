@@ -6,6 +6,7 @@
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getBacklinksSummary, getRankedKeywords } from '../../../lib/dataforseo.js';
+import { readJsonBody } from '../lib/responses.js';
 
 export default [
   // Fetch SEO authority data from DataForSEO and cache as JSON.
@@ -49,37 +50,33 @@ export default [
   {
     method: 'POST',
     match: '/api/reject-keyword',
-    handler(req, res, ctx) {
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let payload;
-        try { payload = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
-          return;
-        }
-        const { keyword, matchType, reason } = payload;
-        if (!keyword || !matchType) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: false, error: 'keyword and matchType are required' }));
-          return;
-        }
-        try {
-          const filePath = join(ctx.ROOT, 'data', 'rejected-keywords.json');
-          const existing = existsSync(filePath)
-            ? JSON.parse(readFileSync(filePath, 'utf8'))
-            : [];
-          existing.push({ keyword, matchType, reason: reason || null, rejectedAt: new Date().toISOString() });
-          writeFileSync(filePath, JSON.stringify(existing, null, 2));
-          ctx.invalidateDataCache();
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-        } catch (err) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: false, error: err.message }));
-        }
-      });
+    async handler(req, res, ctx) {
+      let payload;
+      try { payload = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      const { keyword, matchType, reason } = payload;
+      if (!keyword || !matchType) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'keyword and matchType are required' }));
+        return;
+      }
+      try {
+        const filePath = join(ctx.ROOT, 'data', 'rejected-keywords.json');
+        const existing = existsSync(filePath)
+          ? JSON.parse(readFileSync(filePath, 'utf8'))
+          : [];
+        existing.push({ keyword, matchType, reason: reason || null, rejectedAt: new Date().toISOString() });
+        writeFileSync(filePath, JSON.stringify(existing, null, 2));
+        ctx.invalidateDataCache();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
     },
   },
 ];

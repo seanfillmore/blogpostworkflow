@@ -2,6 +2,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRedirect } from '../../../lib/shopify.js';
+import { readJsonBody } from '../lib/responses.js';
 
 function respondJson(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -39,37 +40,33 @@ export default [
     method: 'POST',
     match: (url) => /^\/api\/cannibalization\/resolve$/.test(url),
     async handler(req, res, ctx) {
-      let body = '';
-      req.on('data', (d) => { body += d; });
-      req.on('end', async () => {
-        try {
-          const { query, winner, loser, action } = JSON.parse(body);
-          if (!query || !winner || !loser || !action) {
-            return respondJson(res, { ok: false, error: 'Missing required fields: query, winner, loser, action' }, 400);
-          }
-
-          if (action === 'REDIRECT') {
-            try {
-              await createRedirect(toPath(loser), toPath(winner));
-            } catch (err) {
-              // 422 = redirect already exists for this path — treat as success
-              if (!err.message.includes('422')) throw err;
-            }
-          } else if (action !== 'DISMISS') {
-            return respondJson(res, { ok: false, error: `Unknown action: ${action}` }, 400);
-          }
-
-          const loaded = loadReport(ctx);
-          if (loaded) {
-            markResolved(loaded.report, query, action);
-            recountAndSave(loaded.path, loaded.report);
-          }
-
-          respondJson(res, { ok: true, action });
-        } catch (err) {
-          respondJson(res, { ok: false, error: err.message }, 502);
+      try {
+        const { query, winner, loser, action } = await readJsonBody(req);
+        if (!query || !winner || !loser || !action) {
+          return respondJson(res, { ok: false, error: 'Missing required fields: query, winner, loser, action' }, 400);
         }
-      });
+
+        if (action === 'REDIRECT') {
+          try {
+            await createRedirect(toPath(loser), toPath(winner));
+          } catch (err) {
+            // 422 = redirect already exists for this path — treat as success
+            if (!err.message.includes('422')) throw err;
+          }
+        } else if (action !== 'DISMISS') {
+          return respondJson(res, { ok: false, error: `Unknown action: ${action}` }, 400);
+        }
+
+        const loaded = loadReport(ctx);
+        if (loaded) {
+          markResolved(loaded.report, query, action);
+          recountAndSave(loaded.path, loaded.report);
+        }
+
+        respondJson(res, { ok: true, action });
+      } catch (err) {
+        respondJson(res, { ok: false, error: err.message }, 502);
+      }
     },
   },
   // Auto-resolve all unresolved conflicts by redirecting losers to the suggested winner
