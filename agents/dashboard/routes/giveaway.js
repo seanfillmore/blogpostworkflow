@@ -23,6 +23,7 @@ import { createHash } from 'node:crypto';
 import { join, basename, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { ROOT } from '../lib/paths.js';
+import { readJsonBody } from '../lib/responses.js';
 import { createRateLimiter, getClientIp } from '../lib/rate-limit.js';
 import { entryTotal, normalizeEmail } from '../../../lib/giveaway/entries.js';
 import { uploadImageToShopifyCDN } from '../../../lib/shopify.js';
@@ -266,39 +267,28 @@ function corsHeaders(req) {
 }
 
 /**
- * Read the body with a hard byte cap.
+ * readJsonBody(req, opts) — deferring its own socket teardown.
  *
- * Rejects with code BODY_TOO_LARGE once the cap is passed, and deliberately
- * does NOT destroy the socket here. Destroying it at this point reset the
- * connection before the error response could flush, so nginx logged
+ * readJsonBody destroys the socket the instant an overflowing chunk is seen
+ * (agents/dashboard/lib/responses.js), which is correct for the other eleven
+ * route modules and is itself tested to do exactly that. On this public route
+ * it is wrong: destroying before the 413 response flushes resets the
+ * connection before the client sees it, and nginx logs
  *   recv() failed (104: Connection reset by peer) while reading response
  *   header from upstream ... POST /api/giveaway/upload
- * and served the entrant a bare 502 with no message. Teardown belongs after
- * the response is written — see refuseBody.
- *
- * Further chunks are dropped rather than buffered, so an oversized body costs
- * bounded memory even though we stop reading it.
+ * and serves the entrant a bare 502 with no message — the exact incident
+ * refuseBody's own 'finish'-listener teardown below exists to prevent. The
+ * readCappedBody this replaced avoided the bug by never destroying eagerly in
+ * the first place; readJsonBody cannot be changed to match (its eager destroy
+ * is load-bearing for the shared contract other callers rely on), so instead
+ * swallow any destroy call that lands before refuseBody gets a chance to
+ * attach its own listener, then hand the real destroy back so that listener's
+ * call still tears the socket down once the response is actually written.
  */
-function readCappedBody(req, cap = MAX_BODY_BYTES) {
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    let overflowed = false;
-    const chunks = [];
-    req.on('data', (c) => {
-      if (overflowed) return;
-      size += c.length;
-      if (size > cap) {
-        overflowed = true;
-        const e = new Error('body too large');
-        e.code = 'BODY_TOO_LARGE';
-        reject(e);
-        return;
-      }
-      chunks.push(c);
-    });
-    req.on('end', () => { if (!overflowed) resolve(Buffer.concat(chunks).toString('utf8')); });
-    req.on('error', reject);
-  });
+function readBody(req, opts) {
+  const realDestroy = typeof req.destroy === 'function' ? req.destroy.bind(req) : () => {};
+  req.destroy = () => {};
+  return readJsonBody(req, opts).finally(() => { req.destroy = realDestroy; });
 }
 
 /**
@@ -335,7 +325,7 @@ export default [
     match: (url) => url.split('?')[0] === '/api/giveaway/enter',
     handler: withRateLimit(enterLimiter, async (req, res) => {
       let parsed;
-      try { parsed = JSON.parse(await readCappedBody(req)); }
+      try { parsed = await readBody(req, { maxBytes: MAX_BODY_BYTES }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
 
       const v = validateEntryPayload(parsed);
@@ -384,7 +374,7 @@ export default [
     match: (url) => url.split('?')[0] === '/api/giveaway/answers',
     handler: withRateLimit(mutateLimiter, async (req, res) => {
       let parsed;
-      try { parsed = JSON.parse(await readCappedBody(req)); }
+      try { parsed = await readBody(req, { maxBytes: MAX_BODY_BYTES }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
       let email;
       try { email = normalizeEmail(parsed.email); }
@@ -422,7 +412,7 @@ export function createUploadHandler({
 } = {}) {
   return async (req, res) => {
     let parsed;
-    try { parsed = JSON.parse(await readCappedBody(req, MAX_UPLOAD_BASE64 + 2048)); }
+    try { parsed = await readBody(req, { maxBytes: MAX_UPLOAD_BASE64 + 2048 }); }
     catch (e) { return refuseBody(req, res, e, 'that file is too large (6MB max)'); }
 
     const v = validateUpload(parsed);

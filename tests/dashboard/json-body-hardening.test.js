@@ -481,11 +481,12 @@ test('readJsonBody passes an array through untouched, and objects unchanged', as
 // ── the unauthenticated surface: dispatched BEFORE checkAuth ─────────────────────────────
 //
 // agents/dashboard/index.js dispatches /api/rum and /api/giveaway/* ahead of checkAuth, so a
-// crash reachable through either is reachable with no credentials at all. Neither uses
-// readJsonBody — both do their own capped read and JSON.parse — so the central fix does NOT
-// cover them and they are pinned separately. Both turn out to be safe already, one by design
-// and one by luck, and this records which is which so a later edit cannot quietly remove the
-// protection.
+// crash reachable through either is reachable with no credentials at all. Both now read their
+// bodies through readJsonBody like every other route (Task 7 deduplicated their promise-style
+// hand-rolled readers), but their byte caps and validators are still pinned separately here:
+// rum and giveaway pass their own maxBytes per call (8 KB, 4 KB, MAX_UPLOAD_BASE64 + 2048)
+// rather than the 1 MB default, and this is what proves that unification did not loosen either
+// cap on the two routes that most need one.
 
 test('POST /api/rum refuses every non-object body by explicit type check, not by luck', async () => {
   rejections.length = 0;
@@ -514,6 +515,26 @@ test("giveaway's payload validators survive a null body — inside a try/catch, 
     const u = validateUpload(bad);
     assert.equal(u.ok, false, `validateUpload(${JSON.stringify(bad)}) must refuse, not throw`);
   }
+});
+
+test('rum still refuses a body over 8 KB', async () => {
+  const res = makeRes();
+  const oversized = JSON.stringify({ pad: 'x'.repeat(9 * 1024) });
+  dispatch(rumRoutes, makeReq('POST', '/api/rum', oversized), res, {});
+  await drain();
+  assert.ok(res.statusCode >= 400, `expected a 4xx, got ${res.statusCode}`);
+  assert.deepEqual(rejections, []);
+});
+
+test('giveaway entry routes still refuse a body over 4 KB', async () => {
+  // Direct reader call, not a dispatch: the giveaway handlers sit behind a rate limiter
+  // keyed on socket details a stub request has no business faking — the same reason the
+  // existing tests in this file validate giveaway through its exported validators.
+  const oversized = JSON.stringify({ pad: 'x'.repeat(5 * 1024) });
+  await assert.rejects(
+    () => readJsonBody(makeChunkedReq(oversized), { maxBytes: 4 * 1024 }),
+    (err) => err.code === 'BODY_TOO_LARGE',
+  );
 });
 
 // ---------------------------------------------------------------------------

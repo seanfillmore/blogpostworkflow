@@ -18,6 +18,7 @@
 import { appendFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT } from '../lib/paths.js';
+import { readJsonBody } from '../lib/responses.js';
 
 // NB: paths.js exports SNAPSHOTS_DIR as data/rank-snapshots, which is a
 // different tree. RUM belongs with the daily metric feeds under data/snapshots.
@@ -54,25 +55,6 @@ function corsHeaders(req) {
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
-}
-
-/** Read the body with a hard byte cap, destroying the socket if exceeded. */
-function readCappedBody(req) {
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    const chunks = [];
-    req.on('data', (chunk) => {
-      size += chunk.length;
-      if (size > MAX_BODY_BYTES) {
-        reject(new Error('body too large'));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    req.on('error', reject);
-  });
 }
 
 function classifyDevice(ua = '') {
@@ -185,18 +167,16 @@ export default [
     match: (url) => url.split('?')[0] === '/api/rum',
     handler: async (req, res) => {
       const headers = { ...corsHeaders(req), 'Content-Type': 'application/json' };
-      let raw;
-      try {
-        raw = await readCappedBody(req);
-      } catch {
-        if (!res.headersSent) { res.writeHead(413, headers); res.end(JSON.stringify({ ok: false })); }
-        return;
-      }
-
       let payload;
-      try { payload = JSON.parse(raw); } catch {
-        res.writeHead(400, headers);
-        res.end(JSON.stringify({ ok: false, error: 'bad json' }));
+      try {
+        payload = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES });
+      } catch (e) {
+        if (e?.code === 'BODY_TOO_LARGE') {
+          if (!res.headersSent) { res.writeHead(413, headers); res.end(JSON.stringify({ ok: false })); }
+        } else {
+          res.writeHead(400, headers);
+          res.end(JSON.stringify({ ok: false, error: 'bad json' }));
+        }
         return;
       }
 
