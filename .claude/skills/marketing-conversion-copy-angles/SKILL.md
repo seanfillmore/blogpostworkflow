@@ -43,7 +43,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Fit here (7/10):** Durable direct-response curiosity mechanics, age irrelevant. This is the construction rule; the curiosity-loop entry further down governs the other end — that the destination actually pays the loop off. Both are needed and neither replaces the other. Free, and applies today to the Meta primary text on the live $30/day giveaway campaign, to email subject lines and preheaders on the retention surface, and to PDP hero lines. The named LLM failure mode matters here specifically because a solo operator drafts with an LLM and will otherwise ship the summarizing version: check every drafted opener for whether it has already given away the answer. Not higher because at ~54 orders/month and a sub-1,000 list the effect is unreadable, so it is a judgement rule applied at draft-review time rather than something testable.
 
-*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (book, excerpt unknown)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ## Inject a trigger word or emotionally loaded phrase ('ruining my life', 'quits by noon') into a hook structure that already converts — don't rebuild the structure.
 
@@ -63,7 +63,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Fit here (6/10):** Durable opening-construction principle, age irrelevant, and additive — this skill covers transformation-first ordering and negative framing, but nothing else owns where in the timeline the first sentence lands. It is the sentence-level companion to the withheld-resolution rule above: mid-action is the easiest way to open a loop without closing it. Free and directly usable on the live Meta primary text, on email subject lines, and on PDP hero copy — 'I kept my arms down through the whole meeting' is a mid-action opening the category actually supports, and the raw material already exists in the pain-based review quotes `marketing-review-mining` tells you to elicit. Capped at 6 because it is a craft rule rather than a revenue mechanism, and because for a body-care brand any mid-action scene must be a real customer moment rather than an invented one.
 
-*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (book, excerpt unknown)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ## Put roughly 90% of your copy effort into the concept and the hook — the body is a formulaic outline you can model off an existing ad.
 
@@ -73,7 +73,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Fit here (6/10):** Durable effort-allocation principle, age irrelevant. Directly useful now that a $30/day hand-run Meta campaign is live: one operator with finite hours building a 3-2-2 flexible ad needs two meaningfully different primary texts, and this says the two should differ in **concept and hook** while the body structure stays fixed — which is what makes them a real comparison rather than two rewordings. It also transfers to email subject lines and Amazon A+ block leads. Capped at 6 because it is a prioritization rule rather than a revenue mechanism, and at ~54 orders/month and $30/day the payoff of concentrating effort will be judged, never measured.
 
-*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (book, excerpt unknown)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ## Write to a primal desire (status, sex, belonging, safety, approval) and treat the product as the mechanism, not the headline.
 
@@ -93,7 +93,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Fit here (5/10):** Durable positioning-within-a-format principle. Real overlap with the primal-desire rule above ('the product is the mechanism, not the headline'), which is what caps it; the additive part is narrower and format-specific — in an organic-styled Meta ad or a founder-voice caption, naming the deodorant in line one destroys the only advantage the format has. Usable now on the live giveaway campaign's primary text at zero cost. Held at 5 because it does not transfer to the surfaces carrying most revenue: an Amazon title and bullets must name the product immediately, and a PDP hero that hides it is just confusing. Scope it to social copy and do not let it leak onto the listing.
 
-*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (book, excerpt unknown)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ## Lead with the transformation — the 'day without pain' after-state — instead of the conventional problem-then-solution order.
 
@@ -173,7 +173,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Fit here (5/10):** Platform-mechanics class for the format specifics (Meta caption behaviour, no-text organic image), and undated — treat the format detail with suspicion even though the underlying story-lead principle is durable. The reason to adopt at all is that it is one of the very few ad formats a solo operator with no designer and no video can actually produce: a plain phone photo plus written text, which makes it a legitimate second primary text inside the 3-2-2 flexible ad now running at $30/day. Scale-down stated: 300–800 words in the founder's own voice, not 3,000, and the story must be true — either the founder's reason for formulating baking-soda-free, or a real customer's transition-period account sourced through `marketing-review-mining`. A fabricated emotional testimonial in body care is an FTC problem, not a creative choice. Pair with the mid-action opening and the product-out-of-the-hook rules above, which are the two craft rules this format depends on. Held at 5 because the evidence is entirely illustrative, and long-form emotional copy is a poor fit for a $12 consumable giveaway entry compared with a direct problem-aware angle.
 
-*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (book, excerpt unknown)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ## When displaying someone else's proof, keep the identifying detail that has nothing to do with the result — age, occupation, location — because the irrelevant detail is what makes the claim feel real.
 

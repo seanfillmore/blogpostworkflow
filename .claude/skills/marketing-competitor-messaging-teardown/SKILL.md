@@ -50,7 +50,7 @@ Because no ad account is running, point the finished piece at live surfaces: Ama
 
 **Fit here (6/10):** Mostly durable — a briefing and modeling workflow, not a UI feature. Free, solo-executable, and it closes the gap left by the run-duration section, which says to model the pattern but never says how. Held at 6 because the output must be checked hard against the specificity and body-care claim rules, and because structure-modeling must stay strictly structural.
 
-*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (book, excerpt unknown)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ### Extend the same gap analysis to email, and pull the reference sends from a public archive instead of waiting on your inbox.
 

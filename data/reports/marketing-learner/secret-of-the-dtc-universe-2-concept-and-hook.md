@@ -1,7 +1,7 @@
 # Secret of the DTC Universe #2: Concept and Hook
 
 **Creator:** Stefan Georgi  
-**Source:** book — `secret-of-the-dtc-universe-2-concept-and-hook`  
+**Source:** social post — `secret-of-the-dtc-universe-2-concept-and-hook`  
 **Published:** unknown (not supplied via --published)  
 **Inferred era cues:** No explicit year. Era cues: routine use of LLMs to draft full ad copy and the observation that LLMs habitually 'close the loop' (post-ChatGPT, ~2023+); the long-form 'native style Meta caption' ad format and Meta ad naming, placing it firmly in the 2024–2025 DTC paid-social era. The hook-construction content itself names no platform feature and reads as durable direct-response principle; only the native-caption format description is platform-specific.  
 
