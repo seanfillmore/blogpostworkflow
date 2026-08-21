@@ -2,6 +2,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { readJsonBody } from '../lib/responses.js';
 
 export default [
   {
@@ -48,7 +49,7 @@ export default [
   {
     method: 'POST',
     match: (url) => url.startsWith('/ads/') && url.endsWith('/chat') && url.includes('/suggestion/'),
-    handler(req, res, ctx) {
+    async handler(req, res, ctx) {
       const parts = req.url.split('/'); // ['', 'ads', date, 'suggestion', id, 'chat']
       const date = parts[2], id = parts[4];
       if (!date || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing date or id' })); return; }
@@ -58,21 +59,31 @@ export default [
       if (ctx.adsInFlight.has(inFlightKey)) { res.writeHead(429, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Request already in progress' })); return; }
       ctx.adsInFlight.add(inFlightKey);
 
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', async () => {
-        const cleanup = () => ctx.adsInFlight.delete(inFlightKey);
-        let payload;
-        try { payload = JSON.parse(body); } catch { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
+      const cleanup = () => ctx.adsInFlight.delete(inFlightKey);
+
+      let payload;
+      try {
+        payload = await readJsonBody(req);
+      } catch {
+        // cleanup() MUST run here. The in-flight key was added before the body was
+        // read, and a rejection escaping to the router guard would leave it set — the
+        // suggestion would answer 429 forever, with no expiry to recover it.
+        cleanup();
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+
+      try {
         const message = (payload.message || '').trim();
-        if (!message) { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message is required' })); return; }
-        if (message.length > 2000) { cleanup(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message exceeds 2000 characters' })); return; }
+        if (!message) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message is required' })); return; }
+        if (message.length > 2000) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'message exceeds 2000 characters' })); return; }
 
         const filePath = join(ctx.ADS_OPTIMIZER_DIR, `${date}.json`);
-        if (!existsSync(filePath)) { cleanup(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion file not found' })); return; }
+        if (!existsSync(filePath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion file not found' })); return; }
         const fileData = JSON.parse(readFileSync(filePath, 'utf8'));
         const suggestion = fileData.suggestions?.find(s => s.id === id);
-        if (!suggestion) { cleanup(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
+        if (!suggestion) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
 
         // Append user message to chat history
         if (!suggestion.chat) suggestion.chat = [];
@@ -181,7 +192,6 @@ export default [
             tools,
           });
         } catch (err) {
-          cleanup();
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
           res.write(`data: Error contacting Claude: ${err.message.replace(/\n/g, '\\n')}\n\n`);
           res.write('data: [DONE]\n\n');
@@ -253,7 +263,6 @@ export default [
             res.write(`data: Error: ${err.message.replace(/\n/g, '\\n')}\n\n`);
             res.write('data: [DONE]\n\n');
             res.end();
-            cleanup();
             return;
           }
         } else {
@@ -275,40 +284,43 @@ export default [
 
         res.write('data: [DONE]\n\n');
         res.end();
+      } finally {
         cleanup();
-      });
+      }
     },
   },
   {
     method: 'POST',
     match: (url) => url.startsWith('/ads/') && url.includes('/suggestion/') && !url.endsWith('/chat'),
-    handler(req, res, ctx) {
+    async handler(req, res, ctx) {
       const parts = req.url.split('/'); // ['', 'ads', date, 'suggestion', id]
       const date = parts[2], id = parts[4];
       if (!date || !id) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Missing date or id' })); return; }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid date' })); return; }
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let payload;
-        try { payload = JSON.parse(body); } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' })); return; }
-        const filePath = join(ctx.ADS_OPTIMIZER_DIR, `${date}.json`);
-        if (!existsSync(filePath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion file not found' })); return; }
-        const data = JSON.parse(readFileSync(filePath, 'utf8'));
-        const suggestion = data.suggestions?.find(s => s.id === id);
-        if (!suggestion) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
-        if (payload.status !== undefined) {
-          if (!['approved', 'rejected'].includes(payload.status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
-          suggestion.status = payload.status;
-        }
-        if (payload.editedValue !== undefined) {
-          if (typeof payload.editedValue !== 'string' || payload.editedValue.length > 200) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid editedValue' })); return; }
-          suggestion.editedValue = payload.editedValue;
-        }
-        writeFileSync(filePath, JSON.stringify(data, null, 2));
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, suggestion }));
-      });
+
+      let payload;
+      try { payload = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+
+      const filePath = join(ctx.ADS_OPTIMIZER_DIR, `${date}.json`);
+      if (!existsSync(filePath)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion file not found' })); return; }
+      const data = JSON.parse(readFileSync(filePath, 'utf8'));
+      const suggestion = data.suggestions?.find(s => s.id === id);
+      if (!suggestion) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Suggestion not found' })); return; }
+      if (payload.status !== undefined) {
+        if (!['approved', 'rejected'].includes(payload.status)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'status must be approved or rejected' })); return; }
+        suggestion.status = payload.status;
+      }
+      if (payload.editedValue !== undefined) {
+        if (typeof payload.editedValue !== 'string' || payload.editedValue.length > 200) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'Invalid editedValue' })); return; }
+        suggestion.editedValue = payload.editedValue;
+      }
+      writeFileSync(filePath, JSON.stringify(data, null, 2));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, suggestion }));
     },
   },
 ];

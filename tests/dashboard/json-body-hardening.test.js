@@ -26,6 +26,7 @@ import { test, before, after } from 'node:test';
 import { dispatch } from '../../agents/dashboard/lib/router.js';
 import { readJsonBody } from '../../agents/dashboard/lib/responses.js';
 import adBriefRoutes from '../../agents/dashboard/routes/ad-brief.js';
+import adsRoutes from '../../agents/dashboard/routes/ads.js';
 import adStudioLaunchRoutes from '../../agents/dashboard/routes/ad-studio-launch.js';
 import adStudioRoutes from '../../agents/dashboard/routes/ad-studio.js';
 import chatRoutes from '../../agents/dashboard/routes/chat.js';
@@ -41,6 +42,7 @@ import { validateEntryPayload, validateUpload } from '../../agents/dashboard/rou
 // business faking.
 const ROUTES = [
   ...adBriefRoutes,
+  ...adsRoutes,
   ...adStudioLaunchRoutes,
   ...adStudioRoutes,
   ...chatRoutes,
@@ -79,6 +81,8 @@ const TARGETS = [
   ['POST', '/api/ad-brief/decide'],
   ['POST', '/api/ad-brief/format'],
   ['POST', '/api/ad-brief/render'],
+  ['POST', '/ads/2026-08-21/suggestion/no-such-id-xyz/chat'],
+  ['POST', '/ads/2026-08-21/suggestion/no-such-id-xyz'],
   ['POST', '/api/ad-studio/launch'],
   ['POST', '/api/ad-studio/run/no-such-run-xyz/decide'],
   ['POST', '/api/chat'],
@@ -107,12 +111,16 @@ for (const body of HOSTILE_BODIES) {
   test(`a request body of ${body} never reaches a handler as something that throws on property access`, async () => {
     rejections.length = 0;
     const answers = [];
+    // ads.js's chat route reads ctx.adsInFlight before the body, and its update route
+    // reads ctx.ADS_OPTIMIZER_DIR after — both need to exist for the sweep to reach the
+    // JSON parse rather than throwing on ctx access first.
+    const ctx = { adsInFlight: new Set(), ADS_OPTIMIZER_DIR: '/tmp/no-such-dir-xyz' };
 
     for (const [method, url] of TARGETS) {
       const res = makeRes();
       // NOT awaited — exactly how lib/router.js's dispatch() calls a handler, and exactly
       // why an internal throw used to become an unhandled rejection rather than a 500.
-      const matched = dispatch(ROUTES, makeReq(method, url, body), res, {});
+      const matched = dispatch(ROUTES, makeReq(method, url, body), res, ctx);
       assert.equal(matched, true, `${method} ${url} must still match a route`);
       answers.push({ url, res });
     }
@@ -135,6 +143,20 @@ for (const body of HOSTILE_BODIES) {
     }
   });
 }
+
+test('a rejected body read does not strand the ads in-flight key', async () => {
+  // ctx.adsInFlight is added to BEFORE the body is read and removed on every early
+  // return. If a body-read rejection escapes instead, the key is never removed and that
+  // suggestion answers 429 until the process restarts — a permanent, silent lockout.
+  const adsInFlight = new Set();
+  const ctx = { adsInFlight, ADS_OPTIMIZER_DIR: '/tmp/no-such-dir-xyz' };
+  const res = makeRes();
+
+  dispatch(adsRoutes, makeReq('POST', '/ads/2026-08-21/suggestion/lock-test/chat', 'null'), res, ctx);
+  await drain();
+
+  assert.equal(adsInFlight.has('2026-08-21/lock-test'), false, 'the in-flight key was released');
+});
 
 // ── readJsonBody's own contract ─────────────────────────────────────────────────────────
 
