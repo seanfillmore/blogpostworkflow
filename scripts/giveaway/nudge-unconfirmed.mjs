@@ -35,12 +35,19 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-for (const line of readFileSync(join(ROOT, '.env'), 'utf8').split('\n')) {
-  const t = line.trim();
-  if (!t || t.startsWith('#')) continue;
-  const i = t.indexOf('=');
-  if (i > 0 && !process.env[t.slice(0, i).trim()]) process.env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
-}
+// A missing .env must not throw at IMPORT time: selectNudgeTargets below is the
+// send policy, it is pure, and the whole point of exporting it is that the rule
+// "never nudge someone who already confirmed" can be tested without credentials.
+// Crashing here would make that rule untestable anywhere .env is absent. A run
+// that actually needs the token still fails loudly on the first Klaviyo call.
+try {
+  for (const line of readFileSync(join(ROOT, '.env'), 'utf8').split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const i = t.indexOf('=');
+    if (i > 0 && !process.env[t.slice(0, i).trim()]) process.env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+  }
+} catch { /* no .env is a valid state — see above */ }
 
 const { listEntrantProfiles, listProfilesWithConsent, subscribeToList, updateProfileProperties } =
   await import('../../lib/klaviyo-profiles.js');
