@@ -1,0 +1,85 @@
+# Secret of the DTC Universe #2: Concept and Hook
+
+**Creator:** Stefan Georgi  
+**Source:** book — `secret-of-the-dtc-universe-2-concept-and-hook`  
+**Published:** unknown (not supplied via --published)  
+**Inferred era cues:** No explicit year. Era cues: routine use of LLMs to draft full ad copy and the observation that LLMs habitually 'close the loop' (post-ChatGPT, ~2023+); the long-form 'native style Meta caption' ad format and Meta ad naming, placing it firmly in the 2024–2025 DTC paid-social era. The hook-construction content itself names no platform feature and reads as durable direct-response principle; only the native-caption format description is platform-specific.  
+
+A short essay arguing that in Meta ad copy, ~90% of the work belongs in the concept and the hook, because the body of any ad is a formulaic structure that can be modeled off an existing ad — and with an LLM that modeling takes minutes. The bulk of the piece defines what makes a hook good: curiosity-driven, emotional, rarely about the product, opening mid-action, and — most importantly — leaving the loop wide open rather than resolving the story. He demonstrates with a no-pull dog harness native ad, showing a bad AI-generated hook that summarizes the whole story, then six better hook openings, and explains that a hook may legitimately reference an event that never appears in the ad body.
+
+Found 7 tactics: 6 adopted, 1 rejected.
+
+## Adopted
+
+### A hook must open a loop and leave it unresolved — never open and close it in the same breath — and the most common failure, especially from an LLM, is a 'hook' that summarizes the entire ad. — 7/10
+
+**Why it works:** Curiosity is an itch the reader cannot scratch without continuing; a hook that states the setup, the cause and the resolution has already scratched it, so there is no reason to read on. LLMs are trained toward resolution and completion, so their default output is a tidy summary that reads like a hook but functions as an abstract.
+
+**Evidence:** A worked negative example he wrote himself ('My 77 year-old mother used to love walking her dog… Here's how a no-pull harness gave her back those precious mornings') dissected against six better alternatives that stop short of resolution. Practitioner teardown, no data.
+
+**Fit:** Durable principle class (direct-response curiosity mechanics), age irrelevant. Additive rather than duplicative: the existing curiosity-loop entry covers ad-to-landing-page loop closure, but nothing owns the construction rule that the hook itself must withhold the resolution, nor the named LLM failure mode — which matters because a solo operator here drafts copy with an LLM and will otherwise ship the summarizing version. Free, applies today to the Meta ad primary text on the live $30/day giveaway campaign, to email subject lines and preheaders on the retention surface, and to PDP hero lines. Not higher because at ~54 orders/month and a sub-1,000 list the effect is unreadable, so it is a judgement rule applied at draft-review time rather than something testable.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+### Put roughly 90% of your ad-copy effort into finding the concept and the hook, because the rest of the ad is a formulaic outline you can model off an existing ad. — 6/10
+
+**Why it works:** The body of a direct-response ad follows a repeatable structure (story → pain → discovery → proof → CTA) that is largely interchangeable across brands, so time spent rewriting it produces almost no differentiation. The concept and hook are the only parts that decide whether anyone reads the body at all, so effort concentrated there is the only effort that changes the outcome.
+
+**Evidence:** Assertion only, with the supporting claim that the four-step LLM modeling process produces 'a good ad' 99% of the time in 1–2 minutes plus ~10 minutes of tweaks. No spend, CTR, or conversion figures.
+
+**Fit:** Durable principle class (effort allocation in direct response), so age is irrelevant. Directly useful now that a $30/day hand-run Meta campaign is live: one operator with finite hours building a 3-2-2 flexible ad needs two meaningfully different primary texts, and this says the two should differ in concept/hook while the body structure stays fixed — which is exactly what makes them a real comparison rather than two rewordings. It also transfers to email subject lines and Amazon A+ block leads. Capped at 6 because it is a prioritization rule rather than a revenue mechanism, and at ~54 orders/month and $30/day the payoff of concentrating effort will be judged, never measured.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+### Model a new ad by giving an LLM an existing ad from another brand, asking it to analyze structure, voice and word count, then supplying your own hook plus brand context and asking it to write a new ad matching that structure and length. — 6/10
+
+**Why it works:** The winning ad's structure encodes ordering and pacing decisions someone else already validated; handing that structure to an LLM as an explicit template, alongside your own concept and brand facts, means the model reproduces the proven skeleton rather than inventing an average one — so the only genuinely new input required is the hook.
+
+**Evidence:** Four numbered steps with the claim that it works '99% of the time' and takes 1–2 minutes plus ~10 minutes of edits. Practitioner assertion, no examples of output and no performance data.
+
+**Fit:** Mostly durable (a briefing/modeling workflow, not a UI feature). Free, solo-executable, and it is the operational completion of the competitor-teardown work already recorded: that skill tells you to sort the Meta Ad Library by run duration and 'model the pattern, do not copy the copy', but never says how to turn a survivor into your own asset. Native, Every Man Jack, Harry's and Dr. Squatch all have long-running ads to model. Held at 6 because the output must be checked hard against the specificity and body-care claim rules — an LLM reproducing a competitor's structure will happily reproduce a claim RSC cannot substantiate — and because structure-modeling must stay structural, since lifting phrasing from a competitor's live ad is a real legal and credibility risk.
+
+**Target skill:** `marketing-competitor-messaging-teardown` (edit)
+
+### Open the hook in the middle of the action, with something already happening, rather than setting the scene first. — 6/10
+
+**Why it works:** A line that drops the reader into an event in progress creates an immediate gap — what is happening, and why — that the reader has to keep reading to fill, whereas a scene-setting opener asks them to invest attention before anything has happened.
+
+**Evidence:** Six alternative hooks with the operative verbs called out ('was laying', 'I saw', 'was mad/felt sorry', 'she quit', 'she stopped'), contrasted against the summarizing version. Illustrative, no performance data.
+
+**Fit:** Durable principle class (opening construction), age irrelevant, and additive — the existing copy skill covers transformation-first ordering, negative framing and how-to stems, but nothing owns mid-action openings. Free and directly usable on the live Meta primary text, on email subject lines, and on PDP hero copy: 'I kept my arms down through the whole meeting' is a mid-action opening the category actually supports, and the raw material already exists in the pain-based review quotes marketing-review-mining tells you to elicit. Capped at 6 because it is a sentence-level craft rule rather than a revenue mechanism, and because for a body-care brand any mid-action scene must be a real customer moment rather than an invented one.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+### The hook should rarely mention the product — in an organic-seeming native ad the discovery of the product should feel almost accidental. — 5/10
+
+**Why it works:** The format's whole advantage is that it reads as a post rather than an ad; naming the product in the opening line breaks that frame immediately and re-triggers the reader's ad-avoidance. Withholding it lets the emotional story earn attention first, so the product arrives as the answer to a problem the reader is already invested in.
+
+**Evidence:** Stated as the third fault of the bad example hook, with the reasoning that the poster's recommendation should feel incidental. Assertion only.
+
+**Fit:** Durable principle class (positioning within a format). Real overlap with the existing primal-desire rule ('the product is the mechanism, not the headline'), which is what caps it; the additive part is narrower and format-specific — in an organic-styled Meta ad or founder-voice caption, naming the deodorant in line one destroys the format's only advantage. Usable now on the live giveaway campaign's primary text at zero cost. Held at 5 because it does not transfer to the surfaces that carry most revenue: an Amazon title and bullets must name the product immediately, and a PDP hero that hides it is just confusing.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+### Run a long-form native-style Meta ad: an organic-looking image with no text overlay, paired with a very long caption that is a first-person emotional story from a spokesperson, ending in the accidental discovery of the product. — 5/10
+
+**Why it works:** The untreated image and story-led caption make the ad read as an organic post rather than a placement, so it earns the reading time a designed ad never gets; the long story builds emotional investment before any claim is made, and the product then lands as a resolution rather than a pitch.
+
+**Evidence:** The format is described in detail and illustrated with a fully sketched no-pull-harness example (elderly mother, lost agency, discovery, resolution). Assertion and worked illustration; no spend, CTR, or ROAS data.
+
+**Fit:** Platform-mechanics class for the format specifics (Meta caption behaviour, no-text organic image), and undated — treat the format detail with suspicion even though the underlying story-lead principle is durable. The reason to adopt at all is that it is one of the very few ad formats a solo operator with no designer and no video can actually produce: a plain phone photo plus written text, which makes it a legitimate second primary text inside the 3-2-2 flexible ad now running at $30/day. Scale-down stated: 300–800 words in the founder's own voice, not 3,000, and the story must be a true one — either the founder's reason for formulating baking-soda-free, or a real customer's transition-period account sourced through marketing-review-mining. A fabricated emotional testimonial in body care is an FTC problem, not a creative choice. Held at 5 because the format's evidence is entirely illustrative, and long-form emotional copy is a poor fit for a $12 consumable giveaway entry compared with a direct problem-aware angle.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+## Rejected
+
+### The hook does not have to describe anything that appears in the ad body — it can come from outside the story entirely, and you bridge back with a line like 'let me explain'. — 3/10
+
+**Rejected because:** Duplicates an existing entry. marketing-awareness-level-messaging already owns 'Hold the proven angle fixed and change only the entry point to make a second asset' — swap only the hook and the bridge sentence, funnel into the identical body copy, with the same worked dog example. Adding this would restate a recorded mechanic and degrade skill triggering.
+
+**Fit reasoning:** Durable principle class and genuinely useful, but it is the same hook-plus-bridge-into-unchanged-body mechanic already recorded in marketing-awareness-level-messaging, down to the source's own dog-ad illustration. The only nuance added — that the hook's event need not be true to the body — is one this business should be cautious with anyway, since an invented opening scene attached to a real product claim is a credibility risk in body care.
+
+## Skills touched
+
+- `marketing-conversion-copy-angles` (edit)
+- `marketing-competitor-messaging-teardown` (edit)
