@@ -151,6 +151,46 @@ made an earlier version of this document wrongly claim flow emails were API-edit
 
 So the redesign is: rebuild the HTML here, verify it here, paste it there.
 
+## Positioning — the differentiator
+
+**Ingredient simplicity, stated as a count.** Decided 2026-08-21 by the operator, after
+Georgi's "Unique Mechanisms have changed" argument forced the question: in a saturated
+category the mechanism copy is compare-and-contrast and nothing else — *the real problem
+with other products is that they don't do X, and ours does.*
+
+For this catalogue, X is **the length of the ingredient deck**.
+
+> Most body lotion is a twenty-line ingredient deck built around a synthetic preservative.
+> Ours is six ingredients, preserved with grapefruit seed extract.
+
+Why this one and not the alternatives: coconut oil on its own is the turmeric case — a
+known ingredient in a saturated category, so it differentiates nothing. Baking-soda-free
+is real but narrow, and it only speaks to deodorant. Ingredient count travels across the
+whole catalogue, is checkable by the buyer in three seconds, and is the rare claim a
+competitor cannot match without reformulating.
+
+**What is sourced, and where.** Everything below traces to the live PDP or the catalogue,
+so it clears `claims.js` with `sourceId: "catalog"` or `"pdp"`. Nothing here is a health
+claim; keep it that way — this is a composition claim, and the moment it becomes "gentler
+on skin" or "better for eczema" it belongs to `health-claims.js` instead.
+
+| Claim | Source |
+|---|---|
+| "Only 6 Clean Ingredients" | Product title, `data/brand/product-catalog.json` and the live PDP |
+| Cold-pressed virgin coconut oil; organic jojoba; unrefined red palm oil | PDP ingredient block |
+| Organic grapefruit seed extract as a broad-spectrum natural preservative | PDP FAQ, "How is this preserved without parabens?" |
+| No parabens, no phenoxyethanol, no mineral oil, no petrolatum, no synthetic fragrance | PDP |
+| $30.00, 8oz, ~8 weeks of daily use, ~$0.40/day | PDP |
+
+**Do not enumerate all six from memory.** The PDP names three oils plus the preservative
+in the block above; the remaining ingredients are not stated there. Writing a full list
+would be inventing the rest of it. Cite the count, cite the named ones, stop.
+
+**Where this lands.** It is the compare-and-contrast body for PDP heroes, Amazon bullets
+and ad primary text, and it is the "named mechanism" that
+`marketing-awareness-level-messaging` says a saturated category demands. Pair it with the
+hook rules — the count is the payoff, not the opener.
+
 ## Known gaps in this kit
 
 1. **Sand.** Logo `#ECE5D8` vs palette `#EDE5D8`. Imperceptible; fold in only if the
