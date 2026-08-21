@@ -23,7 +23,7 @@
 
 import { strict as assert } from 'node:assert';
 import { test, before, after } from 'node:test';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { dispatch } from '../../agents/dashboard/lib/router.js';
@@ -32,11 +32,16 @@ import adBriefRoutes from '../../agents/dashboard/routes/ad-brief.js';
 import adsRoutes from '../../agents/dashboard/routes/ads.js';
 import adStudioLaunchRoutes from '../../agents/dashboard/routes/ad-studio-launch.js';
 import adStudioRoutes from '../../agents/dashboard/routes/ad-studio.js';
+import agentsRoutes from '../../agents/dashboard/routes/agents.js';
+import cannibalizationRoutes from '../../agents/dashboard/routes/cannibalization.js';
 import chatRoutes from '../../agents/dashboard/routes/chat.js';
 import creativesRoutes from '../../agents/dashboard/routes/creatives.js';
 import dataforseoRoutes from '../../agents/dashboard/routes/dataforseo.js';
 import ideasRoutes from '../../agents/dashboard/routes/ideas.js';
+import indexingRoutes from '../../agents/dashboard/routes/indexing.js';
 import performanceQueueRoutes from '../../agents/dashboard/routes/performance-queue.js';
+import postsKillRoutes from '../../agents/dashboard/routes/posts-kill.js';
+import rejectedImagesRoutes from '../../agents/dashboard/routes/rejected-images.js';
 import rumRoutes from '../../agents/dashboard/routes/rum.js';
 import { validateEntryPayload, validateUpload } from '../../agents/dashboard/routes/giveaway.js';
 
@@ -49,19 +54,25 @@ const ROUTES = [
   ...adsRoutes,
   ...adStudioLaunchRoutes,
   ...adStudioRoutes,
+  ...agentsRoutes,
+  ...cannibalizationRoutes,
   ...chatRoutes,
   ...creativesRoutes,
   ...dataforseoRoutes,
   ...ideasRoutes,
+  ...indexingRoutes,
   ...performanceQueueRoutes,
+  ...postsKillRoutes,
+  ...rejectedImagesRoutes,
   ...rumRoutes,
 ];
 
 /** Minimal http.ServerResponse stand-in: captures status + body, nothing else. */
 function makeRes() {
-  const res = { statusCode: null, body: null, headersSent: false };
+  const res = { statusCode: null, body: null, headersSent: false, writableEnded: false, destroyed: false };
   res.writeHead = (status) => { res.statusCode = status; res.headersSent = true; };
-  res.end = (body) => { res.body = body === undefined ? null : body; };
+  res.end = (body) => { res.body = body === undefined ? null : body; res.writableEnded = true; };
+  res.destroy = () => { res.destroyed = true; };
   return res;
 }
 
@@ -101,6 +112,15 @@ const TARGETS = [
   ['POST', '/api/creatives/refine'],
   ['POST', '/api/creatives/package'],
   ['POST', '/api/generate-creative'],
+  // agents.js's /brief/ route already had a dedicated try/catch around just the parse
+  // (separate from the file-not-found / change-not-found checks below it), so it belongs
+  // in this blanket sweep exactly like every other already-migrated route. The other four
+  // new modules this task migrates — cannibalization.js, posts-kill.js, rejected-images.js,
+  // indexing.js's /resubmit — do NOT: each had exactly ONE try/catch wrapping the read AND
+  // all the downstream logic, so their hostile-body status is their preexisting catch's
+  // status (500/502), not a fresh 400. See the dedicated test below this loop for why they
+  // are deliberately not here.
+  ['POST', '/brief/no-such-slug-xyz/change/no-such-id-xyz'],
   // PUT /api/creatives/templates/:id and PUT /api/creatives/sessions/:id are deliberately
   // NOT here — see the dedicated test below for why the blanket "must be 4xx" assertion
   // this loop applies does not fit those two routes, and why sessions/:id specifically
@@ -145,6 +165,10 @@ for (const body of HOSTILE_BODIES) {
       // status, which proves nothing about read-order and fails the blanket 4xx check
       // below for an unrelated reason.
       geminiClient: {},
+      // agents.js's /brief/ route reads this only after a valid status has passed
+      // validation, which none of the hostile bodies below ever do — present anyway so a
+      // future loosening of that check does not throw on a missing ctx key.
+      COMP_BRIEFS_DIR: '/tmp/route-hardening-no-such-dir',
     };
 
     for (const [method, url] of TARGETS) {
@@ -174,6 +198,94 @@ for (const body of HOSTILE_BODIES) {
     }
   });
 }
+
+test('a corrupt brief file produces a 500, not a process kill', async () => {
+  // agents.js does JSON.parse(readFileSync(briefPath)) inside an end callback with no
+  // try. Before the migration that throw was unreachable by the router guard; after it,
+  // the guard answers 500. This is the Class B regression test.
+  const dir = mkdtempSync(join(tmpdir(), 'route-hardening-'));
+  writeFileSync(join(dir, 'corrupt.json'), '{ this is not json');
+  const res = makeRes();
+
+  dispatch(
+    agentsRoutes,
+    makeReq('POST', '/brief/corrupt/change/some-id', JSON.stringify({ status: 'approved' })),
+    res,
+    { COMP_BRIEFS_DIR: dir },
+  );
+  await drain();
+
+  assert.equal(res.statusCode, 500);
+  assert.deepEqual(rejections, [], 'nothing reached the process-level handler');
+  rmSync(dir, { recursive: true, force: true });
+});
+
+// ── cannibalization.js, posts-kill.js, rejected-images.js, and indexing.js's /resubmit:
+// one preexisting catch, not split ──────────────────────────────────────────────────────
+//
+// Every other migrated route (including agents.js's /brief/ above) already had a DEDICATED
+// try/catch around just the JSON parse, separate from the try/catch guarding the rest of
+// the handler's own logic — see chat.js, dataforseo.js's /api/reject-keyword, or agents.js's
+// /brief/ itself (its `{ status } = await readJsonBody(req)` sits in its own try, ahead of
+// the file-not-found / change-not-found checks). Splitting a read out of an ALREADY-split
+// structure preserves that structure; it does not add a new try/catch.
+//
+// These four routes are different: each had exactly ONE try/catch wrapping the read AND
+// every downstream step, and the effort's Global Constraints are explicit for this shape —
+// "keep that catch and its status code exactly; just replace the read" and "do not add a
+// per-route try/catch that was not already there". Splitting them to get a fresh 400 would
+// violate both. So a hostile body now flows into the SAME catch a real backend failure
+// would, and answers that catch's preexisting status: 502 for cannibalization and
+// indexing/resubmit, 500 for posts-kill and rejected-images. For cannibalization and
+// indexing specifically, `5` and `"str"` are a visible status CHANGE from before this
+// migration (400, because the old lenient `JSON.parse` let a scalar through to the route's
+// own field validation) to 502 (because readJsonBody now rejects a scalar before that
+// validation ever runs) — a regression in specificity, not in safety: the request is still
+// refused, just with the generic backend-error status instead of the field-validation one.
+// This is the accepted, verified consequence of the brief's literal recipe for this shape,
+// so it is pinned here rather than forced through the blanket "must be 4xx" sweep above
+// (which does not hold for these four) or left undocumented. What still matters — no
+// unhandled rejection, ever — IS asserted, same as every other test in this file.
+test('the four single-catch modules never crash on a hostile body, answering their preexisting catch status instead of a fresh 4xx', async () => {
+  rejections.length = 0;
+  const ctx = {
+    ROOT: '/tmp/route-hardening-no-such-dir',
+    REJECTED_IMAGES_DIR: '/tmp/route-hardening-no-such-dir',
+    invalidateDataCache() {},
+  };
+  // Verified empirically against the migrated handlers (see task-6-report.md) — not
+  // guessed. '[]' passes readJsonBody untouched (documented contract), so it reaches each
+  // route's own field validation instead of the catch: cannibalization and indexing/resubmit
+  // both have a required field to catch it on (400); posts-kill's only field is optional, so
+  // it proceeds to a real (harmless, on this nonexistent slug) killPost call and succeeds
+  // (200); rejected-images' `filename` is required but only enforced by a downstream
+  // `path.join(..., undefined)` throw, which the SAME catch answers (500), so '[]' does not
+  // stand out there the way it does for the other three.
+  const expected = [
+    ['POST', '/api/cannibalization/resolve', { null: 502, 5: 502, '"str"': 502, '[]': 400 }],
+    ['POST', '/api/posts/no-such-slug-xyz/kill', { null: 500, 5: 500, '"str"': 500, '[]': 200 }],
+    ['POST', '/api/rejected-images/no-such-slug-xyz/accept', { null: 500, 5: 500, '"str"': 500, '[]': 500 }],
+    ['POST', '/api/indexing/resubmit', { null: 502, 5: 502, '"str"': 502, '[]': 400 }],
+  ];
+  const answers = [];
+  for (const [method, url, byBody] of expected) {
+    for (const body of HOSTILE_BODIES) {
+      const res = makeRes();
+      // NOT awaited — same reason as the blanket sweep above: dispatch() does not await
+      // its handler, so checking res.statusCode before draining would read it too early.
+      const matched = dispatch(ROUTES, makeReq(method, url, body), res, ctx);
+      assert.equal(matched, true, `${method} ${url} must still match a route`);
+      answers.push({ method, url, body, res, want: byBody[body] });
+    }
+  }
+
+  await drain();
+
+  assert.deepEqual(rejections, [], 'no route may leave an unhandled rejection');
+  for (const { method, url, body, res, want } of answers) {
+    assert.equal(res.statusCode, want, `${method} ${url} with body ${body}`);
+  }
+});
 
 test('a rejected body read does not strand the ads in-flight key', async () => {
   // ctx.adsInFlight is added to BEFORE the body is read and removed on every early

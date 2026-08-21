@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, unlinkSync, rmdir
 import { join, extname, relative } from 'node:path';
 import { execSync } from 'node:child_process';
 import { getMetaPath, getImagePath } from '../../../lib/posts.js';
+import { readJsonBody } from '../lib/responses.js';
 
 function respondJson(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -37,41 +38,37 @@ export default [
     match: (url) => /^\/api\/rejected-images\/[^/]+\/accept$/.test(url),
     async handler(req, res, ctx) {
       const slug = req.url.split('/')[3];
-      const chunks = [];
-      req.on('data', (d) => chunks.push(d));
-      req.on('end', () => {
-        try {
-          const { filename } = JSON.parse(Buffer.concat(chunks).toString());
-          const srcPath = join(ctx.REJECTED_IMAGES_DIR, slug, filename);
-          if (!existsSync(srcPath)) return respondJson(res, { ok: false, error: 'Image not found' }, 404);
+      try {
+        const { filename } = await readJsonBody(req);
+        const srcPath = join(ctx.REJECTED_IMAGES_DIR, slug, filename);
+        if (!existsSync(srcPath)) return respondJson(res, { ok: false, error: 'Image not found' }, 404);
 
-          // Copy to post directory
-          const destPath = getImagePath(slug);
-          copyFileSync(srcPath, destPath);
+        // Copy to post directory
+        const destPath = getImagePath(slug);
+        copyFileSync(srcPath, destPath);
 
-          // Update post metadata
-          const metaPath = getMetaPath(slug);
-          if (existsSync(metaPath)) {
-            const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
-            meta.image_path = relative(ctx.ROOT, destPath).replace(/\\/g, '/');
-            meta.image_generated_at = new Date().toISOString();
-            delete meta.image_blocked;
-            delete meta.image_blocked_at;
-            delete meta.image_blocked_reason;
-            writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-          }
-
-          // Clean up rejected directory
-          const rejDir = join(ctx.REJECTED_IMAGES_DIR, slug);
-          for (const f of readdirSync(rejDir)) unlinkSync(join(rejDir, f));
-          try { rmdirSync(rejDir); } catch { /* ignore */ }
-
-          ctx.invalidateDataCache();
-          respondJson(res, { ok: true, slug, accepted: filename });
-        } catch (err) {
-          respondJson(res, { ok: false, error: err.message }, 500);
+        // Update post metadata
+        const metaPath = getMetaPath(slug);
+        if (existsSync(metaPath)) {
+          const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+          meta.image_path = relative(ctx.ROOT, destPath).replace(/\\/g, '/');
+          meta.image_generated_at = new Date().toISOString();
+          delete meta.image_blocked;
+          delete meta.image_blocked_at;
+          delete meta.image_blocked_reason;
+          writeFileSync(metaPath, JSON.stringify(meta, null, 2));
         }
-      });
+
+        // Clean up rejected directory
+        const rejDir = join(ctx.REJECTED_IMAGES_DIR, slug);
+        for (const f of readdirSync(rejDir)) unlinkSync(join(rejDir, f));
+        try { rmdirSync(rejDir); } catch { /* ignore */ }
+
+        ctx.invalidateDataCache();
+        respondJson(res, { ok: true, slug, accepted: filename });
+      } catch (err) {
+        respondJson(res, { ok: false, error: err.message }, 500);
+      }
     },
   },
 

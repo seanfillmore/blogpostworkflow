@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
+import { readJsonBody } from '../lib/responses.js';
 
 function respondJson(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -69,20 +70,16 @@ export default [
     method: 'POST',
     match: (url) => /^\/api\/indexing\/resubmit$/.test(url),
     async handler(req, res, ctx) {
-      let body = '';
-      req.on('data', (d) => { body += d; });
-      req.on('end', async () => {
-        try {
-          const { url: pageUrl } = JSON.parse(body);
-          if (!pageUrl) return respondJson(res, { ok: false, error: 'Missing url' }, 400);
-          const { submitUrlForIndexing } = await import('../../../lib/gsc-indexing.js');
-          const result = await submitUrlForIndexing(pageUrl);
-          ctx.invalidateDataCache?.();
-          respondJson(res, { ok: true, result });
-        } catch (err) {
-          respondJson(res, { ok: false, error: err.message }, 502);
-        }
-      });
+      try {
+        const { url: pageUrl } = await readJsonBody(req);
+        if (!pageUrl) return respondJson(res, { ok: false, error: 'Missing url' }, 400);
+        const { submitUrlForIndexing } = await import('../../../lib/gsc-indexing.js');
+        const result = await submitUrlForIndexing(pageUrl);
+        ctx.invalidateDataCache?.();
+        respondJson(res, { ok: true, result });
+      } catch (err) {
+        respondJson(res, { ok: false, error: err.message }, 502);
+      }
     },
   },
 ];
