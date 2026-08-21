@@ -1,6 +1,6 @@
 ---
 name: marketing-lifecycle-email-flows
-description: Use when deciding which automated email/SMS flows should exist and which one to build next — auditing flow coverage for gaps, recovering abandoned carts, and nurturing subscribers who joined the list but have not bought. Covers the inventory and the job of each flow; the content of the post-purchase flow lives in marketing-post-purchase-onboarding and the win-back offer in marketing-retention-offers.
+description: Use when deciding which automated email/SMS flows should exist and which one to build next — auditing flow coverage for gaps, recovering abandoned carts, and nurturing subscribers who joined the list but have not bought, including how to escalate offers to them on a fixed schedule. Covers the inventory and the job of each flow; the content of the post-purchase flow lives in marketing-post-purchase-onboarding and the win-back offer in marketing-retention-offers.
 ---
 
 # Lifecycle Email Flows
@@ -31,14 +31,17 @@ Two cautions. **The 30% figure will not hold at this volume** — treat it as a 
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
 
-## Run a pre-purchase nurture flow aimed specifically at subscribers who joined the list and never bought.
+## Run a pre-purchase nurture flow aimed specifically at subscribers who joined the list and never bought — on a dated schedule, with each step a materially stronger offer than the last.
 
-**Why it works:** Someone who opted in is interested but not convinced — the gap is belief, not awareness. A sequence that supplies differentiation and trust closes the objection blocking them instead of re-pitching the product.
+**Why it works:** Someone who opted in is interested but not convinced — the gap is belief, not awareness. A sequence that supplies differentiation and trust closes the objection blocking them instead of re-pitching the product. And someone who declined the standard offer has not declined *every* offer: a fixed schedule of progressively stronger asks keeps testing the price and structure at which each remaining slice will move. Because the lead is already paid for, every incremental conversion is pure addition to what that lead was worth.
 
-**Evidence offered:** Described as sharing your story and what makes the product different so they buy when ready. Assertion, no conversion data.
+**Evidence offered:** For the nurture half, described as sharing your story and what makes the product different so they buy when ready — assertion, no conversion data. For the escalation half, a hypothetical ladder (Day 15 push notification at 50% off, a $20/mo variant, Day 21 at 75% off, then a $9.99 light tier) with invented take rates (5%, 10%, 10%) carried through the CPL arithmetic. No account data on any step.
 
-**Fit here (6/10):** Names a real hole. Other skills cover what a welcome email should *say* by awareness level (`marketing-awareness-level-messaging`) and how to *build* it (`marketing-email-design-production`), but nothing owned the non-buyer nurture sequence as an artifact. Natural deodorant has an unusually well-defined pre-purchase objection set — the transition period, baking-soda irritation, 'it quit by noon' — and this sequence is the natural place to answer it.
+**Fit here (6/10):** Names a real hole. Other skills cover what a welcome email should *say* by awareness level (`marketing-awareness-level-messaging`) and how to *build* it (`marketing-email-design-production`), but nothing owned the non-buyer nurture sequence as an artifact. Natural deodorant has an unusually well-defined pre-purchase objection set — the transition period, baking-soda irritation, 'it quit by noon' — and this sequence is the natural place to answer it. The escalation ladder supplies what the nurture framing lacked on its own: a schedule and a reason each message differs from the one before, applicable to giveaway entrants as well as never-bought subscribers.
 
-Held at 6 because the list is small so absolute revenue is modest, and **the content this flow carries is generated elsewhere** — by `marketing-problem-solution-inventory` and `marketing-awareness-level-messaging`. The only additive claim here is that the sequence should exist and should target non-buyers specifically.
+Held at 6 because the list is small so absolute revenue is modest, and **the content this flow carries is generated elsewhere** — by `marketing-problem-solution-inventory` and `marketing-awareness-level-messaging`. The only additive claims here are that the sequence should exist, that it should target non-buyers specifically, and that its steps should escalate on fixed days.
+
+Two hard scale-downs on the ladder as pitched. **The descending-discount version does not survive a physical catalog** — 50% and 75% off a $50.46-AOV consumable with real COGS and postage is margin-negative, and `marketing-offer-construction` warns explicitly that a repeating percent-off ladder trains the list to wait. Escalate by offer *structure* instead: reminder, then a named bundle, then a low-COGS bonus (lip balm, travel size) with purchase, then a genuinely time-bounded promotion with a stated reason-why. **And at a sub-1,000 list each step's take rate is a handful of orders**, so read the numbers directionally and keep the ladder to three steps rather than five.
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #10: Don't Forget The Other 75%" (social post)*
