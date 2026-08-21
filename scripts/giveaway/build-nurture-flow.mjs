@@ -147,6 +147,18 @@ for (const file of files) {
   if (!/unsubscribe/i.test(html)) throw new Error(`${file} has no unsubscribe link`);
   if (!/does not forfeit your entry/i.test(html)) throw new Error(`${file} is missing the entry-retention line`);
   if (/SOAP4MO|SOAP6MO|\$99|\$66/.test(html)) throw new Error(`${file} contains offer copy — the offer is day 30 only`);
+  // A plain catalogue link is NOT the day-30 offer and is allowed: the entered
+  // page has carried one since launch. But a sweepstakes email that asks for a
+  // sale must say, in the same email, that buying changes nothing about the
+  // draw. The disclosure already ships in every email; this stops a future edit
+  // adding a buy button to one that lost it.
+  if (/href="[^"]*\/(products|collections|cart)\//.test(html)
+      && !/A purchase will not improve your chances of winning/i.test(html)) {
+    throw new Error(
+      `${file} has a purchase link but no "will not improve your chances" disclosure — `
+      + 'a sweepstakes email that asks for a sale must disclaim it in the same email.',
+    );
+  }
   const key = file.replace(/\.html$/, '');
   if (!MESSAGES[key]) throw new Error(`${file} has no MESSAGES entry (subject/preview/name)`);
 }
