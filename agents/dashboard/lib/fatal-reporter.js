@@ -10,7 +10,9 @@
  * its client times out; the cost of exiting is an outage, which is the thing this whole
  * change exists to remove. Nothing in this module calls process.exit or restarts anything.
  *
- * TWO ESCAPE PATHS, both closed:
+ * THREE ESCAPE PATHS, all closed. All three are the same shape — something outside this
+ * module's control (notify, or the arbitrary `err`/`notifyErr` value handed to it) fails in
+ * a way that turns "report the fatal" into a new fatal, unhandled, of its own:
  *
  * 1. `notify` is declared `async`, so ANY failure inside it — including one on its very
  *    first line, before any `await` — surfaces as a rejected Promise, never a synchronous
@@ -35,6 +37,21 @@
  *    design — worse than the unhandledRejection this module exists to contain. `describe()`
  *    closes that path by never letting a read of `err` throw past it.
  *
+ * 3. A truthy, non-string `.stack` is a hostile FORMAT target even once path 2 is closed:
+ *    `describe()` used to return `value.stack` as-is when truthy, only forcing `String()`
+ *    on the falsy branch. `logger.error(...)` (real `console.error`) formats a non-string
+ *    argument via `util.inspect`, which invokes a `Symbol.for('nodejs.util.inspect.custom')`
+ *    method if the value defines one — a throw from THAT is not caught by Node's inspect
+ *    internals, so it still escapes reportFatal() synchronously despite the try/catch in
+ *    describe(), because that throw happens at the logger.error() call site, not inside
+ *    describe(). Forcing `String(...)` inside describe()'s own try closes it: `String()`
+ *    only invokes `toString()` / `Symbol.toPrimitive`, never `util.inspect.custom`.
+ *
+ * A broken *injected* `logger` (e.g. a test double or future caller whose `.error` itself
+ * throws) is explicitly OUT OF SCOPE — describe() guards values this module cannot control
+ * coming IN (arbitrary `err`/`notifyErr`), not the logger a caller chooses to hand it. The
+ * real logger is `console`, whose `.error` does not throw.
+ *
  * The `reporting` flag is a plain re-entrancy guard, not rate limiting or dedupe: while a
  * report is in flight (i.e. its notify() call hasn't settled yet), any further fatal is
  * logged and dropped rather than recursing into another notify() call. It resets the
@@ -45,7 +62,17 @@ export function createFatalReporter({ notify, logger = console } = {}) {
 
   function describe(value) {
     try {
-      return value?.stack || String(value);
+      // Force stringification here — do not return `value.stack` (or `value`) as-is.
+      // Returning it raw used to look safe because this try/catch wraps the read, but
+      // console.error formats a non-string argument via util.inspect at the logger.error()
+      // call site BELOW, outside this try/catch. If `.stack` is truthy, non-string, and
+      // defines Symbol.for('nodejs.util.inspect.custom'), a throw from that method escapes
+      // straight out of reportFatal() synchronously — the same "uncaughtException listener
+      // throws and crashes the process" failure this module exists to prevent, arriving
+      // through inspect-time formatting rather than read-time property access. String()
+      // only invokes toString() / Symbol.toPrimitive — never util.inspect.custom — so a
+      // hostile object degrades to a safe "[object Object]" instead.
+      return String(value?.stack || value);
     } catch {
       return '[fatal-reporter] could not stringify the underlying error';
     }

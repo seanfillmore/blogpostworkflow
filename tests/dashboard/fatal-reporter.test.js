@@ -24,11 +24,39 @@
 
 import { strict as assert } from 'node:assert';
 import { test, before, after } from 'node:test';
+import { inspect } from 'node:util';
 import { createFatalReporter } from '../../agents/dashboard/lib/fatal-reporter.js';
+
+/** An object whose [util.inspect.custom] throws — the third hostile-error variant. */
+function makeHostileFormatValue() {
+  const value = {};
+  Object.defineProperty(value, inspect.custom, {
+    value() { throw new Error('custom inspect throws'); },
+  });
+  return value;
+}
 
 function makeLogger() {
   const calls = [];
   return { calls, error: (...args) => calls.push(args) };
+}
+
+/**
+ * A logger whose `.error` formats non-string arguments the way the REAL `console.error`
+ * does — via `util.inspect` — instead of storing them raw. `makeLogger()`'s stub does not
+ * do this, so it cannot reproduce the util.inspect.custom hostile-format defect at all: it
+ * happily "passes" a hostile `.stack` object straight through to `calls.push(args)` without
+ * ever invoking the formatting step where the real crash happens. Use this one specifically
+ * for the hostile-format tests below.
+ */
+function makeInspectingLogger() {
+  const calls = [];
+  return {
+    calls,
+    error: (...args) => {
+      calls.push(args.map((a) => (typeof a === 'string' ? a : inspect(a))));
+    },
+  };
 }
 
 const rejections = [];
@@ -88,6 +116,98 @@ test('constructing the notify() call arguments throwing synchronously is also co
   await drain();
 
   assert.deepEqual(rejections, [], 'a throw while building notify() arguments must not escape');
+});
+
+test('a truthy .stack that throws when formatted by util.inspect is also contained', async () => {
+  // The third variant of the hostile-error class, distinct from the throwing-getter case
+  // above: describe()'s try/catch guards the READ of `.stack`, but a first cut of the fix
+  // returned a truthy `.stack` as-is instead of forcing String() on it. console.error
+  // formats a non-string argument via util.inspect, which invokes
+  // Symbol.for('nodejs.util.inspect.custom') if the value defines one — a throw from THAT
+  // is not caught by Node's inspect internals, so it escaped reportFatal() synchronously at
+  // the logger.error() call site, AFTER describe()'s own try/catch had already returned
+  // successfully (the read itself never threw — only formatting it later did). Reproduced
+  // and verified against this project's pinned Node 22.23.1. Uses makeInspectingLogger(),
+  // not makeLogger() — a stub that stores raw args never invokes util.inspect at all, so it
+  // cannot exercise this failure mode (confirmed: this exact test kept passing against the
+  // unfixed describe() when first written against the plain stub, which is why the logger
+  // choice matters here).
+  rejections.length = 0;
+  const logger = makeInspectingLogger();
+  const notify = async () => {};
+  const reportFatal = createFatalReporter({ notify, logger });
+  const hostileErr = { stack: makeHostileFormatValue() };
+
+  let thrown = null;
+  try {
+    reportFatal('uncaughtException', hostileErr);
+  } catch (e) {
+    thrown = e;
+  }
+  await drain();
+
+  assert.equal(thrown, null, 'reportFatal must not throw synchronously for a hostile-to-format .stack');
+  assert.deepEqual(rejections, [], 'nothing should escape as an unhandled rejection either');
+});
+
+test('a notifyErr whose .stack is hostile to format is also contained (the second describe() call site)', async () => {
+  // Same variant as above, but through the OTHER describe() call site: the .catch() that
+  // formats notify()'s own rejection reason. describe() is the same function for both call
+  // sites, so this should already be closed — this test verifies that rather than assuming
+  // it, using makeInspectingLogger() for the same reason as the previous test: the format
+  // step only runs (and only crashes) when something actually calls util.inspect on the
+  // value, which a plain args-storing stub never does. Unlike the previous test, the
+  // logger.error() call this exercises happens inside the .catch() callback — asynchronous,
+  // not a synchronous call from reportFatal() — so a throw there would surface as an
+  // unhandled rejection of that .catch()'s own promise, not a synchronous throw out of
+  // reportFatal() itself. The `rejections` assertion below is what actually proves it.
+  rejections.length = 0;
+  const logger = makeInspectingLogger();
+  const notify = async () => {
+    const err = new Error('notify failed');
+    err.stack = makeHostileFormatValue();
+    throw err;
+  };
+  const reportFatal = createFatalReporter({ notify, logger });
+
+  let thrown = null;
+  try {
+    reportFatal('unhandledRejection', new Error('original failure'));
+  } catch (e) {
+    thrown = e;
+  }
+  await drain();
+
+  assert.equal(thrown, null, 'reportFatal must not throw synchronously when notify()\'s own rejection has a hostile .stack');
+  assert.deepEqual(rejections, [], 'nothing should escape as an unhandled rejection either');
+});
+
+test('a resolving notify() logs no failure and the guard resets for the next fatal', async () => {
+  // Explicit happy-path coverage: no failure logged, and the re-entrancy guard is not
+  // still held after a clean, successful notify() call. Test 4 covers the guard resetting
+  // indirectly (via a failing notify()); this covers the ordinary case directly.
+  rejections.length = 0;
+  const logger = makeLogger();
+  let notifyCalls = 0;
+  const notify = async () => { notifyCalls += 1; };
+  const reportFatal = createFatalReporter({ notify, logger });
+
+  reportFatal('uncaughtException', new Error('handled cleanly'));
+  await drain();
+
+  assert.equal(notifyCalls, 1);
+  assert.deepEqual(rejections, []);
+  assert.ok(
+    !logger.calls.some((c) => String(c[0]).includes('notify failed')),
+    'nothing should be logged as a notify failure when notify() resolves'
+  );
+
+  // A second, independent fatal after the first resolved cleanly should still call notify()
+  // — proving the guard is not stuck "in flight" after a success.
+  reportFatal('uncaughtException', new Error('second, independent'));
+  await drain();
+
+  assert.equal(notifyCalls, 2, 'the guard must not remain held after the prior call resolved');
 });
 
 test('the re-entrancy guard prevents recursion while a report is in flight', async () => {
