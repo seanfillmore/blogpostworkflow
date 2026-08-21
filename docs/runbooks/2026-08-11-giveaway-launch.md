@@ -305,7 +305,13 @@ live without it.
 
 ## Date placeholders — ✅ DONE 2026-08-12
 
-**Entry Period: 12:00 AM CT Aug 15 2026 → 11:59 PM CT Sept 14 2026. Draw: Sept 16 2026.**
+**Entry Period: 12:00 AM PT Aug 18 2026 → 11:59 PM PT Sept 14 2026. Draw: Sept 16 2026.**
+
+*(As filled 2026-08-12 this line read "12:00 AM CT Aug 15 → 11:59 PM CT Sept 14". The open
+date moved Aug 15 → Aug 18 on 2026-08-14 to match the ad launch, and the zone moved CT → PT
+on 2026-08-20 by operator decision. The placeholder table below quotes the ORIGINAL
+placeholder strings verbatim and is deliberately left as-is — it is a record of what was in
+the file, not a statement of current timing.)*
 
 Filled, republished, and **verified on the live storefront** (the rules page
 serves the real dates; zero placeholders remain in the served HTML).
@@ -435,7 +441,7 @@ unlinked and unindexed — it is neither guaranteed to stay that way.
 1. ~~**Give the flow an end boundary** at the Entry Period close.~~ ✅ **RESOLVED
    2026-08-13.** The two deadline emails are no longer in the flow at all — they
    are fixed-date campaigns, so they cannot fire after the close by construction.
-   The onboarding tail is bounded by `close-entry-period.mjs` (cron `5 5 15 9 *`),
+   The onboarding tail is bounded by `close-entry-period.mjs` (cron `TZ=America/Los_Angeles 5 5 15 9 *`),
    which flips the flow to `draft` the morning after entries close. No Klaviyo-UI
    end date is needed, and no date-based `profile_filter`.
    **New manual step:** schedule both campaigns in the Klaviyo UI.

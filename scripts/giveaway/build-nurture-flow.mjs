@@ -59,7 +59,7 @@
  * See lib/giveaway/nurture-schedule.js, which owns the split and the dates.
  *
  * The flow's own tail is bounded by scripts/giveaway/close-entry-period.mjs
- * (cron `5 5 15 9 *`), which flips this flow to `draft` the morning after
+ * (cron `TZ=America/Los_Angeles 5 5 15 9 *`), which flips this flow to `draft` the morning after
  * entries close — so a day-28 entrant stops receiving onboarding emails rather
  * than getting them past the draw. No date-based profile_filter is needed.
  */
@@ -278,7 +278,7 @@ if (mode === 'golive') {
   console.log(`Flow ${config.nurtureFlowId} is live.`);
   console.log('\n>>> MANUAL STEP: add a suppression filter excluding gv_entrant profiles');
   console.log('    from the Welcome flow (UUa3Qk), or FIRST20 will stack on the day-30 offer. <<<');
-  console.log('\nEnd boundary: scripts/giveaway/close-entry-period.mjs (cron `5 5 15 9 *`) flips');
+  console.log('\nEnd boundary: scripts/giveaway/close-entry-period.mjs (cron `TZ=America/Los_Angeles 5 5 15 9 *`) flips');
   console.log('this flow to draft the morning after entries close, so a late entrant stops');
   console.log('receiving onboarding emails once there is nothing left to act on. The two');
   console.log('deadline emails are no longer in this flow at all — they are dated campaigns.');

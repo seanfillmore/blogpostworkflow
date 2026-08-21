@@ -330,8 +330,10 @@ file. `drawAt` is deliberately neither cross-checked nor included: the rules des
 drawing without naming its date, and a date the published rules do not carry is a date ad
 copy must not state.
 
-**Known wart, flagged not fixed:** `config/giveaway.json` stamps `-06:00` and calls it
-store-local, while the rules prose says "CT" (`-05:00` in September). The two therefore
-describe closing *instants* one hour apart. Nothing here normalises that, because this
-module only ever exposes calendar dates — which the two files agree on exactly — and ad copy
-states a date, not a UTC instant. It matters to `close-entry-period.mjs`, not to a headline.
+**Was a known wart, fixed 2026-08-20:** `config/giveaway.json` used to stamp `-06:00` and
+call it store-local while the rules prose said "CT" (`-05:00` in September), so the two
+described closing *instants* one hour apart. The giveaway now runs on **Pacific**: the config
+stamps `-07:00` (PDT) and the rules say "Pacific Time (PT)", so both were wrong and both were
+corrected. Calendar dates did not move. Nothing here changed either way — this module only
+ever exposes calendar dates and ad copy states a date, not a UTC instant — so the skew was
+invisible here while it existed. The offset bites `close-entry-period.mjs`, not a headline.
