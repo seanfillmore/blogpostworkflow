@@ -1,6 +1,6 @@
 ---
 name: marketing-competitor-messaging-teardown
-description: Use when deciding what angle to lead with on a product page, Amazon listing, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, briefing an LLM off a surviving competitor ad to produce your own version of its structure, pulling competitor emails from public archives or your own inbox, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
+description: Use when deciding what angle to lead with on a product page, Amazon listing, Meta primary text, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, mining decades-old direct-response classics for portable structures, briefing an LLM off a surviving ad to produce your own version of its structure, pulling competitor emails from public archives or your own inbox, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
 ---
 
 # Competitor Messaging Teardown
@@ -51,6 +51,24 @@ Because no ad account is running, point the finished piece at live surfaces: Ama
 **Fit here (6/10):** Mostly durable — a briefing and modeling workflow, not a UI feature. Free, solo-executable, and it closes the gap left by the run-duration section, which says to model the pattern but never says how. Held at 6 because the output must be checked hard against the specificity and body-care claim rules, and because structure-modeling must stay strictly structural.
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
+
+### Widen the source pool: old direct-response classics are survivors too, with decades of evidence behind them.
+
+The run-duration filter above pulls from live competitor libraries, and in this category that pool is thin and skewed — Native, Every Man Jack, Dr. Squatch and Harry's are the only libraries available, they all outspend RSC by orders of magnitude, and they are playing a different game. So extend the pool backwards. Proven direct-response ads from decades ago — classic sales letters, direct mail, long-copy print — are survivors on a much longer timescale than "still running after six months," and they are free to read.
+
+Port the structure, not the medium. What made the old ad work sits underneath its delivery format: who is speaking, what the opening claim is, how the story beats are sequenced, what tone the reader is addressed in. Those elements re-wrap cleanly as a video script, a Meta caption, an email, or a PDP block without losing the mechanism. Carlton's One-Legged Golfer letter is the worked case: the second paragraph is structurally the same move as a modern "yapper" ad, and an LLM one-shots a video script carrying the identical big idea and characters.
+
+Run it through the same pipeline: inventory the structure (speaker, hook, beat order, tone), supply your own hook and RSC facts, ask for a new piece matching that skeleton and length — exactly the four-step brief above, with the same two hard constraints. Borrow the skeleton, never the phrasing, and never the claims; an old direct-response classic is *more* likely than a modern competitor ad to carry claim language RSC cannot substantiate, so the specificity and body-care claim rules apply with extra force.
+
+Route the output at the surfaces that are live: Meta primary text on the $30/day giveaway campaign, email subject lines, Amazon/PDP body copy.
+
+**Why it works:** The elements that make an ad convert sit underneath the delivery medium, so a structure validated by decades of paid direct mail transfers into today's native formats intact. You inherit ordering, pacing, and voice decisions someone already paid to validate rather than rediscovering them — and the validation window is decades rather than months.
+
+**Evidence offered:** One worked demonstration — Carlton's One-Legged Golfer letter's second paragraph shown to be structurally the same move as a modern yapper ad, and an LLM one-shotting a video script with the identical big idea and characters. No performance data on either version.
+
+**Fit here (6/10):** Durable-principle class (structure portability), so the age of the source ad is the point rather than a problem. Free and solo-executable, and it lands on live surfaces. Held at 6 because the analyse-then-brief workflow it depends on is already owned by the section above, so only the source pool is genuinely new, and because the worked example is a sub-$100 info product with a money-back guarantee rather than a $12 consumable at a $50.46 AOV — the emotional register of a classic sales letter can overshoot badly for a low-consideration repeat purchase.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #5: Formats May Change, But Underlying Principles Rarely Do" (social post)*
 
 ### Extend the same gap analysis to email, and pull the reference sends from a public archive instead of waiting on your inbox.
 
