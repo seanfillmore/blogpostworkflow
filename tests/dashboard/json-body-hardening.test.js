@@ -198,3 +198,81 @@ test("giveaway's payload validators survive a null body — inside a try/catch, 
     assert.equal(u.ok, false, `validateUpload(${JSON.stringify(bad)}) must refuse, not throw`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Byte cap. readJsonBody is becoming the single body reader for all twelve route
+// modules, two of which (rum, giveaway) are UNAUTHENTICATED and already cap their
+// bodies. Unification must not loosen a limit on a public route, so the cap is a
+// per-call option and each caller passes its own existing value.
+// ---------------------------------------------------------------------------
+
+import { DEFAULT_MAX_BYTES } from '../../agents/dashboard/lib/responses.js';
+
+/** A request that emits `body` in `chunkCount` roughly equal Buffer chunks. */
+function makeChunkedReq(body, chunkCount = 1) {
+  const buf = Buffer.from(body, 'utf8');
+  const per = Math.ceil(buf.length / chunkCount) || 1;
+  const chunks = [];
+  for (let i = 0; i < buf.length; i += per) chunks.push(buf.subarray(i, i + per));
+  return {
+    method: 'POST',
+    url: '/test',
+    headers: {},
+    destroyed: false,
+    destroy() { this.destroyed = true; },
+    on(event, cb) {
+      if (event === 'data') for (const c of chunks) cb(c);
+      if (event === 'end') cb();
+      return this;
+    },
+  };
+}
+
+test('DEFAULT_MAX_BYTES is 1 MB', () => {
+  assert.equal(DEFAULT_MAX_BYTES, 1024 * 1024);
+});
+
+test('a body at the cap is accepted', async () => {
+  const filler = 'x'.repeat(100);
+  const json = JSON.stringify({ filler });
+  const parsed = await readJsonBody(makeChunkedReq(json), { maxBytes: Buffer.byteLength(json) });
+  assert.equal(parsed.filler, filler);
+});
+
+test('a body one byte over the cap rejects with BODY_TOO_LARGE and destroys the socket', async () => {
+  const json = JSON.stringify({ filler: 'x'.repeat(100) });
+  const req = makeChunkedReq(json);
+  await assert.rejects(
+    () => readJsonBody(req, { maxBytes: Buffer.byteLength(json) - 1 }),
+    (err) => err.code === 'BODY_TOO_LARGE',
+  );
+  assert.equal(req.destroyed, true, 'the socket is destroyed so the client cannot keep streaming');
+});
+
+test('overflow rejects exactly once even when many chunks follow', async () => {
+  // The reject arrives on an early chunk; every later chunk must be ignored. A second
+  // reject would be swallowed by the promise, but a second req.destroy() and the
+  // continued buffering would not be — that is the leak this guards.
+  const json = JSON.stringify({ filler: 'x'.repeat(5000) });
+  const req = makeChunkedReq(json, 50);
+  await assert.rejects(() => readJsonBody(req, { maxBytes: 100 }), (err) => err.code === 'BODY_TOO_LARGE');
+  assert.equal(req.destroyed, true);
+});
+
+test('a multibyte character split across two chunks is not corrupted', async () => {
+  // The old hand-rolled readers did `body += chunk`, which calls toString() per chunk
+  // and mangles a UTF-8 sequence straddling a chunk boundary. Buffer.concat first is
+  // the fix, and this is the test that would have caught it.
+  const json = JSON.stringify({ note: 'café — naïve' });
+  const parsed = await readJsonBody(makeChunkedReq(json, Buffer.byteLength(json)));
+  assert.equal(parsed.note, 'café — naïve');
+});
+
+test('the existing contract is unchanged: empty resolves {}, null rejects, array passes', async () => {
+  assert.deepEqual(await readJsonBody(makeChunkedReq('')), {});
+  await assert.rejects(() => readJsonBody(makeChunkedReq('null')));
+  await assert.rejects(() => readJsonBody(makeChunkedReq('5')));
+  await assert.rejects(() => readJsonBody(makeChunkedReq('"str"')));
+  assert.deepEqual(await readJsonBody(makeChunkedReq('[]')), []);
+  await assert.rejects(() => readJsonBody(makeChunkedReq('{not json')));
+});
