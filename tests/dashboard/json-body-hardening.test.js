@@ -28,6 +28,8 @@ import { readJsonBody } from '../../agents/dashboard/lib/responses.js';
 import adBriefRoutes from '../../agents/dashboard/routes/ad-brief.js';
 import adStudioLaunchRoutes from '../../agents/dashboard/routes/ad-studio-launch.js';
 import adStudioRoutes from '../../agents/dashboard/routes/ad-studio.js';
+import chatRoutes from '../../agents/dashboard/routes/chat.js';
+import dataforseoRoutes from '../../agents/dashboard/routes/dataforseo.js';
 import ideasRoutes from '../../agents/dashboard/routes/ideas.js';
 import performanceQueueRoutes from '../../agents/dashboard/routes/performance-queue.js';
 import rumRoutes from '../../agents/dashboard/routes/rum.js';
@@ -41,6 +43,8 @@ const ROUTES = [
   ...adBriefRoutes,
   ...adStudioLaunchRoutes,
   ...adStudioRoutes,
+  ...chatRoutes,
+  ...dataforseoRoutes,
   ...ideasRoutes,
   ...performanceQueueRoutes,
   ...rumRoutes,
@@ -77,6 +81,9 @@ const TARGETS = [
   ['POST', '/api/ad-brief/render'],
   ['POST', '/api/ad-studio/launch'],
   ['POST', '/api/ad-studio/run/no-such-run-xyz/decide'],
+  ['POST', '/api/chat'],
+  ['POST', '/api/chat/action-item'],
+  ['POST', '/api/reject-keyword'],
   ['PATCH', '/api/ideas/no-such-slug-xyz'],
   ['POST', '/api/performance-queue/no-such-slug-xyz/feedback'],
   ['POST', '/api/rum'],
