@@ -204,20 +204,24 @@ test('a corrupt brief file produces a 500, not a process kill', async () => {
   // try. Before the migration that throw was unreachable by the router guard; after it,
   // the guard answers 500. This is the Class B regression test.
   const dir = mkdtempSync(join(tmpdir(), 'route-hardening-'));
-  writeFileSync(join(dir, 'corrupt.json'), '{ this is not json');
-  const res = makeRes();
+  try {
+    writeFileSync(join(dir, 'corrupt.json'), '{ this is not json');
+    const res = makeRes();
 
-  dispatch(
-    agentsRoutes,
-    makeReq('POST', '/brief/corrupt/change/some-id', JSON.stringify({ status: 'approved' })),
-    res,
-    { COMP_BRIEFS_DIR: dir },
-  );
-  await drain();
+    dispatch(
+      agentsRoutes,
+      makeReq('POST', '/brief/corrupt/change/some-id', JSON.stringify({ status: 'approved' })),
+      res,
+      { COMP_BRIEFS_DIR: dir },
+    );
+    await drain();
 
-  assert.equal(res.statusCode, 500);
-  assert.deepEqual(rejections, [], 'nothing reached the process-level handler');
-  rmSync(dir, { recursive: true, force: true });
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(rejections, [], 'nothing reached the process-level handler');
+  } finally {
+    // Must run even if an assertion above throws, or a failing run leaks a tmpdir.
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 // ── cannibalization.js, posts-kill.js, rejected-images.js, and indexing.js's /resubmit:
@@ -236,16 +240,48 @@ test('a corrupt brief file produces a 500, not a process kill', async () => {
 // per-route try/catch that was not already there". Splitting them to get a fresh 400 would
 // violate both. So a hostile body now flows into the SAME catch a real backend failure
 // would, and answers that catch's preexisting status: 502 for cannibalization and
-// indexing/resubmit, 500 for posts-kill and rejected-images. For cannibalization and
-// indexing specifically, `5` and `"str"` are a visible status CHANGE from before this
-// migration (400, because the old lenient `JSON.parse` let a scalar through to the route's
-// own field validation) to 502 (because readJsonBody now rejects a scalar before that
-// validation ever runs) — a regression in specificity, not in safety: the request is still
-// refused, just with the generic backend-error status instead of the field-validation one.
+// indexing/resubmit, 500 for posts-kill and rejected-images. THREE drifts from
+// pre-migration behavior fall out of that, all verified empirically (see task-6-report.md),
+// none invented:
+//   1. cannibalization `5`/`"str"`: 400 → 502. Before, the old lenient `JSON.parse` let a
+//      scalar through to the route's own field validation, which answered 400. Now
+//      readJsonBody rejects the scalar before that validation ever runs, so the SAME
+//      preserved catch answers its generic 502 instead — a regression in specificity, not
+//      in safety: the request is still refused, just with the backend-error status instead
+//      of the field-validation one.
+//   2. indexing/resubmit `5`/`"str"`: 400 → 502, for the identical reason as #1 (the same
+//      `if (!pageUrl) return ...400` field check used to run on a lenient-parsed scalar and
+//      no longer does).
+//   3. posts-kill `5`/`"str"`: 200 → 500. Before, a scalar's `.reason` was `undefined` (no
+//      throw — primitives don't throw on property access), so it silently fell through to
+//      the default reason and a REAL `killPost` call ran and succeeded. Now readJsonBody
+//      rejects the scalar outright, so the same preserved catch answers 500 instead. Unlike
+//      #1 and #2 this one is a safety IMPROVEMENT (a garbage body no longer reaches a real,
+//      destructive `killPost` call) — but it is still a deviation from "preserve status
+//      exactly" and is documented as one here, not sold as a win.
 // This is the accepted, verified consequence of the brief's literal recipe for this shape,
 // so it is pinned here rather than forced through the blanket "must be 4xx" sweep above
 // (which does not hold for these four) or left undocumented. What still matters — no
 // unhandled rejection, ever — IS asserted, same as every other test in this file.
+//
+// posts-kill × '[]' is DELIBERATELY EXCLUDED from the matrix below, unlike the other three
+// routes' '[]' case. '[]' passes readJsonBody untouched (documented contract), so on this
+// route it reaches a REAL, unmocked `killPost(slug, { reason })` call — and `ctx.ROOT`
+// injection does NOT isolate it. `lib/post-kill.js` resolves `getMetaPath` from
+// `lib/posts.js`, and separately calls `loadCalendar`/`writeCalendar` from
+// `lib/calendar-store.js`; both of those modules hardcode their own module-level
+// `ROOT = join(__dirname, '..')` rather than reading it off any `ctx` this test controls,
+// so on this specific path the stub `ctx.ROOT` above is inert. If the slug
+// 'no-such-slug-xyz' ever collided with a real `data/posts/<slug>/meta.json` that carried
+// `shopify_blog_id`/`shopify_article_id`, `lib/post-kill.js:46-53` would issue a LIVE
+// Shopify Admin `DELETE` via `deleteArticle(...)`, on top of `rmSync`-ing the real post
+// directory, unlinking the real brief file, and rewriting the real `data/calendar.json` if
+// the slug matched a calendar item. Today that never happens only because the slug is
+// fictional — a coincidence, not test isolation — so this route's '[]' case is not
+// exercised at all rather than relying on that coincidence holding forever. `null`/`5`/
+// `"str"` remain safe and ARE exercised: readJsonBody rejects all three before `killPost` is
+// ever reached, so they still prove the crash invariant for this route without touching the
+// real repo tree.
 test('the four single-catch modules never crash on a hostile body, answering their preexisting catch status instead of a fresh 4xx', async () => {
   rejections.length = 0;
   const ctx = {
@@ -254,22 +290,22 @@ test('the four single-catch modules never crash on a hostile body, answering the
     invalidateDataCache() {},
   };
   // Verified empirically against the migrated handlers (see task-6-report.md) — not
-  // guessed. '[]' passes readJsonBody untouched (documented contract), so it reaches each
+  // guessed. Each route lists only the hostile bodies it is safe to drive through the REAL
+  // dispatch(); posts-kill omits '[]' — see the comment block above for why. For the other
+  // three, '[]' passes readJsonBody untouched (documented contract), so it reaches each
   // route's own field validation instead of the catch: cannibalization and indexing/resubmit
-  // both have a required field to catch it on (400); posts-kill's only field is optional, so
-  // it proceeds to a real (harmless, on this nonexistent slug) killPost call and succeeds
-  // (200); rejected-images' `filename` is required but only enforced by a downstream
-  // `path.join(..., undefined)` throw, which the SAME catch answers (500), so '[]' does not
-  // stand out there the way it does for the other three.
+  // both have a required field to catch it on (400); rejected-images' `filename` is required
+  // but only enforced by a downstream `path.join(..., undefined)` throw, which the SAME
+  // catch answers (500).
   const expected = [
     ['POST', '/api/cannibalization/resolve', { null: 502, 5: 502, '"str"': 502, '[]': 400 }],
-    ['POST', '/api/posts/no-such-slug-xyz/kill', { null: 500, 5: 500, '"str"': 500, '[]': 200 }],
+    ['POST', '/api/posts/no-such-slug-xyz/kill', { null: 500, 5: 500, '"str"': 500 }],
     ['POST', '/api/rejected-images/no-such-slug-xyz/accept', { null: 500, 5: 500, '"str"': 500, '[]': 500 }],
     ['POST', '/api/indexing/resubmit', { null: 502, 5: 502, '"str"': 502, '[]': 400 }],
   ];
   const answers = [];
   for (const [method, url, byBody] of expected) {
-    for (const body of HOSTILE_BODIES) {
+    for (const body of Object.keys(byBody)) {
       const res = makeRes();
       // NOT awaited — same reason as the blanket sweep above: dispatch() does not await
       // its handler, so checking res.statusCode before draining would read it too early.
