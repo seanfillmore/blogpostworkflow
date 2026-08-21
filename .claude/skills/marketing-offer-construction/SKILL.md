@@ -1,6 +1,6 @@
 ---
 name: marketing-offer-construction
-description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, creating a premium version of something you already sell, scoring which existing SKU should anchor a bundle or act as the cheap entry offer, choosing discount depth (or deciding not to discount at all), finding a price by stepping it upward against a fixed sample of orders, how to state the same savings (percent off vs dollars off vs a free portion), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
+description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, creating a premium version of something you already sell, auditing which SKUs have a real differentiator and which should compete on value vectors instead, scoring which existing SKU should anchor a bundle or act as the cheap entry offer, choosing discount depth (or deciding not to discount at all), finding a price by stepping it upward against a fixed sample of orders, how to state the same savings (percent off vs dollars off vs a free portion), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
 ---
 
 # Offer Construction
@@ -15,15 +15,16 @@ description: Use when deciding what you actually sell or give away rather than h
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
-## If your category is easy for buyers to comparison-shop, win on at least one of three value vectors — faster, less risky, or easier — and hammer that one rather than trying to do all three.
+## Audit each SKU for whether it has a real differentiator at all — where one exists, name it; where the product is a pure commodity, stop forcing mechanism copy onto it and compete instead on the three vectors buyers can still feel: faster, less risky, or easier. Hammer one vector rather than trying to do all three.
 
-**Why it works:** Commoditization happens when nothing distinguishes you on the dimensions a buyer can actually feel. Speed, risk, and ease are the three axes buyers price against across every category, so owning one converts you from an interchangeable option into a premium one.
+**Why it works:** Mechanism copy only has something to say when there is a real difference to name. Forcing a unique mechanism onto a generic product produces copy the market disbelieves, so the honest options collapse to competing on the non-product vectors. Commoditization happens when nothing distinguishes you on the dimensions a buyer can actually feel. Speed, risk, and ease are the axes buyers price against across every category, so owning one converts you from an interchangeable option into a premium one. The audit comes first because it decides which copy slot each SKU gets: mechanism copy for the genuinely differentiated items, value-vector copy for the rest.
 
-**Evidence offered:** Assertion from consulting practice across home services (roofing, concrete, kitchen remodeling); no numbers.
+**Evidence offered:** Assertion from consulting practice across home services (roofing, concrete, kitchen remodeling); no numbers. On the audit half: the generic-turmeric case stated as a rule, plus the GLP-1 anecdote — his own brand scaled $20M→$32M→$50M in 2.5 years with no unique mechanism work at all (awareness total, molecule identical across sellers, winners competing on price, economics and customer success), and more aggressive competitors scaled further. Self-reported figures, no comparison against a mechanism-led competitor.
 
-**Fit here (7/10):** Durable principle class — offer construction, age irrelevant. Natural deodorant is one of the most comparison-shopped categories on Amazon, and Offer/AOV is an explicit stage in the gated sequence, reachable without spend. Two of the three vectors are solo-executable at zero cost: risk (a transition-period guarantee) and ease (refill/bundle/subscription that removes decisions across 12 SKUs). Not higher because speed is essentially out of a solo operator's hands when fulfillment runs through FBA and Shopify.
+**Fit here (7/10):** Durable principle class — offer construction and positioning, age irrelevant. Natural deodorant is one of the most comparison-shopped categories on Amazon, and Offer/AOV is an explicit stage in the gated sequence, reachable without spend. Two of the three vectors are solo-executable at zero cost: risk (a transition-period guarantee) and ease (refill/bundle/subscription that removes decisions across 12 SKUs). Not higher because speed is essentially out of a solo operator's hands when fulfillment runs through FBA and Shopify. The per-SKU audit step is adopted at about a 5 in isolation — it is largely the same argument with a different vector list — but it earns its place as the step that runs first: the baking-soda-free deodorant has a real differentiator worth naming, while an unscented body bar or a plain lip balm may not, and pretending otherwise wastes the copy slot. Read the source's 'or stop selling it' half strictly as 'stop writing mechanism copy for it', never as 'delist it' — the undifferentiated lip balm is explicitly the low-COGS entry and bundle-filler SKU under the splinter and lead-magnet rules below. Competing on delivery time is also largely out of reach under FBA.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
+*Source: Stefan Georgi — "Secret of the DTC Universe #7: Unique Mechanisms have changed" (social post)*
 
 ## Reverse risk by naming the buyer's single biggest fear and guaranteeing, warrantying, or literally insuring against it — then build that cost into the price and put the promise where the buyer decides, not in the footer.
 
@@ -135,7 +136,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Coca-Cola worked as an illustration (secret recipe, pennies of cost, lifelong repeat consumption) plus the claim that a one-person service business also satisfies all four. Assertion with one canonical brand example, no figures.
 
-**Fit here (5/10):** Durable principle class, age irrelevant, but it cannot be used as intended: the no-new-products rule above gates catalog expansion, and a solo operator at $2,700/mo should not be launching product 13. It translates honestly as a scoring lens on the 12 SKUs that already exist — which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (the baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer, and which carries the subscribe-and-save cadence. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules above — the additive part is only the four-way scoring frame.
+**Fit here (5/10):** Durable principle class, age irrelevant, but it cannot be used as intended: the no-new-products rule above gates catalog expansion, and a solo operator at $2,700/mo should not be launching product 13. It translates honestly as a scoring lens on the 12 SKUs that already exist — which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (the baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer, and which carries the subscribe-and-save cadence. It also pairs directly with the differentiator audit above: the 'unique' score is what tells you which SKUs earn mechanism copy. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules above — the additive part is only the four-way scoring frame.
 
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
@@ -175,7 +176,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Illustrative only: 2mg versus 4mg nicotine gum, plastic versus Kevlar or metal iPhone cases, wood instead of metal whiteboards, and service equivalents (priority support, extended hours, senior reps). No data.
 
-**Fit here (5/10):** Durable pricing/offer logic, and it does add a lever the surrounding rules do not name — they cover quantity bundles, buy-X-get-Y and how to name tiers, but presuppose the tiers exist rather than telling you to create one along a quality axis. Honest forms exist here without new sourcing: a larger-size or extra-strength deodorant as the premium tier, or a priority-handling / gift-wrapped configuration. Capped at 5 because it sits in real tension with the strongest rule above — 'don't add products, add ways to offer the products you already have' — since a genuinely new premium formulation means new inventory and cash a $2,700/mo solo operation should not spend, and the neighbouring rules ('win on faster / less risky / easier' and funding the premium by raising price) already cover much of the intent. Use the size and configuration axis, not new formulations, and treat SKU 13 as off-limits.
+**Fit here (5/10):** Durable pricing/offer logic, and it does add a lever the surrounding rules do not name — they cover quantity bundles, buy-X-get-Y and how to name tiers, but presuppose the tiers exist rather than telling you to create one along a quality axis. Honest forms exist here without new sourcing: a larger-size or extra-strength deodorant as the premium tier, or a priority-handling / gift-wrapped configuration. Capped at 5 because it sits in real tension with the strongest rule above — 'don't add products, add ways to offer the products you already have' — since a genuinely new premium formulation means new inventory and cash a $2,700/mo solo operation should not spend, and the neighbouring rules (the differentiator audit and value vectors, and funding the premium by raising price) already cover much of the intent. Use the size and configuration axis, not new formulations, and treat SKU 13 as off-limits.
 
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
@@ -189,3 +190,39 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 *Source: Alex Hormozi — "$100M Offers" (book, part 9 of 11)*
 *Source: Alex Hormozi — "$100M Offers" (book, part 10 of 11)*
+
+## Get adjacent non-competing businesses to contribute their products and services as bonuses in exchange for exposure to your customers, then negotiate group discounts and referral commissions so the bonuses become revenue streams.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Your customer list is the currency: partners get free access to pre-qualified buyers, you get high-value bonuses at zero cost, and referral commissions can turn the bonus stack into profit on top of the core sale.
+
+**Evidence offered:** Detailed pain-clinic worked example (massage, chiro, food discounts, gym, pharmacy) totalling more than the $400 offer price, plus his Prestige Labs sponsored-athlete discount-and-commission arrangement. Anecdotal.
+
+**Fit here (6/10):** Sound and durable offer mechanics: adjacent non-competing brands (a small-batch soap, a bath-goods maker, a clean-beauty brand) will contribute product as a bonus in exchange for exposure, which lets you stack perceived value onto a bundle at zero COGS and optionally earn referral commission on the back end. The only thing missing is the currency the deal is paid in — audience. At a sub-1,000 list and ~54 orders/month no partner takes the call, so today it is negotiation labor with no leverage. Trigger: a list of roughly 3,000-5,000 engaged subscribers or a giveaway entry pool of comparable size, at which point the exposure is worth something to a partner and one email can carry the co-promotion. Offer construction is a durable principle, so the source's age is irrelevant.
+
+*Source: undefined — "undefined" (100m-offers)*
+
+## Run two or three of your best offer names in the ad campaign, quickly note the winner, then treat it as the control to test new names against.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Name performance is unpredictable, so head-to-head testing rather than reasoning identifies the winner, and holding a control prevents you from replacing a proven name with a worse one.
+
+**Evidence offered:** Assertion, plus the admission 'I honestly have no idea why some names win and others do not.'
+
+**Fit here (5/10):** Head-to-head name testing with a preserved control is legitimate — name performance genuinely is unpredictable and holding the winner as control stops you from replacing a proven name with a worse one. What it needs is a readable signal: two or three name cells at $30/day and ~54 orders/month would separate on noise, and acting on that produces false confidence worse than not testing. Trigger: enough weekly purchase volume through paid that a single ad set can distinguish two offer variants — realistically several hundred link clicks and double-digit purchases per cell per week. The naming principle itself is already adopted (see the tier-naming rule above), so this parks as the validation method attached to it. Durable testing logic, not decaying platform mechanics.
+
+*Source: undefined — "undefined" (100m-offers)*
+
+## Run a giveaway as a front-end attraction offer, then call every non-winner and give them a 'second place' consolation discount.
+
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** The giveaway lowers the cost of getting contact information because entering is free, and the consolation framing converts the losing majority by giving them a reason to feel they won something.
+
+**Evidence offered:** Anecdotal kitchen-remodel example; assertion only.
+
+**Fit here (7/10):** The original rejection is void — it leaned on the discredited 'traffic sits behind tracking → CRO → offer' sequence, and RSC is literally standing up a Meta campaign to drive entries to a soap giveaway right now. The structure is exactly right for this moment: a free entry buys the contact cheaply, and the consolation 'you placed second, here is your prize' framing converts the losing 99% by giving them a reason to feel they won rather than a naked discount — that framing is a genuine addition to what lifecycle email already covers. The part that is genuinely blocked is the delivery channel as claimed: phoning every non-winner is sales labor a solo operator cannot do against a paid-fed entry pool. Trigger: support or sales help who can work an entrant list by phone; until then the consolation offer ships by email through the existing nurture escalation and this parked entry covers the phone version.
+
+*Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*

@@ -1,6 +1,6 @@
 ---
 name: marketing-review-mining
-description: Use when sourcing customer proof and deciding which of it to show — exporting Shopify and Amazon reviews to CSV and running them through an LLM for verbatim phrasing and recurring objections, then choosing which quotes actually earn their place: whose 'before' state matches the buyer you want, which quotes name the mechanism that worked, and how to spread a small review corpus across the objections that disqualify readers.
+description: Use when sourcing customer proof and deciding which of it to show — exporting Shopify and Amazon reviews to CSV and running them through an LLM for verbatim phrasing and recurring objections, then choosing which quotes actually earn their place: whose 'before' state matches the buyer you want, which quotes name the mechanism that worked, how to word the review request so it comes back usable, and how to spread a small review corpus across the objections that disqualify readers.
 ---
 
 # Review Mining
@@ -56,3 +56,15 @@ description: Use when sourcing customer proof and deciding which of it to show �
 **Fit here (7/10):** The strongest revenue link in its source video, because the output feeds the surfaces that actually convert: PDP proof blocks, Amazon A+ modules, and email subject lines. Natural deodorant has an unusually clean worst moment — "I kept my arms down in a meeting," "my shirt was ruined by noon" — so the elicitation question has an obvious form here. Additive to the extraction tactic above, which covers how to mine quotes but not which question produces good ones or which to choose. **Channel constraint:** Amazon prohibits directed review solicitation, so only the Shopify-side request (Judge.me follow-up, post-purchase email) is safe to run; Amazon reviews stay read-only input.
 
 *Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
+
+## Install Google Analytics and the Facebook pixel on the review survey pages and read the funnel drop-off report to optimize review-collection conversion.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Instrumenting the survey shows where respondents abandon, so the review request can be tuned like any other conversion path rather than guessed at.
+
+**Evidence offered:** Demoed as a settings field plus a screenshot of a funnel/drop-off analytics view. No example of an insight or an improvement.
+
+**Fit here (5/10):** Instrumenting the review-request funnel and reading where respondents abandon is a legitimate conversion problem — review volume is the input to everything in this skill, and today the corpus is small enough that quotes have to be rationed across objections. Tracking is open, so installing the pixel is not the blocker; the blocker is a readable signal. At ~54 orders/month a drop-off report on the survey has too few sessions per step to license a change. Trigger: several hundred review requests per month, enough that a step-level abandonment rate is stable. Score reflects merit at that volume. Until then, the lever on review quality is the wording of the request itself — a specific question and a text-plus-length floor — not the instrumentation around it.
+
+*Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*
