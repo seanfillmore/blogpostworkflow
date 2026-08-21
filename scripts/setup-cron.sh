@@ -137,6 +137,21 @@ DAILY_GIVEAWAY_RECONCILE="30 8 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaw
 # the reconciler so the digest reads freshly credited numbers.
 DAILY_GIVEAWAY_REPORT="45 8 * * * cd \"$PROJECT_DIR\" && NOTIFY_DEFERRED=1 $NODE scripts/giveaway/report.mjs >> data/reports/scheduler/giveaway-report.log 2>&1"
 
+# Re-send the double-opt-in confirmation to entrants who submitted but never
+# clicked. Measured 2026-08-21, day three of the paid campaign: 108 submissions,
+# 26 confirmed — and 36% even among the cohort mature enough to have decided. An
+# unconfirmed entrant is on no list, so they get no nurture email, cannot be
+# credited as anyone's referrer, and cannot be sold to; the whole gap is this one
+# step. Re-issuing the subscribe makes Klaviyo re-send its opt-in email, which is
+# a CONSENT REQUEST, not marketing — that is the only reason it may reach an
+# unconsented profile, and why this line must never be pointed at a promotional
+# send. Capped at 3 per address, 48h apart, stamped on the profile; skips anyone
+# already confirmed. Idempotent.
+#
+# 16:00 UTC = 9 AM PT, a sane send hour for a US list, and AFTER the 08:45 report
+# so the daily funnel snapshot is taken before the nudge moves it.
+DAILY_GIVEAWAY_NUDGE="0 16 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/nudge-unconfirmed.mjs --apply >> data/reports/scheduler/giveaway-nudge.log 2>&1"
+
 # Entry Period close: stop the nurture flow. Klaviyo has no flow end date, and
 # PATCH /flows accepts only status, so the boundary is enforced from outside.
 # 11:59 PM CT 2026-09-14 = 04:59 UTC 2026-09-15; fire at 05:05 UTC. Idempotent.
@@ -219,6 +234,7 @@ $MONTHLY_PRIORITY_TUNER
 # ── Soap giveaway (daily, UTC) ──
 $DAILY_GIVEAWAY_RECONCILE
 $DAILY_GIVEAWAY_REPORT
+$DAILY_GIVEAWAY_NUDGE
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
 "
 
