@@ -197,7 +197,10 @@ not just the fail count** — a stubbed-fetch test that never settles reports
 
 ## Rollout
 
-Three PRs, in order, each independently mergeable and deployable:
+**One PR, one deploy.** The problem being fixed is dashboard uptime, and three
+separate deploys means three restarts of the process whose availability is the whole
+point. The layers are still built and committed in order inside the branch, so the
+history stays bisectable and each commit lands on a floor that already cannot crash:
 
 1. Layer 1 + its own guard tests.
 2. Layer 2 — `readJsonBody` gains the cap, then the nine callback-style modules
@@ -205,8 +208,17 @@ Three PRs, in order, each independently mergeable and deployable:
    preserved, including status codes.
 3. Layer 3 + a test that the handlers are registered.
 
-After each deploy: `pm2 status` shows `online`, and `curl -X POST <dashboard>/api/rum
--d 'null'` returns a 400 while the process stays up.
+The ordering is not bookkeeping. Layer 2 moves code out of `end` callbacks and into
+handler promises — code that is only safe there **because** Layer 1 is already
+catching that promise. Committing Layer 2 first would briefly convert uncatchable
+throws into uncaught ones.
+
+Post-deploy verification, against the live dashboard:
+
+- `pm2 status` shows `seo-dashboard` `online`.
+- `curl -X POST <dashboard>/api/rum -d 'null'` returns 400 and the process stays up.
+- A body one byte over the `rum` cap returns the same status it returns today.
+- Load one authenticated tab and confirm a normal request still round-trips.
 
 ## Non-goals
 
