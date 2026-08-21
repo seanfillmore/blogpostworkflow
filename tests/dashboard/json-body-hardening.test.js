@@ -23,7 +23,7 @@
 
 import { strict as assert } from 'node:assert';
 import { test, before, after } from 'node:test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { dispatch } from '../../agents/dashboard/lib/router.js';
@@ -199,27 +199,40 @@ test('a rejected body read does not strand the ads in-flight key', async () => {
 // not a refusal. That is not a regression this migration introduces — it is the same
 // "no required fields" shape every other migrated route already treats as ordinary — but it
 // does mean the blanket "must be a 4xx" assertion above does not hold for these two, so they
-// get their own, narrower test: only the three bodies readJsonBody actually REJECTS (null,
-// 5, "str") are asserted to come back 4xx; '[]' is deliberately not exercised here (see
-// below).
+// get their own, narrower test: the three bodies readJsonBody actually REJECTS (null, 5,
+// "str") are asserted to come back 4xx; '[]' is deliberately not exercised here (see below).
 //
-// sessions/:id additionally cannot be driven through the '[]' or '' body shapes in an
-// automated test at all: agents/dashboard/lib/creatives-store.js's saveSession/createSession
-// import CREATIVE_SESSIONS_DIR and CREATIVES_DIR directly from lib/paths.js rather than
-// reading them off ctx, so pointing ctx.CREATIVE_SESSIONS_DIR at a scratch directory does
-// NOT stop a body that reaches the real upsert path from writing into THIS repo's actual
+// THE EMPTY-BODY CASE IS A RULED-ON, ACCEPTED CONSEQUENCE — NOT A DESIRED OUTCOME, AND NOT
+// A BUG. readJsonBody resolves `{}` for a zero-byte body (its documented contract, which
+// predates this migration); the old `JSON.parse('')` threw and produced a 400. Neither of
+// these two routes has a required field to catch that on, so an empty PUT now succeeds
+// (200) where it used to be refused — on templates/:id this also CREATES a stub file that
+// did not exist before, carrying only an updatedAt stamp. Task 5 review flagged this as
+// invisible (no test exercised it); the ruling was to make it VISIBLE in CI rather than add
+// "at least one field required" validation, which the effort's Global Constraints forbid as
+// new validation out of this migration's scope, and which matches how the same shape
+// (POST /ads/:date/suggestion/:id) was already ruled acceptable elsewhere in this effort.
+// The assertions below are written to read as "this was decided on purpose", not as an
+// endorsement — see the two comments directly on those assertions.
+//
+// Only templates/:id is driven through the empty body. sessions/:id is deliberately NOT —
+// it cannot be driven through the '[]' or '' body shapes in an automated test at all:
+// agents/dashboard/lib/creatives-store.js's saveSession/createSession import
+// CREATIVE_SESSIONS_DIR and CREATIVES_DIR directly from lib/paths.js rather than reading
+// them off ctx, so pointing ctx.CREATIVE_SESSIONS_DIR at a scratch directory does NOT stop
+// a body that reaches the real upsert path from writing into THIS repo's actual
 // data/creative-sessions and data/creatives directories. Confirmed by running exactly that
 // scenario once, by hand, while building this test, and having to delete the stray
 // no-such-id-xyz.json and session-*.json files it left behind. That ctx-bypass is a
 // pre-existing fact about the library, not something this migration introduces or is in
-// scope to fix, so this test does not exercise that body shape against sessions/:id.
-test('PUT /api/creatives/templates/:id and /sessions/:id refuse null/5/"str" without crashing', async () => {
+// scope to fix, so sessions/:id's own empty-body 200 stays untested here — this paragraph
+// is the record of that gap, so it stays documented rather than silent.
+test(`PUT /api/creatives/templates/:id and /sessions/:id refuse null/5/"str" without crashing, and templates/:id's empty-body 200 is the accepted readJsonBody consequence (see comment above)`, async () => {
   rejections.length = 0;
   // Real, writable, throwaway directory — templates/:id's write DOES respect
-  // ctx.CREATIVE_TEMPLATES_DIR, but none of the three bodies below ever reach that write
-  // (readJsonBody rejects all three before the handler's own try touches the filesystem);
-  // this only exists so a future body added to this list that DOES pass through lands
-  // somewhere harmless instead of either ENOENT-ing or hitting a real repo path.
+  // ctx.CREATIVE_TEMPLATES_DIR. None of null/5/"str" ever reach that write (readJsonBody
+  // rejects all three before the handler's own try touches the filesystem); the empty
+  // body below is the one case that does reach it, which is the point of this test.
   const tmpDir = mkdtempSync(join(tmpdir(), 'route-hardening-creatives-put-'));
   const ctx = {
     CREATIVE_TEMPLATES_DIR: tmpDir,
@@ -227,6 +240,8 @@ test('PUT /api/creatives/templates/:id and /sessions/:id refuse null/5/"str" wit
     CREATIVES_DIR: '/tmp/route-hardening-no-such-dir',
   };
   const seen = [];
+  let emptyBodyRes;
+  let stubFileExists;
   try {
     for (const body of ['null', '5', '"str"']) {
       for (const [method, url] of [
@@ -239,7 +254,21 @@ test('PUT /api/creatives/templates/:id and /sessions/:id refuse null/5/"str" wit
         seen.push({ method, url, body, res });
       }
     }
+
+    // templates/:id ONLY — see the comment block above for why sessions/:id is excluded.
+    emptyBodyRes = makeRes();
+    const emptyMatched = dispatch(
+      creativesRoutes,
+      makeReq('PUT', '/api/creatives/templates/no-such-id-xyz', ''),
+      emptyBodyRes,
+      ctx,
+    );
+    assert.equal(emptyMatched, true, 'PUT templates/:id must still match a route for an empty body');
+
     await drain();
+
+    // Checked before the tmpDir cleanup in `finally` below runs.
+    stubFileExists = existsSync(join(tmpDir, 'no-such-id-xyz.json'));
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -253,6 +282,20 @@ test('PUT /api/creatives/templates/:id and /sessions/:id refuse null/5/"str" wit
     assert.ok(res.statusCode >= 400 && res.statusCode < 500,
       `${method} ${url} must refuse a body of ${body} with a 4xx, got ${res.statusCode}`);
   }
+
+  // ACCEPTED CONSEQUENCE, ruled on in Task 5 review — not desirable, not a regression this
+  // migration introduces, and deliberately left unfixed rather than given new validation.
+  // readJsonBody resolves {} for an absent body (its documented, pre-existing contract);
+  // templates/:id has no required field to catch that on, so the merge-and-save proceeds
+  // and answers 200 where the old hand-rolled JSON.parse('') used to throw into a 400.
+  assert.equal(emptyBodyRes.statusCode, 200,
+    'RULED ACCEPTABLE (Task 5 review): an empty body against templates/:id succeeds instead ' +
+    'of being refused, because readJsonBody resolves {} and this route has no required field');
+  // Same ruling: the write this 200 represents is real, and on this route it can CREATE a
+  // template that did not exist — asserted here so that fact stays visible, not implied.
+  assert.equal(stubFileExists, true,
+    'RULED ACCEPTABLE (Task 5 review): the empty body creates a stub template file in ' +
+    'CREATIVE_TEMPLATES_DIR carrying only an updatedAt stamp, where none existed before');
 });
 
 // ── readJsonBody's own contract ─────────────────────────────────────────────────────────
