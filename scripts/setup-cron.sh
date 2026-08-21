@@ -119,6 +119,42 @@ MONTHLY_CONTENT_GAP="0 8 1 * * cd \"$PROJECT_DIR\" && $NODE agents/content-gap/i
 # which runs weekly but is guaranteed available by the 1st).
 MONTHLY_PRIORITY_TUNER="0 16 1 * * cd \"$PROJECT_DIR\" && $NODE agents/priority-tuner/index.js >> data/reports/scheduler/priority-tuner.log 2>&1"
 
+# ── Soap giveaway (daily, UTC) — installed on the server 2026-08-12 ──────────
+# These three jobs run the live soap-giveaway campaign. They are recorded here
+# for the first time on 2026-08-21 — until now the server crontab was the only
+# copy, and a server rebuild or crontab restore would have silently reverted
+# the TZ fix below. Verify against `ssh root@137.184.119.230 'crontab -l'`
+# before assuming this block is still current; it is not auto-synced.
+#
+# Credits the confirmation (+2) and referral (+5) rungs. These rungs are written
+# ONLY here; without this line the entry ladder silently never advances.
+# Idempotent — safe to re-run and safe to leave running before launch (no-op at
+# 0 entrants). Must run BEFORE the 13:00 UTC digest.
+DAILY_GIVEAWAY_RECONCILE="30 8 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/reconcile-referrals.mjs --apply >> data/reports/scheduler/giveaway-reconcile.log 2>&1"
+
+# Daily giveaway report + day-5/day-10 spend gates. NOTIFY_DEFERRED=1 appends to
+# the daily-summary JSONL so the gates land in the 13:00 UTC digest. Runs AFTER
+# the reconciler so the digest reads freshly credited numbers.
+DAILY_GIVEAWAY_REPORT="45 8 * * * cd \"$PROJECT_DIR\" && NOTIFY_DEFERRED=1 $NODE scripts/giveaway/report.mjs >> data/reports/scheduler/giveaway-report.log 2>&1"
+
+# Entry Period close: stop the nurture flow. Klaviyo has no flow end date, and
+# PATCH /flows accepts only status, so the boundary is enforced from outside.
+# 11:59 PM CT 2026-09-14 = 04:59 UTC 2026-09-15; fire at 05:05 UTC. Idempotent.
+#
+# THE TRAP THIS LINE PROTECTS AGAINST: the production box's system clock is
+# UTC, full stop. A cron line with no `TZ=` prefix runs on the UTC clock no
+# matter what a comment, a config file, or a variable name claims — cron does
+# not know or care that this job is "Pacific-flavored" unless `TZ=` is present
+# on the line itself. This job originally shipped without `TZ=` and fired on
+# the UTC clock, ~2 hours BEFORE entries actually closed in Pacific time —
+# drafting the nurture flow while people were still entering, which killed the
+# `01-confirm` email and its +2-entry confirmation rung for last-minute
+# entrants. Fixed BY HAND on the server on 2026-08-20 by adding
+# `TZ=America/Los_Angeles`. This job must fire AFTER the giveaway closes in
+# Pacific time — do not remove or "simplify" the TZ prefix, and do not let a
+# future setup-cron.sh edit silently drop it.
+GIVEAWAY_CLOSE_ENTRY_PERIOD="5 5 15 9 * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/close-entry-period.mjs --apply >> data/reports/scheduler/giveaway-close.log 2>&1"
+
 # ── Install ──────────────────────────────────────────────────────────────────
 # Strip ALL previous seo-claude entries (covers ~/seo-claude, /root/seo-claude,
 # and any other path variant) to prevent duplicates from accumulating.
@@ -180,6 +216,10 @@ $BIWEEKLY_STRATEGIST
 # ── Monthly ──
 $MONTHLY_CONTENT_GAP
 $MONTHLY_PRIORITY_TUNER
+# ── Soap giveaway (daily, UTC) ──
+$DAILY_GIVEAWAY_RECONCILE
+$DAILY_GIVEAWAY_REPORT
+$GIVEAWAY_CLOSE_ENTRY_PERIOD
 "
 
 echo "Installing cron jobs..."
@@ -232,6 +272,11 @@ echo ""
 echo "  MONTHLY (1st of each month)"
 echo "  08:00 UTC — content-gap analysis (DataForSEO)"
 echo "  16:00 UTC — priority-tuner (closed-loop weight tuner)"
+echo ""
+echo "  SOAP GIVEAWAY (daily, UTC — see comments in this script for the TZ trap)"
+echo "  08:30 UTC — giveaway reconcile-referrals (confirmation/referral rungs)"
+echo "  08:45 UTC — giveaway daily report (spend gates)"
+echo "  05:05 UTC, 2026-09-15 PT — giveaway close-entry-period (TZ=America/Los_Angeles — do not drop the TZ prefix)"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"

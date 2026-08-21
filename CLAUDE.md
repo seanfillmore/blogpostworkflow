@@ -138,7 +138,7 @@ Rules:
 **Server:** `root@137.184.119.230` (DigitalOcean, Ubuntu)
 **Project path:** `/root/seo-claude`
 **Process manager:** PM2 — process name `seo-dashboard`
-**Cron:** `crontab -l` on the server lists every job. Main scheduler entry runs at 15 UTC (8 AM PT). Daily-summary email runs at 13 UTC (5 AM PT).
+**Cron:** `crontab -l` on the server lists every job — it is the production truth and the source `scripts/setup-cron.sh` is meant to reproduce; the script is not currently a full mirror of everything live (see the script's own job list). Main scheduler entry runs at 15 UTC (8 AM PT). Daily-summary email runs at 13 UTC (5 AM PT). The **soap-giveaway jobs** (`DAILY_GIVEAWAY_RECONCILE`, `DAILY_GIVEAWAY_REPORT`, `GIVEAWAY_CLOSE_ENTRY_PERIOD`) are version-controlled in `scripts/setup-cron.sh` — re-running the script re-installs them from source instead of relying on a hand-edited live crontab. `GIVEAWAY_CLOSE_ENTRY_PERIOD` carries `TZ=America/Los_Angeles`: the box's system clock is UTC, and a cron line with no `TZ=` prefix runs on UTC no matter what a comment claims — that gap fired the entry-period close ~2 hours before entries actually closed in Pacific time, drafting the nurture flow while people were still entering and killing the `01-confirm` email's +2-entry rung for last-minute entrants. Fixed by hand on the server 2026-08-20; do not drop the `TZ=` prefix.
 **SSH:** Key-based auth — no password from this machine.
 
 ### Deploy
