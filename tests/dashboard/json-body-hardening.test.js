@@ -23,6 +23,9 @@
 
 import { strict as assert } from 'node:assert';
 import { test, before, after } from 'node:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { dispatch } from '../../agents/dashboard/lib/router.js';
 import { readJsonBody } from '../../agents/dashboard/lib/responses.js';
 import adBriefRoutes from '../../agents/dashboard/routes/ad-brief.js';
@@ -30,6 +33,7 @@ import adsRoutes from '../../agents/dashboard/routes/ads.js';
 import adStudioLaunchRoutes from '../../agents/dashboard/routes/ad-studio-launch.js';
 import adStudioRoutes from '../../agents/dashboard/routes/ad-studio.js';
 import chatRoutes from '../../agents/dashboard/routes/chat.js';
+import creativesRoutes from '../../agents/dashboard/routes/creatives.js';
 import dataforseoRoutes from '../../agents/dashboard/routes/dataforseo.js';
 import ideasRoutes from '../../agents/dashboard/routes/ideas.js';
 import performanceQueueRoutes from '../../agents/dashboard/routes/performance-queue.js';
@@ -46,6 +50,7 @@ const ROUTES = [
   ...adStudioLaunchRoutes,
   ...adStudioRoutes,
   ...chatRoutes,
+  ...creativesRoutes,
   ...dataforseoRoutes,
   ...ideasRoutes,
   ...performanceQueueRoutes,
@@ -91,6 +96,15 @@ const TARGETS = [
   ['PATCH', '/api/ideas/no-such-slug-xyz'],
   ['POST', '/api/performance-queue/no-such-slug-xyz/feedback'],
   ['POST', '/api/rum'],
+  ['POST', '/api/creatives/analyze-reference'],
+  ['POST', '/api/creatives/templates'],
+  ['POST', '/api/creatives/refine'],
+  ['POST', '/api/creatives/package'],
+  ['POST', '/api/generate-creative'],
+  // PUT /api/creatives/templates/:id and PUT /api/creatives/sessions/:id are deliberately
+  // NOT here — see the dedicated test below for why the blanket "must be 4xx" assertion
+  // this loop applies does not fit those two routes, and why sessions/:id specifically
+  // cannot be driven through every hostile body in an automated test at all.
 ];
 
 /** The four non-object top-level JSON documents from the review. */
@@ -113,8 +127,25 @@ for (const body of HOSTILE_BODIES) {
     const answers = [];
     // ads.js's chat route reads ctx.adsInFlight before the body, and its update route
     // reads ctx.ADS_OPTIMIZER_DIR after — both need to exist for the sweep to reach the
-    // JSON parse rather than throwing on ctx access first.
-    const ctx = { adsInFlight: new Set(), ADS_OPTIMIZER_DIR: '/tmp/no-such-dir-xyz' };
+    // JSON parse rather than throwing on ctx access first. creatives.js's handlers each
+    // check existsSync(<dir>) and answer 404 before doing real work — pointing every one
+    // of these at a directory that does not exist keeps the sweep on that harmless path.
+    const ctx = {
+      adsInFlight: new Set(),
+      ADS_OPTIMIZER_DIR: '/tmp/no-such-dir-xyz',
+      REFERENCE_IMAGES_DIR: '/tmp/route-hardening-no-such-dir',
+      CREATIVE_TEMPLATES_DIR: '/tmp/route-hardening-no-such-dir',
+      CREATIVE_SESSIONS_DIR: '/tmp/route-hardening-no-such-dir',
+      CREATIVES_DIR: '/tmp/route-hardening-no-such-dir',
+      PRODUCT_IMAGES_DIR_MA: '/tmp/route-hardening-no-such-dir',
+      META_ADS_INSIGHTS_DIR: '/tmp/route-hardening-no-such-dir',
+      // Truthy so /api/creatives/refine's pre-body 503 gate ("Gemini API key not
+      // configured") does not fire before the body is ever read — a falsy stub here
+      // would make refine answer 503 for every hostile body regardless of migration
+      // status, which proves nothing about read-order and fails the blanket 4xx check
+      // below for an unrelated reason.
+      geminiClient: {},
+    };
 
     for (const [method, url] of TARGETS) {
       const res = makeRes();
@@ -156,6 +187,72 @@ test('a rejected body read does not strand the ads in-flight key', async () => {
   await drain();
 
   assert.equal(adsInFlight.has('2026-08-21/lock-test'), false, 'the in-flight key was released');
+});
+
+// ── the two upsert PUT routes: no required-field validation, so an array or empty body
+// legitimately SUCCEEDS instead of being refused ─────────────────────────────────────────
+//
+// PUT /api/creatives/templates/:id and PUT /api/creatives/sessions/:id are excluded from
+// the blanket TARGETS sweep above on purpose. Both are create-or-replace endpoints with no
+// required fields, so a body readJsonBody PASSES THROUGH untouched (an array, or an empty
+// body — see readJsonBody's own docstring) reaches their real upsert logic and answers 200,
+// not a refusal. That is not a regression this migration introduces — it is the same
+// "no required fields" shape every other migrated route already treats as ordinary — but it
+// does mean the blanket "must be a 4xx" assertion above does not hold for these two, so they
+// get their own, narrower test: only the three bodies readJsonBody actually REJECTS (null,
+// 5, "str") are asserted to come back 4xx; '[]' is deliberately not exercised here (see
+// below).
+//
+// sessions/:id additionally cannot be driven through the '[]' or '' body shapes in an
+// automated test at all: agents/dashboard/lib/creatives-store.js's saveSession/createSession
+// import CREATIVE_SESSIONS_DIR and CREATIVES_DIR directly from lib/paths.js rather than
+// reading them off ctx, so pointing ctx.CREATIVE_SESSIONS_DIR at a scratch directory does
+// NOT stop a body that reaches the real upsert path from writing into THIS repo's actual
+// data/creative-sessions and data/creatives directories. Confirmed by running exactly that
+// scenario once, by hand, while building this test, and having to delete the stray
+// no-such-id-xyz.json and session-*.json files it left behind. That ctx-bypass is a
+// pre-existing fact about the library, not something this migration introduces or is in
+// scope to fix, so this test does not exercise that body shape against sessions/:id.
+test('PUT /api/creatives/templates/:id and /sessions/:id refuse null/5/"str" without crashing', async () => {
+  rejections.length = 0;
+  // Real, writable, throwaway directory — templates/:id's write DOES respect
+  // ctx.CREATIVE_TEMPLATES_DIR, but none of the three bodies below ever reach that write
+  // (readJsonBody rejects all three before the handler's own try touches the filesystem);
+  // this only exists so a future body added to this list that DOES pass through lands
+  // somewhere harmless instead of either ENOENT-ing or hitting a real repo path.
+  const tmpDir = mkdtempSync(join(tmpdir(), 'route-hardening-creatives-put-'));
+  const ctx = {
+    CREATIVE_TEMPLATES_DIR: tmpDir,
+    CREATIVE_SESSIONS_DIR: '/tmp/route-hardening-no-such-dir',
+    CREATIVES_DIR: '/tmp/route-hardening-no-such-dir',
+  };
+  const seen = [];
+  try {
+    for (const body of ['null', '5', '"str"']) {
+      for (const [method, url] of [
+        ['PUT', '/api/creatives/templates/no-such-id-xyz'],
+        ['PUT', '/api/creatives/sessions/no-such-id-xyz'],
+      ]) {
+        const res = makeRes();
+        const matched = dispatch(creativesRoutes, makeReq(method, url, body), res, ctx);
+        assert.equal(matched, true, `${method} ${url} must still match a route`);
+        seen.push({ method, url, body, res });
+      }
+    }
+    await drain();
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+
+  assert.deepEqual(
+    rejections.map((r) => (r && r.message) || String(r)), [],
+    'no route may leave an unhandled rejection',
+  );
+  for (const { method, url, body, res } of seen) {
+    assert.ok(typeof res.statusCode === 'number', `${method} ${url} must answer a body of ${body}`);
+    assert.ok(res.statusCode >= 400 && res.statusCode < 500,
+      `${method} ${url} must refuse a body of ${body} with a 4xx, got ${res.statusCode}`);
+  }
 });
 
 // ── readJsonBody's own contract ─────────────────────────────────────────────────────────

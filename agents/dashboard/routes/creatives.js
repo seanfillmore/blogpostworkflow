@@ -6,6 +6,7 @@ import Anthropic from '../../../lib/anthropic.js';
 import { GEMINI_MODELS, saveSession, createSession } from '../lib/creatives-store.js';
 import sharp from 'sharp';
 import { CREATIVE_MODELS } from '../../../config/creative-models.js';
+import { readJsonBody } from '../lib/responses.js';
 
 export default [
   // ── exact matches first ──────────────────────────────────────────────────────
@@ -115,50 +116,47 @@ export default [
   {
     method: 'POST',
     match: '/api/creatives/analyze-reference',
-    handler(req, res, ctx) {
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', async () => {
-        let payload;
-        try { payload = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' })); return;
-        }
-        const filename = payload.referenceImage;
-        if (!filename) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'referenceImage required' })); return;
-        }
-        const safe = basename(filename);
-        const absPath = join(ctx.REFERENCE_IMAGES_DIR, safe);
-        if (!existsSync(absPath)) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Reference image not found' })); return;
-        }
-        try {
-          const imgData = readFileSync(absPath);
-          const ext = extname(absPath).toLowerCase();
-          const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
-          const client = new Anthropic();
-          const message = await client.messages.create({
-            model: CREATIVE_MODELS.styleVision,
-            max_tokens: 400,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image', source: { type: 'base64', media_type: mimeMap[ext] || 'image/jpeg', data: imgData.toString('base64') } },
-                { type: 'text', text: 'You are a commercial photography art director. Describe ONLY the transferable production style of this ad so it can be reused to photograph a DIFFERENT product (a natural coconut-based skincare product). Capture: camera angle and framing, lighting quality and direction, background surface and finish, depth and shadows, the styling/prop approach (density and placement), and the overall mood and level of polish. Do NOT name or describe the specific product, brand, fruit, ingredient, text, or logos shown, and do not lock onto its exact colors — keep it about a style that would flatter a premium natural skincare product. Write it as a concise image-generation prompt of 2–4 sentences. Return ONLY the prompt, no preamble.' }
-              ]
-            }]
-          });
-          const stylePrompt = (message.content[0] && message.content[0].text || '').trim();
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ stylePrompt }));
-        } catch (err) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
+    async handler(req, res, ctx) {
+      let payload;
+      try { payload = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      const filename = payload.referenceImage;
+      if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'referenceImage required' })); return;
+      }
+      const safe = basename(filename);
+      const absPath = join(ctx.REFERENCE_IMAGES_DIR, safe);
+      if (!existsSync(absPath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Reference image not found' })); return;
+      }
+      try {
+        const imgData = readFileSync(absPath);
+        const ext = extname(absPath).toLowerCase();
+        const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+        const client = new Anthropic();
+        const message = await client.messages.create({
+          model: CREATIVE_MODELS.styleVision,
+          max_tokens: 400,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mimeMap[ext] || 'image/jpeg', data: imgData.toString('base64') } },
+              { type: 'text', text: 'You are a commercial photography art director. Describe ONLY the transferable production style of this ad so it can be reused to photograph a DIFFERENT product (a natural coconut-based skincare product). Capture: camera angle and framing, lighting quality and direction, background surface and finish, depth and shadows, the styling/prop approach (density and placement), and the overall mood and level of polish. Do NOT name or describe the specific product, brand, fruit, ingredient, text, or logos shown, and do not lock onto its exact colors — keep it about a style that would flatter a premium natural skincare product. Write it as a concise image-generation prompt of 2–4 sentences. Return ONLY the prompt, no preamble.' }
+            ]
+          }]
+        });
+        const stylePrompt = (message.content[0] && message.content[0].text || '').trim();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ stylePrompt }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
     },
   },
 
@@ -166,35 +164,31 @@ export default [
   {
     method: 'POST',
     match: '/api/creatives/templates',
-    handler(req, res, ctx) {
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let data;
-        try { data = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-          return;
-        }
-        if (!data.id || !data.name || !data.prompt) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'id, name, and prompt are required' }));
-          return;
-        }
-        try {
-          const template = {
-            ...data,
-            createdAt: data.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          writeFileSync(join(ctx.CREATIVE_TEMPLATES_DIR, data.id + '.json'), JSON.stringify(template, null, 2));
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(template));
-        } catch (err) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
+    async handler(req, res, ctx) {
+      let data;
+      try { data = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      if (!data.id || !data.name || !data.prompt) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'id, name, and prompt are required' }));
+        return;
+      }
+      try {
+        const template = {
+          ...data,
+          createdAt: data.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        writeFileSync(join(ctx.CREATIVE_TEMPLATES_DIR, data.id + '.json'), JSON.stringify(template, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(template));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
     },
   },
 
@@ -572,150 +566,146 @@ export default [
   {
     method: 'POST',
     match: '/api/creatives/refine',
-    handler(req, res, ctx) {
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', async () => {
-        if (!ctx.geminiClient) {
-          res.writeHead(503, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Gemini API key not configured' }));
+    async handler(req, res, ctx) {
+      if (!ctx.geminiClient) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Gemini API key not configured' }));
+        return;
+      }
+      let payload;
+      try { payload = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      const { sessionId, refinement, model } = payload;
+      const version = parseInt(payload.version, 10);
+      if (!sessionId || !version || !refinement) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'sessionId, version, and refinement are required' }));
+        return;
+      }
+      try {
+        // Load session
+        const sessionPath = join(ctx.CREATIVE_SESSIONS_DIR, sessionId + '.json');
+        if (!existsSync(sessionPath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Session not found' }));
           return;
         }
-        let payload;
-        try { payload = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        const session = JSON.parse(readFileSync(sessionPath, 'utf8'));
+
+        // Find previous version
+        const prevVersion = (session.versions || []).find(v => v.version === version);
+        if (!prevVersion) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Version not found' }));
           return;
         }
-        const { sessionId, refinement, model } = payload;
-        const version = parseInt(payload.version, 10);
-        if (!sessionId || !version || !refinement) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'sessionId, version, and refinement are required' }));
+
+        // Load previous image from disk
+        const prevImagePath = join(ctx.CREATIVES_DIR, prevVersion.imagePath);
+        if (!existsSync(prevImagePath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Previous image not found on disk' }));
           return;
         }
-        try {
-          // Load session
-          const sessionPath = join(ctx.CREATIVE_SESSIONS_DIR, sessionId + '.json');
-          if (!existsSync(sessionPath)) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Session not found' }));
-            return;
+        const prevImageData = readFileSync(prevImagePath);
+
+        // Detect mime type from file extension
+        const prevExt = extname(prevImagePath).toLowerCase();
+        const mimeExtMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+        const prevMimeType = mimeExtMap[prevExt] || 'image/jpeg';
+
+        const geminiModel = model || prevVersion.model || GEMINI_MODELS[0].id;
+
+        // Send previous image + refinement text to Gemini
+        console.log('[Creatives Refine] model:', geminiModel, 'version:', version, 'refinement:', refinement.slice(0, 80));
+
+        // Re-attach the source product/history images so a refine keeps the
+        // product in frame and doesn't drift the composition.
+        const refineParts = [];
+        const mimeMapRefine = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+        for (const relPath of (prevVersion.productImagePaths || [])) {
+          const abs = join(ctx.PRODUCT_IMAGES_DIR, relPath);
+          if (existsSync(abs)) {
+            refineParts.push({ inlineData: { mimeType: mimeMapRefine[extname(abs).toLowerCase()] || 'image/jpeg', data: readFileSync(abs).toString('base64') } });
           }
-          const session = JSON.parse(readFileSync(sessionPath, 'utf8'));
-
-          // Find previous version
-          const prevVersion = (session.versions || []).find(v => v.version === version);
-          if (!prevVersion) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Version not found' }));
-            return;
-          }
-
-          // Load previous image from disk
-          const prevImagePath = join(ctx.CREATIVES_DIR, prevVersion.imagePath);
-          if (!existsSync(prevImagePath)) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Previous image not found on disk' }));
-            return;
-          }
-          const prevImageData = readFileSync(prevImagePath);
-
-          // Detect mime type from file extension
-          const prevExt = extname(prevImagePath).toLowerCase();
-          const mimeExtMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
-          const prevMimeType = mimeExtMap[prevExt] || 'image/jpeg';
-
-          const geminiModel = model || prevVersion.model || GEMINI_MODELS[0].id;
-
-          // Send previous image + refinement text to Gemini
-          console.log('[Creatives Refine] model:', geminiModel, 'version:', version, 'refinement:', refinement.slice(0, 80));
-
-          // Re-attach the source product/history images so a refine keeps the
-          // product in frame and doesn't drift the composition.
-          const refineParts = [];
-          const mimeMapRefine = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
-          for (const relPath of (prevVersion.productImagePaths || [])) {
-            const abs = join(ctx.PRODUCT_IMAGES_DIR, relPath);
-            if (existsSync(abs)) {
-              refineParts.push({ inlineData: { mimeType: mimeMapRefine[extname(abs).toLowerCase()] || 'image/jpeg', data: readFileSync(abs).toString('base64') } });
-            }
-          }
-          refineParts.push({ inlineData: { mimeType: prevMimeType, data: prevImageData.toString('base64') } });
-          refineParts.push({ text: 'Edit this image with the following changes: ' + refinement });
-
-          const refineImageConfig = {};
-          if (prevVersion.aspectRatio && prevVersion.aspectRatio !== 'custom') refineImageConfig.aspectRatio = prevVersion.aspectRatio;
-
-          const result = await ctx.geminiClient.models.generateContent({
-            model: geminiModel,
-            contents: [{ role: 'user', parts: refineParts }],
-            config: {
-              responseModalities: ['TEXT', 'IMAGE'],
-              imageConfig: refineImageConfig,
-            }
-          });
-
-          // Check for safety/policy rejection
-          const candidate = result.candidates?.[0];
-          if (!candidate) {
-            res.writeHead(422, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'No candidates returned — possible safety rejection' }));
-            return;
-          }
-          if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'OTHER') {
-            res.writeHead(422, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Image refinement blocked by safety policy', finishReason: candidate.finishReason }));
-            return;
-          }
-
-          // Find the image part
-          const imagePart = candidate.content?.parts?.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-          if (!imagePart) {
-            res.writeHead(422, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'No image returned from Gemini' }));
-            return;
-          }
-
-          // Save new image in original format from Gemini
-          const newMimeType = imagePart.inlineData.mimeType;
-          const newExtMap = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
-          const newExt = newExtMap[newMimeType] || '.png';
-
-          const maxVer = (session.versions || []).reduce((m, v) => Math.max(m, v.version || 0), 0);
-          const newVersionNum = maxVer + 1;
-          const newImageFilename = `v${newVersionNum}${newExt}`;
-          const sessionDir = join(ctx.CREATIVES_DIR, session.id);
-          ctx.ensureDir(sessionDir);
-          const absImagePath = join(sessionDir, newImageFilename);
-          writeFileSync(absImagePath, Buffer.from(imagePart.inlineData.data, 'base64'));
-
-          const imagePath = session.id + '/' + newImageFilename;
-
-          // Add new version to session with refinement field
-          const newVersion = {
-            version: newVersionNum,
-            imagePath,
-            prompt: prevVersion.prompt,
-            negativePrompt: prevVersion.negativePrompt,
-            refinement,
-            model: geminiModel,
-            aspectRatio: prevVersion.aspectRatio,
-            productImagePaths: prevVersion.productImagePaths || [],
-            historyImagePaths: prevVersion.historyImagePaths || [],
-            basedOnVersion: version,
-            createdAt: new Date().toISOString()
-          };
-          session.versions.push(newVersion);
-          saveSession(session);
-
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ imagePath, version: newVersionNum }));
-        } catch (err2) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err2.message }));
         }
-      });
+        refineParts.push({ inlineData: { mimeType: prevMimeType, data: prevImageData.toString('base64') } });
+        refineParts.push({ text: 'Edit this image with the following changes: ' + refinement });
+
+        const refineImageConfig = {};
+        if (prevVersion.aspectRatio && prevVersion.aspectRatio !== 'custom') refineImageConfig.aspectRatio = prevVersion.aspectRatio;
+
+        const result = await ctx.geminiClient.models.generateContent({
+          model: geminiModel,
+          contents: [{ role: 'user', parts: refineParts }],
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+            imageConfig: refineImageConfig,
+          }
+        });
+
+        // Check for safety/policy rejection
+        const candidate = result.candidates?.[0];
+        if (!candidate) {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No candidates returned — possible safety rejection' }));
+          return;
+        }
+        if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'OTHER') {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Image refinement blocked by safety policy', finishReason: candidate.finishReason }));
+          return;
+        }
+
+        // Find the image part
+        const imagePart = candidate.content?.parts?.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+        if (!imagePart) {
+          res.writeHead(422, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No image returned from Gemini' }));
+          return;
+        }
+
+        // Save new image in original format from Gemini
+        const newMimeType = imagePart.inlineData.mimeType;
+        const newExtMap = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
+        const newExt = newExtMap[newMimeType] || '.png';
+
+        const maxVer = (session.versions || []).reduce((m, v) => Math.max(m, v.version || 0), 0);
+        const newVersionNum = maxVer + 1;
+        const newImageFilename = `v${newVersionNum}${newExt}`;
+        const sessionDir = join(ctx.CREATIVES_DIR, session.id);
+        ctx.ensureDir(sessionDir);
+        const absImagePath = join(sessionDir, newImageFilename);
+        writeFileSync(absImagePath, Buffer.from(imagePart.inlineData.data, 'base64'));
+
+        const imagePath = session.id + '/' + newImageFilename;
+
+        // Add new version to session with refinement field
+        const newVersion = {
+          version: newVersionNum,
+          imagePath,
+          prompt: prevVersion.prompt,
+          negativePrompt: prevVersion.negativePrompt,
+          refinement,
+          model: geminiModel,
+          aspectRatio: prevVersion.aspectRatio,
+          productImagePaths: prevVersion.productImagePaths || [],
+          historyImagePaths: prevVersion.historyImagePaths || [],
+          basedOnVersion: version,
+          createdAt: new Date().toISOString()
+        };
+        session.versions.push(newVersion);
+        saveSession(session);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ imagePath, version: newVersionNum }));
+      } catch (err2) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err2.message }));
+      }
     },
   },
 
@@ -723,67 +713,63 @@ export default [
   {
     method: 'POST',
     match: '/api/creatives/package',
-    handler(req, res, ctx) {
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let payload;
-        try { payload = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+    async handler(req, res, ctx) {
+      let payload;
+      try { payload = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      const { sessionId, product, angle, destinationUrl, placements, sizes } = payload;
+      const version = parseInt(payload.version, 10);
+      if (!sessionId || !version) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'sessionId and version are required' }));
+        return;
+      }
+      try {
+        const sessionPath = join(ctx.CREATIVE_SESSIONS_DIR, sessionId + '.json');
+        if (!existsSync(sessionPath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Session not found' }));
           return;
         }
-        const { sessionId, product, angle, destinationUrl, placements, sizes } = payload;
-        const version = parseInt(payload.version, 10);
-        if (!sessionId || !version) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'sessionId and version are required' }));
+        const session = JSON.parse(readFileSync(sessionPath, 'utf8'));
+        const verObj = (session.versions || []).find(v => v.version === version);
+        if (!verObj) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Version not found' }));
           return;
         }
-        try {
-          const sessionPath = join(ctx.CREATIVE_SESSIONS_DIR, sessionId + '.json');
-          if (!existsSync(sessionPath)) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Session not found' }));
-            return;
-          }
-          const session = JSON.parse(readFileSync(sessionPath, 'utf8'));
-          const verObj = (session.versions || []).find(v => v.version === version);
-          if (!verObj) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Version not found' }));
-            return;
-          }
-          const jobId = 'pkg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-          ctx.ensureDir(ctx.CREATIVE_JOBS_DIR);
-          const jobData = {
-            jobId,
-            source: 'session',
-            heroImagePath: verObj.imagePath,
-            productImages: [],
-            copyBrief: {
-              product: product || session.name || 'Real Skin Care',
-              angle: angle || '',
-              destinationUrl: destinationUrl || '',
-            },
-            placements: Array.isArray(placements) && placements.length ? placements : ['instagram', 'facebook'],
-            sizes: Array.isArray(sizes) ? sizes : [],
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-          };
-          writeFileSync(join(ctx.CREATIVE_JOBS_DIR, jobId + '.json'), JSON.stringify(jobData, null, 2));
-          spawn('node', [join(ctx.ROOT, 'agents/creative-packager/index.js'), '--job-id', jobId], {
-            detached: true,
-            stdio: 'ignore',
-            cwd: ctx.ROOT,
-          }).unref();
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ jobId }));
-        } catch (err2) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err2.message }));
-        }
-      });
+        const jobId = 'pkg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        ctx.ensureDir(ctx.CREATIVE_JOBS_DIR);
+        const jobData = {
+          jobId,
+          source: 'session',
+          heroImagePath: verObj.imagePath,
+          productImages: [],
+          copyBrief: {
+            product: product || session.name || 'Real Skin Care',
+            angle: angle || '',
+            destinationUrl: destinationUrl || '',
+          },
+          placements: Array.isArray(placements) && placements.length ? placements : ['instagram', 'facebook'],
+          sizes: Array.isArray(sizes) ? sizes : [],
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        };
+        writeFileSync(join(ctx.CREATIVE_JOBS_DIR, jobId + '.json'), JSON.stringify(jobData, null, 2));
+        spawn('node', [join(ctx.ROOT, 'agents/creative-packager/index.js'), '--job-id', jobId], {
+          detached: true,
+          stdio: 'ignore',
+          cwd: ctx.ROOT,
+        }).unref();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ jobId }));
+      } catch (err2) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err2.message }));
+      }
     },
   },
 
@@ -791,39 +777,41 @@ export default [
   {
     method: 'POST',
     match: '/api/generate-creative',
-    handler(req, res, ctx) {
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        try {
-          const { adId, productImages = [] } = JSON.parse(body);
-          if (!adId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'adId required' })); return; }
-          if (productImages.length > 3) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'max 3 product images' })); return; }
-          for (const f of productImages) {
-            if (!existsSync(join(ctx.PRODUCT_IMAGES_DIR_MA, f))) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: `Product image not found: ${f}` })); return; }
-          }
-          // Find pageId for the adId from latest insights
-          let pageId = 'unknown';
-          if (existsSync(ctx.META_ADS_INSIGHTS_DIR)) {
-            const iFiles = readdirSync(ctx.META_ADS_INSIGHTS_DIR).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
-            if (iFiles.length) {
-              try {
-                const ins = JSON.parse(readFileSync(join(ctx.META_ADS_INSIGHTS_DIR, iFiles[0]), 'utf8'));
-                pageId = ins.ads.find(a => a.id === adId)?.pageId || 'unknown';
-              } catch {}
-            }
-          }
-          const jobId = `${pageId}-${Date.now()}`;
-          mkdirSync(ctx.CREATIVE_JOBS_DIR, { recursive: true });
-          writeFileSync(join(ctx.CREATIVE_JOBS_DIR, `${jobId}.json`), JSON.stringify({ status: 'pending', adId, productImages, createdAt: new Date().toISOString() }, null, 2));
-          spawn('node', ['agents/creative-packager/index.js', '--job-id', jobId], { detached: true, stdio: 'ignore' }).unref();
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ jobId }));
-        } catch (e) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: e.message }));
+    async handler(req, res, ctx) {
+      let payload;
+      try { payload = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      const { adId, productImages = [] } = payload;
+      try {
+        if (!adId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'adId required' })); return; }
+        if (productImages.length > 3) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'max 3 product images' })); return; }
+        for (const f of productImages) {
+          if (!existsSync(join(ctx.PRODUCT_IMAGES_DIR_MA, f))) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: `Product image not found: ${f}` })); return; }
         }
-      });
+        // Find pageId for the adId from latest insights
+        let pageId = 'unknown';
+        if (existsSync(ctx.META_ADS_INSIGHTS_DIR)) {
+          const iFiles = readdirSync(ctx.META_ADS_INSIGHTS_DIR).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+          if (iFiles.length) {
+            try {
+              const ins = JSON.parse(readFileSync(join(ctx.META_ADS_INSIGHTS_DIR, iFiles[0]), 'utf8'));
+              pageId = ins.ads.find(a => a.id === adId)?.pageId || 'unknown';
+            } catch {}
+          }
+        }
+        const jobId = `${pageId}-${Date.now()}`;
+        mkdirSync(ctx.CREATIVE_JOBS_DIR, { recursive: true });
+        writeFileSync(join(ctx.CREATIVE_JOBS_DIR, `${jobId}.json`), JSON.stringify({ status: 'pending', adId, productImages, createdAt: new Date().toISOString() }, null, 2));
+        spawn('node', ['agents/creative-packager/index.js', '--job-id', jobId], { detached: true, stdio: 'ignore' }).unref();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ jobId }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
     },
   },
 
@@ -833,29 +821,25 @@ export default [
   {
     method: 'PUT',
     match: (url) => /^\/api\/creatives\/templates\/[^/]+$/.test(url),
-    handler(req, res, ctx) {
+    async handler(req, res, ctx) {
       const id = req.url.split('/').pop();
       const filePath = join(ctx.CREATIVE_TEMPLATES_DIR, id + '.json');
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let updates;
-        try { updates = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-          return;
-        }
-        try {
-          const existing = existsSync(filePath) ? JSON.parse(readFileSync(filePath, 'utf8')) : { id };
-          const template = { ...existing, ...updates, id, updatedAt: new Date().toISOString() };
-          writeFileSync(filePath, JSON.stringify(template, null, 2));
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(template));
-        } catch (err) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
+      let updates;
+      try { updates = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      try {
+        const existing = existsSync(filePath) ? JSON.parse(readFileSync(filePath, 'utf8')) : { id };
+        const template = { ...existing, ...updates, id, updatedAt: new Date().toISOString() };
+        writeFileSync(filePath, JSON.stringify(template, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(template));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
     },
   },
 
@@ -911,48 +895,44 @@ export default [
   {
     method: 'PUT',
     match: (url) => /^\/api\/creatives\/sessions\/[^/]+$/.test(url),
-    handler(req, res, ctx) {
+    async handler(req, res, ctx) {
       const id = req.url.split('/').pop();
       const filePath = join(ctx.CREATIVE_SESSIONS_DIR, id + '.json');
-      let body = '';
-      req.on('data', d => { body += d; });
-      req.on('end', () => {
-        let updates;
-        try { updates = JSON.parse(body); } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-          return;
-        }
-        try {
-          const existing = existsSync(filePath) ? JSON.parse(readFileSync(filePath, 'utf8')) : createSession();
-          // Handle deleteVersion
-          if (updates.deleteVersion !== undefined) {
-            const delVer = parseInt(updates.deleteVersion, 10);
-            const verObj = (existing.versions || []).find(v => v.version === delVer);
-            existing.versions = (existing.versions || []).filter(v => v.version !== delVer);
-            // Delete image file from disk
-            if (verObj && verObj.imagePath) {
-              const imgFile = join(ctx.CREATIVES_DIR, verObj.imagePath);
-              if (existsSync(imgFile)) unlinkSync(imgFile);
-            }
-            delete updates.deleteVersion;
+      let updates;
+      try { updates = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+      try {
+        const existing = existsSync(filePath) ? JSON.parse(readFileSync(filePath, 'utf8')) : createSession();
+        // Handle deleteVersion
+        if (updates.deleteVersion !== undefined) {
+          const delVer = parseInt(updates.deleteVersion, 10);
+          const verObj = (existing.versions || []).find(v => v.version === delVer);
+          existing.versions = (existing.versions || []).filter(v => v.version !== delVer);
+          // Delete image file from disk
+          if (verObj && verObj.imagePath) {
+            const imgFile = join(ctx.CREATIVES_DIR, verObj.imagePath);
+            if (existsSync(imgFile)) unlinkSync(imgFile);
           }
-          // Handle toggleFavorite
-          if (updates.toggleFavorite !== undefined) {
-            const toggleId = updates.toggleFavorite;
-            (existing.versions || []).forEach(function(v) {
-              if (v.id === toggleId || v.version === toggleId) v.favorite = !v.favorite;
-            });
-            delete updates.toggleFavorite;
-          }
-          const session = saveSession({ ...existing, ...updates, id });
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(session));
-        } catch (err) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err.message }));
+          delete updates.deleteVersion;
         }
-      });
+        // Handle toggleFavorite
+        if (updates.toggleFavorite !== undefined) {
+          const toggleId = updates.toggleFavorite;
+          (existing.versions || []).forEach(function(v) {
+            if (v.id === toggleId || v.version === toggleId) v.favorite = !v.favorite;
+          });
+          delete updates.toggleFavorite;
+        }
+        const session = saveSession({ ...existing, ...updates, id });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(session));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
     },
   },
 
