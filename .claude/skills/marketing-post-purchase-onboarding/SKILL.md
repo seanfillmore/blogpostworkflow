@@ -1,6 +1,6 @@
 ---
 name: marketing-post-purchase-onboarding
-description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, the promise-and-timeline schedule in the first 48 hours after checkout, packaging inserts, first-use instructions, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order.
+description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, the promise-and-timeline schedule in the first 48 hours after checkout, packaging inserts and their scannable opt-in destination, first-use instructions and named routines, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order.
 ---
 
 # Post Purchase Onboarding
@@ -66,3 +66,15 @@ description: Use when building or fixing what a customer receives after they buy
 **The Amazon constraint decides the destination.** Amazon prohibits inserts that direct buyers to review or off-platform, so on the larger channel the QR must land on a genuine 'how to use this / how did we do' page, never a review solicitation. The capture also needs a real reason to opt in (see the lead-magnet rules in `marketing-offer-construction`) rather than a bare 'join our list'. Held at 7 because it carries per-unit print cost at a $50.46 AOV.
 
 *Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*
+
+## Give buyers instant access to a community the moment they check out — a group they can join while the product is still in transit — so they receive something of value before delivery.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Community access collapses the time delay between paying and receiving something of value, and being around similar people is itself a desired outcome — so the wait becomes part of the product rather than dead time.
+
+**Evidence offered:** A recommendation made to one seasonal-box client; no outcome reported.
+
+**Fit here (5/10):** The mechanism is real and durable: give the buyer something of value in the gap between checkout and delivery, which is exactly the window this skill already works in. What is missing is member density — a buyer community at ~54 orders/month is a room with four people in it and dies on arrival, and the moderation load only becomes worth carrying once the room is alive. Trigger: a few hundred repeat buyers per quarter, or a deodorant-transition cohort large enough that members answer each other. Until then the same job is done by the pre-arrival email sequence and the first-48-hours promise schedule above. Score reflects merit at that volume, not today's.
+
+*Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*

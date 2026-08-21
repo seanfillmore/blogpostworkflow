@@ -1898,15 +1898,72 @@ import {
   CURRENT_STAGE,
   extractStagedTactics,
   isStageActive,
+  isTimingReject,
 } from '../../lib/marketing-learner.js';
 
 // The enum is written into reports, so it is a compatibility surface.
 {
   assert.deepEqual(
     [...STAGES],
-    ['tracking', 'cro', 'offer-aov', 'traffic'],
+    ['tracking', 'cro', 'offer-aov', 'traffic', 'scale', 'team'],
     'stage names are the operating sequence, in order',
   );
+}
+
+// ── parking must actually park something ────────────────────────────────────
+// When CURRENT_STAGE is the LAST entry in STAGES, isStageActive returns true for
+// every value and a stage marker is decoration. That is what happened between
+// 2026-08-17 and 2026-08-20: the traffic gate opened, traffic was last, and the
+// extractor was told to stop setting `stage` at all — so a tactic that was sound
+// but premature had nowhere to go except a reject, and the corpus accumulated 41
+// of them. At least one gate must always sit ahead of the current one.
+{
+  const ahead = STAGES.slice(STAGES.indexOf(CURRENT_STAGE) + 1);
+  assert.ok(ahead.length > 0,
+    'a gate must exist beyond CURRENT_STAGE, or parking is a no-op and premature tactics get rejected instead');
+  for (const gate of ahead) {
+    assert.equal(isStageActive(gate), false, `${gate} parks while the business is at ${CURRENT_STAGE}`);
+  }
+  assert.equal(isStageActive('traffic'), true, 'the gate already reached stays live');
+  assert.equal(isStageActive('cro'), true, 'an earlier gate stays live');
+}
+
+// ── the extractor is told to park, not to reject, on timing ─────────────────
+{
+  const block = buildConstraintBlock();
+  assert.ok(!/Do not set a stage/i.test(block), 'the do-not-park instruction is gone');
+  assert.match(block, /\bscale\b/, 'names the scale gate');
+  assert.match(block, /\bteam\b/, 'names the team gate');
+  assert.match(block, /never a reject|not a reject/i,
+    'says plainly that a timing blocker is a park, not a rejection');
+}
+
+// ── isTimingReject: which old rejections are worth paying to re-read ────────
+{
+  const reject = (why) => ({ verdict: 'reject', rejectReason: why, rscFit: { reasoning: '' } });
+
+  // Timing — the tactic is sound, the business just is not there yet.
+  assert.equal(isTimingReject(reject('Requires a media buyer and an agency.')), true);
+  assert.equal(isTimingReject(reject('Needs volume to reach statistical significance.')), true);
+  assert.equal(isTimingReject(reject('Assumes a $100/day floor and a 20-creative test cell.')), true);
+  assert.equal(isTimingReject(reject('This business does not produce video and has no creator roster.')), true);
+
+  // Merit — stays rejected however big the business gets.
+  assert.equal(isTimingReject(reject('Duplicates an existing entry in marketing-offer-construction.')), false);
+  assert.equal(isTimingReject(reject('Motivational framing with no stated mechanism.')), false);
+
+  // Merit wins ties. A duplicate is a duplicate even when the reasoning also
+  // mentions the budget — otherwise every re-adjudication pass re-proposes the
+  // same duplicates and the skills accumulate near-copies.
+  assert.equal(
+    isTimingReject(reject('Duplicates the existing rule, and also needs volume this business lacks.')),
+    false,
+    'a rejection naming duplication is never re-read as a timing rejection');
+
+  // Only rejections are candidates at all.
+  assert.equal(isTimingReject({ verdict: 'adopt', rscFit: { reasoning: 'needs volume' } }), false);
+  assert.equal(isTimingReject(null), false);
+  assert.equal(isTimingReject(reject('')), false, 'no recorded reason is not evidence of timing');
 }
 
 // validateExtraction: stage is optional, constrained, and adopt-only.
@@ -2085,8 +2142,16 @@ import {
   // the same week the ad account was being built for the giveaway.
   assert.match(b, /gate is OPEN|gates \(tracking, cro, offer-aov, traffic\) are open/i,
     'the constraint block states the traffic gate is open');
-  assert.match(b, /omit `stage` on every tactic/i,
-    'the constraint block tells the model to stop setting stage');
+  // …but "open" must not read as "nothing can ever be parked again". Between
+  // 2026-08-17 and 2026-08-20 the block told the model to omit stage entirely,
+  // and 41 sound-but-premature tactics were rejected instead of parked. The
+  // capacity gates ahead of traffic are what give them somewhere to go.
+  assert.ok(!/omit `stage` on every tactic/i.test(b),
+    'the block no longer tells the model to stop setting stage');
+  assert.match(b, /Timing is a stage, never a reject/i,
+    'the block leads with the rule that timing never produces a rejection');
+  assert.match(b, /"Not yet" is a stage\. Only "not ever" is a\s+reject\./i,
+    'and states the test in one line the model can apply');
   assert.ok(
     !/Requires ad budget materially above current spend\.\n/.test(b) ||
       /do not reject/i.test(b),

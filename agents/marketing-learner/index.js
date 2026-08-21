@@ -31,8 +31,20 @@
  *     in operating-sequence order. A tactic that is sound here but blocked by timing
  *     is adopted into its skill with a `**Stage:**` marker rather than rejected, and
  *     hidden from the fleet projection until that gate opens; this is how you find
- *     them again. Pass a gate (tracking, cro, offer-aov, traffic) to ask what
- *     reaching that phase unlocks. No network, no LLM call, no credential.
+ *     them again. Pass a gate (tracking, cro, offer-aov, traffic, scale, team) to ask
+ *     what reaching that phase unlocks. No network, no LLM call, no credential.
+ *
+ *   node agents/marketing-learner/index.js --readjudicate [--all] [--no-pr]
+ *     Re-reads tactics ALREADY REJECTED in data/reports/marketing-learner/*.json against
+ *     the current stage rules, and parks the ones whose only problem was timing. Run it
+ *     after appending a gate to STAGES or bumping CURRENT_STAGE — a rule change is only
+ *     retroactive if something goes back and looks, and nothing did between 2026-08-17
+ *     and 2026-08-20, which is how 41 sound-but-early tactics were discarded.
+ *     By default it re-reads only rejections whose recorded reasoning turns on volume,
+ *     budget or people (isTimingReject); --all re-reads every rejection in the corpus,
+ *     which costs more and mostly re-confirms duplication rejects. A recovered tactic is
+ *     always adopted WITH a stage — this pass can never promote straight into the live
+ *     projection, because anything runnable today was not a timing rejection.
  *
  *   node agents/marketing-learner/index.js --falsify <skill-name> --claim "<substring
  *       of the tactic's heading>" --reason "<what happened when you tested it>"
@@ -53,7 +65,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,6 +91,8 @@ import {
   chunkText,
   consolidateTactics,
   buildConstraintBlock,
+  isTimingReject,
+  readjudicateRejects,
 } from '../../lib/marketing-learner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -87,7 +101,10 @@ const SKILLS_DIR = join(ROOT, '.claude', 'skills');
 const CORPUS_DIR = join(ROOT, 'data', 'marketing-corpus');
 const REPORT_DIR = join(ROOT, 'data', 'reports', 'marketing-learner');
 
-const FLAGS = { '--extract-only': 'extractOnly', '--no-pr': 'noPr', '--refetch': 'refetch' };
+const FLAGS = {
+  '--extract-only': 'extractOnly', '--no-pr': 'noPr', '--refetch': 'refetch',
+  '--readjudicate': 'readjudicate', '--all': 'all',
+};
 
 /** Repo convention: agents read .env themselves. There is no dotenv import anywhere here. */
 function loadEnv(root = ROOT) {
@@ -116,6 +133,7 @@ export function parseArgs(argv) {
     urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
     falsify: null, claim: null, reason: null, staged: null,
     file: null, author: null, title: null, chunkWords: 4500, splitOn: null, sourceKind: null,
+    readjudicate: false, all: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -143,6 +161,14 @@ export function parseArgs(argv) {
       out.urls.push(a);
     }
   }
+
+  if (out.readjudicate) {
+    if (out.urls.length || out.file || out.falsify || out.staged) {
+      throw new Error('--readjudicate cannot be combined with URLs, --file, --falsify, or --staged — it is a separate mode over the existing reports.');
+    }
+    return out;
+  }
+  if (out.all) throw new Error('--all is only valid with --readjudicate.');
 
   if (out.staged) {
     if (out.staged !== 'all' && !STAGES.includes(out.staged)) {
@@ -511,6 +537,139 @@ async function finishSource({ source, extraction, inventory, args, client }) {
 }
 
 /**
+ * Every rejected tactic the corpus holds, newest report first.
+ *
+ * Reads the JSON reports rather than the markdown ones: the JSON is the structured
+ * record and carries the fields a re-adjudication needs (mechanism, score, reason).
+ */
+export function collectRejects(reportDir = REPORT_DIR, { all = false } = {}) {
+  let files;
+  try {
+    files = readdirSync(reportDir).filter((f) => f.endsWith('.json') && f !== 'staged-backfill.json');
+  } catch { return []; }
+
+  const out = [];
+  for (const f of files.sort()) {
+    let doc;
+    try { doc = JSON.parse(readFileSync(join(reportDir, f), 'utf8')); } catch { continue; }
+    for (const t of doc.tactics ?? []) {
+      if (t.verdict !== 'reject') continue;
+      if (!all && !isTimingReject(t)) continue;
+      out.push({ ...t, sourceId: doc.sourceId ?? f.replace(/\.json$/, ''), sourceCreator: doc.creator, sourceTitle: doc.title, reportFile: f });
+    }
+  }
+  return out;
+}
+
+/**
+ * Re-adjudicate previously rejected tactics under the current stage rules and park
+ * the recoverable ones in their skills.
+ *
+ * Batched because the whole corpus is a few hundred tactics and one call carrying
+ * all of them would push the response past max_tokens — which this repo treats as
+ * corruption, not partial success, so it would discard the entire pass.
+ */
+const READJUDICATE_BATCH = 25;
+
+async function runReadjudicate({ client, args }) {
+  const rejects = collectRejects(REPORT_DIR, { all: args.all });
+  if (!rejects.length) {
+    console.log(args.all
+      ? 'No rejected tactics in the corpus.'
+      : 'No timing-based rejections to re-examine. Pass --all to re-read every rejection.');
+    return;
+  }
+
+  const ahead = STAGES.slice(STAGES.indexOf(CURRENT_STAGE) + 1);
+  console.log(`\n▶ re-adjudicating ${rejects.length} rejected tactic(s) against gates ahead of `
+    + `"${CURRENT_STAGE}": ${ahead.join(', ')}`);
+  if (!args.all) console.log('  (timing-flagged only — pass --all to re-read every rejection)');
+
+  const inventory = scanSkillInventory(SKILLS_DIR);
+  const judged = [];
+  for (let i = 0; i < rejects.length; i += READJUDICATE_BATCH) {
+    const batch = rejects.slice(i, i + READJUDICATE_BATCH);
+    process.stdout.write(`  batch ${Math.floor(i / READJUDICATE_BATCH) + 1}: ${batch.length} tactics… `);
+    const verdicts = await readjudicateRejects({ tactics: batch, inventory, client });
+    const recovered = verdicts.filter((v) => v.outcome === 'recover').length;
+    console.log(`${recovered} recovered, ${batch.length - recovered} upheld`);
+    judged.push(...verdicts);
+  }
+
+  const recovered = judged.filter((t) => t.outcome === 'recover');
+  const writtenPaths = [];
+  const skillsTouched = [];
+
+  const bySkill = new Map();
+  for (const t of recovered) {
+    const key = t.targetSkill.name;
+    if (!bySkill.has(key)) bySkill.set(key, []);
+    bySkill.get(key).push({
+      ...t,
+      source: { creator: t.sourceCreator, title: t.sourceTitle, locator: t.sourceId },
+    });
+  }
+
+  for (const [name, tactics] of bySkill) {
+    const existing = inventory.find((s) => s.name === name);
+    const description = existing
+      ? parseFrontmatter(existing.content).description
+      : tactics[0].targetSkill.description;
+    const { path, action } = await writeSkill({ name, description, tactics, existing, client });
+    skillsTouched.push({ name, action, path });
+    writtenPaths.push(path);
+    syncMirrorIfTouched(writtenPaths, skillsTouched);
+  }
+
+  mkdirSync(REPORT_DIR, { recursive: true });
+  // Pacific, like every other date this agent stamps (--falsify uses todayPacific too).
+  // toISOString would label an evening run with tomorrow's date.
+  const stamp = todayPacific();
+  const reportPath = join(REPORT_DIR, `readjudication-${stamp}.md`);
+  const L = [
+    `# Re-adjudication — ${stamp}`, '',
+    `Re-read ${rejects.length} previously rejected tactic${rejects.length === 1 ? '' : 's'} `
+    + `(${args.all ? 'every rejection in the corpus' : 'timing-flagged only'}) against the gates `
+    + `now sitting ahead of \`${CURRENT_STAGE}\`: ${ahead.map((s) => `\`${s}\``).join(', ')}.`, '',
+    `**${recovered.length} recovered and parked. ${judged.length - recovered.length} upheld.**`, '',
+  ];
+  if (recovered.length) {
+    L.push('## Recovered', '');
+    for (const t of recovered.sort((a, b) => b.rscFit.score - a.rscFit.score)) {
+      L.push(`### ${t.claim} — ${t.rscFit.score}/10 · parked until \`${t.stage}\``, '');
+      L.push(`**Now:** ${t.rscFit.reasoning}`, '');
+      L.push(`**Originally rejected because:** ${t.rejectReason ?? 'n/a'}`, '');
+      L.push(`**Source:** \`${t.sourceId}\` → \`${t.targetSkill.name}\``, '');
+    }
+  }
+  const upheld = judged.filter((t) => t.outcome === 'uphold');
+  if (upheld.length) {
+    L.push('## Upheld', '');
+    for (const t of upheld) L.push(`- **${t.claim}** — ${t.rscFit.reasoning}`);
+    L.push('');
+  }
+  if (skillsTouched.length) {
+    L.push('## Skills touched', '');
+    for (const s of skillsTouched) L.push(`- \`${s.name}\` (${s.action})`);
+  }
+  writeFileSync(reportPath, L.join('\n'));
+  writtenPaths.push(reportPath);
+
+  console.log(`\n  ${recovered.length} recovered, ${judged.length - recovered.length} upheld`);
+  console.log(`  report: ${relative(ROOT, reportPath)}`);
+
+  notify({
+    agent: 'marketing-learner',
+    subject: `Re-adjudication: ${recovered.length} tactic(s) recovered from the reject pile`,
+    body: `${rejects.length} re-read, ${recovered.length} parked behind ${ahead.join('/')}, `
+      + `${judged.length - recovered.length} upheld. Skills touched: ${skillsTouched.map((s) => s.name).join(', ') || 'none'}.`,
+  });
+
+  if (args.noPr || !skillsTouched.length) return;
+  openPullRequest([{ video: { sourceId: `readjudication-${stamp}`, sourceType: 'file', sourceKind: 'reject pile', title: `Re-adjudication ${stamp}` }, extraction: { tactics: judged.map((t) => ({ ...t, rejectReason: t.outcome === 'uphold' ? t.rscFit.reasoning : null })) }, skillsTouched, writtenPaths }]);
+}
+
+/**
  * Cache key for one chunk's extraction.
  *
  * The skill inventory is in the hash deliberately. If skills changed between
@@ -791,6 +950,10 @@ async function main() {
 
   const client = new Anthropic({ apiKey: anthropicKey });
   const results = [];
+
+  if (args.readjudicate) {
+    return runReadjudicate({ client, args });
+  }
 
   if (args.file) {
     // parsePublishedFlags does double duty here: it validates the date (bare

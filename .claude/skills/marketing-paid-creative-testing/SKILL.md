@@ -82,3 +82,27 @@ description: Use when deciding what creative goes into a small-budget Meta campa
 **Fit here (6/10):** Durable-principle class — decompose a proven winner into its working component and multiply executions of that component rather than gambling on new concepts. The gate is open, and the input it needs is closer than it looks: a giveaway generates entry events cheaply enough that a winning creative becomes identifiable in days rather than months, which is the fastest this business has ever been able to find one. Iteration throughput is the real remaining limit — one operator, no designer — though `agents/ad-studio` exists precisely to produce plate variations, so the constraint is Photoshop time rather than concepting, and the static-first rule above is what keeps each iteration cheap enough to be worth making. Read it alongside the double 80/20 allocation above: iterations of the proven angle fill the majority of the creative slots, but one slot stays reserved for an untested angle so the account never stops exploring. Held at 6 because "statistically identifiable" is still generous at this budget; treat the winner as a strong hint and iterate on it anyway, since the alternative is iterating on nothing.
 
 *Source: Spencer Pawliw — "We 38x'd Meta Spend in 4 Months. Here's What Actually Did It" (goedDlD00T0)*
+
+## Test 3-6 hook variations per creative test and take big swings rather than isolating a single word — ideally reformatting existing top performers across every hook pattern in one large test.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Larger variation between cells produces bigger performance separation than single-variable changes, so winners surface faster than clean A/B isolation would allow. A one-word change on a low-traffic account spends the entire budget proving nothing, because the effect size is smaller than the noise; swinging between genuinely different hook patterns makes the gap large enough to read.
+
+**Evidence offered:** Personal testing practice; says she has done the reformat-all-top-performers test repeatedly with great results. No numbers.
+
+**Fit here (6/10):** The underlying principle is durable and correct: big variation between cells separates faster than single-word isolation. Reformatting a proven top performer across several distinct hook patterns is the cheapest way to extend a winner, and it is the natural next move after the breakthrough-ad dissection rule above once there is volume to support it. It is a multi-cell test, though — 3-6 hook cells cannot resolve at $30/day, where a single 3-2-2 flexible ad judged as one unit is the right structure. Trigger: enough purchase volume per week that separate hook cells accumulate readable results inside a fortnight, roughly the point where one ad set clears double-digit weekly purchases. This parks alongside the live rule against hunting per-permutation winners inside a flexible ad — it is what replaces that discipline when volume arrives, not a contradiction of it at current spend.
+
+*Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
+
+## Take your best-performing organic short-form videos and run them as paid ads, because creative that worked with no spend usually works with spend.
+
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** Organic performance is a free pre-test of the hook and the message. A clip that held attention with zero distribution behind it has already cleared the hardest bar, so paid spend is buying reach for creative whose core question — does this stop and hold someone — is answered rather than gambled on.
+
+**Evidence offered:** 'Some of my highest converting ads started as simple TikToks that we made for free.' Anecdote, no spend or ROAS figures.
+
+**Fit here (6/10):** Durable principle with a real mechanism, and the old objection is dead — the paid surface now exists at $30/day, so 'requires ad budget / no ad account' no longer applies. What is genuinely missing is the organic video library itself: producing short-form at any cadence is video production, which the stage rules put behind team, and this skill's static-first rule exists precisely because video carries failure points one person cannot control end to end. Trigger: an existing back-catalogue of organic clips with at least one clear overperformer to harvest — at that point the harvested clip enters as one of the creatives in the flexible ad rather than as a separate launch.
+
+*Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*

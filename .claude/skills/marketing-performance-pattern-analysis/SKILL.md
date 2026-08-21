@@ -44,3 +44,15 @@ description: Name the binding constraint before critiquing anything, then tag ev
 **Fit here (6/10):** Durable-principle class (attribution of a result to the right variable), so age is irrelevant. It is unusually load-bearing at this scale for the opposite reason to the source's: at ~54 orders/month, a sub-1,000-person list and $30/day, nothing here has ever been tested hard enough to be declared dead, so the standing risk is retiring an angle after one flat email subject line or one static plate. The interrogation questions are free, take minutes, and apply to the surfaces that actually carry history — Klaviyo campaign results and past PDP/Amazon copy — as well as to the new Meta account. Held at 6 because it prevents a bad retirement decision rather than producing revenue, and because at this volume the honest answer to "how heavily was it tested" will almost always be "not at all", which makes the checklist short.
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #11: The Double 80/20 Rule in Creative Strategy" (social post)*
+
+## Step 5 — Read an unusually high conversion rate as a narrow-funnel symptom, not a win: when you widen the top, expect the rate to fall while absolute orders rise, and optimise for total sales rather than the percentage.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** A narrow funnel is a filter. Only prospects with the tenacity to self-qualify ever reach the offer, and very few people have that tenacity, so the ones who arrive convert at a flattering rate on a tiny base. Widening the lure admits more unqualified people *and* more qualified ones; the denominator grows faster than the numerator, so the percentage drops even as absolute sales climb. Reading the falling rate as damage is the failure mode — it leads to re-narrowing the funnel and shrinking the business to protect a vanity ratio. This is the same attribution discipline as the rest of this skill applied to a rate rather than an asset: name which variable moved (audience composition) before concluding anything about quality.
+
+**Evidence offered:** IT support company client anecdote — more leads, lower sales conversion rate, treated as the expected and correct outcome. Anecdote, no figures.
+
+**Fit here (5/10):** The underlying principle is durable and transfers cleanly off the phone: an unusually high conversion rate on a narrow funnel means only self-qualified people are reaching it, and widening the top should be expected to lower rate while raising absolute orders — so optimise total sales, not the percentage. That is a real guard against a live failure mode once paid traffic starts diluting a currently self-selected audience. What is missing is a readable signal: at ~54 orders/month a conversion-rate movement is noise, so the diagnostic cannot be acted on yet. Trigger: enough monthly orders that a rate shift is distinguishable from variance.
+
+*Source: undefined — "undefined" (rfdkMStaBW0)*

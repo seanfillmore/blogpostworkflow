@@ -15,6 +15,18 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
+## Benchmark your CPM and click-through rate against industry, product and demographic norms (Varos) so you know whether a number reflects your creative or just your category's auction prices.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Absolute CPM and CTR values are meaningless without category context. A benchmarking dataset tells you whether the figure on your dashboard is a creative problem you can fix or simply what your industry pays in the auction — which is the difference between rebuilding assets and accepting the price.
+
+**Evidence offered:** Tool name-drop repeated twice, described as what she uses to keep brands inside benchmark. No data shown.
+
+**Fit here (5/10):** A paid benchmarking subscription is explicitly a scale park. The mechanism is honest — a $22 CPM means nothing until you know whether skincare in your demo trades at $14 or $35, which tells you whether to fix creative or accept the auction. Two things hold it back today: it is a second paid subscription against a $900/mo budget, and at $30/day RSC's own CPM/CTR are too thin to benchmark meaningfully. It also only ever informs secondary storytelling metrics, never budget decisions, which caps its score. Trigger: several thousand dollars a month of Meta spend where a persistent category-level CPM gap is worth a subscription fee to diagnose. Sits naturally beside the standing decision to decline multi-touch attribution tools until real budget runs across several channels — same test, same restraint.
+
+*Source: undefined — "undefined" (CCsty8R0UaA)*
+
 ## Split every metric into primary metrics you are allowed to optimize budget on (spend, purchases, cost per purchase, ROAS — or leads and cost per lead) and secondary 'storytelling' metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain why something worked — and never treat click-through rate as a performance verdict.
 
 **Why it works:** Only the conversion and cost-per-conversion metrics measure the outcome you are paying for; the rest are inputs that can move for reasons unrelated to revenue. Scaling on a secondary metric therefore funds ads that are cheap to deliver or easy to click rather than ads that sell. Under broad targeting a low CTR can mean the ad filtered correctly rather than failed. And the real explanation for why an ad worked usually sits in the creative — the message, the visual, the format — not anywhere in the numbers.
@@ -106,3 +118,15 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 **Fit here (6/10):** Platform-mechanics class — breakdown categories and placement names shift — but usable on the giveaway campaign, and better suited to it than to a purchase campaign. A giveaway optimizes for entries, and entries arrive orders of magnitude cheaper than purchases, so a breakdown actually accumulates enough events to read; the same split on ~54 orders/month of purchase data would be noise. That makes the giveaway a genuine, cheap audience-discovery exercise: whoever over-indexes on entry cost is a real signal about who responds to this brand, and it carries over to the creative built after the giveaway ends. Read it as directional, not significant. Held at 6 because entry-responders and buyers are not the same population — treat a demographic that enters cheaply as a hypothesis to test on a purchase campaign, never as a proven buyer.
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
+## Once AI collapses the cost of producing assets, buy an agency for the strategy layer — cross-account pattern data, not hands — at roughly $50k/mo revenue.
+
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** A single brand can only learn from its own back end. An agency aggregates performance across hundreds of accounts and therefore knows which headlines, angles and formats travel, so the scarce good is strategic judgment rather than production labour. When production is effectively free, the judgment layer is the part worth outsourcing.
+
+**Evidence offered:** Assertion plus a closing call-to-book gated at $50k/mo revenue.
+
+**Fit here (5/10):** There is a genuine mechanism here and it is not the usual agency pitch: when AI collapses the cost of producing assets, what remains scarce is cross-account pattern knowledge a single brand cannot generate from its own back end. That is a defensible reason to buy outside judgment rather than outside hands. Blocked by both people (an agency) and revenue — the source itself names ~$50k/mo, roughly 18x current. Trigger: monthly revenue and ad spend large enough that a strategy retainer is a small fraction of margin. Scored mid because it stays generic about what the agency is actually accountable for. If bought, hold it to the same metric split used here: it may argue about creative and storytelling metrics, but budget decisions still answer to purchases, cost per purchase and ROAS.
+
+*Source: Jayde Emails — "Build Million Dollar Emails With Claude Design In Minutes" (wo6-XJY1tZ0)*

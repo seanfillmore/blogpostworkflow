@@ -53,6 +53,18 @@ Highest volume (rather than a cost or ROAS cap) lets the algorithm spend the bud
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
+## Advantage+ Shopping needs roughly $100/day and ~20 creatives loaded into the campaign before its allocation logic works at all — that pair of numbers is the threshold at which declining it stops being correct.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** The automated shopping campaign type is built around the algorithm choosing among many assets and needs enough daily conversion events to escape the learning phase. Too few creatives and there is nothing meaningful to allocate between; too little budget and the campaign never accumulates the conversion volume the allocation depends on. Running it underfed starves the exact mechanism you are paying for, which is why the correct move at low spend is a simple manual campaign rather than a shrunken ASC.
+
+**Evidence offered:** Practitioner assertion plus secondhand hearsay ('I've actually heard the minimum number should be 20'); one $700/day campaign shown as the working example. No test or account data supporting either figure.
+
+**Fit here (6/10):** This is the textbook scale park: a $100/day floor and a ~20-asset creative pool. The value of recording it is that it converts "not now" into a dated condition — the decline expires when three things hold together: sustained spend near ~$100/day (roughly 3x today's budget), a proven manual-CBO baseline worth trying to beat, and enough creative production throughput to keep ~20 assets in the pool. Two of those are budget conditions and one is a staffing condition; at one operator with no designer, the asset pool is likely to be the binding constraint rather than the money. Caveat on adoption: this is fast-decaying platform mechanics — campaign-type names, spend minimums and asset requirements must be re-verified in Ads Manager on the day the gate opens rather than trusted from this text.
+
+*Source: undefined — "undefined" (CCsty8R0UaA)*
+
 ## Run one CBO campaign with budget changes made at campaign level — and at this spend collapse everything into a single ad set with four to eight ads rather than splitting the budget across several.
 
 **Why it works:** Ad-set-level budgeting is really a folder of single-ad-set campaigns — more structures to manage for no additional benefit. One campaign budget lets the system allocate across whatever sits beneath it, and editing at campaign level avoids resetting learning on each individual ad set. Below a certain volume, splitting the budget means no ad set ever accumulates enough conversions to exit learning at all, so consolidation is the only workable form.
