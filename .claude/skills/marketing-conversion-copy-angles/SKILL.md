@@ -1,6 +1,6 @@
 ---
 name: marketing-conversion-copy-angles
-description: Use when writing or rewriting product page copy, Amazon titles and bullets, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, walking the buyer through what they already tried and why it failed, three-pillar pitches explained by analogy, one-thing simplicity promises, curiosity setups that pay off on the page, and who the claim is attributed to.
+description: Use when writing or rewriting product page copy, Amazon titles and bullets, Meta ad primary text, email subject lines, or social captions and the language feels generic — covers specificity and hard numbers, calling the buyer out by name, taboo and negative framing, hook construction (open the loop and withhold the resolution, open mid-action, keep the product out of line one), concentrating effort on concept and hook rather than body copy, trigger-word injection into proven structures, primal-desire headlines over feature lists, transformation-first ordering, walking the buyer through what they already tried and why it failed, three-pillar pitches explained by analogy, one-thing simplicity promises, long-form native story ads, curiosity setups that pay off on the page, and who the claim is attributed to.
 ---
 
 # Conversion Copy Angles
@@ -35,6 +35,16 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 
+## A hook must open a loop and leave it unresolved — never open and close it in the same breath. The most common failure, especially from an LLM, is a 'hook' that summarizes the entire ad.
+
+**Why it works:** Curiosity is an itch the reader cannot scratch without continuing. A line that states the setup, the cause and the resolution has already scratched it, so there is no reason to read on. LLMs are trained toward resolution and completion, so their default output is a tidy summary that reads like a hook but functions as an abstract.
+
+**Evidence offered:** A worked negative example he wrote himself ('My 77 year-old mother used to love walking her dog… Here's how a no-pull harness gave her back those precious mornings') dissected against six better alternatives that all stop short of resolution. Practitioner teardown, no data.
+
+**Fit here (7/10):** Durable direct-response curiosity mechanics, age irrelevant. This is the construction rule; the curiosity-loop entry further down governs the other end — that the destination actually pays the loop off. Both are needed and neither replaces the other. Free, and applies today to the Meta primary text on the live $30/day giveaway campaign, to email subject lines and preheaders on the retention surface, and to PDP hero lines. The named LLM failure mode matters here specifically because a solo operator drafts with an LLM and will otherwise ship the summarizing version: check every drafted opener for whether it has already given away the answer. Not higher because at ~54 orders/month and a sub-1,000 list the effect is unreadable, so it is a judgement rule applied at draft-review time rather than something testable.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
+
 ## Inject a trigger word or emotionally loaded phrase ('ruining my life', 'quits by noon') into a hook structure that already converts — don't rebuild the structure.
 
 **Why it works:** The loaded phrase raises emotional temperature and stops the scroll, while the underlying structure that already worked is left intact — so you add attention without discarding the converting logic. This is the word-level lever that makes the taboo and negative-framing angles above land; it is an edit pass on a proven line, not a new concept.
@@ -45,15 +55,45 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
+## Open in the middle of the action, with something already happening, rather than setting the scene first.
+
+**Why it works:** A line that drops the reader into an event in progress creates an immediate gap — what is happening, and why — that they have to keep reading to fill. A scene-setting opener asks them to invest attention before anything has happened, which is a worse trade for a scrolling reader.
+
+**Evidence offered:** Six alternative hooks with the operative verbs called out ('was laying', 'I saw', 'was mad/felt sorry', 'she quit', 'she stopped'), contrasted against the summarizing version. Illustrative, no performance data.
+
+**Fit here (6/10):** Durable opening-construction principle, age irrelevant, and additive — this skill covers transformation-first ordering and negative framing, but nothing else owns where in the timeline the first sentence lands. It is the sentence-level companion to the withheld-resolution rule above: mid-action is the easiest way to open a loop without closing it. Free and directly usable on the live Meta primary text, on email subject lines, and on PDP hero copy — 'I kept my arms down through the whole meeting' is a mid-action opening the category actually supports, and the raw material already exists in the pain-based review quotes `marketing-review-mining` tells you to elicit. Capped at 6 because it is a craft rule rather than a revenue mechanism, and because for a body-care brand any mid-action scene must be a real customer moment rather than an invented one.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
+
+## Put roughly 90% of your copy effort into the concept and the hook — the body is a formulaic outline you can model off an existing ad.
+
+**Why it works:** The body of a direct-response ad follows a repeatable structure (story → pain → discovery → proof → CTA) that is largely interchangeable across brands, so time spent rewriting it produces almost no differentiation. The concept and hook are the only parts that decide whether anyone reads the body at all, so effort concentrated there is the only effort that changes the outcome.
+
+**Evidence offered:** Assertion only, with the supporting claim that his four-step LLM modeling process produces 'a good ad' 99% of the time in 1–2 minutes plus ~10 minutes of tweaks. No spend, CTR, or conversion figures.
+
+**Fit here (6/10):** Durable effort-allocation principle, age irrelevant. Directly useful now that a $30/day hand-run Meta campaign is live: one operator with finite hours building a 3-2-2 flexible ad needs two meaningfully different primary texts, and this says the two should differ in **concept and hook** while the body structure stays fixed — which is what makes them a real comparison rather than two rewordings. It also transfers to email subject lines and Amazon A+ block leads. Capped at 6 because it is a prioritization rule rather than a revenue mechanism, and at ~54 orders/month and $30/day the payoff of concentrating effort will be judged, never measured.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
+
 ## Write to a primal desire (status, sex, belonging, safety, approval) and treat the product as the mechanism, not the headline.
 
 **Why it works:** People buy the end state, not the feature; the product is only the route to the desire, so the desire belongs in the headline and the feature belongs in the supporting line.
 
 **Evidence offered:** Assertion; framed as one of the recurring patterns across all her winning creative, video and static.
 
-**Fit here (6/10):** Durable positioning principle, free to apply. Scored slightly lower because natural body care sits closest to 'safety' and 'approval' and the risk of overreach into unsupportable claims is real — but reframing 'aluminum-free' as a safety/confidence outcome is straightforward PDP and Amazon work.
+**Fit here (6/10):** Durable positioning principle, free to apply. Scored slightly lower because natural body care sits closest to 'safety' and 'approval' and the risk of overreach into unsupportable claims is real — but reframing 'aluminum-free' as a safety/confidence outcome is straightforward PDP and Amazon work. The format-specific hard version of this rule — keeping the product out of the opening line entirely — is below, and applies only to organic-styled social copy, not to Amazon or the PDP.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
+## In organic-styled social copy, keep the product out of the hook — the discovery should feel almost accidental.
+
+**Why it works:** The format's whole advantage is that it reads as a post rather than an ad. Naming the product in the opening line breaks that frame immediately and re-triggers the reader's ad-avoidance. Withholding it lets the emotional story earn attention first, so the product arrives as the answer to a problem the reader is already invested in.
+
+**Evidence offered:** Stated as the third fault of his bad example hook, with the reasoning that the poster's recommendation should feel incidental. Assertion only.
+
+**Fit here (5/10):** Durable positioning-within-a-format principle. Real overlap with the primal-desire rule above ('the product is the mechanism, not the headline'), which is what caps it; the additive part is narrower and format-specific — in an organic-styled Meta ad or a founder-voice caption, naming the deodorant in line one destroys the only advantage the format has. Usable now on the live giveaway campaign's primary text at zero cost. Held at 5 because it does not transfer to the surfaces carrying most revenue: an Amazon title and bullets must name the product immediately, and a PDP hero that hides it is just confusing. Scope it to social copy and do not let it leak onto the listing.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ## Lead with the transformation — the 'day without pain' after-state — instead of the conventional problem-then-solution order.
 
@@ -61,7 +101,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Evidence offered:** Points to Brex's ad account as the exemplar across multiple formats; otherwise assertion.
 
-**Fit here (6/10):** Durable positioning principle, free to apply to PDP hero copy, Amazon bullets, and email subject lines. Real Skin Care's buyer is often someone whose previous natural deodorant failed, so 'a day where you stop checking your shirt' is a legitimate lead. Scored mid rather than high because the existing product-image-stack skill already covers transformation as a visual format — this is the copy-order variant, which is why it lives here rather than in its own skill. Note the tension with negative framing below: fear-first and after-state-first are competing openings, so pick by audience — negative framing for buyers still unaware of the stakes, transformation-first for buyers already burned by a previous attempt. When you pick transformation-first for a burned buyer, the prior-attempt walkthrough below is the body copy that follows the headline.
+**Fit here (6/10):** Durable positioning principle, free to apply to PDP hero copy, Amazon bullets, and email subject lines. Real Skin Care's buyer is often someone whose previous natural deodorant failed, so 'a day where you stop checking your shirt' is a legitimate lead. Scored mid rather than high because the existing product-image-stack skill already covers transformation as a visual format — this is the copy-order variant, which is why it lives here rather than in its own skill. Note the tension with negative framing below: fear-first and after-state-first are competing openings, so pick by audience — negative framing for buyers still unaware of the stakes, transformation-first for buyers already burned by a previous attempt. When you pick transformation-first for a burned buyer, the prior-attempt walkthrough below is the body copy that follows the headline. Whichever opening you pick, it still has to withhold the resolution — 'a day where you stop checking your shirt' works; 'how our baking-soda-free formula gave me a day where I stopped checking my shirt' has already closed the loop.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
@@ -101,7 +141,7 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Evidence offered:** Assertion plus psychological reasoning; explicitly acknowledges the cognitive dissonance in the claim. No data.
 
-**Fit here (6/10):** Durable retention/persuasion psychology, age irrelevant, and free to test on email subject lines and PDP headlines. Fits a 12-SKU catalog where the honest version is real ('the one switch that fixed my transition period', 'one bar replaces three products'). Capped at 6 because in a body-care category the simplicity promise is easy to push into unsupportable claim territory — pair it with the specificity rule above so the 'one thing' always has a defensible referent (a named SKU, a named swap, a countable replacement) rather than an implied cure.
+**Fit here (6/10):** Durable retention/persuasion psychology, age irrelevant, and free to test on email subject lines and PDP headlines. Fits a 12-SKU catalog where the honest version is real ('the one switch that fixed my transition period', 'one bar replaces three products'). Capped at 6 because in a body-care category the simplicity promise is easy to push into unsupportable claim territory — pair it with the specificity rule above so the 'one thing' always has a defensible referent (a named SKU, a named swap, a countable replacement) rather than an implied cure. Note that the one-thing framing names *that* there is a single fix without naming *what* it is — keep it that way, or you have closed the loop in the hook.
 
 *Source: Dara Denney — "I Analyzed $1 Billion in Ad Spend (These 9 Hooks Win Every Time)" (I8tXqqfjIX4)*
 
@@ -121,9 +161,19 @@ description: Use when writing or rewriting product page copy, Amazon titles and 
 
 **Evidence offered:** Assertion, with the explicit caveat about closing the loop on the landing page.
 
-**Fit here (5/10):** Durable principle but its native home is ad-to-landing-page, which is gated behind the traffic stage. It transfers usefully to email subject lines and preview text, which is a live surface given retention is the binding constraint — hence a middling rather than high score.
+**Fit here (5/10):** Durable principle but its native home is ad-to-landing-page, which is gated behind the traffic stage. It transfers usefully to email subject lines and preview text, which is a live surface given retention is the binding constraint — hence a middling rather than high score. This entry owns the *closure* half of the loop: whatever the opener withheld, the destination has to deliver. The construction half — how to write an opener that withholds in the first place, and the LLM summarizing failure mode — is the hook rule near the top of this skill.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
+## Run a long-form native-style ad: an organic-looking image with no text overlay, paired with a long first-person emotional story that ends in the accidental discovery of the product.
+
+**Why it works:** The untreated image and story-led caption make the ad read as an organic post rather than a placement, so it earns reading time a designed ad never gets. The long story builds emotional investment before any claim is made, and the product then lands as a resolution rather than a pitch.
+
+**Evidence offered:** The format is described in detail and illustrated with a fully sketched no-pull-harness example (elderly mother, lost agency, discovery, resolution). Assertion and worked illustration; no spend, CTR, or ROAS data.
+
+**Fit here (5/10):** Platform-mechanics class for the format specifics (Meta caption behaviour, no-text organic image), and undated — treat the format detail with suspicion even though the underlying story-lead principle is durable. The reason to adopt at all is that it is one of the very few ad formats a solo operator with no designer and no video can actually produce: a plain phone photo plus written text, which makes it a legitimate second primary text inside the 3-2-2 flexible ad now running at $30/day. Scale-down stated: 300–800 words in the founder's own voice, not 3,000, and the story must be true — either the founder's reason for formulating baking-soda-free, or a real customer's transition-period account sourced through `marketing-review-mining`. A fabricated emotional testimonial in body care is an FTC problem, not a creative choice. Pair with the mid-action opening and the product-out-of-the-hook rules above, which are the two craft rules this format depends on. Held at 5 because the evidence is entirely illustrative, and long-form emotional copy is a poor fit for a $12 consumable giveaway entry compared with a direct problem-aware angle.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #2: Concept and Hook" (social post, undated)*
 
 ## When displaying someone else's proof, keep the identifying detail that has nothing to do with the result — age, occupation, location — because the irrelevant detail is what makes the claim feel real.
 
