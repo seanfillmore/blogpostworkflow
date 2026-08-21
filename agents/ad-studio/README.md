@@ -74,7 +74,7 @@ accumulate too slowly to mean anything. At $30/day and a modelled ~$2.50 per ent
 ad sets is ~28 entries/ad set/week — under the ~50 conversions Meta wants to exit the
 learning phase. Consolidated it is ~84/week, and learning can actually exit. That
 arithmetic is the entire argument; see
-`.claude/skills/marketing-paid-acquisition-scaling/SKILL.md` for the source.
+`.claude/skills/marketing-paid-creative-testing/SKILL.md` for the source.
 
 The mode **narrows** the run rather than widening it, and refuses anything that would
 quietly produce a different structure:

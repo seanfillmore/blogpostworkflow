@@ -703,10 +703,19 @@ function openPullRequest(results) {
     // skill, so branch-name collisions are expected. -B would silently reset an
     // existing branch and discard whatever work is sitting on it.
     //
-    // Branch from `main`, not current HEAD: `checkout -b` with no start-point branches
-    // from wherever the operator happens to be, so running this from an unrelated
-    // feature branch would carry its unrelated commits straight into the PR.
-    git(['checkout', '-b', branch, 'main']);
+    // Branch from `origin/main`, not current HEAD: `checkout -b` with no start-point
+    // branches from wherever the operator happens to be, so running this from an
+    // unrelated feature branch would carry its unrelated commits straight into the PR.
+    //
+    // And origin/main rather than local `main`, because `main` is ONE ref shared by every
+    // worktree — it tracks whatever the main checkout last pulled, which is routinely
+    // 40+ commits stale, and a worktree cut from origin/main does not change it. On
+    // 2026-08-20 that put PR #566 on a base two merges old; it merged cleanly only
+    // because nothing overlapped. The next run would have reverted #566's edits to the
+    // very skills it was about to edit again. Fetch first so origin/main is current:
+    // the whole point is a fresh base, and a stale remote ref is the same bug renamed.
+    git(['fetch', 'origin', 'main']);
+    git(['checkout', '-b', branch, 'origin/main']);
 
     // The mirror is a projection of whatever .claude/skills/ the working tree
     // holds. The in-loop sync ran while we were still on the operator's branch,

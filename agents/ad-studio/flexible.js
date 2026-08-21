@@ -14,7 +14,7 @@
 // At $30/day and a modelled ~$2.50 per entry, splitting across three ad sets is ~28
 // entries/ad set/week, under the ~50 Meta wants to exit the learning phase. Consolidated,
 // it is ~84/week and learning can actually exit. See the tactic and its provenance in
-// .claude/skills/marketing-paid-acquisition-scaling/SKILL.md.
+// .claude/skills/marketing-paid-creative-testing/SKILL.md.
 //
 // WHAT THIS MODULE DOES NOT DO: it never creates, edits or launches anything on Meta. It
 // writes a manifest a human carries into Ads Manager. Spend is a human decision.
