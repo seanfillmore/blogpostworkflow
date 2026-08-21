@@ -168,6 +168,16 @@ export default [
     handler: async (req, res) => {
       const headers = { ...corsHeaders(req), 'Content-Type': 'application/json' };
       let payload;
+      // ACCEPTED DEVIATION (Task 7 fix-round-1 review): an EMPTY body used to be 400
+      // 'bad json' — the old reader's inline `JSON.parse('')` threw on a zero-byte
+      // string. readJsonBody resolves `{}` for an empty body instead (its documented,
+      // pre-existing contract), so an empty POST now falls through to validateBeacon({}),
+      // which fails its own `path` check and answers 422 'no usable metrics' instead.
+      // Both are refusals — this never turns an error into a success — but it IS a
+      // status-code change (400 -> 422) on this process's public, unauthenticated beacon
+      // route. Left as-is rather than special-cased: theme/snippets/rsc-rum.liquid's
+      // sendBeacon call always sends a non-empty JSON body, so this path is not reachable
+      // from the real sender, only from a client hitting the endpoint directly.
       try {
         payload = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES });
       } catch (e) {

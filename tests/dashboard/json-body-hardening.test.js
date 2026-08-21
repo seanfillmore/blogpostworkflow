@@ -44,6 +44,7 @@ import postsKillRoutes from '../../agents/dashboard/routes/posts-kill.js';
 import rejectedImagesRoutes from '../../agents/dashboard/routes/rejected-images.js';
 import rumRoutes from '../../agents/dashboard/routes/rum.js';
 import { validateEntryPayload, validateUpload } from '../../agents/dashboard/routes/giveaway.js';
+import { createRunAgentHandler, createBackgroundRunHandlers } from '../../agents/dashboard/lib/run-agent.js';
 
 // The same list order agents/dashboard/index.js dispatches in, restricted to the modules
 // that parse a request body. giveaway is covered by direct validator calls further down —
@@ -220,6 +221,80 @@ test('a corrupt brief file produces a 500, not a process kill', async () => {
     assert.deepEqual(rejections, [], 'nothing reached the process-level handler');
   } finally {
     // Must run even if an assertion above throws, or a failing run leaks a tmpdir.
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ── lib/run-agent.js: the two readers the initial grep sweep missed ─────────────────────
+//
+// routes/agents.js's POST /run-agent and POST /run-agent-bg delegate to ctx.runAgent and
+// ctx.bgRunStart, both built by lib/run-agent.js — a lib/ helper, not a routes/ module, so
+// it was outside the original file-by-file migration sweep and kept two hand-rolled
+// req.on('data') readers doing their real work inside a req.on('end') callback with no
+// try, the exact Class C exposure this whole effort exists to close. Migrated onto
+// readJsonBody like every other module; these two tests are its regression coverage.
+//
+// NEITHER test lets a real script spawn. Both hostile bodies below are rejected by
+// readJsonBody before the handler ever reads `script`, and the allowlist-miss body below
+// is refused by `RUN_AGENT_ALLOWLIST.has(script)` before `spawn()` is ever called — traced
+// against the actual handler bodies in lib/run-agent.js, not assumed. A scratch ROOT
+// (mkdtempSync) is passed to both factories regardless, so even a mistaken code path could
+// only ever spawn `node <scratch-dir>/<script>`, never touch this repo's real trees.
+//
+// Also pins that routes/agents.js RETURNS ctx.runAgent(...)/ctx.bgRunStart(...) rather than
+// merely calling them: both handlers are now async (they await readJsonBody), so dispatch()
+// in lib/router.js only sees a promise to guard if the outer handler hands it back. Calling
+// without returning would let a rejection escape the guard entirely — this file's own
+// 'unhandledRejection' listener is what would catch that if the `return` were ever dropped.
+test('POST /run-agent and /run-agent-bg refuse a hostile body without reaching spawn', async () => {
+  rejections.length = 0;
+  const dir = mkdtempSync(join(tmpdir(), 'route-hardening-run-agent-'));
+  try {
+    const ctx = {
+      runAgent: createRunAgentHandler(dir),
+      bgRunStart: createBackgroundRunHandlers(dir).start,
+    };
+    const seen = [];
+    for (const body of ['null', '5', '"str"', '{not json']) {
+      for (const url of ['/run-agent', '/run-agent-bg']) {
+        const res = makeRes();
+        const matched = dispatch(agentsRoutes, makeReq('POST', url, body), res, ctx);
+        assert.equal(matched, true, `${url} must still match a route`);
+        seen.push({ url, body, res });
+      }
+    }
+    await drain();
+    assert.deepEqual(rejections, [], 'no route may leave an unhandled rejection');
+    for (const { url, body, res } of seen) {
+      assert.equal(res.statusCode, 400, `${url} with body ${body} must answer 400 Invalid JSON, got ${res.statusCode}`);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('POST /run-agent and /run-agent-bg refuse a script outside the allowlist without spawning', async () => {
+  rejections.length = 0;
+  const dir = mkdtempSync(join(tmpdir(), 'route-hardening-run-agent-'));
+  try {
+    const ctx = {
+      runAgent: createRunAgentHandler(dir),
+      bgRunStart: createBackgroundRunHandlers(dir).start,
+    };
+    const body = JSON.stringify({ script: 'scripts/not-on-the-allowlist.js', args: [] });
+    const seen = [];
+    for (const url of ['/run-agent', '/run-agent-bg']) {
+      const res = makeRes();
+      const matched = dispatch(agentsRoutes, makeReq('POST', url, body), res, ctx);
+      assert.equal(matched, true, `${url} must still match a route`);
+      seen.push({ url, res });
+    }
+    await drain();
+    assert.deepEqual(rejections, [], 'no route may leave an unhandled rejection');
+    for (const { url, res } of seen) {
+      assert.equal(res.statusCode, 403, `${url} must refuse a script outside RUN_AGENT_ALLOWLIST, got ${res.statusCode}`);
+    }
+  } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });

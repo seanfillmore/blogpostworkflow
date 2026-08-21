@@ -8,8 +8,12 @@ export default [
   {
     method: 'POST',
     match: '/run-agent',
+    // MUST return the call: ctx.runAgent is async (readJsonBody), and dispatch() in
+    // lib/router.js only guards a rejection it can see on the value THIS handler
+    // returns. Calling without returning would let a body-read rejection become an
+    // unhandled rejection outside the guard's reach.
     handler(req, res, ctx) {
-      ctx.runAgent(req, res);
+      return ctx.runAgent(req, res);
     },
   },
   {
@@ -17,8 +21,9 @@ export default [
     // poll /run-job for output. Avoids the proxy's ~100s 524 on SSE runs.
     method: 'POST',
     match: '/run-agent-bg',
+    // MUST return — same reason as /run-agent above.
     handler(req, res, ctx) {
-      ctx.bgRunStart(req, res);
+      return ctx.bgRunStart(req, res);
     },
   },
   {

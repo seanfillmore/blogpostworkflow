@@ -2,6 +2,7 @@
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { mkdirSync, createWriteStream, readFileSync, existsSync, readdirSync, statSync, unlinkSync } from 'node:fs';
+import { readJsonBody } from './responses.js';
 
 export const RUN_AGENT_ALLOWLIST = new Set([
   'agents/rank-tracker/index.js',
@@ -47,30 +48,34 @@ export const RUN_AGENT_ALLOWLIST = new Set([
  * Factory that returns a handler bound to the given ROOT path.
  * Usage: const runAgent = createRunAgentHandler(ROOT); then call runAgent(req, res)
  * from a route handler.
+ *
+ * ASYNC. routes/agents.js's `handler(req, res, ctx) { return ctx.runAgent(req, res); }`
+ * must `return` this call (not merely invoke it) so dispatch() in lib/router.js sees
+ * the returned promise and its `.then(undefined, ...)` guard can catch a rejection —
+ * a body-read rejection that escaped un-awaited would otherwise become an unhandled
+ * rejection outside the guard's reach and take the whole shared PM2 process down.
  */
 export function createRunAgentHandler(ROOT) {
-  return function runAgentHandler(req, res) {
-    let body = '';
-    req.on('data', d => { body += d; });
-    req.on('end', () => {
-      let script, args = [];
-      try { ({ script, args = [] } = JSON.parse(body)); } catch {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
-        return;
-      }
-      if (!RUN_AGENT_ALLOWLIST.has(script)) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'Script not in allowlist' }));
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-      const child = spawn('node', [join(ROOT, script), ...args], { cwd: ROOT });
-      const send = line => res.write(`data: ${line}\n\n`);
-      child.stdout.on('data', d => String(d).split('\n').filter(Boolean).forEach(send));
-      child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => send(`[stderr] ${l}`)));
-      child.on('close', code => { res.write(`data: __exit__:${JSON.stringify({ code })}\n\n`); res.end(); });
-    });
+  return async function runAgentHandler(req, res) {
+    let script, args = [];
+    try {
+      ({ script, args = [] } = await readJsonBody(req));
+    } catch {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+      return;
+    }
+    if (!RUN_AGENT_ALLOWLIST.has(script)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Script not in allowlist' }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+    const child = spawn('node', [join(ROOT, script), ...args], { cwd: ROOT });
+    const send = line => res.write(`data: ${line}\n\n`);
+    child.stdout.on('data', d => String(d).split('\n').filter(Boolean).forEach(send));
+    child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => send(`[stderr] ${l}`)));
+    child.on('close', code => { res.write(`data: __exit__:${JSON.stringify({ code })}\n\n`); res.end(); });
   };
 }
 
@@ -99,42 +104,42 @@ export function createBackgroundRunHandlers(ROOT) {
     }
   } catch { /* ignore */ }
 
-  function start(req, res) {
-    let body = '';
-    req.on('data', d => { body += d; });
-    req.on('end', () => {
-      let script, args = [];
-      try { ({ script, args = [] } = JSON.parse(body)); } catch {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
-        return;
-      }
-      if (!RUN_AGENT_ALLOWLIST.has(script)) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: 'Script not in allowlist' }));
-        return;
-      }
-      const jobId = `${Date.now()}-${process.pid}-${++jobCounter}`;
-      const logPath = join(jobsDir, `${jobId}.log`);
-      const out = createWriteStream(logPath, { flags: 'a' });
-      let child;
-      try {
-        child = spawn('node', [join(ROOT, script), ...args], { cwd: ROOT });
-      } catch (err) {
-        out.write(`[error] failed to start: ${err.message}\n__exit__:${JSON.stringify({ code: 1 })}\n`);
-        out.end();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, jobId }));
-        return;
-      }
-      child.stdout.on('data', d => out.write(d));
-      child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => out.write(`[stderr] ${l}\n`)));
-      child.on('error', err => { out.write(`\n[error] ${err.message}\n__exit__:${JSON.stringify({ code: 1 })}\n`); out.end(); });
-      child.on('close', code => { out.write(`\n__exit__:${JSON.stringify({ code })}\n`); out.end(); });
-      // Respond immediately — the job runs on independently of this request.
+  // ASYNC — see createRunAgentHandler's docstring above: routes/agents.js must
+  // `return ctx.bgRunStart(req, res);` so dispatch() sees the returned promise.
+  async function start(req, res) {
+    let script, args = [];
+    try {
+      ({ script, args = [] } = await readJsonBody(req));
+    } catch {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+      return;
+    }
+    if (!RUN_AGENT_ALLOWLIST.has(script)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Script not in allowlist' }));
+      return;
+    }
+    const jobId = `${Date.now()}-${process.pid}-${++jobCounter}`;
+    const logPath = join(jobsDir, `${jobId}.log`);
+    const out = createWriteStream(logPath, { flags: 'a' });
+    let child;
+    try {
+      child = spawn('node', [join(ROOT, script), ...args], { cwd: ROOT });
+    } catch (err) {
+      out.write(`[error] failed to start: ${err.message}\n__exit__:${JSON.stringify({ code: 1 })}\n`);
+      out.end();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, jobId }));
-    });
+      return;
+    }
+    child.stdout.on('data', d => out.write(d));
+    child.stderr.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => out.write(`[stderr] ${l}\n`)));
+    child.on('error', err => { out.write(`\n[error] ${err.message}\n__exit__:${JSON.stringify({ code: 1 })}\n`); out.end(); });
+    child.on('close', code => { out.write(`\n__exit__:${JSON.stringify({ code })}\n`); out.end(); });
+    // Respond immediately — the job runs on independently of this request.
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, jobId }));
   }
 
   function poll(req, res) {

@@ -56,14 +56,29 @@ export const DEFAULT_MAX_BYTES = 1024 * 1024;
  * their own existing values (8 KB, 4 KB, and MAX_UPLOAD_BASE64 + 2048 respectively).
  * A single shared constant would have silently raised the limit on the two routes that
  * most need one. `err.code = 'BODY_TOO_LARGE'` is load-bearing: giveaway.js branches on
- * that exact string to answer 413 rather than 400. So is `req.destroy()`: without it a
- * client can keep streaming into a request that has already been refused.
+ * that exact string to answer 413 rather than 400.
+ *
+ * `destroyOnOverflow` (default `true`): whether the overflow path calls `req.destroy()`
+ * itself. Destroying immediately is right for every already-migrated caller — it stops a
+ * client from streaming megabytes into a request that has already been refused — which is
+ * why the default is `true`. The default is `true` ONLY because it preserves every already
+ * -migrated caller's behaviour, not because destroying eagerly is the better choice; it is
+ * simply the one this function cannot change out from under callers that already depend on
+ * it (rum.js keeps the default for exactly this reason). giveaway.js's three call sites
+ * pass `destroyOnOverflow: false`: destroying the socket the moment the cap is exceeded
+ * means the 413 response never reaches the client — the connection resets before it can
+ * flush — and nginx serves the entrant a bare 502 with no message instead, on a public,
+ * unauthenticated, paid-traffic route. `tests/dashboard/giveaway-routes.test.js:182` pins
+ * the fix: the socket must not be destroyed before the response is written. The rejection
+ * still carries `err.code = 'BODY_TOO_LARGE'` either way — callers that opt out of the
+ * eager destroy are expected to tear the socket down themselves once their own response has
+ * flushed (see giveaway.js's `refuseBody`, which does exactly that via `res.on('finish', ...)`).
  *
  * Chunks are buffered and concatenated as Buffers, never accumulated with `body += chunk`.
  * The latter calls toString() per chunk and corrupts any UTF-8 sequence that straddles a
  * chunk boundary — which every hand-rolled reader this replaces was doing.
  */
-export function readJsonBody(req, { maxBytes = DEFAULT_MAX_BYTES } = {}) {
+export function readJsonBody(req, { maxBytes = DEFAULT_MAX_BYTES, destroyOnOverflow = true } = {}) {
   return new Promise((resolve, reject) => {
     let size = 0;
     let overflowed = false;
@@ -77,7 +92,7 @@ export function readJsonBody(req, { maxBytes = DEFAULT_MAX_BYTES } = {}) {
         const err = new Error('request body too large');
         err.code = 'BODY_TOO_LARGE';
         reject(err);
-        req.destroy();
+        if (destroyOnOverflow) req.destroy();
         return;
       }
       chunks.push(chunk);

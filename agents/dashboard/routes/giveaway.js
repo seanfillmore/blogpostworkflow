@@ -267,31 +267,6 @@ function corsHeaders(req) {
 }
 
 /**
- * readJsonBody(req, opts) — deferring its own socket teardown.
- *
- * readJsonBody destroys the socket the instant an overflowing chunk is seen
- * (agents/dashboard/lib/responses.js), which is correct for the other eleven
- * route modules and is itself tested to do exactly that. On this public route
- * it is wrong: destroying before the 413 response flushes resets the
- * connection before the client sees it, and nginx logs
- *   recv() failed (104: Connection reset by peer) while reading response
- *   header from upstream ... POST /api/giveaway/upload
- * and serves the entrant a bare 502 with no message — the exact incident
- * refuseBody's own 'finish'-listener teardown below exists to prevent. The
- * readCappedBody this replaced avoided the bug by never destroying eagerly in
- * the first place; readJsonBody cannot be changed to match (its eager destroy
- * is load-bearing for the shared contract other callers rely on), so instead
- * swallow any destroy call that lands before refuseBody gets a chance to
- * attach its own listener, then hand the real destroy back so that listener's
- * call still tears the socket down once the response is actually written.
- */
-function readBody(req, opts) {
-  const realDestroy = typeof req.destroy === 'function' ? req.destroy.bind(req) : () => {};
-  req.destroy = () => {};
-  return readJsonBody(req, opts).finally(() => { req.destroy = realDestroy; });
-}
-
-/**
  * Turn a body-read failure into a response.
  *
  * An oversized body is 413 with a message the entrant can act on, not a
@@ -325,7 +300,7 @@ export default [
     match: (url) => url.split('?')[0] === '/api/giveaway/enter',
     handler: withRateLimit(enterLimiter, async (req, res) => {
       let parsed;
-      try { parsed = await readBody(req, { maxBytes: MAX_BODY_BYTES }); }
+      try { parsed = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES, destroyOnOverflow: false }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
 
       const v = validateEntryPayload(parsed);
@@ -374,7 +349,7 @@ export default [
     match: (url) => url.split('?')[0] === '/api/giveaway/answers',
     handler: withRateLimit(mutateLimiter, async (req, res) => {
       let parsed;
-      try { parsed = await readBody(req, { maxBytes: MAX_BODY_BYTES }); }
+      try { parsed = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES, destroyOnOverflow: false }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
       let email;
       try { email = normalizeEmail(parsed.email); }
@@ -412,7 +387,7 @@ export function createUploadHandler({
 } = {}) {
   return async (req, res) => {
     let parsed;
-    try { parsed = await readBody(req, { maxBytes: MAX_UPLOAD_BASE64 + 2048 }); }
+    try { parsed = await readJsonBody(req, { maxBytes: MAX_UPLOAD_BASE64 + 2048, destroyOnOverflow: false }); }
     catch (e) { return refuseBody(req, res, e, 'that file is too large (6MB max)'); }
 
     const v = validateUpload(parsed);
