@@ -18,17 +18,17 @@
   "_metaPixelNote": "Real Skin Care pixel, installed via the Shopify Facebook & Instagram sales channel with Maximum data sharing (Pixel + advanced matching + Conversions API). Asserted by scripts/giveaway/verify-launch.mjs.",
   "deadlineCampaigns": {
     "05-reminder.html": {
-      "id": "01M002YCXHW8R58ZAHC3BFAMFY",
-      "messageId": "01M002YCXWJZNSM63V6W9N1TSW",
+      "id": "01M0J6WCPCV923BMHCHEK4TXRP",
+      "messageId": "01M0J6WCPNFT7BEFWD4X6BAS5W",
       "sendAt": "2026-09-11T14:00:00.000Z"
     },
     "06-final-call.html": {
-      "id": "01M002YFF4TTKKSTWB4F069T0P",
-      "messageId": "01M002YFFDCQ21CF26TWQWY233",
+      "id": "01M0J6WF89Y705RGF6JMR534MX",
+      "messageId": "01M0J6WF8M9X774BWQE1BFGCHM",
       "sendAt": "2026-09-13T14:00:00.000Z"
     }
   },
-  "provisionalCostPerEntryTargetUsd": 2.50,
+  "provisionalCostPerEntryTargetUsd": 2.5,
   "_provisionalCostPerEntryNote": "A PLACEHOLDER, to be replaced by measurement — not a finding. The spend gate compares cost per entry against what a NEW entrant is measurably worth, but no entrant is 30 days old until mid-September, so without this the gate can only say 'not measurable yet' for the whole entry window while $30/day goes out. $2.50 is the figure the adopted paid-acquisition tactics already model against ($30/day ≈ 84 entries/week, which is what puts one consolidated ad set over Meta's ~50-conversion learning threshold); it is chosen for consistency with that arithmetic, not derived from RSC data. Sanity check on how aggressive it is: at $2.50/entry, breaking even on the FIRST purchase needs roughly an 8% entrant-to-purchase rate against the $50.46 trailing-90d AOV at ~60% gross margin. That is a high bar for a giveaway list, so expect the payoff to come from repeat purchase and LTV rather than first order — and expect to lower this number once real data lands. evaluateSpendGate uses measured value the moment one 30-day window closes and ignores this entirely from then on; it labels every verdict built on this number 'provisional' in the report line.",
   "metaAdAccountId": "act_946015593265647",
   "metaCampaignId": "120248756571100173",
