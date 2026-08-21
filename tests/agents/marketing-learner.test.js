@@ -85,6 +85,24 @@ assert.throws(() => parsePublishedFlags(['a'], ['2026-07-28'], { today: TODAY })
   assert.match(block, /~18 months/, 'states the ~18mo platform-mechanics horizon');
 }
 
+// ── the durability nudge belongs to books, not to every file ────────────────
+// A book is undated and mostly principle, so telling the model to treat it as
+// durable is right. A social post pasted into a .md file is as platform-era as
+// any video — handing it the same nudge would tell the model to discount the
+// very era cues it should be scoring against.
+{
+  const book = buildConstraintBlock({ sourceType: 'file', sourceKind: 'book' });
+  assert.match(book, /This source is a book/, 'a book still gets the durability nudge');
+  assert.match(book, /durable principle/, 'and the instruction that goes with it');
+
+  const post = buildConstraintBlock({ sourceType: 'file', sourceKind: 'social post' });
+  assert.ok(!/durable principle/.test(post), 'a social post is judged on its own era cues');
+  assert.equal(post, buildConstraintBlock(), 'and is scored exactly like a video');
+
+  assert.match(buildConstraintBlock({ sourceType: 'file' }), /This source is a book/,
+    'sourceKind defaults to book, preserving the behaviour the file source shipped with');
+}
+
 // ── parseFrontmatter ────────────────────────────────────────────────────────
 {
   const fm = parseFrontmatter('---\nname: marketing-offers\ndescription: Use when building offers\n---\n\nBody here.\n');
@@ -582,6 +600,23 @@ import { renderReport } from '../../lib/marketing-learner.js';
   });
   assert.match(md, /Hire a media buyer/, 'still lists the reject');
   assert.match(md, /No tactics adopted/i, 'says so plainly when nothing was adopted');
+}
+
+// A file source is named by whatever it actually is. Calling a pasted essay a
+// "book" is not a cosmetic slip: these lines are the provenance the whole skill
+// library rests on.
+{
+  const fileVideo = { ...VIDEO, sourceType: 'file', sourceId: 'secret-of-the-dtc-universe', videoId: null };
+  const asPost = renderReport({
+    extraction: GOOD,
+    video: { ...fileVideo, sourceKind: 'social post' },
+    skillsTouched: [],
+  });
+  assert.match(asPost, /\*\*Source:\*\* social post — `secret-of-the-dtc-universe`/);
+  assert.ok(!/\*\*Source:\*\* book/.test(asPost), 'nothing calls it a book');
+
+  const asBook = renderReport({ extraction: GOOD, video: fileVideo, skillsTouched: [] });
+  assert.match(asBook, /\*\*Source:\*\* book — `secret-of-the-dtc-universe`/, 'unspecified stays book');
 }
 
 import { mergeSkillContent } from '../../lib/marketing-learner.js';
