@@ -1,6 +1,6 @@
 ---
 name: marketing-competitor-messaging-teardown
-description: Use when deciding what angle to lead with on a product page, Amazon listing, Meta primary text, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, mining decades-old direct-response classics for portable structures, briefing an LLM off a surviving ad to produce your own version of its structure, pulling competitor emails from public archives or your own inbox, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
+description: Use when deciding what angle to lead with on a product page, Amazon listing, Meta primary text, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, mining decades-old direct-response classics for portable structures, borrowing premises from viral non-advertising content outside the category, briefing an LLM off a surviving ad to produce your own version of its structure, pulling competitor emails from public archives or your own inbox, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
 ---
 
 # Competitor Messaging Teardown
@@ -69,6 +69,40 @@ Route the output at the surfaces that are live: Meta primary text on the $30/day
 **Fit here (6/10):** Durable-principle class (structure portability), so the age of the source ad is the point rather than a problem. Free and solo-executable, and it lands on live surfaces. Held at 6 because the analyse-then-brief workflow it depends on is already owned by the section above, so only the source pool is genuinely new, and because the worked example is a sub-$100 info product with a money-back guarantee rather than a $12 consumable at a $50.46 AOV — the emotional register of a classic sales letter can overshoot badly for a low-consideration repeat purchase.
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #5: Formats May Change, But Underlying Principles Rarely Do" (social post)*
+
+### Widen it sideways as well: viral non-advertising content is a pool your competitors are not fishing in.
+
+Every source above — live competitor ads, decades-old direct-response classics — is advertising. That is the limitation. Hooks generated from inside the category fail because everything inside the category has already been said, and you are drawing from the same well as Native, Dr. Squatch and Every Man Jack. So extend the pool sideways: stories, videos, forum threads and posts that went viral on their own, from categories with nothing to do with body care.
+
+The habit is the tactic. When something stops your scroll — a video you actually watched to the end, a thread you read all of — ask immediately: *how could I apply this to the brand I'm working on?* Keep a running file of them. Content that went viral organically has already proven it captures attention with no media budget behind it, which is a stronger attention signal than a competitor ad that merely persisted.
+
+Then run it through the same pipeline as any other survivor: inventory the structure (who is speaking, what the premise is, how the beats are sequenced, the tone), supply your own hook and RSC facts, and ask for a new piece matching that skeleton — the four-step brief above, with the same two hard constraints. Borrow the premise and the skeleton, never the phrasing, never the claims.
+
+Route the output at the cheap reversible layer, because a borrowed premise from outside the category is an untested angle: Meta primary text on the $30/day giveaway campaign, and email subject lines. Do not lead an Amazon listing with one.
+
+**Why it works:** Hooks generated from inside the category converge, because every writer in it is drawing from the same well. Content that earned attention with no media behind it has validated its premise the hard way, so borrowing that premise imports proven attention from a pool your competitors are not searching.
+
+**Evidence offered:** One worked demonstration — a viral fantasy-football-punishment video turned into five distinct ad concepts across five unrelated categories. No performance data on any of the concepts; none were run.
+
+**Fit here (5/10):** Durable-principle class (concept generation), so age is irrelevant. Free, solo-executable, and it lands on live surfaces that are already designated as the cheap reversible layer for untested angles. It genuinely widens the source pool past everything above, which is all advertising. Capped at 5 for two reasons: the mechanism is thin — "be curious and ask how it applies" is a habit more than a procedure, and the source concedes it is hard to teach — and every worked example is a high-drama transformation narrative for fitness, weight loss, anti-aging or dating. A $12 aluminium-free deodorant at a $50.46 AOV is a low-consideration repeat purchase where that emotional register overshoots badly.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #4: Steal Like a Winner" (social post)*
+
+### Get many concepts out of one borrowed story by holding the skeleton fixed and swapping only the insecurity.
+
+The section above finds you a viral story; this is how you get more than one asset out of it. Hold the narrative skeleton fixed — *protagonist forced into a public situation, dreading exposure, discovers the product, triumphs* — and vary only two slots: the protagonist's insecurity and the product that resolves it. The same shape carries bodybuilding/muscle, runway/weight loss, TV broadcast/skincare, spelling bee/memory, model numbers/dating. What made the source compelling is the forced-exposure premise and the dread-to-triumph arc, not its subject matter, so substituting the insecurity leaves the interest intact. One source becomes a generator rather than a single asset.
+
+The transposition is unusually clean here. The emotional core of that skeleton is public exposure and the dread of embarrassment, which is exactly what natural deodorant customers are afraid of: arms down in a meeting, the shirt check at 3pm, the moment before a hug. Review mining will hand you those worst-moment scenes in customers' own words, so the skeleton can be filled with something true rather than invented — and it must be. Then brief it with the four-step procedure above and the same two constraints.
+
+One hard limit on format. A solo operator with no creator roster cannot stage a forced-exposure narrative on camera, and inventing a protagonist who does not exist is a disclosure problem, not a creative choice. The only runnable version is a written first-person account of a real moment — a real customer's, quoted and attributed, or your own.
+
+**Why it works:** The structure carries the interest, not the subject. Because the forced-exposure premise and the dread-to-triumph arc do the work, any insecurity a product plausibly resolves can be dropped into the same slots and the story still lands — which turns one borrowed source into a repeatable concept generator.
+
+**Evidence offered:** Five concepts sketched in sequence off the same skeleton (bodybuilding/muscle, runway/weight loss, TV broadcast/skincare, spelling bee/memory, model numbers/dating), each anticipating and answering the objection "but I don't sell that." Illustrative only; no ads run, no figures.
+
+**Fit here (5/10):** Durable-principle class (structure portability), age irrelevant, free to run, and the insecurity slot maps onto a genuine natural-deodorant fear that review mining already surfaces. Held at 5 because it substantially overlaps two rules already recorded — the "hold the proven angle fixed and change only the entry point" re-entry rule in marketing-awareness-level-messaging, and the structure-analyze-then-brief workflow above. The additive part is narrow: the skeleton comes from non-ad content, and what varies is the protagonist's insecurity rather than the awareness level. Disclosure constraints also force it down to a written first-person account, which pulls it back toward the long-form native format already scored at 5.
+
+*Source: Stefan Georgi — "Secret of the DTC Universe #4: Steal Like a Winner" (social post)*
 
 ### Extend the same gap analysis to email, and pull the reference sends from a public archive instead of waiting on your inbox.
 
