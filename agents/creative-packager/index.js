@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { scanSkillInventory, renderContextMirror } from '../../lib/marketing-learner.js';
 import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
+import { overlayPersonas } from '../../lib/operator-angles.js';
 import { archiveRunOutput } from '../../lib/archive-run-output.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -109,11 +110,28 @@ Return only the image prompt as plain text — no JSON, no explanation.`;
  * agents/ad-studio/health-claims.js is removed before it can reach a prompt; if
  * that empties the top persona the next one becomes the default, and if it empties
  * every persona this returns null and takes the documented no-personas path.
+ *
+ * THE OPERATOR OVERLAY IS APPLIED HERE TOO, before sanitizing — retirements and
+ * operator-authored angles cannot be edited into personas.json (see
+ * lib/operator-angles.js), so a reader that skips the overlay serves a retired angle
+ * to the copy writer and never serves its authored replacement.
  */
 export function loadPersonas(root = ROOT) {
+  let parsed;
   try {
     const raw = readFileSync(join(root, 'data', 'context', 'personas.json'), 'utf8');
-    const parsed = JSON.parse(raw);
+    parsed = JSON.parse(raw);
+  } catch { return null; }
+
+  // OVERLAID OUTSIDE THE CATCH ABOVE, DELIBERATELY. A missing or unparseable personas.json
+  // is the documented degradation path and returns null. An overlay failure is NOT: it
+  // throws only when an operator-authored angle names a persona that no longer exists
+  // (a monthly voice-of-customer run renumbered them), and swallowing that here would
+  // silently serve the un-overlaid file — the retired angle back in the copy prompt and
+  // the authored replacement absent, with nothing said. Let it throw.
+  parsed = overlayPersonas(parsed, { root });
+
+  try {
     if (!Array.isArray(parsed.personas)) return null;
     const { personas: safe, drops } = sanitizePersonas(parsed.personas);
     if (drops.length) {

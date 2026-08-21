@@ -181,3 +181,97 @@ test('overlayPersonas applied to the real personas file drops p2a2 and offers p2
   assert.ok(!ids.includes('p2a2'), 'p2a2 must not be briefable');
   assert.ok(ids.includes('p2a4'), 'p2a4 must be briefable');
 });
+
+// ── every personas.json reader applies the overlay ───────────────────────────────────
+//
+// The overlay is only a control if EVERY reader of the research file applies it. It landed
+// wired into two of the four, which meant agents/ad-studio and agents/creative-packager kept
+// serving retired p2a2 to a copy writer and never offered authored p2a4 — the retirement was
+// real in one half of the fleet and a no-op in the other. These tests exercise the two paths
+// that were missed, against the REAL repo files, so a future reader that forgets fails here.
+
+/** A temp root carrying a personas file plus an overlay that retires and replaces an angle. */
+function withPersonasRoot(fn) {
+  const dir = mkdtempSync(join(tmpdir(), 'personas-overlay-'));
+  try {
+    mkdirSync(join(dir, 'data', 'context'), { recursive: true });
+    writeFileSync(join(dir, 'data', 'context', 'personas.json'), JSON.stringify({
+      cluster: 'skin',
+      personas: [{
+        id: 'p2',
+        name: 'The Ingredient-Label Reader',
+        summary: 'Reads every label.',
+        evidence_count: 25,
+        emotional_intensity: 7.5,
+        angles: [
+          {
+            id: 'p2a2',
+            label: '125 chemicals a day',
+            awareness: 'unaware',
+            objection_addressed: 'Does it matter?',
+            proof: 'The 125+ chemicals the average person applies daily.',
+            hook_examples: ['The average person puts 125+ chemicals on their skin every day.'],
+            source_quotes: ['q'],
+          },
+        ],
+      }],
+    }));
+    writeFileSync(join(dir, ...OVERLAY_RELPATH), JSON.stringify({
+      retired: [{ id: 'p2a2', why: 'superseded figure' }],
+      angles: [{
+        personaId: 'p2',
+        id: 'p2a4',
+        label: '112 ingredients, or one',
+        awareness: 'unaware',
+        objection_addressed: 'Never counted them.',
+        proof: 'As many as 112 unique chemical ingredients.',
+        hook_examples: ['12 products. As many as 112 unique chemical ingredients.'],
+        source_quotes: ['q'],
+      }],
+    }));
+    return fn(dir);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('creative-packager loadPersonas applies the overlay', async () => {
+  const { loadPersonas } = await import('../../agents/creative-packager/index.js');
+  withPersonasRoot((root) => {
+    const ids = loadPersonas(root).personas[0].angles.map(a => a.id);
+    assert.deepEqual(ids, ['p2a4'], 'the retired angle must be gone and the authored one present');
+  });
+});
+
+// A monthly voice-of-customer run can renumber personas, orphaning an authored angle.
+// loadPersonas wraps its file read in a catch that returns null; if the overlay ran inside
+// that catch, an orphaned angle would degrade to "no personas at all" and the operator would
+// never learn their angle was dropped. It must throw.
+test('creative-packager loadPersonas lets an orphaned authored angle throw, not degrade to null', async () => {
+  const { loadPersonas } = await import('../../agents/creative-packager/index.js');
+  const dir = mkdtempSync(join(tmpdir(), 'personas-orphan-'));
+  try {
+    mkdirSync(join(dir, 'data', 'context'), { recursive: true });
+    writeFileSync(join(dir, 'data', 'context', 'personas.json'), JSON.stringify({
+      cluster: 'skin',
+      personas: [{ id: 'pX', name: 'Renumbered', angles: [{ id: 'pXa1', label: 'x', awareness: 'unaware', source_quotes: ['q'] }] }],
+    }));
+    writeFileSync(join(dir, ...OVERLAY_RELPATH), JSON.stringify({
+      retired: [], angles: [{ personaId: 'p2', id: 'p2a4', label: 'orphan', awareness: 'unaware' }],
+    }));
+    assert.throws(() => loadPersonas(dir), /not in personas\.json/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ad-studio's non-brief path projects personas straight into the copy prompt. Asserted
+// against the REAL files: the retired angle's superseded figure must not appear in what the
+// copy writer is handed, and the authored replacement's must.
+test('the ad-studio copy projection of the real files carries 112, never 125', async () => {
+  const { projectPersonaForCopy, ROOT: STUDIO_ROOT } = await import('../../agents/ad-studio/index.js');
+  const personas = (await import('../../data/context/personas.json', { with: { type: 'json' } })).default;
+  const projected = projectPersonaForCopy(overlayPersonas(personas, { root: STUDIO_ROOT }));
+  const text = JSON.stringify(projected.persona);
+  assert.ok(!/125\+|\b126\b/.test(text), 'the superseded EWG figure must not reach the copy prompt');
+});

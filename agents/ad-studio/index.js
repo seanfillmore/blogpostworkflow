@@ -41,6 +41,7 @@ import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedString
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
+import { overlayPersonas } from '../../lib/operator-angles.js';
 import { loadGiveaway } from '../../lib/giveaway-claim-source.js';
 import { notify } from '../../lib/notify.js';
 import { archiveRunOutput as archiveRun } from '../../lib/archive-run-output.js';
@@ -1583,7 +1584,17 @@ async function main() {
   let persona = null;
   let pdpBody = '';
   if (!brief) {
-    const personasData = loadJson(join(ROOT, 'data', 'context', 'personas.json'));
+    // OVERLAY BEFORE PROJECTING. A retired angle must not reach a copy prompt from HERE
+    // either, and an operator-authored replacement must. lib/operator-angles.js was wired
+    // into agents/ad-brief and the dashboard route when it landed, which left this path —
+    // the non-brief path, the one that reads the raw research file — serving the retired
+    // angle and never serving its replacement. That is the exact failure the overlay
+    // module's own docstring names: an operator authors an angle, sees no error, and the
+    // run they were watching briefs everything except the thing they just wrote.
+    const personasData = overlayPersonas(
+      loadJson(join(ROOT, 'data', 'context', 'personas.json')),
+      { root: ROOT },
+    );
     const projected = projectPersonaForCopy(personasData);
     if (projected.drops.length) {
       console.warn(`  withheld ${projected.drops.length} health-claim violation(s) from the copy prompt:`);
