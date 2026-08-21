@@ -1096,6 +1096,8 @@ Delete the local `readJson` helper (lines 16–25) and import the shared one. It
 
 Note `campaigns.js`'s two **bodyless** handlers (`dismiss`, `alerts/:type/resolve`) are synchronous and do `JSON.parse(readFileSync(file))` with no `try`. Leave them exactly as they are — Task 1's synchronous arm is what protects them, and Task 8 adds a test proving it.
 
+This was decided explicitly (2026-08-21), not overlooked: a corrupt campaign file becomes a generic 500 rather than a specific 404 or 400. It is a genuine internal error, and a 404 would misreport the cause to the client while the real reason sat only in stderr. Do not "improve" this into a friendlier status.
+
 - [ ] **Step 6: Run and verify everything passes**
 
 ```bash
