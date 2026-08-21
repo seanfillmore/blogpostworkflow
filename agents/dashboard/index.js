@@ -26,6 +26,7 @@ import { ensureDir } from './lib/fs-helpers.js';
 import { loadData, invalidateDataCache } from './lib/data-loader.js';
 import { createRunAgentHandler, createBackgroundRunHandlers } from './lib/run-agent.js';
 import { dispatch } from './lib/router.js';
+import { createFatalReporter } from './lib/fatal-reporter.js';
 import * as paths from './lib/paths.js';
 
 import dataRoutes from './routes/data.js';
@@ -158,34 +159,10 @@ const BOT_LANDING_HTML = `<!doctype html>
 </html>
 `;
 
-/**
- * LAST RESORT, NOT THE FIX. lib/router.js's dispatch() guard and readJsonBody between
- * them are supposed to make these unreachable — anything arriving here is a bug report,
- * not a routine event, which is why it notifies immediately rather than deferring to the
- * 5 AM digest.
- *
- * KEEP SERVING, deliberately. Node terminates on an unhandled rejection by default since
- * v15, and that default is what took the whole dashboard down for every tab whenever one
- * request went wrong. The cost of surviving is that the one in-flight request hangs until
- * its client times out; the cost of exiting is an outage, which is the thing this whole
- * change exists to remove.
- */
-function reportFatal(kind, err) {
-  console.error(`[dashboard] ${kind}:`, err?.stack || err);
-  try {
-    notify({
-      status: 'error',
-      immediate: true,
-      category: 'dashboard',
-      subject: `Dashboard ${kind}`,
-      body: `${kind} in seo-dashboard — the router guard did not contain it, which means a route is doing work outside a guarded promise.\n\n${err?.stack || err}`,
-    });
-  } catch (notifyErr) {
-    // A failing notify must never itself become the thing that kills the process.
-    console.error('[dashboard] notify failed while reporting a fatal:', notifyErr?.message || notifyErr);
-  }
-}
-
+// LAST RESORT, NOT THE FIX — see agents/dashboard/lib/fatal-reporter.js for the full
+// rationale (why it notifies immediately, why the process keeps serving, and why the
+// notify() call is chained rather than awaited-in-a-try/catch).
+const reportFatal = createFatalReporter({ notify });
 process.on('unhandledRejection', (reason) => reportFatal('unhandledRejection', reason));
 process.on('uncaughtException', (err) => reportFatal('uncaughtException', err));
 
