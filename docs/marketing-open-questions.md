@@ -11,33 +11,11 @@ the decision and its date stay on the record. New secrets keep appending here.
 Nothing in this file is a recommendation to act *now*. Where an answer would change a
 skill, that is noted.
 
-**Last updated:** 2026-08-20 · secrets ingested: **all eleven** (#1–#11)
+**Last updated:** 2026-08-21 · secrets ingested: **all eleven** (#1–#11) · **4 answered, 7 open**
 
 ---
 
 ## A. Blocked on a number only you can set
-
-### A1. What opens the `scale` gate, and what opens `team`?
-
-`STAGES` now runs `tracking → cro → offer-aov → traffic → scale → team`, and
-`CURRENT_STAGE` is `traffic`. 23 tactics sit parked behind the two capacity gates —
-Advantage+ Shopping, multi-variant hook tests, creator sourcing and partnerships,
-CPM/CTR benchmarking, community-on-purchase, dunning at volume.
-
-I invented the definitions:
-
-- `scale` — enough order, list and spend volume for a number to be read rather than
-  squinted at. Today: ~54 orders/month, sub-1,000 list, $30/day.
-- `team` — anyone producing work who is not you.
-
-**What I need:** the trigger *you'd* actually use. A concrete one, e.g. "`scale` at 200
-orders/month or $100/day sustained for a month", "`team` the day I pay a creator". Bumping
-`CURRENT_STAGE` is a one-constant change that un-hides everything behind it at once.
-
-**Why it matters:** parked tactics are invisible to every agent until the gate opens. Set
-too high, good work stays hidden. Set too low, agents propose things you can't staff.
-
----
 
 ### A2. What are the exit conditions on the ad-account freeze?
 
@@ -69,23 +47,6 @@ default pass and I expect it to recover few.
 ---
 
 ## B. Strategy questions a skill should not answer for you
-
-### B1. What is the coconut-oil differentiator — the formula, the baking-soda-free construction, or neither?
-
-Georgi #7 argues the mechanism is now purely compare-and-contrast: *"the real problem with
-other products is that they don't do X, and ours does."* And that a product with no
-differentiator either shouldn't be sold, or has to compete on price, service or delivery
-speed instead.
-
-Coconut oil is closer to his turmeric case than his robot vacuum: a known ingredient in a
-saturated category. The recorded competitor set is CeraVe, Vanicream, Cetaphil.
-
-**What I need:** your read on what the actual X is. Candidates: the formula itself,
-baking-soda-free construction, the transition-period support, or a non-product
-differentiator. This determines what every PDP hero, Amazon bullet and ad angle leads with,
-so it is upstream of a lot of recorded copy guidance.
-
----
 
 ### B2. Should `creative-packager`'s default angle be `personas[0].angles[0]`, or the shared-centre angle?
 
@@ -158,59 +119,7 @@ structure, different medium." I have left it as-is rather than change it on my o
 
 ---
 
-### B5. The dramatization gap — guidance loosened, enforcement did not. **Close this first.**
-
-Ingesting #4 changed a line in `marketing-conversion-copy-angles` from *"the story must be
-true — a fabricated emotional testimonial in body care is an FTC problem"* to *"the default
-is that the story is true"*, with an added disclosure rule ("Advertisement" / "Fictional
-events portrayed by a real customer who has been compensated") as the compliant route.
-
-As guidance that is arguably more accurate than the blanket prohibition — disclosed
-dramatization is legal. **The problem is that nothing enforces it.**
-
-- `claims.js` requires a `sourceId` only for claims flagged `factual: true`. A dramatization
-  asserts no fact, so a writer marking it non-factual passes the gate.
-- `health-claims.js` runs on every zone of every format and would catch efficacy language
-  ("smoother", "heals"), but a purely narrative fabrication — *she was dreading the camera,
-  she tried it, she felt confident* — contains no health claim and no factual assertion.
-
-So the skill text was the only thing standing in the way of an invented customer story, and
-it just moved from an absolute to a default. The two gates exist because guidance alone did
-not hold on 2026-08-16.
-
-**Options:**
-
-1. **Revert the loosening.** Restore "the story must be true" as absolute for this
-   catalogue; park or `--falsify` the disclosure rule. Costs nothing, forecloses a device
-   not worth using for a $12 consumable. ← recommended
-2. **Keep the guidance, close the gap in code.** Make first-person narrative in a story
-   format require a source regardless of the `factual` flag. Measure blast radius first —
-   see `reference_health_claims_vocabulary`.
-3. **Keep as-is.** Guidance permits a disclosed dramatization; nothing enforces the
-   disclosure.
-
-**What I need:** which of the three. Nothing has been reverted pending your answer.
-
----
-
 ## C. Ready to build, waiting on go/no-go
-
-### C1. Build the post-entry email sequence?
-
-The highest-value open item, and now supported by two independent secrets: #10 (*"when paid
-is capped, spend the hours converting the leads you already paid for"* — 7/10) and #9
-(*name the binding constraint first*).
-
-39 giveaway entrants and counting, ~32/day at the current rate, with no path to a purchase.
-The recorded design: three steps, escalating by **offer structure** not by discount depth —
-reminder → named bundle → low-COGS bonus → time-bounded promotion with a reason-why. The
-grader explicitly refused the descending-discount ladder (50%/75% off a consumable with real
-COGS is margin-negative, and `marketing-offer-construction` warns a repeating percent-off
-ladder trains the list to wait).
-
-**What I need:** go/no-go. The freeze on the ad account makes this free time.
-
----
 
 ### C2. Compute the real cost-per-entry ceiling?
 
@@ -222,6 +131,18 @@ by the 18–22.5% repeat rate.
 **What I need:** go/no-go, plus one fact I have not verified — whether giveaway entrant
 emails are matchable against Shopify orders. If they aren't, this can't be computed from
 data and becomes an assumption.
+
+---
+
+### A4. What opens the `team` gate?
+
+`scale` now has a trigger (A1). `team` does not. It currently parks 11 tactics — creator
+sourcing and vetting, long-term creator partnerships, actor networks, production-level
+choice, editor/creator routing, the say-the-defect-out-loud review rule, agency strategy
+layer.
+
+The obvious trigger is "the day you first pay someone who is not you to produce an asset",
+but that is my guess, not your decision.
 
 ---
 
@@ -250,4 +171,40 @@ data and becomes an assumption.
 
 ## Answered
 
-*(nothing yet — decisions and their dates land here)*
+### B5. The dramatization gap — **REVERTED, 2026-08-21**
+
+"The story must be true" restored as absolute for this catalogue, and stated as
+deliberately stricter than the law: disclosed dramatization is legal in general, but
+nothing here enforces a disclosure, so the rule *is* the enforcement. The disclosure
+tactic was `--falsify`'d into the graveyard with that reasoning, so the "Do not propose"
+blocklist every agent reads picks it up. Use the reaction/plan format for borrowed drama —
+it fabricates nothing.
+
+### B1. The differentiator is **ingredient simplicity, stated as a count** — 2026-08-21
+
+> Most body lotion is a twenty-line ingredient deck built around a synthetic preservative.
+> Ours is six ingredients, preserved with grapefruit seed extract.
+
+Recorded in `data/brand/brand-kit.md` under "Positioning — the differentiator", with a
+claim→source table so it clears `claims.js`. Verified against the live PDP: the "6 Clean
+Ingredients" count is in the product title itself; the PDP names three oils plus the
+preservative and the no-parabens/phenoxyethanol/mineral-oil/petrolatum contrast.
+
+**Standing caution:** do not enumerate all six from memory — the PDP names three. Cite the
+count and the named ones. And keep it a *composition* claim: the moment it becomes
+"gentler on skin" it belongs to `health-claims.js`.
+
+Rejected alternatives and why: coconut oil alone is the turmeric case (known ingredient,
+saturated category, differentiates nothing); baking-soda-free is real but only speaks to
+deodorant.
+
+### A1. `scale` opens at **$100/day sustained AND 200+ orders/month, whichever comes second** — 2026-08-21
+
+Recorded in the `STAGES` docstring in `lib/marketing-learner.js`. The conservative reading,
+because the parked tactics need spend *and* volume — either alone unparks work that still
+cannot be read. **`team` has no trigger yet** — see A4 below.
+
+### C1. Post-entry email sequence — **GO, 2026-08-21**
+
+Approved. Three steps escalating by offer structure, not discount depth. Build tracked
+separately.
