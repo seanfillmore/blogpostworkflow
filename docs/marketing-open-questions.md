@@ -11,7 +11,7 @@ the decision and its date stay on the record. New secrets keep appending here.
 Nothing in this file is a recommendation to act *now*. Where an answer would change a
 skill, that is noted.
 
-**Last updated:** 2026-08-20 · secrets ingested: #2, #5, #6, #7, #8, #9, #10, #11
+**Last updated:** 2026-08-20 · secrets ingested: **all eleven** (#1–#11)
 
 ---
 
@@ -158,6 +158,41 @@ structure, different medium." I have left it as-is rather than change it on my o
 
 ---
 
+### B5. The dramatization gap — guidance loosened, enforcement did not. **Close this first.**
+
+Ingesting #4 changed a line in `marketing-conversion-copy-angles` from *"the story must be
+true — a fabricated emotional testimonial in body care is an FTC problem"* to *"the default
+is that the story is true"*, with an added disclosure rule ("Advertisement" / "Fictional
+events portrayed by a real customer who has been compensated") as the compliant route.
+
+As guidance that is arguably more accurate than the blanket prohibition — disclosed
+dramatization is legal. **The problem is that nothing enforces it.**
+
+- `claims.js` requires a `sourceId` only for claims flagged `factual: true`. A dramatization
+  asserts no fact, so a writer marking it non-factual passes the gate.
+- `health-claims.js` runs on every zone of every format and would catch efficacy language
+  ("smoother", "heals"), but a purely narrative fabrication — *she was dreading the camera,
+  she tried it, she felt confident* — contains no health claim and no factual assertion.
+
+So the skill text was the only thing standing in the way of an invented customer story, and
+it just moved from an absolute to a default. The two gates exist because guidance alone did
+not hold on 2026-08-16.
+
+**Options:**
+
+1. **Revert the loosening.** Restore "the story must be true" as absolute for this
+   catalogue; park or `--falsify` the disclosure rule. Costs nothing, forecloses a device
+   not worth using for a $12 consumable. ← recommended
+2. **Keep the guidance, close the gap in code.** Make first-person narrative in a story
+   format require a source regardless of the `factual` flag. Measure blast radius first —
+   see `reference_health_claims_vocabulary`.
+3. **Keep as-is.** Guidance permits a disclosed dramatization; nothing enforces the
+   disclosure.
+
+**What I need:** which of the three. Nothing has been reverted pending your answer.
+
+---
+
 ## C. Ready to build, waiting on go/no-go
 
 ### C1. Build the post-entry email sequence?
@@ -198,6 +233,13 @@ data and becomes an assumption.
 - **At the next flexible-ad rebuild**, apply the reserved-slot rule from #11: two of the
   three creative slots hold what has proven itself, one slot stays reserved for a new or
   retested angle. Not applicable until a creative visibly wins.
+- **The whole series is in.** 11 secrets, 41 tactics adopted, 21 rejected, 25 parked behind
+  `scale`/`team`. #1's editor/creator factors parked rather than being rejected, which is
+  the gate change working on new material rather than only on the recovered pile.
+- **Sequencing note: B1 is upstream of most of this list.** If the differentiator turns out
+  to be transition-period support rather than the formula, that changes what the post-entry
+  sequence says (C1), what the reserved creative slot tests, and which angle the
+  shared-centre rule points at. Answer B1 before the others or half of them get redone.
 - **A method now available, needing no decision:** #5's transposition move — take a proven
   direct-response ad from any era and re-render it in a current format, holding hook,
   speaker, tone and story beats fixed (6/10, `marketing-competitor-messaging-teardown`).
