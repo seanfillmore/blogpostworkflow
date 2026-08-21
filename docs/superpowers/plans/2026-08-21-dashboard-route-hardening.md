@@ -811,7 +811,7 @@ Add the import once at the top of the file:
 import { readJsonBody } from '../lib/responses.js';
 ```
 
-Apply the recipe from Task 3 to each site. The four with the `{ error: 'Invalid JSON' }` shape (117, 168, 574, 836, 914) become:
+Apply the recipe from Task 3 to each site. Six of the seven answer `{ error: 'Invalid JSON' }` on a bad body — 117, 168, 574, 725, 836, 914 — and become:
 
 ```js
     async handler(req, res, ctx) {
@@ -824,6 +824,25 @@ Apply the recipe from Task 3 to each site. The four with the `{ error: 'Invalid 
 ```
 
 Keep each site's existing variable name so the rest of the handler is untouched — `payload` at 117/574/725, `data` at 168, `updates` at 836/914. Rename the destination only, never the uses.
+
+**ORDER IS LOAD-BEARING AT SITE 574 (`/api/creatives/refine`).** Its `end` callback checks `ctx.geminiClient` and answers `503 {"error":"Gemini API key not configured"}` **before** it parses the body. Migrating the body read to the top of the handler would silently turn that into a 400 for any client sending a bad body while Gemini is unconfigured. Keep the 503 check first:
+
+```js
+    async handler(req, res, ctx) {
+      if (!ctx.geminiClient) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Gemini API key not configured' }));
+        return;
+      }
+      let payload;
+      try { payload = await readJsonBody(req); } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        return;
+      }
+```
+
+The general rule the recipe implies but does not say: **preserve the original order of every response path.** Read each `end` callback top to bottom before moving it and keep the checks in the sequence they already run.
 
 The `package` route (725) and `/api/generate-creative` (793) keep their own shapes; 793 currently destructures inside its `try` (`const { adId, productImages = [] } = JSON.parse(body)`), so replace only the parse:
 
