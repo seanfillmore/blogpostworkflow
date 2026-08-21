@@ -35,6 +35,16 @@ const dir = mkdtempSync(join(tmpdir(), 'text-source-'));
   assert.equal(src.language, 'en');
   assert.equal(src.durationSeconds, null);
   assert.equal(src.text, 'Chapter one.\n\nChapter two.');
+  assert.equal(src.sourceKind, 'book', 'named a book unless told otherwise');
+}
+
+// ── sourceKind rides on the source, because provenance is downstream of it ───
+{
+  const p = join(dir, 'post.md');
+  writeFileSync(p, 'A short essay someone pasted.\n');
+  const src = loadTextFile(p, { author: 'Stefan Georgi', title: 'Secret #2', sourceKind: 'social post' });
+  assert.equal(src.sourceKind, 'social post');
+  assert.equal(src.sourceType, 'file', 'kind describes the work; type still describes the loader');
 }
 
 // ── every failure mode throws TextSourceError with a distinct code ───────────

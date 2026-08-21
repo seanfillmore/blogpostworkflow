@@ -14,6 +14,18 @@
  *     --no-pr                   Write into the working tree. No branch, no PR.
  *     --refetch                 Ignore the transcript cache (costs a credit).
  *
+ *   node agents/marketing-learner/index.js --file <path.txt|.md> --author "<name>" --title "<title>"
+ *     A local text source instead of a video. Its own mode — cannot be combined with URLs.
+ *     Needs no TRANSCRIPTAPI_KEY. Convert a PDF first: pdftotext -layout in.pdf out.txt.
+ *     --source-kind <kind>      What the work IS, for the provenance line on every adopted
+ *                               tactic: book (default), essay, social post, newsletter,
+ *                               transcript… Say what it actually is. It also decides whether
+ *                               the extraction prompt gets the "treat as durable principle"
+ *                               nudge, which only a book earns — a pasted social post is as
+ *                               platform-era as any video and must be scored like one.
+ *     --published <YYYY|YYYY-MM-DD>   A bare year is accepted here; a book has no upload date.
+ *     --chunk-words / --split-on      Chunking knobs for a long source.
+ *
  *   node agents/marketing-learner/index.js --staged [<gate>]
  *     Read-only listing of every tactic parked behind a stage gate, grouped by gate
  *     in operating-sequence order. A tactic that is sound here but blocked by timing
@@ -49,7 +61,7 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '../../lib/anthropic.js';
 import { notify } from '../../lib/notify.js';
 import { fetchTranscript, extractVideoId, TranscriptError } from '../../lib/transcript-source.js';
-import { loadTextFile } from '../../lib/text-source.js';
+import { loadTextFile, validateSourceKind } from '../../lib/text-source.js';
 import {
   parsePublishedFlags,
   scanSkillInventory,
@@ -96,14 +108,14 @@ function loadEnv(root = ROOT) {
 const VALUE_FLAGS = {
   '--published': 'published', '--falsify': 'falsify', '--claim': 'claim', '--reason': 'reason',
   '--file': 'file', '--author': 'author', '--title': 'title',
-  '--chunk-words': 'chunkWords', '--split-on': 'splitOn',
+  '--chunk-words': 'chunkWords', '--split-on': 'splitOn', '--source-kind': 'sourceKind',
 };
 
 export function parseArgs(argv) {
   const out = {
     urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
     falsify: null, claim: null, reason: null, staged: null,
-    file: null, author: null, title: null, chunkWords: 4500, splitOn: null,
+    file: null, author: null, title: null, chunkWords: 4500, splitOn: null, sourceKind: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -169,10 +181,14 @@ export function parseArgs(argv) {
     if (!out.author) throw new Error('--file requires --author "<name>" — it is the provenance on every claim.');
     if (!out.title) throw new Error('--file requires --title "<title>" — it is the provenance on every claim.');
     if (out.urls.length) throw new Error('--file cannot be combined with URLs — it is a separate mode. Run once per source.');
+    // Default to "book" — the case the file source was built for, and the one
+    // whose durability nudge the extraction prompt still depends on.
+    out.sourceKind ??= 'book';
+    validateSourceKind(out.sourceKind);
     return out;
   }
 
-  for (const [prop, flag] of [['author', '--author'], ['title', '--title'], ['splitOn', '--split-on']]) {
+  for (const [prop, flag] of [['author', '--author'], ['title', '--title'], ['splitOn', '--split-on'], ['sourceKind', '--source-kind']]) {
     if (out[prop]) throw new Error(`${flag} is only valid with --file.`);
   }
   // --chunk-words is valid for videos too: long transcripts chunk on the same path.
@@ -453,11 +469,13 @@ async function finishSource({ source, extraction, inventory, args, client }) {
         source: {
           creator: source.creator,
           title: source.title,
-          // A book cites the excerpt a tactic came from; consolidation records
+          // A long file cites the excerpt a tactic came from; consolidation records
           // every excerpt that fed each canonical tactic, and the first is the
-          // one to cite. A video cites its id, exactly as it always has.
+          // one to cite. A short one has no excerpt worth naming, and appending
+          // "excerpt unknown" to every line of a 1,200-word essay is noise, not
+          // provenance. A video cites its id, exactly as it always has.
           locator: source.sourceType === 'file'
-            ? `book, ${t.mergedFrom?.[0]?.label ?? 'excerpt unknown'}`
+            ? [source.sourceKind, t.mergedFrom?.[0]?.label].filter(Boolean).join(', ')
             : source.videoId,
         },
       });
@@ -609,6 +627,7 @@ async function extractFromSource({ source, inventory, args, client }) {
 async function processFile(item, { client, args }) {
   const source = loadTextFile(item.file, {
     author: item.author, title: item.title, publishedAt: item.publishedAt,
+    sourceKind: item.sourceKind,
   });
   if (item.warning) console.warn(`  ⚠ ${item.warning}`);
   console.log(`  ${source.text.split(/\s+/).length.toLocaleString()} words`);
@@ -709,7 +728,7 @@ function openPullRequest(results) {
         .join('\n');
       const title = r.video.title ?? r.video.sourceId;
       const link = r.video.sourceType === 'file'
-        ? `\`${r.video.sourceId}\` (book)`
+        ? `\`${r.video.sourceId}\` (${r.video.sourceKind ?? 'book'})`
         : `https://www.youtube.com/watch?v=${r.video.videoId}`;
       return `## ${title}\n\n${link}\n\n| Score | Verdict | Claim | Reasoning |\n|---|---|---|---|\n${rows}`;
     }).join('\n\n');
@@ -770,7 +789,7 @@ async function main() {
     const [dated] = parsePublishedFlags([args.file], args.published, { allowYearOnly: true });
     console.log(`\n▶ ${args.file}`);
     results.push(await processFile(
-      { ...dated, file: args.file, author: args.author, title: args.title },
+      { ...dated, file: args.file, author: args.author, title: args.title, sourceKind: args.sourceKind },
       { client, args },
     ));
     return finish(results, args);

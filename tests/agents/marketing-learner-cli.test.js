@@ -399,9 +399,32 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
     /--chunk-words must be a positive integer/);
 }
 
+// ── --source-kind: what the provenance line calls this source ───────────────
+{
+  const d = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T']);
+  assert.equal(d.sourceKind, 'book', 'defaults to book — the case the file source was built for');
+
+  const e = parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--source-kind', 'social post']);
+  assert.equal(e.sourceKind, 'social post');
+
+  // The kind is interpolated into a `*Source: … (<kind>, <locator>)*` line, so a
+  // value carrying a paren or a newline would corrupt every provenance line it
+  // touches — and the LLM is told to copy that line verbatim.
+  for (const bad of ['Book', 'a really extraordinarily long source kind', 'post)', 'a\nb', '']) {
+    assert.throws(
+      () => parseArgs(['--file', 'b.txt', '--author', 'A', '--title', 'T', '--source-kind', bad]),
+      /--source-kind/,
+      `rejects ${JSON.stringify(bad)}`);
+  }
+}
+
 // ── author/title/chunk flags are meaningless without --file ─────────────────
 {
   assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--author', 'A']), /only valid with --file/);
+  assert.throws(
+    () => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--source-kind', 'essay']),
+    /only valid with --file/,
+    'a video is a video; it never needs naming');
   // --chunk-words applies to videos too — long transcripts chunk on the same path.
   assert.equal(parseArgs(['https://youtu.be/aaaaaaaaaaa', '--chunk-words', '900']).chunkWords, 900);
   assert.throws(() => parseArgs(['https://youtu.be/aaaaaaaaaaa', '--split-on', '^C']), /only valid with --file/);
