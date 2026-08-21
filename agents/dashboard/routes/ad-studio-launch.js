@@ -251,12 +251,14 @@ export default [
 
       // findActiveJob/writeJob/spawn are all synchronous fs or process calls that can
       // throw — most realistically writeJob hitting ENOSPC on a box that has already
-      // lost four days of cron to a full disk. dispatch() in lib/router.js calls this
-      // async handler without awaiting or .catch()-ing it, and nothing in this process
-      // registers an `unhandledRejection` handler, so an uncaught throw here would take
-      // down the whole shared `seo-dashboard` PM2 process — not just this tab. Answer a
-      // fixed 500 instead; never echo the exception (it can carry a raw fs path or a
-      // stack frame, and the job id it's about is not this route's to leak either).
+      // lost four days of cron to a full disk. dispatch() in lib/router.js guards the
+      // promise this handler returns, and lib/fatal-reporter.js is the process-level net
+      // for anything that still escapes (wired to unhandledRejection/uncaughtException in
+      // index.js) — so an uncaught throw here would no longer take the shared
+      // `seo-dashboard` PM2 process down. This catch exists to answer a fixed 500 instead
+      // of the router's generic one, and to never echo the exception (it can carry a raw
+      // fs path or a stack frame, and the job id it's about is not this route's to leak
+      // either).
       let result;
       try {
         result = performLaunch(verdict.args, ctx?.adStudioDeps);

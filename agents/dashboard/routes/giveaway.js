@@ -435,13 +435,15 @@ export function createEntriesHandler({ getProfileByEmail: getProfile = getProfil
     let email;
     try { email = normalizeEmail(url.searchParams.get('email')); }
     catch { return json(res, req, 400, { ok: false, error: 'a valid email is required' }); }
-    // MUST be wrapped. dispatch() in agents/dashboard/lib/router.js calls the
-    // handler without awaiting it, and this codebase installs no
-    // unhandledRejection hook — so an un-caught throw here terminates the
-    // whole PM2 process under Node 22's defaults, taking every other
-    // dashboard function down with it. This route is public and
-    // unauthenticated, and klaviyoRequest throws on any non-2xx, so a routine
-    // Klaviyo 5xx or rate-limit would be enough to do it.
+    // MUST be wrapped. dispatch() in agents/dashboard/lib/router.js guards the
+    // promise this handler returns (an escaping rejection gets a fixed 500),
+    // and lib/fatal-reporter.js is the process-level net for anything that
+    // still gets past that, wired to unhandledRejection/uncaughtException in
+    // index.js — so an un-caught throw here no longer terminates the shared
+    // PM2 process. This route is public and unauthenticated, and
+    // klaviyoRequest throws on any non-2xx, so a routine Klaviyo 5xx or
+    // rate-limit is a near-certainty here; this try/catch exists to answer
+    // that with a clean response instead of the router's generic 500.
     try {
       const profile = await getProfile(email);
       // Answer only for GIVEAWAY ENTRANTS, not for "any address Klaviyo knows".

@@ -24,13 +24,16 @@
 //   2. Every error string returned to the client is fixed. Never an exception's
 //      `.message`, never a filesystem path, never a client-supplied value echoed back —
 //      see decideBrief's handler below for the specific case this guards against.
-//   3. The whole handler body is wrapped in try/catch. lib/router.js's dispatch() calls
-//      handlers without awaiting them and nothing in this process registers
-//      `unhandledRejection`, so an unguarded throw here would take down the entire shared
-//      `seo-dashboard` PM2 process, not just this tab. This is a "whole body" rule, not a
-//      "the obvious part" rule — /decide's own listProductsWithBriefs(ROOT) call sits
-//      after this handler's first await and was missed once already (code review,
-//      2026-08-17); see that handler for the fix.
+//   3. The whole handler body is wrapped in try/catch. lib/router.js's dispatch() guards
+//      the promise this handler returns (a rejection gets a fixed 500) and
+//      lib/fatal-reporter.js is the process-level backstop wired to
+//      `unhandledRejection`/`uncaughtException` in index.js, so an escaping throw here no
+//      longer takes the shared `seo-dashboard` PM2 process down — it logs and the process
+//      keeps serving other tabs. These local catches exist to answer a *specific* status
+//      code and a safe, non-echoing error string, not to prevent a crash. This is a "whole
+//      body" rule, not a "the obvious part" rule — /decide's own
+//      listProductsWithBriefs(ROOT) call sits after this handler's first await and was
+//      missed once already (code review, 2026-08-17); see that handler for the fix.
 //   4. Generation is a long job that outlives the request, so it reuses the SAME job-file
 //      mechanism as Ad Studio (lib/ad-studio-job.js) — same one-run-at-a-time guard via
 //      findActiveJob (deliberately SHARED with Ad Studio's renders, not partitioned by
@@ -511,10 +514,10 @@ export default [
 
       // findActiveJob/writeJob/spawn are all synchronous fs or process calls that can
       // throw — most realistically writeJob hitting ENOSPC (see CLAUDE.md's disk-budget
-      // history). dispatch() in lib/router.js calls this async handler without awaiting
-      // or .catch()-ing it and nothing here registers an `unhandledRejection` handler, so
-      // an uncaught throw would take down the whole shared seo-dashboard PM2 process, not
-      // just this tab. Answer a fixed 500 instead; never echo the exception.
+      // history). dispatch() in lib/router.js guards the promise this handler returns, and
+      // lib/fatal-reporter.js backstops anything that still escapes, so this catch is not
+      // what keeps the process up — it exists to answer a fixed 500 instead of a bare 502
+      // and to never echo the exception.
       let result;
       try {
         result = performGenerate(verdict.args, ctx?.adBriefDeps);
@@ -538,11 +541,11 @@ export default [
       // listProductsWithBriefs() reads a directory (readdirSync); lib/ad-brief.js guards
       // each per-entry statSync individually but not the readdirSync itself, so an
       // EACCES, an EIO, or a TOCTOU race between its own existsSync and the read that
-      // follows reaches here as a throw. This sits after the handler's first await —
-      // exactly the shape lib/router.js's dispatch() cannot catch (it calls handlers
-      // without awaiting them, and nothing here registers 'unhandledRejection'), so an
-      // unguarded throw would kill the whole shared seo-dashboard process rather than
-      // fail this one request. Code review, 2026-08-17.
+      // follows reaches here as a throw. This sits after the handler's first await, inside
+      // the promise dispatch() in lib/router.js is already guarding — so an unguarded
+      // throw here would still only 500 this one request, never take the process down.
+      // The catch below exists to give that 500 a specific, non-leaking message instead of
+      // the router's generic one. Code review, 2026-08-17.
       const listProductsWithBriefsFn = ctx?.adBriefDeps?.listProductsWithBriefs || listProductsWithBriefs;
       let knownProducts;
       try {
@@ -582,8 +585,8 @@ export default [
       try { body = await readJsonBody(req); } catch { return respondError(res, 400, 'bad JSON body'); }
 
       // Same unguarded-readdirSync hazard as /decide (code review, 2026-08-17) — this
-      // sits after the handler's first await, so an fs fault here would otherwise reach
-      // lib/router.js's dispatch(), which calls handlers without awaiting them.
+      // sits after the handler's first await; the try/catch below turns an fs fault into
+      // a specific 500 rather than falling through to dispatch()'s generic one.
       const listProductsWithBriefsFn = ctx?.adBriefDeps?.listProductsWithBriefs || listProductsWithBriefs;
       let knownProducts;
       try {
@@ -661,8 +664,9 @@ export default [
 
       // Same reasoning as /generate's handler: findActiveJob/writeJob/spawn are
       // synchronous fs/process calls that can throw (ENOSPC, most realistically — see
-      // CLAUDE.md's disk-budget history) and nothing here registers
-      // 'unhandledRejection'. Fixed 500; never echo the exception.
+      // CLAUDE.md's disk-budget history). dispatch() and lib/fatal-reporter.js already
+      // keep an unguarded throw here from being fatal; this catch exists to answer a
+      // fixed 500 and never echo the exception.
       let result;
       try {
         result = performRender(verdict.args, ctx?.adBriefDeps);

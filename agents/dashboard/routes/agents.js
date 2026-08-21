@@ -29,8 +29,11 @@ export default [
   {
     method: 'GET',
     match: (url) => url.startsWith('/run-job'),
+    // Returned for consistency with /run-agent and /run-agent-bg above, even though
+    // ctx.bgRunPoll is fully synchronous today (no rejection dispatch() could miss) —
+    // it is the shape the next change to bgRunPoll must not have to remember to add.
     handler(req, res, ctx) {
-      ctx.bgRunPoll(req, res);
+      return ctx.bgRunPoll(req, res);
     },
   },
   {

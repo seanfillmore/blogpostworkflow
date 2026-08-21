@@ -201,7 +201,27 @@ const server = http.createServer((req, res) => {
   res.end('Not found');
 });
 
+// The fatal reporter above intentionally never exits — a request-scoped fault must not
+// take the shared process (and every other tab) down. A BOOT fault is the opposite case:
+// `server.listen()` emits `'error'` synchronously (e.g. EADDRINUSE, EACCES) and with no
+// listener that throws, gets caught by `reportFatal`, and leaves the process "online" in
+// PM2 with no listening socket — a zombie that answers nothing while `pm2 status` still
+// says `online` and the only signal is one deferred email. `listening` distinguishes the
+// two cases: before the listen callback fires, any 'error' is a boot failure and must
+// stay loud (`process.exit(1)`, the only `process.exit` in this module, deliberately
+// contradicting the fatal reporter's never-exit rule) so PM2's restart loop and its
+// `errored` status — the thing meant to catch this — actually sees it. After the callback
+// fires, an 'error' here is request-scoped (e.g. a client resetting a connection) and
+// must not exit, so it just logs.
+let listening = false;
+server.on('error', (err) => {
+  if (listening) { console.error('[dashboard] server error:', err); return; }
+  console.error('[dashboard] failed to bind', BIND, PORT, err);
+  process.exit(1);
+});
+
 server.listen(PORT, BIND, () => {
+  listening = true;
   const url = `http://localhost:${PORT}`;
   console.log(`\nSEO Dashboard — ${config.name}`);
   console.log(`  ${url}`);

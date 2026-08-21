@@ -27,7 +27,7 @@ import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { dispatch } from '../../agents/dashboard/lib/router.js';
-import { readJsonBody } from '../../agents/dashboard/lib/responses.js';
+import { readJsonBody, DEFAULT_MAX_BYTES } from '../../agents/dashboard/lib/responses.js';
 import adBriefRoutes from '../../agents/dashboard/routes/ad-brief.js';
 import adsRoutes from '../../agents/dashboard/routes/ads.js';
 import adStudioLaunchRoutes from '../../agents/dashboard/routes/ad-studio-launch.js';
@@ -618,8 +618,6 @@ test('giveaway entry routes still refuse a body over 4 KB', async () => {
 // bodies. Unification must not loosen a limit on a public route, so the cap is a
 // per-call option and each caller passes its own existing value.
 // ---------------------------------------------------------------------------
-
-import { DEFAULT_MAX_BYTES } from '../../agents/dashboard/lib/responses.js';
 
 /** A request that emits `body` in `chunkCount` roughly equal Buffer chunks. */
 function makeChunkedReq(body, chunkCount = 1) {
