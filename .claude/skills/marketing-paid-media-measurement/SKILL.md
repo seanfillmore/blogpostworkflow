@@ -1,0 +1,92 @@
+---
+name: marketing-paid-media-measurement
+description: Use when setting up paid-media reporting, or reading what a running campaign is telling you — configuring a minimal Ads Manager column set sorted highest-to-lowest by spend so triage follows the dollars, running the two-question triage (can I spend more and stay profitable right now, or must I replace the single highest-spend worst-performing ad by changing one variable), splitting primary metrics you may optimize budget on (spend, purchases, cost per purchase, ROAS, or leads and cost per lead) from secondary storytelling metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain, reading sustained average frequency above about 5 as audience exhaustion but early high frequency on a brand-new ad as learning rather than fatigue, building hook rate and hold rate as custom metrics instead of trusting video average play time, leaving Meta's budget allocation alone rather than hand-forcing spend onto the ad with the prettiest ROAS (the breakdown effect), pulling age, gender and placement breakdowns on a winner to aim the next asset, and declining a multi-touch attribution subscription such as Triple Whale or Northbeam until real budget runs across several channels. The account being measured is marketing-paid-campaign-structure; the creative in it is marketing-paid-creative-testing.
+---
+
+# Paid Media Measurement
+
+## Do not buy a first-party attribution platform (Triple Whale, Northbeam) until you are running meaningful budgets across several channels — native platform reporting is enough for a single-channel advertiser.
+
+**Why it works:** Multi-touch attribution tools exist to reconcile conflicting numbers across independent channels (TV, podcast, influencer, Google, Meta). With one acquisition channel there is nothing to reconcile, so the tool adds subscription cost and dashboard maintenance without changing a single decision you would have made from the native numbers. They also do not unlock creative-level insight you cannot already read natively.
+
+**Evidence offered:** Practitioner position stated plainly, with the counter-case named: one client that does invest across multiple channels and therefore does use Triple Whale. Assertion, no cost or decision-quality comparison.
+
+**Fit here (6/10):** Executable today and the one item here that needs no ad account, because it is a spend-avoidance decision rather than an activity: at ~$2,700/mo combined revenue, a multi-touch attribution subscription would consume a visible share of monthly income and change nothing, since there is one paid channel (none) and two sales surfaces. It also sharpens the Tracking gate honestly — gate one means getting Shopify, Klaviyo and Amazon reporting trustworthy, not buying an attribution platform. Held at 6 because it protects margin rather than producing revenue, and the creator's threshold is set from mid-scale DTC accounts rather than a $2,700/mo operation.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
+## Split every metric into primary metrics you are allowed to optimize budget on (spend, purchases, cost per purchase, ROAS — or leads and cost per lead) and secondary 'storytelling' metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain why something worked — and never treat click-through rate as a performance verdict.
+
+**Why it works:** Only the conversion and cost-per-conversion metrics measure the outcome you are paying for; the rest are inputs that can move for reasons unrelated to revenue. Scaling on a secondary metric therefore funds ads that are cheap to deliver or easy to click rather than ads that sell. Under broad targeting a low CTR can mean the ad filtered correctly rather than failed. And the real explanation for why an ad worked usually sits in the creative — the message, the visual, the format — not anywhere in the numbers.
+
+**Evidence offered:** Practitioner assertion, illustrated on one live campaign where the winning ad had an unremarkable outbound CTR but a hook rate roughly double the account average. No controlled comparison.
+
+**Fit here (6/10):** Durable-principle class (measurement discipline), so age is not the limiter — it is a direct restatement of the prime directive that revenue, not clicks or reach, decides where money goes, and it is the correct guardrail against the classic solo-operator mistake of scaling the ad with the best CTR. Blocked only by the traffic gate: there is no ad account, no budget and no working attribution to read purchases against, which is gate one. Held at 6 rather than higher because it prevents waste rather than producing revenue, and at ~54 orders/month even the primary metrics will be too thin to read cleanly at first.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
+**Refinement — read frequency as the audience-exhaustion alarm.** An average frequency above about 5 over the last seven days (or few weeks) means the creative is hitting the same people repeatedly rather than reaching new ones. Reach counts distinct people and impressions count total deliveries, so frequency is the ratio that reveals whether delivery has collapsed onto a small retargeting-sized pool; a rising figure inflates cost per purchase without adding new customers and signals the creative set is too narrow to open new audiences.
+
+**Evidence offered:** Assertion plus her stated personal threshold ('I get a little worried above five'), read off one live campaign that she says was reaching plenty of new people. No data linking a frequency threshold to CPA outcomes.
+
+**Fit here (6/10):** Platform-mechanics class (delivery diagnostics) and about 13 months old, so treat 5 as a soft practitioner threshold rather than a stable rule — but the mechanic is live now that the giveaway campaign is running. This is the single most likely thing to go wrong on a small-budget giveaway: a low daily spend against a narrow interest audience exhausts its pool in days, and frequency is the cheapest place to see it before cost per entry climbs. Watch it weekly from the first week rather than waiting for costs to drift. Held at 6 rather than higher because it is a warning light rather than a revenue mechanism, and the specific number will need sanity-checking against what the account actually does.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
+**Refinement — but on a brand-new ad, early high frequency is learning, not fatigue.** In the first days of a fresh ad, high frequency alongside low spend means Meta is recycling a small high-signal pool to get usable data fast — the same people are hit repeatedly because delivery is deliberately narrow. The later pattern of *rising spend with falling frequency* is the ad broadening out to genuinely new people, which reads like decay on a dashboard but is the opposite. So the exhaustion threshold above applies to a *sustained* frequency on an ad that has already been running, never to a three-day-old creative.
+
+**Evidence offered:** Assertion, illustrated with frequency arithmetic that is stated loosely and incorrectly ('a frequency of 1.6 means 60% of people saw that ad twice in a single day'). No account screenshots.
+
+**Fit here (5/10):** Platform-mechanics class, freshly published, so age is not the limiter. It is the necessary counterpart to the frequency-above-5 rule: on $30/day driving giveaway entries, this distinction decides whether a creative gets three days or ten, and killing a creative on day three for a number that means "still learning" is the expensive version of the mistake. Held at 5 because the creator's own frequency arithmetic is wrong, which undercuts confidence in the specific numbers, and because this is an interpretive guardrail rather than a revenue mechanism — take the direction, ignore the percentages.
+
+*Source: Professor Charley T — "The Simple Facebook Ads Strategy Dominating in 2026" (4DutxlMzqgc)*
+
+**Refinement — build hook rate and hold rate as custom metrics rather than trusting video average play time.** Hook rate is the percentage who watched the first three seconds; hold rate is the percentage who watched the first fifteen seconds (or the whole ad if shorter). Neither exists natively, so without building them you have no view of whether a video's opening earned attention or whether the body retained it. Average play time is distorted by ad length — long ads inflate it — whereas hook and hold are percentages of the same denominator, so they isolate whether the first seconds and the middle are doing their jobs and can be compared across the account. Read hold rate alongside average play time, not average play time alone.
+
+**Evidence offered:** Formulas shown on screen; one live example where the winning ad's hook rate was roughly double the account average of ~30% and hold roughly double the 7–8% average. Single account, no controlled test. Explicitly acknowledged as unavailable for image ads.
+
+**Fit here (4/10):** Platform-mechanics class (custom metric formulas inside Ads Manager) and about 13 months old, so verify the field names against the live interface before building them. The ad account is no longer the blocker — creative supply is. These read video only, and the pipeline here produces static plates (`agents/ad-studio`), not video; the closest real asset is a repeat-customer testimonial clip. Build both metrics anyway the moment any video runs, because existing skills cite hook rate as the native measurement for hook-injection work without ever saying how to compute it. Held at 4 solely because it measures a creative type this business barely produces — this is the one item here still genuinely constrained, and the constraint is the camera, not the gate.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
+## Configure Ads Manager once to a fixed, minimal column set and sort ads highest to lowest by amount spent, so triage follows the dollars before you look at anything else.
+
+Column order: amount spent, purchases, cost per purchase and ROAS first; then frequency, reach, impressions and CPM; then unique outbound click-through rate and cost per link click; then hook rate, hold rate and video average play time; plus post shares. Use unique outbound CTR, never the generic click-through metric.
+
+**Why it works:** A small deliberate column set stops you drowning in metrics: the first four tell you what is working and the audience metrics tell you who you reached. Unique outbound CTR is the purest click metric because it excludes clicks that never land on the site (profile taps, expands), so it is the only click figure that reflects real landing-page arrivals. Sorting by spend puts the money-consuming ads first so triage follows the dollars — an underperforming ad eating most of the budget is the only thing worth turning off first, and a strong ad with negligible spend is not yet moving the account.
+
+**Evidence offered:** Live screen share of her own account with a real ASC campaign, including one campaign where a single ad held roughly 75% of an $11.5k spend; practitioner assertion about which metrics matter. No comparison against other setups, no performance data tying the column choice or sort order to outcomes.
+
+**Fit here (7/10):** Platform-mechanics class (column names, sort controls, metric definitions) and roughly 13 months old, so confirm each label against the live interface as you add it — but this is day-one setup work for the account being built right now, which makes it immediately actionable rather than hypothetical. Do it before the first dollar is spent: a column set fixed in advance is what stops a solo operator reading whatever Meta happens to surface by default. For the giveaway, substitute leads and cost per lead for purchases and cost per purchase in the first block. The sort-by-spend habit matters more here than at agency scale, not less — with one person checking in a few times a week, "look where the money went first" is the whole triage procedure. Held at 7 rather than higher because it is a viewing discipline rather than a revenue mechanism.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
+## Before changing anything, ask 'can I spend more money and stay profitable right now?' — if yes, raise the budget and touch nothing else; if no, find the ad taking the most spend with the worst results and replace only that one, changing one variable.
+
+**Why it works:** Most instinctive responses to a performance dip — launching new ads, restructuring, testing something fresh — reintroduce the complexity that caused the decline. A single gating question stops the tinkering. And when action really is warranted, isolating the highest-spend worst-performing element and changing one variable makes the result attributable, whereas a rebuild teaches nothing because everything moved at once.
+
+**Evidence offered:** Assertion, framed as a two-question diagnostic. No worked example from an account.
+
+**Fit here (6/10):** Durable-principle class (decision discipline), and it matches the prime directive that revenue rather than ratios decides action. It extends the sort-by-spend triage habit above: that rule says look at the biggest spender first, this adds what to do next — replace it with one targeted alternative rather than deleting it or rebuilding the account. Genuinely load-bearing for one person hand-running $30/day, where the whole triage procedure has to fit in a few minutes a week. Held at 6 because it partly overlaps the other restraint rules recorded here, and because 'stay profitable' is not directly answerable on a giveaway campaign until entry-to-purchase conversion is known — substitute 'is cost per entry inside the ceiling my email flow justifies'.
+
+*Source: Professor Charley T — "The Simple Facebook Ads Strategy Dominating in 2026" (4DutxlMzqgc)*
+
+## Do not force budget toward the ads showing the best cost per purchase or ROAS while the algorithm concentrates spend elsewhere — that is Meta's documented breakdown effect, and throttling spend to the apparently cheaper ads usually makes them worse.
+
+**Why it works:** The headline efficiency of a low-spend ad reflects the small, cheapest slice of audience it happened to reach, not what it would do at scale. The algorithm has already estimated that pushing more budget through it would land on costlier inventory, so the attractive CPA is an artefact of tiny delivery rather than a property of the ad — and manually overriding the allocation surfaces that.
+
+**Evidence offered:** Attributed to Meta's own published explanation of the breakdown effect, plus her claim to have tested overriding it 'multiple times' with worse results. No figures from those tests.
+
+**Fit here (6/10):** Platform-mechanics class (algorithmic budget allocation behaviour) about 13 months old, so treat the named "breakdown effect" as a claim to re-check rather than gospel — but the instinct it guards against is live and expensive right now. On a small giveaway budget the temptation is acute: a handful of ads, one showing a flattering cost per entry on almost no delivery, and an operator checking daily with a slider in reach. That is precisely the ad whose efficiency will not survive more budget. Pairs directly with the doom-cycle rule below — both say the same thing, which is that the account needs to be left alone longer than feels comfortable. Held at 6 because it prevents a loss rather than producing a gain.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
+
+## Pull the age, gender, and placement breakdowns on a winning creative — if it over-indexes on a demographic or a placement, build more creative aimed at that audience or formatted for that placement.
+
+**Why it works:** A creative does not perform uniformly across the audience it is served to; the breakdown reveals which slice is actually producing the result, which converts an unexplained winner into a stated audience or format hypothesis you can deliberately build the next asset against.
+
+**Evidence offered:** Assertion with hypothetical examples (a creative skewing 50+, Instagram versus Facebook, feed versus stories versus reels). No account data shown.
+
+**Fit here (6/10):** Platform-mechanics class — breakdown categories and placement names shift — but usable on the giveaway campaign, and better suited to it than to a purchase campaign. A giveaway optimizes for entries, and entries arrive orders of magnitude cheaper than purchases, so a breakdown actually accumulates enough events to read; the same split on ~54 orders/month of purchase data would be noise. That makes the giveaway a genuine, cheap audience-discovery exercise: whoever over-indexes on entry cost is a real signal about who responds to this brand, and it carries over to the creative built after the giveaway ends. Read it as directional, not significant. Held at 6 because entry-responders and buyers are not the same population — treat a demographic that enters cheaply as a hypothesis to test on a purchase campaign, never as a proven buyer.
+
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*

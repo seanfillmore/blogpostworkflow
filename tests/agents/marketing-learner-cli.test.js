@@ -248,20 +248,34 @@ assert.ok(src.includes('syncContextMirror'), 'agent has a mirror sync step');
     'the file is still rewritten each time, so a mid-loop throw leaves it consistent');
 }
 
-// ── F4: the mirror is regenerated AFTER the PR branch is cut from main ──────
+// ── F4: the branch is cut from a FRESHLY FETCHED origin/main ────────────────
+// `main` is one ref shared by every worktree — it tracks whatever the main
+// checkout last pulled, which is routinely dozens of commits stale, and cutting
+// a worktree from origin/main does not move it. Branching from local `main` put
+// PR #566 on a two-merge-old base; the next run would have reverted #566's edits
+// to the very skills it was about to edit again. Structural check (the real
+// thing shells out to git/gh and pushes): fetch, then checkout from origin/main.
+{
+  const fetchIdx = src.indexOf("git(['fetch', 'origin', 'main'])");
+  const checkoutIdx = src.indexOf("git(['checkout', '-b', branch, 'origin/main'])");
+  assert.ok(checkoutIdx > -1, 'branches from origin/main, never local main');
+  assert.ok(fetchIdx > -1 && fetchIdx < checkoutIdx,
+    'origin/main is refreshed before it is used — a stale remote ref is the same bug renamed');
+  assert.ok(!/checkout', '-b', branch, 'main'/.test(src), 'local main is not a start point anywhere');
+}
+
+// ── F4b: the mirror is regenerated AFTER the PR branch is cut ───────────────
 // syncContextMirror projects whatever .claude/skills/ the WORKING TREE holds.
 // The in-loop sync runs on the operator's branch, which may carry skills that do
-// not exist on main; checking out from main drops those files, so that mirror
-// would advertise tactics whose SKILL.md the PR does not contain. Structural
-// check (the real thing shells out to git/gh and pushes): the regeneration call
-// must sit between the checkout and the `git add`.
+// not exist on the base; checking out drops those files, so that mirror would
+// advertise tactics whose SKILL.md the PR does not contain. The regeneration
+// call must sit between the checkout and the `git add`.
 {
-  const checkoutIdx = src.indexOf("git(['checkout', '-b', branch, 'main'])");
+  const checkoutIdx = src.indexOf("git(['checkout', '-b', branch, 'origin/main'])");
   const regenIdx = src.indexOf('syncContextMirror()', checkoutIdx);
   const addIdx = src.indexOf("git(['add', ...paths])");
-  assert.ok(checkoutIdx > -1, 'still branches from main');
   assert.ok(regenIdx > checkoutIdx && regenIdx < addIdx,
-    'the mirror is regenerated after the branch is cut from main and before the files are staged');
+    'the mirror is regenerated after the branch is cut and before the files are staged');
 }
 
 // ── F2: runFalsify — the actual write path, in a sandbox ────────────────────
