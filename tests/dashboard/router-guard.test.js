@@ -115,3 +115,22 @@ test('a non-matching request still returns false and touches nothing', async () 
   assert.equal(dispatch(routes, makeReq('GET', '/other'), res, {}), false);
   assert.equal(res.statusCode, null);
 });
+
+test('a synchronous handler that throws on a corrupt file produces a 500', async () => {
+  // The shape of campaigns.js's dismiss / alerts-resolve handlers: fully synchronous,
+  // JSON.parse(readFileSync(...)) with no try. Only dispatch()'s synchronous arm stands
+  // between a corrupt data file and an uncaughtException.
+  rejections.length = 0;
+  const routes = [{
+    method: 'POST',
+    match: '/sync-file',
+    handler() { JSON.parse('{ not json'); },
+  }];
+  const res = makeRes();
+
+  dispatch(routes, makeReq('POST', '/sync-file'), res, {});
+  await drain();
+
+  assert.equal(res.statusCode, 500);
+  assert.deepEqual(rejections, []);
+});

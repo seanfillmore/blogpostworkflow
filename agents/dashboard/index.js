@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import Anthropic from '../../lib/anthropic.js';
 import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
+import { notify } from '../../lib/notify.js';
 
 import { serveStatic } from './lib/static.js';
 import { loadEnvAuth, hydrateProcessEnv } from './lib/env.js';
@@ -156,6 +157,37 @@ const BOT_LANDING_HTML = `<!doctype html>
 <body><h1>Real Skin Care SEO Tools</h1><p>Internal analytics workspace.</p></body>
 </html>
 `;
+
+/**
+ * LAST RESORT, NOT THE FIX. lib/router.js's dispatch() guard and readJsonBody between
+ * them are supposed to make these unreachable — anything arriving here is a bug report,
+ * not a routine event, which is why it notifies immediately rather than deferring to the
+ * 5 AM digest.
+ *
+ * KEEP SERVING, deliberately. Node terminates on an unhandled rejection by default since
+ * v15, and that default is what took the whole dashboard down for every tab whenever one
+ * request went wrong. The cost of surviving is that the one in-flight request hangs until
+ * its client times out; the cost of exiting is an outage, which is the thing this whole
+ * change exists to remove.
+ */
+function reportFatal(kind, err) {
+  console.error(`[dashboard] ${kind}:`, err?.stack || err);
+  try {
+    notify({
+      status: 'error',
+      immediate: true,
+      category: 'dashboard',
+      subject: `Dashboard ${kind}`,
+      body: `${kind} in seo-dashboard — the router guard did not contain it, which means a route is doing work outside a guarded promise.\n\n${err?.stack || err}`,
+    });
+  } catch (notifyErr) {
+    // A failing notify must never itself become the thing that kills the process.
+    console.error('[dashboard] notify failed while reporting a fatal:', notifyErr?.message || notifyErr);
+  }
+}
+
+process.on('unhandledRejection', (reason) => reportFatal('unhandledRejection', reason));
+process.on('uncaughtException', (err) => reportFatal('uncaughtException', err));
 
 const server = http.createServer((req, res) => {
   const urlPath = (req.url || '/').split('?')[0];
