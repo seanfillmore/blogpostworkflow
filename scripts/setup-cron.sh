@@ -42,11 +42,20 @@ DAILY_RANK_ALERTER="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/rank-alerter
 # optimization loop: feeds the digest, performance-engine, and the ideas inbox.
 DAILY_GSC_OPPORTUNITY="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/gsc-opportunity/index.js >> data/reports/scheduler/gsc-opportunity.log 2>&1"
 
+# Post performance (daily — 30/60/90-day milestone review, after gsc-collector).
+# Verified live on the server 2026-08-21; was missing from this script.
+DAILY_POST_PERFORMANCE="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/post-performance/index.js >> data/reports/scheduler/post-performance.log 2>&1"
+
 # Pipeline prioritizer (daily — runs after signal agents at 13:30–13:45 UTC and
 # before calendar-runner at 10:00 UTC the next morning). Injects unmapped queries
 # as just-in-time backlog ideas and ranks them against all other signals.
-# Supersedes unmapped-query-promoter (retired 2026-06).
+# Supersedes unmapped-query-promoter (retired 2026-06)... except the agent's own
+# job is STILL live on the server crontab as of 2026-08-21, contradicting its own
+# file header ("DEPRECATED ... no longer scheduled"). Recorded here as-is because
+# this script mirrors what actually runs; see cron-mirror-report.md for the
+# operator decision this needs (stop the live job, or un-deprecate the agent).
 DAILY_PIPELINE_PRIORITIZER="0 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-prioritizer/index.js >> data/reports/scheduler/pipeline-prioritizer.log 2>&1"
+DAILY_UNMAPPED_QUERY_PROMOTER="45 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/unmapped-query-promoter/index.js >> data/reports/scheduler/unmapped-query-promoter.log 2>&1"
 
 # Content pipeline (daily)
 DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
@@ -103,10 +112,30 @@ WEEKLY_SEO_OPPORTUNITY="10 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/seo-oppo
 WEEKLY_SEO_IMPACT="30 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/seo-impact/index.js >> data/reports/scheduler/seo-impact.log 2>&1"
 WEEKLY_META_ADS_COLLECTOR="0 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-collector/index.js >> data/logs/meta-ads-collector.log 2>&1"
 WEEKLY_META_ADS_ANALYZER="10 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-analyzer/index.js >> data/logs/meta-ads-analyzer.log 2>&1"
+# Competitor watcher (Monday 02:00 UTC — no TZ prefix on the live line, so this
+# is a fixed UTC time, not a fixed Pacific time. The agent's own header docstring
+# calls it "weekly Sun 7:00 PM PT", which is 02:00 UTC Monday only while PT is on
+# PDT (UTC-7); it will read as 6 PM PT once PST (UTC-8) resumes. Not fixed here —
+# adding TZ= would change live behavior; flagged in cron-mirror-report.md.
+WEEKLY_COMPETITOR_WATCHER="0 2 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/competitor-watcher/index.js >> data/reports/scheduler/competitor-watcher.log 2>&1"
 
 # Weekly (Sunday)
 WEEKLY_ADS_RECAP="0 7 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/ads-weekly-recap.js >> data/reports/ads-weekly-recap.log 2>&1"
 WEEKLY_CAMPAIGN_ANALYZER="0 6 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-analyzer/index.js >> data/reports/campaign-analyzer.log 2>&1"
+
+# Offsite snapshot backup (Sundays 17:00 UTC, after the Sunday jobs above) — see
+# CLAUDE.md's "Snapshot backups" section. data/snapshots/ is the only copy of
+# GSC/Clarity history past those APIs' retention windows; this is the sole
+# offsite copy, so its absence from this script was the exact risk this task
+# exists to close.
+WEEKLY_OFFSITE_BACKUP="0 17 * * 0 cd \"$PROJECT_DIR\" && /bin/bash scripts/backup-snapshots-offsite.sh >> data/reports/scheduler/offsite-backup.log 2>&1"
+
+# Ad Studio / creatives disk hygiene (Sundays). Two complementary sweeps:
+# prune-ad-studio does deep age-only pruning past 90 days; creatives-budget
+# enforces the hard CREATIVES_BUDGET_BYTES ceiling (4 GiB on this box) tier by
+# tier. See CLAUDE.md's "`--formats` is required" section.
+WEEKLY_PRUNE_AD_STUDIO="30 17 * * 0 cd \"$PROJECT_DIR\" && $NODE scripts/prune-ad-studio.mjs --apply >> data/reports/prune-ad-studio.log 2>&1"
+WEEKLY_CREATIVES_BUDGET="0 18 * * 0 cd \"$PROJECT_DIR\" && $NODE scripts/creatives-budget.mjs --apply >> data/reports/scheduler/creatives-budget.log 2>&1"
 
 # Biweekly (every other Sunday)
 BIWEEKLY_STRATEGIST="0 12 * * 0 [ \$(( \$(date +%W) % 2 )) -eq 0 ] && cd \"$PROJECT_DIR\" && $NODE agents/content-strategist/index.js >> data/reports/scheduler/content-strategist.log 2>&1"
@@ -155,6 +184,16 @@ DAILY_GIVEAWAY_REPORT="45 8 * * * cd \"$PROJECT_DIR\" && NOTIFY_DEFERRED=1 $NODE
 # future setup-cron.sh edit silently drop it.
 GIVEAWAY_CLOSE_ENTRY_PERIOD="5 5 15 9 * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/close-entry-period.mjs --apply >> data/reports/scheduler/giveaway-close.log 2>&1"
 
+# Re-send the double-opt-in confirmation to entrants who submitted but never
+# clicked. ~64% of paid submissions never confirm, and an unconfirmed entrant
+# gets no nurture email, cannot be credited as a referrer and cannot be sold to.
+# Consent request, not marketing — capped at 3 per address, 48h apart, stamped
+# on the profile. Idempotent. Runs AFTER the 08:45 report so the daily funnel
+# snapshot is taken before nudging. 16:00 UTC = 9 AM PT, a reasonable send hour
+# for a US list — deliberately expressed in UTC, so no TZ= prefix needed.
+# Installed on the server 2026-08-21; recorded here for the first time.
+DAILY_GIVEAWAY_NUDGE="0 16 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/nudge-unconfirmed.mjs --apply >> data/reports/scheduler/giveaway-nudge.log 2>&1"
+
 # ── Install ──────────────────────────────────────────────────────────────────
 # Strip ALL previous seo-claude entries (covers ~/seo-claude, /root/seo-claude,
 # and any other path variant) to prevent duplicates from accumulating.
@@ -177,8 +216,11 @@ $DAILY_RANK_TRACKER
 $DAILY_RANK_ALERTER
 # ── GSC opportunity (daily) ──
 $DAILY_GSC_OPPORTUNITY
+# ── Post performance (daily) ──
+$DAILY_POST_PERFORMANCE
 # ── Pipeline prioritizer (daily — after signals, before calendar-runner) ──
 $DAILY_PIPELINE_PRIORITIZER
+$DAILY_UNMAPPED_QUERY_PROMOTER
 # ── Content pipeline (daily) ──
 $DAILY_SCHEDULER
 $DAILY_PIPELINE_SCHEDULER
@@ -208,9 +250,13 @@ $WEEKLY_KEYWORD_RESEARCH
 $WEEKLY_META_ADS_COLLECTOR
 $WEEKLY_META_ADS_ANALYZER
 $WEEKLY_SEO_IMPACT
+$WEEKLY_COMPETITOR_WATCHER
 # ── Weekly (Sunday) ──
 $WEEKLY_ADS_RECAP
 $WEEKLY_CAMPAIGN_ANALYZER
+$WEEKLY_OFFSITE_BACKUP
+$WEEKLY_PRUNE_AD_STUDIO
+$WEEKLY_CREATIVES_BUDGET
 # ── Biweekly ──
 $BIWEEKLY_STRATEGIST
 # ── Monthly ──
@@ -219,6 +265,7 @@ $MONTHLY_PRIORITY_TUNER
 # ── Soap giveaway (daily, UTC) ──
 $DAILY_GIVEAWAY_RECONCILE
 $DAILY_GIVEAWAY_REPORT
+$DAILY_GIVEAWAY_NUDGE
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
 "
 
@@ -246,12 +293,15 @@ echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"
 echo "  13:30 UTC — rank-alerter"
+echo "  13:30 UTC — post-performance (30/60/90-day milestone review)"
 echo "  13:45 UTC — publish-drift detector"
+echo "  13:45 UTC — unmapped-query-promoter (live on the server; agent's own header calls itself deprecated — see report)"
 echo "  14:00 UTC — pipeline-prioritizer (rank backlog, inject unmapped queries)"
 echo "  15:00 UTC — scheduler (publish-due + pipeline)"
 echo "  16:00 UTC — pipeline-scheduler (brief drip)"
 echo ""
 echo "  WEEKLY (Monday)"
+echo "  02:00 UTC — competitor-watcher (no TZ= — see report re: PT drift across DST)"
 echo "  07:30 UTC — insight-aggregator"
 echo "  08:00 UTC — keyword-research (DataForSEO)"
 echo "  10:00 UTC — meta-ads-collector"
@@ -265,6 +315,9 @@ echo ""
 echo "  WEEKLY (Sunday)"
 echo "  06:00 PT  — campaign-analyzer"
 echo "  07:00 PT  — ads-weekly-recap"
+echo "  17:00 UTC — offsite snapshot backup (DigitalOcean Spaces, keeps 12 weekly)"
+echo "  17:30 UTC — prune-ad-studio (deep age-only prune, past 90 days)"
+echo "  18:00 UTC — creatives-budget (hard disk ceiling sweep)"
 echo ""
 echo "  BIWEEKLY (every other Sunday)"
 echo "  12:00 UTC — content-strategist calendar refresh"
@@ -276,6 +329,7 @@ echo ""
 echo "  SOAP GIVEAWAY (daily, UTC — see comments in this script for the TZ trap)"
 echo "  08:30 UTC — giveaway reconcile-referrals (confirmation/referral rungs)"
 echo "  08:45 UTC — giveaway daily report (spend gates)"
+echo "  16:00 UTC — giveaway nudge-unconfirmed (re-send opt-in confirmation)"
 echo "  05:05 UTC, 2026-09-15 PT — giveaway close-entry-period (TZ=America/Los_Angeles — do not drop the TZ prefix)"
 echo ""
 echo "View with: crontab -l"

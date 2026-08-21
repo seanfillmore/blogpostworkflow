@@ -139,7 +139,28 @@ Rules:
 **Server:** `root@137.184.119.230` (DigitalOcean, Ubuntu)
 **Project path:** `/root/seo-claude`
 **Process manager:** PM2 — process name `seo-dashboard`
-**Cron:** `crontab -l` on the server lists every job — it is the production truth and the source `scripts/setup-cron.sh` is meant to reproduce; the script is not currently a full mirror of everything live (see the script's own job list). Main scheduler entry runs at 15 UTC (8 AM PT). Daily-summary email runs at 13 UTC (5 AM PT). The **soap-giveaway jobs** (`DAILY_GIVEAWAY_RECONCILE`, `DAILY_GIVEAWAY_REPORT`, `GIVEAWAY_CLOSE_ENTRY_PERIOD`) are version-controlled in `scripts/setup-cron.sh` — re-running the script re-installs them from source instead of relying on a hand-edited live crontab. `GIVEAWAY_CLOSE_ENTRY_PERIOD` carries `TZ=America/Los_Angeles`: the box's system clock is UTC, and a cron line with no `TZ=` prefix runs on UTC no matter what a comment claims — that gap fired the entry-period close ~2 hours before entries actually closed in Pacific time, drafting the nurture flow while people were still entering and killing the `01-confirm` email's +2-entry rung for last-minute entrants. Fixed by hand on the server 2026-08-20; do not drop the `TZ=` prefix.
+**Cron:** `crontab -l` on the server lists every job and is the production truth. As of 2026-08-21, `scripts/setup-cron.sh` is a **complete, verified mirror** of it — every job that runs live has a variable in the script (see the script's own job list, printed when it runs). `crontab -l` is still the thing to trust day-to-day; the script exists so a server rebuild or crontab restore can reproduce it exactly instead of silently dropping jobs no one remembered to write down. Main scheduler entry runs at 15 UTC (8 AM PT). Daily-summary email runs at 13 UTC (5 AM PT). All soap-giveaway jobs (`DAILY_GIVEAWAY_RECONCILE`, `DAILY_GIVEAWAY_REPORT`, `DAILY_GIVEAWAY_NUDGE`, `GIVEAWAY_CLOSE_ENTRY_PERIOD`) are version-controlled in the script — re-running it re-installs them from source instead of relying on a hand-edited live crontab. `GIVEAWAY_CLOSE_ENTRY_PERIOD` carries `TZ=America/Los_Angeles`: the box's system clock is UTC, and a cron line with no `TZ=` prefix runs on UTC no matter what a comment claims — that gap fired the entry-period close ~2 hours before entries actually closed in Pacific time, drafting the nurture flow while people were still entering and killing the `01-confirm` email's +2-entry rung for last-minute entrants. Fixed by hand on the server 2026-08-20; do not drop the `TZ=` prefix.
+
+**Verifying the mirror still matches** (run after any change to `scripts/setup-cron.sh`, without touching the live crontab — stops before the script's own `crontab -` install line, so it only ever reads):
+
+```bash
+ssh root@137.184.119.230 'crontab -l' | grep -vE '^\s*#|^\s*$' | sort > /tmp/live-jobs.txt
+
+sed -n '1,272p' scripts/setup-cron.sh \
+  | sed 's#PROJECT_DIR="\$(cd "\$(dirname "\$0")/\.\." \&\& pwd)"#PROJECT_DIR=/root/seo-claude#' \
+  | sed 's#NODE="\$(which node)"#NODE=/usr/bin/node#' \
+  | grep -v '^mkdir -p' > /tmp/generate-mirror.sh
+source /tmp/generate-mirror.sh > /dev/null
+echo "$NEW_CRONTAB" | grep -vE '^\s*#|^\s*$' | sort > /tmp/script-jobs.txt
+
+diff /tmp/live-jobs.txt /tmp/script-jobs.txt   # empty output = exact mirror
+```
+
+As of 2026-08-21 this diff is not quite empty: the live `prune-ad-studio` line was hand-added via `crontab -e` with different shell quoting and an absolute log path (`cd /root/seo-claude && '/usr/bin/node' ... >> /root/seo-claude/data/reports/...`) instead of the script's usual `cd "$PROJECT_DIR" && $NODE ... >> data/reports/...` — same schedule, same command, same effective log file (the `cd` already lands there), so it is cosmetic, not a real mismatch. Every other line matches byte for byte. A future re-run of `setup-cron.sh` will normalize that one line's formatting without changing what it does.
+
+The line count that matters is the number of job lines (48 as of 2026-08-21), not the file's raw line count — the live crontab also carries several stale auto-generated header-comment blocks from past runs of this script that `grep -v '^\s*#'` strips out along with everything else commented.
+
+The mirror does **not** mean the live crontab is itself fully self-consistent — two known issues found while building this mirror, deliberately left live rather than "fixed" here: `agents/unmapped-query-promoter/index.js` runs daily (`45 13 * * *`) but its own file header calls itself `DEPRECATED (2026-06)` and "no longer scheduled" — either the deprecation is stale or the job should be pulled, and that call belongs to whoever owns the pipeline-prioritizer cutover, not to this mirror. `agents/competitor-watcher/index.js` runs at a bare UTC time (`0 2 * * 1`, no `TZ=`) but its own header describes itself as "weekly Sun 7:00 PM PT" — true only while PT is on PDT (UTC-7); once PST (UTC-8) resumes it silently becomes 6 PM PT. Neither was touched, per the same no-silent-TZ-change rule as `GIVEAWAY_CLOSE_ENTRY_PERIOD` above.
 **SSH:** Key-based auth — no password from this machine.
 
 ### Deploy
