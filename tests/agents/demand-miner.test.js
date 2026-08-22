@@ -34,6 +34,11 @@ function collectWrites() {
   return { written, writeArtifacts: (files) => Object.assign(written, files) };
 }
 
+function collectNotify() {
+  const calls = [];
+  return { calls, notify: async (opts) => { calls.push(opts); } };
+}
+
 test('a full run writes both artifacts', async () => {
   const { written, writeArtifacts } = collectWrites();
   const result = await runDemandMiner({
@@ -109,6 +114,48 @@ test('a SERP failure skips that seed, sets partial, and continues', async () => 
   });
   assert.equal(result.partial, true, 'a skipped seed makes the run partial');
   assert.ok(written.json, 'the run still completes');
+});
+
+test('every seed failing writes nothing, notifies (deferred), and stays partial', async () => {
+  const { written, writeArtifacts } = collectWrites();
+  const { calls, notify } = collectNotify();
+  const alwaysFails = async () => { throw new Error('DataForSEO 502'); };
+  const result = await runDemandMiner({
+    getSerpResults: alwaysFails,
+    anthropic: stubAnthropic(),
+    readJson: (p) => (p.includes('impression-leaks') ? LEAKS : PERSONAS),
+    writeArtifacts,
+    notify,
+    now: 'x',
+  });
+  assert.equal(result.partial, true, 'every seed failing makes the run partial');
+  assert.equal(result.questions.length, 0);
+  assert.deepEqual(written, {}, 'no seeds survived — must not overwrite a good artifact with nothing');
+  assert.equal(calls.length, 1, 'the degraded-harvest guard notifies');
+  assert.equal(calls[0].status, 'error');
+  assert.ok(!calls[0].immediate, 'a degraded cycle waits for the 5 AM digest, not an instant email');
+});
+
+test('every SERP call succeeding with zero PAA/related results writes nothing, notifies, and stays non-partial', async () => {
+  const { written, writeArtifacts } = collectWrites();
+  const { calls, notify } = collectNotify();
+  const emptySerp = async () => ({ organic: [], serpFeatures: [], paa: [], relatedSearches: [] });
+  const result = await runDemandMiner({
+    getSerpResults: emptySerp,
+    anthropic: stubAnthropic(),
+    readJson: (p) => (p.includes('impression-leaks') ? LEAKS : PERSONAS),
+    writeArtifacts,
+    notify,
+    now: 'x',
+  });
+  // The whole point of this variant: nothing errored, so nothing else would have set
+  // partial. A run that "looks clean" must still be caught before it wipes the artifact.
+  assert.equal(result.partial, false, 'no seed failed and no source was missing');
+  assert.equal(result.questions.length, 0);
+  assert.deepEqual(written, {}, 'an all-empty harvest must not overwrite a good artifact with nothing');
+  assert.equal(calls.length, 1, 'the degraded-harvest guard notifies even though nothing errored');
+  assert.equal(calls[0].status, 'error');
+  assert.ok(!calls[0].immediate, 'a degraded cycle waits for the 5 AM digest, not an instant email');
 });
 
 test('malformed LLM output is retried exactly once, then succeeds', async () => {

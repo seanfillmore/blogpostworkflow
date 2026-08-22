@@ -22,7 +22,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '../../lib/anthropic.js';
 import { getSerpResults } from '../../lib/dataforseo.js';
-import { notify } from '../../lib/notify.js';
+import { notify as realNotify } from '../../lib/notify.js';
 import { AWARENESS_LEVELS } from '../../lib/voice-of-customer.js';
 import {
   deriveSeeds,
@@ -191,9 +191,16 @@ export async function classifyStages({ anthropic, records }) {
 /**
  * The injectable core. Every dependency is a parameter, so the smoke test needs no
  * network, no LLM and no filesystem. main() below wires the real ones.
+ *
+ * `notify` defaults to the real `lib/notify.js` sender so main() doesn't have to pass
+ * it explicitly, but stays overridable — the degraded-harvest guard below sends one,
+ * and a test must be able to intercept it without risking a real email.
  */
-export async function runDemandMiner({ getSerpResults, anthropic, readJson, writeArtifacts, now }) {
+export async function runDemandMiner({ getSerpResults, anthropic, readJson, writeArtifacts, now, notify = realNotify }) {
   const leaksFeed = readJson('data/reports/gsc-query-miner/impression-leaks.json');
+  // impression-leaks.json is always written by gsc-query-miner as { leaks: [...] } —
+  // buildImpressionLeaksFeed's shape is guaranteed by the agent that writes it, so unlike
+  // personas.json below there is no bare-array variant to tolerate here.
   const personasFile = readJson('data/context/personas.json');
 
   const { seeds, partial: seedPartial } = deriveSeeds({
@@ -223,6 +230,32 @@ export async function runDemandMiner({ getSerpResults, anthropic, readJson, writ
 
   const records = normalizeHarvest(harvest);
   const staged = validateQuestions(await classifyStages({ anthropic, records }));
+
+  // A non-empty seed set can still end with zero questions two different ways, and
+  // both get the same treatment as the zero-seed guard above for the same reason —
+  // writing an empty artifact would overwrite a good one from a previous run with
+  // nothing:
+  //   1. every seed's SERP call failed — caught above, `partial` is already true.
+  //   2. every seed's SERP call SUCCEEDED but came back with no PAA/related-search
+  //      items — normal for head keywords, and the more dangerous variant: nothing
+  //      set `partial`, so this run looks completely clean while silently wiping the
+  //      artifact. Voice-of-customer's writeArtifacts (agents/voice-of-customer/
+  //      index.js:383-389) guards the same empty-final-output case; this mirrors it.
+  // Notified rather than thrown: the previous artifact survives untouched and next
+  // month's run will retry, so this is a degraded cycle, not a failure — hence
+  // status: 'error' without immediate: true, so it lands in the 5 AM digest.
+  if (staged.length === 0) {
+    console.warn(`  demand-miner: harvested 0 questions from ${seeds.length} seed(s) — leaving the existing artifact in place.`);
+    await notify({
+      subject: 'Demand miner found nothing this cycle',
+      body: `${seeds.length} seed(s) were harvested but produced 0 questions`
+        + `${partial ? ' (partial — one or more seeds failed).' : ' — every SERP call succeeded but returned no PAA or related-search items.'}\n`
+        + 'data/context/demand-questions.{json,md} were left untouched; the previous artifact is preserved.',
+      status: 'error',
+      category: 'demand-miner',
+    });
+    return { questions: [], partial, seedCount: seeds.length };
+  }
 
   // Both artifacts render fully in memory BEFORE the first write, so a renderer throw
   // cannot leave one file new and the other stale.
@@ -300,7 +333,7 @@ async function main() {
 
     if (result.seedCount === 0) {
       console.log('  demand-miner: no seeds available — skipped this cycle.');
-      await notify({
+      await realNotify({
         subject: 'Demand miner skipped — no seeds available',
         body: 'Neither GSC impression leaks nor persona objections were available, so there '
           + 'was nothing to harvest. data/context/demand-questions.{json,md} were left untouched.',
@@ -310,12 +343,21 @@ async function main() {
       return;
     }
 
+    if (result.questions.length === 0) {
+      // seeds were harvested but nothing survived — runDemandMiner already sent the
+      // degraded-harvest notify() (status: error, deferred to the digest) before
+      // returning here, so main() only logs; a second notify would be redundant and
+      // a "refreshed — 0 questions" success message would be actively misleading.
+      console.log(`  demand-miner: harvested 0 questions from ${result.seedCount} seed(s) this cycle — see the digest, previous artifact preserved.`);
+      return;
+    }
+
     console.log(`  demand-miner: ${result.questions.length} questions from ${result.seedCount} seeds`
       + `${result.partial ? ' (PARTIAL)' : ''}`);
     console.log(`  wrote ${join(CONTEXT_DIR, 'demand-questions.json')}`);
     console.log(`  wrote ${join(CONTEXT_DIR, 'demand-questions.md')}`);
 
-    await notify({
+    await realNotify({
       subject: `Demand miner refreshed — ${result.questions.length} questions`,
       body: `Seeds harvested: ${result.seedCount}${result.partial ? ' (PARTIAL — a source was unavailable or a seed failed)' : ''}.\n`
         + `Questions written: ${result.questions.length}.\n`
@@ -325,7 +367,7 @@ async function main() {
     });
   } catch (err) {
     console.error(`demand-miner failed: ${err.message}`);
-    await notify({
+    await realNotify({
       subject: 'Demand miner FAILED',
       body: err.stack || err.message,
       status: 'error',
