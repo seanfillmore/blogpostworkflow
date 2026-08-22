@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="light dark"/>
+<meta name="supported-color-schemes" content="light dark"/>
+<title>Real Skin Care — Win 36 Free Bars</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f1ea;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">The friend you named hasn't finished entering yet — here's what unlocks your +5.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f1ea;">
+  <tr><td align="center" style="padding:24px 12px;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <tr><td align="center" style="padding:8px 0 20px;">
+        <a href="https://www.realskincare.com" style="font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:2px;color:#2f5e3f;text-decoration:none;font-weight:700;">REAL SKIN CARE</a>
+      </td></tr>
+      <tr><td style="background-color:#ffffff;border-radius:12px;padding:36px 32px;">
+
+        <h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:24px;line-height:30px;color:#2b2b2b;">About the friend you named</h1>
+
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">Hi {{ person.first_name|default:"there" }} — when you entered, you named <strong>{{ event.named_referrer }}</strong> as the person who referred you. We wanted to flag that their side of it isn't finished yet, because right now that means nobody is getting the bonus entries.</p>
+
+        {% if event.status == 'referrer_unconfirmed' %}
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">They've entered — but they haven't clicked the confirmation link in their own email yet. Until they do, they aren't a confirmed entrant, and a referral can only be credited to a confirmed entrant.</p>
+        <h2 style="margin:24px 0 12px;font-family:Georgia,serif;font-size:18px;line-height:24px;color:#2b2b2b;">One thing would fix it</h2>
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">Ask them to open the email we sent them and click the confirmation link. That's it. The moment they do, <strong>they're credited +5 entries</strong> for referring you — and they pick up <strong>+2</strong> of their own for confirming.</p>
+        {% else %}
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">We don't have an entry under that address yet. Either they haven't entered, or the address got typed slightly differently from the one they use.</p>
+        <h2 style="margin:24px 0 12px;font-family:Georgia,serif;font-size:18px;line-height:24px;color:#2b2b2b;">This isn't lost — it's just waiting</h2>
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">We re-check every night. If <strong>{{ event.named_referrer }}</strong> enters at that exact address and confirms their email before entries close, <strong>they're credited +5 entries</strong> automatically — no action needed from you, and nothing for you to re-submit.</p>
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;">So the thing worth doing is simply forwarding them the link.</p>
+        {% endif %}
+
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr>
+          <td align="center" bgcolor="#2f5e3f" style="border-radius:6px;">
+            <a href="{{ event.entry_url }}" style="display:inline-block;padding:14px 30px;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:6px;">Send them the entry link</a>
+          </td>
+        </tr></table>
+
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#3d3d3d;"><strong>Your own entry is completely unaffected.</strong> Everything you've earned so far is banked and stays banked, whatever your friend does or doesn't do. Entering was free and it stays free — there is nothing to buy here, and buying doesn't earn entries.</p>
+
+        <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:21px;color:#6b6b6b;">One note, so it isn't a surprise later: the referral is identified by the email address exactly as it was typed on the entry form, and we can't change it after the fact — that's Section 5 of the Official Rules and it applies to everyone the same way. Entries close September 14, 2026.</p>
+
+      </td></tr>
+      <tr><td style="padding:22px 20px 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:19px;color:#9a9385;" align="center">
+        This is a promotional email about the "Win 36 Free Bars" giveaway, sponsored by Real Skin Care, 1623 Central Ave STE 201, Cheyenne, WY 82001, United States. The address above is Sponsor's mailing address for correspondence only — RSC products are made in the USA.<br/>
+        Questions? Just reply, or email <a href="mailto:support@realskincare.com" style="color:#9a9385;">support@realskincare.com</a>. <a href="https://www.realskincare.com/pages/giveaway-official-rules" style="color:#9a9385;">Official rules</a>.<br/>
+        <a href="https://www.instagram.com/realskincare_com/" style="color:#9a9385;">Instagram</a><br/>
+        <a href="{% unsubscribe %}" style="color:#9a9385;text-decoration:underline;">Unsubscribe</a> — unsubscribing does not forfeit your entry. Your entry stays valid for the drawing either way.
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

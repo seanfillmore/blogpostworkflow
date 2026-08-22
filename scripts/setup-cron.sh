@@ -161,6 +161,23 @@ MONTHLY_PRIORITY_TUNER="0 16 1 * * cd \"$PROJECT_DIR\" && $NODE agents/priority-
 # 0 entrants). Must run BEFORE the 13:00 UTC digest.
 DAILY_GIVEAWAY_RECONCILE="30 8 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/reconcile-referrals.mjs --apply >> data/reports/scheduler/giveaway-reconcile.log 2>&1"
 
+# Classify every referral pair by WHY it is not paying, mail the reachable half
+# of each broken one, and report the rest for a human decision. Runs BETWEEN the
+# reconciler and the report: after 08:30 so pairs the reconciler just credited
+# are not mailed about, before 08:45 so the report's numbers and this audit
+# describe the same moment.
+#
+# It never writes gv_referred_by. Official Rules §5 identifies a referral "solely
+# by the referrer's email address entered in that field" and §6 awards a second
+# prize to the referrer "named at the time of entry", so a mistyped address is
+# reported, never repaired — prevention lives in the entry form instead. See the
+# header of scripts/giveaway/audit-referrals.mjs.
+#
+# Sends via the metric-triggered flow built by build-referral-audit-flow.mjs. If
+# that flow is deleted or set to draft, this job still runs and still reports,
+# but the emails silently stop — the events fire into nothing.
+DAILY_GIVEAWAY_REFERRAL_AUDIT="40 8 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/audit-referrals.mjs --apply >> data/reports/scheduler/giveaway-referral-audit.log 2>&1"
+
 # Daily giveaway report + day-5/day-10 spend gates. NOTIFY_DEFERRED=1 appends to
 # the daily-summary JSONL so the gates land in the 13:00 UTC digest. Runs AFTER
 # the reconciler so the digest reads freshly credited numbers.
@@ -279,6 +296,7 @@ $MONTHLY_CONTENT_GAP
 $MONTHLY_PRIORITY_TUNER
 # ── Soap giveaway (daily, UTC) ──
 $DAILY_GIVEAWAY_RECONCILE
+$DAILY_GIVEAWAY_REFERRAL_AUDIT
 $DAILY_GIVEAWAY_REPORT
 $DAILY_GIVEAWAY_NUDGE
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
@@ -343,6 +361,7 @@ echo "  16:00 UTC — priority-tuner (closed-loop weight tuner)"
 echo ""
 echo "  SOAP GIVEAWAY (daily, UTC — see comments in this script for the TZ trap)"
 echo "  08:30 UTC — giveaway reconcile-referrals (confirmation/referral rungs)"
+echo "  08:40 UTC — giveaway referral audit (why a referral isn't paying; reports near-misses)"
 echo "  08:45 UTC — giveaway daily report (spend gates)"
 echo "  16:00 UTC — giveaway nudge-unconfirmed (re-send opt-in confirmation)"
 echo "  05:05 UTC, 2026-09-15 PT — giveaway close-entry-period (TZ=America/Los_Angeles — do not drop the TZ prefix)"

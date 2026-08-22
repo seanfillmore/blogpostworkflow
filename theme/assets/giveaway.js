@@ -16,6 +16,102 @@
     button.textContent = 'Enter free';
   }
 
+  // --- referral address: catch a provider typo BEFORE submit ---
+  //
+  // Official Rules §5 identifies a referral "solely by the referrer's email
+  // address entered in that field", and §6 awards a second $536.40 prize to the
+  // referrer "named at the time of entry". A mistyped address therefore cannot
+  // lawfully be repaired afterwards -- lib/giveaway/referral-audit.js reports
+  // those and deliberately does not fix them. This is the last moment it is
+  // fixable, so the check lives here.
+  //
+  // Deliberately LOOKS NOTHING UP. It is pure string work against a fixed list
+  // of consumer providers, so it cannot leak whether any address entered the
+  // giveaway. An earlier design compared against real entrants over an endpoint;
+  // that was dropped because it would have put a Klaviyo call on the entry path
+  // and handed out confirmed entrants' addresses to anyone who asked.
+  //
+  // MIRRORS lib/giveaway/referrer-suggest.js. Kept in sync by
+  // tests/theme/giveaway-referrer-typo.test.js, which fails if the two lists
+  // drift -- the server module cannot be imported here, because Shopify serves
+  // this file and there is no build step.
+  var KNOWN_DOMAINS = [
+    'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com',
+    'aol.com', 'live.com', 'msn.com', 'comcast.net', 'me.com', 'mac.com',
+    'protonmail.com', 'proton.me', 'gmx.com', 'mail.com', 'ymail.com',
+    'verizon.net', 'att.net', 'sbcglobal.net', 'bellsouth.net', 'cox.net',
+    'charter.net', 'earthlink.net', 'zoho.com', 'yandex.com'
+  ];
+
+  function editDistance(a, b) {
+    if (a === b) return 0;
+    var prev = [];
+    for (var k = 0; k <= b.length; k++) prev[k] = k;
+    for (var i = 1; i <= a.length; i++) {
+      var row = [i];
+      for (var j = 1; j <= b.length; j++) {
+        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        row[j] = Math.min(row[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+      }
+      prev = row;
+    }
+    return prev[b.length];
+  }
+
+  function suggestDomainTypo(raw) {
+    var email = String(raw == null ? '' : raw).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+    var at = email.lastIndexOf('@');
+    var local = email.slice(0, at);
+    var domain = email.slice(at + 1);
+    if (!local || !domain) return null;
+    // A real provider, or any domain we have no opinion about, is left alone.
+    // This check precedes the distance maths on purpose: mail.com is a genuine
+    // provider one edit from gmail.com.
+    if (KNOWN_DOMAINS.indexOf(domain) !== -1) return null;
+    if (domain.length < 5) return null;
+    var best = null; var bestDistance = Infinity; var tied = false;
+    for (var i = 0; i < KNOWN_DOMAINS.length; i++) {
+      var d = editDistance(domain, KNOWN_DOMAINS[i]);
+      if (d === 0 || d > 2) continue;
+      if (d < bestDistance) { best = KNOWN_DOMAINS[i]; bestDistance = d; tied = false; }
+      else if (d === bestDistance) { tied = true; }
+    }
+    if (!best || tied) return null; // a tie is not a suggestion
+    return local + '@' + best;
+  }
+
+  var refInput = form.querySelector('#gv-ref');
+  var refNote = form.querySelector('.gv-ref-note');
+  var refFix = form.querySelector('.gv-ref-fix');
+
+  if (refInput && refNote && refFix) {
+    var showFix = function () {
+      var typed = (refInput.value || '').trim();
+      refNote.hidden = !typed;
+      var guess = suggestDomainTypo(typed);
+      if (!guess) { refFix.hidden = true; refFix.textContent = ''; return; }
+      refFix.textContent = 'Did you mean ';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'gv-ref-fix-apply';
+      btn.textContent = guess;
+      btn.addEventListener('click', function () {
+        refInput.value = guess;
+        refFix.hidden = true;
+      });
+      refFix.appendChild(btn);
+      refFix.appendChild(document.createTextNode('?'));
+      refFix.hidden = false;
+    };
+    refInput.addEventListener('blur', showFix);
+    refInput.addEventListener('input', function () {
+      // Only ever retract on typing; re-proposing mid-word is noise.
+      refNote.hidden = !(refInput.value || '').trim();
+      refFix.hidden = true;
+    });
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     errorEl.hidden = true;
