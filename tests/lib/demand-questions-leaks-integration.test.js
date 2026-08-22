@@ -15,9 +15,11 @@ import { test } from 'node:test';
 import { buildImpressionLeaksFeed } from '../../agents/gsc-query-miner/leaks-feed.js';
 import { deriveSeeds, filterLeaksToSkinCluster } from '../../lib/demand-questions.js';
 
-// The real row shape lib/gsc.js's getTopKeywords/findImpressionLeaks produce — see
-// lib/gsc.js's own "Returns: [{ keyword, clicks, impressions, ctr, position }]"
-// docstrings. Never `query`.
+// The real row shape lib/gsc.js's getTopKeywords produces — see that file's own
+// "Returns: [{ keyword, clicks, impressions, ctr, position }]" docstring. Never
+// `query`. (findImpressionLeaks, which actually hands rows to buildImpressionLeaksFeed,
+// is a LOCAL function in agents/gsc-query-miner/index.js, not a lib/gsc.js export —
+// it just filters/sorts getTopKeywords' rows without renaming any field.)
 const REAL_GSC_ROWS = [
   { keyword: 'is coconut oil good for dry skin', clicks: 0, impressions: 500, ctr: 0, position: 14.2 },
   { keyword: 'natural lotion for eczema', clicks: 0, impressions: 200, ctr: 0, position: 9.5 },

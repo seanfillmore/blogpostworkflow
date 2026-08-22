@@ -282,6 +282,7 @@ export async function classifyStages({ anthropic, records }) {
 export async function runDemandMiner({
   getSerpResults, anthropic, readJson, writeArtifacts, now, notify = realNotify,
   applyPersonaOverlay = (personasData) => personasData,
+  sanitizePersonasStep = (personasData) => personasData,
   limit,
 }) {
   const leaksFeed = readJson('data/reports/gsc-query-miner/impression-leaks.json');
@@ -289,20 +290,31 @@ export async function runDemandMiner({
   // buildImpressionLeaksFeed's shape is guaranteed by the agent that writes it, so unlike
   // personas.json below there is no bare-array variant to tolerate here.
 
-  // applyPersonaOverlay (the real one, lib/operator-angles.js's applyOperatorOverlay)
-  // THROWS on a dangling personaId — an authored angle in operator-angles.json naming a
-  // persona that no longer exists in personas.json, typically after a monthly
-  // voice-of-customer renumbering. That throw is correct and stays a hard failure for
-  // the other four personas.json readers (agents/ad-brief, the dashboard's ad-brief
-  // route, agents/ad-studio, agents/creative-packager) — they are copy-facing, and
-  // silently dropping an authored angle there would hide the operator's replacement
-  // copy, the exact hazard the overlay exists to prevent. demand-miner is different: it
-  // only SEEDS persona-objection questions from personas.json, it never quotes it as
-  // copy, and it runs unattended monthly from cron alongside voice-of-customer, the very
-  // job that causes the renumbering. A stale operator-angles.json killing this whole run
-  // for a reason unrelated to its own logic would silence the leak half too — so this is
-  // the one reader that degrades: drop personas for this run only, keep mining GSC leaks,
+  // applyPersonaOverlay (the real one, lib/operator-angles.js's overlayPersonas, wired
+  // via realOverlayPersonasOnly below) THROWS on a dangling personaId — an authored
+  // angle in operator-angles.json naming a persona that no longer exists in
+  // personas.json, typically after a monthly voice-of-customer renumbering. That throw
+  // is correct and stays a hard failure for the other four personas.json readers
+  // (agents/ad-brief, the dashboard's ad-brief route, agents/ad-studio,
+  // agents/creative-packager) — they are copy-facing, and silently dropping an
+  // authored angle there would hide the operator's replacement copy, the exact hazard
+  // the overlay exists to prevent. demand-miner is different: it only SEEDS
+  // persona-objection questions from personas.json, it never quotes it as copy, and it
+  // runs unattended monthly from cron alongside voice-of-customer, the very job that
+  // causes the renumbering. A stale operator-angles.json killing this whole run for a
+  // reason unrelated to its own logic would silence the leak half too — so this is the
+  // one reader that degrades: drop personas for this run only, keep mining GSC leaks,
   // and surface the failure through notify() rather than an unhandled throw.
+  //
+  // The try/catch below is scoped to ONLY the overlay step, deliberately: it must not
+  // also swallow a failure from sanitizePersonasStep (health-claim withholding — a
+  // completely different subsystem, lib/voice-of-customer.js, with its own failure
+  // modes). Catching both here would misreport an unrelated sanitize bug as "operator-
+  // angles overlay failed" and point the operator at the wrong file to fix. So
+  // sanitizePersonasStep runs AFTER this block, outside the try — if it throws, that
+  // propagates uncaught to main()'s own catch-all (an immediate, correctly-labeled
+  // "Demand miner FAILED" notify), exactly as it would have before this degradation
+  // was added.
   let personasFile;
   let overlayFailed = false;
   try {
@@ -324,6 +336,9 @@ export async function runDemandMiner({
     personasFile = null;
     overlayFailed = true;
   }
+  // Outside the try — a throw here is a different bug (sanitizePersonas/lib/voice-of-
+  // customer.js) and must surface as itself, not as an operator-angles.json problem.
+  personasFile = sanitizePersonasStep(personasFile);
 
   // Leaks are unfiltered site-wide GSC queries, but this artifact is stamped
   // `cluster: "skin"` — filter to skin-cluster leaks BEFORE deriveSeeds so a run
@@ -421,26 +436,52 @@ function realReadJson(relativePath, root = ROOT) {
 }
 
 /**
- * The real personas.json load path: overlay FIRST, sanitize SECOND — the order
- * lib/operator-angles.js documents and the other four readers (agents/ad-brief,
- * the dashboard's ad-brief route, agents/ad-studio's non-brief path,
- * agents/creative-packager's loadPersonas) all use. This agent is the fifth.
+ * The real personas.json load path, in two SEPARATE steps deliberately — this is
+ * what makes runDemandMiner's try/catch scoping possible. `realApplyPersonaOverlay`
+ * below still composes both, in the same overlay-FIRST-sanitize-SECOND order
+ * lib/operator-angles.js documents and the other four readers (agents/ad-brief, the
+ * dashboard's ad-brief route, agents/ad-studio's non-brief path,
+ * agents/creative-packager's loadPersonas) all use, and stays the function those
+ * tests and any other direct caller should reach for. But runDemandMiner's real
+ * wiring (in main() below) uses the two halves separately: only
+ * `realOverlayPersonasOnly` is passed as `applyPersonaOverlay`, the argument
+ * runDemandMiner's try/catch wraps — a dangling-personaId throw from THAT step is
+ * the one this agent is built to survive. `realSanitizePersonasStep` is passed as
+ * `sanitizePersonasStep` and runs outside that try, so a health-claim-withholding
+ * failure (a bug in lib/voice-of-customer.js, an entirely different subsystem) is
+ * never caught by the overlay's handler and misreported as an operator-angles.json
+ * problem — it propagates uncaught, exactly as any other unexpected failure here
+ * would.
  *
  * A missing/unparseable personas.json is `null` here (realReadJson already
- * degrades that way) and passes straight through — overlayPersonas and
- * sanitizePersonas both no-op on null, matching the pre-existing degradation
- * path this agent's tests already cover (deriveSeeds treats missing personas
- * as a partial run, not a failure).
+ * degrades that way) and passes straight through at every step — overlayPersonas
+ * and sanitizePersonas both no-op on null, matching the pre-existing degradation
+ * path this agent's tests already cover (deriveSeeds treats missing personas as a
+ * partial run, not a failure).
  */
-export function realApplyPersonaOverlay(personasData, root = ROOT) {
+export function realOverlayPersonasOnly(personasData, root = ROOT) {
   if (!personasData) return personasData;
-  const overlaid = overlayPersonas(personasData, { root });
-  const { personas: safe, drops } = sanitizePersonas(overlaid?.personas || []);
+  return overlayPersonas(personasData, { root });
+}
+
+export function realSanitizePersonasStep(personasData) {
+  if (!personasData) return personasData;
+  const { personas: safe, drops } = sanitizePersonas(personasData?.personas || []);
   if (drops.length) {
     console.warn(`  demand-miner: withheld ${drops.length} health-claim violation(s) from persona seeds:`);
     console.warn(formatPersonaDrops(drops));
   }
-  return { ...overlaid, personas: safe };
+  return { ...personasData, personas: safe };
+}
+
+/**
+ * Composes the two steps above, in order. Kept for direct callers/tests that want
+ * the combined overlay-then-sanitize behavior in one call. runDemandMiner's own
+ * real wiring does NOT use this — see the docstring above for why it wires the two
+ * halves separately instead.
+ */
+export function realApplyPersonaOverlay(personasData, root = ROOT) {
+  return realSanitizePersonasStep(realOverlayPersonasOnly(personasData, root));
 }
 
 /**
@@ -503,7 +544,8 @@ async function main() {
       anthropic,
       readJson: (p) => realReadJson(p),
       writeArtifacts: (files) => realWriteArtifacts(files),
-      applyPersonaOverlay: (personasData) => realApplyPersonaOverlay(personasData),
+      applyPersonaOverlay: (personasData) => realOverlayPersonasOnly(personasData),
+      sanitizePersonasStep: (personasData) => realSanitizePersonasStep(personasData),
       limit,
       now: new Date().toISOString(),
     });
