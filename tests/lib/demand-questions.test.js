@@ -281,3 +281,56 @@ test('no questions still renders a valid document', () => {
   assert.match(md, /^# Demand questions/m);
   assert.ok(md.length > 0);
 });
+
+// --- Fix round 1: embedded newlines in q.text/q.seed must not break line structure ---
+//
+// q.seed is arbitrary GSC-query or LLM-generated persona-objection text; q.text is an
+// arbitrary PAA/related-search question. Neither is newline-guarded upstream —
+// normalizeHarvest collapses whitespace only for its internal dedup key, never for the
+// stored text. An embedded \n or \r turns one logical entry into multiple physical
+// lines, breaking both load-bearing rules: the entry stops being self-contained on a
+// single grep hit, and a break landing before a literal "## " or "- **" can forge a
+// fake heading/bullet that corrupts a structural grep of the whole file.
+
+test('a question whose text contains \\n renders as exactly one line, content preserved', () => {
+  const md = renderDemandQuestionsMarkdown({
+    ...RENDER_INPUT,
+    questions: [{ text: 'Why does\nmy skin react?', stage: 'unaware', source: 'paa', seed: 'sensitive skin', seed_origin: 'gsc_leak', persona_id: null, seen_count: 1 }],
+  });
+  const lines = md.split('\n');
+  const hit = lines.filter((l) => l.includes('Why does') || l.includes('my skin react?'));
+  assert.equal(hit.length, 1, 'the entry must land on exactly one physical line');
+  assert.ok(hit[0].includes('Why does my skin react?'), 'the newline becomes a space, content preserved');
+});
+
+test('a question whose seed contains \\n renders as exactly one line, content preserved', () => {
+  const md = renderDemandQuestionsMarkdown({
+    ...RENDER_INPUT,
+    questions: [{ text: 'Does coconut oil clog pores?', stage: 'problem-aware', source: 'paa', seed: 'coconut oil\nacne', seed_origin: 'gsc_leak', persona_id: null, seen_count: 1 }],
+  });
+  const lines = md.split('\n');
+  const hit = lines.filter((l) => l.includes('coconut oil') || l.includes('acne'));
+  assert.equal(hit.length, 1, 'the entry must land on exactly one physical line');
+  assert.ok(hit[0].includes('coconut oil acne'), 'the newline becomes a space, content preserved');
+});
+
+test('an embedded fake heading in question text cannot forge a structural "## " line', () => {
+  const md = renderDemandQuestionsMarkdown({
+    ...RENDER_INPUT,
+    questions: [{ text: 'Is this real\n## Fake heading', stage: 'unaware', source: 'paa', seed: 'x', seed_origin: 'gsc_leak', persona_id: null, seen_count: 1 }],
+  });
+  const headingLines = md.split('\n').filter((l) => /^## /.test(l));
+  // Only the real stage heading(s) may match — never one forged out of embedded question text.
+  assert.deepEqual(headingLines, ['## unaware (1)']);
+});
+
+test('\\r\\n is handled the same as \\n', () => {
+  const md = renderDemandQuestionsMarkdown({
+    ...RENDER_INPUT,
+    questions: [{ text: 'Why does\r\nmy skin react?', stage: 'unaware', source: 'paa', seed: 'sensitive skin', seed_origin: 'gsc_leak', persona_id: null, seen_count: 1 }],
+  });
+  const lines = md.split('\n');
+  const hit = lines.filter((l) => l.includes('Why does') || l.includes('my skin react?'));
+  assert.equal(hit.length, 1, 'the entry must land on exactly one physical line');
+  assert.ok(hit[0].includes('Why does my skin react?'), 'the newline becomes a space, content preserved');
+});
