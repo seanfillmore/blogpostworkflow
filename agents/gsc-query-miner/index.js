@@ -34,6 +34,7 @@ import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { loadIndex } from '../../lib/keyword-index/consumer.js';
 import { tagQueries, buildUntappedCandidates } from './lib/index-tagger.js';
+import { buildImpressionLeaksFeed } from './leaks-feed.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -281,6 +282,17 @@ async function main() {
   const cannibalization = findCannibalization(queryPageRows);
   const rawClusters = buildTopicClusters(allQueries);
   console.log(`${rawLeaksAll.length} leaks, ${rawNearMisses.length} near-misses, ${cannibalization.length} cannibalization groups, ${rawClusters.length} clusters`);
+
+  // Write impression leaks as a structured feed. Unconditional — unlike the
+  // untapped-candidates feed below, this has no keyword-index dependency, and
+  // it's written even when empty so generated_at stays a reliable liveness
+  // signal for downstream consumers (e.g. demand-miner) instead of silently
+  // going stale on a cycle that finds nothing.
+  const leaksPath = join(REPORTS_DIR, 'impression-leaks.json');
+  writeFileSync(leaksPath, JSON.stringify(buildImpressionLeaksFeed(rawLeaksAll, { minImpr }), null, 2));
+  console.log(rawLeaksAll.length > 0
+    ? `  Impression leaks: ${rawLeaksAll.length} written to ${leaksPath}`
+    : `  Impression leaks: none this cycle — wrote empty feed to ${leaksPath}`);
 
   // Annotate with keyword-index validation tags. Tag the full leak set once —
   // the capped, report/prompt-facing set is just a slice of the tagged data.
