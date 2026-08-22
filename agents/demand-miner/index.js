@@ -288,7 +288,42 @@ export async function runDemandMiner({
   // impression-leaks.json is always written by gsc-query-miner as { leaks: [...] } —
   // buildImpressionLeaksFeed's shape is guaranteed by the agent that writes it, so unlike
   // personas.json below there is no bare-array variant to tolerate here.
-  const personasFile = applyPersonaOverlay(readJson('data/context/personas.json'));
+
+  // applyPersonaOverlay (the real one, lib/operator-angles.js's applyOperatorOverlay)
+  // THROWS on a dangling personaId — an authored angle in operator-angles.json naming a
+  // persona that no longer exists in personas.json, typically after a monthly
+  // voice-of-customer renumbering. That throw is correct and stays a hard failure for
+  // the other four personas.json readers (agents/ad-brief, the dashboard's ad-brief
+  // route, agents/ad-studio, agents/creative-packager) — they are copy-facing, and
+  // silently dropping an authored angle there would hide the operator's replacement
+  // copy, the exact hazard the overlay exists to prevent. demand-miner is different: it
+  // only SEEDS persona-objection questions from personas.json, it never quotes it as
+  // copy, and it runs unattended monthly from cron alongside voice-of-customer, the very
+  // job that causes the renumbering. A stale operator-angles.json killing this whole run
+  // for a reason unrelated to its own logic would silence the leak half too — so this is
+  // the one reader that degrades: drop personas for this run only, keep mining GSC leaks,
+  // and surface the failure through notify() rather than an unhandled throw.
+  let personasFile;
+  let overlayFailed = false;
+  try {
+    personasFile = applyPersonaOverlay(readJson('data/context/personas.json'));
+  } catch (err) {
+    console.warn(`  demand-miner: operator-angles overlay failed — continuing leaks-only this run: ${err.message}`);
+    await notify({
+      subject: 'Demand miner: operator-angles overlay failed — ran leaks-only',
+      body: `Applying data/context/operator-angles.json to personas.json threw:\n\n${err.message}\n\n`
+        + 'This usually means an authored angle in operator-angles.json names a personaId that no '
+        + 'longer exists in personas.json — most often because the monthly voice-of-customer run '
+        + 'renumbered the personas. Fix or remove the offending entry in '
+        + 'data/context/operator-angles.json, then re-run.\n\n'
+        + 'This run continued on GSC impression-leak seeds only; persona-objection seeding was '
+        + 'skipped entirely for this cycle.',
+      status: 'error',
+      category: 'demand-miner',
+    });
+    personasFile = null;
+    overlayFailed = true;
+  }
 
   // Leaks are unfiltered site-wide GSC queries, but this artifact is stamped
   // `cluster: "skin"` — filter to skin-cluster leaks BEFORE deriveSeeds so a run
@@ -301,7 +336,12 @@ export async function runDemandMiner({
   const seeds = (typeof limit === 'number' && limit > 0)
     ? derivedSeeds.slice(0, Math.min(limit, SEED_CAP))
     : derivedSeeds;
-  let partial = seedPartial;
+  // deriveSeeds already sets `partial` when personas is null/empty (no havePersonas),
+  // which covers the overlay-failure path above since personasFile is null there — but
+  // overlayFailed is OR'd in explicitly too, so this run is unambiguously marked
+  // partial even if deriveSeeds' own partial logic ever changes to be less conservative
+  // about a missing source.
+  let partial = seedPartial || overlayFailed;
 
   // No seeds is not an error — log and leave every artifact untouched. Writing an
   // empty artifact would overwrite a good one from a previous run with nothing.

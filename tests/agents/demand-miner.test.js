@@ -491,6 +491,75 @@ test('runDemandMiner clamps `limit` to SEED_CAP rather than letting it raise the
   assert.equal(result.seedCount, 40, 'a --limit above SEED_CAP must never raise the ceiling above 40');
 });
 
+// --- Fix wave: item 3 — a throwing persona overlay (a dangling personaId in
+// data/context/operator-angles.json, typically from a monthly voice-of-customer
+// renumbering) must degrade this run to leaks-only, not kill it. The overlay's throw
+// stays correct and unchanged for the other four readers (agents/ad-brief, the
+// dashboard's ad-brief route, agents/ad-studio, agents/creative-packager) — they are
+// copy-facing and a silent skip there would hide the operator's replacement copy. This
+// agent only SEEDS questions from personas.json, never quotes it as copy, and runs
+// unattended monthly from cron right alongside the run that causes the renumbering —
+// so an unrelated config error in a sibling agent's file must not take down the leak
+// half of this one too.
+
+test('a throwing persona overlay degrades the run to leaks-only, sets partial, and notifies naming operator-angles.json', async () => {
+  const { written, writeArtifacts } = collectWrites();
+  const { calls, notify } = collectNotify();
+  const throwingOverlay = () => {
+    throw new Error(
+      'operator-angles: angle(s) [p9a1] in data/context/operator-angles.json name persona "p9", '
+      + 'which is not in personas.json (known personas: p1, p2).',
+    );
+  };
+
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: stubAnthropic(),
+    readJson: (p) => (p.includes('impression-leaks') ? LEAKS : PERSONAS),
+    applyPersonaOverlay: throwingOverlay,
+    writeArtifacts,
+    notify,
+    now: 'x',
+  });
+
+  assert.equal(result.partial, true, 'a failed overlay must mark the run partial');
+  assert.ok(written.json, 'the run still completes on the leak seed alone — it must not throw');
+  const parsed = JSON.parse(written.json);
+  assert.ok(
+    parsed.questions.every((q) => q.seed_origin === 'gsc_leak'),
+    'no persona-objection seeds can appear once the overlay failed — personas were dropped for this run',
+  );
+
+  assert.equal(calls.length, 1, 'exactly one notify for the overlay failure');
+  assert.match(calls[0].subject + calls[0].body, /operator-angles\.json/, 'must name operator-angles.json as the cause');
+  assert.equal(calls[0].status, 'error');
+  assert.ok(!calls[0].immediate, 'deferred to the 5 AM digest, not an instant email — the run itself already recovered');
+});
+
+test('a throwing persona overlay still lets a zero-leak-seed run report cleanly (no seeds at all is the pre-existing "nothing to do" path, not a second failure)', async () => {
+  const { written, writeArtifacts } = collectWrites();
+  const { calls, notify } = collectNotify();
+  const throwingOverlay = () => { throw new Error('operator-angles: dangling personaId'); };
+
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: stubAnthropic(),
+    readJson: () => null,   // leaks feed also missing — nothing to seed from either source
+    applyPersonaOverlay: throwingOverlay,
+    writeArtifacts,
+    notify,
+    now: 'x',
+  });
+
+  assert.equal(result.questions.length, 0);
+  assert.deepEqual(written, {}, 'no seeds is not an error, and must not write an empty artifact');
+  // Still exactly one notify — the overlay-failure notify — even though the run then
+  // also finds zero seeds; the zero-seeds path itself returns early without a second
+  // notify (see the "both sources missing" test above).
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].subject + calls[0].body, /operator-angles\.json/);
+});
+
 test('runDemandMiner with no `limit` behaves exactly as before (full SEED_CAP applies)', async () => {
   const { written, writeArtifacts } = collectWrites();
   const result = await runDemandMiner({

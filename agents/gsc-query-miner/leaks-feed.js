@@ -9,6 +9,14 @@
  * Mirrors untapped-candidates.json deliberately: same { generated_at, source, ... }
  * envelope, and written even when empty so `generated_at` remains a reliable liveness
  * signal rather than silently going stale on a cycle that found nothing.
+ *
+ * Input rows come straight from lib/gsc.js (getTopKeywords / findImpressionLeaks),
+ * whose field is `keyword`, not `query` — mapped to `query` here on the way out
+ * because that's the field name `lib/demand-questions.js`'s `deriveSeeds` and
+ * `filterLeaksToSkinCluster` already read (`l.query`). Destructuring `query` off
+ * the input row (the original bug) silently produces `undefined`, which
+ * JSON.stringify drops from the object entirely — so a shape mismatch here does
+ * not throw, it just writes a leak with no query text and no key to notice.
  */
 export function buildImpressionLeaksFeed(leaks = [], { minImpr, now = new Date().toISOString() } = {}) {
   return {
@@ -17,6 +25,6 @@ export function buildImpressionLeaksFeed(leaks = [], { minImpr, now = new Date()
     min_impressions: minImpr,
     leaks: [...leaks]
       .sort((a, b) => b.impressions - a.impressions)
-      .map(({ query, impressions, clicks, position }) => ({ query, impressions, clicks, position })),
+      .map(({ keyword, impressions, clicks, position }) => ({ query: keyword, impressions, clicks, position })),
   };
 }
