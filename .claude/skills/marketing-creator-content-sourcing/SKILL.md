@@ -110,6 +110,17 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
+## Find a freelancer by first writing down the exact skill combination the job needs and the prior career path an ideal candidate would have, then searching for that specific combination of terms plus 'resume' rather than browsing job boards.
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** A generic search or job-board browse returns a large undifferentiated pool you cannot filter; specifying the skill combination and the experience path first turns the search into a filter that only people who already have both can pass, so the shortlist is pre-qualified before you contact anyone.
+
+**Evidence offered:** A worked example for a website build (CSS + video editing, ex-graphic-designer and ex-webmaster) with the literal query string and three named results, plus a Firefox extension recommendation. No hit-rate data.
+
+**Fit here (4/10):** Platform-mechanics class for the execution detail — a 2008 Google resume-search string and a Firefox extension are ~18 years old and the pool of freelancers with indexed HTML resumes has moved to LinkedIn, Upwork and portfolio sites — so the recipe must be rebuilt rather than trusted. What survives is the durable kernel: derive the exact skill combination and prior-role path from the job before searching, and search for that combination rather than for a category. Parked under `team` because it exists only to hire someone who is not the solo operator. Trigger: the first time there is budget for a paid outside asset (a product photographer, or the video editor implied by the static-first rule in marketing-paid-creative-testing). Scored on the merit it will have then: a narrow sourcing heuristic that overlaps the TikTok-browsing and Backstage entries above, though it pairs usefully with the track-the-winners rule below — the search defines who gets a first shot, the track record decides who gets the next one.
+
+*Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 4 of 6)*
+
 ## Track which specific video editors and which specific creators produced past winners, and route new scripts to those named people rather than rotating through whoever is available.
 **Stage:** team — parked until the team phase opens.
 

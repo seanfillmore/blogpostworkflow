@@ -1,0 +1,1030 @@
+{
+  "tactics": [
+    {
+      "claim": "Mine your accumulated customer/client records to find what distinguishes your success stories from your failures, then codify those distinctions into a written list of red flags and green flags you can screen against.",
+      "mechanism": "Six years of survey data contains the actual causal difference between customers who thrived and customers who struggled; distilling it into red flags and green flags converts accumulated experience into a repeatable filter that can be applied in a fifteen-minute phone call instead of discovered painfully over months.",
+      "evidence": "Anecdote only: he describes spending a few hours a day for a week reviewing Strategic Profits surveys and compiling two lists. No figures, no sample size, no worked example of a red flag or a green flag — the promised list is deferred to later sections.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class, so the 2010 date is irrelevant — the problem is duplication. This is the same contrast-the-top-and-bottom-decile move already owned by marketing-performance-pattern-analysis Step 3, and the top-customer identification half is owned by marketing-retention-offers. The client-screening application has no honest ecommerce form: a solo operator selling a $12 deodorant does not turn buyers away, and at ~54 orders/month the 'six years of surveys' input does not exist."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplicates the top-vs-bottom decile contrast in marketing-performance-pattern-analysis and the best-customer work in marketing-retention-offers; the screening application does not translate to a 12-SKU consumable catalogue.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 0,
+          "label": "part 1 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "The most valuable skill in business is the ability to create demand rather than find existing demand and fill it, because when consumer demand shrinks, sellers who only know how to sell into existing demand have nothing left to do.",
+      "mechanism": "Most businesses follow 'find a need and fill it', which makes revenue a function of pre-existing market demand. When that demand contracts they have no lever. A seller who can manufacture demand for something nobody was asking for is not dependent on market conditions.",
+      "evidence": "Assertion in a side-note, supported only by the claim that his own two products (BGS, GPS) had no demand until he marketed them. He explicitly defers the method: 'I'll be teaching you how I do it in future reports.'",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class (positioning), so age is not the issue — no mechanism is stated at all. He names the skill, claims it is the most valuable one, then defers. Nothing tells a solo operator what to write on a PDP, an Amazon bullet or a $30/day Meta ad. The actionable demand-generation work is already covered by marketing-awareness-level-messaging (unaware-buyer entry point, confronting line) and marketing-problem-solution-inventory."
+      },
+      "verdict": "reject",
+      "rejectReason": "Names a skill without supplying any mechanism; the executable portion is already owned by marketing-awareness-level-messaging and marketing-problem-solution-inventory.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 1,
+          "label": "part 1 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Stop buying tactics, tools and 'secret strategies' sold to entrepreneurs, because they supply new excuses ('I can't succeed without this traffic strategy / this video tactic / this software') rather than removing the ones you already have.",
+      "mechanism": "Marketing aimed at struggling entrepreneurs is seductive rather than true. Each new tactic purchased becomes a new prerequisite the buyer can point at as the reason they have not succeeded yet, so consumption of tactics increases distraction and excuse-count instead of decreasing them.",
+      "evidence": "Assertion only, delivered rhetorically ('I am shouting that'). No example of a specific purchase that produced an excuse, no data, no before/after.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class, age irrelevant. The underlying discipline is right for a solo operator at $2,700/mo, but the fleet already owns it with a procedure attached: marketing-performance-pattern-analysis Step 1 (name the binding constraint before critiquing anything, cap research) and marketing-paid-media-measurement (two-question triage, do-nothing on a working funnel, pre-commit the signals that license testing). This is an exhortation, not a rule you can apply to a decision."
+      },
+      "verdict": "reject",
+      "rejectReason": "Same conclusion as restraint rules already recorded in marketing-performance-pattern-analysis and marketing-paid-media-measurement, but with no mechanism or test attached.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 2,
+          "label": "part 1 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Your business results are determined by the quality of your thinking, so diagnose and fix your thinking process — accurate, clean, focused, correct thinking — before working on any business problem; the biggest leverage point in your business is you.",
+      "mechanism": "Every result traces back to an initial thought, and difficult clients all shared a flawed thinking process that generated the surface problems they hired him to fix, so the surface problem can never be solved until the thinking is solved. Improving the single highest-leverage input produces a wave of downstream improvement, and can improve results with no change in behaviour at all.",
+      "evidence": "Assertion plus quotations (Buddha, Henry Ford), the claim he can identify ideal clients in fifteen minutes on the phone, and that a 31-page report earned him $3.5M in funding. The four thinking categories and every named tool appear only as table-of-contents headings — none is explained.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This is the central thesis of the report and it is pure motivational framing as delivered. No mechanism a solo operator could execute: no exercise, no question, no artifact, no surface to change. It does not touch the Shopify PDP, the Amazon listing, the email flows, the $30/day Meta campaign, or the 18–22.5% repeat rate. The leverage-point half restates Step 1 of marketing-performance-pattern-analysis, and the claim that the leverage point is always the operator's thinking actively points away from the identified binding constraint, which is retention."
+      },
+      "verdict": "reject",
+      "rejectReason": "Untestable motivational thesis with no artifact, surface or decision rule; its one operational fragment (find the biggest leverage point first) duplicates marketing-performance-pattern-analysis Step 1.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 3,
+          "label": "part 1 of 9"
+        },
+        {
+          "candidateIndex": 5,
+          "label": "part 2 of 9"
+        },
+        {
+          "candidateIndex": 10,
+          "label": "part 2 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Make a diagnostic report required reading for anyone who wants to hire you, so preliminary work is completed during the wait and your paid time is spent only on the high-value work.",
+      "mechanism": "A backlog means the seller's time is the scarce resource. Front-loading prerequisite work into a self-serve document that prospects consume while waiting means the engagement starts at a more advanced point, so expensive hours go to demand creation rather than remedial groundwork.",
+      "evidence": "Assertion about his own practice ('this report will now be required reading for all companies and entrepreneurs who want to hire me'). No data on engagement length, conversion or outcome.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "B2B consulting-practice operations — managing a waiting list for the founder's personal time. Real Skin Care sells 12 physical SKUs; there is no consulting engagement, no backlog of prospects buying the operator's hours, and no prerequisite work a buyer could complete before purchasing a $12 deodorant."
+      },
+      "verdict": "reject",
+      "rejectReason": "No honest translation at any size — it is service-business intake management, not ecommerce marketing.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 4,
+          "label": "part 1 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Information alone no longer confers advantage because it is abundant and free; your advantage comes from how you sift, evaluate and transform information better than competitors.",
+      "mechanism": "The internet commoditised information supply, so the scarce input shifted from knowing to processing; companies that adapt fastest to the current environment survive.",
+      "evidence": "Fortune 500 turnover statistic (400% turnover, ~1,500 companies dropped off since 1955), a Darwin analogy, and assertion.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Durable-principle class, so the 2010 date is not what sinks it. It is an observation about the macro environment, not a tactic: it prescribes no procedure for sifting or evaluating anything. marketing-performance-pattern-analysis already owns the executable version of 'turn data into judgement'."
+      },
+      "verdict": "reject",
+      "rejectReason": "Macro observation with no prescribed procedure; the executable version already exists in marketing-performance-pattern-analysis.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 6,
+          "label": "part 2 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Never buy a 'business in a box' or done-for-you system; test any such offer by asking what happens when an entrepreneur in a low-cost country who will work harder for 1/100th of your target income buys the same thing.",
+      "mechanism": "Anything that works purely mechanically and is sold openly gets bought by everyone, including operators with far lower cost bases, which drives price down until the advantage is worthless — and if it genuinely worked it would not be for sale at all.",
+      "evidence": "Assertion plus a logical argument; no example of a system tested this way, no figures.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class (commoditisation logic). The underlying idea — an advantage available to everyone at low cost is not an advantage — already exists in executable form as the per-SKU differentiator audit in marketing-offer-construction. As stated here it is advice about which info products not to buy, which has no honest translation to a 12-SKU body-care catalogue, and it prescribes no test against RSC's own products or offers."
+      },
+      "verdict": "reject",
+      "rejectReason": "Advice about info-product purchasing with no ecommerce translation; the transferable commoditisation logic is already the differentiator audit in marketing-offer-construction.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 7,
+          "label": "part 2 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Because the brain is the body's largest energy consumer, it defaults to automatic processes, generalizations and habitual recall, so you must deliberately engage active focused thinking (observing, comparing, analyzing, evaluating, metacognition) rather than assuming you are already thinking.",
+      "mechanism": "Evolutionary energy conservation makes not-thinking the default state; what feels like thinking is usually replaying a previously stored decision, so genuinely new conclusions require deliberate effortful attention.",
+      "evidence": "Physiology figures (brain uses ~20% of oxygen and calories at rest vs heart 10%, lungs 10%, kidneys 7%), the claim chess champions lose 7–10 pounds of fluid in a two-hour match, plus driving and door-handle illustrations. No business outcome data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class (cognitive habit). The physiological story is interesting but the prescription is only 'think harder and more deliberately', with no procedure, trigger or artifact. The executable version of 'do not just replay a stored conclusion' already exists as Step 4 of marketing-performance-pattern-analysis — interrogate the execution before retiring an angle that 'failed before'."
+      },
+      "verdict": "reject",
+      "rejectReason": "Prescription reduces to 'think more deliberately' with no procedure; the marketing-shaped version is already Step 4 of marketing-performance-pattern-analysis.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 8,
+          "label": "part 2 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Diagnose your thinking against three roadblocks — flawed beliefs from faulty assumptions, fuzzy outcomes and sequences, and inaccurate maps of achievement — because roughly 80% of business results trace back to them.",
+      "mechanism": "Faulty beliefs skew your point of view, fuzzy outcomes prevent you from separating essential from non-essential work, and inaccurate maps of achievement cause false paths and unrealistic expectations; fixing even one produces noticeable improvement.",
+      "evidence": "Assertion plus an explicitly guessed figure ('my guess is that about 80% of your results'). The diagnostic questions and fixes are promised in later sections not present in this part.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class. The excerpt deliberately withholds the executable content — the three questions, the belief list and the maps all arrive later. What is here is a taxonomy of self-diagnosis with no test, threshold or artifact, and the one operationally useful idea (get clear on the outcome before deciding what work is essential) is already Step 1 of marketing-performance-pattern-analysis."
+      },
+      "verdict": "reject",
+      "rejectReason": "Taxonomy preview with the executable content withheld; its usable core duplicates the binding-constraint rule in marketing-performance-pattern-analysis.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 9,
+          "label": "part 2 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Before working on the business, run a written honesty audit of yourself: list the top five things you are pretending not to notice, answer a 26-question self-sabotage checklist, write down what those behaviours have already cost you, and project five years forward to what they will cost if unchanged.",
+      "mechanism": "You cannot fix what you refuse to name — denial is presented as the single common factor across struggling entrepreneurs, so surfacing the behaviour in writing is the precondition for corrective action, and quantifying its past and future cost supplies the motivation to act. If you cannot see or sense something you cannot guide it, so you end up a passenger rather than the driver.",
+      "evidence": "Assertion plus analogies (refusing to tell a doctor where it hurts, an alcoholic denying a drinking problem, a pilot waiting for divine intervention in a falling plane) and a claim that his analysis found denial in all the entrepreneurs who struggled. No data, no named cases, no outcomes.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class, so the 2010 date is not the issue. It produces no marketing artifact and no testable change to any surface Real Skin Care owns — it is a personal-psychology worksheet. Its actionable core (diagnose what is actually blocking you before critiquing assets) is already owned by Step 1 of marketing-performance-pattern-analysis in operating terms specific to this business, and adding a self-sabotage checklist alongside it would degrade triggering without adding a mechanism."
+      },
+      "verdict": "reject",
+      "rejectReason": "Personal-psychology worksheet with no marketing surface; the diagnose-before-acting core is already owned by marketing-performance-pattern-analysis Step 1.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 11,
+          "label": "part 2 of 9"
+        },
+        {
+          "candidateIndex": 12,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Prove the product works by naming individual customers (first name plus last initial) alongside their exact results, then turn the proof on the reader with a direct 'but what about you?'",
+      "mechanism": "Named peers with concrete figures read as real people rather than marketing copy, and following the roll-call with a direct question at the reader creates a social-comparison discomfort that is supposed to convert into action.",
+      "evidence": "Demonstrated rather than taught: 'Gloria L, Amanda K, Randy L did. They're already netting $43, $85, $32 per opt-in respectively', plus similar name-lists for two earlier reports. No results reported for the device itself.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "The proof-display half is already owned twice: marketing-conversion-copy-angles ('keep the identifying detail that has nothing to do with the result') and marketing-review-mining (choose quotes whose before-state matches the reader). The guilt-close half has no honest form here — shaming someone into reordering a $12 deodorant against a $50.46 AOV is a retention risk, and the surfaces where it would land are exactly where marketing-post-purchase-onboarding and marketing-retention-offers prescribe reassurance and store credit."
+      },
+      "verdict": "reject",
+      "rejectReason": "Named-proof half duplicates marketing-conversion-copy-angles and marketing-review-mining; the guilt close is a retention risk at this AOV.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 13,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "When you are about to raise the price or withdraw an offer, announce it to existing customers and tell them explicitly that they are grandfathered in at their current rate.",
+      "mechanism": "The same announcement does two jobs at once: for prospects it puts a real deadline on the current price, and for existing customers it converts a price rise — normally a churn event — into a loyalty reward. The locked rate becomes an asset the customer forfeits by cancelling, so commitment lengthens rather than shortens at exactly the moment a price change would otherwise trigger a review of the subscription.",
+      "evidence": "Demonstrated, not taught, and stated twice in the same passage: 'we're going to be removing my reports from Founder's Club shortly (don't worry you'll still get them - you're grandfathered in)... we're going to be offering them at a much higher price... once again you're grandfathered in.' Assertion only, no retention or conversion figures.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable-principle class (retention and pricing psychology), so 2010 is irrelevant. Directly relevant because marketing-offer-construction already prescribes stepping prices upward in committed increments on Shopify, and this names what to do at the moment that step lands: email the subscribe-and-save base to say the new price applies to new subscribers only and their rate is locked. Free, one email, solo-executable, aimed at the binding retention constraint. Capped at 5 because it is close kin to the milestone-rate rule already in marketing-retention-offers — the additive part is narrow (the trigger is a price-change event rather than a tenure milestone, and the announcement itself is the retention mechanism) — because the recurring base here is small, and because the urgency half only works if the increase is genuinely honoured, the same failure marketing-scarcity-urgency-framing warns about."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-retention-offers",
+        "action": "edit",
+        "description": "Offers and messaging that lengthen customer commitment and reduce churn, including locked-rate and milestone-rate mechanics at price-change moments."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 14,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Anchor the perceived value of your offer by quoting a named authority's valuation of it ('Jay Abraham told me it should be a $10,000 a year subscription — and it would still be a bargain').",
+      "mechanism": "A price stated by a credible outsider is harder to dismiss than a price you assert yourself, so the borrowed valuation resets the buyer's reference point far above what you are charging and makes the actual price read as a discount.",
+      "evidence": "Single unverifiable name-drop with no corroboration; no test, no comparison against the same passage without the quote.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "No honest translation at any size. There is no credible outside party who will state that a $12 aluminium-free deodorant ought to cost $40, and implying one is exactly the unsupportable-claim failure the specificity and body-care claim rules in marketing-conversion-copy-angles exist to block. The legitimate version — attributing a claim to a real credentialed source or citing third-party testing — is already recorded there as the authority-attribution lever."
+      },
+      "verdict": "reject",
+      "rejectReason": "No credible outside valuer exists for a $12 consumable; the legitimate authority-attribution version is already recorded in marketing-conversion-copy-angles.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 15,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Tell the reader the effort is front-loaded — that the hardest work is right at the start and that the workload falls while the payoff rises with every page.",
+      "mechanism": "Naming where the peak effort sits and promising it declines lowers the perceived sacrifice of continuing, so the reader pushes through the demanding opening instead of abandoning it.",
+      "evidence": "Assertion embedded as a structural note about the report itself ('the effort this report asks of you is front-loaded... with each passing page your workload decreases as your payoff increases'). Not offered as a technique, no data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "There is a real-sounding translation — telling a natural-deodorant buyer the two-week transition is the hardest part and it gets easier — but that is already fully owned twice: marketing-conversion-friction-audit (published week-by-week results timeline, London-Underground rule) and marketing-post-purchase-onboarding (transition-period expectation setting, early-visible-win rule). The creator is also not advocating this as a tactic; he is describing his document's layout, so extracting a rule would be inventing one."
+      },
+      "verdict": "reject",
+      "rejectReason": "Not advocated as a tactic, and its ecommerce translation is already owned by marketing-conversion-friction-audit and marketing-post-purchase-onboarding.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 16,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Make an abstract point land by wrapping it in a vivid everyday analogy — refusing to tell a doctor where it hurts, an alcoholic denying a drinking problem, a pilot sitting motionless in a falling plane.",
+      "mechanism": "Mapping an unfamiliar or uncomfortable idea onto a scene the reader already understands transfers the conclusion without requiring them to work through an argument.",
+      "evidence": "Three analogies used in sequence in the text; assertion only, no comparison against a plain statement of the same point.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable copy-craft principle, but explaining a mechanism by analogy is already recorded in marketing-conversion-copy-angles as part of the three-pillar rule, with the body-care caveat attached (analogies in this category slide easily into implied physiological claims). A second weaker copy would degrade triggering, and the analogies demonstrated here are diagnostic-of-failure metaphors aimed at an entrepreneur, not at a buyer choosing a deodorant."
+      },
+      "verdict": "reject",
+      "rejectReason": "Already recorded in marketing-conversion-copy-angles with a body-care-specific caveat attached.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 17,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Confront the reader directly and pre-warn that you may offend them, so they stop deflecting and recognise themselves in the copy.",
+      "mechanism": "Naming the reader's avoidance out loud removes the exit route of dismissing the piece as being about someone else, forcing self-identification before the argument arrives.",
+      "evidence": "Assertion, executed in the text ('I told you in the very beginning I might offend you', 'the entrepreneurs who'd benefit the most will be the quickest to give excuses why this report doesn't apply to them'). No data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "The usable core — call the reader out so they self-select — is already owned twice: 'Call your audience out by name in the copy' in marketing-conversion-copy-angles, and the sanctioned confronting line for an unregistered pain in marketing-awareness-level-messaging. The additive part, the pre-emptive offence warning, is a high-ticket guru register that overshoots for a $12 consumable at a $50.46 AOV where the spoken peer register is the recorded default."
+      },
+      "verdict": "reject",
+      "rejectReason": "Core is duplicated in two existing skills; the additive offence-warning register is wrong for this category and price point.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 18,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Make the asset interactive rather than passive — build in blanks the reader has to fill in, and tell them the payoff depends on their engaging rather than just reading.",
+      "mechanism": "Requiring the reader to produce their own answers makes them commit to conclusions they generated themselves, which raises implementation and therefore the results they attribute to you.",
+      "evidence": "Assertion ('reading this report is not intended to be a passive experience... it calls on you to play an active role'), demonstrated by the fill-in exercises. No completion or outcome data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "The ecommerce translation is a worksheet or quiz lead magnet, already enumerated in marketing-offer-construction's three lead-magnet types (a scent/SKU match quiz is named explicitly) — and marketing-paid-campaign-structure explicitly argues to defer that quiz until a plain ad-to-page path has a baseline, because a solo operator cannot debug a multi-step sequence and a new ad account at once. Already recorded and already qualified."
+      },
+      "verdict": "reject",
+      "rejectReason": "Its ecommerce form (quiz/worksheet lead magnet) is already recorded in marketing-offer-construction and deliberately deferred by marketing-paid-campaign-structure.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 19,
+          "label": "part 3 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Rather than partially running five traffic strategies at once, get a quick overview of each, pick the single most promising one, commit to it and master it until it pays off — then reflect on whether the strategy or your execution was at fault before choosing the next.",
+      "mechanism": "Spreading a single operator across many channels means being committed to 'getting something to work' rather than to making one thing work, so nothing is studied deeply, snags cause abandonment rather than diagnosis, and time and money are spent with no progress. Committing to one produces progress plus first-hand experience you can reflect on.",
+      "evidence": "One hypothetical entrepreneur ('Joe') walked through blogging, SEO, Adwords, video and Facebook ads. Illustrative only, no data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class (focus discipline), so the date is not the problem — duplication is. marketing-acquisition-channel-selection already enumerates the channels a solo operator has and enforces running only the cheapest one or two until scale justifies more, and marketing-performance-pattern-analysis Step 4 already owns 'interrogate the execution before retiring the idea'. Adopting would restate two existing skills and blur the descriptions Claude Code matches against."
+      },
+      "verdict": "reject",
+      "rejectReason": "Both halves are already owned by marketing-acquisition-channel-selection and marketing-performance-pattern-analysis Step 4.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 20,
+          "label": "part 4 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Place explicit limits everywhere — cap yourself at three marketing strategies and focus on one, target one keyword instead of thirty, halve the hours you spend at the computer — because limitless operating is weak and self-imposed pressure is what forces you onto the few things that matter.",
+      "mechanism": "With no ceiling on time or scope, an operator rationalises low-value work ('I'm going to be here all day anyway') and does many unimportant things; a hard limit creates pressure that forces the highest-value task to the front. Creativity seeks openness but productivity requires constraint — spreading finite effort across many targets means none receives enough to produce a result, so an artificial limit concentrates effort into something that can actually win.",
+      "evidence": "One client anecdote: cutting his working hours in half turned a struggling business around. Plus a Dan Kennedy quote on self-imposed deadlines, the laser/light analogy, and the aphorism 'limits are the scaffolding that supports your success'. No figures.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class (operator discipline), age irrelevant. The marketing-scope half ('only three strategies, focus on one') is the same rule as marketing-acquisition-channel-selection, and the research-cap and restraint versions are already recorded in marketing-performance-pattern-analysis Step 1 and the do-nothing rules in marketing-paid-media-measurement. What is left — halve your working hours — is personal time management with no ecommerce artifact and no way to test it at ~54 orders/month."
+      },
+      "verdict": "reject",
+      "rejectReason": "Marketing-scope half duplicates marketing-acquisition-channel-selection and existing restraint rules; the remainder is personal time management with no marketing artifact.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 21,
+          "label": "part 4 of 9"
+        },
+        {
+          "candidateIndex": 27,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Stop blaming a lack of resources — time, staff, secret strategies, expensive software — and be resourceful instead, because it is never resources that stop an entrepreneur, only resourcefulness.",
+      "mechanism": "Waiting for optimal resources is an excuse that postpones action indefinitely and wastes time on scavenger hunts; well-funded companies fail routinely, so resourcefulness rather than resource level determines outcomes.",
+      "evidence": "Named third-party examples (Gates vs IBM, Walton vs K-Mart/Sears, Randolph vs Blockbuster) and the dot-com bubble as a counter-case. Anecdotal, no mechanism-level data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Motivational framing with no stated mechanism a solo operator could execute or test. It names no artifact, no surface and no decision rule — 'be more like MacGyver' cannot be written into a PDP, an email flow or a $30/day Meta campaign. It also cuts against the fleet's stage discipline, which deliberately parks tactics needing people or volume rather than exhorting the operator to substitute grit for a media buyer."
+      },
+      "verdict": "reject",
+      "rejectReason": "Motivational framing with no executable mechanism, and it works against the fleet's stage-gating discipline.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 22,
+          "label": "part 4 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Cure 'destination disease' — stop fixating on the outcome, because when only the endpoint matters the achievement process is reduced to obstacles, which produces perfectionism, procrastination, paralysis and pessimism, and the daily work never gets done.",
+      "mechanism": "Obsession with the destination kills the ability to enjoy the journey, which drains desire, passion and motivation, so the hard daily work required for business success stops happening.",
+      "evidence": "Assertion, an Earl Nightingale quote, and a dig at Tim Ferriss's Four Hour Workweek plus an anecdote about Ferriss working sixteen hours over a weekend. No data.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Pure motivational framing with no mechanism a business can act on. The prime directive here is revenue, and this proposes no change to any surface, offer, flow or metric. Nothing about it is testable at any scale, let alone ~54 orders/month."
+      },
+      "verdict": "reject",
+      "rejectReason": "Motivational framing with no marketing surface, artifact or testable change.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 23,
+          "label": "part 4 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Reject the instant-success myth — no success is immediate and no failure is instantaneous, so stop hunting shortcuts, because the consistent search for shortcuts leads to large and disabling setbacks.",
+      "mechanism": "Marketing, technology and entertainment all hide the repeated small steps behind results, so entrepreneurs expect an 'instant life', become preoccupied with shortcuts, and confuse speed with progress, adrenaline with purpose and urgency with importance.",
+      "evidence": "Cultural observation (diet montages in films, internet-marketing 'overnight success' claims), a Gandhi quote, and the January gym-membership pattern. Assertion only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Motivational framing with no mechanism — it prescribes no artifact and no decision rule. Where the fleet needs patience discipline it already has concrete, dated versions: the 10–14 day learning-phase freeze in marketing-paid-campaign-structure and the pre-committed degradation signals in marketing-paid-media-measurement, both testable in a way this is not."
+      },
+      "verdict": "reject",
+      "rejectReason": "No mechanism or artifact; the patience discipline it gestures at already exists in concrete form in the paid-media skills.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 24,
+          "label": "part 4 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Root out untested false beliefs: surface them by treating excuses, self-destructive behaviours and negative habits as clues, interrogate each with 'why?' repeatedly and 'what would I need to believe for this to make sense?', and write the answers down.",
+      "mechanism": "Nobody acts without a reason or a payoff, so any behaviour that interferes with your goals has a hidden belief underneath it; working backwards from the behaviour to the belief that would make it rational exposes the belief so it can be disputed. A belief adopted without testing hardens into perceived objective reality and creates a filter that admits confirming information and blocks contradictory information, so the self-sabotaging behaviour it causes is continually reinforced.",
+      "evidence": "Two invented worked examples (Jack, who reads self-help books without doing the exercises; Jennifer, who buys internet-marketing products compulsively) walked through the two questions. Illustrative only, no data, no case of a belief being tested and overturned.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "The mechanism operates on the operator's private psychology, not on any marketing surface: it produces no copy, no offer, no image, no flow and no measurement. The 'five whys' structure is a general diagnostic that the marketing library already instantiates concretely — name the binding constraint, interrogate the production stack before retiring an angle — in a form that names actual artifacts (Klaviyo campaign history, PDP copy, static plates)."
+      },
+      "verdict": "reject",
+      "rejectReason": "Self-coaching protocol with no marketing artifact; its diagnostic structure is already instantiated concretely in marketing-performance-pattern-analysis.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 25,
+          "label": "part 4 of 9"
+        },
+        {
+          "candidateIndex": 31,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Before accepting or acting on any claim from an outside source, run it through an explicit written skepticism checklist — separate the actual information from what you are inferring, ask whether the speaker has an ulterior motive or hidden agenda, whether there is sufficient evidence, whether this represents the common experience or an isolated occurrence, and whether any part of it is something you want to be true.",
+      "mechanism": "Beliefs are acquired passively from whatever you read and watch, and humans draw conclusions automatically and unconsciously, so a single anecdote is silently upgraded into a general rule and a self-interested source is silently trusted. Motive, evidence sufficiency and representativeness are the three places a persuasive claim most often fails, and wishful thinking is what stops you checking — naming the thing you want to be true is what restores skepticism.",
+      "evidence": "Assertion only — enumerated question lists (eight questions for misleading information, four for wishful thinking, four for jumping to conclusions) plus one illustrative example: wanting to believe others are 'crushing it' at adwords arbitrage. No data, no worked case of the checklist catching a bad claim, and the document itself is a sales piece for the author's own courses.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable-principle class (evidence evaluation), so the 2010 date is irrelevant. Free, purely editorial, and it lands on a real recurring failure here: almost every tactic in this library rests on an unquantified practitioner assertion — 'recovers up to 30% of abandoned carts', '50–60% of promotion sales land in the final hours', a 5% budget-scaling step, a $100/day ASC floor — each produced by a creator with an ulterior motive from an account nothing like a $2,700/mo solo operation. 'Is this the common experience or an isolated occurrence?' is exactly the question that stops an imported benchmark being treated as a forecast at ~54 orders/month, and it also governs reading the business's own small-sample numbers. Capped at 5 because it is a vetting habit rather than a revenue mechanism, it partially overlaps the existing discipline of running the arithmetic yourself rather than inheriting a rule of thumb, and the source offers no evidence the checklist works."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-performance-pattern-analysis",
+        "action": "edit",
+        "description": "Turning marketing data and outside claims into judgement: naming the binding constraint, tagging and contrasting assets, interrogating execution, and vetting imported benchmarks before acting on them."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 26,
+          "label": "part 5 of 9"
+        },
+        {
+          "candidateIndex": 36,
+          "label": "part 6 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Stop sharing your good ideas with other people and write them on a list instead, so the pressure to implement builds until you act.",
+      "mechanism": "Sharing an idea and receiving praise delivers the same psychological payoff as executing it, at a fraction of the effort, so each act of sharing drains the motivation to implement. Withholding leaves the payoff unclaimed, pressure accumulates, and the strongest ideas rise out of the growing list.",
+      "evidence": "Personal anecdote — a transcribed instant-message conversation with a friend a year into his online career, plus his claim that he now keeps ideas to himself until he 'can't take it anymore'. No data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class, but there is no honest translation to an ecommerce catalogue at any size: this is a personal motivation-management habit, not a mechanism that touches a listing, page, email flow or offer. The maintain-a-ranked-backlog half is already covered by the binding-constraint and capped-research rules in marketing-performance-pattern-analysis, which tell you what to work on next for reasons tied to revenue rather than accumulated psychological pressure."
+      },
+      "verdict": "reject",
+      "rejectReason": "Personal motivation habit with no marketing surface; the backlog half is already covered by marketing-performance-pattern-analysis.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 28,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Generate as many ideas as you can, value-rank them, then choose and execute only the best one.",
+      "mechanism": "Idea generation is a blessing only when followed by ranking and selection; without the ranking step the ideas spread you thin and cause direction-switching, which turns the same capability into a liability.",
+      "evidence": "Assertion only, framed as the difference between the blessing and curse cases of having many ideas. No worked ranking, no criteria, no data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class, but it supplies no ranking criteria, which is the only part that would make it actionable — 'value rank them' is unspecified. The existing library already supplies the criteria this would need: name the binding constraint first, prefer the cheap reversible surface, and compute the allowable-CPL ceiling before blaming creative."
+      },
+      "verdict": "reject",
+      "rejectReason": "Omits the ranking criteria that would make it actionable; existing skills already supply those criteria.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 29,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Watch for the boiling-frog pattern of gradual decline and periodically self-audit by checking, for each area of your life and business, whether it is currently improving or declining — prospect knowledge, product quality, marketing effectiveness, overall business results, relationship with your list, reputation in the market — because there is no 'middle'.",
+      "mechanism": "Gradual degradation is not perceptible at any single moment and effects lag causes, so level readings look flat and a business declines without any point at which the operator registers a threat. Forcing a binary direction judgement on each area surfaces the decline while it is still cheap to reverse.",
+      "evidence": "The frog parable plus a printed checkbox table with thirteen rows across Personal, Business and Founder Status categories, presented as a 'wake-up call'. No data, no example of an audit changing a decision.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class (diagnosis before action), so age is not the limiter. It duplicates work already owned: marketing-performance-pattern-analysis Step 1 requires naming the binding constraint before critiquing anything, and Step 3 owns the top-versus-bottom contrast that would actually tell you whether a surface is improving. The audit itself has no measurement basis — 'is your relationship with your list improving?' is a gut checkbox, and this business already reads that directionally off Klaviyo flow revenue and the 18–22.5% repeat rate. Most rows (relationships, health, ability to delegate) are personal development with no marketing translation."
+      },
+      "verdict": "reject",
+      "rejectReason": "Gut-feel audit with no measurement basis; its marketing-relevant portion duplicates Steps 1 and 3 of marketing-performance-pattern-analysis.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 30,
+          "label": "part 5 of 9"
+        },
+        {
+          "candidateIndex": 43,
+          "label": "part 7 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Dispute a surfaced belief with at least one question from each of three types — functional (does it help or hinder my goals), empirical (are the facts accurate), and logical (does the reasoning hold) — to sow enough doubt that the belief collapses.",
+      "mechanism": "A belief stops being a belief once enough doubt is introduced, and the three dispute types attack the three independent ways a belief can be wrong, so running all three leaves no undisputed footing.",
+      "evidence": "Two worked disputes on the invented Jack and Jennifer examples. No data, no case of a real belief changed and a business outcome following.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class, but aimed at self-directed beliefs rather than any marketing decision. The only fragment with commercial value — questioning whether the facts behind a claim are accurate and whether the logic holds — is the same material as the source-skepticism checklist already adopted from this work, so carrying it separately would be duplication that degrades skill triggering."
+      },
+      "verdict": "reject",
+      "rejectReason": "Aimed at personal beliefs; its commercially useful fragment duplicates the source-skepticism checklist already adopted.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 32,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Replace the disputed belief by stating the behaviour you want, listing every reason it helps, formulating a new belief from the best reasons, and compressing it into a mantra or slogan.",
+      "mechanism": "Poking holes in an old belief leaves a vacuum; a deliberately constructed replacement backed by enumerated reasons and compressed into a memorable slogan gives the desired behaviour something to rest on.",
+      "evidence": "One worked example (Jack's new belief and closing slogan 'If it's worth reading, it's worth reaping the rewards'). Illustrative only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Pure self-help construction with no ecommerce translation at any size — it produces a personal mantra, not a page, listing, email, offer or ad. Nothing here touches Shopify, Amazon, Klaviyo or the live Meta campaign, and no scaled-down version would."
+      },
+      "verdict": "reject",
+      "rejectReason": "Produces a personal mantra, not a marketing artifact; no translation at any size.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 33,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Write 'pre-decisions' in advance — if X, then I'll do Y; when X happens, I'll do Y — so a trip-wire fires a premeditated action at the moments you know you will be tempted to abandon the plan.",
+      "mechanism": "In the moment of temptation, rationalisation wins; deciding the response in advance, while calm, means the in-the-moment self is executing a prior decision rather than making a new one under pressure.",
+      "evidence": "Four illustrative if/then and when/I'll statements written for the invented Jack example, plus the assertion that it is 'incredibly effective'. No data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class and the mechanism is real, but the marketing-relevant version is already recorded verbatim: marketing-paid-media-measurement's restraint refinement says to pre-commit, in writing, to the signals that end the do-nothing period, and marketing-paid-campaign-structure fixes the learning-phase freeze in advance for exactly this reason. Adopting the general form would restate skills already covering the live $30/day campaign."
+      },
+      "verdict": "reject",
+      "rejectReason": "The marketing-relevant version is already recorded in marketing-paid-media-measurement and marketing-paid-campaign-structure.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 34,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Write a dated first-person story of your life 90 days after the new behaviour takes hold, then read it every morning and night until you can run it as a movie in your mind without the page.",
+      "mechanism": "Short-term temptations feel more real than long-term benefits, which is why the wrong decision usually wins; making the future outcome vividly real through daily rehearsal levels that contest so the long-term benefit can compete.",
+      "evidence": "One fully written example dated February 15th, 2011, plus assertion. No data.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Visualisation practice with no marketing mechanism and no honest translation to an ecommerce catalogue at any size — it produces nothing a customer sees and touches no channel, offer, asset or metric. Nothing about scale, budget or team would change that."
+      },
+      "verdict": "reject",
+      "rejectReason": "Personal visualisation practice with no customer-facing output or marketing mechanism.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 35,
+          "label": "part 5 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Expect a delay between cause and effect: correct actions produce 'invisible results' that are undetectable for a long time, so fix the evaluation horizon in advance and do not abandon an activity that is working but has not yet shown feedback.",
+      "mechanism": "Most business actions give no immediate signal, so the operator gets no confirmation that a correct decision was correct. Combined with impatience for feedback, this causes people to quit programs that are in fact working, mistaking the absence of a visible result for the absence of a result.",
+      "evidence": "Analogies rather than business data: heart disease as 25.4% of US deaths, seat belt fatality statistics, and the joke about a man who swam 90% of the English Channel and turned back because he was tired. No account figures, no worked example of a business program abandoned prematurely.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable-principle class (feedback timing), age irrelevant. Real translation here rather than pure encouragement: at ~54 orders/month and a sub-1,000 list, the highest-value work — post-purchase and transition-period flows, review accumulation, the subscribe-and-save cadence — produces no readable signal for months, and the standing risk for one operator is killing a flow in week three because nothing visibly moved. The usable form is to fix the evaluation horizon and review date in writing before starting slow-feedback work, so continue-or-stop is decided against a stated condition rather than impatience. Capped at 5 because it heavily overlaps restraint rules already recorded (learning-phase freeze, do-nothing and pre-committed degradation signals, don't-retire-an-angle-prematurely), and because as delivered it is closer to encouragement than mechanism; the additive part is only setting the horizon in advance for non-paid slow-feedback work where no learning phase exists to anchor it."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-performance-pattern-analysis",
+        "action": "edit",
+        "description": "Turning marketing data into judgement, including setting evaluation horizons in advance for slow-feedback work so decisions to continue or stop are made against stated conditions."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 37,
+          "label": "part 6 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Eliminate 'fuzzy thinking' by answering three questions in order: exactly what you want from the business, the absolute minimum necessary to have it, and the fastest and easiest way to get it — including the least number of lead sources, the fewest conversion methods, and how many products you actually need.",
+      "mechanism": "Unclear goals make it impossible to distinguish essential activity from non-essential activity, so the operator defaults to improvising, buys courses they do not need, and confuses activity with accomplishment. Knowing what is necessary is also what tells you what is unnecessary.",
+      "evidence": "Assertion, a rhetorical argument ('if you knew all three you'd already have it') and an anecdote about 250 entrepreneurs at an Early To Rise seminar. No data. The section resolves into an extended pitch for the author's own BGS and GPS programs as the way to obtain the answers.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class, so age is not the problem — duplication and thinness are. Every operational part is already owned: 'name what is capping output before critiquing assets' is Step 1 of marketing-performance-pattern-analysis, 'the least number of lead sources' is the run-only-the-cheapest-one-or-two rule in marketing-acquisition-channel-selection, and 'how many products do you need' is the don't-add-products gate in marketing-offer-construction. What remains is goal clarity as exhortation, with the hardest question's answer explicitly withheld and sold as a course."
+      },
+      "verdict": "reject",
+      "rejectReason": "Every operational element duplicates three existing skills; the remainder is exhortation with the answer withheld behind a course pitch.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 38,
+          "label": "part 6 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Stop chasing the 'one big push' — growth compounds like a doubling penny or a flywheel, so ignore anything marketed as the single move that will take off and instead keep taking the small, easy-to-do-and-easy-not-to-do actions consistently every day.",
+      "mechanism": "Momentum is the sum of many pushes; each turn builds on earlier work so the same effort produces more output over time. Because there is a delay between cause and effect, skipping a small action produces no visible penalty today, so invisible errors compound into failure while invisible positive actions compound into success — and because the effect is invisible early, sellers exploit the desire for a shortcut.",
+      "evidence": "The doubling-penny arithmetic table (day 1 $0.01 to day 31 $10,737,418.24), a long verbatim quotation of Jim Collins' flywheel passage from Good to Great, and a rewritten aphorism. No business data, no case, no figures from his own accounts.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class, so the date is irrelevant — the problem is that there is no mechanism to execute. It prescribes no artifact, no surface and no test: nothing tells a solo operator what to put on a PDP, in an email, or in the $30/day Meta campaign. A penny doubling daily is also not a model of anything in this business — repeat rate, list growth and order volume do not compound at a fixed multiple."
+      },
+      "verdict": "reject",
+      "rejectReason": "Pure exhortation with no artifact, surface or test, and the compounding arithmetic does not model anything in this business.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 39,
+          "label": "part 6 of 9"
+        },
+        {
+          "candidateIndex": 41,
+          "label": "part 7 of 9"
+        },
+        {
+          "candidateIndex": 42,
+          "label": "part 7 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Sequence your product line so that each program answers one of the key questions the customer must answer, and reveal that logic to them so they can self-select which one to buy.",
+      "mechanism": "Mapping each product to a stage of the buyer's own decision sequence makes the catalogue self-explanatory, so a prospect asking 'which one is right for me' converts into a purchase rather than a support ticket.",
+      "evidence": "Assertion plus the observation that 'hardly a week goes by' without a Founders Club member asking support which program to buy. No conversion figures.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "The example is a two-tier information-product ladder where each tier is a different body of knowledge; a 12-SKU catalogue of deodorant, body, oral and lip care has no equivalent decision sequence to map onto, and marketing-offer-construction explicitly gates catalogue expansion. The transferable residue — name the tiers deliberately, lead with one recommended pack so the buyer does not stall — is already owned by the tier-naming rule in marketing-offer-construction, the decision-fatigue rule in marketing-conversion-friction-audit, and the A-or-B framing rule in marketing-upsell-offer-design."
+      },
+      "verdict": "reject",
+      "rejectReason": "Info-product ladder logic with no analogue in a consumable body-care catalogue; the transferable residue is already owned by three existing skills.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 40,
+          "label": "part 6 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Keep a daily journal as the single place where deliberate thinking happens — recording problems, causes, candidate solutions, chosen plans, goals and the reasons a goal was missed — then scan back over previous entries to spot recurring positive and negative patterns, and use it to hold yourself accountable and process what you are avoiding.",
+      "mechanism": "A written record forces thinking to be explicit and makes it retrievable, so past decisions, patterns and misses can be re-read and checked rather than reconstructed from memory; a fixed daily slot converts thinking from occasional to daily. Working alone means nobody else holds you accountable, so the record plus a required reason for every miss is the only accountability mechanism available, and patterns invisible in the moment become visible across the record.",
+      "evidence": "Twenty years of personal practice plus self-reported life outcomes (grades from D's and F's to summa cum laude, partnerships with Jay Abraham, Gary Halbert, John Carlton, building Strategic Profits) and the claim that the journal birthed the 'YOU' diagram behind the Internet Business Manifesto. Anecdotal and entirely self-reported; no data connecting journaling to any business result.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Durable-principle class (work and decision discipline), so the 2010 date is irrelevant. The honest translation for a solo operator is narrow but genuinely useful: a written marketing decision log — what was changed, on which surface, why, what was expected, what happened, and the reason for any miss. That matters more here than at scale precisely because nothing is statistically readable at ~54 orders/month and a sub-1,000 list, so memory is otherwise the only record, and marketing-performance-pattern-analysis Step 4 warns that 'we tried that' is an unproven verdict until you can say how it was executed. Capped at 5 because it substantially overlaps Step 2's tag-every-asset-at-production-time rule and marketing-product-image-stack's written record of which lever changed on each frame — the additive part is only that the log covers offers, prices, emails and campaign edits too. The personal-development uses (feelings, relationships, self-awareness) have no marketing translation and are not adopted."
+      },
+      "verdict": "adopt",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-performance-pattern-analysis",
+        "action": "edit",
+        "description": "Turning marketing data into judgement, including keeping a written decision log of what was changed on which surface, why, what was expected, and what happened."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 44,
+          "label": "part 7 of 9"
+        },
+        {
+          "candidateIndex": 47,
+          "label": "part 7 of 9"
+        },
+        {
+          "candidateIndex": 48,
+          "label": "part 7 of 9"
+        },
+        {
+          "candidateIndex": 49,
+          "label": "part 7 of 9"
+        },
+        {
+          "candidateIndex": 50,
+          "label": "part 8 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Run a fixed critical-thinking protocol on any problem: define the problem as clearly as you can, determine its cause, brainstorm solutions, pick the best one, then write an action plan.",
+      "mechanism": "Separating definition, causation, generation and selection into ordered steps stops you from jumping to a solution before the problem and its cause are understood.",
+      "evidence": "Described as what he does on the pages of his journal. Assertion only, no worked example.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Durable-principle class, age irrelevant, but it is generic problem-solving with nothing marketing-specific attached, and the marketing-shaped version already exists: marketing-performance-pattern-analysis runs name-the-constraint → tag → contrast → interrogate-the-execution, and marketing-paid-campaign-structure owns the compute-the-allowable-cost-before-blaming-the-creative ordering."
+      },
+      "verdict": "reject",
+      "rejectReason": "Generic problem-solving sequence that would compete for triggering with the marketing-specific version already recorded.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 45,
+          "label": "part 7 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Apply SCAMPER — substitute, combine, adapt, modify, put to other uses, eliminate, rearrange — to the issues and ideas you are currently wrestling with, to force creative breakthroughs.",
+      "mechanism": "A fixed list of transformations applied to an existing idea generates variants the mind would not reach unprompted, turning creativity into a checklist rather than an act of inspiration.",
+      "evidence": "Named in passing as something he does in his journal, with the claim that it 'has led me to many breakthroughs'. No example, no output shown, no data.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Durable-principle class and free to run, with a superficially attractive translation — SCAMPER against 12 SKUs would generate offer permutations. But that generator already exists in a better, catalogue-specific form: marketing-offer-construction records the eight levers for making a customer worth more, 'don't add products, add ways to offer the products you already have', and the four-property SKU scoring frame. A generic seven-verb mnemonic would sit next to those doing the same job less precisely, and the source shows not one worked output."
+      },
+      "verdict": "reject",
+      "rejectReason": "A generic creativity mnemonic that duplicates, less precisely, the offer-permutation levers already in marketing-offer-construction.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 46,
+          "label": "part 7 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Write out three things you are grateful for each day along with the reason why, to become more optimistic and therefore more successful in business.",
+      "mechanism": "Research allegedly shows mood and optimism significantly affect business success, and daily written gratitude with stated reasons raises happiness and optimism — so the habit indirectly raises business performance.",
+      "evidence": "Appeals vaguely to 'a tremendous amount of research' with no citation, plus three examples from his own journal and the assertion that 'in a few months you'll notice the difference it makes to your bottom line'.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Pure motivational framing with an unsourced 'research shows' claim and no mechanism connecting it to any marketing surface. There is no artifact, no test, and nothing a solo operator could ship to a buyer."
+      },
+      "verdict": "reject",
+      "rejectReason": "Personal wellbeing habit with an unsourced claim and no marketing mechanism.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 51,
+          "label": "part 8 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Use sentence stems — write 6–10 unique endings to a partial sentence each morning for 7–14 days without reviewing prior answers, then consolidate the unique endings and act on the best ones.",
+      "mechanism": "Writing fast without editing bypasses the conscious mind and taps subconscious associations; forcing unique answers and hiding prior days' output prevents anchoring, so the exercise generates a broader idea set than deliberate brainstorming and keeps the priority top-of-mind.",
+      "evidence": "Attributed to Nathaniel Branden; illustrated with a hypothetical presentation-prep stem and ten sample endings, plus a journal page of self-development stems. No performance data, no comparison against ordinary brainstorming.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "The only item in the excerpt with a concrete procedure, but the creator advocates it strictly as a self-development and procrastination tool — every worked example is about the operator's own behaviour. The nearest marketing translation (fast unedited generation of angle variations) is something I would have to invent, and it substantially restates the generators already recorded in marketing-problem-solution-inventory and the four-slot differentiator checklist in marketing-awareness-level-messaging."
+      },
+      "verdict": "reject",
+      "rejectReason": "Advocated as a self-development tool only; any marketing translation would be invented and would duplicate existing idea generators.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 52,
+          "label": "part 8 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Diagram or mindmap an issue in a notebook rather than only writing prose about it, and revisit and extend the diagram over time.",
+      "mechanism": "Visual thinking surfaces relationships that linear writing does not, and a physical diagram you return to accumulates additions across sessions, producing breakthroughs.",
+      "evidence": "Two journal photographs (a five-minute mindmap at a cigar bar, a presentation plan sketched during a lecture) plus the assertion that diagramming 'helps me come up with breakthroughs all the time'. Anecdotal.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "A thinking-tool preference with no marketing mechanism, no artifact a buyer ever sees, and no connection to any of Real Skin Care's surfaces (PDP, Amazon listing, email flows, Meta creative)."
+      },
+      "verdict": "reject",
+      "rejectReason": "Personal note-taking preference with no marketing mechanism or customer-facing artifact.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 53,
+          "label": "part 8 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Every Sunday evening, answer the same fixed list of 20 reflection questions (what did I learn, biggest time sink, what am I avoiding, top 3 goals for 3 years, what are my fears) to reset priorities for the week ahead.",
+      "mechanism": "A fixed weekly question set forces reflection on what went right and wrong, keeps long-range goals conscious so they are not lost to day-to-day busyness, and surfaces avoided tasks and unresolved fears while there is still time to act.",
+      "evidence": "A photograph of the taped-in question sheet, the full list of 20 questions with a one-line rationale each, and the assertion that a month of doing it makes progress 'hard not to' exceed anything before. No outcomes reported.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "A personal weekly review ritual. It superficially resembles a cadence, but the questions are about the operator's learning, gratitude, fears and relationships — none ask about revenue, repeat rate, cost per entry, or any surface this business operates. marketing-performance-pattern-analysis already owns the real version of 'review what worked and name the discrepancy', grounded in assets and metrics."
+      },
+      "verdict": "reject",
+      "rejectReason": "Personal reflection ritual whose questions touch no marketing surface or metric; the asset-grounded version already exists.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 54,
+          "label": "part 8 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Score yourself 1–10 each night on one chosen life area you know is declining, and if the score is low write down what you will do tomorrow to raise it.",
+      "mechanism": "Simply remaining conscious of a behaviour changes it — cited by analogy to food-logging research showing that writing down what you eat makes people eat less and better.",
+      "evidence": "An uncited appeal to 'tons of research' on food journaling, plus assertion. No business or marketing outcome data.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Self-monitoring of personal behaviour with no marketing mechanism and no output that reaches a customer. Nothing here touches the PDP, the Amazon listing, the email flows or the live $30/day campaign."
+      },
+      "verdict": "reject",
+      "rejectReason": "Personal self-monitoring habit with no customer-facing output or marketing surface.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 55,
+          "label": "part 8 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Keep a running log of the excuses you use for not doing work, identify your recurring favourites, stay skeptical of them when they surface, and treat each appearance as a trigger to act immediately rather than as a reason.",
+      "mechanism": "Excuses feel accurate in the moment but are rationalisations for staying inside the comfort zone; writing them down repeatedly exposes the small set you reuse, and naming them in advance converts them from an unexamined reason to quit into a recognisable cue that action is being avoided — so the same thought that used to end the work now triggers it.",
+      "evidence": "Assertion plus four illustrative sample excuses. No data, no worked example, no account of anyone applying it.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Pure self-discipline framing aimed at the operator. There is no mechanism connecting it to revenue, no customer-facing artifact, and no version that would apply to a 12-SKU body-care catalogue regardless of scale, budget or headcount. It never touches an offer, a page, a listing, a flow, a price or a channel."
+      },
+      "verdict": "reject",
+      "rejectReason": "Self-discipline framing with no marketing mechanism or artifact at any size.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 56,
+          "label": "part 8 of 9"
+        },
+        {
+          "candidateIndex": 58,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Write down at least one governing belief in each of four categories — personal, relationships, performance, business — and paste the list into your journal to reread and reinforce.",
+      "mechanism": "Absorbing a chosen set of beliefs changes the perspective you see the world through, which in turn makes success in each of those areas more certain.",
+      "evidence": "A photograph of his own pasted belief list and a fill-in-the-blank exercise for the reader. No data, no examples of outcomes.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Mindset framing with no stated mechanism beyond 'believe the right things'. No marketing artifact, no test, no path to revenue at any business size."
+      },
+      "verdict": "reject",
+      "rejectReason": "Mindset exercise with no marketing artifact, test or revenue path.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 57,
+          "label": "part 8 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Compress the interval between setting a goal and reviewing it: write a one-paragraph journal entry every hour or two recapping what you finished and committing to what you will finish before the next entry.",
+      "mechanism": "A morning-to-evening review window is long enough for 'goal and task amnesia' to set in — you get swept into whatever is in front of you and never return to the most important task. Shortening the loop to an hour catches the drift before it consumes the day, and each entry is a fresh commitment.",
+      "evidence": "Self-report: eleven timestamped entries from the day he wrote the report (6:00am through 9:45pm), each naming the section written and the word count, plus the claim he 'always sees a spike in productivity'. Single-person anecdote, no comparison.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "The mechanism is real and a solo operator is exactly the person a work-cadence habit would serve — but it is a time-management technique, not a marketing tactic. It produces no asset, changes nothing on the Shopify PDP, the Amazon listing stack, the email flows or the live Meta campaign, and has no bearing on the binding retention constraint."
+      },
+      "verdict": "reject",
+      "rejectReason": "Time-management technique with no marketing asset or surface; not blocked by scale or team, simply out of category.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 59,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Accumulate a databank of powerful questions harvested from books, blogs, reports, calls and conversations — categorise them — and answer one per day in a journal.",
+      "mechanism": "Thinking is asking and answering questions internally, so improving the quality of the questions you hold improves the quality of the thinking that follows; a stored, categorised set means good questions are available on demand rather than only when they happen to occur to you.",
+      "evidence": "Assertion plus a list of roughly 30 generic self-reflection questions ('what is most important to me right now?', 'what do all my successes have in common?'). No outcome reported.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Generic thinking-hygiene advice with no marketing surface attached. Nothing here tells a solo operator what to write on a product page, what to put in a bundle, what to say in a post-purchase email, or how to read the giveaway campaign. It does not touch retention, AOV or the $30/day paid surface."
+      },
+      "verdict": "reject",
+      "rejectReason": "Generic reflection-prompt collection with no marketing surface or decision attached.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 60,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Run the marketing-performance question set: what do our best customers have in common and where else can we find them, what are customers really buying, what are their biggest fears and complaints, what are the top three benefits they want, what makes us superior, how do we make the offer more irresistible, how do we make the risk reversal more exciting, and what additional proof elements can we add.",
+      "mechanism": "Structured self-interrogation surfaces answers you already hold but have never articulated; writing them down converts vague intuition into an explicit brief you can then act on across the marketing.",
+      "evidence": "Assertion that these questions 'have improved the businesses and personal lives' of his private clients. No named case, no figures, no before/after.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Every question is already owned, and owned better, by an existing skill. Best-customer commonality is the top-vs-bottom decile contrast in marketing-performance-pattern-analysis and top-repeat-buyer cultivation in marketing-retention-offers. Fears, complaints and top-three benefits are the before/during/after enumeration and competitor one-star mining in marketing-problem-solution-inventory. 'What makes us superior' is the per-SKU differentiator audit in marketing-offer-construction, risk reversal is the guarantee-by-ticket-size rule there, and proof elements is the credibility-asset inventory in marketing-conversion-friction-audit."
+      },
+      "verdict": "reject",
+      "rejectReason": "Every question in the set is already owned in more specific form by five existing skills; it adds no mechanism.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 61,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Before building anything new, ask which past campaigns, products, programs or services were successful and could be recycled or redeployed today with minimal effort.",
+      "mechanism": "Not stated in the excerpt — offered as a bare reflection prompt with no explanation of why redeploying a past winner beats producing something new.",
+      "evidence": "Assertion only; one bullet in a list of ~20 reflection questions with no example and no result.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "The nearest usable form — re-run a past winning Klaviyo campaign rather than writing a new one — is already covered from both ends: marketing-scarcity-urgency-framing owns re-wrapping the same core promotion with a new seasonal name and fresh dates, and marketing-paid-creative-testing owns holding proven angles in most creative slots and iterating on a breakthrough. There is also no mechanism supplied here at all, which is exactly what the existing entries do supply."
+      },
+      "verdict": "reject",
+      "rejectReason": "No mechanism supplied, and the usable form is already covered by marketing-scarcity-urgency-framing and marketing-paid-creative-testing.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 62,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Identify the three metrics most important to growing the business, look at them more frequently, and list the actions that improve each one.",
+      "mechanism": "Not stated. Offered as a reflection prompt on the assumption that focus on a small metric set produces improvement in it.",
+      "evidence": "Assertion only, inside a question list.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Already owned twice over. marketing-paid-media-measurement splits primary metrics you may optimise budget on from secondary storytelling metrics, and marketing-performance-pattern-analysis Step 1 requires naming the binding constraint before critiquing anything. Both are more specific than 'pick three metrics' and both name the metrics that matter at ~54 orders/month, which this does not."
+      },
+      "verdict": "reject",
+      "rejectReason": "Duplicates, less specifically, the metric hierarchy in marketing-paid-media-measurement and the binding-constraint rule in marketing-performance-pattern-analysis.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 63,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "When answering these questions, deliberately keep writing past the obvious answer, because breakthroughs come from the material below the expected response.",
+      "mechanism": "The obvious answer is the one already in conscious reach and therefore already acted on; pushing past it taps the subconscious and surfaces answers you were previously unaware of.",
+      "evidence": "Assertion only, with an appeal to 'the recesses of your subconscious mind'. No example of an answer that changed after pushing past the obvious.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "An unfalsifiable writing instruction with no marketing surface. It does not tell a solo operator what to change on a PDP, an Amazon slot, an email flow, a bundle price or the live giveaway campaign, and nothing about it is testable at any volume."
+      },
+      "verdict": "reject",
+      "rejectReason": "Unfalsifiable writing instruction with no marketing surface or testable outcome.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 64,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Ask what additional lead-generation channels you can add to the pipeline, which markets could yield joint-venture partners, and what you could offer someone with a large affiliate base to get their affiliates promoting for you.",
+      "mechanism": "Not stated beyond the implication that more channels and more partners means more leads.",
+      "evidence": "Assertion only, inside the 'To Grow Your Business' question list.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "Directly contradicted and superseded by what is already recorded. marketing-acquisition-channel-selection enforces running only the cheapest one or two channels rather than adding more, and already owns the reciprocal non-competing-partner move; marketing-offer-construction parks the adjacent-brand bonus-swap under `scale` with a stated trigger (~3,000–5,000 engaged subscribers). The affiliate-base variant presupposes a partner with an affiliate roster taking a call from a $2,700/mo brand."
+      },
+      "verdict": "reject",
+      "rejectReason": "Contradicts the channel-restraint rule already recorded, and the partner variants are already parked under stage gates with stated triggers.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 65,
+          "label": "part 9 of 9"
+        }
+      ]
+    },
+    {
+      "claim": "Ask how to attract and retain the most talented and growth-minded employees as part of the business-growth review.",
+      "mechanism": "Not stated.",
+      "evidence": "Assertion only, one bullet in a question list.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Not a marketing tactic in any form — a hiring prompt with no mechanism, no artifact and no marketing surface. It is not merely blocked by the `team` gate (which parks real marketing work needing people, such as creator rosters or an outside editor); there is no marketing action here that would become runnable once staff existed."
+      },
+      "verdict": "reject",
+      "rejectReason": "A hiring prompt, not a marketing tactic; no mechanism and nothing that becomes runnable at any stage.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 66,
+          "label": "part 9 of 9"
+        }
+      ]
+    }
+  ]
+}
