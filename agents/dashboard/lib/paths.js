@@ -3,7 +3,14 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const ROOT = join(__dirname, '..', '..', '..');
+// SEO_CLAUDE_ROOT exists purely for test isolation — lets a test point every path
+// this module exports (and everything derived from them below, e.g. creatives-store.js)
+// at a scratch directory instead of the real repo, so a test can't write real files
+// into data/creative-sessions/ or similar. The override IS the repo root — it is used
+// directly, not joined with '..' segments, so it must match what the three-level walk
+// below resolves to. Production never sets it, so the fallback is what every real run
+// resolves to.
+export const ROOT = process.env.SEO_CLAUDE_ROOT || join(__dirname, '..', '..', '..');
 export const PUBLIC_DIR = join(__dirname, '..', 'public');
 
 export const POSTS_DIR     = join(ROOT, 'data', 'posts');
