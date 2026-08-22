@@ -419,6 +419,13 @@ if (new Date().getDate() === 1) {
   // data/context/{voice-of-customer,personas}.md and personas.json. Monthly because
   // reviews accrue a handful a week and Reddit sentiment moves slowly.
   runStep('voice-of-customer', `"${NODE}" agents/voice-of-customer/index.js`, { indent: '    ' });
+
+  // Step 14: demand-miner — seeds Google PAA/related-search harvesting from GSC
+  // impression leaks + persona objections, classifies each question by funnel stage.
+  // Must run AFTER voice-of-customer: it reads data/context/personas.json, which
+  // voice-of-customer rewrites in this same block, and running first would seed
+  // from last month's personas instead of the ones just written.
+  runStep('demand-miner', `"${NODE}" agents/demand-miner/index.js`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
 }
