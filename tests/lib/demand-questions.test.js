@@ -89,3 +89,54 @@ test('blank and duplicate objections are dropped before they cost a SERP call', 
   const { seeds } = deriveSeeds({ leaks: [], personas: dupes });
   assert.deepEqual(seeds.map((s) => s.text), ['same thing']);
 });
+
+// --- Fix round 1: reserve-based cap so an abundant leak feed cannot starve personas ---
+//
+// Measured on the production server: a real gsc-query-miner run yields 253 impression
+// leaks against this 40-seed cap. Leaks-first-then-cap gave leaks all 40 seeds on every
+// real run — persona_objection seeds were starved to zero and the persona join
+// (stage + persona_id) that this artifact exists for never populated. These cases pin
+// the reserve-then-top-up fix.
+
+test('production shape: 253 leaks (measured on-server) against 40 cap does not starve personas', () => {
+  const manyLeaks = Array.from({ length: 253 }, (_, i) => leak(`leak-query-${i}`, 253 - i));
+  const fivePersonas = Array.from({ length: 5 }, (_, p) => ({
+    id: `persona-${p + 1}`,
+    angles: Array.from({ length: 2 }, (_, a) => ({ objection_addressed: `persona-${p + 1}-objection-${a}` })),
+  }));
+  const { seeds } = deriveSeeds({ leaks: manyLeaks, personas: fivePersonas });
+  const origins = new Set(seeds.map((s) => s.origin));
+  assert.deepEqual([...origins].sort(), ['gsc_leak', 'persona_objection']);
+  const personaCount = seeds.filter((s) => s.origin === 'persona_objection').length;
+  const leakCount = seeds.filter((s) => s.origin === 'gsc_leak').length;
+  assert.equal(personaCount, 10, 'all 10 persona objections should survive the cap');
+  assert.equal(leakCount, 30, 'leaks top up the remainder after the persona reserve is honored');
+  assert.equal(seeds.length, SEED_CAP);
+});
+
+test('leaks only: 253 leaks, no personas, uses the full cap', () => {
+  const manyLeaks = Array.from({ length: 253 }, (_, i) => leak(`leak-query-${i}`, 253 - i));
+  const { seeds } = deriveSeeds({ leaks: manyLeaks, personas: [] });
+  assert.equal(seeds.length, SEED_CAP);
+  assert.ok(seeds.every((s) => s.origin === 'gsc_leak'));
+});
+
+test('personas only: 100 objections, no leaks, uses the full cap', () => {
+  const tenPersonas = Array.from({ length: 10 }, (_, p) => ({
+    id: `persona-${p + 1}`,
+    angles: Array.from({ length: 10 }, (_, a) => ({ objection_addressed: `persona-${p + 1}-objection-${a}` })),
+  }));
+  const { seeds } = deriveSeeds({ leaks: [], personas: tenPersonas });
+  assert.equal(seeds.length, SEED_CAP);
+  assert.ok(seeds.every((s) => s.origin === 'persona_objection'));
+});
+
+test('both thin: 5 leaks + 5 objections yields 10 seeds, no padding, no error', () => {
+  const fewLeaks = Array.from({ length: 5 }, (_, i) => leak(`leak-query-${i}`, 5 - i));
+  const onePersona = [{
+    id: 'p1',
+    angles: Array.from({ length: 5 }, (_, a) => ({ objection_addressed: `p1-objection-${a}` })),
+  }];
+  const { seeds } = deriveSeeds({ leaks: fewLeaks, personas: onePersona });
+  assert.equal(seeds.length, 10);
+});
