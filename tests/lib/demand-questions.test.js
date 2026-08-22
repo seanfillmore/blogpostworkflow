@@ -6,6 +6,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { SEED_CAP, deriveSeeds, normalizeHarvest, validateQuestions } from '../../lib/demand-questions.js';
+import { renderDemandQuestionsMarkdown } from '../../lib/demand-questions.js';
 import { AWARENESS_LEVELS } from '../../lib/voice-of-customer.js';
 
 const leak = (query, impressions) => ({ query, impressions, clicks: 0, position: 10 });
@@ -222,4 +223,61 @@ test('validateQuestions rejects a stage outside the five levels', () => {
 
 test('validateQuestions rejects a missing stage', () => {
   assert.throws(() => validateQuestions([{ text: 'q' }]), /stage/i);
+});
+
+// --- Task 5: renderDemandQuestionsMarkdown ---
+
+const RENDER_INPUT = {
+  generatedAt: '2026-08-21T00:00:00.000Z',
+  cluster: 'skin',
+  seedCount: 28,
+  partial: false,
+  questions: [
+    { text: 'Why does my skin react to everything?', stage: 'unaware', source: 'paa', seed: 'sensitive skin', seed_origin: 'gsc_leak', persona_id: null, seen_count: 3 },
+    { text: 'Does coconut oil clog pores?', stage: 'problem-aware', source: 'paa', seed: 'coconut oil acne', seed_origin: 'persona_objection', persona_id: 'p4', seen_count: 2 },
+  ],
+};
+
+test('headings are stable and grouped by funnel stage with counts', () => {
+  const md = renderDemandQuestionsMarkdown(RENDER_INPUT);
+  assert.match(md, /^# Demand questions/m);
+  assert.match(md, /^## unaware \(1\)$/m);
+  assert.match(md, /^## problem-aware \(1\)$/m);
+});
+
+test('only stages that have questions get a heading', () => {
+  const md = renderDemandQuestionsMarkdown(RENDER_INPUT);
+  assert.ok(!md.includes('## most-aware'), 'an empty stage must not render an empty section');
+});
+
+test('stages render in funnel order, not alphabetical or insertion order', () => {
+  const md = renderDemandQuestionsMarkdown(RENDER_INPUT);
+  assert.ok(md.indexOf('## unaware') < md.indexOf('## problem-aware'));
+});
+
+test('each entry is self-contained — one grep hit carries its own context', () => {
+  const md = renderDemandQuestionsMarkdown(RENDER_INPUT);
+  const line = md.split('\n').find((l) => l.includes('Does coconut oil clog pores?'));
+  assert.ok(line.includes('paa'), 'carries its source');
+  assert.ok(line.includes('coconut oil acne'), 'carries the seed that found it');
+  assert.ok(line.includes('p4'), 'carries the persona it is attributed to');
+  assert.ok(line.includes('2'), 'carries seen_count');
+});
+
+test('the header records provenance and the partial flag', () => {
+  const md = renderDemandQuestionsMarkdown(RENDER_INPUT);
+  assert.ok(md.includes('2026-08-21'));
+  assert.ok(md.includes('28'));
+  assert.ok(/partial.*no/i.test(md));
+});
+
+test('a partial run says so prominently', () => {
+  const md = renderDemandQuestionsMarkdown({ ...RENDER_INPUT, partial: true });
+  assert.ok(/partial.*yes/i.test(md));
+});
+
+test('no questions still renders a valid document', () => {
+  const md = renderDemandQuestionsMarkdown({ ...RENDER_INPUT, questions: [] });
+  assert.match(md, /^# Demand questions/m);
+  assert.ok(md.length > 0);
 });
