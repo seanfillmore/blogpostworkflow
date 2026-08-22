@@ -158,6 +158,50 @@
   font-size: 1.5rem;
 }
 
+/* Referral-address help. Quieter than .gv-error because neither line is a
+   failure -- the note is a standing caution and the fix is an offer. They sit
+   under #gv-ref because Official Rules §5 makes the address typed there the
+   sole identifier of a referral, so this is the last point it can be corrected. */
+.gv-ref-note {
+  margin: 6px 0 0;
+  font-size: 1.3rem;
+  line-height: 1.5;
+  opacity: 0.75;
+}
+.gv-ref-fix {
+  margin: 6px 0 0;
+  font-size: 1.4rem;
+  line-height: 1.5;
+}
+/* A real <button> for keyboard and screen-reader users, painted as a link so it
+   does not compete with the form's submit control.
+
+   Selector is `.gv-entry .gv-ref-fix-apply` (0,2,0), NOT a bare class (0,1,0):
+   `.gv-entry button` above is 0,1,1 and would otherwise win no matter what
+   order these rules sit in, rendering the suggestion as a full-width dark
+   block. The :hover/:focus-visible pair is restated for the same reason —
+   `.gv-entry button:hover` is 0,2,1 and outranks the plain selector. */
+.gv-entry .gv-ref-fix-apply {
+  display: inline;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: var(--gv-ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.gv-entry .gv-ref-fix-apply:hover,
+.gv-entry .gv-ref-fix-apply:focus-visible {
+  background: none;
+  color: var(--gv-ink);
+  text-decoration: none;
+}
+.gv-entry .gv-ref-fix-apply:focus-visible { outline: 2px solid var(--gv-ink); outline-offset: 2px; }
+
 /* ── Lander ──────────────────────────────────────────────────────────────── */
 
 .gv-brand { text-align: center; padding: 4px 0 22px; }

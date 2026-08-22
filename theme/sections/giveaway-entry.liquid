@@ -59,7 +59,19 @@
 
         <div>
           <label for="gv-ref">Referred by a friend? <span>Their email, optional</span></label>
-          <input id="gv-ref" name="referredBy" type="email" autocomplete="off" inputmode="email">
+          <input id="gv-ref" name="referredBy" type="email" autocomplete="off" inputmode="email"
+                 aria-describedby="gv-ref-note">
+          {%- comment -%}
+            Official Rules §5 makes the address typed HERE the sole identifier of
+            the referral, and §6 hangs a second prize on it, so a typo cannot be
+            corrected after entry. This is the only moment it is fixable, which
+            is why the warning is stated plainly rather than tucked into the rules.
+          {%- endcomment -%}
+          <p class="gv-ref-note" id="gv-ref-note" hidden>
+            Double-check this address — entries for a referral can only go to the address
+            exactly as typed, and we can’t change it after you enter.
+          </p>
+          <p class="gv-ref-fix" hidden role="status"></p>
         </div>
 
         <button type="submit">Enter free</button>
