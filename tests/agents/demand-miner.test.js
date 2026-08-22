@@ -9,7 +9,10 @@ import { test } from 'node:test';
 import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runDemandMiner, classifyStages, realApplyPersonaOverlay, parseLimitArg } from '../../agents/demand-miner/index.js';
+import {
+  runDemandMiner, classifyStages, realApplyPersonaOverlay,
+  realOverlayPersonasOnly, realSanitizePersonasStep, parseLimitArg,
+} from '../../agents/demand-miner/index.js';
 
 const LEAKS = { leaks: [{ query: 'coconut oil acne', impressions: 900, clicks: 0, position: 12 }] };
 const PERSONAS = { personas: [{ id: 'p1', angles: [{ objection_addressed: 'is it safe for eczema' }] }] };
@@ -489,6 +492,116 @@ test('runDemandMiner clamps `limit` to SEED_CAP rather than letting it raise the
     now: 'x',
   });
   assert.equal(result.seedCount, 40, 'a --limit above SEED_CAP must never raise the ceiling above 40');
+});
+
+// --- Fix wave: item 3 — a throwing persona overlay (a dangling personaId in
+// data/context/operator-angles.json, typically from a monthly voice-of-customer
+// renumbering) must degrade this run to leaks-only, not kill it. The overlay's throw
+// stays correct and unchanged for the other four readers (agents/ad-brief, the
+// dashboard's ad-brief route, agents/ad-studio, agents/creative-packager) — they are
+// copy-facing and a silent skip there would hide the operator's replacement copy. This
+// agent only SEEDS questions from personas.json, never quotes it as copy, and runs
+// unattended monthly from cron right alongside the run that causes the renumbering —
+// so an unrelated config error in a sibling agent's file must not take down the leak
+// half of this one too.
+
+test('a throwing persona overlay degrades the run to leaks-only, sets partial, and notifies naming operator-angles.json', async () => {
+  const { written, writeArtifacts } = collectWrites();
+  const { calls, notify } = collectNotify();
+  const throwingOverlay = () => {
+    throw new Error(
+      'operator-angles: angle(s) [p9a1] in data/context/operator-angles.json name persona "p9", '
+      + 'which is not in personas.json (known personas: p1, p2).',
+    );
+  };
+
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: stubAnthropic(),
+    readJson: (p) => (p.includes('impression-leaks') ? LEAKS : PERSONAS),
+    applyPersonaOverlay: throwingOverlay,
+    writeArtifacts,
+    notify,
+    now: 'x',
+  });
+
+  assert.equal(result.partial, true, 'a failed overlay must mark the run partial');
+  assert.ok(written.json, 'the run still completes on the leak seed alone — it must not throw');
+  const parsed = JSON.parse(written.json);
+  assert.ok(
+    parsed.questions.every((q) => q.seed_origin === 'gsc_leak'),
+    'no persona-objection seeds can appear once the overlay failed — personas were dropped for this run',
+  );
+
+  assert.equal(calls.length, 1, 'exactly one notify for the overlay failure');
+  assert.match(calls[0].subject + calls[0].body, /operator-angles\.json/, 'must name operator-angles.json as the cause');
+  assert.equal(calls[0].status, 'error');
+  assert.ok(!calls[0].immediate, 'deferred to the 5 AM digest, not an instant email — the run itself already recovered');
+});
+
+test('a throwing persona overlay still lets a zero-leak-seed run report cleanly (no seeds at all is the pre-existing "nothing to do" path, not a second failure)', async () => {
+  const { written, writeArtifacts } = collectWrites();
+  const { calls, notify } = collectNotify();
+  const throwingOverlay = () => { throw new Error('operator-angles: dangling personaId'); };
+
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: stubAnthropic(),
+    readJson: () => null,   // leaks feed also missing — nothing to seed from either source
+    applyPersonaOverlay: throwingOverlay,
+    writeArtifacts,
+    notify,
+    now: 'x',
+  });
+
+  assert.equal(result.questions.length, 0);
+  assert.deepEqual(written, {}, 'no seeds is not an error, and must not write an empty artifact');
+  // Still exactly one notify — the overlay-failure notify — even though the run then
+  // also finds zero seeds; the zero-seeds path itself returns early without a second
+  // notify (see the "both sources missing" test above).
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].subject + calls[0].body, /operator-angles\.json/);
+});
+
+// The catch around the overlay call must be scoped to ONLY the overlay step —
+// review finding: realApplyPersonaOverlay (the pre-review real wiring) ran BOTH
+// overlayPersonas AND sanitizePersonas inside runDemandMiner's single try/catch, so
+// an unrelated sanitizePersonas failure (a bug in lib/voice-of-customer.js, nothing
+// to do with data/context/operator-angles.json) would have been caught by the same
+// handler and misreported to the operator as an overlay problem, pointing them at
+// the wrong file. Fixed by splitting realApplyPersonaOverlay into
+// realOverlayPersonasOnly (what runDemandMiner's try/catch wraps) and
+// realSanitizePersonasStep (run afterward, outside the try). This test wires
+// runDemandMiner with BOTH real functions — not a stub standing in for "the whole
+// overlay" — and forces sanitizePersonas itself to throw (a truthy but non-iterable
+// `personas` field, `{}`, which lib/voice-of-customer.js's `for (const persona of
+// personas || [])` cannot iterate) to prove the failure propagates uncaught and is
+// never labeled as an operator-angles.json issue.
+test('the REAL overlay + sanitize wiring: a sanitizePersonas failure propagates uncaught and is never blamed on operator-angles.json', async () => {
+  const { writeArtifacts } = collectWrites();
+  const { calls, notify } = collectNotify();
+  // No operator-angles.json written in this root, so realOverlayPersonasOnly's own
+  // load (loadOperatorAngles) sees a missing file and is a genuine no-op — the
+  // overlay step itself must succeed cleanly here for this test to actually isolate
+  // the sanitize step's failure.
+  const root = mkdtempSync(join(tmpdir(), 'demand-miner-real-wiring-'));
+  const malformedPersonas = { personas: {} }; // truthy, but `for...of` cannot iterate an object
+
+  await assert.rejects(
+    () => runDemandMiner({
+      getSerpResults: stubSerp,
+      anthropic: stubAnthropic(),
+      readJson: (p) => (p.includes('impression-leaks') ? LEAKS : malformedPersonas),
+      applyPersonaOverlay: (personasData) => realOverlayPersonasOnly(personasData, root),
+      sanitizePersonasStep: (personasData) => realSanitizePersonasStep(personasData),
+      writeArtifacts,
+      notify,
+      now: 'x',
+    }),
+    /iterable/i,
+  );
+
+  assert.equal(calls.length, 0, 'the overlay-failure notify must NEVER fire for a sanitizePersonas failure — it is a different bug in a different file');
 });
 
 test('runDemandMiner with no `limit` behaves exactly as before (full SEED_CAP applies)', async () => {

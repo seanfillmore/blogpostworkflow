@@ -114,7 +114,34 @@ test('retirement runs before addition, so an id can be retired and replaced toge
 test('an authored angle naming an unknown persona throws and says why', () => {
   assert.throws(
     () => applyOperatorOverlay(PERSONAS, { angles: [{ personaId: 'p9', id: 'p9a1', label: 'x' }] }),
-    /names persona "p9".*known: p1, p2.*re-point the angle/s,
+    /name persona "p9".*known personas: p1, p2.*update the "personaId" field/s,
+  );
+});
+
+// The message must be actionable at 5 AM without opening the code: which angle, which
+// missing persona, and exactly what file to edit and how.
+test('the unknown-persona message names the offending angle id and the file to fix', () => {
+  assert.throws(
+    () => applyOperatorOverlay(PERSONAS, { angles: [{ personaId: 'p9', id: 'p9a1', label: 'x' }] }),
+    (err) => {
+      assert.match(err.message, /\[p9a1\]/, 'must name the offending angle id');
+      assert.match(err.message, /"p9"/, 'must name the missing personaId');
+      assert.match(err.message, /data\/context\/operator-angles\.json/, 'must name the file to fix');
+      assert.match(err.message, /update the "personaId" field|remove the entry/, 'must say what to do about it');
+      return true;
+    },
+  );
+});
+
+test('the unknown-persona message lists ALL offending angle ids when more than one names the same missing persona', () => {
+  assert.throws(
+    () => applyOperatorOverlay(PERSONAS, {
+      angles: [
+        { personaId: 'p9', id: 'p9a1', label: 'x' },
+        { personaId: 'p9', id: 'p9a2', label: 'y' },
+      ],
+    }),
+    /\[p9a1, p9a2\]/,
   );
 });
 

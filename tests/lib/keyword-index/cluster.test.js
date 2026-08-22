@@ -40,3 +40,30 @@ test('genuinely off-topic / empty queries stay unclustered', () => {
   assert.equal(assignCluster(''), 'unclustered');
   assert.equal(assignCluster(null), 'unclustered');
 });
+
+// The toothpaste rule's `cavit` alternative used to be followed directly by a
+// trailing \b, which requires a non-word character right after whatever matched.
+// No real query is ever the bare token "cavit" — it only ever appears inside
+// "cavity"/"cavities"/"cavitation" — so that \b could never be satisfied and the
+// alternative was dead code. A query naming cavities but no OTHER toothpaste term
+// (no "toothpaste"/"fluoride"/"tooth"/etc.) fell all the way through to the
+// coconut-oil bucket instead, e.g. "is coconut oil good for cavities" — a real
+// leak-report query — mis-clustered as 'coconut oil' (skin, ~$0 revenue toothpaste
+// vs skin cluster mislabeling either way) instead of 'toothpaste'.
+test('cavity/cavities/cavitation match the toothpaste cluster, even with no other toothpaste term present', () => {
+  assert.equal(assignCluster('is coconut oil good for cavities'), 'toothpaste');
+  assert.equal(assignCluster('does coconut oil cause cavities'), 'toothpaste');
+  assert.equal(assignCluster('coconut oil cavity prevention'), 'toothpaste');
+  assert.equal(assignCluster('how to prevent cavities naturally'), 'toothpaste');
+  assert.equal(assignCluster('cavity'), 'toothpaste');
+  assert.equal(assignCluster('cavities'), 'toothpaste');
+  assert.equal(assignCluster('tooth cavitation'), 'toothpaste');
+});
+
+// The \w*-based fix must still respect the leading \b: "cavit" embedded inside a
+// larger unrelated word with no boundary in front of it (no real English word does
+// this, but this pins that the fix didn't loosen the front edge) must not match.
+test('the cavit fix does not introduce false positives on words that merely contain the substring', () => {
+  assert.equal(assignCluster('concavity of a lens'), 'unclustered');
+  assert.equal(assignCluster('excavation site'), 'unclustered');
+});
