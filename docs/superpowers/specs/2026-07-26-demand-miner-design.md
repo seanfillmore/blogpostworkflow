@@ -1,7 +1,7 @@
 # Demand Miner — Top-of-Funnel Demand Data — Design
 
 **Date:** 2026-07-26
-**Status:** Approved design, pending implementation plan
+**Status:** Implemented — see `docs/superpowers/plans/2026-08-21-demand-miner.md`
 **Depends on:** `docs/superpowers/specs/2026-07-26-voice-of-customer-agent-design.md` (PR #355)
 
 ## Problem
