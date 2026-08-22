@@ -43,10 +43,39 @@ test('a confirmed entrant credits the referrer they named', () => {
   assert.equal(r.entries, 8, 'base 1 + confirm 2 + one referral 5');
 });
 
-test('a referrer who is not a confirmed entrant is never credited', () => {
+test('a referrer who never ENTERED is never credited — there is no entry to credit', () => {
   const updates = planEntryUpdates([profile('friend@x.com', { gv_referred_by: 'ghost@x.com' })]);
-  assert.equal(forEmail(updates, 'ghost@x.com'), undefined, 'ghost is not in the confirmed set');
+  assert.equal(forEmail(updates, 'ghost@x.com'), undefined, 'ghost never submitted the form');
   assert.equal(forEmail(updates, 'friend@x.com').breakdown.referrals, 0);
+});
+
+test('REGRESSION: an UNCONFIRMED referrer IS credited when their friend confirms', () => {
+  // §5 pays the referrer "+5 entries per confirmed friend" and conditions it on
+  // the FRIEND confirming, not the referrer. Only §6's prize clause requires a
+  // confirmed referrer, and that is decided at the draw. This function withheld
+  // the entries §5 already granted.
+  const updates = planEntryUpdates([
+    // Entered, never clicked the opt-in link: no stamp, not subscribed.
+    profile('pending@x.com', {}, { subscribed: false }),
+    // subscribed defaults true in this fixture, which IS the confirmation.
+    profile('friend@x.com', { gv_referred_by: 'pending@x.com' }),
+  ], { now: NOW });
+
+  const r = forEmail(updates, 'pending@x.com');
+  assert.ok(r, 'an unconfirmed entrant who earned a referral must be updated');
+  assert.equal(r.breakdown.referrals, 1);
+  assert.equal(r.breakdown.confirmed, false, 'earning a referral is NOT confirming');
+  assert.equal(r.entries, 1 + 5, 'base 1 + referral 5, with no +2 confirmation rung');
+  assert.equal(r.confirmedAt, null, 'and nothing may stamp them as confirmed');
+});
+
+test('an unconfirmed entrant who earned NOTHING is left alone entirely', () => {
+  // Only profiles that are confirmed or that earned a referral produce a write.
+  // Touching every submitted profile would be 200+ pointless Klaviyo calls a night.
+  const updates = planEntryUpdates([
+    profile('quiet@x.com', {}, { subscribed: false }),
+  ], { now: NOW });
+  assert.equal(forEmail(updates, 'quiet@x.com'), undefined);
 });
 
 test('self-referral credits nobody', () => {
@@ -134,21 +163,26 @@ test('an unsubscribed entrant already credited before the stamp existed does not
   assert.equal(u.confirmedAt, NOW, 'the missing stamp is backfilled');
 });
 
-test('someone who NEVER confirmed is not credited and credits nobody', () => {
+test('someone who NEVER confirmed never earns the +2 confirmation rung', () => {
   // Pending double opt-in, or unsubscribed without ever clicking: no stamp, no
-  // stored confirmed flag, not currently subscribed. Crediting this profile
-  // would pay the +2 rung for doing nothing.
+  // stored confirmed flag, not currently subscribed. Paying the +2 here would
+  // credit the rung for doing nothing.
+  //
+  // NOTE what this test no longer claims. It used to assert that such a profile
+  // "credits nobody" — i.e. that an unconfirmed REFERRER earns no +5. That was
+  // stricter than the published rules: §5 conditions the +5 on the FRIEND
+  // confirming, and only §6's prize clause requires a confirmed referrer. The
+  // referral half now has its own regression test above.
   const updates = planEntryUpdates([
     profile('pending@x.com', {}, { subscribed: false }),
     profile('friend@x.com', { gv_referred_by: 'pending@x.com' }),
   ], { now: NOW });
 
-  assert.equal(forEmail(updates, 'pending@x.com'), undefined, 'never-confirmed profiles produce no update');
-  assert.equal(
-    forEmail(updates, 'friend@x.com').breakdown.referrals,
-    0,
-    'and an unconfirmed referrer is still not a valid referrer',
-  );
+  const pending = forEmail(updates, 'pending@x.com');
+  assert.equal(pending.breakdown.confirmed, false, 'no +2 for a profile that never confirmed');
+  assert.equal(pending.breakdown.referrals, 1, 'but the referral their friend generated IS theirs');
+  assert.equal(pending.entries, 1 + 5, 'base 1 + referral 5 — no confirmation rung');
+  assert.equal(pending.confirmedAt, null, 'and nothing stamps them confirmed');
 });
 
 test('other rungs already earned are preserved, not reset', () => {

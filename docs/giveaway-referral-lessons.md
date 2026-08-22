@@ -83,6 +83,54 @@ telling people the truth about why their referral was not paying.
    pairs to a human and never emails them. Next time, state the heuristic's
    existence in the rules so the determination is disclosed rather than inferred.
 
+## The rules contradict themselves about who is in the draw
+
+Found 2026-08-22. This is the most serious drafting defect in the document, and
+it is *not* the referral mechanic — it is the draw pool itself.
+
+| Section | Says |
+|---|---|
+| §4 | "One base entry per email address" for submitting the form |
+| §5 | "Base entry — submitting the entry form: 1 entry" |
+| §8 | drawn "from all eligible entries received during the Entry Period" |
+| §12 | "Sponsor will use a snapshot of **confirmed entrants** taken at the close of the Entry Period to conduct the drawing" |
+
+§4 and §5 grant an entry for submitting. §12 defines the draw pool as confirmed
+entrants only. Both cannot operate, and §12 is the only sentence in the document
+that describes how the pool is assembled — while sitting under a heading
+("Unsubscribing Does Not Forfeit Your Entry") whose subject is something else
+entirely.
+
+At the time this was found the gap held **206 of 283 entrants** — about 40% of a
+508-entry pool. Not a rounding question.
+
+**Operator determination 2026-08-22:** unconfirmed entrants ARE in the draw, at
+whatever entries §5 grants them. Recorded as `drawIncludesUnconfirmedEntrants`
+in `config/giveaway.json` with the full reasoning, because the draw was not built
+yet and nothing had committed to a reading.
+
+### For the next promotion
+
+6. **Define the draw pool once, in one sentence, in the winner-selection
+   section.** Something like: "The drawing will be conducted from all entries
+   validly received during the Entry Period, including entries held by entrants
+   who did not complete email confirmation." Then never mention pool composition
+   anywhere else. §12 should talk about unsubscribing and nothing else.
+
+7. **Decide the confirmation question deliberately, before publishing.** If you
+   *want* confirmation to be a condition of entry, say so in §4 as a condition
+   of entry — not as a side effect of how a snapshot happens to be taken. If you
+   don't, don't let a snapshot sentence imply it. Either is defensible; the
+   defect is having both.
+
+8. **Keep entry-crediting and prize-eligibility conditions visibly separate.**
+   §5's +5 is conditioned on the *friend* confirming; §6's second prize is
+   conditioned on the *referrer* being confirmed. Those are different tests on
+   different parties, and `reconcile.js` conflated them for the whole first week
+   of this promotion — applying §6's condition to §5's credit and withholding
+   entries the rules had already granted. Fixed 2026-08-22. A rules document that
+   states each condition next to the thing it governs makes that mistake harder.
+
 ## What NOT to conclude
 
 Referral volume being ~0 in the first days is **not** evidence the mechanic
