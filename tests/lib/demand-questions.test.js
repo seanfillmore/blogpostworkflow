@@ -6,7 +6,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { SEED_CAP, deriveSeeds, normalizeHarvest, validateQuestions } from '../../lib/demand-questions.js';
-import { renderDemandQuestionsMarkdown } from '../../lib/demand-questions.js';
+import { renderDemandQuestionsMarkdown, filterLeaksToSkinCluster, SKIN_LEAK_CLUSTERS } from '../../lib/demand-questions.js';
 import { AWARENESS_LEVELS } from '../../lib/voice-of-customer.js';
 
 const leak = (query, impressions) => ({ query, impressions, clicks: 0, position: 10 });
@@ -333,4 +333,69 @@ test('\\r\\n is handled the same as \\n', () => {
   const hit = lines.filter((l) => l.includes('Why does') || l.includes('my skin react?'));
   assert.equal(hit.length, 1, 'the entry must land on exactly one physical line');
   assert.ok(hit[0].includes('Why does my skin react?'), 'the newline becomes a space, content preserved');
+});
+
+// --- Fix wave: item 3 — leak seeds must be filtered to the skin cluster ---
+//
+// Leaks are unfiltered site-wide GSC impression data. This artifact stamps every
+// question `cluster: "skin"`, so an oral-care leak mined and labelled "skin" would
+// both waste a paid seed on a ≈$0-revenue cluster (per the Prime Directive) and
+// mislabel the resulting artifact. These pin filterLeaksToSkinCluster's behavior
+// against the concrete leaks named in the fix-wave review.
+
+test('SKIN_LEAK_CLUSTERS is lotion + soap + the generic coconut-oil bucket', () => {
+  assert.deepEqual([...SKIN_LEAK_CLUSTERS].sort(), ['coconut oil', 'lotion', 'soap']);
+});
+
+test('oral-care leaks that mention coconut oil are excluded, not misclassified as skin', () => {
+  const leaks = [
+    leak('cinnamon toothpaste', 500),
+    leak('coconut oil as toothpaste', 495),
+    leak('are coconut oil toothpastes safe for sensitive teeth?', 414),
+  ];
+  assert.deepEqual(filterLeaksToSkinCluster(leaks), []);
+});
+
+test('genuine skin-cluster leaks survive, including generic coconut-oil-for-skin queries', () => {
+  const leaks = [
+    leak('coconut oil acne', 900),
+    leak('best natural body lotion', 300),
+    leak('natural bar soap for men', 200),
+  ];
+  assert.deepEqual(filterLeaksToSkinCluster(leaks).map((l) => l.query), leaks.map((l) => l.query));
+});
+
+test('deodorant, lip balm and hair leaks are excluded — separate clusters, not skin', () => {
+  const leaks = [
+    leak('coconut oil deodorant', 700),
+    leak('coconut oil for hair benefits', 650),
+    leak('best natural lip balm for chapped lips', 600),
+  ];
+  assert.deepEqual(filterLeaksToSkinCluster(leaks), []);
+});
+
+test('a mixed feed keeps only the skin-cluster entries, order preserved', () => {
+  const leaks = [
+    leak('cinnamon toothpaste', 500),
+    leak('coconut oil acne', 900),
+    leak('coconut oil for hair benefits', 650),
+    leak('natural bar soap for men', 200),
+  ];
+  assert.deepEqual(
+    filterLeaksToSkinCluster(leaks).map((l) => l.query),
+    ['coconut oil acne', 'natural bar soap for men'],
+  );
+});
+
+test('null/undefined leaks pass through unchanged — missing-source degradation is deriveSeeds\' job', () => {
+  assert.equal(filterLeaksToSkinCluster(null), null);
+  assert.equal(filterLeaksToSkinCluster(undefined), undefined);
+});
+
+test('an all-off-cluster feed filters down to an empty array, not null', () => {
+  // Distinguishing "no leak feed" (null) from "leak feed present, nothing survived
+  // the filter" ([]) matters: deriveSeeds' partial detection depends on it.
+  const result = filterLeaksToSkinCluster([leak('cinnamon toothpaste', 500)]);
+  assert.deepEqual(result, []);
+  assert.notEqual(result, null);
 });

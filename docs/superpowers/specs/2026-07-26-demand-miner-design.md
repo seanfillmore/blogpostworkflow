@@ -108,8 +108,9 @@ refreshed.
 
 GSC leaks taken highest-impression-first; persona objections round-robin across personas
 so one persona cannot monopolize the budget. Cost is one DataForSEO SERP call per seed
-plus one Claude call per run. Without the cap, a bad GSC week silently becomes hundreds
-of unattended API calls.
+plus up to two Claude calls per run (the stage-classification call retries exactly once
+on malformed/schema-invalid output before giving up). Without the cap, a bad GSC week
+silently becomes hundreds of unattended API calls.
 
 ## Artifact contract
 

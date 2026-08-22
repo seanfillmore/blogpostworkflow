@@ -13,6 +13,17 @@
  *
  * Usage:
  *   node agents/demand-miner/index.js
+ *   node agents/demand-miner/index.js --limit 5
+ *
+ * --limit <n> caps how many seeds this run harvests (one paid DataForSEO SERP call
+ * each), for a cheap rehearsal of a first/real run — the classification-call and
+ * merge failure modes fixed in the 2026-08-21 review (max_tokens truncation, a
+ * text-keyed merge) only surface at the ~200-400-question scale a real 40-seed run
+ * produces, not at the 1-question scale the test suite uses. It CLAMPS, never
+ * raises: a value above SEED_CAP (40, in lib/demand-questions.js) is silently capped
+ * at 40 rather than honored, so a mistyped --limit can never spend more than the
+ * hard ceiling already allows. The cap itself has no override — this is a per-run
+ * CLI flag read here in the shell, not a change to SEED_CAP.
  *
  * Spec: docs/superpowers/specs/2026-08-21-demand-miner-design.md
  */
@@ -23,12 +34,15 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '../../lib/anthropic.js';
 import { getSerpResults } from '../../lib/dataforseo.js';
 import { notify as realNotify } from '../../lib/notify.js';
-import { AWARENESS_LEVELS } from '../../lib/voice-of-customer.js';
+import { AWARENESS_LEVELS, sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
+import { overlayPersonas } from '../../lib/operator-angles.js';
 import {
+  SEED_CAP,
   deriveSeeds,
   normalizeHarvest,
   validateQuestions,
   renderDemandQuestionsMarkdown,
+  filterLeaksToSkinCluster,
 } from '../../lib/demand-questions.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -64,6 +78,16 @@ function loadEnv(root = ROOT) {
  * production model response to ever reach validateQuestions with a bad value, but
  * that check exists as a second, independent line of defense (see the docstring
  * below) and stays meaningful only if it can actually fire on real output.
+ *
+ * `index` rather than `text`: the merge used to key on the model's echoed
+ * question text (`q.text.trim().toLowerCase()`), which breaks the moment the
+ * model keeps the `[1] ` prompt prefix, normalizes a curly apostrophe to a
+ * straight one (common in PAA text), or collapses internal whitespace
+ * differently than `normalizeHarvest` does. Every one of those is a silent,
+ * total miss — the retry produces the same mismatch and the run throws after
+ * the 40 paid SERP calls are already spent. The prompt already numbers every
+ * question `[n]`, so asking for the number back and merging positionally is
+ * both simpler and immune to any text transformation the model applies.
  */
 const CLASSIFY_SCHEMA = {
   type: 'object',
@@ -75,9 +99,9 @@ const CLASSIFY_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['text', 'stage'],
+        required: ['index', 'stage'],
         properties: {
-          text: { type: 'string' },
+          index: { type: 'integer' },
           stage: { type: 'string' },
         },
       },
@@ -98,8 +122,9 @@ function buildClassifyPrompt(records) {
     '  most-aware       — knows our product specifically, needs a final push',
     '',
     'Respond with ONLY a JSON object of the exact shape:',
-    '  { "questions": [ { "text": "<question, verbatim>", "stage": "<one of the levels above>" }, ... ] }',
-    'Return one entry for every question below, using its exact text. No prose, no markdown fence.',
+    '  { "questions": [ { "index": <the question\'s [n] number below>, "stage": "<one of the levels above>" }, ... ] }',
+    'Return one entry for every question below, identified by its [n] index number — do NOT echo',
+    'the question text back. No prose, no markdown fence.',
     '',
     'QUESTIONS:',
   ];
@@ -110,17 +135,35 @@ function buildClassifyPrompt(records) {
 /**
  * The one LLM call. Sends the deduped question texts, asks for a stage per
  * question, parses the JSON response, and merges each returned `stage` back
- * onto its record by text.
+ * onto its record POSITIONALLY by the `[n]` index the prompt assigned — never
+ * by echoed text (see the CLASSIFY_SCHEMA docstring below for why).
  *
  * Retries exactly once on malformed or schema-violating output (bad JSON, a
- * missing `questions` array, an entry missing `text`/`stage`, or a response
- * that doesn't cover every question), then throws. This is a structural
+ * missing `questions` array, an entry missing `index`/`stage`, an
+ * out-of-range index, or a response that doesn't cover every question), then
+ * throws. This is a structural
  * check only — it does NOT validate that `stage` is one of the five funnel
  * levels; that is validateQuestions' job, run by the caller straight after,
  * so both checks stay single-purpose and neither silently overlaps the other.
  *
  * The retry is logged so a recurring parse failure is visible in the digest
  * rather than silent.
+ *
+ * max_tokens is 16000, matching agents/voice-of-customer/index.js:316 on the
+ * same model family. A real 40-seed run harvests roughly 200-400 deduped
+ * questions (a PAA box yields ~4, a related-searches box ~8), and each
+ * response entry costs ~22-25 output tokens plus schema/reasoning overhead —
+ * 4000 was sized against a one-question test fixture and would truncate on
+ * the first real run, after all 40 paid SERP calls were already spent.
+ *
+ * stop_reason === 'max_tokens' is checked BEFORE the parse and throws
+ * immediately rather than retrying: a truncated response cannot become valid
+ * JSON on a second attempt with the same input and the same ceiling, so
+ * retrying into the same wall would just spend a second call to fail the
+ * same way. This mirrors agents/voice-of-customer/index.js:324-325 and the
+ * blog-post-writer checklist in CLAUDE.md, which both treat max_tokens as
+ * fatal-not-retryable for the same reason: the alternative is a JSON.parse
+ * error that blames the model's formatting instead of naming the real cause.
  */
 export async function classifyStages({ anthropic, records }) {
   if (records.length === 0) return [];
@@ -132,7 +175,7 @@ export async function classifyStages({ anthropic, records }) {
     try {
       res = await anthropic.messages.create({
         model: MODEL,
-        max_tokens: 4000,
+        max_tokens: 16000,
         output_config: {
           effort: 'low',
           format: { type: 'json_schema', schema: CLASSIFY_SCHEMA },
@@ -143,6 +186,14 @@ export async function classifyStages({ anthropic, records }) {
       lastError = err;
       console.warn(`  demand-miner: LLM call failed on attempt ${attempt}: ${err.message} — retrying`);
       continue;
+    }
+
+    if (res.stop_reason === 'max_tokens') {
+      throw new Error(
+        `demand-miner: LLM stage classification hit max_tokens on attempt ${attempt} — output is `
+        + 'truncated, not a formatting problem. Not retrying: the same input and ceiling would '
+        + 'truncate identically.',
+      );
     }
 
     const text = (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
@@ -161,26 +212,42 @@ export async function classifyStages({ anthropic, records }) {
       continue;
     }
 
-    const stageByText = new Map();
+    // Merge POSITIONALLY by the [n] index the prompt assigned, never by echoed text —
+    // see the CLASSIFY_SCHEMA docstring above for why a text-keyed merge is fragile.
+    // Any index outside 1..records.length is treated as shape-invalid too: a real
+    // model response never has a reason to name an index that wasn't offered, so
+    // tolerating it would just mask the same kind of malformed output text-keying let
+    // slip through this schema's predecessor.
+    const stageByIndex = new Map();
     let shapeOk = true;
     for (const q of parsed.questions) {
-      if (!q || typeof q.text !== 'string' || typeof q.stage !== 'string') { shapeOk = false; break; }
-      stageByText.set(q.text.trim().toLowerCase(), q.stage);
+      if (
+        !q
+        || typeof q.index !== 'number'
+        || !Number.isInteger(q.index)
+        || q.index < 1
+        || q.index > records.length
+        || typeof q.stage !== 'string'
+      ) { shapeOk = false; break; }
+      stageByIndex.set(q.index, q.stage);
     }
     if (!shapeOk) {
-      lastError = new Error('a question entry was missing "text" or "stage"');
-      console.warn(`  demand-miner: attempt ${attempt} was schema-invalid (missing text/stage) — retrying`);
+      lastError = new Error('a question entry was missing "index"/"stage" or carried an out-of-range index');
+      console.warn(`  demand-miner: attempt ${attempt} was schema-invalid (missing/out-of-range index or stage) — retrying`);
       continue;
     }
 
-    const missing = records.filter((r) => !stageByText.has(r.text.trim().toLowerCase()));
+    const missing = [];
+    for (let i = 1; i <= records.length; i++) {
+      if (!stageByIndex.has(i)) missing.push(i);
+    }
     if (missing.length > 0) {
-      lastError = new Error(`LLM response is missing a stage for ${missing.length} of ${records.length} question(s)`);
+      lastError = new Error(`LLM response is missing a stage for ${missing.length} of ${records.length} question(s) (indices: ${missing.join(', ')})`);
       console.warn(`  demand-miner: attempt ${attempt} did not classify every question — retrying`);
       continue;
     }
 
-    return records.map((r) => ({ ...r, stage: stageByText.get(r.text.trim().toLowerCase()) }));
+    return records.map((r, i) => ({ ...r, stage: stageByIndex.get(i + 1) }));
   }
 
   throw new Error(`demand-miner: LLM stage classification failed twice — ${lastError ? lastError.message : 'unknown error'}`);
@@ -195,18 +262,45 @@ export async function classifyStages({ anthropic, records }) {
  * `notify` defaults to the real `lib/notify.js` sender so main() doesn't have to pass
  * it explicitly, but stays overridable — the degraded-harvest guard below sends one,
  * and a test must be able to intercept it without risking a real email.
+ *
+ * `applyPersonaOverlay` defaults to identity so existing callers/tests that don't care
+ * about the overlay are unaffected. main() wires the real one: load
+ * data/context/operator-angles.json, overlay it onto personas.json, THEN run
+ * sanitizePersonas — the same order the other four personas.json readers use (see
+ * lib/operator-angles.js). This agent is a fifth reader; skipping either half means
+ * a retired angle can still consume a paid seed while an operator-authored
+ * replacement is silently never seeded at all.
+ *
+ * `limit` defaults to undefined (no rehearsal cap — the full SEED_CAP applies via
+ * deriveSeeds as before). When given, it trims the already-derived seed list down
+ * to at most `limit` entries, clamped so it can never exceed SEED_CAP — see the
+ * --limit docs in this file's header. Applied AFTER deriveSeeds, not by changing
+ * the cap it enforces internally, so the reserve-then-top-up split (lib/demand-
+ * questions.js) is untouched and this stays a pure "harvest fewer of the same
+ * seeds" knob rather than a second cap implementation.
  */
-export async function runDemandMiner({ getSerpResults, anthropic, readJson, writeArtifacts, now, notify = realNotify }) {
+export async function runDemandMiner({
+  getSerpResults, anthropic, readJson, writeArtifacts, now, notify = realNotify,
+  applyPersonaOverlay = (personasData) => personasData,
+  limit,
+}) {
   const leaksFeed = readJson('data/reports/gsc-query-miner/impression-leaks.json');
   // impression-leaks.json is always written by gsc-query-miner as { leaks: [...] } —
   // buildImpressionLeaksFeed's shape is guaranteed by the agent that writes it, so unlike
   // personas.json below there is no bare-array variant to tolerate here.
-  const personasFile = readJson('data/context/personas.json');
+  const personasFile = applyPersonaOverlay(readJson('data/context/personas.json'));
 
-  const { seeds, partial: seedPartial } = deriveSeeds({
-    leaks: leaksFeed?.leaks ?? null,
+  // Leaks are unfiltered site-wide GSC queries, but this artifact is stamped
+  // `cluster: "skin"` — filter to skin-cluster leaks BEFORE deriveSeeds so a run
+  // never spends paid seeds mining a cluster it then mislabels as skin. See
+  // lib/demand-questions.js's filterLeaksToSkinCluster docstring for why.
+  const { seeds: derivedSeeds, partial: seedPartial } = deriveSeeds({
+    leaks: filterLeaksToSkinCluster(leaksFeed?.leaks ?? null),
     personas: personasFile?.personas ?? personasFile ?? null,
   });
+  const seeds = (typeof limit === 'number' && limit > 0)
+    ? derivedSeeds.slice(0, Math.min(limit, SEED_CAP))
+    : derivedSeeds;
   let partial = seedPartial;
 
   // No seeds is not an error — log and leave every artifact untouched. Writing an
@@ -287,6 +381,29 @@ function realReadJson(relativePath, root = ROOT) {
 }
 
 /**
+ * The real personas.json load path: overlay FIRST, sanitize SECOND — the order
+ * lib/operator-angles.js documents and the other four readers (agents/ad-brief,
+ * the dashboard's ad-brief route, agents/ad-studio's non-brief path,
+ * agents/creative-packager's loadPersonas) all use. This agent is the fifth.
+ *
+ * A missing/unparseable personas.json is `null` here (realReadJson already
+ * degrades that way) and passes straight through — overlayPersonas and
+ * sanitizePersonas both no-op on null, matching the pre-existing degradation
+ * path this agent's tests already cover (deriveSeeds treats missing personas
+ * as a partial run, not a failure).
+ */
+export function realApplyPersonaOverlay(personasData, root = ROOT) {
+  if (!personasData) return personasData;
+  const overlaid = overlayPersonas(personasData, { root });
+  const { personas: safe, drops } = sanitizePersonas(overlaid?.personas || []);
+  if (drops.length) {
+    console.warn(`  demand-miner: withheld ${drops.length} health-claim violation(s) from persona seeds:`);
+    console.warn(formatPersonaDrops(drops));
+  }
+  return { ...overlaid, personas: safe };
+}
+
+/**
  * Writes both context artifacts plus a dated run record. Takes only the two
  * already-rendered strings the injectable core produces — it parses `json`
  * back out for the metadata the run record needs (date, seed/question counts)
@@ -317,17 +434,37 @@ function realWriteArtifacts({ json, md }, root = ROOT) {
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Parse `--limit <n>` off argv. Returns undefined when absent (no rehearsal cap).
+ * Throws on a non-positive-integer value rather than silently ignoring a typo —
+ * a flag that's supposed to make a run cheaper must not fail open into the full
+ * 40-seed cost because it was misread as "no limit".
+ */
+export function parseLimitArg(argv = process.argv) {
+  const idx = argv.indexOf('--limit');
+  if (idx === -1) return undefined;
+  const raw = argv[idx + 1];
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new Error(`demand-miner: --limit expects a positive integer, got ${JSON.stringify(raw)}`);
+  }
+  return n;
+}
+
 async function main() {
   try {
     const e = loadEnv();
     const anthropic = new Anthropic({ apiKey: e.ANTHROPIC_API_KEY });
+    const limit = parseLimitArg();
 
-    console.log('demand-miner: running…');
+    console.log(`demand-miner: running…${limit ? ` (--limit ${limit}, clamped to SEED_CAP)` : ''}`);
     const result = await runDemandMiner({
       getSerpResults,
       anthropic,
       readJson: (p) => realReadJson(p),
       writeArtifacts: (files) => realWriteArtifacts(files),
+      applyPersonaOverlay: (personasData) => realApplyPersonaOverlay(personasData),
+      limit,
       now: new Date().toISOString(),
     });
 
