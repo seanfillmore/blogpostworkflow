@@ -73,3 +73,26 @@ if (now === 'live') {
   process.exit(1);
 }
 console.log('Entry Period closed: the nurture flow will send nothing further.');
+
+// The pool must be frozen at the close of the Entry Period (§12), and this job
+// is the only thing that runs at that moment.
+//
+// SPAWNED, not imported: importing a script module RUNS it, and doing that here
+// would execute the snapshot as a side effect of merely reading this file — the
+// hazard documented across the fleet in reference_agents_run_on_import.
+//
+// A snapshot failure does not undo the flow close above (that already succeeded
+// and must not be reverted), but it does fail the job loudly, because a drawing
+// with no frozen pool is the one outcome that cannot be recovered later.
+if (apply) {
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(
+    process.execPath,
+    [join(ROOT, 'scripts', 'giveaway', 'take-draw-snapshot.mjs'), '--apply'],
+    { stdio: 'inherit' },
+  );
+  if (r.status !== 0) {
+    console.error('SNAPSHOT FAILED — the drawing has no frozen pool. Run take-draw-snapshot.mjs by hand today.');
+    process.exitCode = 1;
+  }
+}
