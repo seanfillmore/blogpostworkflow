@@ -15,16 +15,26 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listProfilesWithConsent, updateProfileProperties } from '../../lib/klaviyo-profiles.js';
+import { listProfilesWithConsent, listEntrantProfiles, updateProfileProperties } from '../../lib/klaviyo-profiles.js';
 import { planEntryUpdates } from '../../lib/giveaway/reconcile.js';
+import { mergeEntrantProfiles } from '../../lib/giveaway/referral-audit.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const { listId } = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
+const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
+const { listId } = config;
 const apply = process.argv.includes('--apply');
 
-const profiles = await listProfilesWithConsent(listId);
-const subscribed = profiles.filter((p) => p.subscribed).length;
-console.log(`${profiles.length} list profiles (${subscribed} currently subscribed)`);
+// BOTH populations. Klaviyo adds a profile to the list only once double opt-in
+// completes, so the list IS the confirmed set — measured 2026-08-22: 280
+// submitted, 77 listed. Reading the list alone could not see an unconfirmed
+// entrant at all, which is why §5's "+5 per confirmed friend" was never paid to
+// a referrer who had not confirmed: they were invisible, not merely filtered.
+const [listed, submitted] = await Promise.all([
+  listProfilesWithConsent(listId),
+  listEntrantProfiles(config.entryOpensAt),
+]);
+const profiles = mergeEntrantProfiles(listed, submitted);
+console.log(`${submitted.length} submitted, ${listed.length} on the list (${listed.filter((p) => p.subscribed).length} currently subscribed)`);
 
 const updates = planEntryUpdates(profiles);
 if (!updates.length) { console.log('Everything already reconciled.'); process.exit(0); }
@@ -39,7 +49,14 @@ for (const row of updates) {
       gv_entries: row.entries,
       // The durable proof of confirmation. Without it a later unsubscribe would
       // make this entrant invisible to every future run.
-      gv_confirmed_at: row.confirmedAt,
+      //
+      // OMITTED ENTIRELY when null. A row can now be an UNCONFIRMED entrant who
+      // earned a referral (§5 pays the +5 on the friend's confirmation, not the
+      // referrer's), and those carry confirmedAt: null. Sending the key with a
+      // null would write null over a real stamp the moment such a profile later
+      // confirms and a race reorders the writes — destroying the one record that
+      // makes confirmation survive an unsubscribe.
+      ...(row.confirmedAt ? { gv_confirmed_at: row.confirmedAt } : {}),
     });
   } catch (e) {
     // One bad profile must not abandon the rest of the run. The next run

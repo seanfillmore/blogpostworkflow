@@ -49,29 +49,50 @@ test('self-referral is rejected regardless of case', () => {
   const r = validateReferral({
     referrerEmail: 'Sean@Example.com',
     entrantEmail: 'sean@example.com',
-    referrerIsConfirmedEntrant: true,
+    referrerIsEntrant: true,
     referrerReferralCredits: 0,
   });
   assert.equal(r.ok, false);
   assert.match(r.reason, /self-referral/i);
 });
 
-test('an unconfirmed referrer earns nothing — a prize cannot go to someone who never accepted the rules', () => {
+test('a referrer who never entered earns nothing — there is no entry to credit', () => {
+  // Not a confirmation test. §5 pays "+5 entries per confirmed friend" onto the
+  // REFERRER's entry, so the referrer must have one; someone who never
+  // submitted the form has no entry for the bonus to stack on (§4/§5).
   const r = validateReferral({
     referrerEmail: 'friend@example.com',
     entrantEmail: 'entrant@example.com',
-    referrerIsConfirmedEntrant: false,
+    referrerIsEntrant: false,
     referrerReferralCredits: 0,
   });
   assert.equal(r.ok, false);
-  assert.match(r.reason, /not a confirmed entrant/i);
+  assert.match(r.reason, /has not entered/i);
+});
+
+test('REGRESSION: an UNCONFIRMED referrer still earns the +5 their friend generated', () => {
+  // §5's referral bullet conditions the bonus on the FRIEND confirming — "Each
+  // referred friend who confirms their own entry ... +5 entries per confirmed
+  // friend". It says nothing about the referrer's own confirmation.
+  //
+  // Only §6's PRIZE clause requires a confirmed referrer ("but only if the named
+  // referrer is (a) themselves a confirmed entrant"), and that is a draw-time
+  // test, not an entry-crediting one. Requiring confirmation here withheld
+  // entries the published rules had already granted.
+  const r = validateReferral({
+    referrerEmail: 'friend@example.com',
+    entrantEmail: 'entrant@example.com',
+    referrerIsEntrant: true,
+    referrerReferralCredits: 0,
+  });
+  assert.deepEqual(r, { ok: true, reason: null });
 });
 
 test('a referrer already at the cap earns nothing more', () => {
   const r = validateReferral({
     referrerEmail: 'friend@example.com',
     entrantEmail: 'entrant@example.com',
-    referrerIsConfirmedEntrant: true,
+    referrerIsEntrant: true,
     referrerReferralCredits: REFERRAL_CAP,
   });
   assert.equal(r.ok, false);
@@ -82,7 +103,7 @@ test('a valid referral is accepted', () => {
   const r = validateReferral({
     referrerEmail: 'friend@example.com',
     entrantEmail: 'entrant@example.com',
-    referrerIsConfirmedEntrant: true,
+    referrerIsEntrant: true,
     referrerReferralCredits: 3,
   });
   assert.deepEqual(r, { ok: true, reason: null });
