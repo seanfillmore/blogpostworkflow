@@ -1,6 +1,6 @@
 ---
 name: marketing-retention-offers
-description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, recovering failed recurring payments before they become silent cancellations, placing a reward just past the churn point, winning back customers who lapsed months ago, cultivating the top repeat buyers by hand, keeping a note on every customer so support never makes them repeat themselves, and answering a refund request with store credit instead of cash.
+description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, recovering failed recurring payments before they become silent cancellations, placing a reward just past the churn point, grandfathering existing subscribers when you raise the price, winning back customers who lapsed months ago, cultivating the top repeat buyers by hand, keeping a note on every customer so support never makes them repeat themselves, and answering a refund request with store credit instead of cash.
 ---
 
 # Retention Offers
@@ -37,7 +37,19 @@ description: Use when the goal is a second or repeat purchase from someone who a
 
 **Fit here (8/10):** RSC already knows its churn point precisely: the natural-deodorant transition period, which is exactly when a first-time buyer concludes the product failed and is why repeat sits at 18–22.5%. A stated 'stay through order three and your price drops permanently' costs nothing to configure as a founding-subscriber rate, needs no traffic or attribution, and pairs with the transition-period education already in the post-purchase flow. The rice-company precedent is a consumable CPG rather than a high-ticket service, so it transfers cleanly. Held below 9 because the margin give is permanent and must be sized from real landed cost rather than a percentage-off reflex.
 
+This rule fires on **tenure** — the customer earns the rate by staying. The grandfathering rule below fires on a **price-change event** and locks a rate the customer already has. They stack: a founding-subscriber rate earned at order three is exactly the kind of rate worth announcing as locked when the list price later steps up.
+
 *Source: Alex Hormozi — "$100M Money Models" (book, part 10 of 11)*
+
+## When you raise the price or withdraw an offer, announce it and tell existing customers explicitly that they are grandfathered in at their current rate.
+
+**Why it works:** One announcement does two jobs. For prospects it puts a real deadline on the current price. For existing customers it converts a price rise — normally a churn trigger, because any billing change prompts a fresh review of the subscription — into a loyalty reward. The locked rate becomes an asset the customer forfeits by cancelling, so commitment lengthens at precisely the moment it would otherwise shorten. The announcement itself is the retention mechanism, not just the notification of one.
+
+**Evidence offered:** Demonstrated rather than taught, and stated twice in the same passage: 'we're going to be removing my reports from Founder's Club shortly (don't worry you'll still get them - you're grandfathered in)... we're going to be offering them at a much higher price... once again you're grandfathered in.' Assertion only, no retention or conversion figures.
+
+**Fit here (5/10):** Durable-principle class (retention and pricing psychology), so the age of the source is irrelevant. Directly actionable because offer construction here already prescribes stepping prices upward in committed increments on Shopify — this names what to do the moment that step lands: email the subscribe-and-save base to say the new price applies to new subscribers only and their rate is locked. Free, one email, solo-executable, aimed at the binding retention constraint. Capped at 5 because it is close kin to the milestone-rate rule above — the additive part is narrow (the trigger is a price-change event rather than a tenure milestone) — because the recurring base is still small, and because the urgency half only works if the increase is **genuinely honoured**; an announced rise that never happens burns the deadline for every future announcement.
+
+*Source: Rich Schefren — "The Hidden Obstacles To Your Success" (special report, part 3 of 9)*
 
 ## Win back customers who haven't purchased in 6+ months by crediting back part of what they previously paid, framed as their own money returned, redeemable only against a new and usually larger purchase.
 
@@ -75,7 +87,7 @@ description: Use when the goal is a second or repeat purchase from someone who a
 
 **Evidence offered:** Asserted from 18 years of operating history, with the observation that the best customer is often a different persona than the operator assumed. No figures.
 
-**Fit here (7/10):** The distribution described is almost exactly this business — **18–22.5% repeat driving 45–52% of revenue** — which aims it straight at the binding constraint. At ~54 orders/month a solo operator can literally know and personally email the top repeat buyers, so this works *because* of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves. Additive to the rest of this skill, which covers subscription cadence, billing recovery, milestone rates, win-back credit and store credit but nothing about identifying and cultivating a top-customer segment.
+**Fit here (7/10):** The distribution described is almost exactly this business — **18–22.5% repeat driving 45–52% of revenue** — which aims it straight at the binding constraint. At ~54 orders/month a solo operator can literally know and personally email the top repeat buyers, so this works *because* of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves. Additive to the rest of this skill, which covers subscription cadence, billing recovery, milestone rates, grandfathered pricing, win-back credit and store credit but nothing about identifying and cultivating a top-customer segment.
 
 Three limits. The standing discount code is **permanent margin** against a $50.46 AOV and must be sized from landed cost. Amazon buyers (~$1,800/mo, the larger channel) cannot be contacted this way at all. And the "your best customer is a different persona than you assumed" claim is a **prompt to check actual Shopify order history**, not a conclusion to act on — verify it against `personas.json` before rewriting anything.
 

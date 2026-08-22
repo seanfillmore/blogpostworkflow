@@ -1,6 +1,6 @@
 ---
 name: marketing-post-purchase-onboarding
-description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, the promise-and-timeline schedule in the first 48 hours after checkout, packaging inserts and their scannable opt-in destination, first-use instructions and named routines, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order.
+description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, the promise-and-timeline schedule in the first 48 hours after checkout, the order-confirmation email that counters buyer's remorse by re-selling the benefit and restating the guarantee, packaging inserts and their scannable opt-in destination, first-use instructions and named routines, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order.
 ---
 
 # Post Purchase Onboarding
@@ -24,6 +24,16 @@ description: Use when building or fixing what a customer receives after they buy
 **Fit here (7/10):** Durable retention principle, age irrelevant, and it names a mechanism no other entry owns — the rest of this skill covers *what* to teach (transition period, routine, early win) but nothing covers the expectation-setting schedule in the hours right after checkout. Direct fit because retention is the binding constraint and repeat customers are 45–52% of revenue. The honest ecommerce translation is an order-confirmation and pre-arrival sequence that states exactly when the order ships, when it arrives, when the first email lands and what week two will feel like — and then actually delivers each. Free, solo-executable in existing Klaviyo flows, no traffic or attribution needed. Not higher because every promise must be genuinely keepable by one person with FBA and third-party shipping — **only promise what the fulfilment reality can hit** — and at ~54 orders/month the effect on repeat rate will never be cleanly measurable.
 
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
+
+## Counter buyer's remorse in the same window: the order-confirmation and first post-purchase email should re-sell the specific benefit they just bought, restate the money-back guarantee, and say exactly how to reach a human with a question.
+
+**Why it works:** Doubt forms in the minutes and hours after payment — did I need this, can I afford it — and an unanswered doubt turns into a refund or a cancellation. Most buyers only need to know the money-back option exists rather than to use it, so restating the guarantee removes the risk at no cost, and re-stating the benefit gives the decision a reason to survive the doubt. This is the *content* rule that sits inside the first-48-hours schedule above: that section says when each message lands, this says what the earliest ones must carry.
+
+**Evidence offered:** Assertion within the seventh buying-process step, plus the observation that 'most buyers simply need the reassurance that they can get their money back if need be'. No refund or retention figures.
+
+**Fit here (5/10):** Durable retention psychology, free, and aimed at the binding constraint — repeat customers are 45–52% of revenue and the churn event is a first-time buyer deciding during the transition period that the product failed. The additive part over the existing entries is narrow but real: `marketing-offer-construction` owns writing and placing the guarantee on the PDP, and this skill already owns the promise schedule and the pre-arrival education series — what nobody covered is that **the guarantee belongs restated inside the order-confirmation and first post-purchase email, not only on the page that sold them**, and that this email should re-sell the specific benefit rather than just confirm shipping. Capped at 5 for that overlap and because at ~54 orders/month a change in refund rate will never be readable. Note the tension with the fear-handling rule in `marketing-conversion-copy-angles`: the guarantee restatement is evidence, but bare 'don't worry' reassurance is not, so the same email still owes the dated transition timeline.
+
+*Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 3 of 6)*
 
 ## Put printed instructions or a getting-started insert in the box instead of shipping a bare product, because customers left to figure it out on their own don't reorder.
 
