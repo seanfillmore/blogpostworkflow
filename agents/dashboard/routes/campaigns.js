@@ -33,8 +33,12 @@ export default [
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (err) {
+        // Never echo err.message: it can originate from readFileSync/JSON.parse and
+        // carry an absolute filesystem path. Same pattern as router.js's failRoute —
+        // fixed generic body, real detail to stderr for PM2. Status code unchanged.
+        console.error(`[campaigns] error in ${req.method} ${req.url}:`, err?.stack || err);
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: err.message }));
+        res.end(JSON.stringify({ ok: false, error: 'invalid request' }));
       }
     },
   },
@@ -69,8 +73,10 @@ export default [
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (err) {
+        // Same as the /approve catch above: fixed generic body, real detail to stderr.
+        console.error(`[campaigns] error in ${req.method} ${req.url}:`, err?.stack || err);
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: false, error: err.message }));
+        res.end(JSON.stringify({ ok: false, error: 'invalid request' }));
       }
     },
   },
