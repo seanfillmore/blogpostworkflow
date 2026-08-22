@@ -6,7 +6,7 @@
 // production.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { classifyReferrals } from '../../lib/giveaway/referral-audit.js';
+import { classifyReferrals, mergeEntrantProfiles } from '../../lib/giveaway/referral-audit.js';
 
 // Mirrors tests/lib/giveaway-reconcile.js's fixture shape: state AS STORED.
 // `subscribed` is current consent, `gv_confirmed_at` is the durable proof.
@@ -76,43 +76,101 @@ test('an unconfirmed REFEREE blocks the credit and cannot lawfully be emailed', 
   assert.equal(r.notify, null, 'unreachable by marketing email — report only');
 });
 
-test('an exactly self-referred entry is void and silent', () => {
+test('REGRESSION: the lisamarob pair is a NORMAL referral that happens to be flagged', () => {
+  // The live 2026-08-21 case that prompted this work. Operator determination
+  // 2026-08-22: two addresses belonging to one person are still a valid
+  // referral. §6's entry-crediting void has never been enforced by
+  // reconcile.js either — validateReferral blocks only an EXACT address match —
+  // so suppressing here was the audit disagreeing with the payment path.
+  //
+  // The flag survives because §6's PRIZE half is explicitly "any email address
+  // Sponsor determines resolves to the same person", and that determination is
+  // made at the draw, on a $536.40 second prize. Losing the signal entirely
+  // would leave nothing to determine from.
+  const rows = classifyReferrals([
+    confirmed('lisamarob@gmail.com', { gv_referred_by: 'lisamarobin@outlook.com' }),
+  ]);
+  const r = forReferee(rows, 'lisamarob@gmail.com');
+  assert.equal(r.status, 'referrer_missing', 'classified on the merits: that address has not entered');
+  assert.equal(r.samePersonSuspected, true, 'but still flagged for the §6 prize determination');
+  assert.equal(r.notify, 'referee', 'and the entrant IS told their friend needs to enter');
+});
+
+test('an identical local part on a different domain is flagged but still credited normally', () => {
+  const rows = classifyReferrals([
+    confirmed('johnsmith@yahoo.com'),
+    confirmed('johnsmith@gmail.com', { gv_referred_by: 'johnsmith@yahoo.com' }),
+  ]);
+  const r = forReferee(rows, 'johnsmith@gmail.com');
+  assert.equal(r.status, 'creditable');
+  assert.equal(r.samePersonSuspected, true);
+});
+
+test('an EXACT self-referral is still void — naming your own address is not two addresses', () => {
+  // The operator determination covers one person with TWO addresses. Naming the
+  // very address you entered with is the unambiguous §6 case and stays void, as
+  // it is in validateReferral.
   const rows = classifyReferrals([confirmed('solo@x.com', { gv_referred_by: 'solo@x.com' })]);
   const r = forReferee(rows, 'solo@x.com');
   assert.equal(r.status, 'self_referral');
   assert.equal(r.notify, null);
 });
 
-test('REGRESSION: the lisamarob pair is flagged same-person and never gets a suggestion', () => {
-  // The live 2026-08-21 case that prompted this work. Official Rules §6 voids
-  // "any other entry you control" and "any email address Sponsor determines
-  // resolves to the same person". Mailing this entrant "did you mean X?" would
-  // be inviting them to launder a void referral, so it goes to a human instead.
-  const rows = classifyReferrals([
-    confirmed('lisamarob@gmail.com', { gv_referred_by: 'lisamarobin@outlook.com' }),
-  ]);
-  const r = forReferee(rows, 'lisamarob@gmail.com');
-  assert.equal(r.status, 'self_referral_suspected');
-  assert.equal(r.notify, null, 'no email, ever, on a suspected same-person pair');
-  assert.equal(r.suggestion, null);
-});
-
-test('an identical local part on a different domain is the same-person heuristic too', () => {
-  const rows = classifyReferrals([
-    confirmed('johnsmith@gmail.com', { gv_referred_by: 'johnsmith@yahoo.com' }),
-  ]);
-  assert.equal(forReferee(rows, 'johnsmith@gmail.com').status, 'self_referral_suspected');
-});
-
-test('a SHORT shared prefix is not enough to accuse someone of self-referral', () => {
-  // 'sam' is a prefix of 'samuel' but they are plainly two people. Requiring a
-  // minimum stem length is what keeps the heuristic from suppressing genuine
-  // referrals between friends with similar names.
+test('a SHORT shared prefix does not even raise the flag', () => {
+  // 'sam' is a prefix of 'samuel' but they are plainly two people.
   const rows = classifyReferrals([
     confirmed('samuel@x.com'),
     confirmed('sam@x.com', { gv_referred_by: 'samuel@x.com' }),
   ]);
-  assert.equal(forReferee(rows, 'sam@x.com').status, 'creditable');
+  const r = forReferee(rows, 'sam@x.com');
+  assert.equal(r.status, 'creditable');
+  assert.equal(r.samePersonSuspected, false);
+});
+
+test('REGRESSION: an UNCONFIRMED entrant who named a referrer is visible to the audit', () => {
+  // The defect that shipped in PR #585. Klaviyo only adds a profile to the
+  // giveaway list once double opt-in completes, so the list IS the confirmed
+  // set — measured 2026-08-22: 278 submitted, 77 on the list. Feeding the
+  // classifier the list alone hid 6 of 7 referral pairs, and made the
+  // referee_unconfirmed branch unreachable in production despite being tested.
+  const rows = classifyReferrals([
+    confirmed('friend@x.com'),
+    // subscribed:false and no stamp — exactly how a submitted-but-unconfirmed
+    // profile arrives once it is merged in from listEntrantProfiles.
+    profile('pending@x.com', { gv_referred_by: 'friend@x.com' }, { subscribed: false }),
+  ]);
+  const r = forReferee(rows, 'pending@x.com');
+  assert.ok(r, 'an unconfirmed entrant naming a referrer must produce a row');
+  assert.equal(r.status, 'referee_unconfirmed');
+});
+
+test('mergeEntrantProfiles marks submitted-but-unlisted profiles as not subscribed', () => {
+  // The merge is where the blind spot is actually closed, and the subscribed
+  // flag is the load-bearing part: listEntrantProfiles does not return one, and
+  // confirmedEver treats a missing flag as TRUE. Merging naively would mark all
+  // 278 submitted profiles confirmed and credit the +2 rung to people who never
+  // clicked anything.
+  const listed = [{ id: '1', email: 'confirmed@x.com', subscribed: true, properties: { gv_confirmed_at: '2026-08-20T13:00:00.000Z' } }];
+  const submitted = [
+    { id: '1', email: 'confirmed@x.com', properties: { gv_entered_at: '2026-08-20T12:00:00.000Z' } },
+    { id: '2', email: 'pending@x.com', properties: { gv_entered_at: '2026-08-20T12:00:00.000Z' } },
+  ];
+  const merged = mergeEntrantProfiles(listed, submitted);
+  assert.equal(merged.length, 2, 'the union, not either side alone');
+  const pending = merged.find((p) => p.email === 'pending@x.com');
+  assert.equal(pending.subscribed, false, 'not on the list means not confirmed');
+  const already = merged.find((p) => p.email === 'confirmed@x.com');
+  assert.equal(already.subscribed, true, 'the listed copy wins — it is the one carrying consent');
+  assert.equal(already.properties.gv_confirmed_at, '2026-08-20T13:00:00.000Z', 'and its properties are preserved');
+});
+
+test('mergeEntrantProfiles is case-insensitive, so one person is never counted twice', () => {
+  const merged = mergeEntrantProfiles(
+    [{ id: '1', email: 'Person@X.com', subscribed: true, properties: {} }],
+    [{ id: '1', email: 'person@x.com', properties: { gv_entered_at: '2026-08-20T12:00:00.000Z' } }],
+  );
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].subscribed, true);
 });
 
 test('a near-miss of exactly one confirmed entrant is reported with the likely address', () => {

@@ -59,9 +59,9 @@ try {
   }
 } catch { /* no .env is a valid state — see above */ }
 
-const { listProfilesWithConsent, updateProfileProperties } = await import('../../lib/klaviyo-profiles.js');
+const { listProfilesWithConsent, listEntrantProfiles, updateProfileProperties } = await import('../../lib/klaviyo-profiles.js');
 const { trackEvent } = await import('../../lib/klaviyo.js');
-const { classifyReferrals, summarizeAudit } = await import('../../lib/giveaway/referral-audit.js');
+const { classifyReferrals, summarizeAudit, mergeEntrantProfiles } = await import('../../lib/giveaway/referral-audit.js');
 const { notify } = await import('../../lib/notify.js');
 
 export const METRIC = 'Giveaway Referral Pending';
@@ -84,24 +84,44 @@ export function selectNotifyTargets(rows, profilesByEmail) {
   });
 }
 
-const profiles = await listProfilesWithConsent(config.listId);
+// BOTH sources, because they are different populations. Klaviyo adds a profile
+// to the list only after double opt-in, so the list is the CONFIRMED set —
+// measured 2026-08-22: 278 submitted, 77 listed. Reading the list alone (as
+// this script did when it shipped) hid 6 of the 7 referral pairs that existed
+// and made the referee_unconfirmed branch dead code in production.
+const [listed, submitted] = await Promise.all([
+  listProfilesWithConsent(config.listId),
+  listEntrantProfiles(config.entryOpensAt),
+]);
+const profiles = mergeEntrantProfiles(listed, submitted);
 const byEmail = new Map(profiles.map((p) => [String(p.email || '').trim().toLowerCase(), p]));
 const rows = classifyReferrals(profiles);
 const summary = summarizeAudit(rows);
 const targets = selectNotifyTargets(rows, byEmail);
 
-console.log(`${profiles.length} list profiles, ${summary.pairs} referral pair(s)`);
+console.log(`${submitted.length} submitted, ${listed.length} confirmed, ${summary.pairs} referral pair(s)`);
 for (const [status, count] of Object.entries(summary.byStatus)) console.log(`  ${status}: ${count}`);
 
 // Rows a human has to judge. Printed even on a dry run, because this IS the
 // deliverable for the statuses that never generate email.
-const forReview = rows.filter((r) => ['self_referral', 'self_referral_suspected', 'referrer_near_miss', 'referrer_unparseable'].includes(r.status));
+//
+// samePersonSuspected is NOT in this list. By operator determination
+// 2026-08-22 those are valid referrals and route normally; they are surfaced
+// separately below so the §6 PRIZE determination still has its evidence at the
+// draw, which is the only place that question is actually asked.
+const forReview = rows.filter((r) => ['self_referral', 'referrer_near_miss', 'referrer_unparseable'].includes(r.status));
 if (forReview.length) {
   console.log(`\nNeeds a human decision (${forReview.length}) — no email sent for any of these:`);
   for (const r of forReview) {
     const hint = r.suggestion ? ` | probably meant ${r.suggestion.email} (${r.suggestion.distance} edit(s), already confirmed when they entered: ${r.suggestion.confirmedBeforeEntry})` : '';
     console.log(`  [${r.status}] ${r.referee} named ${r.namedRaw}${hint}`);
   }
+}
+
+const samePerson = rows.filter((r) => r.samePersonSuspected);
+if (samePerson.length) {
+  console.log(`\nSame-person suspected (${samePerson.length}) — treated as VALID referrals; listed for the §6 prize determination at the draw:`);
+  for (const r of samePerson) console.log(`  ${r.referee} named ${r.namedRaw} [${r.status}]`);
 }
 
 console.log(`\n${targets.length} entrant(s) to notify${apply ? '' : ' (dry run)'}`);
@@ -144,7 +164,7 @@ const reviewLines = forReview.map((r) => {
 await notify({
   subject: `Giveaway referral audit: ${summary.pairs} pair(s), ${forReview.length} need review`,
   body: [
-    `${profiles.length} list profiles, ${summary.pairs} referral pair(s).`,
+    `${submitted.length} submitted, ${listed.length} confirmed, ${summary.pairs} referral pair(s).`,
     ...Object.entries(summary.byStatus).map(([s, c]) => `  ${s}: ${c}`),
     '',
     apply ? `Notified ${targets.length - failures}/${targets.length} entrant(s).` : `DRY RUN — ${targets.length} would be notified.`,
@@ -152,6 +172,8 @@ await notify({
     '',
     reviewLines.length ? 'Needs a human decision (no email sent for these):' : 'Nothing needs a human decision.',
     ...reviewLines,
+    samePerson.length ? `\nSame-person suspected (${samePerson.length}) — valid referrals, listed for the §6 prize determination:` : '',
+    ...samePerson.map((r) => `  ${r.referee} named ${r.namedRaw} [${r.status}]`),
   ].filter(Boolean).join('\n'),
   status: failures ? 'error' : 'success',
   category: 'giveaway',
