@@ -5,7 +5,8 @@
 
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { SEED_CAP, deriveSeeds } from '../../lib/demand-questions.js';
+import { SEED_CAP, deriveSeeds, normalizeHarvest, validateQuestions } from '../../lib/demand-questions.js';
+import { AWARENESS_LEVELS } from '../../lib/voice-of-customer.js';
 
 const leak = (query, impressions) => ({ query, impressions, clicks: 0, position: 10 });
 
@@ -139,4 +140,86 @@ test('both thin: 5 leaks + 5 objections yields 10 seeds, no padding, no error', 
   }];
   const { seeds } = deriveSeeds({ leaks: fewLeaks, personas: onePersona });
   assert.equal(seeds.length, 10);
+});
+
+// --- Task 4: normalizeHarvest / validateQuestions ---
+
+const seedA = { text: 'coconut oil acne', origin: 'gsc_leak', personaId: null };
+const seedB = { text: 'is it safe for eczema', origin: 'persona_objection', personaId: 'p2' };
+
+test('PAA and related searches normalize into one record shape', () => {
+  const out = normalizeHarvest([{
+    seed: seedA,
+    paa: [{ question: 'Does coconut oil clog pores?', source: 'paa' }],
+    relatedSearches: [{ question: 'coconut oil for dry skin', source: 'related_search' }],
+  }]);
+  assert.equal(out.length, 2);
+  assert.deepEqual(out[0], {
+    text: 'Does coconut oil clog pores?',
+    source: 'paa',
+    seed: 'coconut oil acne',
+    seed_origin: 'gsc_leak',
+    persona_id: null,
+    seen_count: 1,
+  });
+  assert.equal(out[1].source, 'related_search');
+});
+
+test('the same question from two different seeds dedupes and increments seen_count', () => {
+  const q = { question: 'Does coconut oil clog pores?', source: 'paa' };
+  const out = normalizeHarvest([
+    { seed: seedA, paa: [q], relatedSearches: [] },
+    { seed: seedB, paa: [q], relatedSearches: [] },
+  ]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].seen_count, 2);
+});
+
+test('dedup is case- and whitespace-insensitive but keeps the first spelling', () => {
+  const out = normalizeHarvest([
+    { seed: seedA, paa: [{ question: 'Does Coconut Oil Clog Pores?', source: 'paa' }], relatedSearches: [] },
+    { seed: seedB, paa: [{ question: '  does coconut oil clog pores?  ', source: 'paa' }], relatedSearches: [] },
+  ]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].text, 'Does Coconut Oil Clog Pores?');
+  assert.equal(out[0].seen_count, 2);
+});
+
+test('the same question twice from the SAME seed counts once', () => {
+  // seen_count means "how many distinct seeds surfaced this", not "how many times seen".
+  const q = { question: 'same', source: 'paa' };
+  const out = normalizeHarvest([{ seed: seedA, paa: [q, q], relatedSearches: [] }]);
+  assert.equal(out[0].seen_count, 1);
+});
+
+test('the first seed to surface a question owns its attribution', () => {
+  const q = { question: 'shared', source: 'paa' };
+  const out = normalizeHarvest([
+    { seed: seedB, paa: [q], relatedSearches: [] },
+    { seed: seedA, paa: [q], relatedSearches: [] },
+  ]);
+  assert.equal(out[0].persona_id, 'p2');
+  assert.equal(out[0].seed_origin, 'persona_objection');
+});
+
+test('an empty harvest is empty, not a throw', () => {
+  assert.deepEqual(normalizeHarvest([]), []);
+  assert.deepEqual(normalizeHarvest([{ seed: seedA, paa: [], relatedSearches: [] }]), []);
+});
+
+test('validateQuestions accepts every awareness level personas.json uses', () => {
+  const qs = AWARENESS_LEVELS.map((stage, i) => ({ text: `q${i}`, stage }));
+  assert.equal(validateQuestions(qs), qs);
+});
+
+test('validateQuestions rejects a stage outside the five levels', () => {
+  assert.throws(
+    () => validateQuestions([{ text: 'q', stage: 'considering' }]),
+    /stage/i,
+    'an invalid stage must throw — it would silently break the personas join',
+  );
+});
+
+test('validateQuestions rejects a missing stage', () => {
+  assert.throws(() => validateQuestions([{ text: 'q' }]), /stage/i);
 });
