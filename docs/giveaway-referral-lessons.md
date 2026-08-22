@@ -131,6 +131,22 @@ yet and nothing had committed to a reading.
    entries the rules had already granted. Fixed 2026-08-22. A rules document that
    states each condition next to the thing it governs makes that mistake harder.
 
+9. **Stamp every entry rung, not just confirmation.** Only `gv_confirmed_at`
+   carries a timestamp, so the draw snapshot can prove a *confirmation* happened
+   inside the Entry Period but has to take the survey, Instagram and upload rungs
+   as stored. Nothing records when those were earned, so a rung credited after
+   entries closed cannot be detected. Stamp each rung when it is credited and the
+   Entry-Period gate becomes total instead of partial.
+
+10. **Know what an unconfirmed entrant is actually worth before deciding whether
+    they are in the draw.** §5 gates the survey (+3), Instagram (+3) and upload
+    (+10) rungs on nothing at all — only the +2 and the referral bonus require
+    confirmation. So an unconfirmed entrant is not "one entry"; measured
+    2026-08-22, 330 unconfirmed entrants held **1,054 of 1,525 entries — 69% of
+    the pool**, against a first estimate of 40% that assumed one entry each. If
+    the next promotion wants confirmation to matter, it has to gate more rungs on
+    it, not merely describe the draw pool differently.
+
 ## What NOT to conclude
 
 Referral volume being ~0 in the first days is **not** evidence the mechanic
