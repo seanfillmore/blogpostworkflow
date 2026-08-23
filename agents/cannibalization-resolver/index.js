@@ -71,6 +71,7 @@ import {
 
 import { getContentPath, getMetaPath, ensurePostDir, ROOT } from '../../lib/posts.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'cannibalization');
@@ -957,10 +958,14 @@ async function main() {
   }
 }
 
-main()
-  .then(() => notifyLatestReport('Cannibalization Resolver completed', join(ROOT, 'data', 'reports', 'cannibalization')))
-  .catch((err) => {
-    notify({ subject: 'Cannibalization Resolver failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main()
+    .then(() => notifyLatestReport('Cannibalization Resolver completed', join(ROOT, 'data', 'reports', 'cannibalization')))
+    .catch((err) => {
+      notify({ subject: 'Cannibalization Resolver failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

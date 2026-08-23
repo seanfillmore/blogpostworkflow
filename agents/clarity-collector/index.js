@@ -16,6 +16,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { fetchClarityInsights } from '../../lib/clarity.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -52,12 +53,16 @@ async function main() {
   return true;
 }
 
-main()
-  .then(async saved => {
-    if (saved) await notify({ subject: 'Clarity Collector completed', body: `Snapshot saved for ${date}`, status: 'success' }).catch(() => {});
-  })
-  .catch(async err => {
-    await notify({ subject: 'Clarity Collector failed', body: err.message || String(err), status: 'error' }).catch(() => {});
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main()
+    .then(async saved => {
+      if (saved) await notify({ subject: 'Clarity Collector completed', body: `Snapshot saved for ${date}`, status: 'success' }).catch(() => {});
+    })
+    .catch(async err => {
+      await notify({ subject: 'Clarity Collector failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

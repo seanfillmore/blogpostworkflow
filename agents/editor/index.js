@@ -43,6 +43,7 @@ import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
 import { findUncitedClaims } from '../../lib/citation-check.js';
 import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../../lib/year-accuracy.js';
 import { reconcileOverallQuality, llmBlockerReasons } from '../../lib/editor-remediation.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -1402,7 +1403,11 @@ async function main() {
   console.log('\nEditor review complete.');
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

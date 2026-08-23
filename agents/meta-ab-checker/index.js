@@ -27,6 +27,7 @@ import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { decideOutcome } from '../../lib/meta-ab-decision.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -260,10 +261,14 @@ async function main() {
   console.log(`  ✅ Improved: ${improved.length}  → Flat: ${flat.length}  ⚠️ Regressed: ${regressed.length}  ↩ Reverted: ${revertedCount}`);
 }
 
-main()
-  .then(() => notifyLatestReport('Meta A/B Checker completed', join(ROOT, 'data', 'reports', 'meta-ab')))
-  .catch((err) => {
-    notify({ subject: 'Meta A/B Checker failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main()
+    .then(() => notifyLatestReport('Meta A/B Checker completed', join(ROOT, 'data', 'reports', 'meta-ab')))
+    .catch((err) => {
+      notify({ subject: 'Meta A/B Checker failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}
