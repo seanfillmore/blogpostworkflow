@@ -1,22 +1,25 @@
 #!/usr/bin/env node
-// STILL SCHEDULED AND STILL RUNNING — verified against the live crontab 2026-08-23.
+// RETIRED FROM CRON 2026-08-23 — superseded by agents/pipeline-prioritizer.
+// Still runnable by hand; nothing schedules it.
 //
-// This header used to read "DEPRECATED (2026-06) … no longer scheduled". That was
-// false for roughly ten weeks: the live crontab runs this agent daily at 13:45 UTC
-// (`45 13 * * *`), fifteen minutes BEFORE agents/pipeline-prioritizer at 14:00 UTC
-// (`0 14 * * *`). Both run, every day, and this one writes to the calendar first.
+// History worth keeping, because this file lied for ten weeks. Its header said
+// "DEPRECATED (2026-06) … no longer scheduled" while the live crontab ran it daily
+// at 13:45 UTC, fifteen minutes BEFORE pipeline-prioritizer at 14:00 — both writing
+// to the same content calendar. The header was the wrong half, and was corrected to
+// say so before the schedule was touched.
 //
-// The intent recorded in docs/superpowers/specs/2026-06-13-pipeline-prioritizer-design.md
-// still stands — pipeline-prioritizer is meant to supersede this agent by injecting
-// unmapped queries as just-in-time backlog ideas (no fixed +14d date), ranked against
-// all other signals — but the cutover was never completed, so this is a PLAN, not a
-// description of the current system. Whoever finishes that cutover should remove the
-// `45 13 * * *` line from scripts/setup-cron.sh and the live crontab in the same
-// change; until then, treat this agent as live and maintained.
+// The cutover was then finished on evidence, not on the old claim:
+//   * pipeline-prioritizer reads the SAME source — gsc-opportunity's `unmapped[]` —
+//     at the SAME 500-impression floor (config/pipeline-priority.json
+//     signals.unmapped.minImpressions), and ranks it against every other signal
+//     instead of injecting at a fixed +14d date.
+//   * This agent's final runs qualified ZERO items: of 23 unmapped queries, 18 were
+//     under the floor and 5 were already covered by the prioritizer's backlog.
+// So retiring the schedule removed a daily no-op, not a capability.
 //
-// Do not re-add a deprecation notice without also pulling the cron entry. A file that
-// claims it does not run, while running daily against the content calendar, is worse
-// than either state on its own.
+// If you ever re-schedule this, remove the "retired" wording in the same change. A
+// file that claims it does not run, while running daily against the calendar, is
+// worse than either state on its own.
 /**
  * Unmapped Query Promoter
  *

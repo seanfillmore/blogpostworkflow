@@ -49,13 +49,16 @@ DAILY_POST_PERFORMANCE="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/post-per
 # Pipeline prioritizer (daily — runs after signal agents at 13:30–13:45 UTC and
 # before calendar-runner at 10:00 UTC the next morning). Injects unmapped queries
 # as just-in-time backlog ideas and ranks them against all other signals.
-# Supersedes unmapped-query-promoter (retired 2026-06)... except the agent's own
-# job is STILL live on the server crontab as of 2026-08-21, contradicting its own
-# file header ("DEPRECATED ... no longer scheduled"). Recorded here as-is because
-# this script mirrors what actually runs; see cron-mirror-report.md for the
-# operator decision this needs (stop the live job, or un-deprecate the agent).
+# Supersedes unmapped-query-promoter, and as of 2026-08-23 that cutover is DONE:
+# the promoter's `45 13 * * *` entry was removed here and from the live crontab.
+# Both had been running daily, 15 minutes apart, against the same content calendar
+# since 2026-06. Evidence the prioritizer fully covers it: it reads the same
+# gsc-opportunity `unmapped[]` feed at the same 500-impression floor
+# (config/pipeline-priority.json signals.unmapped.minImpressions), and the
+# promoter's own last runs qualified ZERO items — every candidate was either under
+# the floor (18) or already covered by the prioritizer's backlog (5).
+# The agent file is kept and is still runnable by hand; only the schedule is gone.
 DAILY_PIPELINE_PRIORITIZER="0 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-prioritizer/index.js >> data/reports/scheduler/pipeline-prioritizer.log 2>&1"
-DAILY_UNMAPPED_QUERY_PROMOTER="45 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/unmapped-query-promoter/index.js >> data/reports/scheduler/unmapped-query-promoter.log 2>&1"
 
 # Content pipeline (daily)
 DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
@@ -117,6 +120,13 @@ WEEKLY_META_ADS_ANALYZER="10 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-a
 # calls it "weekly Sun 7:00 PM PT", which is 02:00 UTC Monday only while PT is on
 # PDT (UTC-7); it will read as 6 PM PT once PST (UTC-8) resumes. Not fixed here —
 # adding TZ= would change live behavior; flagged in cron-mirror-report.md.
+# Fires at 02:00 UTC Monday = Sunday 19:00 PDT / 18:00 PST. The hour MOVES across
+# DST and that cannot be fixed with a TZ= prefix on this box: `cron 3.0pl1` here
+# supports neither CRON_TZ nor a TZ crontab variable (verified 2026-08-23 against
+# the binary), and an inline `TZ=... cd ... && node` assignment applies only to
+# `cd` — node sees TZ unset. Every job on this server is scheduled in UTC, full
+# stop. The agent's header now states the UTC truth instead of claiming a fixed
+# PT hour. A weekly competitor crawl does not care which hour it lands on.
 WEEKLY_COMPETITOR_WATCHER="0 2 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/competitor-watcher/index.js >> data/reports/scheduler/competitor-watcher.log 2>&1"
 
 # Weekly (Sunday)
@@ -214,7 +224,19 @@ DAILY_GIVEAWAY_NUDGE="0 16 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/n
 # `TZ=America/Los_Angeles`. This job must fire AFTER the giveaway closes in
 # Pacific time — do not remove or "simplify" the TZ prefix, and do not let a
 # future setup-cron.sh edit silently drop it.
-GIVEAWAY_CLOSE_ENTRY_PERIOD="5 5 15 9 * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/close-entry-period.mjs --apply >> data/reports/scheduler/giveaway-close.log 2>&1"
+# 08:05 UTC on Sep 15 = 01:05 PDT Sep 15, i.e. ~1h AFTER entries close at
+# 2026-09-14T23:59:59-07:00 (config/giveaway.json entryClosesAt = 06:59:59 UTC).
+#
+# It previously read `5 5 15 9 * TZ=America/Los_Angeles ...`, which fired at
+# 05:05 UTC = 22:05 PT — 1.92 hours BEFORE entries closed. The TZ= prefix was
+# believed to have fixed that on 2026-08-20. It did not, and could not:
+#   * this box runs `cron 3.0pl1`, whose binary contains neither CRON_TZ nor a
+#     TZ crontab variable, so EVERY job here is scheduled on the UTC clock; and
+#   * an inline `TZ=x cd ... && node` assignment scopes to `cd` alone — verified
+#     on the server, node saw TZ unset.
+# The only thing that moves a job's firing time on this host is the UTC fields.
+# Do NOT re-add a TZ= prefix and assume it schedules anything.
+GIVEAWAY_CLOSE_ENTRY_PERIOD="5 8 15 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/close-entry-period.mjs --apply >> data/reports/scheduler/giveaway-close.log 2>&1"
 
 # Re-send the double-opt-in confirmation to entrants who submitted but never
 # clicked. ~64% of paid submissions never confirm, and an unconfirmed entrant
@@ -252,7 +274,6 @@ $DAILY_GSC_OPPORTUNITY
 $DAILY_POST_PERFORMANCE
 # ── Pipeline prioritizer (daily — after signals, before calendar-runner) ──
 $DAILY_PIPELINE_PRIORITIZER
-$DAILY_UNMAPPED_QUERY_PROMOTER
 # ── Content pipeline (daily) ──
 $DAILY_SCHEDULER
 $DAILY_PIPELINE_SCHEDULER
@@ -328,13 +349,12 @@ echo "  13:30 UTC — gsc-opportunity report"
 echo "  13:30 UTC — rank-alerter"
 echo "  13:30 UTC — post-performance (30/60/90-day milestone review)"
 echo "  13:45 UTC — publish-drift detector"
-echo "  13:45 UTC — unmapped-query-promoter (live on the server; agent's own header calls itself deprecated — see report)"
 echo "  14:00 UTC — pipeline-prioritizer (rank backlog, inject unmapped queries)"
 echo "  15:00 UTC — scheduler (publish-due + pipeline)"
 echo "  16:00 UTC — pipeline-scheduler (brief drip)"
 echo ""
 echo "  WEEKLY (Monday)"
-echo "  02:00 UTC — competitor-watcher (no TZ= — see report re: PT drift across DST)"
+echo "  02:00 UTC Mon — competitor-watcher (UTC, like every job here; PT hour shifts with DST)"
 echo "  07:30 UTC — insight-aggregator"
 echo "  08:00 UTC — keyword-research (DataForSEO)"
 echo "  10:00 UTC — meta-ads-collector"

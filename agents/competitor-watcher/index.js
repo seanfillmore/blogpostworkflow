@@ -14,7 +14,16 @@
  *   data/reports/competitor-watcher/YYYY-MM-DD.md — human-readable
  *   data/reports/competitor-watcher/latest.json — machine-readable signal
  *
- * Cron: weekly Sun 7:00 PM PT.
+ * Cron: weekly, `0 2 * * 1` — 02:00 UTC every Monday.
+ *
+ * That is Sunday 19:00 PDT but Sunday 18:00 PST: the PT hour SHIFTS with DST and
+ * cannot be pinned on this host. This header used to claim a fixed "Sun 7:00 PM
+ * PT", which was true only half the year. Verified 2026-08-23: the server runs
+ * `cron 3.0pl1`, whose binary contains neither CRON_TZ nor a TZ crontab variable,
+ * so every job here is scheduled on the UTC clock — and an inline
+ * `TZ=... cd ... && node` prefix scopes to `cd` alone (node saw TZ unset), so the
+ * TZ= prefixes elsewhere in this crontab schedule nothing. UTC is the contract.
+ * A weekly competitor crawl does not care which hour it lands on.
  *
  * Usage:
  *   node agents/competitor-watcher/index.js
