@@ -16,6 +16,7 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import { getSearchVolume, getSerpResults } from '../../lib/dataforseo.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -233,8 +234,12 @@ Base all recommendations on the data. Do not invent issues not present in the fi
   console.log('\n  Done.');
 }
 
-main().catch(async err => {
-  console.error('Error:', err.message);
-  await notify({ subject: 'CRO Deep Dive SEO failed', body: err.message, status: 'error' }).catch(() => {});
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch(async err => {
+    console.error('Error:', err.message);
+    await notify({ subject: 'CRO Deep Dive SEO failed', body: err.message, status: 'error' }).catch(() => {});
+    process.exit(1);
+  });
+}

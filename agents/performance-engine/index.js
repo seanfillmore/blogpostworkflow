@@ -49,6 +49,7 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports');
 import {
   listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, getRefreshedPath, POSTS_DIR,
 } from '../../lib/posts.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -395,11 +396,9 @@ async function main() {
   console.log('\nPerformance Engine complete.');
 }
 
-// Only run when invoked directly. Without this guard, importing anything from
-// this module runs the whole nightly agent: paid Claude calls, content-refresher
-// child processes, queue writes, and a process.exit(1) that takes the host down.
-const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
-if (isDirectRun) {
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
   main().catch(err => {
     console.error('Performance engine failed:', err);
     process.exit(1);

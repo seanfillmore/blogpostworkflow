@@ -35,6 +35,7 @@ const STATE_PATH = join(STATE_DIR, 'state.json');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'competitor-watcher');
 
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const KNOWN_CLUSTERS = [
   'deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm',
@@ -263,7 +264,11 @@ async function main() {
   console.log('\nCompetitor watcher complete.');
 }
 
-main().catch((err) => {
-  console.error('Competitor watcher failed:', err);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Competitor watcher failed:', err);
+    process.exit(1);
+  });
+}

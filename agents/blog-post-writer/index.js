@@ -22,6 +22,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
+import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
@@ -589,6 +590,7 @@ async function writePost(briefPath) {
   let html = '';
   let inputTokens = 0;
   let outputTokens = 0;
+  let stopReason = null;
 
   await withRetry(async () => {
     html = '';
@@ -609,7 +611,7 @@ async function writePost(briefPath) {
     const finalMessage = await stream.finalMessage();
     inputTokens = finalMessage.usage?.input_tokens || 0;
     outputTokens = finalMessage.usage?.output_tokens || 0;
-    const stopReason = finalMessage.stop_reason;
+    stopReason = finalMessage.stop_reason;
     if (stopReason === 'max_tokens') {
       throw new Error(`Output was truncated (stop_reason=max_tokens, ${outputTokens} tokens). Post is incomplete — increase max_tokens or shorten the brief and re-run.`);
     }
@@ -637,9 +639,11 @@ async function writePost(briefPath) {
   // Validate output before saving
   const hasH2 = /<h2[\s>]/i.test(html);
   const hasCTA = /<section\s[^>]*style/i.test(html);
-  // Detect unclosed href attributes — a truncated href="https://... without closing quote
-  // causes a malformed link to be published to Shopify (e.g. href="https://domain.com/blogs/news/best")
-  const unclosedHref = /href="[^"]*$/.test(html);
+  // Truncation checks (max_tokens, unclosed href, unclosed block tag) are the
+  // fleet-wide set in lib/html-output-guards.js — this agent used to hand-roll
+  // the first two and so lacked the third, the mid-prose case that let a
+  // truncated cannibalization merge through every guard the fleet had.
+  assertHtmlComplete({ html, stopReason });
   if (wordCount < 300) {
     throw new Error(`Stream produced too little content: ${wordCount} words (minimum 300). Re-run or check brief.`);
   }
@@ -649,9 +653,6 @@ async function writePost(briefPath) {
   }
   if (!hasH2) {
     throw new Error('Stream produced HTML with no H2 headings — likely truncated or malformed. Re-run.');
-  }
-  if (unclosedHref) {
-    throw new Error('HTML contains an unclosed href attribute — output was truncated mid-link. Re-run.');
   }
   // Answer-first check: the opening paragraph must lead with the answer
   // to the question implied by the title. LLM search engines (ChatGPT,

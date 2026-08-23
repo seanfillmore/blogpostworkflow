@@ -37,7 +37,9 @@ import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getMetaPath, getPostMeta, getRefreshedPath, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
+import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { optimizationScopeTerms, isKeywordSelling } from '../../lib/selling-products.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-refresher');
@@ -285,7 +287,16 @@ IMPORTANT:
     }],
   });
 
-  return stripCodeFences(message.content[0].text.trim());
+  const refreshed = stripCodeFences(message.content[0].text.trim());
+
+  // Same defect the cannibalization merge had: a fixed max_tokens with no
+  // stop_reason check. This agent's own output on 2026-07-06 was truncated
+  // mid-prose (<p> 32 open / 31 closed) and sat queued in content-refreshed.html.
+  // A refresh overwrites a page that already ranks, so a truncated one is a
+  // strict regression — throw instead of returning it.
+  assertHtmlComplete({ html: refreshed, stopReason: message.stop_reason });
+
+  return refreshed;
 }
 
 // ── diff summary ──────────────────────────────────────────────────────────────
@@ -616,10 +627,14 @@ ${afCheck.intro?.html || ''}`,
   }
 }
 
-main()
-  .then(() => notifyLatestReport('Content Refresher completed', join(ROOT, 'data', 'reports', 'content-refresher')))
-  .catch((err) => {
-    notify({ subject: 'Content Refresher failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main()
+    .then(() => notifyLatestReport('Content Refresher completed', join(ROOT, 'data', 'reports', 'content-refresher')))
+    .catch((err) => {
+      notify({ subject: 'Content Refresher failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

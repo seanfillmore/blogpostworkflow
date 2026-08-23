@@ -26,6 +26,7 @@ import { rankTargets } from '../../lib/pr-targets.js';
 import { extractByline, pageMentionsBrand, looksLikeStore } from '../../lib/html-byline.js';
 import { fetchAllReviewStats } from '../../lib/judgeme.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 function loadEnv() {
   try {
@@ -240,8 +241,12 @@ function renderMarkdown(r) {
   return lines.join('\n') + '\n';
 }
 
-main().catch((err) => {
-  notify({ subject: 'PR Target Finder failed', body: err.message || String(err), status: 'error' }).catch(() => {});
-  console.error('PR Target Finder failed:', err);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    notify({ subject: 'PR Target Finder failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+    console.error('PR Target Finder failed:', err);
+    process.exit(1);
+  });
+}

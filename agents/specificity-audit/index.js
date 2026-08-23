@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { getProducts } from '../../lib/shopify.js';
 import { resolveExternalId, fetchProductReviews } from '../../lib/judgeme.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -190,8 +191,12 @@ async function main() {
   console.log(`\nDone. ${queued} rewrite(s) queued for approval.`);
 }
 
-main().catch((err) => {
-  notify({ subject: 'Specificity Audit failed', body: err.message, status: 'error' });
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    notify({ subject: 'Specificity Audit failed', body: err.message, status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

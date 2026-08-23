@@ -16,6 +16,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getKeywordIdeas, getCompetitors, getRankedKeywords, getTopPages, getSerpResults } from '../../lib/dataforseo.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -499,9 +500,13 @@ async function main() {
   console.log(`\n  Report saved: ${reportPath}`);
 }
 
-main().then(() => {
-  console.log('\nContent gap analysis complete.');
-}).catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().then(() => {
+    console.log('\nContent gap analysis complete.');
+  }).catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

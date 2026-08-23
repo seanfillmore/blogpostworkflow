@@ -24,6 +24,7 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, POSTS_DIR } from '../../lib/posts.js';
 import { buildArticleSchema, buildBreadcrumb, buildFaqSchema } from '../../lib/schema-builders.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -295,7 +296,11 @@ async function main() {
   console.log(`  Posts processed: ${results.length}`);
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

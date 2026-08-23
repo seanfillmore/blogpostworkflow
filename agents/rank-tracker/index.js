@@ -41,6 +41,7 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'rank-tracker');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 import { listAllSlugs, getPostMeta as getPostMetaLib, POSTS_DIR } from '../../lib/posts.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -714,9 +715,13 @@ async function main() {
   }
 }
 
-main().then(() => {
-  console.log('\nRank tracking complete.');
-}).catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().then(() => {
+    console.log('\nRank tracking complete.');
+  }).catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

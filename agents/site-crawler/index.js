@@ -17,6 +17,7 @@ import { startCrawl, getCrawlSummary, getCrawlPages, getCrawlLinks, getCrawlTask
 import { getCustomCollections, getSmartCollections, getCollectionProductCount } from '../../lib/shopify.js';
 import { classifyCollectionHealth } from '../../lib/collection-health.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -378,8 +379,12 @@ async function main() {
   console.log('\nCrawl complete.');
 }
 
-main().catch((err) => {
-  notify({ subject: 'Site Crawler failed', body: err.message || String(err), status: 'error' });
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    notify({ subject: 'Site Crawler failed', body: err.message || String(err), status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

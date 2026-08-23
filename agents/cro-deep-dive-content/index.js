@@ -15,6 +15,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -337,8 +338,12 @@ Keep the report tightly focused on what the data shows. Do not include generic a
   console.log('\n  Done.');
 }
 
-main().catch(async err => {
-  console.error('Error:', err.message);
-  await notify({ subject: 'CRO Deep Dive Content failed', body: err.message, status: 'error' }).catch(() => {});
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch(async err => {
+    console.error('Error:', err.message);
+    await notify({ subject: 'CRO Deep Dive Content failed', body: err.message, status: 'error' }).catch(() => {});
+    process.exit(1);
+  });
+}

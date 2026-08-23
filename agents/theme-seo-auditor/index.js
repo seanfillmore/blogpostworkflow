@@ -29,6 +29,7 @@ import {
   getPages,
 } from '../../lib/shopify.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -400,10 +401,14 @@ async function main() {
   console.log(`\n  Total issues: ${totalIssues} (${criticalIssues} critical)`);
 }
 
-main()
-  .then(() => notifyLatestReport('Theme SEO Audit completed', REPORTS_DIR))
-  .catch((err) => {
-    notify({ subject: 'Theme SEO Audit failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main()
+    .then(() => notifyLatestReport('Theme SEO Audit completed', REPORTS_DIR))
+    .catch((err) => {
+      notify({ subject: 'Theme SEO Audit failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

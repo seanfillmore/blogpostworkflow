@@ -21,6 +21,7 @@ import { matchCompetitorUrl } from './matcher.js';
 import { extractPageStructure } from './scraper.js';
 import { deduplicateChanges } from './brief-writer.js';
 import { getCompetitors as fetchCompetitors, getTopPages as fetchTopPages, getSerpResults } from '../../lib/dataforseo.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -357,4 +358,8 @@ async function main() {
   console.log('\nCompetitor intelligence complete.');
 }
 
-main().catch(e => { console.error(e.message); process.exit(1); });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch(e => { console.error(e.message); process.exit(1); });
+}

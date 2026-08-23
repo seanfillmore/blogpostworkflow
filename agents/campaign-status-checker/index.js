@@ -16,6 +16,7 @@
 import { readFileSync, existsSync, readdirSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -123,7 +124,11 @@ async function main() {
   await notify({ subject, body }).catch(() => {});
 }
 
-main().catch(err => {
-  log(`Error: ${err.message}`);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch(err => {
+    log(`Error: ${err.message}`);
+    process.exit(1);
+  });
+}

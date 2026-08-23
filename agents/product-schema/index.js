@@ -39,6 +39,7 @@ import {
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import * as gsc from '../../lib/gsc.js';
 import { fetchProductStats } from '../../lib/judgeme.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -472,10 +473,14 @@ async function autoMain() {
 
 const run = autoMode ? autoMain : main;
 
-run()
-  .then(() => notifyLatestReport('Product Schema completed', join(ROOT, 'data', 'reports', 'product-schema')))
-  .catch((err) => {
-    notify({ subject: 'Product Schema failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  run()
+    .then(() => notifyLatestReport('Product Schema completed', join(ROOT, 'data', 'reports', 'product-schema')))
+    .catch((err) => {
+      notify({ subject: 'Product Schema failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

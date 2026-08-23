@@ -38,6 +38,7 @@ import { notify } from '../../lib/notify.js';
 import { getMetaPath } from '../../lib/posts.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 import { loadPositionHistory, computeTrajectory, trendMultiplier } from '../../lib/rank-trends.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -519,7 +520,11 @@ function buildMarkdownReport(snapshotFile, all, top) {
   return lines.join('\n');
 }
 
-main().catch((err) => {
-  console.error('Quick-win targeter failed:', err);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Quick-win targeter failed:', err);
+    process.exit(1);
+  });
+}
