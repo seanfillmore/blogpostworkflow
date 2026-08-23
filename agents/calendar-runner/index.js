@@ -39,7 +39,8 @@ import { loadCalendar } from '../../lib/calendar-store.js';
 import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { formatPublishAt } from '../../lib/publish-schedule.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
-import { classifyClusters, clusterForText } from '../../lib/cluster-revenue.js';
+import { clusterForText } from '../../lib/cluster-revenue.js';
+import { loadClusterHold, corroboratedClassification, holdBanner } from '../../lib/cluster-hold.js';
 // Re-export for back-compat: formatPublishAt used to be defined in this file; tests
 // and callers that import it from calendar-runner keep working post-extraction.
 export { formatPublishAt } from '../../lib/publish-schedule.js';
@@ -309,12 +310,20 @@ function applyFeedbackAdjustments(items, classified = loadClusterRevenue()) {
   });
 }
 
-/** Per-cluster revenue from the latest seo-impact run; {} when it has not run. */
+/**
+ * Per-cluster revenue from the latest seo-impact run; {} when it has not run.
+ *
+ * Corroborated against real Shopify orders before anything is blocked or
+ * deferred — see lib/cluster-hold.js. Blocking a work item stops it being
+ * drafted at all, so it holds to the same bar as the spend hold rather than to
+ * seo-impact's directional attribution alone.
+ */
 function loadClusterRevenue() {
   try {
-    const p = join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json');
-    if (!existsSync(p)) return {};
-    return classifyClusters(JSON.parse(readFileSync(p, 'utf8')).clusters);
+    const hold = loadClusterHold({ root: ROOT });
+    const banner = holdBanner(hold);
+    if (banner) console.log(banner);
+    return corroboratedClassification(hold);
   } catch { return {}; }
 }
 

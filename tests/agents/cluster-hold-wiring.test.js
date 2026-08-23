@@ -22,15 +22,16 @@ const MEASURED = [
   { label: 'wide window (90d)', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, toothpaste: 39 } },
 ];
 
+const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
 const HOLD = buildClusterHold(classifyClusters([
   { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
   { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-]), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
+], { totals: TOTALS }), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
 
 const EARNING = buildClusterHold(classifyClusters([
   { cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 },
   { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-]), { measured: MEASURED });
+], { totals: TOTALS }), { measured: MEASURED });
 
 const DUD = 'no-fluoride-toothpaste';
 const EARNER = 'best-coconut-oil-body-lotion';
@@ -162,10 +163,15 @@ test('refresh-runner returns bare slugs, not wrappers — its caller iterates st
 // seo-impact attributes $0 to this cluster; real orders show it is the second
 // biggest earner in the catalogue. Holding it paused 19% of revenue. Every gated
 // agent must now let its posts through, and say why.
+// SYNTHETIC click count. The real `soap` row carried 223 clicks, which no longer
+// clears the 400-click evidence bar at all (a $0 on 223 clicks has a ~19% chance
+// of happening to a category that sells fine). 500 is used here so the fixture
+// still reaches the corroboration step and exercises the disagreement path — the
+// mechanism has to keep working for whatever attribution breaks next.
 const MISATTRIBUTED = buildClusterHold(classifyClusters([
-  { cluster: 'soap', revenue: 0, clicks: 223, pages: 24 },
+  { cluster: 'soap', revenue: 0, clicks: 500, pages: 24 },
   { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-]), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
+], { totals: TOTALS }), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
 
 const SOAP_POST = 'best-natural-bar-soap-for-men';
 

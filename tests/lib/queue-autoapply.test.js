@@ -8,6 +8,7 @@ import { classifyClusters } from '../../lib/cluster-revenue.js';
 
 // Real shape, from data/reports/seo-impact/latest.json on the production server
 // (2026-08-22). toothpaste is the $0 cluster CLAUDE.md names; body lotion earns.
+const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
 const CLUSTERS = classifyClusters([
   { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
   { cluster: 'hand soap', revenue: 62.4, clicks: 4, pages: 4 },
@@ -15,7 +16,7 @@ const CLUSTERS = classifyClusters([
   { cluster: 'deodorant', revenue: 38.25, clicks: 121, pages: 21 },
   { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
   { cluster: 'soap', revenue: 0, clicks: 223, pages: 24 },
-]);
+], { totals: TOTALS });
 
 const pending = (over = {}) => ({ slug: 's', trigger: 'quick-win', status: 'pending', created_at: '2026-07-20T00:00:00Z', ...over });
 
@@ -108,7 +109,7 @@ test('both live toothpaste collection-gaps are auto-dismissed as a $0 cluster', 
 test('the $0-cluster list is read from the report, never hardcoded', () => {
   // Same item, a report in which toothpaste has started earning → no dismissal
   // on revenue grounds. Nothing in the policy names a cluster.
-  const earning = classifyClusters([{ cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 }]);
+  const earning = classifyClusters([{ cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 }], { totals: TOTALS });
   const d = decide(gap(), { clusters: earning, productCounts: new Map([['glycerin-free-toothpaste', 4]]) });
   assert.notEqual(d.action, 'dismiss');
 });

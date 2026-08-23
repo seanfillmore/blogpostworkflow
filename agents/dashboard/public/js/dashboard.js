@@ -1719,9 +1719,17 @@ function renderSeoImpact(d) {
 
   // ── clusters ──
   var clusters = (s.clusters || []).slice(0, 6).map(function(c) {
+    var rev = c.entry_page_organic_revenue != null ? c.entry_page_organic_revenue : c.revenue;
     return '<span style="display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px">' +
-      esc(c.cluster) + ' <strong>' + money(c.revenue) + '</strong></span>';
+      esc(c.cluster) + ' <strong>' + money(rev) + '</strong></span>';
   }).join('');
+  // The residual chip. Without it these chips read as a category P&L that simply
+  // does not add up — over 90 days 54% of revenue lands on pages matching no
+  // cluster at all, and that invisibility is what let a $430 category read as $0.
+  if (clusters && s.cluster_residual) {
+    clusters += '<span style="display:inline-block;background:#f9fafb;border:1px dashed #d1d5db;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px;color:#6b7280">' +
+      esc(s.cluster_residual.label || 'no cluster') + ' <strong>' + money(s.cluster_residual.entry_page_organic_revenue) + '</strong></span>';
+  }
 
   // ── not converting ──
   var nc = (s.not_converting || []).slice(0, 5).map(function(r) {
@@ -1739,7 +1747,8 @@ function renderSeoImpact(d) {
       '</div>' +
     chart +
     table +
-    (clusters ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">Revenue by cluster &mdash; where to push harder</div>' + clusters + '</div>' : '') +
+    (clusters ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">Entry-page organic revenue by cluster</div>' +
+      '<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">Organic-search only, credited to the landing page and bucketed by its URL. Not product revenue.</div>' + clusters + '</div>' : '') +
     (nc ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#92400e;margin-bottom:4px">High traffic, no sales &mdash; conversion opportunities</div><ul style="margin:0;padding-left:18px;font-size:13px;color:#374151">' + nc + '</ul></div>' : '');
 }
 

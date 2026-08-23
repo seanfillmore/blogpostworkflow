@@ -67,3 +67,28 @@ test('the cavit fix does not introduce false positives on words that merely cont
   assert.equal(assignCluster('concavity of a lens'), 'unclustered');
   assert.equal(assignCluster('excavation site'), 'unclustered');
 });
+
+// ── plurals ───────────────────────────────────────────────────────────────────
+// `\b` after a bare noun requires a non-word character right after it, so
+// `\bsoap\b` never matched "soaps" and `\btattoo\b` never matched "tattoos".
+// Nine live calendar items — the whole tattoo-soap group, e.g. "best soaps for
+// tattoos" — matched NO rule at all and dropped out of the evidence pool the
+// $0-cluster verdict is computed over. This is the same class of bug as the
+// dead `cavit` stem documented above the toothpaste rule.
+
+test('a plural product noun lands in its cluster', () => {
+  assert.equal(assignCluster('best soaps for tattoos'), 'soap');
+  assert.equal(assignCluster('what soap to use for tattoos'), 'soap');
+  assert.equal(assignCluster('natural deodorants for men'), 'deodorant');
+  assert.equal(assignCluster('best lip balms 2026'), 'lip balm');
+  assert.equal(assignCluster('fluoride free toothpastes'), 'toothpaste');
+  assert.equal(assignCluster('best shampoos'), 'hair');
+  assert.equal(assignCluster('natural body washes'), 'soap');
+});
+
+test('a plural does not steal a query from an earlier rule', () => {
+  // Ordering still decides: soap precedes lotion precedes coconut oil.
+  assert.equal(assignCluster('coconut soaps'), 'soap');
+  assert.equal(assignCluster('coconut oil deodorants'), 'deodorant');
+  assert.equal(assignCluster('coconut oil'), 'coconut oil');
+});

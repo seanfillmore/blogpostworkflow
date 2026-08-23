@@ -127,6 +127,14 @@ test('aggregation tolerates missing and malformed snapshots', () => {
 
 // ── corroboration: the rule that soap broke ──────────────────────────────────
 
+// The window the report itself measured. Without it no cluster may be a dud.
+const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };
+
+// VERBATIM production rows, data/reports/seo-impact/latest.json 2026-08-22.
+// Deliberately kept split (`soap` + `hand soap`, `body lotion` + `lotion` +
+// `moisturizer` + `body cream`) because that is what a stale report on the
+// server still looks like: the fold has to happen at classification time, not
+// only in reports written after the taxonomy fix.
 const REPORT_CLUSTERS = classifyClusters([
   { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
   { cluster: 'hand soap', revenue: 62.4, clicks: 4, pages: 4 },
@@ -135,7 +143,18 @@ const REPORT_CLUSTERS = classifyClusters([
   { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
   { cluster: 'soap', revenue: 0, clicks: 223, pages: 24 },
   { cluster: 'lotion', revenue: 0, clicks: 56, pages: 12 },
-]);
+  { cluster: 'moisturizer', revenue: 0, clicks: 15, pages: 5 },
+  { cluster: 'coconut oil', revenue: 0, clicks: 11, pages: 7 },
+  { cluster: 'body cream', revenue: 0, clicks: 0, pages: 1 },
+], { totals: TOTALS });
+
+// A SYNTHETIC report in which attribution is broken some other way: a cluster
+// really earning is filed at $0 on enough traffic to clear the evidence bar.
+// The soap disagreement is gone from the real data (the fold fixed it), and the
+// disagreement machinery still has to work for whatever breaks next.
+const MISFILED = classifyClusters([
+  { cluster: 'deodorant', revenue: 0, clicks: 500, pages: 12 },
+], { totals: TOTALS });
 
 // Real measured product revenue: soap earns, toothpaste does not.
 const MEASURED = [
@@ -143,12 +162,23 @@ const MEASURED = [
   { label: 'wide window (90d)', start: '2026-05-24', end: '2026-08-21', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, deodorant: 180, 'lip balm': 120, toothpaste: 39 } },
 ];
 
-test('SOAP IS NOT HELD — seo-impact says $0, the orders say $365.70', () => {
+test('SOAP IS NOT HELD — and after the fold there is no $0 row left to disagree with', () => {
+  // The whole soap incident was a taxonomy artifact: /products/organic-foaming-
+  // hand-soap matched 'hand soap' before 'soap', so the category's only in-window
+  // organic order ($62.40) was filed under a sibling row and `soap` read $0 on
+  // 223 clicks. Folded, soap simply EARNS and never reaches corroboration.
   const v = corroborateClusters(REPORT_CLUSTERS, MEASURED);
-  assert.equal(v.soap.verdict, 'disagreement');
-  assert.equal(v.soap.family, 'soap');
-  assert.match(v.soap.reason, /365\.7|156/, 'the reason quotes the measured dollars');
-  assert.match(v.soap.reason, /attribution/i, 'a disagreement is an attribution defect, and says so');
+  assert.equal(v.soap.verdict, 'earning');
+  assert.equal(REPORT_CLUSTERS.soap.entryPageOrganicRevenue, 62.4);
+  assert.deepEqual(REPORT_CLUSTERS.soap.members.sort(), ['hand soap', 'soap']);
+});
+
+test('a cluster really earning but filed at $0 is a DISAGREEMENT, never a hold', () => {
+  const v = corroborateClusters(MISFILED, MEASURED);
+  assert.equal(v.deodorant.verdict, 'disagreement');
+  assert.equal(v.deodorant.family, 'deodorant');
+  assert.match(v.deodorant.reason, /180|60/, 'the reason quotes the measured dollars');
+  assert.match(v.deodorant.reason, /attribution/i, 'a disagreement is an attribution defect, and says so');
 });
 
 test('TOOTHPASTE IS STILL HELD — both sources agree it earns nothing', () => {
@@ -161,20 +191,20 @@ test('one material window is enough to block a hold — unanimity is required', 
   // $0 across the report's own 28 days, but real money over 90. A quiet month is
   // not evidence that a category earns nothing.
   const quietRecently = [
-    { ...MEASURED[0], byFamily: { ...MEASURED[0].byFamily, soap: 0 } },
+    { ...MEASURED[0], byFamily: { ...MEASURED[0].byFamily, deodorant: 0 } },
     MEASURED[1],
   ];
-  assert.equal(corroborateClusters(REPORT_CLUSTERS, quietRecently).soap.verdict, 'disagreement');
+  assert.equal(corroborateClusters(MISFILED, quietRecently).deodorant.verdict, 'disagreement');
 });
 
 test('a cluster that is not a proven dud is never corroborated at all', () => {
   const v = corroborateClusters(REPORT_CLUSTERS, MEASURED);
-  assert.equal(v['body lotion'].verdict, 'earning');
-  assert.equal(v.lotion.verdict, 'unproven', '56 clicks is too little to judge');
+  assert.equal(v.lotion.verdict, 'earning', 'body lotion + lotion + moisturizer + body cream are ONE cluster');
+  assert.equal(v['coconut oil'].verdict, 'unproven', '11 clicks is too little to judge');
 });
 
 test('an unmappable cluster name cannot be corroborated, so it is not held', () => {
-  const odd = classifyClusters([{ cluster: 'foaming', revenue: 0, clicks: 400, pages: 12 }]);
+  const odd = classifyClusters([{ cluster: 'foaming', revenue: 0, clicks: 400, pages: 12 }], { totals: TOTALS });
   const v = corroborateClusters(odd, MEASURED);
   assert.equal(v.foaming.verdict, 'uncorroborated');
   assert.match(v.foaming.reason, /could not be mapped/i);
@@ -184,7 +214,7 @@ test('missing snapshots corroborate nothing — the hold fails OPEN', () => {
   const blind = [{ label: 'report window (28d)', available: false }, { label: 'wide window (90d)', available: false }];
   const v = corroborateClusters(REPORT_CLUSTERS, blind);
   assert.equal(v.toothpaste.verdict, 'uncorroborated');
-  assert.equal(v.soap.verdict, 'uncorroborated');
+  assert.equal(corroborateClusters(MISFILED, blind).deodorant.verdict, 'uncorroborated');
 });
 
 // ── the hold context built on top ────────────────────────────────────────────
@@ -192,9 +222,13 @@ test('missing snapshots corroborate nothing — the hold fails OPEN', () => {
 test('buildClusterHold holds only the corroborated duds and lists the disagreements', () => {
   const hold = buildClusterHold(REPORT_CLUSTERS, { measured: MEASURED, generatedAt: '2026-08-22T15:16:44.241Z' });
   assert.deepEqual([...hold.heldSet], ['toothpaste'], 'soap is gone from the held set');
-  assert.equal(hold.disagreements.length, 1);
-  assert.equal(hold.disagreements[0].cluster, 'soap');
-  assert.equal(hold.disagreements[0].productRevenue, 365.7);
+  assert.equal(hold.disagreements.length, 0, 'on the real report the fold leaves nothing to disagree about');
+
+  const broken = buildClusterHold(MISFILED, { measured: MEASURED });
+  assert.equal(broken.heldSet.size, 0);
+  assert.equal(broken.disagreements.length, 1);
+  assert.equal(broken.disagreements[0].cluster, 'deodorant');
+  assert.equal(broken.disagreements[0].productRevenue, 180);
 });
 
 test('with no corroboration data at all, nothing is held', () => {
@@ -206,11 +240,14 @@ test('the banner names the disagreement loudly — broken attribution is itself 
   const hold = buildClusterHold(REPORT_CLUSTERS, { measured: MEASURED, generatedAt: 'X' });
   const b = holdBanner(hold);
   assert.match(b, /toothpaste/);
-  assert.match(b, /ATTRIBUTION DISAGREEMENT/);
-  assert.match(b, /soap/);
-  assert.match(b, /365\.7/);
-  assert.match(b, /NOT held/i);
   assert.match(b, new RegExp(HOLD_FLAG));
+
+  const broken = buildClusterHold(MISFILED, { measured: MEASURED, generatedAt: 'X' });
+  const bb = holdBanner(broken);
+  assert.match(bb, /ATTRIBUTION DISAGREEMENT/);
+  assert.match(bb, /deodorant/);
+  assert.match(bb, /180/);
+  assert.match(bb, /NOT held/i);
 });
 
 // ── window derivation ────────────────────────────────────────────────────────
@@ -235,7 +272,12 @@ test('loadClusterHold reads the snapshots for the union of both windows', () => 
     readJson: (p) => {
       read.push(p);
       if (p.endsWith('latest.json')) {
-        return { generated_at: 'X', window: { start: '2026-08-18', end: '2026-08-18' }, clusters: [{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }] };
+        return {
+          generated_at: 'X',
+          window: { start: '2026-08-18', end: '2026-08-18' },
+          totals: { organic_conversions: 8, organic_sessions: 1067 },
+          clusters: [{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }],
+        };
       }
       return snap('2026-08-18', 3, 250, [{ title: TITLES[0][0], revenue: 250 }]);
     },
@@ -244,6 +286,35 @@ test('loadClusterHold reads the snapshots for the union of both windows', () => 
   assert.ok(read.some((p) => p.includes('snapshots')), 'snapshots were read');
   assert.ok(!read.some((p) => p.includes('2026-05-01')), 'a snapshot outside both windows is not read');
   assert.deepEqual([...hold.heldSet], ['toothpaste']);
+});
+
+test('a report with no totals block holds NOTHING — an unknown denominator is not evidence', () => {
+  // The window's own organic order count is what the click threshold is derived
+  // from. Without it a $0 cannot be told apart from a window too thin (or a
+  // tracking outage) to judge, so no cluster may be stamped a dud at all.
+  const hold = loadClusterHold({
+    root: ROOT,
+    readJson: (p) => (p.endsWith('latest.json')
+      ? { generated_at: 'X', window: { start: '2026-08-18', end: '2026-08-18' }, clusters: [{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }] }
+      : snap('2026-08-18', 3, 250, [{ title: TITLES[0][0], revenue: 250 }])),
+    readDir: () => ['2026-08-18.json'],
+  });
+  assert.equal(hold.heldSet.size, 0);
+  assert.equal(hold.classified.toothpaste.status, 'unproven');
+  assert.match(hold.classified.toothpaste.evidence, /order count was not supplied/i);
+});
+
+test('a window with too few organic orders holds NOTHING — a store-wide outage is not a verdict', () => {
+  // A trashed GA4 property once 204'd every hit for 8 days. That reads as $0 in
+  // EVERY cluster at once; under a clicks-only bar it would stamp every
+  // high-traffic category a dud in one unattended run.
+  const outage = classifyClusters(
+    [{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }],
+    { totals: { organic_conversions: 0, organic_sessions: 1067 } },
+  );
+  assert.equal(outage.toothpaste.status, 'unproven');
+  assert.match(outage.toothpaste.evidence, /only 0 organic order/i);
+  assert.equal(buildClusterHold(outage, { measured: MEASURED }).heldSet.size, 0);
 });
 
 test('no cluster name is hardcoded in the corroboration either', () => {
