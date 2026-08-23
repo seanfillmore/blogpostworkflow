@@ -3,10 +3,11 @@
 // DataForSEO-backed routes for the dashboard. The authority panel is
 // refreshed on demand via /api/seo-authority/refresh and cached as JSON
 // at data/reports/seo-authority/latest.json.
-import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getBacklinksSummary, getRankedKeywords } from '../../../lib/dataforseo.js';
 import { readJsonBody } from '../lib/responses.js';
+import { appendRejection } from '../../../lib/rejected-keywords.js';
 
 export default [
   // Fetch SEO authority data from DataForSEO and cache as JSON.
@@ -64,12 +65,15 @@ export default [
         return;
       }
       try {
-        const filePath = join(ctx.ROOT, 'data', 'rejected-keywords.json');
-        const existing = existsSync(filePath)
-          ? JSON.parse(readFileSync(filePath, 'utf8'))
-          : [];
-        existing.push({ keyword, matchType, reason: reason || null, rejectedAt: new Date().toISOString() });
-        writeFileSync(filePath, JSON.stringify(existing, null, 2));
+        // Through the shared writer. This route was the only one with NO
+        // dedupe at all (unconditional push), and the only one stamping
+        // `rejectedAt` — a camelCase spelling none of the nine readers consult,
+        // so its rejections carried no usable date. Both are fixed by
+        // normalizing here rather than at each reader.
+        appendRejection(
+          { keyword, matchType, reason: reason || null, rejected_at: new Date().toISOString(), source: 'dashboard:reject-keyword' },
+          { path: join(ctx.ROOT, 'data', 'rejected-keywords.json') },
+        );
         ctx.invalidateDataCache();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));

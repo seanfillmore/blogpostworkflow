@@ -47,6 +47,7 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { mayRewriteBody } from '../../lib/post-lock.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
@@ -186,14 +187,14 @@ function refreshOne(slug) {
     }
   } catch { /* fall through */ }
 
-  // Winner protection — legacy posts auto-locked by triage must not be refreshed
-  try {
-    const lockMeta = JSON.parse(readFileSync(metaPath, 'utf8'));
-    if (lockMeta.legacy_locked) {
-      console.log(`  [skip] ${slug}: legacy winner (locked)`);
-      return { slug, ok: false, skipped: true, reason: 'legacy winner, locked' };
-    }
-  } catch { /* proceed */ }
+  // Winner protection — a refresh rewrites the BODY. See lib/post-lock.js:
+  // locked or unreadable both refuse; the old bare `catch { /* proceed */ }`
+  // meant an unparseable meta.json waved a winner straight through.
+  const bodyLock = mayRewriteBody(slug);
+  if (!bodyLock.allowed) {
+    console.log(`  [skip] ${slug}: ${bodyLock.reason}`);
+    return { slug, ok: false, skipped: true, reason: bodyLock.reason };
+  }
 
   console.log(`\n══ Refreshing: ${slug} ══`);
 

@@ -35,7 +35,8 @@ import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
-import { getMetaPath, getPostMeta, getRefreshedPath, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getPostMeta, getRefreshedPath, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { mayRewriteBody } from '../../lib/post-lock.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { optimizationScopeTerms, isKeywordSelling } from '../../lib/selling-products.js';
@@ -445,14 +446,15 @@ async function main() {
     const { article, keyword, position, impressions, relatedKeywords, userConcerns = [] } = targets[i];
     const slug = article.handle;
 
-    // Winner protection — legacy posts auto-locked by triage must not be refreshed
-    try {
-      const lockMeta = JSON.parse(readFileSync(getMetaPath(slug), 'utf8'));
-      if (lockMeta.legacy_locked) {
-        console.log(`    [skip] ${slug}: legacy winner (locked)`);
-        continue;
-      }
-    } catch { /* proceed if metadata unreadable */ }
+    // Winner protection — a refresh rewrites the BODY, which is exactly what the
+    // lock exists to prevent on a page that already ranks. See lib/post-lock.js
+    // for the semantics and for why an unreadable lock refuses rather than
+    // proceeds (this used to be a bare `catch { /* proceed */ }`).
+    const bodyLock = mayRewriteBody(slug);
+    if (!bodyLock.allowed) {
+      console.log(`    [skip] ${slug}: ${bodyLock.reason}`);
+      continue;
+    }
 
     console.log(`\n  [${i + 1}/${targets.length}] Refreshing "${article.title}"...`);
     process.stdout.write('    Generating refreshed content... ');

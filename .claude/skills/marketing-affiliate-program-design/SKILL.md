@@ -1,126 +1,150 @@
 ---
 name: marketing-affiliate-program-design
-description: Finding, qualifying, paying, launching and integrating affiliate and stockist partners.
+description: Recruiting, pitching, paying and integrating partner businesses that sell or sample your product to their own audience.
 ---
 
 # Affiliate Program Design
 
-## Build the affiliate hit list by working backwards from your best customers — what they buy and who provides it, where they go and what businesses surround it, what they do for fun and who serves it, and who employs them — then group the answers into categories and flag any business that lands in more than one.
+## Recruit affiliates — independent businesses that promote your product to their own audience for commission or free product — as a distinct lead channel alongside your own advertising.
 
-**Why it works:** The ideal affiliate is a non-competing business with a warm audience of people like your customers; deriving the list from actual customer behaviour rather than from who is available finds the audiences that already trust someone else and are pre-qualified for you.
+**Why it works:** Each affiliate is a compounding stream: they do their own advertising to an audience that already trusts them, so every one you sign adds recurring lead flow for the same one-time recruiting effort, instead of you buying every customer yourself.
 
-**Evidence offered:** Hormozi's own ALAN list of 200 agency-serving products and services, which sorted into six repeatable categories; asserted as his standard process for every new hit list.
+**Evidence offered:** Prestige Labs: 400+ affiliates, 300+ orders/day, ~$450k weeks with no paid ads or sales team; ALAN scaled to $1.7M/mo in six months on a few super-affiliates; $75M combined across 5000+ affiliates.
 
-**Fit here (7/10):** Executable today with a spreadsheet and zero budget: natural-deodorant buyers cluster around yoga studios, CrossFit gyms, salons, barbers, midwives, refill/zero-waste shops and farmers' market stalls. The existing acquisition skill derives partners from the binding constraint; this derives them from customer behaviour, a different generation method.
+**Fit here (6/10):** The honest scaled-down version is runnable today by one person: instead of an 'army', approach 3-5 non-competing local businesses whose customers sweat or care about ingredient labels (yoga studios, CrossFit boxes, salons, midwives, natural grocers) and set them up to sell or sample the deodorant line. Not a revenue fix this quarter at $50.46 AOV, but a zero-media-spend acquisition surface that runs in parallel with the $30/day Meta campaign.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-## Advertise to affiliates the way you advertise to customers, but sell them a way to make money rather than your product — and open with an affiliate-specific callout: name their business type, name their customers, name the result they promise, name the products they already sell, or ask your own customers if they know someone who owns one.
+## Advertise to potential affiliates the way you advertise to customers, using one of five callout entry points: the affiliate owner's title, their customers, the result they promise, the products they already sell, or your own customers ('do you know anyone who owns a spa?').
 
-**Why it works:** Affiliates are businesses; the dream outcome they buy is 'more revenue from the customers you already have, with no product to build, deliver, or support, starting tomorrow'. Callouts self-select the right business owner out of a general audience.
+**Why it works:** Affiliate recruitment is an offer with its own audience; naming the affiliate by role, clientele or product line makes them self-select, and asking your existing customers for introductions turns the buyer list into a recruiting list.
 
-**Evidence offered:** Assertion plus worked callout examples for a spa-adjacent product; the value-element sentence is a fill-in-the-blank template.
+**Evidence offered:** Assertion — illustrated with spa-owner example callout lines.
 
-**Fit here (6/10):** A one-paragraph DM or email to salon and studio owners costs nothing and the framing (make money on customers you already have, we handle fulfilment) is right. The 'ask your own customers who they know' variant is especially cheap at ~54 orders/month. Docked because the value-element half restates the four-term value equation already recorded; only the affiliate-specific callout list is new.
+**Fit here (5/10):** Runnable today with zero budget — the fifth callout in particular (asking the existing ~54-orders/month buyer base whether they know a studio or salon owner) is the cheapest recruitment surface for a sub-1,000-person list. Scored mid because it partially overlaps the existing 'call your audience out by name' claim; the distinct content is the five affiliate-side entry points.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-## Qualify affiliates by requiring an investment before they get affiliate status — the lowest-barrier version is making them buy and actually use the product; if they will not buy it they should not be selling it.
+## Treat affiliates as a second class of customer and construct the offer as a money-making offer in their numbers, not a product pitch: more revenue from customers they already have, high likelihood because their audience already wants the product, no build, fulfilment or support burden, and they can start selling tomorrow.
 
-**Why it works:** People who pay, pay attention. Purchase converts an interested party into a user with first-hand belief, which is what makes their recommendation credible, and it filters out sign-ups who will never promote.
+**Why it works:** Affiliates buy income, not skincare. A partner promotes only when the arrangement improves their own P&L or differentiates their offer, so running the four value terms against 'a new income stream' is what makes a busy business owner sign up rather than politely decline.
 
-**Evidence offered:** Hormozi's stated observation that the more money an affiliate invests in the product the more money they make; presented as tested across 5000+ affiliates in two companies.
+**Evidence offered:** Presented as the standard structure all money-making offers follow, supported by the chiropractor case where included adjustments make the gym membership more valuable than a rival's, and the Prestige Labs case where supplement sales are incremental gym revenue.
 
-**Fit here (7/10):** Cheap, immediately runnable, and it fixes the main failure mode of a tiny affiliate program (thirty sign-ups, no promotion). It also produces revenue at recruitment: a studio owner buying a $50 starter set is an order, and a deodorant recommendation from someone who does not use it converts nothing.
+**Fit here (6/10):** Runnable today: writing a one-page partner pitch costs nothing and the fulfilment burden really is zero for the partner because a solo operator ships everything. The honest pitch is 'this adds a $12 margin item to every new-member kit and makes your welcome package look premium', not 'please share my brand'. Applies the four-term value equation to a different audience, which changes what goes in each term.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-## Use a three-tier affiliate payout instead of one flat commission: a small payout (≈25% of allowable CAC) for anyone who agrees to the terms, double it (≈50%) once they complete a defined activation action, and pay the full allowable CAC only to affiliates who sustain a performance level.
+## Qualify affiliates by forcing an investment — require them to buy and actually use the product to hold affiliate status.
 
-**Why it works:** Tiering pays for behaviour rather than mere sign-up, rewards activation at the moment it happens, and the mix of tiers means average acquisition cost lands below the maximum, freeing money for contests or profit.
+**Why it works:** Money paid is attention paid: an affiliate who has spent their own cash on the product believes in it, sells it more credibly, and self-selects out if they don't.
 
-**Evidence offered:** Worked example: a 20/20/60 tier mix turns a $40 ceiling into a $30 blended payout, improving LTGP:CAC from 3:1 to 4:1.
+**Evidence offered:** Assertion from experience across two affiliate companies ('nine times out of ten, if they pay, they'll pay attention'); described as the lowest-barrier investment that has worked for him.
 
-**Fit here (6/10):** Runnable today with three or four affiliates — the tiers are a written payout schedule, not a multi-cell test. Against thin margins on a $50 AOV consumable, holding full commission back for affiliates who sustain volume is the difference between an affordable program and an unprofitable one. Docked because with a handful of affiliates the blended-cost arithmetic is a rounding error; the behavioural incentive is the real value.
+**Fit here (7/10):** Directly runnable at this size and costs nothing to impose: any studio owner, salon or ambassador who wants a commission code first buys a small assortment at $50-ish. It solves the credibility problem for a natural-deodorant brand where the partner must vouch that it works, and filters out people a solo operator would otherwise administer codes for who never sell.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-## Decide exactly what behaviour you want from the affiliate and pay for that specific thing — pay for repeat customers as well as new ones, and once you can track it, pay for the upstream steps that reliably turn into sales.
+## Set affiliate commission from your maximum allowable CAC — gross profit per order divided by your target LTGP:CAC ratio — and pay for the specific action you want (new customers, repeat customers, or upstream steps like a lead magnet download once you can track them).
 
-**Why it works:** Compensation determines behaviour; paying only on first orders makes affiliates hunt one-time buyers, while paying on repeat orders makes them route customers who stay.
+**Why it works:** Deciding first what the affiliate is paid for makes 'how much' and 'how often' nearly solve themselves, and anchoring the payout to allowable CAC guarantees the channel is profitable by construction rather than by hope.
 
-**Evidence offered:** Assertion drawn from his own payout design across two affiliate companies.
+**Evidence offered:** Worked example: $200 product, $40 fulfilment, $160 contribution, 3:1 LTGP:CAC leaves $40 to the affiliate.
 
-**Fit here (7/10):** Aimed at the binding constraint: repeat rate is 18-22.5% and repeat customers are ~45-52% of revenue, so an affiliate whose commission continues on reorders is being paid to send the kind of buyer this business needs. Shopify affiliate apps track recurring attribution today; no volume or people gate.
+**Fit here (7/10):** Runnable today and necessary before any code is issued: at $50.46 AOV with 18-22.5% repeat, the allowable-CAC calculation is what stops a solo operator handing out a 30% commission that loses money on first purchase. It also forces the same lifetime-value math the Meta campaign needs. Related to but distinct from the existing allowable-cost-per-lead claim.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-## Pay affiliates on the customer forever and never cap payouts, rather than paying a one-time bounty.
+## Use a three-tier payout ladder rather than one flat rate — 25% of allowable CAC for anyone who signs up, 50% once they activate (finish onboarding, do a launch, hit a post count), 100% once they sustain performance — so the blended payout lands well below your maximum CAC.
 
-**Why it works:** A perpetual split gives the affiliate a standing financial interest in keeping that customer buying, so they keep promoting and supporting the relationship instead of churning through one-off referrals.
+**Stage:** scale — parked until the scale phase opens. Recorded now so it is not re-derived later.
 
-**Evidence offered:** Stated preference from his own programs ('I prefer to pay forever so my affiliates stay motivated to keep my customers forever').
+**Why it works:** Tiering rewards the behaviour you actually want (activation and sustained selling) and, because most affiliates never reach the top tier, the blended cost per acquisition falls, improving LTGP:CAC and freeing money for contests and further recruiting.
 
-**Fit here (6/10):** Cheap to promise with almost no affiliates, and it converts a partner into someone with a retention incentive — which matters more than acquisition volume when repeat customers are ~half of revenue. Docked because on a $50 AOV consumable a perpetual 15-20% split permanently thins margin on the exact repeat orders that carry the business, so the rate must be set conservatively.
+**Evidence offered:** Worked example: a 20/20/60 tier mix yields a $30 blended payout against a $40 maximum, moving the ratio from 3:1 to 4:1.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+**Fit here (6/10):** Sound and correctly aimed, but it needs a roster of partners before the blend means anything — with three partners and a max commission near $10-15, a ladder is administrative overhead for no readable difference. Park behind scale. Trigger: roughly 10+ active partners, or partner-sourced orders large enough that the blended-vs-max gap is real money.
 
-## Do all the launch work for your affiliates ahead of time so they can plug and play — hand them the assets, the schedule and the calls to action rather than asking them to figure out how to promote you.
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-**Why it works:** Affiliates promote what is easiest to promote; removing the effort and creative burden is what converts a signed-up affiliate into an active one.
+## Do all the promotional work for your affiliates ahead of the launch so they can plug and play — hand them the assets, copy and schedule rather than asking them to create anything.
 
-**Evidence offered:** Assertion, framed as the precondition for a good launch ('good launches have the work done ahead of time').
+**Why it works:** Affiliates promote in proportion to how easy you make it; removing every production step from their side is what converts a signed-up affiliate into an advertising one.
 
-**Fit here (7/10):** Free for a solo operator who already has product photography and copy: a shared folder with images, three caption drafts, a discount code and a dated posting schedule is an afternoon's work and determines whether a studio owner ever posts. Not blocked by budget, volume or people.
+**Evidence offered:** Assertion — 'good launches have the work done ahead of time. So do all the work for them.'
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+**Fit here (6/10):** Runnable today by one person: a small partner kit (three social captions, two product photos, a discount code, an email template, dates) is an afternoon of work and is what makes a busy salon owner actually post. Adjacent to the fixed-component creator brief, but that covers briefing someone to produce a video for you; this is handing a partner finished assets to distribute.
 
-## Deliberately choose among three partner integration modes and start at the easiest: the partner includes your free sample or lead magnet with every purchase of their own product, the partner sells your entry product, or the partner sells your core offer — with the free-item mode monetized on the things the customer obviously needs next.
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-**Why it works:** Each mode puts a different amount of risk and work on the partner and yields a different quality of lead; naming the mode up front makes the deal legible and your cost structure predictable. At the easiest level the partner gets a stronger offer they can charge more for and needs to sell nothing, while you get your product physically into the hands of a pre-qualified buyer and own the follow-up upsell — so true acquisition cost is only the COGS of the giveaway.
+## Integrate with each partner at one of three escalating depths so lead flow endures: (1) the partner gives your lead magnet or sample away free with every purchase of their own product, (2) the partner sells your lead magnet or trial product and keeps all the cash, (3) the partner sells your core offer for a share of the revenue.
 
-**Evidence offered:** Prestige Labs got gym affiliates to give a free nutrition consult to every new member and upsold supplements; tax-service case study giving free LLC setup to every affiliate's customer and monetizing on bookkeeping and tax prep, with the friend never spending a dollar on paid ads at $50M; author reports testing all three modes and settling on mode 1 twice a year plus mode 3 ongoing.
+**Why it works:** Level 1 makes the partner's own offer more valuable at no cost to them, so they promote it as self-interest; level 2 hands them pure-profit revenue with no fulfilment; level 3 makes you a product line in their business. In all three you acquire the customer and own every subsequent sale, and naming the mode up front decides who pays for goods and who does the pitch instead of leaving a vague cross-promotion nobody executes.
 
-**Fit here (8/10):** The strongest fit available: deodorant, lip balm and soap are cheap, physical and sample-able, so a yoga studio, salon or refill shop dropping a trial into every purchase costs the partner nothing and costs this business COGS only. Pairs with the existing insert-with-scannable-opt-in claim to capture the email, feeding the retention constraint, and the 12-SKU catalog supplies the obvious next need. Solo-runnable at any volume; cap free full-size product per partner given the $50.46 AOV.
+**Evidence offered:** Massage/personal-training worked examples for each level, plus what he actually ran: gyms giving away a free nutrition consult to every new member, gyms selling a $99-$199 consult and keeping the money, and gyms selling supplements on a split; also a national tax prep firm giving away free LLC setup and chiropractors bundling adjustments into memberships.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+**Fit here (8/10):** The most transferable tactic in these excerpts and the cheapest to test. Level 1 is a yoga studio, gym, salon or midwife putting a lip balm or deodorant sample in every client bag or new-member welcome kit with a card routing to email capture — a physical lead magnet the operator already manufactures, and the opt-in feeds the retention flows that are the binding constraint. Level 2 is a small wholesale order the partner retails; level 3 is a plain commission code. No budget, no team, no ad account needed.
 
-## At the middle level of integration, let the partner sell your cheap entry product — or run the launch promotion — and keep 100% of that cash; you make your money on the upsell and the repeat purchase and owe them no split on it.
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-**Why it works:** All-profit-no-work is the most attractive proposition you can make a business owner, so they push harder and want to run it again; you buy a customer at the cost of delivering the entry item and keep full margin on everything after.
+## Pay affiliates on the revenue their customers generate forever, and never cap payouts.
 
-**Evidence offered:** Gyms charged $99-199 for a nutrition consult with his team and kept the money while he upsold supplements; chiropractor case where 30 attendees × $99 = $2,970 profit to the gym owner for a few emails.
+**Why it works:** A lifetime, uncapped split keeps the affiliate motivated to keep the customer alive rather than to harvest a one-time bounty, aligning them with retention instead of churn.
 
-**Fit here (7/10):** Honest translation: a salon or market stall buys lip balms or deodorant at cost and keeps the retail margin, with an insert routing the buyer to the store for the full line; or a partner-hosted sample event where the partner keeps the full margin that day. Gets product into a new audience with no commission accounting and no ad spend, capping acquisition cost at COGS. Contingent on the second purchase actually landing, which is the retention work already underway.
+**Evidence offered:** Assertion of personal preference — 'I prefer to pay forever so my affiliates stay motivated to keep my customers forever. And, I never cap payouts.'
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+**Fit here (6/10):** Cheap to promise and well matched to the binding constraint: repeat customers are 45-52% of revenue, so paying a partner on repeat orders buys a second party who cares about the second purchase. Must be set against the allowable-CAC math so lifetime commission does not eat the retention margin. Runnable today in Shopify with a standard affiliate app on a handful of partners.
 
-## At the deepest level of integration, have the partner sell your core offer directly as a bolt-on revenue stream — they own the selling, you do nothing but deliver, and they take a higher share of lifetime gross profit in exchange.
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
-**Why it works:** Anything you sell, they can sell; the affiliate adds income with no product development, and you trade margin for a distribution channel you do not have to run.
+## Run partners in two phases — a one-time 'launch' promotion to their audience to prove it works, then 'integrate' the product into their ongoing core offer so the flow continues without another campaign.
 
-**Evidence offered:** Prestige Labs taught gyms to run nutrition consultations and upsell the supplement line to their own members, splitting the revenue; described as the ongoing strategy that scaled to ~300 orders/day.
+**Why it works:** A launch produces a visible burst of results that gives the partner a reason to believe; integration converts a one-off promo into a standing line item in their offer, so every new customer of theirs automatically becomes a lead or sale for you with no repeated persuasion.
 
-**Fit here (6/10):** Translates to stockists/wholesale for a 12-SKU line — a studio or shop carrying the full range. Runnable now at one or two accounts and it adds order volume without ad spend. Docked because wholesale margin on a $50 AOV natural-deodorant line is thin, the buyer becomes the partner's customer (no email, no repeat relationship — the binding constraint), and restocking is manual work for a solo operator.
+**Evidence offered:** Three worked case studies — blast-off seminar then embedded LLC offer; free 28-day challenge then a nutrition orientation on every new member; a paid workshop then adjustments included in every gym membership.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+**Fit here (7/10):** Directly translatable at this size: launch = a one-week deodorant giveaway or sampling event with one local studio; integrate = that studio includes a travel-size deodorant or lip balm in every new-member welcome kit, bought wholesale monthly. Integration is what matters here because it produces recurring orders from a single relationship rather than a one-time spike. Runnable now with no team and no spend.
 
-## Run partners in two phases — activate them with a one-off dated launch promotion to their audience first (have them promote before it is buyable, then sell to everyone on launch day), and only after that works, integrate your product permanently into what they already sell.
+*Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
 
-**Why it works:** Affiliates need a fast, visible win to stay engaged, and a dated launch concentrates their promotion into a window that produces real commission volume instead of a trickle. Once they have seen the money, they will accept a permanent structural change to their own offer, which is what produces ongoing lead flow.
+## Give the partner all or nearly all of the money from the launch event — you take the customers and the contact details, not the front-end revenue.
 
-**Evidence offered:** Prestige Labs' fourth-week inflection ($450k in a week from 400+ affiliates); three worked case studies of launch-then-integrate (tax seminar then bundled LLC setup; 28-day challenge then nutrition orientation for every new member; chiropractor workshop then adjustments included in every membership).
+**Why it works:** The partner does the promoting, so paying them 100% of the front end makes the deal free money for them and they will repeat it; you monetize downstream on the customers acquired, whose lifetime value exceeds the front-end margin you gave up.
 
-**Fit here (7/10):** Scales down honestly: a one-off 'free natural deodorant with any class pass this month' promo at a single local studio with a dated code and a pre-written post, and if it moves units, get the studio to include a travel-size in every new-member welcome pack ongoing. A deadline is what makes a busy salon owner actually post. Keep it cheap — no bespoke assets, no paid support — because with a handful of partners the win will be modest.
+**Evidence offered:** Chiropractor case study — gym owner keeps the full $2,970 from a $99 workshop for thirty people and does no work beyond a few emails and posts; the chiropractor takes the room full of prospects.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 14 of 16)*
+**Fit here (7/10):** Solves the exact problem a sub-1,000-list brand has when approaching a partner with a bigger audience: there is nothing to trade on parity, so pay in margin instead. Concretely: let a studio keep 100% of retail on a sampling event or pop-up, or give them the full margin on a first wholesale order, in exchange for the email/SMS opt-ins. At $50 AOV and 18-22% repeat, giving up the first sale's margin is affordable if the opt-in enters the flows.
 
-## Get a first small cohort of affiliates working and use their feedback to fix your offer, terms, launch and integration before recruiting more — then turn their documented results into the recruiting material for the next batch.
+*Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
 
-**Why it works:** Early partners surface the friction in the deal cheaply; once one partner has a real number attached to them, that number is the most persuasive asset for recruiting the next partner, so results compound into recruitment.
+## Judge a partner program by comparing what it cost to recruit and enable each affiliate against the gross profit of every customer that affiliate sends (target 3:1 or better), and improve a weak ratio in exactly three ways — cheaper recruiting, a launch process that activates signed partners, or deeper integration that makes each partner worth more.
 
-**Evidence offered:** Stated action step (ten to twenty affiliates, work the kinks out, then scale by turning results into affiliate lead magnets); assertion only.
+**Why it works:** Affiliates rarely buy much themselves, so measuring them on their own purchases mis-reads the program; attributing all downstream customer gross profit to the partner who sent them makes the spend decision legible, and the three-lever diagnosis says which end of the program to fix.
 
-**Fit here (6/10):** Ten to twenty simultaneous partners is beyond a solo operator hand-running 12 SKUs at $2,700/mo, but the honest scale-down is 2-3 partners run properly with the first partner's sales number written into the pitch email for the next. Complements the existing 'run serially' claim rather than restating it, because it is specifically about partner recruitment sequencing.
+**Evidence offered:** Worked arithmetic ($4,000 affiliate CAC, $120k lifetime sales, 75% margins, 40% payout, 12.5:1 ratio) plus a stated 3:1 minimum.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 15 of 16)*
+**Fit here (5/10):** Durable measurement logic; the dollar figures are B2B-scale and irrelevant. Scaled-down version runnable today: give every partner a unique Shopify discount code and track revenue and gross profit per code against hours and free product spent recruiting them. The real value is the activation-versus-integration diagnosis. Scored mid because at ~54 orders/month a single partner's contribution will not be precise enough to act on for months.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
+
+## Get a first cohort of affiliates, use their feedback to debug the offer, terms, launch and integration, then turn their documented results into the recruiting material for the next batch.
+
+**Why it works:** Early partners surface the friction in the deal before you have scaled it; their results then become third-party proof that removes the biggest objection from the next partner, who wants to know it worked for someone like them.
+
+**Evidence offered:** Stated action step ('advertise your affiliate offer until you get ten to twenty affiliates… turn their results into your first batch of affiliate lead magnets').
+
+**Fit here (5/10):** Ten to twenty partners is far beyond what one operator at $2,700/mo can service, but the honest scale-down is two or three local studios or shops: run them, fix the wholesale terms and the display, then use 'the studio on X street sells eight units a month in their welcome kits' as the opener for partner four. Not parked, because the scaled-down version is genuinely runnable now.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
+
+## Point some of your paid ads at recruiting affiliates and partners rather than only at customers, using the same targeting machinery to build an affiliate program.
+
+**Stage:** scale — parked until the scale phase opens. Recorded now so it is not re-derived later.
+
+**Why it works:** An affiliate acquired through paid ads becomes a permanent distribution node rather than a single purchase, so the same ad dollar buys recurring reach instead of one order.
+
+**Evidence offered:** Author expanded his paid ads to include potential affiliates, which 'paved the way' for his affiliate programs.
+
+**Fit here (5/10):** A legitimate ecommerce channel at any size, but $30/day is a single-purpose budget currently pointed at giveaway entries, and splitting it across a second objective would leave neither cell readable at ~54 orders/month. Park behind scale; trigger is the giveaway campaign hitting a stable cost per entry with budget headroom for a second ad set, or a list large enough to recruit affiliates organically.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 16 of 16))*

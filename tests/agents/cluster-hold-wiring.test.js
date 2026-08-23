@@ -208,6 +208,11 @@ const GATED = [
   'agents/legacy-rebuilder/index.js',
   'agents/blocked-post-resolver/index.js',
   'agents/refresh-runner/index.js',
+  // Added 2026-08-23. PR #617 gated the five above and missed this one, so the
+  // weekly `--apply --limit 5` CTR budget was spending four of its five slots on
+  // the held cluster. Its own selector is tested in
+  // tests/agents/meta-optimizer-cluster-hold.test.js.
+  'agents/meta-optimizer/index.js',
 ];
 
 /**

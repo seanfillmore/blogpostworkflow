@@ -3,12 +3,250 @@
     "keyword": "reale",
     "matchType": "broad",
     "reason": "Brand conflict — 'Reale Skincare' / 'Reale Actives' is a different company. Exclude all reale-* variants from targeting.",
-    "added_at": "2026-04-09"
+    "rejected_at": "2026-04-09"
   },
   {
     "keyword": "real skin",
     "matchType": "exact",
     "reason": "Not a topic we need to address — other brands use similar names. We already own branded 'real skin care' queries so this is exact-match only to avoid filtering our own branded traffic.",
-    "added_at": "2026-04-09"
+    "rejected_at": "2026-04-09"
+  },
+  {
+    "keyword": "glass skin routine",
+    "slug": "glass-skin-routine",
+    "rejected_at": "2026-04-16T21:07:14.265Z"
+  },
+  {
+    "keyword": "retinol vs tretinoin",
+    "slug": "retinol-vs-tretinoin",
+    "rejected_at": "2026-04-16T21:07:24.909Z"
+  },
+  {
+    "keyword": "realskin",
+    "slug": "realskin",
+    "rejected_at": "2026-04-16T21:07:26.963Z"
+  },
+  {
+    "keyword": "real skin care organic body lotion",
+    "matchType": "exact",
+    "reason": "This is a branded term",
+    "rejected_at": "2026-05-02T04:04:41.469Z"
+  },
+  {
+    "keyword": "moisturizing body wash",
+    "slug": "moisturizing-body-wash",
+    "reason": "off product scope: RSC does not sell body wash",
+    "rejected_at": "2026-05-22T18:01:56.362Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "what is glycerin",
+    "reason": "no product mapping",
+    "rejected_at": "2026-06-01T15:05:37.197Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "coconut skin care products",
+    "reason": "no product mapping",
+    "rejected_at": "2026-06-03T15:05:37.466Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "natural teeth whitening",
+    "reason": "no product mapping",
+    "rejected_at": "2026-06-03T15:05:37.467Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "organic aloe vera gel",
+    "reason": "no product mapping",
+    "rejected_at": "2026-06-03T15:05:37.467Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "ayurvedic tooth powder",
+    "reason": "no product mapping",
+    "rejected_at": "2026-06-05T15:05:14.452Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "peppermint soap",
+    "slug": "peppermint-soap",
+    "reason": "off scope: RSC does not sell peppermint soap variant (only lavender/tea tree/lemongrass/unscented bar; orange/coconut/lavender/unscented liquid)",
+    "rejected_at": "2026-06-10T01:31:47.310Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "natural bar soap for woman",
+    "slug": "natural-bar-soap-for-women",
+    "reason": "stale duplicate of best-natural-bar-soap-for-women-clean-picks-that-work (canonical already live); -1 handle redirects elsewhere",
+    "rejected_at": "2026-06-10T01:31:47.906Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "best clean body lotion",
+    "slug": "best-clean-body-lotion-soft-skin-zero-toxins-real-skin-care",
+    "reason": "superseded by /collections/paraben-free-lotion redirect (never published; topic consolidated into collection)",
+    "rejected_at": "2026-06-16T03:16:02.822Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "best natural sls-free toothpaste 2026",
+    "slug": "best-sls-free-toothpaste-2026",
+    "reason": "exact duplicate of /sls-free-toothpaste-the-gentle-switch-worth-making; deleted+redirected in cannibalization pass",
+    "rejected_at": "2026-06-17T03:37:01.184Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "dr bronner alternative",
+    "reason": "no product mapping",
+    "rejected_at": "2026-06-19T15:58:47.226Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "real soap",
+    "slug": "real-soap",
+    "rejected_at": "2026-06-22T13:33:48.994Z"
+  },
+  {
+    "keyword": "real lotion",
+    "slug": "real-lotion",
+    "rejected_at": "2026-06-22T13:33:49.898Z"
+  },
+  {
+    "keyword": "natural deodorizer",
+    "reason": "no product mapping",
+    "rejected_at": "2026-07-01T15:45:09.456Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "can SLS cause canker sores",
+    "reason": "no product mapping",
+    "rejected_at": "2026-07-01T15:45:09.461Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "best sensodyne alternatives",
+    "reason": "no product mapping",
+    "rejected_at": "2026-07-01T15:45:09.495Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "sodium lauryl sulfate",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-02T15:25:24.180Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "beef tallow for skin",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-02T15:25:24.197Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "moisturizing body oil",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-02T15:25:24.198Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "tallow for skin",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-02T15:25:24.201Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "armpit detox",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-03T15:39:58.451Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "tattoo aftercare",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-05T16:07:49.137Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "how to moisturize dry skin",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-05T16:07:49.203Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "organic skincare",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-05T16:07:49.210Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "jojoba oil for skin",
+    "reason": "no product mapping",
+    "rejected_at": "2026-08-10T15:43:40.351Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "what soap to use for tattoo",
+    "matchType": "broad",
+    "slug": "what-soap-to-use-for-tattoo",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "what soap can i use to wash my tattoo",
+    "matchType": "broad",
+    "slug": "what-soap-can-i-use-to-wash-my-tattoo",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "best soaps for tattoos",
+    "matchType": "broad",
+    "slug": "best-soaps-for-tattoos",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "best soap for fresh tattoo",
+    "matchType": "broad",
+    "slug": "best-soap-for-fresh-tattoo",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "what soap to use for tattoos",
+    "matchType": "broad",
+    "slug": "what-soap-to-use-for-tattoos",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "best antibacterial soap for tattoos",
+    "matchType": "broad",
+    "slug": "best-antibacterial-soap-for-tattoos",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "best tattoo soap",
+    "matchType": "broad",
+    "slug": "best-tattoo-soap",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "best soap for new tattoo",
+    "matchType": "broad",
+    "slug": "best-soap-for-new-tattoo",
+    "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+    "rejected_at": "2026-08-23T14:00:04.540Z",
+    "source": "consolidate-tattoo-soap-calendar-2026-08-23"
   }
 ]
