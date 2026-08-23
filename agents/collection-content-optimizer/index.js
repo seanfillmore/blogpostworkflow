@@ -12,6 +12,15 @@
  *
  * All changes queue through data/performance-queue/ for human approval.
  *
+ * HEALTH-CLAIM GATE (lib/seo-copy-health-gate.js + lib/seo-copy-gate-loop.js):
+ * the generated body is 450-650 words of marketing copy plus a 4-6 question FAQ
+ * block — the largest regulated surface any SEO agent here writes. Measured
+ * against the 10 bodies this agent has already produced, 5 trip the blocking
+ * tier (eczema, rosacea, dermatitis, "treatment", "prevention") while 0 of their
+ * titles or meta descriptions do, so the body is where this gate does its work.
+ * Generation regenerates ONCE with the offending words named; --publish-approved
+ * cannot regenerate, so it refuses the write and leaves the item in place.
+ *
  * Usage:
  *   node agents/collection-content-optimizer/index.js                           # dry run
  *   node agents/collection-content-optimizer/index.js --queue                   # write to queue
@@ -41,6 +50,11 @@ import { clusterForCollection } from './lib/cluster-mapper.js';
 import { validateCollectionSpec } from '../../lib/collection-validation.js';
 import { buildCollectionPageSchema, buildBreadcrumb, buildFaqSchema } from '../../lib/schema-builders.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
+import { gateGeneratedCopy } from '../../lib/seo-copy-gate-loop.js';
+import {
+  SEO_COPY_COMPLIANCE_RULE, checkSeoCopyFields,
+  renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
+} from '../../lib/seo-copy-health-gate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -187,7 +201,7 @@ function selectCollectionCandidates(collections, gscResults, activeQueueSlugs, c
 
 // -- claude content generator -------------------------------------------------
 
-async function generateCollectionContent(collection, topQueries, gscData, relatedPosts, ingredients, indexGround) {
+async function generateCollectionContent(collection, topQueries, gscData, relatedPosts, ingredients, indexGround, constraint = '') {
   const currentDesc = stripHtml(collection.body_html).slice(0, 2000);
   const currentWords = wordCount(collection.body_html);
 
@@ -262,6 +276,8 @@ Also write:
 - why: 1-sentence explanation of why this should improve rankings
 - projected_impact: 1-sentence estimate of expected improvement
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "body_html": "<p>...</p>",
@@ -343,6 +359,7 @@ async function publishApprovedCollections() {
   console.log(`  Found ${items.length} approved item(s) to publish:\n`);
 
   let published = 0;
+  const refused = [];
   for (const item of items) {
     process.stdout.write(`  "${item.title}"... `);
 
@@ -359,6 +376,35 @@ async function publishApprovedCollections() {
 
     try {
       const rawHtml = readFileSync(item.proposed_html_path, 'utf8');
+
+      // ── health-claim gate, no retry available ─────────────────────────────
+      // This drain runs daily from scheduler.js step 4b and publishes copy an
+      // earlier `--queue` run generated — possibly before the gate above
+      // existed. There is no prompt here, so a blocking hit REFUSES the write
+      // and stops. The item keeps its `approved` status and its HTML: it is not
+      // dismissed and not deleted, because a gate may decide copy cannot ship
+      // and may not decide the work is worthless (see data/briefs/_dropped/ for
+      // what the other answer cost). Re-running `--queue` regenerates it under
+      // the gate; the check itself is regexes, so re-checking daily is free.
+      const compliance = checkSeoCopyFields({
+        title: item.proposed_meta?.seo_title,
+        meta: item.proposed_meta?.seo_description,
+        body: rawHtml,
+      });
+      if (!compliance.ok) {
+        const words = [...new Set(compliance.blocking.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+        console.error(`REFUSED (health-claim gate): ${words}`);
+        item.health_gate = {
+          refused_at: new Date().toISOString(),
+          refused_by: 'collection-content-optimizer --publish-approved',
+          violations: compliance.blocking,
+        };
+        writeItem(item); // still `approved` — refused, not dismissed
+        refused.push({ label: item.title, resource: `collections/${item.slug}`, violations: compliance.blocking });
+        continue;
+      }
+      if (item.health_gate) { delete item.health_gate; } // cleared by a compliant regeneration
+
       const resourceType = item.collection_type === 'custom' ? 'custom_collections' : 'smart_collections';
 
       // Strip any previously-embedded schema blocks to avoid duplication on re-runs,
@@ -411,6 +457,8 @@ async function publishApprovedCollections() {
   }
 
   console.log(`\n  Done — ${published}/${items.length} collection content update(s) pushed to Shopify.`);
+  for (const line of renderGateRefusalLines(refused)) console.log(`  ${line}`);
+  return { refused };
 }
 
 // -- main ---------------------------------------------------------------------
@@ -521,6 +569,7 @@ async function main() {
   console.log('');
 
   let queued = 0;
+  const gateSkipped = [];
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${c.title}"... `);
@@ -538,9 +587,45 @@ async function main() {
         clusterMates: c.clusterEntries.filter((e) => e.keyword),
         competitors: (competitors[c.cluster] || []).slice(0, 3),
       } : null;
-      const proposed = await generateCollectionContent(c, topQueries, c.gsc, relatedPosts, ingredients, indexGround);
+      // ── health-claim gate ──────────────────────────────────────────────
+      // A collection body is 450-650 words of marketing copy on a commercial
+      // page, plus a 4-6 question FAQ block — by some distance the largest
+      // regulated surface any of these agents writes, and the one most likely
+      // to answer "is this good for eczema?" in the product's own voice.
+      // Measured against the 10 bodies this agent has already generated, 5 trip
+      // the blocking tier (eczema, rosacea, dermatitis, "treatment",
+      // "prevention"), so the retry here is load-bearing, not decorative.
+      // SEO_COPY_COMPLIANCE_RULE is already in the first prompt for that reason.
+      const gated = await gateGeneratedCopy(
+        (constraint) => generateCollectionContent(c, topQueries, c.gsc, relatedPosts, ingredients, indexGround, constraint),
+        {
+          extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, body: p?.body_html }),
+          required: ['title', 'body'],
+        },
+      );
+
+      if (!gated.ok) {
+        const words = [...new Set(gated.violations.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+        console.log('gated');
+        console.log(`  ⊘ health-claim gate: ${words} — skipped after ${gated.attempts} attempt(s), nothing queued`);
+        gateSkipped.push({ label: c.title, pageUrl: c.url, violations: gated.violations, attempts: gated.attempts });
+        // Not counted against the run's candidate budget — a gated collection
+        // was not optimised — but bounded by its OWN equal budget, or a bad pool
+        // becomes an unbounded walk at two 4k-token calls each.
+        if (gateSkipped.length >= limit) {
+          console.log(`\n  Health-claim gate: ${gateSkipped.length} skips — at the skip budget, stopping.`);
+          break;
+        }
+        continue;
+      }
+
+      const proposed = gated.proposed;
       const wc = wordCount(proposed.body_html);
-      console.log(`done (${wc} words)`);
+      console.log(gated.attempts > 1 ? `done (${wc} words, regenerated once — health-claim gate)` : `done (${wc} words)`);
+      if (gated.advisory.length) {
+        const words = [...new Set(gated.advisory.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+        console.log(`    · advisory (not blocked): ${words}`);
+      }
 
       // Validate generated content — hard block on thin/invalid output
       const vSpec = {
@@ -602,15 +687,48 @@ async function main() {
   }
 
   console.log(`\n  Done — ${queued}/${candidates.length} item(s) written to data/performance-queue/`);
+  for (const line of renderGateSkipLines(gateSkipped)) console.log(`  ${line}`);
+  return { gateSkipped };
 }
 
 // -- entry point --------------------------------------------------------------
 
 const run = publishApproved ? publishApprovedCollections : main;
 
+/**
+ * A gate skip or refusal has to reach the 5 AM digest, and this agent writes no
+ * markdown report — `notifyLatestReport` would say "no report generated this
+ * run" and the skip would exist only in a cron log nobody reads. So an extra
+ * DEFERRED notification is sent, and only when there is something to say.
+ * Never `immediate: true`, and never `status: 'error'`: the gate refusing a
+ * claim is the policy working, not a failure.
+ */
+async function notifyGateOutcome(outcome) {
+  const lines = [
+    ...renderGateSkipLines(outcome?.gateSkipped || []),
+    ...renderGateRefusalLines(outcome?.refused || []),
+  ];
+  if (!lines.length) return;
+  const n = (outcome?.gateSkipped?.length || 0) + (outcome?.refused?.length || 0);
+  await notify({
+    subject: `Collection Content Optimizer: ${n} health-claim gate ${n === 1 ? 'block' : 'blocks'}`,
+    body: lines.join('\n'),
+    status: 'success',
+    category: 'pipeline',
+  });
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   run()
-    .then(() => notifyLatestReport('Collection Content Optimizer completed', REPORTS_DIR))
+    .then(async (outcome) => {
+      await notifyGateOutcome(outcome);
+      return notifyLatestReport(
+        `Collection Content Optimizer completed${gateSkipSummaryFragment([
+          ...(outcome?.gateSkipped || []), ...(outcome?.refused || []),
+        ])}`,
+        REPORTS_DIR,
+      );
+    })
     .catch((err) => {
       notify({ subject: 'Collection Content Optimizer failed', body: err.message || String(err), status: 'error' });
       console.error('Error:', err.message);
