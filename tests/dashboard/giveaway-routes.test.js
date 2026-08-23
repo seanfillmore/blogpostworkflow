@@ -156,6 +156,50 @@ test('GET /entries answers only for actual entrants, not for anyone in Klaviyo',
   assert.equal(JSON.parse(res200.body).entries, 6);
 });
 
+test('GET /entries reports WHETHER a referrer was named, never WHO', async () => {
+  // The entered page uses this to tell a referred entrant that confirming also
+  // pays the friend who referred them — six of seven referrals measured
+  // 2026-08-22 were stuck at exactly that step.
+  //
+  // A BOOLEAN, deliberately. Returning gv_referred_by would let anyone holding
+  // an entrant's address learn who referred them, from a public unauthenticated
+  // route. The boolean carries the same motivational weight with no new
+  // disclosure — the page says "the friend who referred you", never names them.
+  const handler = createEntriesHandler({
+    getProfileByEmail: async () => ({
+      id: 'P3',
+      email: 'test@example.com',
+      properties: {
+        gv_entries: 1,
+        gv_breakdown: { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false },
+        gv_referred_by: 'friend@example.com',
+      },
+    }),
+  });
+  const res = makeRes();
+  await handler({ url: '/api/giveaway/entries?email=test@example.com', headers: {} }, res);
+  const body = JSON.parse(res.body);
+  assert.equal(body.hasReferrer, true);
+  assert.equal(body.referredBy, undefined, 'the address itself must never leave the server');
+  assert.equal(JSON.stringify(body).includes('friend@example.com'), false, 'not anywhere in the payload');
+});
+
+test('GET /entries reports hasReferrer false when none was named', async () => {
+  const handler = createEntriesHandler({
+    getProfileByEmail: async () => ({
+      id: 'P4',
+      email: 'test@example.com',
+      properties: {
+        gv_entries: 3,
+        gv_breakdown: { confirmed: true, survey: false, referrals: 0, instagram: false, upload: false },
+      },
+    }),
+  });
+  const res = makeRes();
+  await handler({ url: '/api/giveaway/entries?email=test@example.com', headers: {} }, res);
+  assert.equal(JSON.parse(res.body).hasReferrer, false);
+});
+
 test('a Klaviyo failure on GET /entries responds 502 instead of crashing the process', async () => {
   // dispatch() in agents/dashboard/lib/router.js calls the handler without
   // awaiting it, and this codebase installs no unhandledRejection hook, so an

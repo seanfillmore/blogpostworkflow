@@ -210,9 +210,30 @@
   // We know who they are, so fetch the authoritative total. A 404 means they
   // have not entered yet; anything else is a transient failure. In both cases
   // fall back to hiding the count rather than showing a fabricated one.
+  // Shown only to someone who named a referrer AND has not confirmed yet.
+  //
+  // §5 pays the referrer +5 only once the friend they referred confirms, so
+  // until this person clicks, their referrer has nothing. Measured 2026-08-22,
+  // six of seven referral pairs were stuck at exactly this step. Every other
+  // argument on this page is about what the reader gets; this is the only one
+  // about what someone else loses.
+  //
+  // Once they HAVE confirmed the line is false and must not appear — the
+  // referrer has been credited.
+  var referralStake = root.querySelector('[data-gv-referral-stake]');
+  function showReferralStake(body) {
+    if (!referralStake) return;
+    var named = Boolean(body && body.hasReferrer);
+    var confirmed = Boolean(body && body.breakdown && body.breakdown.confirmed);
+    referralStake.hidden = !(named && !confirmed);
+  }
+
   fetch(endpoint + '/entries?email=' + encodeURIComponent(email))
     .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (body) { showLadder(body && typeof body.entries === 'number' ? body.entries : null); })
+    .then(function (body) {
+      showLadder(body && typeof body.entries === 'number' ? body.entries : null);
+      showReferralStake(body);
+    })
     .catch(function () { showLadder(null); });
 
   survey.addEventListener('submit', function (e) {
