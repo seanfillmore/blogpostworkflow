@@ -119,7 +119,7 @@ silently becomes hundreds of unattended API calls.
 ```json
 {
   "generated_at": "2026-08-01T15:10:00Z",
-  "cluster": "skin",
+  "clusters": ["lotion", "soap", "coconut oil", "deodorant", "lip balm"],
   "seed_count": 28,
   "partial": false,
   "questions": [{
@@ -134,6 +134,19 @@ silently becomes hundreds of unattended API calls.
 }
 ```
 
+- **`clusters` (2026-08-22, amended):** originally a single `"cluster": "skin"` string.
+  Replaced with an array — sourced straight from `lib/demand-questions.js`'s
+  `SKIN_LEAK_CLUSTERS`, never hardcoded — because the owner widened the mined leak set
+  from lotion+soap (+the generic coconut-oil bucket) to also include deodorant and lip
+  balm, and a single word could no longer describe the scope honestly: neither `"skin"`
+  nor any other one-word label covers deodorant and lip balm without also being wrong
+  for one of them. **This only bounds GSC-leak-origin seeds.** Persona-objection seeds
+  stay lotion+soap only, always, because they come from `personas.json` —
+  `voice-of-customer`'s `SKIN_CLUSTER_HANDLES` research, which this change did not
+  touch. A question's own `seed_origin` (`gsc_leak` vs `persona_objection`) is what
+  tells a reader which scope actually produced it; `clusters` is not a per-question
+  field, so it cannot answer that by itself. This was safe to change because nothing
+  consumed `demand-questions.json` yet at the time of the change.
 - `stage` uses the **same five awareness levels as `personas.json`**
   (`unaware` | `problem-aware` | `solution-aware` | `product-aware` | `most-aware`), so
   the two artifacts join on `stage` and `persona_id`. That join is the funnel matrix in
