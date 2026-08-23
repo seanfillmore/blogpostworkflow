@@ -1,6 +1,6 @@
 ---
 name: marketing-product-image-stack
-description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, leading with the attribute whose result is visibly demonstrable, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, how to stage use so it looks effortless, how much production polish an asset needs for its price point, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
+description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, building a nonverbal call-out that visually depicts the qualifying condition, leading with the attribute whose result is visibly demonstrable, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, keeping a consistent non-founder character or mascot across frames, how to stage use so it looks effortless, how much production polish an asset needs for its price point, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
 ---
 
 # Product Image Stack
@@ -25,7 +25,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Tension to reconcile:** the source stacks two or three levers into one frame, which pulls against the one-job-per-asset rule below. For RSC, pick one lever per test frame so you can reason about what changed.
 
-**Which lever to pick first:** the demonstrable-result rule below is the tie-breaker — of the levers available for a given SKU, prefer the one that puts a visible result in frame over one that merely restates an attribute.
+**Which lever to pick first:** the demonstrable-result rule below is the tie-breaker — of the levers available for a given SKU, prefer the one that puts a visible result in frame over one that merely restates an attribute. The contrast lever is also the verbal/nonverbal call-out rule below in miniature: contrast is what earns the glance, but pair it with a scene that depicts who the frame is for.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -38,7 +38,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (7/10):** The mechanism is sound and durable — promote proven winners to control and always keep one variant in test — and Amazon Experiments is a live, current tool available to brand-registered sellers, so this is not a stale platform-mechanics artifact. Note that this was parked under `traffic`, but its real blocker was never ad budget: it is Amazon session volume, at ~36 Amazon orders/month too thin for a variant to reach a readable delta. Opening the Meta gate does not fix that, because the giveaway campaign drives Shopify entries rather than Amazon sessions. Still worth 7 on merit and worth starting a standing cadence on the highest-traffic ASIN, accepting that early reads are directional.
 
-**How it meshes with the rules above:** the one-lever-per-frame discipline is what makes this cadence readable — a variant that changes three levers at once produces a delta you cannot attribute. Until the gate opens, main-image and secondary-slot changes here are judgement-led: change one lever, ship, move on, and keep a written record of what changed so the same frames can be re-run as proper A/B pairs when sessions support it.
+**How it meshes with the rules above:** the one-lever-per-frame discipline is what makes this cadence readable — a variant that changes three levers at once produces a delta you cannot attribute. Until sessions support a readable delta, main-image and secondary-slot changes here are judgement-led: change one lever, ship, move on, and keep a written record of what changed so the same frames can be re-run as proper A/B pairs later.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -69,6 +69,18 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
+## Give the frame a nonverbal call-out as well as a verbal one — use contrast (colour, motion, anything that sticks out) to earn the glance, and stage a scene that visually depicts the qualifying condition instead of only naming it in words.
+
+**Why it works:** Attention is captured pre-verbally. A frame that *shows* the problem — a person tossing in bed, a room stacked with junk — makes the sufferer recognise themselves before a single word is read, so the image does the targeting the headline would otherwise have to carry alone. Contrast is what stops the scroll; the depicted condition is what makes the right person stop rather than everyone.
+
+**Evidence offered:** The cocktail-party analogy extended past the called name to the dropped tray and the champagne flute — sounds that turn heads without language — plus a list of worked scene examples. Assertion and analogy, no test data.
+
+**Fit here (7/10):** Durable creative principle and highly runnable now: the account runs static ads, the operator already produces imagery with the AI reference-photo workflow below, and a scene frame costs nothing but a prompt. Concrete forms for RSC: reapplying at 3pm in an office bathroom, a discarded stick of conventional deodorant, an armpit-check in a car mirror before a meeting, a shirt held up to the light. Additive because the format rotation below names transformation and lifestyle but never names *depicting the qualifying condition* as a job in its own right.
+
+**How it meshes with the rules above and below:** this is the 'before' frame of the transformation format used alone, as a targeting device rather than as proof — so it belongs on secondary slots, PDP imagery and paid statics, not on the Amazon main image, where the compliance rule below requires the product itself to be the subject. The one-persona rule governs *who* must recognise themselves in the scene; the contrast lever in the main-image list above is the same mechanism reduced to colour. Keep the depicted condition honest and category-safe — an agitation scene still has to be something the product actually resolves.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 8 of 16))*
+
 ## Always have these static formats in rotation: educational infographic, headliner, benefit callout, us-vs-them comparison, transformation, instructional/step-by-step, lifestyle/in-context, grid/multi-SKU, and text-only.
 
 **Why it works:** Each format carries a different job and reaches a different awareness stage; missing formats are literal gaps in who you can convert. Infographics and text-only borrow credibility from organic formats and don't read as ads.
@@ -94,7 +106,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 ## Show the transformation rather than describing the after-state — before/after visuals are the highest-leverage format for problem-aware and solution-aware buyers looking for proof.
 
-**Why it works:** Problem- and solution-aware buyers have stopped needing persuasion and only need evidence; a visual before/after is proof in a form that requires no reading. This is the strongest instance of the demonstrable-result rule above: the before frame supplies the contrast that makes the result legible.
+**Why it works:** Problem- and solution-aware buyers have stopped needing persuasion and only need evidence; a visual before/after is proof in a form that requires no reading. This is the strongest instance of the demonstrable-result rule above: the before frame supplies the contrast that makes the result legible — and it is also the nonverbal call-out rule above doing double duty, since the 'before' half is the qualifying condition depicted.
 
 **Evidence offered:** Assertion plus her observation that transformation is the biggest format gap in the ad accounts she audits; AI demo produces a pit-stain before/after she rates highly.
 
@@ -160,6 +172,18 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
+## Give the imagery an enduring non-founder likeness — a recurring character who looks, talks and dresses like the target buyer, or a mascot — and keep it consistent across frames.
+
+**Why it works:** People pay attention to and trust people who resemble them, so a likeness matched to the buyer does part of the qualifying work before any copy is read. A consistent recurring character compounds recognition across every ad and listing frame instead of restarting from zero each time — and because a mascot never ages, never renegotiates and never leaves, it detaches the brand from the owner's face, removing the dependency that makes an owner-fronted business fragile and hard to sell.
+
+**Evidence offered:** Assertion plus named examples (Mickey Mouse, the Geico Gecko, Tony the Tiger, the Michelin Man) and the Gym Launch sale anecdote. No performance data.
+
+**Fit here (5/10):** Durable positioning principle. Partially runnable now — a consistent AI-rendered character or mascot held steady across statics and PDP frames needs no designer and no on-camera talent, using the reference-image workflow below to keep the face, wardrobe and register identical from frame to frame. Hiring real on-camera talent is team-gated, and at ~$2,700/mo brand-recognition compounding is a slow-payback lever against the binding retention constraint, so it is adopted at a modest score for the scaled-down version only.
+
+**How it meshes with the rules above:** the lifestyle rule already tells you to specify the avatar, setting and emotional register per frame; this adds that the avatar should be the *same* person across frames rather than a new stranger each time, and that it should never default to the founder. Keep it inside the one-persona rule — a recurring character is one narrowly-specified buyer made visible, not a mascot that tries to appeal to everyone — and inside the compliance guardrail below, which keeps a character out of the Amazon main image where the product itself must be the subject.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 8 of 16))*
+
 ## Match production value to the product's price point — high-AOV products need elevated, higher-production creative to earn trust; lower-priced products are served fine by raw, phone-shot, plainly-lit frames.
 
 **Why it works:** Polish is a trust signal that scales with the size of the ask. When a buyer is spending a lot, visible production value signals a legitimate brand worth the money; when the ask is small, raw and unpolished reads as authentic rather than cheap, so the extra spend buys nothing. Over-polished, generic-looking frames on a small body-care brand actively read as stock.
@@ -178,7 +202,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Stated flatly as a rule ('you can't just stamp it on the image, you'll get banned'), plus a live catch where GPT Images 2.0 rendered a screen the product does not have and he corrected it back to the reference image. Assertion from practice, no policy citation.
 
-**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. This also caps the demonstrable-result rule above: the result shown must be one the real product actually produces, photographed honestly. Free to observe, and it protects the revenue-producing channel. A non-compliant frame is never a winner, however well it performs.
+**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. This also caps the demonstrable-result rule above: the result shown must be one the real product actually produces, photographed honestly — and it keeps agitation scenes and recurring characters off the main image, where the product itself must be the subject. Free to observe, and it protects the revenue-producing channel. A non-compliant frame is never a winner, however well it performs.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -188,6 +212,6 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Live walkthrough: a first attempt got the button wrong, a prompt error ('no logos') was corrected, photo was switched to render, and the gibberish bottom-line text was fixed in Canva — whole loop asserted at 10–15 minutes. Side-by-side showing GPT Images 2.0 rendering minuscule text correctly where Nano Banana Pro produced AI gibberish. Single demonstration, no comparison against a designer.
 
-**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots and PDP heroes on both channels, at near-zero cost. Held at 6 because it is a production-speed lever rather than a revenue mechanism, and it must be run under the compliance guardrail above, at the polish level the price-point rule above calls for. The full reference-photo and correction workflow is owned by marketing-ai-product-imagery; the edit-vs-regenerate rule also exists in marketing-email-design-production for email assets.
+**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots and PDP heroes on both channels, at near-zero cost. The same reference-image discipline is what holds a recurring character consistent across frames. Held at 6 because it is a production-speed lever rather than a revenue mechanism, and it must be run under the compliance guardrail above, at the polish level the price-point rule above calls for. The full reference-photo and correction workflow is owned by marketing-ai-product-imagery; the edit-vs-regenerate rule also exists in marketing-email-design-production for email assets.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*

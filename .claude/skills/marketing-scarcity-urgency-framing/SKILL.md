@@ -1,6 +1,6 @@
 ---
 name: marketing-scarcity-urgency-framing
-description: Use when putting a deadline on something — deciding what actually expires when the product is always in stock, announcing a dated opening for an offer that isn't buyable yet, giving a promotion a believable reason why and a real end date, naming and re-wrapping a recurring monthly promotion, scheduling the closing reminder at the end of a promo window, and creating urgency on evergreen surfaces (Amazon listings, always-on PDPs) where no honest deadline exists at all.
+description: Use when putting a deadline on something — deciding what actually expires when the product is always in stock, surfacing genuine batch/capacity limits as honest scarcity, announcing a dated opening for an offer that isn't buyable yet, running a whisper-tease-shout launch cadence and showing the build behind the scenes, giving a promotion a believable reason why and a real end date, naming and re-wrapping a recurring monthly promotion, scheduling the closing reminder at the end of a promo window, and creating urgency on evergreen surfaces (Amazon listings, always-on PDPs) where no honest deadline exists at all.
 ---
 
 # Scarcity and Urgency Framing
@@ -14,6 +14,16 @@ description: Use when putting a deadline on something — deciding what actually
 **Fit here (7/10):** The single most transferable urgency mechanic for an always-in-stock consumable: RSC cannot claim deodorant becomes unavailable, so this is the only honest form of urgency available. It attaches to structures already in place — a named bundle, a buy-X-get-Y multipack, a free lip balm with a refill, the subscribe-and-save rate. Zero cost, solo-executable on Shopify and in email, squarely in the Offer/AOV stage. Not higher because `marketing-offer-construction` warns against reflexive discounting: the safe version is an expiring *bonus or bundle*, not a recurring percentage-off that trains the list to wait.
 
 *Source: Alex Hormozi — "$100M Offers" (book, part 8 of 11)*
+
+## Advertise the operational limits you actually have — batch size, capacity, slots — instead of hiding them.
+
+**Why it works:** Real limits make the thing feel scarcer and more valuable, driving faster action, and because the limit is true it costs nothing to state and cannot be called a bluff. This is the one honest scarcity lever that points at the *product* rather than at the promotion: the catalog is always in stock, but any individual batch, scent run or prize pool is not.
+
+**Evidence offered:** Assertion with example lines ('we only printed one batch of shirts and will never reprint this design', 'I can only handle five people per week'). No data.
+
+**Fit here (7/10):** Durable persuasion principle and honestly true here: a solo operator making small batches of 12 SKUs has real limits — batch counts, seasonal scents, a fixed number of giveaway prizes and consolation samples. The rest of this skill covers making the promotion expire and attaching bonuses to ordering, but not surfacing genuine capacity/batch limits, which is the one honest lever an always-in-stock catalog has. Free, solo-executable on the PDP, in email and in organic captions. Guardrail: state only the limit that is real — if the batch gets reprinted, say so before the next one, or the claim becomes the fake product scarcity the first section rules out.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 3 of 16))*
 
 ## Where nothing can honestly expire, attach the bonus to the act of ordering instead of to a calendar.
 
@@ -41,9 +51,29 @@ description: Use when putting a deadline on something — deciding what actually
 
 **Evidence offered:** Demonstrated rather than taught: 'you can NOT sign up for Guided Profit System now. Not yet... between now and Tuesday, September 23 2008, keep your eyes glued to your inbox. There are more reports, videos and blog postings... all free. Plus, as we get closer to the release date, I'll provide more details and personally answer your questions.' No open rates, no conversion figures, no comparison against launching immediately.
 
-**Fit here (5/10):** Durable offer-sequencing principle, free and solo-executable, landing on the one owned surface where the 18–22.5% repeat rate is decided. The honest RSC form is a dated launch for a new scent, a seasonal bundle or the next giveaway round, with two or three value emails in between — then the reason-why wrapper and the closing send below carry the window once it opens. Capped at 5 because at a sub-1,000 subscriber list and ~54 orders/month the concentration effect will never be measurable, because a runway of 'coming soon' emails on a $12 consumable overshoots if it runs more than a few sends, and because **the mechanism collapses if the stated opening date is not honoured** — same trust rule as the closing deadline.
+**Fit here (5/10):** Durable offer-sequencing principle, free and solo-executable, landing on the one owned surface where the 18–22.5% repeat rate is decided. The honest RSC form is a dated launch for a new scent, a seasonal bundle or the next giveaway round, with two or three value emails in between — then the reason-why wrapper and the closing send carry the window once it opens. The two sections below supply the schedule for that gap (what to send, how often) and the material to fill it with. Capped at 5 because at a sub-1,000 subscriber list and ~54 orders/month the concentration effect will never be measurable, because a runway of 'coming soon' emails on a $12 consumable overshoots if it runs more than a few sends, and because **the mechanism collapses if the stated opening date is not honoured** — same trust rule as the closing deadline.
 
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 6 of 6)*
+
+## Run the pre-launch gap on a whisper-tease-shout cadence, escalating frequency as the date approaches.
+
+**Why it works:** Curiosity built and deliberately left unresolved accumulates an engaged audience before anything is buyable, so demand is assembled in advance and released at once instead of trickling; the escalating frequency converts that stored attention on a fixed date. The full cadence: *whisper* (curiosity, behind-the-scenes, no reveal) every 4–6 weeks until 60 days out, then every 2–3 weeks; *tease* (reveal the product, publish the date, show the value elements) weekly until 14 days out, then twice weekly; *shout* (explicit CTA, bonuses, scarcity) twice a day from 3 days out, every few hours on launch day, every 30 minutes in the final two hours.
+
+**Evidence offered:** Applied to his own book launch, described phase by phase; presented as the best method he has found for activating affiliates and 'how you launch anything'. No comparative data.
+
+**Fit here (7/10):** Fully runnable by one person today across email (sub-1,000 list), organic social and the live Meta campaign — usable for the soap giveaway and any new SKU or seasonal drop. Supplies the multi-week schedule and per-phase message that the dated-opening section above leaves unspecified. **Scale down honestly: three phases and a real date, not twice-daily shouting to a 900-person list** — whisper on organic only, tease with two or three emails, shout with a launch-day send and one closing send (see the closing-reminder section below). The published date is a promise under the same trust rule as every other deadline here.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
+
+## Fill the whisper phase by showing your work — batches, drafts, reformulations, late nights.
+
+**Why it works:** Visible duration and effort are read as evidence of quality, so documenting the build inflates perceived value before any claim is made, while also generating the curiosity the whisper phase depends on. An audience values a thing more the longer it appears to have taken; a ten-year product is valued above a ten-day one.
+
+**Evidence offered:** Book launch example (photos of printed drafts, framework versions, editing videos); asserted principle about long-gestation products being valued higher. No data.
+
+**Fit here (6/10):** A solo formulator has exactly this material for free — batch-making, ingredient sourcing, reformulation attempts, packaging decisions — and it feeds organic content and Meta creative without a crew (phone footage is enough at this price point). It is also the natural content for the whisper phase above and the 'free value' the dated-opening section asks you to fill the gap with, and it doubles as proof for the batch-limit claim earlier in this skill. Scored 6 because it is a perceived-value lift on a brand whose constraint is retention, not a direct revenue mechanism.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 14 of 16))*
 
 ## Run to a stated deadline and send a closing reminder at the end rather than letting a promotion fade out.
 

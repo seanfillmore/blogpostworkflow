@@ -1,13 +1,13 @@
 ---
 name: marketing-conversion-friction-audit
-description: Use when a Shopify product page, Amazon listing, or checkout gets visitors but few orders and you need to decide what to change — covers instrumenting the store with session recordings and buyer surveys before rewriting anything, auditing the page against perceived risk and proof placement, published results timelines, hosting competitor comparisons and third-party proof on your own page, variant and information overload, deciding which page sections earn their length, checkout speed and guest checkout, and how visibly return, cancellation, and guarantee terms are stated.
+description: Use when a Shopify product page, Amazon listing, or checkout gets visitors but few orders and you need to decide what to change — covers instrumenting the store with session recordings and buyer surveys before rewriting anything, interrogating people who decline even a free offer to name the hidden non-price cost, auditing the page against perceived risk and proof placement, published results timelines, hosting competitor comparisons and third-party proof on your own page, variant and information overload, deciding which page sections earn their length, checkout speed and guest checkout, and how visibly return, cancellation, and guarantee terms are stated.
 ---
 
 # Conversion Friction Audit
 
 ## Before rewriting anything, instrument the store and ask people directly — session recordings and an on-page question for non-buyers, a post-purchase survey for buyers — and keep probing until the specific constraint on order count or AOV is named.
 
-**Why it works:** Without observation you are optimizing whatever you happen to believe, and you cannot double down on a winner or kill a loser before it drains the bank. Analytics show where people abandon but never why. Watching real sessions surfaces the specific confusion, missing information or friction that no amount of internal reasoning produces; asking the people who *did* buy which information closed them names the deciding factor directly, so the fix targets a known constraint instead of a guessed one. Both are qualitative evidence, which does not require statistical volume to be informative.
+**Why it works:** Without observation you are optimizing whatever you happen to believe, and you cannot double down on a winner or kill a loser before it drains the bank. Analytics show where people abandon but never why. Watching real sessions surfaces the specific confusion, missing information or friction that no amount of internal reasoning produces; asking the people who *did* buy which information closed them names the deciding factor directly, so the fix targets a known constraint instead of a guessed one. Both are qualitative evidence, which does not require statistical volume to be informative. The sharpest version of the non-buyer half is the free-offer decline question below — a generic exit survey collects shrugs, while a specific decliner asked a specific question names a defect.
 
 **Evidence offered:** Schefren part 2: named as Silver Bullet #2, then detailed with tool name-drops (Woopra for real-time analytics, ClickTale for session recording, 4q.iperceptions for on-page survey) and the claim that today's reports are graphically robust enough that 'a sixth-grader could understand them' — no account data, no before/after, no instrumentation procedure. Schefren part 5: process instruction only — monitor each step, note abandonment points, scour forums and blogs, and 'better yet, conduct a survey at the end of the buying process' — no example survey, no findings, no data.
 
@@ -16,6 +16,16 @@ description: Use when a Shopify product page, Amazon listing, or checkout gets v
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 2 of 6)*
 
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 5 of 6)*
+
+## When someone turns down even a *free* offer, ask why and ask "what would I have to do to make it worth it for you to continue?" — a declined free thing proves the blocker is dream outcome, belief, or hidden time/effort/sacrifice cost, not price.
+
+**Why it works:** Price is only one term of the value equation, so a free thing that still gets declined is direct proof that the hidden costs are the real expense. The decliner is the only person who can name which of the other three terms is broken — they do not want the outcome, they do not believe it will work for them, or the effort/wait/risk of trying it exceeds zero dollars. Asking converts a no into a specific fixable defect, and the answer doubles as ammunition for the next prospect, since the objection you just heard is the one the page is failing to pre-empt.
+
+**Evidence offered:** Assertion only, framed as the author's own diagnostic habit; no data, no worked case.
+
+**Fit here (7/10):** Durable principle class, zero cost, runnable today by the solo operator — reply to every email decline, and question the people who saw a giveaway or sample offer and did not enter. Unusually well matched: natural deodorant carries a real hidden cost (the transition/detox period, the reapplication habit) that plausibly caps the 18–22.5% repeat rate, and this question is the cheapest way to confirm that rather than assume it. Distinct from the generic buyer/non-buyer surveys above — this is one specific question aimed at one specific decliner, which is why it returns a named defect instead of a shrug — and distinct from the declined-cross-sell claim elsewhere in the library. Whatever it surfaces should be routed straight into the four-term audit below and, if the answer is the transition period, into the published-timeline tactic. Not higher because it only reaches people who engaged enough to be reachable (email list, DMs), never the anonymous Amazon shopper on the larger ~$1,800/mo channel, and it produces diagnosis rather than revenue.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
 ## Audit an offer against the four-term value equation — increase dream outcome and perceived likelihood of achievement while decreasing time delay and effort/sacrifice — rather than treating the offer as a single price decision.
 

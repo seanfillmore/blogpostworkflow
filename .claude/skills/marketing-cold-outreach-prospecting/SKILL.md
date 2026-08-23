@@ -1,96 +1,76 @@
 ---
 name: marketing-cold-outreach-prospecting
-description: Building and working a hand-assembled cold prospect list of partners, stockists and creators.
+description: Reaching qualified strangers one-to-one — building the list, personalising the opener, offer selection, follow-up cadence and step-conversion tracking.
 ---
 
 # Cold Outreach Prospecting
 
-## Build the targeted prospect list in three escalating tiers — subscribe to scraping software first, then pay list brokers, then assemble names by hand from groups and communities — and start at the manual tier if you have more time than money, because hand-assembled prospects are the freshest.
+## Assemble a targeted prospect list by working from most accessible to least — scraping software, then paid list brokers, then joining groups and communities and hand-collecting names — and prefer the hand-assembled list because those people have received the fewest cold reach outs.
 
-**Why it works:** Anyone can query the same searchable databases, so those prospects are saturated with other companies' pitches; names you dig out of communities yourself have received far fewer cold approaches, so response rates are higher.
+**Why it works:** Cold outreach only works if you can contact qualified strangers at all; databases everyone else can query are already saturated, so a self-assembled list gets a higher response rate at the cost of your time.
 
-**Evidence offered:** Assertion plus the author's own stated process; no measured comparison of response rates between tiers.
+**Evidence offered:** Assertion plus a stated process he personally runs.
 
-**Fit here (6/10):** Cold outreach to individual $50 AOV consumers is not viable, but the honest translation is real: hand-build a list of 50-100 prospective stockists, boutiques, gyms/yoga studios, salons, podcast hosts and micro-creators from the communities they sit in. No software or broker spend needed — the manual tier is the recommended entry. Below 8 because retention is the binding constraint and this competes for hours with the live Meta campaign.
+**Fit here (6/10):** Consumer cold outreach is dead on arrival at $50.46 AOV, but the partner-side translation is real and runnable today: hand-build a list of 100 target stockists (refill shops, salons, gyms, boutiques), subscription boxes and micro-creators from Instagram/TikTok and local directories. Skip the scraping subscriptions and broker samples — the elbow-grease path is the only affordable one and also the highest-response one. Capped at 6 because acquisition is not the binding constraint here.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 7 of 16))*
 
-## Open every cold message with one to three specific things a friend would know about the prospect — compliment them on it and, ideally, say how it benefited you — so the cold reach out reads like a warm one; batch the research across the list beforehand.
+## Research one to three things about each prospect before contacting them, compliment them on it and show how it benefited you, so the cold message reads like it came from someone they already know.
 
-**Why it works:** Strangers hang up or delete because nothing signals prior relationship. A researched, specific opener buys enough seconds to make the actual ask, because people give time to people who evidently know and like them.
+**Why it works:** Strangers give you seconds and default to ignoring you; evidence that you spent effort on them specifically buys enough time to make the actual ask, and people like people who like them.
 
-**Evidence offered:** A worked dialogue example (the dog-trainer call) plus assertion.
+**Evidence offered:** Extended illustrative dialogue (the dog-trainer cold call) — a worked example, not measured data.
 
-**Fit here (7/10):** Executable today with zero budget: a DM to a boutique owner or creator that names their actual shop, post or ingredient they champion. The prospect universe here is dozens, not thousands, which is exactly the condition under which the author says to personalize every one. Nothing existing holds the cold-open personalization mechanic.
+**Fit here (7/10):** Directly runnable today by one person: every outreach message to a stockist, subscription box or micro-creator can open with a specific line about their shop, their post, or their audience. Batching the research is cheap at list sizes of 50-150. It feeds creator sourcing without restating it — that skill covers how to judge and brief a creator, not how to open a cold DM to one.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 7 of 16))*
 
-## When cold outreach take rates are poor, change the lead magnet before you tweak the script or process — keep raising what you give away until they feel stupid saying no.
+## When outreach isn't converting, change the lead magnet or offer before you tune anything else in the process — swap the disguised sales call for as much free service as you can afford, and keep raising it until they feel stupid saying no.
 
-**Why it works:** Strangers give you seconds, not minutes, so the size of the free thing is the dominant variable in whether they engage; script and process changes move a much smaller term.
+**Why it works:** The offer is the single highest-leverage variable in the sequence; script, targeting and cadence changes move take rate marginally while the thing being offered moves it in multiples.
 
-**Evidence offered:** Author's gym-industry cold outreach: four months of poor results, many tested process changes, then swapping a 'game planning session' for real free service tripled take rates.
+**Evidence offered:** Four months of failing cold outreach to gyms; swapping 'game planning session' (code for sales call) for real free service 3x'd take rates and beat every other test he ran.
 
-**Fit here (6/10):** Executable now with 12 SKUs and no budget: the natural version of 'big fast value' for a stockist or creator is free product shipped, not a discount code or a 'quick chat'. The diagnostic ordering — offer first, script second — is the distinct contribution, since 'give away something other people charge for' is already held. Scored 6 because free-unit cost is real against ~$2,700/mo and must be capped to a small list.
+**Fit here (6/10):** The 'give away something people pay for' half is already recorded in marketing-offer-construction, so only the test-ordering claim is new: when a cold outreach sequence underperforms, replace the offer before rewriting the script — e.g. offering a boutique a free filled tester set and a printed shelf card rather than a 'quick call about wholesale'. Scored 6 because it is adjacent to an existing claim and the channel is secondary to retention here.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 7 of 16))*
 
-## Set the automation/personalization ratio by list size — the fewer prospects you have, the less automation you should use and the more each message should be individually written.
+## Set your personalization level inversely to list size — a list of 1,000 highly qualified prospects gets every message personalized by hand, a list of millions can be templated and automated.
 
-**Why it works:** Personalization raises response rate; automation raises volume. With a small finite universe of qualified prospects, volume is capped anyway, so the only lever left is response rate — you cannot afford to burn a name on a templated blast.
+**Why it works:** Personalization raises response rate but costs time per contact; automation raises contacts per hour at a lower rate. Which trade wins depends entirely on how many qualified names exist in the universe.
 
-**Evidence offered:** Assertion with two contrasting examples (1,000 hedge fund managers vs tens of millions of weight-loss prospects).
+**Evidence offered:** Assertion with two contrasting examples (1,000 hedge fund managers vs. tens of millions of weight-loss prospects).
 
-**Fit here (6/10):** The realistic prospect universe for stockists, local studios and niche creators in this category is dozens to low hundreds, which puts this business at the 'personalize every one, automate nothing' end of the rule. It also correctly forbids buying sending tools that are not needed. Not covered by any existing skill.
+**Fit here (6/10):** This decides how the business should run outreach at all: the universe of realistic stockists, subscription boxes and niche creators is in the dozens-to-low-hundreds, which the rule says should be 100% hand-personalized and never blasted. It explicitly rules out the templated-blast tooling that would waste money at this revenue. Not higher because it is an operating rule rather than a revenue lever on its own.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 7 of 16))*
 
-## Contact each prospect multiple times in multiple ways, and use the non-response on one channel as the explicit pretext for the next ('I'm calling to follow up on my email').
+## Contact each prospect multiple times across multiple channels, and treat non-response on one channel as the explicit reason to follow up on another ('I'm calling to follow up about my email'); expect two to three conversations before a sale rather than one.
 
-**Why it works:** People respond to different mediums, and most senders quit after one attempt. Multi-channel repetition raises the chance of being seen and signals seriousness, and every unanswered attempt manufactures a legitimate reason for the next one.
+**Why it works:** Different people respond to different mediums, most senders quit after one attempt, and multi-channel persistence signals the matter is important — so an unanswered message manufactures a legitimate next touch instead of ending the sequence.
 
-**Evidence offered:** Assertion plus the 'if you really needed to reach your parents' analogy; author states he never answers calls but replies to DMs.
+**Evidence offered:** Assertion plus the analogy of urgently reaching your parents; his own stated preference for DMs over calls.
 
-**Fit here (7/10):** No budget or headcount required, and it is where solo operators actually lose partnership and stockist deals — one unanswered DM and the prospect is abandoned. Directly usable on surfaces this business has (Instagram DM, email, then a follow-up referencing the email). Complements acquisition-channel-selection, which covers choosing partners but not contact cadence.
+**Fit here (7/10):** The most portable claim in the excerpt for a solo operator: an outreach list of 100 stockists and creators worked once produces almost nothing, and email → Instagram DM → follow-up email costs nothing but time. Nothing in the existing skills covers outreach follow-up cadence — the lifecycle-email skill covers automated flows to people who already opted in.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 7 of 16))*
 
-## After you have exhausted a prospect list, wait three to six months and work the same list again from the top.
+## Once you have worked all the way through a cold list, wait three to six months and work it again from the top, because non-response is usually about visibility, timing or circumstance rather than rejection.
 
-**Why it works:** Three independent reasons the same name can convert later: they never saw the first messages, they saw them at a bad moment, or their circumstances changed. Nothing about the offer has to change for the list to yield a fresh crop.
+**Why it works:** Three separate failure modes decay over time — they never saw it, they saw it at a bad moment, or they did not need it then. Re-running the same list harvests the subset whose circumstances have since changed, at zero list-acquisition cost.
 
-**Evidence offered:** Assertion with the holiday-weight-gain illustration.
+**Evidence offered:** Assertion with an illustrative example (the prospect who gains ten pounds over the holidays).
 
-**Fit here (6/10):** Free to run and it means the hand-built prospect list keeps paying out rather than being a one-time effort — important when list building is the expensive part. Distinct from the recorded win-back claim, which addresses lapsed paying customers rather than never-replied prospects. Requires a written list with dates.
+**Fit here (6/10):** Free reuse of an asset a solo operator has already paid for in hours. A boutique that had no shelf space in March may be reformulating its lineup in September; a creator who ignored a DM may have just started a skincare series. Costs nothing but a calendar reminder. Held at 6 because it is a second-order improvement to a non-binding channel.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 7 of 16))*
 
-## Track every step of the outreach funnel as a rate, hold the channel to at least 3x lifetime profit versus fully-loaded cost (labor plus software), and reverse-engineer the input volume from the resulting equation.
+## Keep outreach scripts short — a page or two for calls and chat, half a page for cold email — and get your first 100 conversations or 10,000 emails out before you start tweaking the wording.
 
-**Why it works:** Cold outreach is deterministic in a way paid channels are not: a fixed input produces a fixed number of responses, so once you know the conversion rate at each step you can solve for the volume needed to hit a target and tell whether the channel is worth continuing.
+**Why it works:** There is no reward for a pretty script; response data from volume tells you what to change, whereas pre-optimizing wording with no reply data is guessing and delays the only thing that produces information.
 
-**Evidence offered:** Worked phone, email and DM examples with stated rates (20% pickup, 30% open × 10% reply = 3% engaged), plus his claim that failed cold outreach attempts were run by people who never tracked metrics.
+**Evidence offered:** Assertion.
 
-**Fit here (6/10):** The honest gate on whether the solo operator should spend hours on partner and stockist prospecting: with $50.46 AOV and 18-22.5% repeat, one stockist or creator relationship must be worth several hours of labor to clear a 3:1 bar. Runnable today as a spreadsheet of sent/replied/agreed — ratios are directional at dozens of prospects, but the arithmetic still decides continue-or-stop. Not covered by paid-media-measurement, which is Ads Manager specific.
+**Fit here (5/10):** Runnable today with an honest scale-down: 10,000 emails is not this business's world, but 'work the entire first list of 100 before rewriting the message' is the same rule at this size and stops a solo operator burning a week polishing an email nobody has received. Scored 5 because it is a work-discipline rule with modest revenue consequence.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
-
-## Keep outreach scripts short — a page or two for calls and chat, under half a page for cold email — and send the first large batch before optimizing the wording.
-
-**Why it works:** Script polish has far less leverage than volume and offer, and you cannot know which line is failing until you have real replies to read. Front-loading optimization delays the only thing that produces information.
-
-**Evidence offered:** Assertion ('there are no awards for prettiest script'), with a stated threshold of 100 conversations or 10,000 emails before tweaking.
-
-**Fit here (5/10):** Correct anti-perfectionism guidance for a solo operator who will otherwise rewrite a DM for an hour. Scaled down: the stated thresholds are unreachable, so the operational version is 'send the whole first batch of 30-50 hand-built prospects before rewriting anything'. A discipline rule rather than a revenue mechanism.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
-
-## Allocate ten to twenty percent of outreach effort to brand-new untested tooling — e.g. if you call five days a week, run a new dialer on one of them and compare it to your standard.
-
-**Why it works:** Outreach output is bounded by tooling, and tools improve faster than habits do; reserving a fixed slice surfaces the next efficiency gain before the current stack goes stale, with the comparison built into the schedule.
-
-**Evidence offered:** Assertion only.
-
-**Fit here (5/10):** Not a duplicate of the double-80/20 in creative testing, which governs creative angles rather than tooling. Honest scaled-down version: try one new tool per outreach cycle rather than one day in five, and drop it if it does not beat the current method. Scored 5 because tooling is not the constraint — hours and retention are.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 7 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 7 of 16))*

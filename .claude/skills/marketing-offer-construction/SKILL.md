@@ -1,6 +1,6 @@
 ---
 name: marketing-offer-construction
-description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, creating a premium version of something you already sell, auditing which SKUs have a real differentiator and which should compete on value vectors instead, scoring which existing SKU should anchor a bundle or act as the cheap entry offer, setting a front-end acquisition price and the margin gate it has to clear, choosing discount depth (or deciding not to discount at all), finding a price by stepping it upward against a fixed sample of orders, cutting a price objection by re-anchoring the comparison class instead of discounting, stating plainly why a high price has to be high, how to state the same savings (percent off vs dollars off vs a free portion), where the price sits relative to the bundle, guarantee and quantity argument on a page or in an email, how to close a page or email with a condensed claim summary and the guarantee restated against each claim, which audience to validate a new offer on first, writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
+description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, creating a premium version of something you already sell, auditing which SKUs have a real differentiator and which should compete on value vectors instead, scoring which existing SKU should anchor a bundle or act as the cheap entry offer, setting a front-end acquisition price and the margin gate it has to clear, choosing discount depth (or deciding not to discount at all), finding a price by stepping it upward against a fixed sample of orders, cutting a price objection by re-anchoring the comparison class instead of discounting, stating plainly why a high price has to be high, how to state the same savings (percent off vs dollars off vs a free portion), where the price sits relative to the bundle, guarantee and quantity argument on a page or in an email, how to close a page or email with a condensed claim summary and the guarantee restated against each claim, which audience to validate a new offer on first, writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, deciding whether an ad should point at the product itself or at a free offer at all, picking and packaging a lead magnet (sample, guide, quiz or physical item), screening a lead magnet against who it actually attracts, testing a lead-magnet name before spending on it, recruiting a capped group of free-product testers in exchange for before/after usage rights, or picking the incentive behind an email capture popup.
 ---
 
 # Offer Construction
@@ -78,6 +78,16 @@ description: Use when deciding what you actually sell or give away rather than h
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
 
+## Advertise the core offer directly first — put a free offer in front of it only where buyers genuinely need to learn or trust something before they can buy, which mostly means expensive purchases.
+
+**Why it works:** Going straight for the sale is the direct path to money; every free step you insert adds a conversion step that has to be paid for, maintained and converted downstream. A lead magnet earns its place only where the consideration cycle genuinely requires education or trust before purchase — otherwise it is a tax on the funnel.
+
+**Evidence offered:** Assertion, illustrated by Hormozi's own failed $450 webinar funnel versus the later case-study funnel.
+
+**Fit here (7/10):** This is a live decision right now: the $30/day Meta campaign points at a soap giveaway — a lead magnet — for a $50.46 AOV consumable that needs almost no education to buy. The rule says run at least one cell straight to a deodorant PDP and judge the two against each other on cost per purchase, not cost per entry. Related to but distinct from the 'simplest possible funnel' claim elsewhere: that governs how many steps sit between the ad and the PDP; this governs whether the thing advertised is the product or a free offer at all. Treat it as the gate on every lead-magnet rule below — nothing free ships until direct-to-PDP has been given a fair cell.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 2 of 16))*
+
 ## Never let the ask be a bare 'request a quote' — give something in exchange for contact information, and describe it as a dream outcome in the buyer's own words.
 
 **Why it works:** Nobody wants the transaction step itself; they want an outcome. Trading a concretely desirable thing for an email raises opt-in rate because the exchange finally feels favorable to the visitor.
@@ -94,9 +104,69 @@ description: Use when deciding what you actually sell or give away rather than h
 
 **Evidence offered:** Examples for each: 'Seven mistakes homeowners make when fixing their HVAC'; a local-SEO firm that ranks a business top-three free and calls in seven days ('they're crushing it'); a fashion consultant who automated a color-palette assessment. Anecdotal.
 
-**Fit here (6/10):** Durable principle class and it gives a concrete menu for a surface that is already live at zero cost. All three have real forms here: reveal-a-problem as a short guide on why a natural deodorant switch fails, trial-of-solution as a travel-size or sample, one-step as a scent/SKU match quiz across the 12-SKU catalog. Scored 6 rather than higher because trial-of-solution carries real COGS and shipping cost at a $50.46 AOV, so only the zero-COGS variants are safe to run first.
+**Fit here (6/10):** Durable principle class and it gives a concrete menu for a surface that is already live at zero cost. All three have real forms here: reveal-a-problem as a short guide on why a natural deodorant switch fails, trial-of-solution as a travel-size or sample, one-step as a scent/SKU match quiz across the 12-SKU catalog. Scored 6 rather than higher because trial-of-solution carries real COGS and shipping cost at a $50.46 AOV, so only the zero-COGS variants are safe to run first — and because for a consumables catalog the trial variant is not just one option among three but the specific right answer, which the sample rule immediately below owns.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
+
+## For a consumable, the correct lead magnet is a limited-use sample or trial of the core product itself — a single-serving or 'fun sized' unit — because consumables solve recurring problems only with recurring use.
+
+**Why it works:** A consumable sample delivers the full experience but runs out, and the problem it solved returns on a schedule. The product itself creates the repurchase pull, so the free unit both qualifies interest (only people with the problem want it) and demonstrates the exact thing that has to be rebought.
+
+**Evidence offered:** Assertion plus the Costco sampling example and the food/cosmetics/medicine category list.
+
+**Fit here (8/10):** The entire 12-SKU catalog is consumables and retention — not traffic — is the binding constraint at 18–22.5% repeat. A trial-size deodorant as the Meta front-end offer (or as the giveaway prize) is directly runnable by a solo operator at $30/day: it filters for people who actually want deodorant rather than sweepstakes entrants, and the stick running out is itself the reorder trigger. More specific than the generic three-types menu above, and it is the reason the trial variant beats the guide variant here despite carrying COGS. Two guards: the real cost of the sample plus postage must clear the front-end margin gate above before it goes behind paid traffic, and the sample only earns its keep if it ships with a reorder path (bundle offer, subscribe-and-save link) already in the box.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 2 of 16))*
+
+## Pick the lead magnet by running the problem–solution cycle: choose a narrow, meaningful problem, solve it completely for free, and check that the next problem the solution reveals is one your core offer sells against.
+
+**Why it works:** Every solution reveals a new problem. If the revealed problem is the one your paid product solves, the free offer manufactures its own demand for the purchase; if it is not, you buy contacts with no path to revenue. Solving the narrow problem completely also earns the trust that makes the paid ask credible.
+
+**Evidence offered:** Assertion plus a worked home-seller example (valuation, photos, cleaning, staging as narrow problems upstream of 'sell my home') and the pretzels-at-a-bar analogy.
+
+**Fit here (7/10):** This is the test the soap giveaway currently passes or fails: does receiving a free bar of soap reveal a problem that natural deodorant, oral care or lip balm answers, or does it just harvest sweepstakes emails? A solo operator can apply it in an afternoon to re-pick the prize — a free trial-size deodorant reveals 'my switch is going badly / I need a full-size and a routine', which the catalog answers directly. Distinct from the same cycle applied at the moment of purchase in marketing-upsell-offer-design: this applies it to the free front end.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 2 of 16))*
+
+## Take one narrowly-defined problem and build the lead magnet for it across four delivery vehicles — software/tool, information, a done-for-you service, or a physical product — then make several versions and rotate them.
+
+**Why it works:** The same problem can be solved many ways; each vehicle appeals to a different person, and each new version keeps advertising fresh at low incremental effort while revealing which framing pulls best. Picking the vehicle you can actually produce is what determines whether it ships at all.
+
+**Evidence offered:** Hormozi's own gym-owner examples: a benchmarking spreadsheet, a mini course on writing an ad, thirty days of free ad management, and a book (Gym Launch Secrets).
+
+**Fit here (7/10):** Durable offer-construction principle, directly usable against the live Meta campaign. The soap giveaway is one physical-product magnet, but the same narrow problem — switching to natural deodorant without the transition-period stink — also supports an information magnet (a transition guide), a tool (a scent/SKU picker quiz across the 12 SKUs), and a sample-size physical magnet. All four are producible by one person from existing inventory, and rotation gives the $30/day campaign fresh entry offers with no new product development. The done-for-you vehicle has no real form for a solo ecommerce operator — ignore it here.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 2 of 16))*
+
+## Screen every lead magnet against four requirements before it ships: it engages ideal customers on sight, it out-engages your core offer, it is valuable enough that they actually consume it, and it makes the right people more likely to buy.
+
+**Why it works:** A magnet that fails any one of these produces volume without buyers. Engaged leads, not raw leads, are what convert, so the magnet has to select for the person who wants the core offer rather than for whoever will take a free thing.
+
+**Evidence offered:** Assertion; stated as the chapter's summary criteria.
+
+**Fit here (7/10):** This is the exact guard the live soap-giveaway campaign needs at $30/day: a generic soap prize attracts sweepstakes hunters, not natural-deodorant buyers, and at ~54 orders/month there is no room to pay for a list that never buys. Durable principle, runnable as a written four-line checklist before the next entry offer ships, and it pairs with the problem–solution cycle above — that picks the magnet, this vetoes it.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 3 of 16))*
+
+## Test the name of the lead magnet before promoting it — headline first, then image, then subheadline — using polls to your following, a post on every platform asking for a '1' or a '2', or direct messages if you have no following at all.
+
+**Why it works:** Five times more people read the headline than anything else, so packaging determines whether the magnet is ever consumed. Small wording changes ('how to' versus no 'how to') produce large engagement swings, and directional preference data needs very few votes — which is why the free, pre-spend version of the test is worth running.
+
+**Evidence offered:** His own book-title tests: three headline rounds, one image round (real beat cartoon), four subheadline rounds with the winners recorded.
+
+**Fit here (7/10):** Durable copy/packaging principle and runnable today at zero cost: an Instagram story poll, a two-option subject-line test to the sub-1,000 list, or DMs to repeat customers all settle what to call the giveaway, the sample offer or the transition guide before any of the $30/day goes behind it. The fixed order matters — settle the name before fussing with the image. Held at 7 because a handful of poll votes is directional only; treat it as a tiebreaker between two names you would ship either way, never as evidence a name will sell.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 2 of 16))*
+
+## Make the lead magnet as easy as possible to consume — information in every format (text, video, audio, images), software that works on phone and desktop, a physical product that is fast to order, fast to arrive, easy to open, and shipped with simple directions.
+
+**Why it works:** People prefer lower-effort options, so removing consumption friction multiplies both take rate and actual consumption — and only a consumed magnet produces buyers.
+
+**Evidence offered:** Claims 2–4x increases in take rates; cites the near-even quarter split of $100M Offers across ebook, physical, audio and video.
+
+**Fit here (6/10):** Durable principle, and the scaled-down version needs no crew: deliver a deodorant-transition guide as an email sequence, a one-page PDF, and a phone-shot 60-second video, and let the opt-in choose. The physical half partially overlaps the post-purchase insert work already owned elsewhere, so the adoptable delta is format multiplication of the information magnet feeding the giveaway/sample list. Held at 6 because format work is cheap but not free in solo hours, and a magnet that fails the four-requirement screen above does not get better by being available in four formats.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 3 of 16))*
 
 ## Splinter one low-cost component out of your full offer, sell it at 80–90% off or free, and upsell the rest — because a 10–20% discount changes nothing while an 80–90% discount changes behavior.
 
@@ -117,6 +187,16 @@ description: Use when deciding what you actually sell or give away rather than h
 **Fit here (6/10):** Durable principle class and a useful selection filter for a business whose products are physical and priced — a real travel-size or a full lip balm has an unmistakable market price, unlike a PDF. Scored 6 rather than higher because the same real cost that makes it convert is real cash out of a $2,700/mo operation, so it should be gated to a paid-order threshold (free item with purchase, or with a bundle) rather than given for a bare email.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
+
+## Run an ad recruiting a small, explicitly numbered group to receive the product free, on the stated condition that they let you use their before/after photos and results in your marketing.
+
+**Why it works:** The capped number creates scarcity, the exchange framing makes the free product feel earned rather than cheap, and the deliverable is not just leads but a stock of proof assets — which is what makes the next round of advertising work.
+
+**Evidence offered:** First-hand case: an all-caps, image-free Facebook ad with this structure turned $1,000 into $5,700 across 19 sales at $299, and became the '6 week challenge' promotion credited with $1.5B+ across 4,500+ licensed gyms.
+
+**Fit here (7/10):** Durable offer construction that maps cleanly onto this catalog: 'looking for 10 people to run our 30-day natural deodorant switch — free full-size stick, you send honest before/after notes and a photo we can use.' Runnable today on the $30/day budget alongside or instead of the giveaway, and it attacks a real weakness, which is a thin proof corpus rather than a thin traffic count. Distinct from the private pre-launch validation panel: this is a public acquisition offer whose output is usage-rights content. Two guards — cap the number honestly and honour the cap, and carry FTC material-connection disclosure on anything later used as a testimonial, since the product was given free.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 8 of 16))*
 
 ## Don't add products, add ways to offer the products you already have — and when auditing which way, run the eight levers for making a customer worth more, starting with the three that require nothing new from you.
 
@@ -146,7 +226,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Coca-Cola worked as an illustration (secret recipe, pennies of cost, lifelong repeat consumption) plus the claim that a one-person service business also satisfies all four. Assertion with one canonical brand example, no figures.
 
-**Fit here (5/10):** Durable principle class, age irrelevant, but it cannot be used as intended: the no-new-products rule above gates catalog expansion, and a solo operator at $2,700/mo should not be launching product 13. It translates honestly as a scoring lens on the 12 SKUs that already exist — which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (the baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer, and which carries the subscribe-and-save cadence. It also pairs directly with the differentiator audit above: the 'unique' score is what tells you which SKUs earn mechanism copy, and with the front-end/back-end split: the 'air' score picks the candidate front end, the 'sticky' score picks the back end. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules above — the additive part is only the four-way scoring frame.
+**Fit here (5/10):** Durable principle class, age irrelevant, but it cannot be used as intended: the no-new-products rule above gates catalog expansion, and a solo operator at $2,700/mo should not be launching product 13. It translates honestly as a scoring lens on the 12 SKUs that already exist — which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (the baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer or sample, and which carries the subscribe-and-save cadence. It also pairs directly with the differentiator audit above: the 'unique' score is what tells you which SKUs earn mechanism copy, and with the front-end/back-end split: the 'air' score picks the candidate front end, the 'sticky' score picks the back end. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules above — the additive part is only the four-way scoring frame.
 
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
@@ -156,7 +236,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** The $5 five-day tanning pass story — five sessions never gets anyone as tan as they want, so the pass is credited toward a $19.99 unlimited membership — plus a gym version where 8 of 10 leads took the $399 premium. Anecdotal, single-operator claims.
 
-**Fit here (8/10):** Natural deodorant has a genuinely true version of the turkey talk: one stick does not span the transition period, so a single-unit purchase is the version most likely to fail. Saying that plainly on the PDP and in the Amazon A+ block simultaneously lifts AOV from $50.46 and forward-buys enough supply to survive the churn window — hitting both the Offer/AOV stage and the binding retention constraint at zero cost. This is the persuasion layer that makes an already-listed multi-unit pack actually sell, and it is distinct from the published-results-timeline tactic: that one documents what happens, this one uses the timeline to justify quantity.
+**Fit here (8/10):** Natural deodorant has a genuinely true version of the turkey talk: one stick does not span the transition period, so a single-unit purchase is the version most likely to fail. Saying that plainly on the PDP and in the Amazon A+ block simultaneously lifts AOV from $50.46 and forward-buys enough supply to survive the churn window — hitting both the Offer/AOV stage and the binding retention constraint at zero cost. This is the persuasion layer that makes an already-listed multi-unit pack actually sell, and it is distinct from the published-results-timeline tactic: that one documents what happens, this one uses the timeline to justify quantity. It is also the natural upsell script behind a free trial-size sample — the sample proves it works, the turkey talk explains why one stick was never going to be enough.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 3 of 11)*
 
@@ -206,7 +286,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Assertion from practice with example package names and the airline analogy (First / Business / Economy); claims it boosts upsells-per-person. No conversion data.
 
-**Fit here (8/10):** Extends the buy-X-get-Y multipack already adopted with a naming layer nothing else covers. A 12-SKU catalog at a $50.46 AOV is exactly the case where a named 'Natural Switch Starter' or 'Full Routine' is a single ask that lifts AOV and forward-buys months of a consumable, suppressing churn with no new traffic. Zero cost, solo-executable on Shopify bundle and collection pages today and as a multipack ASIN on Amazon. Held at 8 because naming adds no value by itself and at ~54 orders/month the effect will never be measurable — apply by judgment and move on.
+**Fit here (8/10):** Extends the buy-X-get-Y multipack already adopted with a naming layer nothing else covers. A 12-SKU catalog at a $50.46 AOV is exactly the case where a named 'Natural Switch Starter' or 'Full Routine' is a single ask that lifts AOV and forward-buys months of a consumable, suppressing churn with no new traffic. Zero cost, solo-executable on Shopify bundle and collection pages today and as a multipack ASIN on Amazon. Held at 8 because naming adds no value by itself and at ~54 orders/month the effect will never be measurable — apply by judgment and move on, or settle a two-name choice with the free poll/DM test above.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
 
@@ -271,7 +351,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Assertion, plus the admission 'I honestly have no idea why some names win and others do not.'
 
-**Fit here (5/10):** Head-to-head name testing with a preserved control is legitimate — name performance genuinely is unpredictable and holding the winner as control stops you from replacing a proven name with a worse one. What it needs is a readable signal: two or three name cells at $30/day and ~54 orders/month would separate on noise, and acting on that produces false confidence worse than not testing. Trigger: enough weekly purchase volume through paid that a single ad set can distinguish two offer variants — realistically several hundred link clicks and double-digit purchases per cell per week. The naming principle itself is already adopted (see the tier-naming rule above), so this parks as the validation method attached to it. Durable testing logic, not decaying platform mechanics.
+**Fit here (5/10):** Head-to-head name testing with a preserved control is legitimate — name performance genuinely is unpredictable and holding the winner as control stops you from replacing a proven name with a worse one. What it needs is a readable signal: two or three name cells at $30/day and ~54 orders/month would separate on noise, and acting on that produces false confidence worse than not testing. Trigger: enough weekly purchase volume through paid that a single ad set can distinguish two offer variants — realistically several hundred link clicks and double-digit purchases per cell per week. The naming principle itself is already adopted (see the tier-naming rule above), and the free, pre-spend version of the test — polls, a two-option post, or DMs to repeat customers — is already live in the name-testing rule above; only the paid head-to-head with a preserved control is parked here. Durable testing logic, not decaying platform mechanics.
 
 *Source: undefined — "undefined" (100m-offers)*
 
@@ -283,6 +363,6 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Anecdotal kitchen-remodel example; assertion only.
 
-**Fit here (7/10):** The original rejection is void — it leaned on the discredited 'traffic sits behind tracking → CRO → offer' sequence, and RSC is literally standing up a Meta campaign to drive entries to a soap giveaway right now. The structure is exactly right for this moment: a free entry buys the contact cheaply, and the consolation 'you placed second, here is your prize' framing converts the losing 99% by giving them a reason to feel they won rather than a naked discount — that framing is a genuine addition to what lifecycle email already covers. The part that is genuinely blocked is the delivery channel as claimed: phoning every non-winner is sales labor a solo operator cannot do against a paid-fed entry pool. Trigger: support or sales help who can work an entrant list by phone; until then the consolation offer ships by email through the existing nurture escalation and this parked entry covers the phone version.
+**Fit here (7/10):** The original rejection is void — it leaned on the discredited 'traffic sits behind tracking → CRO → offer' sequence, and RSC is literally standing up a Meta campaign to drive entries to a soap giveaway right now. The structure is exactly right for this moment: a free entry buys the contact cheaply, and the consolation 'you placed second, here is your prize' framing converts the losing 99% by giving them a reason to feel they won rather than a naked discount — that framing is a genuine addition to what lifecycle email already covers. Note that the prize itself still has to clear the lead-magnet screens above (does it attract deodorant buyers, and does the problem it solves lead into the catalog). The part that is genuinely blocked is the delivery channel as claimed: phoning every non-winner is sales labor a solo operator cannot do against a paid-fed entry pool. Trigger: support or sales help who can work an entrant list by phone; until then the consolation offer ships by email through the existing nurture escalation and this parked entry covers the phone version.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*

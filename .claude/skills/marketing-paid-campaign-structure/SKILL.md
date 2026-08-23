@@ -1,6 +1,6 @@
 ---
 name: marketing-paid-campaign-structure
-description: Use when configuring a small-budget Meta account, or deciding whether you are allowed to change it — keeping the first funnel to two elements (one ad type pointing straight at a PDP or landing page, no advertorial and no 15-step quiz in between) until a baseline exists, running one CBO campaign with budget edits made at campaign level and everything collapsed into a single ad set at low volume, choosing campaign objectives that optimize for the purchase or lead event instead of clicks, reach, or engagement, choosing first-run bid strategy and attribution window (and declining Advantage+ Shopping at small budget), freezing account edits for 7-14 days so the learning phase can exit, scaling in budget steps of 5% or less when the last seven days beat target and reading the cost bump afterwards as a denominator effect, setting breakeven-on-first-purchase CAC targets justified by the lifecycle email and SMS revenue that follows, judged in profit dollars rather than ROAS multiple, and computing the allowable cost per lead or entry (downstream conversion rate × blended customer value) before blaming the creative — including raising that ceiling by lifting customer value or converting the leads you already paid for. What goes inside the ads is marketing-paid-creative-testing; what to measure and how to read it is marketing-paid-media-measurement. Complements marketing-lifecycle-email-flows and marketing-retention-offers, which own the backend flows that make paid payback math work.
+description: Use when configuring a small-budget Meta account, or deciding whether you are allowed to change it — keeping the first funnel to two elements (one ad type pointing straight at a PDP or landing page, no advertorial and no 15-step quiz in between) until a baseline exists, running one CBO campaign with budget edits made at campaign level and everything collapsed into a single ad set at low volume, seeding audiences from your own tiered customer and lead lists rather than a bare interest stack, choosing campaign objectives that optimize for the purchase or lead event instead of clicks, reach, or engagement, choosing first-run bid strategy and attribution window (and declining Advantage+ Shopping at small budget), pre-committing a monthly loss budget and a small education carve-out before launch, freezing account edits for 7-14 days so the learning phase can exit, capping each new ad test at roughly two times first-30-day customer cash, scaling in budget steps of 5% or less when the last seven days beat target and reading the cost bump afterwards as a denominator effect, setting breakeven-on-first-purchase CAC targets — sharpened to 30-day collected cash covering CAC plus COGS, with an immediate upsell sized to close the gap — justified by the lifecycle email and SMS revenue that follows and judged in profit dollars rather than ROAS multiple, and computing the allowable cost per lead or entry (downstream conversion rate × blended customer value) before blaming the creative — including funding the lead magnet itself out of that ceiling, raising the ceiling by lifting customer value, or converting the leads you already paid for. What goes inside the ads is marketing-paid-creative-testing; what to measure and how to read it is marketing-paid-media-measurement. Complements marketing-lifecycle-email-flows and marketing-retention-offers, which own the backend flows that make paid payback math work.
 ---
 
 # Paid Campaign Structure
@@ -75,6 +75,24 @@ Highest volume (rather than a cost or ROAS cap) lets the algorithm spend the bud
 
 *Source: Professor Charley T — "The Simple Facebook Ads Strategy Dominating in 2026" (4DutxlMzqgc)*
 
+## Seed the lookalike audience from your own lists in quality order — past and current customers first, then warm contacts, then cold leads — padding down the ladder only as far as the platform's minimum requires, then layer basic filters (age, gender, interest, location) on top.
+
+**Why it works:** The platform models new people on the contacts you hand it, so a higher-quality seed produces a more responsive lookalike. Padding down the quality ladder to clear the minimum list size necessarily broadens the model, and the hand-set filters are what re-narrow it afterwards, so a higher share of impressions land on people plausibly capable of buying.
+
+**Evidence offered:** Assertion plus 'this is exactly what I do'. No comparison against interest-only or broad targeting, no account figures.
+
+**Fit here (6/10):** Platform mechanics from 2023, which puts it near the suspicion line — Meta has since pushed Advantage+ audience as the default, so a lookalike now functions as a suggestion to the delivery system rather than a hard boundary; that decay is why this is a 6 rather than higher, and it means **verifying current audience-tool behaviour in Ads Manager before building anything**. The underlying move still holds at this scale: hundreds of Shopify buyers plus a sub-1,000 email list clears Meta's source minimum, and seeding the giveaway campaign off actual buyers instead of a bare interest stack is a free efficiency gain at $30/day. One discipline note — set the audience once at launch and leave it inside the 10-14 day freeze below; audience is exactly the knob a bored solo operator reaches for on day three, and changing it restarts learning like any other edit.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 8 of 16))*
+
+**Refinement — consolidate every list you own into one place first, separated into tiers.** Four tiers: past/current customers, warm contacts, cold leads, and people who gave contact information to an ad but never bought. Ad platforms can only model on or exclude audiences you have actually uploaded, and keeping the tiers separate is what preserves the information about which contacts are worth modelling on and which are worth retargeting or suppressing.
+
+**Evidence offered:** Assertion, given as an action step. No figures.
+
+**Fit here (6/10):** Runnable today by one person: export Shopify customers, pull whatever Amazon exposes through Manage Your Customer Engagement, and tag giveaway entrants separately from buyers rather than dumping everyone into one list. It matters here specifically because the live campaign manufactures the fourth tier — entrants who handed over an email and did not buy — which is simultaneously the raw material for the post-entry nurture flow and the exclusion list that stops the campaign paying to re-acquire people it already has. Held at 6 because it is prep work rather than a revenue lever on its own, and because at a sub-1,000 list the tiers are small enough that the value is mostly in the hygiene, not the targeting lift.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 8 of 16))*
+
 ## Scale by raising the campaign budget 5% or less whenever the last seven days beat your target cost per result — and expect the cost per result to look temporarily worse afterwards, because that is arithmetic, not failure.
 
 **Why it works:** If you are already beating target, a small budget increase buys extra impressions with enough margin that even zero incremental conversions still leaves you at or under target — the step is smaller than your safety margin, so it cannot break you. And because the increment is smaller than one conversion's worth of spend, the average cost per result rises before the next conversion lands. The dip is a denominator effect, not degradation.
@@ -84,6 +102,28 @@ Highest volume (rather than a cost or ROAS cap) lets the algorithm spend the bud
 **Fit here (6/10):** Durable in its logic — scale in increments smaller than your margin of safety, and read a short-term average-cost rise after a budget bump as an artifact. Directly usable on the live giveaway once a cost-per-entry baseline exists, and the interpretive half is the part that earns its place: a solo operator watching a $30/day campaign daily will see cost per entry rise the day after a bump and be tempted to reverse it. Two adjustments: a 5% step on $30/day is $1.50, so the meaningful move is a step every week or two rather than a nightly nudge; and 'target' here is cost per entry, which is only interpretable against the entry-to-purchase rate the post-entry email flow produces — compute that ceiling first, using the allowable-cost-per-lead arithmetic below. Not higher because the seven-day window at this spend is directional, not significant.
 
 *Source: Professor Charley T — "The Simple Facebook Ads Strategy Dominating in 2026" (4DutxlMzqgc)*
+
+## Cap each new ad test at roughly two times the cash a customer generates in their first thirty days, and shut the ad off at one times that figure if it has produced literally nothing.
+
+**Why it works:** It caps the cost of being wrong while still giving an ad enough spend to prove itself. Both errors are expensive — killing winners before they can convert, and letting obvious losers run out of hope — and pegging the kill threshold to real customer cash sizes the test against the economics rather than against the operator's patience.
+
+**Evidence offered:** Personal experience only; the author reports having wasted money in both directions before settling on this rule. No test data, no distribution of outcomes.
+
+**Fit here (7/10):** Durable economic logic rather than platform mechanics, so it survives interface changes. Translates directly: at a $50.46 AOV, roughly **$100 of spend behind a new ad before killing it**, and **~$50 if it has produced nothing at all** — no entries, not merely expensive entries. That is a rule a solo operator can actually hold to, which is the point. Two adaptations. First, at $30/day across a single ad set of four to eight ads, no individual ad accumulates $100 in three days — in practice these thresholds are reached over a week or more, and where the kill trigger collides with the 10-14 day freeze below, **the freeze wins inside the first learning window**. Second, at ~54 orders/month this is a spend cap on obvious failures, not a significance test; it tells you when to stop paying for an unknown, not that the ad was definitively bad.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
+
+## Once ads at least break even, stop asking 'how much should I spend' and reverse the budget from a customer target — customers wanted × cost per customer, padded roughly 20% because ads get less efficient as they scale — then commit to the daily number.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** A budget derived from capacity and CAC turns spend into an arithmetic consequence of a goal rather than a nerve-based decision made fresh every week, and the 20% pad prices in the efficiency decay that arrives with higher spend instead of treating it as a nasty surprise.
+
+**Evidence offered:** Assertion with a worked example (100 customers × $100 CAC = $10,000, padded to $12,000, or $400/day). No account data.
+
+**Fit here (6/10):** Sound and durable, but it presupposes two things this business does not yet have: ads that already break even, and a budget set by ambition rather than by cash on hand. Today's $30/day is set by what a ~$2,700/mo business can float, so the reversal would produce a number the account cannot pay. Trigger for unparking: a Meta campaign holding at or above breakeven CAC for a full month. At that point the binding question changes from 'what can we afford' to 'how many customers can one person pack and ship', and this is the arithmetic that answers it.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
 ## Once a campaign is live, make no major changes for at least 7 days — 10-14 at low conversion volume — because every edit restarts Meta's learning phase.
 
@@ -101,6 +141,24 @@ Take the 10-14 day end of the range rather than 7. The freeze covers account edi
 
 *Source: LYFE Marketing — "How to CRUSH Meta Ads with a Small Budget in 2026" (AVjmQfJT9iA)*
 
+## Before launching, name the monthly amount you are willing to lose, expect to lose it, and book the first months of spend as tuition rather than revenue generation.
+
+**Why it works:** Pre-committing a loss budget removes the mid-flight panic that kills campaigns in week two and mis-files the cost of learning as evidence of failure. You are spending on the expectation of learning, not earning, which is what keeps the campaign alive long enough to produce readable behaviour in the first place.
+
+**Evidence offered:** Assertion only ('Start with an acceptable amount of money you are willing to lose each month. Expect to lose it. You won't be earning, you'll be learning.'). No figures, no accounts.
+
+**Fit here (6/10):** $900/mo of spend against ~$2,700/mo of revenue is real money for a solo operator, and the most likely failure mode on this account is switching the campaign off in week two because it has not returned cash — which is also a direct violation of the 10-14 day freeze above. Writing the number down before launch is runnable today and takes ten minutes. It complements the break-even target rather than competing with it: the target is where you are heading, the loss budget is what you can survive on the way there. Two honest constraints. The figure has to be one the business can actually float from cash, not a number chosen to justify the campaign; and 'expect to lose it' is permission to be patient, not permission to skip the diagnosis when the money is gone.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 10 of 16))*
+
+**Refinement — ring-fence a fixed slice of the ad budget (1-10%) for tests run with no expectation of return, and account for it as education.** Removing the return expectation from a defined slice is what makes it psychologically and financially possible to try a new channel, page or angle at all; occasional winners pay for the losses, and every loss still buys information.
+
+**Evidence offered:** Reported advice from an eight-figure operator, followed by the author's own sequence of tests (new audiences, email, phone, text blasts, affiliates) that he credits with taking the business from $400k to $4M/mo. Attribution to the carve-out specifically is not established.
+
+**Fit here (5/10):** At ~$900/mo a 10% carve-out is roughly **$90/mo**, which will not fund a readable parallel test cell — so the honest scale-down is to spend it as **one discrete monthly experiment** (a single new lead-magnet page, one new angle, one week of a different entry offer) and book it as learning rather than judging it on ROAS. Distinct from the 80/20 proven-versus-experimental creative allocation in marketing-paid-creative-testing, which governs *which ads run inside the live campaign*; this governs *which bets get funded at all*. Held at 5 because at this budget the carve-out is small enough that its main function is permission rather than statistics.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
+
 ## Aim to break even on the first purchase from paid ads rather than turn a profit, because the email and SMS backend converts that customer into profit later — win on day 30, not day 1.
 
 **Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
@@ -112,6 +170,14 @@ Take the 10-14 day end of the range rather than 7. The freeze covers account edi
 **Fit here (7/10):** Durable-principle class (CAC judged against lifetime value, not first-order margin), so age is irrelevant, and the gate that parked it is open. It is the right frame for the giveaway, with one adjustment that matters: a giveaway entrant is not a first purchase, so there is no first-order margin to break even against. The equivalent question is what an entry is worth — which is entirely a function of whether the post-entry email sequence converts entrants into buyers. That makes cost per entry meaningless in isolation. This section supplies the *frame*; the section below supplies the actual calculation and the order in which to run it. Treat the first campaign as buying the data to compute it. A legitimate 7 on merit.
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
+
+**Refinement — set the bar as 30-day *collected cash* covering acquisition **and** fulfilment, and use an immediate upsell as the instrument that closes the gap.** A credit card gives roughly 30 days of interest-free float, so if 30-day collected gross profit ≥ CAC + COGS, the card squares itself every cycle and ad spend recycles indefinitely with no outside funding. The arithmetic is explicit: a $100 upsell taken by 1 in 5 buyers adds **$20 of average upsell dollars per customer**, which turns a $10 first-purchase profit into $30 and breaks even against a $30 CAC. The lever is upsell price × take rate, not lifetime value you are waiting on.
+
+**Evidence offered:** Worked numeric example ($15/mo membership, $5 delivery cost, 10-month retention, $30 CAC) plus the claim that this is how he scaled every company past $1M/mo within twelve months for seven years. Self-reported, no cohort data.
+
+**Fit here (7/10):** Durable offer/pricing logic and directly usable at $30/day. It sharpens the day-30 frame above rather than repeating it: 'break even on the first purchase' quietly omits COGS and postage, while '30-day collected cash ≥ CAC + COGS' is a hard number the operator can actually compute at a **$50.46 AOV** and then hold the campaign to. The instrument it names — average upsell dollars per customer, priced and take-rated across the 12-SKU catalog — is a lever this business can pull this month; the concrete construction of those offers belongs to marketing-upsell-offer-design and marketing-offer-construction. Docked slightly because at ~54 orders/month any new upsell's take rate will be noisy for a while, so the first version of the number is a working estimate to revise, not a measurement.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
 **Refinement — judge spend in profit dollars, not in ROAS multiple.** Stop demanding a 10x return on ad spend: a 3-4x ROAS that clears your margins and can be reinvested is a working machine. The cheapest, most in-market buyers convert first, so each incremental dollar of spend reaches a colder audience and costs more per customer — declining ROAS is the expected shape of scaling, not a failure. Since profit is the ratio multiplied by spend, a lower multiple on much larger spend produces more absolute money, so chasing the percentage caps the business at a small budget.
 
@@ -146,3 +212,13 @@ Take the 10-14 day end of the range rather than 7. The freeze covers account edi
 **Fit here (7/10):** Durable-principle class (unit economics / effort allocation), age irrelevant, and it is the correct allocation rule for this exact week: the giveaway campaign's entrants are by construction a pool of people who raised a hand and did not buy. With one operator and $30/day, hours spent building the post-entry email sequence are worth more than hours spent shaving cost per entry, because the entry→purchase rate is the multiplicand on everything the ad budget buys. Note the interaction with the simplest-funnel rule at the top: improving the sequence that follows the entry is not the same as bolting another step onto the acquisition path — one raises the value of a lead you already have, the other adds a variable you then cannot debug. It also restates the standing read that retention, not traffic, is the binding constraint — here as an acquisition argument rather than a retention one. Held at 7 because the source's example is a zero-marginal-cost app subscription, so the 4x headroom claim does not transfer to a physical-goods catalog carrying COGS and postage, and at a sub-1,000 list the recovered percentages will be directional.
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #10: Don't Forget The Other 75%" (social post)*
+
+## Budget real money per lead into delivering the lead magnet, rather than insisting the magnet be free to you — a costlier magnet pulls far more engaged leads for the same ad spend and can still lower blended cost per acquired customer.
+
+**Why it works:** Advertising a free high-value thing instead of the core offer multiplies the number of engaged leads the same media budget produces. Even after adding the magnet's unit cost to every lead, total cost per *customer* falls, because far more people enter the funnel and the close rate applies to a much larger base. The magnet's cost is an acquisition line item, not an expense to be minimised to zero.
+
+**Evidence offered:** A worked hypothetical: $3,000 CAC advertising the core offer directly, versus $1,000 CAC via a $25 lead magnet at a 1-in-10 close rate. No account data behind either figure.
+
+**Fit here (7/10):** The traffic gate is open and $30/day is live, so this is a decision facing the operator right now: **how much product cost per entry the giveaway can carry**. It complements rather than restates the allowable-cost-per-lead section above, which sets the ceiling but says nothing about funding the magnet inside it. The honest scaled-down version: compute allowable cost per entry (entry→purchase rate × contribution margin × repeat value), then treat **media cost + fulfilment cost as sharing that one ceiling**. That arithmetic is also the argument for the current format — a giveaway puts one prize across many entrants, so its per-entry fulfilment cost is near zero by design, whereas a sample-unit magnet at a few dollars plus postage would consume most of a $2.50–$8 entry ceiling on its own. Docked from higher because the source's numbers are a high-ticket hypothetical with a 1-in-10 close rate; at a $50.46 AOV consumable the 3x spread does not transfer, only the principle that magnet cost is a legitimate, budgetable line.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 3 of 16))*

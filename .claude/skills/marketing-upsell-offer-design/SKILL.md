@@ -1,6 +1,6 @@
 ---
 name: marketing-upsell-offer-design
-description: Use when designing the second ask in a purchase path rather than the first — what to offer in the cart, on the Shopify post-purchase/thank-you page, or in a follow-up email once the buyer has felt the problem; how to frame a quantity or variant choice so 'don't buy' is not one of the options; which surface each cross-sell belongs on; and how to diagnose a cross-sell that is being declined.
+description: Use when designing the second ask in a purchase path rather than the first — what to offer in the cart, on the Shopify post-purchase/thank-you page, on the confirmation page after a lead-magnet or giveaway opt-in, or in a follow-up email once the buyer has felt the problem; how to frame a quantity or variant choice so 'don't buy' is not one of the options; which surface each cross-sell belongs on; and how to diagnose a cross-sell that is being declined.
 ---
 
 # Upsell Offer Design
@@ -24,6 +24,16 @@ description: Use when designing the second ask in a purchase path rather than th
 **Fit here (8/10):** A scented body-care catalog is natively an A/B choice, and a first-time natural-deodorant buyer has no basis for picking a scent or strength. Translates directly and free into cart and post-purchase copy ('lavender or cedar?'), a default two-pack quantity selector, refill cadence framed as 'every 4 weeks or every 8 weeks' rather than subscribe yes/no, and a 'most people start here' badge on one PDP variant. Held at 8 because a webpage cannot actually remove the no-purchase option the way a salesperson can, at ~54 orders/month it is applied by judgment rather than measured, and the nudge half partly implements the existing decision-fatigue rule about leading with one recommended pack.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
+
+## The opt-in confirmation page is a selling surface, not a 'check your inbox' page — put the paid offer there, with a short video or explanation of how it works.
+
+**Why it works:** The moment right after someone hands over their email is the highest-intent moment in the funnel, and the page they land on is otherwise wasted on a receipt message. Presenting the paid offer there converts a share of leads immediately instead of waiting for the email sequence to fire, and the short explainer does the job the first email would have done — showing how the product works — while attention is still on you.
+
+**Evidence offered:** Assertion, described as the author's own standing setup. No take-rate or revenue figures.
+
+**Fit here (8/10):** Directly applicable to a live surface: $30/day of Meta spend is pointed at soap-giveaway entries, and the entry confirmation page is currently the cheapest place to make a first sale against an AOV of $50.46. One page, one person, no budget — buildable in Shopify today, and it partially offsets paid CAC before the email flow even fires. Note this is a *pre-purchase* surface and is distinct from the post-purchase thank-you page below: the card is not on file yet, so this offer still has to carry its own checkout, and the A-or-B framing above (scent, pack size) is the right way to write it.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 6 of 16))*
 
 ## Don't make the buyer re-enter payment details — close on the card already on file.
 

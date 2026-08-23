@@ -1,6 +1,6 @@
 ---
 name: marketing-lifecycle-email-flows
-description: Use when deciding which automated email/SMS flows should exist and which one to build next — auditing flow coverage for gaps, recovering abandoned carts, and nurturing subscribers who joined the list but have not bought, including how to escalate offers to them on a fixed schedule. Covers the inventory and the job of each flow; the content of the post-purchase flow lives in marketing-post-purchase-onboarding and the win-back offer in marketing-retention-offers.
+description: Use when deciding which automated email/SMS flows should exist and which one to build next — auditing flow coverage for gaps, recovering abandoned carts, nurturing subscribers who joined the list but have not bought (including how to escalate offers to them on a fixed schedule), and choosing which medium carries a flow when email alone gets no response. Covers the inventory and the job of each flow; the content of the post-purchase flow lives in marketing-post-purchase-onboarding and the win-back offer in marketing-retention-offers.
 ---
 
 # Lifecycle Email Flows
@@ -14,6 +14,8 @@ description: Use when deciding which automated email/SMS flows should exist and 
 **Fit here (6/10):** Email is the one owned surface where the binding retention constraint can actually be worked — zero cost, no ad budget, no attribution needed. Held at 6 because a checklist is not itself a revenue mechanism.
 
 **Run against the live account on 2026-07-29, all four are already covered** — eight flows are live, including Abandoned Cart, Welcome Series, Post-Purchase, Replenishment, Customer Winback, Browse Abandonment and Product Review / Cross-Sell. So the value here is not a build list; it is (a) re-running the check periodically, and (b) the one question the checklist raises that the account does not obviously answer: whether any flow nurtures subscribers who joined and *never bought*, as distinct from the Welcome Series everyone receives. Verify with the Klaviyo flows endpoint rather than assuming — assuming is how this section originally shipped claiming the cart flow was missing.
+
+Note that the audit is an inventory of *jobs*, not of *channels*: a flow can be present and still be failing because it only ever goes out by email. Pair this check with the medium test below.
 
 **Build one, get it working, then add the next.** This must be reconciled with the staging discipline in `marketing-upsell-offer-design` — four flows launched in a month at ~54 orders teaches nothing about which one worked.
 
@@ -43,5 +45,21 @@ Held at 6 because the list is small so absolute revenue is modest, and **the con
 
 Two hard scale-downs on the ladder as pitched. **The descending-discount version does not survive a physical catalog** — 50% and 75% off a $50.46-AOV consumable with real COGS and postage is margin-negative, and `marketing-offer-construction` warns explicitly that a repeating percent-off ladder trains the list to wait. Escalate by offer *structure* instead: reminder, then a named bundle, then a low-COGS bonus (lip balm, travel size) with purchase, then a genuinely time-bounded promotion with a stated reason-why. **And at a sub-1,000 list each step's take rate is a handful of orders**, so read the numbers directionally and keep the ladder to three steps rather than five.
 
+A third dimension to escalate on is *medium* — if the first two email steps land silent, send the third by SMS rather than adding a fourth email. See the next section.
+
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
 *Source: Stefan Georgi — "Secret of the DTC Universe #10: Don't Forget The Other 75%" (social post)*
+
+## When follow-up in one medium produces nothing, test the next medium before concluding the follow-up itself does not work — email, then phone, then SMS.
+
+**Why it works:** Engaged leads who ignored one channel are not unreachable. The same message delivered in a medium they actually attend to converts, so a silent sequence is evidence of channel fit failing, not of the offer or the sequence failing. Diagnosing it as the latter kills a flow that was only ever mis-routed.
+
+**Evidence offered:** Author's account: email produced nothing, phone calls produced nothing, text blasts moved the business from $1.5M to $1.8M/mo. Single-business anecdote, no breakdown of what else changed.
+
+**Fit here (6/10):** The named media are not era-bound platform features, so this survives translation to a 2026 Klaviyo account. **This is the channel axis the flow inventory above deliberately does not cover** — that checklist specifies which flows must exist, this specifies which medium carries them, and a flow can be fully built and still dead because it only ever sends email. With a sub-1,000 list and an 18–22% repeat rate, one-and-done buyers and never-bought subscribers are a known dead pool email alone has not moved. Adding an SMS opt-in and re-running the existing win-back or non-buyer nurture message through it is a solo-operator-sized change inside Klaviyo — no new team, no ad spend — and it points straight at the binding retention constraint.
+
+Three adjustments before acting on it. **Skip the phone step.** A $50.46-AOV consumable does not support outbound calls, and the middle rung of the ladder is the one piece of this that is business-model-specific to the author. Go email → SMS. **The $1.5M→$1.8M delta will not scale down proportionally** — treat it as a reason to open the channel, not a forecast; at ~54 orders/month the honest read is directional. **And SMS is consent-gated**, so the first work is an opt-in surface (checkout, the welcome flow, the giveaway entry form) that builds a list worth sending to, before any message is written. Until that list exists, this is a build task, not a test.
+
+Run it as a true medium test, not a rewrite: send the *same* message that got no email response, so a lift is attributable to the channel rather than to new copy.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
