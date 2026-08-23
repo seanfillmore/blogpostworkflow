@@ -45,15 +45,20 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { send } from '../flows/klaviyo-graph.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CONFIG_PATH = join(ROOT, 'config', 'giveaway.json');
 const TEMPLATE_FILE = join(ROOT, 'data', 'giveaway', 'nurture', '00-confirm-request.html');
 
+// Shape matches what klaviyo-graph.js's send() expects: `subject` and `preview`,
+// which it maps onto the message's subject_line/preview_text. Do not rename these
+// to the API's field names — send() owns that translation, along with the FROM
+// identity (Real Skin Care <support@realskincare.com>) every RSC flow shares.
 export const MESSAGE = {
   name: 'Giveaway — 00 Confirm request',
   subject: 'Confirm your entry — 2 bonus entries waiting',
-  preview_text: 'One click adds 2 entries to your $536.40 giveaway entry.',
+  preview: 'One click adds 2 entries to your $536.40 giveaway entry.',
 };
 
 /**
@@ -136,12 +141,13 @@ async function main() {
     triggers: [{ type: 'list', id: config.listId }],
     profile_filter: null,
     entry_action_id: 'send1',
-    actions: [{
-      temporary_id: 'send1',
-      type: 'send-email',
-      data: { ...MESSAGE, template_id: config.confirmTemplateId },
-      links: { next: null },
-    }],
+    // send() from scripts/flows/klaviyo-graph.js, NOT a hand-rolled action. A
+    // send-email action's fields live under data.message alongside a required
+    // FROM identity and half a dozen flags; a flat {subject, template_id} is
+    // rejected outright ("'subject' is not a valid field for the resource
+    // 'SendEmailActionData'"). That helper is the one shape proven live, and
+    // build-nurture-flow.mjs already reuses it rather than restating it.
+    actions: [send('send1', { ...MESSAGE, template_id: config.confirmTemplateId }, null)],
   };
 
   // Definitions cannot be PATCHed — rebuilding is delete-then-recreate, so a

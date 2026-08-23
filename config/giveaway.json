@@ -3,8 +3,8 @@
   "listName": "Giveaway 2026-09 — Entrants",
   "confirmMechanism": "double_opt_in",
   "_confirmMechanismNote": "HOW A CONFIRMATION CLICK IS OBSERVED, and the single switch for the cutover. `double_opt_in`: the Klaviyo list is double opt-in, Klaviyo only adds a profile once the opt-in link is clicked, so membership of the subscribed set IS the confirmation. `flow_link`: the list is SINGLE opt-in, entrants are subscribed on form submit, and a branded flow email carries the confirmation link (update_property_link writes gv_confirmed). Under flow_link, subscription proves NOTHING — reading it as confirmation pays the +2 to every submitter and inflates every §5 referral rung with it. lib/giveaway/reconcile.js resolveMechanism() is the only reader; an unrecognised value throws rather than defaulting, because the two branches disagree about every entrant on the list at once. FLIPPING THIS IS HALF THE CUTOVER — the Klaviyo list opt-in process must be changed in the UI in the same maintenance window, and in this order: set the list to single opt-in FIRST, then flip this key. The reverse order leaves a window where entrants are on a double-opt-in list while the code has stopped believing subscription means anything, which stalls every +2 until the flip completes. See docs/giveaway-confirm-cutover.md.",
-  "confirmTemplateId": null,
-  "confirmFlowId": null,
+  "confirmTemplateId": "VxJnPd",
+  "confirmFlowId": "VyjCRz",
   "confirmedSegmentId": null,
   "nurtureTemplates": {
     "01-confirm.html": "RFn6ZR",
