@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT } from '../../lib/posts.js';
 import { upsertItem, loadCalendar } from '../../lib/calendar-store.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -225,8 +226,12 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  notify({ subject: 'Draft Refresher failed', body: err.message, status: 'error' });
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    notify({ subject: 'Draft Refresher failed', body: err.message, status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

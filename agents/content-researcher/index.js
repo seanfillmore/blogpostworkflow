@@ -37,6 +37,7 @@ import {
 import { loadIndex } from '../../lib/keyword-index/consumer.js';
 import { mergeRelatedKeywords, buildResearchIndexContext } from './lib/index-context.js';
 import { computeCompetitorBenchmark } from '../../lib/content-benchmark.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 // GSC is optional — gracefully skip if not configured
 let gsc = null;
@@ -746,7 +747,11 @@ async function main() {
   console.log('\nContent research complete.');
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}
