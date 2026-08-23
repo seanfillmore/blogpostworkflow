@@ -49,6 +49,7 @@ import {
   getAccessToken,
 } from '../../lib/shopify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -2011,6 +2012,13 @@ CURRENT CONTENT:
 ${contentOnly}`,
       }],
     });
+
+    // This rewrite REPLACES a live collection page's body and had no truncation
+    // check of any kind — not even stop_reason. A cut-off rewrite would publish a
+    // collection page that stops mid-sentence, and collections are the pages that
+    // convert. Checked before the schema block is prepended so the guard sees only
+    // model output, not our own wrapper.
+    assertHtmlComplete({ html: msg.content[0].text.trim(), stopReason: msg.stop_reason });
 
     const rewritten = msg.content[0].text.trim();
     const newBody = schemaBlock ? `${schemaBlock}\n${rewritten}` : rewritten;
