@@ -38,6 +38,28 @@ npm run learn -- --file digitalassets/some-book.txt \
 #    merges are re-paid.
 ```
 
+That cache claim was false until 2026-08-23 and is worth knowing about, because it
+decides what a re-run costs. The chunk cache keys on the extraction prompt, which
+included every skill's full text — so any successful merge changed the key and
+invalidated every cached chunk of every source. Three consecutive retries of one book
+re-extracted all six chunks. The prompt now carries claim headings instead of bodies,
+so the key only moves when a claim is added, removed or reworded: a same-day re-run
+after a failed merge hits cache, and a re-run months later probably does not.
+
+## Ingested
+
+What has already been through the pipeline. Re-running a source is not harmful — the
+merge deduplicates — but it re-pays extraction, so check here first.
+
+| Source | Words | Ingested | Report |
+|---|---:|---|---|
+| `100m-offers.txt` — Hormozi, *$100M Offers* | 46k | 2026-07-28 | `100m-offers.md` |
+| `100m-money-models.txt` — Hormozi, *$100M Money Models* | 45k | 2026-07-28 | `100m-money-models.md` |
+| `100m-leads.txt` — Hormozi, *$100M Leads* | 68k | 2026-08-23 | `100m-leads.md` |
+
+Reports live in `data/reports/marketing-learner/` and are committed, so that column is
+the durable record even though the source texts here are not.
+
 `--author` and `--title` are required: there is no metadata endpoint for a local
 file, so those two flags *are* the provenance that ends up on every claim.
 

@@ -1,6 +1,6 @@
 ---
 name: marketing-retention-offers
-description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, recovering failed recurring payments before they become silent cancellations, placing a reward just past the churn point, grandfathering existing subscribers when you raise the price, winning back customers who lapsed months ago, cultivating the top repeat buyers by hand, keeping a note on every customer so support never makes them repeat themselves, and answering a refund request with store credit instead of cash.
+description: Use when the goal is a second or repeat purchase from someone who already bought — converting one-time buyers onto a refill or subscription cadence, setting the price gap between one-time and recurring, keeping active customers buying the next thing so they keep referring, recovering failed recurring payments before they become silent cancellations, placing a reward just past the churn point, grandfathering existing subscribers when you raise the price, winning back customers who lapsed months ago, cultivating the top repeat buyers by hand, keeping a note on every customer so support never makes them repeat themselves, and answering a refund request with store credit instead of cash.
 ---
 
 # Retention Offers
@@ -51,6 +51,20 @@ This rule fires on **tenure** — the customer earns the rate by staying. The gr
 
 *Source: Rich Schefren — "The Hidden Obstacles To Your Success" (special report, part 3 of 9)*
 
+## Keep selling active customers the next thing — a new product or more of what they bought — and make each next offer more compelling than the first, because customers who fall off the back end stop referring.
+
+**Why it works:** Every additional purchase extends lifetime value and adds another delivered result, which compounds goodwill. A customer still buying is a customer still recommending; a lapsed one has nothing recent to recommend. Demand you leave unsatisfied does not disappear — it gets satisfied by a competitor, and the relationship goes with it. Two operating rules follow: the second ask must be *stronger* than the first (a better bundle, a bigger jump in value, not the same offer re-sent), and it should be **timed to a delivered win** rather than to a calendar slot, so the customer is buying on the back of a result they can feel.
+
+**Evidence offered:** Anecdote about a weight-loss company where customers who did not refer at tier one referred after buying the more expensive product. Single case, no figures.
+
+**Fit here (7/10):** Retention is the stated binding constraint — 18–22.5% repeat, repeat buyers ~45–52% of revenue — and 12 SKUs across deodorant, body care, oral care and lip balm give a real 'next thing' to sell: deodorant buyer → body wash or soap; body care buyer → oral care; any buyer → multi-unit or gift set. Free to run as a post-purchase email sequence with no traffic, budget or attribution required. The delivered-win timing is unusually concrete here: the win is surviving the transition period, so the strongest second ask lands right after the point where the product visibly starts working — roughly weeks three to four — not on day seven.
+
+This is the *upstream* version of the win-back rule below: sell the next thing while the customer is still active, and you never have to buy them back. Run it by hand for the people identified in the top-repeat-buyer section, and use it as the destination for any store credit issued — credit is worth more when it is pointed at a specific, better next offer.
+
+One caution: it overlaps the subscription cadence and upsell machinery already here, so do not stack a cross-sell email on top of a refill reminder in the same week. Sequence them. The genuinely additive claims are the referral link (a lapsed customer stops recommending) and the requirement that the second ask exceed the first.
+
+*Source: Alex Hormozi — "$100M Leads" (book, part 11 of 16)*
+
 ## Win back customers who haven't purchased in 6+ months by crediting back part of what they previously paid, framed as their own money returned, redeemable only against a new and usually larger purchase.
 
 **Why it works:** Past customers have already cleared the trust and first-purchase hurdles, so reactivating them is far cheaper than acquiring strangers. Framing the incentive as their own money returned reads as restitution and recognition rather than a markdown, so it does not devalue the product or train the list to wait for sales, and because it is redeemable only against a new purchase it converts a dormant customer into an order.
@@ -87,7 +101,7 @@ This rule fires on **tenure** — the customer earns the rate by staying. The gr
 
 **Evidence offered:** Asserted from 18 years of operating history, with the observation that the best customer is often a different persona than the operator assumed. No figures.
 
-**Fit here (7/10):** The distribution described is almost exactly this business — **18–22.5% repeat driving 45–52% of revenue** — which aims it straight at the binding constraint. At ~54 orders/month a solo operator can literally know and personally email the top repeat buyers, so this works *because* of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves. Additive to the rest of this skill, which covers subscription cadence, billing recovery, milestone rates, grandfathered pricing, win-back credit and store credit but nothing about identifying and cultivating a top-customer segment.
+**Fit here (7/10):** The distribution described is almost exactly this business — **18–22.5% repeat driving 45–52% of revenue** — which aims it straight at the binding constraint. At ~54 orders/month a solo operator can literally know and personally email the top repeat buyers, so this works *because* of the small scale rather than despite it. Zero cost for the personal-contact and priority-service halves. Additive to the rest of this skill, which covers subscription cadence, billing recovery, milestone rates, grandfathered pricing, next-thing cross-sell, win-back credit and store credit but nothing about identifying and cultivating a top-customer segment. This is also the highest-yield place to run the next-thing rule by hand.
 
 Three limits. The standing discount code is **permanent margin** against a $50.46 AOV and must be sized from landed cost. Amazon buyers (~$1,800/mo, the larger channel) cannot be contacted this way at all. And the "your best customer is a different persona than you assumed" claim is a **prompt to check actual Shopify order history**, not a conclusion to act on — verify it against `personas.json` before rewriting anything.
 
@@ -99,6 +113,6 @@ Three limits. The standing discount code is **permanent margin** against a $50.4
 
 **Evidence offered:** Assertion plus the described handoff chain, with the explicit note that a beginner taking all the calls himself should at least keep and review his own notes. No data.
 
-**Fit here (5/10):** The solo-operator version is exactly the one the creator names, and it is free: one note per customer recording their prior order, scent, skin reaction and the issue they raised last time, and every support reply opening by referencing it. At ~54 orders/month a single person can genuinely maintain this, and with repeat customers at 45–52% of revenue, goodwill inside a support thread lands directly on the binding constraint. It is the service-layer complement to hand-cultivating the top repeat buyers, and it makes the store-credit save far more convincing — "you told me the switch got worse around week two" beats a generic canned reply. Capped at 5 because it is a service habit rather than a revenue mechanism, it has no effect on the ~$1,800/mo Amazon channel where buyer identity is largely hidden, and the multi-person handoff half of the tactic is irrelevant with no team.
+**Fit here (5/10):** The solo-operator version is exactly the one the creator names, and it is free: one note per customer recording their prior order, scent, skin reaction and the issue they raised last time, and every support reply opening by referencing it. At ~54 orders/month a single person can genuinely maintain this, and with repeat customers at 45–52% of revenue, goodwill inside a support thread lands directly on the binding constraint. It is the service-layer complement to hand-cultivating the top repeat buyers, and it makes the store-credit save far more convincing — "you told me the switch got worse around week two" beats a generic canned reply. The same notes tell you which "next thing" to offer and when the delivered win landed. Capped at 5 because it is a service habit rather than a revenue mechanism, it has no effect on the ~$1,800/mo Amazon channel where buyer identity is largely hidden, and the multi-person handoff half of the tactic is irrelevant with no team.
 
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*

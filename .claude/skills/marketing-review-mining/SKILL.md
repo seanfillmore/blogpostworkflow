@@ -1,6 +1,6 @@
 ---
 name: marketing-review-mining
-description: Use when sourcing customer proof and deciding which of it to show — exporting Shopify and Amazon reviews to CSV and running them through an LLM for verbatim phrasing and recurring objections, then choosing which quotes actually earn their place: whose 'before' state matches the buyer you want, which quotes name the mechanism that worked, how to word the review request so it comes back usable, how to spread a small review corpus across the objections that disqualify readers, and how to monitor and answer what is being said about you off your own property.
+description: Use when sourcing customer proof and deciding which of it to show — exporting Shopify and Amazon reviews to CSV and running them through an LLM for verbatim phrasing and recurring objections, then choosing which quotes actually earn their place: whose 'before' state matches the buyer you want, which quotes name the mechanism that worked, how to word the review request so it comes back usable and how to frame and route the ask so people actually act on it, how to spread a small review corpus across the objections that disqualify readers, and how to monitor and answer what is being said about you off your own property.
 ---
 
 # Review Mining
@@ -14,6 +14,16 @@ description: Use when sourcing customer proof and deciding which of it to show �
 **Fit here (8/10):** Durable principle, and the single best-fit tactic here for a solo operator. Amazon and Shopify reviews already exist and export as CSV; it costs nothing, needs no traffic, no budget, and no team. It does not require thousands of reviews — the method works on dozens, since the output is a handful of quotable lines for Amazon bullets, PDP copy, and email.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
+## Frame the ask as a free, 60-second gift to a stranger who is like the reader used to be — then spell out the exact click-path for each place they might be reading, plus a QR-code fallback.
+
+**Why it works:** Altruistic framing removes the sense that the ask serves you, and stating the tiny time cost and zero money cost pre-empts the 'not now' objection. Spelling out the literal taps per platform removes the friction that kills most review requests, and the QR fallback catches anyone whose interface has changed or who is reading on the wrong device.
+
+**Evidence offered:** Assertion, demonstrated by the author performing the ask in the book itself. No response-rate figures.
+
+**Fit here (8/10):** Immediately executable across surfaces this business already has — the Amazon 'Request a Review' path, the Shopify post-purchase email, and the packaging insert QR code already recorded as the owned surface for marketplace buyers. Reviews are the cheapest proof available to a 12-SKU catalogue at this order volume, and the whole rest of this skill is downstream of review volume. Directly additive to the request-wording tactic below: that one covers shaping the question so the answer is usable, this one covers getting the person to act at all. The framing has an obvious form in this category — 'somewhere there is someone on their fourth natural deodorant who is about to give up; sixty seconds of your experience decides it for them.' **Guardrail:** the framing is fine on Amazon, the conditions are not — the ask must stay neutral (no 'if you loved it', no incentive, no directing which product or rating), and the compliant Amazon route is the neutral Request a Review button; the insert QR should point to a review page, never to a positive-only path.
+
+*Source: Alex Hormozi — "$100M Leads" (book, part 6 of 16)*
 
 ## Choose quotes whose 'before' state is the buyer's situation today and that name the mechanism that fixed it — not the quotes with the highest praise.
 
@@ -41,7 +51,7 @@ description: Use when sourcing customer proof and deciding which of it to show �
 
 **Evidence offered:** Demonstrated as a settings toggle (require text, minimum ~50 characters) with the reasoning 'you want them to look real… you don't want any short responses'. Assertion, no data.
 
-**Fit here (7/10):** This is the missing half of the selection rules above. Those say an empty objection slot is a prompt for the post-purchase review request — but nothing said how to shape the request so it comes back with a before state and a mechanism already in it. With dozens of reviews rather than thousands, every submission has to carry both, so the Shopify request should ask something specific ('what had you tried before, and what happened in the first two weeks?') instead of a bare star prompt. Free, no traffic needed. Not higher because a character floor cannot be imposed on Amazon reviews, which is the larger channel.
+**Fit here (7/10):** This is the missing half of the selection rules above. Those say an empty objection slot is a prompt for the post-purchase review request — but nothing said how to shape the request so it comes back with a before state and a mechanism already in it. With dozens of reviews rather than thousands, every submission has to carry both, so the Shopify request should ask something specific ('what had you tried before, and what happened in the first two weeks?') instead of a bare star prompt. Free, no traffic needed. Pairs with the gift-framing and click-path tactic above, which handles whether the customer starts at all; this one handles what comes back when they do. Not higher because a character floor cannot be imposed on Amazon reviews, which is the larger channel.
 
 **Two things the source recommends alongside this that must never be done here.** Do **not** set a minimum star rating so only happy customers are shown the review link: review gating is an FTC deception issue, breaches Amazon and Google policy, risks the ~$1,800/mo channel, and strips out exactly the negative before-states the selection rules above depend on. Do **not** incentivize reviews with a free product or gift: a flat Amazon TOS violation, FTC-disclosure-bound elsewhere, and it buys the least usable reviews at real COGS.
 
@@ -75,6 +85,6 @@ description: Use when sourcing customer proof and deciding which of it to show �
 
 **Evidence offered:** Demoed as a settings field plus a screenshot of a funnel/drop-off analytics view. No example of an insight or an improvement.
 
-**Fit here (5/10):** Instrumenting the review-request funnel and reading where respondents abandon is a legitimate conversion problem — review volume is the input to everything in this skill, and today the corpus is small enough that quotes have to be rationed across objections. Tracking is open, so installing the pixel is not the blocker; the blocker is a readable signal. At ~54 orders/month a drop-off report on the survey has too few sessions per step to license a change. Trigger: several hundred review requests per month, enough that a step-level abandonment rate is stable. Score reflects merit at that volume. Until then, the lever on review quality is the wording of the request itself — a specific question and a text-plus-length floor — not the instrumentation around it.
+**Fit here (5/10):** Instrumenting the review-request funnel and reading where respondents abandon is a legitimate conversion problem — review volume is the input to everything in this skill, and today the corpus is small enough that quotes have to be rationed across objections. Tracking is open, so installing the pixel is not the blocker; the blocker is a readable signal. At ~54 orders/month a drop-off report on the survey has too few sessions per step to license a change. Trigger: several hundred review requests per month, enough that a step-level abandonment rate is stable. Score reflects merit at that volume. Until then, the levers on review volume and quality are the framing and click-path of the ask, and the wording of the question itself — a specific question and a text-plus-length floor — not the instrumentation around it.
 
 *Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*

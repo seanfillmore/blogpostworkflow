@@ -26,6 +26,17 @@
  *     --published <YYYY|YYYY-MM-DD>   A bare year is accepted here; a book has no upload date.
  *     --chunk-words / --split-on      Chunking knobs for a long source.
  *
+ *   Chunk caching, and when a re-run is cheap. Each chunk's extraction is cached under
+ *   data/marketing-corpus/<sourceId>/chunks/, keyed on the chunk text plus the exact
+ *   prompt it was extracted with. Until 2026-08-23 that prompt carried every skill's full
+ *   body, so ANY successful merge changed the key and invalidated every cached chunk of
+ *   every source — the cache was correct and never hit, and three consecutive retries of
+ *   one book re-extracted all six chunks. The prompt now carries claim HEADINGS instead
+ *   (renderInventoryForExtraction), so the key only moves when a claim is added, removed
+ *   or reworded. Practical consequence: re-running after a failed merge is cheap on the
+ *   same day, and progressively less cheap the more the fleet has changed since. Nothing
+ *   here invalidates on a schedule — --refetch is the only way to force re-extraction.
+ *
  *   node agents/marketing-learner/index.js --staged [<gate>]
  *     Read-only listing of every tactic parked behind a stage gate, grouped by gate
  *     in operating-sequence order. A tactic that is sound here but blocked by timing
@@ -84,6 +95,7 @@ import {
   renderReport,
   falsifyTactic,
   renderContextMirror,
+  renderInventoryForExtraction,
   extractStagedTactics,
   isStageActive,
   STAGES,
@@ -702,8 +714,12 @@ async function extractFromSource({ source, inventory, args, client }) {
   if (chunks.length === 1) {
     return extractTactics({ video: source, inventory, client });
   }
+  // Hash the SAME projection the prompt embeds, not the raw skill bodies. Hashing full
+  // content made every successful merge invalidate every cached chunk of every source —
+  // correct, since the prompt then contained those bodies, but it meant the cache could
+  // essentially never hit, because changing skills is what this pipeline does.
   const inventoryFingerprint = createHash('sha256')
-    .update(inventory.map((s) => `${s.name} ${s.content}`).join(''))
+    .update(renderInventoryForExtraction(inventory))
     .digest('hex');
   // Must track the source, not be hardcoded: buildExtractionPrompt embeds the block
   // keyed off source.sourceType, so a hardcoded value desyncs the cache fingerprint
