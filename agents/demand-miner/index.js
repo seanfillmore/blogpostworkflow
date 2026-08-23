@@ -38,6 +38,7 @@ import { AWARENESS_LEVELS, sanitizePersonas, formatPersonaDrops } from '../../li
 import { overlayPersonas } from '../../lib/operator-angles.js';
 import {
   SEED_CAP,
+  SKIN_LEAK_CLUSTERS,
   deriveSeeds,
   normalizeHarvest,
   validateQuestions,
@@ -50,7 +51,19 @@ const ROOT = join(__dirname, '..', '..');
 const CONTEXT_DIR = join('data', 'context');
 const REPORT_DIR = join('data', 'reports', 'demand-miner');
 
-const CLUSTER = 'skin';
+// The artifact's `clusters` field, sourced from SKIN_LEAK_CLUSTERS rather than
+// hardcoded — a single `cluster: "skin"` string used to stand in for this and went
+// stale the moment SKIN_LEAK_CLUSTERS grew past lotion+soap (see its docstring).
+// IMPORTANT ASYMMETRY: this only bounds GSC-LEAK-origin seeds (filterLeaksToSkinCluster
+// below). Persona-objection seeds are scoped separately and more narrowly — always
+// lotion+soap, via voice-of-customer's SKIN_CLUSTER_HANDLES — because personas.json
+// is voice-of-customer's lotion+soap research, unaffected by this list. A run can
+// therefore legitimately contain seed_origin: "gsc_leak" questions about deodorant or
+// lip balm alongside seed_origin: "persona_objection" questions that never do. Both
+// artifacts (JSON `clusters` and the markdown header) carry a note pointing a reader at
+// each question's own `seed_origin` rather than let them assume every cluster listed
+// here applies to every question.
+const CLUSTERS = SKIN_LEAK_CLUSTERS;
 const MODEL = 'claude-haiku-4-5-20251001';
 
 // ── .env loader (same pattern as the other agents) ───────────────────────────
@@ -340,10 +353,11 @@ export async function runDemandMiner({
   // customer.js) and must surface as itself, not as an operator-angles.json problem.
   personasFile = sanitizePersonasStep(personasFile);
 
-  // Leaks are unfiltered site-wide GSC queries, but this artifact is stamped
-  // `cluster: "skin"` — filter to skin-cluster leaks BEFORE deriveSeeds so a run
-  // never spends paid seeds mining a cluster it then mislabels as skin. See
-  // lib/demand-questions.js's filterLeaksToSkinCluster docstring for why.
+  // Leaks are unfiltered site-wide GSC queries — filter to SKIN_LEAK_CLUSTERS BEFORE
+  // deriveSeeds so a run never spends paid seeds mining an excluded cluster (toothpaste,
+  // hair, brand, unclustered). See lib/demand-questions.js's filterLeaksToSkinCluster
+  // docstring for why, and the CLUSTERS comment above for what this artifact's
+  // `clusters` field does and doesn't cover.
   const { seeds: derivedSeeds, partial: seedPartial } = deriveSeeds({
     leaks: filterLeaksToSkinCluster(leaksFeed?.leaks ?? null),
     personas: personasFile?.personas ?? personasFile ?? null,
@@ -410,14 +424,14 @@ export async function runDemandMiner({
   // cannot leave one file new and the other stale.
   const payload = {
     generated_at: now,
-    cluster: CLUSTER,
+    clusters: CLUSTERS,
     seed_count: seeds.length,
     partial,
     questions: staged,
   };
   const json = JSON.stringify(payload, null, 2);
   const md = renderDemandQuestionsMarkdown({
-    questions: staged, generatedAt: now, cluster: CLUSTER, seedCount: seeds.length, partial,
+    questions: staged, generatedAt: now, clusters: CLUSTERS, seedCount: seeds.length, partial,
   });
   writeArtifacts({ json, md });
 
@@ -504,7 +518,7 @@ function realWriteArtifacts({ json, md }, root = ROOT) {
   mkdirSync(reportDir, { recursive: true });
   const runRecord = {
     generated_at: payload.generated_at,
-    cluster: payload.cluster,
+    clusters: payload.clusters,
     seed_count: payload.seed_count,
     partial: payload.partial,
     question_count: payload.questions.length,

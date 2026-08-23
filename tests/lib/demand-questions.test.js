@@ -229,7 +229,7 @@ test('validateQuestions rejects a missing stage', () => {
 
 const RENDER_INPUT = {
   generatedAt: '2026-08-21T00:00:00.000Z',
-  cluster: 'skin',
+  clusters: ['coconut oil', 'deodorant', 'lip balm', 'lotion', 'soap'],
   seedCount: 28,
   partial: false,
   questions: [
@@ -282,6 +282,22 @@ test('no questions still renders a valid document', () => {
   assert.ok(md.length > 0);
 });
 
+test('the header renders the clusters array, not a single "skin" string', () => {
+  const md = renderDemandQuestionsMarkdown(RENDER_INPUT);
+  assert.match(md, /^Clusters: coconut oil, deodorant, lip balm, lotion, soap$/m);
+});
+
+test('the header explains that Clusters only bounds leak-origin seeds, not persona-origin ones', () => {
+  // A reader of the artifact should not have to work this asymmetry out for
+  // themselves: persona-objection seeds stay lotion+soap only (voice-of-customer's
+  // SKIN_CLUSTER_HANDLES) regardless of what Clusters lists, because Clusters is
+  // sourced from SKIN_LEAK_CLUSTERS, which only ever gates GSC-leak seeds.
+  const md = renderDemandQuestionsMarkdown(RENDER_INPUT);
+  assert.match(md, /seed_origin/);
+  assert.match(md, /persona_objection/);
+  assert.match(md, /lotion \+ soap/);
+});
+
 // --- Fix round 1: embedded newlines in q.text/q.seed must not break line structure ---
 //
 // q.seed is arbitrary GSC-query or LLM-generated persona-objection text; q.text is an
@@ -309,7 +325,10 @@ test('a question whose seed contains \\n renders as exactly one line, content pr
     questions: [{ text: 'Does coconut oil clog pores?', stage: 'problem-aware', source: 'paa', seed: 'coconut oil\nacne', seed_origin: 'gsc_leak', persona_id: null, seen_count: 1 }],
   });
   const lines = md.split('\n');
-  const hit = lines.filter((l) => l.includes('coconut oil') || l.includes('acne'));
+  // 'acne' only, not 'coconut oil' — the header's `Clusters:` line legitimately
+  // contains the literal text "coconut oil" (it's one of SKIN_LEAK_CLUSTERS), so
+  // matching on that alone would also catch the header, not just this entry.
+  const hit = lines.filter((l) => l.includes('acne'));
   assert.equal(hit.length, 1, 'the entry must land on exactly one physical line');
   assert.ok(hit[0].includes('coconut oil acne'), 'the newline becomes a space, content preserved');
 });
@@ -335,16 +354,21 @@ test('\\r\\n is handled the same as \\n', () => {
   assert.ok(hit[0].includes('Why does my skin react?'), 'the newline becomes a space, content preserved');
 });
 
-// --- Fix wave: item 3 — leak seeds must be filtered to the skin cluster ---
+// --- Fix wave: item 3 — leak seeds must be filtered to SKIN_LEAK_CLUSTERS ---
 //
-// Leaks are unfiltered site-wide GSC impression data. This artifact stamps every
-// question `cluster: "skin"`, so an oral-care leak mined and labelled "skin" would
-// both waste a paid seed on a ≈$0-revenue cluster (per the Prime Directive) and
-// mislabel the resulting artifact. These pin filterLeaksToSkinCluster's behavior
-// against the concrete leaks named in the fix-wave review.
+// Leaks are unfiltered site-wide GSC impression data. This artifact reports its
+// `clusters` array straight from SKIN_LEAK_CLUSTERS (agents/demand-miner/index.js), so
+// an oral-care or hair leak mined and folded in would both waste a paid seed on a
+// cluster this fleet has already decided not to mine (≈$0-revenue toothpaste, or a
+// product line that doesn't exist) and corrupt that self-reported scope. These pin
+// filterLeaksToSkinCluster's behavior against the concrete leaks named in the fix-wave
+// review, plus the later widening to include deodorant and lip balm.
 
-test('SKIN_LEAK_CLUSTERS is lotion + soap + the generic coconut-oil bucket', () => {
-  assert.deepEqual([...SKIN_LEAK_CLUSTERS].sort(), ['coconut oil', 'lotion', 'soap']);
+test('SKIN_LEAK_CLUSTERS covers every mineable RSC product cluster except toothpaste and hair', () => {
+  assert.deepEqual(
+    [...SKIN_LEAK_CLUSTERS].sort(),
+    ['coconut oil', 'deodorant', 'lip balm', 'lotion', 'soap'],
+  );
 });
 
 test('oral-care leaks that mention coconut oil are excluded, not misclassified as skin', () => {
@@ -365,13 +389,57 @@ test('genuine skin-cluster leaks survive, including generic coconut-oil-for-skin
   assert.deepEqual(filterLeaksToSkinCluster(leaks).map((l) => l.query), leaks.map((l) => l.query));
 });
 
-test('deodorant, lip balm and hair leaks are excluded — separate clusters, not skin', () => {
+test('hair leaks are excluded — the brand has no hair products', () => {
   const leaks = [
-    leak('coconut oil deodorant', 700),
     leak('coconut oil for hair benefits', 650),
-    leak('best natural lip balm for chapped lips', 600),
+    leak('best coconut oil shampoo', 300),
   ];
   assert.deepEqual(filterLeaksToSkinCluster(leaks), []);
+});
+
+test('deodorant leaks now survive — the owner widened the mined set to include it', () => {
+  const leaks = [
+    leak('coconut oil deodorant', 700),
+    leak('best natural deodorant for sweating', 400),
+  ];
+  assert.deepEqual(
+    filterLeaksToSkinCluster(leaks).map((l) => l.query),
+    leaks.map((l) => l.query),
+  );
+});
+
+test('lip balm leaks now survive — the owner widened the mined set to include it', () => {
+  const leaks = [
+    leak('best natural lip balm for chapped lips', 600),
+    leak('lip balm for cold weather', 250),
+  ];
+  assert.deepEqual(
+    filterLeaksToSkinCluster(leaks).map((l) => l.query),
+    leaks.map((l) => l.query),
+  );
+});
+
+test('toothpaste leaks are still excluded — the Prime Directive names that cluster $0 revenue', () => {
+  const leaks = [
+    leak('cinnamon toothpaste', 500),
+    leak('coconut oil as toothpaste', 495),
+  ];
+  assert.deepEqual(filterLeaksToSkinCluster(leaks), []);
+});
+
+test('a mixed feed spanning every RSC product line keeps deodorant, lip balm, lotion, soap and coconut oil, and drops toothpaste and hair', () => {
+  const leaks = [
+    leak('cinnamon toothpaste', 900),
+    leak('coconut oil deodorant', 800),
+    leak('coconut oil for hair benefits', 700),
+    leak('best natural lip balm for chapped lips', 600),
+    leak('coconut oil acne', 500),
+    leak('natural bar soap for men', 400),
+  ];
+  assert.deepEqual(
+    filterLeaksToSkinCluster(leaks).map((l) => l.query),
+    ['coconut oil deodorant', 'best natural lip balm for chapped lips', 'coconut oil acne', 'natural bar soap for men'],
+  );
 });
 
 test('a mixed feed keeps only the skin-cluster entries, order preserved', () => {

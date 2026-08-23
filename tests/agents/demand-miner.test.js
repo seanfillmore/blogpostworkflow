@@ -59,7 +59,7 @@ test('a full run writes both artifacts', async () => {
   assert.ok(written.json, 'demand-questions.json rendered');
   assert.ok(written.md, 'demand-questions.md rendered');
   const parsed = JSON.parse(written.json);
-  assert.equal(parsed.cluster, 'skin');
+  assert.deepEqual([...parsed.clusters].sort(), ['coconut oil', 'deodorant', 'lip balm', 'lotion', 'soap']);
   assert.equal(parsed.questions[0].stage, 'problem-aware');
   assert.equal(parsed.questions[0].seed_origin, 'gsc_leak');
 });
@@ -213,7 +213,8 @@ test('the JSON envelope matches the artifact contract exactly', async () => {
     now: '2026-08-21T00:00:00.000Z',
   });
   const parsed = JSON.parse(written.json);
-  assert.deepEqual(Object.keys(parsed).sort(), ['cluster', 'generated_at', 'partial', 'questions', 'seed_count']);
+  assert.deepEqual(Object.keys(parsed).sort(), ['clusters', 'generated_at', 'partial', 'questions', 'seed_count']);
+  assert.ok(Array.isArray(parsed.clusters), 'clusters is an array, not a single "skin" string — the label stopped being accurate once SKIN_LEAK_CLUSTERS grew past lotion+soap');
   assert.deepEqual(Object.keys(parsed.questions[0]).sort(),
     ['persona_id', 'seed', 'seed_origin', 'seen_count', 'source', 'stage', 'text'],
     'the funnel-matrix join depends on stage and persona_id being present under these exact names');
