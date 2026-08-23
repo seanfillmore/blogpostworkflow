@@ -1,21 +1,50 @@
+// tests/lib/cluster-corroboration.test.js
+//
+// THE SAFETY PROPERTY THIS FILE EXISTS TO PIN: no single measurement pipeline may
+// condemn a category alone. Held on one source, the rule paused `soap` — which
+// sells $324.85/90d, 13% of all revenue and second only to lotion — because
+// seo-impact's entry-page attribution filed $62.40 of it under `hand soap` and
+// showed `soap` at $0.
+//
+// WHAT CHANGED ON 2026-08-23 AND WHAT DID NOT. The two sources SWAPPED ROLES and
+// a third was retired; the rule itself is unchanged.
+//
+//              PRIMARY (source A)              CROSS-CHECK (source B)
+//   question   what did the CATEGORY SELL?     what did its PAGES EARN?
+//   data       raw order LINE ITEMS            raw order TOTALS
+//   join key   product title → cluster         landing-page URL → cluster
+//   channels   all                             organic search only
+//
+// The independence that caught the soap bug was never "two databases" — both
+// sides always read Shopify orders. It was the JOIN KEY, and A and B still
+// differ on exactly that axis. `data/snapshots/shopify/*.json` `topProducts[]`
+// was retired as a source because it answers A's question by A's join key and is
+// capped at the top 5 products per day: it reported toothpaste at $39.00/90d
+// where the raw line items say $71.50. A capped copy of the primary is not
+// corroboration, and keeping it would have given the appearance of three sources
+// while deleting the one axis of real independence.
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  clusterFamily, productRevenueByFamily, corroborateClusters, buildClusterHold,
-  loadClusterHold, holdBanner, windowsFor, WIDE_WINDOW_DAYS, HOLD_FLAG,
+  clusterFamily, corroborateClusters, buildClusterHold, loadClusterHold, holdBanner,
+  readWideSources, renderDisagreementLines, WIDE_WINDOW_DAYS, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
-import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { classifyClusters, JUDGING_WINDOW_DAYS } from '../../lib/cluster-revenue.js';
+import {
+  holdFor, heldScenario, disagreementScenario, impactReport, wideRows,
+  PRODUCTION_CLUSTER_ROWS, SOLD_90D, PAGES_EARNED_90D, WIDE_ORDERS, JUDGING_WINDOW,
+} from '../helpers/cluster-fixtures.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// ── the nine real product titles ─────────────────────────────────────────────
-// Every product that earned a dollar in the trailing 90 days, verbatim from
-// data/snapshots/shopify/*.json `topProducts[].title` on the production server.
-// This is the join that decides whether a cluster is really earning, so it is
-// tested against the real strings and not against tidied-up ones.
+// ── the shared vocabulary ────────────────────────────────────────────────────
+// Both sources are compared in ONE taxonomy or the comparison is meaningless.
+// These are the nine real product titles that earned a dollar in the trailing 90
+// days, verbatim from production — the join source A is keyed on.
 
 const TITLES = [
   ['Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', 'lotion'],
@@ -42,10 +71,9 @@ test('a soap that is also a moisturizer lands in soap, not lotion', () => {
   assert.equal(clusterFamily('Moisturizing Coconut Soap | 3.4oz'), 'soap');
 });
 
-test('both vocabularies meet in one place — seo-impact cluster names map to the same families', () => {
-  // seo-impact splits soap into `soap` + `hand soap` and lotion into
+test('both sources meet in one place — seo-impact cluster names map to the same families', () => {
+  // seo-impact once split soap into `soap` + `hand soap` and lotion into
   // `body lotion` + `lotion` + `moisturizer`. Product titles know none of that.
-  // Corroboration is only meaningful because BOTH sides go through assignCluster.
   assert.equal(clusterFamily('hand soap'), 'soap');
   assert.equal(clusterFamily('soap'), 'soap');
   assert.equal(clusterFamily('body lotion'), 'lotion');
@@ -60,267 +88,297 @@ test('a cluster name that maps to no family is reported as unmappable, not as ze
   assert.equal(clusterFamily(''), 'unclustered');
 });
 
-// ── aggregating snapshots ────────────────────────────────────────────────────
+// ── reading both sources out of the report ───────────────────────────────────
 
-const snap = (date, orders, revenue, products) => ({
-  date, orders: { count: orders, revenue }, topProducts: products,
+test('both sources come off `clusters_product_wide[]`, one row per cluster', () => {
+  const { productRevenue, entryPageRevenue, judgingWindow, windowOrders } = readWideSources(impactReport());
+  assert.equal(productRevenue.soap, 324.85, 'source A: what the category SOLD');
+  assert.equal(entryPageRevenue.soap, 110.49, 'source B: what its PAGES earned');
+  assert.deepEqual(judgingWindow, JUDGING_WINDOW);
+  assert.equal(windowOrders, WIDE_ORDERS);
 });
 
-// The real 28-day window seo-impact reported on 2026-08-22: 18 orders, $1,079.46.
-const WINDOW_SNAPSHOTS = [
-  snap('2026-07-30', 1, 90, [{ title: TITLES[0][0], revenue: 90 }]),
-  snap('2026-08-09', 1, 60, [{ title: TITLES[5][0], revenue: 60 }]),
-  snap('2026-08-17', 1, 93, [
-    { title: TITLES[4][0], revenue: 78 },
-    { title: TITLES[2][0], revenue: 15 },
-  ]),
-  snap('2026-08-18', 3, 250, [
-    { title: TITLES[0][0], revenue: 113.58 },
-    { title: TITLES[3][0], revenue: 78 },
-    { title: TITLES[1][0], revenue: 58.42 },
-  ]),
-];
-
-test('product revenue aggregates by family across a window', () => {
-  const agg = productRevenueByFamily(WINDOW_SNAPSHOTS);
-  assert.equal(agg.byFamily.soap, 156, 'two different soap SKUs sum into one family');
-  assert.equal(agg.byFamily.lotion, 262, '90 + 113.58 + 58.42');
-  assert.equal(agg.byFamily['lip balm'], 60);
-  assert.equal(agg.byFamily.deodorant, 15);
-  assert.equal(agg.byFamily.toothpaste, undefined, 'a family that earned nothing has no row');
-  assert.equal(agg.orders, 6);
-  assert.equal(agg.revenue, 493);
+test('an absent wide block yields NULLS, never empty maps', () => {
+  // "not measured" and "measured as zero" are different answers: the second is a
+  // verdict and the first is a missing input. Collapsing them is how a deploy
+  // condemns every category at once.
+  const src = readWideSources(impactReport({ wide: null }));
+  assert.equal(src.productRevenue, null);
+  assert.equal(src.entryPageRevenue, null);
+  assert.equal(src.windowOrders, null);
+  assert.equal(readWideSources(null).productRevenue, null);
 });
 
-test('the materiality floor is one average order, derived from the same snapshots', () => {
-  // Not a magic constant: a cluster that has not produced even a single
-  // average order over the window is materially a non-channel, and the floor
-  // moves with the business instead of ageing into a wrong number.
-  const agg = productRevenueByFamily(WINDOW_SNAPSHOTS);
-  assert.equal(agg.aov, 493 / 6);
-  assert.equal(agg.available, true);
+test('a report carrying source A but NOT source B reads B as null, never as $0', () => {
+  // This shape really exists: `clusters_product_wide` shipped one change before
+  // the entry-page column was added to it. Reading the missing field as `|| 0`
+  // would make every cluster's cross-check say "its pages earned nothing" —
+  // the direction that CREATES holds. It must fail open instead.
+  const rows = wideRows({ sold: { toothpaste: 0, lotion: 1757.1 } })
+    .map(({ entry_page_organic_revenue, ...r }) => r);
+  const src = readWideSources({
+    clusters_product_wide: rows, cluster_product_meta: { wide_orders_all_channels: 50 },
+  });
+  assert.equal(src.entryPageRevenue, null);
+  assert.equal(src.productRevenue.toothpaste, 0, 'source A is still read');
+
+  const hold = buildClusterHold(
+    classifyClusters([{ cluster: 'toothpaste', revenue: 0, clicks: 640, pages: 24 }],
+      { productRevenue: src.productRevenue, windowOrders: src.windowOrders }),
+    { entryPageRevenue: src.entryPageRevenue },
+  );
+  assert.equal(hold.heldSet.size, 0, 'half a report holds nothing');
+  assert.equal(hold.uncorroborated.length, 1);
 });
 
-test('a window with no orders cannot corroborate anything', () => {
-  const agg = productRevenueByFamily([snap('2026-08-01', 0, 0, [])]);
-  assert.equal(agg.available, false, 'no orders means no average order, so no floor');
+test('a row missing ONE of the two fields reads that field as 0, not undefined', () => {
+  // The real rows always carry both, but a row built by an older writer may
+  // carry only one. Once the entry-page COLUMN exists somewhere in the array,
+  // an individual row missing it genuinely earned nothing — the "nothing was
+  // measured" case is the whole-column-absent branch above, not this one.
+  //
+  // Deliberately hand-built rather than via `wideRows`, which writes explicit
+  // zeroes into both fields: with those, this coercion is never reached and the
+  // test would pass with the `|| 0` deleted.
+  const src = readWideSources({
+    clusters_product_wide: [
+      { cluster: 'soap', product_revenue_all_channels: 100 },              // no entry-page key
+      { cluster: 'coconut oil', entry_page_organic_revenue: 25 },          // no product key
+    ],
+    cluster_product_meta: { wide_orders_all_channels: 50 },
+  });
+  assert.equal(src.productRevenue['coconut oil'], 0);
+  assert.equal(src.entryPageRevenue.soap, 0);
+  assert.equal(src.productRevenue.soap, 100);
+  assert.equal(src.entryPageRevenue['coconut oil'], 25);
 });
 
-test('a day at the collector top-5 cap makes the window a lower bound, not evidence', () => {
-  // agents/shopify-collector keeps only the top 5 products per day. That has
-  // never happened (max 4 across all history), but if it does, a family showing
-  // zero might simply be the part that was cut — which would make a hold an
-  // artifact of the cap.
-  const capped = [snap('2026-08-18', 6, 300, Array.from({ length: 5 }, (_, i) => ({
-    title: TITLES[i][0], revenue: 60,
-  })))];
-  const agg = productRevenueByFamily(capped);
-  assert.equal(agg.truncatedDays, 1);
-  assert.equal(agg.available, false, 'a truncated window is refused rather than trusted');
+// ── the cross-check ──────────────────────────────────────────────────────────
+
+const REAL = classifyClusters(PRODUCTION_CLUSTER_ROWS, {
+  productRevenue: SOLD_90D, windowOrders: WIDE_ORDERS,
 });
 
-test('aggregation tolerates missing and malformed snapshots', () => {
-  const agg = productRevenueByFamily([null, {}, snap('2026-08-01', 1, 10, null)]);
-  assert.equal(agg.orders, 1);
-  assert.deepEqual(agg.byFamily, {});
-});
-
-// ── corroboration: the rule that soap broke ──────────────────────────────────
-
-// The window the report itself measured. Without it no cluster may be a dud.
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };
-
-// VERBATIM production rows, data/reports/seo-impact/latest.json 2026-08-22.
-// Deliberately kept split (`soap` + `hand soap`, `body lotion` + `lotion` +
-// `moisturizer` + `body cream`) because that is what a stale report on the
-// server still looks like: the fold has to happen at classification time, not
-// only in reports written after the taxonomy fix.
-const REPORT_CLUSTERS = classifyClusters([
-  { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-  { cluster: 'hand soap', revenue: 62.4, clicks: 4, pages: 4 },
-  { cluster: 'lip balm', revenue: 48, clicks: 4, pages: 6 },
-  { cluster: 'deodorant', revenue: 38.25, clicks: 121, pages: 21 },
-  { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-  { cluster: 'soap', revenue: 0, clicks: 223, pages: 24 },
-  { cluster: 'lotion', revenue: 0, clicks: 56, pages: 12 },
-  { cluster: 'moisturizer', revenue: 0, clicks: 15, pages: 5 },
-  { cluster: 'coconut oil', revenue: 0, clicks: 11, pages: 7 },
-  { cluster: 'body cream', revenue: 0, clicks: 0, pages: 1 },
-], { totals: TOTALS });
-
-// A SYNTHETIC report in which attribution is broken some other way: a cluster
-// really earning is filed at $0 on enough traffic to clear the evidence bar.
-// The soap disagreement is gone from the real data (the fold fixed it), and the
-// disagreement machinery still has to work for whatever breaks next.
-const MISFILED = classifyClusters([
-  { cluster: 'deodorant', revenue: 0, clicks: 500, pages: 12 },
-], { totals: TOTALS });
-
-// Real measured product revenue: soap earns, toothpaste does not.
-const MEASURED = [
-  { label: 'report window (28d)', start: '2026-07-24', end: '2026-08-20', available: true, orders: 18, revenue: 1079.46, aov: 59.97, truncatedDays: 0, byFamily: { lotion: 909, 'lip balm': 120, soap: 156, deodorant: 60 } },
-  { label: 'wide window (90d)', start: '2026-05-24', end: '2026-08-21', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, deodorant: 180, 'lip balm': 120, toothpaste: 39 } },
-];
-
-test('SOAP IS NOT HELD — and after the fold there is no $0 row left to disagree with', () => {
-  // The whole soap incident was a taxonomy artifact: /products/organic-foaming-
-  // hand-soap matched 'hand soap' before 'soap', so the category's only in-window
-  // organic order ($62.40) was filed under a sibling row and `soap` read $0 on
-  // 223 clicks. Folded, soap simply EARNS and never reaches corroboration.
-  const v = corroborateClusters(REPORT_CLUSTERS, MEASURED);
+test('SOAP IS NOT HELD — it sold $324.85, so it never reaches the cross-check at all', () => {
+  const v = corroborateClusters(REAL, { entryPageRevenue: PAGES_EARNED_90D });
   assert.equal(v.soap.verdict, 'earning');
-  assert.equal(REPORT_CLUSTERS.soap.entryPageOrganicRevenue, 62.4);
-  assert.deepEqual(REPORT_CLUSTERS.soap.members.sort(), ['hand soap', 'soap']);
+  assert.equal(v.soap.productRevenue, 324.85);
 });
 
-test('a cluster really earning but filed at $0 is a DISAGREEMENT, never a hold', () => {
-  const v = corroborateClusters(MISFILED, MEASURED);
-  assert.equal(v.deodorant.verdict, 'disagreement');
-  assert.equal(v.deodorant.family, 'deodorant');
-  assert.match(v.deodorant.reason, /180|60/, 'the reason quotes the measured dollars');
-  assert.match(v.deodorant.reason, /attribution/i, 'a disagreement is an attribution defect, and says so');
+test('and soap no longer depends on a threshold to survive', () => {
+  // The old defence was the 400-click bar, which soap's 227 did not clear. That
+  // is no longer load-bearing: at any click count it simply sold money.
+  const loud = classifyClusters([{ cluster: 'soap', revenue: 0, clicks: 5000, pages: 90 }], {
+    productRevenue: SOLD_90D, windowOrders: WIDE_ORDERS,
+  });
+  assert.equal(loud.soap.status, 'earning');
 });
 
-test('TOOTHPASTE IS STILL HELD — both sources agree it earns nothing', () => {
-  const v = corroborateClusters(REPORT_CLUSTERS, MEASURED);
+test('SOURCE B WOULD HAVE CAUGHT THE SOAP INCIDENT — on the real click count, not a raised one', () => {
+  // Reproduce the 2026-08-19 defect on the new basis: something breaks the
+  // product-title join and source A reads soap at $0. Its pages really earned
+  // $110.49 over the judging window, so B contradicts A and the hold is blocked.
+  // This is the concrete demonstration that B is not redundant — and it works at
+  // soap's actual 227 clicks, which the old 400-click bar could not reach.
+  const s = disagreementScenario('soap');
+  const classified = classifyClusters(s.clusters, { productRevenue: s.sold, windowOrders: WIDE_ORDERS });
+  assert.equal(classified.soap.status, 'proven_dud', 'source A alone still condemns it');
+
+  const v = corroborateClusters(classified, { entryPageRevenue: s.earned });
+  assert.equal(v.soap.verdict, 'disagreement');
+  assert.equal(v.soap.family, 'soap');
+  assert.match(v.soap.reason, /110\.49/, 'the reason quotes what the pages earned');
+  assert.match(v.soap.reason, /NOT held/);
+  assert.match(v.soap.reason, /attribution is broken/i);
+});
+
+test('when BOTH sources read $0 the cluster is held, and the reason says both', () => {
+  const s = heldScenario('toothpaste');
+  const classified = classifyClusters(s.clusters, { productRevenue: s.sold, windowOrders: WIDE_ORDERS });
+  const v = corroborateClusters(classified, { entryPageRevenue: s.earned });
   assert.equal(v.toothpaste.verdict, 'held');
   assert.equal(v.toothpaste.family, 'toothpaste');
+  assert.match(v.toothpaste.reason, /both sources agree/);
 });
 
-test('one material window is enough to block a hold — unanimity is required', () => {
-  // $0 across the report's own 28 days, but real money over 90. A quiet month is
-  // not evidence that a category earns nothing.
-  const quietRecently = [
-    { ...MEASURED[0], byFamily: { ...MEASURED[0].byFamily, deodorant: 0 } },
-    MEASURED[1],
-  ];
-  assert.equal(corroborateClusters(MISFILED, quietRecently).deodorant.verdict, 'disagreement');
-});
-
-test('a cluster that is not a proven dud is never corroborated at all', () => {
-  const v = corroborateClusters(REPORT_CLUSTERS, MEASURED);
-  assert.equal(v.lotion.verdict, 'earning', 'body lotion + lotion + moisturizer + body cream are ONE cluster');
+test('a cluster that is not a proven dud is never cross-checked at all', () => {
+  const v = corroborateClusters(REAL, { entryPageRevenue: PAGES_EARNED_90D });
+  assert.equal(v.lotion.verdict, 'earning');
   assert.equal(v['coconut oil'].verdict, 'unproven', '11 clicks is too little to judge');
 });
 
-test('an unmappable cluster name cannot be corroborated, so it is not held', () => {
-  const odd = classifyClusters([{ cluster: 'foaming', revenue: 0, clicks: 400, pages: 12 }], { totals: TOTALS });
-  const v = corroborateClusters(odd, MEASURED);
+test('but sold-vs-earned is reported on EVERY row, not only the duds', () => {
+  // That comparison is what exposes an attribution split before it becomes a
+  // verdict, so an operator reading the table needs it on the earning rows too.
+  const v = corroborateClusters(REAL, { entryPageRevenue: PAGES_EARNED_90D });
+  assert.equal(v.lotion.productRevenue, 1757.1);
+  assert.equal(v.lotion.entryPageRevenue, 666.73);
+});
+
+test('an unmappable cluster name cannot be cross-checked, so it is not held', () => {
+  const odd = classifyClusters([{ cluster: 'foaming', revenue: 0, clicks: 400, pages: 12 }],
+    { productRevenue: { ...SOLD_90D, foaming: 0 }, windowOrders: WIDE_ORDERS });
+  const v = corroborateClusters(odd, { entryPageRevenue: PAGES_EARNED_90D });
   assert.equal(v.foaming.verdict, 'uncorroborated');
   assert.match(v.foaming.reason, /could not be mapped/i);
 });
 
-test('missing snapshots corroborate nothing — the hold fails OPEN', () => {
-  const blind = [{ label: 'report window (28d)', available: false }, { label: 'wide window (90d)', available: false }];
-  const v = corroborateClusters(REPORT_CLUSTERS, blind);
+test('a MISSING cross-check corroborates nothing — the hold fails OPEN', () => {
+  const s = heldScenario('toothpaste');
+  const classified = classifyClusters(s.clusters, { productRevenue: s.sold, windowOrders: WIDE_ORDERS });
+  const v = corroborateClusters(classified, { entryPageRevenue: null });
   assert.equal(v.toothpaste.verdict, 'uncorroborated');
-  assert.equal(corroborateClusters(MISFILED, blind).deodorant.verdict, 'uncorroborated');
+  assert.match(v.toothpaste.reason, /second source\s+is missing entirely/);
 });
 
 // ── the hold context built on top ────────────────────────────────────────────
 
-test('buildClusterHold holds only the corroborated duds and lists the disagreements', () => {
-  const hold = buildClusterHold(REPORT_CLUSTERS, { measured: MEASURED, generatedAt: '2026-08-22T15:16:44.241Z' });
-  assert.deepEqual([...hold.heldSet], ['toothpaste'], 'soap is gone from the held set');
-  assert.equal(hold.disagreements.length, 0, 'on the real report the fold leaves nothing to disagree about');
+test('buildClusterHold holds only the cross-checked duds and lists the disagreements', () => {
+  const held = holdFor(heldScenario('toothpaste'));
+  assert.deepEqual([...held.heldSet], ['toothpaste']);
+  assert.equal(held.disagreements.length, 0);
 
-  const broken = buildClusterHold(MISFILED, { measured: MEASURED });
+  const broken = holdFor(disagreementScenario('soap'));
   assert.equal(broken.heldSet.size, 0);
   assert.equal(broken.disagreements.length, 1);
-  assert.equal(broken.disagreements[0].cluster, 'deodorant');
-  assert.equal(broken.disagreements[0].productRevenue, 180);
+  assert.equal(broken.disagreements[0].cluster, 'soap');
+  assert.equal(broken.disagreements[0].entryPageRevenue, 110.49);
 });
 
-test('with no corroboration data at all, nothing is held', () => {
-  const hold = buildClusterHold(REPORT_CLUSTERS, { measured: [] });
-  assert.equal(hold.heldSet.size, 0);
+test('ON THE REAL 2026-08-23 REPORT nothing is held and nothing disagrees', () => {
+  const live = holdFor();
+  assert.deepEqual([...live.heldSet], []);
+  assert.deepEqual(live.disagreements, []);
+  assert.deepEqual(live.uncorroborated, []);
+  assert.equal(live.disarmed, null, 'the gate was armed — it simply found nothing');
+  assert.equal(holdBanner(live), '', 'a clean report is the one silent case');
 });
 
-test('the banner names the disagreement loudly — broken attribution is itself the finding', () => {
-  const hold = buildClusterHold(REPORT_CLUSTERS, { measured: MEASURED, generatedAt: 'X' });
-  const b = holdBanner(hold);
+// ── A DISARMED GATE MUST NOT LOOK LIKE A CLEAN RUN ──────────────────────────
+//
+// Every fail-open branch produces the same visible outcome as a report on which
+// every category earns: nothing held, no banner. Until 2026-08-23 a report
+// carrying `clusters_product_wide: []` rendered byte-identically to a clean one
+// while `available` still read true — a fully disarmed gate, invisible. That is
+// the "quiet loss of capability" the freshness rule exists to make loud.
+
+test('a report with no product reading says the gate is OFF, and why', () => {
+  const off = loadClusterHold({ root: ROOT, readJson: () => impactReport({ wide: null }) });
+  assert.match(off.disarmed, /no product-revenue reading/);
+  assert.match(holdBanner(off), /gate is OFF/);
+  assert.match(holdBanner(off), /full pick list/);
+});
+
+test('a judging window too thin to judge says so too, rather than reading as clean', () => {
+  const thin = holdFor({ ...heldScenario('toothpaste'), orders: 20 });
+  assert.match(thin.disarmed, /only 20 order\(s\), below the 45/);
+  assert.match(holdBanner(thin), /gate is OFF/);
+});
+
+test('a missing cross-check disarms the gate loudly as well', () => {
+  const s = heldScenario('toothpaste');
+  const noB = holdFor({ ...s, earned: null });
+  assert.match(noB.disarmed, /cross-check is missing entirely/);
+  assert.match(holdBanner(noB), /gate is OFF/);
+});
+
+test('an armed gate that simply holds something is NOT reported as disarmed', () => {
+  const held = holdFor(heldScenario('toothpaste'));
+  assert.equal(held.disarmed, null);
+  assert.doesNotMatch(holdBanner(held), /gate is OFF/);
+});
+
+test('with no cross-check data at all, nothing is held', () => {
+  const s = heldScenario('toothpaste');
+  const blind = buildClusterHold(
+    classifyClusters(s.clusters, { productRevenue: s.sold, windowOrders: WIDE_ORDERS }),
+    { entryPageRevenue: null },
+  );
+  assert.equal(blind.heldSet.size, 0);
+  assert.equal(blind.uncorroborated.length, 1);
+});
+
+// ── the disagreement is a FINDING, and it has to reach a human ───────────────
+
+test('the banner names the disagreement loudly — a broken source is itself the finding', () => {
+  const held = holdFor({ ...heldScenario('toothpaste'), generatedAt: 'X' });
+  const b = holdBanner(held);
   assert.match(b, /toothpaste/);
   assert.match(b, new RegExp(HOLD_FLAG));
 
-  const broken = buildClusterHold(MISFILED, { measured: MEASURED, generatedAt: 'X' });
+  const broken = holdFor({ ...disagreementScenario('soap'), generatedAt: 'X' });
   const bb = holdBanner(broken);
-  assert.match(bb, /ATTRIBUTION DISAGREEMENT/);
-  assert.match(bb, /deodorant/);
-  assert.match(bb, /180/);
+  assert.match(bb, /SOURCES DISAGREE/);
+  assert.match(bb, /soap/);
+  assert.match(bb, /110\.49/);
   assert.match(bb, /NOT held/i);
 });
 
-// ── window derivation ────────────────────────────────────────────────────────
-
-test('the corroboration window is taken from the report, never invented', () => {
-  const w = windowsFor({ start: '2026-07-24', end: '2026-08-20' });
-  assert.equal(w[0].start, '2026-07-24');
-  assert.equal(w[0].end, '2026-08-20');
-  assert.equal(w[1].end, '2026-08-20', 'the wide window ends on the same day');
-  assert.equal(w[1].start, '2026-05-23', `${WIDE_WINDOW_DAYS} days INCLUSIVE, ending 2026-08-20`);
+test('and it reaches the DIGEST, because these agents run unattended at 3 and 8 AM', () => {
+  const lines = renderDisagreementLines(holdFor(disagreementScenario('soap'))).join('\n');
+  assert.match(lines, /SOURCES DISAGREE/);
+  assert.match(lines, /soap/);
+  assert.match(lines, /110\.49/);
+  assert.deepEqual(renderDisagreementLines(holdFor(heldScenario('toothpaste'))), [], 'silent when both agree');
+  assert.deepEqual(renderDisagreementLines(null), []);
 });
 
-test('a report with no window block yields no windows, so nothing can be held', () => {
-  assert.deepEqual(windowsFor(null), []);
-  assert.deepEqual(windowsFor({ start: '2026-07-24' }), []);
+test('a category with no SKU behind it is a disagreement, not a dud', () => {
+  // `coconut oil` is the shape: RSC ships no coconut-oil SKU, so source A is
+  // structurally $0 for it forever. Today it is NOT an example of B firing —
+  // measured over the same window its pages earned $0.00 too, and it is spared
+  // only by the click precondition at 11 clicks (do not re-assert that its posts
+  // "send readers to lotion"; nothing measured says so). The `earned` figure
+  // below is therefore HYPOTHETICAL: this is the case as it would arrive if such
+  // a cluster's pages did start earning. "There is nothing to sell here" is a
+  // different diagnosis from "this content failed", and only B tells them apart.
+  const s = {
+    clusters: [{ cluster: 'coconut oil', revenue: 0, clicks: 400, pages: 12 }],
+    sold: { ...SOLD_90D, 'coconut oil': 0 },
+    earned: { ...PAGES_EARNED_90D, 'coconut oil': 41.2 },
+  };
+  const hold = holdFor(s);
+  assert.equal(hold.heldSet.size, 0);
+  assert.equal(hold.disagreements[0].cluster, 'coconut oil');
+  assert.match(hold.disagreements[0].corroboration, /no SKU behind it/);
 });
 
-test('loadClusterHold reads the snapshots for the union of both windows', () => {
-  const read = [];
+// ── the window ───────────────────────────────────────────────────────────────
+
+test('the judging window is 90 days, and both modules agree on the number', () => {
+  assert.equal(WIDE_WINDOW_DAYS, JUDGING_WINDOW_DAYS);
+  assert.equal(JUDGING_WINDOW_DAYS, 90);
+});
+
+test('the window is taken from the report, never invented', () => {
+  const hold = loadClusterHold({ root: ROOT, readJson: () => impactReport() });
+  assert.deepEqual(hold.judgingWindow, JUDGING_WINDOW);
+  assert.match(holdBanner(holdFor(disagreementScenario('soap'))), /2026-05-24 → 2026-08-21/);
+});
+
+test('loadClusterHold refuses to judge when the report carries no order count', () => {
+  const s = heldScenario('toothpaste');
   const hold = loadClusterHold({
     root: ROOT,
-    readJson: (p) => {
-      read.push(p);
-      if (p.endsWith('latest.json')) {
-        return {
-          generated_at: 'X',
-          window: { start: '2026-08-18', end: '2026-08-18' },
-          totals: { organic_conversions: 8, organic_sessions: 1067 },
-          clusters: [{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }],
-        };
-      }
-      return snap('2026-08-18', 3, 250, [{ title: TITLES[0][0], revenue: 250 }]);
+    readJson: () => {
+      const r = impactReport({ clusters: s.clusters, sold: s.sold, earned: s.earned });
+      r.cluster_product_meta.wide_orders_all_channels = null;
+      return r;
     },
-    readDir: () => ['2026-08-18.json', '2026-05-01.json', 'notes.txt'],
-  });
-  assert.ok(read.some((p) => p.includes('snapshots')), 'snapshots were read');
-  assert.ok(!read.some((p) => p.includes('2026-05-01')), 'a snapshot outside both windows is not read');
-  assert.deepEqual([...hold.heldSet], ['toothpaste']);
-});
-
-test('a report with no totals block holds NOTHING — an unknown denominator is not evidence', () => {
-  // The window's own organic order count is what the click threshold is derived
-  // from. Without it a $0 cannot be told apart from a window too thin (or a
-  // tracking outage) to judge, so no cluster may be stamped a dud at all.
-  const hold = loadClusterHold({
-    root: ROOT,
-    readJson: (p) => (p.endsWith('latest.json')
-      ? { generated_at: 'X', window: { start: '2026-08-18', end: '2026-08-18' }, clusters: [{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }] }
-      : snap('2026-08-18', 3, 250, [{ title: TITLES[0][0], revenue: 250 }])),
-    readDir: () => ['2026-08-18.json'],
   });
   assert.equal(hold.heldSet.size, 0);
-  assert.equal(hold.classified.toothpaste.status, 'unproven');
   assert.match(hold.classified.toothpaste.evidence, /order count was not supplied/i);
 });
 
-test('a window with too few organic orders holds NOTHING — a store-wide outage is not a verdict', () => {
-  // A trashed GA4 property once 204'd every hit for 8 days. That reads as $0 in
-  // EVERY cluster at once; under a clicks-only bar it would stamp every
-  // high-traffic category a dud in one unattended run.
-  const outage = classifyClusters(
-    [{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }],
-    { totals: { organic_conversions: 0, organic_sessions: 1067 } },
-  );
-  assert.equal(outage.toothpaste.status, 'unproven');
-  assert.match(outage.toothpaste.evidence, /only 0 organic order/i);
-  assert.equal(buildClusterHold(outage, { measured: MEASURED }).heldSet.size, 0);
-});
-
-test('no cluster name is hardcoded in the corroboration either', () => {
+test('no cluster name is hardcoded in the cross-check either', () => {
   // Executable source only. The module's docstring names the cluster this
   // correction came from, because an incident nobody can name is one that gets
   // repeated — but no cluster may appear in the LOGIC.
+  //
+  // `lib/cluster-revenue.js` is deliberately NOT on this list: its
+  // `PRODUCT_CLUSTERS` names every category RSC sells, which is a catalogue and
+  // not a verdict. The rule is that no cluster may be singled out by the hold
+  // logic, not that the taxonomy may not exist.
   for (const rel of ['lib/cluster-hold.js', 'scripts/cluster-holds.mjs']) {
     const src = readFileSync(join(ROOT, rel), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, ' ')

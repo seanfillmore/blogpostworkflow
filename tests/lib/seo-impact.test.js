@@ -12,6 +12,8 @@ import {
   actionWins,
   rankBy,
   weeklyRevenueTrend,
+  entryPageClusterRevenue,
+  withWideEntryPageRevenue,
 } from '../../lib/seo-impact.js';
 import { shopifyRevenueByPage, attributionRows, SEARCH_HOSTS } from '../../lib/order-attribution.js';
 // The real Pacific day resolver the agent injects — DST-correct, and the same one the
@@ -547,4 +549,182 @@ test('the cluster table says what its dollars are, and shows the residual', () =
   assert.match(md, /no cluster \(homepage \/ cart \/ subscription\)/);
   assert.match(md, /\$77\.94/);
   assert.match(md, /\$62\.40/, 'soap is one row now, carrying its real attributed dollars');
+});
+
+// ── the report's PRODUCT cluster table ────────────────────────────────────────
+
+/**
+ * Real figures, measured from 131 live orders over the 200 days to 2026-08-23.
+ * The 28-day window ending 2026-08-21 is the same one the fixture above uses.
+ */
+const PRODUCT_REPORT = {
+  window: { start: '2026-07-24', end: '2026-08-20' },
+  prior_window: { start: '2026-06-26', end: '2026-07-23' },
+  revenue_source: 'shopify-orders',
+  totals: { organic_revenue: 540.08, organic_revenue_delta: 357.9, organic_conversions: 8, organic_sessions: 1067 },
+  top_revenue: [], top_growth: [], action_wins: [], not_converting: [], channel_mix: [],
+  clusters: [
+    {
+      cluster: 'lotion', entry_page_organic_revenue: 313.49, revenue: 313.49, revenueDelta: 282.3, clicks: 106, pages: 38,
+      product_organic_revenue: 357, product_organic_revenue_prev: 300, product_organic_revenue_delta: 57,
+      product_revenue_all_channels: 755.3, product_orders_all_channels: 9, organic_share: 47.3,
+    },
+    {
+      cluster: 'soap', entry_page_organic_revenue: 62.4, revenue: 62.4, revenueDelta: 62.4, clicks: 227, pages: 28,
+      product_organic_revenue: 62.4, product_organic_revenue_prev: 0, product_organic_revenue_delta: 62.4,
+      product_revenue_all_channels: 123.5, product_orders_all_channels: 3, organic_share: 50.5,
+    },
+    {
+      // Never had a clustered entry page this window; entry-page attribution
+      // could not see it at all.
+      cluster: 'deodorant', entry_page_organic_revenue: 0, revenue: 0, revenueDelta: 0, clicks: 0, pages: 0,
+      product_organic_revenue: 36, product_organic_revenue_prev: 0, product_organic_revenue_delta: 36,
+      product_revenue_all_channels: 46.5, product_orders_all_channels: 2, organic_share: 77.4,
+    },
+  ],
+  cluster_residual: {
+    label: 'no cluster (homepage / cart / subscription)',
+    entry_page_organic_revenue: 77.94, revenue: 77.94, revenueDelta: 67.94, clicks: 40, pages: 12,
+  },
+  clusters_product_wide: [
+    { cluster: 'lotion', product_organic_revenue: 875.7, product_revenue_all_channels: 1757.1, product_orders_all_channels: 24 },
+    { cluster: 'toothpaste', product_organic_revenue: 35.1, product_revenue_all_channels: 71.5, product_orders_all_channels: 3 },
+  ],
+  cluster_product_meta: {
+    source: 'shopify-orders',
+    basis: 'order line items (price × quantity less allocated discounts), summed to line subtotals — shipping and tax are order-level and are excluded',
+    window: { start: '2026-07-24', end: '2026-08-20' },
+    wide_window: { start: '2026-05-24', end: '2026-08-20' },
+    wide_window_days: 90,
+    reconciles_to: 'line subtotals over the window, NOT totals.organic_revenue',
+    product_subtotal_organic: 515.4,
+    product_subtotal_all_channels: 1021.3,
+    unclustered_line_revenue_organic: 0,
+    unclustered_line_revenue_all_channels: 0,
+    non_product_revenue_organic: 24.68,
+    non_product_revenue_all_channels: 58.16,
+    orders_without_lines_organic: 0,
+    orders_without_lines_all_channels: 1,
+    wide_orders_all_channels: 50,
+  },
+};
+
+test('the product cluster table leads, and says what its dollars are', () => {
+  const md = buildReport(PRODUCT_REPORT);
+  assert.match(md, /What each category actually SOLD/);
+  assert.match(md, /line items/i);
+  // The two tables must be distinguishable at a glance and in that order.
+  assert.ok(
+    md.indexOf('What each category actually SOLD') < md.indexOf('Entry-page organic revenue by cluster'),
+    'the category answer comes before the landing-page answer',
+  );
+  assert.match(md, /Entry-page organic revenue by cluster — the LANDING-PAGE view/);
+  assert.match(md, /different question/i);
+});
+
+test('the product table states that it does NOT reconcile to organic_revenue', () => {
+  const md = buildReport(PRODUCT_REPORT);
+  // The gap is shipping and tax, named and quantified, never silently closed.
+  assert.match(md, /line subtotals/);
+  assert.match(md, /shipping and tax/i);
+  assert.match(md, /\$24\.68/);
+  assert.match(md, /do \*\*not\*\*\s*\n?\s*reconcile to `totals\.organic_revenue`/);
+});
+
+test('a category with no clustered entry page appears in the product table', () => {
+  const md = buildReport(PRODUCT_REPORT);
+  const section = md.slice(md.indexOf('What each category actually SOLD'), md.indexOf('### Over 90 days'));
+  assert.match(section, /\| deodorant \|/);
+  assert.match(section, /\$46\.50/);
+});
+
+test('orders with no line items are declared, never counted as a category selling nothing', () => {
+  const md = buildReport(PRODUCT_REPORT);
+  assert.match(md, /carried no line items/);
+  assert.match(md, /not\*\* counted as a category selling nothing/);
+});
+
+test('the 90-day table is labelled as a different window, not more columns', () => {
+  const md = buildReport(PRODUCT_REPORT);
+  assert.match(md, /### Over 90 days/);
+  assert.match(md, /THE TABLE THE \$0-CLUSTER GATE JUDGES ON/,
+    'it is not a companion view any more — it is the one the verdict is made on');
+  assert.match(md, /2026-05-24 → 2026-08-20/);
+  assert.match(md, /\$71\.50/, 'toothpaste sold $71.50 over 90 days — it reads $0 at 28');
+});
+
+test('the 90-day table shows BOTH sources of the hold rule, side by side', () => {
+  // A reader has to be able to see the two numbers a hold rests on without
+  // opening a second report. `Pages earned` is source B.
+  const md = buildReport(PRODUCT_REPORT);
+  assert.match(md, /\| Pages earned \(organic\) \|/);
+  assert.match(md, /BOTH are\s*\n?\s*\$0\.00/, 'and the rule is stated next to the table');
+});
+
+test('a report with no product figures renders exactly as it did before', () => {
+  const { clusters_product_wide, cluster_product_meta, ...legacy } = PRODUCT_REPORT;
+  const md = buildReport({
+    ...legacy,
+    clusters: legacy.clusters.map(({
+      product_organic_revenue, product_organic_revenue_prev, product_organic_revenue_delta,
+      product_revenue_all_channels, product_orders_all_channels, organic_share, ...row
+    }) => row),
+  });
+  assert.doesNotMatch(md, /What each category actually SOLD/);
+  assert.match(md, /Entry-page organic revenue by cluster/);
+});
+
+
+// ── source B of the $0-cluster hold rule ─────────────────────────────────────
+//
+// What a cluster's PAGES earned from organic search over the 90-day judging
+// window, keyed on the landing-page URL. `clusterRollup` answers the same
+// question for the report's own window, but only as a by-product of the impact
+// rows, which exist only where GSC has data. The wide window has no GSC pull
+// behind it and does not need one: the landing path is on the ORDER.
+
+const clusterOf = (path) => {
+  if (/lotion|moistur/.test(path)) return 'lotion';
+  if (/soap/.test(path)) return 'soap';
+  return null;
+};
+
+test('entryPageClusterRevenue buckets order revenue by the landing page, no GSC needed', () => {
+  const byPage = new Map([
+    ['/blogs/news/best-body-lotion', { revenue: 313.49 }],
+    ['/products/coconut-moisturizer', { revenue: 353.24 }],
+    ['/products/organic-foaming-hand-soap', { revenue: 110.49 }],
+    ['/', { revenue: 388.43 }],
+  ]);
+  const { byCluster, residual } = entryPageClusterRevenue(byPage, clusterOf);
+  assert.equal(byCluster.lotion, 666.73, 'two lotion pages sum into one cluster');
+  assert.equal(byCluster.soap, 110.49);
+  assert.equal(residual, 388.43, 'a path matching no cluster is the residual, never a row');
+  assert.deepEqual(entryPageClusterRevenue(null, clusterOf), { byCluster: {}, residual: 0 });
+});
+
+test('withWideEntryPageRevenue UNIONS the two sources — it does not just decorate one', () => {
+  // A cluster whose pages earned while its products sold nothing must get a row.
+  // That row is the single most important one in the array: it is exactly the
+  // case that has to block a hold, and decorating instead of unioning would make
+  // it invisible to the cross-check.
+  const rows = withWideEntryPageRevenue(
+    [{ cluster: 'soap', product_revenue_all_channels: 324.85, product_organic_revenue: 123.7 }],
+    { byCluster: { soap: 110.49, 'coconut oil': 41.2 } },
+  );
+  assert.deepEqual(rows.map((r) => r.cluster), ['soap', 'coconut oil']);
+  assert.equal(rows[0].entry_page_organic_revenue, 110.49);
+  const noSku = rows[1];
+  assert.equal(noSku.product_revenue_all_channels, 0, 'a category with no SKU sold nothing, and says so');
+  assert.equal(noSku.entry_page_organic_revenue, 41.2);
+});
+
+test('withWideEntryPageRevenue with NO source B emits nothing at all', () => {
+  // Not "every row at $0" — that would bake an unmeasured zero into the report on
+  // disk, where no reader can tell it from a real one, and it is the direction
+  // that CREATES holds. Emitting nothing switches the gate off for the run.
+  assert.deepEqual(withWideEntryPageRevenue([{ cluster: 'soap', product_revenue_all_channels: 324.85 }], null), []);
+  assert.deepEqual(withWideEntryPageRevenue([{ cluster: 'soap' }], {}), []);
+  assert.deepEqual(withWideEntryPageRevenue([{ cluster: 'soap' }], { byCluster: {} })[0].entry_page_organic_revenue, 0,
+    'a MEASURED empty result is different — it is a real zero and does emit');
 });

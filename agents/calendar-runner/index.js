@@ -282,11 +282,14 @@ export function revenueAdjustment(category, classified, keyword = null) {
   const c = cluster ? classified?.[cluster] : null;
   const status = c?.status || 'unproven';
 
+  // Both messages quote the PRODUCT figure, because that is what the verdict was
+  // made on. Printing `revenue` (the entry-page alias) beside a decision made on
+  // a different number is how the two came to be confused in the first place.
   if (status === 'earning') {
-    return { days: -ACCELERATE_DAYS, reason: `${cluster} cluster earned $${c.revenue.toFixed(2)} — accelerated ${ACCELERATE_DAYS} days` };
+    return { days: -ACCELERATE_DAYS, reason: `${cluster} cluster sold $${(Number(c.productRevenue) || 0).toFixed(2)} — accelerated ${ACCELERATE_DAYS} days` };
   }
   if (status === 'proven_dud') {
-    return { days: DEFER_DAYS, reason: `${cluster} cluster: ${c.clicks} clicks, $0.00 revenue across ${c.pages} pages — deferred ${DEFER_DAYS} days behind work that earns` };
+    return { days: DEFER_DAYS, reason: `${cluster} cluster sold $0.00 across ${c.clicks} clicks / ${c.pages} pages — deferred ${DEFER_DAYS} days behind work that earns` };
   }
   // Unproven: too little traffic to judge. Left alone on purpose — deprioritising
   // an untested category is how a category never gets tested.

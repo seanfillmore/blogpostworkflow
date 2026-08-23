@@ -32,6 +32,44 @@ test('buildDigestHtml: surfaces revenue + failures, drops the routine listing', 
   assert.ok(html.includes('1 error'), 'footer shows error count');
 });
 
+// ── the digest's cluster line names a CATEGORY, so it prints category sales ───
+
+const CLUSTER_DIGEST = {
+  totals: { organic_revenue: 540.08, organic_revenue_delta: 357.9, organic_conversions: 8 },
+  window: { start: '2026-07-25', end: '2026-08-21' },
+  top_revenue: [],
+  clusters: [
+    {
+      cluster: 'lotion', entry_page_organic_revenue: 313.49, revenue: 313.49,
+      product_organic_revenue: 357, product_revenue_all_channels: 755.3,
+    },
+    {
+      cluster: 'soap', entry_page_organic_revenue: 62.4, revenue: 62.4,
+      product_organic_revenue: 62.4, product_revenue_all_channels: 123.5,
+    },
+  ],
+};
+
+test('the digest prints what each category sold, not what landed on pages named after it', () => {
+  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, [], 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot });
+  assert.ok(html.includes('Sold by category'), 'the label says which question it answers');
+  assert.ok(html.includes('$755.30'), 'all-channel product revenue shown');
+  assert.ok(html.includes('$357.00'), 'organic product revenue shown');
+});
+
+test('a report written before product attribution still renders its old cluster line', () => {
+  const legacy = {
+    ...CLUSTER_DIGEST,
+    clusters: CLUSTER_DIGEST.clusters.map(({
+      product_organic_revenue, product_revenue_all_channels, ...c
+    }) => c),
+  };
+  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, [], 'https://dash', [], legacy, null, { dataRoot: emptyRoot });
+  assert.ok(html.includes('By cluster (entry-page organic)'), 'labelled as the entry-page view');
+  assert.ok(html.includes('$313.49'));
+  assert.ok(!html.includes('Sold by category'));
+});
+
 // buildDigestHtml takes 13 injected arguments but ALSO read five paths off disk
 // under the repo root. That made it machine-dependent: this test passed on a laptop
 // with no data/reports and failed on the server, where those files exist — the same

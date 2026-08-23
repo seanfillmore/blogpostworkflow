@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildClusterHold, renderDisagreementLines, HOLD_FLAG } from '../../lib/cluster-hold.js';
-import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { renderDisagreementLines, HOLD_FLAG } from '../../lib/cluster-hold.js';
+import {
+  holdFor, heldScenario, SOLD_90D, PAGES_EARNED_90D,
+} from '../helpers/cluster-fixtures.js';
 import { holdContentQuality } from '../../agents/indexing-fixer/index.js';
 import { holdCandidates } from '../../agents/performance-engine/index.js';
 import { selectLegacyPosts } from '../../agents/legacy-rebuilder/index.js';
@@ -13,25 +15,26 @@ import { holdSlugs } from '../../agents/refresh-runner/index.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// Production shape (2026-08-22). One $0 cluster with real traffic, one earner.
-// MEASURED is the corroborating source — real product revenue from the daily
-// Shopify order snapshots. A cluster is held only when BOTH agree it earns
-// nothing, so a hold fixture without it would hold nothing at all.
-const MEASURED = [
-  { label: 'report window (28d)', available: true, orders: 18, revenue: 1079.46, aov: 59.97, truncatedDays: 0, byFamily: { lotion: 909, soap: 156 } },
-  { label: 'wide window (90d)', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, toothpaste: 39 } },
-];
+// A cluster is held only when BOTH sources agree it earns nothing — its products
+// sold $0.00 over the 90-day judging window AND its pages earned $0.00 of
+// organic revenue over the same window.
+//
+// SYNTHETIC. Production has no held cluster as of 2026-08-23 (toothpaste, the
+// last one, sells $71.50/90d), so the fixture is what keeps the WIRING under
+// test: that each gated agent applies the hold at all, and applies it before its
+// own per-run cap. See tests/lib/cluster-revenue.test.js for the real verdicts.
+const HOLD = holdFor({ ...heldScenario('toothpaste'), generatedAt: '2026-08-23T10:00:00Z' });
 
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
-const HOLD = buildClusterHold(classifyClusters([
-  { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-  { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-], { totals: TOTALS }), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
-
-const EARNING = buildClusterHold(classifyClusters([
-  { cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 },
-  { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-], { totals: TOTALS }), { measured: MEASURED });
+// The same cluster, same traffic, one product sale — which is the real
+// toothpaste case now. Nothing else changes and the hold releases itself.
+const EARNING = holdFor({
+  clusters: [
+    { cluster: 'toothpaste', revenue: 0, clicks: 640, pages: 24 },
+    { cluster: 'lotion', revenue: 313.49, clicks: 106, pages: 39 },
+  ],
+  sold: { ...SOLD_90D, toothpaste: 12.5 },
+  earned: { ...PAGES_EARNED_90D, toothpaste: 0 },
+});
 
 const DUD = 'no-fluoride-toothpaste';
 const EARNER = 'best-coconut-oil-body-lotion';
@@ -160,18 +163,26 @@ test('refresh-runner returns bare slugs, not wrappers — its caller iterates st
 
 // ── the correction: a misattributed cluster reaches every agent unheld ───────
 
-// seo-impact attributes $0 to this cluster; real orders show it is the second
-// biggest earner in the catalogue. Holding it paused 19% of revenue. Every gated
-// agent must now let its posts through, and say why.
-// SYNTHETIC click count. The real `soap` row carried 223 clicks, which no longer
-// clears the 400-click evidence bar at all (a $0 on 223 clicks has a ~19% chance
-// of happening to a category that sells fine). 500 is used here so the fixture
-// still reaches the corroboration step and exercises the disagreement path — the
-// mechanism has to keep working for whatever attribution breaks next.
-const MISATTRIBUTED = buildClusterHold(classifyClusters([
-  { cluster: 'soap', revenue: 0, clicks: 500, pages: 24 },
-  { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-], { totals: TOTALS }), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
+// The 2026-08-19 incident, reproduced on the new basis: something breaks the
+// product-title join and source A reads `soap` at $0 — a category that really
+// sold $324.85 over the judging window, 13% of all revenue, second only to
+// lotion. Its PAGES earned $110.49 over the same window, so source B contradicts
+// A and every gated agent must let soap's posts through, and say why.
+//
+// Note the click count is soap's REAL 227, not a raised one. Under the old
+// entry-page basis this fixture needed 500 clicks to reach the corroboration
+// step at all, because a $0 on 223 clicks did not clear the 400-click bar. The
+// re-derived precondition (125) means the mechanism is now exercised at the
+// traffic the incident actually happened at.
+const MISATTRIBUTED = holdFor({
+  clusters: [
+    { cluster: 'soap', revenue: 0, clicks: 227, pages: 28 },
+    { cluster: 'toothpaste', revenue: 0, clicks: 640, pages: 24 },
+  ],
+  sold: { ...SOLD_90D, soap: 0, toothpaste: 0 },
+  earned: { ...PAGES_EARNED_90D, toothpaste: 0 },
+  generatedAt: '2026-08-23T10:00:00Z',
+});
 
 const SOAP_POST = 'best-natural-bar-soap-for-men';
 
@@ -193,9 +204,9 @@ test('the disagreement reaches the DIGEST, not just the console banner', () => {
   // These agents run unattended at 3 and 8 AM. The 5 AM digest is the only
   // channel a broken-attribution finding can speak through.
   const lines = renderDisagreementLines(MISATTRIBUTED).join('\n');
-  assert.match(lines, /ATTRIBUTION DISAGREEMENT/);
+  assert.match(lines, /SOURCES DISAGREE/);
   assert.match(lines, /soap/);
-  assert.match(lines, /365\.7/);
+  assert.match(lines, /110\.49/, 'the line quotes what the cluster\'s pages earned');
   assert.deepEqual(renderDisagreementLines(HOLD), [], 'silent when both sources agree');
   assert.deepEqual(renderDisagreementLines(null), []);
 });

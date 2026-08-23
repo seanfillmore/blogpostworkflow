@@ -15,50 +15,66 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildClusterHold, corroboratedClassification } from '../../lib/cluster-hold.js';
+import { corroboratedClassification } from '../../lib/cluster-hold.js';
 import { classifyClusters } from '../../lib/cluster-revenue.js';
 import { triageOrphanBrief } from '../../lib/brief-triage.js';
 import { decide } from '../../lib/queue-autoapply.js';
+import { holdFor, SOLD_90D, PAGES_EARNED_90D, WIDE_ORDERS } from '../helpers/cluster-fixtures.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };
 
-// Real measured product revenue by family, from data/snapshots/shopify on the
-// production server. soap really sells; toothpaste really does not.
-const MEASURED = [
-  { label: 'report window (28d)', available: true, orders: 18, revenue: 1079.46, aov: 59.97, truncatedDays: 0, byFamily: { lotion: 909, 'lip balm': 120, soap: 156, deodorant: 60 } },
-  { label: 'wide window (90d)', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, deodorant: 180, 'lip balm': 120, toothpaste: 39 } },
-];
-
-// A report in which attribution is broken: soap reads $0 on enough traffic to
-// clear the evidence bar, while the orders say it is a top-two category. This is
-// the 2026-08-22 incident with the click count raised past the new bar, so the
-// scenario survives the taxonomy fix that removed its original cause.
-const BROKEN = buildClusterHold(classifyClusters([
-  { cluster: 'soap', revenue: 0, clicks: 500, pages: 24 },
-  { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-], { totals: TOTALS }), { measured: MEASURED, generatedAt: 'X' });
+// A report in which SOURCE A is broken: something zeroes the product-title join
+// and `soap` reads $0 over the judging window, while its PAGES plainly earned
+// $110.49 over the same window. That is the 2026-08-19 incident on the new
+// basis — and, unlike the old fixture, it works at soap's REAL 227 clicks
+// instead of a count raised to clear a 400-click bar.
+//
+// `toothpaste` is zeroed on BOTH sources here, which is SYNTHETIC: it really
+// sold $71.50 over the judging window. The fixture needs one genuinely-dead
+// cluster to prove the gate is not simply switched off.
+const BROKEN = holdFor({
+  clusters: [
+    { cluster: 'soap', revenue: 0, clicks: 227, pages: 28 },
+    { cluster: 'toothpaste', revenue: 0, clicks: 640, pages: 24 },
+  ],
+  sold: { ...SOLD_90D, soap: 0, toothpaste: 0 },
+  earned: { ...PAGES_EARNED_90D, toothpaste: 0 },
+  generatedAt: 'X',
+});
 
 test('an uncorroborated dud is downgraded to unproven, with the reason kept', () => {
   const c = corroboratedClassification(BROKEN);
-  assert.equal(BROKEN.classified.soap.status, 'proven_dud', 'seo-impact alone still says dud');
-  assert.equal(c.soap.status, 'unproven', 'the orders overrule it');
+  assert.equal(BROKEN.classified.soap.status, 'proven_dud', 'source A alone still says dud');
+  assert.equal(c.soap.status, 'unproven', 'the cross-check overrules it');
   assert.equal(c.soap.uncorroboratedDud, true);
-  assert.match(c.soap.evidence, /ATTRIBUTION DISAGREEMENT/);
+  assert.match(c.soap.evidence, /SOURCES DISAGREE/);
+  assert.match(c.soap.evidence, /110\.49/, 'and keeps the number that blocked the hold');
 });
 
 test('a corroborated dud stays a dud — the gate is not just switched off', () => {
   const c = corroboratedClassification(BROKEN);
   assert.equal(c.toothpaste.status, 'proven_dud');
-  assert.match(c.toothpaste.corroboration, /below one average order in every window/);
+  assert.match(c.toothpaste.corroboration, /both sources agree/);
 });
 
-test('with no order snapshots at all, nothing is a dud', () => {
-  const blind = buildClusterHold(classifyClusters([
-    { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-  ], { totals: TOTALS }), { measured: [] });
+test('with no cross-check at all, nothing is a dud', () => {
+  const blind = holdFor({
+    clusters: [{ cluster: 'toothpaste', revenue: 0, clicks: 640, pages: 24 }],
+    sold: { ...SOLD_90D, toothpaste: 0 },
+    earned: null,
+  });
   const c = corroboratedClassification(blind);
   assert.equal(c.toothpaste.status, 'unproven');
+});
+
+test('and with no product reading at all — the pre-migration report — nothing is a dud', () => {
+  // The deploy path: latest.json on the server was written before
+  // `clusters_product_wide` existed, so it carries neither source.
+  const old = classifyClusters(
+    [{ cluster: 'toothpaste', revenue: 0, clicks: 640, pages: 24 }], { windowOrders: WIDE_ORDERS },
+  );
+  assert.equal(old.toothpaste.status, 'unproven');
+  assert.match(old.toothpaste.evidence, /no product-revenue reading/i);
 });
 
 test('corroboratedClassification tolerates a missing hold', () => {

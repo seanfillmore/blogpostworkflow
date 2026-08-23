@@ -14,40 +14,26 @@ import { clusterStatus } from '../../lib/cluster-revenue.js';
 import { triageOrphanBrief } from '../../lib/brief-triage.js';
 import { selectWorkItems } from '../../agents/calendar-runner/index.js';
 import { decide } from '../../lib/queue-autoapply.js';
+import { heldScenario, impactReport } from '../helpers/cluster-fixtures.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = (rel) => readFileSync(join(ROOT, rel), 'utf8');
 
-// The 2026-08-22 production report, trimmed to what the gates read. toothpaste is
-// the cluster CLAUDE.md names as the $0 one, and it clears the post-PR-#624 bar.
-const CLUSTERS = [
-  { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-  { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-];
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };
-const report = (generated_at) => ({
-  generated_at, window: { start: '2026-07-24', end: '2026-08-20' }, clusters: CLUSTERS, totals: TOTALS,
+// A report in which one cluster is dead on BOTH sources, so this file has a hold
+// to prove the freshness rule actually switches off. SYNTHETIC: on the real
+// 2026-08-23 report toothpaste sells $71.50/90d and nothing is held at all.
+const SCENARIO = heldScenario('toothpaste');
+const CLUSTERS = SCENARIO.clusters;
+const report = (generated_at) => impactReport({
+  generated_at, clusters: CLUSTERS, sold: SCENARIO.sold, earned: SCENARIO.earned,
 });
-// Real Shopify product revenue over the same windows — the corroborating source,
-// without which nothing is held at all and this file would prove nothing.
-const SNAPSHOTS = {
-  '2026-08-20.json': {
-    orders: { count: 18, revenue: 1079.46 },   // AOV $59.97 — the corroboration floor
-    topProducts: [{ title: 'Coconut Oil Body Lotion', revenue: 909 }, { title: 'Natural Deodorant', revenue: 170.46 }],
-  },
-};
 const TODAY = '2026-08-23';
 
 function hold({ generatedAt, today = TODAY }) {
   return loadClusterHold({
     root: '/fake',
     today,
-    readJson: (p) => {
-      if (p.endsWith(SEO_IMPACT_RELPATH)) return generatedAt === null ? null : report(generatedAt);
-      const f = p.split('/').pop();
-      return SNAPSHOTS[f] || { topProducts: [] };
-    },
-    readDir: () => Object.keys(SNAPSHOTS),
+    readJson: (p) => (p.endsWith(SEO_IMPACT_RELPATH) && generatedAt !== null ? report(generatedAt) : null),
   });
 }
 
