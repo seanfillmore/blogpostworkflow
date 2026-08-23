@@ -23,6 +23,18 @@
  *     (if not refreshed within the last 30 days). After the refresh, the next
  *     indexing-checker run will re-inspect and submit via Tier 2 if needed.
  *
+ *     REVENUE-GATED. This is the path that spends money: each refresh is a
+ *     chain of paid LLM calls, and on 2026-08-21 eleven of them fired in one
+ *     unattended run for a single cluster that has returned $0. A post whose
+ *     cluster the revenue report shows earning nothing is SKIPPED AND COUNTED
+ *     here (lib/cluster-hold.js). No cluster is named in this file — the held
+ *     set is measured, so it releases itself the moment the cluster earns.
+ *     `--include-held` refreshes them anyway.
+ *
+ *     The free tiers above are deliberately NOT gated: a sitemap ping and an
+ *     Indexing API submission cost nothing but a Google quota, and a hold is a
+ *     spend pause, never a deindexing. Held pages stay live and stay submitted.
+ *
  * True critical verdicts (noindex tag, robots.txt block, canonical conflict,
  * page fetch failure) go straight to manual flag — these are technical
  * misconfigurations that neither resubmission nor refresh can fix.
@@ -32,6 +44,7 @@
  * Usage:
  *   node agents/indexing-fixer/index.js              # normal run
  *   node agents/indexing-fixer/index.js --dry-run    # preview actions
+ *   node agents/indexing-fixer/index.js --include-held  # refresh $0-cluster posts too
  *   node agents/indexing-fixer/index.js --approve <slug>   # force Indexing API submit
  */
 
@@ -42,6 +55,9 @@ import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { resubmitSitemap, submitUrlForIndexing, getQuotaStatus } from '../../lib/gsc-indexing.js';
 import { isInfraError, countDeliveredSubmissions } from '../../lib/indexing-escalation.js';
+import {
+  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
 
 import { getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
 
@@ -52,6 +68,7 @@ const QUEUE_FILE = join(QUEUE_DIR, 'indexing-submissions.json');
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
+const INCLUDE_HELD = args.includes(HOLD_FLAG);
 const approveIdx = args.indexOf('--approve');
 const APPROVE_SLUG = approveIdx !== -1 ? args[approveIdx + 1] : null;
 
@@ -108,6 +125,30 @@ export function staleBlockedSlugs(results, getMeta) {
     if (meta?.indexing_blocked) out.push(r.slug);
   }
   return out;
+}
+
+/**
+ * Split the crawled_not_indexed list into what gets a paid refresh and what is
+ * held because its cluster earns $0.
+ *
+ * Exported for test, and thin on purpose: the rule itself lives in
+ * lib/cluster-hold.js so every agent holds on the same measured evidence rather
+ * than on its own copy of a threshold. The post's recorded target keyword is
+ * consulted alongside the slug — that keyword is what seo-impact attributes
+ * revenue on, and the legacy corpus has slugs that name no product at all.
+ *
+ * @returns {{kept:Array, held:Array, overridden:Array}}
+ */
+export function holdContentQuality(results, hold, { includeHeld = false, getMeta = loadPostMeta } = {}) {
+  return partitionHeld(results, hold, {
+    includeHeld,
+    describe: (r) => ({
+      slug: r?.slug,
+      keyword: getMeta?.(r?.slug)?.target_keyword,
+      title: r?.title,
+      url: r?.url,
+    }),
+  });
 }
 
 function stampPostMeta(slug, patch) {
@@ -194,15 +235,30 @@ async function processNormalRun() {
 
   const tierOne = actionable.filter((r) => r.verdict.action === 'resubmit_sitemap');
   const tierTwo = actionable.filter((r) => r.verdict.action === 'submit_indexing_api');
-  const contentQuality = actionable.filter((r) => r.verdict.action === 'content_quality_review');
   const critical = actionable.filter((r) => [
     'fix_noindex_tag', 'fix_robots_txt', 'fix_canonical_mismatch', 'fix_page_fetch',
   ].includes(r.verdict.action));
 
+  // The only paid path in this agent. Everything above is a free API call, so
+  // only this one is revenue-gated. Held posts stay live, stay in the sitemap,
+  // and stay eligible for Tier 1/Tier 2 — we simply stop buying them rewrites.
+  const hold = loadClusterHold({ root: ROOT });
+  const banner = holdBanner(hold);
+  if (banner) console.log(`${banner}\n`);
+  const { kept: contentQuality, held: heldRefreshes } = holdContentQuality(
+    actionable.filter((r) => r.verdict.action === 'content_quality_review'),
+    hold,
+    { includeHeld: INCLUDE_HELD },
+  );
+
   console.log(`  Tier 1 (sitemap ping — auto):        ${tierOne.length}`);
   console.log(`  Tier 2 (indexing API — auto):        ${tierTwo.length}`);
   console.log(`  Content quality (auto-refresh):      ${contentQuality.length}`);
+  if (heldRefreshes.length) console.log(`  Content quality (HELD, $0 cluster):  ${heldRefreshes.length}`);
   console.log(`  Tier 3 (manual investigation):       ${critical.length}\n`);
+
+  for (const h of renderHoldLines(heldRefreshes)) console.log(`  ${h}`);
+  if (heldRefreshes.length) console.log('');
 
   // ── Tier 1: sitemap resubmission ──────────────────────────────────────────
   // One sitemap ping covers all pending URLs simultaneously (the sitemap
@@ -371,6 +427,9 @@ async function processNormalRun() {
     summary.push(parts.join(', '));
   }
   if (contentQuality.length) summary.push(`${contentQuality.length} content-quality refresh triggered`);
+  // Named in the subject so a held cluster is visible in the 5 AM digest rather
+  // than showing up as a run that mysteriously stopped doing anything.
+  if (heldRefreshes.length) summary.push(`${heldRefreshes.length} held ($0 cluster)`);
   if (critical.length) summary.push(`${critical.length} flagged for manual fix`);
 
   if (summary.length > 0) {
@@ -382,8 +441,11 @@ async function processNormalRun() {
         ...tierTwoSucceeded.map((r) => `[tier2] ${r.slug}: submitted to Indexing API (${r.age_days}d old)`),
         ...tierTwoFailed.map((r) => `[tier2-FAIL] ${r.slug}: ${r.error.slice(0, 120)}`),
         ...contentQuality.map((r) => `[refresh] ${r.slug}: refresh-runner triggered (crawled_not_indexed)`),
+        ...renderHoldLines(heldRefreshes),
         ...critical.map((r) => `[critical] ${r.slug}: ${r.verdict.action}`),
       ].join('\n'),
+      // A hold is routine housekeeping working as designed, so it never moves
+      // this off 'info' — only a real failure does. Deferred either way.
       status: (critical.length > 0 || tierTwoFailed.length > 0) ? 'error' : 'info',
       category: 'seo',
     }).catch(() => {});

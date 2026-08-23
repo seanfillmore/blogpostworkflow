@@ -21,11 +21,24 @@
  * Publishes automatically after the editor passes. Pass --no-publish to skip
  * the Shopify update (useful for local testing or dry runs).
  *
+ * REVENUE-GATED BULK SELECTION. The three bulk pick lists (--from-post-
+ * performance, --from-quick-wins, --aging-quarterly) are revenue-gated: a slug
+ * whose cluster the revenue report shows earning $0 is
+ * SKIPPED AND COUNTED (lib/cluster-hold.js) rather than bought a refresh. No
+ * cluster is named in this file, and a held post is otherwise untouched —
+ * still live, still indexed, still published. `--include-held` refreshes them.
+ *
+ * A SINGLE SLUG ARGUMENT IS NEVER HELD. That path is either an operator asking
+ * by hand or a caller (indexing-fixer, legacy-rebuilder) that has already
+ * applied the same hold to its own pick list; holding again here would be a
+ * second, invisible gate whose skips nobody counts.
+ *
  * Usage:
  *   node agents/refresh-runner/index.js best-natural-deodorant-for-women
  *   node agents/refresh-runner/index.js --from-post-performance
  *   node agents/refresh-runner/index.js --from-quick-wins --limit 2
  *   node agents/refresh-runner/index.js --aging-quarterly
+ *   node agents/refresh-runner/index.js --aging-quarterly --include-held
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
@@ -35,11 +48,15 @@ import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
+import {
+  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, holdSummaryFragment, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv.slice(2);
 const FLAG_PUBLISH = !args.includes('--no-publish');
+const INCLUDE_HELD = args.includes(HOLD_FLAG);
 const FLAG_PP = args.includes('--from-post-performance');
 const FLAG_QW = args.includes('--from-quick-wins');
 const FLAG_AGING = args.includes('--aging-quarterly');
@@ -70,9 +87,32 @@ function ageInDays(iso) {
   return Number.isNaN(t) ? null : Math.floor((Date.now() - t) / 86400000);
 }
 
+/**
+ * Split a bulk slug list into what gets refreshed and what is held because its
+ * cluster earns $0. Returns BARE SLUGS in `kept` — the caller iterates strings.
+ *
+ * Exported for test; the rule itself lives in lib/cluster-hold.js.
+ *
+ * @param {string[]} slugs
+ * @param {object} hold
+ * @param {{includeHeld?:boolean, metaFor?:(slug:string)=>object|null}} opts
+ * @returns {{kept:string[], held:Array, overridden:Array}}
+ */
+export function holdSlugs(slugs, hold, { includeHeld = false, metaFor = () => null } = {}) {
+  return partitionHeld(slugs, hold, {
+    includeHeld,
+    describe: (s) => ({ slug: s, keyword: metaFor(s)?.target_keyword }),
+  });
+}
+
+function metaForSlug(slug) {
+  try { return JSON.parse(readFileSync(getMetaPath(slug), 'utf8')); } catch { return null; }
+}
+
 function gatherSlugs() {
-  // Manual single slug wins.
-  if (SLUG_ARG) return [SLUG_ARG];
+  // Manual single slug wins — an operator naming a post is never held, and the
+  // agents that call this with one slug have already applied the hold upstream.
+  if (SLUG_ARG) return { slugs: [SLUG_ARG], held: [] };
 
   const slugs = new Set();
 
@@ -101,7 +141,13 @@ function gatherSlugs() {
     }
   }
 
-  return [...slugs].slice(0, LIMIT);
+  // Held BEFORE --limit: otherwise three held slugs consume the whole budget
+  // and the run refreshes nothing that could ever earn.
+  const hold = loadClusterHold({ root: ROOT });
+  const banner = holdBanner(hold);
+  if (banner) console.log(`${banner}\n`);
+  const { kept, held } = holdSlugs([...slugs], hold, { includeHeld: INCLUDE_HELD, metaFor: metaForSlug });
+  return { slugs: kept.slice(0, LIMIT), held };
 }
 
 function run(cmd, label) {
@@ -229,9 +275,20 @@ function refreshOne(slug) {
 async function main() {
   console.log('\nRefresh Runner\n');
 
-  const slugs = gatherSlugs();
+  const { slugs, held } = gatherSlugs();
+  for (const line of renderHoldLines(held)) console.log(`  ${line}`);
   if (!slugs.length) {
     console.log('  No slugs to refresh. Provide a slug argument or use --from-post-performance / --from-quick-wins / --aging-quarterly.');
+    // A run that refreshed nothing BECAUSE everything was held has to say so —
+    // otherwise the hold looks like the agent quietly stopping.
+    if (held.length) {
+      await notify({
+        subject: `Refresh Runner: 0 refreshed${holdSummaryFragment(held)}`,
+        body: renderHoldLines(held).join('\n'),
+        status: 'info',
+        category: 'pipeline',
+      }).catch(() => {});
+    }
     return;
   }
   console.log(`  Slugs to refresh (${slugs.length}): ${slugs.join(', ')}`);
@@ -263,9 +320,15 @@ async function main() {
   const counts = [`${ok} succeeded`];
   if (failed.length) counts.push(`${failed.length} failed`);
   if (skipped.length) counts.push(`${skipped.length} skipped`);
+  if (held.length) counts.push(`${held.length} held`);
   await notify({
     subject: `Refresh Runner: ${counts.join(', ')}`,
-    body: results.map((r) => `${r.ok ? '[ok]' : r.skipped ? '[skip]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
+    body: [
+      results.map((r) => `${r.ok ? '[ok]' : r.skipped ? '[skip]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
+      ...renderHoldLines(held),
+    ].join('\n'),
+    // A hold is the same class of thing as a skip: the guard doing its job, not
+    // a failure. It never moves the status off 'info'.
     status: failed.length ? 'error' : 'info',
     category: 'pipeline',
   }).catch(() => {});

@@ -17,8 +17,10 @@
  *            goes into that library's repair loop, not onto a human's list.
  *   DISMISS  collection-gap items that hold fewer than 2 distinct products, or
  *            that sit in a cluster proven to earn $0. Cluster revenue is read
- *            from data/reports/seo-impact/latest.json — no cluster is named in
- *            code. Only the 2+ products rule is hardcoded (CLAUDE.md).
+ *            from data/reports/seo-impact/latest.json through the shared
+ *            lib/cluster-hold.js loader — the same evidence, read the same way,
+ *            as every agent that puts a $0 cluster on hold. No cluster is named
+ *            in code. Only the 2+ products rule is hardcoded (CLAUDE.md).
  *   LEAVE    everything else, including the pdp-builder artifacts that share
  *            this directory with a different schema.
  *
@@ -37,13 +39,13 @@
  * publisher step that ships `approved` items.
  */
 
-import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { writeFileSync, copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { listQueueItems, writeItem } from '../performance-engine/lib/queue.js';
 import { getContentPath, ROOT as POSTS_ROOT } from '../../lib/posts.js';
-import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { loadClusterHold, holdBanner } from '../../lib/cluster-hold.js';
 import { planRun, cooldownTargets, targetSlugFor, MAX_APPLIES_PER_RUN } from '../../lib/queue-autoapply.js';
 import { applyItem, findPostMeta, matchProductsForGap } from '../../lib/queue-apply.js';
 import { revertPlanFor } from '../../lib/queue-revert.js';
@@ -55,14 +57,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const QUEUE_DIR = join(ROOT, 'data', 'performance-queue');
 const REPORT_DIR = join(ROOT, 'data', 'reports', 'queue-autoapply');
-const SEO_IMPACT = join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json');
 
 const REFRESH_TRIGGERS = new Set(['quick-win', 'flop-refresh', 'low-ctr-meta', 'legacy-flop']);
-
-function readJsonSafe(path) {
-  if (!existsSync(path)) return null;
-  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
-}
 
 /**
  * Shopify calls, imported lazily. lib/shopify.js throws at import time without
@@ -211,10 +207,14 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
   log(`\nQueue Auto-Apply${dryRun ? ' — DRY RUN (nothing will be changed)' : ''}\n`);
 
   const items = listQueueItems();
-  const impact = readJsonSafe(SEO_IMPACT);
-  const clusters = classifyClusters(impact?.clusters || []);
-  if (!impact) {
-    log('  ⚠ data/reports/seo-impact/latest.json is missing — the $0-cluster gate cannot fire this run.');
+  // Same evidence, same loader, as every agent that puts a $0 cluster on hold —
+  // this used to classify the report inline, which was a second copy of the
+  // load waiting to drift away from the rest of the fleet.
+  const hold = loadClusterHold({ root: ROOT });
+  const clusters = hold.classified;
+  const banner = holdBanner(hold);
+  if (banner) log(banner);
+  if (!hold.available) {
     log('    The 2+ distinct products rule still applies; it needs no revenue data.');
   }
   const cooldown = cooldownTargets(items);
@@ -350,7 +350,7 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
     dry_run: dryRun,
     cap,
     queue_size: items.length,
-    seo_impact_generated_at: impact?.generated_at || null,
+    seo_impact_generated_at: hold.generatedAt,
     applied,
     dismissed,
     gated,

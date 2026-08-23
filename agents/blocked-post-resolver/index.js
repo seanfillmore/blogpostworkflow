@@ -26,6 +26,14 @@
  * unfixable verdict is not re-attempted tomorrow (and every day after) at full
  * LLM price. A NEW editor verdict re-opens the post automatically.
  *
+ * REVENUE-GATED CANDIDATE SELECTION. Each candidate is a chain of paid LLM calls
+ * (editor gate ×N plus up to three repair agents), so a post whose cluster the
+ * revenue report shows earning $0 is SKIPPED AND COUNTED (lib/cluster-hold.js)
+ * before the --limit budget is spent. No cluster is named in this file. A held
+ * post is left EXACTLY as it is: still live, still indexed, flag untouched — the
+ * hold pauses spend, it never resolves or removes anything. `--include-held`
+ * remediates them anyway, and naming a post with --slug is never held.
+ *
  * Output: one deferred notify() summary line, per the digest convention — this
  * agent does not email.
  *
@@ -34,6 +42,7 @@
  *   node agents/blocked-post-resolver/index.js --apply          # remediate + push
  *   node agents/blocked-post-resolver/index.js --slug <slug> --apply
  *   node agents/blocked-post-resolver/index.js --limit 3 --apply
+ *   node agents/blocked-post-resolver/index.js --limit 3 --apply --include-held
  */
 
 import { execSync } from 'node:child_process';
@@ -46,6 +55,9 @@ import {
 import { classifyBlockedReport, reportFingerprint } from '../../lib/blocked-posts.js';
 import { isPassing, parseEditorBlockers, firstBlockerReason } from '../../lib/editor-remediation.js';
 import { notify } from '../../lib/notify.js';
+import {
+  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, holdSummaryFragment, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
 
 // How many posts one unattended run will remediate. Each one is a chain of
 // paid LLM calls (editor gate ×N, plus up to 3 repair agents), so an uncapped
@@ -55,17 +67,26 @@ const DEFAULT_LIMIT = 5;
 // ── pure decisions (unit-tested; no I/O) ─────────────────────────────────────
 
 /**
- * Which posts this run will act on.
+ * Which posts this run will act on, plus what the revenue hold withheld.
  *
  * `includeLive: true` is deliberate and is the opposite of what the 5 AM digest
  * asks for. A live page serving content that fails the gate is exactly this
  * agent's job; it is just not something to wake a human for.
  *
+ * ORDER: hold, THEN `--slug`, THEN `--limit`. Holding before the limit is the
+ * point — five held posts must not consume a budget of five and leave every
+ * earning-cluster post blocked for another day. `--slug` is checked after the
+ * hold so an explicitly named post is never withheld: the hold stops unattended
+ * spend, and a hand-typed slug is not unattended.
+ *
  * @param {Array<{slug:string, meta:object, report:string, reportAgeDays:number}>} entries
- * @param {{now?:number, limit?:number, slug?:string}} opts
+ * @param {{now?:number, limit?:number, slug?:string, hold?:object, includeHeld?:boolean}} opts
+ * @returns {{kept:Array, held:Array, overridden:Array}}
  */
-export function selectBlockedPosts(entries, { now = Date.now(), limit = null, slug = null } = {}) {
-  let out = (entries || [])
+export function selectBlockedPostsWithHold(entries, {
+  now = Date.now(), limit = null, slug = null, hold = null, includeHeld = false,
+} = {}) {
+  const classified = (entries || [])
     .map((e) => {
       const verdict = classifyBlockedReport({
         report: e.report, meta: e.meta, reportAgeDays: e.reportAgeDays, now, includeLive: true,
@@ -73,9 +94,23 @@ export function selectBlockedPosts(entries, { now = Date.now(), limit = null, sl
       return verdict ? { ...e, live: verdict.live, blockers: verdict.blockerText } : null;
     })
     .filter(Boolean);
+
+  const { kept, held, overridden } = slug
+    ? { kept: classified, held: [], overridden: [] }
+    : partitionHeld(classified, hold, {
+      includeHeld,
+      describe: (e) => ({ slug: e.slug, keyword: e.meta?.target_keyword, title: e.meta?.title }),
+    });
+
+  let out = kept;
   if (slug) out = out.filter((e) => e.slug === slug);
   if (limit) out = out.slice(0, limit);
-  return out;
+  return { kept: out, held, overridden };
+}
+
+/** The selection alone. Kept as the call shape everything already uses. */
+export function selectBlockedPosts(entries, opts = {}) {
+  return selectBlockedPostsWithHold(entries, opts).kept;
 }
 
 /**
@@ -120,20 +155,24 @@ export function metaAfterExhaustion(meta, { at, report, reasons = [] }) {
 
 /** The single deferred digest line. Names every post and what happened to it. */
 export function renderResolverSummary({
-  resolved = [], exhausted = [], skipped = [], failed = [], dryRun = false, candidates = [],
+  resolved = [], exhausted = [], skipped = [], failed = [], dryRun = false, candidates = [], held = [],
 } = {}) {
+  const holdLines = renderHoldLines(held);
   if (dryRun) {
-    if (!candidates.length) return 'Dry run — no blocked posts found.';
+    if (!candidates.length) {
+      return ['Dry run — no blocked posts found.', ...holdLines].join('\n');
+    }
     return [
       `Dry run — ${candidates.length} blocked post(s) would be remediated:`,
       ...candidates.map((c) => `- ${c.slug}${c.live ? ' (LIVE)' : ''}`),
+      ...(holdLines.length ? ['', ...holdLines] : []),
       '',
       'Re-run with --apply to remediate and push.',
     ].join('\n');
   }
 
   if (!resolved.length && !exhausted.length && !skipped.length && !failed.length) {
-    return 'No blocked posts — nothing to resolve.';
+    return ['No blocked posts — nothing to resolve.', ...holdLines].join('\n');
   }
 
   const lines = [
@@ -156,6 +195,7 @@ export function renderResolverSummary({
     lines.push('', 'Failed (nothing changed on Shopify):');
     for (const f of failed) lines.push(`- ${f.slug}: ${f.reason}`);
   }
+  if (holdLines.length) lines.push('', ...holdLines);
   return lines.join('\n');
 }
 
@@ -240,20 +280,28 @@ async function softenAndSettle(slug, meta) {
 
 async function main() {
   const apply = process.argv.includes('--apply');
+  const includeHeld = process.argv.includes(HOLD_FLAG);
   const slug = arg('--slug');
   const limitRaw = arg('--limit');
   const limit = limitRaw ? parseInt(limitRaw, 10) : DEFAULT_LIMIT;
 
   console.log('\nBlocked Post Resolver\n');
 
-  const candidates = selectBlockedPosts(collectEntries(), { limit, slug });
+  const hold = loadClusterHold({ root: ROOT });
+  const banner = holdBanner(hold);
+  if (banner) console.log(`${banner}\n`);
+
+  const { kept: candidates, held } = selectBlockedPostsWithHold(
+    collectEntries(), { limit, slug, hold, includeHeld },
+  );
   console.log(`  ${candidates.length} blocked post(s)${apply ? '' : ' (DRY RUN)'}`);
+  if (held.length) for (const line of renderHoldLines(held)) console.log(`  ${line}`);
 
   if (!apply) {
     for (const c of candidates) console.log(`    [${c.live ? 'live' : 'pre-publish'}] ${c.slug}`);
-    const body = renderResolverSummary({ dryRun: true, candidates });
+    const body = renderResolverSummary({ dryRun: true, candidates, held });
     console.log(`\n${body}`);
-    await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s) (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
+    await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s)${holdSummaryFragment(held)} (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
     return;
   }
 
@@ -283,11 +331,11 @@ async function main() {
     }
   }
 
-  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false });
+  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held });
   console.log(`\n${body}`);
 
   await notify({
-    subject: `Blocked Post Resolver: ${resolved.length} resolved, ${exhausted.length} written off, ${failed.length} failed`,
+    subject: `Blocked Post Resolver: ${resolved.length} resolved, ${exhausted.length} written off, ${failed.length} failed${holdSummaryFragment(held)}`,
     body,
     // Deferred, per the digest convention in CLAUDE.md — never immediate. An
     // exhausted post is a note, not an outage: the page is still live.

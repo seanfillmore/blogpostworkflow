@@ -7,10 +7,20 @@
  *   refresh via refresh-runner (content-refresher → editor → publisher, in
  *   place on the existing post) · broken → skip for manual fix.
  *
+ * REVENUE-GATED. A full rebuild is a refresh-runner chain of paid LLM calls, so
+ * posts whose cluster the revenue report shows earning $0 are SKIPPED AND
+ * COUNTED (lib/cluster-hold.js) before the pick list is capped. No cluster is
+ * named in this file. Held posts are NOT touched in any way — still live, still
+ * indexed, still carrying whatever tags they had. `--include-held` rebuilds them.
+ *
+ * Naming one slug on the command line is an operator asking for that post, and
+ * is never held — the hold exists to stop UNATTENDED spend.
+ *
  * Usage:
  *   node agents/legacy-rebuilder/index.js                    # list legacy posts (dry run)
  *   node agents/legacy-rebuilder/index.js <slug> --apply     # rebuild one post
  *   node agents/legacy-rebuilder/index.js --limit 3 --apply  # rebuild N posts
+ *   node agents/legacy-rebuilder/index.js --limit 3 --apply --include-held
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -20,6 +30,33 @@ import { fileURLToPath } from 'node:url';
 import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../lib/posts.js';
 import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
+import {
+  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, holdSummaryFragment, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
+
+/**
+ * Split the legacy pick list into what gets rebuilt and what is held because its
+ * cluster earns $0.
+ *
+ * Held BEFORE `--limit` is applied, deliberately: holding afterwards would let
+ * five held posts consume the whole daily budget and leave the backlog of
+ * earning-cluster posts untouched.
+ *
+ * Exported for test; the rule itself lives in lib/cluster-hold.js so this agent
+ * and the queue hold on the same measured evidence.
+ *
+ * @returns {{kept:Array, held:Array, overridden:Array}}
+ */
+export function selectLegacyPosts(posts, { hold = null, includeHeld = false } = {}) {
+  return partitionHeld(posts, hold, {
+    includeHeld,
+    describe: (p) => ({
+      slug: p?.slug,
+      keyword: p?.meta?.target_keyword,
+      title: p?.meta?.title,
+    }),
+  });
+}
 
 /**
  * The digest body. Previously this was counts only — "4 rebuilt, 1 failed" — while
@@ -65,6 +102,7 @@ const BACKUPS_DIR = join(ROOT, 'data', 'backups', 'legacy-rebuild');
 
 const args = process.argv.slice(2);
 const apply = args.includes('--apply');
+const includeHeld = args.includes(HOLD_FLAG);
 const limitIdx = args.indexOf('--limit');
 const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : null;
 const slugArg = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--limit');
@@ -222,7 +260,20 @@ async function rebuildPost(slug) {
 async function main() {
   console.log('\nLegacy Post Rebuilder\n');
 
-  const legacy = findLegacyPosts();
+  const hold = loadClusterHold({ root: ROOT });
+  const banner = holdBanner(hold);
+  if (banner) console.log(`${banner}\n`);
+
+  // An explicit slug is an operator asking for that post; the hold only ever
+  // stops unattended spend, so it does not apply to a hand-typed request.
+  const { kept: legacy, held } = slugArg
+    ? { kept: findLegacyPosts(), held: [] }
+    : selectLegacyPosts(findLegacyPosts(), { hold, includeHeld });
+
+  if (held.length) {
+    for (const line of renderHoldLines(held)) console.log(`  ${line}`);
+    console.log('');
+  }
 
   // Tier breakdown — shows what action each post would receive.
   const byBucket = { winner: [], rising: [], flop: [], broken: [], untriaged: [] };
@@ -276,8 +327,12 @@ async function main() {
   }
 
   await notify({
-    subject: `Legacy Rebuilder: ${succeeded} rebuilt, ${failures.length} failed`,
-    body: renderRebuildSummary({ succeeded, failures, remaining: legacy.length - succeeded }),
+    subject: `Legacy Rebuilder: ${succeeded} rebuilt, ${failures.length} failed${holdSummaryFragment(held)}`,
+    body: [
+      renderRebuildSummary({ succeeded, failures, remaining: legacy.length - succeeded }),
+      ...(held.length ? ['', ...renderHoldLines(held)] : []),
+    ].join('\n'),
+    // A hold never moves the status — it is the policy working, not a failure.
     status: failures.length > 0 ? 'warning' : 'success',
   });
 
