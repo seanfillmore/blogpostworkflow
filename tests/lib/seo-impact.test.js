@@ -8,6 +8,7 @@ import {
   mergeRevenueSources,
   buildPageImpacts,
   clusterRollup,
+  residualRollup,
   actionWins,
   rankBy,
   weeklyRevenueTrend,
@@ -294,6 +295,66 @@ test('clusterRollup: reports clicks beside revenue, and no GA4 figure', () => {
   assert.equal('revenueGa4' in rollup[0], false);
 });
 
+test('clusterRollup: emits entry_page_organic_revenue as the canonical field', () => {
+  // `revenue` read as product revenue for a category, which it never was — that
+  // misreading is what let a $430 category be recorded as $0. Both names carry
+  // the same number so unmigrated consumers keep working.
+  const rollup = clusterRollup([{ path: '/x-soap', revenue: 62.4, revenuePrev: 0 }], () => 'soap');
+  assert.equal(rollup[0].entry_page_organic_revenue, 62.4);
+  assert.equal(rollup[0].revenue, 62.4);
+});
+
+// ── residualRollup ────────────────────────────────────────────────────────────
+// clusterRollup skips every page matching no cluster, so the cluster table has
+// never summed to totals.organic_revenue and never said so. On the 2026-08-22
+// report that gap is $77.94 (the homepage); over 90 days it is $1,152.50, 54% of
+// the store. An invisible majority is what makes the table look like it ought to
+// reconcile to product revenue.
+
+test('residualRollup: everything the cluster table drops on the floor', () => {
+  const impacts = [
+    { path: '/', revenue: 77.94, revenuePrev: 10, clicks: 40 },
+    { path: '/cart', revenue: 0, revenuePrev: 0, clicks: 3 },
+    { path: '/blogs/news/best-soap', revenue: 62.4, revenuePrev: 0, clicks: 4 },
+  ];
+  const clusterFor = (p) => (p.includes('soap') ? 'soap' : null);
+  const r = residualRollup(impacts, clusterFor);
+  assert.equal(r.entry_page_organic_revenue, 77.94);
+  assert.equal(r.revenue, 77.94);
+  assert.equal(r.revenueDelta, 67.94);
+  assert.equal(r.pages, 2, 'both unclustered pages are counted, earning or not');
+  assert.equal(r.clicks, 43);
+  assert.match(r.label, /no cluster/i);
+  assert.deepEqual(r.top_pages, [{ path: '/', revenue: 77.94 }]);
+});
+
+test('residualRollup + clusterRollup reconcile to the organic total', () => {
+  // The real 2026-08-22 numbers: $462.14 clustered + $77.94 residual = $540.08.
+  const impacts = [
+    { path: '/blogs/news/best-non-toxic-body-lotion-2025', revenue: 262.39, revenuePrev: 0 },
+    { path: '/collections/non-toxic-body-lotion', revenue: 51.1, revenuePrev: 0 },
+    { path: '/products/organic-foaming-hand-soap', revenue: 62.4, revenuePrev: 0 },
+    { path: '/blogs/news/best-vegan-lip-balm-natural-picks-for-soft-lips', revenue: 48, revenuePrev: 0 },
+    { path: '/blogs/news/coconut-oil-deodorant-does-it-work-is-it-safe', revenue: 20.99, revenuePrev: 0 },
+    { path: '/blogs/news/best-native-deodorant-alternatives-natural-options-that-work', revenue: 17.26, revenuePrev: 0 },
+    { path: '/', revenue: 77.94, revenuePrev: 0 },
+  ];
+  const clusterFor = (p) => (p === '/' ? null : 'x');
+  const clustered = clusterRollup(impacts, clusterFor)
+    .reduce((s, c) => s + c.entry_page_organic_revenue, 0);
+  const residual = residualRollup(impacts, clusterFor).entry_page_organic_revenue;
+  assert.equal(Math.round(clustered * 100) / 100, 462.14);
+  assert.equal(residual, 77.94);
+  assert.equal(Math.round((clustered + residual) * 100) / 100, 540.08);
+});
+
+test('residualRollup: no unclustered pages is a clean zero, not a missing key', () => {
+  const r = residualRollup([{ path: '/a-soap', revenue: 5 }], () => 'soap');
+  assert.equal(r.entry_page_organic_revenue, 0);
+  assert.equal(r.pages, 0);
+  assert.deepEqual(r.top_pages, []);
+});
+
 // ── rankBy ────────────────────────────────────────────────────────────────────
 
 test('rankBy: sorts descending by the given key and respects limit', () => {
@@ -453,4 +514,37 @@ test('weeklyRevenueTrend: channels:null gives the whole store as the series', ()
   ], { endDate: '2026-08-15', weeks: 1, channels: null });
   assert.equal(t[0].revenue, 80);
   assert.equal(t[0].revenue_all_channels, 80);
+});
+
+// ── the report's cluster table ────────────────────────────────────────────────
+
+import { buildReport } from '../../agents/seo-impact/index.js';
+
+test('the cluster table says what its dollars are, and shows the residual', () => {
+  const md = buildReport({
+    window: { start: '2026-07-24', end: '2026-08-20' },
+    prior_window: { start: '2026-06-26', end: '2026-07-23' },
+    revenue_source: 'shopify-orders',
+    totals: { organic_revenue: 540.08, organic_revenue_delta: 357.9, organic_conversions: 8, organic_sessions: 1067 },
+    top_revenue: [], top_growth: [], action_wins: [], not_converting: [], channel_mix: [],
+    clusters: [
+      { cluster: 'lotion', entry_page_organic_revenue: 313.49, revenue: 313.49, revenueDelta: 282.3, clicks: 106, pages: 38 },
+      { cluster: 'soap', entry_page_organic_revenue: 62.4, revenue: 62.4, revenueDelta: 62.4, clicks: 227, pages: 28 },
+    ],
+    cluster_residual: {
+      label: 'no cluster (homepage / cart / subscription)',
+      entry_page_organic_revenue: 77.94, revenue: 77.94, revenueDelta: 67.94, clicks: 40, pages: 12,
+    },
+  });
+
+  // The heading no longer oversells it as a push-harder league table.
+  assert.doesNotMatch(md, /where to push harder/i);
+  assert.match(md, /Entry-page organic revenue by cluster/);
+  assert.match(md, /not product revenue/i);
+  assert.match(md, /totals\.organic_revenue/);
+
+  // The residual row: $77.94 of the $540.08 lands on no cluster at all.
+  assert.match(md, /no cluster \(homepage \/ cart \/ subscription\)/);
+  assert.match(md, /\$77\.94/);
+  assert.match(md, /\$62\.40/, 'soap is one row now, carrying its real attributed dollars');
 });

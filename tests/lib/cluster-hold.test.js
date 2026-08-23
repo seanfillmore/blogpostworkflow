@@ -29,7 +29,8 @@ const MEASURED = [
   { label: 'report window (28d)', available: true, orders: 18, revenue: 1079.46, aov: 59.97, truncatedDays: 0, byFamily: { lotion: 909, 'lip balm': 120, soap: 156, deodorant: 60 } },
   { label: 'wide window (90d)', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, deodorant: 180, 'lip balm': 120, toothpaste: 39 } },
 ];
-const withOrders = (clusters, opts = {}) => buildClusterHold(classifyClusters(clusters), { measured: MEASURED, ...opts });
+const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
+const withOrders = (clusters, opts = {}) => buildClusterHold(classifyClusters(clusters, { totals: TOTALS }), { measured: MEASURED, ...opts });
 
 const HOLD = withOrders(REPORT, { generatedAt: '2026-08-22T10:00:00Z' });
 
@@ -83,7 +84,7 @@ test('loadClusterHold reads the report AND the orders that corroborate it', () =
     readJson: (p) => {
       seen.push(p);
       if (p.endsWith(SEO_IMPACT_RELPATH)) {
-        return { generated_at: 'X', window: { start: '2026-08-20', end: '2026-08-20' }, clusters: REPORT };
+        return { generated_at: 'X', window: { start: '2026-08-20', end: '2026-08-20' }, totals: TOTALS, clusters: REPORT };
       }
       return { date: '2026-08-20', orders: { count: 2, revenue: 120 }, topProducts: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', revenue: 120 }] };
     },
@@ -101,7 +102,7 @@ test('clusterForItem prefers the target keyword, then the slug, then title and u
   assert.equal(clusterForItem({ keyword: 'toothpaste without sls', slug: 'x' }), 'toothpaste');
   assert.equal(clusterForItem({ target_keyword: 'best natural deodorant', slug: 'x' }), 'deodorant');
   assert.equal(clusterForItem({ slug: 'no-fluoride-toothpaste' }), 'toothpaste');
-  assert.equal(clusterForItem({ title: 'Best Coconut Oil Body Lotion' }), 'body lotion');
+  assert.equal(clusterForItem({ title: 'Best Coconut Oil Body Lotion' }), 'lotion');
   assert.equal(clusterForItem({ url: 'https://www.realskincare.com/blogs/news/best-lip-balm' }), 'lip balm');
   assert.equal(clusterForItem({ slug: 'dry-brushing-technique' }), null);
   assert.equal(clusterForItem(null), null);
@@ -124,7 +125,7 @@ test('an item in an earning cluster passes through untouched', () => {
   const d = holdDecision({ slug: 'benefits-of-using-coconut-oil-lotion', keyword: 'coconut oil body lotion' }, HOLD);
   assert.equal(d.skip, false);
   assert.equal(d.onHold, false);
-  assert.equal(d.cluster, 'body lotion');
+  assert.equal(d.cluster, 'lotion');
 });
 
 test('an item that maps to no cluster at all is never held', () => {

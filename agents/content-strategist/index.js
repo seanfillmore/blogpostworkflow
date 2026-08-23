@@ -26,7 +26,8 @@ const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 import { listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, POSTS_DIR } from '../../lib/posts.js';
 import { findSemanticDuplicate } from '../../lib/cannibalization-guard.js';
 import { splitInventory } from '../../lib/brief-triage.js';
-import { classifyClusters, provenDuds, clusterForText } from '../../lib/cluster-revenue.js';
+import { provenDuds, clusterForText } from '../../lib/cluster-revenue.js';
+import { loadClusterHold, corroboratedClassification, holdBanner } from '../../lib/cluster-hold.js';
 import { clusterPenalties } from '../../lib/cluster-performance.js';
 import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
@@ -70,12 +71,21 @@ function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-/** Per-cluster revenue from the latest seo-impact run; {} when it has not run. */
+/**
+ * Per-cluster revenue from the latest seo-impact run; {} when it has not run.
+ *
+ * Goes through `loadClusterHold` + `corroboratedClassification`, NOT the raw
+ * classification. Dropping an LLM's proposal and clearing existing calendar
+ * items is a hard block, so it holds to the same two-source bar as the spend
+ * hold: a $0 that real Shopify orders contradict is an attribution defect, not a
+ * verdict, and must not silence a category. See lib/cluster-hold.js.
+ */
 function loadClusterRevenue() {
   try {
-    const p = join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json');
-    if (!existsSync(p)) return {};
-    return classifyClusters(JSON.parse(readFileSync(p, 'utf8')).clusters);
+    const hold = loadClusterHold({ root: ROOT });
+    const banner = holdBanner(hold);
+    if (banner) console.log(banner);
+    return corroboratedClassification(hold);
   } catch { return {}; }
 }
 

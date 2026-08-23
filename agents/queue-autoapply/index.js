@@ -45,7 +45,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { listQueueItems, writeItem } from '../performance-engine/lib/queue.js';
 import { getContentPath, ROOT as POSTS_ROOT } from '../../lib/posts.js';
-import { loadClusterHold, holdBanner } from '../../lib/cluster-hold.js';
+import { loadClusterHold, corroboratedClassification, holdBanner } from '../../lib/cluster-hold.js';
 import { planRun, cooldownTargets, targetSlugFor, MAX_APPLIES_PER_RUN } from '../../lib/queue-autoapply.js';
 import { applyItem, findPostMeta, matchProductsForGap } from '../../lib/queue-apply.js';
 import { revertPlanFor } from '../../lib/queue-revert.js';
@@ -211,7 +211,10 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
   // this used to classify the report inline, which was a second copy of the
   // load waiting to drift away from the rest of the fleet.
   const hold = loadClusterHold({ root: ROOT });
-  const clusters = hold.classified;
+  // The CORROBORATED view, not the raw one: dismissing a collection-gap is a
+  // decision not to build a commercial page, and an uncorroborated $0 is an
+  // attribution artifact, not evidence the category cannot sell.
+  const clusters = corroboratedClassification(hold);
   const banner = holdBanner(hold);
   if (banner) log(banner);
   if (!hold.available) {

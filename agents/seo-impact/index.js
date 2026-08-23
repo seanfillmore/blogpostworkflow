@@ -57,9 +57,10 @@ import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import { ptDayOf, ptDayBounds } from '../shopify-collector/index.js';
 import {
   pathOf, organicSessionsByPage, isSearchEngineSource, mergeRevenueSources, buildPageImpacts,
-  clusterRollup, actionWins, rankBy, weeklyRevenueTrend,
+  clusterRollup, residualRollup, actionWins, rankBy, weeklyRevenueTrend,
 } from '../../lib/seo-impact.js';
 import { clusterForText } from '../../lib/cluster-revenue.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -224,6 +225,10 @@ async function main() {
   const topRevenue = rankBy(impacts.filter(i => i.revenue > 0), 'revenue', 10);
   const topGrowth = rankBy(impacts.filter(i => i.revenueDelta > 0), 'revenueDelta', 10);
   const clusters = clusterRollup(impacts, clusterFor);
+  // What the cluster table drops on the floor. Reported explicitly so the table
+  // can be read as what it is — a partial view of organic entry-page revenue —
+  // rather than as a category P&L that mysteriously fails to add up.
+  const clusterResidual = residualRollup(impacts, clusterFor);
   const wins = rankBy(actionWins(impacts), 'revenueDelta', 10);
   // High organic traffic that isn't converting — content driving visits, not sales.
   const notConverting = rankBy(
@@ -303,6 +308,7 @@ async function main() {
     top_revenue: topRevenue,
     top_growth: topGrowth,
     clusters,
+    cluster_residual: clusterResidual,
     action_wins: wins,
     not_converting: notConverting,
     revenue_trend: revenueTrend,
@@ -333,7 +339,9 @@ async function main() {
   console.log('\nSEO impact analysis complete.');
 }
 
-function buildReport(p) {
+// Exported so the cluster table — including the residual row that makes it
+// legible — is testable without a live GA4/Shopify/GSC run.
+export function buildReport(p) {
   const L = [];
   const money = (n) => `$${(Math.round(n * 100) / 100).toFixed(2)}`;
   const delta = (n) => `${n >= 0 ? '+' : '−'}${money(Math.abs(n))}`;
@@ -360,11 +368,19 @@ function buildReport(p) {
   for (const r of p.top_growth) L.push(`- **${delta(r.revenueDelta)}** — ${r.path} (${money(r.revenue)} now)`);
   if (!p.top_growth.length) L.push('- _No pages grew vs the prior window._');
   L.push('');
-  L.push('## Revenue by cluster — where to push harder');
+  L.push('## Entry-page organic revenue by cluster');
   L.push('');
-  L.push('| Cluster | Revenue | Δ vs prior | Clicks | Pages |');
+  L.push('_Organic-search-only revenue over this window, credited to the page the session LANDED on and bucketed'
+    + ' by a word in that URL. **This is not product revenue and it is not a category\'s sales.** It reconciles to'
+    + ' `totals.organic_revenue` and to nothing else — the residual row below is the rest of it._');
+  L.push('');
+  L.push('| Cluster | Entry-page organic $ | Δ vs prior | Clicks | Pages |');
   L.push('|---------|--------:|-----------:|-------:|------:|');
-  for (const c of p.clusters) L.push(`| ${c.cluster} | ${money(c.revenue)} | ${delta(c.revenueDelta)} | ${c.clicks || 0} | ${c.pages} |`);
+  for (const c of p.clusters) L.push(`| ${c.cluster} | ${money(c.entry_page_organic_revenue ?? c.revenue)} | ${delta(c.revenueDelta)} | ${c.clicks || 0} | ${c.pages} |`);
+  if (p.cluster_residual) {
+    const r = p.cluster_residual;
+    L.push(`| _${r.label}_ | ${money(r.entry_page_organic_revenue)} | ${delta(r.revenueDelta)} | ${r.clicks || 0} | ${r.pages} |`);
+  }
   L.push('');
   if (p.action_wins.length) {
     L.push('## Actions associated with a lift');
@@ -441,6 +457,8 @@ function storeContextSection(p) {
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// The one tested predicate (CLAUDE.md: four hand-rolled spellings had accumulated
+// and two audit passes miscounted which agents were guarded as a result).
+if (isDirectRun(import.meta.url)) {
   main().catch((err) => { console.error('SEO impact agent failed:', err); process.exit(1); });
 }

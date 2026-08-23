@@ -162,11 +162,12 @@ test('detectDraftStall treats a never-drafted pipeline with pending work as stal
 import { revenueAdjustment } from '../../agents/calendar-runner/index.js';
 import { classifyClusters } from '../../lib/cluster-revenue.js';
 
+const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
 const CLASSIFIED = classifyClusters([
   { cluster: 'body lotion', revenue: 87.09, clicks: 34,  pages: 20 },
   { cluster: 'toothpaste',  revenue: 0,     clicks: 725, pages: 26 },
   { cluster: 'hand soap',   revenue: 0,     clicks: 1,   pages: 2  },
-]);
+], { totals: TOTALS });
 
 test('revenueAdjustment accelerates a cluster that earns', () => {
   const adj = revenueAdjustment('Body Lotion', CLASSIFIED);
@@ -205,11 +206,15 @@ test('revenueAdjustment never accelerates a dud even when it ranks', () => {
 // labelled "Bar Soap" (unproven). Same topic, two answers, depending on which
 // field happened to be read.
 
+// SYNTHETIC click counts: 180 + 10 no longer clears the 400-click evidence bar,
+// and the real soap cluster is not a dud at all. What is under test here is that
+// the runner and the brief triage bucket the same topic identically, so the
+// fixture is given enough traffic to reach a verdict either could act on.
 const SOAP = classifyClusters([
-  { cluster: 'soap',      revenue: 0, clicks: 180, pages: 20 },
+  { cluster: 'soap',      revenue: 0, clicks: 470, pages: 20 },
   { cluster: 'bar soap',  revenue: 0, clicks: 10,  pages: 4  },
   { cluster: 'deodorant', revenue: 17.26, clicks: 109, pages: 21 },
-]);
+], { totals: TOTALS });
 
 test('revenueAdjustment judges on the keyword, matching what the brief triage does', () => {
   const adj = revenueAdjustment('Bar Soap', SOAP, 'oatmeal soap');

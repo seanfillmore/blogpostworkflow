@@ -260,11 +260,12 @@ test('buildPrepaidSection caps the list so an 8-week plan is not swamped', () =>
 
 import { classifyClusters } from '../../lib/cluster-revenue.js';
 
+const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
 const CLUSTERS = classifyClusters([
   { cluster: 'body lotion', revenue: 87.09, clicks: 34,  pages: 20 },
   { cluster: 'toothpaste',  revenue: 0,     clicks: 725, pages: 26 },
   { cluster: 'hand soap',   revenue: 0,     clicks: 1,   pages: 2  },
-]);
+], { totals: TOTALS });
 
 test('buildNonEarningSection forbids new posts in a cluster with traffic and no revenue', () => {
   const out = buildNonEarningSection(CLUSTERS);
@@ -275,13 +276,13 @@ test('buildNonEarningSection forbids new posts in a cluster with traffic and no 
 
 test('buildNonEarningSection does not condemn an untested cluster', () => {
   const out = buildNonEarningSection(CLUSTERS);
-  assert.ok(!/hand soap/i.test(out), 'one click is not evidence — it would never get tested');
+  assert.ok(!/soap/i.test(out), 'one click is not evidence — it would never get tested');
 });
 
 test('buildNonEarningSection is empty when every cluster earns or is untested', () => {
   const out = buildNonEarningSection(classifyClusters([
     { cluster: 'body lotion', revenue: 87.09, clicks: 34, pages: 20 },
-  ]));
+  ], { totals: TOTALS }));
   assert.equal(out, '');
 });
 

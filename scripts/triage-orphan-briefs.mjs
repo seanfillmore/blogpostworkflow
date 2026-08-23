@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { triageOrphanBrief } from '../lib/brief-triage.js';
 import { listAllSlugs, getPostMeta, getContentPath } from '../lib/posts.js';
 import { isInProductScope } from '../lib/product-scope.js';
-import { classifyClusters } from '../lib/cluster-revenue.js';
+import { loadClusterHold, corroboratedClassification, holdBanner } from '../lib/cluster-hold.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
@@ -53,12 +53,21 @@ const rejectedKeywords = (readJson(join(ROOT, 'data', 'rejected-keywords.json'),
   .map((r) => r.keyword).filter(Boolean);
 const brandTerms = (readJson(join(ROOT, 'config', 'site.json'), {}).brand_terms || []);
 
-const clusterRevenue = DROP_NON_EARNING
-  ? classifyClusters(readJson(join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'), {}).clusters)
-  : null;
-if (DROP_NON_EARNING && !clusterRevenue) {
-  console.error('--drop-non-earning needs data/reports/seo-impact/latest.json. Run agents/seo-impact first.');
-  process.exit(1);
+// This flag DELETES paid-for research off disk with unlinkSync, so it is the
+// most evidence-hungry consumer of the cluster verdict, not the least. It reads
+// the CORROBORATED classification: a $0 that real Shopify orders contradict is a
+// broken-attribution finding, and on 2026-08-22 acting on one unchecked would
+// have deleted every brief in a category earning 19% of all revenue.
+let clusterRevenue = null;
+if (DROP_NON_EARNING) {
+  const hold = loadClusterHold({ root: ROOT });
+  if (!hold.available) {
+    console.error('--drop-non-earning needs data/reports/seo-impact/latest.json. Run agents/seo-impact first.');
+    process.exit(1);
+  }
+  const banner = holdBanner(hold);
+  if (banner) console.log(banner);
+  clusterRevenue = corroboratedClassification(hold);
 }
 
 // ── walk the orphans ─────────────────────────────────────────────────────────
