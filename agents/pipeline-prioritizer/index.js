@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { loadCalendar, upsertItem, writeCalendar } from '../../lib/calendar-store.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import { newestReportDate } from '../../lib/snapshot-health.js';
+import { SEO_IMPACT_MAX_AGE_DAYS, freshnessOfFile, staleNote } from '../../lib/seo-impact-freshness.js';
 import { computePlan, applyHysteresis } from '../../lib/pipeline-priority.js';
 import { slugify } from '../../lib/keyword-dedup.js';
 import { isInProductScope } from '../../lib/product-scope.js';
@@ -89,7 +90,13 @@ function collectSignals(today) {
   }
 
   // 2) revenue-growth clusters → boost NEW ideas in cluster
-  if (fresh('seo-impact', 3, today)) {
+  //
+  // DEGRADES, does not block: this signal only BOOSTS ideas that are already on
+  // the list, so running without it costs a bit of ranking quality and nothing
+  // else. The threshold is the fleet-wide one (lib/seo-impact-freshness.js), not
+  // the incidental 3 that used to sit here — it was stricter than the digest's
+  // own alert, so this signal disappeared a day before anything said so.
+  if (fresh('seo-impact', SEO_IMPACT_MAX_AGE_DAYS, today)) {
     const s = readJson(reportPath('seo-impact'));
     for (const c of (s?.clusters || [])) {
       if ((c.revenueDelta || 0) < cfg.signals.revenue_cluster.minDelta) continue;
@@ -98,6 +105,10 @@ function collectSignals(today) {
         strength: c.revenueDelta, label: `revenue +$${Math.round(c.revenueDelta)}`,
         raw: { revenue: c.revenue } });
     }
+  } else {
+    // Say so. `fresh()` returning false used to drop the signal in silence,
+    // which is how a degraded prioritiser looks identical to a healthy one.
+    console.log(`  · revenue-cluster signal SKIPPED — ${staleNote(freshnessOfFile(reportPath('seo-impact'), { today }))}`);
   }
 
   // 3) rank/traffic drops → REFRESH that post

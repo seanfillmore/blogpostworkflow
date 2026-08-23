@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import {
   loadClusterHold, HOLD_FLAG, SEO_IMPACT_RELPATH, SHOPIFY_SNAPSHOT_RELDIR, TOP_PRODUCTS_PER_DAY,
 } from '../lib/cluster-hold.js';
+import { staleNote } from '../lib/seo-impact-freshness.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -48,6 +49,8 @@ if (process.argv.includes('--json')) {
     generated_at: hold.generatedAt,
     source: SEO_IMPACT_RELPATH,
     available: hold.available,
+    stale: hold.stale,
+    freshness: hold.freshness,
     held: hold.held,
     disagreements: hold.disagreements,
     uncorroborated: hold.uncorroborated,
@@ -64,8 +67,12 @@ if (process.argv.includes('--json')) {
 console.log('\nCluster holds — unattended spend paused on $0 clusters\n');
 
 if (!hold.available) {
-  console.log(`  ⚠ ${SEO_IMPACT_RELPATH} is missing or unreadable.`);
-  console.log('    Nothing is held. The hold fails OPEN: no measurement, no pause.');
+  // Stale and absent both fail open, but they are different things to go and
+  // fix: one means the file never arrived, the other means the producer stopped.
+  console.log(hold.stale
+    ? `  ⚠ ${staleNote(hold.freshness)}`
+    : `  ⚠ ${SEO_IMPACT_RELPATH} is missing or unreadable.`);
+  console.log('    Nothing is held. The hold fails OPEN: no usable measurement, no pause.');
   console.log('    Run `node agents/seo-impact/index.js` (it is gitignored locally — check the server).\n');
   process.exit(0);
 }

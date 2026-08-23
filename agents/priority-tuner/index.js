@@ -23,7 +23,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readAttribution } from '../../lib/attribution-log.js';
 import { aggregatePerformance, proposeWeightChanges, applyWeightChanges } from '../../lib/priority-tuning.js';
-import { newestReportDate } from '../../lib/snapshot-health.js';
+import { PRIORITY_TUNER_MAX_AGE_DAYS, freshnessOfFile, staleNote } from '../../lib/seo-impact-freshness.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -44,11 +44,18 @@ async function main() {
   const cfg = readJson(CONFIG_PATH);
   if (!cfg?.tuning) { console.error('No tuning config; aborting.'); process.exit(1); }
 
-  // seo-impact freshness — don't tune on stale outcome data (allow 35d: monthly cadence)
-  const impactDate = newestReportDate(SEO_IMPACT_PATH);
-  const impactAge = impactDate ? Math.floor((Date.parse(today) - Date.parse(impactDate)) / 86400000) : Infinity;
-  if (impactAge > 35) {
-    console.log(`  seo-impact stale (${impactDate || 'missing'}); skipping tune.`);
+  // seo-impact freshness — don't tune on stale outcome data.
+  //
+  // This is the ONE consumer with a window wider than SEO_IMPACT_MAX_AGE_DAYS,
+  // and the reason is documented on the constant in lib/seo-impact-freshness.js:
+  // the tuner does not read the report's current state, it joins `action_wins`,
+  // which describe a trailing 28-day outcome window and only become measurable
+  // after `tuning.measureLagDays`. Deliberately wider, not incidentally — it was
+  // a bare `> 35` here before, indistinguishable from an oversight.
+  const impactFreshness = freshnessOfFile(SEO_IMPACT_PATH, { today, maxAgeDays: PRIORITY_TUNER_MAX_AGE_DAYS });
+  const impactDate = impactFreshness.newestDate;
+  if (impactFreshness.status !== 'ok') {
+    console.log(`  ${staleNote(impactFreshness)} Skipping tune.`);
     // A dry run must not write, on EVERY exit path — this one used to call
     // writeReport() unguarded, so `--dry-run` created data/reports/priority-tuner/
     // whenever seo-impact was stale or absent. Stale is not the rare case: the
