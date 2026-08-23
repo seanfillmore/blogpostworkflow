@@ -25,6 +25,14 @@
  * hard ceiling already allows. The cap itself has no override — this is a per-run
  * CLI flag read here in the shell, not a change to SEED_CAP.
  *
+ * The SUCCESS notify (only) carries a metrics block (see renderRunMetrics below)
+ * answering two questions this agent shipped with deliberately open, so the first
+ * real run settles them from evidence rather than more guessing: how much the
+ * skin-cluster leak filter drops and whether the drops look like genuine top-of-funnel
+ * phrasing (a dropped-query sample), and whether the LLM stage-classification response
+ * ever names the same [n] index twice (a silent Map.set overwrite classifyStages now
+ * counts but still does not reject — see its docstring).
+ *
  * Spec: docs/superpowers/specs/2026-08-21-demand-miner-design.md
  */
 
@@ -43,7 +51,7 @@ import {
   normalizeHarvest,
   validateQuestions,
   renderDemandQuestionsMarkdown,
-  filterLeaksToSkinCluster,
+  filterLeaksToSkinClusterDetailed,
 } from '../../lib/demand-questions.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -177,9 +185,20 @@ function buildClassifyPrompt(records) {
  * blog-post-writer checklist in CLAUDE.md, which both treat max_tokens as
  * fatal-not-retryable for the same reason: the alternative is a JSON.parse
  * error that blames the model's formatting instead of naming the real cause.
+ *
+ * Returns `{ records, duplicateIndexCount }`, not a bare array — demand-miner's
+ * second open question is whether the model ever names the same `[n]` index twice
+ * in one response. The merge below has always keyed onto a `Map`, so a repeated
+ * index has always silently overwritten via `Map.set` (last value wins) rather than
+ * being rejected — `validateQuestions` can't catch it because both the earlier and
+ * the later entry are individually valid. That merge behavior is UNCHANGED here: this
+ * only counts how many times it happened, in the same pass that already walks
+ * `parsed.questions` to build `stageByIndex`, so the notify can report whether
+ * it ever actually occurs in practice. It does not reject, warn mid-loop, or alter
+ * which value wins.
  */
 export async function classifyStages({ anthropic, records }) {
-  if (records.length === 0) return [];
+  if (records.length === 0) return { records: [], duplicateIndexCount: 0 };
   const prompt = buildClassifyPrompt(records);
 
   let lastError;
@@ -233,6 +252,7 @@ export async function classifyStages({ anthropic, records }) {
     // slip through this schema's predecessor.
     const stageByIndex = new Map();
     let shapeOk = true;
+    let duplicateIndexCount = 0;
     for (const q of parsed.questions) {
       if (
         !q
@@ -242,6 +262,12 @@ export async function classifyStages({ anthropic, records }) {
         || q.index > records.length
         || typeof q.stage !== 'string'
       ) { shapeOk = false; break; }
+      // Count BEFORE the overwrite, not after — this must count collisions, not
+      // just track "have we seen this index at all" (which stageByIndex.has already
+      // does for other purposes). Merge behavior is untouched: the Map.set below
+      // still runs unconditionally, so a later duplicate still wins, exactly as
+      // before this counter existed.
+      if (stageByIndex.has(q.index)) duplicateIndexCount += 1;
       stageByIndex.set(q.index, q.stage);
     }
     if (!shapeOk) {
@@ -260,7 +286,10 @@ export async function classifyStages({ anthropic, records }) {
       continue;
     }
 
-    return records.map((r, i) => ({ ...r, stage: stageByIndex.get(i + 1) }));
+    return {
+      records: records.map((r, i) => ({ ...r, stage: stageByIndex.get(i + 1) })),
+      duplicateIndexCount,
+    };
   }
 
   throw new Error(`demand-miner: LLM stage classification failed twice — ${lastError ? lastError.message : 'unknown error'}`);
@@ -358,8 +387,22 @@ export async function runDemandMiner({
   // hair, brand, unclustered). See lib/demand-questions.js's filterLeaksToSkinCluster
   // docstring for why, and the CLUSTERS comment above for what this artifact's
   // `clusters` field does and doesn't cover.
+  //
+  // The _Detailed variant (not filterLeaksToSkinCluster) is used here on purpose: this
+  // run's success notify needs to answer "how much did the filter drop, and is it good
+  // top-of-funnel phrasing" (demand-miner's first open question), which needs the
+  // dropped rows themselves, not just a smaller survivor array. `leaksAfterFilter` is
+  // what actually feeds deriveSeeds below — identical to what
+  // filterLeaksToSkinCluster(...) would have returned — so this is a reporting-only
+  // change, not a change to which leaks get mined.
+  const {
+    survivors: leaksAfterFilter,
+    dropped: leaksDropped,
+    total: leaksIn,
+  } = filterLeaksToSkinClusterDetailed(leaksFeed?.leaks ?? null);
+
   const { seeds: derivedSeeds, partial: seedPartial } = deriveSeeds({
-    leaks: filterLeaksToSkinCluster(leaksFeed?.leaks ?? null),
+    leaks: leaksAfterFilter,
     personas: personasFile?.personas ?? personasFile ?? null,
   });
   const seeds = (typeof limit === 'number' && limit > 0)
@@ -392,7 +435,38 @@ export async function runDemandMiner({
   }
 
   const records = normalizeHarvest(harvest);
-  const staged = validateQuestions(await classifyStages({ anthropic, records }));
+  const { records: classified, duplicateIndexCount } = await classifyStages({ anthropic, records });
+  const staged = validateQuestions(classified);
+
+  // Assembled here, once, regardless of which return path below is taken — the
+  // leak-filter and seed-origin figures are already known by this point in the run,
+  // and the zero-question guard right below returns a metrics-shaped result too so a
+  // future caller of that path doesn't have to special-case an undefined field. Only
+  // main()'s SUCCESS notify actually renders this (via renderRunMetrics below) — the
+  // "no seeds available" and "Demand miner FAILED" notifies in main() are unchanged —
+  // but it's cheap to compute unconditionally and wrong to compute it twice.
+  const seedsByOrigin = { gsc_leak: 0, persona_objection: 0 };
+  for (const s of seeds) seedsByOrigin[s.origin] = (seedsByOrigin[s.origin] || 0) + 1;
+
+  const stageDistribution = {};
+  for (const level of AWARENESS_LEVELS) stageDistribution[level] = 0;
+  for (const q of staged) stageDistribution[q.stage] = (stageDistribution[q.stage] || 0) + 1;
+
+  const metrics = {
+    seedsByOrigin,
+    leakFilter: {
+      in: leaksIn,
+      survived: Array.isArray(leaksAfterFilter) ? leaksAfterFilter.length : 0,
+      dropped: leaksDropped.length,
+      droppedSample: leaksDropped.slice(0, 5).map((l) => l.query),
+    },
+    stageDistribution,
+    personaJoin: {
+      withPersona: staged.filter((q) => q.persona_id != null).length,
+      withoutPersona: staged.filter((q) => q.persona_id == null).length,
+    },
+    duplicateIndexCount,
+  };
 
   // A non-empty seed set can still end with zero questions two different ways, and
   // both get the same treatment as the zero-seed guard above for the same reason —
@@ -417,7 +491,9 @@ export async function runDemandMiner({
       status: 'error',
       category: 'demand-miner',
     });
-    return { questions: [], partial, seedCount: seeds.length };
+    return {
+      questions: [], partial, seedCount: seeds.length, metrics,
+    };
   }
 
   // Both artifacts render fully in memory BEFORE the first write, so a renderer throw
@@ -435,7 +511,9 @@ export async function runDemandMiner({
   });
   writeArtifacts({ json, md });
 
-  return { questions: staged, partial, seedCount: seeds.length };
+  return {
+    questions: staged, partial, seedCount: seeds.length, metrics,
+  };
 }
 
 // ── real dependency wiring ───────────────────────────────────────────────────
@@ -527,6 +605,52 @@ function realWriteArtifacts({ json, md }, root = ROOT) {
   writeFileSync(join(reportDir, 'latest.json'), JSON.stringify(runRecord, null, 2), 'utf8');
 }
 
+// ── run-metrics notify block ────────────────────────────────────────────────
+
+/**
+ * Renders `runDemandMiner`'s `metrics` into the plain-text block appended to the
+ * SUCCESS notify — a diagnostic block in an email, not a report artifact, so this
+ * stays a pure string builder with no I/O rather than a template file or a second
+ * JSON shape. Pure and exported so it's testable on a constructed `metrics` object
+ * without running the whole agent.
+ *
+ * Exists to settle demand-miner's two deliberately-deferred open questions from the
+ * first real run onward, every month, not just once:
+ *   1. how much the skin-cluster leak filter drops, and whether the sample looks like
+ *      genuine on-topic top-of-funnel phrasing it shouldn't be dropping.
+ *   2. whether the LLM stage-classification response ever names the same `[n]` index
+ *      twice — a silent Map.set overwrite that validateQuestions can't catch.
+ * Both stay visible even on a clean run ("nothing dropped", "0 collisions") rather
+ * than only appearing when something looks wrong — a block that vanishes on a good
+ * month reads as "no data" as easily as "nothing happened".
+ */
+export function renderRunMetrics(metrics) {
+  const {
+    seedsByOrigin, leakFilter, stageDistribution, personaJoin, duplicateIndexCount,
+  } = metrics;
+
+  const lines = [
+    '',
+    `Seeds by origin: ${seedsByOrigin.gsc_leak || 0} gsc_leak, ${seedsByOrigin.persona_objection || 0} persona_objection.`,
+    '',
+    `Skin-cluster leak filter: ${leakFilter.in} leak(s) in -> ${leakFilter.survived} survived, ${leakFilter.dropped} dropped.`,
+    leakFilter.dropped > 0
+      ? `  Dropped sample (up to 5 of ${leakFilter.dropped}): ${leakFilter.droppedSample.map((q) => `"${q}"`).join(', ')}`
+      : '  Nothing dropped this run.',
+    '',
+    `Funnel stage distribution: ${AWARENESS_LEVELS.map((level) => `${level} ${stageDistribution[level] || 0}`).join(', ')}.`,
+    '',
+    `Persona join: ${personaJoin.withPersona} question(s) carry a persona_id, ${personaJoin.withoutPersona} do not.`,
+    '',
+    duplicateIndexCount > 0
+      ? `LLM duplicate index collisions: ${duplicateIndexCount} — the classify-stage response named the same [n] `
+        + 'index more than once; the later value silently won via Map.set (merge behavior unchanged, just now visible).'
+      : 'LLM duplicate index collisions: 0.',
+  ];
+
+  return lines.join('\n');
+}
+
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -594,7 +718,9 @@ async function main() {
       subject: `Demand miner refreshed — ${result.questions.length} questions`,
       body: `Seeds harvested: ${result.seedCount}${result.partial ? ' (PARTIAL — a source was unavailable or a seed failed)' : ''}.\n`
         + `Questions written: ${result.questions.length}.\n`
-        + `Review data/context/demand-questions.md, then git diff data/context/ to see what changed.`,
+        + renderRunMetrics(result.metrics)
+        + '\n\n'
+        + 'Review data/context/demand-questions.md, then git diff data/context/ to see what changed.',
       status: 'success',
       category: 'demand-miner',
     });
