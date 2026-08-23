@@ -202,6 +202,27 @@
 }
 .gv-entry .gv-ref-fix-apply:focus-visible { outline: 2px solid var(--gv-ink); outline-offset: 2px; }
 
+/* The seed commitment. Collapsed by default: it is a fairness disclosure, not a
+   selling point, and expanding it by default pushes the entry form down on
+   mobile for the sake of copy most visitors will not read. It must still be
+   present and readable BEFORE entry — a <details> is, including to screen
+   readers and to anyone who searches the page. */
+.gv-method {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--gv-line);
+  border-radius: var(--gv-radius);
+  font-size: 1.4rem;
+  line-height: 1.55;
+}
+.gv-method > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--gv-ink);
+}
+.gv-method > summary:focus-visible { outline: 2px solid var(--gv-ink); outline-offset: 2px; }
+.gv-method p { margin: 10px 0 0; }
+
 /* ── Lander ──────────────────────────────────────────────────────────────── */
 
 .gv-brand { text-align: center; padding: 4px 0 22px; }
