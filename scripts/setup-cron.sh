@@ -4,7 +4,9 @@
 # Run once to register all recurring tasks:
 #   chmod +x scripts/setup-cron.sh && ./scripts/setup-cron.sh
 #
-# All times are UTC unless marked with TZ=America/Los_Angeles.
+# ALL times are UTC. This host's cron (3.0pl1) supports neither CRON_TZ nor a TZ
+# crontab variable, so a TZ= prefix cannot move a job — see the note above
+# GIVEAWAY_CLOSE_ENTRY_PERIOD. Change the UTC fields, never add a TZ= prefix.
 # The script strips ALL previous seo-claude entries (any path variant)
 # before installing, so re-running is always safe and idempotent.
 
@@ -70,8 +72,8 @@ DAILY_INDEXING_CHECKER="0 11 * * * cd \"$PROJECT_DIR\" && $NODE agents/indexing-
 DAILY_INDEXING_FIXER="30 11 * * * cd \"$PROJECT_DIR\" && $NODE agents/indexing-fixer/index.js >> data/reports/scheduler/indexing-fixer.log 2>&1"
 
 # Ads (daily)
-DAILY_ADS_OPTIMIZER="45 6 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/ads-optimizer/index.js >> data/reports/ads-optimizer.log 2>&1"
-DAILY_CAMPAIGN_MONITOR="30 7 * * * TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-monitor/index.js >> data/reports/campaign-monitor.log 2>&1"
+DAILY_ADS_OPTIMIZER="45 6 * * * cd \"$PROJECT_DIR\" && $NODE agents/ads-optimizer/index.js >> data/reports/ads-optimizer.log 2>&1"
+DAILY_CAMPAIGN_MONITOR="30 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-monitor/index.js >> data/reports/campaign-monitor.log 2>&1"
 
 # Campaign status + ad fixer (high frequency)
 HOURLY_CAMPAIGN_STATUS="0 * * * * cd \"$PROJECT_DIR\" && $NODE agents/campaign-status-checker/index.js --scheduled >> data/logs/campaign-status-checker.log 2>&1"
@@ -130,8 +132,8 @@ WEEKLY_META_ADS_ANALYZER="10 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-a
 WEEKLY_COMPETITOR_WATCHER="0 2 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/competitor-watcher/index.js >> data/reports/scheduler/competitor-watcher.log 2>&1"
 
 # Weekly (Sunday)
-WEEKLY_ADS_RECAP="0 7 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE scripts/ads-weekly-recap.js >> data/reports/ads-weekly-recap.log 2>&1"
-WEEKLY_CAMPAIGN_ANALYZER="0 6 * * 0 TZ=America/Los_Angeles cd \"$PROJECT_DIR\" && $NODE agents/campaign-analyzer/index.js >> data/reports/campaign-analyzer.log 2>&1"
+WEEKLY_ADS_RECAP="0 7 * * 0 cd \"$PROJECT_DIR\" && $NODE scripts/ads-weekly-recap.js >> data/reports/ads-weekly-recap.log 2>&1"
+WEEKLY_CAMPAIGN_ANALYZER="0 6 * * 0 cd \"$PROJECT_DIR\" && $NODE agents/campaign-analyzer/index.js >> data/reports/campaign-analyzer.log 2>&1"
 
 # Offsite snapshot backup (Sundays 17:00 UTC, after the Sunday jobs above) — see
 # CLAUDE.md's "Snapshot backups" section. data/snapshots/ is the only copy of
@@ -210,32 +212,26 @@ DAILY_GIVEAWAY_NUDGE="0 16 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/n
 
 # Entry Period close: stop the nurture flow. Klaviyo has no flow end date, and
 # PATCH /flows accepts only status, so the boundary is enforced from outside.
-# 11:59 PM CT 2026-09-14 = 04:59 UTC 2026-09-15; fire at 05:05 UTC. Idempotent.
+# Idempotent.
 #
-# THE TRAP THIS LINE PROTECTS AGAINST: the production box's system clock is
-# UTC, full stop. A cron line with no `TZ=` prefix runs on the UTC clock no
-# matter what a comment, a config file, or a variable name claims — cron does
-# not know or care that this job is "Pacific-flavored" unless `TZ=` is present
-# on the line itself. This job originally shipped without `TZ=` and fired on
-# the UTC clock, ~2 hours BEFORE entries actually closed in Pacific time —
-# drafting the nurture flow while people were still entering, which killed the
-# `01-confirm` email and its +2-entry confirmation rung for last-minute
-# entrants. Fixed BY HAND on the server on 2026-08-20 by adding
-# `TZ=America/Los_Angeles`. This job must fire AFTER the giveaway closes in
-# Pacific time — do not remove or "simplify" the TZ prefix, and do not let a
-# future setup-cron.sh edit silently drop it.
-# 08:05 UTC on Sep 15 = 01:05 PDT Sep 15, i.e. ~1h AFTER entries close at
-# 2026-09-14T23:59:59-07:00 (config/giveaway.json entryClosesAt = 06:59:59 UTC).
+# TIMING, AND THE TRAP IT SPENT THREE DAYS IN:
+# Entries close 2026-09-14T23:59:59-07:00 (config/giveaway.json entryClosesAt),
+# which is 06:59:59 UTC on Sep 15. This fires at 08:05 UTC = 01:05 PDT Sep 15,
+# about an hour AFTER close. It must never fire before.
 #
-# It previously read `5 5 15 9 * TZ=America/Los_Angeles ...`, which fired at
-# 05:05 UTC = 22:05 PT — 1.92 hours BEFORE entries closed. The TZ= prefix was
-# believed to have fixed that on 2026-08-20. It did not, and could not:
-#   * this box runs `cron 3.0pl1`, whose binary contains neither CRON_TZ nor a
-#     TZ crontab variable, so EVERY job here is scheduled on the UTC clock; and
-#   * an inline `TZ=x cd ... && node` assignment scopes to `cd` alone — verified
-#     on the server, node saw TZ unset.
-# The only thing that moves a job's firing time on this host is the UTC fields.
-# Do NOT re-add a TZ= prefix and assume it schedules anything.
+# It previously read `5 5 15 9 * TZ=America/Los_Angeles ...` — 05:05 UTC =
+# 22:05 PT, i.e. 1.92 hours BEFORE entries closed, drafting the nurture flow
+# while people were still entering and killing the `01-confirm` email's
+# +2-entry rung for last-minute entrants. Adding that TZ= prefix on 2026-08-20
+# was believed to be the fix. It was not, and could not be:
+#   * this box runs `cron 3.0pl1`, whose binary contains NEITHER `CRON_TZ` nor a
+#     `TZ` crontab variable, so every job here is scheduled on the UTC clock; and
+#   * an inline `TZ=x cd ... && node` is a SHELL assignment scoped to `cd` —
+#     verified on the server, node saw TZ unset.
+# The prefix was inert twice over. Only the UTC fields move a job on this host.
+#
+# Do NOT re-add a TZ= prefix and assume it schedules anything. If entryClosesAt
+# ever changes, recompute the UTC fields by hand — nothing here follows it.
 GIVEAWAY_CLOSE_ENTRY_PERIOD="5 8 15 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/close-entry-period.mjs --apply >> data/reports/scheduler/giveaway-close.log 2>&1"
 
 # Re-send the double-opt-in confirmation to entrants who submitted but never
@@ -384,7 +380,7 @@ echo "  08:30 UTC — giveaway reconcile-referrals (confirmation/referral rungs)
 echo "  08:40 UTC — giveaway referral audit (why a referral isn't paying; reports near-misses)"
 echo "  08:45 UTC — giveaway daily report (spend gates)"
 echo "  16:00 UTC — giveaway nudge-unconfirmed (re-send opt-in confirmation)"
-echo "  05:05 UTC, 2026-09-15 PT — giveaway close-entry-period (TZ=America/Los_Angeles — do not drop the TZ prefix)"
+echo "  08:05 UTC 2026-09-15 — giveaway close-entry-period (~1h AFTER entries close; UTC clock, no TZ prefix)"
 echo ""
 echo "View with: crontab -l"
 echo "Logs in:   $PROJECT_DIR/data/reports/scheduler/"
