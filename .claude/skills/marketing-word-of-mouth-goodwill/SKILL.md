@@ -1,9 +1,9 @@
 ---
-name: marketing-referral-and-word-of-mouth
-description: Generating word of mouth by design: diagnosing why referrals are absent, sizing promises so they can be exceeded, and running a product-improvement loop that produces goodwill.
+name: marketing-word-of-mouth-goodwill
+description: Making the product worth talking about, before any referral mechanic is built — diagnosing whether few referrals means an unremarkable product or an ask that never happens, sizing promises low enough that delivery can exceed them, and running a standing monthly complaint-to-fix loop that produces the goodwill word of mouth is made of. The mechanics of the ask itself — payout structures, timing, gift cards, measurement — live in marketing-referral-programs, and are worth nothing until this passes.
 ---
 
-# Referral And Word Of Mouth
+# Word Of Mouth Goodwill
 
 ## If you get few referrals, there are only two causes — the product is not as remarkable as you think, or you never ask — so diagnose which before building any referral mechanic, using the question 'why are my customers too embarrassed to tell everyone they know about my product?'
 
