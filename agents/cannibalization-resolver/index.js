@@ -67,11 +67,16 @@ import { notify, notifyLatestReport } from '../../lib/notify.js';
 import {
   getBlogs, getArticles, updateArticle,
   getRedirects, createRedirect,
+  getCustomCollections, getSmartCollections,
 } from '../../lib/shopify.js';
 
 import { getContentPath, getMetaPath, ensurePostDir, ROOT } from '../../lib/posts.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import {
+  loadClusterHold, holdDecision, renderHoldLines, dedupeHeld, holdBanner,
+  renderDisagreementLines, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'cannibalization');
@@ -112,6 +117,8 @@ const days = parseInt(getArg('--days') || '90', 10);
 const minImpr = parseInt(getArg('--min-impr') || '50', 10);
 const reportJson = args.includes('--report-json');
 const publishPending = args.includes('--publish-pending-drafts');
+// Run the held clusters anyway, still recording that they were held.
+const includeHeld = args.includes(HOLD_FLAG);
 
 // ── URL helpers ───────────────────────────────────────────────────────────────
 // urlPath / slugFromPath live in redirect-decision.js (imported above) — same
@@ -270,12 +277,28 @@ function mergeMaxTokens(winnerHtml) {
   return Math.min(32000, Math.max(8000, Math.ceil(inputTokens * 1.5) + 1000));
 }
 
-async function consolidateContent(winnerArticle, loserArticle, query, articleIndex) {
+async function consolidateContent(winnerArticle, loserArticle, query, articleIndex, liveCollections = []) {
   // Build a compact list of other posts available for internal linking
   const otherPosts = [...articleIndex.entries()]
     .filter(([handle]) => handle !== winnerArticle.handle && handle !== loserArticle.handle)
     .map(([handle, a]) => `- ${a.title}: /blogs/news/${handle}`)
     .join('\n');
+
+  // The model was given blog posts to link to and NOTHING about collections, so
+  // it invented plausible-sounding ones — /collections/natural-toothpaste,
+  // /collections/sls-free-toothpaste, /collections/fluoride-free-toothpaste,
+  // /collections/vegan-toothpaste — all of which were deleted in the 62→5
+  // collection cleanup. Every such merge then auto-held on "internal link
+  // issues" (12 of 17 holds on 2026-08-23).
+  //
+  // The fix is a closed list of collections that ACTUALLY EXIST, fetched live.
+  // This never creates a collection and must not be read as licence to: a
+  // collection exists only where a category holds 2+ distinct products, and
+  // chasing keywords with new collections is what produced 62 of them for 9
+  // products and split the ranking signal.
+  const collectionList = liveCollections.length
+    ? liveCollections.map((c) => `- ${c.title}: /collections/${c.handle}`).join('\n')
+    : '(none available — do not link to any collection)';
 
   const prompt = `You are a content editor for ${config.name}, a ${config.brand_description}.
 
@@ -294,6 +317,9 @@ ${loserArticle.body_html}
 **Other blog posts available for internal linking:**
 ${otherPosts}
 
+**The ONLY collection pages that exist. This list is exhaustive:**
+${collectionList}
+
 Your job: produce a single, improved version of the WINNER that incorporates any unique valuable sections from the LOSER that are not already covered, and includes relevant internal links to related blog posts.
 
 Rules:
@@ -304,6 +330,7 @@ Rules:
 - Do not add a note about the merger or mention the other article
 - Add 2–4 internal links to related posts from the list above where they fit naturally in the text (use the full path as the href, e.g. <a href="/blogs/news/best-natural-toothpaste-2025">natural toothpaste</a>)
 - Do not link to the loser post — it will be redirected
+- COLLECTION LINKS: you may link ONLY to a collection listed above, copied exactly. Do NOT invent a collection URL. If no listed collection fits this post, link to no collection at all — that is the correct outcome, not a failure. A /collections/ URL that is not on that list does not exist and will 404.
 - Output ONLY the merged HTML body content, nothing else`;
 
   const msg = await client.messages.create({
@@ -332,12 +359,77 @@ Rules:
 
 // ── apply resolutions ─────────────────────────────────────────────────────────
 
+/**
+ * Published collections only — the closed list the merge prompt is allowed to
+ * link to. Fetched ONCE per run, not per merge. Unpublished drafts are excluded
+ * deliberately: 84 of the 89 collections on the store are drafts from the 62→5
+ * cleanup, and linking to one would 404 exactly like an invented URL.
+ */
+async function loadLiveCollections() {
+  try {
+    const [custom, smart] = await Promise.all([
+      getCustomCollections({ limit: 250 }),
+      getSmartCollections({ limit: 250 }),
+    ]);
+    return [...custom, ...smart]
+      .filter((c) => c.published_at)
+      .map((c) => ({ handle: c.handle, title: c.title }));
+  } catch (e) {
+    // Fail CLOSED here: an empty list tells the prompt to link to no collection,
+    // which is safe. Guessing would reintroduce the invented-URL bug.
+    console.log(`  ⚠ could not load collections (${e.message}) — merges will link to none`);
+    return [];
+  }
+}
+
 async function applyResolutions(decisions, articleIndex, existingRedirects, groups) {
   const existingPaths = new Set(existingRedirects.map((r) => r.path));
   const results = [];
 
+  // $0-cluster hold. This agent was the seventh large unattended LLM spender and
+  // the only one NOT on lib/cluster-hold.js's gated list — its 2026-08-23 run
+  // spent ~61 minutes on merges. Gating here, BEFORE consolidateContent, is the
+  // whole point: holding after the merge would still pay for the Claude call the
+  // hold exists to avoid. Same "gate before the cap" rule the other six follow.
+  //
+  // What this does NOT claim: that it would hold anything today. As of
+  // 2026-08-23 ZERO clusters qualify — toothpaste, the cluster this agent merges
+  // most, sold $71.50/90d and is `earning`, not a dud — and the gate is in fact
+  // DISARMED on the current report (no judging-window order count). That is the
+  // correct state for a structural guard: it is wired for when a cluster does
+  // qualify, and holds nothing when none does.
+  //
+  // A hold NEVER means unpublish, delete or deindex. Held pages stay live and
+  // keep their traffic; only unattended spend pauses. Fails open: a missing,
+  // stale or disarmed report holds nothing, and holdBanner() says which.
+  const liveCollections = await loadLiveCollections();
+  console.log(`  Live collections available for linking: ${liveCollections.length}`);
+
+  const hold = loadClusterHold({ root: ROOT });
+  for (const line of holdBanner(hold)) console.log(`  ${line}`);
+  const heldRecords = [];
+
   for (const decision of decisions) {
     if (decision.confidence !== 'HIGH') continue;
+
+    // Judge the cluster on the WINNER — that is the page a merge would rewrite.
+    const holdCall = holdDecision(
+      { slug: slugFromPath(decision.winner), keyword: decision.query, url: decision.winner },
+      hold,
+      { includeHeld },
+    );
+    if (holdCall.skip) {
+      heldRecords.push({ slug: slugFromPath(decision.winner), cluster: holdCall.cluster, reason: holdCall.reason });
+      results.push({
+        query: decision.query,
+        winnerPath: decision.winner,
+        action: 'HELD_CLUSTER',
+        status: 'skipped_cluster_hold',
+        cluster: holdCall.cluster,
+        holdReason: holdCall.reason,
+      });
+      continue;
+    }
 
     for (const loser of decision.losers) {
       if (loser.action === 'MONITOR') continue;
@@ -375,7 +467,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
       if (loser.action === 'CONSOLIDATE' && loserArticle) {
         try {
           process.stdout.write(`\n    Merging "${loserHandle}" → "${winnerHandle}"... `);
-          const mergedHtml = await consolidateContent(winnerArticle, loserArticle, decision.query, articleIndex);
+          const mergedHtml = await consolidateContent(winnerArticle, loserArticle, decision.query, articleIndex, liveCollections);
           console.log('merged');
 
           // Save to data/posts/ so the editor agent can evaluate it.
@@ -486,6 +578,13 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
       }
     }
   }
+
+  // Report what the hold withheld. A hold nobody can see becomes a mystery
+  // outage six weeks later, so this prints AND goes in the digest body below.
+  if (heldRecords.length) {
+    for (const line of renderHoldLines(dedupeHeld(heldRecords))) console.log(`  ${line}`);
+  }
+  results.clusterHeld = heldRecords;
 
   return results;
 }
