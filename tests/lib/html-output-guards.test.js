@@ -50,3 +50,37 @@ test('futureDatesAdded ignores pre-existing, past, and earlier-this-year dates',
   assert.deepEqual(futureDatesAdded('x', 'study from March 2025', now), []);               // past
   assert.deepEqual(futureDatesAdded('x', 'in May 2026', now), []);                          // earlier this year
 });
+
+// ── droppedLinks: which links a revision lost, not just how many ─────────────
+// content-remediator's guard reported only counts ("16 < 19"), which is a number
+// nobody can act on and nothing can retry against. Naming the anchors lets the
+// reviser be told exactly what to put back.
+const LINKED = '<p>See <a href="https://www.realskincare.com/a">alpha</a> and <a href="https://www.realskincare.com/b">beta</a>.</p>';
+
+test('droppedLinks names the href and anchor text of each lost link', async () => {
+  const { droppedLinks } = await import('../../lib/html-output-guards.js');
+  const revised = '<p>See <a href="https://www.realskincare.com/a">alpha</a> and beta.</p>';
+  const gone = droppedLinks(LINKED, revised);
+  assert.equal(gone.length, 1);
+  assert.equal(gone[0].href, 'https://www.realskincare.com/b');
+  assert.equal(gone[0].anchor, 'beta');
+});
+
+test('droppedLinks returns [] when every link survives, even if prose changed', async () => {
+  const { droppedLinks } = await import('../../lib/html-output-guards.js');
+  assert.deepEqual(droppedLinks(LINKED, LINKED.replace('See', 'Have a look at')), []);
+});
+
+test('droppedLinks is count-aware for repeated hrefs', async () => {
+  const { droppedLinks } = await import('../../lib/html-output-guards.js');
+  const twice = '<a href="/x">one</a><a href="/x">two</a>';
+  const once = '<a href="/x">one</a>';
+  assert.equal(droppedLinks(twice, once).length, 1);
+  assert.deepEqual(droppedLinks(once, twice), []);
+});
+
+test('droppedLinks strips nested markup from the anchor text', async () => {
+  const { droppedLinks } = await import('../../lib/html-output-guards.js');
+  const gone = droppedLinks('<a href="/x"><strong>bold  anchor</strong></a>', '');
+  assert.equal(gone[0].anchor, 'bold anchor');
+});

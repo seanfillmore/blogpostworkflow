@@ -15,51 +15,16 @@ import {
   loadRejections, isRejectedKw, getPostMeta, getItemStatus,
 } from './data-parsers.js';
 import { parseTechSeoReport } from './tech-seo-parser.js';
+import { classifyBlockedReport, LIVE_BLOCK_FRESHNESS_DAYS } from '../../../lib/blocked-posts.js';
 
-// How recent a live post's editor report must be to count as a freshly-blocked
-// refresh (vs an ancient stale report on a healthy legacy post). Days.
-const LIVE_BLOCK_FRESHNESS_DAYS = 30;
-
-/**
- * Pure decision: given a post's editor report + meta (+ report age), should it
- * surface as hard-blocked, and is it a live post whose refresh is blocked?
- * Extracted so the rules are unit-tested and can't silently regress (the
- * `shopify_publish_at`-in-the-past over-filter once hid every refresh-blocked
- * live post — the gap behind "blocked posts aren't surfaced anywhere").
- *
- * Rules (in order):
- *   1. Report must contain a "VERDICT: Needs Work" — cheap pre-filter.
- *   2. Skip only posts Shopify EXPLICITLY marks live (status published/scheduled).
- *      An UNSET status does NOT mean "fine": a refresh of an already-live post
- *      that fails the gate leaves the live post on old content with a fresh
- *      Needs Work report — exactly what must surface.
- *   3. "## OVERALL QUALITY" verdict (the editor's canonical sign-off) trumps
- *      sub-section verdicts: Pass / Good / Excellent → not blocked.
- *   4. "## BLOCKERS*" section starting with "None" → not blocked.
- *   5. For an already-live post (publish date in the past), require a RECENT
- *      report so an ancient stale report on a healthy legacy post doesn't flood
- *      the card. New (not-yet-live) posts surface regardless of age.
- *
- * @returns {{live:boolean, blockerText:string}|null} null = not blocked
- */
-export function classifyBlockedReport({ report, meta, reportAgeDays = Infinity, now = Date.now() }) {
-  if (!report || !meta) return null;
-  if (!/VERDICT[:*\s]*Needs Work/i.test(report)) return null;                              // rule 1
-  if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') return null; // rule 2
-
-  const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
-  if (overallMatch && !/needs work/i.test(overallMatch[1])) return null;                   // rule 3
-
-  const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
-  if (blockersMatch && /^\s*None\b/i.test(blockersMatch[1].trim())) return null;           // rule 4
-
-  const publishTs = meta.shopify_publish_at ? Date.parse(meta.shopify_publish_at) : NaN;
-  const live = !Number.isNaN(publishTs) && publishTs <= now;
-  if (live && reportAgeDays > LIVE_BLOCK_FRESHNESS_DAYS) return null;                       // rule 5
-
-  const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
-  return { live, blockerText };
-}
+// The rule moved to lib/blocked-posts.js so agents/daily-summary and
+// agents/blocked-post-resolver can share it — this module drags in the whole
+// dashboard path tree and is not importable from an agent. Re-exported here so
+// every existing caller (and tests/agents/dashboard-blocked-posts.test.js) keeps
+// working unchanged. The dashboard is the REVIEW surface, so it asks for live
+// posts too (`includeLive: true`, the library default); the 5 AM email asks for
+// only the ones a human must act on.
+export { classifyBlockedReport, LIVE_BLOCK_FRESHNESS_DAYS };
 
 /**
  * Find posts hard-blocked by the editorial gate — pre-publish posts stuck before

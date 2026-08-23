@@ -26,7 +26,7 @@ import {
   getContentPath, getEditorReportPath, getBackupsDir, ensurePostDir, ROOT,
 } from '../../lib/posts.js';
 import { parseEditorBlockers, contentBlockers, formatBlockersForPrompt } from '../../lib/editor-remediation.js';
-import { assertHtmlComplete, externalLinksAdded, futureDatesAdded } from '../../lib/html-output-guards.js';
+import { reviseWithLinkGuard } from '../../lib/content-revision.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -50,14 +50,6 @@ function arg(name) {
 
 function loadJson(p, fallback) {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return fallback; }
-}
-
-function countLinks(html) {
-  return (html.match(/<a\s/gi) || []).length;
-}
-
-function stripFences(text) {
-  return text.replace(/^```(?:html)?\s*/i, '').replace(/```\s*$/i, '').trim();
 }
 
 async function main() {
@@ -117,35 +109,30 @@ HARD CONSTRAINTS — violating these makes the revision unusable:
 ORIGINAL POST HTML:
 ${original}`;
 
-  const res = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 16000,
-    messages: [{ role: 'user', content: prompt }],
+  // The revise → validate loop lives in lib/content-revision.js so it is testable
+  // without a network call. The guards are unchanged and still FATAL — a revision
+  // that drops a link, fabricates a source or comes back truncated is never
+  // saved. The one thing that changed: a dropped link now earns exactly ONE more
+  // attempt, with the missing anchors named in the prompt. On 2026-08-21
+  // "Revision dropped links (16 < 19) — refusing to save" reached the digest as a
+  // failure; the guard was right, but the model had never been told what it lost.
+  const nowDate = new Date();
+  const { revised, attempts } = await reviseWithLinkGuard({
+    original,
+    basePrompt: prompt,
+    now: { year: nowDate.getFullYear(), month: nowDate.getMonth() + 1 },
+    callModel: async (p) => {
+      const res = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 16000,
+        messages: [{ role: 'user', content: p }],
+      });
+      return {
+        text: (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(''),
+        stopReason: res.stop_reason,
+      };
+    },
   });
-
-  const revised = stripFences((res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(''));
-
-  // Fatal integrity checks — escalate (leave post blocked) rather than save junk.
-  assertHtmlComplete({ html: revised, stopReason: res.stop_reason });
-  if (revised.length < original.length * 0.6) {
-    throw new Error(`Revision is suspiciously short (${revised.length} vs ${original.length} chars) — refusing to save.`);
-  }
-  if (countLinks(revised) < countLinks(original)) {
-    throw new Error(`Revision dropped links (${countLinks(revised)} < ${countLinks(original)}) — refusing to save.`);
-  }
-  // The reviser must not fabricate citations or dates — that's citation-finder's
-  // job (it verifies sources). Adding an external link or a future-dated "fact"
-  // means it invented a source; refuse so the post stays blocked for the proper
-  // tool / a human instead of going live with a 404 link or a bogus date.
-  const addedLinks = externalLinksAdded(original, revised);
-  if (addedLinks.length) {
-    throw new Error(`Revision added ${addedLinks.length} unverified external link(s) — citations are citation-finder's job. Refusing to save: ${addedLinks.slice(0, 3).join(', ')}`);
-  }
-  const now = new Date();
-  const futureDates = futureDatesAdded(original, revised, { year: now.getFullYear(), month: now.getMonth() + 1 });
-  if (futureDates.length) {
-    throw new Error(`Revision introduced future-dated "fact(s)" not in the original (${futureDates.slice(0, 3).join(', ')}) — likely a fabricated citation date. Refusing to save.`);
-  }
 
   // Back up the original, then write the revision.
   ensurePostDir(slug);
@@ -153,7 +140,7 @@ ${original}`;
   copyFileSync(contentPath, join(getBackupsDir(slug), `content-${stamp}.html`));
   writeFileSync(contentPath, revised);
 
-  console.log(`  content-remediator: revised "${slug}" (${blockers.length} blocker(s) addressed; backup saved).`);
+  console.log(`  content-remediator: revised "${slug}" (${blockers.length} blocker(s) addressed in ${attempts} attempt(s); backup saved).`);
   await notify({
     subject: `Content remediated: ${slug}`,
     body: `Revised ${slug} to address editor blockers: ${blockers.map((b) => b.section).join(', ')}.`,
@@ -161,8 +148,13 @@ ${original}`;
   }).catch(() => {});
 }
 
-main().catch((err) => {
-  notify({ subject: 'Content Remediator failed', body: err.message || String(err), status: 'error' }).catch(() => {});
-  console.error(`  content-remediator error: ${err.message}`);
-  process.exit(1);
-});
+// Only run when invoked directly — importing this module must not start a live
+// revision (it writes content.html and can exit the host process).
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main().catch((err) => {
+    notify({ subject: 'Content Remediator failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+    console.error(`  content-remediator error: ${err.message}`);
+    process.exit(1);
+  });
+}

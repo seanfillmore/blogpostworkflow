@@ -241,6 +241,18 @@ runStep('flatten-chains', `"${NODE}" agents/technical-seo/index.js flatten-chain
 // Step 5f: rebuild legacy / editor-tagged posts — max 5 per day, daily until backlog clears
 runStep('legacy-rebuilder', `"${NODE}" agents/legacy-rebuilder/index.js --limit 5 --apply${dryFlag}`);
 
+// Step 5f.1: resolve hard-blocked posts. Runs AFTER legacy-rebuilder (and after
+// the link-repair + editor + publisher work in Step 3) so it sees the freshest
+// editor verdicts and only picks up what those left blocked.
+//
+// This closes the loop the digest could not: "Action Required — N posts
+// hard-blocked" appeared every morning and nothing acted on it, so three LIVE
+// HTTP-200 pages sat flagged from 2026-08-16 to 2026-08-22. --apply because the
+// scheduled path applies (Autonomy Principle); the repair loop still pushes only
+// a revision that PASSES the gate, and on exhaustion it softens the claim and
+// leaves the page live rather than ever unpublishing it.
+runStep('blocked-post-resolver', `"${NODE}" agents/blocked-post-resolver/index.js --limit 5${dryFlag ? '' : ' --apply'}`);
+
 // Step 5g: refresh stale year references in titles + meta descriptions (idempotent)
 runStep('meta-optimizer --refresh-stale-years', `"${NODE}" agents/meta-optimizer/index.js --refresh-stale-years${dryFlag ? '' : ' --apply'}`);
 

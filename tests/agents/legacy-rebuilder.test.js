@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { renderRebuildSummary } from '../../agents/legacy-rebuilder/index.js';
+import { renderRebuildSummary, clearNeedsRebuild } from '../../agents/legacy-rebuilder/index.js';
 
 // The digest said "Legacy Rebuilder: 4 rebuilt, 1 failed" and nothing else — no
 // slug, no reason. The detail existed but only reached console.error, and the
@@ -49,6 +49,35 @@ test('renderRebuildSummary lists every failure, not just the first', () => {
   });
   assert.match(body, /a/);
   assert.match(body, /b/);
+});
+
+// ── the `broken` bucket used to be immortal ─────────────────────────────────
+// rebuildPost() returned true for a broken-bucket post WITHOUT clearing
+// needs_rebuild, so the same post re-entered findLegacyPosts() every single day
+// and re-surfaced in the digest forever. The `winner` branch had always cleared
+// it; `broken` never did.
+
+test('clearNeedsRebuild drops the flag and records the acknowledgement', () => {
+  const meta = { slug: 'x', needs_rebuild: { flagged_at: '2026-08-16T00:00:00Z' }, legacy_bucket: 'broken' };
+  const { meta: out, cleared } = clearNeedsRebuild(meta, { ackField: 'legacy_broken_ack_at', at: '2026-08-22T00:00:00Z' });
+  assert.equal(cleared, true);
+  assert.equal(out.needs_rebuild, undefined);
+  assert.equal(out.legacy_broken_ack_at, '2026-08-22T00:00:00Z');
+  assert.equal(out.legacy_bucket, 'broken', 'the bucket survives — the post still needs a manual technical fix');
+});
+
+test('clearNeedsRebuild is a no-op when the flag was never set', () => {
+  const meta = { slug: 'x', legacy_bucket: 'broken' };
+  const { meta: out, cleared } = clearNeedsRebuild(meta, { ackField: 'legacy_broken_ack_at', at: 'T' });
+  assert.equal(cleared, false);
+  assert.equal(out.legacy_broken_ack_at, undefined, 'no stamp when nothing was cleared');
+  assert.deepEqual(out, meta);
+});
+
+test('clearNeedsRebuild tolerates a null meta', () => {
+  const { meta: out, cleared } = clearNeedsRebuild(null, { ackField: 'a', at: 'T' });
+  assert.equal(cleared, false);
+  assert.deepEqual(out, {});
 });
 
 console.log('✓ legacy-rebuilder tests pass');
