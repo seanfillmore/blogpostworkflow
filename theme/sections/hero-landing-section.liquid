@@ -80,10 +80,27 @@
 {%- assign hero_d = product.metafields.bundle.hero_desktop.value | default: section.settings.bg_image_desktop -%}
 {%- assign hero_m = product.metafields.bundle.hero_mobile.value | default: section.settings.bg_image_mobile -%}
 
-{%- comment -%} Load section CSS non-blocking {%- endcomment -%}
+{%- comment -%}
+  Load section CSS RENDER-BLOCKING, on purpose.
+
+  This used to be the media="print" onload="this.media='all'" trick. That made
+  the hero paint before its own stylesheet applied: .hero-landing__bg is not yet
+  position:absolute;inset:0 and .hero-landing__bg-img not yet
+  height:100%;object-fit:cover, so the <img> below lays out in normal flow at
+  its own width/height attributes -- which are the MOBILE image's (750x1000
+  portrait on the homepage, 100x100 on the landing-page templates) while the
+  desktop <source> serves 2400x1200 landscape. At a 1280px viewport that
+  reserves ~1707px, then collapses to the 760px min-height when the sheet
+  finally applies. Measured: homepage CLS p75 0.1231, 25 of 27
+  hero-landing__bg shifts at vw >= 1200, median 0.141 at median 973ms.
+
+  The preload on the next line already starts the fetch at the same moment, so
+  making it blocking costs no extra latency -- and this is above-the-fold,
+  LCP-critical CSS that should never have been deferred. The <noscript> copy is
+  gone with the trick: it existed only to cover the JS-dependent onload swap.
+{%- endcomment -%}
 <link rel="preload" as="style" href="{{ 'hero-landing-section.css' | asset_url }}">
-<link rel="stylesheet" href="{{ 'hero-landing-section.css' | asset_url }}" media="print" onload="this.media='all'">
-<noscript>{{ 'hero-landing-section.css' | asset_url | stylesheet_tag }}</noscript>
+<link rel="stylesheet" href="{{ 'hero-landing-section.css' | asset_url }}">
 
 {%- comment -%} Preload likely LCP image for desktop {%- endcomment -%}
 {%- if hero_d != blank -%}
@@ -128,10 +145,22 @@
   {%- if d != blank or m != blank -%}
     <picture>
       {%- if d != blank -%}
+        {%- comment -%}
+          width/height are defence-in-depth for the shift described above: when
+          this <source> is the chosen candidate the browser takes its aspect
+          ratio from these attributes instead of falling back to the <img>'s
+          mobile-portrait ones. Both current desktop heroes are 2400x1200, so
+          this renders width="2400" height="1200" today; it is read off the
+          image rather than hardcoded because hero_d can be overridden per
+          product by the bundle.hero_desktop metafield above, and a hardcoded
+          2:1 would then be wrong for that override.
+        {%- endcomment -%}
         <source
           media="(min-width: 768px)"
           srcset="{{ d | image_url: width: 2000 }} 2000w, {{ d | image_url: width: 1600 }} 1600w, {{ d | image_url: width: 1200 }} 1200w"
-          sizes="100vw">
+          sizes="100vw"
+          width="{{ d.width }}"
+          height="{{ d.height }}">
       {%- endif -%}
 
       {%- if m != blank -%}
