@@ -1,12 +1,12 @@
 // agents/dashboard/routes/ideas.js
 import { loadCalendar, upsertItem } from '../../../lib/calendar-store.js';
 import { join } from 'node:path';
-import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 // The SHARED helper, not a local copy. This module used to carry its own byte-identical
 // clone, which meant it also carried the `JSON.parse('null')` process-kill fixed in
 // lib/responses.js on 2026-08-17 — a central fix that two route modules opt out of by
 // re-implementing is not a central fix. See that function's docstring.
 import { readJsonBody } from '../lib/responses.js';
+import { appendRejection } from '../../../lib/rejected-keywords.js';
 
 function respondJson(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -91,13 +91,18 @@ export default [
       const item = calendar.items.find((i) => i.slug === slug);
       if (!item) return respondJson(res, { ok: false, error: 'Not found' }, 404);
 
-      // Add to rejected-keywords.json
-      const rejectedPath = join(ctx.ROOT, 'data', 'rejected-keywords.json');
-      const rejected = existsSync(rejectedPath) ? JSON.parse(readFileSync(rejectedPath, 'utf8')) : [];
-      if (!rejected.find((r) => r.keyword === item.keyword)) {
-        rejected.push({ keyword: item.keyword, slug: item.slug, rejected_at: new Date().toISOString() });
-        writeFileSync(rejectedPath, JSON.stringify(rejected, null, 2));
-      }
+      // Add to rejected-keywords.json — through the shared writer, which
+      // re-reads and merges before writing. This route runs inside the
+      // long-lived PM2 process while agents/content-strategist writes the same
+      // file from the 15:00 UTC cron; the old local read → push → write lost
+      // whichever finished second. Its dedupe was also case-SENSITIVE, so
+      // "Real Soap" and "real soap" both landed.
+      appendRejection({
+        keyword: item.keyword,
+        slug: item.slug,
+        rejected_at: new Date().toISOString(),
+        source: 'dashboard:ideas-reject',
+      }, { path: join(ctx.ROOT, 'data', 'rejected-keywords.json') });
 
       // Remove from calendar
       const updatedItems = calendar.items.filter((i) => i.slug !== slug);
