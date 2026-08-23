@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   runDemandMiner, classifyStages, realApplyPersonaOverlay,
-  realOverlayPersonasOnly, realSanitizePersonasStep, parseLimitArg,
+  realOverlayPersonasOnly, realSanitizePersonasStep, parseLimitArg, renderRunMetrics,
 } from '../../agents/demand-miner/index.js';
 
 const LEAKS = { leaks: [{ query: 'coconut oil acne', impressions: 900, clicks: 0, position: 12 }] };
@@ -283,11 +283,12 @@ test('the merge is positional by index — a mangled/echoed text field on the re
       ],
     }) }],
   }) } };
-  const result = await classifyStages({ anthropic: mangledLlm, records });
+  const { records: result, duplicateIndexCount } = await classifyStages({ anthropic: mangledLlm, records });
   assert.equal(result[0].stage, 'problem-aware');
   assert.equal(result[1].stage, 'unaware');
   // The original text is untouched — only `stage` was merged on.
   assert.equal(result[0].text, 'Doesn’t coconut oil clog pores?');
+  assert.equal(duplicateIndexCount, 0, 'two distinct indices, no collision');
 });
 
 test('an out-of-range index is schema-invalid, retried once, then throws', async () => {
@@ -298,6 +299,47 @@ test('an out-of-range index is schema-invalid, retried once, then throws', async
   } } };
   await assert.rejects(() => classifyStages({ anthropic: badIndexLlm, records: [{ text: 'q' }] }));
   assert.equal(calls, 2, 'one attempt plus one retry, then give up — not an infinite loop');
+});
+
+// --- Open question 2 — does the LLM classification response ever name the same [n]
+// index twice? The merge has always keyed onto a Map, so a repeated index has always
+// silently overwritten via Map.set (last value wins) — validateQuestions can't catch
+// it because both the earlier and later entry are individually valid. This was
+// deliberately left unfixed (no rejection, no dedup) pending evidence from a real run;
+// these tests pin that classifyStages now COUNTS the collision without changing that
+// merge behavior at all.
+
+test('classifyStages counts a duplicate index without changing the merge (last value still wins) or rejecting the response', async () => {
+  const dupLlm = { messages: { create: async () => ({
+    content: [{ type: 'text', text: JSON.stringify({
+      questions: [
+        { index: 1, stage: 'unaware' },
+        { index: 1, stage: 'most-aware' }, // same index twice — the second silently overwrites
+      ],
+    }) }],
+  }) } };
+  const { records, duplicateIndexCount } = await classifyStages({ anthropic: dupLlm, records: [{ text: 'q' }] });
+  // Mutation this catches: removing/miscounting the duplicate-index counter, or
+  // "fixing" the merge to reject/dedupe duplicates instead of just reporting them —
+  // either would flip one of these two assertions.
+  assert.equal(duplicateIndexCount, 1, 'index 1 was named twice — exactly one collision');
+  assert.equal(records[0].stage, 'most-aware', 'merge behavior unchanged: the later entry for a duplicate index still wins via Map.set');
+});
+
+test('classifyStages reports zero duplicate indices for a clean response with no repeats', async () => {
+  const cleanLlm = { messages: { create: async () => ({
+    content: [{ type: 'text', text: JSON.stringify({
+      questions: [{ index: 1, stage: 'unaware' }, { index: 2, stage: 'problem-aware' }],
+    }) }],
+  }) } };
+  const { duplicateIndexCount } = await classifyStages({
+    anthropic: cleanLlm,
+    records: [{ text: 'q1' }, { text: 'q2' }],
+  });
+  // Mutation this catches: a duplicate counter that fires on ANY response (e.g.
+  // counting total entries, or counting `stageByIndex.has` regardless of whether the
+  // Map already held that key from a real duplicate) would report non-zero here.
+  assert.equal(duplicateIndexCount, 0, 'two distinct indices, no collision');
 });
 
 // --- Fix wave: item 2 — this agent is a FIFTH reader of personas.json and must apply
@@ -616,4 +658,139 @@ test('runDemandMiner with no `limit` behaves exactly as before (full SEED_CAP ap
   });
   assert.equal(result.seedCount, 2, 'unaffected: one leak seed + one persona seed, same as before this fix wave');
   assert.ok(written.json);
+});
+
+// --- Success-notify metrics: settling the two deliberately-open questions from the
+// first real run, every month, not just once. See the module docstring and
+// renderRunMetrics for what these numbers are for.
+
+// Open question 1: how much does the skin-cluster leak filter drop, and does it look
+// like genuine top-of-funnel phrasing? "why is my skin so oily" and "how to get rid
+// of dark spots" are exactly the kind of on-topic phrasing named in the task as a
+// known recall-loss case — neither matches any assignCluster rule (lib/keyword-index/
+// cluster.js), so both come back 'unclustered' and are dropped.
+
+test('runDemandMiner reports how many leaks the skin-cluster filter dropped, with a sample of what was dropped', async () => {
+  const leaksWithNoise = {
+    leaks: [
+      { query: 'coconut oil lotion for eczema', impressions: 500, clicks: 0, position: 8 }, // survives (lotion)
+      { query: 'why is my skin so oily', impressions: 400, clicks: 0, position: 5 }, // dropped (unclustered)
+      { query: 'how to get rid of dark spots', impressions: 300, clicks: 0, position: 6 }, // dropped (unclustered)
+    ],
+  };
+  const { writeArtifacts } = collectWrites();
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: stubAnthropic(),
+    readJson: (p) => (p.includes('impression-leaks') ? leaksWithNoise : PERSONAS),
+    writeArtifacts,
+    now: 'x',
+  });
+  // Mutation this catches: reverting index.js to call filterLeaksToSkinCluster (the
+  // survivors-only function) instead of the _Detailed variant would leave
+  // result.metrics.leakFilter undefined entirely; swapping the survivors/dropped
+  // arrays, or using the wrong SKIN_LEAK_CLUSTER_SET check, would flip these counts.
+  assert.equal(result.metrics.leakFilter.in, 3);
+  assert.equal(result.metrics.leakFilter.survived, 1);
+  assert.equal(result.metrics.leakFilter.dropped, 2);
+  assert.deepEqual(
+    [...result.metrics.leakFilter.droppedSample].sort(),
+    ['how to get rid of dark spots', 'why is my skin so oily'],
+    'the sample names the actual dropped queries, not just a count',
+  );
+});
+
+test('runDemandMiner reports zero drops, with an empty sample, when every leak survives the filter', async () => {
+  const cleanLeaks = { leaks: [{ query: 'coconut oil lotion for eczema', impressions: 500, clicks: 0, position: 8 }] };
+  const { writeArtifacts } = collectWrites();
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: stubAnthropic(),
+    readJson: (p) => (p.includes('impression-leaks') ? cleanLeaks : PERSONAS),
+    writeArtifacts,
+    now: 'x',
+  });
+  // Mutation this catches: a filter that reports a nonzero drop count (or a
+  // non-empty sample) even when nothing was actually excluded — e.g. an
+  // off-by-one that treats the last survivor as dropped.
+  assert.equal(result.metrics.leakFilter.in, 1);
+  assert.equal(result.metrics.leakFilter.survived, 1);
+  assert.equal(result.metrics.leakFilter.dropped, 0);
+  assert.deepEqual(result.metrics.leakFilter.droppedSample, []);
+});
+
+test('runDemandMiner caps the dropped-leak sample at 5 even when more than 5 are dropped', async () => {
+  const manyDropped = {
+    leaks: Array.from({ length: 8 }, (_, i) => ({
+      query: `totally unrelated query number ${i}`, impressions: 8 - i, clicks: 0, position: 5,
+    })),
+  };
+  const { writeArtifacts } = collectWrites();
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: stubAnthropic(),
+    readJson: (p) => (p.includes('impression-leaks') ? manyDropped : PERSONAS),
+    writeArtifacts,
+    now: 'x',
+  });
+  // Mutation this catches: a sample that isn't capped (dropped.length entries
+  // instead of at most 5) would make an email carrying hundreds of dropped queries
+  // in a real run — the whole point of "up to 5" as a diagnostic, not a dump.
+  assert.equal(result.metrics.leakFilter.dropped, 8);
+  assert.equal(result.metrics.leakFilter.droppedSample.length, 5);
+});
+
+// Open question 2, end-to-end: proves runDemandMiner actually wires classifyStages'
+// duplicateIndexCount into `metrics`, not just that classifyStages computes it in
+// isolation (already covered above).
+
+test('runDemandMiner surfaces classifyStages\' duplicate-index count in `metrics`', async () => {
+  const dupLlm = { messages: { create: async () => ({
+    content: [{ type: 'text', text: JSON.stringify({
+      questions: [{ index: 1, stage: 'unaware' }, { index: 1, stage: 'problem-aware' }],
+    }) }],
+  }) } };
+  const { writeArtifacts } = collectWrites();
+  const result = await runDemandMiner({
+    getSerpResults: stubSerp,
+    anthropic: dupLlm,
+    readJson: (p) => (p.includes('impression-leaks') ? LEAKS : PERSONAS),
+    writeArtifacts,
+    now: 'x',
+  });
+  // Mutation this catches: destructuring only `records` off classifyStages' return
+  // and dropping `duplicateIndexCount` on the floor before it reaches `metrics`.
+  assert.equal(result.metrics.duplicateIndexCount, 1);
+});
+
+// --- renderRunMetrics: the actual text a human reads in the 5 AM digest.
+
+test('renderRunMetrics renders the dropped-leak sample quoted and counted', () => {
+  const body = renderRunMetrics({
+    seedsByOrigin: { gsc_leak: 2, persona_objection: 1 },
+    leakFilter: { in: 3, survived: 1, dropped: 2, droppedSample: ['why is my skin so oily', 'how to get rid of dark spots'] },
+    stageDistribution: { unaware: 1, 'problem-aware': 0, 'solution-aware': 0, 'product-aware': 0, 'most-aware': 0 },
+    personaJoin: { withPersona: 0, withoutPersona: 1 },
+    duplicateIndexCount: 0,
+  });
+  assert.match(body, /3 leak\(s\) in -> 1 survived, 2 dropped/);
+  assert.match(body, /"why is my skin so oily"/);
+  assert.match(body, /"how to get rid of dark spots"/);
+  assert.match(body, /LLM duplicate index collisions: 0\./);
+});
+
+test('renderRunMetrics says "nothing dropped" cleanly when the filter drops nothing, and flags a nonzero duplicate count', () => {
+  const body = renderRunMetrics({
+    seedsByOrigin: { gsc_leak: 1, persona_objection: 0 },
+    leakFilter: { in: 1, survived: 1, dropped: 0, droppedSample: [] },
+    stageDistribution: { unaware: 0, 'problem-aware': 1, 'solution-aware': 0, 'product-aware': 0, 'most-aware': 0 },
+    personaJoin: { withPersona: 0, withoutPersona: 1 },
+    duplicateIndexCount: 3,
+  });
+  // Mutation this catches: a renderer that only handles the "something dropped"
+  // branch (crashing or printing "undefined" on an empty sample), or one that
+  // renders the same duplicate-count line regardless of whether it's zero.
+  assert.match(body, /Nothing dropped this run\./);
+  assert.match(body, /LLM duplicate index collisions: 3/);
+  assert.doesNotMatch(body, /Dropped sample/);
 });

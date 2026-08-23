@@ -6,7 +6,9 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { SEED_CAP, deriveSeeds, normalizeHarvest, validateQuestions } from '../../lib/demand-questions.js';
-import { renderDemandQuestionsMarkdown, filterLeaksToSkinCluster, SKIN_LEAK_CLUSTERS } from '../../lib/demand-questions.js';
+import {
+  renderDemandQuestionsMarkdown, filterLeaksToSkinCluster, filterLeaksToSkinClusterDetailed, SKIN_LEAK_CLUSTERS,
+} from '../../lib/demand-questions.js';
 import { AWARENESS_LEVELS } from '../../lib/voice-of-customer.js';
 
 const leak = (query, impressions) => ({ query, impressions, clicks: 0, position: 10 });
@@ -466,4 +468,45 @@ test('an all-off-cluster feed filters down to an empty array, not null', () => {
   const result = filterLeaksToSkinCluster([leak('cinnamon toothpaste', 500)]);
   assert.deepEqual(result, []);
   assert.notEqual(result, null);
+});
+
+// --- filterLeaksToSkinClusterDetailed — the demand-miner success notify's evidence
+// source for "how much is dropped, and is it the good stuff". A pure sibling of
+// filterLeaksToSkinCluster (same predicate), reporting what it dropped instead of
+// discarding it.
+
+test('filterLeaksToSkinClusterDetailed reports dropped rows alongside survivors, not just a smaller array', () => {
+  const leaks = [
+    leak('coconut oil acne', 900),          // survives: coconut oil
+    leak('why is my skin so oily', 700),    // dropped: unclustered — on-topic top-of-funnel, no assignCluster rule fits
+    leak('natural bar soap for men', 200),  // survives: soap
+    leak('cinnamon toothpaste', 150),       // dropped: toothpaste (excluded cluster)
+  ];
+  const result = filterLeaksToSkinClusterDetailed(leaks);
+  // Mutation this catches: swapping which branch pushes to survivors vs dropped, or
+  // returning the wrong `total` (leaks.length vs survivors.length), would flip these.
+  assert.equal(result.total, 4);
+  assert.deepEqual(result.survivors.map((l) => l.query), ['coconut oil acne', 'natural bar soap for men']);
+  assert.deepEqual(result.dropped.map((l) => l.query), ['why is my skin so oily', 'cinnamon toothpaste']);
+  // filterLeaksToSkinCluster must still agree — it's a thin wrapper over this.
+  assert.deepEqual(filterLeaksToSkinCluster(leaks).map((l) => l.query), result.survivors.map((l) => l.query));
+});
+
+test('filterLeaksToSkinClusterDetailed reports zero dropped when every leak survives', () => {
+  const leaks = [leak('coconut oil acne', 900), leak('natural bar soap for men', 200)];
+  const result = filterLeaksToSkinClusterDetailed(leaks);
+  // Mutation this catches: an implementation that always pushes at least one row to
+  // `dropped` (e.g. an off-by-one loop bound) would fail this even though nothing
+  // should have been excluded.
+  assert.equal(result.dropped.length, 0);
+  assert.equal(result.survived, undefined); // no such key — `survivors`, not `survived`
+  assert.equal(result.survivors.length, 2);
+  assert.equal(result.total, 2);
+});
+
+test('filterLeaksToSkinClusterDetailed on a non-array input passes survivors through unchanged and reports nothing dropped', () => {
+  // Mirrors filterLeaksToSkinCluster's own null/undefined pass-through: "no leak feed
+  // available" has nothing to report, not a zero-out-of-zero drop count.
+  assert.deepEqual(filterLeaksToSkinClusterDetailed(null), { survivors: null, dropped: [], total: 0 });
+  assert.deepEqual(filterLeaksToSkinClusterDetailed(undefined), { survivors: undefined, dropped: [], total: 0 });
 });
