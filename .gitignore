@@ -159,3 +159,9 @@ data/reports/llm-usage/
 # data/briefs/ itself already holds committed content-brief JSON for a different
 # pipeline, and ignoring the parent would silently drop tracked files from future diffs.
 data/briefs/ad-studio/
+
+# data/briefs/_dropped/ is deliberately NOT ignored. It holds content briefs that
+# scripts/triage-orphan-briefs.mjs took out of circulation, and archiving a tracked
+# brief there is a rename git can follow and undo. Ignoring it would make the archive
+# itself untracked — which is exactly the condition that made the 2026-08-19 loss of
+# vegan-soap/oatmeal-soap/coconut-oil-soap-benefits unrecoverable. See lib/brief-archive.js.
