@@ -102,7 +102,7 @@ either.
 
 Raised by #5. The "yapper ad" (creator to camera: pain → skeptical discovery → trial →
 transformation → CTA) was **rejected** as a duplicate — that story skeleton is already
-recorded in `marketing-conversion-copy-angles` as the long-form native story ad, and the
+recorded in `marketing-copy-hooks-and-formats` as the long-form native story ad, and the
 only additive element is the video medium, which `marketing-paid-creative-testing` already
 declines as the default for a solo operator.
 

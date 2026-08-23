@@ -1,6 +1,6 @@
 ---
 name: marketing-review-mining
-description: Use when sourcing customer proof and deciding which of it to show — exporting Shopify and Amazon reviews to CSV and running them through an LLM for verbatim phrasing and recurring objections, then choosing which quotes actually earn their place: whose 'before' state matches the buyer you want, which quotes name the mechanism that worked, how to word the review request so it comes back usable, and how to spread a small review corpus across the objections that disqualify readers.
+description: Use when sourcing customer proof and deciding which of it to show — exporting Shopify and Amazon reviews to CSV and running them through an LLM for verbatim phrasing and recurring objections, then choosing which quotes actually earn their place: whose 'before' state matches the buyer you want, which quotes name the mechanism that worked, how to word the review request so it comes back usable, how to spread a small review corpus across the objections that disqualify readers, and how to monitor and answer what is being said about you off your own property.
 ---
 
 # Review Mining
@@ -56,6 +56,16 @@ description: Use when sourcing customer proof and deciding which of it to show �
 **Fit here (7/10):** The strongest revenue link in its source video, because the output feeds the surfaces that actually convert: PDP proof blocks, Amazon A+ modules, and email subject lines. Natural deodorant has an unusually clean worst moment — "I kept my arms down in a meeting," "my shirt was ruined by noon" — so the elicitation question has an obvious form here. Additive to the extraction tactic above, which covers how to mine quotes but not which question produces good ones or which to choose. **Channel constraint:** Amazon prohibits directed review solicitation, so only the Shopify-side request (Judge.me follow-up, post-purchase email) is safe to run; Amazon reviews stay read-only input.
 
 *Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
+
+## Monitor the consumer-generated media buyers check before deciding — third-party reviews, blogs, forum threads — and leave nothing derogatory standing without a visible, reasonable reply.
+
+**Why it works:** Prospects leave your site to check what disinterested parties say, and they weight those accounts above your own copy. An unanswered negative account off your property therefore does damage no amount of on-page copy repairs; a calm, specific response neutralises it not just for the complainant but for every later reader of the same thread, who sees the objection and the answer together.
+
+**Evidence offered:** A cited Deloitte & Touche survey claiming more than 80% of people who seek out these opinions believe them more than advertising copy. Secondhand citation, no link, no figures on the effect of responding.
+
+**Fit here (6/10):** Durable trust-and-proof principle whose described behaviour has only intensified since 2008. Genuinely additive to everything above: the other tactics own extracting language from reviews you already have and choosing which to display, and the voice-of-customer agent already mines Reddit and Judge.me monthly — but nothing owned the response side. Concretely: replying to a negative Amazon review on the ~$1,800/mo channel, or answering a 'has anyone tried this brand' thread in a sensitive-skin or zero-waste subreddit. Free, purely editorial, solo-executable, and it lands on the exact objections (baking soda burned, quit by noon, gave up during the transition) that drive the 18–22.5% repeat rate — the same objection set the proof-spread tactic above organises around, so a reply and a curated quote can answer the same belief. Held at 6 because it protects trust rather than producing revenue, and it will never be measurable at this volume. **Guardrail:** Amazon permits a seller response to a review but prohibits anything that reads as review manipulation — no asking for edits or removal, no inducements; and forum participation must be disclosed as the brand, never posted as a customer.
+
+*Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 3 of 6)*
 
 ## Install Google Analytics and the Facebook pixel on the review survey pages and read the funnel drop-off report to optimize review-collection conversion.
 

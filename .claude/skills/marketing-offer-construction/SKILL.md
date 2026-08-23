@@ -1,6 +1,6 @@
 ---
 name: marketing-offer-construction
-description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, creating a premium version of something you already sell, auditing which SKUs have a real differentiator and which should compete on value vectors instead, scoring which existing SKU should anchor a bundle or act as the cheap entry offer, choosing discount depth (or deciding not to discount at all), finding a price by stepping it upward against a fixed sample of orders, how to state the same savings (percent off vs dollars off vs a free portion), writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
+description: Use when deciding what you actually sell or give away rather than how you word it — building bundles and buy-X-get-Y structures to lift average order value, naming and pricing the tiers of a package, creating a premium version of something you already sell, auditing which SKUs have a real differentiator and which should compete on value vectors instead, scoring which existing SKU should anchor a bundle or act as the cheap entry offer, setting a front-end acquisition price and the margin gate it has to clear, choosing discount depth (or deciding not to discount at all), finding a price by stepping it upward against a fixed sample of orders, cutting a price objection by re-anchoring the comparison class instead of discounting, stating plainly why a high price has to be high, how to state the same savings (percent off vs dollars off vs a free portion), where the price sits relative to the bundle, guarantee and quantity argument on a page or in an email, how to close a page or email with a condensed claim summary and the guarantee restated against each claim, which audience to validate a new offer on first, writing and placing a guarantee or risk-reversal promise on a product page or Amazon listing, or picking the incentive behind an email capture popup.
 ---
 
 # Offer Construction
@@ -11,7 +11,7 @@ description: Use when deciding what you actually sell or give away rather than h
 
 **Evidence offered:** Assertion, repeated twice as the video's framing thesis; no data.
 
-**Fit here (7/10):** Durable pricing/offer logic, no decay. Directly corrective for a $2,700/mo solo operation whose default promotional reflex is a percentage-off code. Free to apply and sits inside the Offer/AOV stage that is reachable without ad spend. Treat this as the gate on every other tactic below: before writing a discount, check whether a guarantee, a bundle structure, or a pre-work/ease improvement would move perceived value further at lower cost.
+**Fit here (7/10):** Durable pricing/offer logic, no decay. Directly corrective for a $2,700/mo solo operation whose default promotional reflex is a percentage-off code. Free to apply and sits inside the Offer/AOV stage that is reachable without ad spend. Treat this as the gate on every other tactic below: before writing a discount, check whether a guarantee, a bundle structure, a re-anchored price comparison, or a pre-work/ease improvement would move perceived value further at lower cost.
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
@@ -43,10 +43,20 @@ description: Use when deciding what you actually sell or give away rather than h
 
 **Evidence offered:** Assertion, plus the fallback logic that if the market won't pay, you move up market. Procedure supported by worked arithmetic only — $5 gum stepped to $6, then $7.20, with the instruction to keep going and 'do the math'; the source prescribes five sales per step and 20% increments, with no case data and no account of how conversion rate is observed at small volumes.
 
-**Fit here (6/10):** Durable pricing logic, age irrelevant, and revenue is the prime directive — with roughly 54 orders/month, price is one of only two multiplicands available without new traffic. The sample unit is unusually workable at this scale: five Shopify orders is a matter of days. Two real limits cap it at 6. First, the prescribed 20% step is far too coarse for a $12 deodorant in a saturated category where Native and Dr. Squatch set the visible comparison price — take small steps here. Second, on Amazon (~$1,800/mo, the larger channel) price moves interact with Buy Box and ranking, so run the escalation on Shopify first. At this order volume a clean read is slow either way, so prefer applying it as the funding mechanism for a specific added guarantee or bundle rather than as a standalone across-the-board increase.
+**Fit here (6/10):** Durable pricing logic, age irrelevant, and revenue is the prime directive — with roughly 54 orders/month, price is one of only two multiplicands available without new traffic. The sample unit is unusually workable at this scale: five Shopify orders is a matter of days. Two real limits cap it at 6. First, the prescribed 20% step is far too coarse for a $12 deodorant in a saturated category where Native and Dr. Squatch set the visible comparison price — take small steps here. Second, on Amazon (~$1,800/mo, the larger channel) price moves interact with Buy Box and ranking, so run the escalation on Shopify first — the cheapest-audience-first rule below is the general form of that ordering. At this order volume a clean read is slow either way, so prefer applying it as the funding mechanism for a specific added guarantee or bundle rather than as a standalone across-the-board increase.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
+
+## Price the front end and the back end against different objectives — the front-end SKU exists to acquire a customer and must clear a margin gate above your allowable cost per acquisition; the back-end SKU exists to produce lifetime value.
+
+**Why it works:** Front-end and back-end products are optimised against different objectives, so pricing them on the same logic sub-optimises both. A front end priced above the market's impulse threshold does not acquire; one without a large margin multiple over landed cost cannot pay for the media that delivers it, no matter how well it converts. The front-end price is therefore a media-funding decision first and a revenue decision second.
+
+**Evidence offered:** Billy Mays' stated 'magic number' of $19.95 for two-minute spots, Schefren's own $47 front-end strike price for his information business, and the DRTV requirement of roughly a five-times markup to cover media, distribution and fulfilment (achieved by manufacturing overseas). Self-reported figures from two very different businesses, no test data.
+
+**Fit here (6/10):** Durable pricing logic, so the 2009 date is irrelevant. Live right now: a $30/day Meta campaign runs against ~$2,700/mo combined revenue, so whichever SKU becomes the paid entry point has to carry contribution margin above cost per acquisition, and the offer presented to a paid-fed audience is exactly this decision. The splinter rule below already owns the low-COGS entry offer, the escalation rule above owns finding a price, and the four-property scoring rule owns which SKU plays which role — the additive part here is the explicit front-end/back-end split and the margin gate that sits on the front end: compute landed cost plus postage against what you can afford to pay for a customer, and refuse any entry offer that does not clear it. Held at 6 because none of the specific numbers transfer — $19.95, $47 and a 5x markup come from DRTV impulse goods and information products, not a $12 deodorant carrying real COGS and postage at a $50.46 AOV — so compute the margin, never import the multiple. At ~54 orders/month the resulting price point is a judgement call, never a measurement.
+
+*Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 1 of 3)*
 
 ## Improve ease by doing pre-work for the customer — intake, onboarding, and preparation done on your side before they have to act — because almost nobody does it and customers notice.
 
@@ -94,7 +104,7 @@ description: Use when deciding what you actually sell or give away rather than h
 
 **Evidence offered:** Whiteboard A/B/C/D decomposition of a $2,000 offer; assertion plus the rebuttal that 'everything I do comes together' is always false (you can always paint, seal, or measure part of it). No data.
 
-**Fit here (6/10):** Durable pricing psychology, no decay, and it has a direct catalog form: lip balm is already the natural low-COGS entry SKU, and the discount-depth rule is an immediate corrective to the reflexive 10%-off popup. Held at 6 because at ~$2,700/mo with solo-funded shipping, an 80–90% off physical entry product can go cash-negative per order once postage is counted — the principle transfers, but only to items where landed cost is genuinely trivial, and the upsell path must exist before the discount ships.
+**Fit here (6/10):** Durable pricing psychology, no decay, and it has a direct catalog form: lip balm is already the natural low-COGS entry SKU, and the discount-depth rule is an immediate corrective to the reflexive 10%-off popup. Held at 6 because at ~$2,700/mo with solo-funded shipping, an 80–90% off physical entry product can go cash-negative per order once postage is counted — the principle transfers, but only to items where landed cost is genuinely trivial, and the upsell path must exist before the discount ships. Run the splintered item through the front-end margin gate above before it goes behind paid traffic.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
 
@@ -136,7 +146,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Coca-Cola worked as an illustration (secret recipe, pennies of cost, lifelong repeat consumption) plus the claim that a one-person service business also satisfies all four. Assertion with one canonical brand example, no figures.
 
-**Fit here (5/10):** Durable principle class, age irrelevant, but it cannot be used as intended: the no-new-products rule above gates catalog expansion, and a solo operator at $2,700/mo should not be launching product 13. It translates honestly as a scoring lens on the 12 SKUs that already exist — which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (the baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer, and which carries the subscribe-and-save cadence. It also pairs directly with the differentiator audit above: the 'unique' score is what tells you which SKUs earn mechanism copy. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules above — the additive part is only the four-way scoring frame.
+**Fit here (5/10):** Durable principle class, age irrelevant, but it cannot be used as intended: the no-new-products rule above gates catalog expansion, and a solo operator at $2,700/mo should not be launching product 13. It translates honestly as a scoring lens on the 12 SKUs that already exist — which item is stickiest (deodorant and oral care are true consumables), which has the lowest landed cost (lip balm), which is genuinely differentiated (the baking-soda-free variant). That scoring decides which SKU anchors a named bundle, which becomes the low-COGS entry/attraction offer, and which carries the subscribe-and-save cadence. It also pairs directly with the differentiator audit above: the 'unique' score is what tells you which SKUs earn mechanism copy, and with the front-end/back-end split: the 'air' score picks the candidate front end, the 'sticky' score picks the back end. Free, no traffic, no attribution. Capped at 5 because the 'unique' criterion is largely unachievable in a saturated natural-deodorant category, and the low-COGS-entry insight is already half-covered by the splinter and lead-magnet rules above — the additive part is only the four-way scoring frame.
 
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
 
@@ -159,6 +169,36 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 **Fit here (8/10):** Bundle and multipack pricing is already the adopted AOV lever, and this makes the label on that bundle a free variable — 'save 25%' vs 'save $18' vs 'third stick free' vs '3 for $99, a $132 value'; 'lip balm free with your first refill' vs 'add the lip balm for $1'. The $1 variant even recovers some landed cost at a $50.46 AOV. Applies identically on Shopify bundle widgets, Amazon multipack ASINs and email subject lines, with no spend. Held at 8 only because at ~54 orders/month a clean A/B read is impossible — pick by judgment, favouring the free-portion framing per the source's own argument that 'free' beats an equivalent discount.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 4 of 11)*
+
+## Cut a price objection by redefinition rather than by discounting — switch the comparison standard so the price is measured against something more expensive than the products it is normally compared with.
+
+**Why it works:** A price only 'costs too much' relative to the class it is being compared against. Moving the comparison to a different, costlier standard changes the denominator, so the same number reads as smaller without the seller giving up any margin. This is the complement to the framing rule above: that one chooses how to state a saving, this one chooses what the price is being weighed against in the first place.
+
+**Evidence offered:** Stated as one of three redefinition moves, with the reasoning that the price seems high only because it is being ranked against other products in the same field. No worked example, no data.
+
+**Fit here (5/10):** Durable-principle class (pricing psychology), age irrelevant, free, editorial. Additive next to the rules here that own how to state savings, where the price sits on the page, and how to step a price upward — none of them re-anchor the comparison itself. It is one of the very few price levers that costs no margin at all, which matters at a $50.46 AOV with real COGS and postage. Honest forms: a stick priced against the shirts it saves, or a multipack priced per day of use. Capped at 5 because the anchor has to be truthful, an implied dermatology comparison drifts toward a medical claim, and Native and Dr. Squatch set a visible in-category price the buyer re-anchors to on Amazon anyway.
+
+*Source: Eugene M. Schwartz — "Breakthrough Advertising (reader's notes)" (book notes, part 2 of 3)*
+
+## When the price is high, say so plainly and give explicit reasons why it has to be — never apologise for it or soften it.
+
+**Why it works:** An unexplained high price reads as greed and invites the buyer to negotiate it down mentally. Naming the reasons converts the number into a consequence of something the buyer values — the cost of what is inside, the size of the outcome — so the price becomes evidence about the product rather than an obstacle to it. Stating it before the buyer objects also signals a seller who is not embarrassed by the number.
+
+**Evidence offered:** Demonstrated: 'Securing a place will NOT be cheap... And that's the way it needs to be — for three important reasons', followed by the three reasons (seriousness filter, peer quality, value delivered). Assertion only, no price test, no take-rate figures.
+
+**Fit here (5/10):** Durable pricing psychology, free and purely editorial. Narrowly additive here: this skill already owns re-anchoring the comparison class, funding a premium by raising price, and stepping a price upward against a fixed sample, but nothing owned stating the reasons behind the number on the page. The honest form is real and already true — small-batch production by one person, ingredient cost, no filler — and it belongs on the Shopify PDP and in founder-voice emails where a $12 stick sits next to Native and Dr. Squatch. Capped at 5 because it is a one-paragraph craft habit rather than a revenue mechanism, it sits close to the reason-why rule in marketing-scarcity-urgency-framing, and the source's version — price as a screening device for a six-figure coaching client — has no form at a $50.46 AOV, so only the stated-reasons half transfers. Every reason given must be a real cost fact, not a manufactured justification.
+
+*Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 6 of 6)*
+
+## The price is not the end of the argument — state it early and put the value-stacking work after it: bundle framing, the free portion, the guarantee and the quantity argument all belong below the price on the page and after the price line in an email.
+
+**Why it works:** The first half of a pitch only gets the reader to consider buying; what moves them from considering to acting is value being stacked on top of a price they already know. Withholding the price until the end means the strongest persuasion — the second unit free, the bonus, the risk reversal, the totalled value — has nowhere to land, because the reader is still holding an open question about cost while you argue.
+
+**Evidence offered:** Observation of where Mays introduces price across his spots (about halfway, never later than two thirds), plus a worked example of the Tool Bandit sequence (price, then second unit free, then a $10 bonus, then the totalled value). Observational, no split test.
+
+**Fit here (5/10):** Durable-principle class (offer presentation sequencing), age irrelevant, free, editorial. The literal instruction does not survive an ecommerce PDP — Shopify and Amazon both put the price above the fold by default, so it is never withheld — but the underlying claim translates cleanly: order the PDP sections, A+ blocks and email bodies so the multipack framing, the free-portion label, the stated reasons the price is what it is, the 30-day guarantee and the turkey-talk quantity argument all sit *after* the price, working on a number the buyer already holds. Held at 5 because it is a sequencing heuristic rather than a revenue mechanism, it interacts with the information-fatigue rule in marketing-conversion-friction-audit (order by decision-relevance, do not just stack), and at ~54 orders/month the ordering will be judged rather than measured.
+
+*Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 2 of 3)*
 
 ## Bundle several add-ons into one named package and name every tier deliberately — the top tier an aspirational outcome name, the floor tier something like 'The Minimum' — so one ask sells many items.
 
@@ -190,6 +230,26 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 *Source: Alex Hormozi — "$100M Offers" (book, part 9 of 11)*
 *Source: Alex Hormozi — "$100M Offers" (book, part 10 of 11)*
+
+## Close by summarizing — a bare condensed catalog of every performance, benefit and application with no description or elaboration — and turn the guarantee into the climax, restating it against each individual claim ('this must do X, or your money back').
+
+**Why it works:** By the close the reader has already had each point dramatized, so a stripped list re-presents the whole case in one glance without costing reading time. Attaching the guarantee to each named performance converts a general reassurance into a specific, repeated promise, so the last thing the reader holds is the full set of claims with the risk removed from each one.
+
+**Evidence offered:** Named as the two conventional summary devices, with the repeated-guarantee construction written out. Assertion, no data.
+
+**Fit here (5/10):** Durable-principle class (offer presentation), age irrelevant, free, editorial. Additive in a narrow direction: the rules above own guarantee wording and placement and the price-then-value-stack ordering, but none of them said the guarantee can also serve as the closing summary device, restated per claim. Runnable today on the Shopify PDP and in non-buyer nurture emails — end with the bare claim list ('works through the transition, no baking soda, no aluminium, lasts a full day') and hang the 30-day promise on each line. Two hard caps: the per-claim repetition must only attach to claims the 30-day promise genuinely covers, and it must be scoped away from Amazon A+ content, where refund and cart-directing language is policy-constrained on the ~$1,800/mo channel.
+
+*Source: Eugene M. Schwartz — "Breakthrough Advertising (reader's notes)" (book notes, part 2 of 3)*
+
+## Validate a new offer on the smallest, cheapest audience that predicts the full result — email the owned list first, and only fund paid or change the Amazon listing once it pulls.
+
+**Why it works:** Direct response is trackable, so a cheap surface can predict a larger one; testing where the cost of a failure is smallest means most of the money and time gets spent riding winners rather than discovering losers at full price. The stop-rule is what makes it work in the source: if it does not pull on the cheap surface, it does not get rolled out.
+
+**Evidence offered:** Billy and Sully's cheap predictive TV test markets, Joseph Sugarman testing every ad in the Southwestern edition of the Wall Street Journal, and Schefren's own stated house-list-first sequence (test every new product to the house list, and only if it beats expectations go out to affiliates, PPC and SEO). Practitioner anecdotes, no figures.
+
+**Fit here (5/10):** Durable-principle class (test ordering), age irrelevant. Additive on a different axis from the rules already recorded: marketing-awareness-level-messaging's cheap-reversible-first rule orders copy angles (ad text before PDP rebuild), while this orders audiences — validate a new bundle, price or promotion by emailing the owned list before putting any of the $30/day Meta budget or an Amazon listing change behind it. Free, needs no attribution (redemption reads off a discount code), and it is the general form of the 'run the price escalation on Shopify first, not Amazon' rule above, since Amazon changes are slow to unwind on the larger ~$1,800/mo channel. Capped at 5 because it substantially overlaps those two rules, and because the source's stop-rule does not survive the scale-down: at a sub-1,000 subscriber list and ~54 orders/month, 'sales were disappointing, kill it' is a directional judgement on a handful of orders, so treat a flat list test as a reason not to fund it yet, never as proof the offer is dead.
+
+*Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 3 of 3)*
 
 ## Get adjacent non-competing businesses to contribute their products and services as bonuses in exchange for exposure to your customers, then negotiate group discounts and referral commissions so the bonuses become revenue streams.
 

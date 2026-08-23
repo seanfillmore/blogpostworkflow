@@ -538,6 +538,116 @@ await assert.rejects(
   assert.match(err.message, /part 3 of 11/, 'the error names the chunk that failed');
 }
 
+// A schema-invalid body gets exactly ONE re-sample. The Entrepreneurial Emergency
+// died on chunk 4 of 6 because the model wrote a `rejectReason` for the last tactic
+// and omitted its `verdict` — one dropped key out of seven objects. The JSON parsed;
+// only the schema failed, and re-running the identical prompt produced valid output.
+// That is sampling variance, not a deterministic property of the prompt, and
+// refusing to re-sample discarded five good chunks and a consolidation pass with it.
+{
+  let calls = 0;
+  const missingVerdict = {
+    tactics: [
+      { ...GOOD.tactics[0] },
+      { ...GOOD.tactics[1], verdict: undefined },
+    ],
+  };
+  const slipsOnce = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          return {
+            stop_reason: 'end_turn',
+            content: [{
+              type: 'text',
+              text: JSON.stringify(calls === 1 ? missingVerdict : GOOD),
+            }],
+          };
+        },
+      }),
+    },
+  };
+  const out = await extractTactics({
+    video: VIDEO, inventory: [], client: slipsOnce, retryOptions: { delayMs: 1 },
+  });
+  assert.equal(calls, 2, 'a schema-invalid body is re-sampled exactly once');
+  assert.equal(out.tactics.length, 2, 'the second, valid sample is what gets returned');
+}
+
+// ...and only once. Repeated failure means the prompt or the ceiling is the problem,
+// not the sample, so it must not spend a third call to confirm that.
+{
+  let calls = 0;
+  const alwaysInvalid = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          return {
+            stop_reason: 'end_turn',
+            content: [{ type: 'text', text: JSON.stringify({ tactics: [{ claim: 'no verdict' }] }) }],
+          };
+        },
+      }),
+    },
+  };
+  const err = await extractTactics({
+    video: VIDEO, inventory: [], client: alwaysInvalid, retryOptions: { delayMs: 1 },
+  }).then(() => null, (e) => e);
+
+  assert.ok(err, 'a body that fails twice still throws');
+  assert.equal(calls, 2, 'stops at two attempts — it does not keep re-sampling');
+  assert.ok(err.offendingPayload?.tactics, 'the schema failure still carries the parsed payload out');
+}
+
+// A refusal is not re-sampled either. The safety classifiers declined this prompt;
+// re-sending it unchanged reaches the same decision, so grouping it with a malformed
+// body would just buy a second identical refusal.
+{
+  let calls = 0;
+  const refusing = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          return { stop_reason: 'refusal', content: [] };
+        },
+      }),
+    },
+  };
+  const err = await extractTactics({
+    video: VIDEO, inventory: [], client: refusing, retryOptions: { delayMs: 1 },
+  }).then(() => null, (e) => e);
+
+  assert.ok(err, 'a refusal throws');
+  assert.equal(calls, 1, 'a refusal is not re-sampled');
+  assert.equal(err.offendingPayload?.stop_reason, 'refusal', 'stop_reason is still carried out');
+}
+
+// Truncation is NOT re-sampled even though it now shares the retry loop: max_tokens
+// says the output did not fit the ceiling, and a second attempt against that same
+// ceiling cannot fix it.
+{
+  let calls = 0;
+  const truncating = {
+    messages: {
+      stream: () => ({
+        finalMessage: async () => {
+          calls += 1;
+          return { stop_reason: 'max_tokens', content: [] };
+        },
+      }),
+    },
+  };
+  await assert.rejects(
+    () => extractTactics({ video: VIDEO, inventory: [], client: truncating, retryOptions: { delayMs: 1 } }),
+    /max_tokens/,
+    'truncation still throws'
+  );
+  assert.equal(calls, 1, 'truncation is not re-sampled — the ceiling, not the sample, is the problem');
+}
+
 // A trailing comma before } or ] is the single most common way the model's JSON
 // comes back invalid — the Dara Denney statics video failed twice in a row on it
 // (17 of them in part 1, 4 in part 2), each failure discarding a paid extraction.

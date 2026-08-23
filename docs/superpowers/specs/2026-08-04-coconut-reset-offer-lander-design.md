@@ -183,7 +183,7 @@ buried.
 
 Verbatim proof is pulled from the file's golden-nugget phrases rather than
 paraphrased — e.g. *"dude as soon as you put it on it just ABSORBS"* against the
-absorption objection. Per `marketing-conversion-copy-angles`, reviewer-volunteered
+absorption objection. Per `marketing-copy-credibility-and-proof`, reviewer-volunteered
 context is kept and never invented.
 
 ### Timeline module — format constraint
