@@ -1,0 +1,262 @@
+/* Hero Landing Section — mobile-first, performance-conscious */
+.section-landing-hero {
+  position: relative;
+  /* If hero starts below the fold, this avoids rendering cost until scrolled into view */
+  content-visibility: auto;
+  contain-intrinsic-size: 800px; /* fallback size to prevent layout jank */
+}
+
+.hero-landing {
+  position: relative;
+  padding-top: var(--hero-pt, 48px);
+  padding-bottom: var(--hero-pb, 48px);
+  background-color: var(--hero-bg-color, transparent);
+  min-height: auto; /* content-driven by default */
+  overflow: hidden;
+}
+
+/* Height modes */
+.hero-landing--height-px { min-height: var(--hero-min-h-d, 600px); }
+.hero-landing--height-vh { min-height: calc(var(--hero-vh, 70) * 1vh); }
+
+/* Mobile min-height for px mode */
+@media (max-width: 767.98px) {
+  .hero-landing--height-px { min-height: var(--hero-min-h-m, 480px); }
+}
+
+/* Background */
+.hero-landing__bg { position: absolute; inset: 0; z-index: 0; }
+.hero-landing__bg-img {
+  width: 100%; height: 100%;
+  position: absolute; inset: 0;
+  object-fit: cover; object-position: center;
+}
+.hero-landing__bg-overlay {
+  position: absolute; inset: 0;
+  background: rgba(var(--hero-overlay-color, 0,0,0), var(--hero-overlay-opacity, 0));
+}
+
+/* Layout */
+.hero-landing__inner { position: relative; z-index: 1; }
+.hero-landing__grid { display: grid; }
+.hero-landing__content { text-align: left; }
+.hero-landing--center-mobile .hero-landing__content { text-align: center; }
+
+/* Headings */
+.hero-landing__heading {
+  margin: 0 0 8px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.hero-landing__subheading-wrap { display: inline-block; margin: 4px 0 var(--gap-sub-to-bullets, 12px); /* was: 4px 0 16px */ }
+.hero-landing__subheading-wrap--bg { position: relative; padding: 4px 10px; }
+.hero-landing__subheading-wrap--bg::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: var(--subhead-bg);
+  background-size: cover; background-position: center;
+  opacity: var(--subhead-bg-opacity, 0.15);
+  z-index: -1; border-radius: 6px;
+}
+.hero-landing__subheading { font-weight: 800; }
+
+/* Rating */
+.hero-landing__rating {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; font-size: 14px;
+}
+.rating-stars {
+  position: relative; display: inline-grid;
+  grid-auto-flow: column; gap: 2px; line-height: 0;
+}
+.rating-stars svg { width: 16px; height: 16px; fill: #cfd8dc; } /* base (empty) */
+.rating-stars::after {
+  content: ""; position: absolute; left: 0; top: 0;
+  height: 16px; width: var(--rating-pct, 0%);
+  background: currentColor;
+  -webkit-mask:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='86' height='16' viewBox='0 0 86 16' fill='none'><path d='M8 0l2.472 4.827L16 5.833l-4 3.9.944 5.5L8 12.667 3.056 15.233 4 9.733 0 5.833l5.528-1.006L8 0Z'/><path d='M25.2 0l2.471 4.827L33.2 5.833l-4 3.9.944 5.5-4.944-2.566-4.945 2.566L21.2 9.733l-4-3.9 5.529-1.006L25.2 0Z'/><path d='M42.4 0l2.472 4.827L50.4 5.833l-4 3.9.944 5.5-4.944-2.566-4.945 2.566L38.4 9.733l-4-3.9 5.529-1.006L42.4 0Z'/><path d='M59.6 0l2.472 4.827L67.6 5.833l-4 3.9.944 5.5-4.944-2.566-4.944 2.566L55.6 9.733l-4-3.9 5.528-1.006L59.6 0Z'/><path d='M76.8 0l2.472 4.827L84.8 5.833l-4 3.9.944 5.5-4.944-2.566-4.944 2.566L72.8 9.733l-4-3.9 5.528-1.006L76.8 0Z'/></svg>") no-repeat center / contain;
+          mask:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='86' height='16' viewBox='0 0 86 16' fill='none'><path d='M8 0l2.472 4.827L16 5.833l-4 3.9.944 5.5L8 12.667 3.056 15.233 4 9.733 0 5.833l5.528-1.006L8 0Z'/><path d='M25.2 0l2.471 4.827L33.2 5.833l-4 3.9.944 5.5-4.944-2.566-4.945 2.566L21.2 9.733l-4-3.9 5.529-1.006L25.2 0Z'/><path d='M42.4 0l2.472 4.827L50.4 5.833l-4 3.9.944 5.5-4.944-2.566-4.945 2.566L38.4 9.733l-4-3.9 5.529-1.006L42.4 0Z'/><path d='M59.6 0l2.472 4.827L67.6 5.833l-4 3.9.944 5.5-4.944-2.566-4.944 2.566L55.6 9.733l-4-3.9 5.528-1.006L59.6 0Z'/><path d='M76.8 0l2.472 4.827L84.8 5.833l-4 3.9.944 5.5-4.944-2.566-4.944 2.566L72.8 9.733l-4-3.9 5.528-1.006L76.8 0Z'/></svg>") no-repeat center / contain;
+}
+.rating-caption { opacity: 0.9; }
+
+/* Bullets spacing (between items via gap; top spacing handled by subheadline) */
+.hero-landing__bullets {
+  display: grid;
+  gap: var(--gap-between-bullets, 10px);
+  margin: 0 0 20px; /* was: var(--gap-sub-to-bullets, 12px) 0 20px */
+  padding: 0;
+}
+.hero-landing__bullets--center { justify-items: center; text-align: center; }
+
+.hero-landing__bullet {
+  display: grid;
+  grid-template-columns: 24px auto;
+  gap: 10px;
+  align-items: center; /* center icon + text vertically */
+  list-style: none;
+}
+.hero-landing__bullets--center .hero-landing__bullet { grid-template-columns: 24px max-content; }
+
+.hero-landing__bullet-icon svg,
+.hero-landing__badge-icon svg {
+  width: 20px; height: 20px;
+}
+
+/* CTA */
+.hero-landing__cta { margin: 16px 0 10px; }
+.hero-landing__btn {
+  display: inline-block;
+  padding: 14px 22px;
+  border-radius: 8px;
+  background: #2ecc71;
+  color: #000;
+  text-decoration: none;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Full-width CTA options */
+.hero-landing__btn--full-m { display: block; width: 100%; text-align: center; }
+@media (min-width: 768px) {
+  .hero-landing__btn--full-d { display: block; width: 100%; text-align: center; }
+}
+
+/* Secondary text-link CTA below primary button */
+.hero-landing__btn-secondary {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+  letter-spacing: 0.3px;
+}
+.hero-landing__btn-secondary:hover { opacity: 0.7; }
+.hero-landing__cta { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+/* Badges — stacked & centered on mobile */
+.hero-landing__badges {
+  margin-top: 12px;
+  display: grid;
+  grid-auto-flow: row;     /* stack vertically on mobile */
+  gap: 12px;
+  justify-items: center;   /* center each badge block */
+  text-align: center;      /* center text inside badges */
+}
+
+.hero-landing__badge {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center; /* center icon+text as a unit */
+  font-size: 14px;
+}
+
+/* Desktop: row of centered badges */
+@media (min-width: 768px) {
+  .hero-landing__badges {
+    grid-auto-flow: column;
+    gap: 18px;
+    justify-content: center; /* center the whole row */
+    justify-items: normal;
+    text-align: initial;
+  }
+}
+
+
+/* Desktop adjustments */
+@media (min-width: 768px) {
+  .hero-landing__grid { display: grid; grid-template-columns: 1fr; }
+  .hero-landing__content { max-width: 620px; }
+  .hero-landing--flip .hero-landing__content { margin-left: auto; }
+  .hero-landing__badges { justify-content: center; }
+  .hero-landing__heading { font-size: clamp(28px, 5vw, 56px); }
+}
+
+/* Mobile heading size */
+@media (max-width: 767.98px) {
+  .hero-landing__heading { font-size: 28px; }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within { scroll-behavior: auto; }
+}
+
+/* Compact spacing: cap values, don’t overwrite them */
+.hero-landing--compact .hero-landing__bullets {
+  gap: min(var(--gap-between-bullets, 10px), 12px);
+  margin-top: 0;                 /* top spacing still comes from subheadline */
+  margin-bottom: 12px;
+}
+
+/* Keep the other compact tweaks */
+.hero-landing--compact .hero-landing__heading { margin-bottom: 6px; }
+.hero-landing--compact .hero-landing__subheading-wrap { margin-bottom: min(var(--gap-sub-to-bullets, 12px), 10px); }
+.hero-landing--compact .hero-landing__cta { margin: 10px 0 6px; }
+.hero-landing--compact .hero-landing__badges { gap: 12px; }
+
+.ingredient-card__header {
+  background: var(--card-header-bg);
+  color: var(--card-header-color);
+}
+.ingredient-card__title { color: inherit; } /* makes the title follow header color */
+
+.ingredient-card__desc {
+  background: var(--card-desc-bg);
+  color: var(--card-desc-color);
+}
+/* Keep content centered when center-on-mobile is enabled */
+.hero-landing--center-mobile .hero-landing__grid { justify-items: center; }
+.hero-landing--center-mobile .hero-landing__content,
+.hero-landing--center-mobile .hero-landing__badges,
+.hero-landing--center-mobile .hero-landing__cta { text-align: center; }
+
+/* Rating star fill color token (gold by default) */
+.hero-landing__rating { color: var(--rating-fill, #F59F00); } /* affects mask fill */
+.rating-stars svg { fill: var(--rating-empty, #CFD8DC); }     /* empty star tint */
+
+/* Fallback: clamp content width even if inline style is removed */
+.hero-landing__inner { max-width: var(--hero-max-w, 1200px); margin-inline: auto; }
+
+/* Tidy desktop grid: no need to re-declare 1 column */
+@media (min-width: 768px){
+  .hero-landing__grid { display: grid; }
+}
+
+/* Small visual rhythm helpers (optional) */
+.hero-landing__subheading-wrap { margin: 4px 0 var(--gap-sub-to-bullets, 12px); }
+.hero-landing__bullets { gap: var(--gap-between-bullets, 10px); }
+
+/* Give the FILLED layer its color (affects ::after via currentColor) */
+.rating-stars{
+  color: var(--rating-fill, #F59F00) !important; /* gold by default */
+}
+
+/* Keep the caption text using the regular foreground color */
+.hero-landing__rating{ color: inherit !important; }
+
+/* Ensure the empty stars stay the intended tint even if the theme uses
+   svg { fill: currentColor } somewhere */
+.rating-stars svg{
+  fill: var(--rating-empty, #CFD8DC) !important; /* light gray */
+}
+
+/* Simple 2-layer stars */
+.stars{ position: relative; display: inline-block; line-height: 0; }
+.stars__row{ display: inline-grid; grid-auto-flow: column; gap: 2px; }
+.stars__row svg{ width: 16px; height: 16px; fill: currentColor; }
+
+.stars__base{ color: var(--rating-empty, #CFD8DC); }
+.stars__fill{
+  color: var(--rating-fill, #F59F00);
+  position: absolute; inset: 0 auto auto 0;
+  overflow: hidden;
+  width: var(--pct, 0%);        /* e.g., 4.5 -> 90% */
+}
+
+/* Keep caption normal text color */
+.hero-landing__rating{ color: inherit; }
